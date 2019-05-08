@@ -16,7 +16,7 @@ from ..utils.fixes import _argmax, _object_dtype_isnan
 from ..utils.validation import check_is_fitted
 
 from .base import _transform_selected
-from .label import _encode, _encode_check_unknown
+from .label import _encode, _encode_check_unknown, _encode_numpy
 
 
 __all__ = [
@@ -85,8 +85,6 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                                  " it has to be of shape (n_features,).")
 
         self.categories_ = []
-        self.infrequent_= []
-        self._is_infrequent = []
         self.infrequent_indices_ = []
 
         for i in range(n_features):
@@ -106,14 +104,18 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                                " during fit".format(diff, i))
                         raise ValueError(msg)
             self.categories_.append(cats)
-            inf, indices = self._find_infrequent_categories(Xi)
-            self.infrequent_.append(inf)
-            self.infrequent_indices_.append(indices)
 
-    def _find_infrequent_categories(self, Xi):
-        unique, counts = np.unique(Xi, return_counts=True)
-        indices = np.argsort(counts)[:-self.max_levels]
-        return unique[indices], indices
+            if self.max_levels is not None:
+                infrequent_indices = self._find_infrequent_category_indices(Xi)
+            else:
+                infrequent_indices = np.array([])
+            self.infrequent_indices_.append(infrequent_indices)
+
+    def _find_infrequent_category_indices(self, Xi):
+        # TODO: this is using unique on X again. Ideally we should integrate
+        # this into _encode()
+        _, counts = np.unique(Xi, return_counts=True)
+        return np.argsort(counts)[:-self.max_levels]
 
     def _transform(self, X, handle_unknown='error'):
         X_list, n_samples, n_features = self._check_X(X)
@@ -147,6 +149,29 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                     Xi[~valid_mask] = self.categories_[i][0]
             _, encoded = _encode(Xi, self.categories_[i], encode=True)
             X_int[:, i] = encoded
+
+        # We need to take care of infrequent categories here. We want all the
+        # infrequent categories to end up in a specific column, after all the
+        # frequent ones. Let's say we have 4 categories with 2 infrequent
+        # categories (and 2 frequent categories): we want the value in X_int
+        # for the infrequent categories to be 2 (third column), and the values
+        # for the frequent ones to be 0 and 1. The piece of code below
+        # performs this mapping.
+        # TODO: maybe integrate this part with the one above
+        self._infrequent_mappings = {}
+        huge_int = np.iinfo(X_int.dtype).max
+        for feature_idx in range(n_features):
+            if self.infrequent_indices_[feature_idx].size > 0:
+                mapping = np.arange(len(self.categories_[feature_idx]))
+                # Trick: set the infrequent cats columns to a very big int and
+                # encode again.
+                for ordinal_cat in self.infrequent_indices_[feature_idx]:
+                    mapping[ordinal_cat] = huge_int
+                _, mapping = _encode_numpy(mapping, encode=True)
+
+                # update X_int and save mapping for later (for dropping logic)
+                X_int[:, feature_idx] = mapping[X_int[:, feature_idx]]
+                self._infrequent_mappings[feature_idx] = mapping
 
         return X_int, X_mask
 
@@ -254,6 +279,10 @@ class OneHotEncoder(_BaseEncoder):
         be dropped for each feature. None if all the transformed features will
         be retained.
 
+    infrequent_indices_: list of arrays of shape(n_infrequent_categories)
+        ``infrequent_indices_[i]`` contains a list of indices in
+        ``categories_[i]`` corresponsing to the infrequent categories.
+
     active_features_ : array
         Indices for active features, meaning values that actually occur
         in the training set. Only available when n_values is ``'auto'``.
@@ -292,7 +321,7 @@ class OneHotEncoder(_BaseEncoder):
     ... # doctest: +NORMALIZE_WHITESPACE
     OneHotEncoder(categorical_features=None, categories=None, drop=None,
        dtype=<... 'numpy.float64'>, handle_unknown='ignore',
-       n_values=None, sparse=True)
+       max_levels=None, n_values=None, sparse=True)
 
     >>> enc.categories_
     [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]
@@ -689,40 +718,40 @@ class OneHotEncoder(_BaseEncoder):
         """New implementation assuming categorical input"""
         # validation of X happens in _check_X called by _transform
         X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown)
-        hello = []
-        for feature_idx in range(X_int.shape[1]):
-            col = X_int[:, feature_idx]
-            if self.infrequent_[feature_idx].size > 0:
-                mapping = np.arange(len(self.categories_[feature_idx]))
-                for i in self.infrequent_indices_[feature_idx]:
-                    mapping[i] = np.iinfo(col.dtype).max
-
-                from .label import _encode_numpy
-                _, encoded_mapping = _encode_numpy(mapping, encode=True)
-                col[:] = encoded_mapping[col]
-                hello.append(encoded_mapping)
-
         n_samples, n_features = X_int.shape
 
         if self.drop is not None:
-            to_drop = self.drop_idx_.reshape(1, -1)
+            to_drop = self.drop_idx_.copy()
 
-            # We remove all the dropped categories from mask, and decrement all
-            # categories that occur after them to avoid an empty column.
+            if not isinstance(self.drop, str):
+                # if drop is not 'first', we need to remap the dropped indexes
+                # if some of the categories are infrequent.
+                for feature_idx in range(n_features):
+                    if self.infrequent_indices_[feature_idx].size > 0:
+                        mapping = self._infrequent_mappings[feature_idx]
+                        to_drop[feature_idx] = mapping[to_drop[feature_idx]]
 
-            if not isinstance(self.drop, str):  # drop is not 'first'
-                for i in range(to_drop.shape[1]):
-                    to_drop[0][i] = hello[i][to_drop[0][i]]
+            # We remove all the dropped categories from mask, and decrement
+            # all categories that occur after them to avoid an empty column.
 
+            to_drop = to_drop.reshape(1, -1)
             keep_cells = X_int != to_drop
             X_mask &= keep_cells
             X_int[X_int > to_drop] -= 1
-            n_values = [len(cats) - len(inf) for (cats, inf) in zip(self.categories_, self.infrequent_)]
-        else:
-            n_values = [len(cats) - len(inf) + 1 for (cats, inf) in zip(self.categories_, self.infrequent_)]
+
+        n_columns = [len(cats) for cats in self.categories_]
+        # update n_columns if there are infrequent categories, and if some of
+        # them have been dropped
+        for feature_idx, infrequent_idx in enumerate(self.infrequent_indices_):
+            if self.drop is not None:
+                n_columns[feature_idx] -= 1
+            n_infrequent = infrequent_idx.size
+            if n_infrequent > 0:
+                # still add 1 for the infrequent column
+                n_columns[feature_idx] += 1 - n_infrequent
 
         mask = X_mask.ravel()
-        n_values = np.array([0] + n_values)
+        n_values = np.array([0] + n_columns)
         feature_indices = np.cumsum(n_values)
         indices = (X_int + feature_indices[:-1]).ravel()[mask]
         indptr = X_mask.sum(axis=1).cumsum()
@@ -912,6 +941,10 @@ class OrdinalEncoder(_BaseEncoder):
         (in order of the features in X and corresponding with the output
         of ``transform``).
 
+    infrequent_indices_: list of arrays of shape(n_infrequent_categories)
+        ``infrequent_indices_[i]`` contains a list of indices in
+        ``categories_[i]`` corresponsing to the infrequent categories.
+
     Examples
     --------
     Given a dataset with two features, we let the encoder find the unique
@@ -922,7 +955,8 @@ class OrdinalEncoder(_BaseEncoder):
     >>> X = [['Male', 1], ['Female', 3], ['Female', 2]]
     >>> enc.fit(X)
     ... # doctest: +ELLIPSIS
-    OrdinalEncoder(categories='auto', dtype=<... 'numpy.float64'>)
+    OrdinalEncoder(categories='auto', dtype=<... 'numpy.float64'>,
+                   max_levels=None)
     >>> enc.categories_
     [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]
     >>> enc.transform([['Female', 3], ['Male', 1]])
@@ -941,9 +975,10 @@ class OrdinalEncoder(_BaseEncoder):
       between 0 and n_classes-1.
     """
 
-    def __init__(self, categories='auto', dtype=np.float64):
+    def __init__(self, categories='auto', dtype=np.float64, max_levels=None):
         self.categories = categories
         self.dtype = dtype
+        self.max_levels=max_levels
 
     def fit(self, X, y=None):
         """Fit the OrdinalEncoder to X.
@@ -960,6 +995,7 @@ class OrdinalEncoder(_BaseEncoder):
         """
         # base classes uses _categories to deal with deprecations in
         # OneHoteEncoder: can be removed once deprecations are removed
+        # XXX tag 0.22
         self._categories = self.categories
         self._fit(X)
 

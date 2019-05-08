@@ -839,3 +839,95 @@ def test_categories(density, drop):
             assert cat_list[drop_idx] == drop_cat
     assert isinstance(ohe_test.drop_idx_, np.ndarray)
     assert ohe_test.drop_idx_.dtype == np.int_
+
+
+def test_infrequent_categories_sanity():
+    # Not a super legit test for now.
+    # Mostly aimed at explaining how the infrequent categories are handled.
+
+    X = [[0, 0, 1],
+         [1, 0, 0],
+         [3, 5, 1],
+         [3, 1, 0],
+         [3, 1, 1],
+         [3, 2, 0],
+         [1, 5, 1],
+         [0, 5, 0],
+         [3, 0, 1]]
+    X = np.array(X)
+
+    # Check _infrequent_idx_ attribute
+    oe = OrdinalEncoder(max_levels=2)
+    X_trans = oe.fit_transform(X)
+    # first feature: category 0 is infrequent
+    # note that 1 is also infrequent but we want to keep 2 categories
+    assert len(oe.infrequent_indices_[0]) == 1
+    assert oe.categories_[0][oe.infrequent_indices_[0][0]] == 0
+    # second feature: categories 2 and 1 are infrequent
+    # 2 comes first because it has less occurrences than 1
+    assert len(oe.infrequent_indices_[1]) == 2
+    assert oe.categories_[1][oe.infrequent_indices_[1][0]] == 2
+    assert oe.categories_[1][oe.infrequent_indices_[1][1]] == 1
+    # third feature: no infrequent category
+    assert len(oe.infrequent_indices_[2]) == 0
+
+    # For ordinal encoder, the infrequent categories are assigned the highest
+    # integer.
+    expected_X_trans = [[2, 0, 1],
+                        [0, 0, 0],
+                        [1, 1, 1],
+                        [1, 2, 0],
+                        [1, 2, 1],
+                        [1, 2, 0],
+                        [0, 1, 1],
+                        [2, 1, 0],
+                        [1, 0, 1]]
+    assert np.array_equal(X_trans, expected_X_trans)
+
+    ohe = OneHotEncoder(categories='auto', max_levels=2)
+    X_trans = ohe.fit_transform(X).toarray()
+    # first feature: 1 is treated as infrequent and ends up in
+    # X_trans[:, 2]
+    # second feature: 1 and 2 are treated as infrequent and end up in
+    # X_trans[:, 5]
+    # third feature: no infrequent category. Represented by the 2 last
+    # columns
+    expected_X_trans = [[0, 0, 1,   1, 0, 0,   0, 1],
+                        [1, 0, 0,   1, 0, 0,   1, 0],
+                        [0, 1, 0,   0, 1, 0,   0, 1],
+                        [0, 1, 0,   0, 0, 1,   1, 0],
+                        [0, 1, 0,   0, 0, 1,   0, 1],
+                        [0, 1, 0,   0, 0, 1,   1, 0],
+                        [1, 0, 0,   0, 1, 0,   0, 1],
+                        [0, 0, 1,   0, 1, 0,   1, 0],
+                        [0, 1, 0,   1, 0, 0,   0, 1]]
+
+    assert np.array_equal(X_trans, expected_X_trans)
+
+    # Dropping the first column works as expected
+    ohe = OneHotEncoder(categories='auto', max_levels=2, drop='first')
+    X_trans = ohe.fit_transform(X).toarray()
+    expected_X_trans = [[0, 1,   0, 0,   1],
+                        [0, 0,   0, 0,   0],
+                        [1, 0,   1, 0,   1],
+                        [1, 0,   0, 1,   0],
+                        [1, 0,   0, 1,   1],
+                        [1, 0,   0, 1,   0],
+                        [0, 0,   1, 0,   1],
+                        [0, 1,   1, 0,   0],
+                        [1, 0,   0, 0,   1]]
+    assert np.array_equal(X_trans, expected_X_trans)
+
+    # Dropping explicit categories works as expected
+    ohe = OneHotEncoder(categories='auto', max_levels=2, drop=[3, 5, 1])
+    X_trans = ohe.fit_transform(X).toarray()
+    expected_X_trans = [[0, 1,   1, 0,   0],
+                        [1, 0,   1, 0,   1],
+                        [0, 0,   0, 0,   0],
+                        [0, 0,   0, 1,   1],
+                        [0, 0,   0, 1,   0],
+                        [0, 0,   0, 1,   1],
+                        [1, 0,   0, 0,   0],
+                        [0, 1,   0, 0,   1],
+                        [0, 0,   1, 0,   0]]
+    assert np.array_equal(X_trans, expected_X_trans)
