@@ -975,6 +975,7 @@ def test_search_default_iid(SearchCV, specialized_params):
     assert search.cv_results_['param_C'][0] == 1
     # scores are the same as above
     assert_allclose(test_cv_scores, [1, 1. / 3.])
+    assert_allclose(train_cv_scores, [1, 1])
     # Unweighted mean/std is used
     assert test_mean == pytest.approx(np.mean(test_cv_scores))
     assert test_std == pytest.approx(np.std(test_cv_scores))
