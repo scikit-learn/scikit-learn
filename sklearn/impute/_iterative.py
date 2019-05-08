@@ -32,6 +32,17 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
 
     Read more in the :ref:`User Guide <iterative_imputer>`.
 
+    .. note::
+
+      This estimator is still **experimental** for now: the predictions
+      and the API might change without any deprecation cycle. To use it,
+      you need to explicitly import ``enable_hist_gradient_boosting``::
+
+        >>> # explicitly require this experimental feature
+        >>> from sklearn.experimental import enable_iterative_imputer  # noqa
+        >>> # now you can import normally from ensemble
+        >>> from sklearn.impute import IterativeImputer
+
     Parameters
     ----------
     estimator : estimator object, default=BayesianRidge()
