@@ -471,6 +471,7 @@ Samples generator
    :toctree: generated/
 
    experimental.enable_hist_gradient_boosting
+   experimental.enable_iterative_imputer
 
 
 .. _feature_extraction_ref:

@@ -216,7 +216,7 @@ Support for Python 3.4 and below has been officially dropped.
 
     >>> # explicitly require this experimental feature
     >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
-    >>> # now you can import normally from ensemble
+    >>> # now you can import normally from sklearn.ensemble
     >>> from sklearn.ensemble import HistGradientBoostingClassifier
 
   :pr:`12807` by :user:`Nicolas Hug<NicolasHug>`.
@@ -357,6 +357,15 @@ Support for Python 3.4 and below has been officially dropped.
   function of other features in a round-robin fashion. :pr:`8478` and
   :pr:`12177` by :user:`Sergey Feldman <sergeyf>` and :user:`Ben Lawson
   <benlawson>`.
+
+  The API of IterativeImputer is experimental and subject to change without any
+  deprecation cycle. To use them, you need to explicitly import
+  ``enable_iterative_imputer``::
+
+    >>> from sklearn.experimental import enable_iterative_imputer  # noqa
+    >>> # now you can import normally from sklearn.impute
+    >>> from sklearn.impute import IterativeImputer
+
 
 - |Feature| The :class:`impute.SimpleImputer` and
   :class:`impute.IterativeImputer` have a new parameter ``'add_indicator'``,
