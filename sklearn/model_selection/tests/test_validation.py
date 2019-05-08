@@ -24,6 +24,7 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
 from sklearn.model_selection import cross_val_score, ShuffleSplit
@@ -189,7 +190,7 @@ class MockClassifier:
             raise ValueError('X cannot be d')
         if sample_weight is not None:
             assert sample_weight.shape[0] == X.shape[0], (
-                'MockClassifier extra fit_param ' 
+                'MockClassifier extra fit_param '
                 'sample_weight.shape[0] is {0}, should be {1}'
                 .format(sample_weight.shape[0], X.shape[0]))
         if class_prior is not None:
@@ -349,10 +350,10 @@ def test_cross_validate_invalid_scoring_param():
 
     # Multiclass Scorers that return multiple values are not supported yet
     assert_raises_regex(ValueError, "scoring must return a number, got",
-                        cross_validate, SVC(gamma='scale'), X, y,
+                        cross_validate, SVC(), X, y,
                         scoring=multivalued_scorer)
     assert_raises_regex(ValueError, "scoring must return a number, got",
-                        cross_validate, SVC(gamma='scale'), X, y,
+                        cross_validate, SVC(), X, y,
                         scoring={"foo": multivalued_scorer})
 
     assert_raises_regex(ValueError, "'mse' is not a valid scoring value.",
@@ -566,7 +567,7 @@ def test_cross_val_score_precomputed():
     assert_array_almost_equal(score_precomputed, score_linear)
 
     # test with callable
-    svm = SVC(gamma='scale', kernel=lambda x, y: np.dot(x, y.T))
+    svm = SVC(kernel=lambda x, y: np.dot(x, y.T))
     score_callable = cross_val_score(svm, X, y)
     assert_array_almost_equal(score_precomputed, score_callable)
 
@@ -1333,8 +1334,8 @@ def check_cross_val_predict_binary(est, X, y, method):
 
     # Check actual outputs for several representations of y
     for tg in [y, y + 1, y - 2, y.astype('str')]:
-        assert_array_equal(cross_val_predict(est, X, tg, method=method, cv=cv),
-                           expected_predictions)
+        assert_allclose(cross_val_predict(est, X, tg, method=method, cv=cv),
+                        expected_predictions)
 
 
 def check_cross_val_predict_multiclass(est, X, y, method):
@@ -1358,8 +1359,8 @@ def check_cross_val_predict_multiclass(est, X, y, method):
 
     # Check actual outputs for several representations of y
     for tg in [y, y + 1, y - 2, y.astype('str')]:
-        assert_array_equal(cross_val_predict(est, X, tg, method=method, cv=cv),
-                           expected_predictions)
+        assert_allclose(cross_val_predict(est, X, tg, method=method, cv=cv),
+                        expected_predictions)
 
 
 def check_cross_val_predict_multilabel(est, X, y, method):
@@ -1406,7 +1407,7 @@ def check_cross_val_predict_multilabel(est, X, y, method):
         cv_predict_output = cross_val_predict(est, X, tg, method=method, cv=cv)
         assert_equal(len(cv_predict_output), len(expected_preds))
         for i in range(len(cv_predict_output)):
-            assert_array_equal(cv_predict_output[i], expected_preds[i])
+            assert_allclose(cv_predict_output[i], expected_preds[i])
 
 
 def check_cross_val_predict_with_method_binary(est):

@@ -154,7 +154,7 @@ def fetch_species_distributions(data_home=None,
         instead of trying to download the data from the source site.
 
     Returns
-    --------
+    -------
     The data is returned as a Bunch object with the following attributes:
 
     coverages : array, shape = [14, 1592, 1212]
