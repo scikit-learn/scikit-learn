@@ -36,11 +36,11 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
 
       This estimator is still **experimental** for now: the predictions
       and the API might change without any deprecation cycle. To use it,
-      you need to explicitly import ``enable_hist_gradient_boosting``::
+      you need to explicitly import ``enable_iterative_imputer``::
 
         >>> # explicitly require this experimental feature
         >>> from sklearn.experimental import enable_iterative_imputer  # noqa
-        >>> # now you can import normally from ensemble
+        >>> # now you can import normally from sklearn.impute
         >>> from sklearn.impute import IterativeImputer
 
     Parameters
