@@ -105,7 +105,6 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
     Brendan J. Frey and Delbert Dueck, "Clustering by Passing Messages
     Between Data Points", Science Feb. 2007
     """
-    S = check_array(S, accept_sparse=False)
     S = as_float_array(S, copy=copy)
     n_samples = S.shape[0]
 
@@ -365,7 +364,11 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
         y : Ignored
 
         """
-        X = check_array(X, accept_sparse='csr')
+        if(self.affinity == "precomputed"):
+            accept_sparse = False
+        else:
+            accept_sparse = 'csr'
+        X = check_array(X, accept_sparse=accept_sparse)
         if self.affinity == "precomputed":
             self.affinity_matrix_ = X
         elif self.affinity == "euclidean":
