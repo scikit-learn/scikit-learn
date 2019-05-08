@@ -190,7 +190,6 @@ def test_adjustment_for_chance():
     assert_array_almost_equal(max_abs_scores, [0.02, 0.03, 0.03, 0.02], 2)
 
 
-@ignore_warnings(category=FutureWarning)
 def test_adjusted_mutual_info_score():
     # Compute the Adjusted Mutual Information and test against known values
     labels_a = np.array([1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3])
