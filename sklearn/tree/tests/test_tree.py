@@ -33,6 +33,7 @@ from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import TempMemmap
 
 from sklearn.utils.validation import check_random_state
 
@@ -1579,7 +1580,7 @@ def test_min_weight_leaf_split_level(name):
 
 
 def check_public_apply(name):
-    X_small32 = X_small.astype(tree._tree.DTYPE)
+    X_small32 = X_small.astype(tree._tree.DTYPE, copy=False)
 
     est = ALL_TREES[name]()
     est.fit(X_small, y_small)
@@ -1588,7 +1589,7 @@ def check_public_apply(name):
 
 
 def check_public_apply_sparse(name):
-    X_small32 = csr_matrix(X_small.astype(tree._tree.DTYPE))
+    X_small32 = csr_matrix(X_small.astype(tree._tree.DTYPE, copy=False))
 
     est = ALL_TREES[name]()
     est.fit(X_small, y_small)
@@ -1828,3 +1829,32 @@ def test_empty_leaf_infinite_threshold():
         infinite_threshold = np.where(~np.isfinite(tree.tree_.threshold))[0]
         assert len(infinite_threshold) == 0
         assert len(empty_leaf) == 0
+
+
+@pytest.mark.parametrize('name', CLF_TREES)
+def test_multi_target(name):
+    Tree = CLF_TREES[name]
+
+    clf = Tree()
+
+    X = iris.data
+
+    # Make multi column mixed type target.
+    y = np.vstack([
+        iris.target.astype(float),
+        iris.target.astype(int),
+        iris.target.astype(str),
+    ]).T
+
+    # Try to fit and predict.
+    clf.fit(X, y)
+    clf.predict(X)
+
+
+def test_decision_tree_memmap():
+    # check that decision trees supports read-only buffer (#13626)
+    X = np.random.RandomState(0).random_sample((10, 2)).astype(np.float32)
+    y = np.zeros(10)
+
+    with TempMemmap((X, y)) as (X_read_only, y_read_only):
+        DecisionTreeClassifier().fit(X_read_only, y_read_only)

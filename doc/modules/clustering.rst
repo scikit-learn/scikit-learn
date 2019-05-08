@@ -73,13 +73,13 @@ Overview of clustering methods
      - Graph distance (e.g. nearest-neighbor graph)
 
    * - :ref:`Ward hierarchical clustering <hierarchical_clustering>`
-     - number of clusters
+     - number of clusters or distance threshold
      - Large ``n_samples`` and ``n_clusters``
      - Many clusters, possibly connectivity constraints
      - Distances between points
 
    * - :ref:`Agglomerative clustering <hierarchical_clustering>`
-     - number of clusters, linkage type, distance
+     - number of clusters or distance threshold, linkage type, distance
      - Large ``n_samples`` and ``n_clusters``
      - Many clusters, possibly connectivity constraints, non Euclidean
        distances
@@ -94,9 +94,9 @@ Overview of clustering methods
    * - :ref:`OPTICS <optics>`
      - minimum cluster membership
      - Very large ``n_samples``, large ``n_clusters``
-     - Non-flat geometry, uneven cluster sizes, variable cluster density 
+     - Non-flat geometry, uneven cluster sizes, variable cluster density
      - Distances between points
-   
+
    * - :ref:`Gaussian mixtures <mixture>`
      - many
      - Not scalable
@@ -124,26 +124,24 @@ model with equal covariance per component.
 K-means
 =======
 
-The :class:`KMeans` algorithm clusters data by trying to separate samples
-in n groups of equal variance, minimizing a criterion known as the
-`inertia <inertia>`_ or within-cluster sum-of-squares.
-This algorithm requires the number of clusters to be specified.
-It scales well to large number of samples and has been used
-across a large range of application areas in many different fields.
+The :class:`KMeans` algorithm clusters data by trying to separate samples in n
+groups of equal variance, minimizing a criterion known as the *inertia* or
+within-cluster sum-of-squares (see below). This algorithm requires the number
+of clusters to be specified. It scales well to large number of samples and has
+been used across a large range of application areas in many different fields.
 
-The k-means algorithm divides a set of :math:`N` samples :math:`X`
-into :math:`K` disjoint clusters :math:`C`,
-each described by the mean :math:`\mu_j` of the samples in the cluster.
-The means are commonly called the cluster "centroids";
-note that they are not, in general, points from :math:`X`,
+The k-means algorithm divides a set of :math:`N` samples :math:`X` into
+:math:`K` disjoint clusters :math:`C`, each described by the mean :math:`\mu_j`
+of the samples in the cluster. The means are commonly called the cluster
+"centroids"; note that they are not, in general, points from :math:`X`,
 although they live in the same space.
-The K-means algorithm aims to choose centroids
-that minimise the *inertia*, or within-cluster sum of squared criterion:
+
+The K-means algorithm aims to choose centroids that minimise the **inertia**,
+or **within-cluster sum-of-squares criterion**:
 
 .. math:: \sum_{i=0}^{n}\min_{\mu_j \in C}(||x_i - \mu_j||^2)
 
-Inertia, or the within-cluster sum of squares criterion,
-can be recognized as a measure of how internally coherent clusters are.
+Inertia can be recognized as a measure of how internally coherent clusters are.
 It suffers from various drawbacks:
 
 - Inertia makes the assumption that clusters are convex and isotropic,
@@ -154,9 +152,9 @@ It suffers from various drawbacks:
   better and zero is optimal. But in very high-dimensional spaces, Euclidean
   distances tend to become inflated
   (this is an instance of the so-called "curse of dimensionality").
-  Running a dimensionality reduction algorithm such as `PCA <PCA>`_
-  prior to k-means clustering can alleviate this problem
-  and speed up the computations.
+  Running a dimensionality reduction algorithm such as :ref:`PCA` prior to
+  k-means clustering can alleviate this problem and speed up the
+  computations.
 
 .. image:: ../auto_examples/cluster/images/sphx_glr_plot_kmeans_assumptions_001.png
    :target: ../auto_examples/cluster/plot_kmeans_assumptions.html
@@ -758,6 +756,18 @@ Any core sample is part of a cluster, by definition. Any sample that is not a
 core sample, and is at least ``eps`` in distance from any core sample, is
 considered an outlier by the algorithm.
 
+While the parameter ``min_samples`` primarily controls how tolerant the
+algorithm is towards noise (on noisy and large data sets it may be desiable
+to increase this parameter), the parameter ``eps`` is *crucial to choose
+appropriately* for the data set and distance function and usually cannot be
+left at the default value. It controls the local neighborhood of the points.
+When chosen too small, most data will not be clustered at all (and labeled
+as ``-1`` for "noise"). When chosen too large, it causes close clusters to
+be merged into one cluster, and eventually the entire data set to be returned
+as a single cluster. Some heuristics for choosing this parameter have been
+discussed in literature, for example based on a knee in the nearest neighbor
+distances plot (as discussed in the references below).
+
 In the figure below, the color indicates cluster membership, with large circles
 indicating core samples found by the algorithm. Smaller circles are non-core
 samples that are still part of a cluster. Moreover, the outliers are indicated
@@ -799,7 +809,7 @@ by black points below.
 
     This implementation is by default not memory efficient because it constructs
     a full pairwise similarity matrix in the case where kd-trees or ball-trees cannot
-    be used (e.g. with sparse matrices). This matrix will consume n^2 floats.
+    be used (e.g., with sparse matrices). This matrix will consume n^2 floats.
     A couple of mechanisms for getting around this are:
 
     - Use :ref:`OPTICS <optics>` clustering in conjunction with the
@@ -825,24 +835,28 @@ by black points below.
    In Proceedings of the 2nd International Conference on Knowledge Discovery
    and Data Mining, Portland, OR, AAAI Press, pp. 226–231. 1996
 
+ * "DBSCAN revisited, revisited: why and how you should (still) use DBSCAN.
+   Schubert, E., Sander, J., Ester, M., Kriegel, H. P., & Xu, X. (2017).
+   In ACM Transactions on Database Systems (TODS), 42(3), 19.
+
 .. _optics:
 
 OPTICS
 ======
 
-The :class:`OPTICS` algorithm shares many similarities with the
-:class:`DBSCAN` algorithm, and can be considered a generalization of
-DBSCAN that relaxes the ``eps`` requirement from a single value to a value
-range. The key difference between DBSCAN and OPTICS is that the OPTICS
-algorithm builds a *reachability* graph, which assigns each sample both a
-``reachability_`` distance, and a spot within the cluster ``ordering_``
-attribute; these two attributes are assigned when the model is fitted, and are
-used to determine cluster membership. If OPTICS is run with the default value
-of *inf* set for ``max_eps``, then DBSCAN style cluster extraction can be
-performed in linear time for any given ``eps`` value using the
-``extract_dbscan`` method. Setting ``max_eps`` to a lower value will result
-in shorter run times, and can be thought of as the maximum cluster object size
-(in diameter) that OPTICS will be able to extract.
+The :class:`OPTICS` algorithm shares many similarities with the :class:`DBSCAN`
+algorithm, and can be considered a generalization of DBSCAN that relaxes the
+``eps`` requirement from a single value to a value range. The key difference
+between DBSCAN and OPTICS is that the OPTICS algorithm builds a *reachability*
+graph, which assigns each sample both a ``reachability_`` distance, and a spot
+within the cluster ``ordering_`` attribute; these two attributes are assigned
+when the model is fitted, and are used to determine cluster membership. If
+OPTICS is run with the default value of *inf* set for ``max_eps``, then DBSCAN
+style cluster extraction can be performed repeatedly in linear time for any
+given ``eps`` value using the ``cluster_optics_dbscan`` method. Setting
+``max_eps`` to a lower value will result in shorter run times, and can be
+thought of as the maximum neighborhood radius from each point to find other
+potential reachable points.
 
 .. |optics_results| image:: ../auto_examples/cluster/images/sphx_glr_plot_optics_001.png
         :target: ../auto_examples/cluster/plot_optics.html
@@ -858,14 +872,16 @@ points are ordered such that nearby points are adjacent. 'Cutting' the
 reachability plot at a single value produces DBSCAN like results; all points
 above the 'cut' are classified as noise, and each time that there is a break
 when reading from left to right signifies a new cluster. The default cluster
-extraction with OPTICS looks at changes in slope within the graph to guess at
-natural clusters. There are also other possibilities for analysis on the graph
+extraction with OPTICS looks at the steep slopes within the graph to find
+clusters, and the user can define what counts as a steep slope using the
+parameter ``xi``. There are also other possibilities for analysis on the graph
 itself, such as generating hierarchical representations of the data through
-reachability-plot dendrograms. The plot above has been color-coded so that
-cluster colors in planar space match the linear segment clusters of the
-reachability plot-- note that the blue and red clusters are adjacent in the
-reachability plot, and can be hierarchically represented as children of a
-larger parent cluster.
+reachability-plot dendrograms, and the hierarchy of clusters detected by the
+algorithm can be accessed through the ``cluster_hierarchy_`` parameter. The
+plot above has been color-coded so that cluster colors in planar space match
+the linear segment clusters of the reachability plot. Note that the blue and
+red clusters are adjacent in the reachability plot, and can be hierarchically
+represented as children of a larger parent cluster.
 
 .. topic:: Examples:
 
@@ -873,43 +889,33 @@ larger parent cluster.
 
 
 .. topic:: Comparison with DBSCAN
-    
-    The results from OPTICS ``extract_dbscan`` method and DBSCAN are not quite
-    identical. Specifically, while *core_samples* returned from both OPTICS
-    and DBSCAN are guaranteed to be identical, labeling of periphery and noise
-    points is not. This is in part because the first sample processed by
-    OPTICS will always have a reachability distance that is set to ``inf``,
-    and will thus generally be marked as noise rather than periphery. This
-    affects adjacent points when they are considered as candidates for being
-    marked as either periphery or noise. While this effect is quite local to
-    the starting point of the dataset and is unlikely to be noticed on even
-    moderately large datasets, it is worth also noting that non-core boundry
-    points may switch cluster labels on the rare occasion that they are
-    equidistant to a competeing cluster due to how the graph is read from left
-    to right when assigning labels. 
+
+    The results from OPTICS ``cluster_optics_dbscan`` method and DBSCAN are
+    very similar, but not always identical; specifically, labeling of periphery
+    and noise points. This is in part because the first samples of each dense
+    area processed by OPTICS have a large reachability value while being close
+    to other points in their area, and will thus sometimes be marked as noise
+    rather than periphery. This affects adjacent points when they are
+    considered as candidates for being marked as either periphery or noise.
 
     Note that for any single value of ``eps``, DBSCAN will tend to have a
     shorter run time than OPTICS; however, for repeated runs at varying ``eps``
     values, a single run of OPTICS may require less cumulative runtime than
-    DBSCAN. It is also important to note that OPTICS output can be unstable at
-    ``eps`` values very close to the initial ``max_eps`` value. OPTICS seems
-    to produce near identical results to DBSCAN provided that ``eps`` passed to
-    ``extract_dbscan`` is a half order of magnitude less than the inital
-    ``max_eps`` that was used to fit; using a value close to ``max_eps``
-    will throw a warning, and using a value larger will result in an exception. 
+    DBSCAN. It is also important to note that OPTICS' output is close to
+    DBSCAN's only if ``eps`` and ``max_eps`` are close.
 
 .. topic:: Computational Complexity
 
     Spatial indexing trees are used to avoid calculating the full distance
     matrix, and allow for efficient memory usage on large sets of samples.
     Different distance metrics can be supplied via the ``metric`` keyword.
-    
+
     For large datasets, similar (but not identical) results can be obtained via
     `HDBSCAN <https://hdbscan.readthedocs.io>`_. The HDBSCAN implementation is
-    multithreaded, and has better algorithmic runtime complexity than OPTICS--
+    multithreaded, and has better algorithmic runtime complexity than OPTICS,
     at the cost of worse memory scaling. For extremely large datasets that
     exhaust system memory using HDBSCAN, OPTICS will maintain *n* (as opposed
-    to *n^2* memory scaling); however, tuning of the ``max_eps`` parameter
+    to *n^2*) memory scaling; however, tuning of the ``max_eps`` parameter
     will likely need to be used to give a solution in a reasonable amount of
     wall time.
 
@@ -918,12 +924,6 @@ larger parent cluster.
  *  "OPTICS: ordering points to identify the clustering structure."
     Ankerst, Mihael, Markus M. Breunig, Hans-Peter Kriegel, and Jörg Sander.
     In ACM Sigmod Record, vol. 28, no. 2, pp. 49-60. ACM, 1999.
-
- *  "Automatic extraction of clusters from hierarchical clustering
-    representations."
-    Sander, Jörg, Xuejie Qin, Zhiyong Lu, Nan Niu, and Alex Kovarsky.
-    In Advances in knowledge discovery and data mining,
-    pp. 75-87. Springer Berlin Heidelberg, 2003. 
 
 .. _birch:
 
@@ -1311,24 +1311,24 @@ more broadly common names.
    Machine Learning Research 3: 583–617.
    `doi:10.1162/153244303321897735 <http://strehl.com/download/strehl-jmlr02.pdf>`_.
 
- * [VEB2009] Vinh, Epps, and Bailey, (2009). "Information theoretic measures
-   for clusterings comparison". Proceedings of the 26th Annual International
-   Conference on Machine Learning - ICML '09.
-   `doi:10.1145/1553374.1553511 <https://dl.acm.org/citation.cfm?doid=1553374.1553511>`_.
-   ISBN 9781605585161.
-
- * [VEB2010] Vinh, Epps, and Bailey, (2010). "Information Theoretic Measures for
-   Clusterings Comparison: Variants, Properties, Normalization and
-   Correction for Chance". JMLR
-   <http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf>
-
  * `Wikipedia entry for the (normalized) Mutual Information
    <https://en.wikipedia.org/wiki/Mutual_Information>`_
 
  * `Wikipedia entry for the Adjusted Mutual Information
    <https://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
    
- * [YAT2016] Yang, Algesheimer, and Tessone, (2016). "A comparative analysis of
+ .. [VEB2009] Vinh, Epps, and Bailey, (2009). "Information theoretic measures
+   for clusterings comparison". Proceedings of the 26th Annual International
+   Conference on Machine Learning - ICML '09.
+   `doi:10.1145/1553374.1553511 <https://dl.acm.org/citation.cfm?doid=1553374.1553511>`_.
+   ISBN 9781605585161.
+
+ .. [VEB2010] Vinh, Epps, and Bailey, (2010). "Information Theoretic Measures for
+   Clusterings Comparison: Variants, Properties, Normalization and
+   Correction for Chance". JMLR
+   <http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf>
+   
+ .. [YAT2016] Yang, Algesheimer, and Tessone, (2016). "A comparative analysis of
    community
    detection algorithms on artificial networks". Scientific Reports 6: 30750.
    `doi:10.1038/srep30750 <https://www.nature.com/articles/srep30750>`_.
@@ -1371,6 +1371,22 @@ Their harmonic mean called **V-measure** is computed by
 
   >>> metrics.v_measure_score(labels_true, labels_pred)    # doctest: +ELLIPSIS
   0.51...
+
+This function's formula is as follows:::
+
+.. math:: v = \frac{(1 + \beta) \times \text{homogeneity} \times \text{completeness}}{(\beta \times \text{homogeneity} + \text{completeness})}
+
+`beta` defaults to a value of 1.0, but for using a value less than 1 for beta::
+
+  >>> metrics.v_measure_score(labels_true, labels_pred, beta=0.6)    # doctest: +ELLIPSIS
+  0.54...
+
+more weight will be attributed to homogeneity, and using a value greater than 1::
+
+  >>> metrics.v_measure_score(labels_true, labels_pred, beta=1.8)    # doctest: +ELLIPSIS
+  0.48...
+
+more weight will be attributed to completeness.
 
 The V-measure is actually equivalent to the mutual information (NMI)
 discussed above, with the aggregation function being the arithmetic mean [B2011]_.
@@ -1655,7 +1671,8 @@ Drawbacks
 .. _calinski_harabasz_index:
 
 Calinski-Harabasz Index
-----------------------
+-----------------------
+
 If the ground truth labels are not known, the Calinski-Harabasz index
 (:func:`sklearn.metrics.calinski_harabasz_score`) - also known as the Variance 
 Ratio Criterion - can be used to evaluate the model, where a higher 

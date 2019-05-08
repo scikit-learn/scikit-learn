@@ -19,7 +19,7 @@ from scipy.sparse import linalg as sp_linalg
 
 from .base import LinearClassifierMixin, LinearModel, _rescale_data
 from .sag import sag_solver
-from ..base import RegressorMixin
+from ..base import RegressorMixin, MultiOutputMixin
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import row_norms
 from ..utils import check_X_y
@@ -29,14 +29,36 @@ from ..utils import compute_sample_weight
 from ..utils import column_or_1d
 from ..preprocessing import LabelBinarizer
 from ..model_selection import GridSearchCV
-from ..externals import six
 from ..metrics.scorer import check_scoring
 from ..exceptions import ConvergenceWarning
+from ..utils.sparsefuncs import mean_variance_axis
 
 
-def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0):
+def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0,
+                     X_offset=None, X_scale=None):
+
+    def _get_rescaled_operator(X):
+
+        X_offset_scale = X_offset / X_scale
+
+        def matvec(b):
+            return X.dot(b) - b.dot(X_offset_scale)
+
+        def rmatvec(b):
+            return X.T.dot(b) - X_offset_scale * np.sum(b)
+
+        X1 = sparse.linalg.LinearOperator(shape=X.shape,
+                                          matvec=matvec,
+                                          rmatvec=rmatvec)
+        return X1
+
     n_samples, n_features = X.shape
-    X1 = sp_linalg.aslinearoperator(X)
+
+    if X_offset is None or X_scale is None:
+        X1 = sp_linalg.aslinearoperator(X)
+    else:
+        X1 = _get_rescaled_operator(X)
+
     coefs = np.empty((y.shape[1], n_features), dtype=X.dtype)
 
     if n_features > n_samples:
@@ -205,9 +227,17 @@ def _solve_svd(X, y, alpha):
     return np.dot(Vt.T, d_UT_y).T
 
 
+def _get_valid_accept_sparse(is_X_sparse, solver):
+    if is_X_sparse and solver in ['auto', 'sag', 'saga']:
+        return 'csr'
+    else:
+        return ['csr', 'csc', 'coo']
+
+
 def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                      max_iter=None, tol=1e-3, verbose=0, random_state=None,
-                     return_n_iter=False, return_intercept=False):
+                     return_n_iter=False, return_intercept=False,
+                     check_input=True):
     """Solve the ridge equation by the method of normal equations.
 
     Read more in the :ref:`User Guide <ridge_regression>`.
@@ -269,7 +299,8 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
 
         All last five solvers support both dense and sparse data. However, only
-        'sag' and 'saga' supports sparse input when`fit_intercept` is True.
+        'sag' and 'sparse_cg' supports sparse input when`fit_intercept` is
+        True.
 
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.
@@ -310,6 +341,11 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
         .. versionadded:: 0.17
 
+    check_input : boolean, default True
+        If False, the input arrays X and y will not be checked.
+
+        .. versionadded:: 0.21
+
     Returns
     -------
     coef : array, shape = [n_features] or [n_targets, n_features]
@@ -327,24 +363,52 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     -----
     This function won't compute the intercept.
     """
-    if return_intercept and sparse.issparse(X) and solver != 'sag':
-        if solver != 'auto':
-            warnings.warn("In Ridge, only 'sag' solver can currently fit the "
-                          "intercept when X is sparse. Solver has been "
-                          "automatically changed into 'sag'.")
-        solver = 'sag'
 
-    _dtype = [np.float64, np.float32]
+    return _ridge_regression(X, y, alpha,
+                             sample_weight=sample_weight,
+                             solver=solver,
+                             max_iter=max_iter,
+                             tol=tol,
+                             verbose=verbose,
+                             random_state=random_state,
+                             return_n_iter=return_n_iter,
+                             return_intercept=return_intercept,
+                             X_scale=None,
+                             X_offset=None,
+                             check_input=check_input)
 
-    # SAG needs X and y columns to be C-contiguous and np.float64
-    if solver in ['sag', 'saga']:
-        X = check_array(X, accept_sparse=['csr'],
-                        dtype=np.float64, order='C')
-        y = check_array(y, dtype=np.float64, ensure_2d=False, order='F')
-    else:
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                        dtype=_dtype)
-        y = check_array(y, dtype=X.dtype, ensure_2d=False)
+
+def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
+                      max_iter=None, tol=1e-3, verbose=0, random_state=None,
+                      return_n_iter=False, return_intercept=False,
+                      X_scale=None, X_offset=None, check_input=True):
+
+    has_sw = sample_weight is not None
+
+    if solver == 'auto':
+        if return_intercept:
+            # only sag supports fitting intercept directly
+            solver = "sag"
+        elif not sparse.issparse(X):
+            solver = "cholesky"
+        else:
+            solver = "sparse_cg"
+
+    if solver not in ('sparse_cg', 'cholesky', 'svd', 'lsqr', 'sag', 'saga'):
+        raise ValueError("Known solvers are 'sparse_cg', 'cholesky', 'svd'"
+                         " 'lsqr', 'sag' or 'saga'. Got %s." % solver)
+
+    if return_intercept and solver != 'sag':
+        raise ValueError("In Ridge, only 'sag' solver can directly fit the "
+                         "intercept. Please change solver to 'sag' or set "
+                         "return_intercept=False.")
+
+    if check_input:
+        _dtype = [np.float64, np.float32]
+        _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), solver)
+        X = check_array(X, accept_sparse=_accept_sparse, dtype=_dtype,
+                        order="C")
+        y = check_array(y, dtype=X.dtype, ensure_2d=False, order="C")
     check_consistent_length(X, y)
 
     n_samples, n_features = X.shape
@@ -362,15 +426,6 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     if n_samples != n_samples_:
         raise ValueError("Number of samples in X and y does not correspond:"
                          " %d != %d" % (n_samples, n_samples_))
-
-    has_sw = sample_weight is not None
-
-    if solver == 'auto':
-        # cholesky if it's a dense array and cg in any other case
-        if not sparse.issparse(X) or has_sw:
-            solver = 'cholesky'
-        else:
-            solver = 'sparse_cg'
 
     if has_sw:
         if np.atleast_1d(sample_weight).ndim > 1:
@@ -391,12 +446,14 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     if alpha.size == 1 and n_targets > 1:
         alpha = np.repeat(alpha, n_targets)
 
-    if solver not in ('sparse_cg', 'cholesky', 'svd', 'lsqr', 'sag', 'saga'):
-        raise ValueError('Solver %s not understood' % solver)
-
     n_iter = None
     if solver == 'sparse_cg':
-        coef = _solve_sparse_cg(X, y, alpha, max_iter, tol, verbose)
+        coef = _solve_sparse_cg(X, y, alpha,
+                                max_iter=max_iter,
+                                tol=tol,
+                                verbose=verbose,
+                                X_offset=X_offset,
+                                X_scale=X_scale)
 
     elif solver == 'lsqr':
         coef, n_iter = _solve_lsqr(X, y, alpha, max_iter, tol)
@@ -411,7 +468,6 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
             except linalg.LinAlgError:
                 # use SVD solver if matrix is singular
                 solver = 'svd'
-
         else:
             try:
                 coef = _solve_cholesky(X, y, alpha)
@@ -423,11 +479,12 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         # precompute max_squared_sum for all targets
         max_squared_sum = row_norms(X, squared=True).max()
 
-        coef = np.empty((y.shape[1], n_features))
+        coef = np.empty((y.shape[1], n_features), dtype=X.dtype)
         n_iter = np.empty(y.shape[1], dtype=np.int32)
-        intercept = np.zeros((y.shape[1], ))
+        intercept = np.zeros((y.shape[1], ), dtype=X.dtype)
         for i, (alpha_i, target) in enumerate(zip(alpha, y.T)):
-            init = {'coef': np.zeros((n_features + int(return_intercept), 1))}
+            init = {'coef': np.zeros((n_features + int(return_intercept), 1),
+                                     dtype=X.dtype)}
             coef_, n_iter_, _ = sag_solver(
                 X, target.ravel(), sample_weight, 'squared', alpha_i, 0,
                 max_iter, tol, verbose, random_state, False, max_squared_sum,
@@ -464,8 +521,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         return coef
 
 
-class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
-
+class _BaseRidge(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
     @abstractmethod
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, solver="auto",
@@ -481,37 +537,47 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
 
     def fit(self, X, y, sample_weight=None):
 
-        if self.solver in ('sag', 'saga'):
-            _dtype = np.float64
-        else:
-            # all other solvers work at both float precision levels
-            _dtype = [np.float64, np.float32]
-
-        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=_dtype,
+        # all other solvers work at both float precision levels
+        _dtype = [np.float64, np.float32]
+        _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X),
+                                                  self.solver)
+        X, y = check_X_y(X, y,
+                         accept_sparse=_accept_sparse,
+                         dtype=_dtype,
                          multi_output=True, y_numeric=True)
 
         if ((sample_weight is not None) and
                 np.atleast_1d(sample_weight).ndim > 1):
             raise ValueError("Sample weights must be 1D array or scalar")
 
+        # when X is sparse we only remove offset from y
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X,
-            sample_weight=sample_weight)
+            sample_weight=sample_weight, return_mean=True)
 
         # temporary fix for fitting the intercept with sparse data using 'sag'
-        if sparse.issparse(X) and self.fit_intercept:
-            self.coef_, self.n_iter_, self.intercept_ = ridge_regression(
+        if (sparse.issparse(X) and self.fit_intercept and
+           self.solver != 'sparse_cg'):
+            self.coef_, self.n_iter_, self.intercept_ = _ridge_regression(
                 X, y, alpha=self.alpha, sample_weight=sample_weight,
                 max_iter=self.max_iter, tol=self.tol, solver=self.solver,
                 random_state=self.random_state, return_n_iter=True,
-                return_intercept=True)
+                return_intercept=True, check_input=False)
+            # add the offset which was subtracted by _preprocess_data
             self.intercept_ += y_offset
         else:
-            self.coef_, self.n_iter_ = ridge_regression(
+            if sparse.issparse(X) and self.solver == 'sparse_cg':
+                # required to fit intercept with sparse_cg solver
+                params = {'X_offset': X_offset, 'X_scale': X_scale}
+            else:
+                # for dense matrices or when intercept is set to 0
+                params = {}
+
+            self.coef_, self.n_iter_ = _ridge_regression(
                 X, y, alpha=self.alpha, sample_weight=sample_weight,
                 max_iter=self.max_iter, tol=self.tol, solver=self.solver,
                 random_state=self.random_state, return_n_iter=True,
-                return_intercept=False)
+                return_intercept=False, check_input=False, **params)
             self._set_intercept(X_offset, y_offset, X_scale)
 
         return self
@@ -596,8 +662,8 @@ class Ridge(_BaseRidge, RegressorMixin):
           approximately the same scale. You can preprocess the data with a
           scaler from sklearn.preprocessing.
 
-        All last five solvers support both dense and sparse data. However,
-        only 'sag' and 'saga' supports sparse input when `fit_intercept` is
+        All last five solvers support both dense and sparse data. However, only
+        'sag' and 'sparse_cg' supports sparse input when `fit_intercept` is
         True.
 
         .. versionadded:: 0.17
@@ -642,9 +708,9 @@ class Ridge(_BaseRidge, RegressorMixin):
     >>> from sklearn.linear_model import Ridge
     >>> import numpy as np
     >>> n_samples, n_features = 10, 5
-    >>> np.random.seed(0)
-    >>> y = np.random.randn(n_samples)
-    >>> X = np.random.randn(n_samples, n_features)
+    >>> rng = np.random.RandomState(0)
+    >>> y = rng.randn(n_samples)
+    >>> X = rng.randn(n_samples, n_features)
     >>> clf = Ridge(alpha=1.0)
     >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
     Ridge(alpha=1.0, copy_X=True, fit_intercept=True, max_iter=None,
@@ -654,10 +720,11 @@ class Ridge(_BaseRidge, RegressorMixin):
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, solver="auto",
                  random_state=None):
-        super(Ridge, self).__init__(alpha=alpha, fit_intercept=fit_intercept,
-                                    normalize=normalize, copy_X=copy_X,
-                                    max_iter=max_iter, tol=tol, solver=solver,
-                                    random_state=random_state)
+        super().__init__(
+            alpha=alpha, fit_intercept=fit_intercept,
+            normalize=normalize, copy_X=copy_X,
+            max_iter=max_iter, tol=tol, solver=solver,
+            random_state=random_state)
 
     def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model
@@ -677,7 +744,7 @@ class Ridge(_BaseRidge, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        return super(Ridge, self).fit(X, y, sample_weight=sample_weight)
+        return super().fit(X, y, sample_weight=sample_weight)
 
 
 class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
@@ -768,8 +835,10 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
     Attributes
     ----------
-    coef_ : array, shape (n_features,) or (n_classes, n_features)
-        Weight vector(s).
+    coef_ : array, shape (1, n_features) or (n_classes, n_features)
+        Coefficient of the features in the decision function.
+
+        ``coef_`` is of shape (1, n_features) when the given problem is binary.
 
     intercept_ : float | array, shape = (n_targets,)
         Independent term in decision function. Set to 0.0 if
@@ -803,7 +872,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, class_weight=None,
                  solver="auto", random_state=None):
-        super(RidgeClassifier, self).__init__(
+        super().__init__(
             alpha=alpha, fit_intercept=fit_intercept, normalize=normalize,
             copy_X=copy_X, max_iter=max_iter, tol=tol, solver=solver,
             random_state=random_state)
@@ -830,8 +899,9 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         -------
         self : returns an instance of self.
         """
-        check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
-                  multi_output=True)
+        _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X),
+                                                  self.solver)
+        check_X_y(X, y, accept_sparse=_accept_sparse, multi_output=True)
 
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
@@ -850,12 +920,112 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
             sample_weight = (sample_weight *
                              compute_sample_weight(self.class_weight, y))
 
-        super(RidgeClassifier, self).fit(X, Y, sample_weight=sample_weight)
+        super().fit(X, Y, sample_weight=sample_weight)
         return self
 
     @property
     def classes_(self):
         return self._label_binarizer.classes_
+
+
+def _check_gcv_mode(X, gcv_mode):
+    possible_gcv_modes = [None, 'auto', 'svd', 'eigen']
+    if gcv_mode not in possible_gcv_modes:
+        raise ValueError(
+            "Unknown value for 'gcv_mode'. "
+            "Got {} instead of one of {}" .format(
+                gcv_mode, possible_gcv_modes))
+    if gcv_mode in ['eigen', 'svd']:
+        return gcv_mode
+    # if X has more rows than columns, use decomposition of X^T.X,
+    # otherwise X.X^T
+    if X.shape[0] > X.shape[1]:
+        return 'svd'
+    return 'eigen'
+
+
+def _find_smallest_angle(query, vectors):
+    """Find the column of vectors that is most aligned with the query.
+
+    Both query and the columns of vectors must have their l2 norm equal to 1.
+
+    Parameters
+    ----------
+    query : ndarray, shape (n_samples,)
+        Normalized query vector.
+
+    vectors : ndarray, shape (n_samples, n_features)
+        Vectors to which we compare query, as columns. Must be normalized.
+    """
+    abs_cosine = np.abs(query.dot(vectors))
+    index = np.argmax(abs_cosine)
+    return index
+
+
+class _X_operator(sparse.linalg.LinearOperator):
+    """Behaves as centered and scaled X with an added intercept column.
+
+    This operator behaves as
+    np.hstack([X - sqrt_sw[:, None] * X_mean, sqrt_sw[:, None]])
+    """
+
+    def __init__(self, X, X_mean, sqrt_sw):
+        n_samples, n_features = X.shape
+        super().__init__(X.dtype, (n_samples, n_features + 1))
+        self.X = X
+        self.X_mean = X_mean
+        self.sqrt_sw = sqrt_sw
+
+    def _matvec(self, v):
+        v = v.ravel()
+        return safe_sparse_dot(
+            self.X, v[:-1], dense_output=True
+        ) - self.sqrt_sw * self.X_mean.dot(v[:-1]) + v[-1] * self.sqrt_sw
+
+    def _matmat(self, v):
+        return (
+            safe_sparse_dot(self.X, v[:-1], dense_output=True) -
+            self.sqrt_sw[:, None] * self.X_mean.dot(v[:-1]) + v[-1] *
+            self.sqrt_sw[:, None])
+
+    def _transpose(self):
+        return _Xt_operator(self.X, self.X_mean, self.sqrt_sw)
+
+
+class _Xt_operator(sparse.linalg.LinearOperator):
+    """Behaves as transposed centered and scaled X with an intercept column.
+
+    This operator behaves as
+    np.hstack([X - sqrt_sw[:, None] * X_mean, sqrt_sw[:, None]]).T
+    """
+
+    def __init__(self, X, X_mean, sqrt_sw):
+        n_samples, n_features = X.shape
+        super().__init__(X.dtype, (n_features + 1, n_samples))
+        self.X = X
+        self.X_mean = X_mean
+        self.sqrt_sw = sqrt_sw
+
+    def _matvec(self, v):
+        v = v.ravel()
+        n_features = self.shape[0]
+        res = np.empty(n_features, dtype=self.X.dtype)
+        res[:-1] = (
+            safe_sparse_dot(self.X.T, v, dense_output=True) -
+            (self.X_mean * self.sqrt_sw.dot(v))
+        )
+        res[-1] = np.dot(v, self.sqrt_sw)
+        return res
+
+    def _matmat(self, v):
+        n_features = self.shape[0]
+        res = np.empty((n_features, v.shape[1]), dtype=self.X.dtype)
+        res[:-1] = (
+            safe_sparse_dot(self.X.T, v, dense_output=True) -
+            self.X_mean[:, None] * self.sqrt_sw.dot(v)
+        )
+        res[-1] = np.dot(self.sqrt_sw, v)
+        return res
 
 
 class _RidgeGCV(LinearModel):
@@ -909,18 +1079,6 @@ class _RidgeGCV(LinearModel):
         self.gcv_mode = gcv_mode
         self.store_cv_values = store_cv_values
 
-    def _pre_compute(self, X, y, centered_kernel=True):
-        # even if X is very sparse, K is usually very dense
-        K = safe_sparse_dot(X, X.T, dense_output=True)
-        # the following emulates an additional constant regressor
-        # corresponding to fit_intercept=True
-        # but this is done only when the features have been centered
-        if centered_kernel:
-            K += np.ones_like(K)
-        v, Q = linalg.eigh(K)
-        QT_y = np.dot(Q.T, y)
-        return v, Q, QT_y
-
     def _decomp_diag(self, v_prime, Q):
         # compute diagonal of the matrix: dot(Q, dot(diag(v_prime), Q^T))
         return (v_prime * Q ** 2).sum(axis=-1)
@@ -932,18 +1090,161 @@ class _RidgeGCV(LinearModel):
             D = D[(slice(None), ) + (np.newaxis, ) * (len(B.shape) - 1)]
         return D * B
 
-    def _errors_and_values_helper(self, alpha, y, v, Q, QT_y):
-        """Helper function to avoid code duplication between self._errors and
-        self._values.
+    def _compute_gram(self, X, sqrt_sw):
+        """Computes the Gram matrix with possible centering.
 
-        Notes
-        -----
-        We don't construct matrix G, instead compute action on y & diagonal.
+        If ``center`` is ``True``, compute
+        (X - X.mean(axis=0)).dot((X - X.mean(axis=0)).T)
+        else X.dot(X.T)
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            The input uncentered data.
+
+        sqrt_sw : ndarray, shape (n_samples,)
+            square roots of sample weights
+
+        center : bool, default is True
+            Whether or not to remove the mean from ``X``.
+
+        Returns
+        -------
+        gram : ndarray, shape (n_samples, n_samples)
+            The Gram matrix.
+        X_mean : ndarray, shape (n_feature,)
+            The mean of ``X`` for each feature.
+        """
+        center = self.fit_intercept and sparse.issparse(X)
+        if not center:
+            # in this case centering has been done in preprocessing
+            # or we are not fitting an intercept.
+            X_mean = np.zeros(X.shape[1], dtype=X.dtype)
+            return safe_sparse_dot(X, X.T, dense_output=True), X_mean
+        # otherwise X is always sparse
+        n_samples = X.shape[0]
+        sample_weight_matrix = sparse.dia_matrix(
+            (sqrt_sw, 0), shape=(n_samples, n_samples))
+        X_weighted = sample_weight_matrix.dot(X)
+        X_mean, _ = mean_variance_axis(X_weighted, axis=0)
+        X_mean *= n_samples / sqrt_sw.dot(sqrt_sw)
+        X_mX = sqrt_sw[:, None] * safe_sparse_dot(
+            X_mean, X.T, dense_output=True)
+        X_mX_m = np.outer(sqrt_sw, sqrt_sw) * np.dot(X_mean, X_mean)
+        return (safe_sparse_dot(X, X.T, dense_output=True) + X_mX_m
+                - X_mX - X_mX.T, X_mean)
+
+    def _compute_covariance(self, X, sqrt_sw):
+        """Computes centered covariance matrix.
+
+        If ``center`` is ``True``, compute
+        (X - X.mean(axis=0)).T.dot(X - X.mean(axis=0))
+        else
+        X.T.dot(X)
+
+        Parameters
+        ----------
+        X : sparse matrix, shape (n_samples, n_features)
+            The input uncentered data.
+
+        sqrt_sw : ndarray, shape (n_samples,)
+            square roots of sample weights
+
+        center : bool, default is True
+            Whether or not to remove the mean from ``X``.
+
+        Returns
+        -------
+        covariance : ndarray, shape (n_features, n_features)
+            The covariance matrix.
+        X_mean : ndarray, shape (n_feature,)
+            The mean of ``X`` for each feature.
+        """
+        if not self.fit_intercept:
+            # in this case centering has been done in preprocessing
+            # or we are not fitting an intercept.
+            X_mean = np.zeros(X.shape[1], dtype=X.dtype)
+            return safe_sparse_dot(X.T, X, dense_output=True), X_mean
+        # this function only gets called for sparse X
+        n_samples = X.shape[0]
+        sample_weight_matrix = sparse.dia_matrix(
+            (sqrt_sw, 0), shape=(n_samples, n_samples))
+        X_weighted = sample_weight_matrix.dot(X)
+        X_mean, _ = mean_variance_axis(X_weighted, axis=0)
+        X_mean = X_mean * n_samples / sqrt_sw.dot(sqrt_sw)
+        weight_sum = sqrt_sw.dot(sqrt_sw)
+        return (safe_sparse_dot(X.T, X, dense_output=True) -
+                weight_sum * np.outer(X_mean, X_mean),
+                X_mean)
+
+    def _sparse_multidot_diag(self, X, A, X_mean, sqrt_sw):
+        """Compute the diagonal of (X - X_mean).dot(A).dot((X - X_mean).T)
+        without explicitely centering X nor computing X.dot(A)
+        when X is sparse.
+
+        Parameters
+        ----------
+        X : sparse matrix, shape = (n_samples, n_features)
+
+        A : np.ndarray, shape = (n_features, n_features)
+
+        X_mean : np.ndarray, shape = (n_features,)
+
+        sqrt_sw : np.ndarray, shape = (n_features,)
+            square roots of sample weights
+
+        Returns
+        -------
+        diag : np.ndarray, shape = (n_samples,)
+            The computed diagonal.
+        """
+        intercept_col = sqrt_sw
+        scale = sqrt_sw
+        batch_size = X.shape[1]
+        diag = np.empty(X.shape[0], dtype=X.dtype)
+        for start in range(0, X.shape[0], batch_size):
+            batch = slice(start, min(X.shape[0], start + batch_size), 1)
+            X_batch = np.empty(
+                (X[batch].shape[0], X.shape[1] + self.fit_intercept),
+                dtype=X.dtype
+            )
+            if self.fit_intercept:
+                X_batch[:, :-1] = X[batch].A - X_mean * scale[batch][:, None]
+                X_batch[:, -1] = intercept_col[batch]
+            else:
+                X_batch = X[batch].A
+            diag[batch] = (X_batch.dot(A) * X_batch).sum(axis=1)
+        return diag
+
+    def _eigen_decompose_gram(self, X, y, sqrt_sw):
+        """Eigendecomposition of X.X^T, used when n_samples <= n_features"""
+        # if X is dense it has already been centered in preprocessing
+        K, X_mean = self._compute_gram(X, sqrt_sw)
+        if self.fit_intercept:
+            # to emulate centering X with sample weights,
+            # ie removing the weighted average, we add a column
+            # containing the square roots of the sample weights.
+            # by centering, it is orthogonal to the other columns
+            K += np.outer(sqrt_sw, sqrt_sw)
+        v, Q = linalg.eigh(K)
+        QT_y = np.dot(Q.T, y)
+        return X_mean, v, Q, QT_y
+
+    def _solve_eigen_gram(self, alpha, y, sqrt_sw, X_mean, v, Q, QT_y):
+        """Compute dual coefficients and diagonal of (Identity - Hat_matrix)
+
+        Used when we have a decomposition of X.X^T (n_features >= n_samples).
         """
         w = 1. / (v + alpha)
-        constant_column = np.var(Q, 0) < 1.e-12
-        # detect constant columns
-        w[constant_column] = 0  # cancel the regularization for the intercept
+        if self.fit_intercept:
+            # the vector containing the square roots of the sample weights (1
+            # when no sample weights) is the eigenvector of XX^T which
+            # corresponds to the intercept; we cancel the regularization on
+            # this dimension. the corresponding eigenvalue is
+            # sum(sample_weight).
+            normalized_sw = sqrt_sw / np.linalg.norm(sqrt_sw)
+            intercept_dim = _find_smallest_angle(normalized_sw, Q)
+            w[intercept_dim] = 0  # cancel regularization for the intercept
 
         c = np.dot(Q, self._diag_dot(w, QT_y))
         G_diag = self._decomp_diag(w, Q)
@@ -952,35 +1253,117 @@ class _RidgeGCV(LinearModel):
             G_diag = G_diag[:, np.newaxis]
         return G_diag, c
 
-    def _errors(self, alpha, y, v, Q, QT_y):
-        G_diag, c = self._errors_and_values_helper(alpha, y, v, Q, QT_y)
-        return (c / G_diag) ** 2, c
+    def _eigen_decompose_covariance(self, X, y, sqrt_sw):
+        """Eigendecomposition of X^T.X, used when n_samples > n_features."""
+        n_samples, n_features = X.shape
+        cov = np.empty((n_features + 1, n_features + 1), dtype=X.dtype)
+        cov[:-1, :-1], X_mean = self._compute_covariance(X, sqrt_sw)
+        if not self.fit_intercept:
+            cov = cov[:-1, :-1]
+        # to emulate centering X with sample weights,
+        # ie removing the weighted average, we add a column
+        # containing the square roots of the sample weights.
+        # by centering, it is orthogonal to the other columns
+        # when all samples have the same weight we add a column of 1
+        else:
+            cov[-1] = 0
+            cov[:, -1] = 0
+            cov[-1, -1] = sqrt_sw.dot(sqrt_sw)
+        nullspace_dim = max(0, X.shape[1] - X.shape[0])
+        s, V = linalg.eigh(cov)
+        # remove eigenvalues and vectors in the null space of X^T.X
+        s = s[nullspace_dim:]
+        V = V[:, nullspace_dim:]
+        return X_mean, s, V, X
 
-    def _values(self, alpha, y, v, Q, QT_y):
-        G_diag, c = self._errors_and_values_helper(alpha, y, v, Q, QT_y)
-        return y - (c / G_diag), c
+    def _solve_eigen_covariance_no_intercept(
+            self, alpha, y, sqrt_sw, X_mean, s, V, X):
+        """Compute dual coefficients and diagonal of (Identity - Hat_matrix)
 
-    def _pre_compute_svd(self, X, y, centered_kernel=True):
-        if sparse.issparse(X):
-            raise TypeError("SVD not supported for sparse matrices")
-        if centered_kernel:
-            X = np.hstack((X, np.ones((X.shape[0], 1))))
-        # to emulate fit_intercept=True situation, add a column on ones
-        # Note that by centering, the other columns are orthogonal to that one
+        Used when we have a decomposition of X^T.X
+        (n_features < n_samples and X is sparse), and not fitting an intercept.
+        """
+        w = 1 / (s + alpha)
+        A = (V * w).dot(V.T)
+        AXy = A.dot(safe_sparse_dot(X.T, y, dense_output=True))
+        y_hat = safe_sparse_dot(X, AXy, dense_output=True)
+        hat_diag = self._sparse_multidot_diag(X, A, X_mean, sqrt_sw)
+        if len(y.shape) != 1:
+            # handle case where y is 2-d
+            hat_diag = hat_diag[:, np.newaxis]
+        return (1 - hat_diag) / alpha, (y - y_hat) / alpha
+
+    def _solve_eigen_covariance_intercept(
+            self, alpha, y, sqrt_sw, X_mean, s, V, X):
+        """Compute dual coefficients and diagonal of (Identity - Hat_matrix)
+
+        Used when we have a decomposition of X^T.X
+        (n_features < n_samples and X is sparse),
+        and we are fitting an intercept.
+        """
+        # the vector [0, 0, ..., 0, 1]
+        # is the eigenvector of X^TX which
+        # corresponds to the intercept; we cancel the regularization on
+        # this dimension. the corresponding eigenvalue is
+        # sum(sample_weight), e.g. n when uniform sample weights.
+        intercept_sv = np.zeros(V.shape[0])
+        intercept_sv[-1] = 1
+        intercept_dim = _find_smallest_angle(intercept_sv, V)
+        w = 1 / (s + alpha)
+        w[intercept_dim] = 1 / s[intercept_dim]
+        A = (V * w).dot(V.T)
+        # add a column to X containing the square roots of sample weights
+        X_op = _X_operator(X, X_mean, sqrt_sw)
+        AXy = A.dot(X_op.T.dot(y))
+        y_hat = X_op.dot(AXy)
+        hat_diag = self._sparse_multidot_diag(X, A, X_mean, sqrt_sw)
+        # return (1 - hat_diag), (y - y_hat)
+        if len(y.shape) != 1:
+            # handle case where y is 2-d
+            hat_diag = hat_diag[:, np.newaxis]
+        return (1 - hat_diag) / alpha, (y - y_hat) / alpha
+
+    def _solve_eigen_covariance(
+            self, alpha, y, sqrt_sw, X_mean, s, V, X):
+        """Compute dual coefficients and diagonal of (Identity - Hat_matrix)
+
+        Used when we have a decomposition of X^T.X
+        (n_features < n_samples and X is sparse).
+        """
+        if self.fit_intercept:
+            return self._solve_eigen_covariance_intercept(
+                alpha, y, sqrt_sw, X_mean, s, V, X)
+        return self._solve_eigen_covariance_no_intercept(
+            alpha, y, sqrt_sw, X_mean, s, V, X)
+
+    def _svd_decompose_design_matrix(self, X, y, sqrt_sw):
+        # X already centered
+        X_mean = np.zeros(X.shape[1], dtype=X.dtype)
+        if self.fit_intercept:
+            # to emulate fit_intercept=True situation, add a column
+            # containing the square roots of the sample weights
+            # by centering, the other columns are orthogonal to that one
+            intercept_column = sqrt_sw[:, None]
+            X = np.hstack((X, intercept_column))
         U, s, _ = linalg.svd(X, full_matrices=0)
         v = s ** 2
         UT_y = np.dot(U.T, y)
-        return v, U, UT_y
+        return X_mean, v, U, UT_y
 
-    def _errors_and_values_svd_helper(self, alpha, y, v, U, UT_y):
-        """Helper function to avoid code duplication between self._errors_svd
-        and self._values_svd.
+    def _solve_svd_design_matrix(
+            self, alpha, y, sqrt_sw, X_mean, v, U, UT_y):
+        """Compute dual coefficients and diagonal of (Identity - Hat_matrix)
+
+        Used when we have an SVD decomposition of X
+        (n_features >= n_samples and X is dense).
         """
-        constant_column = np.var(U, 0) < 1.e-12
-        # detect columns colinear to ones
         w = ((v + alpha) ** -1) - (alpha ** -1)
-        w[constant_column] = - (alpha ** -1)
-        # cancel the regularization for the intercept
+        if self.fit_intercept:
+            # detect intercept column
+            normalized_sw = sqrt_sw / np.linalg.norm(sqrt_sw)
+            intercept_dim = _find_smallest_angle(normalized_sw, U)
+            # cancel the regularization for the intercept
+            w[intercept_dim] = - (alpha ** -1)
         c = np.dot(U, self._diag_dot(w, UT_y)) + (alpha ** -1) * y
         G_diag = self._decomp_diag(w, U) + (alpha ** -1)
         if len(y.shape) != 1:
@@ -988,24 +1371,16 @@ class _RidgeGCV(LinearModel):
             G_diag = G_diag[:, np.newaxis]
         return G_diag, c
 
-    def _errors_svd(self, alpha, y, v, U, UT_y):
-        G_diag, c = self._errors_and_values_svd_helper(alpha, y, v, U, UT_y)
-        return (c / G_diag) ** 2, c
-
-    def _values_svd(self, alpha, y, v, U, UT_y):
-        G_diag, c = self._errors_and_values_svd_helper(alpha, y, v, U, UT_y)
-        return y - (c / G_diag), c
-
     def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model
 
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Training data
+            Training data. Will be cast to float64 if necessary
 
         y : array-like, shape = [n_samples] or [n_samples, n_targets]
-            Target values. Will be cast to X's dtype if necessary
+            Target values. Will be cast to float64 if necessary
 
         sample_weight : float or array-like of shape [n_samples]
             Sample weight
@@ -1014,66 +1389,60 @@ class _RidgeGCV(LinearModel):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float64,
+        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'],
+                         dtype=[np.float64],
                          multi_output=True, y_numeric=True)
+
+        if np.any(self.alphas <= 0):
+            raise ValueError(
+                "alphas must be positive. Got {} containing some "
+                "negative or null value instead.".format(self.alphas))
+
         if sample_weight is not None and not isinstance(sample_weight, float):
-            sample_weight = check_array(sample_weight, ensure_2d=False)
+            sample_weight = check_array(sample_weight, ensure_2d=False,
+                                        dtype=X.dtype)
         n_samples, n_features = X.shape
 
         X, y, X_offset, y_offset, X_scale = LinearModel._preprocess_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X,
             sample_weight=sample_weight)
 
-        gcv_mode = self.gcv_mode
-        with_sw = len(np.shape(sample_weight))
-
-        if gcv_mode is None or gcv_mode == 'auto':
-            if sparse.issparse(X) or n_features > n_samples or with_sw:
-                gcv_mode = 'eigen'
-            else:
-                gcv_mode = 'svd'
-        elif gcv_mode == "svd" and with_sw:
-            # FIXME non-uniform sample weights not yet supported
-            warnings.warn("non-uniform sample weights unsupported for svd, "
-                          "forcing usage of eigen")
-            gcv_mode = 'eigen'
+        gcv_mode = _check_gcv_mode(X, self.gcv_mode)
 
         if gcv_mode == 'eigen':
-            _pre_compute = self._pre_compute
-            _errors = self._errors
-            _values = self._values
+            decompose = self._eigen_decompose_gram
+            solve = self._solve_eigen_gram
         elif gcv_mode == 'svd':
-            # assert n_samples >= n_features
-            _pre_compute = self._pre_compute_svd
-            _errors = self._errors_svd
-            _values = self._values_svd
-        else:
-            raise ValueError('bad gcv_mode "%s"' % gcv_mode)
+            if sparse.issparse(X):
+                decompose = self._eigen_decompose_covariance
+                solve = self._solve_eigen_covariance
+            else:
+                decompose = self._svd_decompose_design_matrix
+                solve = self._solve_svd_design_matrix
 
         if sample_weight is not None:
             X, y = _rescale_data(X, y, sample_weight)
-
-        centered_kernel = not sparse.issparse(X) and self.fit_intercept
-
-        v, Q, QT_y = _pre_compute(X, y, centered_kernel)
-        n_y = 1 if len(y.shape) == 1 else y.shape[1]
-        cv_values = np.zeros((n_samples * n_y, len(self.alphas)))
-        C = []
+            sqrt_sw = np.sqrt(sample_weight)
+        else:
+            sqrt_sw = np.ones(X.shape[0], dtype=X.dtype)
 
         scorer = check_scoring(self, scoring=self.scoring, allow_none=True)
         error = scorer is None
 
-        if np.any(self.alphas < 0):
-            raise ValueError("alphas cannot be negative. "
-                             "Got {} containing some "
-                             "negative value instead.".format(self.alphas))
-
+        n_y = 1 if len(y.shape) == 1 else y.shape[1]
+        cv_values = np.zeros((n_samples * n_y, len(self.alphas)),
+                             dtype=X.dtype)
+        C = []
+        X_mean, *decomposition = decompose(X, y, sqrt_sw)
         for i, alpha in enumerate(self.alphas):
+            G_diag, c = solve(
+                float(alpha), y, sqrt_sw, X_mean, *decomposition)
             if error:
-                out, c = _errors(float(alpha), y, v, Q, QT_y)
+                squared_errors = (c / G_diag) ** 2
+                cv_values[:, i] = squared_errors.ravel()
             else:
-                out, c = _values(float(alpha), y, v, Q, QT_y)
-            cv_values[:, i] = out.ravel()
+                predictions = y - (c / G_diag)
+                cv_values[:, i] = predictions.ravel()
             C.append(c)
 
         if error:
@@ -1095,6 +1464,7 @@ class _RidgeGCV(LinearModel):
         self.dual_coef_ = C[best]
         self.coef_ = safe_sparse_dot(self.dual_coef_.T, X)
 
+        X_offset += X_mean * X_scale
         self._set_intercept(X_offset, y_offset, X_scale)
 
         if self.store_cv_values:
@@ -1107,7 +1477,7 @@ class _RidgeGCV(LinearModel):
         return self
 
 
-class _BaseRidgeCV(LinearModel):
+class _BaseRidgeCV(LinearModel, MultiOutputMixin):
     def __init__(self, alphas=(0.1, 1.0, 10.0),
                  fit_intercept=True, normalize=False, scoring=None,
                  cv=None, gcv_mode=None,
@@ -1126,7 +1496,8 @@ class _BaseRidgeCV(LinearModel):
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-            Training data
+            Training data. If using GCV, will be cast to float64
+            if necessary.
 
         y : array-like, shape = [n_samples] or [n_samples, n_targets]
             Target values. Will be cast to X's dtype if necessary
@@ -1137,8 +1508,17 @@ class _BaseRidgeCV(LinearModel):
         Returns
         -------
         self : object
+
+        Notes
+        -----
+        When sample_weight is provided, the selected hyperparameter may depend
+        on whether we use generalized cross-validation (cv=None or cv='auto')
+        or another form of cross-validation, because only generalized
+        cross-validation takes the sample weights into account when computing
+        the validation score.
         """
-        if self.cv is None:
+        cv = self.cv
+        if cv is None:
             estimator = _RidgeGCV(self.alphas,
                                   fit_intercept=self.fit_intercept,
                                   normalize=self.normalize,
@@ -1154,9 +1534,11 @@ class _BaseRidgeCV(LinearModel):
                 raise ValueError("cv!=None and store_cv_values=True "
                                  " are incompatible")
             parameters = {'alpha': self.alphas}
+            solver = 'sparse_cg' if sparse.issparse(X) else 'auto'
             gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept,
-                                    normalize=self.normalize),
-                              parameters, cv=self.cv, scoring=self.scoring)
+                                    normalize=self.normalize,
+                                    solver=solver),
+                              parameters, cv=cv, scoring=self.scoring)
             gs.fit(X, y, sample_weight=sample_weight)
             estimator = gs.best_estimator_
             self.alpha_ = gs.best_estimator_.alpha
@@ -1186,6 +1568,7 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
         the estimates. Larger values specify stronger regularization.
         Alpha corresponds to ``C^-1`` in other linear models such as
         LogisticRegression or LinearSVC.
+        If using generalized cross-validation, alphas must be positive.
 
     fit_intercept : boolean
         Whether to calculate the intercept for this model. If set
@@ -1204,12 +1587,15 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
+        If None, the negative mean squared error if cv is 'auto' or None
+        (i.e. when using generalized cross-validation), and r2 score otherwise.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
         - None, to use the efficient Leave-One-Out cross-validation
+          (also known as Generalized Cross-Validation).
         - integer, to specify the number of folds.
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -1225,15 +1611,13 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
         Flag indicating which strategy to use when performing
         Generalized Cross-Validation. Options are::
 
-            'auto' : use svd if n_samples > n_features or when X is a sparse
-                     matrix, otherwise use eigen
-            'svd' : force computation via singular value decomposition of X
-                    (does not work for sparse matrices)
-            'eigen' : force computation via eigendecomposition of X^T X
+            'auto' : use 'svd' if n_samples > n_features, otherwise use 'eigen'
+            'svd' : force use of singular value decomposition of X when X is
+                dense, eigenvalue decomposition of X^T.X when X is sparse.
+            'eigen' : force computation via eigendecomposition of X.X^T
 
         The 'auto' mode is the default and is intended to pick the cheaper
-        option of the two depending upon the shape and format of the training
-        data.
+        option of the two depending on the shape of the training data.
 
     store_cv_values : boolean, default=False
         Flag indicating if the cross-validation values corresponding to
@@ -1351,8 +1735,10 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         contain the mean squared errors (by default) or the values of the
         ``{loss,score}_func`` function (if provided in the constructor).
 
-    coef_ : array, shape = [n_features] or [n_targets, n_features]
-        Weight vector(s).
+    coef_ : array, shape (1, n_features) or (n_targets, n_features)
+        Coefficient of the features in the decision function.
+
+        ``coef_`` is of shape (1, n_features) when the given problem is binary.
 
     intercept_ : float | array, shape = (n_targets,)
         Independent term in decision function. Set to 0.0 if
@@ -1386,7 +1772,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     def __init__(self, alphas=(0.1, 1.0, 10.0), fit_intercept=True,
                  normalize=False, scoring=None, cv=None, class_weight=None,
                  store_cv_values=False):
-        super(RidgeClassifierCV, self).__init__(
+        super().__init__(
             alphas=alphas, fit_intercept=fit_intercept, normalize=normalize,
             scoring=scoring, cv=cv, store_cv_values=store_cv_values)
         self.class_weight = class_weight
@@ -1398,7 +1784,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         ----------
         X : array-like, shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+            and n_features is the number of features. When using GCV,
+            will be cast to float64 if necessary.
 
         y : array-like, shape (n_samples,)
             Target values. Will be cast to X's dtype if necessary

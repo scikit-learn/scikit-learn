@@ -4,7 +4,6 @@
 #         Wei LI <kuantkid@gmail.com>
 # License: BSD 3 clause
 
-from __future__ import division
 
 import warnings
 
@@ -16,7 +15,6 @@ from scipy.sparse.csgraph import connected_components
 from scipy.sparse.csgraph import laplacian as csgraph_laplacian
 
 from ..base import BaseEstimator
-from ..externals import six
 from ..utils import check_random_state, check_array, check_symmetric
 from ..utils.extmath import _deterministic_vector_sign_flip
 from ..metrics.pairwise import rbf_kernel
@@ -350,7 +348,7 @@ class SpectralEmbedding(BaseEstimator):
     Read more in the :ref:`User Guide <spectral_embedding>`.
 
     Parameters
-    -----------
+    ----------
     n_components : integer, default: 2
         The dimension of the projected subspace.
 
@@ -510,9 +508,9 @@ class SpectralEmbedding(BaseEstimator):
         X = check_array(X, ensure_min_samples=2, estimator=self)
 
         random_state = check_random_state(self.random_state)
-        if isinstance(self.affinity, six.string_types):
-            if self.affinity not in set(("nearest_neighbors", "rbf",
-                                         "precomputed")):
+        if isinstance(self.affinity, str):
+            if self.affinity not in {"nearest_neighbors", "rbf",
+                                     "precomputed"}:
                 raise ValueError(("%s is not a valid affinity. Expected "
                                   "'precomputed', 'rbf', 'nearest_neighbors' "
                                   "or a callable.") % self.affinity)

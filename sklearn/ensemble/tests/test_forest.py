@@ -9,6 +9,7 @@ Testing for the forest module (sklearn.ensemble.forest).
 # License: BSD 3 clause
 
 import pickle
+import math
 from collections import defaultdict
 from distutils.version import LooseVersion
 import itertools
@@ -40,8 +41,11 @@ from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import skip_if_no_parallel
 
+from sklearn.exceptions import NotFittedError
+
 from sklearn import datasets
 from sklearn.decomposition import TruncatedSVD
+from sklearn.datasets import make_classification
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.ensemble import RandomForestClassifier
@@ -368,14 +372,12 @@ def test_importances_asymptotic():
     assert_less(np.abs(true_importances - importances).mean(), 0.01)
 
 
-def check_unfitted_feature_importances(name):
-    assert_raises(ValueError, getattr, FOREST_ESTIMATORS[name](random_state=0),
-                  "feature_importances_")
-
-
 @pytest.mark.parametrize('name', FOREST_ESTIMATORS)
 def test_unfitted_feature_importances(name):
-    check_unfitted_feature_importances(name)
+    err_msg = ("This {} instance is not fitted yet. Call 'fit' with "
+               "appropriate arguments before using this method.".format(name))
+    with pytest.raises(NotFittedError, match=err_msg):
+        getattr(FOREST_ESTIMATORS[name](), 'feature_importances_')
 
 
 def check_oob_score(name, X, y, n_estimators=20):
@@ -457,7 +459,7 @@ def check_gridsearch(name):
 
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
 def test_gridsearch(name):
     # Check that base trees can be grid-searched.
@@ -532,20 +534,51 @@ def check_multioutput(name):
     if name in FOREST_CLASSIFIERS:
         with np.errstate(divide="ignore"):
             proba = est.predict_proba(X_test)
-            assert_equal(len(proba), 2)
-            assert_equal(proba[0].shape, (4, 2))
-            assert_equal(proba[1].shape, (4, 4))
+            assert len(proba) == 2
+            assert proba[0].shape == (4, 2)
+            assert proba[1].shape == (4, 4)
 
             log_proba = est.predict_log_proba(X_test)
-            assert_equal(len(log_proba), 2)
-            assert_equal(log_proba[0].shape, (4, 2))
-            assert_equal(log_proba[1].shape, (4, 4))
+            assert len(log_proba) == 2
+            assert log_proba[0].shape == (4, 2)
+            assert log_proba[1].shape == (4, 4)
 
 
 @pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS_REGRESSORS)
 def test_multioutput(name):
     check_multioutput(name)
+
+
+@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
+@pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
+def test_multioutput_string(name):
+    # Check estimators on multi-output problems with string outputs.
+
+    X_train = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [-2, 1],
+               [-1, 1], [-1, 2], [2, -1], [1, -1], [1, -2]]
+    y_train = [["red", "blue"], ["red", "blue"], ["red", "blue"],
+               ["green", "green"], ["green", "green"], ["green", "green"],
+               ["red", "purple"], ["red", "purple"], ["red", "purple"],
+               ["green", "yellow"], ["green", "yellow"], ["green", "yellow"]]
+    X_test = [[-1, -1], [1, 1], [-1, 1], [1, -1]]
+    y_test = [["red", "blue"], ["green", "green"],
+              ["red", "purple"], ["green", "yellow"]]
+
+    est = FOREST_ESTIMATORS[name](random_state=0, bootstrap=False)
+    y_pred = est.fit(X_train, y_train).predict(X_test)
+    assert_array_equal(y_pred, y_test)
+
+    with np.errstate(divide="ignore"):
+        proba = est.predict_proba(X_test)
+        assert len(proba) == 2
+        assert proba[0].shape == (4, 2)
+        assert proba[1].shape == (4, 4)
+
+        log_proba = est.predict_log_proba(X_test)
+        assert len(log_proba) == 2
+        assert log_proba[0].shape == (4, 2)
+        assert log_proba[1].shape == (4, 4)
 
 
 def check_classes_shape(name):
@@ -1280,11 +1313,11 @@ def test_nestimators_future_warning(forest):
 class MyBackend(DEFAULT_JOBLIB_BACKEND):
     def __init__(self, *args, **kwargs):
         self.count = 0
-        super(MyBackend, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def start_call(self):
         self.count += 1
-        return super(MyBackend, self).start_call()
+        return super().start_call()
 
 
 register_parallel_backend('testing', MyBackend)
@@ -1306,3 +1339,42 @@ def test_backend_respected():
         clf.predict_proba(X)
 
     assert ba.count == 0
+
+
+@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
+@pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
+@pytest.mark.parametrize('oob_score', (True, False))
+def test_multi_target(name, oob_score):
+    ForestClassifier = FOREST_CLASSIFIERS[name]
+
+    clf = ForestClassifier(bootstrap=True, oob_score=oob_score)
+
+    X = iris.data
+
+    # Make multi column mixed type target.
+    y = np.vstack([
+        iris.target.astype(float),
+        iris.target.astype(int),
+        iris.target.astype(str),
+    ]).T
+
+    # Try to fit and predict.
+    clf.fit(X, y)
+    clf.predict(X)
+
+
+def test_forest_feature_importances_sum():
+    X, y = make_classification(n_samples=15, n_informative=3, random_state=1,
+                               n_classes=3)
+    clf = RandomForestClassifier(min_samples_leaf=5, random_state=42,
+                                 n_estimators=200).fit(X, y)
+    assert math.isclose(1, clf.feature_importances_.sum(), abs_tol=1e-7)
+
+
+def test_forest_degenerate_feature_importances():
+    # build a forest of single node trees. See #13636
+    X = np.zeros((10, 10))
+    y = np.ones((10,))
+    gbr = RandomForestRegressor(n_estimators=10).fit(X, y)
+    assert_array_equal(gbr.feature_importances_,
+                       np.zeros(10, dtype=np.float64))

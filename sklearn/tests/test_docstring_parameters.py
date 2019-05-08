@@ -3,7 +3,6 @@
 # License: BSD 3 clause
 
 import inspect
-import sys
 import warnings
 import importlib
 
@@ -52,13 +51,11 @@ _METHODS_IGNORE_NONE_Y = [
 def test_docstring_parameters():
     # Test module docstring formatting
 
-    # Skip test if numpydoc is not found or if python version is < 3.5
+    # Skip test if numpydoc is not found
     try:
         import numpydoc  # noqa
-        assert sys.version_info >= (3, 5)
-    except (ImportError, AssertionError):
-        raise SkipTest("numpydoc is required to test the docstrings, "
-                       "as well as python version >= 3.5")
+    except ImportError:
+        raise SkipTest("numpydoc is required to test the docstrings")
 
     from numpydoc import docscrape
 

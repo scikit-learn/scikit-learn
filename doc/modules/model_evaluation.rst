@@ -59,7 +59,7 @@ Scoring                           Function                                      
 ==============================    =============================================     ==================================
 **Classification**
 'accuracy'                        :func:`metrics.accuracy_score`
-'balanced_accuracy'               :func:`metrics.balanced_accuracy_score`           for binary targets
+'balanced_accuracy'               :func:`metrics.balanced_accuracy_score`
 'average_precision'               :func:`metrics.average_precision_score`
 'brier_score_loss'                :func:`metrics.brier_score_loss`
 'f1'                              :func:`metrics.f1_score`                          for binary targets
@@ -70,6 +70,7 @@ Scoring                           Function                                      
 'neg_log_loss'                    :func:`metrics.log_loss`                          requires ``predict_proba`` support
 'precision' etc.                  :func:`metrics.precision_score`                   suffixes apply as with 'f1'
 'recall' etc.                     :func:`metrics.recall_score`                      suffixes apply as with 'f1'
+'jaccard' etc.                    :func:`metrics.jaccard_score`                     suffixes apply as with 'f1'
 'roc_auc'                         :func:`metrics.roc_auc_score`
 
 **Clustering**
@@ -99,10 +100,10 @@ Usage examples:
     >>> from sklearn.model_selection import cross_val_score
     >>> iris = datasets.load_iris()
     >>> X, y = iris.data, iris.target
-    >>> clf = svm.SVC(gamma='scale', random_state=0)
+    >>> clf = svm.SVC(random_state=0)
     >>> cross_val_score(clf, X, y, scoring='recall_macro',
     ...                 cv=5)  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    array([0.96..., 1.  ..., 0.96..., 0.96..., 1.        ])
+    array([0.96..., 0.96..., 0.96..., 0.93..., 1.        ])
     >>> model = svm.SVC()
     >>> cross_val_score(model, X, y, cv=5, scoring='wrong_choice')
     Traceback (most recent call last):
@@ -215,6 +216,25 @@ the following two rules:
   Again, by convention higher numbers are better, so if your scorer
   returns loss, that value should be negated.
 
+.. note:: **Using custom scorers in functions where n_jobs > 1**
+
+    While defining the custom scoring function alongside the calling function 
+    should work out of the box with the default joblib backend (loky), 
+    importing it from another module will be a more robust approach and work
+    independently of the joblib backend. 
+
+    For example, to use, ``n_jobs`` greater than 1 in the example below, 
+    ``custom_scoring_function`` function is saved in a user-created module 
+    (``custom_scorer_module.py``) and imported::
+
+        >>> from custom_scorer_module import custom_scoring_function # doctest: +SKIP
+        >>> cross_val_score(model,
+        ...  X_train,
+        ...  y_train,
+        ...  scoring=make_scorer(custom_scoring_function, greater_is_better=False),
+        ...  cv=5,
+        ...  n_jobs=-1) # doctest: +SKIP
+
 .. _multimetric_scoring:
 
 Using multiple metric evaluation
@@ -307,7 +327,7 @@ Some also work in the multilabel case:
    f1_score
    fbeta_score
    hamming_loss
-   jaccard_similarity_score
+   jaccard_score
    log_loss
    multilabel_confusion_matrix
    precision_recall_fscore_support
@@ -327,6 +347,8 @@ And some work with binary and multilabel (but not multiclass) problems:
 In the following sub-sections, we will describe each of those functions,
 preceded by some notes on common API and metric definition.
 
+.. _average:
+
 From binary to multiclass and multilabel
 ----------------------------------------
 
@@ -335,8 +357,6 @@ Some metrics are essentially defined for binary classification tasks (e.g.
 only the positive label is evaluated, assuming by default that the positive
 class is labelled ``1`` (though this may be configurable through the
 ``pos_label`` parameter).
-
-.. _average:
 
 In extending a binary metric to multiclass or multilabel problems, the data
 is treated as a collection of binary problems, one for each class.
@@ -661,43 +681,6 @@ In the multilabel case with binary label indicators: ::
     or superset of the true labels will give a Hamming loss between
     zero and one, exclusive.
 
-.. _jaccard_similarity_score:
-
-Jaccard similarity coefficient score
--------------------------------------
-
-The :func:`jaccard_similarity_score` function computes the average (default)
-or sum of `Jaccard similarity coefficients
-<https://en.wikipedia.org/wiki/Jaccard_index>`_, also called the Jaccard index,
-between pairs of label sets.
-
-The Jaccard similarity coefficient of the :math:`i`-th samples,
-with a ground truth label set :math:`y_i` and predicted label set
-:math:`\hat{y}_i`, is defined as
-
-.. math::
-
-    J(y_i, \hat{y}_i) = \frac{|y_i \cap \hat{y}_i|}{|y_i \cup \hat{y}_i|}.
-
-In binary and multiclass classification, the Jaccard similarity coefficient
-score is equal to the classification accuracy.
-
-::
-
-  >>> import numpy as np
-  >>> from sklearn.metrics import jaccard_similarity_score
-  >>> y_pred = [0, 2, 1, 3]
-  >>> y_true = [0, 1, 2, 3]
-  >>> jaccard_similarity_score(y_true, y_pred)
-  0.5
-  >>> jaccard_similarity_score(y_true, y_pred, normalize=False)
-  2
-
-In the multilabel case with binary label indicators: ::
-
-  >>> jaccard_similarity_score(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
-  0.75
-
 .. _precision_recall_f_measure_metrics:
 
 Precision, recall and F-measures
@@ -938,6 +921,61 @@ Similarly, labels not present in the data sample may be accounted for in macro-a
   ... # doctest: +ELLIPSIS
   0.166...
 
+.. _jaccard_similarity_score:
+
+Jaccard similarity coefficient score
+-------------------------------------
+
+The :func:`jaccard_score` function computes the average of `Jaccard similarity
+coefficients <https://en.wikipedia.org/wiki/Jaccard_index>`_, also called the
+Jaccard index, between pairs of label sets.
+
+The Jaccard similarity coefficient of the :math:`i`-th samples,
+with a ground truth label set :math:`y_i` and predicted label set
+:math:`\hat{y}_i`, is defined as
+
+.. math::
+
+    J(y_i, \hat{y}_i) = \frac{|y_i \cap \hat{y}_i|}{|y_i \cup \hat{y}_i|}.
+
+:func:`jaccard_score` works like :func:`precision_recall_fscore_support` as a
+naively set-wise measure applying natively to binary targets, and extended to
+apply to multilabel and multiclass through the use of `average` (see
+:ref:`above <average>`).
+
+In the binary case: ::
+
+  >>> import numpy as np
+  >>> from sklearn.metrics import jaccard_score
+  >>> y_true = np.array([[0, 1, 1],
+  ...                    [1, 1, 0]])
+  >>> y_pred = np.array([[1, 1, 1],
+  ...                    [1, 0, 0]])
+  >>> jaccard_score(y_true[0], y_pred[0])  # doctest: +ELLIPSIS
+  0.6666...
+
+In the multilabel case with binary label indicators: ::
+
+  >>> jaccard_score(y_true, y_pred, average='samples')  # doctest: +ELLIPSIS
+  0.5833...
+  >>> jaccard_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
+  0.6666...
+  >>> jaccard_score(y_true, y_pred, average=None)
+  array([0.5, 0.5, 1. ])
+
+Multiclass problems are binarized and treated like the corresponding
+multilabel problem: ::
+
+  >>> y_pred = [0, 2, 1, 2]
+  >>> y_true = [0, 1, 2, 2]
+  >>> jaccard_score(y_true, y_pred, average=None)
+  ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  array([1. , 0. , 0.33...])
+  >>> jaccard_score(y_true, y_pred, average='macro')
+  0.44...
+  >>> jaccard_score(y_true, y_pred, average='micro')
+  0.33...
+
 .. _hinge_loss:
 
 Hinge loss
@@ -979,7 +1017,7 @@ with a svm classifier in a binary class problem::
   >>> X = [[0], [1]]
   >>> y = [-1, 1]
   >>> est = svm.LinearSVC(random_state=0)
-  >>> est.fit(X, y)
+  >>> est.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
   LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
        intercept_scaling=1, loss='squared_hinge', max_iter=1000,
        multi_class='ovr', penalty='l2', random_state=0, tol=0.0001,
@@ -997,7 +1035,7 @@ with a svm classifier in a multiclass problem::
   >>> Y = np.array([0, 1, 2, 3])
   >>> labels = np.array([0, 1, 2, 3])
   >>> est = svm.LinearSVC()
-  >>> est.fit(X, Y)
+  >>> est.fit(X, Y)  # doctest: +NORMALIZE_WHITESPACE
   LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
        intercept_scaling=1, loss='squared_hinge', max_iter=1000,
        multi_class='ovr', penalty='l2', random_state=None, tol=0.0001,
@@ -1926,9 +1964,9 @@ Next, let's compare the accuracy of ``SVC`` and ``most_frequent``::
 We see that ``SVC`` doesn't do much better than a dummy classifier. Now, let's
 change the kernel::
 
-  >>> clf = SVC(gamma='scale', kernel='rbf', C=1).fit(X_train, y_train)
+  >>> clf = SVC(kernel='rbf', C=1).fit(X_train, y_train)
   >>> clf.score(X_test, y_test)  # doctest: +ELLIPSIS
-  0.97...
+  0.94...
 
 We see that the accuracy was boosted to almost 100%.  A cross validation
 strategy is recommended for a better estimate of the accuracy, if it

@@ -180,10 +180,10 @@ the ``[:-1]`` Python syntax, which produces a new array that contains all but
 the last item from ``digits.data``::
 
   >>> clf.fit(digits.data[:-1], digits.target[:-1])  # doctest: +NORMALIZE_WHITESPACE
-  SVC(C=100.0, cache_size=200, class_weight=None, coef0=0.0,
+  SVC(C=100.0, break_ties=False, cache_size=200, class_weight=None, coef0=0.0,
     decision_function_shape='ovr', degree=3, gamma=0.001, kernel='rbf',
-    max_iter=-1, probability=False, random_state=None, shrinking=True,
-    tol=0.001, verbose=False)
+    max_iter=-1, probability=False,
+    random_state=None, shrinking=True, tol=0.001, verbose=False)
 
 Now you can *predict* new values. In this case, you'll predict using the last
 image from ``digits.data``. By predicting, you'll determine the image from the 
@@ -216,14 +216,14 @@ persistence model, `pickle <https://docs.python.org/2/library/pickle.html>`_::
 
   >>> from sklearn import svm
   >>> from sklearn import datasets
-  >>> clf = svm.SVC(gamma='scale')
+  >>> clf = svm.SVC()
   >>> iris = datasets.load_iris()
   >>> X, y = iris.data, iris.target
   >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-  SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
+  SVC(C=1.0, break_ties=False, cache_size=200, class_weight=None, coef0=0.0,
     decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
-    max_iter=-1, probability=False, random_state=None, shrinking=True,
-    tol=0.001, verbose=False)
+    max_iter=-1, probability=False,
+    random_state=None, shrinking=True, tol=0.001, verbose=False)
 
   >>> import pickle
   >>> s = pickle.dumps(clf)
@@ -291,21 +291,21 @@ maintained::
     >>> from sklearn import datasets
     >>> from sklearn.svm import SVC
     >>> iris = datasets.load_iris()
-    >>> clf = SVC(gamma='scale')
+    >>> clf = SVC()
     >>> clf.fit(iris.data, iris.target)  # doctest: +NORMALIZE_WHITESPACE
-    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
+    SVC(C=1.0, break_ties=False, cache_size=200, class_weight=None, coef0=0.0,
       decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
-      max_iter=-1, probability=False, random_state=None, shrinking=True,
-      tol=0.001, verbose=False)
+      max_iter=-1, probability=False,
+      random_state=None, shrinking=True, tol=0.001, verbose=False)
 
     >>> list(clf.predict(iris.data[:3]))
     [0, 0, 0]
 
     >>> clf.fit(iris.data, iris.target_names[iris.target])  # doctest: +NORMALIZE_WHITESPACE
-    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
+    SVC(C=1.0, break_ties=False, cache_size=200, class_weight=None, coef0=0.0,
       decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
-      max_iter=-1, probability=False, random_state=None, shrinking=True,
-      tol=0.001, verbose=False)
+      max_iter=-1, probability=False,
+      random_state=None, shrinking=True, tol=0.001, verbose=False)
 
     >>> list(clf.predict(iris.data[:3]))  # doctest: +NORMALIZE_WHITESPACE
     ['setosa', 'setosa', 'setosa']
@@ -322,29 +322,27 @@ via the :term:`set_params()<set_params>` method. Calling ``fit()`` more than
 once will overwrite what was learned by any previous ``fit()``::
 
   >>> import numpy as np
+  >>> from sklearn.datasets import load_iris
   >>> from sklearn.svm import SVC
-
-  >>> rng = np.random.RandomState(0)
-  >>> X = rng.rand(100, 10)
-  >>> y = rng.binomial(1, 0.5, 100)
-  >>> X_test = rng.rand(5, 10)
+  >>> X, y = load_iris(return_X_y=True)
 
   >>> clf = SVC()
   >>> clf.set_params(kernel='linear').fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-  SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-    decision_function_shape='ovr', degree=3, gamma='auto_deprecated',
-    kernel='linear', max_iter=-1, probability=False, random_state=None,
-    shrinking=True, tol=0.001, verbose=False)
-  >>> clf.predict(X_test)
-  array([1, 0, 1, 1, 0])
+  SVC(C=1.0, break_ties=False, cache_size=200, class_weight=None, coef0=0.0,
+    decision_function_shape='ovr', degree=3, gamma='scale',
+    kernel='linear', max_iter=-1,
+    probability=False, random_state=None, shrinking=True, tol=0.001,
+    verbose=False)
+  >>> clf.predict(X[:5])
+  array([0, 0, 0, 0, 0])
 
-  >>> clf.set_params(kernel='rbf', gamma='scale').fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-  SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
+  >>> clf.set_params(kernel='rbf').fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
+  SVC(C=1.0, break_ties=False, cache_size=200, class_weight=None, coef0=0.0,
     decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
-    max_iter=-1, probability=False, random_state=None, shrinking=True,
-    tol=0.001, verbose=False)
-  >>> clf.predict(X_test)
-  array([1, 0, 1, 1, 0])
+    max_iter=-1, probability=False,
+    random_state=None, shrinking=True, tol=0.001, verbose=False)
+  >>> clf.predict(X[:5])
+  array([0, 0, 0, 0, 0])
 
 Here, the default kernel ``rbf`` is first changed to ``linear`` via
 :func:`SVC.set_params()<sklearn.svm.SVC.set_params>` after the estimator has
@@ -365,8 +363,7 @@ the target data fit upon::
     >>> X = [[1, 2], [2, 4], [4, 5], [3, 2], [3, 1]]
     >>> y = [0, 0, 1, 1, 2]
 
-    >>> classif = OneVsRestClassifier(estimator=SVC(gamma='scale',
-    ...                                             random_state=0))
+    >>> classif = OneVsRestClassifier(estimator=SVC(random_state=0))
     >>> classif.fit(X, y).predict(X)
     array([0, 0, 1, 1, 2])
 

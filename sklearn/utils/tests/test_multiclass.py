@@ -1,11 +1,8 @@
 
-from __future__ import division
 import numpy as np
 import scipy.sparse as sp
 from itertools import product
 
-from sklearn.externals.six.moves import xrange
-from sklearn.externals.six import iteritems
 
 from scipy.sparse import issparse
 from scipy.sparse import csc_matrix
@@ -19,6 +16,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import SkipTest
 
 from sklearn.utils.multiclass import unique_labels
@@ -26,6 +24,7 @@ from sklearn.utils.multiclass import is_multilabel
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.multiclass import _ovr_decision_function
 
 from sklearn.utils.metaestimators import _safe_split
 from sklearn.model_selection import ShuffleSplit
@@ -33,7 +32,7 @@ from sklearn.svm import SVC
 from sklearn import datasets
 
 
-class NotAnArray(object):
+class NotAnArray:
     """An object that is convertable to an array. This is useful to
     simulate a Pandas timeseries."""
 
@@ -73,8 +72,8 @@ EXAMPLES = {
         NotAnArray(np.array([1, 0, 2])),
         [0, 1, 2],
         ['a', 'b', 'c'],
-        np.array([u'a', u'b', u'c']),
-        np.array([u'a', u'b', u'c'], dtype=object),
+        np.array(['a', 'b', 'c']),
+        np.array(['a', 'b', 'c'], dtype=object),
         np.array(['a', 'b', 'c'], dtype=object),
     ],
     'multiclass-multioutput': [
@@ -84,8 +83,8 @@ EXAMPLES = {
         np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=np.float),
         np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=np.float32),
         np.array([['a', 'b'], ['c', 'd']]),
-        np.array([[u'a', u'b'], [u'c', u'd']]),
-        np.array([[u'a', u'b'], [u'c', u'd']], dtype=object),
+        np.array([['a', 'b'], ['c', 'd']]),
+        np.array([['a', 'b'], ['c', 'd']], dtype=object),
         np.array([[1, 0, 2]]),
         NotAnArray(np.array([[1, 0, 2]])),
     ],
@@ -108,7 +107,7 @@ EXAMPLES = {
         ['a', 'b'],
         ['abc', 'def'],
         np.array(['abc', 'def']),
-        [u'a', u'b'],
+        ['a', 'b'],
         np.array(['abc', 'def'], dtype=object),
     ],
     'continuous': [
@@ -128,7 +127,7 @@ EXAMPLES = {
         # sequence of sequences that weren't supported even before deprecation
         np.array([np.array([]), np.array([1, 2, 3])], dtype=object),
         [np.array([]), np.array([1, 2, 3])],
-        [set([1, 2, 3]), set([1, 2])],
+        [{1, 2, 3}, {1, 2}],
         [frozenset([1, 2, 3]), frozenset([1, 2])],
 
         # and also confusable as sequences of sequences
@@ -143,7 +142,7 @@ EXAMPLES = {
 }
 
 NON_ARRAY_LIKE_EXAMPLES = [
-    set([1, 2, 3]),
+    {1, 2, 3},
     {0: 'a', 1: 'b'},
     {0: [5], 1: [5]},
     'abc',
@@ -164,7 +163,7 @@ def test_unique_labels():
     assert_raises(ValueError, unique_labels)
 
     # Multiclass problem
-    assert_array_equal(unique_labels(xrange(10)), np.arange(10))
+    assert_array_equal(unique_labels(range(10)), np.arange(10))
     assert_array_equal(unique_labels(np.arange(10)), np.arange(10))
     assert_array_equal(unique_labels([4, 0, 2]), np.array([0, 2, 4]))
 
@@ -179,7 +178,7 @@ def test_unique_labels():
                        np.arange(3))
 
     # Several arrays passed
-    assert_array_equal(unique_labels([4, 0, 2], xrange(5)),
+    assert_array_equal(unique_labels([4, 0, 2], range(5)),
                        np.arange(5))
     assert_array_equal(unique_labels((0, 1, 2), (0,), (2, 1)),
                        np.arange(3))
@@ -226,7 +225,7 @@ def test_unique_labels_mixed_types():
 
 
 def test_is_multilabel():
-    for group, group_examples in iteritems(EXAMPLES):
+    for group, group_examples in EXAMPLES.items():
         if group in ['multilabel-indicator']:
             dense_exp = True
         else:
@@ -279,7 +278,7 @@ def test_check_classification_targets():
 
 # @ignore_warnings
 def test_type_of_target():
-    for group, group_examples in iteritems(EXAMPLES):
+    for group, group_examples in EXAMPLES.items():
         for example in group_examples:
             assert_equal(type_of_target(example), group,
                          msg=('type_of_target(%r) should be %r, got %r'
@@ -381,3 +380,46 @@ def test_safe_split_with_precomputed_kernel():
     K_test, y_test2 = _safe_split(clfp, K, y, test, train)
     assert_array_almost_equal(K_test, np.dot(X_test, X_train.T))
     assert_array_almost_equal(y_test, y_test2)
+
+
+def test_ovr_decision_function():
+    # test properties for ovr decision function
+
+    predictions = np.array([[0, 1, 1],
+                            [0, 1, 0],
+                            [0, 1, 1],
+                            [0, 1, 1]])
+
+    confidences = np.array([[-1e16, 0, -1e16],
+                            [1., 2., -3.],
+                            [-5., 2., 5.],
+                            [-0.5, 0.2, 0.5]])
+
+    n_classes = 3
+
+    dec_values = _ovr_decision_function(predictions, confidences, n_classes)
+
+    # check that the decision values are within 0.5 range of the votes
+    votes = np.array([[1, 0, 2],
+                      [1, 1, 1],
+                      [1, 0, 2],
+                      [1, 0, 2]])
+
+    assert_allclose(votes, dec_values, atol=0.5)
+
+    # check that the prediction are what we expect
+    # highest vote or highest confidence if there is a tie.
+    # for the second sample we have a tie (should be won by 1)
+    expected_prediction = np.array([2, 1, 2, 2])
+    assert_array_equal(np.argmax(dec_values, axis=1), expected_prediction)
+
+    # third and fourth sample have the same vote but third sample
+    # has higher confidence, this should reflect on the decision values
+    assert (dec_values[2, 2] > dec_values[3, 2])
+
+    # assert subset invariance.
+    dec_values_one = [_ovr_decision_function(np.array([predictions[i]]),
+                                             np.array([confidences[i]]),
+                                             n_classes)[0] for i in range(4)]
+
+    assert_allclose(dec_values, dec_values_one, atol=1e-6)

@@ -6,7 +6,6 @@ import numbers
 
 from .base import SelectorMixin
 from ..base import BaseEstimator, clone, MetaEstimatorMixin
-from ..externals import six
 
 from ..exceptions import NotFittedError
 from ..utils.metaestimators import if_delegate_has_method
@@ -48,7 +47,7 @@ def _calculate_threshold(estimator, importances, threshold):
         else:
             threshold = "mean"
 
-    if isinstance(threshold, six.string_types):
+    if isinstance(threshold, str):
         if "*" in threshold:
             scale, reference = threshold.split("*")
             scale = float(scale.strip())

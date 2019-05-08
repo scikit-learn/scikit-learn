@@ -7,7 +7,6 @@
 # modifications of the algorithm:
 # * Fast Optimization for t-SNE:
 #   https://cseweb.ucsd.edu/~lvdmaaten/workshops/nips2010/papers/vandermaaten.pdf
-from __future__ import division
 
 import warnings
 from time import time
@@ -25,7 +24,6 @@ from ..decomposition import PCA
 from ..metrics.pairwise import pairwise_distances
 from . import _utils
 from . import _barnes_hut_tsne
-from ..externals.six import string_types
 
 
 MACHINE_EPSILON = np.finfo(np.double).eps
@@ -508,8 +506,8 @@ class TSNE(BaseEstimator):
         The perplexity is related to the number of nearest neighbors that
         is used in other manifold learning algorithms. Larger datasets
         usually require a larger perplexity. Consider selecting a value
-        between 5 and 50. The choice is not extremely critical since t-SNE
-        is quite insensitive to this parameter.
+        between 5 and 50. Different values can result in significanlty
+        different results.
 
     early_exaggeration : float, optional (default: 12.0)
         Controls how tight natural clusters in the original space are in
@@ -680,7 +678,7 @@ class TSNE(BaseEstimator):
         if self.angle < 0.0 or self.angle > 1.0:
             raise ValueError("'angle' must be between 0.0 - 1.0")
         if self.metric == "precomputed":
-            if isinstance(self.init, string_types) and self.init == 'pca':
+            if isinstance(self.init, str) and self.init == 'pca':
                 raise ValueError("The parameter init=\"pca\" cannot be "
                                  "used with metric=\"precomputed\".")
             if X.shape[0] != X.shape[1]:

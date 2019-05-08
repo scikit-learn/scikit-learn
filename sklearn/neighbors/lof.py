@@ -150,7 +150,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     def __init__(self, n_neighbors=20, algorithm='auto', leaf_size=30,
                  metric='minkowski', p=2, metric_params=None,
                  contamination="legacy", novelty=False, n_jobs=None):
-        super(LocalOutlierFactor, self).__init__(
+        super().__init__(
             n_neighbors=n_neighbors,
             algorithm=algorithm,
             leaf_size=leaf_size, metric=metric, p=p,
@@ -243,7 +243,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
                 raise ValueError("contamination must be in (0, 0.5], "
                                  "got: %f" % self._contamination)
 
-        super(LocalOutlierFactor, self).fit(X)
+        super().fit(X)
 
         n_samples = self._fit_X.shape[0]
         if self.n_neighbors > n_samples:
@@ -401,7 +401,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     def score_samples(self):
         """Opposite of the Local Outlier Factor of X.
 
-        It is the opposite as as bigger is better, i.e. large values correspond
+        It is the opposite as bigger is better, i.e. large values correspond
         to inliers.
 
         Only available for novelty detection (when novelty is set to True).
@@ -437,7 +437,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     def _score_samples(self, X):
         """Opposite of the Local Outlier Factor of X.
 
-        It is the opposite as as bigger is better, i.e. large values correspond
+        It is the opposite as bigger is better, i.e. large values correspond
         to inliers.
 
         Only available for novelty detection (when novelty is set to True).
@@ -500,5 +500,5 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
                                         self.n_neighbors_ - 1]
         reach_dist_array = np.maximum(distances_X, dist_k)
 
-        #  1e-10 to avoid `nan' when nb of duplicates > n_neighbors_:
+        # 1e-10 to avoid `nan' when nb of duplicates > n_neighbors_:
         return 1. / (np.mean(reach_dist_array, axis=1) + 1e-10)

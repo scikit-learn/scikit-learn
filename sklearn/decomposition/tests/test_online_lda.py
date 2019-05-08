@@ -20,8 +20,7 @@ from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import if_safe_multiprocessing_with_blas
 
 from sklearn.exceptions import NotFittedError
-from sklearn.externals.six.moves import xrange
-from sklearn.externals.six import StringIO
+from io import StringIO
 
 
 def _build_sparse_mtx():
@@ -90,7 +89,7 @@ def test_lda_partial_fit():
     lda = LatentDirichletAllocation(n_components=n_components,
                                     learning_offset=10., total_samples=100,
                                     random_state=rng)
-    for i in xrange(3):
+    for i in range(3):
         lda.partial_fit(X)
 
     correct_idx_grps = [(0, 1, 2), (3, 4, 5), (6, 7, 8)]
@@ -181,12 +180,12 @@ def test_lda_negative_input():
 
 
 def test_lda_no_component_error():
-    # test `transform` and `perplexity` before `fit`
+    # test `perplexity` before `fit`
     rng = np.random.RandomState(0)
     X = rng.randint(4, size=(20, 10))
     lda = LatentDirichletAllocation()
-    regex = r"^no 'components_' attribute"
-    assert_raises_regexp(NotFittedError, regex, lda.transform, X)
+    regex = ("This LatentDirichletAllocation instance is not fitted yet. "
+             "Call 'fit' with appropriate arguments before using this method.")
     assert_raises_regexp(NotFittedError, regex, lda.perplexity, X)
 
 

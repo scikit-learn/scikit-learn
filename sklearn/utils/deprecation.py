@@ -1,11 +1,10 @@
-import sys
 import warnings
 import functools
 
 __all__ = ["deprecated"]
 
 
-class deprecated(object):
+class deprecated:
     """Decorator to mark a function or class as deprecated.
 
     Issue a warning when the function is called/the class is instantiated and
@@ -43,6 +42,15 @@ class deprecated(object):
         """
         if isinstance(obj, type):
             return self._decorate_class(obj)
+        elif isinstance(obj, property):
+            # Note that this is only triggered properly if the `property`
+            # decorator comes before the `deprecated` decorator, like so:
+            #
+            # @deprecated(msg)
+            # @property
+            # def deprecated_attribute_(self):
+            #     ...
+            return self._decorate_property(obj)
         else:
             return self._decorate_fun(obj)
 
@@ -84,6 +92,16 @@ class deprecated(object):
 
         return wrapped
 
+    def _decorate_property(self, prop):
+        msg = self.extra
+
+        @property
+        def wrapped(*args, **kwargs):
+            warnings.warn(msg, category=DeprecationWarning)
+            return prop.fget(*args, **kwargs)
+
+        return wrapped
+
     def _update_doc(self, olddoc):
         newdoc = "DEPRECATED"
         if self.extra:
@@ -95,9 +113,6 @@ class deprecated(object):
 
 def _is_deprecated(func):
     """Helper to check if func is wraped by our deprecated decorator"""
-    if sys.version_info < (3, 5):
-        raise NotImplementedError("This is only available for python3.5 "
-                                  "or above")
     closures = getattr(func, '__closure__', [])
     if closures is None:
         closures = []

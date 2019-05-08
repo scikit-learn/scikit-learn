@@ -9,6 +9,11 @@ the model for future use without having to retrain. The following section gives
 you an example of how to persist a model with pickle. We'll also review a few
 security and maintainability issues when working with pickle serialization.
 
+An alternative to pickling is to export the model to another format using one
+of the model export tools listed under :ref:`related_projects`. Unlike
+pickling, once exported you cannot recover the full Scikit-learn estimator
+object, but you can deploy the model for prediction, usually by using tools
+supporting open model interchange formats such as `ONNX`_ or `PMML`_.
 
 Persistence example
 -------------------
@@ -18,14 +23,14 @@ persistence model, namely `pickle <https://docs.python.org/2/library/pickle.html
 
   >>> from sklearn import svm
   >>> from sklearn import datasets
-  >>> clf = svm.SVC(gamma='scale')
+  >>> clf = svm.SVC()
   >>> iris = datasets.load_iris()
   >>> X, y = iris.data, iris.target
   >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-  SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
+  SVC(C=1.0, break_ties=False, cache_size=200, class_weight=None, coef0=0.0,
       decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
-      max_iter=-1, probability=False, random_state=None, shrinking=True,
-      tol=0.001, verbose=False)
+      max_iter=-1, probability=False,
+      random_state=None, shrinking=True, tol=0.001, verbose=False)
 
   >>> import pickle
   >>> s = pickle.dumps(clf)

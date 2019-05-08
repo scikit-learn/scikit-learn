@@ -13,7 +13,6 @@ from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..utils import check_random_state
 from ..utils._joblib import effective_n_jobs
-from ..externals import six
 from abc import ABCMeta, abstractmethod
 
 MAX_RAND_SEED = np.iinfo(np.int32).max
@@ -58,8 +57,7 @@ def _set_random_states(estimator, random_state=None):
         estimator.set_params(**to_set)
 
 
-class BaseEnsemble(six.with_metaclass(ABCMeta, BaseEstimator,
-                                      MetaEstimatorMixin)):
+class BaseEnsemble(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
     """Base class for all ensemble classes.
 
     Warning: This class should not be used directly. Use derived classes
@@ -85,6 +83,8 @@ class BaseEnsemble(six.with_metaclass(ABCMeta, BaseEstimator,
     estimators_ : list of estimators
         The collection of fitted base estimators.
     """
+    # overwrite _required_parameters from MetaEstimatorMixin
+    _required_parameters = []
 
     @abstractmethod
     def __init__(self, base_estimator, n_estimators=10,
@@ -124,8 +124,8 @@ class BaseEnsemble(six.with_metaclass(ABCMeta, BaseEstimator,
         sub-estimators.
         """
         estimator = clone(self.base_estimator_)
-        estimator.set_params(**dict((p, getattr(self, p))
-                                    for p in self.estimator_params))
+        estimator.set_params(**{p: getattr(self, p)
+                                for p in self.estimator_params})
 
         if random_state is not None:
             _set_random_states(estimator, random_state)

@@ -257,7 +257,6 @@ This is an example of **bias/variance tradeoff**: the larger the ridge
 We can choose ``alpha`` to minimize left out error, this time using the
 diabetes dataset rather than our synthetic data::
 
-    >>> from __future__ import print_function
     >>> alphas = np.logspace(-4, -1, 6)
     >>> print([regr.set_params(alpha=alpha)
     ...            .fit(diabetes_X_train, diabetes_y_train)
@@ -334,6 +333,7 @@ application of Occam's razor: *prefer simpler models*.
     >>> best_alpha = alphas[scores.index(max(scores))]
     >>> regr.alpha = best_alpha
     >>> regr.fit(diabetes_X_train, diabetes_y_train)
+    ... # doctest: +NORMALIZE_WHITESPACE
     Lasso(alpha=0.025118864315095794, copy_X=True, fit_intercept=True,
        max_iter=1000, normalize=False, positive=False, precompute=False,
        random_state=None, selection='cyclic', tol=0.0001, warm_start=False)
@@ -375,8 +375,7 @@ function or **logistic** function:
 
 ::
 
-    >>> log = linear_model.LogisticRegression(solver='lbfgs', C=1e5,
-    ...                                       multi_class='multinomial')
+    >>> log = linear_model.LogisticRegression(C=1e5, multi_class='multinomial')
     >>> log.fit(iris_X_train, iris_y_train)  # doctest: +NORMALIZE_WHITESPACE
     LogisticRegression(C=100000.0, class_weight=None, dual=False,
         fit_intercept=True, intercept_scaling=1, l1_ratio=None, max_iter=100,
@@ -451,7 +450,7 @@ the separating line (less regularization).
 
 .. topic:: Example:
 
- - :ref:`sphx_glr_auto_examples_svm_plot_iris.py`
+ - :ref:`sphx_glr_auto_examples_svm_plot_iris_svc.py`
 
 
 SVMs can be used in regression --:class:`SVR` (Support Vector Regression)--, or in
@@ -462,10 +461,11 @@ classification --:class:`SVC` (Support Vector Classification).
     >>> from sklearn import svm
     >>> svc = svm.SVC(kernel='linear')
     >>> svc.fit(iris_X_train, iris_y_train)    # doctest: +NORMALIZE_WHITESPACE
-    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-        decision_function_shape='ovr', degree=3, gamma='auto_deprecated',
-        kernel='linear', max_iter=-1, probability=False, random_state=None,
-        shrinking=True, tol=0.001, verbose=False)
+    SVC(C=1.0, break_ties=False, cache_size=200, class_weight=None, coef0=0.0,
+        decision_function_shape='ovr', degree=3, gamma='scale',
+        kernel='linear', max_iter=-1,
+        probability=False, random_state=None, shrinking=True, tol=0.001,
+        verbose=False)
 
 
 .. warning:: **Normalizing data**
