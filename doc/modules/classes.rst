@@ -1548,7 +1548,6 @@ To be removed in 0.22
    :toctree: generated/
    :template: deprecated_class.rst
 
-   preprocessing.Imputer
    utils.testing.mock_mldata_urlopen
 
 .. autosummary::
