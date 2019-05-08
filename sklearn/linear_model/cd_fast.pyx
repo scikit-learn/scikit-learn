@@ -5,6 +5,8 @@
 #         Manoj Kumar <manojkumarsivaraj334@gmail.com>
 #
 # License: BSD 3 clause
+#
+# cython: boundscheck=False, wraparound=False, cdivision=True
 
 from libc.math cimport fabs
 cimport numpy as np
@@ -22,6 +24,8 @@ from ..utils._cython_blas cimport (_axpy, _dot, _asum, _ger, _gemv, _nrm2,
 from ..utils._cython_blas cimport RowMajor, ColMajor, Trans, NoTrans
 
 
+from ..utils._random cimport our_rand_r
+
 ctypedef np.float64_t DOUBLE
 ctypedef np.uint32_t UINT32_t
 
@@ -34,14 +38,6 @@ cdef enum:
     # We don't use RAND_MAX because it's different across platforms and
     # particularly tiny on Windows/MSVC.
     RAND_R_MAX = 0x7FFFFFFF
-
-
-cdef inline UINT32_t our_rand_r(UINT32_t* seed) nogil:
-    seed[0] ^= <UINT32_t>(seed[0] << 13)
-    seed[0] ^= <UINT32_t>(seed[0] >> 17)
-    seed[0] ^= <UINT32_t>(seed[0] << 5)
-
-    return seed[0] % (<UINT32_t>RAND_R_MAX + 1)
 
 
 cdef inline UINT32_t rand_int(UINT32_t end, UINT32_t* random_state) nogil:
@@ -100,9 +96,6 @@ cdef floating diff_abs_max(int n, floating* a, floating* b) nogil:
     return m
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def enet_coordinate_descent(floating[::1] w,
                             floating alpha, floating beta,
                             floating[::1, :] X,
@@ -155,8 +148,8 @@ def enet_coordinate_descent(floating[::1] w,
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
 
     if alpha == 0 and beta == 0:
-        warnings.warn("Coordinate descent with no regularization may lead to unexpected"
-            " results and is discouraged.")
+        warnings.warn("Coordinate descent with no regularization may lead to "
+                      "unexpected results and is discouraged.")
 
     with nogil:
         # R = y - np.dot(X, w)
@@ -249,18 +242,16 @@ def enet_coordinate_descent(floating[::1] w,
                     break
 
         else:
+            # for/else, runs if for doesn't end with a `break`
             with gil:
-                warnings.warn("Objective did not converge."
-                " You might want to increase the number of iterations."
-                " Duality gap: {}, tolerance: {}".format(gap, tol),
-                ConvergenceWarning)
+                warnings.warn("Objective did not converge. You might want to "
+                              "increase the number of iterations. Duality "
+                              "gap: {}, tolerance: {}".format(gap, tol),
+                              ConvergenceWarning)
 
     return w, gap, tol, n_iter + 1
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def sparse_enet_coordinate_descent(floating [::1] w,
                             floating alpha, floating beta,
                             np.ndarray[floating, ndim=1, mode='c'] X_data,
@@ -466,18 +457,16 @@ def sparse_enet_coordinate_descent(floating [::1] w,
                     break
 
         else:
+            # for/else, runs if for doesn't end with a `break`
             with gil:
-                warnings.warn("Objective did not converge."
-                " You might want to increase the number of iterations."
-                " Duality gap: {}, tolerance: {}".format(gap, tol),
-                ConvergenceWarning)
+                warnings.warn("Objective did not converge. You might want to "
+                              "increase the number of iterations. Duality "
+                              "gap: {}, tolerance: {}".format(gap, tol),
+                              ConvergenceWarning)
 
     return w, gap, tol, n_iter + 1
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def enet_coordinate_descent_gram(floating[::1] w,
                                  floating alpha, floating beta,
                                  np.ndarray[floating, ndim=2, mode='c'] Q,
@@ -620,19 +609,17 @@ def enet_coordinate_descent_gram(floating[::1] w,
                     # return if we reached desired tolerance
                     break
 
-
-        with gil:
-            warnings.warn("Objective did not converge."
-            " You might want to increase the number of iterations."
-            " Duality gap: {}, tolerance: {}".format(gap, tol),
-            ConvergenceWarning)
+        else:
+            # for/else, runs if for doesn't end with a `break`
+            with gil:
+                warnings.warn("Objective did not converge. You might want to "
+                              "increase the number of iterations. Duality "
+                              "gap: {}, tolerance: {}".format(gap, tol),
+                              ConvergenceWarning)
 
     return np.asarray(w), gap, tol, n_iter + 1
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                                        floating l2_reg,
                                        np.ndarray[floating, ndim=2, mode='fortran'] X,
@@ -817,11 +804,12 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                 if gap < tol:
                     # return if we reached desired tolerance
                     break
-                else:
-                    with gil:
-                        warnings.warn("Objective did not converge."
-                        " You might want to increase the number of iterations."
-                        " Duality gap: {}, tolerance: {}".format(gap, tol),
-                        ConvergenceWarning)
+        else:
+            # for/else, runs if for doesn't end with a `break`
+            with gil:
+                warnings.warn("Objective did not converge. You might want to "
+                              "increase the number of iterations. Duality "
+                              "gap: {}, tolerance: {}".format(gap, tol),
+                              ConvergenceWarning)
 
     return np.asarray(W), gap, tol, n_iter + 1

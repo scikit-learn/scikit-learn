@@ -28,5 +28,7 @@ Welcome to scikit-learn
     about
     testimonials/testimonials
     whats_new
+    roadmap
+    governance
 
 |

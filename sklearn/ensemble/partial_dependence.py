@@ -3,6 +3,10 @@
 # Authors: Peter Prettenhofer
 # License: BSD 3 clause
 
+# Note: function here are deprecated. We don't call the new versions because
+# the API slightly changes (namely partial_dependence does not have the grid
+# parameter anymore.)
+
 from itertools import count
 import numbers
 
@@ -14,9 +18,15 @@ from ..utils._joblib import Parallel, delayed
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
 from ..tree._tree import DTYPE
+from ..utils import deprecated
 
-from ._gradient_boosting import _partial_dependence_tree
 from .gradient_boosting import BaseGradientBoosting
+
+
+__all__ = [
+    'partial_dependence',
+    'plot_partial_dependence',
+]
 
 
 def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
@@ -67,6 +77,9 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
     return cartesian(axes), axes
 
 
+@deprecated("The function ensemble.partial_dependence has been deprecated "
+            "in favour of inspection.partial_dependence in 0.21 "
+            "and will be removed in 0.23.")
 def partial_dependence(gbrt, target_variables, grid=None, X=None,
                        percentiles=(0.05, 0.95), grid_resolution=100):
     """Partial dependence of ``target_variables``.
@@ -76,6 +89,11 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
     by the ``gbrt``.
 
     Read more in the :ref:`User Guide <partial_dependence>`.
+
+    .. deprecated:: 0.21
+       This function was deprecated in version 0.21 in favor of
+       :func:`sklearn.inspection.partial_dependence` and will be
+       removed in 0.23.
 
     Parameters
     ----------
@@ -155,12 +173,16 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
     for stage in range(n_estimators):
         for k in range(n_trees_per_stage):
             tree = gbrt.estimators_[stage, k].tree_
-            _partial_dependence_tree(tree, grid, target_variables,
-                                     gbrt.learning_rate, pdp[k])
+            tree.compute_partial_dependence(grid, target_variables, pdp[k])
+    pdp *= gbrt.learning_rate
 
     return pdp, axes
 
 
+@deprecated("The function ensemble.plot_partial_dependence has been "
+            "deprecated in favour of "
+            "sklearn.inspection.plot_partial_dependence in "
+            " 0.21 and will be removed in 0.23.")
 def plot_partial_dependence(gbrt, X, features, feature_names=None,
                             label=None, n_cols=3, grid_resolution=100,
                             percentiles=(0.05, 0.95), n_jobs=None,
@@ -173,6 +195,11 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     plots.
 
     Read more in the :ref:`User Guide <partial_dependence>`.
+
+    .. deprecated:: 0.21
+       This function was deprecated in version 0.21 in favor of
+       :func:`sklearn.inspection.plot_partial_dependence` and will be
+       removed in 0.23.
 
     Parameters
     ----------

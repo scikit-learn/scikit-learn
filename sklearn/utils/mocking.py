@@ -108,7 +108,7 @@ class CheckingClassifier(BaseEstimator, ClassifierMixin):
     def predict(self, T):
         """
         Parameters
-        -----------
+        ----------
         T : indexable, length n_samples
         """
         if self.check_X is not None:

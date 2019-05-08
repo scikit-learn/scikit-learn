@@ -228,9 +228,10 @@ class ParameterSampler:
     >>> from sklearn.model_selection import ParameterSampler
     >>> from scipy.stats.distributions import expon
     >>> import numpy as np
-    >>> np.random.seed(0)
+    >>> rng = np.random.RandomState(0)
     >>> param_grid = {'a':[1, 2], 'b': expon()}
-    >>> param_list = list(ParameterSampler(param_grid, n_iter=4))
+    >>> param_list = list(ParameterSampler(param_grid, n_iter=4,
+    ...                                    random_state=rng))
     >>> rounded_list = [dict((k, round(v, 6)) for (k, v) in d.items())
     ...                 for d in param_list]
     >>> rounded_list == [{'b': 0.89856, 'a': 1},
@@ -316,7 +317,7 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
         The scorer callable object / function must have its signature as
         ``scorer(estimator, X, y)``.
 
-        If ``None`` the estimator's default scorer is used.
+        If ``None`` the estimator's score method is used.
 
     verbose : int
         Verbosity level.
@@ -379,15 +380,13 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
     """
 
     @abstractmethod
-    def __init__(self, estimator, scoring=None,
-                 fit_params=None, n_jobs=None, iid='warn',
+    def __init__(self, estimator, scoring=None, n_jobs=None, iid='warn',
                  refit=True, cv='warn', verbose=0, pre_dispatch='2*n_jobs',
                  error_score='raise-deprecating', return_train_score=True):
 
         self.scoring = scoring
         self.estimator = estimator
         self.n_jobs = n_jobs
-        self.fit_params = fit_params
         self.iid = iid
         self.refit = refit
         self.cv = cv
@@ -448,7 +447,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         ``predict``.
 
         Parameters
-        -----------
+        ----------
         X : indexable, length n_samples
             Must fulfill the input assumptions of the
             underlying estimator.
@@ -465,7 +464,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         ``predict_proba``.
 
         Parameters
-        -----------
+        ----------
         X : indexable, length n_samples
             Must fulfill the input assumptions of the
             underlying estimator.
@@ -482,7 +481,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         ``predict_log_proba``.
 
         Parameters
-        -----------
+        ----------
         X : indexable, length n_samples
             Must fulfill the input assumptions of the
             underlying estimator.
@@ -499,7 +498,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         ``decision_function``.
 
         Parameters
-        -----------
+        ----------
         X : indexable, length n_samples
             Must fulfill the input assumptions of the
             underlying estimator.
@@ -516,7 +515,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         ``refit=True``.
 
         Parameters
-        -----------
+        ----------
         X : indexable, length n_samples
             Must fulfill the input assumptions of the
             underlying estimator.
@@ -533,7 +532,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         ``inverse_transform`` and ``refit=True``.
 
         Parameters
-        -----------
+        ----------
         Xt : indexable, length n_samples
             Must fulfill the input assumptions of the
             underlying estimator.
@@ -697,7 +696,8 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
                 self.best_index_ = self.refit(results)
                 if not isinstance(self.best_index_, (int, np.integer)):
                     raise TypeError('best_index_ returned is not an integer')
-                if self.best_index_ < 0 or self.best_index_ >= len(results):
+                if (self.best_index_ < 0 or
+                   self.best_index_ >= len(results["params"])):
                     raise IndexError('best_index_ index out of range')
             else:
                 self.best_index_ = results["rank_test_%s"
@@ -867,7 +867,7 @@ class GridSearchCV(BaseSearchCV):
 
         See :ref:`multimetric_grid_search` for an example.
 
-        If None, the estimator's default scorer (if available) is used.
+        If None, the estimator's score method is used.
 
     n_jobs : int or None, optional (default=None)
         Number of jobs to run in parallel.
@@ -930,8 +930,8 @@ class GridSearchCV(BaseSearchCV):
         dataset.
 
         For multiple metric evaluation, this needs to be a string denoting the
-        scorer is used to find the best parameters for refitting the estimator
-        at the end.
+        scorer that would be used to find the best parameters for refitting
+        the estimator at the end.
 
         Where there are considerations other than maximum score in
         choosing a best estimator, ``refit`` can be set to a function which
@@ -978,16 +978,18 @@ class GridSearchCV(BaseSearchCV):
     >>> from sklearn.model_selection import GridSearchCV
     >>> iris = datasets.load_iris()
     >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
-    >>> svc = svm.SVC(gamma="scale")
+    >>> svc = svm.SVC()
     >>> clf = GridSearchCV(svc, parameters, cv=5)
     >>> clf.fit(iris.data, iris.target)
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     GridSearchCV(cv=5, error_score=...,
-           estimator=SVC(C=1.0, cache_size=..., class_weight=..., coef0=...,
+           estimator=SVC(C=1.0, break_ties=False, cache_size=...,
+                         class_weight=..., coef0=...,
                          decision_function_shape='ovr', degree=..., gamma=...,
-                         kernel='rbf', max_iter=-1, probability=False,
-                         random_state=None, shrinking=True, tol=...,
-                         verbose=False),
+                         kernel='rbf', max_iter=-1,
+                         probability=False,
+                         random_state=None, shrinking=True,
+                         tol=..., verbose=False),
            iid=..., n_jobs=None,
            param_grid=..., pre_dispatch=..., refit=..., return_train_score=...,
            scoring=..., verbose=...)
@@ -1103,7 +1105,7 @@ class GridSearchCV(BaseSearchCV):
         This is present only if ``refit`` is not False.
 
     Notes
-    ------
+    -----
     The parameters selected are those that maximize the score of the left out
     data, unless an explicit score is passed in which case it is used instead.
 
@@ -1209,7 +1211,7 @@ class RandomizedSearchCV(BaseSearchCV):
 
         See :ref:`multimetric_grid_search` for an example.
 
-        If None, the estimator's default scorer (if available) is used.
+        If None, the estimator's score method is used.
 
     n_jobs : int or None, optional (default=None)
         Number of jobs to run in parallel.

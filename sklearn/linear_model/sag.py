@@ -201,9 +201,9 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
     >>> import numpy as np
     >>> from sklearn import linear_model
     >>> n_samples, n_features = 10, 5
-    >>> np.random.seed(0)
-    >>> X = np.random.randn(n_samples, n_features)
-    >>> y = np.random.randn(n_samples)
+    >>> rng = np.random.RandomState(0)
+    >>> X = rng.randn(n_samples, n_features)
+    >>> y = rng.randn(n_samples)
     >>> clf = linear_model.Ridge(solver='sag')
     >>> clf.fit(X, y)
     ... #doctest: +NORMALIZE_WHITESPACE

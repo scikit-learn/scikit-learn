@@ -71,7 +71,7 @@ def test_classification():
                            Perceptron(tol=1e-3),
                            DecisionTreeClassifier(),
                            KNeighborsClassifier(),
-                           SVC(gamma="scale")]:
+                           SVC()]:
         for params in grid:
             BaggingClassifier(base_estimator=base_estimator,
                               random_state=rng,
@@ -117,8 +117,7 @@ def test_sparse_classification():
             for f in ['predict', 'predict_proba', 'predict_log_proba', 'decision_function']:
                 # Trained on sparse format
                 sparse_classifier = BaggingClassifier(
-                    base_estimator=CustomSVC(gamma='scale',
-                                             decision_function_shape='ovr'),
+                    base_estimator=CustomSVC(decision_function_shape='ovr'),
                     random_state=1,
                     **params
                 ).fit(X_train_sparse, y_train)
@@ -126,8 +125,7 @@ def test_sparse_classification():
 
                 # Trained on dense format
                 dense_classifier = BaggingClassifier(
-                    base_estimator=CustomSVC(gamma='scale',
-                                             decision_function_shape='ovr'),
+                    base_estimator=CustomSVC(decision_function_shape='ovr'),
                     random_state=1,
                     **params
                 ).fit(X_train, y_train)
@@ -155,7 +153,7 @@ def test_regression():
                            DummyRegressor(),
                            DecisionTreeRegressor(),
                            KNeighborsRegressor(),
-                           SVR(gamma='scale')]:
+                           SVR()]:
         for params in grid:
             BaggingRegressor(base_estimator=base_estimator,
                              random_state=rng,
@@ -201,7 +199,7 @@ def test_sparse_regression():
 
             # Trained on sparse format
             sparse_classifier = BaggingRegressor(
-                base_estimator=CustomSVR(gamma='scale'),
+                base_estimator=CustomSVR(),
                 random_state=1,
                 **params
             ).fit(X_train_sparse, y_train)
@@ -209,7 +207,7 @@ def test_sparse_regression():
 
             # Trained on dense format
             dense_results = BaggingRegressor(
-                base_estimator=CustomSVR(gamma='scale'),
+                base_estimator=CustomSVR(),
                 random_state=1,
                 **params
             ).fit(X_train, y_train).predict(X_test)
@@ -334,7 +332,7 @@ def test_oob_score_classification():
                                                         iris.target,
                                                         random_state=rng)
 
-    for base_estimator in [DecisionTreeClassifier(), SVC(gamma="scale")]:
+    for base_estimator in [DecisionTreeClassifier(), SVC()]:
         clf = BaggingClassifier(base_estimator=base_estimator,
                                 n_estimators=100,
                                 bootstrap=True,
@@ -464,8 +462,7 @@ def test_parallel_classification():
     assert_array_almost_equal(y1, y3)
 
     # decision_function
-    ensemble = BaggingClassifier(SVC(gamma='scale',
-                                     decision_function_shape='ovr'),
+    ensemble = BaggingClassifier(SVC(decision_function_shape='ovr'),
                                  n_jobs=3,
                                  random_state=0).fit(X_train, y_train)
 
@@ -482,8 +479,7 @@ def test_parallel_classification():
                          "".format(X_test.shape[1], X_err.shape[1]),
                          ensemble.decision_function, X_err)
 
-    ensemble = BaggingClassifier(SVC(gamma='scale',
-                                     decision_function_shape='ovr'),
+    ensemble = BaggingClassifier(SVC(decision_function_shape='ovr'),
                                  n_jobs=1,
                                  random_state=0).fit(X_train, y_train)
 
@@ -518,7 +514,7 @@ def test_parallel_regression():
 
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_gridsearch():
     # Check that bagging ensembles can be grid-searched.
     # Transform iris into a binary classification task
@@ -529,7 +525,7 @@ def test_gridsearch():
     parameters = {'n_estimators': (1, 2),
                   'base_estimator__C': (1, 2)}
 
-    GridSearchCV(BaggingClassifier(SVC(gamma="scale")),
+    GridSearchCV(BaggingClassifier(SVC()),
                  parameters,
                  scoring="roc_auc").fit(X, y)
 
@@ -578,7 +574,7 @@ def test_base_estimator():
 
     assert isinstance(ensemble.base_estimator_, DecisionTreeRegressor)
 
-    ensemble = BaggingRegressor(SVR(gamma='scale'),
+    ensemble = BaggingRegressor(SVR(),
                                 n_jobs=3,
                                 random_state=0).fit(X_train, y_train)
     assert isinstance(ensemble.base_estimator_, SVR)
@@ -810,7 +806,7 @@ def test_set_oob_score_label_encoding():
 
 
 def replace(X):
-    X = X.copy().astype('float')
+    X = X.astype('float', copy=True)
     X[~np.isfinite(X)] = 0
     return X
 
