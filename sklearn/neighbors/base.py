@@ -162,7 +162,6 @@ class NeighborsBase(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
 
     def _fit(self, X):
         self._check_algorithm_metric()
-
         if self.metric_params is None:
             self.effective_metric_params_ = {}
         else:

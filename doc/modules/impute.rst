@@ -199,8 +199,8 @@ contributes to the imputation of a given sample. For each missing feature in a
 sample, the donors are selected such that they have the feature present and 
 they are one of the ``n_neighbors`` nearest neighbors.
 
-then the sample can potentially have multiple sets of
-``n_neighbors`` donors depending on the particular feature being imputed.
+Each sample can potentially have multiple sets of ``n_neighbors`` donors 
+depending on the particular feature being imputed.
 
 Each missing feature is then imputed as the average, either weighted or
 unweighted, of these neighbors. When the number of donor neighbors is less
