@@ -364,7 +364,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
         y : Ignored
 
         """
-        if(self.affinity == "precomputed"):
+        if self.affinity == "precomputed":
             accept_sparse = False
         else:
             accept_sparse = 'csr'
