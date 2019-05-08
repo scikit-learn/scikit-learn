@@ -69,7 +69,7 @@ preprocessor = ColumnTransformer(
 # Append classifier to preprocessing pipeline.
 # Now we have a full prediction pipeline.
 clf = Pipeline(steps=[('preprocessor', preprocessor),
-                      ('classifier', LogisticRegression(solver='lbfgs'))])
+                      ('classifier', LogisticRegression())])
 
 X = data.drop('survived', axis=1)
 y = data['survived']
