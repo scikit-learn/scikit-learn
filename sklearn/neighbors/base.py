@@ -44,7 +44,8 @@ VALID_METRICS = dict(ball_tree=BallTree.valid_metrics,
 
 VALID_METRICS_SPARSE = dict(ball_tree=[],
                             kd_tree=[],
-                            brute=PAIRWISE_DISTANCE_FUNCTIONS.keys())
+                            brute=(PAIRWISE_DISTANCE_FUNCTIONS.keys() -
+                                   {'haversine'}))
 
 
 def _check_weights(weights):
@@ -62,14 +63,14 @@ def _get_weights(dist, weights):
     """Get the weights from an array of distances and a parameter ``weights``
 
     Parameters
-    ===========
+    ----------
     dist : ndarray
         The input distances
     weights : {'uniform', 'distance' or a callable}
         The kind of weighting used
 
     Returns
-    ========
+    -------
     weights_arr : array of the same shape as ``dist``
         if ``weights == 'uniform'``, then returns None
     """

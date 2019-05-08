@@ -173,8 +173,8 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
     Read more in the :ref:`User Guide <spectral_clustering>`.
 
     Parameters
-    -----------
-    affinity : array-like or sparse graph, shape: (n_samples, n_samples)
+    ----------
+    affinity : array-like or sparse matrix, shape: (n_samples, n_samples)
         The affinity matrix describing the relationship of the samples to
         embed. **Must be symmetric**.
 
@@ -240,7 +240,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
       https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
 
     Notes
-    ------
+    -----
     The graph should contain only one connect component, elsewhere
     the results make little sense.
 
@@ -298,7 +298,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
     Read more in the :ref:`User Guide <spectral_clustering>`.
 
     Parameters
-    -----------
+    ----------
     n_clusters : integer, optional
         The dimension of the projection subspace.
 

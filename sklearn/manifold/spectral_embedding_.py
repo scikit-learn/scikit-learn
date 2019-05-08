@@ -348,7 +348,7 @@ class SpectralEmbedding(BaseEstimator):
     Read more in the :ref:`User Guide <spectral_embedding>`.
 
     Parameters
-    -----------
+    ----------
     n_components : integer, default: 2
         The dimension of the projected subspace.
 

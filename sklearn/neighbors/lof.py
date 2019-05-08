@@ -400,7 +400,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     def score_samples(self):
         """Opposite of the Local Outlier Factor of X.
 
-        It is the opposite as as bigger is better, i.e. large values correspond
+        It is the opposite as bigger is better, i.e. large values correspond
         to inliers.
 
         Only available for novelty detection (when novelty is set to True).
@@ -436,7 +436,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     def _score_samples(self, X):
         """Opposite of the Local Outlier Factor of X.
 
-        It is the opposite as as bigger is better, i.e. large values correspond
+        It is the opposite as bigger is better, i.e. large values correspond
         to inliers.
 
         Only available for novelty detection (when novelty is set to True).
@@ -499,5 +499,5 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
                                         self.n_neighbors_ - 1]
         reach_dist_array = np.maximum(distances_X, dist_k)
 
-        #  1e-10 to avoid `nan' when nb of duplicates > n_neighbors_:
+        # 1e-10 to avoid `nan' when nb of duplicates > n_neighbors_:
         return 1. / (np.mean(reach_dist_array, axis=1) + 1e-10)

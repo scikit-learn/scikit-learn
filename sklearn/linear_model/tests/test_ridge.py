@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
@@ -6,7 +7,9 @@ from itertools import product
 import pytest
 
 from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_greater
@@ -37,7 +40,7 @@ from sklearn.datasets import make_regression
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import KFold
 
-from sklearn.utils import check_random_state
+from sklearn.utils import check_random_state, _IS_32BIT
 from sklearn.datasets import make_multilabel_classification
 
 diabetes = datasets.load_diabetes()
@@ -778,7 +781,8 @@ def test_raises_value_error_if_solver_not_supported():
     wrong_solver = "This is not a solver (MagritteSolveCV QuantumBitcoin)"
 
     exception = ValueError
-    message = "Solver %s not understood" % wrong_solver
+    message = ("Known solvers are 'sparse_cg', 'cholesky', 'svd'"
+               " 'lsqr', 'sag' or 'saga'. Got %s." % wrong_solver)
 
     def func():
         X = np.eye(3)
@@ -832,9 +836,57 @@ def test_ridge_fit_intercept_sparse():
     # test the solver switch and the corresponding warning
     for solver in ['saga', 'lsqr']:
         sparse = Ridge(alpha=1., tol=1.e-15, solver=solver, fit_intercept=True)
-        assert_warns(UserWarning, sparse.fit, X_csr, y)
-        assert_almost_equal(dense.intercept_, sparse.intercept_)
-        assert_array_almost_equal(dense.coef_, sparse.coef_)
+        assert_raises_regex(ValueError, "In Ridge,", sparse.fit, X_csr, y)
+
+
+@pytest.mark.parametrize('return_intercept', [False, True])
+@pytest.mark.parametrize('sample_weight', [None, np.ones(1000)])
+@pytest.mark.parametrize('arr_type', [np.array, sp.csr_matrix])
+@pytest.mark.parametrize('solver', ['auto', 'sparse_cg', 'cholesky', 'lsqr',
+                                    'sag', 'saga'])
+def test_ridge_regression_check_arguments_validity(return_intercept,
+                                                   sample_weight, arr_type,
+                                                   solver):
+    """check if all combinations of arguments give valid estimations"""
+
+    # test excludes 'svd' solver because it raises exception for sparse inputs
+
+    rng = check_random_state(42)
+    X = rng.rand(1000, 3)
+    true_coefs = [1, 2, 0.1]
+    y = np.dot(X, true_coefs)
+    true_intercept = 0.
+    if return_intercept:
+        true_intercept = 10000.
+    y += true_intercept
+    X_testing = arr_type(X)
+
+    alpha, atol, tol = 1e-3, 1e-4, 1e-6
+
+    if solver not in ['sag', 'auto'] and return_intercept:
+        assert_raises_regex(ValueError,
+                            "In Ridge, only 'sag' solver",
+                            ridge_regression, X_testing, y,
+                            alpha=alpha,
+                            solver=solver,
+                            sample_weight=sample_weight,
+                            return_intercept=return_intercept,
+                            tol=tol)
+        return
+
+    out = ridge_regression(X_testing, y, alpha=alpha,
+                           solver=solver,
+                           sample_weight=sample_weight,
+                           return_intercept=return_intercept,
+                           tol=tol,
+                           )
+
+    if return_intercept:
+        coef, intercept = out
+        assert_allclose(coef, true_coefs, rtol=0, atol=atol)
+        assert_allclose(intercept, true_intercept, rtol=0, atol=atol)
+    else:
+        assert_allclose(out, true_coefs, rtol=0, atol=atol)
 
 
 def test_errors_and_values_helper():
@@ -884,7 +936,9 @@ def test_ridge_classifier_no_support_multilabel():
     assert_raises(ValueError, RidgeClassifier().fit, X, y)
 
 
-def test_dtype_match():
+@pytest.mark.parametrize(
+    "solver", ["svd", "sparse_cg", "cholesky", "lsqr", "sag", "saga"])
+def test_dtype_match(solver):
     rng = np.random.RandomState(0)
     alpha = 1.0
 
@@ -894,25 +948,22 @@ def test_dtype_match():
     X_32 = X_64.astype(np.float32)
     y_32 = y_64.astype(np.float32)
 
-    solvers = ["svd", "sparse_cg", "cholesky", "lsqr"]
-    for solver in solvers:
+    # Check type consistency 32bits
+    ridge_32 = Ridge(alpha=alpha, solver=solver, max_iter=500, tol=1e-10,)
+    ridge_32.fit(X_32, y_32)
+    coef_32 = ridge_32.coef_
 
-        # Check type consistency 32bits
-        ridge_32 = Ridge(alpha=alpha, solver=solver)
-        ridge_32.fit(X_32, y_32)
-        coef_32 = ridge_32.coef_
+    # Check type consistency 64 bits
+    ridge_64 = Ridge(alpha=alpha, solver=solver, max_iter=500, tol=1e-10,)
+    ridge_64.fit(X_64, y_64)
+    coef_64 = ridge_64.coef_
 
-        # Check type consistency 64 bits
-        ridge_64 = Ridge(alpha=alpha, solver=solver)
-        ridge_64.fit(X_64, y_64)
-        coef_64 = ridge_64.coef_
-
-        # Do the actual checks at once for easier debug
-        assert coef_32.dtype == X_32.dtype
-        assert coef_64.dtype == X_64.dtype
-        assert ridge_32.predict(X_32).dtype == X_32.dtype
-        assert ridge_64.predict(X_64).dtype == X_64.dtype
-        assert_almost_equal(ridge_32.coef_, ridge_64.coef_, decimal=5)
+    # Do the actual checks at once for easier debug
+    assert coef_32.dtype == X_32.dtype
+    assert coef_64.dtype == X_64.dtype
+    assert ridge_32.predict(X_32).dtype == X_32.dtype
+    assert ridge_64.predict(X_64).dtype == X_64.dtype
+    assert_allclose(ridge_32.coef_, ridge_64.coef_, rtol=1e-4)
 
 
 def test_dtype_match_cholesky():
@@ -943,3 +994,32 @@ def test_dtype_match_cholesky():
     assert ridge_32.predict(X_32).dtype == X_32.dtype
     assert ridge_64.predict(X_64).dtype == X_64.dtype
     assert_almost_equal(ridge_32.coef_, ridge_64.coef_, decimal=5)
+
+
+@pytest.mark.parametrize(
+    'solver', ['svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga'])
+def test_ridge_regression_dtype_stability(solver):
+    random_state = np.random.RandomState(0)
+    n_samples, n_features = 6, 5
+    X = random_state.randn(n_samples, n_features)
+    coef = random_state.randn(n_features)
+    y = np.dot(X, coef) + 0.01 * rng.randn(n_samples)
+    alpha = 1.0
+    rtol = 1e-2 if os.name == 'nt' and _IS_32BIT else 1e-5
+
+    results = dict()
+    for current_dtype in (np.float32, np.float64):
+        results[current_dtype] = ridge_regression(X.astype(current_dtype),
+                                                  y.astype(current_dtype),
+                                                  alpha=alpha,
+                                                  solver=solver,
+                                                  random_state=random_state,
+                                                  sample_weight=None,
+                                                  max_iter=500,
+                                                  tol=1e-10,
+                                                  return_n_iter=False,
+                                                  return_intercept=False)
+
+    assert results[np.float32].dtype == np.float32
+    assert results[np.float64].dtype == np.float64
+    assert_allclose(results[np.float32], results[np.float64], rtol=rtol)

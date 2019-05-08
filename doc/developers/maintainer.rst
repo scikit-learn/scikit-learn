@@ -50,7 +50,7 @@ Making a release
    - Edit the doc/whats_new.rst file to add release title and commit
      statistics. You can retrieve commit statistics with::
 
-        $ git shortlog -ns 0.998..
+        $ git shortlog -s 0.99.33.. | cut -f2- | sort --ignore-case | tr '\n' ';' | sed 's/;/, /g;s/, $//'
 
    - Update the release date in whats_new.rst
 
