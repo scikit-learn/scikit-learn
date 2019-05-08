@@ -109,7 +109,7 @@ def check_pairwise_arrays(X, Y, precomputed=False, dtype=None,
         - 'allow-nan': accept only np.nan values in array. Values cannot
           be infinite.
 
-        .. versionadded:: 0.21
+        .. versionadded:: 0.22
            ``force_all_finite`` accepts the string ``'allow-nan'``.
 
     copy : bool
