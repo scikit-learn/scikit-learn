@@ -752,7 +752,7 @@ class OneHotEncoder(_BaseEncoder):
                 # category.
                 n_columns[feature_idx] -= 1
                 if (isinstance(self.drop, str) and self.drop == 'infrequent'
-                                               and n_infrequent == 0):
+                        and n_infrequent == 0):
                     n_columns[feature_idx] += 1  # revert decrement from above
 
         if self.drop is not None:
@@ -769,10 +769,9 @@ class OneHotEncoder(_BaseEncoder):
                             # so that no dropping happens for this feature
                             to_drop[feature_idx] = -1
             else:
-                # self.drop is an array of categories
-                # we need to remap the dropped indexes if some of the
-                # categories are infrequent. see _transform() for details
-                # about the mapping.
+                # self.drop is an array of categories. we need to remap the
+                # dropped indexes if some of the categories are infrequent.
+                # see _transform() for details about the mapping.
                 for feature_idx in range(n_features):
                     if self.infrequent_indices_[feature_idx].size > 0:
                         mapping = self._infrequent_mappings[feature_idx]
