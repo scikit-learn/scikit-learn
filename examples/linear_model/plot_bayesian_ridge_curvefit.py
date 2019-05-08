@@ -22,7 +22,7 @@ So, lambda_init should be relatively small (1.e-3) so as to reduce the bias.
 
 Also, by evaluating log marginal likelihood (L) of
 these models, we can determine which one is better.
-It can be concluded that the model with larger L are more likely.
+It can be concluded that the model with larger L is more likely.
 """
 print(__doc__)
 
