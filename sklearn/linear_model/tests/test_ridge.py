@@ -661,7 +661,6 @@ def check_dense_sparse(test_func):
         assert_array_almost_equal(ret_dense, ret_sparse, decimal=3)
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
 @pytest.mark.parametrize(
@@ -817,7 +816,6 @@ def test_ridge_classifier_cv_store_cv_values():
     assert r.cv_values_.shape == (n_samples, n_targets, n_alphas)
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_ridgecv_sample_weight():
     rng = np.random.RandomState(0)
     alphas = (0.1, 1.0, 10.0)
