@@ -1548,14 +1548,11 @@ To be removed in 0.22
    :toctree: generated/
    :template: deprecated_class.rst
 
-   covariance.GraphLasso
-   covariance.GraphLassoCV
    utils.testing.mock_mldata_urlopen
 
 .. autosummary::
    :toctree: generated/
    :template: deprecated_function.rst
 
-   covariance.graph_lasso
    datasets.fetch_mldata
    datasets.mldata_filename

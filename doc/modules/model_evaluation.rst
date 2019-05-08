@@ -100,7 +100,7 @@ Usage examples:
     >>> from sklearn.model_selection import cross_val_score
     >>> iris = datasets.load_iris()
     >>> X, y = iris.data, iris.target
-    >>> clf = svm.SVC(gamma='scale', random_state=0)
+    >>> clf = svm.SVC(random_state=0)
     >>> cross_val_score(clf, X, y, scoring='recall_macro',
     ...                 cv=5)  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     array([0.96..., 0.96..., 0.96..., 0.93..., 1.        ])
@@ -1964,7 +1964,7 @@ Next, let's compare the accuracy of ``SVC`` and ``most_frequent``::
 We see that ``SVC`` doesn't do much better than a dummy classifier. Now, let's
 change the kernel::
 
-  >>> clf = SVC(gamma='scale', kernel='rbf', C=1).fit(X_train, y_train)
+  >>> clf = SVC(kernel='rbf', C=1).fit(X_train, y_train)
   >>> clf.score(X_test, y_test)  # doctest: +ELLIPSIS
   0.94...
 
