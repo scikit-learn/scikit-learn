@@ -105,6 +105,7 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
     Brendan J. Frey and Delbert Dueck, "Clustering by Passing Messages
     Between Data Points", Science Feb. 2007
     """
+    S = check_array(S, accept_sparse=False)
     S = as_float_array(S, copy=copy)
     n_samples = S.shape[0]
 
