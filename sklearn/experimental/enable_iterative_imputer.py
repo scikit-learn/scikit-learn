@@ -12,7 +12,7 @@ as an attribute of the impute module::
     >>> from sklearn.impute import IterativeImputer
 """
 
-from ..ensemble._iterative import IterativeImputer
+from ..impute._iterative import IterativeImputer
 from .. import impute
 
 impute.IterativeImputer = IterativeImputer
