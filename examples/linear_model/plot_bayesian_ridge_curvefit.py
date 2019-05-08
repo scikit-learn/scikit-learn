@@ -8,7 +8,7 @@ Computes a Bayesian Ridge Regression of Sinusoids.
 See :ref:`bayesian_ridge_regression` for more information on the regressor.
 
 In general, when fitting a curve with a polynomial by Bayesian ridge
-regression (evidence approximation), the selection of initial values of
+regression, the selection of initial values of
 the regularization parameters (alpha, lambda) may be important.
 This is because the regularization parameters is determined by an iterative
 procedure that depends on initial values.
@@ -20,9 +20,9 @@ When starting from the default values (alpha_init = 1.90, lambda_init = 1.),
 the bias of the resulting curve is large, and the variance is small.
 So, lambda_init should be relatively small (1.e-3) so as to reduce the bias.
 
-Also, by evaluating the evidences (marginal log-likelihoods, logL) of
+Also, by evaluating log marginal likelihood (L) of
 these models, we can determine which one is better.
-It can be concluded that the model with larger evidence are more likely.
+It can be concluded that the model with larger L are more likely.
 """
 print(__doc__)
 
@@ -58,7 +58,7 @@ regs = [BayesianRidge(tol=1e-6, fit_intercept=False, compute_score=True),
                       alpha_init=inits[1][0], lambda_init=inits[1][1])]
 
 # #############################################################################
-# Plot the true and predicted curves with logLs (evidences)
+# Plot the true and predicted curves with log marginal likelihood (L)
 fig, axes = plt.subplots(1, 2, figsize=(8, 4))
 for i, (reg, ax) in enumerate(zip(regs, axes)):
     reg.fit(X_train, y_train)
@@ -76,7 +76,7 @@ for i, (reg, ax) in enumerate(zip(regs, axes)):
     if i == 0:
         title = title+" (Default)"
     ax.set_title(title, fontsize=12)
-    text = "$\\alpha={:.1f}$\n$\\lambda={:.3f}$\nlog$L={:.1f}$".format(
+    text = "$\\alpha={:.1f}$\n$\\lambda={:.3f}$\n$L={:.1f}$".format(
            reg.alpha_, reg.lambda_, reg.scores_[-1])
     ax.text(0.05, -1.0, text, fontsize=12)
 
