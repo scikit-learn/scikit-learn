@@ -32,9 +32,6 @@ def test_imports_strategies():
     with pytest.raises(ImportError):
         from sklearn.impute import IterativeImputer
 
-    with pytest.raises(ImportError):
-        from sklearn.impute._iterative import IterativeImputer
-
     import sklearn.experimental
     with pytest.raises(ImportError):
         from sklearn.impute import IterativeImputer
