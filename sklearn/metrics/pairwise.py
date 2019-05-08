@@ -296,13 +296,13 @@ def nan_euclidean_distances(X, Y=None, squared=False,
 
     Compute the euclidean distance between each pair of samples in X and Y,
     where Y=X is assumed if Y=None. When calculating the distance between a
-    pair of samples, this formulation zero-weights feature coordinates with a
+    pair of samples, this formulation ignores feature coordinates with a
     missing value in either sample and scales up the weight of the remaining
     coordinates:
 
-        dist(x,y) = sqrt(weight * sq. distance from non-missing coordinates)
+        dist(x,y) = sqrt(weight * sq. distance from present coordinates)
         where,
-        weight = Total # of coordinates / # of non-missing coordinates
+        weight = Total # of coordinates / # of present coordinates
 
     For example, the distance between ``[3, na, na, 6]`` and ``[1, na, 4, 5]``
     is:
@@ -310,7 +310,7 @@ def nan_euclidean_distances(X, Y=None, squared=False,
         .. math::
             \\sqrt{\\frac{4}{2}((3-1)^2 + (6-5)^2)}
 
-    If all the coordinates are missing or if there are no common non-missing
+    If all the coordinates are missing or if there are no common present
     coordinates then NaN is returned for that pair.
 
     Read more in the :ref:`User Guide <metrics>`.
@@ -385,7 +385,7 @@ def nan_euclidean_distances(X, Y=None, squared=False,
         else:
             missing_YT = _get_missing_mask(YT, missing_values)
 
-    # Convert to uint8 be used to calculate distances
+    # Convert to uint8 to be used for calculate distances
     not_missing_X_int = (~missing_X).astype(np.uint8)
     not_missing_YT_int = (~missing_YT).astype(np.uint8)
 
