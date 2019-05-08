@@ -427,24 +427,6 @@ def test_auc():
     assert_array_almost_equal(auc(x, y), 0.5)
 
 
-def test_auc_duplicate_values():
-    # Test Area Under Curve (AUC) computation with duplicate values
-
-    # auc() was previously sorting the x and y arrays according to the indices
-    # from numpy.argsort(x), which was reordering the tied 0's in this example
-    # and resulting in an incorrect area computation. This test detects the
-    # error.
-
-    # This will not work again in the future! so regression?
-    x = [-2.0, 0.0, 0.0, 0.0, 1.0]
-    y1 = [2.0, 0.0, 0.5, 1.0, 1.0]
-    y2 = [2.0, 1.0, 0.0, 0.5, 1.0]
-    y3 = [2.0, 1.0, 0.5, 0.0, 1.0]
-
-    for y in (y1, y2, y3):
-        assert_array_almost_equal(auc(x, y), 3.0)
-
-
 def test_auc_errors():
     # Incompatible shapes
     assert_raises(ValueError, auc, [0.0, 0.5, 1.0], [0.1, 0.2])
