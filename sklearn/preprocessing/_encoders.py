@@ -1012,7 +1012,7 @@ class OrdinalEncoder(_BaseEncoder):
     def __init__(self, categories='auto', dtype=np.float64, max_levels=None):
         self.categories = categories
         self.dtype = dtype
-        self.max_levels=max_levels
+        self.max_levels = max_levels
 
     def fit(self, X, y=None):
         """Fit the OrdinalEncoder to X.
