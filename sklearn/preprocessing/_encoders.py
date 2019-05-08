@@ -154,9 +154,9 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
         # infrequent categories to end up in a specific column, after all the
         # frequent ones. Let's say we have 4 categories with 2 infrequent
         # categories (and 2 frequent categories): we want the value in X_int
-        # for the infrequent categories to be 2 (third column), and the values
-        # for the frequent ones to be 0 and 1. The piece of code below
-        # performs this mapping.
+        # for the infrequent categories to be 2 (third and last column), and
+        # the values for the frequent ones to be 0 and 1. The piece of code
+        # below performs this mapping.
         # TODO: maybe integrate this part with the one above
         self._infrequent_mappings = {}
         huge_int = np.iinfo(X_int.dtype).max
@@ -532,12 +532,28 @@ class OneHotEncoder(_BaseEncoder):
         else:
             self._fit(X, handle_unknown=self.handle_unknown)
             self.drop_idx_ = self._compute_drop_idx()
+
+            # check if user wants to manually drop a feature that is
+            # infrequent: this is not allowed
+            if self.drop is not None and not isinstance(self.drop, str):
+                for feature_idx, (infrequent_indices, drop_idx) in enumerate(
+                        zip(self.infrequent_indices_, self.drop_idx_)):
+                    if drop_idx in infrequent_indices:
+                        raise ValueError(
+                            "Category {} of feature {} is infrequent and thus "
+                            "cannot be dropped. Use drop='infrequent' "
+                            "instead.".format(
+                                self.categories_[feature_idx][drop_idx],
+                                feature_idx
+                            )
+                        )
             return self
 
     def _compute_drop_idx(self):
         if self.drop is None:
             return None
-        elif (isinstance(self.drop, str) and self.drop == 'first'):
+        elif (isinstance(self.drop, str) and
+                self.drop in ('first', 'infrequent')):
             return np.zeros(len(self.categories_), dtype=np.int_)
         elif not isinstance(self.drop, str):
             try:
@@ -720,12 +736,43 @@ class OneHotEncoder(_BaseEncoder):
         X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown)
         n_samples, n_features = X_int.shape
 
+        # n_columns indicates, for each feature, how many columns are used in
+        # X_trans. By default this corresponds to the number of categories, but
+        # will differ if we drop some of them, or if there are infrequent
+        # categories (all mapped to the same column)
+        n_columns = [len(cats) for cats in self.categories_]
+        for feature_idx in range(n_features):
+            n_infrequent = self.infrequent_indices_[feature_idx].size
+            if n_infrequent > 0:
+                # still add 1 for the infrequent column
+                n_columns[feature_idx] += 1 - n_infrequent
+            if self.drop is not None:
+                # if drop is not None we always drop one column in general,
+                # except when drop is 'infrequent' and there is no infrequent
+                # category.
+                n_columns[feature_idx] -= 1
+                if (isinstance(self.drop, str) and self.drop == 'infrequent'
+                                               and n_infrequent == 0):
+                    n_columns[feature_idx] += 1  # revert decrement from above
+
         if self.drop is not None:
             to_drop = self.drop_idx_.copy()
 
-            if not isinstance(self.drop, str):
-                # if drop is not 'first', we need to remap the dropped indexes
-                # if some of the categories are infrequent.
+            if isinstance(self.drop, str):
+                if self.drop == 'infrequent':
+                    for feature_idx in range(n_features):
+                        if self.infrequent_indices_[feature_idx].size > 0:
+                            # drop the infrequent column (i.e. the last one)
+                            to_drop[feature_idx] = n_columns[feature_idx]
+                        else:
+                            # no infrequent category, use special marker -1
+                            # so that no dropping happens for this feature
+                            to_drop[feature_idx] = -1
+            else:
+                # self.drop is an array of categories
+                # we need to remap the dropped indexes if some of the
+                # categories are infrequent. see _transform() for details
+                # about the mapping.
                 for feature_idx in range(n_features):
                     if self.infrequent_indices_[feature_idx].size > 0:
                         mapping = self._infrequent_mappings[feature_idx]
@@ -733,22 +780,10 @@ class OneHotEncoder(_BaseEncoder):
 
             # We remove all the dropped categories from mask, and decrement
             # all categories that occur after them to avoid an empty column.
-
             to_drop = to_drop.reshape(1, -1)
-            keep_cells = X_int != to_drop
+            keep_cells = (X_int != to_drop) | (to_drop == -1)
             X_mask &= keep_cells
-            X_int[X_int > to_drop] -= 1
-
-        n_columns = [len(cats) for cats in self.categories_]
-        # update n_columns if there are infrequent categories, and if some of
-        # them have been dropped
-        for feature_idx, infrequent_idx in enumerate(self.infrequent_indices_):
-            if self.drop is not None:
-                n_columns[feature_idx] -= 1
-            n_infrequent = infrequent_idx.size
-            if n_infrequent > 0:
-                # still add 1 for the infrequent column
-                n_columns[feature_idx] += 1 - n_infrequent
+            X_int[(X_int > to_drop) & (to_drop != -1)] -= 1
 
         mask = X_mask.ravel()
         n_values = np.array([0] + n_columns)

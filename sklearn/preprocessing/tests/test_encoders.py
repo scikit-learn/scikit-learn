@@ -931,3 +931,25 @@ def test_infrequent_categories_sanity():
                         [0, 1,   0, 0,   1],
                         [0, 0,   1, 0,   0]]
     assert np.array_equal(X_trans, expected_X_trans)
+
+    # Dropping the infrequent categories works as expected
+    ohe = OneHotEncoder(categories='auto', max_levels=2, drop='infrequent')
+    X_trans = ohe.fit_transform(X).toarray()
+    expected_X_trans = [[0, 0,   1, 0,   0, 1],
+                        [1, 0,   1, 0,   1, 0],
+                        [0, 1,   0, 1,   0, 1],
+                        [0, 1,   0, 0,   1, 0],
+                        [0, 1,   0, 0,   0, 1],
+                        [0, 1,   0, 0,   1, 0],
+                        [1, 0,   0, 1,   0, 1],
+                        [0, 0,   0, 1,   1, 0],
+                        [0, 1,   1, 0,   0, 1]]
+
+    assert np.array_equal(X_trans, expected_X_trans)
+
+    # Manually dropping a category that is infrequent is not allowed
+    ohe = OneHotEncoder(categories='auto', max_levels=2, drop=[3, 1, 1])
+    err_msg = ("Category 1 of feature 1 is infrequent and thus cannot be "
+               "dropped")
+    with pytest.raises(ValueError, match=err_msg):
+        X_trans = ohe.fit(X)
