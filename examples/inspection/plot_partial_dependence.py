@@ -73,10 +73,11 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1,
 print("Training MLPRegressor...")
 tic = time()
 est = make_pipeline(QuantileTransformer(),
-                    MLPRegressor(hidden_layer_sizes=(50, 50, 50),
-                                 max_iter=500,
+                    MLPRegressor(hidden_layer_sizes=(50, 50),
+                                 learning_rate_init=0.01,
+                                 max_iter=200,
                                  early_stopping=True,
-                                 n_iter_no_change=20,
+                                 n_iter_no_change=5,
                                  validation_fraction=0.1))
 est.fit(X_train, y_train)
 print("done in {:.3f}s".format(time() - tic))
@@ -88,7 +89,7 @@ tic = time()
 # with the brute method.
 features = [0, 5, 1, 2]
 plot_partial_dependence(est, X_train, features, feature_names=names,
-                        n_jobs=3, grid_resolution=50)
+                        n_jobs=3, grid_resolution=20)
 print("done in {:.3f}s".format(time() - tic))
 fig = plt.gcf()
 fig.suptitle('Partial dependence of house value on non-location features\n'
@@ -107,7 +108,7 @@ print('Computing partial dependence plots...')
 tic = time()
 features = [0, 5, 1, 2, (5, 1)]
 plot_partial_dependence(est, X_train, features, feature_names=names,
-                        n_jobs=3, grid_resolution=50)
+                        n_jobs=3, grid_resolution=20)
 print("done in {:.3f}s".format(time() - tic))
 fig = plt.gcf()
 fig.suptitle('Partial dependence of house value on non-location features\n'
@@ -155,7 +156,7 @@ fig = plt.figure()
 
 target_feature = (1, 5)
 pdp, axes = partial_dependence(est, X, target_feature,
-                               grid_resolution=50)
+                               grid_resolution=20)
 XX, YY = np.meshgrid(axes[0], axes[1])
 Z = pdp[0].T
 ax = Axes3D(fig)
