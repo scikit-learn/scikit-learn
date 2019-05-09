@@ -17,7 +17,6 @@ from distutils.version import LooseVersion
 import numpy as np
 
 from .base import get_data_home, _fetch_remote, RemoteFileMetadata
-from ..utils import deprecated
 from ..utils import Bunch
 from ..utils._joblib import Memory
 from ..utils import _joblib
@@ -64,29 +63,6 @@ TARGETS = (
                   '1365e89b3e649747777b70e692dc1592')),
 )
 
-
-@deprecated('This function was deprecated in version 0.20 and will be removed '
-            'in 0.22.')
-def scale_face(face):
-    """Scale back to 0-1 range in case of normalization for plotting.
-
-    .. deprecated:: 0.20
-    This function was deprecated in version 0.20 and will be removed in 0.22.
-
-
-    Parameters
-    ----------
-    face : array_like
-        The array to scale
-
-    Returns
-    -------
-    array_like
-        The scaled array
-    """
-    scaled = face - face.min()
-    scaled /= scaled.max()
-    return scaled
 
 #
 # Common private utilities for data fetching from the original LFW website
