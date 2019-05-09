@@ -121,6 +121,12 @@ Support for Python 3.4 and below has been officially dropped.
   parameter which can be used to find the clusters instead of ``n_clusters``.
   :issue:`9069` by :user:`Vathsala Achar <VathsalaAchar>` and `Adrin Jalali`_.
 
+:mod:`sklearn.compose`
+......................
+
+- |API| :class:`compose.ColumnTransformer` is no longer an experimental
+  feature. :pr:`13835` by :user:`Hanmin Qin <qinhanmin2014>`.
+
 :mod:`sklearn.datasets`
 .......................
 
@@ -607,7 +613,7 @@ Support for Python 3.4 and below has been officially dropped.
 - |Feature| Classes :class:`~model_selection.GridSearchCV` and
   :class:`~model_selection.RandomizedSearchCV` now allow for refit=callable
   to add flexibility in identifying the best estimator.
-  See :doc:`/auto_examples/model_selection/plot_grid_search_refit_callable.py`.
+  See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py`.
   :pr:`11354` by :user:`Wenhao Zhang <wenhaoz@ucla.edu>`,
   `Joel Nothman`_ and :user:`Adrin Jalali <adrinjalali>`.
 
