@@ -35,7 +35,7 @@ from sklearn.model_selection import cross_val_score
 rng = np.random.RandomState(0)
 
 N_SPLITS = 5
-REGRESSOR = RandomForestRegressor(random_state=0, n_estimators=100)
+REGRESSOR = RandomForestRegressor(random_state=0)
 
 
 def get_scores_for_imputer(imputer, X_missing, y_missing):
