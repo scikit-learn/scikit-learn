@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.compose import ColumnTransformer
 from sklearn.datasets import load_boston, load_iris
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_inspection import permutation_importance
+from sklearn.inspection import permutation_importance
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler

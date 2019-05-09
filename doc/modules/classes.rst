@@ -664,25 +664,6 @@ Kernels:
    impute.IterativeImputer
    impute.MissingIndicator
    
-.. _model_inspection_ref:
-
-:mod:`sklearn.model_inspection`: Model Inspection
-=========================================  
-
-.. automodule:: sklearn.model_inspection
-   :no-members:
-   :no-inherited-members:
-
-**User guide:** See the :ref:`model_inspection` section for further details.
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   model_inspection.permutation_importance
-
 .. _kernel_approximation_ref:
 
 :mod:`sklearn.kernel_approximation` Kernel Approximation
@@ -1269,6 +1250,7 @@ Model validation
    :template: function.rst
 
    inspection.partial_dependence
+   inspection.permutation_importance
    inspection.plot_partial_dependence
 
 

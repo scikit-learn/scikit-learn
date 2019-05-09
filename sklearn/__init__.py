@@ -88,7 +88,6 @@ else:
                'naive_bayes', 'neighbors', 'neural_network', 'pipeline',
                'preprocessing', 'random_projection', 'semi_supervised',
                'svm', 'tree', 'discriminant_analysis', 'impute', 'compose',
-               'model_inspection',
                # Non-modules:
                'clone', 'get_config', 'set_config', 'config_context',
                'show_versions']

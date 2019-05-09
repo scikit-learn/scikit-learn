@@ -33,7 +33,7 @@ import numpy as np
 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.impute import SimpleImputer
-from sklearn.model_inspection import permutation_importance
+from sklearn.inspection import permutation_importance
 from sklearn.compose import ColumnTransformer
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
