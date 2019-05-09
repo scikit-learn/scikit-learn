@@ -108,8 +108,7 @@ print('Computing partial dependence plots...')
 tic = time()
 features = [0, 5, 1, 2, (5, 1)]
 plot_partial_dependence(est, X_train, features, feature_names=names,
-                        n_jobs=2, grid_resolution=20,
-                        contour_kw={"cmap": plt.cm.plasma})
+                        n_jobs=3, grid_resolution=20)
 print("done in {:.3f}s".format(time() - tic))
 fig = plt.gcf()
 fig.suptitle('Partial dependence of house value on non-location features\n'
