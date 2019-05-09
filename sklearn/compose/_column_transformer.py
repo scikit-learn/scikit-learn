@@ -10,7 +10,6 @@ different columns.
 from itertools import chain
 
 import numpy as np
-import warnings
 from scipy import sparse
 
 from ..base import clone, TransformerMixin
