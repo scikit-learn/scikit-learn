@@ -279,7 +279,6 @@ def test_error():
                   X, y_class, sample_weight=np.asarray([-1]))
 
 
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_base_estimator():
     # Test different base estimators.
     from sklearn.ensemble import RandomForestClassifier

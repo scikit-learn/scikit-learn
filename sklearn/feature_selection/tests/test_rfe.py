@@ -355,7 +355,6 @@ def test_rfe_cv_n_jobs():
     assert_array_almost_equal(rfecv.grid_scores_, rfecv_grid_scores)
 
 
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_rfe_cv_groups():
     generator = check_random_state(0)
     iris = load_iris()
