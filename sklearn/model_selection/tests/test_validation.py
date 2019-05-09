@@ -1435,7 +1435,6 @@ def test_cross_val_predict_method_checking():
         check_cross_val_predict_multiclass(est, X, y, method)
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')
 @pytest.mark.filterwarnings('ignore: The default value of n_split')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_gridsearchcv_cross_val_predict_with_method():

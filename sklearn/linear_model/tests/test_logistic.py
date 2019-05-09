@@ -1423,7 +1423,7 @@ def test_elastic_net_vs_l1_l2(C):
 
     enet_clf = LogisticRegression(penalty='elasticnet', C=C, solver='saga',
                                   random_state=0)
-    gs = GridSearchCV(enet_clf, param_grid, cv=5, iid=False, refit=True)
+    gs = GridSearchCV(enet_clf, param_grid, cv=5, refit=True)
 
     l1_clf = LogisticRegression(penalty='l1', C=C, solver='saga',
                                 random_state=0)
@@ -1468,7 +1468,6 @@ def test_LogisticRegression_elastic_net_objective(C, l1_ratio):
     assert enet_objective(lr_enet) < enet_objective(lr_l2)
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 @pytest.mark.parametrize('multi_class', ('ovr', 'multinomial'))
 def test_LogisticRegressionCV_GridSearchCV_elastic_net(multi_class):
     # make sure LogisticRegressionCV gives same best params (l1 and C) as
@@ -1526,7 +1525,7 @@ def test_LogisticRegressionCV_GridSearchCV_elastic_net_ovr():
     param_grid = {'C': Cs, 'l1_ratio': l1_ratios}
     lr = LogisticRegression(penalty='elasticnet', solver='saga',
                             random_state=0, multi_class='ovr')
-    gs = GridSearchCV(lr, param_grid, cv=cv, iid=False)
+    gs = GridSearchCV(lr, param_grid, cv=cv)
     gs.fit(X_train, y_train)
 
     # Check that predictions are 80% the same
