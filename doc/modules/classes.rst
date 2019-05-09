@@ -471,6 +471,7 @@ Samples generator
    :toctree: generated/
 
    experimental.enable_hist_gradient_boosting
+   experimental.enable_iterative_imputer
 
 
 .. _feature_extraction_ref:
@@ -1539,21 +1540,3 @@ To be removed in 0.23
 
    ensemble.partial_dependence.partial_dependence
    ensemble.partial_dependence.plot_partial_dependence
-
-
-To be removed in 0.22
----------------------
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_class.rst
-
-   covariance.GraphLasso
-   covariance.GraphLassoCV
-   preprocessing.Imputer
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_function.rst
-
-   covariance.graph_lasso
