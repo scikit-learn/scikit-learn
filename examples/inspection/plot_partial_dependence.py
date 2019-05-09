@@ -77,7 +77,7 @@ est = make_pipeline(QuantileTransformer(),
                                  learning_rate_init=0.01,
                                  max_iter=200,
                                  early_stopping=True,
-                                 n_iter_no_change=5,
+                                 n_iter_no_change=10,
                                  validation_fraction=0.1))
 est.fit(X_train, y_train)
 print("done in {:.3f}s".format(time() - tic))
@@ -155,7 +155,7 @@ plt.subplots_adjust(top=0.9)
 fig = plt.figure()
 
 target_feature = (1, 5)
-pdp, axes = partial_dependence(est, X, target_feature,
+pdp, axes = partial_dependence(est, X_train, target_feature,
                                grid_resolution=20)
 XX, YY = np.meshgrid(axes[0], axes[1])
 Z = pdp[0].T
