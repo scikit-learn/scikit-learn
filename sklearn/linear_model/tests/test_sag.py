@@ -316,8 +316,7 @@ def test_sag_pobj_matches_logistic_regression():
     clf2 = clone(clf1)
     clf3 = LogisticRegression(fit_intercept=False, tol=.0000001,
                               C=1. / alpha / n_samples, max_iter=max_iter,
-                              random_state=10, multi_class='ovr',
-                              solver='lbfgs')
+                              random_state=10, multi_class='ovr')
 
     clf1.fit(X, y)
     clf2.fit(sp.csr_matrix(X), y)

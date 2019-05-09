@@ -453,11 +453,6 @@ def test_pairwise_distances_argmin_min():
     np.testing.assert_almost_equal(dist_orig_ind, dist_chunked_ind, decimal=7)
     np.testing.assert_almost_equal(dist_orig_val, dist_chunked_val, decimal=7)
 
-    # Test batch_size deprecation warning
-    assert_warns_message(DeprecationWarning, "version 0.22",
-                         pairwise_distances_argmin_min, X, Y, batch_size=500,
-                         metric='euclidean')
-
 
 def _reduce_func(dist, start):
     return dist[:, :100]

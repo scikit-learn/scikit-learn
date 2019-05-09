@@ -66,7 +66,6 @@ def check_predictions(clf, X, y):
     assert_array_equal(probabilities.argmax(axis=1), y)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 def test_predict_2_classes():
     # Simple sanity check on a 2 classes dataset
     # Make sure it predicts the correct result on simple datasets.
@@ -82,7 +81,6 @@ def test_predict_2_classes():
                                          random_state=0), X_sp, Y1)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 def test_error():
     # Test for appropriate exception on errors
     msg = "Penalty term must be positive"
@@ -162,7 +160,6 @@ def test_lr_liblinear_warning():
                          lr.fit, iris.data, target)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 def test_predict_3_classes():
     check_predictions(LogisticRegression(C=10), X, Y2)
     check_predictions(LogisticRegression(C=10), X_sp, Y2)
@@ -293,7 +290,6 @@ def test_multinomial_binary_probabilities():
     assert_almost_equal(proba, expected_proba)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 def test_sparsify():
     # Test sparsify and densify members.
     n_samples, n_features = iris.data.shape
@@ -317,7 +313,6 @@ def test_sparsify():
     assert_array_almost_equal(pred_d_d, pred_d_s)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 def test_inconsistent_input():
     # Test that an exception is raised on inconsistent input
     rng = np.random.RandomState(0)
@@ -336,7 +331,6 @@ def test_inconsistent_input():
                   rng.random_sample((3, 12)))
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 def test_write_parameters():
     # Test that we can write to coef_ and intercept_
     clf = LogisticRegression(random_state=0)
@@ -346,7 +340,6 @@ def test_write_parameters():
     assert_array_almost_equal(clf.decision_function(X), 0)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 def test_nan():
     # Test proper NaN handling.
     # Regression test for Issue #252: fit used to go into an infinite loop.
@@ -550,7 +543,7 @@ def test_logistic_cv_multinomial_score(scoring, multiclass_agg_list):
     X, y = make_classification(n_samples=100, random_state=0, n_classes=3,
                                n_informative=6)
     train, test = np.arange(80), np.arange(80, 100)
-    lr = LogisticRegression(C=1., solver='lbfgs', multi_class='multinomial')
+    lr = LogisticRegression(C=1., multi_class='multinomial')
     # we use lbfgs to support multinomial
     params = lr.get_params()
     # we store the params to set them further in _log_reg_scoring_path
@@ -576,10 +569,10 @@ def test_multinomial_logistic_regression_string_inputs():
     # For numerical labels, let y values be taken from set (-1, 0, 1)
     y = np.array(y) - 1
     # Test for string labels
-    lr = LogisticRegression(solver='lbfgs', multi_class='multinomial')
-    lr_cv = LogisticRegressionCV(solver='lbfgs', multi_class='multinomial')
-    lr_str = LogisticRegression(solver='lbfgs', multi_class='multinomial')
-    lr_cv_str = LogisticRegressionCV(solver='lbfgs', multi_class='multinomial')
+    lr = LogisticRegression(multi_class='multinomial')
+    lr_cv = LogisticRegressionCV(multi_class='multinomial')
+    lr_str = LogisticRegression(multi_class='multinomial')
+    lr_cv_str = LogisticRegressionCV(multi_class='multinomial')
 
     lr.fit(X_ref, y)
     lr_cv.fit(X_ref, y)
@@ -600,7 +593,7 @@ def test_multinomial_logistic_regression_string_inputs():
 
     # Make sure class weights can be given with string labels
     lr_cv_str = LogisticRegression(
-        solver='lbfgs', class_weight={'bar': 1, 'baz': 2, 'foo': 0},
+        class_weight={'bar': 1, 'baz': 2, 'foo': 0},
         multi_class='multinomial').fit(X_ref, y_str)
     assert_equal(sorted(np.unique(lr_cv_str.predict(X_ref))), ['bar', 'baz'])
 
@@ -835,7 +828,7 @@ def test_logistic_regression_sample_weights():
 
         # Test that sample weights work the same with the lbfgs,
         # newton-cg, and 'sag' solvers
-        clf_sw_lbfgs = LR(solver='lbfgs', fit_intercept=False, random_state=42,
+        clf_sw_lbfgs = LR(fit_intercept=False, random_state=42,
                           multi_class='ovr')
         clf_sw_lbfgs.fit(X, y, sample_weight=sample_weight)
         clf_sw_n = LR(solver='newton-cg', fit_intercept=False, random_state=42,
@@ -1058,7 +1051,6 @@ def test_logreg_intercept_scaling():
         assert_raise_message(ValueError, msg, clf.fit, X, Y1)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 def test_logreg_intercept_scaling_zero():
     # Test that intercept_scaling is ignored when fit_intercept is False
 
