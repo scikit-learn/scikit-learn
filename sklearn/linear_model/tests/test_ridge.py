@@ -1,4 +1,3 @@
-import os
 import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
@@ -41,7 +40,7 @@ from sklearn.datasets import make_regression
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import KFold, GroupKFold, cross_val_predict
 
-from sklearn.utils import check_random_state, _IS_32BIT
+from sklearn.utils import check_random_state
 from sklearn.datasets import make_multilabel_classification
 
 diabetes = datasets.load_diabetes()
