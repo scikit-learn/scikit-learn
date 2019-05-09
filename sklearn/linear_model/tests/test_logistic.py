@@ -1572,7 +1572,7 @@ def test_LogisticRegressionCV_elasticnet_attribute_shapes():
     n_folds = 2
     lrcv = LogisticRegressionCV(penalty='elasticnet', Cs=Cs, solver='saga',
                                 cv=n_folds, l1_ratios=l1_ratios,
-                                random_state=0)
+                                multi_class='ovr', random_state=0)
     lrcv.fit(X, y)
     coefs_paths = np.asarray(list(lrcv.coefs_paths_.values()))
     assert coefs_paths.shape == (n_classes, n_folds, Cs.size,
