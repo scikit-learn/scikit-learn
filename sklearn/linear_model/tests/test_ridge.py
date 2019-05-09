@@ -1,4 +1,3 @@
-import os
 import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
@@ -41,7 +40,7 @@ from sklearn.datasets import make_regression
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import KFold, GroupKFold, cross_val_predict
 
-from sklearn.utils import check_random_state, _IS_32BIT
+from sklearn.utils import check_random_state
 from sklearn.datasets import make_multilabel_classification
 
 diabetes = datasets.load_diabetes()
@@ -1122,16 +1121,18 @@ def test_dtype_match_cholesky():
 
 @pytest.mark.parametrize(
     'solver', ['svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga'])
-def test_ridge_regression_dtype_stability(solver):
-    random_state = np.random.RandomState(0)
+@pytest.mark.parametrize('seed', range(1))
+def test_ridge_regression_dtype_stability(solver, seed):
+    random_state = np.random.RandomState(seed)
     n_samples, n_features = 6, 5
     X = random_state.randn(n_samples, n_features)
     coef = random_state.randn(n_features)
-    y = np.dot(X, coef) + 0.01 * rng.randn(n_samples)
+    y = np.dot(X, coef) + 0.01 * random_state.randn(n_samples)
     alpha = 1.0
-    rtol = 1e-2 if os.name == 'nt' and _IS_32BIT else 1e-5
-
     results = dict()
+    # XXX: Sparse CG seems to be far less numerically stable than the
+    # others, maybe we should not enable float32 for this one.
+    atol = 1e-3 if solver == "sparse_cg" else 1e-5
     for current_dtype in (np.float32, np.float64):
         results[current_dtype] = ridge_regression(X.astype(current_dtype),
                                                   y.astype(current_dtype),
@@ -1146,4 +1147,4 @@ def test_ridge_regression_dtype_stability(solver):
 
     assert results[np.float32].dtype == np.float32
     assert results[np.float64].dtype == np.float64
-    assert_allclose(results[np.float32], results[np.float64], rtol=rtol)
+    assert_allclose(results[np.float32], results[np.float64], atol=atol)

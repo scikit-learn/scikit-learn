@@ -105,7 +105,16 @@ of ``y``.  This is done for each feature in an iterative fashion, and then is
 repeated for ``max_iter`` imputation rounds. The results of the final
 imputation round are returned.
 
+.. note::
+
+   This estimator is still **experimental** for now: the predictions
+   and the API might change without any deprecation cycle. To use it,
+   you need to explicitly import ``enable_iterative_imputer``.
+
+::
+
     >>> import numpy as np
+    >>> from sklearn.experimental import enable_iterative_imputer
     >>> from sklearn.impute import IterativeImputer
     >>> imp = IterativeImputer(max_iter=10, random_state=0)
     >>> imp.fit([[1, 2], [3, 6], [4, 8], [np.nan, 3], [7, np.nan]])  # doctest: +NORMALIZE_WHITESPACE
