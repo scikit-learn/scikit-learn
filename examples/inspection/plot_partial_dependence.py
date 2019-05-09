@@ -64,7 +64,8 @@ from mpl_toolkits.mplot3d import Axes3D
 
 from sklearn.inspection import partial_dependence
 from sklearn.inspection import plot_partial_dependence
-from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.neural_network import MLPRegressor
 from sklearn.datasets.california_housing import fetch_california_housing
 
@@ -95,9 +96,8 @@ def main():
     plt.subplots_adjust(top=0.9)  # tight_layout causes overlap with suptitle
 
     print("Training GradientBoostingRegressor...")
-    est = GradientBoostingRegressor(n_estimators=100, max_depth=4,
-                                    learning_rate=0.1, loss='huber',
-                                    random_state=1)
+    est = HistGradientBoostingRegressor(max_iter=100, max_leaf_nodes=64,
+                                        learning_rate=0.1, random_state=1)
     est.fit(X, y)
     print('Computing partial dependence plots...')
     features = [0, 5, 1, 2, (5, 1)]
