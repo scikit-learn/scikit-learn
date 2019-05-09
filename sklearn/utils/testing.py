@@ -57,28 +57,6 @@ from sklearn.utils._joblib import joblib
 from sklearn.utils._unittest_backport import TestCase
 
 additional_names_in_all = []
-try:
-    from nose.tools import raises as _nose_raises
-    deprecation_message = (
-        'sklearn.utils.testing.raises has been deprecated in version 0.20 '
-        'and will be removed in 0.22. Please use '
-        'sklearn.utils.testing.assert_raises instead.')
-    raises = deprecated(deprecation_message)(_nose_raises)
-    additional_names_in_all.append('raises')
-except ImportError:
-    pass
-
-try:
-    from nose.tools import with_setup as _with_setup
-    deprecation_message = (
-        'sklearn.utils.testing.with_setup has been deprecated in version 0.20 '
-        'and will be removed in 0.22.'
-        'If your code relies on with_setup, please use'
-        ' nose.tools.with_setup instead.')
-    with_setup = deprecated(deprecation_message)(_with_setup)
-    additional_names_in_all.append('with_setup')
-except ImportError:
-    pass
 
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_raises_regexp", "assert_true",
