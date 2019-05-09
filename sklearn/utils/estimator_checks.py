@@ -270,7 +270,7 @@ def _yield_all_checks(name, estimator):
     yield check_fit_idempotent
 
 
-def check_estimator(Estimator):
+def check_estimator(Estimator, verbose=False):
     """Check if estimator adheres to scikit-learn conventions.
 
     This estimator will run an extensive test-suite for input validation,
@@ -288,7 +288,13 @@ def check_estimator(Estimator):
     estimator : estimator object or class
         Estimator to check. Estimator is a class object or instance.
 
+    verbose : boolean
+        Flag to specify in order to see a progress bar.
+
     """
+    if verbose == True:
+        raise NotImplementedError
+
     if isinstance(Estimator, type):
         # got a class
         name = Estimator.__name__
