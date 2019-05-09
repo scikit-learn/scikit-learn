@@ -1046,7 +1046,7 @@ class LinearModelCV(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
     @abstractmethod
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
-                 copy_X=True, cv='warn', verbose=False, n_jobs=None,
+                 copy_X=True, cv=None, verbose=False, n_jobs=None,
                  positive=False, random_state=None, selection='cyclic'):
         self.eps = eps
         self.n_alphas = n_alphas
@@ -1294,7 +1294,7 @@ class LassoCV(LinearModelCV, RegressorMixin):
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 3-fold cross-validation,
+        - None, to use the default 5-fold cross-validation,
         - integer, to specify the number of folds.
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -1304,9 +1304,8 @@ class LassoCV(LinearModelCV, RegressorMixin):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.20
-            ``cv`` default value if None will change from 3-fold to 5-fold
-            in v0.22.
+        .. versionchanged:: 0.22
+            ``cv`` default value if None changed from 3-fold to 5-fold.
 
     verbose : bool or integer
         Amount of verbosity.
@@ -1364,7 +1363,7 @@ class LassoCV(LinearModelCV, RegressorMixin):
     >>> from sklearn.linear_model import LassoCV
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(noise=4, random_state=0)
-    >>> reg = LassoCV(cv=5, random_state=0).fit(X, y)
+    >>> reg = LassoCV(random_state=0).fit(X, y)
     >>> reg.score(X, y) # doctest: +ELLIPSIS
     0.9993...
     >>> reg.predict(X[:1,])
@@ -1391,7 +1390,7 @@ class LassoCV(LinearModelCV, RegressorMixin):
 
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
-                 copy_X=True, cv='warn', verbose=False, n_jobs=None,
+                 copy_X=True, cv=None, verbose=False, n_jobs=None,
                  positive=False, random_state=None, selection='cyclic'):
         super().__init__(
             eps=eps, n_alphas=n_alphas, alphas=alphas,
@@ -1464,7 +1463,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 3-fold cross-validation,
+        - None, to use the default 5-fold cross-validation,
         - integer, to specify the number of folds.
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -1474,9 +1473,8 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.20
-            ``cv`` default value if None will change from 3-fold to 5-fold
-            in v0.22.
+        .. versionchanged:: 0.22
+            ``cv`` default value if None changed from 3-fold to 5-fold.
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -1539,7 +1537,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     >>> from sklearn.datasets import make_regression
 
     >>> X, y = make_regression(n_features=2, random_state=0)
-    >>> regr = ElasticNetCV(cv=5, random_state=0)
+    >>> regr = ElasticNetCV(random_state=0)
     >>> regr.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
     ElasticNetCV(alphas=None, copy_X=True, cv=5, eps=0.001, fit_intercept=True,
            l1_ratio=0.5, max_iter=1000, n_alphas=100, n_jobs=None,
@@ -1589,7 +1587,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
 
     def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False, precompute='auto',
-                 max_iter=1000, tol=1e-4, cv='warn', copy_X=True,
+                 max_iter=1000, tol=1e-4, cv=None, copy_X=True,
                  verbose=0, n_jobs=None, positive=False, random_state=None,
                  selection='cyclic'):
         self.l1_ratio = l1_ratio
@@ -2001,7 +1999,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 3-fold cross-validation,
+        - None, to use the default 5-fold cross-validation,
         - integer, to specify the number of folds.
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -2011,9 +2009,8 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.20
-            ``cv`` default value if None will change from 3-fold to 5-fold
-            in v0.22.
+        .. versionchanged:: 0.22
+            ``cv`` default value if None changed from 3-fold to 5-fold.
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -2102,7 +2099,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
     def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False,
-                 max_iter=1000, tol=1e-4, cv='warn', copy_X=True,
+                 max_iter=1000, tol=1e-4, cv=None, copy_X=True,
                  verbose=0, n_jobs=None, random_state=None,
                  selection='cyclic'):
         self.l1_ratio = l1_ratio
@@ -2183,7 +2180,7 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 3-fold cross-validation,
+        - None, to use the default 5-fold cross-validation,
         - integer, to specify the number of folds.
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -2193,9 +2190,8 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.20
-            ``cv`` default value if None will change from 3-fold to 5-fold
-            in v0.22.
+        .. versionchanged:: 0.22
+            ``cv`` default value if None changed from 3-fold to 5-fold.
 
     verbose : bool or integer
         Amount of verbosity.
@@ -2249,7 +2245,7 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
     >>> from sklearn.datasets import make_regression
     >>> from sklearn.metrics import r2_score
     >>> X, y = make_regression(n_targets=2, noise=4, random_state=0)
-    >>> reg = MultiTaskLassoCV(cv=5, random_state=0).fit(X, y)
+    >>> reg = MultiTaskLassoCV(random_state=0).fit(X, y)
     >>> r2_score(y, reg.predict(X)) # doctest: +ELLIPSIS
     0.9994...
     >>> reg.alpha_
@@ -2274,7 +2270,7 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
 
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
                  normalize=False, max_iter=1000, tol=1e-4, copy_X=True,
-                 cv='warn', verbose=False, n_jobs=None, random_state=None,
+                 cv=None, verbose=False, n_jobs=None, random_state=None,
                  selection='cyclic'):
         super().__init__(
             eps=eps, n_alphas=n_alphas, alphas=alphas,
