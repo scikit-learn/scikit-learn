@@ -67,9 +67,9 @@ class IsolationForest(BaseBagging, OutlierMixin):
     contamination : 'auto' or float, optional (default='auto')
         The amount of contamination of the data set, i.e. the proportion
         of outliers in the data set. Used when fitting to define the threshold
-        on the decision function.
+        on the scores of the samples.
 
-        - if 'auto', the decision function threshold is determined as in the
+        - if 'auto', the threshold is determined as in the
           original paper,
         - if a float, the contamination should be in the range [0, 0.5].
 
