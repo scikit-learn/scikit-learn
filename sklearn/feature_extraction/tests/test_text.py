@@ -754,7 +754,7 @@ def test_count_vectorizer_pipeline_grid_selection():
 
     # find the best parameters for both the feature extraction and the
     # classifier
-    grid_search = GridSearchCV(pipeline, parameters, n_jobs=1)
+    grid_search = GridSearchCV(pipeline, parameters, n_jobs=1, cv=3)
 
     # Check that the best model found by grid search is 100% correct on the
     # held out evaluation set.

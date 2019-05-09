@@ -148,16 +148,17 @@ def build_dataset(n_samples=50, n_features=200, n_informative_features=10,
 def test_lasso_cv():
     X, y, X_test, y_test = build_dataset()
     max_iter = 150
-    clf = LassoCV(n_alphas=10, eps=1e-3, max_iter=max_iter).fit(X, y)
+    clf = LassoCV(n_alphas=10, eps=1e-3, max_iter=max_iter, cv=3).fit(X, y)
     assert_almost_equal(clf.alpha_, 0.056, 2)
 
-    clf = LassoCV(n_alphas=10, eps=1e-3, max_iter=max_iter, precompute=True)
+    clf = LassoCV(n_alphas=10, eps=1e-3, max_iter=max_iter, precompute=True,
+                  cv=3)
     clf.fit(X, y)
     assert_almost_equal(clf.alpha_, 0.056, 2)
 
     # Check that the lars and the coordinate descent implementation
     # select a similar alpha
-    lars = LassoLarsCV(normalize=False, max_iter=30).fit(X, y)
+    lars = LassoLarsCV(normalize=False, max_iter=30, cv=3).fit(X, y)
     # for this we check that they don't fall in the grid of
     # clf.alphas further than 1
     assert np.abs(np.searchsorted(clf.alphas_[::-1], lars.alpha_) -
@@ -455,14 +456,14 @@ def test_multioutput_enetcv_error():
 
 def test_multitask_enet_and_lasso_cv():
     X, y, _, _ = build_dataset(n_features=50, n_targets=3)
-    clf = MultiTaskElasticNetCV().fit(X, y)
+    clf = MultiTaskElasticNetCV(cv=3).fit(X, y)
     assert_almost_equal(clf.alpha_, 0.00556, 3)
-    clf = MultiTaskLassoCV().fit(X, y)
+    clf = MultiTaskLassoCV(cv=3).fit(X, y)
     assert_almost_equal(clf.alpha_, 0.00278, 3)
 
     X, y, _, _ = build_dataset(n_targets=3)
     clf = MultiTaskElasticNetCV(n_alphas=10, eps=1e-3, max_iter=100,
-                                l1_ratio=[0.3, 0.5], tol=1e-3)
+                                l1_ratio=[0.3, 0.5], tol=1e-3, cv=3)
     clf.fit(X, y)
     assert_equal(0.5, clf.l1_ratio_)
     assert_equal((3, X.shape[1]), clf.coef_.shape)
@@ -471,7 +472,7 @@ def test_multitask_enet_and_lasso_cv():
     assert_equal((2, 10), clf.alphas_.shape)
 
     X, y, _, _ = build_dataset(n_targets=3)
-    clf = MultiTaskLassoCV(n_alphas=10, eps=1e-3, max_iter=100, tol=1e-3)
+    clf = MultiTaskLassoCV(n_alphas=10, eps=1e-3, max_iter=100, tol=1e-3, cv=3)
     clf.fit(X, y)
     assert_equal((3, X.shape[1]), clf.coef_.shape)
     assert_equal((3, ), clf.intercept_.shape)

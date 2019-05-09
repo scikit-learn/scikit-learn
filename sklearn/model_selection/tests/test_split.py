@@ -205,8 +205,8 @@ def test_2d_y():
                  RepeatedKFold(), RepeatedStratifiedKFold(),
                  ShuffleSplit(), StratifiedShuffleSplit(test_size=.5),
                  GroupShuffleSplit(), LeaveOneGroupOut(),
-                 LeavePGroupsOut(n_groups=2), GroupKFold(), TimeSeriesSplit(),
-                 PredefinedSplit(test_fold=groups)]
+                 LeavePGroupsOut(n_groups=2), GroupKFold(n_splits=3),
+                 TimeSeriesSplit(), PredefinedSplit(test_fold=groups)]
     for splitter in splitters:
         list(splitter.split(X, y, groups))
         list(splitter.split(X, y_2d, groups))
@@ -1473,7 +1473,8 @@ def test_nested_cv():
     X, y = make_classification(n_samples=15, n_classes=2, random_state=0)
     groups = rng.randint(0, 5, 15)
 
-    cvs = [LeaveOneGroupOut(), LeaveOneOut(), GroupKFold(), StratifiedKFold(),
+    cvs = [LeaveOneGroupOut(), LeaveOneOut(), GroupKFold(n_splits=3),
+           StratifiedKFold(),
            StratifiedShuffleSplit(n_splits=3, random_state=0)]
 
     for inner_cv, outer_cv in combinations_with_replacement(cvs, 2):

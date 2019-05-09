@@ -965,7 +965,7 @@ class GridSearchCV(BaseSearchCV):
     >>> clf = GridSearchCV(svc, parameters)
     >>> clf.fit(iris.data, iris.target)
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    GridSearchCV(error_score=...,
+    GridSearchCV(cv=None, error_score=...,
            estimator=SVC(C=1.0, break_ties=False, cache_size=...,
                          class_weight=..., coef0=...,
                          decision_function_shape='ovr', degree=..., gamma=...,

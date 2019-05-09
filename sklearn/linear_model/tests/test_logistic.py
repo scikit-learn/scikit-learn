@@ -531,7 +531,7 @@ def test_logistic_cv():
     X_ref -= X_ref.mean()
     X_ref /= X_ref.std()
     lr_cv = LogisticRegressionCV(Cs=[1.], fit_intercept=False,
-                                 solver='liblinear', multi_class='ovr')
+                                 solver='liblinear', multi_class='ovr', cv=3)
     lr_cv.fit(X_ref, y)
     lr = LogisticRegression(C=1., fit_intercept=False,
                             solver='liblinear', multi_class='ovr')

@@ -1539,10 +1539,10 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     >>> X, y = make_regression(n_features=2, random_state=0)
     >>> regr = ElasticNetCV(random_state=0)
     >>> regr.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-    ElasticNetCV(alphas=None, copy_X=True, eps=0.001, fit_intercept=True,
-           l1_ratio=0.5, max_iter=1000, n_alphas=100, n_jobs=None,
-           normalize=False, positive=False, precompute='auto', random_state=0,
-           selection='cyclic', tol=0.0001, verbose=0)
+    ElasticNetCV(alphas=None, copy_X=True, cv=None, eps=0.001,
+           fit_intercept=True, l1_ratio=0.5, max_iter=1000, n_alphas=100,
+           n_jobs=None, normalize=False, positive=False, precompute='auto',
+           random_state=0, selection='cyclic', tol=0.0001, verbose=0)
     >>> print(regr.alpha_) # doctest: +ELLIPSIS
     0.199...
     >>> print(regr.intercept_) # doctest: +ELLIPSIS
