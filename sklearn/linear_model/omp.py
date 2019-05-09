@@ -681,7 +681,7 @@ def _omp_path_residues(X_train, y_train, X_test, y_test, copy=True,
     """Compute the residues on left-out data for a full LARS path
 
     Parameters
-    -----------
+    ----------
     X_train : array, shape (n_samples, n_features)
         The data to fit the LARS on
 

@@ -44,7 +44,7 @@ from scipy.special import expit
 from time import time
 from ..model_selection import train_test_split
 from ..tree.tree import DecisionTreeRegressor
-from ..tree._tree import DTYPE
+from ..tree._tree import DTYPE, DOUBLE
 from ..tree._tree import TREE_LEAF
 from . import _gb_losses
 
@@ -1432,7 +1432,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             self._clear_state()
 
         # Check input
-        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'], dtype=DTYPE)
+        # Since check_array converts both X and y to the same dtype, but the
+        # trees use different types for X and y, checking them separately.
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'], dtype=DTYPE)
         n_samples, self.n_features_ = X.shape
 
         sample_weight_is_none = sample_weight is None
@@ -1444,6 +1446,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         check_consistent_length(X, y, sample_weight)
 
+        y = check_array(y, accept_sparse='csc', ensure_2d=False, dtype=None)
+        y = column_or_1d(y, warn=True)
         y = self._validate_y(y, sample_weight)
 
         if self.n_iter_no_change is not None:
@@ -1489,7 +1493,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                     except TypeError:  # regular estimator without SW support
                         raise ValueError(msg)
                     except ValueError as e:
-                        if 'not enough values to unpack' in str(e):  # pipeline
+                        if "pass parameters to specific steps of "\
+                           "your pipeline using the "\
+                           "stepname__parameter" in str(e):  # pipeline
                             raise ValueError(msg) from e
                         else:  # regular estimator whose input checking failed
                             raise
@@ -1688,7 +1694,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             Regression and binary classification are special cases with
             ``k == 1``, otherwise ``k==n_classes``.
         """
-        X = check_array(X, dtype=DTYPE, order="C",  accept_sparse='csr')
+        X = check_array(X, dtype=DTYPE, order="C", accept_sparse='csr')
         raw_predictions = self._raw_predict_init(X)
         for i in range(self.estimators_.shape[0]):
             predict_stage(self.estimators_, i, X, self.learning_rate,
@@ -1703,24 +1709,33 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         Returns
         -------
         feature_importances_ : array, shape (n_features,)
+            The values of this array sum to 1, unless all trees are single node
+            trees consisting of only the root node, in which case it will be an
+            array of zeros.
         """
         self._check_initialized()
 
-        total_sum = np.zeros((self.n_features_, ), dtype=np.float64)
-        for stage in self.estimators_:
-            stage_sum = sum(tree.tree_.compute_feature_importances(
-                normalize=False) for tree in stage) / len(stage)
-            total_sum += stage_sum
+        relevant_trees = [tree
+                          for stage in self.estimators_ for tree in stage
+                          if tree.tree_.node_count > 1]
+        if not relevant_trees:
+            # degenerate case where all trees have only one node
+            return np.zeros(shape=self.n_features_, dtype=np.float64)
 
-        importances = total_sum / total_sum.sum()
-        return importances
+        relevant_feature_importances = [
+            tree.tree_.compute_feature_importances(normalize=False)
+            for tree in relevant_trees
+        ]
+        avg_feature_importances = np.mean(relevant_feature_importances,
+                                          axis=0, dtype=np.float64)
+        return avg_feature_importances / np.sum(avg_feature_importances)
 
     def _validate_y(self, y, sample_weight):
         # 'sample_weight' is not utilised but is used for
         # consistency with similar method _validate_y of GBC
         self.n_classes_ = 1
         if y.dtype.kind == 'O':
-            y = y.astype(np.float64)
+            y = y.astype(DOUBLE)
         # Default implementation
         return y
 
@@ -1997,6 +2012,7 @@ shape (n_estimators, ``loss_.K``)
 
     See also
     --------
+    sklearn.ensemble.HistGradientBoostingClassifier,
     sklearn.tree.DecisionTreeClassifier, RandomForestClassifier
     AdaBoostClassifier
 
@@ -2069,7 +2085,7 @@ shape (n_estimators, ``loss_.K``)
             `classes_`. Regression and binary classification produce an
             array of shape [n_samples].
         """
-        X = check_array(X, dtype=DTYPE, order="C",  accept_sparse='csr')
+        X = check_array(X, dtype=DTYPE, order="C", accept_sparse='csr')
         raw_predictions = self._raw_predict(X)
         if raw_predictions.shape[1] == 1:
             return raw_predictions.ravel()
@@ -2457,7 +2473,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
     See also
     --------
-    DecisionTreeRegressor, RandomForestRegressor
+    sklearn.ensemble.HistGradientBoostingRegressor,
+    sklearn.tree.DecisionTreeRegressor, RandomForestRegressor
 
     References
     ----------
@@ -2510,7 +2527,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         y : array, shape (n_samples,)
             The predicted values.
         """
-        X = check_array(X, dtype=DTYPE, order="C",  accept_sparse='csr')
+        X = check_array(X, dtype=DTYPE, order="C", accept_sparse='csr')
         # In regression we can directly return the raw value from the trees.
         return self._raw_predict(X).ravel()
 

@@ -447,7 +447,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         ``predict``.
 
         Parameters
-        -----------
+        ----------
         X : indexable, length n_samples
             Must fulfill the input assumptions of the
             underlying estimator.
@@ -464,7 +464,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         ``predict_proba``.
 
         Parameters
-        -----------
+        ----------
         X : indexable, length n_samples
             Must fulfill the input assumptions of the
             underlying estimator.
@@ -481,7 +481,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         ``predict_log_proba``.
 
         Parameters
-        -----------
+        ----------
         X : indexable, length n_samples
             Must fulfill the input assumptions of the
             underlying estimator.
@@ -498,7 +498,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         ``decision_function``.
 
         Parameters
-        -----------
+        ----------
         X : indexable, length n_samples
             Must fulfill the input assumptions of the
             underlying estimator.
@@ -515,7 +515,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         ``refit=True``.
 
         Parameters
-        -----------
+        ----------
         X : indexable, length n_samples
             Must fulfill the input assumptions of the
             underlying estimator.
@@ -532,7 +532,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         ``inverse_transform`` and ``refit=True``.
 
         Parameters
-        -----------
+        ----------
         Xt : indexable, length n_samples
             Must fulfill the input assumptions of the
             underlying estimator.
@@ -930,8 +930,8 @@ class GridSearchCV(BaseSearchCV):
         dataset.
 
         For multiple metric evaluation, this needs to be a string denoting the
-        scorer is used to find the best parameters for refitting the estimator
-        at the end.
+        scorer that would be used to find the best parameters for refitting
+        the estimator at the end.
 
         Where there are considerations other than maximum score in
         choosing a best estimator, ``refit`` can be set to a function which
@@ -978,16 +978,18 @@ class GridSearchCV(BaseSearchCV):
     >>> from sklearn.model_selection import GridSearchCV
     >>> iris = datasets.load_iris()
     >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
-    >>> svc = svm.SVC(gamma="scale")
+    >>> svc = svm.SVC()
     >>> clf = GridSearchCV(svc, parameters, cv=5)
     >>> clf.fit(iris.data, iris.target)
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     GridSearchCV(cv=5, error_score=...,
-           estimator=SVC(C=1.0, cache_size=..., class_weight=..., coef0=...,
+           estimator=SVC(C=1.0, break_ties=False, cache_size=...,
+                         class_weight=..., coef0=...,
                          decision_function_shape='ovr', degree=..., gamma=...,
-                         kernel='rbf', max_iter=-1, probability=False,
-                         random_state=None, shrinking=True, tol=...,
-                         verbose=False),
+                         kernel='rbf', max_iter=-1,
+                         probability=False,
+                         random_state=None, shrinking=True,
+                         tol=..., verbose=False),
            iid=..., n_jobs=None,
            param_grid=..., pre_dispatch=..., refit=..., return_train_score=...,
            scoring=..., verbose=...)
@@ -1103,7 +1105,7 @@ class GridSearchCV(BaseSearchCV):
         This is present only if ``refit`` is not False.
 
     Notes
-    ------
+    -----
     The parameters selected are those that maximize the score of the left out
     data, unless an explicit score is passed in which case it is used instead.
 

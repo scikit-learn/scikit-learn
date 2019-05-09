@@ -12,15 +12,12 @@ from .shrunk_covariance_ import shrunk_covariance, ShrunkCovariance, \
     ledoit_wolf, ledoit_wolf_shrinkage, \
     LedoitWolf, oas, OAS
 from .robust_covariance import fast_mcd, MinCovDet
-from .graph_lasso_ import graph_lasso, GraphLasso, GraphLassoCV,\
-    graphical_lasso, GraphicalLasso, GraphicalLassoCV
+from .graph_lasso_ import graphical_lasso, GraphicalLasso, GraphicalLassoCV
 from .elliptic_envelope import EllipticEnvelope
 
 
 __all__ = ['EllipticEnvelope',
            'EmpiricalCovariance',
-           'GraphLasso',
-           'GraphLassoCV',
            'GraphicalLasso',
            'GraphicalLassoCV',
            'LedoitWolf',
@@ -29,7 +26,6 @@ __all__ = ['EllipticEnvelope',
            'ShrunkCovariance',
            'empirical_covariance',
            'fast_mcd',
-           'graph_lasso',
            'graphical_lasso',
            'ledoit_wolf',
            'ledoit_wolf_shrinkage',

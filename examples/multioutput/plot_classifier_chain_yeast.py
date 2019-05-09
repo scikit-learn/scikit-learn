@@ -54,7 +54,7 @@ X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=.2,
 
 # Fit an independent logistic regression model for each class using the
 # OneVsRestClassifier wrapper.
-base_lr = LogisticRegression(solver='lbfgs')
+base_lr = LogisticRegression()
 ovr = OneVsRestClassifier(base_lr)
 ovr.fit(X_train, Y_train)
 Y_pred_ovr = ovr.predict(X_test)

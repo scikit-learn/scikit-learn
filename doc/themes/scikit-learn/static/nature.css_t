@@ -1137,6 +1137,13 @@ table.docutils.citation tr td.label, table.docutils.footnote tr td.label {
     text-shadow: none;
 }
 
+table.longtable {
+    -moz-hyphens: none;
+    -ms-hyphens: none;
+    -webkit-hyphens: none;
+    hyphens: none;
+}
+
 /*----- testimonials ----------*/
 
 div.testimonial h2 {

@@ -420,7 +420,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         """Fit label binarizer and transform multi-class labels to binary
         labels.
 
-        The output of transform is sometimes referred to    as
+        The output of transform is sometimes referred to as
         the 1-of-K coding scheme.
 
         Parameters
