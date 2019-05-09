@@ -1361,7 +1361,7 @@ class _RidgeGCV(LinearModel):
         """Compute dual coefficients and diagonal of G^(-1)
 
         Used when we have an SVD decomposition of X
-        (n_samples <= n_features and X is dense).
+        (n_samples > n_features and X is dense).
         """
         w = ((v + alpha) ** -1) - (alpha ** -1)
         if self.fit_intercept:
