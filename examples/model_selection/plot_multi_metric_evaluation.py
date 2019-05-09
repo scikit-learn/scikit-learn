@@ -47,7 +47,7 @@ scoring = {'AUC': 'roc_auc', 'Accuracy': make_scorer(accuracy_score)}
 # ``gs.best_index_``
 gs = GridSearchCV(DecisionTreeClassifier(random_state=42),
                   param_grid={'min_samples_split': range(2, 403, 10)},
-                  scoring=scoring, cv=5, refit='AUC', return_train_score=True)
+                  scoring=scoring, refit='AUC', return_train_score=True)
 gs.fit(X, y)
 results = gs.cv_results_
 

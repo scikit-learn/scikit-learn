@@ -591,7 +591,7 @@ def test_refit_callable():
         X, y = make_classification(n_samples=100, n_features=4,
                                    random_state=42)
         clf = GridSearchCV(LinearSVC(random_state=42), {'C': [0.01, 0.1, 1]},
-                           scoring='precision', refit=True, cv=5)
+                           scoring='precision', refit=True)
         clf.fit(X, y)
         # Ensure that `best_index_ != 0` for this dummy clf
         assert clf.best_index_ != 0
@@ -605,7 +605,7 @@ def test_refit_callable():
     X, y = make_classification(n_samples=100, n_features=4,
                                random_state=42)
     clf = GridSearchCV(LinearSVC(random_state=42), {'C': [0.01, 0.1, 1]},
-                       scoring='precision', refit=refit_callable, cv=5)
+                       scoring='precision', refit=refit_callable)
     clf.fit(X, y)
 
     assert clf.best_index_ == 0
@@ -628,8 +628,7 @@ def test_refit_callable_invalid_type():
                                random_state=42)
 
     clf = GridSearchCV(LinearSVC(random_state=42), {'C': [0.1, 1]},
-                       scoring='precision', refit=refit_callable_invalid_type,
-                       cv=5)
+                       scoring='precision', refit=refit_callable_invalid_type)
     with pytest.raises(TypeError,
                        match='best_index_ returned is not an integer'):
         clf.fit(X, y)
@@ -652,7 +651,7 @@ def test_refit_callable_out_bound(out_bound_value, search_cv):
                                random_state=42)
 
     clf = search_cv(LinearSVC(random_state=42), {'C': [0.1, 1]},
-                    scoring='precision', refit=refit_callable_out_bound, cv=5)
+                    scoring='precision', refit=refit_callable_out_bound)
     with pytest.raises(IndexError, match='best_index_ index out of range'):
         clf.fit(X, y)
 
@@ -674,7 +673,7 @@ def test_refit_callable_multi_metric():
                                random_state=42)
     scoring = {'Accuracy': make_scorer(accuracy_score), 'prec': 'precision'}
     clf = GridSearchCV(LinearSVC(random_state=42), {'C': [0.01, 0.1, 1]},
-                       scoring=scoring, refit=refit_callable, cv=5)
+                       scoring=scoring, refit=refit_callable)
     clf.fit(X, y)
 
     assert clf.best_index_ == 0
@@ -1679,7 +1678,7 @@ def test_custom_run_search():
                                     err_msg='Checking ' + k)
 
     def fit_grid(param_grid):
-        return GridSearchCV(clf, param_grid, cv=5,
+        return GridSearchCV(clf, param_grid,
                             return_train_score=True).fit(X, y)
 
     class CustomSearchCV(BaseSearchCV):
@@ -1698,7 +1697,7 @@ def test_custom_run_search():
     clf = DecisionTreeRegressor(random_state=0)
     X, y = make_classification(n_samples=100, n_informative=4,
                                random_state=0)
-    mycv = CustomSearchCV(clf, cv=5, return_train_score=True).fit(X, y)
+    mycv = CustomSearchCV(clf, return_train_score=True).fit(X, y)
     gscv = fit_grid([{'max_depth': [1, 2]},
                      {'min_samples_split': [5, 10]}])
 
@@ -1721,7 +1720,7 @@ def test__custom_fit_no_run_search():
             return self
 
     # this should not raise any exceptions
-    NoRunSearchSearchCV(SVC(), cv=5).fit(X, y)
+    NoRunSearchSearchCV(SVC()).fit(X, y)
 
     class BadSearchCV(BaseSearchCV):
         def __init__(self, estimator, **kwargs):
@@ -1730,7 +1729,7 @@ def test__custom_fit_no_run_search():
     with pytest.raises(NotImplementedError,
                        match="_run_search not implemented."):
         # this should raise a NotImplementedError
-        BadSearchCV(SVC(), cv=5).fit(X, y)
+        BadSearchCV(SVC()).fit(X, y)
 
 
 @pytest.mark.parametrize("iid", [False, True])

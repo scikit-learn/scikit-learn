@@ -409,13 +409,13 @@ def check_cross_validate_single_metric(clf, X, y, scores):
     for (return_train_score, dict_len) in ((True, 4), (False, 3)):
         # Single metric passed as a string
         if return_train_score:
-            mse_scores_dict = cross_validate(clf, X, y, cv=5,
+            mse_scores_dict = cross_validate(clf, X, y,
                                              scoring='neg_mean_squared_error',
                                              return_train_score=True)
             assert_array_almost_equal(mse_scores_dict['train_score'],
                                       train_mse_scores)
         else:
-            mse_scores_dict = cross_validate(clf, X, y, cv=5,
+            mse_scores_dict = cross_validate(clf, X, y,
                                              scoring='neg_mean_squared_error',
                                              return_train_score=False)
         assert isinstance(mse_scores_dict, dict)
@@ -426,19 +426,19 @@ def check_cross_validate_single_metric(clf, X, y, scores):
         # Single metric passed as a list
         if return_train_score:
             # It must be True by default - deprecated
-            r2_scores_dict = cross_validate(clf, X, y, cv=5, scoring=['r2'],
+            r2_scores_dict = cross_validate(clf, X, y, scoring=['r2'],
                                             return_train_score=True)
             assert_array_almost_equal(r2_scores_dict['train_r2'],
                                       train_r2_scores, True)
         else:
-            r2_scores_dict = cross_validate(clf, X, y, cv=5, scoring=['r2'],
+            r2_scores_dict = cross_validate(clf, X, y, scoring=['r2'],
                                             return_train_score=False)
         assert isinstance(r2_scores_dict, dict)
         assert_equal(len(r2_scores_dict), dict_len)
         assert_array_almost_equal(r2_scores_dict['test_r2'], test_r2_scores)
 
     # Test return_estimator option
-    mse_scores_dict = cross_validate(clf, X, y, cv=5,
+    mse_scores_dict = cross_validate(clf, X, y,
                                      scoring='neg_mean_squared_error',
                                      return_estimator=True)
     for k, est in enumerate(mse_scores_dict['estimator']):
@@ -463,7 +463,7 @@ def check_cross_validate_multi_metric(clf, X, y, scores):
         for scoring in all_scoring:
             if return_train_score:
                 # return_train_score must be True by default - deprecated
-                cv_results = cross_validate(clf, X, y, cv=5, scoring=scoring,
+                cv_results = cross_validate(clf, X, y, scoring=scoring,
                                             return_train_score=True)
                 assert_array_almost_equal(cv_results['train_r2'],
                                           train_r2_scores)
@@ -471,7 +471,7 @@ def check_cross_validate_multi_metric(clf, X, y, scores):
                     cv_results['train_neg_mean_squared_error'],
                     train_mse_scores)
             else:
-                cv_results = cross_validate(clf, X, y, cv=5, scoring=scoring,
+                cv_results = cross_validate(clf, X, y, scoring=scoring,
                                             return_train_score=False)
             assert isinstance(cv_results, dict)
             assert_equal(set(cv_results.keys()),
@@ -642,19 +642,19 @@ def test_cross_val_score_with_score_func_classification():
     clf = SVC(kernel='linear')
 
     # Default score (should be the accuracy score)
-    scores = cross_val_score(clf, iris.data, iris.target, cv=5)
+    scores = cross_val_score(clf, iris.data, iris.target)
     assert_array_almost_equal(scores, [0.97, 1., 0.97, 0.97, 1.], 2)
 
     # Correct classification score (aka. zero / one score) - should be the
     # same as the default estimator score
     zo_scores = cross_val_score(clf, iris.data, iris.target,
-                                scoring="accuracy", cv=5)
+                                scoring="accuracy")
     assert_array_almost_equal(zo_scores, [0.97, 1., 0.97, 0.97, 1.], 2)
 
     # F1 score (class are balanced so f1_score should be equal to zero/one
     # score
     f1_scores = cross_val_score(clf, iris.data, iris.target,
-                                scoring="f1_weighted", cv=5)
+                                scoring="f1_weighted")
     assert_array_almost_equal(f1_scores, [0.97, 1., 0.97, 0.97, 1.], 2)
 
 
@@ -664,23 +664,23 @@ def test_cross_val_score_with_score_func_regression():
     reg = Ridge()
 
     # Default score of the Ridge regression estimator
-    scores = cross_val_score(reg, X, y, cv=5)
+    scores = cross_val_score(reg, X, y)
     assert_array_almost_equal(scores, [0.94, 0.97, 0.97, 0.99, 0.92], 2)
 
     # R2 score (aka. determination coefficient) - should be the
     # same as the default estimator score
-    r2_scores = cross_val_score(reg, X, y, scoring="r2", cv=5)
+    r2_scores = cross_val_score(reg, X, y, scoring="r2")
     assert_array_almost_equal(r2_scores, [0.94, 0.97, 0.97, 0.99, 0.92], 2)
 
     # Mean squared error; this is a loss function, so "scores" are negative
-    neg_mse_scores = cross_val_score(reg, X, y, cv=5,
+    neg_mse_scores = cross_val_score(reg, X, y,
                                      scoring="neg_mean_squared_error")
     expected_neg_mse = np.array([-763.07, -553.16, -274.38, -273.26, -1681.99])
     assert_array_almost_equal(neg_mse_scores, expected_neg_mse, 2)
 
     # Explained variance
     scoring = make_scorer(explained_variance_score)
-    ev_scores = cross_val_score(reg, X, y, cv=5, scoring=scoring)
+    ev_scores = cross_val_score(reg, X, y, scoring=scoring)
     assert_array_almost_equal(ev_scores, [0.94, 0.97, 0.97, 0.99, 0.92], 2)
 
 
@@ -743,7 +743,7 @@ def test_permutation_test_score_allow_nans():
         ('imputer', SimpleImputer(strategy='mean', missing_values=np.nan)),
         ('classifier', MockClassifier()),
     ])
-    permutation_test_score(p, X, y, cv=5)
+    permutation_test_score(p, X, y)
 
 
 def test_cross_val_score_allow_nans():
@@ -755,7 +755,7 @@ def test_cross_val_score_allow_nans():
         ('imputer', SimpleImputer(strategy='mean', missing_values=np.nan)),
         ('classifier', MockClassifier()),
     ])
-    cross_val_score(p, X, y, cv=5)
+    cross_val_score(p, X, y)
 
 
 def test_cross_val_score_multilabel():
@@ -767,9 +767,9 @@ def test_cross_val_score_multilabel():
     scoring_micro = make_scorer(precision_score, average='micro')
     scoring_macro = make_scorer(precision_score, average='macro')
     scoring_samples = make_scorer(precision_score, average='samples')
-    score_micro = cross_val_score(clf, X, y, scoring=scoring_micro, cv=5)
-    score_macro = cross_val_score(clf, X, y, scoring=scoring_macro, cv=5)
-    score_samples = cross_val_score(clf, X, y, scoring=scoring_samples, cv=5)
+    score_micro = cross_val_score(clf, X, y, scoring=scoring_micro)
+    score_macro = cross_val_score(clf, X, y, scoring=scoring_macro)
+    score_samples = cross_val_score(clf, X, y, scoring=scoring_samples)
     assert_almost_equal(score_micro, [1, 1 / 2, 3 / 4, 1 / 2, 1 / 3])
     assert_almost_equal(score_macro, [1, 1 / 2, 3 / 4, 1 / 2, 1 / 4])
     assert_almost_equal(score_samples, [1, 1 / 2, 3 / 4, 1 / 2, 1 / 4])

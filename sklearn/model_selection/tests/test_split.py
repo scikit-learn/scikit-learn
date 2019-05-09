@@ -1500,13 +1500,6 @@ def test_nsplit_default_warn():
     assert_no_warnings(TimeSeriesSplit, n_splits=5)
 
 
-def test_check_cv_default_warn():
-    # Test that warnings are raised. Will be removed in 0.22
-    assert_warns_message(FutureWarning, CV_WARNING, check_cv)
-    assert_warns_message(FutureWarning, CV_WARNING, check_cv, None)
-    assert_no_warnings(check_cv, cv=5)
-
-
 def test_build_repr():
     class MockSplitter:
         def __init__(self, a, b=0, c=None):

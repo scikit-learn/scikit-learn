@@ -83,7 +83,7 @@ X /= X.std(axis=0)
 # Estimate the covariance
 emp_cov = np.dot(X.T, X) / n_samples
 
-model = GraphicalLassoCV(cv=5)
+model = GraphicalLassoCV()
 model.fit(X)
 cov_ = model.covariance_
 prec_ = model.precision_

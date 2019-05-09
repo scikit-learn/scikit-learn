@@ -1453,7 +1453,7 @@ def test_elastic_net_vs_l1_l2(C):
 
     enet_clf = LogisticRegression(penalty='elasticnet', C=C, solver='saga',
                                   random_state=0)
-    gs = GridSearchCV(enet_clf, param_grid, cv=5, refit=True)
+    gs = GridSearchCV(enet_clf, param_grid, refit=True)
 
     l1_clf = LogisticRegression(penalty='l1', C=C, solver='saga',
                                 random_state=0)
@@ -1577,7 +1577,7 @@ def test_LogisticRegressionCV_no_refit(multi_class):
     l1_ratios = np.linspace(0, 1, 2)
 
     lrcv = LogisticRegressionCV(penalty='elasticnet', Cs=Cs, solver='saga',
-                                cv=5, l1_ratios=l1_ratios, random_state=0,
+                                l1_ratios=l1_ratios, random_state=0,
                                 multi_class=multi_class, refit=False)
     lrcv.fit(X, y)
     assert lrcv.C_.shape == (n_classes,)
