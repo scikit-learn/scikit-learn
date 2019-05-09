@@ -121,6 +121,12 @@ Support for Python 3.4 and below has been officially dropped.
   parameter which can be used to find the clusters instead of ``n_clusters``.
   :issue:`9069` by :user:`Vathsala Achar <VathsalaAchar>` and `Adrin Jalali`_.
 
+:mod:`sklearn.compose`
+......................
+
+- |API| :class:`compose.ColumnTransformer` is no longer an experimental
+  feature. :pr:`13835` by :user:`Hanmin Qin <qinhanmin2014>`.
+
 :mod:`sklearn.datasets`
 .......................
 
