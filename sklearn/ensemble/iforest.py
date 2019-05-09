@@ -283,8 +283,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
             self.offset_ = -0.5
             return self
 
-        # else, define offset_ wrt contamination parameter, so that the
-        # threshold_ attribute is implicitly 0 and is not needed anymore:
+        # else, define offset_ wrt contamination parameter
         self.offset_ = np.percentile(self.score_samples(X),
                                      100. * self.contamination)
 
