@@ -96,9 +96,9 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     contamination : 'auto' or float, optional (default='auto')
         The amount of contamination of the data set, i.e. the proportion
         of outliers in the data set. When fitting this is used to define the
-        threshold on the decision function.
+        threshold on the scores of the samples.
 
-        - if 'auto', the decision function threshold is determined as in the
+        - if 'auto', the threshold is determined as in the
           original paper,
         - if a float, the contamination should be in the range [0, 0.5].
 
