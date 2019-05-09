@@ -691,7 +691,9 @@ def adjusted_mutual_info_score(labels_true, labels_pred,
         How to compute the normalizer in the denominator. Possible options
         are 'min', 'geometric', 'arithmetic', and 'max'.
 
-        .. versionadded:: 0.20
+        .. versionadded:: 0.22
+           The default value of ``average_method`` changed from 'max' to
+           'arithmetic'.
 
     Returns
     -------
@@ -802,11 +804,13 @@ def normalized_mutual_info_score(labels_true, labels_pred,
     labels_pred : array, shape = [n_samples]
         A clustering of the data into disjoint subsets.
 
-    average_method : string, optional (default: 'warn')
+    average_method : string, optional (default: 'arithmetic')
         How to compute the normalizer in the denominator. Possible options
         are 'min', 'geometric', 'arithmetic', and 'max'.
 
-        .. versionadded:: 0.20
+        .. versionadded:: 0.22
+           The default value of ``average_method`` changed from 'geometric' to
+           'arithmetic'.
 
     Returns
     -------
