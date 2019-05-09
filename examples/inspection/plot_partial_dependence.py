@@ -47,16 +47,16 @@ from sklearn.datasets.california_housing import fetch_california_housing
 
 
 cal_housing = fetch_california_housing()
-
-X, y = cal_housing.data, cal_housing.target
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1,
-                                                    random_state=0)
 names = cal_housing.feature_names
+X, y = cal_housing.data, cal_housing.target
 
 # Center target to avoid gradient boosting init bias: gradient boosting
 # with the 'recursion' method does not account for the initial estimator
 # (here the average target, by default)
 y -= y.mean()
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1,
+                                                    random_state=0)
 
 print("Training MLPRegressor...")
 tic = time()
