@@ -691,7 +691,7 @@ def adjusted_mutual_info_score(labels_true, labels_pred,
         How to compute the normalizer in the denominator. Possible options
         are 'min', 'geometric', 'arithmetic', and 'max'.
 
-        .. versionadded:: 0.22
+        .. versionchanged:: 0.22
            The default value of ``average_method`` changed from 'max' to
            'arithmetic'.
 
@@ -808,7 +808,7 @@ def normalized_mutual_info_score(labels_true, labels_pred,
         How to compute the normalizer in the denominator. Possible options
         are 'min', 'geometric', 'arithmetic', and 'max'.
 
-        .. versionadded:: 0.22
+        .. versionchanged:: 0.22
            The default value of ``average_method`` changed from 'geometric' to
            'arithmetic'.
 
