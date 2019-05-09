@@ -660,7 +660,6 @@ def check_dense_sparse(test_func):
         assert_array_almost_equal(ret_dense, ret_sparse, decimal=3)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
 @pytest.mark.parametrize(
         'test_func',
@@ -714,7 +713,6 @@ def test_class_weights():
     assert_array_almost_equal(reg.intercept_, rega.intercept_)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 @pytest.mark.parametrize('reg', (RidgeClassifier, RidgeClassifierCV))
 def test_class_weight_vs_sample_weight(reg):
     """Check class_weights resemble sample_weights behavior."""
@@ -744,7 +742,6 @@ def test_class_weight_vs_sample_weight(reg):
     assert_almost_equal(reg1.coef_, reg2.coef_)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_class_weights_cv():
     # Test class weights for cross validated ridge classifier.
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
@@ -761,7 +758,6 @@ def test_class_weights_cv():
     assert_array_equal(reg.predict([[-.2, 2]]), np.array([-1]))
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_ridgecv_store_cv_values():
     rng = np.random.RandomState(42)
 
@@ -789,7 +785,6 @@ def test_ridgecv_store_cv_values():
                         r.fit, x, y)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_ridge_classifier_cv_store_cv_values():
     x = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
                   [1.0, 1.0], [1.0, 0.0]])
@@ -909,7 +904,6 @@ def test_sparse_design_with_sample_weights():
                                       decimal=6)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_ridgecv_int_alphas():
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
                   [1.0, 1.0], [1.0, 0.0]])
@@ -920,7 +914,6 @@ def test_ridgecv_int_alphas():
     ridge.fit(X, y)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_ridgecv_negative_alphas():
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
                   [1.0, 1.0], [1.0, 0.0]])

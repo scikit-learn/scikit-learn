@@ -733,7 +733,6 @@ def test_vectorizer_inverse_transform(Vectorizer):
         assert_array_equal(np.sort(terms), np.sort(terms2))
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_count_vectorizer_pipeline_grid_selection():
     # raw documents
     data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
@@ -770,7 +769,6 @@ def test_count_vectorizer_pipeline_grid_selection():
     assert_equal(best_vectorizer.ngram_range, (1, 1))
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_vectorizer_pipeline_grid_selection():
     # raw documents
     data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS

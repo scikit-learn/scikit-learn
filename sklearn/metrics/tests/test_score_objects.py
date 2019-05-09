@@ -252,7 +252,6 @@ def test_check_scoring_and_check_multimetric_scoring():
                              scoring=scoring)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_check_scoring_gridsearchcv():
     # test that check_scoring works on GridSearchCV and pipeline.
     # slightly redundant non-regression test.

@@ -175,11 +175,10 @@ def test_parameter_grid():
     assert_grid_iter_equals_getitem(has_empty)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_grid_search():
     # Test that the best estimator contains the right value for foo_param
     clf = MockClassifier()
-    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, verbose=3)
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=3, verbose=3)
     # make sure it selects the smallest parameter in case of ties
     old_stdout = sys.stdout
     sys.stdout = StringIO()
@@ -255,7 +254,6 @@ def test_grid_search_no_score():
                          [[1]])
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_grid_search_score_method():
     X, y = make_classification(n_samples=100, n_classes=2, flip_y=.2,
                                random_state=0)
@@ -285,7 +283,6 @@ def test_grid_search_score_method():
     assert_almost_equal(score_auc, score_no_score_auc)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of n_split')  # 0.22
 def test_grid_search_groups():
     # Check if ValueError (when groups is None) propagates to GridSearchCV
     # And also check if groups is correctly passed to the cv object
@@ -297,8 +294,8 @@ def test_grid_search_groups():
     clf = LinearSVC(random_state=0)
     grid = {'C': [1]}
 
-    group_cvs = [LeaveOneGroupOut(), LeavePGroupsOut(2), GroupKFold(),
-                 GroupShuffleSplit()]
+    group_cvs = [LeaveOneGroupOut(), LeavePGroupsOut(2),
+                 GroupKFold(n_splits=3), GroupShuffleSplit(n_splits=3)]
     for cv in group_cvs:
         gs = GridSearchCV(clf, grid, cv=cv)
         assert_raise_message(ValueError,
@@ -313,7 +310,6 @@ def test_grid_search_groups():
         gs.fit(X, y)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_classes__property():
     # Test that classes_ property matches best_estimator_.classes_
     X = np.arange(100).reshape(10, 10)
@@ -341,25 +337,25 @@ def test_classes__property():
     assert not hasattr(grid_search, 'classes_')
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_trivial_cv_results_attr():
     # Test search over a "grid" with only one point.
     clf = MockClassifier()
-    grid_search = GridSearchCV(clf, {'foo_param': [1]})
+    grid_search = GridSearchCV(clf, {'foo_param': [1]}, cv=3)
     grid_search.fit(X, y)
     assert hasattr(grid_search, "cv_results_")
 
-    random_search = RandomizedSearchCV(clf, {'foo_param': [0]}, n_iter=1)
+    random_search = RandomizedSearchCV(clf, {'foo_param': [0]}, n_iter=1, cv=3)
     random_search.fit(X, y)
     assert hasattr(grid_search, "cv_results_")
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_no_refit():
     # Test that GSCV can be used for model selection alone without refitting
     clf = MockClassifier()
     for scoring in [None, ['accuracy', 'precision']]:
-        grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, refit=False)
+        grid_search = GridSearchCV(
+            clf, {'foo_param': [1, 2, 3]}, refit=False, cv=3
+        )
         grid_search.fit(X, y)
         assert not hasattr(grid_search, "best_estimator_") and \
             hasattr(grid_search, "best_index_") and \
@@ -385,7 +381,6 @@ def test_no_refit():
                              X, y)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_grid_search_error():
     # Test that grid search will capture errors on data with different length
     X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
@@ -395,7 +390,6 @@ def test_grid_search_error():
     assert_raises(ValueError, cv.fit, X_[:180], y_)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_grid_search_one_grid_point():
     X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
     param_dict = {"C": [1.0], "kernel": ["rbf"], "gamma": [0.1]}
@@ -410,17 +404,15 @@ def test_grid_search_one_grid_point():
     assert_array_equal(clf.dual_coef_, cv.best_estimator_.dual_coef_)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_grid_search_when_param_grid_includes_range():
     # Test that the best estimator contains the right value for foo_param
     clf = MockClassifier()
     grid_search = None
-    grid_search = GridSearchCV(clf, {'foo_param': range(1, 4)})
+    grid_search = GridSearchCV(clf, {'foo_param': range(1, 4)}, cv=3)
     grid_search.fit(X, y)
     assert_equal(grid_search.best_estimator_.foo_param, 2)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_grid_search_bad_param_grid():
     param_dict = {"C": 1.0}
     clf = SVC(gamma='auto')
@@ -450,7 +442,6 @@ def test_grid_search_bad_param_grid():
     assert_raises(ValueError, GridSearchCV, clf, param_dict)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_grid_search_sparse():
     # Test that grid search works with both dense and sparse matrices
     X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
@@ -472,7 +463,6 @@ def test_grid_search_sparse():
     assert_equal(C, C2)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_grid_search_sparse_scoring():
     X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
 
@@ -508,7 +498,6 @@ def test_grid_search_sparse_scoring():
     assert_array_equal(y_pred, y_pred3)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_grid_search_precomputed_kernel():
     # Test that grid search works when the input features are given in the
     # form of a precomputed kernel matrix
@@ -537,7 +526,6 @@ def test_grid_search_precomputed_kernel():
     assert_raises(ValueError, cv.fit, K_train.tolist(), y_train)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_grid_search_precomputed_kernel_error_nonsquare():
     # Test that grid search returns an error with a non-square precomputed
     # training kernel matrix
@@ -681,7 +669,6 @@ def test_refit_callable_multi_metric():
     assert not hasattr(clf, 'best_score_')
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_gridsearch_nd():
     # Pass X as list in GridSearchCV
     X_4d = np.arange(10 * 5 * 3 * 2).reshape(10, 5, 3, 2)
@@ -749,7 +736,6 @@ def test_pandas_input():
         assert hasattr(grid_search, "cv_results_")
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_unsupervised_grid_search():
     # test grid-search with unsupervised estimator
     X, y = make_blobs(random_state=0)
@@ -776,7 +762,6 @@ def test_unsupervised_grid_search():
     assert_equal(grid_search.best_params_["n_clusters"], 4)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_gridsearch_no_predict():
     # test grid-search with an estimator without predict.
     # slight duplication of a test from KDE
@@ -1188,7 +1173,6 @@ def compare_refit_methods_when_refit_with_acc(search_multi, search_acc, refit):
         assert_equal(getattr(search_multi, key), getattr(search_acc, key))
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_search_cv_results_rank_tie_breaking():
     X, y = make_blobs(n_samples=50, random_state=42)
 
@@ -1220,7 +1204,6 @@ def test_search_cv_results_rank_tie_breaking():
         assert_almost_equal(search.cv_results_['rank_test_score'], [1, 1, 3])
 
 
-@pytest.mark.filterwarnings('ignore: The default value of n_split')  # 0.22
 def test_search_cv_results_none_param():
     X, y = [[1], [2], [3], [4], [5]], [0, 0, 0, 0, 1]
     estimators = (DecisionTreeRegressor(), DecisionTreeClassifier())
@@ -1297,7 +1280,6 @@ def test_grid_search_correct_score_results():
                 assert_almost_equal(correct_score, cv_scores[i])
 
 
-@pytest.mark.filterwarnings('ignore: The default value of n_split')  # 0.22
 def test_fit_grid_point():
     X, y = make_classification(random_state=0)
     cv = StratifiedKFold(random_state=0)
@@ -1326,25 +1308,23 @@ def test_fit_grid_point():
                          {'score': scorer}, verbose=True)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_pickle():
     # Test that a fit search can be pickled
     clf = MockClassifier()
-    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, refit=True)
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, refit=True, cv=3)
     grid_search.fit(X, y)
     grid_search_pickled = pickle.loads(pickle.dumps(grid_search))
     assert_array_almost_equal(grid_search.predict(X),
                               grid_search_pickled.predict(X))
 
     random_search = RandomizedSearchCV(clf, {'foo_param': [1, 2, 3]},
-                                       refit=True, n_iter=3)
+                                       refit=True, n_iter=3, cv=3)
     random_search.fit(X, y)
     random_search_pickled = pickle.loads(pickle.dumps(random_search))
     assert_array_almost_equal(random_search.predict(X),
                               random_search_pickled.predict(X))
 
 
-@pytest.mark.filterwarnings('ignore: The default value of n_split')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
 def test_grid_search_with_multioutput_data():
     # Test search with multi-output estimator
@@ -1478,7 +1458,6 @@ def test_grid_search_failing_classifier():
     assert gs.best_index_ != clf.FAILING_PARAMETER
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_grid_search_failing_classifier_raise():
     # GridSearchCV with on_error == 'raise' raises the error
 
@@ -1530,7 +1509,6 @@ def test_parameters_sampler_replacement():
     assert_equal(len(samples), 7)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_stochastic_gradient_loss_param():
     # Make sure the predict_proba works when loss is specified
     # as one of the parameters in the param_grid.
@@ -1540,7 +1518,7 @@ def test_stochastic_gradient_loss_param():
     X = np.arange(24).reshape(6, -1)
     y = [0, 0, 0, 1, 1, 1]
     clf = GridSearchCV(estimator=SGDClassifier(tol=1e-3, loss='hinge'),
-                       param_grid=param_grid)
+                       param_grid=param_grid, cv=3)
 
     # When the estimator is not fitted, `predict_proba` is not available as the
     # loss is 'hinge'.
@@ -1555,19 +1533,18 @@ def test_stochastic_gradient_loss_param():
         'loss': ['hinge'],
     }
     clf = GridSearchCV(estimator=SGDClassifier(tol=1e-3, loss='hinge'),
-                       param_grid=param_grid)
+                       param_grid=param_grid, cv=3)
     assert not hasattr(clf, "predict_proba")
     clf.fit(X, y)
     assert not hasattr(clf, "predict_proba")
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_search_train_scores_set_to_false():
     X = np.arange(6).reshape(6, -1)
     y = [0, 0, 0, 1, 1, 1]
     clf = LinearSVC(random_state=0)
 
-    gs = GridSearchCV(clf, param_grid={'C': [0.1, 0.2]})
+    gs = GridSearchCV(clf, param_grid={'C': [0.1, 0.2]}, cv=3)
     gs.fit(X, y)
 
 
@@ -1652,10 +1629,9 @@ def test_grid_search_cv_splits_consistency():
                                   per_param_scores[3])
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_transform_inverse_transform_round_trip():
     clf = MockClassifier()
-    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, verbose=3)
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=3, verbose=3)
 
     grid_search.fit(X, y)
     X_round_trip = grid_search.inverse_transform(grid_search.transform(X))

@@ -458,7 +458,6 @@ def check_gridsearch(name):
     clf.fit(iris.data, iris.target)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
 def test_gridsearch(name):
     # Check that base trees can be grid-searched.
