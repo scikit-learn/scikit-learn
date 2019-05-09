@@ -81,7 +81,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
 
         if self._categories != 'auto':
             if len(self._categories) != n_features:
-                raise ValueError("Shape mismatch: if n_values is an array,"
+                raise ValueError("Shape mismatch: if categories is an array,"
                                  " it has to be of shape (n_features,).")
 
         self.categories_ = []
@@ -328,23 +328,23 @@ class OneHotEncoder(_BaseEncoder):
 
     # Deprecated attributes
 
-    @property
     @deprecated("The ``active_features_`` attribute was deprecated in version "
                 "0.20 and will be removed 0.22.")
+    @property
     def active_features_(self):
         check_is_fitted(self, 'categories_')
         return self._active_features_
 
-    @property
     @deprecated("The ``feature_indices_`` attribute was deprecated in version "
                 "0.20 and will be removed 0.22.")
+    @property
     def feature_indices_(self):
         check_is_fitted(self, 'categories_')
         return self._feature_indices_
 
-    @property
     @deprecated("The ``n_values_`` attribute was deprecated in version "
                 "0.20 and will be removed 0.22.")
+    @property
     def n_values_(self):
         check_is_fitted(self, 'categories_')
         return self._n_values_
@@ -675,15 +675,10 @@ class OneHotEncoder(_BaseEncoder):
 
     def _transform_new(self, X):
         """New implementation assuming categorical input"""
-        X_temp = check_array(X, dtype=None)
-        if not hasattr(X, 'dtype') and np.issubdtype(X_temp.dtype, np.str_):
-            X = check_array(X, dtype=np.object)
-        else:
-            X = X_temp
-
-        n_samples, n_features = X.shape
-
+        # validation of X happens in _check_X called by _transform
         X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown)
+
+        n_samples, n_features = X_int.shape
 
         if self.drop is not None:
             to_drop = self.drop_idx_.reshape(1, -1)

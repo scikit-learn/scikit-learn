@@ -19,4 +19,6 @@ coverage:
         # https://github.com/codecov/browser-extension
         target: auto
         threshold: 1%
- 
+
+ignore:
+- "sklearn/externals"

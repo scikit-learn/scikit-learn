@@ -8,13 +8,13 @@ used with a variety of estimators to do round-robin regression, treating every
 variable as an output in turn.
 
 In this example we compare some estimators for the purpose of missing feature
-imputation with :class:`sklearn.imputeIterativeImputer`::
+imputation with :class:`sklearn.impute.IterativeImputer`:
 
-    :class:`~sklearn.linear_model.BayesianRidge`: regularized linear regression
-    :class:`~sklearn.tree.DecisionTreeRegressor`: non-linear regression
-    :class:`~sklearn.ensemble.ExtraTreesRegressor`: similar to missForest in R
-    :class:`~sklearn.neighbors.KNeighborsRegressor`: comparable to other KNN
-    imputation approaches
+* :class:`~sklearn.linear_model.BayesianRidge`: regularized linear regression
+* :class:`~sklearn.tree.DecisionTreeRegressor`: non-linear regression
+* :class:`~sklearn.ensemble.ExtraTreesRegressor`: similar to missForest in R
+* :class:`~sklearn.neighbors.KNeighborsRegressor`: comparable to other KNN
+  imputation approaches
 
 Of particular interest is the ability of
 :class:`sklearn.impute.IterativeImputer` to mimic the behavior of missForest, a
@@ -42,6 +42,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
+# To use this experimental feature, we need to explicitly ask for it:
+from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.datasets import fetch_california_housing
 from sklearn.impute import SimpleImputer
 from sklearn.impute import IterativeImputer
@@ -57,6 +59,10 @@ N_SPLITS = 5
 rng = np.random.RandomState(0)
 
 X_full, y_full = fetch_california_housing(return_X_y=True)
+# ~2k samples is enough for the purpose of the example.
+# Remove the following two lines for a slower run with different error bars.
+X_full = X_full[::10]
+y_full = y_full[::10]
 n_samples, n_features = X_full.shape
 
 # Estimate the score on the entire dataset, with no missing values
@@ -93,16 +99,16 @@ for strategy in ('mean', 'median'):
 estimators = [
     BayesianRidge(),
     DecisionTreeRegressor(max_features='sqrt', random_state=0),
-    ExtraTreesRegressor(n_estimators=10, n_jobs=-1, random_state=0),
+    ExtraTreesRegressor(n_estimators=10, random_state=0),
     KNeighborsRegressor(n_neighbors=15)
 ]
 score_iterative_imputer = pd.DataFrame()
-for estimator in estimators:
+for impute_estimator in estimators:
     estimator = make_pipeline(
-        IterativeImputer(random_state=0, estimator=estimator),
+        IterativeImputer(random_state=0, estimator=impute_estimator),
         br_estimator
     )
-    score_iterative_imputer[estimator.__class__.__name__] = \
+    score_iterative_imputer[impute_estimator.__class__.__name__] = \
         cross_val_score(
             estimator, X_missing, y_missing, scoring='neg_mean_squared_error',
             cv=N_SPLITS
