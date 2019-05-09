@@ -46,17 +46,29 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.datasets.california_housing import fetch_california_housing
 
 
+##############################################################################
+# California Housing data preprocessing
+# -------------------------------------
+#
+# Center target to avoid gradient boosting init bias: gradient boosting
+# with the 'recursion' method does not account for the initial estimator
+# (here the average target, by default)
+#
 cal_housing = fetch_california_housing()
 names = cal_housing.feature_names
 X, y = cal_housing.data, cal_housing.target
 
-# Center target to avoid gradient boosting init bias: gradient boosting
-# with the 'recursion' method does not account for the initial estimator
-# (here the average target, by default)
 y -= y.mean()
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1,
                                                     random_state=0)
+
+##############################################################################
+# Partial Dependence computation
+# ------------------------------
+#
+# Let's fit the models and compute the partial dependence plots either
+# or one or two variables at a time.
 
 print("Training MLPRegressor...")
 tic = time()
@@ -103,6 +115,9 @@ fig.suptitle('Partial dependence of house value on non-location features\n'
 plt.subplots_adjust(top=0.9)
 
 ##############################################################################
+# Analysis of the plots
+# ---------------------
+#
 # We can clearly see that the median house price shows a linear relationship
 # with the median income (top left) and that the house price drops when the
 # average occupants per household increases (top middle).
@@ -128,7 +143,8 @@ plt.subplots_adjust(top=0.9)
 # two features: for an average occupancy greater than two, the house price is
 # nearly independent of the house age, whereas for values less than two there
 # is a strong dependence on age.
-#
+
+##############################################################################
 # 3D interaction plots
 # --------------------
 #
