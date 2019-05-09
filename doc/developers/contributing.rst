@@ -626,7 +626,7 @@ reviewing pull requests, you may find :ref:`this tip
 .. _testing_coverage:
 
 Testing and improving test coverage
-------------------------------------
+-----------------------------------
 
 High-quality `unit testing <https://en.wikipedia.org/wiki/Unit_testing>`_
 is a corner-stone of the scikit-learn development process. For this
@@ -641,22 +641,42 @@ the corresponding subpackages.
 
 We expect code coverage of new features to be at least around 90%.
 
-.. note:: **Workflow to improve test coverage**
-
-   To test code coverage, you need to install the `coverage
-   <https://pypi.org/project/coverage/>`_ package in addition to pytest.
-
-   1. Run 'make test-coverage'. The output lists for each file the line
-      numbers that are not tested.
-
-   2. Find a low hanging fruit, looking at which lines are not tested,
-      write or adapt a test specifically for these lines.
-
-   3. Loop.
-
 For guidelines on how to use ``pytest`` efficiently, see the
 :ref:`pytest_tips`.
 
+Writing matplotlib related tests
+................................
+
+Test fixtures ensure that a set of tests will be executing with the appropriate
+initialization and cleanup. The scikit-learn test suite implements a fixture
+which can be used with ``matplotlib``.
+
+``pyplot``
+    The ``pyplot`` fixture should be used when a test function is dealing with
+    ``matplotlib``. ``matplotlib`` is a soft dependency and is not required.
+    This fixture is in charge of skipping the tests if ``matplotlib`` is not
+    installed. In addition, figures created during the tests will be
+    automatically closed once the test function has been executed.
+
+To use this fixture in a test function, one needs to pass it as an
+argument::
+
+    def test_requiring_mpl_fixture(pyplot):
+        # you can now safely use matplotlib
+
+Workflow to improve test coverage
+.................................
+
+To test code coverage, you need to install the `coverage
+<https://pypi.org/project/coverage/>`_ package in addition to pytest.
+
+1. Run 'make test-coverage'. The output lists for each file the line
+    numbers that are not tested.
+
+2. Find a low hanging fruit, looking at which lines are not tested,
+    write or adapt a test specifically for these lines.
+
+3. Loop.
 
 Developers web site
 -------------------
@@ -1488,8 +1508,8 @@ decide what tests to run and what input data is appropriate. Tags can depend on
 estimator parameters or even system architecture and can in general only be
 determined at runtime.
 
-The default value of all tags except for ``X_types`` is ``False``. These are
-defined in the ``BaseEstimator`` class.
+The default value of all tags except for ``X_types`` and ``requires_fit`` is
+``False``. These are defined in the ``BaseEstimator`` class.
 
 The current set of estimator tags are:
 
@@ -1511,6 +1531,10 @@ multilabel
 stateless
     whether the estimator needs access to data for fitting. Even though
     an estimator is stateless, it might still need a call to ``fit`` for initialization.
+
+requires_fit
+    whether the estimator requires to be fitted before calling one of
+    `transform`, `predict`, `predict_proba`, or `decision_function`.
 
 allow_nan
     whether the estimator supports data with missing values encoded as np.NaN

@@ -75,10 +75,10 @@ y_train = y[:train_samples]
 y_test = y[train_samples:]
 
 # Create classifiers
-lr = LogisticRegression(solver='lbfgs')
+lr = LogisticRegression()
 gnb = GaussianNB()
 svc = LinearSVC(C=1.0)
-rfc = RandomForestClassifier(n_estimators=100)
+rfc = RandomForestClassifier()
 
 
 # #############################################################################

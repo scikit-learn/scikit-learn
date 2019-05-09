@@ -357,7 +357,7 @@ def _argmin_min_reduce(dist, start):
 
 
 def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
-                                  batch_size=None, metric_kwargs=None):
+                                  metric_kwargs=None):
     """Compute minimum distances between one point and a set of points.
 
     This function computes for each row in X, the index of the row of Y which
@@ -408,11 +408,6 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
-    batch_size : integer
-        .. deprecated:: 0.20
-            Deprecated for removal in 0.22.
-            Use sklearn.set_config(working_memory=...) instead.
-
     metric_kwargs : dict, optional
         Keyword arguments to pass to specified metric function.
 
@@ -430,11 +425,6 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
     sklearn.metrics.pairwise_distances
     sklearn.metrics.pairwise_distances_argmin
     """
-    if batch_size is not None:
-        warnings.warn("'batch_size' is ignored. It was deprecated in version "
-                      "0.20 and will be removed in version 0.22. "
-                      "Use sklearn.set_config(working_memory=...) instead.",
-                      DeprecationWarning)
     X, Y = check_pairwise_arrays(X, Y)
 
     if metric_kwargs is None:
@@ -453,7 +443,7 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
 
 
 def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
-                              batch_size=None, metric_kwargs=None):
+                              metric_kwargs=None):
     """Compute minimum distances between one point and a set of points.
 
     This function computes for each row in X, the index of the row of Y which
@@ -506,11 +496,6 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
-    batch_size : integer
-        .. deprecated:: 0.20
-            Deprecated for removal in 0.22.
-            Use sklearn.set_config(working_memory=...) instead.
-
     metric_kwargs : dict
         keyword arguments to pass to specified metric function.
 
@@ -528,8 +513,7 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
         metric_kwargs = {}
 
     return pairwise_distances_argmin_min(X, Y, axis, metric,
-                                         metric_kwargs=metric_kwargs,
-                                         batch_size=batch_size)[0]
+                                         metric_kwargs=metric_kwargs)[0]
 
 
 def haversine_distances(X, Y=None):
@@ -1579,7 +1563,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
     return _parallel_pairwise(X, Y, func, n_jobs, **kwds)
 
 
-# These distances recquire boolean arrays, when using scipy.spatial.distance
+# These distances require boolean arrays, when using scipy.spatial.distance
 PAIRWISE_BOOLEAN_FUNCTIONS = [
     'dice',
     'jaccard',
