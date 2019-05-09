@@ -136,17 +136,24 @@ Setting the regularization parameter: generalized Cross-Validation
 ------------------------------------------------------------------
 
 :class:`RidgeCV` implements ridge regression with built-in
-cross-validation of the alpha parameter.  The object works in the same way
+cross-validation of the alpha parameter. The object works in the same way
 as GridSearchCV except that it defaults to Generalized Cross-Validation
 (GCV), an efficient form of leave-one-out cross-validation::
 
+    >>> import numpy as np
     >>> from sklearn import linear_model
-    >>> reg = linear_model.RidgeCV(alphas=[0.1, 1.0, 10.0], cv=3)
-    >>> reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])       # doctest: +SKIP
-    RidgeCV(alphas=[0.1, 1.0, 10.0], cv=3, fit_intercept=True, scoring=None,
-        normalize=False)
-    >>> reg.alpha_                                      # doctest: +SKIP
-    0.1
+    >>> reg = linear_model.RidgeCV(alphas=np.logspace(-6, 6, 13))
+    >>> reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])       # doctest: +NORMALIZE_WHITESPACE
+    RidgeCV(alphas=array([1.e-06, 1.e-05, 1.e-04, 1.e-03, 1.e-02, 1.e-01, 1.e+00, 1.e+01,
+          1.e+02, 1.e+03, 1.e+04, 1.e+05, 1.e+06]),
+            cv=None, fit_intercept=True, gcv_mode=None, normalize=False,
+            scoring=None, store_cv_values=False)
+    >>> reg.alpha_
+    0.01
+
+Specifying the value of the `cv` attribute will trigger the use of
+cross-validation with `GridSearchCV`, for example `cv=10` for 10-fold
+cross-validation, rather than Generalized Cross-Validation.
 
 .. topic:: References
 

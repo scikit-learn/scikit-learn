@@ -23,6 +23,8 @@ print(__doc__)
 import numpy as np
 import matplotlib.pyplot as plt
 
+# To use the experimental IterativeImputer, we need to explicitly ask for it:
+from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.datasets import load_diabetes
 from sklearn.datasets import load_boston
 from sklearn.ensemble import RandomForestRegressor

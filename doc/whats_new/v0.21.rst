@@ -38,6 +38,8 @@ random sampling procedures.
   seed, including :class:`linear_model.LogisticRegression`,
   :class:`linear_model.LogisticRegressionCV`, :class:`linear_model.Ridge`,
   and :class:`linear_model.RidgeCV` with 'sag' solver. |Fix|
+- :class:`linear_model.ridge.RidgeCV` when using generalized cross-validation
+  with sparse inputs. |Fix|
 
 
 Details are listed in the changelog below.
@@ -214,7 +216,7 @@ Support for Python 3.4 and below has been officially dropped.
 
     >>> # explicitly require this experimental feature
     >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
-    >>> # now you can import normally from ensemble
+    >>> # now you can import normally from sklearn.ensemble
     >>> from sklearn.ensemble import HistGradientBoostingClassifier
 
   :pr:`12807` by :user:`Nicolas Hug<NicolasHug>`.
@@ -356,6 +358,15 @@ Support for Python 3.4 and below has been officially dropped.
   :pr:`12177` by :user:`Sergey Feldman <sergeyf>` and :user:`Ben Lawson
   <benlawson>`.
 
+  The API of IterativeImputer is experimental and subject to change without any
+  deprecation cycle. To use them, you need to explicitly import
+  ``enable_iterative_imputer``::
+
+    >>> from sklearn.experimental import enable_iterative_imputer  # noqa
+    >>> # now you can import normally from sklearn.impute
+    >>> from sklearn.impute import IterativeImputer
+
+
 - |Feature| The :class:`impute.SimpleImputer` and
   :class:`impute.IterativeImputer` have a new parameter ``'add_indicator'``,
   which simply stacks a :class:`impute.MissingIndicator` transform into the
@@ -395,7 +406,7 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.linear_model`
 ...........................
 
-- |Enhancement| :mod:`linear_model.ridge` now preserves ``float32`` and
+- |Enhancement| :class:`linear_model.Ridge` now preserves ``float32`` and
   ``float64`` dtypes. :issues:`8769` and :issues:`11000` by
   :user:`Guillaume Lemaitre <glemaitre>`, and :user:`Joan Massich <massich>`
 
@@ -492,6 +503,10 @@ Support for Python 3.4 and below has been officially dropped.
 - |API| :func:`linear_model.logistic_regression_path` is deprecated
   in version 0.21 and will be removed in version 0.23.
   :pr:`12821` by :user:`Nicolas Hug <NicolasHug>`.
+
+- |Fix| :class:`linear_model.ridge.RidgeCV` with generalized cross-validation
+  now correctly fits an intercept when ``fit_intercept=True`` and the design
+  matrix is sparse. :issue:`13350` by :user:`Jérôme Dockès <jeromedockes>`
 
 :mod:`sklearn.manifold`
 .......................
