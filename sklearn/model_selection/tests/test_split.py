@@ -46,8 +46,6 @@ from sklearn.linear_model import Ridge
 
 from sklearn.model_selection._split import _validate_shuffle_split
 from sklearn.model_selection._split import _build_repr
-from sklearn.model_selection._split import CV_WARNING
-from sklearn.model_selection._split import NSPLIT_WARNING
 
 from sklearn.datasets import load_digits
 from sklearn.datasets import make_classification
@@ -1291,7 +1289,7 @@ def test_check_cv():
 
 
 def test_cv_iterable_wrapper():
-    kf_iter = KFold(n_splits=5).split(X, y)
+    kf_iter = KFold().split(X, y)
     kf_iter_wrapped = check_cv(kf_iter)
     # Since the wrapped iterable is enlisted and stored,
     # split can be called any number of times to produce
@@ -1300,7 +1298,7 @@ def test_cv_iterable_wrapper():
                             list(kf_iter_wrapped.split(X, y)))
     # If the splits are randomized, successive calls to split yields different
     # results
-    kf_randomized_iter = KFold(n_splits=5, shuffle=True).split(X, y)
+    kf_randomized_iter = KFold(, shuffle=True).split(X, y)
     kf_randomized_iter_wrapped = check_cv(kf_randomized_iter)
     # numpy's assert_array_equal properly compares nested lists
     np.testing.assert_equal(list(kf_randomized_iter_wrapped.split(X, y)),
@@ -1485,19 +1483,6 @@ def test_nested_cv():
                           cv=inner_cv, error_score='raise')
         cross_val_score(gs, X=X, y=y, groups=groups, cv=outer_cv,
                         fit_params={'groups': groups})
-
-
-def test_nsplit_default_warn():
-    # Test that warnings are raised. Will be removed in 0.22
-    assert_warns_message(FutureWarning, NSPLIT_WARNING, KFold)
-    assert_warns_message(FutureWarning, NSPLIT_WARNING, GroupKFold)
-    assert_warns_message(FutureWarning, NSPLIT_WARNING, StratifiedKFold)
-    assert_warns_message(FutureWarning, NSPLIT_WARNING, TimeSeriesSplit)
-
-    assert_no_warnings(KFold, n_splits=5)
-    assert_no_warnings(GroupKFold, n_splits=5)
-    assert_no_warnings(StratifiedKFold, n_splits=5)
-    assert_no_warnings(TimeSeriesSplit, n_splits=5)
 
 
 def test_build_repr():

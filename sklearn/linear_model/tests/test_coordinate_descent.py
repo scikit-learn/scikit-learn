@@ -185,7 +185,7 @@ def test_lasso_cv_with_some_model_selection():
 
     pipe = make_pipeline(
         StandardScaler(),
-        LassoCV(cv=StratifiedKFold(n_splits=5))
+        LassoCV(cv=StratifiedKFold())
     )
     pipe.fit(X, y)
 

@@ -362,7 +362,7 @@ def test_cross_validate_invalid_scoring_param():
 
 def test_cross_validate():
     # Compute train and test mse/r2 scores
-    cv = KFold(n_splits=5)
+    cv = KFold()
 
     # Regression
     X_reg, y_reg = make_regression(n_samples=30, random_state=0)
