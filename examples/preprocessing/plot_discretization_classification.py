@@ -63,7 +63,7 @@ def get_name(estimator):
 
 # list of (estimator, param_grid), where param_grid is used in GridSearchCV
 classifiers = [
-    (LogisticRegression(solver='lbfgs', random_state=0), {
+    (LogisticRegression(random_state=0), {
         'C': np.logspace(-2, 7, 10)
     }),
     (LinearSVC(random_state=0), {
@@ -71,7 +71,7 @@ classifiers = [
     }),
     (make_pipeline(
         KBinsDiscretizer(encode='onehot'),
-        LogisticRegression(solver='lbfgs', random_state=0)), {
+        LogisticRegression(random_state=0)), {
             'kbinsdiscretizer__n_bins': np.arange(2, 10),
             'logisticregression__C': np.logspace(-2, 7, 10),
         }),
