@@ -128,7 +128,6 @@ bottom.
 
 #. Improved tools for model diagnostics and basic inference
 
-   * partial dependence plots :issue:`5653`
    * alternative feature importances implementations (e.g. methods or wrappers)
    * better ways to handle validation sets when fitting
    * better ways to find thresholds / create decision rules :issue:`8614`
@@ -143,19 +142,6 @@ bottom.
    * Verbose is not very friendly and should use a standard logging library
      :issue:`6929`
    * Callbacks or a similar system would facilitate logging and early stopping
-
-#. Use scipy BLAS Cython bindings
-
-   * This will make it possible to get rid of our partial copy of suboptimal
-     Atlas C-routines. :issue:`11638`
-   * This should speed up the Windows and Linux wheels
-
-#. Allow fine-grained parallelism in cython
-
-   * Now that we do not use fork-based multiprocessing in joblib anymore it's
-     possible to use the prange / openmp thread management which makes it
-     possible to have very efficient thread-based parallelism at the Cython
-     level. Example with K-Means: :issue:`11950`
 
 #. Distributed parallelism
 
@@ -240,9 +226,6 @@ Subpackage-specific goals
 :mod:`sklearn.ensemble`
 
 * a stacking implementation
-* a binned feature histogram based and thread parallel implementation of
-  decision trees to compete with the performance of state of the art gradient
-  boosting like LightGBM.
 
 :mod:`sklearn.model_selection`
 
@@ -269,5 +252,3 @@ Subpackage-specific goals
 
 * Performance issues with `Pipeline.memory`
 * see "Everything in Scikit-learn should conform to our API contract" above
-* Add a verbose option :issue:`10435`
-
