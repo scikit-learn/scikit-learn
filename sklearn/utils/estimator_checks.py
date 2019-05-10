@@ -402,7 +402,6 @@ def set_checking_parameters(estimator):
     loo_cv = ['RidgeCV']
     if name not in loo_cv and hasattr(estimator, 'cv'):
         estimator.set_params(cv=3)
-        print('SETTING CV to 3')
     if hasattr(estimator, 'n_splits'):
         estimator.set_params(n_splits=3)
 
