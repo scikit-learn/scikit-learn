@@ -1255,6 +1255,9 @@ class _RidgeGCV(LinearModel):
     def _eigen_decompose_covariance(self, X, y, sqrt_sw):
         """Eigendecomposition of X^T.X, used when n_samples > n_features
         and X is sparse.
+
+        This is following section 5.3 in the
+        "Rifkin and Lippert, 2007, Notes on Regularized Least Squares"
         """
         n_samples, n_features = X.shape
         cov = np.empty((n_features + 1, n_features + 1), dtype=X.dtype)
@@ -1271,21 +1274,21 @@ class _RidgeGCV(LinearModel):
             cov[:, -1] = 0
             cov[-1, -1] = sqrt_sw.dot(sqrt_sw)
         nullspace_dim = max(0, X.shape[1] - X.shape[0])
-        eigvals, Q = linalg.eigh(cov)
+        eigvals, V = linalg.eigh(cov)
         # remove eigenvalues and vectors in the null space of X^T.X
         eigvals = eigvals[nullspace_dim:]
-        Q = Q[:, nullspace_dim:]
-        return X_mean, eigvals, Q, X
+        V = V[:, nullspace_dim:]
+        return X_mean, eigvals, V, X
 
     def _solve_eigen_covariance_no_intercept(
-            self, alpha, y, sqrt_sw, X_mean, eigvals, Q, X):
+            self, alpha, y, sqrt_sw, X_mean, eigvals, V, X):
         """Compute dual coefficients and diagonal of G^-1.
 
         Used when we have a decomposition of X^T.X
         (n_samples > n_features and X is sparse), and not fitting an intercept.
         """
         w = 1 / (eigvals + alpha)
-        A = (Q * w).dot(Q.T)
+        A = (V * w).dot(V.T)
         AXy = A.dot(safe_sparse_dot(X.T, y, dense_output=True))
         y_hat = safe_sparse_dot(X, AXy, dense_output=True)
         hat_diag = self._sparse_multidot_diag(X, A, X_mean, sqrt_sw)
@@ -1295,7 +1298,7 @@ class _RidgeGCV(LinearModel):
         return (1 - hat_diag) / alpha, (y - y_hat) / alpha
 
     def _solve_eigen_covariance_intercept(
-            self, alpha, y, sqrt_sw, X_mean, eigvals, Q, X):
+            self, alpha, y, sqrt_sw, X_mean, eigvals, V, X):
         """Compute dual coefficients and diagonal of G^-1
 
         Used when we have a decomposition of X^T.X
@@ -1307,12 +1310,12 @@ class _RidgeGCV(LinearModel):
         # corresponds to the intercept; we cancel the regularization on
         # this dimension. the corresponding eigenvalue is
         # sum(sample_weight), e.g. n when uniform sample weights.
-        intercept_sv = np.zeros(Q.shape[0])
+        intercept_sv = np.zeros(V.shape[0])
         intercept_sv[-1] = 1
-        intercept_dim = _find_smallest_angle(intercept_sv, Q)
+        intercept_dim = _find_smallest_angle(intercept_sv, V)
         w = 1 / (eigvals + alpha)
         w[intercept_dim] = 1 / eigvals[intercept_dim]
-        A = (Q * w).dot(Q.T)
+        A = (V * w).dot(V.T)
         # add a column to X containing the square roots of sample weights
         X_op = _X_CenterStackOp(X, X_mean, sqrt_sw)
         AXy = A.dot(X_op.T.dot(y))
@@ -1325,7 +1328,7 @@ class _RidgeGCV(LinearModel):
         return (1 - hat_diag) / alpha, (y - y_hat) / alpha
 
     def _solve_eigen_covariance(
-            self, alpha, y, sqrt_sw, X_mean, eigvals, Q, X):
+            self, alpha, y, sqrt_sw, X_mean, eigvals, V, X):
         """Compute dual coefficients and diagonal of G^-1
 
         Used when we have a decomposition of X^T.X
@@ -1336,9 +1339,9 @@ class _RidgeGCV(LinearModel):
         """
         if self.fit_intercept:
             return self._solve_eigen_covariance_intercept(
-                alpha, y, sqrt_sw, X_mean, eigvals, Q, X)
+                alpha, y, sqrt_sw, X_mean, eigvals, V, X)
         return self._solve_eigen_covariance_no_intercept(
-            alpha, y, sqrt_sw, X_mean, eigvals, Q, X)
+            alpha, y, sqrt_sw, X_mean, eigvals, V, X)
 
     def _svd_decompose_design_matrix(self, X, y, sqrt_sw):
         # X already centered
