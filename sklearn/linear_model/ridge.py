@@ -1330,9 +1330,6 @@ class _RidgeGCV(LinearModel):
 
         Used when we have a decomposition of X^T.X
         (n_samples > n_features and X is sparse).
-
-        Letting X^T.X = VLV^T, the Hat_matrix can be written as:
-        XV(L + alpha*I)^(-1)V^TX^T
         """
         if self.fit_intercept:
             return self._solve_eigen_covariance_intercept(
