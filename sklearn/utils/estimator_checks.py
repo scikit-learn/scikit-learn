@@ -402,6 +402,7 @@ def set_checking_parameters(estimator):
     loo_cv = ['RidgeCV']
     if name not in loo_cv and hasattr(estimator, 'cv'):
         estimator.set_params(cv=3)
+        print('SETTING CV to 3')
     if hasattr(estimator, 'n_splits'):
         estimator.set_params(n_splits=3)
 
@@ -1959,6 +1960,8 @@ def check_class_weight_balanced_linear_classifier(name, Classifier):
         classifier.set_params(n_iter=1000)
     if hasattr(classifier, "max_iter"):
         classifier.set_params(max_iter=1000)
+    if hasattr(classifier, 'cv'):
+        classifier.set_params(cv=3)
     set_random_state(classifier)
 
     # Let the model compute the class frequencies
