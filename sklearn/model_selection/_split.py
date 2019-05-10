@@ -2236,7 +2236,7 @@ class GapCrossValidator(metaclass=ABCMeta):
     def __masks_to_indices(masks):
         for mask in masks:
             index = np.arange(len(mask))
-            yield index[mask]
+            yield index[np.nonzero(mask)]
 
     @staticmethod
     def __indices_to_masks(indices, n_samples):
