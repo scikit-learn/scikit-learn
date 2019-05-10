@@ -1054,7 +1054,7 @@ class _RidgeGCV(LinearModel):
     Let loov be the vector of prediction values for each example
     when the model was fitted with all examples but this example.
 
-    loov = (KGY - diag(KG^-1)Y) / diag(I-KG^-1)
+    loov = (KG^-1Y - diag(KG^-1)Y) / diag(I-KG^-1)
 
     Let looe be the vector of prediction errors for each example
     when the model was fitted with all examples but this example.
@@ -1255,9 +1255,6 @@ class _RidgeGCV(LinearModel):
     def _eigen_decompose_covariance(self, X, y, sqrt_sw):
         """Eigendecomposition of X^T.X, used when n_samples > n_features
         and X is sparse.
-
-        This is following section 5.3 in the
-        "Rifkin and Lippert, 2007, Notes on Regularized Least Squares"
         """
         n_samples, n_features = X.shape
         cov = np.empty((n_features + 1, n_features + 1), dtype=X.dtype)
@@ -1334,8 +1331,8 @@ class _RidgeGCV(LinearModel):
         Used when we have a decomposition of X^T.X
         (n_samples > n_features and X is sparse).
 
-        Letting X^T.X = QVQ^T, the Hat_matrix can be written as:
-        QV(V + alpha*I)^(-1)VQ
+        Letting X^T.X = VLV^T, the Hat_matrix can be written as:
+        XV(L + alpha*I)^(-1)V^TX^T
         """
         if self.fit_intercept:
             return self._solve_eigen_covariance_intercept(
@@ -1352,19 +1349,19 @@ class _RidgeGCV(LinearModel):
             # by centering, the other columns are orthogonal to that one
             intercept_column = sqrt_sw[:, None]
             X = np.hstack((X, intercept_column))
-        U, s, _ = linalg.svd(X, full_matrices=0)
-        eigenvals_sq = s ** 2
+        U, singvals, _ = linalg.svd(X, full_matrices=0)
+        singvals_sq = singvals ** 2
         UT_y = np.dot(U.T, y)
-        return X_mean, eigenvals_sq, U, UT_y
+        return X_mean, singvals_sq, U, UT_y
 
     def _solve_svd_design_matrix(
-            self, alpha, y, sqrt_sw, X_mean, eigenvals_sq, U, UT_y):
+            self, alpha, y, sqrt_sw, X_mean, singvals_sq, U, UT_y):
         """Compute dual coefficients and diagonal of G^-1
 
         Used when we have an SVD decomposition of X
         (n_samples > n_features and X is dense).
         """
-        w = ((eigenvals_sq + alpha) ** -1) - (alpha ** -1)
+        w = ((singvals_sq + alpha) ** -1) - (alpha ** -1)
         if self.fit_intercept:
             # detect intercept column
             normalized_sw = sqrt_sw / np.linalg.norm(sqrt_sw)
