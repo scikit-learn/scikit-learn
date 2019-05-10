@@ -49,83 +49,13 @@ def test_one_hot_encoder_sparse_dense():
     assert_array_equal(X_trans_sparse.toarray(), X_trans_dense)
 
 
-@pytest.mark.parametrize(
-    "X_fit, X_tran, params, err_type, err_msg",
-    # FIXME: the error message is not as informative as it could be
-    [([[3, 2, 1], [0, 1, 1]], [[0], [3]], {},
-      IndexError, "boolean index did not match"),
-     ([[1], [2]], [[0], [1]], {},
-      ValueError, "Found unknown categories")]
-)
-def test_one_hot_encoder_error(X_fit, X_tran, params, err_type, err_msg):
-    X_fit = np.array(X_fit)
-    X_tran = np.array(X_tran)
+def test_one_hot_encoder_diff_n_features():
+    X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2]])
+    X2 = np.array([[1, 0]])
     enc = OneHotEncoder()
-    enc.fit(X_fit)
-    # test that error is raised when wrong number of features
-    with pytest.raises(err_type, match=err_msg):
-        enc.transform(X_tran)
-
-
-def _run_one_hot(X, X2, cat):
-    # enc = assert_warns(
-    #     DeprecationWarning,
-    #     OneHotEncoder, categorical_features=cat)
-    enc = OneHotEncoder(categorical_features=cat)
-    with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
-        Xtr = enc.fit_transform(X)
-    with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
-        X2tr = enc.fit(X).transform(X2)
-    return Xtr, X2tr
-
-
-def _check_one_hot(X, X2, cat, n_features):
-    ind = np.where(cat)[0]
-    # With mask
-    A, B = _run_one_hot(X, X2, cat)
-    # With indices
-    C, D = _run_one_hot(X, X2, ind)
-    # Check shape
-    assert_equal(A.shape, (2, n_features))
-    assert_equal(B.shape, (1, n_features))
-    assert_equal(C.shape, (2, n_features))
-    assert_equal(D.shape, (1, n_features))
-    # Check that mask and indices give the same results
-    assert_array_equal(toarray(A), toarray(C))
-    assert_array_equal(toarray(B), toarray(D))
-
-
-def test_one_hot_encoder_categorical_features():
-    X = np.array([[3, 2, 1], [0, 1, 1]])
-    X2 = np.array([[1, 1, 1]])
-
-    cat = [True, False, False]
-    _check_one_hot(X, X2, cat, 4)
-
-    # Edge case: all non-categorical
-    cat = [False, False, False]
-    _check_one_hot(X, X2, cat, 3)
-
-    # Edge case: all categorical
-    cat = [True, True, True]
-    _check_one_hot(X, X2, cat, 5)
-
-    # check error raised if also specifying categories
-    oh = OneHotEncoder(categories=[range(3)],
-                       categorical_features=[True, False, False])
-    assert_raises(ValueError, oh.fit, X)
-
-
-def test_one_hot_encoder_categorical_features_ignore_unknown():
-    # GH12881 bug in combination of categorical_features with ignore
-    X = np.array([[1, 2, 3], [4, 5, 6], [2, 3, 2]]).T
-    oh = OneHotEncoder(categorical_features=[2], handle_unknown='ignore')
-
-    with ignore_warnings(category=DeprecationWarning):
-        res = oh.fit_transform(X)
-
-    expected = np.array([[1, 0, 1], [0, 1, 0], [1, 2, 3], [4, 5, 6]]).T
-    assert_array_equal(res.toarray(), expected)
+    enc.fit(X)
+    with pytest.raises(ValueError, match="broadcast"):
+        enc.transform(X2)
 
 
 def test_one_hot_encoder_handle_unknown():
@@ -135,8 +65,9 @@ def test_one_hot_encoder_handle_unknown():
     # Test that one hot encoder raises error for unknown features
     # present during transform.
     oh = OneHotEncoder(handle_unknown='error')
-    assert_warns(FutureWarning, oh.fit, X)
-    assert_raises(ValueError, oh.transform, X2)
+    oh.fit(X)
+    with pytest.raises(ValueError, match='Found unknown categories'):
+        oh.transform(X2)
 
     # Test the ignore option, ignores unknown features (giving all 0's)
     oh = OneHotEncoder(handle_unknown='ignore')
@@ -150,7 +81,8 @@ def test_one_hot_encoder_handle_unknown():
 
     # Raise error if handle_unknown is neither ignore or error.
     oh = OneHotEncoder(handle_unknown='42')
-    assert_raises(ValueError, oh.fit, X)
+    with pytest.raises(ValueError, match='handle_unknown should be either'):
+        oh.fit(X)
 
 
 def test_one_hot_encoder_not_fitted():
@@ -160,19 +92,6 @@ def test_one_hot_encoder_not_fitted():
            "Call 'fit' with appropriate arguments before using this method.")
     with pytest.raises(NotFittedError, match=msg):
         enc.transform(X)
-
-
-def test_one_hot_encoder_no_categorical_features():
-    X = np.array([[3, 2, 1], [0, 1, 1]], dtype='float64')
-
-    cat = [False, False, False]
-    enc = OneHotEncoder(categorical_features=cat)
-    with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
-        X_tr = enc.fit_transform(X)
-    expected_features = np.array([], dtype='object')
-    assert_array_equal(X, X_tr)
-    assert_array_equal(enc.get_feature_names(), expected_features)
-    assert enc.categories_ == []
 
 
 def test_one_hot_encoder_handle_unknown_strings():
@@ -426,47 +345,6 @@ def test_one_hot_encoder_pandas():
     assert_allclose(Xtr, [[1, 0, 1, 0], [0, 1, 0, 1]])
 
 
-def test_one_hot_encoder_feature_names():
-    enc = OneHotEncoder()
-    X = [['Male', 1, 'girl', 2, 3],
-         ['Female', 41, 'girl', 1, 10],
-         ['Male', 51, 'boy', 12, 3],
-         ['Male', 91, 'girl', 21, 30]]
-
-    enc.fit(X)
-    feature_names = enc.get_feature_names()
-    assert isinstance(feature_names, np.ndarray)
-
-    assert_array_equal(['x0_Female', 'x0_Male',
-                        'x1_1', 'x1_41', 'x1_51', 'x1_91',
-                        'x2_boy', 'x2_girl',
-                        'x3_1', 'x3_2', 'x3_12', 'x3_21',
-                        'x4_3',
-                        'x4_10', 'x4_30'], feature_names)
-
-    feature_names2 = enc.get_feature_names(['one', 'two',
-                                            'three', 'four', 'five'])
-
-    assert_array_equal(['one_Female', 'one_Male',
-                        'two_1', 'two_41', 'two_51', 'two_91',
-                        'three_boy', 'three_girl',
-                        'four_1', 'four_2', 'four_12', 'four_21',
-                        'five_3', 'five_10', 'five_30'], feature_names2)
-
-    with pytest.raises(ValueError, match="input_features should have length"):
-        enc.get_feature_names(['one', 'two'])
-
-
-def test_one_hot_encoder_feature_names_unicode():
-    enc = OneHotEncoder()
-    X = np.array([['c❤t1', 'dat2']], dtype=object).T
-    enc.fit(X)
-    feature_names = enc.get_feature_names()
-    assert_array_equal(['x0_c❤t1', 'x0_dat2'], feature_names)
-    feature_names = enc.get_feature_names(input_features=['n👍me'])
-    assert_array_equal(['n👍me_c❤t1', 'n👍me_dat2'], feature_names)
-
-
 @pytest.mark.parametrize("X", [np.array([[1, np.nan]]).T,
                                np.array([['a', np.nan]], dtype=object).T],
                          ids=['numeric', 'object'])
@@ -650,39 +528,23 @@ def test_one_hot_encoder_drop_manual():
                        enc.inverse_transform(trans))
 
 
-def test_one_hot_encoder_invalid_params():
-    enc = OneHotEncoder(drop='second')
-    assert_raises_regex(
-        ValueError,
-        "Wrong input for parameter `drop`.",
-        enc.fit, [["Male"], ["Female"]])
-
-    enc = OneHotEncoder(handle_unknown='ignore', drop='first')
-    assert_raises_regex(
-        ValueError,
-        "`handle_unknown` must be 'error'",
-        enc.fit, [["Male"], ["Female"]])
-
-    enc = OneHotEncoder(drop='first')
-    assert_raises_regex(
-        ValueError,
-        "The handling of integer data will change in version",
-        enc.fit, [[1], [2]])
-
-    enc = OneHotEncoder(drop='first', categories='auto')
-    assert_no_warnings(enc.fit_transform, [[1], [2]])
-
-    enc = OneHotEncoder(drop=np.asarray('b', dtype=object))
-    assert_raises_regex(
-        ValueError,
-        "Wrong input for parameter `drop`.",
-        enc.fit, [['abc', 2, 55], ['def', 1, 55], ['def', 3, 59]])
-
-    enc = OneHotEncoder(drop=['ghi', 3, 59])
-    assert_raises_regex(
-        ValueError,
-        "The following categories were supposed",
-        enc.fit, [['abc', 2, 55], ['def', 1, 55], ['def', 3, 59]])
+@pytest.mark.parametrize(
+    "X_fit, params, err_msg",
+    [([["Male"], ["Female"]], {'drop': 'second'},
+     "Wrong input for parameter `drop`"),
+     ([["Male"], ["Female"]], {'drop': 'first', 'handle_unknown': 'ignore'},
+     "`handle_unknown` must be 'error'"),
+     ([['abc', 2, 55], ['def', 1, 55], ['def', 3, 59]],
+      {'drop': np.asarray('b', dtype=object)},
+     "Wrong input for parameter `drop`"),
+     ([['abc', 2, 55], ['def', 1, 55], ['def', 3, 59]],
+      {'drop': ['ghi', 3, 59]},
+     "The following categories were supposed")]
+)
+def test_one_hot_encoder_invalid_params(X_fit, params, err_msg):
+    enc = OneHotEncoder(**params)
+    with pytest.raises(ValueError, match=err_msg):
+        enc.fit(X_fit)
 
 
 @pytest.mark.parametrize('drop', [['abc', 3], ['abc', 3, 41, 'a']])
