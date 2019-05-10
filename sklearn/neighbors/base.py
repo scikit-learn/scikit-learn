@@ -927,4 +927,5 @@ class UnsupervisedMixin:
             Training data. If array or matrix, shape [n_samples, n_features],
             or [n_samples, n_samples] if metric='precomputed'.
         """
+        self._y = y
         return self._fit(X)
