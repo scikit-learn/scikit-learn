@@ -226,8 +226,8 @@ class OneHotEncoder(_BaseEncoder):
     >>> enc.fit(X)
     ... # doctest: +ELLIPSIS
     ... # doctest: +NORMALIZE_WHITESPACE
-    OneHotEncoder(categories=None, drop=None, dtype=<... 'numpy.float64'>,
-       handle_unknown='ignore', n_values=None, sparse=True)
+    OneHotEncoder(categories='auto', drop=None, dtype=<... 'numpy.float64'>,
+                  handle_unknown='ignore', sparse=True)
 
     >>> enc.categories_
     [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]
