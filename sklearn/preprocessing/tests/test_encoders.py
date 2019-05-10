@@ -27,167 +27,44 @@ def toarray(a):
     return a
 
 
-def test_one_hot_encoder_sparse():
-    # Test OneHotEncoder's fit and transform.
-    X = [[3, 2, 1], [0, 1, 1]]
-    enc = OneHotEncoder()
-    with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
-        # discover max values automatically
-        X_trans = enc.fit_transform(X).toarray()
-        assert_equal(X_trans.shape, (2, 5))
-        assert_array_equal(enc.active_features_,
-                           np.where([1, 0, 0, 1, 0, 1, 1, 0, 1])[0])
-        assert_array_equal(enc.feature_indices_, [0, 4, 7, 9])
+def test_one_hot_encoder_sparse_dense():
+    # check that sparse and dense will give the same results
 
-        # check outcome
-        assert_array_equal(X_trans,
-                           [[0., 1., 0., 1., 1.],
-                            [1., 0., 1., 0., 1.]])
+    X = np.array([[3, 2, 1], [0, 1, 1]])
+    enc_sparse = OneHotEncoder()
+    enc_dense = OneHotEncoder(sparse=False)
 
-    # max value given as 3
-    # enc = assert_warns(DeprecationWarning, OneHotEncoder, n_values=4)
-    enc = OneHotEncoder(n_values=4)
-    with ignore_warnings(category=DeprecationWarning):
-        X_trans = enc.fit_transform(X)
-        assert_equal(X_trans.shape, (2, 4 * 3))
-        assert_array_equal(enc.feature_indices_, [0, 4, 8, 12])
+    X_trans_sparse = enc_sparse.fit_transform(X)
+    X_trans_dense = enc_dense.fit_transform(X)
 
-    # max value given per feature
-    # enc = assert_warns(DeprecationWarning, OneHotEncoder, n_values=[3, 2, 2])
-    enc = OneHotEncoder(n_values=[3, 2, 2])
-    with ignore_warnings(category=DeprecationWarning):
-        X = [[1, 0, 1], [0, 1, 1]]
-        X_trans = enc.fit_transform(X)
-        assert_equal(X_trans.shape, (2, 3 + 2 + 2))
-        assert_array_equal(enc.n_values_, [3, 2, 2])
-    # check that testing with larger feature works:
-    X = np.array([[2, 0, 1], [0, 1, 1]])
-    enc.transform(X)
+    assert X_trans_sparse.shape == (2, 5)
+    assert X_trans_dense.shape == (2, 5)
 
-    # test that an error is raised when out of bounds:
-    X_too_large = [[0, 2, 1], [0, 1, 1]]
-    assert_raises(ValueError, enc.transform, X_too_large)
-    error_msg = r"unknown categorical feature present \[2\] during transform"
-    assert_raises_regex(ValueError, error_msg, enc.transform, X_too_large)
-    with ignore_warnings(category=DeprecationWarning):
-        assert_raises(
-            ValueError,
-            OneHotEncoder(n_values=2).fit_transform, X)
-
-    # test that error is raised when wrong number of features
-    assert_raises(ValueError, enc.transform, X[:, :-1])
-
-    # test that error is raised when wrong number of features in fit
-    # with prespecified n_values
-    with ignore_warnings(category=DeprecationWarning):
-        assert_raises(ValueError, enc.fit, X[:, :-1])
-    # test exception on wrong init param
-    with ignore_warnings(category=DeprecationWarning):
-        assert_raises(
-            TypeError, OneHotEncoder(n_values=np.int).fit, X)
-
-    enc = OneHotEncoder()
-    # test negative input to fit
-    with ignore_warnings(category=FutureWarning):
-        assert_raises(ValueError, enc.fit, [[0], [-1]])
-
-    # test negative input to transform
-    with ignore_warnings(category=FutureWarning):
-        enc.fit([[0], [1]])
-    assert_raises(ValueError, enc.transform, [[0], [-1]])
-
-    with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
-        enc = OneHotEncoder(drop='first', n_values=1)
-        for method in (enc.fit, enc.fit_transform):
-            assert_raises_regex(
-                ValueError,
-                'The `categorical_features` and `n_values` keywords ',
-                method, [[0], [-1]])
-
-            enc = OneHotEncoder(drop='first', categorical_features='all')
-            assert_raises_regex(
-                ValueError,
-                'The `categorical_features` and `n_values` keywords ',
-                method, [[0], [-1]])
-
-
-def test_one_hot_encoder_dense():
-    # check for sparse=False
-    X = [[3, 2, 1], [0, 1, 1]]
-    enc = OneHotEncoder(sparse=False)
-    with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
-        # discover max values automatically
-        X_trans = enc.fit_transform(X)
-        assert_equal(X_trans.shape, (2, 5))
-        assert_array_equal(enc.active_features_,
-                           np.where([1, 0, 0, 1, 0, 1, 1, 0, 1])[0])
-        assert_array_equal(enc.feature_indices_, [0, 4, 7, 9])
+    assert sparse.issparse(X_trans_sparse)
+    assert not sparse.issparse(X_trans_dense)
 
     # check outcome
-    assert_array_equal(X_trans,
-                       np.array([[0., 1., 0., 1., 1.],
-                                 [1., 0., 1., 0., 1.]]))
+    assert_array_equal(X_trans_sparse.toarray(), [[0., 1., 0., 1., 1.],
+                                                  [1., 0., 1., 0., 1.]])
+    assert_array_equal(X_trans_sparse.toarray(), X_trans_dense)
 
 
-def test_one_hot_encoder_deprecationwarnings():
-    for X in [[[3, 2, 1], [0, 1, 1]],
-              [[3., 2., 1.], [0., 1., 1.]]]:
-        enc = OneHotEncoder()
-        assert_warns_message(FutureWarning, "handling of integer",
-                             enc.fit, X)
-        enc = OneHotEncoder()
-        assert_warns_message(FutureWarning, "handling of integer",
-                             enc.fit_transform, X)
-
-        # check it still works correctly as well
-        with ignore_warnings(category=FutureWarning):
-            X_trans = enc.fit_transform(X).toarray()
-        res = [[0., 1., 0., 1., 1.],
-               [1., 0., 1., 0., 1.]]
-        assert_array_equal(X_trans, res)
-
-        # check deprecated attributes
-        assert_warns(DeprecationWarning, lambda: enc.active_features_)
-        assert_warns(DeprecationWarning, lambda: enc.feature_indices_)
-        assert_warns(DeprecationWarning, lambda: enc.n_values_)
-
-        # check no warning is raised if keyword is specified
-        enc = OneHotEncoder(categories='auto')
-        assert_no_warnings(enc.fit, X)
-        enc = OneHotEncoder(categories='auto')
-        assert_no_warnings(enc.fit_transform, X)
-        X_trans = enc.fit_transform(X).toarray()
-        assert_array_equal(X_trans, res)
-
-        # check there is also a warning if the default is passed
-        enc = OneHotEncoder(n_values='auto', handle_unknown='ignore')
-        assert_warns(DeprecationWarning, enc.fit, X)
-
-    X = np.array([['cat1', 'cat2']], dtype=object).T
-    enc = OneHotEncoder(categorical_features='all')
-    assert_warns(DeprecationWarning, enc.fit, X)
-
-
-def test_one_hot_encoder_force_new_behaviour():
-    # ambiguous integer case (non secutive range of categories)
-    X = np.array([[1, 2]]).T
-    X2 = np.array([[0, 1]]).T
-
-    # without argument -> by default using legacy behaviour with warnings
+@pytest.mark.parametrize(
+    "X_fit, X_tran, params, err_type, err_msg",
+    # FIXME: the error message is not as informative as it could be
+    [([[3, 2, 1], [0, 1, 1]], [[0], [3]], {},
+      IndexError, "boolean index did not match"),
+     ([[1], [2]], [[0], [1]], {},
+      ValueError, "Found unknown categories")]
+)
+def test_one_hot_encoder_error(X_fit, X_tran, params, err_type, err_msg):
+    X_fit = np.array(X_fit)
+    X_tran = np.array(X_tran)
     enc = OneHotEncoder()
-
-    with ignore_warnings(category=FutureWarning):
-        enc.fit(X)
-
-    res = enc.transform(X2)
-    exp = np.array([[0, 0], [1, 0]])
-    assert_array_equal(res.toarray(), exp)
-
-    # with explicit auto argument -> don't use legacy behaviour
-    # (so will raise an error on unseen value within range)
-    enc = OneHotEncoder(categories='auto')
-    enc.fit(X)
-    assert_raises(ValueError, enc.transform, X2)
+    enc.fit(X_fit)
+    # test that error is raised when wrong number of features
+    with pytest.raises(err_type, match=err_msg):
+        enc.transform(X_tran)
 
 
 def _run_one_hot(X, X2, cat):
