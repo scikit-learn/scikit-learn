@@ -292,7 +292,7 @@ def check_estimator(Estimator, verbose=False):
         Flag to specify in order to see a progress bar.
 
     """
-    if verbose == True:
+    if verbose:
         raise NotImplementedError
 
     if isinstance(Estimator, type):
