@@ -225,6 +225,7 @@ def setup_package():
                                   'Implementation :: PyPy')
                                  ],
                     cmdclass=cmdclass,
+                    python_requires=">=3.5",
                     install_requires=[
                         'numpy>={}'.format(NUMPY_MIN_VERSION),
                         'scipy>={}'.format(SCIPY_MIN_VERSION),
