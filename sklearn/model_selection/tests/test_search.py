@@ -1242,8 +1242,8 @@ def test_search_cv_timing():
     X = [[1, ], [2, ], [3, ], [4, ]]
     y = [0, 1, 1, 0]
 
-    gs = GridSearchCV(svc, {'C': [0, 1]}, cv=2)
-    rs = RandomizedSearchCV(svc, {'C': [0, 1]}, cv=2, n_iter=2)
+    gs = GridSearchCV(svc, {'C': [0, 1]}, cv=2, error_score=0)
+    rs = RandomizedSearchCV(svc, {'C': [0, 1]}, cv=2, error_score=0, n_iter=2)
 
     for search in (gs, rs):
         search.fit(X, y)
@@ -1446,7 +1446,7 @@ def test_grid_search_failing_classifier():
     # caught by grid_search (expected behavior), and this would cause an
     # error in this test.
     gs = GridSearchCV(clf, [{'parameter': [0, 1, 2]}], scoring='accuracy',
-                      refit=False)
+                      refit=False, error_score=0.0)
     assert_warns(FitFailedWarning, gs.fit, X, y)
     n_candidates = len(gs.cv_results_['params'])
 
@@ -1479,7 +1479,6 @@ def test_grid_search_failing_classifier():
     assert gs.best_index_ != clf.FAILING_PARAMETER
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_grid_search_failing_classifier_raise():
     # GridSearchCV with on_error == 'raise' raises the error
 
