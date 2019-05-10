@@ -371,7 +371,7 @@ that are trained on a single X predictor matrix to predict a series
 of responses (y1,y2,y3...,yn).
 
 Below is an example of multioutput classification:
-    
+
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.multioutput import MultiOutputClassifier
     >>> from sklearn.ensemble import RandomForestClassifier
@@ -384,7 +384,7 @@ Below is an example of multioutput classification:
     >>> n_samples, n_features = X.shape # 10,100
     >>> n_outputs = Y.shape[1] # 3
     >>> n_classes = 3
-    >>> forest = RandomForestClassifier(n_estimators=100, random_state=1)
+    >>> forest = RandomForestClassifier(random_state=1)
     >>> multi_target_forest = MultiOutputClassifier(forest, n_jobs=-1)
     >>> multi_target_forest.fit(X, Y).predict(X)
     array([[2, 2, 0],
