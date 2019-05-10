@@ -93,8 +93,8 @@ def _encode(values, uniques=None, encode=False, check_unknown=True):
         If True, also encode the values into integer codes based on `uniques`.
     check_unknown : bool, default True
         If True, check for values in ``values`` that are not in ``unique``
-        and raise an error. This is ignored for object dtype and treated as
-        True in this case). This parameter is useful for
+        and raise an error. This is ignored for object dtype, and treated as
+        True in this case. This parameter is useful for
         _BaseEncoder._transform() to avoid calling _encode_check_unknown()
         twice.
 
