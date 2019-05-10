@@ -518,7 +518,7 @@ class OneHotEncoder(_BaseEncoder):
                 input_features[i] + '_' + str(t) for t in cats[i]]
             feature_names.extend(names)
 
-        return np.ar_categoriesray(feature_names, dtype=object)
+        return np.array(feature_names, dtype=object)
 
 
 class OrdinalEncoder(_BaseEncoder):
