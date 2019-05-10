@@ -153,7 +153,9 @@ validation iterator instead, for instance::
   >>> n_samples = iris.data.shape[0]
   >>> cv = ShuffleSplit(test_size=0.3, random_state=0)
   >>> cross_val_score(clf, iris.data, iris.target, cv=cv)  # doctest: +ELLIPSIS
-  array([0.977..., 0.977..., 1.  ..., 0.955..., 1.        ])
+  array([0.977..., 0.977..., 1.        , 0.955..., 1.        ,
+         0.977..., 0.977..., 1.        , 0.977..., 0.977...])
+
 
 Another option is to use an iterable yielding (train, test) splits as arrays of
 indices, for example::
@@ -505,6 +507,11 @@ Here is a usage example::
   [4 5 1 0 6 9 7] [2 3 8]
   [2 7 5 8 0 3 4] [6 1 9]
   [4 1 0 6 8 9 3] [5 2 7]
+  [5 2 6 3 7 4 0] [1 8 9]
+  [7 8 6 5 4 9 0] [3 2 1]
+  [3 5 6 7 1 8 4] [0 9 2]
+  [1 4 5 3 6 0 2] [7 8 9]
+  [0 8 3 7 9 6 4] [1 2 5]
 
 Here is a visualization of the cross-validation behavior. Note that
 :class:`ShuffleSplit` is not affected by classes or groups.
