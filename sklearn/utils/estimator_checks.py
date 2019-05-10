@@ -399,12 +399,11 @@ def set_checking_parameters(estimator):
         estimator.set_params(min_samples_leaf=5)
 
     # Speed-up by reducing the number of CV or splits for CV estimators
-    if hasattr(estimator, 'cv'):
-        if estimator.cv is None:
-            estimator.set_params(cv=3)
+    loo_cv = ['RidgeCV']
+    if name not in loo_cv and hasattr(estimator, 'cv'):
+        estimator.set_params(cv=3)
     if hasattr(estimator, 'n_splits'):
-        if estimator.n_splits == 5:
-            estimator.set_params(n_splits=3)
+        estimator.set_params(n_splits=3)
 
 
 class NotAnArray:
