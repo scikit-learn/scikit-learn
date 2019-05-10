@@ -196,7 +196,10 @@ The :class:`MissingIndicator` transformer is useful to transform a dataset into
 corresponding binary matrix indicating the presence of missing values in the
 dataset. This transformation is useful in conjunction with imputation. When
 using imputation, preserving the information about which values had been
-missing can be informative.
+missing can be informative. Note that both the :class:`SimpleImputer` and 
+:class:`IterativeImputer` have the boolean parameter ``add_indicator``
+(default=False) which when set to True provides a convenient way of stacking a 
+:class:`MissingIndicator` transform onto output of the imputer’s transform.
 
 ``NaN`` is usually used as the placeholder for missing values. However, it
 enforces the data type to be float. The parameter ``missing_values`` allows to
