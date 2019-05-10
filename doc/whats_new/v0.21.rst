@@ -38,7 +38,7 @@ random sampling procedures.
   seed, including :class:`linear_model.LogisticRegression`,
   :class:`linear_model.LogisticRegressionCV`, :class:`linear_model.Ridge`,
   and :class:`linear_model.RidgeCV` with 'sag' solver. |Fix|
-- :class:`linear_model.ridge.RidgeCV` when using generalized cross-validation
+- :class:`linear_model.RidgeCV` when using generalized cross-validation
   with sparse inputs. |Fix|
 
 
@@ -120,6 +120,12 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`cluster.FeatureAgglomeration` now accept a ``distance_threshold``
   parameter which can be used to find the clusters instead of ``n_clusters``.
   :issue:`9069` by :user:`Vathsala Achar <VathsalaAchar>` and `Adrin Jalali`_.
+
+:mod:`sklearn.compose`
+......................
+
+- |API| :class:`compose.ColumnTransformer` is no longer an experimental
+  feature. :pr:`13835` by :user:`Hanmin Qin <qinhanmin2014>`.
 
 :mod:`sklearn.datasets`
 .......................
@@ -504,7 +510,7 @@ Support for Python 3.4 and below has been officially dropped.
   in version 0.21 and will be removed in version 0.23.
   :pr:`12821` by :user:`Nicolas Hug <NicolasHug>`.
 
-- |Fix| :class:`linear_model.ridge.RidgeCV` with generalized cross-validation
+- |Fix| :class:`linear_model.RidgeCV` with generalized cross-validation
   now correctly fits an intercept when ``fit_intercept=True`` and the design
   matrix is sparse. :issue:`13350` by :user:`Jérôme Dockès <jeromedockes>`
 
@@ -581,11 +587,11 @@ Support for Python 3.4 and below has been officially dropped.
   in version 0.21 and will be removed in version 0.23. :pr:`10580` by
   :user:`Reshama Shaikh <reshamas>` and :user:`Sandra Mitrovic <SandraMNE>`.
 
-- |Fix| The function :func:`euclidean_distances`, and therefore
-  several estimators with ``metric='euclidean'``, suffered from numerical
-  precision issues with ``float32`` features. Precision has been increased at the
-  cost of a small drop of performance. :pr:`13554` by :user:`Celelibi` and
-  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+- |Fix| The function :func:`metrics.pairwise.euclidean_distances`, and 
+  therefore several estimators with ``metric='euclidean'``, suffered from 
+  numerical precision issues with ``float32`` features. Precision has been 
+  increased at the cost of a small drop of performance. :pr:`13554` by 
+  :user:`Celelibi` and :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |API| :func:`metrics.jaccard_similarity_score` is deprecated in favour of
   the more consistent :func:`metrics.jaccard_score`. The former behavior for
@@ -607,7 +613,7 @@ Support for Python 3.4 and below has been officially dropped.
 - |Feature| Classes :class:`~model_selection.GridSearchCV` and
   :class:`~model_selection.RandomizedSearchCV` now allow for refit=callable
   to add flexibility in identifying the best estimator.
-  See :doc:`/auto_examples/model_selection/plot_grid_search_refit_callable.py`.
+  See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py`.
   :pr:`11354` by :user:`Wenhao Zhang <wenhaoz@ucla.edu>`,
   `Joel Nothman`_ and :user:`Adrin Jalali <adrinjalali>`.
 
