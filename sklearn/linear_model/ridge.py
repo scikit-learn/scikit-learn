@@ -1043,23 +1043,23 @@ class _RidgeGCV(LinearModel):
 
     Let G = (K + alpha*Id).
 
-    Dual solution: c = G^(-1)y
+    Dual solution: c = G^-1y
     Primal solution: w = X^T c
 
     Compute eigendecomposition K = Q V Q^T.
-    Then G = Q (V + alpha*Id)^-1 Q^T,
+    Then G^-1 = Q (V + alpha*Id)^-1 Q^T,
     where (V + alpha*Id) is diagonal.
     It is thus inexpensive to inverse for many alphas.
 
     Let loov be the vector of prediction values for each example
     when the model was fitted with all examples but this example.
 
-    loov = (KGY - diag(KG)Y) / diag(I-KG)
+    loov = (KGY - diag(KG^-1)Y) / diag(I-KG^-1)
 
     Let looe be the vector of prediction errors for each example
     when the model was fitted with all examples but this example.
 
-    looe = y - loov = c / diag(G)
+    looe = y - loov = c / diag(G^-1)
 
     References
     ----------
@@ -1230,7 +1230,7 @@ class _RidgeGCV(LinearModel):
         return X_mean, eigvals, Q, QT_y
 
     def _solve_eigen_gram(self, alpha, y, sqrt_sw, X_mean, eigvals, Q, QT_y):
-        """Compute dual coefficients and diagonal of G^(-1)
+        """Compute dual coefficients and diagonal of G^-1
 
         Used when we have a decomposition of X.X^T (n_samples <= n_features).
         """
@@ -1271,22 +1271,21 @@ class _RidgeGCV(LinearModel):
             cov[:, -1] = 0
             cov[-1, -1] = sqrt_sw.dot(sqrt_sw)
         nullspace_dim = max(0, X.shape[1] - X.shape[0])
-        eigvals, V = linalg.eigh(cov)
+        eigvals, Q = linalg.eigh(cov)
         # remove eigenvalues and vectors in the null space of X^T.X
         eigvals = eigvals[nullspace_dim:]
-        V = V[:, nullspace_dim:]
-        return X_mean, eigvals, V, X
+        Q = Q[:, nullspace_dim:]
+        return X_mean, eigvals, Q, X
 
     def _solve_eigen_covariance_no_intercept(
-            self, alpha, y, sqrt_sw, X_mean, eigvals, V, X):
-        """Compute dual coefficients and diagonal of (Identity - Hat_matrix),
-        where Hat_matrix = X(X^TX + alpha*I)^(-1)X^T
+            self, alpha, y, sqrt_sw, X_mean, eigvals, Q, X):
+        """Compute dual coefficients and diagonal of G^-1.
 
         Used when we have a decomposition of X^T.X
         (n_samples > n_features and X is sparse), and not fitting an intercept.
         """
         w = 1 / (eigvals + alpha)
-        A = (V * w).dot(V.T)
+        A = (Q * w).dot(Q.T)
         AXy = A.dot(safe_sparse_dot(X.T, y, dense_output=True))
         y_hat = safe_sparse_dot(X, AXy, dense_output=True)
         hat_diag = self._sparse_multidot_diag(X, A, X_mean, sqrt_sw)
@@ -1296,9 +1295,8 @@ class _RidgeGCV(LinearModel):
         return (1 - hat_diag) / alpha, (y - y_hat) / alpha
 
     def _solve_eigen_covariance_intercept(
-            self, alpha, y, sqrt_sw, X_mean, eigvals, V, X):
-        """Compute dual coefficients and diagonal of (Identity - Hat_matrix),
-        where Hat_matrix = X(X^TX + alpha*I)^(-1)X^T
+            self, alpha, y, sqrt_sw, X_mean, eigvals, Q, X):
+        """Compute dual coefficients and diagonal of G^-1
 
         Used when we have a decomposition of X^T.X
         (n_samples > n_features and X is sparse),
@@ -1309,12 +1307,12 @@ class _RidgeGCV(LinearModel):
         # corresponds to the intercept; we cancel the regularization on
         # this dimension. the corresponding eigenvalue is
         # sum(sample_weight), e.g. n when uniform sample weights.
-        intercept_sv = np.zeros(V.shape[0])
+        intercept_sv = np.zeros(Q.shape[0])
         intercept_sv[-1] = 1
-        intercept_dim = _find_smallest_angle(intercept_sv, V)
+        intercept_dim = _find_smallest_angle(intercept_sv, Q)
         w = 1 / (eigvals + alpha)
         w[intercept_dim] = 1 / eigvals[intercept_dim]
-        A = (V * w).dot(V.T)
+        A = (Q * w).dot(Q.T)
         # add a column to X containing the square roots of sample weights
         X_op = _X_CenterStackOp(X, X_mean, sqrt_sw)
         AXy = A.dot(X_op.T.dot(y))
@@ -1328,8 +1326,7 @@ class _RidgeGCV(LinearModel):
 
     def _solve_eigen_covariance(
             self, alpha, y, sqrt_sw, X_mean, eigvals, Q, X):
-        """Compute dual coefficients and diagonal of (Identity - Hat_matrix),
-        where Hat_matrix = X(X^TX + alpha*I)^(-1)X^T
+        """Compute dual coefficients and diagonal of G^-1
 
         Used when we have a decomposition of X^T.X
         (n_samples > n_features and X is sparse).
@@ -1353,18 +1350,18 @@ class _RidgeGCV(LinearModel):
             intercept_column = sqrt_sw[:, None]
             X = np.hstack((X, intercept_column))
         U, s, _ = linalg.svd(X, full_matrices=0)
-        v = s ** 2
+        eigenvals_sq = s ** 2
         UT_y = np.dot(U.T, y)
-        return X_mean, v, U, UT_y
+        return X_mean, eigenvals_sq, U, UT_y
 
     def _solve_svd_design_matrix(
-            self, alpha, y, sqrt_sw, X_mean, v, U, UT_y):
-        """Compute dual coefficients and diagonal of G^(-1)
+            self, alpha, y, sqrt_sw, X_mean, eigenvals_sq, U, UT_y):
+        """Compute dual coefficients and diagonal of G^-1
 
         Used when we have an SVD decomposition of X
         (n_samples > n_features and X is dense).
         """
-        w = ((v + alpha) ** -1) - (alpha ** -1)
+        w = ((eigenvals_sq + alpha) ** -1) - (alpha ** -1)
         if self.fit_intercept:
             # detect intercept column
             normalized_sw = sqrt_sw / np.linalg.norm(sqrt_sw)
