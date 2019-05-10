@@ -346,6 +346,7 @@ Samples generator
    decomposition.dict_learning
    decomposition.dict_learning_online
    decomposition.fastica
+   decomposition.non_negative_factorization
    decomposition.sparse_encode
 
 .. _lda_ref:
