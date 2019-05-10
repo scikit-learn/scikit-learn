@@ -331,6 +331,7 @@ def test_pipeline_methods_pca_svm():
     pipe.score(X, y)
 
 
+@pytest.mark.filterwarnings('ignore: default contamination parameter')  # 0.22
 def test_pipeline_score_samples_pca_lof():
     iris = load_iris()
     X = iris.data
