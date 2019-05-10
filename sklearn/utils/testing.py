@@ -56,8 +56,6 @@ from sklearn.utils import deprecated, IS_PYPY, _IS_32BIT
 from sklearn.utils._joblib import joblib
 from sklearn.utils._unittest_backport import TestCase
 
-additional_names_in_all = []
-
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_raises_regexp", "assert_true",
            "assert_false", "assert_almost_equal", "assert_array_equal",
@@ -66,7 +64,6 @@ __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_greater", "assert_greater_equal",
            "assert_approx_equal", "assert_allclose",
            "assert_run_python_script", "SkipTest"]
-__all__.extend(additional_names_in_all)
 
 _dummy = TestCase('__init__')
 assert_equal = _dummy.assertEqual
