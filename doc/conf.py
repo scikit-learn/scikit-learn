@@ -265,7 +265,8 @@ carousel_thumbs = {'sphx_glr_plot_classifier_comparison_001.png': 600,
 
 # enable experimental module so that experimental estimators can be
 # discovered properly by sphinx
-from sklearn.experimental import *  # noqa
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+from sklearn.experimental import enable_iterative_imputer  # noqa
 
 
 def make_carousel_thumbs(app, exception):
