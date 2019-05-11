@@ -56,8 +56,6 @@ def test_dict_learning_overcomplete():
     assert dico.components_.shape == (n_components, n_features)
 
 
-# positive lars deprecated 0.22
-@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 @pytest.mark.parametrize("transform_algorithm", [
     "lasso_lars",
     "lasso_cd",
@@ -76,10 +74,21 @@ def test_dict_learning_positivity(transform_algorithm,
                                   positive_code,
                                   positive_dict):
     n_components = 5
-    dico = DictionaryLearning(
+    clf = DictionaryLearning(
         n_components, transform_algorithm=transform_algorithm, random_state=0,
-        positive_code=positive_code, positive_dict=positive_dict).fit(X)
-    code = dico.transform(X)
+        positive_code=positive_code, positive_dict=positive_dict,
+        fit_algorithm="cd")
+    try:
+        dico = clf.fit(X)
+        code = dico.transform(X)
+    except ValueError:
+        if transform_algorithm not in ["lasso_lars", "lars"]:
+            raise
+        elif not positive_code:
+            raise
+        else:
+            return
+
     if positive_dict:
         assert (dico.components_ >= 0).all()
     else:
@@ -170,8 +179,6 @@ def test_dict_learning_online_shapes():
     assert_equal(np.dot(code, dictionary).shape, X.shape)
 
 
-# positive lars deprecated 0.22
-@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 @pytest.mark.parametrize("transform_algorithm", [
     "lasso_lars",
     "lasso_cd",
@@ -192,10 +199,22 @@ def test_dict_learning_online_positivity(transform_algorithm,
     rng = np.random.RandomState(0)
     n_components = 8
 
-    dico = MiniBatchDictionaryLearning(
+    clf = MiniBatchDictionaryLearning(
         n_components, transform_algorithm=transform_algorithm, random_state=0,
-        positive_code=positive_code, positive_dict=positive_dict).fit(X)
-    code = dico.transform(X)
+        positive_code=positive_code, positive_dict=positive_dict,
+        fit_algorithm='cd')
+
+    try:
+        dico = clf.fit(X)
+        code = dico.transform(X)
+    except ValueError:
+        if transform_algorithm not in ["lasso_lars", "lars"]:
+            raise
+        elif not positive_code:
+            raise
+        else:
+            return
+
     if positive_dict:
         assert (dico.components_ >= 0).all()
     else:
@@ -206,6 +225,7 @@ def test_dict_learning_online_positivity(transform_algorithm,
         assert (code < 0).any()
 
     code, dictionary = dict_learning_online(X, n_components=n_components,
+                                            method="cd",
                                             alpha=1, random_state=rng,
                                             positive_dict=positive_dict,
                                             positive_code=positive_code)
@@ -307,8 +327,6 @@ def test_sparse_encode_shapes():
         assert_equal(code.shape, (n_samples, n_components))
 
 
-# positive lars deprecated 0.22
-@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 @pytest.mark.parametrize("positive", [
     False,
     True,
@@ -318,18 +336,19 @@ def test_sparse_encode_positivity(positive):
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)  # random init
     V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
-    for algo in ('lasso_lars', 'lasso_cd', 'lars', 'threshold'):
+    for algo in ('lasso_cd', 'threshold'):
         code = sparse_encode(X, V, algorithm=algo, positive=positive)
         if positive:
             assert (code >= 0).all()
         else:
             assert (code < 0).any()
 
-    try:
-        sparse_encode(X, V, algorithm='omp', positive=positive)
-    except ValueError:
-        if not positive:
-            raise
+    for algo in ('lasso_lars', 'lars', 'omp'):
+        try:
+            sparse_encode(X, V, algorithm=algo, positive=positive)
+        except ValueError:
+            if not positive:
+                raise
 
 
 def test_sparse_encode_input():

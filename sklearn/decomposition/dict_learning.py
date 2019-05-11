@@ -112,12 +112,20 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         try:
             err_mgt = np.seterr(all='ignore')
 
+            # TODO: Should verbose argument be passed to this?
+            if positive:
+                raise ValueError(
+                    """
+                    Positive constraint not supported for \"lasso_lars\"
+                    coding method.
+                    """
+                )
+
             # Not passing in verbose=max(0, verbose-1) because Lars.fit already
             # corrects the verbosity level.
             lasso_lars = LassoLars(alpha=alpha, fit_intercept=False,
                                    verbose=verbose, normalize=False,
-                                   precompute=gram, fit_path=False,
-                                   positive=positive)
+                                   precompute=gram, fit_path=False)
             lasso_lars.fit(dictionary.T, X.T, Xy=cov)
             new_code = lasso_lars.coef_
         finally:
@@ -143,11 +151,20 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         try:
             err_mgt = np.seterr(all='ignore')
 
+            # TODO: Should verbose argument be passed to this?
+            if positive:
+                raise ValueError(
+                    """
+                    Positive constraint not supported for \"lars\"
+                    coding method.
+                    """
+                )
+
             # Not passing in verbose=max(0, verbose-1) because Lars.fit already
             # corrects the verbosity level.
             lars = Lars(fit_intercept=False, verbose=verbose, normalize=False,
                         precompute=gram, n_nonzero_coefs=int(regularization),
-                        fit_path=False, positive=positive)
+                        fit_path=False)
             lars.fit(dictionary.T, X.T, Xy=cov)
             new_code = lars.coef_
         finally:
@@ -519,6 +536,12 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
     if method not in ('lars', 'cd'):
         raise ValueError('Coding method %r not supported as a fit algorithm.'
                          % method)
+
+    if method == 'lars' and positive_code:
+        raise ValueError(
+            "Positive constraint not supported for \"lars\" coding method."
+        )
+
     method = 'lasso_' + method
 
     t0 = time.time()
@@ -729,6 +752,12 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
 
     if method not in ('lars', 'cd'):
         raise ValueError('Coding method not supported as a fit algorithm.')
+
+    if method == 'lars' and positive_code:
+        raise ValueError(
+            "Positive constraint not supported for \"lars\" coding method."
+        )
+
     method = 'lasso_' + method
 
     t0 = time.time()
