@@ -676,8 +676,8 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
         raise TypeError("Gower distance does not support sparse matrices")
 
     type_scale = type(scale)
-    if not (type_scale is bool or type_scale is list or 
-    type_scale is np.array):
+    if not (type_scale is bool or type_scale is list or
+        type_scale is np.array):
         raise TypeError("Parameter scale must be boolean, list, or array")
 
     if X is None or len(X) == 0:
@@ -730,7 +730,7 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
     # input values as proposed by the Gower's paper.
     if n_col_num_present:
         MIN_MAX = _precompute_metric_params(X_num, Y_num, metric='gower',
-        RANGE=scale)
+            RANGE=scale)
 
         # Scales the numeric values between 0 and 1.
         if scale:
@@ -1449,7 +1449,7 @@ def _precompute_metric_params(X, Y, metric=None, **kwds):
                 MAX = np.nanmax([np.nanmax(Y, axis=0), MAX], axis=0)
         else:
             MAX = MIN + RANGE
-        return {'MIN' : MIN, 'MAX' : MAX}
+        return {'MIN': MIN, 'MAX': MAX}
     if metric == "seuclidean" and 'V' not in kwds:
         if X is Y:
             V = np.var(X, axis=0, ddof=1)

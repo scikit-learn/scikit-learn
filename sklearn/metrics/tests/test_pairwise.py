@@ -962,7 +962,7 @@ def test_gower_distances():
     D = gower_distances(X[0:1], Y[0:1], scale=[2999, 2999])
     assert_array_almost_equal(D_expected[0:1, 0:1], D)
 
-    D = gower_distances(X[1:], Y[1:], scale=[2999,2999])
+    D = gower_distances(X[1:], Y[1:], scale=[2999, 2999])
     assert_array_almost_equal(D_expected[1:3, 1:3], D)
 
 
