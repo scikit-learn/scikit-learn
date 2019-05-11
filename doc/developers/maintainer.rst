@@ -163,3 +163,29 @@ config file, exactly the same way as the other Travis jobs. We use a ``if: type
 
 The branch targeted by the Cron job and the frequency of the Cron job is set
 via the web UI at https://www.travis-ci.org/scikit-learn/scikit-learn/settings.
+
+Experimental features
+---------------------
+
+The :mod:`sklearn.experimental` module was introduced in 0.21 and contains
+experimental features / estimators that are subject to change without
+deprecation cycle.
+
+To create an experimental module, you can just copy and modify the content of
+`enable_hist_gradient_boosting.py
+<https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/experimental/enable_hist_gradient_boosting.py>`_.
+
+Please also write basic tests following those in
+`test_enable_hist_gradient_boosting.py
+<https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/experimental/tests/test_enable_hist_gradient_boosting.py>`_.
+
+Make sure every user-facing code you write explicitly mentions that the feature
+is experimental, and add a ``# noqa`` comment to avoid pep8-related warnings::
+
+    # To use this experimental feature, we need to explicitly ask for it:
+    from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+    from sklearn.ensemble import HistGradientBoostingRegressor
+
+For the docs to render properly, please also import
+``enable_my_experimental_feature`` in ``doc/conf.py``, else sphinx won't be able
+to import the corresponding modules.
