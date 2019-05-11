@@ -1091,29 +1091,35 @@ class _RidgeGCV(LinearModel):
         return D * B
 
     def _compute_gram(self, X, sqrt_sw):
-        """Computes the Gram matrix with possible centering.
-
-        If ``center`` is ``True``, compute
-        (X - X.mean(axis=0)).dot((X - X.mean(axis=0)).T)
-        else X.dot(X.T)
+        """Computes the Gram matrix XX^T with possible centering.
 
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            The input uncentered data.
+            The preprocessed design matrix.
 
         sqrt_sw : ndarray, shape (n_samples,)
             square roots of sample weights
-
-        center : bool, default is True
-            Whether or not to remove the mean from ``X``.
 
         Returns
         -------
         gram : ndarray, shape (n_samples, n_samples)
             The Gram matrix.
         X_mean : ndarray, shape (n_feature,)
-            The mean of ``X`` for each feature.
+            The weighted mean of ``X`` for each feature.
+
+        Notes
+        -----
+        When X is dense the centering has been done in preprocessing
+        so the mean is 0 and we just compute XX^T.
+
+        When X is sparse it has not been centered in preprocessing, but it has
+        been scaled by sqrt(sample weights).
+
+        When self.fit_intercept is False no centering is done.
+
+        The centered X is never actually computed because centering would break
+        the sparsity of X.
         """
         center = self.fit_intercept and sparse.issparse(X)
         if not center:
@@ -1135,30 +1141,32 @@ class _RidgeGCV(LinearModel):
                 - X_mX - X_mX.T, X_mean)
 
     def _compute_covariance(self, X, sqrt_sw):
-        """Computes centered covariance matrix.
-
-        If ``center`` is ``True``, compute
-        (X - X.mean(axis=0)).T.dot(X - X.mean(axis=0))
-        else
-        X.T.dot(X)
+        """Computes covariance matrix X^TX with possible centering.
 
         Parameters
         ----------
         X : sparse matrix, shape (n_samples, n_features)
-            The input uncentered data.
+            The preprocessed design matrix.
 
         sqrt_sw : ndarray, shape (n_samples,)
             square roots of sample weights
-
-        center : bool, default is True
-            Whether or not to remove the mean from ``X``.
 
         Returns
         -------
         covariance : ndarray, shape (n_features, n_features)
             The covariance matrix.
         X_mean : ndarray, shape (n_feature,)
-            The mean of ``X`` for each feature.
+            The weighted mean of ``X`` for each feature.
+
+        Notes
+        -----
+        Since X is sparse it has not been centered in preprocessing, but it has
+        been scaled by sqrt(sample weights).
+
+        When self.fit_intercept is False no centering is done.
+
+        The centered X is never actually computed because centering would break
+        the sparsity of X.
         """
         if not self.fit_intercept:
             # in this case centering has been done in preprocessing
