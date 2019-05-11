@@ -613,7 +613,7 @@ def cosine_distances(X, Y=None):
     return S
 
 
-def gower_distances(X, Y=None, categorical_features=None, scale=True, **metric_kwargs):
+def gower_distances(X, Y=None, categorical_features=None, scale=True):
     """Compute the distances between the observations in X and Y,
     that may contain mixed types of data, using an implementation
     of Gower formula.
@@ -637,17 +637,15 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True, **metric_k
         If the categorical_features array is not provided, by default all
         non-numeric columns are considered categorical.
 
-    scale : boolean, optional (default=True)
-        Indicates if the data will be scaled between 0 and 1. If false, it
-        is assumed the data is already scaled.
-
-    **metric_kwargs : dict, optional
-        Keyword arguments with precomputed parameters (MIN, MAX)
-        to scale the data.
+    scale : boolean, list or array, optional (default=True)
+        Indicates if the numerical columns will be scaled between 0 and 1.
+        If false, it is assumed the numerical columns are already scaled.
+        If a list or array, it must countain the ranges of values from
+        numerical columns.
         
     Returns
     -------
-    similarities : ndarray, shape (n_samples, n_samples)
+    similarities : ndarray, shape (n_samples_X, n_samples_Y)
 
     References
     ----------
@@ -676,6 +674,10 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True, **metric_k
     """
     if issparse(X) or issparse(Y):
         raise TypeError("Gower distance does not support sparse matrices")
+    
+    type_scale = type(scale)
+    if not (type_scale is bool or type_scale is list or type_scale is np.array):
+        raise TypeError("Parameter scale must be boolean, list, or array")
 
     if X is None or len(X) == 0:
         raise ValueError("X can not be None or empty")
@@ -726,15 +728,9 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True, **metric_k
     # Calculates the min and max values, and if requested, scale the
     # input values as proposed by the Gower's paper.
     if n_col_num_present:
-        MIN_MAX = {}
-        if 'MIN' not in metric_kwargs or 'MAX' not in metric_kwargs:
-            MIN_MAX = _precompute_metric_params(X_num, Y_num, metric='gower', 
-            **metric_kwargs)
-        else:
-            MIN_MAX['MIN'] = metric_kwargs['MIN']
-            MIN_MAX['MAX'] = metric_kwargs['MAX']
-
-        print(MIN_MAX)
+        MIN_MAX = _precompute_metric_params(X_num, Y_num, metric='gower', 
+        RANGE=scale)
+        
         # Scales the numeric values between 0 and 1.
         if scale:
             scaler = MinMaxScaler().fit([MIN_MAX['MIN'], MIN_MAX['MAX']])
@@ -1441,12 +1437,19 @@ def _precompute_metric_params(X, Y, metric=None, **kwds):
     """Precompute data-derived metric parameters if not provided
     """
     if metric == "gower":
-        MIN_MAX = {}
-        if 'MIN' not in kwds:
-            MIN_MAX['MIN'] = np.nanmin((np.vstack([X, Y]), X)[X is Y], axis=0)
-        if 'MAX' not in kwds:
-            MIN_MAX['MAX'] = np.nanmax((np.vstack([X, Y]), X)[X is Y], axis=0)
-        return MIN_MAX
+        RANGE = kwds['RANGE']
+        MIN = np.nanmin(X, axis=0)
+        if X is not Y:
+            MIN = np.nanmin([np.nanmin(Y, axis=0), MIN], axis=0)
+        MAX = None
+        if type(RANGE) is bool:
+            MAX = np.nanmax(X, axis=0)
+            if X is not Y:
+                MAX = np.nanmax([np.nanmax(Y, axis=0), MAX], axis=0)
+        else:
+            MAX = MIN + RANGE
+            
+        return {'MIN':MIN, 'MAX':MAX}
     if metric == "seuclidean" and 'V' not in kwds:
         if X is Y:
             V = np.var(X, axis=0, ddof=1)

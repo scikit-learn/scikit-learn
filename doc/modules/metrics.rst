@@ -73,7 +73,7 @@ their cosine similarity :math:`k` is defined as:
 
 .. math::
 
-    k(x, y) = \frac{x y^\top}{\|x\| \|y\|}
+    k(x, y) = \frac{x y^    op}{\|x\| \|y\|}
 
 This is called cosine similarity, because Euclidean (L2) normalization
 projects the vectors onto the unit sphere,
@@ -103,7 +103,7 @@ or categorical attributes, using an implementation of Gower Similarity.
 
 .. math::
 
-    g(\mathbf{x}, \mathbf{y}) = \frac{\sum_i(s(x_i, y_i))}{|\{i| x_i\text{ is not missing or }y_i\text{ is not missing}\}|}
+    g(\mathbf{x}, \mathbf{y}) = \frac{\sum_i(s(x_i, y_i))}{|\{i| x_i    ext{ is not missing or }y_i    ext{ is not missing}\}|}
 
 Where:
 
@@ -125,8 +125,7 @@ of x and y, as described by the expressions:
 
 The Gower formula combines a Manhattan (L1) distance for numeric features
 with Hamming distance for categorical features to obtain a general coefficient
-for categorical and numeric data. Numeric variables are expected to be scaled
-between 0 and 1.
+for categorical and numeric data.
 
 .. topic:: References:
 
@@ -144,7 +143,7 @@ If ``x`` and ``y`` are column vectors, their linear kernel is:
 
 .. math::
 
-    k(x, y) = x^\top y
+    k(x, y) = x^    op y
 
 .. _polynomial_kernel:
 
@@ -160,7 +159,7 @@ The polynomial kernel is defined as:
 
 .. math::
 
-    k(x, y) = (\gamma x^\top y +c_0)^d
+    k(x, y) = (\gamma x^    op y +c_0)^d
 
 where:
 
@@ -180,7 +179,7 @@ activation function). It is defined as:
 
 .. math::
 
-    k(x, y) = \tanh( \gamma x^\top y + c_0)
+    k(x, y) =     anh( \gamma x^    op y + c_0)
 
 where:
 

@@ -660,7 +660,7 @@ def test_gower_distances():
     #
     # The calculation formula for Gower similarity is available in the
     # user guide.
-
+    
     X = [[np.nan, np.nan], [np.nan, np.nan]]
     D = gower_distances(X)
     assert_array_almost_equal(X, D)
@@ -843,41 +843,6 @@ def test_gower_distances():
     # Gower results for numerical values must be similar to Manhattan.
     assert_array_almost_equal(D * 2, manhattan_distances(X))
 
-    # Test X and Y with diferent ranges of numeric values
-    X = [[222.22, 1],
-         [1934.0, 4],
-         [1, 1]]
-
-    Y = [[222.22, 1],
-         [1934.0, 4],
-         [3000, 3000]]
-
-    D = gower_distances(X, Y)
-
-    # The expected normalized values above are:
-    Xn = [[0.073765, 0.0],
-          [0.644548, 0.001],
-          [0.0,      0.0]]
-
-    Yn = [[0.073765, 0.0],
-          [0.644548, 0.001],
-          [1.0,      1.0]]
-
-    # Simplified calculation of Gower distance for expected values
-    n_rows, n_cols = np.shape(X)
-    D_expected = np.zeros((n_rows, n_rows))
-    for i in range(0, n_rows):
-        for j in range(0, n_rows):
-            D_expected[i][j] = (abs(Xn[i][0] - Yn[j][0]) +
-                                abs(Xn[i][1] - Yn[j][1])) / n_cols
-
-    assert_array_almost_equal(D_expected, D)
-
-    # Test the use of metric parameters
-    D = gower_distances(X, Y, MIN=[1.0, 1.0], MAX=[3000.0, 3000.0])
-
-    assert_array_almost_equal(D_expected, D)
-
     # Test to obtain a non-squared distance matrix
     X = np.array([['Syria', 1.0, 0.0, 0.0, True],
                   ['Ireland', 0.181818, 0.0, 1, False],
@@ -956,6 +921,51 @@ def test_gower_distances():
     with pytest.raises(ValueError):
         gower_distances(X, scale=False)
 
+    # Test X and Y with diferent ranges of numeric values
+    X = [[222.22, 1],
+         [1934.0, 4],
+         [1, 1]]
+
+    Y = [[222.22, 1],
+         [1934.0, 4],
+         [3000, 3000]]
+
+    D = gower_distances(X, Y)
+
+    # The expected normalized values above are:
+    Xn = [[0.073765, 0.0],
+          [0.644548, 0.001],
+          [0.0,      0.0]]
+
+    Yn = [[0.073765, 0.0],
+          [0.644548, 0.001],
+          [1.0,      1.0]]
+
+    # Simplified calculation of Gower distance for expected values
+    n_rows, n_cols = np.shape(X)
+    D_expected = np.zeros((n_rows, n_rows))
+    for i in range(0, n_rows):
+        for j in range(0, n_rows):
+            D_expected[i][j] = (abs(Xn[i][0] - Yn[j][0]) +
+                                abs(Xn[i][1] - Yn[j][1])) / n_cols
+
+    assert_array_almost_equal(D_expected, D)
+
+    # Test the use of metric parameters
+    D = gower_distances(X, Y, scale=[2999,2999])
+
+    assert_array_almost_equal(D_expected, D)
+
+    # Test gower robustness after slice de data, with its original ranges
+    D = gower_distances(X[0:2], Y[0:2], scale=[2999,2999])
+    assert_array_almost_equal(D_expected[0:2,0:2], D)
+
+    D = gower_distances(X[0:1], Y[0:1], scale=[2999,2999])
+    assert_array_almost_equal(D_expected[0:1,0:1], D)
+
+    D = gower_distances(X[1:], Y[1:], scale=[2999,2999])
+    assert_array_almost_equal(D_expected[1:3,1:3], D)
+    
 
 def test_haversine_distances():
     # Check haversine distance with distances computation
