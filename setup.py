@@ -254,6 +254,12 @@ def setup_package():
 
         metadata['version'] = VERSION
     else:
+        if sys.version_info < (3, 5):
+            raise RuntimeError(
+                "Scikit-learn requires Python 3.5 or later. The current"
+                " Python version is %s installed in %s."
+                % (platform.python_version(), sys.executable))
+
         numpy_status = get_numpy_status()
         numpy_req_str = "scikit-learn requires NumPy >= {}.\n".format(
             NUMPY_MIN_VERSION)
