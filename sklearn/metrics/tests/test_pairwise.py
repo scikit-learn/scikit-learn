@@ -660,14 +660,13 @@ def test_gower_distances():
     #
     # The calculation formula for Gower similarity is available in the
     # user guide.
-    
+
     X = [[np.nan, np.nan], [np.nan, np.nan]]
     D = gower_distances(X)
     assert_array_almost_equal(X, D)
 
     with pytest.raises(TypeError):
         gower_distances(csr_matrix((2, 2)))
-
     with pytest.raises(ValueError):
         gower_distances(None)
 
@@ -951,21 +950,21 @@ def test_gower_distances():
 
     assert_array_almost_equal(D_expected, D)
 
-    # Test the use of metric parameters
-    D = gower_distances(X, Y, scale=[2999,2999])
+    # Test the use of range parameters
+    D = gower_distances(X, Y, scale=[2999, 2999])
 
     assert_array_almost_equal(D_expected, D)
 
     # Test gower robustness after slice de data, with its original ranges
-    D = gower_distances(X[0:2], Y[0:2], scale=[2999,2999])
-    assert_array_almost_equal(D_expected[0:2,0:2], D)
+    D = gower_distances(X[0:2], Y[0:2], scale=[2999, 2999])
+    assert_array_almost_equal(D_expected[0:2, 0:2], D)
 
-    D = gower_distances(X[0:1], Y[0:1], scale=[2999,2999])
-    assert_array_almost_equal(D_expected[0:1,0:1], D)
+    D = gower_distances(X[0:1], Y[0:1], scale=[2999, 2999])
+    assert_array_almost_equal(D_expected[0:1, 0:1], D)
 
     D = gower_distances(X[1:], Y[1:], scale=[2999,2999])
-    assert_array_almost_equal(D_expected[1:3,1:3], D)
-    
+    assert_array_almost_equal(D_expected[1:3, 1:3], D)
+
 
 def test_haversine_distances():
     # Check haversine distance with distances computation
