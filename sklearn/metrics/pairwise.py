@@ -670,7 +670,6 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
 
     * Different from the original similarity S, this implementation
     returns 1-S.
-
     """
     if issparse(X) or issparse(Y):
         raise TypeError("Gower distance does not support sparse matrices")
