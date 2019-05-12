@@ -1546,7 +1546,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
         dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else None
 
         if dtype == bool and \
-                (X.dtype != bool or not ((Y is None) or Y.dtype == bool)):
+                (X.dtype != bool or (Y is not None and Y.dtype != bool)):
             msg = "Data was converted to boolean for metric %s" % metric
             warnings.warn(msg, DataConversionWarning)
 
