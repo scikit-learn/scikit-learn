@@ -337,11 +337,8 @@ def test_sparse_encode_positivity(positive):
             assert (code < 0).any()
 
     for algo in ('lasso_lars', 'lars', 'omp'):
-        try:
-            sparse_encode(X, V, algorithm=algo, positive=positive)
-        except ValueError:
-            if not positive:
-                raise
+        if positive:
+            assert_raises(ValueError, sparse_encode, X, V, algorithm=algo, positive=positive)
 
 
 def test_sparse_encode_input():
