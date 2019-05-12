@@ -78,16 +78,13 @@ def test_dict_learning_positivity(transform_algorithm,
         n_components, transform_algorithm=transform_algorithm, random_state=0,
         positive_code=positive_code, positive_dict=positive_dict,
         fit_algorithm="cd")
-    try:
-        dico = clf.fit(X)
+
+    dico = clf.fit(X)
+    if transform_algorithm in ["lasso_lars", "lars"] and positive_code:
+        assert_raises(ValueError, dico.transform, X)
+        return
+    else:
         code = dico.transform(X)
-    except ValueError:
-        if transform_algorithm not in ["lasso_lars", "lars"]:
-            raise
-        elif not positive_code:
-            raise
-        else:
-            return
 
     if positive_dict:
         assert (dico.components_ >= 0).all()
@@ -204,16 +201,12 @@ def test_dict_learning_online_positivity(transform_algorithm,
         positive_code=positive_code, positive_dict=positive_dict,
         fit_algorithm='cd')
 
-    try:
-        dico = clf.fit(X)
+    dico = clf.fit(X)
+    if transform_algorithm in ["lasso_lars", "lars"] and positive_code:
+        assert_raises(ValueError, dico.transform, X)
+        return
+    else:
         code = dico.transform(X)
-    except ValueError:
-        if transform_algorithm not in ["lasso_lars", "lars"]:
-            raise
-        elif not positive_code:
-            raise
-        else:
-            return
 
     if positive_dict:
         assert (dico.components_ >= 0).all()
