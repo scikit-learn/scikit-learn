@@ -677,7 +677,7 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
 
     type_scale = type(scale)
     if not (type_scale is bool or type_scale is list or
-        type_scale is np.array):
+            type_scale is np.array):
         raise TypeError("Parameter scale must be boolean, list, or array")
 
     if X is None or len(X) == 0:
@@ -729,19 +729,19 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
     # Calculates the min and max values, and if requested, scale the
     # input values as proposed by the Gower's paper.
     if n_col_num_present:
-        MIN_MAX = _precompute_metric_params(X_num, Y_num, metric='gower',
-            RANGE=scale)
+        params = _precompute_metric_params(X_num, Y_num, metric='gower',
+                                           RANGE=scale)
 
         # Scales the numeric values between 0 and 1.
         if scale:
-            scaler = MinMaxScaler().fit([MIN_MAX['MIN'], MIN_MAX['MAX']])
+            scaler = MinMaxScaler().fit([params['MIN'], params['MAX']])
             X_num = scaler.transform(X_num)
             if y_is_not_none:
                 Y_num = scaler.transform(Y_num)
             else:
                 Y_num = X_num
         # If not, checks if the data is scaled.
-        elif np.min(MIN_MAX['MIN']) < 0 or np.max(MIN_MAX['MAX']) > 1:
+        elif np.min(params['MIN']) < 0 or np.max(params['MAX']) > 1:
             raise ValueError("Input data is not scaled between 0 and 1.")
 
     y_n_rows = Y.shape[0]
