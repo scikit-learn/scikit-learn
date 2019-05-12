@@ -642,7 +642,7 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
         If false, it is assumed the numerical columns are already scaled.
         If a list or array, it must countain the ranges of values from
         numerical columns.
-        
+
     Returns
     -------
     similarities : ndarray, shape (n_samples_X, n_samples_Y)
