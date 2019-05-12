@@ -218,13 +218,13 @@ the following two rules:
 
 .. note:: **Using custom scorers in functions where n_jobs > 1**
 
-    While defining the custom scoring function alongside the calling function 
-    should work out of the box with the default joblib backend (loky), 
+    While defining the custom scoring function alongside the calling function
+    should work out of the box with the default joblib backend (loky),
     importing it from another module will be a more robust approach and work
-    independently of the joblib backend. 
+    independently of the joblib backend.
 
-    For example, to use, ``n_jobs`` greater than 1 in the example below, 
-    ``custom_scoring_function`` function is saved in a user-created module 
+    For example, to use, ``n_jobs`` greater than 1 in the example below,
+    ``custom_scoring_function`` function is saved in a user-created module
     (``custom_scorer_module.py``) and imported::
 
         >>> from custom_scorer_module import custom_scoring_function # doctest: +SKIP
@@ -1851,10 +1851,14 @@ function::
 R² score, the coefficient of determination
 -------------------------------------------
 
-The :func:`r2_score` function computes R², the `coefficient of
-determination <https://en.wikipedia.org/wiki/Coefficient_of_determination>`_.
-It provides a measure of how well future samples are likely to
-be predicted by the model. Best possible score is 1.0 and it can be negative
+The :func:`r2_score` function computes the `coefficient of
+determination <https://en.wikipedia.org/wiki/Coefficient_of_determination>`_,
+usually denoted as R².
+It represents the proportion of variance (of y) that has been explained by the
+independent variables in the model. It provides an indication of goodness of
+fit and therefore a measure of how well unseen samples are likely to be
+predicted by the model, through the proportion of explained variance.
+Best possible score is 1.0 and it can be negative
 (because the model can be arbitrarily worse). A constant model that always
 predicts the expected value of y, disregarding the input features, would get a
 R^2 score of 0.0.
