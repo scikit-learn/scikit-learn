@@ -18,6 +18,7 @@ from sklearn.utils.testing import TempMemmap
 from sklearn.decomposition import DictionaryLearning
 from sklearn.decomposition import MiniBatchDictionaryLearning
 from sklearn.decomposition import SparseCoder
+from sklearn.decomposition import dict_learning
 from sklearn.decomposition import dict_learning_online
 from sklearn.decomposition import sparse_encode
 
@@ -54,6 +55,13 @@ def test_dict_learning_overcomplete():
     n_components = 12
     dico = DictionaryLearning(n_components, random_state=0).fit(X)
     assert dico.components_.shape == (n_components, n_features)
+
+
+def test_dict_learning_lars_positive_parameter():
+    n_components = 5
+    alpha = 1
+    assert_raises(ValueError, dict_learning, X, n_components,
+                  alpha, positive_code=True)
 
 
 @pytest.mark.parametrize("transform_algorithm", [
@@ -174,6 +182,12 @@ def test_dict_learning_online_shapes():
     assert_equal(code.shape, (n_samples, n_components))
     assert_equal(dictionary.shape, (n_components, n_features))
     assert_equal(np.dot(code, dictionary).shape, X.shape)
+
+
+def test_dict_learning_online_lars_positive_parameter():
+    alpha = 1
+    assert_raises(ValueError, dict_learning_online, X,
+                  alpha, positive_code=True)
 
 
 @pytest.mark.parametrize("transform_algorithm", [
