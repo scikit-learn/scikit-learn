@@ -1876,7 +1876,7 @@ the estimated R² is defined as:
 where :math:`\bar{y} =  \frac{1}{n} \sum_{i=0}^{n} y_i`.
 
 Note that :func:`r2_score` calculates unadjusted R² without correcting for
-bias in sample variance in y.
+bias in sample variance of y.
 
 Here is a small example of usage of the :func:`r2_score` function::
 
