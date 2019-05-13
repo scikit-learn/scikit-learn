@@ -20,7 +20,6 @@ from ..utils.validation import check_is_fitted
 from ..tree._tree import DTYPE
 from ..utils import deprecated
 
-from ._gradient_boosting import _partial_dependence_tree
 from .gradient_boosting import BaseGradientBoosting
 
 
@@ -174,8 +173,8 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
     for stage in range(n_estimators):
         for k in range(n_trees_per_stage):
             tree = gbrt.estimators_[stage, k].tree_
-            _partial_dependence_tree(tree, grid, target_variables,
-                                     gbrt.learning_rate, pdp[k])
+            tree.compute_partial_dependence(grid, target_variables, pdp[k])
+    pdp *= gbrt.learning_rate
 
     return pdp, axes
 

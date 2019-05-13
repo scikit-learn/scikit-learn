@@ -380,7 +380,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
     """
 
     @abstractmethod
-    def __init__(self, estimator, scoring=None, n_jobs=None, iid='warn',
+    def __init__(self, estimator, scoring=None, n_jobs=None, iid='deprecated',
                  refit=True, cv='warn', verbose=0, pre_dispatch='2*n_jobs',
                  error_score='raise-deprecating', return_train_score=True):
 
@@ -447,7 +447,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         ``predict``.
 
         Parameters
-        -----------
+        ----------
         X : indexable, length n_samples
             Must fulfill the input assumptions of the
             underlying estimator.
@@ -464,7 +464,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         ``predict_proba``.
 
         Parameters
-        -----------
+        ----------
         X : indexable, length n_samples
             Must fulfill the input assumptions of the
             underlying estimator.
@@ -481,7 +481,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         ``predict_log_proba``.
 
         Parameters
-        -----------
+        ----------
         X : indexable, length n_samples
             Must fulfill the input assumptions of the
             underlying estimator.
@@ -498,7 +498,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         ``decision_function``.
 
         Parameters
-        -----------
+        ----------
         X : indexable, length n_samples
             Must fulfill the input assumptions of the
             underlying estimator.
@@ -515,7 +515,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         ``refit=True``.
 
         Parameters
-        -----------
+        ----------
         X : indexable, length n_samples
             Must fulfill the input assumptions of the
             underlying estimator.
@@ -532,7 +532,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         ``inverse_transform`` and ``refit=True``.
 
         Parameters
-        -----------
+        ----------
         Xt : indexable, length n_samples
             Must fulfill the input assumptions of the
             underlying estimator.
@@ -791,27 +791,15 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         # NOTE test_sample counts (weights) remain the same for all candidates
         test_sample_counts = np.array(test_sample_counts[:n_splits],
                                       dtype=np.int)
-        iid = self.iid
-        if self.iid == 'warn':
-            warn = False
-            for scorer_name in scorers.keys():
-                scores = test_scores[scorer_name].reshape(n_candidates,
-                                                          n_splits)
-                means_weighted = np.average(scores, axis=1,
-                                            weights=test_sample_counts)
-                means_unweighted = np.average(scores, axis=1)
-                if not np.allclose(means_weighted, means_unweighted,
-                                   rtol=1e-4, atol=1e-4):
-                    warn = True
-                    break
 
-            if warn:
-                warnings.warn("The default of the `iid` parameter will change "
-                              "from True to False in version 0.22 and will be"
-                              " removed in 0.24. This will change numeric"
-                              " results when test-set sizes are unequal.",
-                              DeprecationWarning)
-            iid = True
+        if self.iid != 'deprecated':
+            warnings.warn(
+                "The parameter 'iid' is deprecated in 0.22 and will be "
+                "removed in 0.24.", DeprecationWarning
+            )
+            iid = self.iid
+        else:
+            iid = False
 
         for scorer_name in scorers.keys():
             # Computed the (weighted) mean and std for test scores alone
@@ -892,18 +880,14 @@ class GridSearchCV(BaseSearchCV):
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    iid : boolean, default='warn'
+    iid : boolean, default=False
         If True, return the average score across folds, weighted by the number
         of samples in each test set. In this case, the data is assumed to be
         identically distributed across the folds, and the loss minimized is
-        the total loss per sample, and not the mean loss across the folds. If
-        False, return the average score across folds. Default is True, but
-        will change to False in version 0.22, to correspond to the standard
-        definition of cross-validation.
+        the total loss per sample, and not the mean loss across the folds.
 
-        .. versionchanged:: 0.20
-            Parameter ``iid`` will change from True to False by default in
-            version 0.22, and will be removed in 0.24.
+        .. deprecated:: 0.22
+            Parameter ``iid`` is deprecated in 0.22 and will be removed in 0.24
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
@@ -978,16 +962,18 @@ class GridSearchCV(BaseSearchCV):
     >>> from sklearn.model_selection import GridSearchCV
     >>> iris = datasets.load_iris()
     >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
-    >>> svc = svm.SVC(gamma="scale")
+    >>> svc = svm.SVC()
     >>> clf = GridSearchCV(svc, parameters, cv=5)
     >>> clf.fit(iris.data, iris.target)
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     GridSearchCV(cv=5, error_score=...,
-           estimator=SVC(C=1.0, cache_size=..., class_weight=..., coef0=...,
+           estimator=SVC(C=1.0, break_ties=False, cache_size=...,
+                         class_weight=..., coef0=...,
                          decision_function_shape='ovr', degree=..., gamma=...,
-                         kernel='rbf', max_iter=-1, probability=False,
-                         random_state=None, shrinking=True, tol=...,
-                         verbose=False),
+                         kernel='rbf', max_iter=-1,
+                         probability=False,
+                         random_state=None, shrinking=True,
+                         tol=..., verbose=False),
            iid=..., n_jobs=None,
            param_grid=..., pre_dispatch=..., refit=..., return_train_score=...,
            scoring=..., verbose=...)
@@ -1103,7 +1089,7 @@ class GridSearchCV(BaseSearchCV):
         This is present only if ``refit`` is not False.
 
     Notes
-    ------
+    -----
     The parameters selected are those that maximize the score of the left out
     data, unless an explicit score is passed in which case it is used instead.
 
@@ -1132,9 +1118,9 @@ class GridSearchCV(BaseSearchCV):
     _required_parameters = ["estimator", "param_grid"]
 
     def __init__(self, estimator, param_grid, scoring=None,
-                 n_jobs=None, iid='warn', refit=True, cv='warn', verbose=0,
-                 pre_dispatch='2*n_jobs', error_score='raise-deprecating',
-                 return_train_score=False):
+                 n_jobs=None, iid='deprecated', refit=True, cv='warn',
+                 verbose=0, pre_dispatch='2*n_jobs',
+                 error_score='raise-deprecating', return_train_score=False):
         super().__init__(
             estimator=estimator, scoring=scoring,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
@@ -1234,18 +1220,14 @@ class RandomizedSearchCV(BaseSearchCV):
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    iid : boolean, default='warn'
+    iid : boolean, default=False
         If True, return the average score across folds, weighted by the number
         of samples in each test set. In this case, the data is assumed to be
         identically distributed across the folds, and the loss minimized is
-        the total loss per sample, and not the mean loss across the folds. If
-        False, return the average score across folds. Default is True, but
-        will change to False in version 0.22, to correspond to the standard
-        definition of cross-validation.
+        the total loss per sample, and not the mean loss across the folds.
 
-        .. versionchanged:: 0.20
-            Parameter ``iid`` will change from True to False by default in
-            version 0.22, and will be removed in 0.24.
+        .. deprecated:: 0.22
+            Parameter ``iid`` is deprecated in 0.22 and will be removed in 0.24
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
@@ -1448,7 +1430,7 @@ class RandomizedSearchCV(BaseSearchCV):
     _required_parameters = ["estimator", "param_distributions"]
 
     def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
-                 n_jobs=None, iid='warn', refit=True,
+                 n_jobs=None, iid='deprecated', refit=True,
                  cv='warn', verbose=0, pre_dispatch='2*n_jobs',
                  random_state=None, error_score='raise-deprecating',
                  return_train_score=False):
