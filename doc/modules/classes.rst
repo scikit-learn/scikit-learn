@@ -346,6 +346,7 @@ Samples generator
    decomposition.dict_learning
    decomposition.dict_learning_online
    decomposition.fastica
+   decomposition.non_negative_factorization
    decomposition.sparse_encode
 
 .. _lda_ref:
@@ -471,6 +472,7 @@ Samples generator
    :toctree: generated/
 
    experimental.enable_hist_gradient_boosting
+   experimental.enable_iterative_imputer
 
 
 .. _feature_extraction_ref:

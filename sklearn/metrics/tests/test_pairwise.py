@@ -173,6 +173,15 @@ def test_pairwise_boolean_distance(metric):
     with pytest.warns(DataConversionWarning, match=msg):
         pairwise_distances(X, metric=metric)
 
+    # Check that the warning is raised if X is boolean by Y is not boolean:
+    with pytest.warns(DataConversionWarning, match=msg):
+        pairwise_distances(X.astype(bool), Y=Y, metric=metric)
+
+    # Check that no warning is raised if X is already boolean and Y is None:
+    with pytest.warns(None) as records:
+        pairwise_distances(X.astype(bool), metric=metric)
+    assert len(records) == 0
+
 
 def test_no_data_conversion_warning():
     # No warnings issued if metric is not a boolean distance function
@@ -452,11 +461,6 @@ def test_pairwise_distances_argmin_min():
         X, Y, axis=0, metric="manhattan")
     np.testing.assert_almost_equal(dist_orig_ind, dist_chunked_ind, decimal=7)
     np.testing.assert_almost_equal(dist_orig_val, dist_chunked_val, decimal=7)
-
-    # Test batch_size deprecation warning
-    assert_warns_message(DeprecationWarning, "version 0.22",
-                         pairwise_distances_argmin_min, X, Y, batch_size=500,
-                         metric='euclidean')
 
 
 def _reduce_func(dist, start):

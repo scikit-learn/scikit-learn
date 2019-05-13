@@ -432,8 +432,6 @@ def test_thresholded_scorers_multilabel_indicator_data():
     assert_almost_equal(score1, score2)
 
 
-@pytest.mark.filterwarnings("ignore:the behavior of ")
-# AMI and NMI changes for 0.22
 def test_supervised_cluster_scorers():
     # Test clustering scorers against gold standard labeling.
     X, y = make_blobs(random_state=0, centers=2)

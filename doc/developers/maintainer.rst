@@ -94,6 +94,7 @@ Making a release
    packages and upload them to PyPI by running the following commands in the
    scikit-learn source folder (checked out at the release tag)::
 
+       $ rm -r dist
        $ pip install -U wheelhouse_uploader twine
        $ python setup.py fetch_artifacts
 
@@ -105,7 +106,7 @@ Making a release
 
    Upload everything at once to https://pypi.org::
 
-       $ twine upload dist/
+       $ twine upload dist/*
 
 7. For major/minor (not bug-fix release), update the symlink for ``stable``
    in https://github.com/scikit-learn/scikit-learn.github.io::
@@ -115,7 +116,9 @@ Making a release
        $ cd scikit-learn.github.io
        $ echo stable > .git/info/sparse-checkout
        $ git checkout master
-       $ ln -sf 0.999 stable
+       $ rm stable
+       $ ln -s 0.999 stable
+       $ git commit -m "Update stable to point to 0.999" stable
        $ git push origin master
 
 The following GitHub checklist might be helpful in a release PR::

@@ -332,7 +332,6 @@ def test_ovr_multilabel_dataset():
                             decimal=2)
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_ovr_multilabel_predict_proba():
     base_clf = MultinomialNB(alpha=1)
@@ -423,7 +422,6 @@ def test_ovr_single_label_decision_function():
                        clf.predict(X_test))
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_ovr_gridsearch():
     ovr = OneVsRestClassifier(LinearSVC(random_state=0))
@@ -601,7 +599,6 @@ def test_ovo_decision_function():
         assert_greater(len(np.unique(decisions[:, class_idx])), 146)
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_ovo_gridsearch():
     ovo = OneVsOneClassifier(LinearSVC(random_state=0))
@@ -701,7 +698,6 @@ def test_ecoc_fit_predict():
     assert_equal(len(ecoc.estimators_), n_classes * 2)
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_ecoc_gridsearch():
     ecoc = OutputCodeClassifier(LinearSVC(random_state=0),
