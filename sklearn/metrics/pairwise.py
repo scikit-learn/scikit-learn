@@ -306,7 +306,7 @@ def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None):
     maxmem = max(
         ((x_density * n_samples_X + y_density * n_samples_Y) * n_features
          + (x_density * n_samples_X * y_density * n_samples_Y)) / 10,
-        10 * 2**17)
+        10 * 2 ** 17)
 
     # The increase amount of memory in 8-byte blocks is:
     # - x_density * batch_size * n_features (copy of chunk of X)
@@ -315,7 +315,7 @@ def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None):
     # Hence x² + (xd+yd)kx = M, where x=batch_size, k=n_features, M=maxmem
     #                                 xd=x_density and yd=y_density
     tmp = (x_density + y_density) * n_features
-    batch_size = (-tmp + np.sqrt(tmp**2 + 4 * maxmem)) / 2
+    batch_size = (-tmp + np.sqrt(tmp ** 2 + 4 * maxmem)) / 2
     batch_size = max(int(batch_size), 1)
 
     x_batches = gen_batches(X.shape[0], batch_size)
@@ -916,7 +916,7 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     K = safe_sparse_dot(X, Y.T, dense_output=True)
     K *= gamma
     K += coef0
-    np.tanh(K, K)   # compute tanh in-place
+    np.tanh(K, K)  # compute tanh in-place
     return K
 
 
@@ -949,7 +949,7 @@ def rbf_kernel(X, Y=None, gamma=None):
 
     K = euclidean_distances(X, Y, squared=True)
     K *= -gamma
-    np.exp(K, K)    # exponentiate K in-place
+    np.exp(K, K)  # exponentiate K in-place
     return K
 
 
@@ -983,7 +983,7 @@ def laplacian_kernel(X, Y=None, gamma=None):
         gamma = 1.0 / X.shape[1]
 
     K = -gamma * manhattan_distances(X, Y)
-    np.exp(K, K)    # exponentiate K in-place
+    np.exp(K, K)  # exponentiate K in-place
     return K
 
 
@@ -1561,7 +1561,8 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
 
         dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else None
 
-        if dtype == bool and (X.dtype != bool or Y.dtype != bool):
+        if (dtype == bool and
+                (X.dtype != bool or (Y is not None and Y.dtype != bool))):
             msg = "Data was converted to boolean for metric %s" % metric
             warnings.warn(msg, DataConversionWarning)
 
@@ -1591,7 +1592,6 @@ PAIRWISE_BOOLEAN_FUNCTIONS = [
     'sokalsneath',
     'yule',
 ]
-
 
 # Helper functions - distance
 PAIRWISE_KERNEL_FUNCTIONS = {

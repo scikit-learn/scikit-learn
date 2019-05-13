@@ -2,6 +2,29 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_0_21_1:
+
+Version 0.21.1
+==============
+
+**May 2019**
+
+
+This is a bug-fix release with some minor documentation improvements and
+enhancements to features released in 0.21.0.
+
+Changelog
+---------
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Fixed a bug in :class:`metrics.pairwise_distances` where it would raise
+  ``AttributeError`` for boolean metrics when ``X`` had a boolean dtype and
+  ``Y == None``.
+  :issue:`13864` by :user:`Paresh Mathur <rick2047>`.
+
+
 .. _changes_0_21:
 
 Version 0.21.0
