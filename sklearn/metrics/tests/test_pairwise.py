@@ -173,6 +173,15 @@ def test_pairwise_boolean_distance(metric):
     with pytest.warns(DataConversionWarning, match=msg):
         pairwise_distances(X, metric=metric)
 
+    # Check that the warning is raised if X is boolean by Y is not boolean:
+    with pytest.warns(DataConversionWarning, match=msg):
+        pairwise_distances(X.astype(bool), Y=Y, metric=metric)
+
+    # Check that no warning is raised if X is already boolean and Y is None:
+    with pytest.warns(None) as records:
+        pairwise_distances(X.astype(bool), metric=metric)
+    assert len(records) == 0
+
 
 def test_no_data_conversion_warning():
     # No warnings issued if metric is not a boolean distance function
