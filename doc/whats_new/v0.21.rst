@@ -4,14 +4,14 @@
 
 .. _changes_0_21_1:
 
-Version 0.21.0
+Version 0.21.1
 ==============
 
 **May 2019**
 
 
 This is a bug-fix release with some minor documentation improvements and
-enhancements to features released in 0.20.1.
+enhancements to features released in 0.21.0.
 
 Changelog
 ---------
