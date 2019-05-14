@@ -1194,8 +1194,9 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
         fd(func, ret, s, X, Y[s], **kwds)
         for s in gen_even_slices(_num_samples(Y), effective_n_jobs(n_jobs)))
 
-    if ((X is Y or Y is None) and func is euclidean_distances):
+    if (X is Y or Y is None) and func is euclidean_distances:
         # zeroing diagonal for euclidean norm.
+        # TODO: do it also for other norms.
         np.fill_diagonal(ret, 0)
 
     return ret
