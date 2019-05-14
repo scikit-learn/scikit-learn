@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
@@ -1088,6 +1089,10 @@ def test_dtype_match(solver):
     assert coef_64.dtype == X_64.dtype
     assert ridge_32.predict(X_32).dtype == X_32.dtype
     assert ridge_64.predict(X_64).dtype == X_64.dtype
+    if solver == "sparse_cg" and sys.platform == "darwin":
+        pytest.xfail(
+            "Known failures on MacOS, See "
+            "https://github.com/scikit-learn/scikit-learn/issues/13868")
     assert_allclose(ridge_32.coef_, ridge_64.coef_, rtol=1e-4)
 
 
