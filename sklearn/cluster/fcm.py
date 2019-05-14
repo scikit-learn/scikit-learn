@@ -13,6 +13,19 @@ from ..utils import check_random_state
 from ..preprocessing import normalize
 
 
+def reconstruct_label(labels):
+    if len(labels) <= 0:
+        return labels
+    tmp = []
+    for i, xi in enumerate(labels):
+        if xi in tmp:
+            labels[i] = tmp.index(xi)
+        else:
+            tmp.append(xi)
+            labels[i] = len(tmp) - 1
+    return labels
+
+
 def fcm(X, n_clusters, m=2, eps=10, random_state=None, max_iter=300,
         sample_weight=None):
     """Fuzzy CMeans clustering
@@ -100,8 +113,9 @@ def fcm(X, n_clusters, m=2, eps=10, random_state=None, max_iter=300,
         if np.sum(abs(new_membership_mat - membership_mat)) < eps:
             break
         membership_mat = new_membership_mat
-
-    return Centroids, np.argmax(new_membership_mat, axis=1), iter_time
+    labels = np.argmax(new_membership_mat, axis=1)
+    reconstruct_label(labels)
+    return Centroids, labels, iter_time
 
 
 class FCM(BaseEstimator, ClusterMixin):
