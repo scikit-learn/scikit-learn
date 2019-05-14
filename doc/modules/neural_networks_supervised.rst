@@ -152,7 +152,7 @@ indices where the value is `1` represents the assigned classes of that sample::
     >>> clf.predict([[0., 0.]])
     array([[0, 1]])
 
-See the examples below and the doc string of
+See the examples below and the docstring of
 :meth:`MLPClassifier.fit` for further information.
 
 .. topic:: Examples:

@@ -32,7 +32,7 @@ def _make_edges_3d(n_x, n_y, n_z=1):
     """Returns a list of edges for a 3D image.
 
     Parameters
-    ===========
+    ----------
     n_x : integer
         The size of the grid in the x direction.
     n_y : integer

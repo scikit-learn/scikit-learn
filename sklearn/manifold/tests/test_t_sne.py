@@ -140,7 +140,8 @@ def test_binary_search_neighbors():
 
     # Test that when we use all the neighbors the results are identical
     k = n_samples
-    neighbors_nn = np.argsort(distances, axis=1)[:, 1:k].astype(np.int64)
+    neighbors_nn = np.argsort(distances, axis=1)[:, 1:k].astype(np.int64,
+                                                                copy=False)
     distances_nn = np.array([distances[k, neighbors_nn[k]]
                             for k in range(n_samples)])
     P2 = _binary_search_perplexity(distances_nn, neighbors_nn,
@@ -152,7 +153,8 @@ def test_binary_search_neighbors():
     for k in np.linspace(80, n_samples, 5):
         k = int(k)
         topn = k * 10  # check the top 10 *k entries out of k * k entries
-        neighbors_nn = np.argsort(distances, axis=1)[:, :k].astype(np.int64)
+        neighbors_nn = np.argsort(distances, axis=1)[:, :k].astype(np.int64,
+                                                                   copy=False)
         distances_nn = np.array([distances[k, neighbors_nn[k]]
                                 for k in range(n_samples)])
         P2k = _binary_search_perplexity(distances_nn, neighbors_nn,
@@ -176,7 +178,8 @@ def test_binary_perplexity_stability():
     distances = np.abs(distances.dot(distances.T))
     np.fill_diagonal(distances, 0.0)
     last_P = None
-    neighbors_nn = np.argsort(distances, axis=1)[:, :k].astype(np.int64)
+    neighbors_nn = np.argsort(distances, axis=1)[:, :k].astype(np.int64,
+                                                               copy=False)
     for _ in range(100):
         P = _binary_search_perplexity(distances.copy(), neighbors_nn.copy(),
                                       3, verbose=0)
@@ -294,25 +297,6 @@ def test_preserve_trustworthiness_approximately_with_precomputed_distances():
         X_embedded = tsne.fit_transform(D)
         t = trustworthiness(D, X_embedded, n_neighbors=1, metric="precomputed")
         assert t > .95
-
-
-def test_trustworthiness_precomputed_deprecation():
-    # FIXME: Remove this test in v0.23
-
-    # Use of the flag `precomputed` in trustworthiness parameters has been
-    # deprecated, but will still work until v0.23.
-    random_state = check_random_state(0)
-    X = random_state.randn(100, 2)
-    assert_equal(assert_warns(DeprecationWarning, trustworthiness,
-                              pairwise_distances(X), X, precomputed=True), 1.)
-    assert_equal(assert_warns(DeprecationWarning, trustworthiness,
-                              pairwise_distances(X), X, metric='precomputed',
-                              precomputed=True), 1.)
-    assert_raises(ValueError, assert_warns, DeprecationWarning,
-                  trustworthiness, X, X, metric='euclidean', precomputed=True)
-    assert_equal(assert_warns(DeprecationWarning, trustworthiness,
-                              pairwise_distances(X), X, metric='euclidean',
-                              precomputed=True), 1.)
 
 
 def test_trustworthiness_not_euclidean_metric():
@@ -532,7 +516,7 @@ def _run_answer_test(pos_input, pos_output, neighbors, grad_output,
     distances = pairwise_distances(pos_input).astype(np.float32)
     args = distances, perplexity, verbose
     pos_output = pos_output.astype(np.float32)
-    neighbors = neighbors.astype(np.int64)
+    neighbors = neighbors.astype(np.int64, copy=False)
     pij_input = _joint_probabilities(*args)
     pij_input = squareform(pij_input).astype(np.float32)
     grad_bh = np.zeros(pos_output.shape, dtype=np.float32)
@@ -604,7 +588,7 @@ def test_64bit(method, dt):
     # Ensure 64bit arrays are handled correctly.
     random_state = check_random_state(0)
 
-    X = random_state.randn(50, 2).astype(dt)
+    X = random_state.randn(50, 2).astype(dt, copy=False)
     tsne = TSNE(n_components=2, perplexity=2, learning_rate=100.0,
                 random_state=0, method=method, verbose=0)
     X_embedded = tsne.fit_transform(X)

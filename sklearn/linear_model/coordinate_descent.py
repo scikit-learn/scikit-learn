@@ -23,7 +23,6 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils.fixes import _joblib_parallel_args
 from ..utils.validation import check_is_fitted
 from ..utils.validation import column_or_1d
-from ..exceptions import ConvergenceWarning
 
 from . import cd_fast
 
@@ -225,7 +224,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     values output by lars_path
 
     Examples
-    ---------
+    --------
 
     Comparing lasso_path and lars_path with interpolation:
 
@@ -481,13 +480,6 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         coefs[..., i] = coef_
         dual_gaps[i] = dual_gap_
         n_iters.append(n_iter_)
-        if dual_gap_ > eps_:
-            warnings.warn('Objective did not converge.' +
-                          ' You might want' +
-                          ' to increase the number of iterations.' +
-                          ' Fitting data with very small alpha' +
-                          ' may cause precision problems.',
-                          ConvergenceWarning)
 
         if verbose:
             if verbose > 2:
@@ -669,7 +661,7 @@ class ElasticNet(LinearModel, RegressorMixin, MultiOutputMixin):
         """Fit model with coordinate descent.
 
         Parameters
-        -----------
+        ----------
         X : ndarray or scipy.sparse matrix, (n_samples, n_features)
             Data
 
@@ -1755,7 +1747,7 @@ class MultiTaskElasticNet(Lasso):
         """Fit MultiTaskElasticNet model with coordinate descent
 
         Parameters
-        -----------
+        ----------
         X : ndarray, shape (n_samples, n_features)
             Data
         y : ndarray, shape (n_samples, n_tasks)
@@ -1811,11 +1803,6 @@ class MultiTaskElasticNet(Lasso):
                 check_random_state(self.random_state), random)
 
         self._set_intercept(X_offset, y_offset, X_scale)
-
-        if self.dual_gap_ > self.eps_:
-            warnings.warn('Objective did not converge, you might want'
-                          ' to increase the number of iterations',
-                          ConvergenceWarning)
 
         # return self for chaining fit and predict calls
         return self
@@ -2260,9 +2247,10 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
     --------
     >>> from sklearn.linear_model import MultiTaskLassoCV
     >>> from sklearn.datasets import make_regression
+    >>> from sklearn.metrics import r2_score
     >>> X, y = make_regression(n_targets=2, noise=4, random_state=0)
     >>> reg = MultiTaskLassoCV(cv=5, random_state=0).fit(X, y)
-    >>> reg.score(X, y) # doctest: +ELLIPSIS
+    >>> r2_score(y, reg.predict(X)) # doctest: +ELLIPSIS
     0.9994...
     >>> reg.alpha_
     0.5713...

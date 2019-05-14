@@ -45,10 +45,11 @@ that contain the missing values::
     >>> import numpy as np
     >>> from sklearn.impute import SimpleImputer
     >>> imp = SimpleImputer(missing_values=np.nan, strategy='mean')
-    >>> imp.fit([[1, 2], [np.nan, 3], [7, 6]])       # doctest: +NORMALIZE_WHITESPACE
-    SimpleImputer(copy=True, fill_value=None, missing_values=nan, strategy='mean', verbose=0)
+    >>> imp.fit([[1, 2], [np.nan, 3], [7, 6]])  # doctest: +NORMALIZE_WHITESPACE
+    SimpleImputer(add_indicator=False, copy=True, fill_value=None,
+                  missing_values=nan, strategy='mean', verbose=0)
     >>> X = [[np.nan, 2], [6, np.nan], [7, 6]]
-    >>> print(imp.transform(X))           # doctest: +NORMALIZE_WHITESPACE  +ELLIPSIS
+    >>> print(imp.transform(X))      # doctest: +NORMALIZE_WHITESPACE  +ELLIPSIS
     [[4.          2.        ]
      [6.          3.666...]
      [7.          6.        ]]
@@ -59,9 +60,10 @@ The :class:`SimpleImputer` class also supports sparse matrices::
     >>> X = sp.csc_matrix([[1, 2], [0, -1], [8, 4]])
     >>> imp = SimpleImputer(missing_values=-1, strategy='mean')
     >>> imp.fit(X)                  # doctest: +NORMALIZE_WHITESPACE
-    SimpleImputer(copy=True, fill_value=None, missing_values=-1, strategy='mean', verbose=0)
+    SimpleImputer(add_indicator=False, copy=True, fill_value=None,
+                  missing_values=-1, strategy='mean', verbose=0)
     >>> X_test = sp.csc_matrix([[-1, 2], [6, -1], [7, 6]])
-    >>> print(imp.transform(X_test).toarray())      # doctest: +NORMALIZE_WHITESPACE
+    >>> print(imp.transform(X_test).toarray())  # doctest: +NORMALIZE_WHITESPACE
     [[3. 2.]
      [6. 3.]
      [7. 6.]]
@@ -103,14 +105,25 @@ of ``y``.  This is done for each feature in an iterative fashion, and then is
 repeated for ``max_iter`` imputation rounds. The results of the final
 imputation round are returned.
 
+.. note::
+
+   This estimator is still **experimental** for now: the predictions
+   and the API might change without any deprecation cycle. To use it,
+   you need to explicitly import ``enable_iterative_imputer``.
+
+::
+
     >>> import numpy as np
+    >>> from sklearn.experimental import enable_iterative_imputer
     >>> from sklearn.impute import IterativeImputer
     >>> imp = IterativeImputer(max_iter=10, random_state=0)
     >>> imp.fit([[1, 2], [3, 6], [4, 8], [np.nan, 3], [7, np.nan]])  # doctest: +NORMALIZE_WHITESPACE
-    IterativeImputer(estimator=None, imputation_order='ascending',
-                     initial_strategy='mean', max_iter=10, max_value=None,
-                     min_value=None, missing_values=nan, n_nearest_features=None,
-                     random_state=0, sample_posterior=False, tol=0.001, verbose=0)
+    IterativeImputer(add_indicator=False, estimator=None,
+                     imputation_order='ascending', initial_strategy='mean',
+                     max_iter=10, max_value=None, min_value=None,
+                     missing_values=nan, n_nearest_features=None,
+                     random_state=0, sample_posterior=False, tol=0.001,
+                     verbose=0)
     >>> X_test = [[np.nan, 2], [6, np.nan], [np.nan, 6]]
     >>> # the model learns that the second feature is double the first
     >>> print(np.round(imp.transform(X_test)))

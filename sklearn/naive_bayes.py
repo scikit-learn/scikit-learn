@@ -460,8 +460,14 @@ class BaseDiscreteNB(BaseNB):
                                  " classes.")
             self.class_log_prior_ = np.log(class_prior)
         elif self.fit_prior:
+            with warnings.catch_warnings():
+                # silence the warning when count is 0 because class was not yet
+                # observed
+                warnings.simplefilter("ignore", RuntimeWarning)
+                log_class_count = np.log(self.class_count_)
+
             # empirical prior, with sample_weight taken into account
-            self.class_log_prior_ = (np.log(self.class_count_) -
+            self.class_log_prior_ = (log_class_count -
                                      np.log(self.class_count_.sum()))
         else:
             self.class_log_prior_ = np.full(n_classes, -np.log(n_classes))
@@ -540,7 +546,7 @@ class BaseDiscreteNB(BaseNB):
 
         # label_binarize() returns arrays with dtype=np.int64.
         # We convert it to np.float64 to support sample_weight consistently
-        Y = Y.astype(np.float64)
+        Y = Y.astype(np.float64, copy=False)
         if sample_weight is not None:
             sample_weight = np.atleast_2d(sample_weight)
             Y *= check_array(sample_weight).T
@@ -591,7 +597,7 @@ class BaseDiscreteNB(BaseNB):
         # LabelBinarizer().fit_transform() returns arrays with dtype=np.int64.
         # We convert it to np.float64 to support sample_weight consistently;
         # this means we also don't have to cast X to floating point
-        Y = Y.astype(np.float64)
+        Y = Y.astype(np.float64, copy=False)
         if sample_weight is not None:
             sample_weight = np.atleast_2d(sample_weight)
             Y *= check_array(sample_weight).T

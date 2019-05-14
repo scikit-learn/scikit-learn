@@ -155,6 +155,32 @@ def test_remove_zero_eig():
     assert_equal(Xt.shape, (3, 0))
 
 
+def test_leave_zero_eig():
+    """This test checks that fit().transform() returns the same result as
+    fit_transform() in case of non-removed zero eigenvalue.
+    Non-regression test for issue #12141 (PR #12143)"""
+    X_fit = np.array([[1, 1], [0, 0]])
+
+    # Assert that even with all np warnings on, there is no div by zero warning
+    with pytest.warns(None) as record:
+        with np.errstate(all='warn'):
+            k = KernelPCA(n_components=2, remove_zero_eig=False,
+                          eigen_solver="dense")
+            # Fit, then transform
+            A = k.fit(X_fit).transform(X_fit)
+            # Do both at once
+            B = k.fit_transform(X_fit)
+            # Compare
+            assert_array_almost_equal(np.abs(A), np.abs(B))
+
+    for w in record:
+        # There might be warnings about the kernel being badly conditioned,
+        # but there should not be warnings about division by zero.
+        # (Numpy division by zero warning can have many message variants, but
+        # at least we know that it is a RuntimeWarning so lets check only this)
+        assert not issubclass(w.category, RuntimeWarning)
+
+
 def test_kernel_pca_precomputed():
     rng = np.random.RandomState(0)
     X_fit = rng.random_sample((5, 4))
@@ -188,7 +214,6 @@ def test_kernel_pca_invalid_kernel():
     assert_raises(ValueError, kpca.fit, X_fit)
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 # 0.23. warning about tol not having its correct default value.
 @pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_gridsearch_pipeline():
@@ -205,7 +230,6 @@ def test_gridsearch_pipeline():
     assert_equal(grid_search.best_score_, 1)
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 # 0.23. warning about tol not having its correct default value.
 @pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_gridsearch_pipeline_precomputed():

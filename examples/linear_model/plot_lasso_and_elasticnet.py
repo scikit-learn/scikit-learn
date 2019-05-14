@@ -19,15 +19,16 @@ from sklearn.metrics import r2_score
 # Generate some sparse data to play with
 np.random.seed(42)
 
-n_samples, n_features = 50, 200
+n_samples, n_features = 50, 100
 X = np.random.randn(n_samples, n_features)
-coef = 3 * np.random.randn(n_features)
-inds = np.arange(n_features)
-np.random.shuffle(inds)
-coef[inds[10:]] = 0  # sparsify coef
+
+# Decreasing coef w. alternated signs for visualization
+idx = np.arange(n_features)
+coef = (-1) ** idx * np.exp(-idx / 10)
+coef[10:] = 0  # sparsify coef
 y = np.dot(X, coef)
 
-# add noise
+# Add noise
 y += 0.01 * np.random.normal(size=n_samples)
 
 # Split data in train set and test set
@@ -58,12 +59,16 @@ r2_score_enet = r2_score(y_test, y_pred_enet)
 print(enet)
 print("r^2 on test data : %f" % r2_score_enet)
 
-plt.plot(enet.coef_, color='lightgreen', linewidth=2,
-         label='Elastic net coefficients')
-plt.plot(lasso.coef_, color='gold', linewidth=2,
-         label='Lasso coefficients')
-plt.plot(coef, '--', color='navy', label='original coefficients')
+m, s, _ = plt.stem(np.where(enet.coef_)[0], enet.coef_[enet.coef_ != 0],
+                   markerfmt='x', label='Elastic net coefficients')
+plt.setp([m, s], color="#2ca02c")
+m, s, _ = plt.stem(np.where(lasso.coef_)[0], lasso.coef_[lasso.coef_ != 0],
+                   markerfmt='x', label='Lasso coefficients')
+plt.setp([m, s], color='#ff7f0e')
+plt.stem(np.where(coef)[0], coef[coef != 0], label='true coefficients',
+         markerfmt='bx')
+
 plt.legend(loc='best')
-plt.title("Lasso R^2: %f, Elastic Net R^2: %f"
+plt.title("Lasso $R^2$: %.3f, Elastic Net $R^2$: %.3f"
           % (r2_score_lasso, r2_score_enet))
 plt.show()
