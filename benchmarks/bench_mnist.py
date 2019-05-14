@@ -84,8 +84,8 @@ def load_data(dtype=np.float32, order='F'):
 ESTIMATORS = {
     "dummy": DummyClassifier(),
     'CART': DecisionTreeClassifier(),
-    'ExtraTrees': ExtraTreesClassifier(n_estimators=100),
-    'RandomForest': RandomForestClassifier(n_estimators=100),
+    'ExtraTrees': ExtraTreesClassifier(),
+    'RandomForest': RandomForestClassifier(),
     'Nystroem-SVM': make_pipeline(
         Nystroem(gamma=0.015, n_components=1000), LinearSVC(C=100)),
     'SampledRBF-SVM': make_pipeline(
