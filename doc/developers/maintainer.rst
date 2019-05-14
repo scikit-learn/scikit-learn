@@ -173,7 +173,18 @@ deprecation cycle.
 
 To create an experimental module, you can just copy and modify the content of
 `enable_hist_gradient_boosting.py
-<https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/experimental/enable_hist_gradient_boosting.py>`_.
+<https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/experimental/enable_hist_gradient_boosting.py>`_,
+or
+`enable_iterative_imputer.py
+<https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/experimental/enable_iterative_imputer.py>`_.
+
+Note that the public import path must be to a public subpackage (like
+``sklearn/ensemble`` or ``sklearn/impute``), not just a ``.py`` module.
+Also, the (private) experimental features that are imported must be in a
+submodule/subpackage of the public subpackage, e.g.
+``sklearn/ensemble/_hist_gradient_boosting/`` or
+``sklearn/impute/_iterative.py``. This is needed so that pickles still work
+in the future when the features aren't experimental anymore
 
 Please also write basic tests following those in
 `test_enable_hist_gradient_boosting.py
@@ -187,5 +198,6 @@ is experimental, and add a ``# noqa`` comment to avoid pep8-related warnings::
     from sklearn.ensemble import HistGradientBoostingRegressor
 
 For the docs to render properly, please also import
-``enable_my_experimental_feature`` in ``doc/conf.py``, else sphinx won't be able
-to import the corresponding modules.
+``enable_my_experimental_feature`` in ``doc/conf.py``, else sphinx won't be
+able to import the corresponding modules. Note that using ``from
+sklearn.experimental import *`` **does not work**.
