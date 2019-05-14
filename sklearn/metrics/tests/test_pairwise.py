@@ -550,7 +550,7 @@ def test_parallel_pairwise_distances_diagonal(metric):
     rng = np.random.RandomState(0)
     X = rng.normal(size=(1000, 10), scale=1e10)
     distances = pairwise_distances(X, metric=metric, n_jobs=2)
-    assert_allclose(np.diag(distances), 0, rtol=1e-10)
+    assert_allclose(np.diag(distances), 0, atol=1e-10)
 
 
 @ignore_warnings
