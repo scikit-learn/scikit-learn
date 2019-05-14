@@ -23,6 +23,12 @@ Changelog
   ``Y == None``.
   :issue:`13864` by :user:`Paresh Mathur <rick2047>`.
 
+- |Fix| Fixed two bugs in :class:`metrics.pairwise_distances` when
+  ``n_jobs > 1``. First it used to return a distance matrix with same dtype as
+  input, even for integer dtype. Then the diagonal was not zeros for euclidean
+  metric when ``Y`` is ``X``. :issue:`13877` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.neighbors`
 ......................
 
