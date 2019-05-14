@@ -543,6 +543,16 @@ def test_pairwise_distances_chunked_diagonal(metric):
     assert_array_almost_equal(np.diag(np.vstack(chunks)), 0, decimal=10)
 
 
+@pytest.mark.parametrize(
+        'metric',
+        ('euclidean', 'l2', 'sqeuclidean'))
+def test_parallel_pairwise_distances_diagonal(metric):
+    rng = np.random.RandomState(0)
+    X = rng.normal(size=(1000, 10), scale=1e10)
+    distances = pairwise_distances(X, metric=metric, n_jobs=2)
+    assert_array_almost_equal(np.diag(distances), 0, decimal=10)
+
+
 @ignore_warnings
 def test_pairwise_distances_chunked():
     # Test the pairwise_distance helper function.
