@@ -7,7 +7,7 @@
 Version 0.21.1
 ==============
 
-**May 2019**
+**17 May 2019**
 
 
 This is a bug-fix release with some minor documentation improvements and
@@ -23,6 +23,13 @@ Changelog
   ``AttributeError`` for boolean metrics when ``X`` had a boolean dtype and
   ``Y == None``.
   :issue:`13864` by :user:`Paresh Mathur <rick2047>`.
+
+:mod:`sklearn.neighbors`
+......................
+
+- |Fix| Fixed a bug in :class:`neighbors.KernelDensity` which could not be
+  restored from a pickle if ``sample_weight`` had been used.
+  :issue:`13772` by :user:`Aditya Vyas <aditya1702>`.
 
 
 .. _changes_0_21:
