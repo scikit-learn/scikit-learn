@@ -9,9 +9,8 @@ Version 0.21.1
 
 **17 May 2019**
 
-
-This is a bug-fix release with some minor documentation improvements and
-enhancements to features released in 0.21.0.
+This is a bug-fix release to primarily resolve some packaging issues in version
+0.21.0. It also includes minor documentation improvements and some bug fixes.
 
 Changelog
 ---------
