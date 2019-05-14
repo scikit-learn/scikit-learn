@@ -1182,16 +1182,21 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
 
     if Y is None:
         Y = X
+    X, Y, dtype = _return_float_dtype(X, Y)
 
     if effective_n_jobs(n_jobs) == 1:
         return func(X, Y, **kwds)
 
     # enforce a threading backend to prevent data communication overhead
     fd = delayed(_dist_wrapper)
-    ret = np.empty((X.shape[0], Y.shape[0]), dtype=X.dtype, order='F')
+    ret = np.empty((X.shape[0], Y.shape[0]), dtype=dtype, order='F')
     Parallel(backend="threading", n_jobs=n_jobs)(
         fd(func, ret, s, X, Y[s], **kwds)
         for s in gen_even_slices(_num_samples(Y), effective_n_jobs(n_jobs)))
+
+    if ((X is Y or Y is None) and func is euclidean_distances):
+        # zeroing diagonal for euclidean norm.
+        np.fill_diagonal(ret, 0)
 
     return ret
 
