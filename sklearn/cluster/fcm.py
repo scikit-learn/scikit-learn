@@ -4,7 +4,7 @@
 # Authors: Junyi Li (lijy263@mail2.sysu.edu.cn)
 # License: BSD 3 clause
 # The import part this file is copy from k_means_.py,
-# some functions is not used for now.
+# some functions are not used for now.
 import numpy as np
 
 from ..base import BaseEstimator, ClusterMixin
@@ -26,7 +26,7 @@ def reconstruct_label(labels):
     return labels
 
 
-def fcm(X, n_clusters, m=2, eps=10, random_state=None, max_iter=300,
+def fcm(X, n_clusters, m=2, eps=3, random_state=None, max_iter=300,
         sample_weight=None):
     """Fuzzy CMeans clustering
 
@@ -38,7 +38,7 @@ def fcm(X, n_clusters, m=2, eps=10, random_state=None, max_iter=300,
     n_clusters : integer
         The number of seeds to choose
 
-    eps : float, optional (default = 10)
+    eps : float, optional (default = 3)
         If the sum of the abs of the (new_cluster_probability_matrix \
         - old_cluster_probability_matrix) is smaller than eps, \
          then the algorithm will stop.
@@ -129,7 +129,7 @@ class FCM(BaseEstimator, ClusterMixin):
     n_clusters : integer, optional (default = 3)
         The number of seeds to choose
 
-    eps : float, optional (default = 10)
+    eps : float, optional (default = 3)
         If the sum of the abs of the (new_cluster_probability_matrix \
         - old_cluster_probability_matrix) is smaller than eps, \
          then the algorithm will stop.
@@ -163,7 +163,7 @@ class FCM(BaseEstimator, ClusterMixin):
     Now, something remains implementing: sample weighted \
     section and parallel run the model.
     """
-    def __init__(self, n_clusters=3, m=2, eps=10, init='random',
+    def __init__(self, n_clusters=3, m=2, eps=3, init='random',
                  max_iter=300, random_state=None):
         self.n_clusters = n_clusters
         self.init = init
