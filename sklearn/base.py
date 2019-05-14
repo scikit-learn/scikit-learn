@@ -27,6 +27,7 @@ _DEFAULT_TAGS = {
     'multilabel': False,
     '_skip_test': False,
     'multioutput_only': False,
+    'binary_only': False,
     'requires_fit': True}
 
 
