@@ -25,8 +25,9 @@ Changelog
 
 - |Fix| Fixed two bugs in :class:`metrics.pairwise_distances` when
   ``n_jobs > 1``. First it used to return a distance matrix with same dtype as
-  input, even for integer dtype. Then the diagonal was not zeros when ``Y`` is
-  ``X``. :issue:`13877` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+  input, even for integer dtype. Then the diagonal was not zeros for euclidean
+  metric when ``Y`` is ``X``. :issue:`13877` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.neighbors`
 ......................
