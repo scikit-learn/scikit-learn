@@ -260,8 +260,8 @@ def test_pairwise_parallel(func, metric, kwds, array_constr, dtype):
         # Not all metrics support sparse input
         # ValueError may be triggered by bad callable
         if array_constr is csr_matrix:
-            assert_raises(type(exc), func, X, metric=metric,
-                          n_jobs=2, **kwds)
+            with pytest.raises(type(exc)):
+                func(X, metric=metric, n_jobs=2, **kwds)
             return
         else:
             raise
@@ -550,7 +550,7 @@ def test_parallel_pairwise_distances_diagonal(metric):
     rng = np.random.RandomState(0)
     X = rng.normal(size=(1000, 10), scale=1e10)
     distances = pairwise_distances(X, metric=metric, n_jobs=2)
-    assert_array_almost_equal(np.diag(distances), 0, decimal=10)
+    assert_allclose(np.diag(distances), 0, rtol=1e-10)
 
 
 @ignore_warnings
