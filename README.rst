@@ -109,11 +109,10 @@ You can check the latest sources with the command::
 
     git clone https://github.com/scikit-learn/scikit-learn.git
 
-Setting up a development environment
+Contributing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Quick tutorial on how to go about setting up your environment to
-contribute to scikit-learn: https://github.com/scikit-learn/scikit-learn/blob/master/CONTRIBUTING.md
+https://github.com/scikit-learn/scikit-learn/blob/master/CONTRIBUTING.md
 
 Testing
 ~~~~~~~
