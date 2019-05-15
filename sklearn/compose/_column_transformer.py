@@ -8,6 +8,7 @@ different columns.
 # License: BSD
 
 from itertools import chain
+from contextlib import suppress
 
 import numpy as np
 from scipy import sparse
@@ -61,7 +62,7 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
             indicate to drop the columns or to pass them through untransformed,
             respectively.
         column(s) : string or int, array-like of string or int, slice, \
-boolean mask array or callable
+boolean mask array or callable or pandas Index
             Indexes the data on its second axis. Integers are interpreted as
             positional columns, while strings can reference DataFrame columns
             by name.  A scalar string or int should be used where
@@ -597,6 +598,7 @@ def _get_column(X, key):
     - scalar: output is 1D
     - lists, slices, boolean masks: output is 2D
     - callable that returns any of the above
+    - pandas Index
 
     Supported key data types:
 
@@ -608,23 +610,30 @@ def _get_column(X, key):
           can use any hashable object as key).
 
     """
-    # check whether we have string column names or integers
-    if _check_key_type(key, int):
-        column_names = False
-    elif _check_key_type(key, str):
-        column_names = True
-    elif _check_key_type(key, tuple):
-        column_names = True
-    elif hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_):
-        # boolean mask
-        column_names = False
-        if hasattr(X, 'loc'):
-            # pandas boolean masks don't work with iloc, so take loc path
+    # Will be set if _check_key_type returns True or key is a pandas index
+    column_names = None
+    with suppress(ImportError):
+        import pandas as pd
+        if isinstance(key, pd.Index):
             column_names = True
-    else:
+
+    if column_names is None:
+        # check whether we have string column names or integers
+        if _check_key_type(key, int):
+            column_names = False
+        elif _check_key_type(key, str):
+            column_names = True
+        elif hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_):
+            # boolean mask
+            column_names = False
+            if hasattr(X, 'loc'):
+                # pandas boolean masks don't work with iloc, so take loc path
+                column_names = True
+
+    if column_names is None:
         raise ValueError("No valid specification of the columns. Only a "
                          "scalar, list or slice of all integers or all "
-                         "strings, or boolean mask is allowed")
+                         "strings, or boolean mask or pandas index is allowed")
 
     if column_names:
         if hasattr(X, 'loc'):
@@ -649,8 +658,17 @@ def _get_column_indices(X, key):
     For accepted values of `key`, see the docstring of _get_column
 
     """
-    n_columns = X.shape[1]
+    with suppress(ImportError):
+        import pandas as pd
+        if isinstance(key, pd.Index):
+            try:
+                all_columns = list(X.columns)
+            except AttributeError:
+                raise ValueError("Specifying the columns using indexes are "
+                                 "only supported for pandas DataFrames")
+            return [all_columns.index(col) for col in key]
 
+    n_columns = X.shape[1]
     if (_check_key_type(key, int)
             or hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_)):
         # Convert key into positive indexes
@@ -678,18 +696,11 @@ def _get_column_indices(X, key):
             columns = list(key)
 
         return [all_columns.index(col) for col in columns]
-    elif _check_key_type(key, tuple):
-        try:
-            all_columns = list(X.columns)
-        except AttributeError:
-            raise ValueError("Specifying the columns using tuples is only "
-                             "supported for pandas DataFrames")
-        columns = [key] if isinstance(key, tuple) else key
-        return [all_columns.index(col) for col in columns]
-    else:
-        raise ValueError("No valid specification of the columns. Only a "
-                         "scalar, list or slice of all integers or all "
-                         "strings, or boolean mask is allowed")
+
+    raise ValueError("No valid specification of the columns. Only a "
+                     "scalar, list or slice of all integers or all "
+                     "strings, or boolean mask, or a pandas Index is "
+                     "allowed")
 
 
 def _is_empty_column_selection(column):

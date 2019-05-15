@@ -163,6 +163,10 @@ def test_column_transformer_dataframe():
         # boolean mask
         (np.array([True, False]), X_res_first),
         (pd.Series([True, False], index=['first', 'second']), X_res_first),
+
+        # pandas index
+        (pd.Index(['first']), X_res_first),
+        (pd.Index(['first', 'second']), X_res_both)
     ]
 
     for selection, res in cases:
@@ -250,6 +254,35 @@ def test_column_transformer_dataframe():
     assert_array_equal(ct.transformers_[-1][2], [1])
 
 
+def test_column_transformer_dataframe_int_index():
+    pd = pytest.importorskip('pandas')
+
+    X_array = np.array([[0, 1, 2], [2, 4, 6], [3, 6, 9]]).T
+    X_df = pd.DataFrame(X_array, columns=[2, 1, 3])
+
+    X_res_first = np.array([[0, 1, 2]]).T
+    X_res_rest = np.array([[2, 4, 6], [3, 6, 9]]).T
+    X_res_both = X_array
+
+    cases = [
+        (pd.Index([2]), X_res_first),
+        (pd.Index([1, 3]), X_res_rest),
+        (pd.Index([2, 1, 3]), X_res_both)
+    ]
+
+    for selection, res in cases:
+        ct = ColumnTransformer([('trans', Trans(), selection)],
+                               remainder='drop')
+        assert_array_equal(ct.fit_transform(X_df), res)
+        assert_array_equal(ct.fit(X_df).transform(X_df), res)
+
+        # callable that returns any of the allowed specifiers
+        ct = ColumnTransformer([('trans', Trans(), lambda X: selection)],
+                               remainder='drop')
+        assert_array_equal(ct.fit_transform(X_df), res)
+        assert_array_equal(ct.fit(X_df).transform(X_df), res)
+
+
 def test_column_transformer_dataframe_multi_index():
     pd = pytest.importorskip('pandas')
 
@@ -265,16 +298,16 @@ def test_column_transformer_dataframe_multi_index():
 
     cases = [
         # multi-index
-        (('a', 1), X_res_first),
         ([('a', 1)], X_res_first),
         ([('a', 2), ('b', 0)], X_res_rest),
         ([('a', 1), ('a', 2)], X_res_a),
-        (('b', 0), X_res_b),
         ([('b', 0)], X_res_b),
         ([('a', 1), ('a', 2), ('b', 0)], X_res_both),
     ]
 
     for selection, res in cases:
+        selection = pd.MultiIndex.from_tuples(selection)
+
         ct = ColumnTransformer([('trans', Trans(), selection)],
                                remainder='drop')
         assert_array_equal(ct.fit_transform(X_df), res)
@@ -285,6 +318,18 @@ def test_column_transformer_dataframe_multi_index():
                                remainder='drop')
         assert_array_equal(ct.fit_transform(X_df), res)
         assert_array_equal(ct.fit(X_df).transform(X_df), res)
+
+
+def test_column_transformer_errors_with_index_numpy_array():
+    pd = pytest.importorskip('pandas')
+
+    X_array = np.array([[0, 1, 2], [2, 4, 6], [3, 6, 9]]).T
+    ct = ColumnTransformer([('trans', Trans(), pd.Index([2]))])
+
+    msg = ("Specifying the columns using indexes are "
+           "only supported for pandas DataFrames")
+    with pytest.raises(ValueError, match=msg):
+        ct.fit(X_array)
 
 
 @pytest.mark.parametrize("pandas", [True, False], ids=['pandas', 'numpy'])
