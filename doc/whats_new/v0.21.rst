@@ -2,6 +2,41 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_0_21_1:
+
+Version 0.21.1
+==============
+
+**17 May 2019**
+
+This is a bug-fix release to primarily resolve some packaging issues in version
+0.21.0. It also includes minor documentation improvements and some bug fixes.
+
+Changelog
+---------
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Fixed a bug in :class:`metrics.pairwise_distances` where it would raise
+  ``AttributeError`` for boolean metrics when ``X`` had a boolean dtype and
+  ``Y == None``.
+  :issue:`13864` by :user:`Paresh Mathur <rick2047>`.
+
+- |Fix| Fixed two bugs in :class:`metrics.pairwise_distances` when
+  ``n_jobs > 1``. First it used to return a distance matrix with same dtype as
+  input, even for integer dtype. Then the diagonal was not zeros for euclidean
+  metric when ``Y`` is ``X``. :issue:`13877` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.neighbors`
+......................
+
+- |Fix| Fixed a bug in :class:`neighbors.KernelDensity` which could not be
+  restored from a pickle if ``sample_weight`` had been used.
+  :issue:`13772` by :user:`Aditya Vyas <aditya1702>`.
+
+
 .. _changes_0_21:
 
 Version 0.21.0
