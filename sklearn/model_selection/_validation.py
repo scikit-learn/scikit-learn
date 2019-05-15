@@ -133,11 +133,9 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
     return_estimator : boolean, default False
         Whether to return the estimators fitted on each split.
 
-    error_score : 'raise' | 'raise-deprecating' or numeric
+    error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
-        If set to 'raise-deprecating', a FutureWarning is printed before the
-        error is raised.
         If a numeric value is given, FitFailedWarning is raised. This parameter
         does not affect the refit step, which will always raise the error.
 
@@ -336,11 +334,9 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv='warn',
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    error_score : 'raise' | 'raise-deprecating' or numeric
+    error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
-        If set to 'raise-deprecating', a FutureWarning is printed before the
-        error is raised.
         If a numeric value is given, FitFailedWarning is raised. This parameter
         does not affect the refit step, which will always raise the error.
 
@@ -424,11 +420,9 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     verbose : integer
         The verbosity level.
 
-    error_score : 'raise' | 'raise-deprecating' or numeric
+    error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
-        If set to 'raise-deprecating', a FutureWarning is printed before the
-        error is raised.
         If a numeric value is given, FitFailedWarning is raised. This parameter
         does not affect the refit step, which will always raise the error.
 
@@ -1198,11 +1192,9 @@ def learning_curve(estimator, X, y, groups=None,
         If None, the random number generator is the RandomState instance used
         by `np.random`. Used when ``shuffle`` is True.
 
-    error_score : 'raise' | 'raise-deprecating' or numeric
+    error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
-        If set to 'raise-deprecating', a FutureWarning is printed before the
-        error is raised.
         If a numeric value is given, FitFailedWarning is raised. This parameter
         does not affect the refit step, which will always raise the error.
 
@@ -1433,11 +1425,9 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
     verbose : integer, optional
         Controls the verbosity: the higher, the more messages.
 
-    error_score : 'raise' | 'raise-deprecating' or numeric
+    error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
-        If set to 'raise-deprecating', a FutureWarning is printed before the
-        error is raised.
         If a numeric value is given, FitFailedWarning is raised. This parameter
         does not affect the refit step, which will always raise the error.
 
