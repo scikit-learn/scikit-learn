@@ -5,12 +5,13 @@ Permutation Importance with Multicollinear Features
 
 In this example, we compute the permutation importance on the Wisconsin
 breast cancer dataset. The :class:`sklearn.ensemble.RandomForestClassifier`
-can easily get about 96% accuracy on a test dataset with a unsurprising
+can easily get about 97% accuracy on a test dataset with a unsurprising
 tree based feature importance graph. Because this dataset
-contains multicollinear features, the permutation importance we show that
+contains multicollinear features, the permutation importance will show that
 none of the features are important. We handle the multicollinearity by
-performing hierarchical clustering on the Spearman rank-order correlations,
-picking a threshold, and keeping a single feature from each cluster.
+performing hierarchical clustering on the features' Spearman rank-order
+correlations, picking a threshold, and keeping a single feature from each
+cluster.
 
 .. note::
     See also
@@ -68,9 +69,9 @@ plt.show()
 ##############################################################################
 # Handling Multicollinear Features
 # --------------------------------
-# When two features are collinear, permutating one feature will have little
+# When features are collinear, permutating one feature will have little
 # effect on the models performance because it can get the same information
-# from the correlated feature. One way to handle multicollinear features is by
+# from a correlated feature. One way to handle multicollinear features is by
 # performing hierarchical clustering on the Spearman rank-order correlations,
 # picking a threshold, and keeping a single feature from each cluster. First,
 # we plot a heatmap of the correlated features:

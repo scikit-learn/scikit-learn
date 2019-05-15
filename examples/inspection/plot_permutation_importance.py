@@ -9,7 +9,7 @@ permutation importance on the titanic dataset. We will show that the random
 forest feature importance can inflate the importance of numerical features.
 
 Furthermore, the built-in feature importance of random forests suffers from
-being computed on statistics derived from the training set data: the
+being computed on statistics derived from the training dataset: the
 importances can be high even for features that are not predictive of the target
 variable, as long as the model has the capacity to use them to overfit.
 
