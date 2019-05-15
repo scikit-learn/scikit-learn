@@ -1860,7 +1860,8 @@ independent variables in the model. It provides an indication of goodness of
 fit and therefore a measure of how well unseen samples are likely to be
 predicted by the model, through the proportion of explained variance.
 
-Best possible score is 1.0 and it can be negative
+As such variance is dataset dependent, R² may not be meaningfully comparable
+across different datasets. Best possible score is 1.0 and it can be negative
 (because the model can be arbitrarily worse). A constant model that always
 predicts the expected value of y, disregarding the input features, would get a
 R^2 score of 0.0.
@@ -1873,7 +1874,7 @@ the estimated R² is defined as:
 
   R^2(y, \hat{y}) = 1 - \frac{\sum_{i=0}^{n} (y_i - \hat{y}_i)^2}{\sum_{i=0}^{n} (y_i - \bar{y})^2}
 
-where :math:`\bar{y} =  \frac{1}{n} \sum_{i=0}^{n} y_i`.
+where :math:`\bar{y} = \frac{1}{n} \sum_{i=0}^{n} y_i` and :math:`\sum_{i=0}^{n} (y_i - \hat{y}_i)^2 = \sum_{i=0}^{n} \epsilon_i^2`.
 
 Note that :func:`r2_score` calculates unadjusted R² without correcting for
 bias in sample variance of y.
