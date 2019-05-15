@@ -71,7 +71,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
 
             - If 'auto', the threshold is determined as in the
             original paper.
-            - If a float, the contamination should be in the range [0, 0.5].
+            - If float, the contamination should be in the range [0, 0.5].
 
         .. versionchanged:: 0.22
            The default value of ``contamination`` changed from 0.1
