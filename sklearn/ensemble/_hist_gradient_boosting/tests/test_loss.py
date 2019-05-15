@@ -130,7 +130,7 @@ def test_numerical_gradients(loss, n_classes, prediction_dim):
     def relative_error(a, b):
         return np.abs(a - b) / np.maximum(np.abs(a), np.abs(b))
 
-    assert np.allclose(numerical_gradients, gradients, rtol=1e-5)
+    assert np.allclose(numerical_gradients, gradients, rtol=1e-4)
     assert np.allclose(numerical_hessians, hessians, rtol=1e-5)
 
 
