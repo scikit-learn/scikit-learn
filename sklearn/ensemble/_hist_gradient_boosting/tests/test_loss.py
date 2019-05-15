@@ -1,5 +1,6 @@
 import numpy as np
 from numpy.testing import assert_almost_equal
+from numpy.testing import assert_allclose
 from scipy.optimize import newton
 from sklearn.utils import assert_all_finite
 from sklearn.utils.fixes import sp_version
@@ -130,8 +131,8 @@ def test_numerical_gradients(loss, n_classes, prediction_dim):
     def relative_error(a, b):
         return np.abs(a - b) / np.maximum(np.abs(a), np.abs(b))
 
-    assert np.allclose(numerical_gradients, gradients, rtol=1e-5)
-    assert np.allclose(numerical_hessians, hessians, rtol=1e-5)
+    assert_allclose(numerical_gradients, gradients, atol=1e-5)
+    assert_allclose(numerical_hessians, hessians, atol=1e-5)
 
 
 def test_baseline_least_squares():
