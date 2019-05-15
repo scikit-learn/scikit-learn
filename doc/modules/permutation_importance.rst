@@ -19,6 +19,12 @@ this procedure can be repeated to obtain a distribution of importances. The
 the permutation importance distributions for features in the
 titantic dataset are computed:
 
+Feature importance is an model interpretation technique that determines the 
+features that are important to a model. 
+
+The permutation faeature importance is
+defined to be the decrease in performance of a model, when the 
+
 .. figure:: ../auto_examples/inspection/images/sphx_glr_plot_permutation_importance_002.png
    :target: ../auto_examples/inspection/plot_permutation_importance.html
    :align: center
