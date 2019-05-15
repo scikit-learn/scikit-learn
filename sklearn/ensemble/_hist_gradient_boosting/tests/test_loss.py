@@ -86,13 +86,14 @@ def test_derivatives(loss, x0, y_true):
 ])
 @pytest.mark.skipif(Y_DTYPE != np.float64,
                     reason='Need 64 bits float precision for numerical checks')
-def test_numerical_gradients(loss, n_classes, prediction_dim):
+@pytest.mark.parametrize('seed', range(1))
+def test_numerical_gradients(loss, n_classes, prediction_dim, seed):
     # Make sure gradients and hessians computed in the loss are correct, by
     # comparing with their approximations computed with finite central
     # differences.
     # See https://en.wikipedia.org/wiki/Finite_difference.
 
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(seed)
     n_samples = 100
     if loss == 'least_squares':
         y_true = rng.normal(size=n_samples).astype(Y_DTYPE)
@@ -131,8 +132,8 @@ def test_numerical_gradients(loss, n_classes, prediction_dim):
     def relative_error(a, b):
         return np.abs(a - b) / np.maximum(np.abs(a), np.abs(b))
 
-    assert_allclose(numerical_gradients, gradients, atol=1e-5)
-    assert_allclose(numerical_hessians, hessians, atol=1e-5)
+    assert_allclose(numerical_gradients, gradients, rtol=1e-4)
+    assert_allclose(numerical_hessians, hessians, rtol=1e-4)
 
 
 def test_baseline_least_squares():
