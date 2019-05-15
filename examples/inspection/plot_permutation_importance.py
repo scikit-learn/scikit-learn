@@ -21,11 +21,6 @@ can mitigate those limitations.
    .. [1] Strobl, C., Boulesteix, AL., Zeileis, A. et al. BMC Bioinformatics
         (2007) 8: 25. https://doi.org/10.1186/1471-2105-8-25
 """
-##############################################################################
-# Training a Random Forest
-# ------------------------
-# A combination of numerical features and categorical features were used to
-# train our random forest model:
 print(__doc__)
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -122,7 +117,7 @@ print("RF test accuracy: %0.3f" % rf.score(X_test, y_test))
 # - RF importances are biased towards high cardinality features;
 # - RF importances are computed on training set statistics and therefore do not
 #   reflect the ability of feature to be useful to make predictions that
-#   generalize to the test set (when the model as enough capacity).
+#   generalize to the test set (when the model has enough capacity).
 ohe = (rf.named_steps['preprocess']
          .named_transformers_['cat']
          .named_steps['onehot'])
@@ -151,7 +146,8 @@ ax.set_title("Random Forest Feature Importances")
 #
 # Also note that both random features have very low importances (close to 0) as
 # expected.
-permute_importance = permutation_importance(rf, X_test, y_test, n_rounds=30)
+permute_importance = permutation_importance(rf, X_test, y_test, n_rounds=10,
+                                            random_state=42)
 permute_importance_mean = np.mean(permute_importance, axis=-1)
 sorted_idx = permute_importance_mean.argsort()
 
@@ -168,7 +164,8 @@ ax.set_title("Permutation Importances (test set)")
 # plots is a confirmation that the RF model has enough capacity to use that
 # random numerical feature to overfit. You can further confirm this by
 # re-running this example with constrained RF with min_samples_leaf=10.
-permute_importance = permutation_importance(rf, X_train, y_train, n_rounds=30)
+permute_importance = permutation_importance(rf, X_train, y_train, n_rounds=10,
+                                            random_state=42)
 permute_importance_mean = np.mean(permute_importance, axis=-1)
 sorted_idx = permute_importance_mean.argsort()
 
