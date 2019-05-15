@@ -207,8 +207,6 @@ def test_spca_error_unormalized_components(spca):
     rng = np.random.RandomState(0)
     Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)
 
-    err_msg = "Not normalizing the components in {} is not supported".format(
-        spca.__name__
-    )
+    err_msg = "normalize_components=False is not supported starting "
     with pytest.raises(NotImplementedError, match=err_msg):
         spca(normalize_components=False).fit(Y)

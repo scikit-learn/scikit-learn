@@ -24,9 +24,8 @@ def _check_normalize_components(normalize_components, estimator_name):
             )
         else:
             raise NotImplementedError(
-                "Not normalizing the components in {} is not supported "
-                "since 0.22. Remove this parameter from the constructor."
-                .format(estimator_name)
+                "normalize_components=False is not supported starting from "
+                "0.22. Remove this parameter from the constructor."
             )
 
 
