@@ -230,6 +230,7 @@ def test_gradient():
                               (epsilon * 2.0))
             assert_almost_equal(numgrad, grad)
 
+
 @pytest.mark.parametrize('X,y', classification_datasets)
 def test_lbfgs_classification(X, y):
     # Test lbfgs on classification.
@@ -249,7 +250,7 @@ def test_lbfgs_classification(X, y):
         y_predict = mlp.predict(X_test)
         assert_greater(mlp.score(X_train, y_train), 0.95)
         assert_equal((y_predict.shape[0], y_predict.dtype.kind),
-                      expected_shape_dtype)
+                     expected_shape_dtype)
 
 
 @pytest.mark.parametrize('X,y', regression_datasets)
