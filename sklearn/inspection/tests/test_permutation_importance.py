@@ -8,6 +8,7 @@ from sklearn.inspection import permutation_importance
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import OneHotEncoder
 
 
 @pytest.mark.parametrize("to_pd", [True, False])
@@ -19,12 +20,12 @@ def test_permutation_importance_correlated_feature_regression(to_pd):
     y_with_little_noise = (
         y + rng.normal(scale=0.001, size=y.shape[0])).reshape(-1, 1)
 
+    # Adds feature correlated with target
     if to_pd:
         pd = pytest.importorskip("pandas")
         X = pd.DataFrame(X, columns=bunch.feature_names)
         X['correlated_feature'] = y_with_little_noise
     else:
-        # Adds correlated feature to X
         X = np.hstack([X, y_with_little_noise])
 
     rf = RandomForestRegressor(n_estimators=10, random_state=rng)
@@ -51,12 +52,19 @@ def test_permutation_importance_correlated_feature_column_transframer():
         y + rng.normal(scale=0.001, size=y.shape[0])).reshape(-1, 1)
 
     df = pd.DataFrame(X, columns=bunch.feature_names)
+
+    # Adds string feature
+    choices = ['this', 'is', 'a', 'string']
+    df["categorical"] = rng.choice(choices, X.shape[0], p=[0.25] * 4)
+
+    # Adds feature correlated with target
     df["correlated_feature"] = y_with_little_noise
 
     column_trans = ColumnTransformer(
         [("scale", StandardScaler(),
          ["sepal length (cm)", "sepal width (cm)",
-          "petal length (cm)", "petal width (cm)"])],
+          "petal length (cm)", "petal width (cm)"]),
+         ("encoder", OneHotEncoder(), ["categorical"])],
         remainder='passthrough')
     model = Pipeline([("preprocessing", column_trans),
                       ("estimator",
