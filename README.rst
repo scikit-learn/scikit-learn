@@ -110,8 +110,8 @@ You can check the latest sources with the command::
     git clone https://github.com/scikit-learn/scikit-learn.git
 
 Contributing
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+~~~~~~~~~~~~
+To learn more about making a contribution to scikit-learn, please view the contributing document: 
 https://github.com/scikit-learn/scikit-learn/blob/master/CONTRIBUTING.md
 
 Testing
