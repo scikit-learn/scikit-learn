@@ -39,6 +39,12 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.compose`
+......................
+
+- |Enhancement| Added support for using tuples to select ``MultiIndex`` 
+  columns in :class:`compose.ColumnTransformer` :pr:`13790` by `Thomas Fan`_.
+
 :mod:`sklearn.svm`
 ..................
 
