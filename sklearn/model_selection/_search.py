@@ -329,7 +329,7 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error.
+        step, which will always raise the error. Default is ``np.nan``.
 
     Returns
     -------
@@ -942,7 +942,7 @@ class GridSearchCV(BaseSearchCV):
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error.
+        step, which will always raise the error. Default is ``np.nan``.
 
     return_train_score : boolean, default=False
         If ``False``, the ``cv_results_`` attribute will not include training
@@ -1289,7 +1289,7 @@ class RandomizedSearchCV(BaseSearchCV):
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error.
+        step, which will always raise the error. Default is ``np.nan``.
 
     return_train_score : boolean, default=False
         If ``False``, the ``cv_results_`` attribute will not include training
