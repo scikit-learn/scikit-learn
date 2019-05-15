@@ -1462,7 +1462,7 @@ def test_grid_search_failing_classifier():
                 FailingClassifier.FAILING_PARAMETER))
 
     gs = GridSearchCV(clf, [{'parameter': [0, 1, 2]}], scoring='accuracy',
-                      refit=False)
+                      refit=False, error_score=float('nan'))
     assert_warns(FitFailedWarning, gs.fit, X, y)
     n_candidates = len(gs.cv_results_['params'])
     assert all(np.all(np.isnan(get_cand_scores(cand_i)))
@@ -1479,6 +1479,7 @@ def test_grid_search_failing_classifier():
     assert gs.best_index_ != clf.FAILING_PARAMETER
 
 
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_grid_search_failing_classifier_raise():
     # GridSearchCV with on_error == 'raise' raises the error
 
