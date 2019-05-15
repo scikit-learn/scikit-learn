@@ -20,6 +20,7 @@ from sklearn.utils.estimator_checks import set_checking_parameters
 from sklearn.utils.estimator_checks import check_estimators_unfitted
 from sklearn.utils.estimator_checks import check_fit_score_takes_y
 from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
+from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.estimator_checks import check_outlier_corruption
 from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
@@ -30,6 +31,7 @@ from sklearn.decomposition import NMF
 from sklearn.linear_model import MultiTaskElasticNet
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsRegressor
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.validation import check_X_y, check_array
 
 
@@ -276,6 +278,29 @@ class SparseTransformer(BaseEstimator):
         return sp.csr_matrix(X)
 
 
+class BinaryDecisionTreeClassifier(DecisionTreeClassifier):
+    def _more_tags(self):
+        return {'binary_only': True}
+
+    def fit(self, X, y, sample_weight=None):
+        super().fit(X, y, sample_weight)
+        X, y = check_X_y(X, y, y_numeric=False)
+        check_classification_targets(y)
+        self.classes_, y = np.unique(y, return_inverse=True)
+        n_trim_classes = np.count_nonzero(np.bincount(y, sample_weight))
+        if n_trim_classes != 2:
+            raise ValueError("y contains %d class after sample_weight "
+                             "trimmed classes with zero weights, while 2 "
+                             "classes are required." % n_trim_classes)
+        return self
+
+    def predict_proba(self, X):
+        return super().predict_proba(X)
+
+    def predict(self, X):
+        return super().predict(X)
+
+
 def test_check_fit_score_takes_y_works_on_deprecated_fit():
     # Tests that check_fit_score_takes_y works on a class with
     # a deprecated fit method
@@ -384,6 +409,9 @@ def test_check_estimator():
     check_estimator(AdaBoostClassifier())
     check_estimator(MultiTaskElasticNet)
     check_estimator(MultiTaskElasticNet())
+
+    # doesn't error on binary_only tagged estimator
+    check_estimator(BinaryDecisionTreeClassifier)
 
 
 def test_check_outlier_corruption():

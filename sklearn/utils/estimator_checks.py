@@ -1911,6 +1911,7 @@ def check_regressors_no_decision_function(name, regressor_orig):
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_class_weight_classifiers(name, classifier_orig):
+    tags = _safe_tags(classifier_orig)
     if name == "NuSVC":
         # the sparse version has a parameter that doesn't do anything
         raise SkipTest("Not testing NuSVC class weight as it is ignored.")
@@ -1919,7 +1920,12 @@ def check_class_weight_classifiers(name, classifier_orig):
         # FIXME SOON!
         raise SkipTest
 
-    for n_centers in [2, 3]:
+    if tags['binary_only']:
+        problems = [2]
+    else:
+        problems = [2, 3]
+
+    for n_centers in problems:
         # create a very noisy dataset
         X, y = make_blobs(centers=n_centers, random_state=0, cluster_std=20)
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.5,
