@@ -1666,9 +1666,6 @@ def test_fit_and_score_failing():
     assert_warns_message(FitFailedWarning, warning_message, _fit_and_score,
                          *fit_and_score_args, **fit_and_score_kwargs)
 
-    with pytest.raises(ValueError):
-        _fit_and_score(*fit_and_score_args)
-
     fit_and_score_kwargs = {'error_score': 'raise'}
     # check if exception was raised, with default error_score='raise'
     assert_raise_message(ValueError, "Failing classifier failed as required",
