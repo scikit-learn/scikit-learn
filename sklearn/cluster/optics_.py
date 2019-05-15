@@ -30,7 +30,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
     neighborhood radius. Better suited for usage on large datasets than the
     current sklearn implementation of DBSCAN.
 
-    Clusters are then extracted using a DBSCAN like method
+    Clusters are then extracted using a DBSCAN-like method
     (cluster_method = 'dbscan') or an automatic
     technique proposed in [1]_ (cluster_method = 'xi').
 
