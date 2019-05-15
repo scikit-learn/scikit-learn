@@ -69,9 +69,9 @@ class IsolationForest(BaseBagging, OutlierMixin):
         of outliers in the data set. Used when fitting to define the threshold
         on the scores of the samples.
 
-        - if 'auto', the threshold is determined as in the
-          original paper,
-        - if a float, the contamination should be in the range [0, 0.5].
+            - If 'auto', the threshold is determined as in the
+            original paper.
+            - If a float, the contamination should be in the range [0, 0.5].
 
         .. versionchanged:: 0.22
            The default value of ``contamination`` changed from 0.1
@@ -105,7 +105,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
            in 0.22.
 
         .. deprecated:: 0.22
-           ``behaviour`` parameter will be deprecated in 0.22 and removed in
+           ``behaviour`` parameter is deprecated in 0.22 and removed in
            0.24.
 
     random_state : int, RandomState instance or None, optional (default=None)
