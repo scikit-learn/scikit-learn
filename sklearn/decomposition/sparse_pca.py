@@ -86,14 +86,14 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    normalize_components : True, optional (default='deprecated')
+    normalize_components : 'deprecated'
         This parameter does not have any effect. The components are always
         normalized.
 
         .. versionadded:: 0.20
 
         .. deprecated:: 0.22
-           ``normalize_components`` si deprecated in 0.22 and will be removed
+           ``normalize_components`` is deprecated in 0.22 and will be removed
            in 0.24.
 
     Attributes
@@ -303,7 +303,7 @@ class MiniBatchSparsePCA(SparsePCA):
         .. versionadded:: 0.20
 
         .. deprecated:: 0.22
-           ``normalize_components`` si deprecated in 0.22 and will be removed
+           ``normalize_components`` is deprecated in 0.22 and will be removed
            in 0.24.
 
     Attributes
