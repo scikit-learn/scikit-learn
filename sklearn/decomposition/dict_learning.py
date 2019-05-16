@@ -539,7 +539,7 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
 
     if method == 'lars' and positive_code:
         raise ValueError(
-            "Positive constraint not supported for \"lars\" coding method."
+            "Positive constraint not supported for 'lars' coding method."
         )
 
     method = 'lasso_' + method
