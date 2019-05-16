@@ -1,5 +1,6 @@
 import numpy as np
 from numpy.testing import assert_almost_equal
+from numpy.testing import assert_allclose
 from scipy.optimize import newton
 from sklearn.utils import assert_all_finite
 from sklearn.utils.fixes import sp_version
@@ -89,7 +90,8 @@ def test_derivatives(loss, x0, y_true):
 ])
 @pytest.mark.skipif(Y_DTYPE != np.float64,
                     reason='Need 64 bits float precision for numerical checks')
-def test_numerical_gradients(loss, n_classes, prediction_dim):
+@pytest.mark.parametrize('seed', range(1))
+def test_numerical_gradients(loss, n_classes, prediction_dim, seed):
     # Make sure gradients and hessians computed in the loss are correct, by
     # comparing with their approximations computed with finite central
     # differences.
@@ -131,8 +133,8 @@ def test_numerical_gradients(loss, n_classes, prediction_dim):
     f = loss(y_true, raw_predictions, average=False)
     numerical_hessians = (f_plus_eps + f_minus_eps - 2 * f) / eps**2
 
-    assert np.allclose(numerical_gradients, gradients, rtol=1e-5)
-    assert np.allclose(numerical_hessians, hessians, rtol=1e-5)
+    assert_allclose(numerical_gradients, gradients, rtol=1e-4, atol=1e-7)
+    assert_allclose(numerical_hessians, hessians, rtol=1e-4, atol=1e-7)
 
 
 def test_baseline_least_squares():
