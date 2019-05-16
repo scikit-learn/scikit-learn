@@ -124,10 +124,9 @@ def test_dict_learning_lars_dict_positivity(transform_algorithm,
 ])
 def test_dict_learning_lars_code_positivity(transform_algorithm):
     n_components = 5
-    positive_code = True
     dico = DictionaryLearning(
         n_components, transform_algorithm=transform_algorithm, random_state=0,
-        positive_code=positive_code, fit_algorithm="cd").fit(X)
+        positive_code=True, fit_algorithm="cd").fit(X)
 
     err_msg = "Positive constraint not supported for '{}' coding method."
     err_msg = err_msg.format(transform_algorithm)
