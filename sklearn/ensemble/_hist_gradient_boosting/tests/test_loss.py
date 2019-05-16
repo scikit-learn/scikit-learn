@@ -83,7 +83,7 @@ def test_derivatives(loss, x0, y_true):
 
 @pytest.mark.parametrize('loss, n_classes, prediction_dim', [
     ('least_squares', 0, 1),
-    ('least_absolute_deviation', 1, 1),
+    ('least_absolute_deviation', 0, 1),
     ('binary_crossentropy', 2, 1),
     ('categorical_crossentropy', 3, 3),
 ])
@@ -97,7 +97,7 @@ def test_numerical_gradients(loss, n_classes, prediction_dim):
 
     rng = np.random.RandomState(0)
     n_samples = 100
-    if loss == 'least_squares':
+    if loss in ('least_squares', 'least_absolute_deviation'):
         y_true = rng.normal(size=n_samples).astype(Y_DTYPE)
     else:
         y_true = rng.randint(0, n_classes, size=n_samples).astype(Y_DTYPE)
