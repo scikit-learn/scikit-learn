@@ -154,10 +154,13 @@ class TreeGrower:
         The shrinkage parameter to apply to the leaves values, also known as
         learning rate.
     """
-    def __init__(self, X_binned, gradients, hessians, max_leaf_nodes=None,
+    def __init__(self, y_train, raw_predictions, X_binned, gradients, hessians, max_leaf_nodes=None,
                  max_depth=None, min_samples_leaf=20, min_gain_to_split=0.,
                  max_bins=256, actual_n_bins=None, l2_regularization=0.,
                  min_hessian_to_split=1e-3, shrinkage=1.):
+
+        self.y_train = y_train
+        self.raw_predictions = raw_predictions
 
         self._validate_parameters(X_binned, max_leaf_nodes, max_depth,
                                   min_samples_leaf, min_gain_to_split,
@@ -396,8 +399,13 @@ class TreeGrower:
         XGBoost: A Scalable Tree Boosting System, T. Chen, C. Guestrin, 2016
         https://arxiv.org/abs/1603.02754
         """
-        node.value = -self.shrinkage * node.sum_gradients / (
-            node.sum_hessians + self.splitter.l2_regularization)
+        # node.value = -self.shrinkage * node.sum_gradients / (
+        #     node.sum_hessians + self.splitter.l2_regularization)
+        median = (self.shrinkage *
+                  np.median(self.y_train[node.sample_indices] -
+                            self.raw_predictions[node.sample_indices]) /
+                  (node.sum_hessians + self.splitter.l2_regularization))
+        node.value = median
         self.finalized_leaves.append(node)
 
     def _finalize_splittable_nodes(self):

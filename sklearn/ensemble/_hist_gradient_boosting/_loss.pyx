@@ -33,6 +33,20 @@ def _update_gradients_least_squares(
         gradients[i] = raw_predictions[i] - y_true[i]
 
 
+def _update_gradients_least_absolute_deviation(
+        G_H_DTYPE_C [::1] gradients,  # OUT
+        const Y_DTYPE_C [::1] y_true,  # IN
+        const Y_DTYPE_C [::1] raw_predictions):  # IN
+
+    cdef:
+        int n_samples
+        int i
+
+    n_samples = raw_predictions.shape[0]
+    for i in prange(n_samples, schedule='static', nogil=True):
+        gradients[i] = 2 * (y_true[i] - raw_predictions[i] < 0) - 1
+
+
 def _update_gradients_hessians_binary_crossentropy(
         G_H_DTYPE_C [::1] gradients,  # OUT
         G_H_DTYPE_C [::1] hessians,  # OUT

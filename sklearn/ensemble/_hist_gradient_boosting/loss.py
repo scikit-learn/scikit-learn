@@ -18,6 +18,7 @@ except ImportError:
 from .types import Y_DTYPE
 from .types import G_H_DTYPE
 from ._loss import _update_gradients_least_squares
+from ._loss import _update_gradients_least_absolute_deviation
 from ._loss import _update_gradients_hessians_binary_crossentropy
 from ._loss import _update_gradients_hessians_categorical_crossentropy
 
@@ -53,9 +54,14 @@ class BaseLoss(ABC):
         shape = (prediction_dim, n_samples)
         gradients = np.empty(shape=shape, dtype=G_H_DTYPE)
         if self.hessians_are_constant:
-            # if the hessians are constant, we consider they are equal to 1.
-            # this is correct as long as we adjust the gradients. See e.g. LS
-            # loss
+            # If the hessians are constant, we consider they are equal to 1.
+            # - For LS loss, hessians are actually 2, but we compute a "half LS
+            #   loss". The leaves values will still be correct as long as we
+            #   adjust the gradients (see _update_gradients_least_squares())
+            # - For LAD loss, hessians are actually 0, but they are always
+            #   ignored anyway. For this loss, the leaf value isn't a newton
+            #   step as computed in grower._finalize_leaf(), but rather the
+            #   median of the targets of the samples at the leaf.
             hessians = np.ones(shape=(1, 1), dtype=G_H_DTYPE)
         else:
             hessians = np.empty(shape=shape, dtype=G_H_DTYPE)
@@ -139,6 +145,40 @@ class LeastSquares(BaseLoss):
         raw_predictions = raw_predictions.reshape(-1)
         gradients = gradients.reshape(-1)
         _update_gradients_least_squares(gradients, y_true, raw_predictions)
+
+
+class LeastAbsoluteDeviation(BaseLoss):
+    """Least asbolute deviation, for regression.
+
+    For a given sample x_i, the loss is defined as::
+
+        loss(x_i) = |y_true_i - raw_pred_i|
+    """
+
+    hessians_are_constant = True
+
+    def __call__(self, y_true, raw_predictions, average=True):
+        # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
+        # return a view.
+        raw_predictions = raw_predictions.reshape(-1)
+        loss = np.abs(y_true - raw_predictions)
+        return loss.mean() if average else loss
+
+    def get_baseline_prediction(self, y_train, prediction_dim):
+        return np.median(y_train)
+
+    @staticmethod
+    def inverse_link_function(raw_predictions):
+        return raw_predictions
+
+    def update_gradients_and_hessians(self, gradients, hessians, y_true,
+                                      raw_predictions):
+        # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
+        # return a view.
+        raw_predictions = raw_predictions.reshape(-1)
+        gradients = gradients.reshape(-1)
+        _update_gradients_least_absolute_deviation(gradients, y_true,
+                                                   raw_predictions)
 
 
 class BinaryCrossEntropy(BaseLoss):
@@ -242,6 +282,7 @@ class CategoricalCrossEntropy(BaseLoss):
 
 _LOSSES = {
     'least_squares': LeastSquares,
+    'least_absolute_deviation': LeastAbsoluteDeviation,
     'binary_crossentropy': BinaryCrossEntropy,
     'categorical_crossentropy': CategoricalCrossEntropy
 }
