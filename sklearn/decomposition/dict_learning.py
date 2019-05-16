@@ -115,7 +115,7 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
             if positive:
                 raise ValueError(
                     """
-                    Positive constraint not supported for \"lasso_lars\"
+                    Positive constraint not supported for 'lasso_lars'
                     coding method.
                     """
                 )
