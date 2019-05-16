@@ -366,26 +366,40 @@ def test_sparse_encode_shapes():
         assert_equal(code.shape, (n_samples, n_components))
 
 
+@pytest.mark.parametrize("algo", [
+    'lasso_cd',
+    'threshold'
+])
 @pytest.mark.parametrize("positive", [
     False,
     True,
 ])
-def test_sparse_encode_positivity(positive):
+def test_sparse_encode_positivity(algo, positive):
     n_components = 12
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)  # random init
     V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
-    for algo in ('lasso_cd', 'threshold'):
-        code = sparse_encode(X, V, algorithm=algo, positive=positive)
-        if positive:
-            assert (code >= 0).all()
-        else:
-            assert (code < 0).any()
+    code = sparse_encode(X, V, algorithm=algo, positive=positive)
+    if positive:
+        assert (code >= 0).all()
+    else:
+        assert (code < 0).any()
 
-    for algo in ('lasso_lars', 'lars', 'omp'):
-        if positive:
-            assert_raises(ValueError, sparse_encode, X, V, algorithm=algo,
-                          positive=positive)
+
+@pytest.mark.parametrize("algo", [
+    'lasso_lars',
+    'lars',
+    'omp'
+])
+def test_sparse_encode_unavailable_positivity(algo):
+    n_components = 12
+    rng = np.random.RandomState(0)
+    V = rng.randn(n_components, n_features)  # random init
+    V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
+    err_msg = "Positive constraint not supported for '{}' coding method."
+    err_msg = err_msg.format(algo)
+    with pytest.raises(ValueError, match=err_msg):
+        sparse_encode(X, V, algorithm=algo, positive=True)
 
 
 def test_sparse_encode_input():

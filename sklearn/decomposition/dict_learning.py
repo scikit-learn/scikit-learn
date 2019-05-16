@@ -113,12 +113,8 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
             err_mgt = np.seterr(all='ignore')
 
             if positive:
-                raise ValueError(
-                    """
-                    Positive constraint not supported for 'lasso_lars'
-                    coding method.
-                    """
-                )
+                raise ValueError("Positive constraint not supported for "
+                                 "'lasso_lars' coding method.")
 
             # Not passing in verbose=max(0, verbose-1) because Lars.fit already
             # corrects the verbosity level.
@@ -152,10 +148,8 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
 
             if positive:
                 raise ValueError(
-                    """
-                    Positive constraint not supported for \"lars\"
-                    coding method.
-                    """
+                    "Positive constraint not supported for 'lars' "
+                    "coding method."
                 )
 
             # Not passing in verbose=max(0, verbose-1) because Lars.fit already
@@ -178,7 +172,7 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         # TODO: Should verbose argument be passed to this?
         if positive:
             raise ValueError(
-                "Positive constraint not supported for \"omp\" coding method."
+                "Positive constraint not supported for 'omp' coding method."
             )
         new_code = orthogonal_mp_gram(
             Gram=gram, Xy=cov, n_nonzero_coefs=int(regularization),
