@@ -876,13 +876,23 @@ class OrdinalEncoder(_BaseEncoder):
 
     dtype : number type, default np.float64
         Desired dtype of output.
-    
+
     handle_unknown : 'error' or 'ignore', default='error'.
         Whether to raise an error or ignore if an unknown categorical feature
         is present during transform (default is to raise). When this parameter
         is set to 'ignore' and an unknown category is encountered during
         transform, a numeric ``-1`` category is returned. In the inverse
         transform, an unknown category will be denoted as None.
+    
+    unknown_category : object
+        Desired value that will take unknown value in
+        :meth:`~OrdinalEncoder.inverse_transform`.
+    
+    unknown_value : integer
+        Desired value that will take unknown value in
+        :meth:`~OrdinalEncoder.transform`. Warning that if this value
+        is in :math:`[0, N-1]`, where N is the number of categories,
+        it will be indistiguishable from the original category.
 
 
     Attributes
@@ -913,7 +923,7 @@ class OrdinalEncoder(_BaseEncoder):
     >>> enc.inverse_transform([[1, 0], [0, 1]])
     array([['Male', 1],
            ['Female', 2]], dtype=object)
-    
+
     The ordinal encoding can be set to handle unknown categories at
     transform time.
 
@@ -940,12 +950,13 @@ class OrdinalEncoder(_BaseEncoder):
     """
 
     def __init__(self, categories='auto', dtype=np.float64,
-                 handle_unknown='error'):
+                 handle_unknown='error', unknown_category=None,
+                 unknown_value=-1):
         self.categories = categories
         self.dtype = dtype
         self.handle_unknown = handle_unknown
-        self.unknown_category = None
-        self.unknown_value = -1
+        self.unknown_category = unknown_category
+        self.unknown_value = unknown_value
 
     def fit(self, X, y=None):
         """Fit the OrdinalEncoder to X.

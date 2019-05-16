@@ -687,7 +687,7 @@ def test_ordinal_encoder_specified_categories(X, X2, cats, cat_dtype):
      [np.array(['a', 'b', 'c'])], np.object_),
     ], ids=['object', 'numeric', 'object-string-cat'])
 def test_ordinal_encoder_specified_categories_handle_unknown(X, cats,
-        cat_dtype):
+                                                             cat_dtype):
     enc = OrdinalEncoder(categories=cats, handle_unknown='ignore')
     exp = np.array([[-1.], [1.]])
     assert_array_equal(enc.fit_transform(X), exp)
@@ -752,6 +752,7 @@ def test_ordinal_encoder_raise_categories_shape():
 
     with pytest.raises(ValueError, match=msg):
         enc.fit(X)
+
 
 def test_encoder_dtypes():
     # check that dtypes are preserved when determining categories
