@@ -755,7 +755,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
 
     if method == 'lars' and positive_code:
         raise ValueError(
-            "Positive constraint not supported for \"lars\" coding method."
+            "Positive constraint not supported for 'lars' coding method."
         )
 
     method = 'lasso_' + method
