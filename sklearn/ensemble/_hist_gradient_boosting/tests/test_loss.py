@@ -157,7 +157,7 @@ def test_baseline_least_absolute_deviation():
     baseline_prediction = loss.get_baseline_prediction(y_train, 1)
     assert baseline_prediction.shape == tuple()  # scalar
     assert baseline_prediction.dtype == y_train.dtype
-    # Make sure baseline prediction is the mean of all targets
+    # Make sure baseline prediction is the median of all targets
     assert_almost_equal(baseline_prediction, np.median(y_train))
 
 
