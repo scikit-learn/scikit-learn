@@ -26,6 +26,16 @@ from ._loss import _update_gradients_hessians_categorical_crossentropy
 class BaseLoss(ABC):
     """Base class for a loss."""
 
+    # This variable indicates whether the loss requires the leaves values to
+    # be updated once the tree has been trained. The trees are trained to
+    # predict a Newton step (see grower._finalize_leaf()). But for some losses
+    # (e.g. least absolute deviation) we need to adjust the tree values to
+    # account for the "line search" of the gradient descent prodcedure. See
+    # the original paper Greedy Function Approximation: A Gradient Boosting
+    # Machine by Friedman (https://statweb.stanford.edu/~jhf/ftp/trebst.pdf)
+    # for the theory.
+    need_update_leaves_values = False
+
     def init_gradients_and_hessians(self, n_samples, prediction_dim):
         """Return initial gradients and hessians.
 
@@ -55,13 +65,9 @@ class BaseLoss(ABC):
         gradients = np.empty(shape=shape, dtype=G_H_DTYPE)
         if self.hessians_are_constant:
             # If the hessians are constant, we consider they are equal to 1.
-            # - For LS loss, hessians are actually 2, but we compute a "half LS
-            #   loss". The leaves values will still be correct as long as we
-            #   adjust the gradients (see _update_gradients_least_squares())
+            # - This is correct for the half LS loss
             # - For LAD loss, hessians are actually 0, but they are always
-            #   ignored anyway. For this loss, the leaf value isn't a newton
-            #   step as computed in grower._finalize_leaf(), but rather the
-            #   median of the targets of the samples at the leaf.
+            #   ignored anyway.
             hessians = np.ones(shape=(1, 1), dtype=G_H_DTYPE)
         else:
             hessians = np.empty(shape=shape, dtype=G_H_DTYPE)
@@ -156,6 +162,7 @@ class LeastAbsoluteDeviation(BaseLoss):
     """
 
     hessians_are_constant = True
+    need_update_leaves_values = True  # see note in BaseLoss
 
     def __call__(self, y_true, raw_predictions, average=True):
         # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
@@ -179,6 +186,20 @@ class LeastAbsoluteDeviation(BaseLoss):
         gradients = gradients.reshape(-1)
         _update_gradients_least_absolute_deviation(gradients, y_true,
                                                    raw_predictions)
+
+    def update_leaves_values(self, grower, y_true, raw_predictions):
+        # Update the values predicted by the tree with
+        # median(y_true - raw_predictions).
+        # See note about need_update_leaves_values in BaseLoss.
+
+        # TODO: ideally this should be computed in parallel over the leaves
+        # using something similar to _update_raw_predictions(), but this
+        # requires a cython version of median()
+        for leaf in grower.finalized_leaves:
+            indices = leaf.sample_indices
+            median_res = np.median(y_true[indices] - raw_predictions[indices])
+            leaf.value = grower.shrinkage * median_res
+            # Note that the regularization is ignored here
 
 
 class BinaryCrossEntropy(BaseLoss):

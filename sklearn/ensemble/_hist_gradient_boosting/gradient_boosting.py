@@ -247,8 +247,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             for k in range(self.n_trees_per_iteration_):
 
                 grower = TreeGrower(
-                    y_train,
-                    raw_predictions[k, :],
                     X_binned_train, gradients[k, :], hessians[k, :],
                     max_bins=self.max_bins,
                     actual_n_bins=self.bin_mapper_.actual_n_bins_,
@@ -263,12 +261,14 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 acc_find_split_time += grower.total_find_split_time
                 acc_compute_hist_time += grower.total_compute_hist_time
 
+                if self.loss_.need_update_leaves_values:
+                    self.loss_.update_leaves_values(grower, y_train,
+                                                    raw_predictions[k, :])
+
                 predictor = grower.make_predictor(
                     bin_thresholds=self.bin_mapper_.bin_thresholds_
                 )
                 predictors[-1].append(predictor)
-
-                # TODO: update tree leaves values here
 
                 # Update raw_predictions with the predictions of the newly
                 # created tree.
