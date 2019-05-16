@@ -876,6 +876,14 @@ class OrdinalEncoder(_BaseEncoder):
 
     dtype : number type, default np.float64
         Desired dtype of output.
+    
+    handle_unknown : 'error' or 'ignore', default='error'.
+        Whether to raise an error or ignore if an unknown categorical feature
+        is present during transform (default is to raise). When this parameter
+        is set to 'ignore' and an unknown category is encountered during
+        transform, a numeric ``-1`` category is returned. In the inverse
+        transform, an unknown category will be denoted as None.
+
 
     Attributes
     ----------
@@ -894,7 +902,8 @@ class OrdinalEncoder(_BaseEncoder):
     >>> X = [['Male', 1], ['Female', 3], ['Female', 2]]
     >>> enc.fit(X)
     ... # doctest: +ELLIPSIS
-    OrdinalEncoder(categories='auto', dtype=<... 'numpy.float64'>)
+    OrdinalEncoder(categories='auto', dtype=<... 'numpy.float64'>,
+                   handle_unknown='error')
     >>> enc.categories_
     [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]
     >>> enc.transform([['Female', 3], ['Male', 1]])
@@ -903,6 +912,23 @@ class OrdinalEncoder(_BaseEncoder):
 
     >>> enc.inverse_transform([[1, 0], [0, 1]])
     array([['Male', 1],
+           ['Female', 2]], dtype=object)
+    
+    The ordinal encoding can be set to handle unknown categories at
+    transform time.
+
+    >>> from sklearn.preprocessing import OrdinalEncoder
+    >>> enc = OrdinalEncoder(handle_unknown='ignore')
+    >>> X = [['Male', 1], ['Female', 3], ['Female', 2]]
+    >>> enc.fit(X)
+    ... # doctest: +ELLIPSIS
+    OrdinalEncoder(categories='auto', dtype=<... 'numpy.float64'>,
+                   handle_unknown='ignore')
+    >>> enc.transform([['Female', 4], ['Other', 1]])
+    array([[ 0., -1.],
+           [-1.,  0.]])
+    >>> enc.inverse_transform([[1, -1], [0, 1]])
+    array([['Male', None],
            ['Female', 2]], dtype=object)
 
     See also
@@ -913,9 +939,13 @@ class OrdinalEncoder(_BaseEncoder):
       between 0 and n_classes-1.
     """
 
-    def __init__(self, categories='auto', dtype=np.float64):
+    def __init__(self, categories='auto', dtype=np.float64,
+                 handle_unknown='error'):
         self.categories = categories
         self.dtype = dtype
+        self.handle_unknown = handle_unknown
+        self.unknown_category = None
+        self.unknown_value = -1
 
     def fit(self, X, y=None):
         """Fit the OrdinalEncoder to X.
@@ -933,7 +963,7 @@ class OrdinalEncoder(_BaseEncoder):
         # base classes uses _categories to deal with deprecations in
         # OneHoteEncoder: can be removed once deprecations are removed
         self._categories = self.categories
-        self._fit(X)
+        self._fit(X, handle_unknown=self.handle_unknown)
 
         return self
 
@@ -951,7 +981,8 @@ class OrdinalEncoder(_BaseEncoder):
             Transformed input.
 
         """
-        X_int, _ = self._transform(X)
+        X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown)
+        X_int[np.logical_not(X_mask)] = self.unknown_value
         return X_int.astype(self.dtype, copy=False)
 
     def inverse_transform(self, X):
@@ -987,6 +1018,10 @@ class OrdinalEncoder(_BaseEncoder):
         for i in range(n_features):
             labels = X[:, i].astype('int64', copy=False)
             X_tr[:, i] = self.categories_[i][labels]
+
+            if self.handle_unknown == 'ignore':
+                unknown = labels == self.unknown_value
+                X_tr[unknown, i] = self.unknown_category
 
         return X_tr
 

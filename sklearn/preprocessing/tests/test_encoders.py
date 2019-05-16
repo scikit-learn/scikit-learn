@@ -634,6 +634,22 @@ def test_ordinal_encoder(X):
     assert_array_equal(enc.fit_transform(X), exp)
 
 
+@pytest.mark.parametrize("Xfit,Xtrans", [
+    ([['abc', 2, 55], ['def', 1, 55]], [['ghi', 2, 55]]),
+    (np.array([[10, 2, 55], [20, 1, 55]]), np.array([[30, 2, 55]])),
+    (np.array([['a', 'B', 'cat'], ['b', 'A', 'cat']], dtype=object),
+        np.array([['C', 'B', 'cat']], dtype=object))
+    ], ids=['mixed', 'numeric', 'object'])
+def test_ordinal_encoder_handle_unknown(Xfit, Xtrans):
+    enc = OrdinalEncoder(handle_unknown='ignore')
+    exp = np.array([[-1, 1, 0]], dtype='int64')
+    enc.fit_transform(Xfit)
+    assert_array_equal(enc.transform(Xtrans), exp.astype('float64'))
+    enc = OrdinalEncoder(dtype='int64', handle_unknown='ignore')
+    enc.fit(Xfit)
+    assert_array_equal(enc.transform(Xtrans), exp)
+
+
 @pytest.mark.parametrize("X, X2, cats, cat_dtype", [
     (np.array([['a', 'b']], dtype=object).T,
      np.array([['a', 'd']], dtype=object).T,
@@ -662,11 +678,45 @@ def test_ordinal_encoder_specified_categories(X, X2, cats, cat_dtype):
         enc.fit(X2)
 
 
+@pytest.mark.parametrize("X, cats, cat_dtype", [
+    (np.array([['d', 'b']], dtype=object).T,
+     [['a', 'b', 'c']], np.object_),
+    (np.array([[4, 2]], dtype='int64').T,
+     [[1, 2, 3]], np.int64),
+    (np.array([['d', 'b']], dtype=object).T,
+     [np.array(['a', 'b', 'c'])], np.object_),
+    ], ids=['object', 'numeric', 'object-string-cat'])
+def test_ordinal_encoder_specified_categories_handle_unknown(X, cats,
+        cat_dtype):
+    enc = OrdinalEncoder(categories=cats, handle_unknown='ignore')
+    exp = np.array([[-1.], [1.]])
+    assert_array_equal(enc.fit_transform(X), exp)
+    assert list(enc.categories[0]) == list(cats[0])
+    assert enc.categories_[0].tolist() == list(cats[0])
+    # manually specified categories should have same dtype as
+    # the data when coerced from lists
+    assert enc.categories_[0].dtype == cat_dtype
+
+
 def test_ordinal_encoder_inverse():
     X = [['abc', 2, 55], ['def', 1, 55]]
     enc = OrdinalEncoder()
     X_tr = enc.fit_transform(X)
     exp = np.array(X, dtype=object)
+    assert_array_equal(enc.inverse_transform(X_tr), exp)
+
+    # incorrect shape raises
+    X_tr = np.array([[0, 1, 1, 2], [1, 0, 1, 0]])
+    msg = re.escape('Shape of the passed X data is not correct')
+    assert_raises_regex(ValueError, msg, enc.inverse_transform, X_tr)
+
+
+def test_ordinal_encoder_inverse_handle_unknown():
+    X = [['abc', 2, 55], ['def', 1, 55]]
+    Xu = [['ghi', 2, 55]]
+    enc = OrdinalEncoder(handle_unknown='ignore')
+    X_tr = enc.fit(X).transform(Xu)
+    exp = np.array([[None, 2, 55]], dtype=object)
     assert_array_equal(enc.inverse_transform(X_tr), exp)
 
     # incorrect shape raises
