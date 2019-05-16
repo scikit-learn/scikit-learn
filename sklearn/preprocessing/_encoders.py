@@ -883,11 +883,11 @@ class OrdinalEncoder(_BaseEncoder):
         is set to 'ignore' and an unknown category is encountered during
         transform, a numeric ``-1`` category is returned. In the inverse
         transform, an unknown category will be denoted as None.
-    
+
     unknown_category : object
         Desired value that will take unknown value in
         :meth:`~OrdinalEncoder.inverse_transform`.
-    
+
     unknown_value : integer
         Desired value that will take unknown value in
         :meth:`~OrdinalEncoder.transform`. Warning that if this value
