@@ -590,6 +590,25 @@ def test_one_hot_encoder_feature_names_unicode():
     assert_array_equal(['n👍me_c❤t1', 'n👍me_dat2'], feature_names)
 
 
+def test_one_hot_encoder_feature_names_drop():
+    # Assume that this is OK for manual drop, if OK for first
+    # since other tests will fail if drop_idx_ is not correct
+    enc = OneHotEncoder(drop='first')
+    X = [['Male', 1, 'girl', 2, 3],
+         ['Female', 41, 'girl', 2, 10],
+         ['Male', 51, 'boy', 2, 3],
+         ['Male', 91, 'girl', 2, 30]]
+
+    enc.fit(X)
+    feature_names = enc.get_feature_names()
+    assert isinstance(feature_names, np.ndarray)
+
+    assert_array_equal(['x0_Male',
+                        'x1_41', 'x1_51', 'x1_91',
+                        'x2_girl',
+                        'x4_10', 'x4_30'], feature_names)
+
+
 @pytest.mark.parametrize("X", [np.array([[1, np.nan]]).T,
                                np.array([['a', np.nan]], dtype=object).T],
                          ids=['numeric', 'object'])
