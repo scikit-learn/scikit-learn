@@ -66,9 +66,7 @@ def test_dict_learning_lars_positive_parameter():
 
 
 @pytest.mark.parametrize("transform_algorithm", [
-    "lasso_lars",
     "lasso_cd",
-    "lars",
     "threshold",
 ])
 @pytest.mark.parametrize("positive_code", [
@@ -88,11 +86,7 @@ def test_dict_learning_positivity(transform_algorithm,
         positive_code=positive_code, positive_dict=positive_dict,
         fit_algorithm="cd").fit(X)
 
-    if transform_algorithm in ["lasso_lars", "lars"] and positive_code:
-        assert_raises(ValueError, dico.transform, X)
-        return
-    else:
-        code = dico.transform(X)
+    code = dico.transform(X)
 
     if positive_dict:
         assert (dico.components_ >= 0).all()
@@ -102,6 +96,44 @@ def test_dict_learning_positivity(transform_algorithm,
         assert (code >= 0).all()
     else:
         assert (code < 0).any()
+
+
+@pytest.mark.parametrize("transform_algorithm", [
+    "lasso_lars",
+    "lars",
+])
+@pytest.mark.parametrize("positive_dict", [
+    False,
+    True,
+])
+def test_dict_learning_lars_dict_positivity(transform_algorithm,
+                                            positive_dict):
+    n_components = 5
+    dico = DictionaryLearning(
+        n_components, transform_algorithm=transform_algorithm, random_state=0,
+        positive_dict=positive_dict, fit_algorithm="cd").fit(X)
+
+    if positive_dict:
+        assert (dico.components_ >= 0).all()
+    else:
+        assert (dico.components_ < 0).any()
+
+
+@pytest.mark.parametrize("transform_algorithm", [
+    "lasso_lars",
+    "lars",
+])
+def test_dict_learning_lars_code_positivity(transform_algorithm):
+    n_components = 5
+    positive_code = True
+    dico = DictionaryLearning(
+        n_components, transform_algorithm=transform_algorithm, random_state=0,
+        positive_code=positive_code, fit_algorithm="cd").fit(X)
+
+    err_msg = "Positive constraint not supported for '{}' coding method."
+    err_msg = err_msg.format(transform_algorithm)
+    with pytest.raises(ValueError, match=err_msg):
+        dico.transform(X)
 
 
 def test_dict_learning_reconstruction():
@@ -186,8 +218,9 @@ def test_dict_learning_online_shapes():
 
 def test_dict_learning_online_lars_positive_parameter():
     alpha = 1
-    assert_raises(ValueError, dict_learning_online, X,
-                  alpha, positive_code=True)
+    err_msg = "Positive constraint not supported for 'lars' coding method."
+    with pytest.raises(ValueError, match=err_msg):
+        dict_learning_online(X, alpha, positive_code=True)
 
 
 @pytest.mark.parametrize("transform_algorithm", [
