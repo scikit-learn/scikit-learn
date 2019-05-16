@@ -83,12 +83,11 @@ def test_dict_learning_positivity(transform_algorithm,
                                   positive_code,
                                   positive_dict):
     n_components = 5
-    clf = DictionaryLearning(
+    dico = DictionaryLearning(
         n_components, transform_algorithm=transform_algorithm, random_state=0,
         positive_code=positive_code, positive_dict=positive_dict,
-        fit_algorithm="cd")
+        fit_algorithm="cd").fit(X)
 
-    dico = clf.fit(X)
     if transform_algorithm in ["lasso_lars", "lars"] and positive_code:
         assert_raises(ValueError, dico.transform, X)
         return
@@ -211,12 +210,11 @@ def test_dict_learning_online_positivity(transform_algorithm,
     rng = np.random.RandomState(0)
     n_components = 8
 
-    clf = MiniBatchDictionaryLearning(
+    dico = MiniBatchDictionaryLearning(
         n_components, transform_algorithm=transform_algorithm, random_state=0,
         positive_code=positive_code, positive_dict=positive_dict,
-        fit_algorithm='cd')
+        fit_algorithm='cd').fit(X)
 
-    dico = clf.fit(X)
     if transform_algorithm in ["lasso_lars", "lars"] and positive_code:
         assert_raises(ValueError, dico.transform, X)
         return
