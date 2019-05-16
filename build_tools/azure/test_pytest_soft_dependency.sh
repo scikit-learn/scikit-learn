@@ -18,5 +18,5 @@ fi
 
 # .coverage from running the tests is in TEST_DIR
 pushd $TEST_DIR
-python -m sklearn.utils.tests.test_estimator_checks
+$CMD -m sklearn.utils.tests.test_estimator_checks
 popd
