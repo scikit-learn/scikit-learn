@@ -44,7 +44,7 @@ from sklearn.preprocessing import OneHotEncoder
 # We further include two random variables that are not correlated in any way
 # with the target variable (``survived``):
 # - ``random_num`` is a high cardinality numerical variable (as many unique
-#   values as records);
+# values as records);
 # - ``random_cat`` is a low cardinality categorical variable (3 possible
 #   values).
 titanic_url = ('https://raw.githubusercontent.com/amueller/'
@@ -116,8 +116,8 @@ print("RF test accuracy: %0.3f" % rf.score(X_test, y_test))
 # This problem stems from two limitations of RF feature importances:
 # - RF importances are biased towards high cardinality features;
 # - RF importances are computed on training set statistics and therefore do not
-#   reflect the ability of feature to be useful to make predictions that
-#   generalize to the test set (when the model has enough capacity).
+# reflect the ability of feature to be useful to make predictions that
+# generalize to the test set (when the model has enough capacity).
 ohe = (rf.named_steps['preprocess']
          .named_transformers_['cat']
          .named_steps['onehot'])
