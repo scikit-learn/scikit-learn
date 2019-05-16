@@ -500,6 +500,7 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
     precision = tps / (tps + fps)
     precision[np.isnan(precision)] = 0
     recall = tps / tps[-1]
+    recall[np.isnan(recall)] = 0
 
     # stop when full recall attained
     # and reverse the outputs so recall is decreasing
