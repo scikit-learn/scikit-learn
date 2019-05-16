@@ -112,7 +112,6 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         try:
             err_mgt = np.seterr(all='ignore')
 
-            # TODO: Should verbose argument be passed to this?
             if positive:
                 raise ValueError(
                     """
