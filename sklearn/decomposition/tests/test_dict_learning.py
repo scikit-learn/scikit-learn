@@ -87,7 +87,6 @@ def test_dict_learning_positivity(transform_algorithm,
         fit_algorithm="cd").fit(X)
 
     code = dico.transform(X)
-
     if positive_dict:
         assert (dico.components_ >= 0).all()
     else:
@@ -224,9 +223,7 @@ def test_dict_learning_online_lars_positive_parameter():
 
 
 @pytest.mark.parametrize("transform_algorithm", [
-    "lasso_lars",
     "lasso_cd",
-    "lars",
     "threshold",
 ])
 @pytest.mark.parametrize("positive_code", [
@@ -237,23 +234,15 @@ def test_dict_learning_online_lars_positive_parameter():
     False,
     True,
 ])
-def test_dict_learning_online_positivity(transform_algorithm,
-                                         positive_code,
-                                         positive_dict):
-    rng = np.random.RandomState(0)
+def test_minibatch_dictionnary_learning_positivity(
+        transform_algorithm, positive_code, positive_dict):
     n_components = 8
-
     dico = MiniBatchDictionaryLearning(
         n_components, transform_algorithm=transform_algorithm, random_state=0,
         positive_code=positive_code, positive_dict=positive_dict,
         fit_algorithm='cd').fit(X)
 
-    if transform_algorithm in ["lasso_lars", "lars"] and positive_code:
-        assert_raises(ValueError, dico.transform, X)
-        return
-    else:
-        code = dico.transform(X)
-
+    code = dico.transform(X)
     if positive_dict:
         assert (dico.components_ >= 0).all()
     else:
@@ -262,6 +251,42 @@ def test_dict_learning_online_positivity(transform_algorithm,
         assert (code >= 0).all()
     else:
         assert (code < 0).any()
+
+
+@pytest.mark.parametrize("transform_algorithm", [
+    "lasso_lars",
+    "lars"
+])
+@pytest.mark.parametrize("positive_dict", [
+    False,
+    True,
+])
+def test_minibatch_dictionnary_learning_lars(transform_algorithm,
+                                             positive_dict):
+    n_components = 8
+
+    dico = MiniBatchDictionaryLearning(
+        n_components, transform_algorithm=transform_algorithm, random_state=0,
+        positive_dict=positive_dict, fit_algorithm='cd').fit(X)
+
+    if positive_dict:
+        assert (dico.components_ >= 0).all()
+    else:
+        assert (dico.components_ < 0).any()
+
+
+@pytest.mark.parametrize("positive_code", [
+    False,
+    True,
+])
+@pytest.mark.parametrize("positive_dict", [
+    False,
+    True,
+])
+def test_dict_learning_online_positivity(positive_code,
+                                         positive_dict):
+    rng = np.random.RandomState(0)
+    n_components = 8
 
     code, dictionary = dict_learning_online(X, n_components=n_components,
                                             method="cd",
