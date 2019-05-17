@@ -6,7 +6,9 @@
 from math import log
 
 import numpy as np
+import pytest
 from scipy.linalg import pinvh
+from scipy.special import loggamma
 
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -38,25 +40,33 @@ def test_bayesian_ridge_scores():
     clf = BayesianRidge(compute_score=True)
     clf.fit(X, y)
 
-    assert clf.scores_.shape == (clf.n_iter_ + 1,)
+    assert clf.scores_.shape == (clf.n_iter_,)
 
 
+@pytest.mark.filterwarnings('ignore: Optimization step did not')
 def test_bayesian_ridge_score_values():
     """Check value of score on toy example.
 
-    Compute log marginal likelihood with equation (36) in Sparse Bayesian
+    Compute the objective function with equation (36) in Sparse Bayesian
     Learning and the Relevance Vector Machine (Tipping, 2001):
 
-    - 0.5 * (log |Id/alpha + X.X^T/lambda| +
-             y^T.(Id/alpha + X.X^T/lambda).y + n * log(2 * pi))
+    - 0.5 * (log |Id/alpha + X.X^T/lambda| + y^T.(Id/alpha + X.X^T/lambda).y)
     + lambda_1 * log(lambda) - lambda_2 * lambda
     + alpha_1 * log(alpha) - alpha_2 * alpha
+
+    and contant terms:
+
+    - n/2 * log(2 * pi)
+    + alpha_1 * log(alpha_2) - loggamma(alpha_1)
+    - (alpha_1 + n/2) * log((alpha_1 + n/2) / e) + loggamma(alpha_1 + n/2)
+    + lambda_1 * log(lambda_2) - loggamma(lambda_1)
+    - (lambda_1 + m/2) * log((lambda_1 + m/2) / e) + loggamma(lambda_1 + m/2)
 
     and check equality with the score computed during training.
     """
 
     X, y = diabetes.data, diabetes.target
-    n_samples = X.shape[0]
+    n_samples, n_features = X.shape
     # check with initial values of alpha and lambda (see code for the values)
     eps = np.finfo(np.float64).eps
     alpha_ = 1. / (np.var(y) + eps)
@@ -67,14 +77,23 @@ def test_bayesian_ridge_score_values():
     alpha_2 = 0.1
     lambda_1 = 0.1
     lambda_2 = 0.1
+    alpha_1_post = alpha_1 + 0.5 * n_samples
+    lambda_1_post = lambda_1 + 0.5 * n_features
 
     # compute score using formula of docstring
-    score = lambda_1 * log(lambda_) - lambda_2 * lambda_
-    score += alpha_1 * log(alpha_) - alpha_2 * alpha_
+    offset = -0.5 * n_samples * log(2 * np.pi)
+    offset += alpha_1 * log(alpha_2) - loggamma(alpha_1)
+    offset -= (alpha_1_post * log(alpha_1_post / np.e) -
+               loggamma(alpha_1_post))
+    offset += lambda_1 * log(lambda_2) - loggamma(lambda_1)
+    offset -= (lambda_1_post * log(lambda_1_post / np.e) -
+               loggamma(lambda_1_post))
+
+    score = offset + alpha_1 * log(alpha_) - alpha_2 * alpha_
+    score += lambda_1 * log(lambda_) - lambda_2 * lambda_
     M = 1. / alpha_ * np.eye(n_samples) + 1. / lambda_ * np.dot(X, X.T)
     M_inv = pinvh(M)
-    score += - 0.5 * (fast_logdet(M) + np.dot(y.T, np.dot(M_inv, y)) +
-                      n_samples * log(2 * np.pi))
+    score += - 0.5 * (fast_logdet(M) + np.dot(y.T, np.dot(M_inv, y)))
 
     # compute score with BayesianRidge
     clf = BayesianRidge(alpha_1=alpha_1, alpha_2=alpha_2,

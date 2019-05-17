@@ -9,9 +9,12 @@ from math import log
 import numpy as np
 from scipy import linalg
 from scipy.linalg import pinvh
+from scipy.special import loggamma
+import warnings
 
 from .base import LinearModel, _rescale_data
 from ..base import RegressorMixin
+from ..exceptions import ConvergenceWarning
 from ..utils.extmath import fast_logdet
 from ..utils import check_X_y
 
@@ -56,7 +59,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
         Default is 1.e-6
 
     compute_score : boolean, optional
-        If True, compute the log marginal likelihood at each iteration of the
+        If True, compute the log likelihood (logp) at each iteration of the
         optimization. Default is False.
 
     fit_intercept : boolean, optional, default True
@@ -101,11 +104,11 @@ class BayesianRidge(LinearModel, RegressorMixin):
         Estimated variance-covariance matrix of the weights.
 
     scores_ : array, shape = (n_iter_ + 1,)
-        If computed_score is True, value of the log marginal likelihood (to be
-        maximized) at each iteration of the optimization. The array starts
-        with the value of the log marginal likelihood obtained for the initial
-        values of alpha and lambda and ends with the value obtained for the
-        estimated alpha and lambda.
+        If compute_score is True, value of (the lower bound of) the log
+        likelihood (to be maximized) at each iteration of the optimization.
+        The array starts with the value of the log likelihood obtained for the
+        initial values of alpha and lambda and ends with the value obtained
+        for the estimated alpha and lambda.
 
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
@@ -129,7 +132,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
     (Tipping, 2001) where updates of the regularization parameters are done as
     suggested in (MacKay, 1992). Note that according to A New
     View of Automatic Relevance Determination (Wipf and Nagarajan, 2008) these
-    update rules do not guarantee that the marginal likelihood is increasing
+    update rules do not guarantee that the log likelihood is increasing
     between two consecutive iterations of the optimization.
 
     References
@@ -208,7 +211,11 @@ class BayesianRidge(LinearModel, RegressorMixin):
         alpha_1 = self.alpha_1
         alpha_2 = self.alpha_2
 
-        self.scores_ = list()
+        if self.compute_score:
+            self.scores_ = list()
+            # compute the onstant terms for the objective function
+            L_offset = self._lower_bound_offset(n_samples, n_features)
+        converged = False
         coef_old_ = None
 
         XT_y = np.dot(X.T, y)
@@ -224,12 +231,19 @@ class BayesianRidge(LinearModel, RegressorMixin):
                                               XT_y, U, Vh, eigen_vals_,
                                               alpha_, lambda_)
             if self.compute_score:
-                # compute the log marginal likelihood
-                s = self._log_marginal_likelihood(n_samples, n_features,
-                                                  eigen_vals_,
-                                                  alpha_, lambda_,
-                                                  coef_, rmse_)
-                self.scores_.append(s)
+                # compute the objective function
+                L = self._compute_lower_bound(n_samples, n_features,
+                                              eigen_vals_, alpha_, lambda_,
+                                              coef_, rmse_, L_offset)
+                self.scores_.append(L)
+
+            # Check for convergence
+            if iter_ != 0 and np.sum(np.abs(coef_old_ - coef_)) < self.tol:
+                if verbose:
+                    print("Convergence after ", str(iter_), " iterations")
+                converged = True
+                break
+            coef_old_ = np.copy(coef_)
 
             # Update alpha and lambda according to (MacKay, 1992)
             gamma_ = np.sum((alpha_ * eigen_vals_) /
@@ -239,29 +253,17 @@ class BayesianRidge(LinearModel, RegressorMixin):
             alpha_ = ((n_samples - gamma_ + 2 * alpha_1) /
                       (rmse_ + 2 * alpha_2))
 
-            # Check for convergence
-            if iter_ != 0 and np.sum(np.abs(coef_old_ - coef_)) < self.tol:
-                if verbose:
-                    print("Convergence after ", str(iter_), " iterations")
-                break
-            coef_old_ = np.copy(coef_)
-
+        if not converged:
+            warnings.warn("Optimization step did not converge. Increase the "
+                          "number of iterations.", ConvergenceWarning)
         self.n_iter_ = iter_ + 1
 
         # return regularization parameters and corresponding posterior mean,
-        # log marginal likelihood and posterior covariance
+        # objective function and posterior covariance
         self.alpha_ = alpha_
         self.lambda_ = lambda_
-        self.coef_, rmse_ = self._update_coef_(X, y, n_samples, n_features,
-                                               XT_y, U, Vh, eigen_vals_,
-                                               alpha_, lambda_)
+        self.coef_ = coef_
         if self.compute_score:
-            # compute the log marginal likelihood
-            s = self._log_marginal_likelihood(n_samples, n_features,
-                                              eigen_vals_,
-                                              alpha_, lambda_,
-                                              coef_, rmse_)
-            self.scores_.append(s)
             self.scores_ = np.array(self.scores_)
 
         # posterior covariance is given by 1/alpha_ * scaled_sigma_
@@ -329,13 +331,37 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
         return coef_, rmse_
 
-    def _log_marginal_likelihood(self, n_samples, n_features, eigen_vals,
-                                 alpha_, lambda_, coef, rmse):
-        """Log marginal likelihood."""
+    def _lower_bound_offset(self, n_samples, n_features):
+        """Constant terms for the objective function (variational lower bound
+        of the log likelihood).
+        """
         alpha_1 = self.alpha_1
         alpha_2 = self.alpha_2
         lambda_1 = self.lambda_1
         lambda_2 = self.lambda_2
+        alpha_1_post = alpha_1 + 0.5 * n_samples
+        lambda_1_post = lambda_1 + 0.5 * n_features
+
+        offset = -0.5 * n_samples * log(2 * np.pi)
+        offset += alpha_1 * log(alpha_2) - loggamma(alpha_1)
+        offset -= (alpha_1_post * log(alpha_1_post / np.e) -
+                   loggamma(alpha_1_post))
+        offset += lambda_1 * log(lambda_2) - loggamma(lambda_1)
+        offset -= (lambda_1_post * log(lambda_1_post / np.e) -
+                   loggamma(lambda_1_post))
+        return offset
+
+    def _compute_lower_bound(self, n_samples, n_features, eigen_vals,
+                             alpha_, lambda_, coef, rmse, offset):
+        """Computes the objective function (variational lower bound of the
+        log likelihood).
+        """
+        alpha_1 = self.alpha_1
+        alpha_2 = self.alpha_2
+        lambda_1 = self.lambda_1
+        lambda_2 = self.lambda_2
+        alpha_1_post = alpha_1 + 0.5 * n_samples
+        lambda_1_post = lambda_1 + 0.5 * n_features
 
         # compute the log of the determinant of the posterior covariance.
         # posterior covariance is given by
@@ -348,16 +374,11 @@ class BayesianRidge(LinearModel, RegressorMixin):
             logdet_sigma[:n_samples] += alpha_ * eigen_vals
             logdet_sigma = - np.sum(np.log(logdet_sigma))
 
-        score = lambda_1 * log(lambda_) - lambda_2 * lambda_
-        score += alpha_1 * log(alpha_) - alpha_2 * alpha_
-        score += 0.5 * (n_features * log(lambda_) +
-                        n_samples * log(alpha_) -
-                        alpha_ * rmse -
-                        lambda_ * np.sum(coef ** 2) +
-                        logdet_sigma -
-                        n_samples * log(2 * np.pi))
-
-        return score
+        L = offset + alpha_1_post * log(alpha_) - alpha_2 * alpha_
+        L += lambda_1_post * log(lambda_) - lambda_2 * lambda_
+        L += 0.5 * (logdet_sigma - alpha_ * rmse -
+                    lambda_ * (coef ** 2).sum())
+        return L
 
 
 ###############################################################################
