@@ -531,6 +531,7 @@ class GridSuccessiveHalving(BaseSuccessiveHalving):
     :class:`RandomSuccessiveHalving`:
         Random search over a set of parameters using successive halving.
     """
+    _required_parameters = ["estimator", "param_grid"]
 
     def __init__(self, estimator, param_grid, scoring=None,
                  n_jobs=None, refit=True, verbose=0, cv=5,
@@ -832,6 +833,7 @@ class RandomSuccessiveHalving(BaseSuccessiveHalving):
     :class:`GridSuccessiveHalving`:
         Search over a grid of parameters using successive halving.
     """
+    _required_parameters = ["estimator", "param_distributions"]
 
     def __init__(self, estimator, param_distributions,
                  n_candidates='auto', scoring=None, n_jobs=None, refit=True,
