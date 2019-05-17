@@ -329,7 +329,7 @@ def test_precision_recall_fscore_support_errors():
 
     # Bad beta
     assert_raises(ValueError, precision_recall_fscore_support,
-                  y_true, y_pred, beta=0.0)
+                  y_true, y_pred, beta=-1.0)
 
     # Bad pos_label
     assert_raises(ValueError, precision_recall_fscore_support,
