@@ -8,6 +8,7 @@ from contextlib import closing
 from functools import wraps
 import itertools
 from collections.abc import Generator
+from collections import OrderedDict
 
 from urllib.request import urlopen, Request
 
@@ -18,6 +19,7 @@ from ..externals import _arff
 from .base import get_data_home
 from urllib.error import HTTPError
 from ..utils import Bunch
+from ..utils import check_pandas_support  # noqa
 
 __all__ = ['fetch_openml']
 
@@ -261,6 +263,58 @@ def _convert_arff_data(arff_data, col_slice_x, col_slice_y, shape=None):
     else:
         # This should never happen
         raise ValueError('Unexpected Data Type obtained from arff.')
+
+
+def _feature_to_dtype(feature):
+    """Map feature to dtype for pandas DataFrame
+    """
+    if feature["data_type"] == "string":
+        return object
+    elif feature["data_type"] == "nominal":
+        return 'category'
+    # only numeric, integer, real are left
+    elif (feature["number_of_missing_values"] != "0" or
+          feature["data_type"] in ["numeric", "real"]):
+        return np.float64
+    elif feature["data_type"] == "integer":
+        return np.int64
+    raise ValueError("Unsupported feature: {}".format(feature))
+
+
+def _convert_arff_data_dataframe(arrf_data, all_columns, features_dict):
+    """Convert the ARFF object into a pandas DataFrame.
+
+    Parameters
+    ----------
+    arff_data : list or dict
+        as obtained from liac-arff object
+
+    all_columns : list
+        columns to return
+
+    features_dict : OrderedDict
+        map from feature to feature info from openml. This includes
+        columns that are not ignored.
+
+    Returns
+    -------
+    df : pd.DataFrame
+    """
+    check_pandas_support('fetch_openml with return_frame=True')
+    import pandas as pd
+
+    df = pd.DataFrame(arrf_data['data'], columns=list(features_dict.keys()),
+                      dtype=object)
+    df = df[all_columns].copy()
+
+    dtypes = {}
+    for column in all_columns:
+        dtype = _feature_to_dtype(features_dict[column])
+        if dtype == object:
+            continue
+        dtypes[column] = dtype
+
+    return df.astype(dtypes)
 
 
 def _get_data_info_by_name(name, version, data_home):
@@ -578,6 +632,13 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         warn("OpenML raised a warning on the dataset. It might be "
              "unusable. Warning: {}".format(data_description['warning']))
 
+    return_sparse = False
+    if data_description['format'].lower() == 'sparse_arff':
+        return_sparse = True
+
+    if return_sparse and return_frame:
+        raise ValueError('Cannot return dataframe with sparse data')
+
     # download data features, meta-info about column types
     features_list = _get_data_features(data_id, data_home)
 
@@ -609,7 +670,8 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
                                             target_column)
 
     # prepare which columns and data types should be returned for the X and y
-    features_dict = {feature['name']: feature for feature in features_list}
+    features_dict = OrderedDict([(feature['name'], feature)
+                                for feature in features_list])
 
     # XXX: col_slice_y should be all nominal or all numeric
     _verify_target_data_type(features_dict, target_column)
@@ -628,10 +690,6 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
                              'columns. '.format(feat['name'], nr_missing))
 
     # determine arff encoding to return
-    return_sparse = False
-    if data_description['format'].lower() == 'sparse_arff':
-        return_sparse = True
-
     if not return_sparse:
         data_qualities = _get_data_qualities(data_id, data_home)
         shape = _get_data_shape(data_qualities)
@@ -644,7 +702,18 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     # obtain the data
     arff = _download_data_arff(data_description['file_id'], return_sparse,
-                               data_home)
+                               data_home, encode_nominal=not return_frame)
+
+    description = "{}\n\nDownloaded from openml.org.".format(
+        data_description.pop('description'))
+
+    if return_frame:
+        all_columns = data_columns + target_column
+        df = _convert_arff_data_dataframe(arff, all_columns, features_dict)
+        return Bunch(data=df, target=None, feature_names=data_columns,
+                     target_names=target_column, DESCR=description,
+                     details=data_description, categories=None,
+                     url="https://www.openml.org/d/{}".format(data_id))
 
     # nominal attributes is a dict mapping from the attribute name to the
     # possible values. Includes also the target column (which will be popped
@@ -669,9 +738,6 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         raise ValueError('Mix of nominal and non-nominal targets is not '
                          'currently supported')
 
-    description = "{}\n\nDownloaded from openml.org.".format(
-        data_description.pop('description'))
-
     # reshape y back to 1-D array, if there is only 1 target column; back
     # to None if there are not target columns
     if y.shape[1] == 1:
@@ -684,6 +750,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     bunch = Bunch(
         data=X, target=y, feature_names=data_columns,
+        target_names=target_column,
         DESCR=description, details=data_description,
         categories=nominal_attributes,
         url="https://www.openml.org/d/{}".format(data_id))

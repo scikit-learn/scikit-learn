@@ -824,3 +824,24 @@ def check_matplotlib_support(caller_name):
             "{} requires matplotlib. You can install matplotlib with "
             "`pip install matplotlib`".format(caller_name)
         ) from e
+
+
+def check_pandas_support(caller_name):
+    """Raise ImportError with detailed error message if pandsa is not
+    installed.
+
+    Plot utilities like :func:`fetch_openml` should lazily import
+    pandas and call this helper before any computation.
+
+    Parameters
+    ----------
+    caller_name : str
+        The name of the caller that requires pandas.
+    """
+    try:
+        import pandas  # noqa
+    except ImportError as e:
+        raise ImportError(
+            "{} requires pandas. You can install pandas with "
+            "`pip install pandas`".format(caller_name)
+        ) from e

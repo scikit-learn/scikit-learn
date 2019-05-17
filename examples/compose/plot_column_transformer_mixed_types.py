@@ -24,10 +24,10 @@ together with a simple classification model.
 #
 # License: BSD 3 clause
 
-import pandas as pd
 import numpy as np
 
 from sklearn.compose import ColumnTransformer
+from sklearn.datasets import fetch_openml
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
@@ -37,9 +37,8 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 np.random.seed(0)
 
 # Read data from Titanic dataset.
-titanic_url = ('https://raw.githubusercontent.com/amueller/'
-               'scipy-2017-sklearn/091d371/notebooks/datasets/titanic3.csv')
-data = pd.read_csv(titanic_url)
+titantic = fetch_openml(data_id=40945, return_frame=False)
+data = titantic.data
 
 # We will train our classifier with the following features:
 # Numeric Features:

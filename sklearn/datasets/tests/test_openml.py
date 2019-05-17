@@ -14,7 +14,8 @@ from sklearn.datasets.openml import (_open_openml_url,
                                      _get_data_description_by_id,
                                      _download_data_arff,
                                      _get_local_path,
-                                     _retry_with_clean_cache)
+                                     _retry_with_clean_cache,
+                                     _feature_to_dtype)
 from sklearn.utils.testing import (assert_warns_message,
                                    assert_raise_message)
 from sklearn.utils import is_scalar_nan
@@ -93,10 +94,12 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
     if isinstance(target_column, str):
         # single target, so target is vector
         assert data_by_id.target.shape == (expected_observations, )
+        assert data_by_id.target_names[0] == target_column
     elif isinstance(target_column, list):
         # multi target, so target is array
         assert data_by_id.target.shape == (expected_observations,
                                            len(target_column))
+        assert np.all(data_by_id.target_names == target_column)
     assert data_by_id.data.dtype == np.float64
     assert data_by_id.target.dtype == expected_target_dtype
     assert len(data_by_id.feature_names) == expected_features
@@ -255,6 +258,31 @@ def _monkey_patch_webbased_functions(context,
         context.setattr(sklearn.datasets.openml, 'urlopen', _mock_urlopen)
 
 
+@pytest.mark.parametrize('feature, expected_dtype', [
+    ({'data_type': 'string', 'number_of_missing_values': '0'}, object),
+    ({'data_type': 'string', 'number_of_missing_values': '1'}, object),
+    ({'data_type': 'numeric', 'number_of_missing_values': '0'}, np.float64),
+    ({'data_type': 'numeric', 'number_of_missing_values': '1'}, np.float64),
+    ({'data_type': 'real', 'number_of_missing_values': '0'}, np.float64),
+    ({'data_type': 'real', 'number_of_missing_values': '1'}, np.float64),
+    ({'data_type': 'integer', 'number_of_missing_values': '0'}, np.int64),
+    ({'data_type': 'integer', 'number_of_missing_values': '1'}, np.float64),
+    ({'data_type': 'nominal', 'number_of_missing_values': '0'}, 'category'),
+    ({'data_type': 'nominal', 'number_of_missing_values': '1'}, 'category'),
+])
+def test_feature_to_dtype(feature, expected_dtype):
+    assert _feature_to_dtype(feature) == expected_dtype
+
+
+@pytest.mark.parametrize('feature', [
+    {'data_type': 'datatime', 'number_of_missing_values': '0'}
+])
+def test_feature_to_dtype_error(feature):
+    msg = 'Unsupported feature: {}'.format(feature)
+    with pytest.raises(ValueError, match=msg):
+        _feature_to_dtype(feature)
+
+
 def test_fetch_openml_iris_pandas(monkeypatch):
     # classification dataset with numeric only columns
     pd = pytest.importorskip('pandas')
@@ -274,6 +302,7 @@ def test_fetch_openml_iris_pandas(monkeypatch):
     bunch = fetch_openml(data_id=data_id, return_frame=True, cache=False)
     df = bunch.data
 
+    assert isinstance(df, pd.DataFrame)
     assert np.all(df.dtypes == expected_dtypes)
     assert df.shape == expected_shape
     assert np.all(df.columns == expected_columns)
@@ -294,16 +323,16 @@ def test_fetch_openml_anneal_pandas(monkeypatch):
 
     bunch = fetch_openml(data_id=data_id, return_frame=True,
                          target_column=target_column, cache=False)
-
     df = bunch.data
-    assert df.shape == expected_shape
 
+    assert isinstance(df, pd.DataFrame)
+    assert df.shape == expected_shape
     n_categories = len([dtype for dtype in df.dtypes
                        if isinstance(dtype, pd.CategoricalDtype)])
     n_floats = len([dtype for dtype in df.dtypes if dtype.kind == 'f'])
     assert expected_categories == n_categories
     assert expected_floats == n_floats
-    assert np.all(bunch.target_names == target_column)
+    assert np.all(bunch.target_names == [target_column])
 
 
 def test_fetch_openml_cpu_pandas(monkeypatch):
@@ -329,6 +358,7 @@ def test_fetch_openml_cpu_pandas(monkeypatch):
     bunch = fetch_openml(data_id=data_id, return_frame=True, cache=False)
     df = bunch.data
 
+    assert isinstance(df, pd.DataFrame)
     assert df.shape == expected_shape
     assert np.all(df.dtypes == expected_dtypes)
     assert np.all(df.columns == expected_feature_names + expected_target_names)
@@ -341,7 +371,7 @@ def test_fetch_openml_australian_pandas_error_sparse(monkeypatch):
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
 
-    msg = ('Cannot return dataframe with sparse data')
+    msg = 'Cannot return dataframe with sparse data'
     with pytest.raises(ValueError, match=msg):
         fetch_openml(data_id=data_id, return_frame=True, cache=False)
 
@@ -350,16 +380,16 @@ def test_fetch_openml_adultcensus_pandas(monkeypatch):
     pd = pytest.importorskip('pandas')
     # Check because of the numeric row attribute (issue #12329)
     data_id = 1119
-    expected_shape = (10, 14)
+    expected_shape = (10, 15)
     expected_categories = 9
-    expected_floats = 7
+    expected_floats = 6
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
     bunch = fetch_openml(data_id=data_id, return_frame=True, cache=False)
-
     df = bunch.data
-    assert df.shape == expected_shape
 
+    assert isinstance(df, pd.DataFrame)
+    assert df.shape == expected_shape
     n_categories = len([dtype for dtype in df.dtypes
                        if isinstance(dtype, pd.CategoricalDtype)])
     n_floats = len([dtype for dtype in df.dtypes if dtype.kind == 'f'])
@@ -375,14 +405,15 @@ def test_fetch_openml_miceprotein_pandas(monkeypatch):
     data_id = 40966
     expected_shape = (7, 78)
     expected_floats = 77
-    expected_categories = 5
+    expected_categories = 1
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
     bunch = fetch_openml(data_id=data_id, return_frame=True, cache=False)
 
     df = bunch.data
-    assert df.shape == expected_shape
 
+    assert isinstance(df, pd.DataFrame)
+    assert df.shape == expected_shape
     n_categories = len([dtype for dtype in df.dtypes
                        if isinstance(dtype, pd.CategoricalDtype)])
     n_floats = len([dtype for dtype in df.dtypes if dtype.kind == 'f'])
@@ -406,14 +437,15 @@ def test_fetch_openml_emotions_pandas(monkeypatch):
                          target_column=target_column)
 
     df = bunch.data
-    assert df.shape == expected_shape
 
+    assert isinstance(df, pd.DataFrame)
+    assert df.shape == expected_shape
     n_categories = len([dtype for dtype in df.dtypes
                        if isinstance(dtype, pd.CategoricalDtype)])
     n_floats = len([dtype for dtype in df.dtypes if dtype.kind == 'f'])
     assert expected_categories == n_categories
     assert expected_floats == n_floats
-    assert np.all(bunch.target_column == target_column)
+    assert np.all(bunch.target_names == target_column)
 
 
 def test_fetch_openml_titanic_pandas(monkeypatch):
@@ -422,24 +454,36 @@ def test_fetch_openml_titanic_pandas(monkeypatch):
 
     data_id = 40945
     expected_shape = (1309, 14)
-    expected_dtypes = [np.float64, pd.CategoricalDtype(['0', '1']),
-                       object, pd.CategoricalDtype(['female', 'male']),
-                       np.float64, np.float64, np.float64, object,
-                       np.float64, object,
-                       pd.CategoricalDtype(['C', 'Q', 'S']), object,
-                       np.float64, object]
-    expected_columns = ['pclass', 'survived', 'name', 'sex', 'age',
-                        'sibsp', 'parch', 'ticket', 'fare', 'cabin',
-                        'embarked', 'boat', 'body', 'home.dest']
-    expected_feature_names = ['pclass', 'name', 'sex', 'age',
-                              'sibsp', 'parch', 'ticket', 'fare', 'cabin',
-                              'embarked', 'boat', 'body', 'home.dest']
+    name_to_dtype = {
+        'pclass': np.float64,
+        'name': object,
+        'sex': pd.CategoricalDtype(['female', 'male']),
+        'age': np.float64,
+        'sibsp': np.float64,
+        'parch': np.float64,
+        'ticket': object,
+        'fare': np.float64,
+        'cabin': object,
+        'embarked': pd.CategoricalDtype(['C', 'Q', 'S']),
+        'boat': object,
+        'body': np.float64,
+        'home.dest': object,
+        'survived': pd.CategoricalDtype(['0', '1'])
+    }
+    expected_columns = ['pclass', 'name', 'sex', 'age', 'sibsp',
+                        'parch', 'ticket', 'fare', 'cabin', 'embarked',
+                        'boat', 'body', 'home.dest', 'survived']
+    expected_dtypes = [name_to_dtype[col] for col in expected_columns]
+    expected_feature_names = ['pclass', 'name', 'sex', 'age', 'sibsp',
+                              'parch', 'ticket', 'fare', 'cabin', 'embarked',
+                              'boat', 'body', 'home.dest']
     expected_target_names = ['survived']
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
     bunch = fetch_openml(data_id=data_id, return_frame=True, cache=False)
-
     df = bunch.data
+
+    assert isinstance(df, pd.DataFrame)
     assert df.shape == expected_shape
     assert np.all(df.dtypes == expected_dtypes)
     assert np.all(df.columns == expected_columns)
