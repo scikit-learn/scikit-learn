@@ -436,7 +436,8 @@ def _valid_data_column_names(features_list, target_columns):
 
 
 def fetch_openml(name=None, version='active', data_id=None, data_home=None,
-                 target_column='default-target', cache=True, return_X_y=False):
+                 target_column='default-target', cache=True, return_X_y=False,
+                 return_frame=False):
     """Fetch dataset from openml by name or dataset id.
 
     Datasets are uniquely identified by either an integer ID or by a
@@ -489,24 +490,33 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         If True, returns ``(data, target)`` instead of a Bunch object. See
         below for more information about the `data` and `target` objects.
 
+    return_frame : boolean, default=False
+        If True, returns a Bunch where the data attribute is a pandas
+        DataFrame.
+
     Returns
     -------
 
     data : Bunch
         Dictionary-like object, with attributes:
 
-        data : np.array or scipy.sparse.csr_matrix of floats
+        data : np.array, scipy.sparse.csr_matrix of floats, or pandas Dataframe
             The feature matrix. Categorical features are encoded as ordinals.
-        target : np.array
+            If ``return_frame`` is True, this is a pandas DataFrame.
+        target : np.array or None
             The regression target or classification labels, if applicable.
             Dtype is float if numeric, and object if categorical.
+            If ``return_frame`` is True, this is None.
         DESCR : str
             The full description of the dataset
         feature_names : list
             The names of the dataset columns
-        categories : dict
+        target_names : list
+            The names of the target columns
+        categories : dict or None
             Maps each categorical feature name to a list of values, such
-            that the value encoded as i is ith in the list.
+            that the value encoded as i is ith in the list. If ``return_frame``
+            is True, this is None.
         details : dict
             More metadata from OpenML
 
@@ -571,11 +581,14 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     # download data features, meta-info about column types
     features_list = _get_data_features(data_id, data_home)
 
-    for feature in features_list:
-        if 'true' in (feature['is_ignore'], feature['is_row_identifier']):
-            continue
-        if feature['data_type'] == 'string':
-            raise ValueError('STRING attributes are not yet supported')
+    if not return_frame:
+        for feature in features_list:
+            if 'true' in (feature['is_ignore'], feature['is_row_identifier']):
+                continue
+            if feature['data_type'] == 'string':
+                raise ValueError('STRING attributes are not supported for '
+                                 'arrays as a return value. Try '
+                                 'return_frame=True')
 
     if target_column == "default-target":
         # determines the default target based on the data feature results

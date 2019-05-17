@@ -255,6 +255,198 @@ def _monkey_patch_webbased_functions(context,
         context.setattr(sklearn.datasets.openml, 'urlopen', _mock_urlopen)
 
 
+def test_fetch_openml_iris_pandas(monkeypatch):
+    # classification dataset with numeric only columns
+    pd = pytest.importorskip('pandas')
+    data_id = 61
+    expected_shape = (150, 5)
+
+    cat_dtype = pd.CategoricalDtype(['Iris-setosa', 'Iris-versicolor',
+                                     'Iris-virginica'])
+    expected_dtypes = [np.float64] * 4 + [cat_dtype]
+    expected_feature_names = ['sepallength', 'sepalwidth', 'petallength',
+                              'petalwidth']
+    expected_target_names = ['class']
+    expected_columns = expected_feature_names + expected_target_names
+
+    _monkey_patch_webbased_functions(monkeypatch, data_id, True)
+
+    bunch = fetch_openml(data_id=data_id, return_frame=True, cache=False)
+    df = bunch.data
+
+    assert np.all(df.dtypes == expected_dtypes)
+    assert df.shape == expected_shape
+    assert np.all(df.columns == expected_columns)
+    assert np.all(bunch.feature_names == expected_feature_names)
+    assert np.all(bunch.target_names == expected_target_names)
+
+
+def test_fetch_openml_anneal_pandas(monkeypatch):
+    # classification dataset with numeric and categorical columns
+    pd = pytest.importorskip('pandas')
+    data_id = 2
+    target_column = 'class'
+    expected_shape = (11, 39)
+    expected_categories = 33
+    expected_floats = 6
+
+    _monkey_patch_webbased_functions(monkeypatch, data_id, True)
+
+    bunch = fetch_openml(data_id=data_id, return_frame=True,
+                         target_column=target_column, cache=False)
+
+    df = bunch.data
+    assert df.shape == expected_shape
+
+    n_categories = len([dtype for dtype in df.dtypes
+                       if isinstance(dtype, pd.CategoricalDtype)])
+    n_floats = len([dtype for dtype in df.dtypes if dtype.kind == 'f'])
+    assert expected_categories == n_categories
+    assert expected_floats == n_floats
+    assert np.all(bunch.target_names == target_column)
+
+
+def test_fetch_openml_cpu_pandas(monkeypatch):
+    # regression dataset with numeric and categorical columns
+    pd = pytest.importorskip('pandas')
+    data_id = 561
+    expected_shape = (209, 8)
+
+    cat_dtype = pd.CategoricalDtype(['adviser', 'amdahl', 'apollo', 'basf',
+                                     'bti', 'burroughs', 'c.r.d', 'cdc',
+                                     'cambex', 'dec', 'dg', 'formation',
+                                     'four-phase', 'gould', 'hp', 'harris',
+                                     'honeywell', 'ibm', 'ipl', 'magnuson',
+                                     'microdata', 'nas', 'ncr', 'nixdorf',
+                                     'perkin-elmer', 'prime', 'siemens',
+                                     'sperry', 'sratus', 'wang'])
+    expected_dtypes = [cat_dtype] + [np.float64] * 7
+    expected_feature_names = ['vendor', 'MYCT', 'MMIN', 'MMAX', 'CACH', 'CHMIN',
+                              'CHMAX']
+    expected_target_names = ['class']
+
+    _monkey_patch_webbased_functions(monkeypatch, data_id, True)
+    bunch = fetch_openml(data_id=data_id, return_frame=True, cache=False)
+    df = bunch.data
+
+    assert df.shape == expected_shape
+    assert np.all(df.dtypes == expected_dtypes)
+    assert np.all(df.columns == expected_feature_names + expected_target_names)
+    assert np.all(bunch.feature_names == expected_feature_names)
+    assert np.all(bunch.target_names == expected_target_names)
+
+
+def test_fetch_openml_australian_pandas_error_sparse(monkeypatch):
+    data_id = 292
+
+    _monkey_patch_webbased_functions(monkeypatch, data_id, True)
+
+    msg = ('Cannot return dataframe with sparse data')
+    with pytest.raises(ValueError, match=msg):
+        fetch_openml(data_id=data_id, return_frame=True, cache=False)
+
+
+def test_fetch_openml_adultcensus_pandas(monkeypatch):
+    pd = pytest.importorskip('pandas')
+    # Check because of the numeric row attribute (issue #12329)
+    data_id = 1119
+    expected_shape = (10, 14)
+    expected_categories = 9
+    expected_floats = 7
+
+    _monkey_patch_webbased_functions(monkeypatch, data_id, True)
+    bunch = fetch_openml(data_id=data_id, return_frame=True, cache=False)
+
+    df = bunch.data
+    assert df.shape == expected_shape
+
+    n_categories = len([dtype for dtype in df.dtypes
+                       if isinstance(dtype, pd.CategoricalDtype)])
+    n_floats = len([dtype for dtype in df.dtypes if dtype.kind == 'f'])
+    assert expected_categories == n_categories
+    assert expected_floats == n_floats
+
+
+def test_fetch_openml_miceprotein_pandas(monkeypatch):
+    # JvR: very important check, as this dataset defined several row ids
+    # and ignore attributes. Note that data_features json has 82 attributes,
+    # and row id (1), ignore attributes (3) have been removed.
+    pd = pytest.importorskip('pandas')
+    data_id = 40966
+    expected_shape = (7, 78)
+    expected_floats = 77
+    expected_categories = 5
+
+    _monkey_patch_webbased_functions(monkeypatch, data_id, True)
+    bunch = fetch_openml(data_id=data_id, return_frame=True, cache=False)
+
+    df = bunch.data
+    assert df.shape == expected_shape
+
+    n_categories = len([dtype for dtype in df.dtypes
+                       if isinstance(dtype, pd.CategoricalDtype)])
+    n_floats = len([dtype for dtype in df.dtypes if dtype.kind == 'f'])
+    assert expected_categories == n_categories
+    assert expected_floats == n_floats
+
+
+def test_fetch_openml_emotions_pandas(monkeypatch):
+    # classification dataset with multiple targets (natively)
+    pd = pytest.importorskip('pandas')
+
+    data_id = 40589
+    target_column = ['amazed.suprised', 'happy.pleased', 'relaxing.calm',
+                     'quiet.still', 'sad.lonely', 'angry.aggresive']
+    expected_shape = (13, 78)
+    expected_categories = 6
+    expected_floats = 72
+
+    _monkey_patch_webbased_functions(monkeypatch, data_id, True)
+    bunch = fetch_openml(data_id=data_id, return_frame=True, cache=False,
+                         target_column=target_column)
+
+    df = bunch.data
+    assert df.shape == expected_shape
+
+    n_categories = len([dtype for dtype in df.dtypes
+                       if isinstance(dtype, pd.CategoricalDtype)])
+    n_floats = len([dtype for dtype in df.dtypes if dtype.kind == 'f'])
+    assert expected_categories == n_categories
+    assert expected_floats == n_floats
+    assert np.all(bunch.target_column == target_column)
+
+
+def test_fetch_openml_titanic_pandas(monkeypatch):
+    # dataset with strings
+    pd = pytest.importorskip('pandas')
+
+    data_id = 40945
+    expected_shape = (1309, 14)
+    expected_dtypes = [np.float64, pd.CategoricalDtype(['0', '1']),
+                       object, pd.CategoricalDtype(['female', 'male']),
+                       np.float64, np.float64, np.float64, object,
+                       np.float64, object,
+                       pd.CategoricalDtype(['C', 'Q', 'S']), object,
+                       np.float64, object]
+    expected_columns = ['pclass', 'survived', 'name', 'sex', 'age',
+                        'sibsp', 'parch', 'ticket', 'fare', 'cabin',
+                        'embarked', 'boat', 'body', 'home.dest']
+    expected_feature_names = ['pclass', 'name', 'sex', 'age',
+                              'sibsp', 'parch', 'ticket', 'fare', 'cabin',
+                              'embarked', 'boat', 'body', 'home.dest']
+    expected_target_names = ['survived']
+
+    _monkey_patch_webbased_functions(monkeypatch, data_id, True)
+    bunch = fetch_openml(data_id=data_id, return_frame=True, cache=False)
+
+    df = bunch.data
+    assert df.shape == expected_shape
+    assert np.all(df.dtypes == expected_dtypes)
+    assert np.all(df.columns == expected_columns)
+    assert np.all(bunch.feature_names == expected_feature_names)
+    assert np.all(bunch.target_names == expected_target_names)
+
+
 @pytest.mark.parametrize('gzip_response', [True, False])
 def test_fetch_openml_iris(monkeypatch, gzip_response):
     # classification dataset with numeric only columns
@@ -661,12 +853,13 @@ def test_warn_ignore_attribute(monkeypatch, gzip_response):
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
-def test_string_attribute(monkeypatch, gzip_response):
+def test_string_attribute_without_dataframe(monkeypatch, gzip_response):
     data_id = 40945
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     # single column test
     assert_raise_message(ValueError,
-                         'STRING attributes are not yet supported',
+                         ('STRING attributes are not supported for arrays as '
+                          'a return value. Try return_frame=True'),
                          fetch_openml, data_id=data_id, cache=False)
 
 
