@@ -1058,9 +1058,11 @@ Hyper-parameter optimizers
    :template: class.rst
 
    model_selection.GridSearchCV
+   model_selection.GridSuccessiveHalving
    model_selection.ParameterGrid
    model_selection.ParameterSampler
    model_selection.RandomizedSearchCV
+   model_selection.RandomSuccessiveHalving
 
 
 .. autosummary::
