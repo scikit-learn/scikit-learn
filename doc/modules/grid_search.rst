@@ -279,8 +279,8 @@ iterations of a random forest::
 
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.ensemble import RandomForestClassifier
+    >>> from sklearn.model_selection import GridSuccessiveHalving
     >>> import pandas as pd
-    >>> from dabl.search import GridSuccessiveHalving
     >>>
     >>> parameters = {'max_depth': [3, 5, 10],
     ...               'min_samples_split': [2, 5, 10]}
@@ -312,8 +312,8 @@ a big budget, this may be a waste of resource::
 
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.svm import SVC
+    >>> from sklearn.model_selection import GridSuccessiveHalving
     >>> import pandas as pd
-    >>> from dabl.search import GridSuccessiveHalving
     >>> parameters = {'kernel': ('linear', 'rbf'),
     ...               'C': [1, 10, 100]}
     >>> base_estimator = SVC(gamma='scale')
@@ -357,8 +357,8 @@ the number of candidates, the last iteration may have to evaluate more than
 ``ratio`` candidates.::
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.svm import SVC
+    >>> from sklearn.model_selection import GridSuccessiveHalving
     >>> import pandas as pd
-    >>> from dabl.search import GridSuccessiveHalving
     >>>
     >>>
     >>> parameters = {'kernel': ('linear', 'rbf'),
