@@ -352,20 +352,20 @@ def test_scale_and_stability():
         X_s = (X - X.mean(axis=0)) / X_std
         Y_s = (Y - Y.mean(axis=0)) / Y_std
 
-        for clf in [CCA(tol=1e-07), pls_.PLSCanonical(),
+        for clf in [CCA(), pls_.PLSCanonical(),
                     pls_.PLSRegression(),
                     pls_.PLSSVD()]:
             clf.set_params(scale=True)
             X_score, Y_score = clf.fit_transform(X, Y)
             clf.set_params(scale=False)
             X_s_score, Y_s_score = clf.fit_transform(X_s, Y_s)
-            assert_array_almost_equal(X_s_score, X_score, decimal=4)
-            assert_array_almost_equal(Y_s_score, Y_score, decimal=4)
+            assert_array_almost_equal(X_s_score, X_score, decimal=3)
+            assert_array_almost_equal(Y_s_score, Y_score, decimal=3)
             # Scaling should be idempotent
             clf.set_params(scale=True)
             X_score, Y_score = clf.fit_transform(X_s, Y_s)
-            assert_array_almost_equal(X_s_score, X_score, decimal=4)
-            assert_array_almost_equal(Y_s_score, Y_score, decimal=4)
+            assert_array_almost_equal(X_s_score, X_score, decimal=3)
+            assert_array_almost_equal(Y_s_score, Y_score, decimal=3)
 
 
 def test_pls_errors():
