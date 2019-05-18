@@ -352,7 +352,7 @@ def test_scale_and_stability():
         X_s = (X - X.mean(axis=0)) / X_std
         Y_s = (Y - Y.mean(axis=0)) / Y_std
 
-        for clf in [CCA(tol=1e-07), pls_.PLSCanonical(),
+        for clf in [CCA(tol=1e-08), pls_.PLSCanonical(),
                     pls_.PLSRegression(),
                     pls_.PLSSVD()]:
             clf.set_params(scale=True)
