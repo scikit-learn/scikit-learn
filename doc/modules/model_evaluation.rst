@@ -1872,9 +1872,9 @@ the estimated R² is defined as:
 
 .. math::
 
-  R^2(y, \hat{y}) = 1 - \frac{\sum_{i=0}^{n} (y_i - \hat{y}_i)^2}{\sum_{i=0}^{n} (y_i - \bar{y})^2}
+  R^2(y, \hat{y}) = 1 - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sum_{i=1}^{n} (y_i - \bar{y})^2}
 
-where :math:`\bar{y} = \frac{1}{n} \sum_{i=0}^{n} y_i` and :math:`\sum_{i=0}^{n} (y_i - \hat{y}_i)^2 = \sum_{i=0}^{n} \epsilon_i^2`.
+where :math:`\bar{y} = \frac{1}{n} \sum_{i=1}^{n} y_i` and :math:`\sum_{i=1}^{n} (y_i - \hat{y}_i)^2 = \sum_{i=1}^{n} \epsilon_i^2`.
 
 Note that :func:`r2_score` calculates unadjusted R² without correcting for
 bias in sample variance of y.
