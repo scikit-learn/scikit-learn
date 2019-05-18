@@ -55,7 +55,7 @@ def permutation_importance(estimator, X, y, scoring=None, n_rounds=1,
         https://doi.org/10.1023/A:1010933404324
     """
 
-    X, y = check_X_y(X, y)
+    X, y = check_X_y(X, y, dtype=None, force_all_finite='allow-nan')
     random_state = check_random_state(random_state)
     scorer = check_scoring(estimator, scoring=scoring)
     scores = np.empty(shape=(X.shape[1], n_rounds), dtype=np.float)

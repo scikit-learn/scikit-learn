@@ -5,7 +5,10 @@ from sklearn.datasets import load_boston
 from sklearn.datasets import load_iris
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.inspection import permutation_importance
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import OneHotEncoder
 from sklearn.utils.testing import assert_array_almost_equal
 
 
@@ -26,7 +29,7 @@ def test_permutation_importance_correlated_feature_regression(
     y_with_little_noise = (
         y + rng.normal(scale=0.001, size=y.shape[0])).reshape(-1, 1)
 
-    # Adds feature correlated as the last column with target
+    # Adds feature correlated with y as the last column
     if convert_to_df:
         pd = pytest.importorskip("pandas")
         X = pd.DataFrame(X, columns=dataset.feature_names)
@@ -37,16 +40,50 @@ def test_permutation_importance_correlated_feature_regression(
     clf.fit(X, y)
 
     X_before = X.copy()
-    permute_scores = permutation_importance(clf, X, y, n_rounds=n_rounds,
-                                            random_state=rng)
+    permute_imp = permutation_importance(clf, X, y, n_rounds=n_rounds,
+                                         random_state=rng)
 
-    assert permute_scores.shape == (X.shape[1], n_rounds)
+    assert permute_imp.shape == (X.shape[1], n_rounds)
 
     # permutation_importance does not change X
     assert_array_almost_equal(X_before, X)
 
-    permute_score_means = np.mean(permute_scores, axis=-1)
+    permute_score_means = np.mean(permute_imp, axis=-1)
 
-    # the correlated feature was added as the last column and should
+    # the correlated feature with y was added as the last column and should
     # have the highest importance
     assert np.all(permute_score_means[-1] > permute_score_means[:-1])
+
+
+@pytest.mark.parametrize("convert_to_df", [True, False])
+def test_permutation_importance_strings(convert_to_df):
+    rng = np.random.RandomState(42)
+    n_rounds = 10
+
+    # Last column is correlated with y
+    X = np.array([['a', 'b', 'c', 'd'], ['a', 'b', 'a', 'b']]).T
+    y = np.array([0, 1, 0, 1])
+
+    if convert_to_df:
+        pd = pytest.importorskip("pandas")
+        X = pd.DataFrame(X)
+
+    clf = make_pipeline(OneHotEncoder(), LogisticRegression(solver='lbfgs'))
+    clf.fit(X, y)
+
+    X_before = X.copy()
+    permute_imp = permutation_importance(clf, X, y, n_rounds=n_rounds,
+                                         random_state=rng)
+
+    assert permute_imp.shape == (X.shape[1], n_rounds)
+
+    # permutation_importance does not change X
+    assert np.all(X_before == X)
+
+    permute_score_means = np.mean(permute_imp, axis=-1)
+
+    # the correlated feature with y is the last column and should
+    # have the highest importance
+    assert np.all(permute_score_means[-1] > permute_score_means[:-1])
+
+
