@@ -3,9 +3,12 @@
 Permutation Importance vs Random Forest Feature Importance
 ==========================================================
 
+.. currentmodule:: sklearn.inspection
+
 In this example, we will compare the
 :class:`sklearn.ensemble.RandomForestClassifier` feature importance with the
-permutation importance on the titanic dataset. We will show that the random
+permutation importance on the titanic dataset using
+:func:`permutation_importance`. We will show that the random
 forest feature importance can inflate the importance of numerical features.
 
 Furthermore, the built-in feature importance of random forests suffers from
@@ -43,6 +46,7 @@ from sklearn.preprocessing import OneHotEncoder
 #
 # We further include two random variables that are not correlated in any way
 # with the target variable (``survived``):
+#
 # - ``random_num`` is a high cardinality numerical variable (as many unique
 # values as records);
 # - ``random_cat`` is a low cardinality categorical variable (3 possible
@@ -109,11 +113,12 @@ print("RF test accuracy: %0.3f" % rf.score(X_test, y_test))
 ##############################################################################
 # Tree Based Feature Importance
 # -----------------------------
-# The tree based feature importance ranks the numerical features, to be the
-# most important features. But furthermore, the non-predictive ``random_num``
+# The tree based feature importance ranks the numerical features to be the
+# most important features. As a result, the non-predictive ``random_num``
 # variable is ranked the most important!
 #
 # This problem stems from two limitations of RF feature importances:
+#
 # - RF importances are biased towards high cardinality features;
 # - RF importances are computed on training set statistics and therefore do not
 # reflect the ability of feature to be useful to make predictions that

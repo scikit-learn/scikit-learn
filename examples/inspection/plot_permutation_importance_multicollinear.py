@@ -3,15 +3,17 @@
 Permutation Importance with Multicollinear Features
 ===================================================
 
+.. currentmodule:: sklearn.inspection
+
 In this example, we compute the permutation importance on the Wisconsin
-breast cancer dataset. The :class:`sklearn.ensemble.RandomForestClassifier`
-can easily get about 97% accuracy on a test dataset with a unsurprising
-tree based feature importance graph. Because this dataset
-contains multicollinear features, the permutation importance will show that
-none of the features are important. We handle the multicollinearity by
-performing hierarchical clustering on the features' Spearman rank-order
-correlations, picking a threshold, and keeping a single feature from each
-cluster.
+breast cancer dataset using :func:`permutation_importance`.
+The :class:`sklearn.ensemble.RandomForestClassifier` can easily get about 97%
+accuracy on a test dataset with a unsurprising tree based feature importance
+graph. Because this dataset contains multicollinear features, the permutation
+importance will show that none of the features are important.
+We handle the multicollinearity by performing hierarchical clustering on the
+features' Spearman rank-order correlations, picking a threshold, and keeping a
+single feature from each cluster.
 
 .. note::
     See also
@@ -47,15 +49,16 @@ print("Accuracy on test data: {:.2f}".format(clf.score(X_test, y_test)))
 # Next, we plot the tree based feature importance and the permutation
 # importance. The permutation importance plot shows that permuting a feature
 # drops the accuracy by at most `0.012`, which would suggest that none of the
-# features are important. The permutation importance is calculated on the
-# training set to show how much the model relies on each feature during
-# training.
+# features are important. This is in contradiction with the high test accuracy
+# computed above: some feature must be important. The permutation importance
+# is calculated on the training set to show how much the model relies on each
+# feature during training.
 perm_importance = permutation_importance(clf, X_train, y_train, n_rounds=10,
                                          random_state=42)
 perm_sorted_idx = np.mean(perm_importance, axis=-1).argsort()
 
 tree_importance_sorted_idx = np.argsort(clf.feature_importances_)
-tree_indicies = np.arange(1, len(clf.feature_importances_)+1)
+tree_indicies = np.arange(1, len(clf.feature_importances_) + 1)
 
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 8))
 ax1.barh(tree_indicies, clf.feature_importances_[tree_importance_sorted_idx])

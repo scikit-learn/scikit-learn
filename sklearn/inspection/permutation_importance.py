@@ -11,43 +11,41 @@ def permutation_importance(estimator, X, y, scoring=None, n_rounds=1,
 
     The permutation importance of a feature is calculated as follows. First,
     the estimator is trained on a training set. Then a baseline metric, defined
-    by ``scoring``, is evaluated on a validation set. Next, a feature column
-    from the validation set is permuted and the metric is evaluated again.
-    The permutation importance is defined to be the difference between the
-    baseline metric and metric from permutating the feature column.
+    by ``scoring``, is evaluated on a (potentially different) dataset defined
+    by the ``X`` parameter. Next, a feature column from the validation set is
+    permuted and the metric is evaluated again. The permutation importance is
+    defined to be the difference between the baseline metric and metric from
+    permutating the feature column.
 
     Read more in the :ref:`User Guide <permutation_importance>`.
 
     Parameters
     ----------
     estimator : object
-        A estimator that has already been `fit` and is compatible with
+        An estimator that has already been `fit` and is compatible with
         ``scorer``.
 
-    X : array-like or DataFrame, shape = (n_samples, n_features)
-        Training data.
+    X : ndarray or DataFrame, shape = (n_samples, n_features)
+        Data on which permutaiton importance will be computed.
 
     y : array-like, shape = (n_samples, ...)
         Targets for supervised learning.
 
     scoring : string, callable or None, optional (default=None)
-        A string (see model evaluation documentation) or
-        a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
+        Scorer to use. It can be a single
+        string (see :ref:`scoring_parameter`) or a callable (see
+        :ref:`scoring`). If None, the estimator's default scorer is used.
 
     n_rounds : int, optional (default=1)
         Number of times to permute a feature.
 
     random_state : int, RandomState instance or None, optional, default None
-        The seed of the pseudo random number generator that selects a random
-        feature to update.  If int, random_state is the seed used by the random
-        number generator; If RandomState instance, random_state is the random
-        number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`.
+        Pseudo-random number generator to control the permutations.
+        See :term:`random_state`.
 
     Returns
     -------
-    scores : array, shape (n_features, bootstrap_samples)
+    importances : array, shape (n_features, n_rounds)
         Permutation importance scores.
 
     References
@@ -57,28 +55,25 @@ def permutation_importance(estimator, X, y, scoring=None, n_rounds=1,
     """
 
     random_state = check_random_state(random_state)
-    scoring = check_scoring(estimator, scoring=scoring)
+    scorer = check_scoring(estimator, scoring=scoring)
     scores = np.empty(shape=(X.shape[1], n_rounds), dtype=np.float)
 
-    # Makes copy since columns will be shuffled
-    X = X.copy()
-
-    if hasattr(X, 'iloc'):
+    if hasattr(X, 'iloc'):  # pandas dataframe
         X_iloc = X.iloc
     else:
         X_iloc = X
 
-    baseline_score = scoring(estimator, X, y)
-    for col in range(X.shape[1]):
-        original_feature = X_iloc[:, col].copy()
+    baseline_score = scorer(estimator, X, y)
+    for col_idx in range(X.shape[1]):
+        original_feature = X_iloc[:, col_idx].copy()
 
-        for b_idx in range(n_rounds):
+        for n_round in range(n_rounds):
             X_perm = random_state.permutation(original_feature)
-            X_iloc[:, col] = X_perm
+            X_iloc[:, col_idx] = X_perm
 
-            feature_score = scoring(estimator, X, y)
-            scores[col, b_idx] = baseline_score - feature_score
+            feature_score = scorer(estimator, X, y)
+            scores[col_idx, n_round] = baseline_score - feature_score
 
-        X_iloc[:, col] = original_feature
+        X_iloc[:, col_idx] = original_feature
 
     return scores
