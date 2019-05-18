@@ -134,7 +134,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                         Xi = Xi.copy()
 
                     Xi[~valid_mask] = self.categories_[i][0]
-            # We use check_unkown=False, since _encode_check_unknown was
+            # We use check_unknown=False, since _encode_check_unknown was
             # already called above.
             _, encoded = _encode(Xi, self.categories_[i], encode=True,
                                  check_unknown=False)
