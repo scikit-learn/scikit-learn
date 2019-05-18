@@ -38,8 +38,7 @@ def test_permutation_importance_correlated_feature_regression(
 
     X_before = X.copy()
     permute_scores = permutation_importance(clf, X, y, n_rounds=n_rounds,
-                                            random_state=rng,
-                                            scoring="neg_mean_absolute_error")
+                                            random_state=rng)
 
     assert permute_scores.shape == (X.shape[1], n_rounds)
 
@@ -51,4 +50,3 @@ def test_permutation_importance_correlated_feature_regression(
     # the correlated feature was added as the last column and should
     # have the highest importance
     assert np.all(permute_score_means[-1] > permute_score_means[:-1])
-

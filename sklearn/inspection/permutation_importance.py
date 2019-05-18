@@ -2,6 +2,7 @@
 import numpy as np
 
 from ..utils import check_random_state
+from ..utils import check_X_y
 from ..metrics import check_scoring
 
 
@@ -25,7 +26,7 @@ def permutation_importance(estimator, X, y, scoring=None, n_rounds=1,
         An estimator that has already been `fit` and is compatible with
         ``scorer``.
 
-    X : ndarray or DataFrame, shape = (n_samples, n_features)
+    X : array-like or DataFrame, shape = (n_samples, n_features)
         Data on which permutaiton importance will be computed.
 
     y : array-like, shape = (n_samples, ...)
@@ -54,6 +55,7 @@ def permutation_importance(estimator, X, y, scoring=None, n_rounds=1,
         https://doi.org/10.1023/A:1010933404324
     """
 
+    X, y = check_X_y(X, y)
     random_state = check_random_state(random_state)
     scorer = check_scoring(estimator, scoring=scoring)
     scores = np.empty(shape=(X.shape[1], n_rounds), dtype=np.float)
