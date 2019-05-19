@@ -279,26 +279,17 @@ class SparseTransformer(BaseEstimator):
 
 
 class BinaryDecisionTreeClassifier(DecisionTreeClassifier):
+    # Toy classifier that only supports binary classification.
     def _more_tags(self):
         return {'binary_only': True}
 
     def fit(self, X, y, sample_weight=None):
         super().fit(X, y, sample_weight)
-        X, y = check_X_y(X, y, y_numeric=False)
-        check_classification_targets(y)
-        self.classes_, y = np.unique(y, return_inverse=True)
-        n_trim_classes = np.count_nonzero(np.bincount(y, sample_weight))
-        if n_trim_classes != 2:
+        if self.n_classes_ != 2:
             raise ValueError("y contains %d class after sample_weight "
                              "trimmed classes with zero weights, while 2 "
-                             "classes are required." % n_trim_classes)
+                             "classes are required." % self.n_classes_)
         return self
-
-    def predict_proba(self, X):
-        return super().predict_proba(X)
-
-    def predict(self, X):
-        return super().predict(X)
 
 
 def test_check_fit_score_takes_y_works_on_deprecated_fit():
