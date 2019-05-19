@@ -98,7 +98,7 @@ def test_extract_xi():
     X, expected_labels = shuffle(X, expected_labels, random_state=rng)
 
     clust = OPTICS(min_samples=3, min_cluster_size=2,
-                   max_eps=np.inf, cluster_method='xi',
+                   max_eps=20, cluster_method='xi',
                    xi=0.4).fit(X)
     assert_array_equal(clust.labels_, expected_labels)
 
@@ -108,7 +108,7 @@ def test_extract_xi():
     X, expected_labels = shuffle(X, expected_labels, random_state=rng)
 
     clust = OPTICS(min_samples=3, min_cluster_size=3,
-                   max_eps=np.inf, cluster_method='xi',
+                   max_eps=20, cluster_method='xi',
                    xi=0.1).fit(X)
     # this may fail if the predecessor correction is not at work!
     assert_array_equal(clust.labels_, expected_labels)
@@ -127,9 +127,10 @@ def test_extract_xi():
 
 
 def test_cluster_hierarchy_():
+    rng = np.random.RandomState(0)
     n_points_per_cluster = 100
     C1 = [0, 0] + 2 * rng.randn(n_points_per_cluster, 2)
-    C2 = [0, 0] + 10 * rng.randn(n_points_per_cluster, 2)
+    C2 = [0, 0] + 50 * rng.randn(n_points_per_cluster, 2)
     X = np.vstack((C1, C2))
     X = shuffle(X, random_state=0)
 

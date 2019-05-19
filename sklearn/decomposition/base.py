@@ -27,7 +27,7 @@ class _BasePCA(BaseEstimator, TransformerMixin, metaclass=ABCMeta):
         """Compute data covariance with the generative model.
 
         ``cov = components_.T * S**2 * components_ + sigma2 * eye(n_features)``
-        where  S**2 contains the explained variances, and sigma2 contains the
+        where S**2 contains the explained variances, and sigma2 contains the
         noise variances.
 
         Returns

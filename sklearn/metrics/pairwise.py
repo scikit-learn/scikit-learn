@@ -306,7 +306,7 @@ def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None):
     maxmem = max(
         ((x_density * n_samples_X + y_density * n_samples_Y) * n_features
          + (x_density * n_samples_X * y_density * n_samples_Y)) / 10,
-        10 * 2**17)
+        10 * 2 ** 17)
 
     # The increase amount of memory in 8-byte blocks is:
     # - x_density * batch_size * n_features (copy of chunk of X)
@@ -315,7 +315,7 @@ def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None):
     # Hence x² + (xd+yd)kx = M, where x=batch_size, k=n_features, M=maxmem
     #                                 xd=x_density and yd=y_density
     tmp = (x_density + y_density) * n_features
-    batch_size = (-tmp + np.sqrt(tmp**2 + 4 * maxmem)) / 2
+    batch_size = (-tmp + np.sqrt(tmp ** 2 + 4 * maxmem)) / 2
     batch_size = max(int(batch_size), 1)
 
     x_batches = gen_batches(X.shape[0], batch_size)
@@ -357,7 +357,7 @@ def _argmin_min_reduce(dist, start):
 
 
 def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
-                                  batch_size=None, metric_kwargs=None):
+                                  metric_kwargs=None):
     """Compute minimum distances between one point and a set of points.
 
     This function computes for each row in X, the index of the row of Y which
@@ -408,11 +408,6 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
-    batch_size : integer
-        .. deprecated:: 0.20
-            Deprecated for removal in 0.22.
-            Use sklearn.set_config(working_memory=...) instead.
-
     metric_kwargs : dict, optional
         Keyword arguments to pass to specified metric function.
 
@@ -430,11 +425,6 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
     sklearn.metrics.pairwise_distances
     sklearn.metrics.pairwise_distances_argmin
     """
-    if batch_size is not None:
-        warnings.warn("'batch_size' is ignored. It was deprecated in version "
-                      "0.20 and will be removed in version 0.22. "
-                      "Use sklearn.set_config(working_memory=...) instead.",
-                      DeprecationWarning)
     X, Y = check_pairwise_arrays(X, Y)
 
     if metric_kwargs is None:
@@ -453,7 +443,7 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
 
 
 def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
-                              batch_size=None, metric_kwargs=None):
+                              metric_kwargs=None):
     """Compute minimum distances between one point and a set of points.
 
     This function computes for each row in X, the index of the row of Y which
@@ -506,11 +496,6 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
-    batch_size : integer
-        .. deprecated:: 0.20
-            Deprecated for removal in 0.22.
-            Use sklearn.set_config(working_memory=...) instead.
-
     metric_kwargs : dict
         keyword arguments to pass to specified metric function.
 
@@ -528,8 +513,7 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
         metric_kwargs = {}
 
     return pairwise_distances_argmin_min(X, Y, axis, metric,
-                                         metric_kwargs=metric_kwargs,
-                                         batch_size=batch_size)[0]
+                                         metric_kwargs=metric_kwargs)[0]
 
 
 def haversine_distances(X, Y=None):
@@ -749,7 +733,7 @@ def paired_cosine_distances(X, Y):
     distances : ndarray, shape (n_samples, )
 
     Notes
-    ------
+    -----
     The cosine distance is equivalent to the half the squared
     euclidean distance if each sample is normalized to unit norm
     """
@@ -916,7 +900,7 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     K = safe_sparse_dot(X, Y.T, dense_output=True)
     K *= gamma
     K += coef0
-    np.tanh(K, K)   # compute tanh in-place
+    np.tanh(K, K)  # compute tanh in-place
     return K
 
 
@@ -949,7 +933,7 @@ def rbf_kernel(X, Y=None, gamma=None):
 
     K = euclidean_distances(X, Y, squared=True)
     K *= -gamma
-    np.exp(K, K)    # exponentiate K in-place
+    np.exp(K, K)  # exponentiate K in-place
     return K
 
 
@@ -983,7 +967,7 @@ def laplacian_kernel(X, Y=None, gamma=None):
         gamma = 1.0 / X.shape[1]
 
     K = -gamma * manhattan_distances(X, Y)
-    np.exp(K, K)    # exponentiate K in-place
+    np.exp(K, K)  # exponentiate K in-place
     return K
 
 
@@ -1169,17 +1153,17 @@ def distance_metrics():
 
     The valid distance metrics, and the function they map to, are:
 
-    ============     ====================================
-    metric           Function
-    ============     ====================================
-    'cityblock'      metrics.pairwise.manhattan_distances
-    'cosine'         metrics.pairwise.cosine_distances
-    'euclidean'      metrics.pairwise.euclidean_distances
-    'haversine'      metrics.pairwise.haversine_distances
-    'l1'             metrics.pairwise.manhattan_distances
-    'l2'             metrics.pairwise.euclidean_distances
-    'manhattan'      metrics.pairwise.manhattan_distances
-    ============     ====================================
+    ============   ====================================
+    metric         Function
+    ============   ====================================
+    'cityblock'    metrics.pairwise.manhattan_distances
+    'cosine'       metrics.pairwise.cosine_distances
+    'euclidean'    metrics.pairwise.euclidean_distances
+    'haversine'    metrics.pairwise.haversine_distances
+    'l1'           metrics.pairwise.manhattan_distances
+    'l2'           metrics.pairwise.euclidean_distances
+    'manhattan'    metrics.pairwise.manhattan_distances
+    ============   ====================================
 
     Read more in the :ref:`User Guide <metrics>`.
 
@@ -1198,16 +1182,22 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
 
     if Y is None:
         Y = X
+    X, Y, dtype = _return_float_dtype(X, Y)
 
     if effective_n_jobs(n_jobs) == 1:
         return func(X, Y, **kwds)
 
     # enforce a threading backend to prevent data communication overhead
     fd = delayed(_dist_wrapper)
-    ret = np.empty((X.shape[0], Y.shape[0]), dtype=X.dtype, order='F')
+    ret = np.empty((X.shape[0], Y.shape[0]), dtype=dtype, order='F')
     Parallel(backend="threading", n_jobs=n_jobs)(
         fd(func, ret, s, X, Y[s], **kwds)
         for s in gen_even_slices(_num_samples(Y), effective_n_jobs(n_jobs)))
+
+    if (X is Y or Y is None) and func is euclidean_distances:
+        # zeroing diagonal for euclidean norm.
+        # TODO: do it also for other norms.
+        np.fill_diagonal(ret, 0)
 
     return ret
 
@@ -1561,7 +1551,8 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
 
         dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else None
 
-        if dtype == bool and (X.dtype != bool or Y.dtype != bool):
+        if (dtype == bool and
+                (X.dtype != bool or (Y is not None and Y.dtype != bool))):
             msg = "Data was converted to boolean for metric %s" % metric
             warnings.warn(msg, DataConversionWarning)
 
@@ -1579,7 +1570,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
     return _parallel_pairwise(X, Y, func, n_jobs, **kwds)
 
 
-# These distances recquire boolean arrays, when using scipy.spatial.distance
+# These distances require boolean arrays, when using scipy.spatial.distance
 PAIRWISE_BOOLEAN_FUNCTIONS = [
     'dice',
     'jaccard',
@@ -1591,7 +1582,6 @@ PAIRWISE_BOOLEAN_FUNCTIONS = [
     'sokalsneath',
     'yule',
 ]
-
 
 # Helper functions - distance
 PAIRWISE_KERNEL_FUNCTIONS = {
@@ -1664,7 +1654,8 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
     kernel between the arrays from both X and Y.
 
     Valid values for metric are::
-        ['rbf', 'sigmoid', 'polynomial', 'poly', 'linear', 'cosine']
+        ['additive_chi2', 'chi2', 'linear', 'poly', 'polynomial', 'rbf',
+         'laplacian', 'sigmoid', 'cosine']
 
     Read more in the :ref:`User Guide <metrics>`.
 

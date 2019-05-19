@@ -346,6 +346,7 @@ Samples generator
    decomposition.dict_learning
    decomposition.dict_learning_online
    decomposition.fastica
+   decomposition.non_negative_factorization
    decomposition.sparse_encode
 
 .. _lda_ref:
@@ -471,6 +472,7 @@ Samples generator
    :toctree: generated/
 
    experimental.enable_hist_gradient_boosting
+   experimental.enable_iterative_imputer
 
 
 .. _feature_extraction_ref:
@@ -1548,15 +1550,11 @@ To be removed in 0.22
    :toctree: generated/
    :template: deprecated_class.rst
 
-   covariance.GraphLasso
-   covariance.GraphLassoCV
-   preprocessing.Imputer
    utils.testing.mock_mldata_urlopen
 
 .. autosummary::
    :toctree: generated/
    :template: deprecated_function.rst
 
-   covariance.graph_lasso
    datasets.fetch_mldata
    datasets.mldata_filename
