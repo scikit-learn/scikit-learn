@@ -6,46 +6,41 @@ Pandas Interoperability
 =======================
 
 This part of the User Guide aims to highlight some of the particularities that
-arise when using pandas datastructures as input for scikit-learn.
+arise when using Pandas datastructures as input for Scikit-learn.
 
-The basics of using pandas and Scikit-learn
+The basics of using Pandas and Scikit-learn
 ==================================================================
 
 Scikit-learn supports the use of
-`pandas DataFrames <http://pandas.pydata.org/pandas-docs/stable/>`__
+`Pandas DataFrames <http://pandas.pydata.org/pandas-docs/stable/>`__
 implicitly. However, this implicit support has its conditions and potential
 pitfalls and some (not all) of these will be outlined below.
 
-Reasons for these conditions and the difficulty of supporting pandas, stems
-from the fact that pandas data structures such as Series and DataFrames can
+Reasons for these conditions and the difficulty of supporting Pandas, stems
+from the fact that Pandas data structures such as Series and DataFrames can
 hold heterogenous datatypes (different columns can contain different
 datatypes). Therefore, Series and DataFrames can be thought of as containers
 for arrays that hold the actual data in an homogenous format. Some of these
 underlying data structures might not necessarily be representable as NumPy
 arrays (e.g. Categorical data). Pandas supports these alternate data types using
-pandas specific or 3rd party libraries that extend the NumPy type system. The
-difficulty of supporting pandas data structure thus comes from pandas
+Pandas specific or 3rd party libraries that extend the NumPy type system. The
+difficulty of supporting Pandas data structure thus comes from Pandas
 capability of supporting heterogenous data in one data structure.
 
-Every Scikit-learn estimator/transformer/pipeline
-(for the rest of this section we shall call these primitives)
-supports the use of DataFrames as inputs which is achieved by obtaining a
+Most Scikit-learn estimator/transformer/pipeline
+(for the rest of this section we shall call these estimators)
+support the use of DataFrames as inputs through obtaining a
 `NumPy array <https://docs.scipy.org/doc/numpy/user/>`__ using
-the :meth:`~numpy.asarray` on a DataFrame object. The only exception where a
-a DataFrame is being used explicitly is the
-:class:`~sklearn.compose.ColumnTransformer` which is briefly
-discussed below `Dealing with heterogenous data`_.
-
-.. note::
-  Starting with pandas version 0.24.0, it is encouraged to obtain
-  NumPy arrays from DataFrames or Series via :meth:`.to_numpy()` instead of
-  using :meth:`.values`. More details on this can be found in the
-  `release notes <http://pandas-docs.github.io/pandas-docs-travis/whatsnew/v0.24.0.html#accessing-the-values-in-a-series-or-index>`__
-  and the documentation `here <http://pandas.pydata.org/pandas-docs/stable/getting_started/basics.html#basics-dtypes>`__
-  and `here <http://pandas.pydata.org/pandas-docs/stable/getting_started/basics.html#attributes-and-underlying-data>`__.
+the :meth:`~numpy.asarray` on a DataFrame object. There are several exceptions of
+estimators that know how to work with DataFrames or that just pass on DataFrames
+(or inputs in general). Examples of the former include
+:class:`~sklearn.model_selection.GridSearchCV`
+and :class:`~sklearn.compose.ColumnTransformer`
+(discussed below `Dealing with heterogenous data`_) while examples of the
+latter include many meta-estimators such as :class:`~sklearn.pipeline.Pipeline`.
 
 There are several conditions on using a DataFrame as an input to
-Scikit-learn primitives, one of which is that the data in the
+Scikit-learn estimators, one of which is that the data in the
 DataFrame columns used by the estimator are of numerical type. Other conditions
 and pitfalls are described in subsequent sections. The numerical condition can
 be checked e.g. using something like::
@@ -64,12 +59,13 @@ be checked e.g. using something like::
 
 There are also a variety of classes such as pipelines and model selection
 processes that will pass a DataFrame along "as is" to the nested estimators
-(see the next section for an example). However, this is not guaranteed and some
-of the issues arising as a result are outlined below and sources
-(where available) of
-discussions and work-arounds (the latter is provided without guarantee that the
-workaround will still work) are provided. It should also be mentioned that if
-the DataFrame contains heterogenous data, the :meth:`~numpy.asarray()` function will
+(see the next section for an example). However, this varries on a case by
+case basis and some of the issues arising as a result of this are outlined 
+below and sources (where available) of discussions and work-arounds
+(the latter is provided without guarantee that the workaround will still work)
+are provided. It should also be mentioned that if
+the DataFrame contains heterogenous data (even numeric data of heterogenous 
+dtype), the :meth:`~numpy.asarray()` function will
 create an in-memory copy of the DataFrame, thus using a NumPy array in the
 first place can be more memory efficient as well as avoiding some of the
 potential pitfalls when using DataFrames. If the DataFrame contains only
@@ -79,9 +75,9 @@ homogenous data in the first place, no in-memory copy will be created using
 Pandas in **not** Pandas out
 ============================
 
-Some primitives in Scikit-learn support the pandas in pandas out, however it
-should generally be assumed that you get a Numpy array as an output when
-providing a DataFrame as an input.
+Some estimators in Scikit-learn support the Pandas in Pandas out, however the
+marjority do not so it should generally be assumed that you get a Numpy
+array as an output when providing a DataFrame as an input.
 
 Example for Pandas working with Scikit-learn primitive::
 
@@ -114,11 +110,11 @@ NumPy array instead of a DataFrame even though we use a DataFrame as input::
 
 As this example shows, at the moment it is not guaranteed that Scikit-learn
 primitivies with :meth:`.fit`, :meth:`.transform` (and :meth:`.predict`)
-capability support pandas in pandas out. However, there are ways around this
+capability support Pandas in Pandas out. However, there are ways around this
 such as an example given
 `here <https://github.com/scikit-learn/scikit-learn/issues/5523#issuecomment-171674105>`__
 show, where adding additional functionality to the StandardScaler class adds
-the pandas in pandas out capability. Care should be taken as this does not
+the Pandas in Pandas out capability. Care should be taken as this does not
 take care of the column ordering problem that is discussed in the next section.
 
 The column ordering problem
@@ -176,12 +172,9 @@ example given below::
   array([0, 0, 2, 0, 0])
 
 
-At the time of writing, it is the users responsibility to ensure that the
+It is the users responsibility to ensure that the
 column ordering in the data used for training the estimator is the same as the
-ordering of the data used for prediction. There is an ongoing discussion
-whether or not this will change in the future and this
-`issue <https://github.com/scikit-learn/scikit-learn/issues/7242>`__ should be
-watched and used to update this paragraph in the future. A simple and straight-
+ordering of the data used for prediction. A simple and straight-
 forward way of ensuring that column ordering and column labels are the same is
 using something like `df[list of column names]` to enforce the
 correct ordering.
@@ -194,7 +187,7 @@ to :term:`categocrical feature` and :ref:`preprocessing_categorical_features`.
 It is worth noting that as of :ref:`changes_0_20_3`, both
 :class:`~sklearn.preprocessing.OneHotEncoder` and
 :class:`~sklearn.preprocessing.OrdinalEncoder`
-support string or Categorical columns coming straight from pandas DataFrames.
+support string or Categorical columns coming straight from Pandas DataFrames.
 
 
 Dealing with heterogenous data
@@ -206,12 +199,12 @@ learn provides an experimental :class:`~sklearn.compose.ColumnTransformer` API
 (:ref:`column_transformer`).
 This API (which might change in the future) allows the definition of different
 transformation steps to be applied to different columns in either arrays,
-sparse matrices or pandas DataFrames.
+sparse matrices or Pandas DataFrames.
 
 Dealing with missing values
 ===========================
 
-As per the glossary, most Scikit-learn primitives do not work with missing
+As per the glossary, most Scikit-learn estimators do not work with missing
 values. If they do, NaN is the preferred representation of missing values. For
 more details, see :term:`missing values`. Non-numeric data is now also supported
 via the ``'most_frequent'`` or ``'constant'`` of the
@@ -276,17 +269,17 @@ Example Usage
 The code above highlights the following three elements:
 
 1) If your sparse value is not NaN then it is important to specify
-*default_fill_value* property when creating your pandas DataFrame, otherwise no
+*default_fill_value* property when creating your Pandas DataFrame, otherwise no
 space saving will occur. Check this using the
 :attr:`~pandas.SparseDataFrame.density()` property, which
 should be less than 100% if successful. When creating the scipy sparse matrix,
 this *default_fill_value* will be used for use as the sparse value (nnz).
 
-2) Either the :meth:`~pandas.SparseDataFrame.to_coo()` method on the pandas
+2) Either the :meth:`~pandas.SparseDataFrame.to_coo()` method on the Pandas
 SparseDataFrame, or :class:`~scipy.sparse.coo_matrix` constructor are
 alternative ways you can convert to a scipy sparse datastructure.
 
-3) It is generally better to convert from your pandas Dataframe first to a
+3) It is generally better to convert from your Pandas Dataframe first to a
 :class:`~scipy.sparse.coo_matrix`, as this is far quicker to construct,
 and from this to then convert to a Compressed Row
 :class:`~scipy.sparse.csr_matrix`, or Compressed Column
