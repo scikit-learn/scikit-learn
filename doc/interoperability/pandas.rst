@@ -211,7 +211,7 @@ sparse matrices or pandas DataFrames.
 Dealing with missing values
 ===========================
 
-As per the glossary, most Scikit-learn primitives do not work with missing
+As per the glossary, most Scikit-learn estimators do not work with missing
 values. If they do, NaN is the preferred representation of missing values. For
 more details, see :term:`missing values`. Non-numeric data is now also supported
 via the ``'most_frequent'`` or ``'constant'`` of the
