@@ -2,6 +2,23 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_0_21_2:
+
+Version 0.21.2
+==============
+
+**June 2019**
+
+Changelog
+---------
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Fixed a bug in :func:`euclidean_distances` where a part of the distance
+  matrix was left un-instanciated for suffiently large datasets. :issue:`13910`
+  by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 .. _changes_0_21_1:
 
 Version 0.21.1
@@ -18,20 +35,16 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
-- |Fix| Fixed a bug in :func:`metrics.pairwise_distances` where it would raise
+- |Fix| Fixed a bug in :class:`metrics.pairwise_distances` where it would raise
   ``AttributeError`` for boolean metrics when ``X`` had a boolean dtype and
   ``Y == None``.
   :issue:`13864` by :user:`Paresh Mathur <rick2047>`.
 
-- |Fix| Fixed two bugs in :func:`metrics.pairwise_distances` when
+- |Fix| Fixed two bugs in :class:`metrics.pairwise_distances` when
   ``n_jobs > 1``. First it used to return a distance matrix with same dtype as
   input, even for integer dtype. Then the diagonal was not zeros for euclidean
   metric when ``Y`` is ``X``. :issue:`13877` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
-
-- |Fix| Fixed a bug in :func:`euclidean_distances` where a part of the distance
-  matrix was left un-instanciated for suffiently large datasets. :issue:`13910`
-  by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.neighbors`
 ......................
