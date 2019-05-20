@@ -8,7 +8,7 @@ from math import log
 import numpy as np
 import pytest
 from scipy.linalg import pinvh
-from scipy.special import loggamma
+from scipy.special import gammaln
 
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -82,12 +82,12 @@ def test_bayesian_ridge_score_values():
 
     # compute score using formula of docstring
     offset = -0.5 * n_samples * log(2 * np.pi)
-    offset += alpha_1 * log(alpha_2) - loggamma(alpha_1)
+    offset += alpha_1 * log(alpha_2) - gammaln(alpha_1)
     offset -= (alpha_1_post * log(alpha_1_post / np.e) -
-               loggamma(alpha_1_post))
-    offset += lambda_1 * log(lambda_2) - loggamma(lambda_1)
+               gammaln(alpha_1_post))
+    offset += lambda_1 * log(lambda_2) - gammaln(lambda_1)
     offset -= (lambda_1_post * log(lambda_1_post / np.e) -
-               loggamma(lambda_1_post))
+               gammaln(lambda_1_post))
 
     score = offset + alpha_1 * log(alpha_) - alpha_2 * alpha_
     score += lambda_1 * log(lambda_) - lambda_2 * lambda_

@@ -9,7 +9,7 @@ from math import log
 import numpy as np
 from scipy import linalg
 from scipy.linalg import pinvh
-from scipy.special import loggamma
+from scipy.special import gammaln
 import warnings
 
 from .base import LinearModel, _rescale_data
@@ -343,12 +343,12 @@ class BayesianRidge(LinearModel, RegressorMixin):
         lambda_1_post = lambda_1 + 0.5 * n_features
 
         offset = -0.5 * n_samples * log(2 * np.pi)
-        offset += alpha_1 * log(alpha_2) - loggamma(alpha_1)
+        offset += alpha_1 * log(alpha_2) - gammaln(alpha_1)
         offset -= (alpha_1_post * log(alpha_1_post / np.e) -
-                   loggamma(alpha_1_post))
-        offset += lambda_1 * log(lambda_2) - loggamma(lambda_1)
+                   gammaln(alpha_1_post))
+        offset += lambda_1 * log(lambda_2) - gammaln(lambda_1)
         offset -= (lambda_1_post * log(lambda_1_post / np.e) -
-                   loggamma(lambda_1_post))
+                   gammaln(lambda_1_post))
         return offset
 
     def _compute_lower_bound(self, n_samples, n_features, eigen_vals,
