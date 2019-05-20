@@ -510,6 +510,27 @@ def test_precision_recall_curve():
     assert_equal(p.size, r.size)
     assert_equal(p.size, t.size + 1)
 
+def test_precision_recall_curve_nan():
+    y_true, _, probas_pred = make_prediction(binary=True)
+    _test_precision_recall_curve(y_true, probas_pred)
+
+    # Use {-1, 1} for labels; make sure original labels aren't modified
+    y_true[np.where(y_true == 0)] = -1
+    y_true_copy = y_true.copy()
+    _test_precision_recall_curve(y_true, probas_pred)
+    assert_array_equal(y_true_copy, y_true)
+
+    labels = [0, 0, 0, 0]
+    predict_probas = [1, 2, 3, 4]
+    # In this case, recall is going to be [nan 0] but it should be set to [0 0]
+    # in order to mean average precision not being set to nan too.
+    p, r, t = precision_recall_curve(labels, predict_probas)
+    assert_array_almost_equal(p, np.array([0., 1.]))
+    assert_array_almost_equal(r, np.array([0., 0.]))
+    #it should return 0 instead of nan
+    assert_array_almost_equal(t, np.array([4]))
+    assert_equal(p.size, r.size)
+    assert_equal(p.size, t.size + 1)
 
 def _test_precision_recall_curve(y_true, probas_pred):
     # Test Precision-Recall and aread under PR curve
