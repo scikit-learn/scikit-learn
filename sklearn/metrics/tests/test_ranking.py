@@ -1,4 +1,3 @@
-
 import pytest
 import numpy as np
 import warnings
@@ -491,6 +490,7 @@ def test_binary_clf_curve():
     assert_raise_message(ValueError, msg, precision_recall_curve,
                          y_true, y_pred)
 
+
 def test_precision_recall_curve():
     y_true, _, probas_pred = make_prediction(binary=True)
     _test_precision_recall_curve(y_true, probas_pred)
@@ -510,6 +510,7 @@ def test_precision_recall_curve():
     assert_equal(p.size, r.size)
     assert_equal(p.size, t.size + 1)
 
+
 def test_precision_recall_curve_nan():
     y_true, _, probas_pred = make_prediction(binary=True)
     _test_precision_recall_curve(y_true, probas_pred)
@@ -527,10 +528,11 @@ def test_precision_recall_curve_nan():
     p, r, t = precision_recall_curve(labels, predict_probas)
     assert_array_almost_equal(p, np.array([0., 1.]))
     assert_array_almost_equal(r, np.array([0., 0.]))
-    #it should return 0 instead of nan
+    # it should return 0 instead of nan
     assert_array_almost_equal(t, np.array([4]))
     assert_equal(p.size, r.size)
     assert_equal(p.size, t.size + 1)
+
 
 def _test_precision_recall_curve(y_true, probas_pred):
     # Test Precision-Recall and aread under PR curve
@@ -572,7 +574,7 @@ def test_precision_recall_curve_toydata():
         p, r, _ = precision_recall_curve(y_true, y_score)
         auc_prc = average_precision_score(y_true, y_score)
         assert_array_almost_equal(p, [0.5, 0., 1.])
-        assert_array_almost_equal(r, [1., 0.,  0.])
+        assert_array_almost_equal(r, [1., 0., 0.])
         # Here we are doing a terrible prediction: we are always getting
         # it wrong, hence the average_precision_score is the accuracy at
         # chance: 50%
@@ -622,9 +624,9 @@ def test_precision_recall_curve_toydata():
         assert_raises(Exception, average_precision_score, y_true, y_score,
                       average="weighted")
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="samples"), 1.)
+                                                    average="samples"), 1.)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="micro"), 1.)
+                                                    average="micro"), 1.)
 
         y_true = np.array([[0, 1], [0, 1]])
         y_score = np.array([[0, 1], [1, 0]])
@@ -633,31 +635,31 @@ def test_precision_recall_curve_toydata():
         assert_raises(Exception, average_precision_score, y_true, y_score,
                       average="weighted")
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="samples"), 0.75)
+                                                    average="samples"), 0.75)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="micro"), 0.5)
+                                                    average="micro"), 0.5)
 
         y_true = np.array([[1, 0], [0, 1]])
         y_score = np.array([[0, 1], [1, 0]])
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="macro"), 0.5)
+                                                    average="macro"), 0.5)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="weighted"), 0.5)
+                                                    average="weighted"), 0.5)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="samples"), 0.5)
+                                                    average="samples"), 0.5)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="micro"), 0.5)
+                                                    average="micro"), 0.5)
 
         y_true = np.array([[1, 0], [0, 1]])
         y_score = np.array([[0.5, 0.5], [0.5, 0.5]])
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="macro"), 0.5)
+                                                    average="macro"), 0.5)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="weighted"), 0.5)
+                                                    average="weighted"), 0.5)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="samples"), 0.5)
+                                                    average="samples"), 0.5)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="micro"), 0.5)
+                                                    average="micro"), 0.5)
 
 
 def test_average_precision_constant_values():
@@ -859,7 +861,7 @@ def _my_lrap(y_true, y_score):
     y_true = check_array(y_true)
     y_score = check_array(y_score)
     n_samples, n_labels = y_true.shape
-    score = np.empty((n_samples, ))
+    score = np.empty((n_samples,))
     for i in range(n_samples):
         # The best rank correspond to 1. Rank higher than 1 are worse.
         # The best inverse ranking correspond to n_labels.
@@ -919,14 +921,14 @@ def check_alternative_lrap_implementation(lrap_score, n_classes=5,
 
 
 @pytest.mark.parametrize(
-        'check',
-        (check_lrap_toy,
-         check_lrap_without_tie_and_increasing_score,
-         check_lrap_only_ties,
-         check_zero_or_all_relevant_labels))
+    'check',
+    (check_lrap_toy,
+     check_lrap_without_tie_and_increasing_score,
+     check_lrap_only_ties,
+     check_zero_or_all_relevant_labels))
 @pytest.mark.parametrize(
-        'func',
-        (label_ranking_average_precision_score, _my_lrap))
+    'func',
+    (label_ranking_average_precision_score, _my_lrap))
 def test_label_ranking_avp(check, func):
     check(func)
 
@@ -939,10 +941,9 @@ def test_lrap_error_raised():
 @pytest.mark.parametrize('n_classes', (2, 5, 10))
 @pytest.mark.parametrize('random_state', range(1))
 def test_alternative_lrap_implementation(n_samples, n_classes, random_state):
-
     check_alternative_lrap_implementation(
-               label_ranking_average_precision_score,
-               n_classes, n_samples, random_state)
+        label_ranking_average_precision_score,
+        n_classes, n_samples, random_state)
 
 
 def test_lrap_sample_weighting_zero_labels():
@@ -1120,7 +1121,7 @@ def test_partial_roc_auc_score():
     with pytest.raises(ValueError):
         assert roc_auc_score(y_true, y_true, max_fpr=0)
 
-    y_scores = np.array([0.1,  0,  0.1, 0.01])
+    y_scores = np.array([0.1, 0, 0.1, 0.01])
     roc_auc_with_max_fpr_one = roc_auc_score(y_true, y_scores, max_fpr=1)
     unconstrained_roc_auc = roc_auc_score(y_true, y_scores)
     assert roc_auc_with_max_fpr_one == unconstrained_roc_auc
