@@ -198,6 +198,9 @@ def test_precision_recall_f1_score_binary():
                                       **kwargs),
                             (1 + 2 ** 2) * ps * rs / (2 ** 2 * ps + rs), 2)
 
+        assert_almost_equal(my_assert(fbeta_score, y_true, y_pred, beta=np.inf,
+                                      **kwargs), rs)
+
 
 @ignore_warnings
 def test_precision_recall_f_binary_single_class():
@@ -1324,10 +1327,13 @@ def test_precision_recall_f1_score_multilabel_1():
     assert_array_almost_equal(r, [0.0, 1.0, 1.0, 0.0], 2)
     assert_array_almost_equal(f, [0.0, 1 / 1.5, 1, 0.0], 2)
     assert_array_almost_equal(s, [1, 1, 1, 1], 2)
-
+    
     f2 = fbeta_score(y_true, y_pred, beta=2, average=None)
     support = s
     assert_array_almost_equal(f2, [0, 0.83, 1, 0], 2)
+    
+    f3 = fbeta_score(y_true, y_pred, beta=np.inf, average=None)
+    assert_array_almost_equal(f3, r, 2)
 
     # Check macro
     p, r, f, s = precision_recall_fscore_support(y_true, y_pred,

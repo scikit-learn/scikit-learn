@@ -1428,20 +1428,22 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         pred_sum = np.array([pred_sum.sum()])
         true_sum = np.array([true_sum.sum()])
 
-    # Finally, we have all our sufficient statistics. Divide! #
-    beta2 = beta ** 2
-
     # Divide, and on zero-division, set scores to 0 and warn:
 
     precision = _prf_divide(tp_sum, pred_sum,
                             'precision', 'predicted', average, warn_for)
     recall = _prf_divide(tp_sum, true_sum,
                          'recall', 'true', average, warn_for)
+
     # Don't need to warn for F: either P or R warned, or tp == 0 where pos
     # and true are nonzero, in which case, F is well-defined and zero
-    denom = beta2 * precision + recall
-    denom[denom == 0.] = 1  # avoid division by 0
-    f_score = (1 + beta2) * precision * recall / denom
+    if beta < np.inf:
+        beta2 = beta ** 2
+        denom = beta2 * precision + recall
+        denom[denom == 0.] = 1  # avoid division by 0
+        f_score = (1 + beta2) * precision * recall / denom
+    else:
+        f_score = recall
 
     # Average the results
     if average == 'weighted':
