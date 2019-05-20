@@ -243,6 +243,7 @@ cdef class Splitter:
         cdef:
             int n_samples = sample_indices.shape[0]
             X_BINNED_DTYPE_C bin_idx = split_info.bin_idx
+            unsigned char missing_go_to_left = split_info.missing_go_to_left
             int feature_idx = split_info.feature_idx
             const X_BINNED_DTYPE_C [::1] X_binned = \
                 self.X_binned[:, feature_idx]
@@ -288,12 +289,23 @@ cdef class Splitter:
                 stop = start + sizes[thread_idx]
                 for i in range(start, stop):
                     sample_idx = sample_indices[i]
-                    if X_binned[sample_idx] <= bin_idx:
-                        left_indices_buffer[start + left_count] = sample_idx
-                        left_count = left_count + 1
+                    if (self.has_missing_values[feature_idx] and
+                            X_binned[sample_idx] == self.actual_n_bins[feature_idx] - 1):
+                        # missing value
+                        if missing_go_to_left:
+                            left_indices_buffer[start + left_count] = sample_idx
+                            left_count = left_count + 1
+                        else:
+                            right_indices_buffer[start + right_count] = sample_idx
+                            right_count = right_count + 1
                     else:
-                        right_indices_buffer[start + right_count] = sample_idx
-                        right_count = right_count + 1
+                        # non-missing value
+                        if X_binned[sample_idx] <= bin_idx:
+                            left_indices_buffer[start + left_count] = sample_idx
+                            left_count = left_count + 1
+                        else:
+                            right_indices_buffer[start + right_count] = sample_idx
+                            right_count = right_count + 1
 
                 left_counts[thread_idx] = left_count
                 right_counts[thread_idx] = right_count
@@ -513,7 +525,7 @@ cdef class Splitter:
             unsigned int n_samples_left
             unsigned int n_samples_right
             unsigned int n_samples_ = n_samples
-            unsigned int second_to_last_bin 
+            unsigned int second_to_last_bin
             Y_DTYPE_C sum_hessian_left
             Y_DTYPE_C sum_hessian_right
             Y_DTYPE_C sum_gradient_left

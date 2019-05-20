@@ -452,8 +452,10 @@ def _fill_predictor_node_array(predictor_nodes, grower_node,
         # Decision node
         split_info = grower_node.split_info
         feature_idx, bin_idx = split_info.feature_idx, split_info.bin_idx
+        print(bin_idx)
         node['feature_idx'] = feature_idx
         node['bin_threshold'] = bin_idx
+        node['missing_go_to_left'] = split_info.missing_go_to_left
         if bin_thresholds is not None:
             threshold = bin_thresholds[feature_idx][bin_idx]
             node['threshold'] = threshold

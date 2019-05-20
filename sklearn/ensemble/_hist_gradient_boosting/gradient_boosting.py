@@ -95,7 +95,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         acc_compute_hist_time = 0.  # time spent computing histograms
         # time spent predicting X for gradient and hessians update
         acc_prediction_time = 0.
-        X, y = check_X_y(X, y, dtype=[X_DTYPE])
+        X, y = check_X_y(X, y, dtype=[X_DTYPE], force_all_finite='allow-nan')
         y = self._encode_y(y)
         rng = check_random_state(self.random_state)
 
@@ -441,7 +441,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         raw_predictions : array, shape (n_samples * n_trees_per_iteration,)
             The raw predicted values.
         """
-        X = check_array(X, dtype=[X_DTYPE, X_BINNED_DTYPE])
+        X = check_array(X, dtype=[X_DTYPE, X_BINNED_DTYPE],
+                        force_all_finite='allow-nan')
         check_is_fitted(self, '_predictors')
         if X.shape[1] != self.n_features_:
             raise ValueError(

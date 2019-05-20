@@ -7,6 +7,7 @@
 
 cimport cython
 from cython.parallel import prange
+from libc.math cimport isnan
 import numpy as np
 cimport numpy as np
 
@@ -22,6 +23,7 @@ cdef packed struct node_struct:
     unsigned int count
     unsigned int feature_idx
     X_DTYPE_C threshold
+    unsigned char missing_go_to_left
     unsigned int left
     unsigned int right
     Y_DTYPE_C gain
@@ -63,10 +65,16 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
     while True:
         if node.is_leaf:
             return node.value
-        if numeric_data[row, node.feature_idx] <= node.threshold:
-            node = nodes[node.left]
+        if isnan(numeric_data[row, node.feature_idx]):
+            if node.missing_go_to_left:
+                node = nodes[node.left]
+            else:
+                node = nodes[node.right]
         else:
-            node = nodes[node.right]
+            if numeric_data[row, node.feature_idx] <= node.threshold:
+                node = nodes[node.left]
+            else:
+                node = nodes[node.right]
 
 
 cdef void _predict_from_binned_data_parallel(
