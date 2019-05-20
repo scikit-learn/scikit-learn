@@ -35,6 +35,8 @@ def test_histogram_split(n_bins):
 
             actual_n_bins = np.array([n_bins] * X_binned.shape[1],
                                      dtype=np.uint32)
+            has_missing_values = np.array([False] * X_binned.shape[1],
+                                          dtype=np.uint8)
             builder = HistogramBuilder(X_binned,
                                        n_bins,
                                        all_gradients,
@@ -43,6 +45,7 @@ def test_histogram_split(n_bins):
             splitter = Splitter(X_binned,
                                 n_bins,
                                 actual_n_bins,
+                                has_missing_values,
                                 l2_regularization,
                                 min_hessian_to_split,
                                 min_samples_leaf, min_gain_to_split,
@@ -97,9 +100,11 @@ def test_gradient_and_hessian_sanity(constant_hessian):
 
     actual_n_bins = np.array([n_bins] * X_binned.shape[1],
                              dtype=np.uint32)
+    has_missing_values = np.array([False] * X_binned.shape[1],
+                                    dtype=np.uint8)
     builder = HistogramBuilder(X_binned, n_bins, all_gradients,
                                all_hessians, constant_hessian)
-    splitter = Splitter(X_binned, n_bins, actual_n_bins,
+    splitter = Splitter(X_binned, n_bins, actual_n_bins, has_missing_values,
                         l2_regularization, min_hessian_to_split,
                         min_samples_leaf, min_gain_to_split, constant_hessian)
 
@@ -193,10 +198,12 @@ def test_split_indices():
 
     actual_n_bins = np.array([n_bins] * X_binned.shape[1],
                              dtype=np.uint32)
+    has_missing_values = np.array([False] * X_binned.shape[1],
+                                    dtype=np.uint8)
     builder = HistogramBuilder(X_binned, n_bins,
                                all_gradients, all_hessians,
                                hessians_are_constant)
-    splitter = Splitter(X_binned, n_bins, actual_n_bins,
+    splitter = Splitter(X_binned, n_bins, actual_n_bins, has_missing_values,
                         l2_regularization, min_hessian_to_split,
                         min_samples_leaf, min_gain_to_split,
                         hessians_are_constant)
@@ -249,9 +256,11 @@ def test_min_gain_to_split():
 
     actual_n_bins = np.array([n_bins] * X_binned.shape[1],
                              dtype=np.uint32)
+    has_missing_values = np.array([False] * X_binned.shape[1],
+                                    dtype=np.uint8)
     builder = HistogramBuilder(X_binned, n_bins, all_gradients,
                                all_hessians, hessians_are_constant)
-    splitter = Splitter(X_binned, n_bins, actual_n_bins,
+    splitter = Splitter(X_binned, n_bins, actual_n_bins, has_missing_values,
                         l2_regularization, min_hessian_to_split,
                         min_samples_leaf, min_gain_to_split,
                         hessians_are_constant)

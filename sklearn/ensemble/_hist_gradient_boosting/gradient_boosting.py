@@ -250,6 +250,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     X_binned_train, gradients[k, :], hessians[k, :],
                     max_bins=self.max_bins,
                     actual_n_bins=self.bin_mapper_.actual_n_bins_,
+                    has_missing_values=self.bin_mapper_.has_missing_values_,
                     max_leaf_nodes=self.max_leaf_nodes,
                     max_depth=self.max_depth,
                     min_samples_leaf=self.min_samples_leaf,

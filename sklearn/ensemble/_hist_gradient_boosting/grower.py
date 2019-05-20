@@ -156,8 +156,9 @@ class TreeGrower:
     """
     def __init__(self, X_binned, gradients, hessians, max_leaf_nodes=None,
                  max_depth=None, min_samples_leaf=20, min_gain_to_split=0.,
-                 max_bins=256, actual_n_bins=None, l2_regularization=0.,
-                 min_hessian_to_split=1e-3, shrinkage=1.):
+                 max_bins=256, actual_n_bins=None, has_missing_values=False,
+                 l2_regularization=0., min_hessian_to_split=1e-3,
+                 shrinkage=1.):
 
         self._validate_parameters(X_binned, max_leaf_nodes, max_depth,
                                   min_samples_leaf, min_gain_to_split,
@@ -173,13 +174,17 @@ class TreeGrower:
         else:
             actual_n_bins = np.asarray(actual_n_bins, dtype=np.uint32)
 
+        if isinstance(has_missing_values, bool):
+            has_missing_values = [has_missing_values] * actual_n_bins.shape[0]
+        has_missing_values = np.array(has_missing_values, dtype=np.uint8)
+
         hessians_are_constant = hessians.shape[0] == 1
         self.histogram_builder = HistogramBuilder(
             X_binned, max_bins, gradients, hessians, hessians_are_constant)
         self.splitter = Splitter(
-            X_binned, max_bins, actual_n_bins, l2_regularization,
-            min_hessian_to_split, min_samples_leaf, min_gain_to_split,
-            hessians_are_constant)
+            X_binned, max_bins, actual_n_bins, has_missing_values,
+            l2_regularization, min_hessian_to_split, min_samples_leaf,
+            min_gain_to_split, hessians_are_constant)
         self.max_leaf_nodes = max_leaf_nodes
         self.max_bins = max_bins
         self.n_features = X_binned.shape[1]
