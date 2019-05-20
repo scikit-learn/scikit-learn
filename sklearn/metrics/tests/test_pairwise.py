@@ -714,7 +714,7 @@ def test_euclidean_distances_upcast(batch_size, x_array_constr,
     assert_allclose(distances, expected, rtol=1e-6)
 
 
-@pytest.mark.parametrize("batch_size", [None, 10, 11, 101])
+@pytest.mark.parametrize("batch_size", [None, 5, 7, 101])
 @pytest.mark.parametrize("x_array_constr", [np.array, csr_matrix],
                          ids=["dense", "sparse"])
 def test_euclidean_distances_upcast_sym(batch_size, x_array_constr):
