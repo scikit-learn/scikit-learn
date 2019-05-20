@@ -49,7 +49,7 @@ x_test = np.linspace(0., 1., 100)
 # #############################################################################
 # Fit by cubic polynomial
 n_order = 3
-X_train = np.vander(x_train, n_order+1, increasing=True)
+X_train = np.vander(x_train, n_order + 1, increasing=True)
 X_test = np.vander(x_test, n_order+1, increasing=True)
 
 # #############################################################################
