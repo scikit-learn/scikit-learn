@@ -213,7 +213,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
         if self.compute_score:
             self.scores_ = list()
-            # compute the onstant terms for the objective function
+            # compute the constant terms for the objective function
             L_offset = self._lower_bound_offset(n_samples, n_features)
         converged = False
         coef_old_ = None
@@ -465,6 +465,9 @@ class ARDRegression(LinearModel, RegressorMixin):
     scores_ : float
         if computed, value of the objective function (to be maximized)
 
+    n_iter_ : int
+        The actual number of iterations to reach the stopping criterion.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -548,6 +551,8 @@ class ARDRegression(LinearModel, RegressorMixin):
         lambda_2 = self.lambda_2
         alpha_1 = self.alpha_1
         alpha_2 = self.alpha_2
+        alpha_1_post = alpha_1 + 0.5 * n_samples
+        lambda_1_post = lambda_1 + 0.5
         verbose = self.verbose
 
         # Initialization of the values of the parameters
@@ -557,7 +562,11 @@ class ARDRegression(LinearModel, RegressorMixin):
         alpha_ = 1. / (np.var(y) + eps)
         lambda_ = np.ones(n_features)
 
-        self.scores_ = list()
+        if self.compute_score:
+            self.scores_ = list()
+            # compute the constant terms for the objective function
+            L_offset = self._lower_bound_offset(n_samples, n_features)
+        converged = False
         coef_old_ = None
 
         # Compute sigma and mu (using Woodbury matrix identity)
@@ -582,9 +591,26 @@ class ARDRegression(LinearModel, RegressorMixin):
         for iter_ in range(self.n_iter):
             sigma_ = update_sigma(X, alpha_, lambda_, keep_lambda, n_samples)
             coef_ = update_coeff(X, y, coef_, alpha_, keep_lambda, sigma_)
+            rmse_ = np.sum((y - np.dot(X, coef_)) ** 2)
+
+            # Compute the objective function
+            if self.compute_score:
+                L = L_offset + alpha_1_post * log(alpha_) - alpha_2 * alpha_
+                L += (lambda_1_post * np.log(lambda_) -
+                      lambda_2 * lambda_).sum()
+                L += 0.5 * (fast_logdet(sigma_) - alpha_ * rmse_ -
+                            (lambda_ * coef_ ** 2).sum())
+                self.scores_.append(L)
+
+            # Check for convergence
+            if iter_ > 0 and np.sum(np.abs(coef_old_ - coef_)) < self.tol:
+                if verbose:
+                    print("Converged after %s iterations" % iter_)
+                converged = True
+                break
+            coef_old_ = np.copy(coef_)
 
             # Update alpha and lambda
-            rmse_ = np.sum((y - np.dot(X, coef_)) ** 2)
             gamma_ = 1. - lambda_[keep_lambda] * np.diag(sigma_)
             lambda_[keep_lambda] = ((gamma_ + 2. * lambda_1) /
                                     ((coef_[keep_lambda]) ** 2 +
@@ -596,30 +622,17 @@ class ARDRegression(LinearModel, RegressorMixin):
             keep_lambda = lambda_ < self.threshold_lambda
             coef_[~keep_lambda] = 0
 
-            # Compute the objective function
-            if self.compute_score:
-                s = (lambda_1 * np.log(lambda_) - lambda_2 * lambda_).sum()
-                s += alpha_1 * log(alpha_) - alpha_2 * alpha_
-                s += 0.5 * (fast_logdet(sigma_) + n_samples * log(alpha_) +
-                            np.sum(np.log(lambda_)))
-                s -= 0.5 * (alpha_ * rmse_ + (lambda_ * coef_ ** 2).sum())
-                self.scores_.append(s)
-
-            # Check for convergence
-            if iter_ > 0 and np.sum(np.abs(coef_old_ - coef_)) < self.tol:
-                if verbose:
-                    print("Converged after %s iterations" % iter_)
-                break
-            coef_old_ = np.copy(coef_)
-
-        # update sigma and mu using updated parameters from the last iteration
-        sigma_ = update_sigma(X, alpha_, lambda_, keep_lambda, n_samples)
-        coef_ = update_coeff(X, y, coef_, alpha_, keep_lambda, sigma_)
+        if not converged:
+            warnings.warn("Optimization step did not converge. Increase the "
+                          "number of iterations.", ConvergenceWarning)
+        self.n_iter_ = iter_ + 1
 
         self.coef_ = coef_
         self.alpha_ = alpha_
         self.sigma_ = sigma_
         self.lambda_ = lambda_
+        if self.compute_score:
+            self.scores_ = np.array(self.scores_)
         self._set_intercept(X_offset_, y_offset_, X_scale_)
         return self
 
@@ -655,3 +668,23 @@ class ARDRegression(LinearModel, RegressorMixin):
             sigmas_squared_data = (np.dot(X, self.sigma_) * X).sum(axis=1)
             y_std = np.sqrt(sigmas_squared_data + (1. / self.alpha_))
             return y_mean, y_std
+
+    def _lower_bound_offset(self, n_samples, n_features):
+        """Constant terms for the objective function (variational lower bound
+        of the log likelihood).
+        """
+        alpha_1 = self.alpha_1
+        alpha_2 = self.alpha_2
+        lambda_1 = self.lambda_1
+        lambda_2 = self.lambda_2
+        alpha_1_post = alpha_1 + 0.5 * n_samples
+        lambda_1_post = lambda_1 + 0.5
+
+        offset = -0.5 * n_samples * log(2 * np.pi)
+        offset += alpha_1 * log(alpha_2) - gammaln(alpha_1)
+        offset -= (alpha_1_post * log(alpha_1_post / np.e) -
+                   gammaln(alpha_1_post))
+        offset += n_features * (lambda_1 * log(lambda_2) - gammaln(lambda_1))
+        offset -= n_features * (lambda_1_post * log(lambda_1_post / np.e) -
+                                gammaln(lambda_1_post))
+        return offset
