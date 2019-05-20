@@ -29,7 +29,8 @@ X, y = load_breast_cancer(return_X_y=True)
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
 clf = DecisionTreeClassifier(random_state=0)
-ccp_alphas, impurities = clf.cost_complexity_pruning_path(X_train, y_train)
+path = clf.cost_complexity_pruning_path(X_train, y_train)
+ccp_alphas, impurities = path.ccp_alphas, path.impurities
 fig, ax = plt.subplots()
 ax.plot(ccp_alphas, impurities, marker='o')
 ax.set_xlabel("effective alpha")

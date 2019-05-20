@@ -1237,13 +1237,14 @@ cdef class Tree:
 
 cdef class _CCPPruneController:
     cdef bint stop_pruning(self, DOUBLE_t effective_alpha) nogil:
+        return 0
+
+    cdef int save_metrics(self, DOUBLE_t effective_alpha,
+                          DOUBLE_t subtree_impurities) nogil:
         pass
 
-    cdef int save_impurity(self, DOUBLE_t subtree_impurities) nogil:
-        pass
 
-
-cdef class _AlphaPruning(_CCPPruneController):
+cdef class _AlphaPruner(_CCPPruneController):
     cdef DOUBLE_t ccp_alpha
 
     def __cinit__(self, DOUBLE_t ccp_alpha):
@@ -1256,28 +1257,22 @@ cdef class _AlphaPruning(_CCPPruneController):
 
 
 cdef class _PathFinder(_CCPPruneController):
-    cdef Stack alpha_stack
-    cdef Stack impurity_stack
+    cdef DOUBLE_t[:] alpha_stack
+    cdef DOUBLE_t[:] impurity_stack
+    cdef UINT32_t stack_count
 
-    def __cinit__(self):
-        self.alpha_stack = Stack(INITIAL_STACK_SIZE)
-        self.impurity_stack = Stack(INITIAL_STACK_SIZE)
+    def __cinit__(self,  int node_count):
+        self.alpha_stack = np.zeros(shape=(node_count), dtype=np.float64)
+        self.impurity_stack = np.zeros(shape=(node_count), dtype=np.float64)
+        self.stack_count = 0
 
-    cdef bint stop_pruning(self, DOUBLE_t effective_alpha) nogil:
-        # the sixth element is used because it is a double
-        rc = self.alpha_stack.push(0, 0, 0, 0, 0, effective_alpha, 0)
-        if rc == -1:
-            with gil:
-                raise MemoryError()
-        return 0
+    cdef int save_metrics(self,
+                          DOUBLE_t effective_alpha,
+                          DOUBLE_t subtree_impurities) nogil:
+        self.alpha_stack[self.stack_count] = effective_alpha
+        self.impurity_stack[self.stack_count] = subtree_impurities
+        self.stack_count += 1
 
-    cdef int save_impurity(self, DOUBLE_t subtree_impurities) nogil:
-        # the sixth element is used because it is a double
-        rc = self.impurity_stack.push(0, 0, 0, 0, 0,
-                                      subtree_impurities, 0)
-        if rc == -1:
-            with gil:
-                raise MemoryError()
 
 cdef _cost_complexity_prune(
     Tree orig_tree,
@@ -1390,10 +1385,8 @@ cdef _cost_complexity_prune(
         for i in range(leaves_in_subtree.shape[0]):
             candidate_nodes[i] = not leaves_in_subtree[i]
 
-        # evaluate subtree before pruning
-        controller.save_impurity(r_branch[0])
-        # effective alpha without pruning is zero
-        controller.stop_pruning(0)
+        # save metrics before pruning
+        controller.save_metrics(0.0, r_branch[0])
 
         while True:
             # If root node is a leaf
@@ -1458,8 +1451,7 @@ cdef _cost_complexity_prune(
                 r_branch[node_idx] += r_diff
                 node_idx = parent[node_idx]
 
-            # evaluate subtree before pruning
-            controller.save_impurity(r_branch[0])
+            controller.save_metrics(effective_alpha, r_branch[0])
 
         for i in range(in_subtree.shape[0]):
             if in_subtree[i]:
@@ -1493,7 +1485,7 @@ cpdef build_pruned_tree_ccp(
             shape=n_nodes, dtype=np.uint8)
         SIZE_t[:] capacity = np.zeros(shape=1, dtype=np.intp)
 
-    pruning_controller = _AlphaPruning(ccp_alpha=ccp_alpha)
+    pruning_controller = _AlphaPruner(ccp_alpha=ccp_alpha)
 
     _cost_complexity_prune(orig_tree, pruning_controller,
                            leaves_in_subtree, capacity)
@@ -1508,30 +1500,28 @@ cpdef ccp_pruning_path(Tree orig_tree):
             shape=orig_tree.node_count, dtype=np.uint8)
         SIZE_t[:] capacity = np.zeros(shape=1, dtype=np.intp)
 
-    path_finder = _PathFinder()
+    path_finder = _PathFinder(orig_tree.node_count)
 
     _cost_complexity_prune(orig_tree, path_finder,
                            leaves_in_subtree, capacity)
 
     cdef:
-        np.ndarray ccp_alphas = np.empty(shape=path_finder.alpha_stack.top,
+        UINT32_t total_items = path_finder.stack_count
+        np.ndarray ccp_alphas = np.empty(shape=total_items,
                                          dtype=np.float64)
-        np.ndarray impurities = np.empty(shape=path_finder.impurity_stack.top,
+        np.ndarray impurities = np.empty(shape=total_items,
                                          dtype=np.float64)
-        StackRecord stack_record
-        SIZE_t idx = path_finder.alpha_stack.top - 1
+        UINT32_t stack_count = 0
 
-    # alpha_stack and impurity_stack will have the same number of elements
-    while not path_finder.alpha_stack.is_empty():
-        path_finder.alpha_stack.pop(&stack_record)
-        # The impurity element is used for storing alphas
-        ccp_alphas[idx] = stack_record.impurity
+    while stack_count < total_items:
+        ccp_alphas[stack_count] = path_finder.alpha_stack[stack_count]
+        impurities[stack_count] = path_finder.impurity_stack[stack_count]
+        stack_count += 1
 
-        path_finder.impurity_stack.pop(&stack_record)
-        impurities[idx] = stack_record.impurity
-        idx -= 1
-
-    return (ccp_alphas, impurities)
+    return {
+        'ccp_alphas': ccp_alphas,
+        'impurities': impurities
+    }
 
 
 cdef _build_pruned_tree(

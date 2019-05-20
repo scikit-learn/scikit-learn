@@ -31,6 +31,7 @@ from ..base import clone
 from ..base import RegressorMixin
 from ..base import is_classifier
 from ..base import MultiOutputMixin
+from ..utils import Bunch
 from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import compute_sample_weight
@@ -539,7 +540,7 @@ class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
         self.tree_ = pruned_tree
 
     def cost_complexity_pruning_path(self, X, y, sample_weight=None):
-        """Prunes tree using Minimal Cost-Complexity Pruning.
+        """Prune tree using Minimal Cost-Complexity Pruning.
 
         Parameters
         ----------
@@ -560,16 +561,16 @@ class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
 
         Returns
         -------
-        ccp_alphas : array-like
-            Effective alphas of subtree during pruning.
-
-        impurities : array-like
-            Sum of the impurities of the subtree leaves for the corresponding
-            alpha value in ``ccp_alphas``.
+        ccp_path : Bunch object, a dictionary with attribute access
+            ``ccp_alphas``
+                Effective alphas of subtree during pruning.
+            ``impurities``
+                Sum of the impurities of the subtree leaves for the
+                corresponding alpha value in ``ccp_alphas``.
         """
         est = clone(self).set_params(ccp_alpha=0.0)
         est.fit(X, y, sample_weight=sample_weight)
-        return ccp_pruning_path(est.tree_)
+        return Bunch(**ccp_pruning_path(est.tree_))
 
     @property
     def feature_importances_(self):
