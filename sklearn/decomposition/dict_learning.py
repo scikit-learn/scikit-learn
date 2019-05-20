@@ -107,14 +107,12 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         copy_cov = False
         cov = np.dot(dictionary, X.T)
 
+    _check_positive_coding(algorithm, positive)
+
     if algorithm == 'lasso_lars':
         alpha = float(regularization) / n_features  # account for scaling
         try:
             err_mgt = np.seterr(all='ignore')
-
-            if positive:
-                raise ValueError("Positive constraint not supported for "
-                                 "'lasso_lars' coding method.")
 
             # Not passing in verbose=max(0, verbose-1) because Lars.fit already
             # corrects the verbosity level.
@@ -146,12 +144,6 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         try:
             err_mgt = np.seterr(all='ignore')
 
-            if positive:
-                raise ValueError(
-                    "Positive constraint not supported for 'lars' "
-                    "coding method."
-                )
-
             # Not passing in verbose=max(0, verbose-1) because Lars.fit already
             # corrects the verbosity level.
             lars = Lars(fit_intercept=False, verbose=verbose, normalize=False,
@@ -169,11 +161,6 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
             np.clip(new_code, 0, None, out=new_code)
 
     elif algorithm == 'omp':
-        # TODO: Should verbose argument be passed to this?
-        if positive:
-            raise ValueError(
-                "Positive constraint not supported for 'omp' coding method."
-            )
         new_code = orthogonal_mp_gram(
             Gram=gram, Xy=cov, n_nonzero_coefs=int(regularization),
             tol=None, norms_squared=row_norms(X, squared=True),
@@ -185,6 +172,14 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
     if new_code.ndim != 2:
         return new_code.reshape(n_samples, n_components)
     return new_code
+
+
+def _check_positive_coding(method, positive):
+    if positive and method in ["omp", "lars", "lasso_lars"]:
+        raise ValueError(
+                "Positive constraint not supported for '{}' "
+                "coding method.".format(method)
+            )
 
 
 # XXX : could be moved to the linear_model module
