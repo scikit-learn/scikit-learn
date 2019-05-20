@@ -216,7 +216,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
         # is zero
         alpha_ = self.alpha_init
         lambda_ = self.lambda_init
-        if self.alpha_init is None:
+        if alpha_ is None:
             alpha_ = 1. / (np.var(y) + eps)
         if self.lambda_init is None:
             lambda_ = 1.
