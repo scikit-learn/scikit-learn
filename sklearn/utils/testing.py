@@ -56,30 +56,6 @@ from sklearn.utils import deprecated, IS_PYPY, _IS_32BIT
 from sklearn.utils._joblib import joblib
 from sklearn.utils._unittest_backport import TestCase
 
-additional_names_in_all = []
-try:
-    from nose.tools import raises as _nose_raises
-    deprecation_message = (
-        'sklearn.utils.testing.raises has been deprecated in version 0.20 '
-        'and will be removed in 0.22. Please use '
-        'sklearn.utils.testing.assert_raises instead.')
-    raises = deprecated(deprecation_message)(_nose_raises)
-    additional_names_in_all.append('raises')
-except ImportError:
-    pass
-
-try:
-    from nose.tools import with_setup as _with_setup
-    deprecation_message = (
-        'sklearn.utils.testing.with_setup has been deprecated in version 0.20 '
-        'and will be removed in 0.22.'
-        'If your code relies on with_setup, please use'
-        ' nose.tools.with_setup instead.')
-    with_setup = deprecated(deprecation_message)(_with_setup)
-    additional_names_in_all.append('with_setup')
-except ImportError:
-    pass
-
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_raises_regexp", "assert_true",
            "assert_false", "assert_almost_equal", "assert_array_equal",
@@ -88,7 +64,6 @@ __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_greater", "assert_greater_equal",
            "assert_approx_equal", "assert_allclose",
            "assert_run_python_script", "SkipTest"]
-__all__.extend(additional_names_in_all)
 
 _dummy = TestCase('__init__')
 assert_equal = _dummy.assertEqual
@@ -714,28 +689,6 @@ def set_random_state(estimator, random_state=0):
         estimator.set_params(random_state=random_state)
 
 
-def if_matplotlib(func):
-    """Test decorator that skips test if matplotlib not installed.
-
-    Parameters
-    ----------
-    func
-    """
-    @wraps(func)
-    def run_test(*args, **kwargs):
-        try:
-            import matplotlib
-            matplotlib.use('Agg', warn=False)
-            # this fails if no $DISPLAY specified
-            import matplotlib.pyplot as plt
-            plt.figure()
-        except ImportError:
-            raise SkipTest('Matplotlib not available.')
-        else:
-            return func(*args, **kwargs)
-    return run_test
-
-
 try:
     import pytest
 
@@ -1024,21 +977,3 @@ def assert_run_python_script(source_code, timeout=60):
                                % e.output.decode('utf-8'))
     finally:
         os.unlink(source_file)
-
-
-def close_figure(fig=None):
-    """Close a matplotlibt figure.
-
-    Parameters
-    ----------
-    fig : int or str or Figure, optional (default=None)
-        The figure, figure number or figure name to close. If ``None``, all
-        current figures are closed.
-    """
-    from matplotlib.pyplot import get_fignums, close as _close  # noqa
-
-    if fig is None:
-        for fig in get_fignums():
-            _close(fig)
-    else:
-        _close(fig)

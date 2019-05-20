@@ -1683,7 +1683,7 @@ class Normalizer(BaseEstimator, TransformerMixin):
     >>> X = [[4, 1, 2, 2],
     ...      [1, 3, 9, 3],
     ...      [5, 7, 5, 1]]
-    >>> transformer = Normalizer().fit(X) # fit does nothing.
+    >>> transformer = Normalizer().fit(X)  # fit does nothing.
     >>> transformer
     Normalizer(copy=True, norm='l2')
     >>> transformer.transform(X)
@@ -1819,7 +1819,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
     >>> X = [[ 1., -1.,  2.],
     ...      [ 2.,  0.,  0.],
     ...      [ 0.,  1., -1.]]
-    >>> transformer = Binarizer().fit(X) # fit does nothing.
+    >>> transformer = Binarizer().fit(X)  # fit does nothing.
     >>> transformer
     Binarizer(copy=True, threshold=0.0)
     >>> transformer.transform(X)
