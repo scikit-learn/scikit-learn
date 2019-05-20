@@ -26,6 +26,8 @@ It can be concluded that the model with larger L is more likely.
 """
 print(__doc__)
 
+# Author: Yoshihiro Uchida <nimbus1after2a1sun7shower@gmail.com>
+
 import numpy as np
 import matplotlib.pyplot as plt
 
