@@ -1,4 +1,3 @@
-# coding: utf-8
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Olivier Grisel <olivier.grisel@ensta.org>
@@ -6,7 +5,6 @@
 #          Eric Martin <eric@ericmart.in>
 #          Giorgio Patrini <giorgio.patrini@anu.edu.au>
 #          Eric Chang <ericchang2017@u.northwestern.edu>
-#          Xavier Dupré <xadupre@microsoft.com>
 # License: BSD 3 clause
 
 
@@ -1547,6 +1545,10 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
                 XP = np.empty((n_samples, self.n_output_features_),
                               dtype=X.dtype, order=self.order)
 
+                # What follows is a faster implementation of:
+                # for i, comb in enumerate(combinations):
+                #     XP[:, i] = X[:, comb].prod(1)
+
                 if self.include_bias:
                     XP[:, 0] = 1
 
@@ -1561,10 +1563,9 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
                     else:
                         new_index = []
                         end = index[-1]
-                        for feature_idx in range(0, n_features):
-                            a = index[feature_idx]
+                        for feature_idx in range(n_features):
+                            start = index[feature_idx]
                             new_index.append(current_col)
-                            start = a
                             if self.interaction_only:
                                 start += index[feature_idx + 1] - \
                                          index[feature_idx]
@@ -1574,7 +1575,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
                             np.multiply(XP[:, start:end],
                                         X[:, feature_idx:feature_idx + 1],
                                         out=XP[:, current_col:next_col],
-                                        where=True, casting='no')
+                                        casting='no')
                             current_col = next_col
 
                         new_index.append(current_col)
