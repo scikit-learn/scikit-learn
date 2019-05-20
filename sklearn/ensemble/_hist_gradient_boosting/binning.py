@@ -19,6 +19,8 @@ from .types import X_DTYPE, X_BINNED_DTYPE
 def _find_binning_thresholds(data, max_bins, subsample, random_state):
     """Extract feature-wise quantiles from numerical data.
 
+    Missing values are ignored for finding the thresholds.
+
     Parameters
     ----------
     data : array-like, shape (n_samples, n_features)
@@ -50,13 +52,20 @@ def _find_binning_thresholds(data, max_bins, subsample, random_state):
         subset = rng.choice(np.arange(data.shape[0]), subsample, replace=False)
         data = data.take(subset, axis=0)
 
-    percentiles = np.linspace(0, 100, num=max_bins + 1)
-    percentiles = percentiles[1:-1]
     binning_thresholds = []
+    has_missing_values = []
     for f_idx in range(data.shape[1]):
-        col_data = np.ascontiguousarray(data[:, f_idx], dtype=X_DTYPE)
+        col_data = data[:, f_idx]
+        # ignore missing values when computing bin thresholds
+        missing_mask = np.isnan(col_data)
+        if missing_mask.any():
+            col_data = col_data[~missing_mask]
+            has_missing_values.append(True)
+        else:
+            has_missing_values.append(False)
+        col_data = np.ascontiguousarray(col_data, dtype=X_DTYPE)
         distinct_values = np.unique(col_data)
-        if len(distinct_values) <= max_bins:
+        if len(distinct_values) + has_missing_values[-1] <= max_bins:
             midpoints = distinct_values[:-1] + distinct_values[1:]
             midpoints *= .5
         else:
@@ -65,10 +74,13 @@ def _find_binning_thresholds(data, max_bins, subsample, random_state):
             # np.unique(col_data, return_counts) instead but this is more
             # work and the performance benefit will be limited because we
             # work on a fixed-size subsample of the full data.
+            n_percentiles = max_bins if has_missing_values[-1] else max_bins + 1
+            percentiles = np.linspace(0, 100, num=n_percentiles)
+            percentiles = percentiles[1:-1]
             midpoints = np.percentile(col_data, percentiles,
                                       interpolation='midpoint').astype(X_DTYPE)
         binning_thresholds.append(midpoints)
-    return binning_thresholds
+    return binning_thresholds, has_missing_values
 
 
 class _BinMapper(BaseEstimator, TransformerMixin):
@@ -87,9 +99,10 @@ class _BinMapper(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     max_bins : int, optional (default=256)
-        The maximum number of bins to use. If for a given feature the number of
-        unique values is less than ``max_bins``, then those unique values
-        will be used to compute the bin thresholds, instead of the quantiles.
+        The maximum number of bins to use (including the bin for missing
+        values, if any). If for a given feature the number of unique values
+        is less than ``max_bins``, then those unique values will be used to
+        compute the bin thresholds, instead of the quantiles.
     subsample : int or None, optional (default=2e5)
         If ``n_samples > subsample``, then ``sub_samples`` samples will be
         randomly choosen to compute the quantiles. If ``None``, the whole data
@@ -107,6 +120,8 @@ class _BinMapper(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         """Fit data X by computing the binning thresholds.
 
+        The last bin is reserved for missing values, if any.
+
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
@@ -118,13 +133,15 @@ class _BinMapper(BaseEstimator, TransformerMixin):
         -------
         self : object
         """
-        X = check_array(X, dtype=[X_DTYPE])
-        self.bin_thresholds_ = _find_binning_thresholds(
+        X = check_array(X, dtype=[X_DTYPE], force_all_finite='allow-nan')
+        self.bin_thresholds_, self.has_missing_values_ = _find_binning_thresholds(
             X, self.max_bins, subsample=self.subsample,
             random_state=self.random_state)
 
         self.actual_n_bins_ = np.array(
-            [thresholds.shape[0] + 1 for thresholds in self.bin_thresholds_],
+            [thresholds.shape[0] + 1 + has_missing_values
+             for (thresholds, has_missing_values)
+             in zip(self.bin_thresholds_, self.has_missing_values_)],
             dtype=np.uint32)
 
         return self
@@ -132,17 +149,22 @@ class _BinMapper(BaseEstimator, TransformerMixin):
     def transform(self, X):
         """Bin data X.
 
+        Missing values will be mapped to the last bin (whether or not missing
+        values were encountered at fit time). For this reason, `X` should be
+        the fitting data, though we do not enforce this. Note that the GBDT
+        code only ever uses mapper.fit_transform(), so this assumption is OK.
+
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            The data to bin.
+            The data to bin. Must be the fitting data.
 
         Returns
         -------
         X_binned : array-like, shape (n_samples, n_features)
             The binned data.
         """
-        X = check_array(X, dtype=[X_DTYPE])
+        X = check_array(X, dtype=[X_DTYPE], force_all_finite='allow-nan')
         check_is_fitted(self, ['bin_thresholds_', 'actual_n_bins_'])
         if X.shape[1] != self.actual_n_bins_.shape[0]:
             raise ValueError(
@@ -151,5 +173,5 @@ class _BinMapper(BaseEstimator, TransformerMixin):
                                         X.shape[1])
             )
         binned = np.zeros_like(X, dtype=X_BINNED_DTYPE, order='F')
-        _map_to_bins(X, self.bin_thresholds_, binned)
+        _map_to_bins(X, self.bin_thresholds_, self.actual_n_bins_, binned)
         return binned
