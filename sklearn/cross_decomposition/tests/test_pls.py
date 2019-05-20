@@ -359,12 +359,12 @@ def test_scale_and_stability():
             X_score, Y_score = clf.fit_transform(X, Y)
             clf.set_params(scale=False)
             X_s_score, Y_s_score = clf.fit_transform(X_s, Y_s)
-            assert_allclose(X_s_score, X_score, rtol=1e-3)
+            assert_allclose(X_s_score, X_score, rtol=1e-3, atol=1e-3)
             assert_allclose(Y_s_score, Y_score, rtol=1e-3, atol=1e-6)
             # Scaling should be idempotent
             clf.set_params(scale=True)
             X_score, Y_score = clf.fit_transform(X_s, Y_s)
-            assert_allclose(X_s_score, X_score, rtol=1e-2)
+            assert_allclose(X_s_score, X_score, rtol=1e-2, atol=1e-3)
             assert_allclose(Y_s_score, Y_score, rtol=1e-3, atol=1e-6)
 
 
