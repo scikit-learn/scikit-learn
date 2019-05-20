@@ -649,9 +649,9 @@ def test_euclidean_distances(dtype, x_array_constr, y_array_constr):
     # check that euclidean distances gives same result as scipy cdist
     # when X and Y != X are provided
     rng = np.random.RandomState(0)
-    X = rng.random_sample((100, 10)).astype(dtype, copy=False)
+    X = rng.random_sample((110, 10000)).astype(dtype, copy=False)
     X[X < 0.8] = 0
-    Y = rng.random_sample((10, 10)).astype(dtype, copy=False)
+    Y = rng.random_sample((100, 10000)).astype(dtype, copy=False)
     Y[Y < 0.8] = 0
 
     expected = cdist(X, Y)
@@ -673,7 +673,7 @@ def test_euclidean_distances_sym(dtype, x_array_constr):
     # check that euclidean distances gives same result as scipy pdist
     # when only X is provided
     rng = np.random.RandomState(0)
-    X = rng.random_sample((100, 10)).astype(dtype, copy=False)
+    X = rng.random_sample((100, 10000)).astype(dtype, copy=False)
     X[X < 0.8] = 0
 
     expected = squareform(pdist(X))

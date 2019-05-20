@@ -319,7 +319,6 @@ def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None):
     batch_size = max(int(batch_size), 1)
 
     x_batches = gen_batches(X.shape[0], batch_size)
-    y_batches = gen_batches(Y.shape[0], batch_size)
 
     for i, x_slice in enumerate(x_batches):
         X_chunk = X[x_slice].astype(np.float64)
@@ -327,6 +326,8 @@ def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None):
             XX_chunk = row_norms(X_chunk, squared=True)[:, np.newaxis]
         else:
             XX_chunk = XX[x_slice]
+
+        y_batches = gen_batches(Y.shape[0], batch_size)
 
         for j, y_slice in enumerate(y_batches):
             if X is Y and j < i:
