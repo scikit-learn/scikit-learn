@@ -399,9 +399,8 @@ def test_export_text():
     assert export_text(reg, decimals=1, show_weights=True) == expected_report
 
 
-def test_plot_tree():
+def test_plot_tree(pyplot):
     # mostly smoke tests
-    pytest.importorskip("matplotlib.pyplot")
     # Check correctness of export_graphviz
     clf = DecisionTreeClassifier(max_depth=3,
                                  min_samples_split=2,
