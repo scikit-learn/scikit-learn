@@ -74,7 +74,8 @@ def _find_binning_thresholds(data, max_bins, subsample, random_state):
             # np.unique(col_data, return_counts) instead but this is more
             # work and the performance benefit will be limited because we
             # work on a fixed-size subsample of the full data.
-            n_percentiles = max_bins if has_missing_values[-1] else max_bins + 1
+            n_percentiles = (max_bins if has_missing_values[-1]
+                             else max_bins + 1)
             percentiles = np.linspace(0, 100, num=n_percentiles)
             percentiles = percentiles[1:-1]
             midpoints = np.percentile(col_data, percentiles,
