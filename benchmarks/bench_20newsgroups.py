@@ -1,4 +1,3 @@
-from __future__ import print_function, division
 from time import time
 import argparse
 import numpy as np
@@ -17,11 +16,9 @@ from sklearn.naive_bayes import MultinomialNB
 
 ESTIMATORS = {
     "dummy": DummyClassifier(),
-    "random_forest": RandomForestClassifier(n_estimators=100,
-                                            max_features="sqrt",
+    "random_forest": RandomForestClassifier(max_features="sqrt",
                                             min_samples_split=10),
-    "extra_trees": ExtraTreesClassifier(n_estimators=100,
-                                        max_features="sqrt",
+    "extra_trees": ExtraTreesClassifier(max_features="sqrt",
                                         min_samples_split=10),
     "logistic_regression": LogisticRegression(),
     "naive_bayes": MultinomialNB(),

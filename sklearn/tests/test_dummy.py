@@ -1,4 +1,3 @@
-from __future__ import division
 
 import pytest
 
@@ -101,6 +100,22 @@ def test_most_frequent_and_prior_strategy():
         else:
             assert_array_almost_equal(clf.predict_proba([X[0]]),
                                       clf.class_prior_.reshape((1, -1)) > 0.5)
+
+
+def test_most_frequent_and_prior_strategy_with_2d_column_y():
+    # non-regression test added in
+    # https://github.com/scikit-learn/scikit-learn/pull/13545
+    X = [[0], [0], [0], [0]]
+    y_1d = [1, 2, 1, 1]
+    y_2d = [[1], [2], [1], [1]]
+
+    for strategy in ("most_frequent", "prior"):
+        clf_1d = DummyClassifier(strategy=strategy, random_state=0)
+        clf_2d = DummyClassifier(strategy=strategy, random_state=0)
+
+        clf_1d.fit(X, y_1d)
+        clf_2d.fit(X, y_2d)
+        assert_array_equal(clf_1d.predict(X), clf_2d.predict(X))
 
 
 def test_most_frequent_and_prior_strategy_multioutput():
@@ -676,6 +691,7 @@ def test_dummy_regressor_return_std():
     assert_array_equal(y_pred_list[1], y_std_expected)
 
 
+@pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
 @pytest.mark.parametrize("y,y_test", [
     ([1, 1, 1, 2], [1.25] * 4),
     (np.array([[2, 2],
@@ -710,3 +726,15 @@ def test_regressor_prediction_independent_of_X(strategy):
     predictions2 = reg2.predict(X2)
 
     assert_array_equal(predictions1, predictions2)
+
+
+@pytest.mark.parametrize(
+    "strategy", ["stratified", "most_frequent", "prior", "uniform", "constant"]
+)
+def test_dtype_of_classifier_probas(strategy):
+    y = [0, 2, 1, 1]
+    X = np.zeros(4)
+    model = DummyClassifier(strategy=strategy, random_state=0, constant=0)
+    probas = model.fit(X, y).predict_proba(X)
+
+    assert probas.dtype == np.float64

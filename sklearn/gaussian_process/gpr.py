@@ -11,14 +11,16 @@ import numpy as np
 from scipy.linalg import cholesky, cho_solve, solve_triangular
 from scipy.optimize import fmin_l_bfgs_b
 
-from sklearn.base import BaseEstimator, RegressorMixin, clone
-from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
-from sklearn.utils import check_random_state
-from sklearn.utils.validation import check_X_y, check_array
-from sklearn.exceptions import ConvergenceWarning
+from ..base import BaseEstimator, RegressorMixin, clone
+from ..base import MultiOutputMixin
+from .kernels import RBF, ConstantKernel as C
+from ..utils import check_random_state
+from ..utils.validation import check_X_y, check_array
+from ..exceptions import ConvergenceWarning
 
 
-class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
+class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
+                               MultiOutputMixin):
     """Gaussian process regression (GPR).
 
     The implementation is based on Algorithm 2.1 of Gaussian Processes
@@ -472,3 +474,6 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
             raise ValueError("Unknown optimizer %s." % self.optimizer)
 
         return theta_opt, func_min
+
+    def _more_tags(self):
+        return {'requires_fit': False}

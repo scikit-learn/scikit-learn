@@ -127,7 +127,7 @@ for distribution, color, axes in zip(distributions, colors, axes_list):
         ax.hist(X_trans, color=color, bins=BINS)
         title = 'After {}'.format(meth_name)
         if lmbda is not None:
-            title += '\n$\lambda$ = {}'.format(lmbda)
+            title += r'\n$\lambda$ = {}'.format(lmbda)
         ax.set_title(title, fontsize=FONT_SIZE)
         ax.tick_params(axis='both', which='major', labelsize=FONT_SIZE)
         ax.set_xlim([-3.5, 3.5])

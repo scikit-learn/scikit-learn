@@ -17,10 +17,11 @@ example is based on the Boston housing data set.
 # Author: Guillaume Lemaitre <guillaume.lemaitre@inria.fr>
 # License: BSD 3 clause
 
-from __future__ import print_function, division
 
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
+from distutils.version import LooseVersion
 
 print(__doc__)
 
@@ -33,6 +34,13 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import RidgeCV
 from sklearn.compose import TransformedTargetRegressor
 from sklearn.metrics import median_absolute_error, r2_score
+
+
+# `normed` is being deprecated in favor of `density` in histograms
+if LooseVersion(matplotlib.__version__) >= '2.1':
+    density_param = {'density': True}
+else:
+    density_param = {'normed': True}
 
 ###############################################################################
 # A synthetic random regression problem is generated. The targets ``y`` are
@@ -54,13 +62,13 @@ y_trans = np.log1p(y)
 
 f, (ax0, ax1) = plt.subplots(1, 2)
 
-ax0.hist(y, bins=100, normed=True)
+ax0.hist(y, bins=100, **density_param)
 ax0.set_xlim([0, 2000])
 ax0.set_ylabel('Probability')
 ax0.set_xlabel('Target')
 ax0.set_title('Target distribution')
 
-ax1.hist(y_trans, bins=100, normed=True)
+ax1.hist(y_trans, bins=100, **density_param)
 ax1.set_ylabel('Probability')
 ax1.set_xlabel('Target')
 ax1.set_title('Transformed target distribution')
@@ -139,12 +147,12 @@ y_trans = quantile_transform(dataset.data[:, target],
 
 f, (ax0, ax1) = plt.subplots(1, 2)
 
-ax0.hist(y, bins=100, normed=True)
+ax0.hist(y, bins=100, **density_param)
 ax0.set_ylabel('Probability')
 ax0.set_xlabel('Target')
 ax0.set_title('Target distribution')
 
-ax1.hist(y_trans, bins=100, normed=True)
+ax1.hist(y_trans, bins=100, **density_param)
 ax1.set_ylabel('Probability')
 ax1.set_xlabel('Target')
 ax1.set_title('Transformed target distribution')

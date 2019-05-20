@@ -17,7 +17,6 @@ the lower the better
 #          Noel Dawe <noel@dawe.me>
 # License: BSD 3 clause
 
-from __future__ import division
 
 import warnings
 from functools import partial
@@ -38,7 +37,7 @@ from ..preprocessing import label_binarize
 from .base import _average_binary_score
 
 
-def auc(x, y, reorder='deprecated'):
+def auc(x, y):
     """Compute Area Under the Curve (AUC) using the trapezoidal rule
 
     This is a general function, given points on a curve.  For computing the
@@ -53,19 +52,6 @@ def auc(x, y, reorder='deprecated'):
         decreasing.
     y : array, shape = [n]
         y coordinates.
-    reorder : boolean, optional (default='deprecated')
-        Whether to sort x before computing. If False, assume that x must be
-        either monotonic increasing or monotonic decreasing. If True, y is
-        used to break ties when sorting x. Make sure that y has a monotonic
-        relation to x when setting reorder to True.
-
-        .. deprecated:: 0.20
-           Parameter ``reorder`` has been deprecated in version 0.20 and will
-           be removed in 0.22. It's introduced for roc_auc_score (not for
-           general use) and is no longer used there. What's more, the result
-           from auc will be significantly influenced if x is sorted
-           unexpectedly due to slight floating point error (See issue #9786).
-           Future (and default) behavior is equivalent to ``reorder=False``.
 
     Returns
     -------
@@ -96,27 +82,14 @@ def auc(x, y, reorder='deprecated'):
         raise ValueError('At least 2 points are needed to compute'
                          ' area under curve, but x.shape = %s' % x.shape)
 
-    if reorder != 'deprecated':
-        warnings.warn("The 'reorder' parameter has been deprecated in "
-                      "version 0.20 and will be removed in 0.22. It is "
-                      "recommended not to set 'reorder' and ensure that x "
-                      "is monotonic increasing or monotonic decreasing.",
-                      DeprecationWarning)
-
     direction = 1
-    if reorder is True:
-        # reorder the data points according to the x axis and using y to
-        # break ties
-        order = np.lexsort((y, x))
-        x, y = x[order], y[order]
-    else:
-        dx = np.diff(x)
-        if np.any(dx < 0):
-            if np.all(dx <= 0):
-                direction = -1
-            else:
-                raise ValueError("x is neither increasing nor decreasing "
-                                 ": {}.".format(x))
+    dx = np.diff(x)
+    if np.any(dx < 0):
+        if np.all(dx <= 0):
+            direction = -1
+        else:
+            raise ValueError("x is neither increasing nor decreasing "
+                             ": {}.".format(x))
 
     area = direction * np.trapz(y, x)
     if isinstance(area, np.memmap):
@@ -329,7 +302,7 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
         if max_fpr is None or max_fpr == 1:
             return auc(fpr, tpr)
         if max_fpr <= 0 or max_fpr > 1:
-            raise ValueError("Expected max_frp in range ]0, 1], got: %r"
+            raise ValueError("Expected max_fpr in range (0, 1], got: %r"
                              % max_fpr)
 
         # Add a single point at max_fpr by linear interpolation
@@ -470,13 +443,16 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
     Parameters
     ----------
     y_true : array, shape = [n_samples]
-        True targets of binary classification in range {-1, 1} or {0, 1}.
+        True binary labels. If labels are not either {-1, 1} or {0, 1}, then
+        pos_label should be explicitly given.
 
     probas_pred : array, shape = [n_samples]
         Estimated probabilities or decision function.
 
     pos_label : int or str, default=None
-        The label of the positive class
+        The label of the positive class.
+        When ``pos_label=None``, if y_true is in {-1, 1} or {0, 1},
+        ``pos_label`` is set to 1, otherwise an error will be raised.
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
@@ -553,7 +529,9 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
         (as returned by "decision_function" on some classifiers).
 
     pos_label : int or str, default=None
-        Label considered as positive and others are considered negative.
+        The label of the positive class.
+        When ``pos_label=None``, if y_true is in {-1, 1} or {0, 1},
+        ``pos_label`` is set to 1, otherwise an error will be raised.
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
@@ -635,12 +613,11 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
         tps = tps[optimal_idxs]
         thresholds = thresholds[optimal_idxs]
 
-    if tps.size == 0 or fps[0] != 0 or tps[0] != 0:
-        # Add an extra threshold position if necessary
-        # to make sure that the curve starts at (0, 0)
-        tps = np.r_[0, tps]
-        fps = np.r_[0, fps]
-        thresholds = np.r_[thresholds[0] + 1, thresholds]
+    # Add an extra threshold position
+    # to make sure that the curve starts at (0, 0)
+    tps = np.r_[0, tps]
+    fps = np.r_[0, fps]
+    thresholds = np.r_[thresholds[0] + 1, thresholds]
 
     if fps[-1] <= 0:
         warnings.warn("No negative samples in y_true, "
@@ -729,13 +706,13 @@ def label_ranking_average_precision_score(y_true, y_score, sample_weight=None):
         if (relevant.size == 0 or relevant.size == n_labels):
             # If all labels are relevant or unrelevant, the score is also
             # equal to 1. The label ranking has no meaning.
-            out += 1.
-            continue
+            aux = 1.
+        else:
+            scores_i = y_score[i]
+            rank = rankdata(scores_i, 'max')[relevant]
+            L = rankdata(scores_i[relevant], 'max')
+            aux = (L / rank).mean()
 
-        scores_i = y_score[i]
-        rank = rankdata(scores_i, 'max')[relevant]
-        L = rankdata(scores_i[relevant], 'max')
-        aux = (L / rank).mean()
         if sample_weight is not None:
             aux = aux * sample_weight[i]
         out += aux

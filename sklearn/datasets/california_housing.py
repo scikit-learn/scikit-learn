@@ -33,7 +33,7 @@ from .base import _fetch_remote
 from .base import _pkl_filepath
 from .base import RemoteFileMetadata
 from ..utils import Bunch
-from ..externals import joblib
+from ..utils import _joblib
 
 # The original data can be found at:
 # https://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.tgz
@@ -50,12 +50,12 @@ def fetch_california_housing(data_home=None, download_if_missing=True,
                              return_X_y=False):
     """Load the California housing dataset (regression).
 
-    ==============     ==============
-    Samples total               20640
-    Dimensionality                  8
-    Features                     real
-    Target             real 0.15 - 5.
-    ==============     ==============
+    ==============   ==============
+    Samples total             20640
+    Dimensionality                8
+    Features                   real
+    Target           real 0.15 - 5.
+    ==============   ==============
 
     Read more in the :ref:`User Guide <california_housing_dataset>`.
 
@@ -97,7 +97,7 @@ def fetch_california_housing(data_home=None, download_if_missing=True,
         .. versionadded:: 0.20
 
     Notes
-    ------
+    -----
 
     This dataset consists of 20,640 samples and 9 features.
     """
@@ -124,11 +124,11 @@ def fetch_california_housing(data_home=None, download_if_missing=True,
             columns_index = [8, 7, 2, 3, 4, 5, 6, 1, 0]
             cal_housing = cal_housing[:, columns_index]
 
-            joblib.dump(cal_housing, filepath, compress=6)
+            _joblib.dump(cal_housing, filepath, compress=6)
         remove(archive_path)
 
     else:
-        cal_housing = joblib.load(filepath)
+        cal_housing = _joblib.load(filepath)
 
     feature_names = ["MedInc", "HouseAge", "AveRooms", "AveBedrms",
                      "Population", "AveOccup", "Latitude", "Longitude"]

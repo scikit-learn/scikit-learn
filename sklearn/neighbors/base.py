@@ -9,7 +9,6 @@
 from functools import partial
 from distutils.version import LooseVersion
 
-import sys
 import warnings
 from abc import ABCMeta, abstractmethod
 
@@ -18,16 +17,15 @@ from scipy.sparse import csr_matrix, issparse
 
 from .ball_tree import BallTree
 from .kd_tree import KDTree
-from ..base import BaseEstimator
+from ..base import BaseEstimator, MultiOutputMixin
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_X_y, check_array, gen_even_slices
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
-from ..externals import six
-from ..utils import Parallel, delayed, effective_n_jobs
-from ..utils._joblib import __version__ as joblib_version
 from ..exceptions import DataConversionWarning
+from ..utils._joblib import Parallel, delayed, effective_n_jobs
+from ..utils._joblib import __version__ as joblib_version
 
 VALID_METRICS = dict(ball_tree=BallTree.valid_metrics,
                      kd_tree=KDTree.valid_metrics,
@@ -45,7 +43,8 @@ VALID_METRICS = dict(ball_tree=BallTree.valid_metrics,
 
 VALID_METRICS_SPARSE = dict(ball_tree=[],
                             kd_tree=[],
-                            brute=PAIRWISE_DISTANCE_FUNCTIONS.keys())
+                            brute=(PAIRWISE_DISTANCE_FUNCTIONS.keys() -
+                                   {'haversine'}))
 
 
 def _check_weights(weights):
@@ -63,14 +62,14 @@ def _get_weights(dist, weights):
     """Get the weights from an array of distances and a parameter ``weights``
 
     Parameters
-    ===========
+    ----------
     dist : ndarray
         The input distances
     weights : {'uniform', 'distance' or a callable}
         The kind of weighting used
 
     Returns
-    ========
+    -------
     weights_arr : array of the same shape as ``dist``
         if ``weights == 'uniform'``, then returns None
     """
@@ -103,7 +102,7 @@ def _get_weights(dist, weights):
                          "'distance', or a callable function")
 
 
-class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
+class NeighborsBase(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
     """Base class for nearest neighbors estimators."""
 
     @abstractmethod
@@ -292,7 +291,7 @@ def _tree_query_parallel_helper(tree, data, n_neighbors, return_distance):
     return tree.query(data, n_neighbors, return_distance)
 
 
-class KNeighborsMixin(object):
+class KNeighborsMixin:
     """Mixin for k-neighbors searches"""
 
     def _kneighbors_reduce_func(self, dist, start,
@@ -439,11 +438,12 @@ class KNeighborsMixin(object):
                 raise ValueError(
                     "%s does not work with sparse matrices. Densify the data, "
                     "or set algorithm='brute'" % self._fit_method)
-            if (sys.version_info < (3,) or
-                    LooseVersion(joblib_version) < LooseVersion('0.12')):
+            old_joblib = LooseVersion(joblib_version) < LooseVersion('0.12')
+            if old_joblib:
                 # Deal with change of API in joblib
+                check_pickle = False if old_joblib else None
                 delayed_query = delayed(_tree_query_parallel_helper,
-                                        check_pickle=False)
+                                        check_pickle=check_pickle)
                 parallel_kwargs = {"backend": "threading"}
             else:
                 delayed_query = delayed(_tree_query_parallel_helper)
@@ -580,7 +580,7 @@ def _tree_query_radius_parallel_helper(tree, data, radius, return_distance):
     return tree.query_radius(data, radius, return_distance)
 
 
-class RadiusNeighborsMixin(object):
+class RadiusNeighborsMixin:
     """Mixin for radius-based neighbors searches"""
 
     def _radius_neighbors_reduce_func(self, dist, start,
@@ -854,7 +854,7 @@ class RadiusNeighborsMixin(object):
                           shape=(n_samples1, n_samples2))
 
 
-class SupervisedFloatMixin(object):
+class SupervisedFloatMixin:
     def fit(self, X, y):
         """Fit the model using X as training data and y as target values
 
@@ -874,7 +874,7 @@ class SupervisedFloatMixin(object):
         return self._fit(X)
 
 
-class SupervisedIntegerMixin(object):
+class SupervisedIntegerMixin:
     def fit(self, X, y):
         """Fit the model using X as training data and y as target values
 
@@ -917,7 +917,7 @@ class SupervisedIntegerMixin(object):
         return self._fit(X)
 
 
-class UnsupervisedMixin(object):
+class UnsupervisedMixin:
     def fit(self, X, y=None):
         """Fit the model using X as training data
 

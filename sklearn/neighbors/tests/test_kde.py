@@ -10,7 +10,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.datasets import make_blobs
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import StandardScaler
-from sklearn.externals import joblib
+from sklearn.utils import _joblib
 
 
 def compute_kernel_slow(Y, X, kernel, h):
@@ -205,21 +205,22 @@ def test_kde_sample_weights():
                     assert_allclose(scores_scaled_weight, scores_weight)
 
 
-def test_pickling(tmpdir):
+@pytest.mark.parametrize('sample_weight', [None, [0.1, 0.2, 0.3]])
+def test_pickling(tmpdir, sample_weight):
     # Make sure that predictions are the same before and after pickling. Used
     # to be a bug because sample_weights wasn't pickled and the resulting tree
     # would miss some info.
 
     kde = KernelDensity()
     data = np.reshape([1., 2., 3.], (-1, 1))
-    kde.fit(data)
+    kde.fit(data, sample_weight=sample_weight)
 
     X = np.reshape([1.1, 2.1], (-1, 1))
     scores = kde.score_samples(X)
 
     file_path = str(tmpdir.join('dump.pkl'))
-    joblib.dump(kde, file_path)
-    kde = joblib.load(file_path)
+    _joblib.dump(kde, file_path)
+    kde = _joblib.load(file_path)
     scores_pickled = kde.score_samples(X)
 
     assert_allclose(scores, scores_pickled)

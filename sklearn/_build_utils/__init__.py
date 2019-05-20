@@ -4,7 +4,6 @@ Utilities useful during the build.
 # author: Andy Mueller, Gael Varoquaux
 # license: BSD
 
-from __future__ import division, print_function, absolute_import
 
 import os
 
@@ -12,8 +11,12 @@ from distutils.version import LooseVersion
 
 from numpy.distutils.system_info import get_info
 
+from .openmp_helpers import check_openmp_support
+
+
 DEFAULT_ROOT = 'sklearn'
-CYTHON_MIN_VERSION = '0.23'
+# on conda, this is the latest for python 3.5
+CYTHON_MIN_VERSION = '0.28.5'
 
 
 def get_blas_info():
@@ -62,6 +65,8 @@ def build_from_c_and_cpp_files(extensions):
 
 def maybe_cythonize_extensions(top_path, config):
     """Tweaks for building extensions between release and development mode."""
+    with_openmp = check_openmp_support()
+
     is_release = os.path.exists(os.path.join(top_path, 'PKG-INFO'))
 
     if is_release:
@@ -81,4 +86,7 @@ def maybe_cythonize_extensions(top_path, config):
             exc.args += (message,)
             raise
 
-        config.ext_modules = cythonize(config.ext_modules)
+        config.ext_modules = cythonize(
+            config.ext_modules,
+            compile_time_env={'SKLEARN_OPENMP_SUPPORTED': with_openmp},
+            compiler_directives={'language_level': 3})

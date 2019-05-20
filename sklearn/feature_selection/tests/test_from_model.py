@@ -1,7 +1,6 @@
 import pytest
 import numpy as np
 
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
@@ -35,7 +34,6 @@ def test_invalid_input():
         assert_raises(ValueError, model.transform, data)
 
 
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_input_estimator_unchanged():
     # Test that SelectFromModel fits on a clone of the estimator.
     est = RandomForestClassifier()
@@ -178,7 +176,6 @@ def test_feature_importances():
         assert_array_almost_equal(X_new, X[:, feature_mask])
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_sample_weight():
     # Ensure sample weights are passed to underlying estimator
@@ -216,7 +213,6 @@ def test_coef_default_threshold():
     assert_array_almost_equal(X_new, X[:, mask])
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @skip_if_32bit
 def test_2d_coef():
@@ -243,7 +239,6 @@ def test_2d_coef():
             assert_array_almost_equal(X_new, X[:, feature_mask])
 
 
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 # 0.23. warning about tol not having its correct default value.
 @pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_partial_fit():
@@ -264,7 +259,7 @@ def test_partial_fit():
 
     # check that if est doesn't have partial_fit, neither does SelectFromModel
     transformer = SelectFromModel(estimator=RandomForestClassifier())
-    assert_false(hasattr(transformer, "partial_fit"))
+    assert not hasattr(transformer, "partial_fit")
 
 
 def test_calling_fit_reinitializes():

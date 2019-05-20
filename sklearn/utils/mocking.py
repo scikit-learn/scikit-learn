@@ -1,11 +1,10 @@
 import numpy as np
 
 from ..base import BaseEstimator, ClassifierMixin
-from .testing import assert_true
 from .validation import _num_samples, check_array
 
 
-class ArraySlicingWrapper(object):
+class ArraySlicingWrapper:
     """
     Parameters
     ----------
@@ -18,7 +17,7 @@ class ArraySlicingWrapper(object):
         return MockDataFrame(self.array[aslice])
 
 
-class MockDataFrame(object):
+class MockDataFrame:
     """
     Parameters
     ----------
@@ -96,19 +95,20 @@ class CheckingClassifier(BaseEstimator, ClassifierMixin):
                                               allow_nd=True))
         if self.expected_fit_params:
             missing = set(self.expected_fit_params) - set(fit_params)
-            assert_true(len(missing) == 0, 'Expected fit parameter(s) %s not '
-                                           'seen.' % list(missing))
+            assert len(missing) == 0, 'Expected fit parameter(s) %s not ' \
+                                      'seen.' % list(missing)
             for key, value in fit_params.items():
-                assert_true(len(value) == len(X),
-                            'Fit parameter %s has length %d; '
-                            'expected %d.' % (key, len(value), len(X)))
+                assert len(value) == len(X), (
+                        'Fit parameter %s has length %d; '
+                        'expected %d.'
+                        % (key, len(value), len(X)))
 
         return self
 
     def predict(self, T):
         """
         Parameters
-        -----------
+        ----------
         T : indexable, length n_samples
         """
         if self.check_X is not None:
@@ -132,3 +132,6 @@ class CheckingClassifier(BaseEstimator, ClassifierMixin):
         else:
             score = 0.
         return score
+
+    def _more_tags(self):
+        return {'_skip_test': True, 'X_types': ['1dlabel']}

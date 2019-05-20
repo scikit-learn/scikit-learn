@@ -27,8 +27,6 @@ Gerhard Schroeder       0.76      0.76      0.76        25
 ================== ============ ======= ========== =======
 
 """
-from __future__ import print_function
-
 from time import time
 import logging
 import matplotlib.pyplot as plt

@@ -1,19 +1,19 @@
 # Authors: Shane Grigsby <refuge@rocktalus.com>
-#          Amy X. Zhang <axz@mit.edu>
+#          Adrin Jalali <adrin.jalali@gmail.com>
 # License: BSD 3 clause
 
-from __future__ import print_function, division
 import numpy as np
 import pytest
 
 from sklearn.datasets.samples_generator import make_blobs
-from sklearn.cluster.optics_ import OPTICS
-from sklearn.cluster.optics_ import _TreeNode, _cluster_tree
-from sklearn.cluster.optics_ import _find_local_maxima
+from sklearn.cluster.optics_ import (OPTICS,
+                                     _extend_region,
+                                     _extract_xi_labels)
 from sklearn.metrics.cluster import contingency_matrix
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.cluster.dbscan_ import DBSCAN
-from sklearn.utils.testing import assert_equal, assert_warns
+from sklearn.utils import shuffle
+from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_allclose
@@ -32,6 +32,114 @@ C6 = [5, 6] + 2 * rng.randn(n_points_per_cluster, 2)
 X = np.vstack((C1, C2, C3, C4, C5, C6))
 
 
+@pytest.mark.parametrize(
+    ('r_plot', 'end'),
+    [[[10, 8.9, 8.8, 8.7, 7, 10], 3],
+     [[10, 8.9, 8.8, 8.7, 8.6, 7, 10], 0],
+     [[10, 8.9, 8.8, 8.7, 7, 6, np.inf], 4],
+     [[10, 8.9, 8.8, 8.7, 7, 6, np.inf], 4],
+     ])
+def test_extend_downward(r_plot, end):
+    r_plot = np.array(r_plot)
+    ratio = r_plot[:-1] / r_plot[1:]
+    steep_downward = ratio >= 1 / .9
+    upward = ratio < 1
+
+    e = _extend_region(steep_downward, upward, 0, 2)
+    assert e == end
+
+
+@pytest.mark.parametrize(
+    ('r_plot', 'end'),
+    [[[1, 2, 2.1, 2.2, 4, 8, 8, np.inf], 6],
+     [[1, 2, 2.1, 2.2, 2.3, 4, 8, 8, np.inf], 0],
+     [[1, 2, 2.1, 2, np.inf], 0],
+     [[1, 2, 2.1, np.inf], 2],
+     ])
+def test_extend_upward(r_plot, end):
+    r_plot = np.array(r_plot)
+    ratio = r_plot[:-1] / r_plot[1:]
+    steep_upward = ratio <= .9
+    downward = ratio > 1
+
+    e = _extend_region(steep_upward, downward, 0, 2)
+    assert e == end
+
+
+@pytest.mark.parametrize(
+    ('ordering', 'clusters', 'expected'),
+    [[[0, 1, 2, 3], [[0, 1], [2, 3]], [0, 0, 1, 1]],
+     [[0, 1, 2, 3], [[0, 1], [3, 3]], [0, 0, -1, 1]],
+     [[0, 1, 2, 3], [[0, 1], [3, 3], [0, 3]], [0, 0, -1, 1]],
+     [[3, 1, 2, 0], [[0, 1], [3, 3], [0, 3]], [1, 0, -1, 0]],
+     ])
+def test_the_extract_xi_labels(ordering, clusters, expected):
+    labels = _extract_xi_labels(ordering, clusters)
+
+    assert_array_equal(labels, expected)
+
+
+def test_extract_xi():
+    # small and easy test (no clusters around other clusters)
+    # but with a clear noise data.
+    rng = np.random.RandomState(0)
+    n_points_per_cluster = 5
+
+    C1 = [-5, -2] + .8 * rng.randn(n_points_per_cluster, 2)
+    C2 = [4, -1] + .1 * rng.randn(n_points_per_cluster, 2)
+    C3 = [1, -2] + .2 * rng.randn(n_points_per_cluster, 2)
+    C4 = [-2, 3] + .3 * rng.randn(n_points_per_cluster, 2)
+    C5 = [3, -2] + .6 * rng.randn(n_points_per_cluster, 2)
+    C6 = [5, 6] + .2 * rng.randn(n_points_per_cluster, 2)
+
+    X = np.vstack((C1, C2, C3, C4, C5, np.array([[100, 100]]), C6))
+    expected_labels = np.r_[[2] * 5, [0] * 5, [1] * 5, [3] * 5, [1] * 5,
+                            -1, [4] * 5]
+    X, expected_labels = shuffle(X, expected_labels, random_state=rng)
+
+    clust = OPTICS(min_samples=3, min_cluster_size=2,
+                   max_eps=20, cluster_method='xi',
+                   xi=0.4).fit(X)
+    assert_array_equal(clust.labels_, expected_labels)
+
+    X = np.vstack((C1, C2, C3, C4, C5, np.array([[100, 100]] * 2), C6))
+    expected_labels = np.r_[[1] * 5, [3] * 5, [2] * 5, [0] * 5, [2] * 5,
+                            -1, -1, [4] * 5]
+    X, expected_labels = shuffle(X, expected_labels, random_state=rng)
+
+    clust = OPTICS(min_samples=3, min_cluster_size=3,
+                   max_eps=20, cluster_method='xi',
+                   xi=0.1).fit(X)
+    # this may fail if the predecessor correction is not at work!
+    assert_array_equal(clust.labels_, expected_labels)
+
+    C1 = [[0, 0], [0, 0.1], [0, -.1], [0.1, 0]]
+    C2 = [[10, 10], [10, 9], [10, 11], [9, 10]]
+    C3 = [[100, 100], [100, 90], [100, 110], [90, 100]]
+    X = np.vstack((C1, C2, C3))
+    expected_labels = np.r_[[0] * 4, [1] * 4, [2] * 4]
+    X, expected_labels = shuffle(X, expected_labels, random_state=rng)
+
+    clust = OPTICS(min_samples=2, min_cluster_size=2,
+                   max_eps=np.inf, cluster_method='xi',
+                   xi=0.04).fit(X)
+    assert_array_equal(clust.labels_, expected_labels)
+
+
+def test_cluster_hierarchy_():
+    rng = np.random.RandomState(0)
+    n_points_per_cluster = 100
+    C1 = [0, 0] + 2 * rng.randn(n_points_per_cluster, 2)
+    C2 = [0, 0] + 50 * rng.randn(n_points_per_cluster, 2)
+    X = np.vstack((C1, C2))
+    X = shuffle(X, random_state=0)
+
+    clusters = OPTICS(min_samples=20, xi=.1).fit(X).cluster_hierarchy_
+    assert clusters.shape == (2, 2)
+    diff = np.sum(clusters - np.array([[0, 99], [0, 199]]))
+    assert diff / len(X) < 0.05
+
+
 def test_correct_number_of_clusters():
     # in 'auto' mode
 
@@ -39,17 +147,13 @@ def test_correct_number_of_clusters():
     X = generate_clustered_data(n_clusters=n_clusters)
     # Parameters chosen specifically for this task.
     # Compute OPTICS
-    clust = OPTICS(max_eps=5.0 * 6.0, min_samples=4)
+    clust = OPTICS(max_eps=5.0 * 6.0, min_samples=4, xi=.1)
     clust.fit(X)
     # number of clusters, ignoring noise if present
     n_clusters_1 = len(set(clust.labels_)) - int(-1 in clust.labels_)
     assert_equal(n_clusters_1, n_clusters)
 
     # check attribute types and sizes
-    assert clust.core_sample_indices_.ndim == 1
-    assert clust.core_sample_indices_.size > 0
-    assert clust.core_sample_indices_.dtype.kind == 'i'
-
     assert clust.labels_.shape == (len(X),)
     assert clust.labels_.dtype.kind == 'i'
 
@@ -66,23 +170,14 @@ def test_correct_number_of_clusters():
 
 def test_minimum_number_of_sample_check():
     # test that we check a minimum number of samples
-    msg = ("Number of training samples (n_samples=1) must be greater than "
-           "min_samples (min_samples=10) used for clustering.")
+    msg = "min_samples must be no greater than"
 
     # Compute OPTICS
     X = [[1, 1]]
-    clust = OPTICS(max_eps=5.0 * 0.3, min_samples=10)
+    clust = OPTICS(max_eps=5.0 * 0.3, min_samples=10, min_cluster_size=1)
 
     # Run the fit
     assert_raise_message(ValueError, msg, clust.fit, X)
-
-
-def test_empty_extract():
-    # Test extract where fit() has not yet been run.
-    msg = ("This OPTICS instance is not fitted yet. Call 'fit' with "
-           "appropriate arguments before using this method.")
-    clust = OPTICS(max_eps=5.0 * 0.3, min_samples=10)
-    assert_raise_message(ValueError, msg, clust.extract_dbscan, 0.01)
 
 
 def test_bad_extract():
@@ -93,9 +188,10 @@ def test_bad_extract():
                                 cluster_std=0.4, random_state=0)
 
     # Compute OPTICS
-    clust = OPTICS(max_eps=5.0 * 0.03, min_samples=10)
-    clust2 = clust.fit(X)
-    assert_raise_message(ValueError, msg, clust2.extract_dbscan, 0.3)
+    clust = OPTICS(max_eps=5.0 * 0.03,
+                   cluster_method='dbscan',
+                   eps=0.3, min_samples=10)
+    assert_raise_message(ValueError, msg, clust.fit, X)
 
 
 def test_bad_reachability():
@@ -104,24 +200,23 @@ def test_bad_reachability():
     X, labels_true = make_blobs(n_samples=750, centers=centers,
                                 cluster_std=0.4, random_state=0)
 
-    clust = OPTICS(max_eps=5.0 * 0.003, min_samples=10)
-    assert_raise_message(ValueError, msg, clust.fit, X)
+    with pytest.warns(UserWarning, match=msg):
+        clust = OPTICS(max_eps=5.0 * 0.003, min_samples=10, eps=0.015)
+        clust.fit(X)
 
 
 def test_close_extract():
-    # Test extract where extraction eps is close to scaled epsPrime
+    # Test extract where extraction eps is close to scaled max_eps
 
     centers = [[1, 1], [-1, -1], [1, -1]]
     X, labels_true = make_blobs(n_samples=750, centers=centers,
                                 cluster_std=0.4, random_state=0)
 
     # Compute OPTICS
-    clust = OPTICS(max_eps=1.0, min_samples=10)
-    clust3 = clust.fit(X)
-    # check warning when centers are passed
-    assert_warns(RuntimeWarning, clust3.extract_dbscan, .3)
+    clust = OPTICS(max_eps=1.0, cluster_method='dbscan',
+                   eps=0.3, min_samples=10).fit(X)
     # Cluster ordering starts at 0; max cluster label = 2 is 3 clusters
-    assert_equal(max(clust3.extract_dbscan(.3)[1]), 2)
+    assert_equal(max(clust.labels_), 2)
 
 
 @pytest.mark.parametrize('eps', [0.1, .3, .5])
@@ -134,25 +229,47 @@ def test_dbscan_optics_parity(eps, min_samples):
                                 cluster_std=0.4, random_state=0)
 
     # calculate optics with dbscan extract at 0.3 epsilon
-    op = OPTICS(min_samples=min_samples).fit(X)
-    core_optics, labels_optics = op.extract_dbscan(eps)
+    op = OPTICS(min_samples=min_samples, cluster_method='dbscan',
+                eps=eps).fit(X)
 
     # calculate dbscan labels
     db = DBSCAN(eps=eps, min_samples=min_samples).fit(X)
 
-    contingency = contingency_matrix(db.labels_, labels_optics)
+    contingency = contingency_matrix(db.labels_, op.labels_)
     agree = min(np.sum(np.max(contingency, axis=0)),
                 np.sum(np.max(contingency, axis=1)))
     disagree = X.shape[0] - agree
 
-    # verify core_labels match
-    assert_array_equal(core_optics, db.core_sample_indices_)
-
-    non_core_count = len(labels_optics) - len(core_optics)
-    percent_mismatch = np.round((disagree - 1) / non_core_count, 2)
+    percent_mismatch = np.round((disagree - 1) / X.shape[0], 2)
 
     # verify label mismatch is <= 5% labels
     assert percent_mismatch <= 0.05
+
+
+def test_min_samples_edge_case():
+    C1 = [[0, 0], [0, 0.1], [0, -.1]]
+    C2 = [[10, 10], [10, 9], [10, 11]]
+    C3 = [[100, 100], [100, 96], [100, 106]]
+    X = np.vstack((C1, C2, C3))
+
+    expected_labels = np.r_[[0] * 3, [1] * 3, [2] * 3]
+    clust = OPTICS(min_samples=3,
+                   max_eps=7, cluster_method='xi',
+                   xi=0.04).fit(X)
+    assert_array_equal(clust.labels_, expected_labels)
+
+    expected_labels = np.r_[[0] * 3, [1] * 3, [-1] * 3]
+    clust = OPTICS(min_samples=3,
+                   max_eps=3, cluster_method='xi',
+                   xi=0.04).fit(X)
+    assert_array_equal(clust.labels_, expected_labels)
+
+    expected_labels = np.r_[[-1] * 9]
+    with pytest.warns(UserWarning, match="All reachability values"):
+        clust = OPTICS(min_samples=4,
+                       max_eps=3, cluster_method='xi',
+                       xi=0.04).fit(X)
+        assert_array_equal(clust.labels_, expected_labels)
 
 
 # try arbitrary minimum sizes
@@ -181,32 +298,6 @@ def test_min_cluster_size_invalid2():
     clust = OPTICS(min_cluster_size=len(X) + 1)
     with pytest.raises(ValueError, match="must be no greater than the "):
         clust.fit(X)
-
-
-@pytest.mark.parametrize("reach, n_child, members", [
-    (np.array([np.inf, 0.9, 0.9, 1.0, 0.89, 0.88, 10, .9, .9, .9, 10, 0.9,
-               0.9, 0.89, 0.88, 10, .9, .9, .9, .9]), 2, np.r_[0:6]),
-    (np.array([np.inf, 0.9, 0.9, 0.9, 0.89, 0.88, 10, .9, .9, .9, 10, 0.9,
-               0.9, 0.89, 0.88, 100, .9, .9, .9, .9]), 1, np.r_[0:15])])
-def test_cluster_sigmin_pruning(reach, n_child, members):
-    # Tests pruning left and right, insignificant splitpoints, empty nodelists
-    # Parameters chosen specifically for this task
-
-    # Case 1: Three pseudo clusters, 2 of which are too small
-    # Case 2: Two pseudo clusters, 1 of which are too small
-    # Normalize
-    reach = reach / np.max(reach[1:])
-
-    ordering = np.r_[0:20]
-    cluster_boundaries = _find_local_maxima(reach, 5)
-    root = _TreeNode(ordering, 0, 20, None)
-
-    # Build cluster tree inplace on root node
-    _cluster_tree(root, None, cluster_boundaries, reach, ordering,
-                  5, .75, .7, .4, .3)
-    assert_equal(root.split_point, cluster_boundaries[0])
-    assert_equal(n_child, len(root.children))
-    assert_array_equal(members, root.children[0].points)
 
 
 def test_processing_order():
@@ -299,6 +390,27 @@ def test_compare_to_ELKI():
     index = np.where(clust1.core_distances_ <= 0.5)[0]
     assert_allclose(clust1.core_distances_[index],
                     clust2.core_distances_[index])
+
+
+def test_wrong_cluster_method():
+    clust = OPTICS(cluster_method='superfancy')
+    with pytest.raises(ValueError, match="cluster_method should be one of "):
+        clust.fit(X)
+
+
+def test_extract_dbscan():
+    # testing an easy dbscan case. Not including clusters with different
+    # densities.
+    rng = np.random.RandomState(0)
+    n_points_per_cluster = 20
+    C1 = [-5, -2] + .2 * rng.randn(n_points_per_cluster, 2)
+    C2 = [4, -1] + .2 * rng.randn(n_points_per_cluster, 2)
+    C3 = [1, 2] + .2 * rng.randn(n_points_per_cluster, 2)
+    C4 = [-2, 3] + .2 * rng.randn(n_points_per_cluster, 2)
+    X = np.vstack((C1, C2, C3, C4))
+
+    clust = OPTICS(cluster_method='dbscan', eps=.5).fit(X)
+    assert_array_equal(np.sort(np.unique(clust.labels_)), [0, 1, 2, 3])
 
 
 def test_precomputed_dists():

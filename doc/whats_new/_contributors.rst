@@ -48,7 +48,7 @@
 
 .. _Bertrand Thirion: https://team.inria.fr/parietal/bertrand-thirions-page
 
-.. _Andreas Müller: https://peekaboo-vision.blogspot.com/
+.. _Andreas Müller: https://amueller.github.io/
 
 .. _Matthieu Perrot: http://brainvisa.info/biblio/lnao/en/Author/PERROT-M.html
 
@@ -169,3 +169,9 @@
 .. _Roman Yurchak: https://github.com/rth
 
 .. _Hanmin Qin: https://github.com/qinhanmin2014
+
+.. _Adrin Jalali: https://github.com/adrinjalali
+
+.. _Thomas Fan: https://github.com/thomasjpfan
+
+.. _Nicolas Hug: https://github.com/NicolasHug

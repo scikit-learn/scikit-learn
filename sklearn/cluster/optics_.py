@@ -5,195 +5,34 @@ These routines execute the OPTICS algorithm, and implement various
 cluster extraction methods of the ordered list.
 
 Authors: Shane Grigsby <refuge@rocktalus.com>
-         Amy X. Zhang <axz@mit.edu>
+         Adrin Jalali <adrinjalali@gmail.com>
          Erich Schubert <erich@debian.org>
+         Hanmin Qin <qinhanmin2005@sina.com>
 License: BSD 3 clause
 """
 
-from __future__ import division
 import warnings
 import numpy as np
 
 from ..utils import check_array
 from ..utils import gen_batches, get_chunk_n_rows
-from ..utils.validation import check_is_fitted
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
 
 
-def optics(X, min_samples=5, max_eps=np.inf, metric='minkowski',
-           p=2, metric_params=None, maxima_ratio=.75,
-           rejection_ratio=.7, similarity_threshold=0.4,
-           significant_min=.003, min_cluster_size=.005,
-           min_maxima_ratio=0.001, algorithm='auto',
-           leaf_size=30, n_jobs=None):
-    """Perform OPTICS clustering from vector array
-
-    OPTICS: Ordering Points To Identify the Clustering Structure
-    Closely related to DBSCAN, finds core sample of high density and expands
-    clusters from them. Unlike DBSCAN, keeps cluster hierarchy for a variable
-    neighborhood radius. Better suited for usage on large point datasets than
-    the current sklearn implementation of DBSCAN.
-
-    This implementation deviates from the original OPTICS by first performing
-    k-nearest-neighborhood searches on all points to identify core sizes, then
-    computing only the distances to unprocessed points when constructing the
-    cluster order. Note that we do not employ a heap to manage the expansion
-    candidates, so the time complexity will be O(n^2).
-
-    Read more in the :ref:`User Guide <optics>`.
-
-    Parameters
-    ----------
-    X : array, shape (n_samples, n_features)
-        The data.
-
-    min_samples : int (default=5)
-        The number of samples in a neighborhood for a point to be considered
-        as a core point.
-
-    max_eps : float, optional (default=np.inf)
-        The maximum distance between two samples for them to be considered
-        as in the same neighborhood. Default value of "np.inf" will identify
-        clusters across all scales; reducing `max_eps` will result in
-        shorter run times.
-
-    metric : string or callable, optional (default='minkowski')
-        metric to use for distance computation. Any metric from scikit-learn
-        or scipy.spatial.distance can be used.
-
-        If metric is a callable function, it is called on each
-        pair of instances (rows) and the resulting value recorded. The callable
-        should take two arrays as input and return one value indicating the
-        distance between them. This works for Scipy's metrics, but is less
-        efficient than passing the metric name as a string.
-
-        Distance matrices are not supported.
-
-        Valid values for metric are:
-
-        - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
-          'manhattan']
-
-        - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
-          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
-          'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
-          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
-          'yule']
-
-        See the documentation for scipy.spatial.distance for details on these
-        metrics.
-
-    p : integer, optional (default=2)
-        Parameter for the Minkowski metric from
-        :class:`sklearn.metrics.pairwise_distances`. When p = 1, this is
-        equivalent to using manhattan_distance (l1), and euclidean_distance
-        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
-
-    metric_params : dict, optional (default=None)
-        Additional keyword arguments for the metric function.
-
-    maxima_ratio : float, optional (default=.75)
-        The maximum ratio we allow of average height of clusters on the
-        right and left to the local maxima in question. The higher the
-        ratio, the more generous the algorithm is to preserving local
-        minima, and the more cuts the resulting tree will have.
-
-    rejection_ratio : float, optional (default=.7)
-        Adjusts the fitness of the clustering. When the maxima_ratio is
-        exceeded, determine which of the clusters to the left and right to
-        reject based on rejection_ratio. Higher values will result in points
-        being more readily classified as noise; conversely, lower values will
-        result in more points being clustered.
-
-    similarity_threshold : float, optional (default=.4)
-        Used to check if nodes can be moved up one level, that is, if the
-        new cluster created is too "similar" to its parent, given the
-        similarity threshold. Similarity can be determined by 1) the size
-        of the new cluster relative to the size of the parent node or
-        2) the average of the reachability values of the new cluster
-        relative to the average of the reachability values of the parent
-        node. A lower value for the similarity threshold means less levels
-        in the tree.
-
-    significant_min : float, optional (default=.003)
-        Sets a lower threshold on how small a significant maxima can be.
-
-    min_cluster_size : int > 1 or float between 0 and 1 (default=0.005)
-        Minimum number of samples in an OPTICS cluster, expressed as an
-        absolute number or a fraction of the number of samples (rounded
-        to be at least 2).
-
-    min_maxima_ratio : float, optional (default=.001)
-        Used to determine neighborhood size for minimum cluster membership.
-        Each local maxima should be a largest value in a neighborhood
-        of the `size min_maxima_ratio * len(X)` from left and right.
-
-    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
-        Algorithm used to compute the nearest neighbors:
-
-        - 'ball_tree' will use :class:`BallTree`
-        - 'kd_tree' will use :class:`KDTree`
-        - 'brute' will use a brute-force search.
-        - 'auto' will attempt to decide the most appropriate algorithm
-          based on the values passed to :meth:`fit` method. (default)
-
-        Note: fitting on sparse input will override the setting of
-        this parameter, using brute force.
-
-    leaf_size : int, optional (default=30)
-        Leaf size passed to :class:`BallTree` or :class:`KDTree`. This can
-        affect the speed of the construction and query, as well as the memory
-        required to store the tree. The optimal value depends on the
-        nature of the problem.
-
-    n_jobs : int or None, optional (default=None)
-        The number of parallel jobs to run for neighbors search.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
-
-    Returns
-    -------
-    core_sample_indices_ : array, shape (n_core_samples,)
-        The indices of the core samples.
-
-    labels_ : array, shape (n_samples,)
-        The estimated labels.
-
-    See also
-    --------
-    OPTICS
-        An estimator interface for this clustering algorithm.
-    dbscan
-        A similar clustering for a specified neighborhood radius (eps).
-        Our implementation is optimized for runtime.
-
-    References
-    ----------
-    Ankerst, Mihael, Markus M. Breunig, Hans-Peter Kriegel, and Jörg Sander.
-    "OPTICS: ordering points to identify the clustering structure." ACM SIGMOD
-    Record 28, no. 2 (1999): 49-60.
-    """
-
-    clust = OPTICS(min_samples, max_eps, metric, p, metric_params,
-                   maxima_ratio, rejection_ratio,
-                   similarity_threshold, significant_min,
-                   min_cluster_size, min_maxima_ratio,
-                   algorithm, leaf_size, n_jobs)
-    clust.fit(X)
-    return clust.core_sample_indices_, clust.labels_
-
-
 class OPTICS(BaseEstimator, ClusterMixin):
     """Estimate clustering structure from vector array
 
-    OPTICS: Ordering Points To Identify the Clustering Structure
-    Closely related to DBSCAN, finds core sample of high density and expands
-    clusters from them. Unlike DBSCAN, keeps cluster hierarchy for a variable
-    neighborhood radius. Better suited for usage on large point datasets than
-    the current sklearn implementation of DBSCAN.
+    OPTICS (Ordering Points To Identify the Clustering Structure), closely
+    related to DBSCAN, finds core sample of high density and expands clusters
+    from them [1]_. Unlike DBSCAN, keeps cluster hierarchy for a variable
+    neighborhood radius. Better suited for usage on large datasets than the
+    current sklearn implementation of DBSCAN.
+
+    Clusters are then extracted using a DBSCAN-like method
+    (cluster_method = 'dbscan') or an automatic
+    technique proposed in [1]_ (cluster_method = 'xi').
 
     This implementation deviates from the original OPTICS by first performing
     k-nearest-neighborhood searches on all points to identify core sizes, then
@@ -205,27 +44,29 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     Parameters
     ----------
-    min_samples : int (default=5)
-        The number of samples in a neighborhood for a point to be considered
-        as a core point.
+    min_samples : int > 1 or float between 0 and 1 (default=None)
+        The number of samples in a neighborhood for a point to be considered as
+        a core point. Also, up and down steep regions can't have more then
+        ``min_samples`` consecutive non-steep points. Expressed as an absolute
+        number or a fraction of the number of samples (rounded to be at least
+        2).
 
     max_eps : float, optional (default=np.inf)
-        The maximum distance between two samples for them to be considered
-        as in the same neighborhood. Default value of "np.inf" will identify
-        clusters across all scales; reducing `max_eps` will result in
-        shorter run times.
+        The maximum distance between two samples for one to be considered as
+        in the neighborhood of the other. Default value of ``np.inf`` will
+        identify clusters across all scales; reducing ``max_eps`` will result
+        in shorter run times.
 
     metric : string or callable, optional (default='minkowski')
-        metric to use for distance computation. Any metric from scikit-learn
+        Metric to use for distance computation. Any metric from scikit-learn
         or scipy.spatial.distance can be used.
 
         If metric is a callable function, it is called on each
         pair of instances (rows) and the resulting value recorded. The callable
         should take two arrays as input and return one value indicating the
         distance between them. This works for Scipy's metrics, but is less
-        efficient than passing the metric name as a string.
-
-        Distance matrices are not supported.
+        efficient than passing the metric name as a string. If metric is
+        "precomputed", X is assumed to be a distance matrix and must be square.
 
         Valid values for metric are:
 
@@ -250,41 +91,33 @@ class OPTICS(BaseEstimator, ClusterMixin):
     metric_params : dict, optional (default=None)
         Additional keyword arguments for the metric function.
 
-    maxima_ratio : float, optional (default=.75)
-        The maximum ratio we allow of average height of clusters on the
-        right and left to the local maxima in question. The higher the
-        ratio, the more generous the algorithm is to preserving local
-        minima, and the more cuts the resulting tree will have.
+    cluster_method : string, optional (default='xi')
+        The extraction method used to extract clusters using the calculated
+        reachability and ordering. Possible values are "xi" and "dbscan".
 
-    rejection_ratio : float, optional (default=.7)
-        Adjusts the fitness of the clustering. When the maxima_ratio is
-        exceeded, determine which of the clusters to the left and right to
-        reject based on rejection_ratio. Higher values will result in points
-        being more readily classified as noise; conversely, lower values will
-        result in more points being clustered.
+    eps : float, optional (default=None)
+        The maximum distance between two samples for one to be considered as
+        in the neighborhood of the other. By default it assumes the same value
+        as ``max_eps``.
+        Used only when ``cluster_method='dbscan'``.
 
-    similarity_threshold : float, optional (default=.4)
-        Used to check if nodes can be moved up one level, that is, if the
-        new cluster created is too "similar" to its parent, given the
-        similarity threshold. Similarity can be determined by 1) the size
-        of the new cluster relative to the size of the parent node or
-        2) the average of the reachability values of the new cluster
-        relative to the average of the reachability values of the parent
-        node. A lower value for the similarity threshold means less levels
-        in the tree.
+    xi : float, between 0 and 1, optional (default=0.05)
+        Determines the minimum steepness on the reachability plot that
+        constitutes a cluster boundary. For example, an upwards point in the
+        reachability plot is defined by the ratio from one point to its
+        successor being at most 1-xi.
+        Used only when ``cluster_method='xi'``.
 
-    significant_min : float, optional (default=.003)
-        Sets a lower threshold on how small a significant maxima can be.
+    predecessor_correction : bool, optional (default=True)
+        Correct clusters according to the predecessors calculated by OPTICS
+        [2]_. This parameter has minimal effect on most datasets.
+        Used only when ``cluster_method='xi'``.
 
-    min_cluster_size : int > 1 or float between 0 and 1 (default=0.005)
+    min_cluster_size : int > 1 or float between 0 and 1 (default=None)
         Minimum number of samples in an OPTICS cluster, expressed as an
-        absolute number or a fraction of the number of samples (rounded
-        to be at least 2).
-
-    min_maxima_ratio : float, optional (default=.001)
-        Used to determine neighborhood size for minimum cluster membership.
-        Each local maxima should be a largest value in a neighborhood
-        of the `size min_maxima_ratio * len(X)` from left and right.
+        absolute number or a fraction of the number of samples (rounded to be
+        at least 2). If ``None``, the value of ``min_samples`` is used instead.
+        Used only when ``cluster_method='xi'``.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
@@ -312,12 +145,10 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     Attributes
     ----------
-    core_sample_indices_ : array, shape (n_core_samples,)
-        Indices of core samples.
-
     labels_ : array, shape (n_samples,)
         Cluster labels for each point in the dataset given to fit().
-        Noisy samples are given the label -1.
+        Noisy samples and points which are not included in a leaf cluster
+        of ``cluster_hierarchy_`` are labeled as -1.
 
     reachability_ : array, shape (n_samples,)
         Reachability distances per sample, indexed by object order. Use
@@ -335,57 +166,65 @@ class OPTICS(BaseEstimator, ClusterMixin):
         Point that a sample was reached from, indexed by object order.
         Seed points have a predecessor of -1.
 
+    cluster_hierarchy_ : array, shape (n_clusters, 2)
+        The list of clusters in the form of ``[start, end]`` in each row, with
+        all indices inclusive. The clusters are ordered according to
+        ``(end, -start)`` (ascending) so that larger clusters encompassing
+        smaller clusters come after those smaller ones. Since ``labels_`` does
+        not reflect the hierarchy, usually
+        ``len(cluster_hierarchy_) > np.unique(optics.labels_)``. Please also
+        note that these indices are of the ``ordering_``, i.e.
+        ``X[ordering_][start:end + 1]`` form a cluster.
+        Only available when ``cluster_method='xi'``.
+
     See also
     --------
-
     DBSCAN
         A similar clustering for a specified neighborhood radius (eps).
         Our implementation is optimized for runtime.
 
     References
     ----------
-    Ankerst, Mihael, Markus M. Breunig, Hans-Peter Kriegel, and Jörg Sander.
-    "OPTICS: ordering points to identify the clustering structure." ACM SIGMOD
-    Record 28, no. 2 (1999): 49-60.
+    .. [1] Ankerst, Mihael, Markus M. Breunig, Hans-Peter Kriegel,
+       and Jörg Sander. "OPTICS: ordering points to identify the clustering
+       structure." ACM SIGMOD Record 28, no. 2 (1999): 49-60.
 
-    Schubert, Erich, Michael Gertz.
-    "Improving the Cluster Structure Extracted from OPTICS Plots." Proc. of
-    the Conference "Lernen, Wissen, Daten, Analysen" (LWDA) (2018): 318-329.
+    .. [2] Schubert, Erich, Michael Gertz.
+       "Improving the Cluster Structure Extracted from OPTICS Plots." Proc. of
+       the Conference "Lernen, Wissen, Daten, Analysen" (LWDA) (2018): 318-329.
     """
 
-    def __init__(self, min_samples=5, max_eps=np.inf, metric='minkowski',
-                 p=2, metric_params=None, maxima_ratio=.75,
-                 rejection_ratio=.7, similarity_threshold=0.4,
-                 significant_min=.003, min_cluster_size=.005,
-                 min_maxima_ratio=0.001, algorithm='auto',
-                 leaf_size=30, n_jobs=None):
-
+    def __init__(self, min_samples=5, max_eps=np.inf, metric='minkowski', p=2,
+                 metric_params=None, cluster_method='xi', eps=None, xi=0.05,
+                 predecessor_correction=True, min_cluster_size=None,
+                 algorithm='auto', leaf_size=30, n_jobs=None):
         self.max_eps = max_eps
         self.min_samples = min_samples
-        self.maxima_ratio = maxima_ratio
-        self.rejection_ratio = rejection_ratio
-        self.similarity_threshold = similarity_threshold
-        self.significant_min = significant_min
         self.min_cluster_size = min_cluster_size
-        self.min_maxima_ratio = min_maxima_ratio
         self.algorithm = algorithm
         self.metric = metric
         self.metric_params = metric_params
         self.p = p
         self.leaf_size = leaf_size
+        self.cluster_method = cluster_method
+        self.eps = eps
+        self.xi = xi
+        self.predecessor_correction = predecessor_correction
         self.n_jobs = n_jobs
 
     def fit(self, X, y=None):
         """Perform OPTICS clustering
 
         Extracts an ordered list of points and reachability distances, and
-        performs initial clustering using `max_eps` distance specified at
+        performs initial clustering using ``max_eps`` distance specified at
         OPTICS object instantiation.
 
         Parameters
         ----------
-        X : array, shape (n_samples, n_features)
-            The data.
+        X : array, shape (n_samples, n_features), or (n_samples, n_samples)  \
+if metric=’precomputed’.
+            A feature array, or array of distances between samples if
+            metric='precomputed'.
 
         y : ignored
 
@@ -396,488 +235,685 @@ class OPTICS(BaseEstimator, ClusterMixin):
         """
         X = check_array(X, dtype=np.float)
 
-        n_samples = len(X)
+        if self.cluster_method not in ['dbscan', 'xi']:
+            raise ValueError("cluster_method should be one of"
+                             " 'dbscan' or 'xi' but is %s" %
+                             self.cluster_method)
 
-        if self.min_samples > n_samples:
-            raise ValueError("Number of training samples (n_samples=%d) must "
-                             "be greater than min_samples (min_samples=%d) "
-                             "used for clustering." %
-                             (n_samples, self.min_samples))
+        (self.ordering_, self.core_distances_, self.reachability_,
+         self.predecessor_) = compute_optics_graph(
+             X=X, min_samples=self.min_samples, algorithm=self.algorithm,
+             leaf_size=self.leaf_size, metric=self.metric,
+             metric_params=self.metric_params, p=self.p, n_jobs=self.n_jobs,
+             max_eps=self.max_eps)
 
-        if self.min_cluster_size <= 0 or (self.min_cluster_size !=
-                                          int(self.min_cluster_size)
-                                          and self.min_cluster_size > 1):
-            raise ValueError('min_cluster_size must be a positive integer or '
-                             'a float between 0 and 1. Got %r' %
-                             self.min_cluster_size)
-        elif self.min_cluster_size > n_samples:
-            raise ValueError('min_cluster_size must be no greater than the '
-                             'number of samples (%d). Got %d' %
-                             (n_samples, self.min_cluster_size))
+        # Extract clusters from the calculated orders and reachability
+        if self.cluster_method == 'xi':
+            labels_, clusters_ = cluster_optics_xi(
+                self.reachability_,
+                self.predecessor_,
+                self.ordering_,
+                self.min_samples,
+                self.min_cluster_size,
+                self.xi,
+                self.predecessor_correction)
+            self.cluster_hierarchy_ = clusters_
+        elif self.cluster_method == 'dbscan':
+            if self.eps is None:
+                eps = self.max_eps
+            else:
+                eps = self.eps
 
-        # Start all points as 'unprocessed' ##
-        self.reachability_ = np.empty(n_samples)
-        self.reachability_.fill(np.inf)
-        self.predecessor_ = np.empty(n_samples, dtype=int)
-        self.predecessor_.fill(-1)
-        # Start all points as noise ##
-        self.labels_ = np.full(n_samples, -1, dtype=int)
+            if eps > self.max_eps:
+                raise ValueError('Specify an epsilon smaller than %s. Got %s.'
+                                 % (self.max_eps, eps))
 
-        nbrs = NearestNeighbors(n_neighbors=self.min_samples,
-                                algorithm=self.algorithm,
-                                leaf_size=self.leaf_size, metric=self.metric,
-                                metric_params=self.metric_params, p=self.p,
-                                n_jobs=self.n_jobs)
+            labels_ = cluster_optics_dbscan(self.reachability_,
+                                            self.core_distances_,
+                                            self.ordering_,
+                                            eps)
 
-        nbrs.fit(X)
-        # Here we first do a kNN query for each point, this differs from
-        # the original OPTICS that only used epsilon range queries.
-        self.core_distances_ = self._compute_core_distances_(X, nbrs)
-        # OPTICS puts an upper limit on these, use inf for undefined.
-        self.core_distances_[self.core_distances_ > self.max_eps] = np.inf
-        self.ordering_ = self._calculate_optics_order(X, nbrs)
-
-        indices_, self.labels_ = _extract_optics(self.ordering_,
-                                                 self.reachability_,
-                                                 self.maxima_ratio,
-                                                 self.rejection_ratio,
-                                                 self.similarity_threshold,
-                                                 self.significant_min,
-                                                 self.min_cluster_size,
-                                                 self.min_maxima_ratio)
-        self.core_sample_indices_ = indices_
+        self.labels_ = labels_
         return self
 
-    # OPTICS helper functions
-    def _compute_core_distances_(self, X, neighbors, working_memory=None):
-        """Compute the k-th nearest neighbor of each sample
 
-        Equivalent to neighbors.kneighbors(X, self.min_samples)[0][:, -1]
-        but with more memory efficiency.
-
-        Parameters
-        ----------
-        X : array, shape (n_samples, n_features)
-            The data.
-        neighbors : NearestNeighbors instance
-            The fitted nearest neighbors estimator.
-        working_memory : int, optional
-            The sought maximum memory for temporary distance matrix chunks.
-            When None (default), the value of
-            ``sklearn.get_config()['working_memory']`` is used.
-
-        Returns
-        -------
-        core_distances : array, shape (n_samples,)
-            Distance at which each sample becomes a core point.
-            Points which will never be core have a distance of inf.
-        """
-        n_samples = len(X)
-        core_distances = np.empty(n_samples)
-        core_distances.fill(np.nan)
-
-        chunk_n_rows = get_chunk_n_rows(row_bytes=16 * self.min_samples,
-                                        max_n_rows=n_samples,
-                                        working_memory=working_memory)
-        slices = gen_batches(n_samples, chunk_n_rows)
-        for sl in slices:
-            core_distances[sl] = neighbors.kneighbors(
-                X[sl], self.min_samples)[0][:, -1]
-        return core_distances
-
-    def _calculate_optics_order(self, X, nbrs):
-        # Main OPTICS loop. Not parallelizable. The order that entries are
-        # written to the 'ordering_' list is important!
-        # Note that this implementation is O(n^2) theoretically, but
-        # supposedly with very low constant factors.
-        processed = np.zeros(X.shape[0], dtype=bool)
-        ordering = np.zeros(X.shape[0], dtype=int)
-        for ordering_idx in range(X.shape[0]):
-            # Choose next based on smallest reachability distance
-            # (And prefer smaller ids on ties, possibly np.inf!)
-            index = np.where(processed == 0)[0]
-            point = index[np.argmin(self.reachability_[index])]
-
-            processed[point] = True
-            ordering[ordering_idx] = point
-            if self.core_distances_[point] != np.inf:
-                self._set_reach_dist(point, processed, X, nbrs)
-        return ordering
-
-    def _set_reach_dist(self, point_index, processed, X, nbrs):
-        P = X[point_index:point_index + 1]
-        # Assume that radius_neighbors is faster without distances
-        # and we don't need all distances, nevertheless, this means
-        # we may be doing some work twice.
-        indices = nbrs.radius_neighbors(P, radius=self.max_eps,
-                                        return_distance=False)[0]
-
-        # Getting indices of neighbors that have not been processed
-        unproc = np.compress((~np.take(processed, indices)).ravel(),
-                             indices, axis=0)
-        # Neighbors of current point are already processed.
-        if not unproc.size:
-            return
-
-        # Only compute distances to unprocessed neighbors:
-        if self.metric == 'precomputed':
-            dists = X[point_index, unproc]
-        else:
-            dists = pairwise_distances(P, np.take(X, unproc, axis=0),
-                                       self.metric, n_jobs=None).ravel()
-
-        rdists = np.maximum(dists, self.core_distances_[point_index])
-        improved = np.where(rdists < np.take(self.reachability_, unproc))
-        self.reachability_[unproc[improved]] = rdists[improved]
-        self.predecessor_[unproc[improved]] = point_index
-
-    def extract_dbscan(self, eps):
-        """Performs DBSCAN extraction for an arbitrary epsilon.
-
-        Extraction runs in linear time. Note that if the `max_eps` OPTICS
-        parameter was set to < inf for extracting reachability and ordering
-        arrays, DBSCAN extractions will be unstable for `eps` values close to
-        `max_eps`. Setting `eps` < (`max_eps` / 5.0) will guarantee
-        extraction parity with DBSCAN.
-
-        Parameters
-        ----------
-        eps : float or int, required
-            DBSCAN `eps` parameter. Must be set to < `max_eps`. Equivalence
-            with DBSCAN algorithm is achieved if `eps` is < (`max_eps` / 5)
-
-        Returns
-        -------
-        core_sample_indices_ : array, shape (n_core_samples,)
-            The indices of the core samples.
-
-        labels_ : array, shape (n_samples,)
-            The estimated labels.
-        """
-        check_is_fitted(self, 'reachability_')
-
-        if eps > self.max_eps:
-            raise ValueError('Specify an epsilon smaller than %s. Got %s.'
-                             % (self.max_eps, eps))
-
-        if eps * 5.0 > (self.max_eps * 1.05):
-            warnings.warn(
-                "Warning, max_eps (%s) is close to eps (%s): "
-                "Output may be unstable." % (self.max_eps, eps),
-                RuntimeWarning, stacklevel=2)
-        # Stability warning is documented in _extract_dbscan method...
-
-        return _extract_dbscan(self.ordering_, self.core_distances_,
-                               self.reachability_, eps)
+def _validate_size(size, n_samples, param_name):
+    if size <= 0 or (size !=
+                     int(size)
+                     and size > 1):
+        raise ValueError('%s must be a positive integer '
+                         'or a float between 0 and 1. Got %r' %
+                         (param_name, size))
+    elif size > n_samples:
+        raise ValueError('%s must be no greater than the'
+                         ' number of samples (%d). Got %d' %
+                         (param_name, n_samples, size))
 
 
-def _extract_dbscan(ordering, core_distances, reachability, eps):
-    """Performs DBSCAN extraction for an arbitrary epsilon (`eps`).
+# OPTICS helper functions
+def _compute_core_distances_(X, neighbors, min_samples, working_memory):
+    """Compute the k-th nearest neighbor of each sample
+
+    Equivalent to neighbors.kneighbors(X, self.min_samples)[0][:, -1]
+    but with more memory efficiency.
 
     Parameters
     ----------
-    ordering : array, shape (n_samples,)
-        OPTICS ordered point indices (`ordering_`)
-    core_distances : array, shape (n_samples,)
-        Distances at which points become core (`core_distances_`)
-    reachability : array, shape (n_samples,)
-        Reachability distances calculated by OPTICS (`reachability_`)
-    eps : float or int
-        DBSCAN `eps` parameter
+    X : array, shape (n_samples, n_features)
+        The data.
+    neighbors : NearestNeighbors instance
+        The fitted nearest neighbors estimator.
+    working_memory : int, optional
+        The sought maximum memory for temporary distance matrix chunks.
+        When None (default), the value of
+        ``sklearn.get_config()['working_memory']`` is used.
 
     Returns
     -------
-    core_sample_indices_ : array, shape (n_core_samples,)
-        The indices of the core samples.
+    core_distances : array, shape (n_samples,)
+        Distance at which each sample becomes a core point.
+        Points which will never be core have a distance of inf.
+    """
+    n_samples = X.shape[0]
+    core_distances = np.empty(n_samples)
+    core_distances.fill(np.nan)
 
+    chunk_n_rows = get_chunk_n_rows(row_bytes=16 * min_samples,
+                                    max_n_rows=n_samples,
+                                    working_memory=working_memory)
+    slices = gen_batches(n_samples, chunk_n_rows)
+    for sl in slices:
+        core_distances[sl] = neighbors.kneighbors(
+            X[sl], min_samples)[0][:, -1]
+    return core_distances
+
+
+def compute_optics_graph(X, min_samples, max_eps, metric, p, metric_params,
+                         algorithm, leaf_size, n_jobs):
+    """Computes the OPTICS reachability graph.
+
+    Read more in the :ref:`User Guide <optics>`.
+
+    Parameters
+    ----------
+    X : array, shape (n_samples, n_features), or (n_samples, n_samples)  \
+if metric=’precomputed’.
+        A feature array, or array of distances between samples if
+        metric='precomputed'
+
+    min_samples : int (default=5)
+        The number of samples in a neighborhood for a point to be considered
+        as a core point. Expressed as an absolute number or a fraction of the
+        number of samples (rounded to be at least 2).
+
+    max_eps : float, optional (default=np.inf)
+        The maximum distance between two samples for one to be considered as
+        in the neighborhood of the other. Default value of ``np.inf`` will
+        identify clusters across all scales; reducing ``max_eps`` will result
+        in shorter run times.
+
+    metric : string or callable, optional (default='minkowski')
+        Metric to use for distance computation. Any metric from scikit-learn
+        or scipy.spatial.distance can be used.
+
+        If metric is a callable function, it is called on each
+        pair of instances (rows) and the resulting value recorded. The callable
+        should take two arrays as input and return one value indicating the
+        distance between them. This works for Scipy's metrics, but is less
+        efficient than passing the metric name as a string. If metric is
+        "precomputed", X is assumed to be a distance matrix and must be square.
+
+        Valid values for metric are:
+
+        - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
+          'manhattan']
+
+        - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
+          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
+          'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
+          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
+          'yule']
+
+        See the documentation for scipy.spatial.distance for details on these
+        metrics.
+
+    p : integer, optional (default=2)
+        Parameter for the Minkowski metric from
+        :class:`sklearn.metrics.pairwise_distances`. When p = 1, this is
+        equivalent to using manhattan_distance (l1), and euclidean_distance
+        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
+
+    metric_params : dict, optional (default=None)
+        Additional keyword arguments for the metric function.
+
+    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
+        Algorithm used to compute the nearest neighbors:
+
+        - 'ball_tree' will use :class:`BallTree`
+        - 'kd_tree' will use :class:`KDTree`
+        - 'brute' will use a brute-force search.
+        - 'auto' will attempt to decide the most appropriate algorithm
+          based on the values passed to :meth:`fit` method. (default)
+
+        Note: fitting on sparse input will override the setting of
+        this parameter, using brute force.
+
+    leaf_size : int, optional (default=30)
+        Leaf size passed to :class:`BallTree` or :class:`KDTree`. This can
+        affect the speed of the construction and query, as well as the memory
+        required to store the tree. The optimal value depends on the
+        nature of the problem.
+
+    n_jobs : int or None, optional (default=None)
+        The number of parallel jobs to run for neighbors search.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+
+    Returns
+    -------
+    ordering_ : array, shape (n_samples,)
+        The cluster ordered list of sample indices.
+
+    core_distances_ : array, shape (n_samples,)
+        Distance at which each sample becomes a core point, indexed by object
+        order. Points which will never be core have a distance of inf. Use
+        ``clust.core_distances_[clust.ordering_]`` to access in cluster order.
+
+    reachability_ : array, shape (n_samples,)
+        Reachability distances per sample, indexed by object order. Use
+        ``clust.reachability_[clust.ordering_]`` to access in cluster order.
+
+    predecessor_ : array, shape (n_samples,)
+        Point that a sample was reached from, indexed by object order.
+        Seed points have a predecessor of -1.
+
+    References
+    ----------
+    .. [1] Ankerst, Mihael, Markus M. Breunig, Hans-Peter Kriegel,
+       and Jörg Sander. "OPTICS: ordering points to identify the clustering
+       structure." ACM SIGMOD Record 28, no. 2 (1999): 49-60.
+    """
+    n_samples = X.shape[0]
+    _validate_size(min_samples, n_samples, 'min_samples')
+    if min_samples <= 1:
+        min_samples = max(2, min_samples * n_samples)
+
+    # Start all points as 'unprocessed' ##
+    reachability_ = np.empty(n_samples)
+    reachability_.fill(np.inf)
+    predecessor_ = np.empty(n_samples, dtype=int)
+    predecessor_.fill(-1)
+
+    nbrs = NearestNeighbors(n_neighbors=min_samples,
+                            algorithm=algorithm,
+                            leaf_size=leaf_size,
+                            metric=metric,
+                            metric_params=metric_params,
+                            p=p,
+                            n_jobs=n_jobs)
+
+    nbrs.fit(X)
+    # Here we first do a kNN query for each point, this differs from
+    # the original OPTICS that only used epsilon range queries.
+    # TODO: handle working_memory somehow?
+    core_distances_ = _compute_core_distances_(X=X, neighbors=nbrs,
+                                               min_samples=min_samples,
+                                               working_memory=None)
+    # OPTICS puts an upper limit on these, use inf for undefined.
+    core_distances_[core_distances_ > max_eps] = np.inf
+
+    # Main OPTICS loop. Not parallelizable. The order that entries are
+    # written to the 'ordering_' list is important!
+    # Note that this implementation is O(n^2) theoretically, but
+    # supposedly with very low constant factors.
+    processed = np.zeros(X.shape[0], dtype=bool)
+    ordering = np.zeros(X.shape[0], dtype=int)
+    for ordering_idx in range(X.shape[0]):
+        # Choose next based on smallest reachability distance
+        # (And prefer smaller ids on ties, possibly np.inf!)
+        index = np.where(processed == 0)[0]
+        point = index[np.argmin(reachability_[index])]
+
+        processed[point] = True
+        ordering[ordering_idx] = point
+        if core_distances_[point] != np.inf:
+            _set_reach_dist(core_distances_=core_distances_,
+                            reachability_=reachability_,
+                            predecessor_=predecessor_,
+                            point_index=point,
+                            processed=processed, X=X, nbrs=nbrs,
+                            metric=metric, metric_params=metric_params,
+                            p=p, max_eps=max_eps)
+    if np.all(np.isinf(reachability_)):
+        warnings.warn("All reachability values are inf. Set a larger"
+                      " max_eps or all data will be considered outliers.",
+                      UserWarning)
+    return ordering, core_distances_, reachability_, predecessor_
+
+
+def _set_reach_dist(core_distances_, reachability_, predecessor_,
+                    point_index, processed, X, nbrs, metric, metric_params,
+                    p, max_eps):
+    P = X[point_index:point_index + 1]
+    # Assume that radius_neighbors is faster without distances
+    # and we don't need all distances, nevertheless, this means
+    # we may be doing some work twice.
+    indices = nbrs.radius_neighbors(P, radius=max_eps,
+                                    return_distance=False)[0]
+
+    # Getting indices of neighbors that have not been processed
+    unproc = np.compress(~np.take(processed, indices), indices)
+    # Neighbors of current point are already processed.
+    if not unproc.size:
+        return
+
+    # Only compute distances to unprocessed neighbors:
+    if metric == 'precomputed':
+        dists = X[point_index, unproc]
+    else:
+        _params = dict() if metric_params is None else metric_params.copy()
+        if metric == 'minkowski' and 'p' not in _params:
+            # the same logic as neighbors, p is ignored if explicitly set
+            # in the dict params
+            _params['p'] = p
+        dists = pairwise_distances(P, np.take(X, unproc, axis=0),
+                                   metric, n_jobs=None,
+                                   **_params).ravel()
+
+    rdists = np.maximum(dists, core_distances_[point_index])
+    improved = np.where(rdists < np.take(reachability_, unproc))
+    reachability_[unproc[improved]] = rdists[improved]
+    predecessor_[unproc[improved]] = point_index
+
+
+def cluster_optics_dbscan(reachability, core_distances, ordering, eps):
+    """Performs DBSCAN extraction for an arbitrary epsilon.
+
+    Extracting the clusters runs in linear time. Note that this results in
+    ``labels_`` which are close to a `DBSCAN` with similar settings and
+    ``eps``, only if ``eps`` is close to ``max_eps``.
+
+    Parameters
+    ----------
+    reachability : array, shape (n_samples,)
+        Reachability distances calculated by OPTICS (``reachability_``)
+
+    core_distances : array, shape (n_samples,)
+        Distances at which points become core (``core_distances_``)
+
+    ordering : array, shape (n_samples,)
+        OPTICS ordered point indices (``ordering_``)
+
+    eps : float
+        DBSCAN ``eps`` parameter. Must be set to < ``max_eps``. Results
+        will be close to DBSCAN algorithm if ``eps`` and ``max_eps`` are close
+        to one another.
+
+    Returns
+    -------
     labels_ : array, shape (n_samples,)
         The estimated labels.
-    """
 
+    """
     n_samples = len(core_distances)
-    is_core = np.zeros(n_samples, dtype=bool)
     labels = np.zeros(n_samples, dtype=int)
 
     far_reach = reachability > eps
     near_core = core_distances <= eps
     labels[ordering] = np.cumsum(far_reach[ordering] & near_core[ordering]) - 1
     labels[far_reach & ~near_core] = -1
-    is_core[near_core] = True
-    return np.arange(n_samples)[is_core], labels
+    return labels
 
 
-def _extract_optics(ordering, reachability, maxima_ratio=.75,
-                    rejection_ratio=.7, similarity_threshold=0.4,
-                    significant_min=.003, min_cluster_size=.005,
-                    min_maxima_ratio=0.001):
-    """Performs automatic cluster extraction for variable density data.
+def cluster_optics_xi(reachability, predecessor, ordering, min_samples,
+                      min_cluster_size=None, xi=0.05,
+                      predecessor_correction=True):
+    """Automatically extract clusters according to the Xi-steep method.
 
     Parameters
     ----------
-    ordering : array, shape (n_samples,)
-        OPTICS ordered point indices (`ordering_`)
-
     reachability : array, shape (n_samples,)
         Reachability distances calculated by OPTICS (`reachability_`)
 
-    maxima_ratio : float, optional
-        The maximum ratio we allow of average height of clusters on the
-        right and left to the local maxima in question. The higher the
-        ratio, the more generous the algorithm is to preserving local
-        minima, and the more cuts the resulting tree will have.
+    predecessor : array, shape (n_samples,)
+        Predecessors calculated by OPTICS.
 
-    rejection_ratio : float, optional
-        Adjusts the fitness of the clustering. When the maxima_ratio is
-        exceeded, determine which of the clusters to the left and right to
-        reject based on rejection_ratio. Higher values will result in points
-        being more readily classified as noise; conversely, lower values will
-        result in more points being clustered.
+    ordering : array, shape (n_samples,)
+        OPTICS ordered point indices (`ordering_`)
 
-    similarity_threshold : float, optional
-        Used to check if nodes can be moved up one level, that is, if the
-        new cluster created is too "similar" to its parent, given the
-        similarity threshold. Similarity can be determined by 1) the size
-        of the new cluster relative to the size of the parent node or
-        2) the average of the reachability values of the new cluster
-        relative to the average of the reachability values of the parent
-        node. A lower value for the similarity threshold means less levels
-        in the tree.
+    min_samples : int > 1 or float between 0 and 1 (default=None)
+        The same as the min_samples given to OPTICS. Up and down steep regions
+        can't have more then ``min_samples`` consecutive non-steep points.
+        Expressed as an absolute number or a fraction of the number of samples
+        (rounded to be at least 2).
 
-    significant_min : float, optional
-        Sets a lower threshold on how small a significant maxima can be.
+    min_cluster_size : int > 1 or float between 0 and 1 (default=None)
+        Minimum number of samples in an OPTICS cluster, expressed as an
+        absolute number or a fraction of the number of samples (rounded to be
+        at least 2). If ``None``, the value of ``min_samples`` is used instead.
+
+    xi : float, between 0 and 1, optional (default=0.05)
+        Determines the minimum steepness on the reachability plot that
+        constitutes a cluster boundary. For example, an upwards point in the
+        reachability plot is defined by the ratio from one point to its
+        successor being at most 1-xi.
+
+    predecessor_correction : bool, optional (default=True)
+        Correct clusters based on the calculated predecessors.
+
+    Returns
+    -------
+    labels : array, shape (n_samples)
+        The labels assigned to samples. Points which are not included
+        in any cluster are labeled as -1.
+
+    clusters : array, shape (n_clusters, 2)
+        The list of clusters in the form of ``[start, end]`` in each row, with
+        all indices inclusive. The clusters are ordered according to ``(end,
+        -start)`` (ascending) so that larger clusters encompassing smaller
+        clusters come after such nested smaller clusters. Since ``labels`` does
+        not reflect the hierarchy, usually ``len(clusters) >
+        np.unique(labels)``.
+    """
+    n_samples = len(reachability)
+    _validate_size(min_samples, n_samples, 'min_samples')
+    if min_samples <= 1:
+        min_samples = max(2, min_samples * n_samples)
+    if min_cluster_size is None:
+        min_cluster_size = min_samples
+    _validate_size(min_cluster_size, n_samples, 'min_cluster_size')
+    if min_cluster_size <= 1:
+        min_cluster_size = max(2, min_cluster_size * n_samples)
+
+    clusters = _xi_cluster(reachability[ordering], predecessor[ordering],
+                           ordering, xi,
+                           min_samples, min_cluster_size,
+                           predecessor_correction)
+    labels = _extract_xi_labels(ordering, clusters)
+    return labels, clusters
+
+
+def _extend_region(steep_point, xward_point, start, min_samples):
+    """Extend the area until it's maximal.
+
+    It's the same function for both upward and downward reagions, depending on
+    the given input parameters. Assuming:
+
+        - steep_{upward/downward}: bool array indicating whether a point is a
+          steep {upward/downward};
+        - upward/downward: bool array indicating whether a point is
+          upward/downward;
+
+    To extend an upward reagion, ``steep_point=steep_upward`` and
+    ``xward_point=downward`` are expected, and to extend a downward region,
+    ``steep_point=steep_downward`` and ``xward_point=upward``.
+
+    Parameters
+    ----------
+    steep_point : bool array, shape (n_samples)
+        True if the point is steep downward (upward).
+
+    xward_point : bool array, shape (n_samples)
+        True if the point is an upward (respectively downward) point.
+
+    start : integer
+        The start of the xward region.
+
+    min_samples : integer
+       The same as the min_samples given to OPTICS. Up and down steep
+       regions can't have more then ``min_samples`` consecutive non-steep
+       points.
+
+    Returns
+    -------
+    index : integer
+        The current index iterating over all the samples, i.e. where we are up
+        to in our search.
+
+    end : integer
+        The end of the region, which can be behind the index. The region
+        includes the ``end`` index.
+    """
+    n_samples = len(steep_point)
+    non_xward_points = 0
+    index = start
+    end = start
+    # find a maximal area
+    while index < n_samples:
+        if steep_point[index]:
+            non_xward_points = 0
+            end = index
+        elif not xward_point[index]:
+            # it's not a steep point, but still goes up.
+            non_xward_points += 1
+            # region should include no more than min_samples consecutive
+            # non steep xward points.
+            if non_xward_points > min_samples:
+                break
+        else:
+            return end
+        index += 1
+    return end
+
+
+def _update_filter_sdas(sdas, mib, xi_complement, reachability_plot):
+    """Update steep down areas (SDAs) using the new maximum in between (mib)
+    value, and the given complement of xi, i.e. ``1 - xi``.
+    """
+    if np.isinf(mib):
+        return []
+    res = [sda for sda in sdas
+           if mib <= reachability_plot[sda['start']] * xi_complement]
+    for sda in res:
+        sda['mib'] = max(sda['mib'], mib)
+    return res
+
+
+def _correct_predecessor(reachability_plot, predecessor_plot, ordering, s, e):
+    """Correct for predecessors.
+
+    Applies Algorithm 2 of [1]_.
+
+    Input parameters are ordered by the computer OPTICS ordering.
+
+    .. [1] Schubert, Erich, Michael Gertz.
+       "Improving the Cluster Structure Extracted from OPTICS Plots." Proc. of
+       the Conference "Lernen, Wissen, Daten, Analysen" (LWDA) (2018): 318-329.
+    """
+    while s < e:
+        if reachability_plot[s] > reachability_plot[e]:
+            return s, e
+        p_e = ordering[predecessor_plot[e]]
+        for i in range(s, e):
+            if p_e == ordering[i]:
+                return s, e
+        e -= 1
+    return None, None
+
+
+def _xi_cluster(reachability_plot, predecessor_plot, ordering, xi, min_samples,
+                min_cluster_size, predecessor_correction):
+    """Automatically extract clusters according to the Xi-steep method.
+
+    This is rouphly an implementation of Figure 19 of the OPTICS paper.
+
+    Parameters
+    ----------
+    reachability_plot : array, shape (n_samples)
+        The reachability plot, i.e. reachability ordered according to
+        the calculated ordering, all computed by OPTICS.
+
+    predecessor_plot : array, shape (n_samples)
+        Predecessors ordered according to the calculated ordering.
+
+    xi : float, between 0 and 1
+        Determines the minimum steepness on the reachability plot that
+        constitutes a cluster boundary. For example, an upwards point in the
+        reachability plot is defined by the ratio from one point to its
+        successor being at most 1-xi.
+
+    min_samples : int > 1 or float between 0 and 1 (default=None)
+        The same as the min_samples given to OPTICS. Up and down steep regions
+        can't have more then ``min_samples`` consecutive non-steep points.
+        Expressed as an absolute number or a fraction of the number of samples
+        (rounded to be at least 2).
 
     min_cluster_size : int > 1 or float between 0 and 1
         Minimum number of samples in an OPTICS cluster, expressed as an
         absolute number or a fraction of the number of samples (rounded
         to be at least 2).
 
-    min_maxima_ratio : float, optional
-        Used to determine neighborhood size for minimum cluster membership.
+    predecessor_correction : bool
+        Correct clusters based on the calculated predecessors.
 
     Returns
     -------
-    core_sample_indices_ : array, shape (n_core_samples,)
-        The indices of the core samples.
-
-    labels_ : array, shape (n_samples,)
-        The estimated labels.
+    clusters : array, shape (n_clusters, 2)
+        The list of clusters in the form of [start, end] in each row, with all
+        indices inclusive. The clusters are ordered in a way that larger
+        clusters encompassing smaller clusters come after those smaller
+        clusters.
     """
 
-    # Extraction wrapper
-    # according to Ankerst M. et.al. 1999 (p. 5), for a small enough
-    # generative distance epsilong, there should be more than one INF.
-    if np.all(np.isinf(reachability)):
-        raise ValueError("All reachability values are inf. Set a larger"
-                         " max_eps.")
-    normalization_factor = np.max(reachability[reachability < np.inf])
-    reachability = reachability / normalization_factor
-    reachability_plot = reachability[ordering].tolist()
-    root_node = _automatic_cluster(reachability_plot, ordering,
-                                   maxima_ratio, rejection_ratio,
-                                   similarity_threshold, significant_min,
-                                   min_cluster_size, min_maxima_ratio)
-    leaves = _get_leaves(root_node, [])
-    # Start cluster id's at 0
-    clustid = 0
-    n_samples = len(reachability)
-    is_core = np.zeros(n_samples, dtype=bool)
-    labels = np.full(n_samples, -1, dtype=int)
-    # Start all points as non-core noise
-    for leaf in leaves:
-        index = ordering[leaf.start:leaf.end]
-        labels[index] = clustid
-        is_core[index] = 1
-        clustid += 1
-    return np.arange(n_samples)[is_core], labels
+    # Our implementation adds an inf to the end of reachability plot
+    # this helps to find potential clusters at the end of the
+    # reachability plot even if there's no upward region at the end of it.
+    reachability_plot = np.hstack((reachability_plot, np.inf))
+
+    xi_complement = 1 - xi
+    sdas = []  # steep down areas, introduced in section 4.3.2 of the paper
+    clusters = []
+    index = 0
+    mib = 0.  # maximum in between, section 4.3.2
+
+    # Our implementation corrects a mistake in the original
+    # paper, i.e., in Definition 9 steep downward point,
+    # r(p) * (1 - x1) <= r(p + 1) should be
+    # r(p) * (1 - x1) >= r(p + 1)
+    with np.errstate(invalid='ignore'):
+        ratio = reachability_plot[:-1] / reachability_plot[1:]
+        steep_upward = ratio <= xi_complement
+        steep_downward = ratio >= 1 / xi_complement
+        downward = ratio > 1
+        upward = ratio < 1
+
+    # the following loop is is almost exactly as Figure 19 of the paper.
+    # it jumps over the areas which are not either steep down or up areas
+    for steep_index in iter(np.flatnonzero(steep_upward | steep_downward)):
+        # just continue if steep_index has been a part of a discovered xward
+        # area.
+        if steep_index < index:
+            continue
+
+        mib = max(mib, np.max(reachability_plot[index:steep_index + 1]))
+
+        # steep downward areas
+        if steep_downward[steep_index]:
+            sdas = _update_filter_sdas(sdas, mib, xi_complement,
+                                       reachability_plot)
+            D_start = steep_index
+            D_end = _extend_region(steep_downward, upward,
+                                   D_start, min_samples)
+            D = {'start': D_start, 'end': D_end, 'mib': 0.}
+            sdas.append(D)
+            index = D_end + 1
+            mib = reachability_plot[index]
+
+        # steep upward areas
+        else:
+            sdas = _update_filter_sdas(sdas, mib, xi_complement,
+                                       reachability_plot)
+            U_start = steep_index
+            U_end = _extend_region(steep_upward, downward, U_start,
+                                   min_samples)
+            index = U_end + 1
+            mib = reachability_plot[index]
+
+            U_clusters = []
+            for D in sdas:
+                c_start = D['start']
+                c_end = U_end
+
+                # line (**), sc2*
+                if reachability_plot[c_end + 1] * xi_complement < D['mib']:
+                    continue
+
+                # Definition 11: criterion 4
+                D_max = reachability_plot[D['start']]
+                if D_max * xi_complement >= reachability_plot[c_end + 1]:
+                    # Find the first index from the left side which is almost
+                    # at the same level as the end of the detected cluster.
+                    while (reachability_plot[c_start + 1] >
+                           reachability_plot[c_end + 1]
+                           and c_start < D['end']):
+                        c_start += 1
+                elif reachability_plot[c_end + 1] * xi_complement >= D_max:
+                    # Find the first index from the right side which is almost
+                    # at the same level as the beginning of the detected
+                    # cluster.
+                    # Our implementation corrects a mistake in the original
+                    # paper, i.e., in Definition 11 4c, r(x) < r(sD) should be
+                    # r(x) > r(sD).
+                    while (reachability_plot[c_end - 1] > D_max
+                           and c_end > U_start):
+                        c_end -= 1
+
+                # predecessor correction
+                if predecessor_correction:
+                    c_start, c_end = _correct_predecessor(reachability_plot,
+                                                          predecessor_plot,
+                                                          ordering,
+                                                          c_start,
+                                                          c_end)
+                if c_start is None:
+                    continue
+
+                # Definition 11: criterion 3.a
+                if c_end - c_start + 1 < min_cluster_size:
+                    continue
+
+                # Definition 11: criterion 1
+                if c_start > D['end']:
+                    continue
+
+                # Definition 11: criterion 2
+                if c_end < U_start:
+                    continue
+
+                U_clusters.append((c_start, c_end))
+
+            # add smaller clusters first.
+            U_clusters.reverse()
+            clusters.extend(U_clusters)
+
+    return np.array(clusters)
 
 
-def _automatic_cluster(reachability_plot, ordering,
-                       maxima_ratio, rejection_ratio,
-                       similarity_threshold, significant_min,
-                       min_cluster_size, min_maxima_ratio):
-    """Converts reachability plot to cluster tree and returns root node.
+def _extract_xi_labels(ordering, clusters):
+    """Extracts the labels from the clusters returned by `_xi_cluster`.
+    We rely on the fact that clusters are stored
+    with the smaller clusters coming before the larger ones.
 
     Parameters
     ----------
+    ordering : array, shape (n_samples)
+        The ordering of points calculated by OPTICS
 
-    reachability_plot : list, required
-        Reachability distances ordered by OPTICS ordering index.
+    clusters : array, shape (n_clusters, 2)
+        List of clusters i.e. (start, end) tuples,
+        as returned by `_xi_cluster`.
 
+    Returns
+    -------
+    labels : array, shape (n_samples)
     """
 
-    min_neighborhood_size = 2
-    if min_cluster_size <= 1:
-        min_cluster_size = max(2, min_cluster_size * len(ordering))
-    neighborhood_size = int(min_maxima_ratio * len(ordering))
-
-    # Again, should this check < min_samples, should the parameter be public?
-    if neighborhood_size < min_neighborhood_size:
-        neighborhood_size = min_neighborhood_size
-
-    local_maxima_points = _find_local_maxima(reachability_plot,
-                                             neighborhood_size)
-    root_node = _TreeNode(ordering, 0, len(ordering), None)
-    _cluster_tree(root_node, None, local_maxima_points,
-                  reachability_plot, ordering, min_cluster_size,
-                  maxima_ratio, rejection_ratio,
-                  similarity_threshold, significant_min)
-
-    return root_node
-
-
-class _TreeNode(object):
-    # automatic cluster helper classes and functions
-    def __init__(self, points, start, end, parent_node):
-        self.points = points
-        self.start = start
-        self.end = end
-        self.parent_node = parent_node
-        self.children = []
-        self.split_point = -1
-
-
-def _is_local_maxima(index, reachability_plot, neighborhood_size):
-    right_idx = slice(index + 1, index + neighborhood_size + 1)
-    left_idx = slice(max(1, index - neighborhood_size - 1), index)
-    return (np.all(reachability_plot[index] >= reachability_plot[left_idx]) and
-            np.all(reachability_plot[index] >= reachability_plot[right_idx]))
-
-
-def _find_local_maxima(reachability_plot, neighborhood_size):
-    local_maxima_points = {}
-    # 1st and last points on Reachability Plot are not taken
-    # as local maxima points
-    for i in range(1, len(reachability_plot) - 1):
-        # if the point is a local maxima on the reachability plot with
-        # regard to neighborhood_size, insert it into priority queue and
-        # maxima list
-        if (reachability_plot[i] > reachability_plot[i - 1] and
-            reachability_plot[i] >= reachability_plot[i + 1] and
-            _is_local_maxima(i, np.array(reachability_plot),
-                             neighborhood_size) == 1):
-            local_maxima_points[i] = reachability_plot[i]
-
-    return sorted(local_maxima_points,
-                  key=local_maxima_points.__getitem__, reverse=True)
-
-
-def _cluster_tree(node, parent_node, local_maxima_points,
-                  reachability_plot, reachability_ordering,
-                  min_cluster_size, maxima_ratio, rejection_ratio,
-                  similarity_threshold, significant_min):
-    """Recursively builds cluster tree to hold hierarchical cluster structure
-
-    node is a node or the root of the tree in the first call
-    parent_node is parent node of N or None if node is root of the tree
-    local_maxima_points is list of local maxima points sorted in
-    descending order of reachability
-    """
-
-    if len(local_maxima_points) == 0:
-        return  # parent_node is a leaf
-
-    # take largest local maximum as possible separation between clusters
-    s = local_maxima_points[0]
-    node.split_point = s
-    local_maxima_points = local_maxima_points[1:]
-
-    # create two new nodes and add to list of nodes
-    node_1 = _TreeNode(reachability_ordering[node.start:s],
-                       node.start, s, node)
-    node_2 = _TreeNode(reachability_ordering[s + 1:node.end],
-                       s + 1, node.end, node)
-    local_max_1 = []
-    local_max_2 = []
-
-    for i in local_maxima_points:
-        if i < s:
-            local_max_1.append(i)
-        if i > s:
-            local_max_2.append(i)
-
-    node_list = []
-    node_list.append((node_1, local_max_1))
-    node_list.append((node_2, local_max_2))
-
-    if reachability_plot[s] < significant_min:
-        node.split_point = -1
-        # if split_point is not significant, ignore this split and continue
-        return
-
-    # only check a certain ratio of points in the child
-    # nodes formed to the left and right of the maxima
-    # ...should check_ratio be a user settable parameter?
-    check_ratio = .8
-    check_value_1 = int(np.round(check_ratio * len(node_1.points)))
-    check_value_2 = int(np.round(check_ratio * len(node_2.points)))
-    avg_reach1 = np.mean(reachability_plot[(node_1.end -
-                                            check_value_1):node_1.end])
-    avg_reach2 = np.mean(reachability_plot[node_2.start:(node_2.start
-                                                         + check_value_2)])
-
-    if ((avg_reach1 / maxima_ratio) > reachability_plot[s] or
-            (avg_reach2 / maxima_ratio) > reachability_plot[s]):
-
-        if (avg_reach1 / rejection_ratio) < reachability_plot[s]:
-            # reject node 2
-            node_list.remove((node_2, local_max_2))
-        if (avg_reach2 / rejection_ratio) < reachability_plot[s]:
-            # reject node 1
-            node_list.remove((node_1, local_max_1))
-        if ((avg_reach1 / rejection_ratio) >= reachability_plot[s] and
-                (avg_reach2 / rejection_ratio) >= reachability_plot[s]):
-            # since split_point is not significant,
-            # ignore this split and continue (reject both child nodes)
-            node.split_point = -1
-            _cluster_tree(node, parent_node, local_maxima_points,
-                          reachability_plot, reachability_ordering,
-                          min_cluster_size, maxima_ratio, rejection_ratio,
-                          similarity_threshold, significant_min)
-            return
-
-    # remove clusters that are too small
-    if (len(node_1.points) < min_cluster_size and
-            node_list.count((node_1, local_max_1)) > 0):
-        # cluster 1 is too small
-        node_list.remove((node_1, local_max_1))
-    if (len(node_2.points) < min_cluster_size and
-            node_list.count((node_2, local_max_2)) > 0):
-        # cluster 2 is too small
-        node_list.remove((node_2, local_max_2))
-    if not node_list:
-        # parent_node will be a leaf
-        node.split_point = -1
-        return
-
-    # Check if nodes can be moved up one level - the new cluster created
-    # is too "similar" to its parent, given the similarity threshold.
-    bypass_node = 0
-    if parent_node is not None:
-        if ((node.end - node.start) / (parent_node.end - parent_node.start) >
-                similarity_threshold):
-
-            parent_node.children.remove(node)
-            bypass_node = 1
-
-    for nl in node_list:
-        if bypass_node == 1:
-            parent_node.children.append(nl[0])
-            _cluster_tree(nl[0], parent_node, nl[1],
-                          reachability_plot, reachability_ordering,
-                          min_cluster_size, maxima_ratio, rejection_ratio,
-                          similarity_threshold, significant_min)
-        else:
-            node.children.append(nl[0])
-            _cluster_tree(nl[0], node, nl[1], reachability_plot,
-                          reachability_ordering, min_cluster_size,
-                          maxima_ratio, rejection_ratio,
-                          similarity_threshold, significant_min)
-
-
-def _get_leaves(node, arr):
-    if node is not None:
-        if node.split_point == -1:
-            arr.append(node)
-        for n in node.children:
-            _get_leaves(n, arr)
-    return arr
+    labels = np.full(len(ordering), -1, dtype=int)
+    label = 0
+    for c in clusters:
+        if not np.any(labels[c[0]:(c[1] + 1)] != -1):
+            labels[c[0]:(c[1] + 1)] = label
+            label += 1
+    labels[ordering] = labels.copy()
+    return labels
