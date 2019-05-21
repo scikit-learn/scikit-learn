@@ -998,6 +998,7 @@ See the :ref:`metrics` section of the user guide for further details.
    :template: class.rst
 
    mixture.BayesianGaussianMixture
+   mixture.BernoulliMixture
    mixture.GaussianMixture
 
 .. _modelselection_ref:
