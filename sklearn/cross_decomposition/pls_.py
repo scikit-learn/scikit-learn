@@ -36,6 +36,7 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
     ite = 1
     X_pinv = Y_pinv = None
     eps = np.finfo(X.dtype).eps
+    Y_cond = 10 * np.finfo(Y.dtype).eps
     # Inner loop of the Wold algo.
     while True:
         # 1.1 Update u: the X weights
@@ -60,7 +61,8 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
         # 2.1 Update y_weights
         if mode == "B":
             if Y_pinv is None:
-                Y_pinv = pinv2(Y, check_finite=False)  # compute once pinv(Y)
+                # compute once pinv(Y)
+                Y_pinv = pinv2(Y, check_finite=False, cond=Y_cond)
             y_weights = np.dot(Y_pinv, x_score)
         else:
             # Mode A regress each Y column on x_score
@@ -285,7 +287,6 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin, MultiOutputMixin,
         self.n_iter_ = []
 
         # NIPALS algo: outer loop, over components
-        Y_eps = np.finfo(Yk.dtype).eps
         for k in range(self.n_components):
             if np.all(np.dot(Yk.T, Yk) < np.finfo(np.double).eps):
                 # Yk constant
@@ -294,10 +295,6 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin, MultiOutputMixin,
             # 1) weights estimation (inner loop)
             # -----------------------------------
             if self.algorithm == "nipals":
-                # Replace columns that are all close to zero with zeros
-                Yk_mask = np.all(np.abs(Yk) < 10 * Y_eps, axis=0)
-                Yk[:, Yk_mask] = 0.0
-
                 x_weights, y_weights, n_iter_ = \
                     _nipals_twoblocks_inner_loop(
                         X=Xk, Y=Yk, mode=self.mode, max_iter=self.max_iter,
