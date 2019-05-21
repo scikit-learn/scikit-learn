@@ -409,7 +409,7 @@ class MeanShift(BaseEstimator, ClusterMixin):
         """Perform clustering.
 
         Parameters
-        -----------
+        ----------
         X : array-like, shape=[n_samples, n_features]
             Samples to cluster.
 

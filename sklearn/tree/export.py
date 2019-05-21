@@ -839,7 +839,7 @@ def export_text(decision_tree, feature_names=None, max_depth=10,
         Text summary of all the rules in the decision tree.
 
     Examples
-    -------
+    --------
 
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.tree import DecisionTreeClassifier
