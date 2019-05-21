@@ -284,10 +284,9 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin, MultiOutputMixin,
         self.y_loadings_ = np.zeros((q, self.n_components))
         self.n_iter_ = []
 
-        eps = np.finfo(np.double).eps
         # NIPALS algo: outer loop, over components
         for k in range(self.n_components):
-            if np.all(np.dot(Yk.T, Yk) < eps):
+            if np.all(np.dot(Yk.T, Yk) < np.finfo(np.double).eps):
                 # Yk constant
                 warnings.warn('Y residual constant at iteration %s' % k)
                 break
