@@ -52,7 +52,8 @@ All scorer objects follow the convention that **higher return values are better
 than lower return values**.  Thus metrics which measure the distance between
 the model and the data, like :func:`metrics.mean_squared_error`, are
 available as neg_mean_squared_error which return the negated value
-of the metric.
+of the metric. Similarly, :func:`brier_score_loss` returns the negated value
+of the metric to adhere to the above scorer convention.
 
 ==============================    =============================================     ==================================
 Scoring                           Function                                          Comment
