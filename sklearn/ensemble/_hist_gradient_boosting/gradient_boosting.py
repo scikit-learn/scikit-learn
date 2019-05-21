@@ -464,6 +464,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         return raw_predictions
 
+    def _more_tags(self):
+        return {'allow_nan': True}
+
     @abstractmethod
     def _get_loss(self):
         pass
