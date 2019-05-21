@@ -287,7 +287,7 @@ class ParameterSampler:
 
 
 def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
-                   verbose, error_score='raise-deprecating', **fit_params):
+                   verbose, error_score=np.nan, **fit_params):
     """Run fit on one set of parameters.
 
     Parameters
@@ -329,8 +329,7 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error. Default is 'raise' but from
-        version 0.22 it will change to np.nan.
+        step, which will always raise the error. Default is ``np.nan``.
 
     Returns
     -------
@@ -382,7 +381,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
     @abstractmethod
     def __init__(self, estimator, scoring=None, n_jobs=None, iid='deprecated',
                  refit=True, cv='warn', verbose=0, pre_dispatch='2*n_jobs',
-                 error_score='raise-deprecating', return_train_score=True):
+                 error_score=np.nan, return_train_score=True):
 
         self.scoring = scoring
         self.estimator = estimator
@@ -943,8 +942,7 @@ class GridSearchCV(BaseSearchCV):
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error. Default is 'raise' but from
-        version 0.22 it will change to np.nan.
+        step, which will always raise the error. Default is ``np.nan``.
 
     return_train_score : boolean, default=False
         If ``False``, the ``cv_results_`` attribute will not include training
@@ -1120,7 +1118,7 @@ class GridSearchCV(BaseSearchCV):
     def __init__(self, estimator, param_grid, scoring=None,
                  n_jobs=None, iid='deprecated', refit=True, cv='warn',
                  verbose=0, pre_dispatch='2*n_jobs',
-                 error_score='raise-deprecating', return_train_score=False):
+                 error_score=np.nan, return_train_score=False):
         super().__init__(
             estimator=estimator, scoring=scoring,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
@@ -1291,8 +1289,7 @@ class RandomizedSearchCV(BaseSearchCV):
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error. Default is 'raise' but from
-        version 0.22 it will change to np.nan.
+        step, which will always raise the error. Default is ``np.nan``.
 
     return_train_score : boolean, default=False
         If ``False``, the ``cv_results_`` attribute will not include training
@@ -1432,7 +1429,7 @@ class RandomizedSearchCV(BaseSearchCV):
     def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
                  n_jobs=None, iid='deprecated', refit=True,
                  cv='warn', verbose=0, pre_dispatch='2*n_jobs',
-                 random_state=None, error_score='raise-deprecating',
+                 random_state=None, error_score=np.nan,
                  return_train_score=False):
         self.param_distributions = param_distributions
         self.n_iter = n_iter
