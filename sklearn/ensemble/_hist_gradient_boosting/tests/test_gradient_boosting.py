@@ -145,3 +145,39 @@ def test_should_stop(scores, n_iter_no_change, tol, stopping):
         n_iter_no_change=n_iter_no_change, tol=tol
     )
     assert gbdt._should_stop(scores) == stopping
+
+
+def test_missing_values():
+    # sanity check for missing value support. With only one feature and
+    # y == isnan(X), the gbdt is supposed to reach perfect accuracy.
+
+    n_samples = 100
+    n_features = 1
+    rng = np.random.RandomState(0)
+
+    X = rng.normal(size=(n_samples, n_features))
+    mask = rng.binomial(1, .5, size=X.shape).astype(np.bool)
+    X[mask] = np.nan
+    y = mask.ravel()
+    gb = HistGradientBoostingClassifier()
+    gb.fit(X, y)
+
+    assert gb.score(X, y) == 1
+
+
+def test_missing_value_predict_only():
+    # Make sure that misisng values are supported at predict time even if they
+    # were not encountered during fit time
+
+    rng = np.random.RandomState(0)
+    X, y = make_classification(random_state=rng)
+
+    gb = HistGradientBoostingClassifier()
+    gb.fit(X, y)
+    assert gb.score(X, y) == 1
+
+    # Half the values are now missing
+    missing_mask = rng.binomial(1, .5, size=X.shape).astype(np.bool)
+    X[missing_mask] = np.nan
+
+    assert gb.score(X, y) >= .8
