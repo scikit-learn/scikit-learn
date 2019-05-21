@@ -1236,15 +1236,19 @@ cdef class Tree:
 
 
 cdef class _CCPPruneController:
+    """Base class used by build_pruned_tree_ccp to control pruning
+    """
     cdef bint stop_pruning(self, DOUBLE_t effective_alpha) nogil:
+        """Return 1 to stop pruning and 0 to continue pruning"""
         return 0
 
     cdef int save_metrics(self, DOUBLE_t effective_alpha,
                           DOUBLE_t subtree_impurities) nogil:
+        """Save metrics when pruning"""
         pass
 
-
 cdef class _AlphaPruner(_CCPPruneController):
+    """Use alpha to control when to stop pruning"""
     cdef DOUBLE_t ccp_alpha
 
     def __cinit__(self, DOUBLE_t ccp_alpha):
@@ -1257,21 +1261,22 @@ cdef class _AlphaPruner(_CCPPruneController):
 
 
 cdef class _PathFinder(_CCPPruneController):
-    cdef DOUBLE_t[:] alpha_stack
-    cdef DOUBLE_t[:] impurity_stack
-    cdef UINT32_t stack_count
+    """Record metrics used to return the cost complexity path"""
+    cdef DOUBLE_t[:] ccp_alphas
+    cdef DOUBLE_t[:] impurities
+    cdef UINT32_t count
 
     def __cinit__(self,  int node_count):
-        self.alpha_stack = np.zeros(shape=(node_count), dtype=np.float64)
-        self.impurity_stack = np.zeros(shape=(node_count), dtype=np.float64)
-        self.stack_count = 0
+        self.ccp_alphas = np.zeros(shape=(node_count), dtype=np.float64)
+        self.impurities = np.zeros(shape=(node_count), dtype=np.float64)
+        self.count = 0
 
     cdef int save_metrics(self,
                           DOUBLE_t effective_alpha,
                           DOUBLE_t subtree_impurities) nogil:
-        self.alpha_stack[self.stack_count] = effective_alpha
-        self.impurity_stack[self.stack_count] = subtree_impurities
-        self.stack_count += 1
+        self.ccp_alphas[self.count] = effective_alpha
+        self.impurities[self.count] = subtree_impurities
+        self.count += 1
 
 
 cdef _cost_complexity_prune(
@@ -1506,17 +1511,17 @@ cpdef ccp_pruning_path(Tree orig_tree):
                            leaves_in_subtree, capacity)
 
     cdef:
-        UINT32_t total_items = path_finder.stack_count
+        UINT32_t total_items = path_finder.count
         np.ndarray ccp_alphas = np.empty(shape=total_items,
                                          dtype=np.float64)
         np.ndarray impurities = np.empty(shape=total_items,
                                          dtype=np.float64)
-        UINT32_t stack_count = 0
+        UINT32_t count = 0
 
-    while stack_count < total_items:
-        ccp_alphas[stack_count] = path_finder.alpha_stack[stack_count]
-        impurities[stack_count] = path_finder.impurity_stack[stack_count]
-        stack_count += 1
+    while count < total_items:
+        ccp_alphas[count] = path_finder.ccp_alphas[count]
+        impurities[count] = path_finder.impurities[count]
+        count += 1
 
     return {
         'ccp_alphas': ccp_alphas,
