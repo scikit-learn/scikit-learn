@@ -20,6 +20,7 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 
 from abc import ABCMeta
 from collections.abc import Iterable
+import warnings
 
 import numpy as np
 
@@ -225,6 +226,10 @@ def get_scorer(scoring):
     """
     if isinstance(scoring, str):
         try:
+            if scoring == 'brier_score_loss':
+                warnings.warn("Function 'brier_score_loss' was renamed to"
+                              "'neg_brier_score_loss' in version 0.22 and will"
+                              "be removed in version 0.24", DeprecationWarning)
             scorer = SCORERS[scoring]
         except KeyError:
             raise ValueError('%r is not a valid scoring value. '
@@ -491,7 +496,7 @@ average_precision_scorer = make_scorer(average_precision_score,
 # Score function for probabilistic classification
 neg_log_loss_scorer = make_scorer(log_loss, greater_is_better=False,
                                   needs_proba=True)
-brier_score_loss_scorer = make_scorer(brier_score_loss,
+neg_brier_score_loss_scorer = make_scorer(brier_score_loss,
                                       greater_is_better=False,
                                       needs_proba=True)
 
@@ -518,7 +523,8 @@ SCORERS = dict(explained_variance=explained_variance_scorer,
                balanced_accuracy=balanced_accuracy_scorer,
                average_precision=average_precision_scorer,
                neg_log_loss=neg_log_loss_scorer,
-               brier_score_loss=brier_score_loss_scorer,
+               brier_score_loss=neg_brier_score_loss_scorer,
+               neg_brier_score_loss=neg_brier_score_loss_scorer,
                # Cluster metrics that use supervised evaluation
                adjusted_rand_score=adjusted_rand_scorer,
                homogeneity_score=homogeneity_scorer,
