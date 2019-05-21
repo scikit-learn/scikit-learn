@@ -249,6 +249,10 @@ cdef class Splitter:
             X_BINNED_DTYPE_C bin_idx = split_info.bin_idx
             unsigned char missing_go_to_left = split_info.missing_go_to_left
             int feature_idx = split_info.feature_idx
+            unsigned char has_missing_values = \
+                self.has_missing_values[feature_idx]
+            X_BINNED_DTYPE_C missing_values_bin = \
+                self.actual_n_bins[feature_idx] - 1
             const X_BINNED_DTYPE_C [::1] X_binned = \
                 self.X_binned[:, feature_idx]
             unsigned int [::1] left_indices_buffer = self.left_indices_buffer
@@ -293,8 +297,8 @@ cdef class Splitter:
                 stop = start + sizes[thread_idx]
                 for i in range(start, stop):
                     sample_idx = sample_indices[i]
-                    if ((self.has_missing_values[feature_idx] and
-                            X_binned[sample_idx] == self.actual_n_bins[feature_idx] - 1 and
+                    if ((has_missing_values and
+                            X_binned[sample_idx] == missing_values_bin and
                             missing_go_to_left) or
                             X_binned[sample_idx] <= bin_idx):
                         left_indices_buffer[start + left_count] = sample_idx
@@ -374,6 +378,7 @@ cdef class Splitter:
             int n_features = self.n_features
             split_info_struct split_info
             split_info_struct * split_infos
+            unsigned char [:] has_missing_values = self.has_missing_values
 
         with nogil:
             n_samples = sample_indices.shape[0]
@@ -401,7 +406,7 @@ cdef class Splitter:
                     feature_idx, histograms, n_samples,
                     sum_gradients, sum_hessians, &split_infos[feature_idx])
 
-                if self.has_missing_values[feature_idx]:
+                if has_missing_values[feature_idx]:
                     self._find_best_bin_to_split_right_to_left(
                         feature_idx, histograms, n_samples,
                         sum_gradients, sum_hessians, &split_infos[feature_idx])
@@ -462,7 +467,10 @@ cdef class Splitter:
             unsigned int n_samples_left
             unsigned int n_samples_right
             unsigned int n_samples_ = n_samples
-            unsigned int end
+            # We don't need to consider splitting on the last bin (or second to
+            # last bin if there are missing values) since this would result in
+            # having 0 samples in the right node
+            unsigned int end = self.actual_n_bins[feature_idx] - 1
             Y_DTYPE_C sum_hessian_left
             Y_DTYPE_C sum_hessian_right
             Y_DTYPE_C sum_gradient_left
@@ -472,10 +480,6 @@ cdef class Splitter:
         sum_gradient_left, sum_hessian_left = 0., 0.
         n_samples_left = 0
 
-        # We don't need to consider splitting on the last bin (or second to
-        # last bin if there are missing values) since this would result in
-        # having 0 samples in the right node
-        end = self.actual_n_bins[feature_idx] - 1
         if self.has_missing_values[feature_idx]:
             # if there are missing values (in the last bin), skip one more bin
             end -= 1
