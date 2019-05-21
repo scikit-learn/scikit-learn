@@ -31,8 +31,8 @@ is_pypy = '__pypy__' in sys.builtin_module_names
 def pytest_runtest_call(item):
     """Setup pytest calls to trigger garbage collector
 
-    Parameter
-    ---------
+    Parameters
+    ----------
     item : pytest item
         Pytest item
     """
