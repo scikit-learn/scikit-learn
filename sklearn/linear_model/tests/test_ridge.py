@@ -34,7 +34,7 @@ from sklearn.linear_model.ridge import RidgeClassifierCV
 from sklearn.linear_model.ridge import _solve_cholesky
 from sklearn.linear_model.ridge import _solve_cholesky_kernel
 from sklearn.linear_model.ridge import _check_gcv_mode
-from sklearn.linear_model.ridge import _X_operator
+from sklearn.linear_model.ridge import _X_CenterStackOp
 from sklearn.datasets import make_regression
 
 from sklearn.model_selection import GridSearchCV
@@ -314,14 +314,14 @@ def test_ridge_individual_penalties():
 
 
 @pytest.mark.parametrize('n_col', [(), (1,), (3,)])
-def test_x_operator(n_col):
+def test_X_CenterStackOp(n_col):
     rng = np.random.RandomState(0)
     X = rng.randn(11, 8)
     X_m = rng.randn(8)
     sqrt_sw = rng.randn(len(X))
     Y = rng.randn(11, *n_col)
     A = rng.randn(9, *n_col)
-    operator = _X_operator(sp.csr_matrix(X), X_m, sqrt_sw)
+    operator = _X_CenterStackOp(sp.csr_matrix(X), X_m, sqrt_sw)
     reference_operator = np.hstack(
         [X - sqrt_sw[:, None] * X_m, sqrt_sw[:, None]])
     assert_allclose(reference_operator.dot(A), operator.dot(A))
