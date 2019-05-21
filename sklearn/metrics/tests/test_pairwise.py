@@ -631,7 +631,6 @@ def test_euclidean_distances():
     wrong_D = euclidean_distances(X, Y,
                                   X_norm_squared=np.zeros_like(X_norm_sq),
                                   Y_norm_squared=np.zeros_like(Y_norm_sq))
-
     with pytest.raises(AssertionError):
         assert_allclose(wrong_D, D1)
 

@@ -306,7 +306,7 @@ def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None, batch_size=None):
         # - x_density * batch_size * n_features (copy of chunk of X)
         # - y_density * batch_size * n_features (copy of chunk of Y)
         # - batch_size * batch_size (chunk of distance matrix)
-        # Hence xÂ² + (xd+yd)kx = M, where x=batch_size, k=n_features, M=maxmem
+        # Hence x² + (xd+yd)kx = M, where x=batch_size, k=n_features, M=maxmem
         #                                 xd=x_density and yd=y_density
         tmp = (x_density + y_density) * n_features
         batch_size = (-tmp + np.sqrt(tmp ** 2 + 4 * maxmem)) / 2
