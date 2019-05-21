@@ -1,3 +1,6 @@
+import gc
+import sys
+
 import pytest
 
 
@@ -19,3 +22,13 @@ def pyplot():
     pyplot = pytest.importorskip('matplotlib.pyplot')
     yield pyplot
     pyplot.close('all')
+
+
+is_pypy = '__pypy__' in sys.builtin_module_names
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_call(item):
+    yield
+    if is_pypy:
+        gc.collect()
