@@ -271,7 +271,7 @@ def test_subsample():
                         [1, 1, 1],
                         [1, 0, 0]])])
 def test_missing_values_support(max_bins, actual_n_bins, X_trans_expected):
-    # basic check for missing values: make sure nans are mapped to last bins
+    # check for missing values: make sure nans are mapped to last bins
     # and that attributes are correct
 
     # Note that the extra bin for missing values is only allocated if needed

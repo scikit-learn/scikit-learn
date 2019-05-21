@@ -43,6 +43,8 @@ def _find_binning_thresholds(data, max_bins, subsample, random_state):
         For each feature, stores the increasing numeric values that can
         be used to separate the bins. Thus ``len(binning_thresholds) ==
         n_features``.
+    has_missing_values: list of bool
+        For each feature, indicates whether missing values were encountered.
     """
     if not (2 <= max_bins <= 256):
         raise ValueError('max_bins={} should be no smaller than 2 '
@@ -135,9 +137,10 @@ class _BinMapper(BaseEstimator, TransformerMixin):
         self : object
         """
         X = check_array(X, dtype=[X_DTYPE], force_all_finite='allow-nan')
-        self.bin_thresholds_, self.has_missing_values_ = _find_binning_thresholds(
-            X, self.max_bins, subsample=self.subsample,
-            random_state=self.random_state)
+        self.bin_thresholds_, self.has_missing_values_ = \
+            _find_binning_thresholds(
+                    X, self.max_bins, subsample=self.subsample,
+                    random_state=self.random_state)
 
         self.actual_n_bins_ = np.array(
             [thresholds.shape[0] + 1 + has_missing_values

@@ -65,16 +65,12 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
     while True:
         if node.is_leaf:
             return node.value
-        if isnan(numeric_data[row, node.feature_idx]):
-            if node.missing_go_to_left:
-                node = nodes[node.left]
-            else:
-                node = nodes[node.right]
+        if ((isnan(numeric_data[row, node.feature_idx]) and
+             node.missing_go_to_left) or
+                numeric_data[row, node.feature_idx] <= node.threshold):
+            node = nodes[node.left]
         else:
-            if numeric_data[row, node.feature_idx] <= node.threshold:
-                node = nodes[node.left]
-            else:
-                node = nodes[node.right]
+            node = nodes[node.right]
 
 
 cdef void _predict_from_binned_data_parallel(

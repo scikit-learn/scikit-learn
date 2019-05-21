@@ -144,6 +144,9 @@ class TreeGrower:
         equal to ``max_bins``. If it's an int, all features are considered to
         have the same number of bins. If None, all features are considered to
         have ``max_bins`` bins.
+    has_missing_values : ndarray of bool or bool, optional (default=False)
+        Whether each feature contains missing values. If it's a bool, the same
+        values is used for all features.
     l2_regularization : float, optional (default=0)
         The L2 regularization parameter.
     min_hessian_to_split : float, optional (default=1e-3)

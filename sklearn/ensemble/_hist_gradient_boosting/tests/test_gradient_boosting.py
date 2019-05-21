@@ -166,8 +166,9 @@ def test_missing_values():
 
 
 def test_missing_value_predict_only():
-    # Make sure that misisng values are supported at predict time even if they
+    # Make sure that missing values are supported at predict time even if they
     # were not encountered during fit time
+    # The missing values are assigned to whichever child has the most samples
 
     rng = np.random.RandomState(0)
     X, y = make_classification(random_state=rng)

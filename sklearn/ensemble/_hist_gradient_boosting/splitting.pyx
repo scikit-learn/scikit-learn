@@ -52,6 +52,8 @@ class SplitInfo:
         The index of the feature to be split.
     bin_idx : int
         The index of the bin on which the split is made.
+    missing_go_to_left : bool
+        Whether missing values should go to the left child
     sum_gradient_left : float
         The sum of the gradients of all the samples in the left child.
     sum_hessian_left : float
@@ -99,6 +101,8 @@ cdef class Splitter:
     actual_n_bins : ndarray, shape (n_features,)
         The actual number of bins needed for each feature, which is lower or
         equal to max_bins.
+    has_missing_values : ndarray, shape (n_features,)
+        Whether each feature contains missing values.
     l2_regularization : float
         The L2 regularization parameter.
     min_hessian_to_split : float, default=1e-3
@@ -289,23 +293,15 @@ cdef class Splitter:
                 stop = start + sizes[thread_idx]
                 for i in range(start, stop):
                     sample_idx = sample_indices[i]
-                    if (self.has_missing_values[feature_idx] and
-                            X_binned[sample_idx] == self.actual_n_bins[feature_idx] - 1):
-                        # missing value
-                        if missing_go_to_left:
-                            left_indices_buffer[start + left_count] = sample_idx
-                            left_count = left_count + 1
-                        else:
-                            right_indices_buffer[start + right_count] = sample_idx
-                            right_count = right_count + 1
+                    if ((self.has_missing_values[feature_idx] and
+                            X_binned[sample_idx] == self.actual_n_bins[feature_idx] - 1 and
+                            missing_go_to_left) or
+                            X_binned[sample_idx] <= bin_idx):
+                        left_indices_buffer[start + left_count] = sample_idx
+                        left_count = left_count + 1
                     else:
-                        # non-missing value
-                        if X_binned[sample_idx] <= bin_idx:
-                            left_indices_buffer[start + left_count] = sample_idx
-                            left_count = left_count + 1
-                        else:
-                            right_indices_buffer[start + right_count] = sample_idx
-                            right_count = right_count + 1
+                        right_indices_buffer[start + right_count] = sample_idx
+                        right_count = right_count + 1
 
                 left_counts[thread_idx] = left_count
                 right_counts[thread_idx] = right_count
@@ -387,7 +383,19 @@ cdef class Splitter:
 
             for feature_idx in prange(n_features, schedule='static'):
                 # For each feature, find best bin to split on
+                # Start with a gain of -1 (if no better split is found, that
+                # means one of the constraints isn't respected
+                # (min_samples_leaf, etc) and the grower will later turn the
+                # node into a leaf.
                 split_infos[feature_idx].gain = -1
+
+                # We will scan bins from left to right (in all cases), and if
+                # there are any missing values, we will also scan bins from
+                # right to left. This way, we can consider whichever case
+                # yields the best gain: either missing values go to the right
+                # (left to right scan) or to the left (left to right case).
+                # See algo 3 from the XGBoost paper
+                # https://arxiv.org/abs/1603.02754
 
                 self._find_best_bin_to_split_left_to_right(
                     feature_idx, histograms, n_samples,
@@ -444,6 +452,10 @@ cdef class Splitter:
 
         Splits that do not satisfy the splitting constraints
         (min_gain_to_split, etc.) are discarded here.
+
+        We scan node from left to right. This version is called whether there
+        are missing values or not. If any, missing values are assigned to the
+        right node.
         """
         cdef:
             unsigned int bin_idx
@@ -460,11 +472,12 @@ cdef class Splitter:
         sum_gradient_left, sum_hessian_left = 0., 0.
         n_samples_left = 0
 
-        # We don't need to consider splitting on the last bin since this would
-        # result in having 0 samples in the right node
+        # We don't need to consider splitting on the last bin (or second to
+        # last bin if there are missing values) since this would result in
+        # having 0 samples in the right node
         end = self.actual_n_bins[feature_idx] - 1
         if self.has_missing_values[feature_idx]:
-            # if there are missing values, skip one more bin
+            # if there are missing values (in the last bin), skip one more bin
             end -= 1
 
         for bin_idx in range(end):
@@ -519,6 +532,16 @@ cdef class Splitter:
             Y_DTYPE_C sum_gradients,
             Y_DTYPE_C sum_hessians,
             split_info_struct * split_info) nogil:  # OUT
+        """Find best bin to split on for a given feature.
+
+        Splits that do not satisfy the splitting constraints
+        (min_gain_to_split, etc.) are discarded here.
+
+        We scan node from right to left. This version is only called when
+        there are missing values. If there's no missing value, calling
+        _find_best_bin_to_split_left_to_right is enough. If any, missing
+        values are assigned to the left node.
+        """
 
         cdef:
             unsigned int bin_idx
@@ -555,7 +578,8 @@ cdef class Splitter:
                     histograms[feature_idx, bin_idx].sum_hessians
             sum_hessian_left = sum_hessians - sum_hessian_right
 
-            sum_gradient_right += histograms[feature_idx, bin_idx].sum_gradients
+            sum_gradient_right += \
+                histograms[feature_idx, bin_idx].sum_gradients
             sum_gradient_left = sum_gradients - sum_gradient_right
 
             if n_samples_right < self.min_samples_leaf:
