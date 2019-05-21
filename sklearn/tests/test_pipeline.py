@@ -340,8 +340,8 @@ def test_pipeline_score_samples_pca_lof():
     pca = PCA(svd_solver='full', n_components='mle', whiten=True)
     pipe = Pipeline([('pca', pca), ('lof', clf)])
     pipe.fit(X)
-    assert_equal(list(pipe.score_samples(X[:2])),
-                 [-0.9564705258081416, -1.0371487183896932])
+    assert_array_almost_equal(pipe.score_samples(X[:2]),
+                              [-0.9564705258081416, -1.0371487183896932])
 
 
 def test_pipeline_methods_preprocessing_svm():
