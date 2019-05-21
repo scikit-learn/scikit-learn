@@ -29,6 +29,13 @@ is_pypy = '__pypy__' in sys.builtin_module_names
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_call(item):
+    """Setup pytest calls to trigger garbage collector
+
+    Parameter
+    ---------
+    item : pytest item
+        Pytest item
+    """
     yield
     if is_pypy:
         gc.collect()
