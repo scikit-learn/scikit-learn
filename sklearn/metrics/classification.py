@@ -1066,7 +1066,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     The F-beta score is the weighted harmonic mean of precision and recall,
     reaching its optimal value at 1 and its worst value at 0.
 
-    The `beta` parameter determines the weight of precision in the combined
+    The `beta` parameter determines the weight of recall in the combined
     score. ``beta < 1`` lends more weight to precision, while ``beta > 1``
     favors recall (``beta -> 0`` considers only precision, ``beta -> inf``
     only recall).
@@ -1989,16 +1989,18 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
     -----
     In multiclass classification, the Hamming loss corresponds to the Hamming
     distance between ``y_true`` and ``y_pred`` which is equivalent to the
-    subset ``zero_one_loss`` function.
+    subset ``zero_one_loss`` function, when `normalize` parameter is set to
+    True.
 
     In multilabel classification, the Hamming loss is different from the
     subset zero-one loss. The zero-one loss considers the entire set of labels
     for a given sample incorrect if it does not entirely match the true set of
-    labels. Hamming loss is more forgiving in that it penalizes the individual
-    labels.
+    labels. Hamming loss is more forgiving in that it penalizes only the
+    individual labels.
 
-    The Hamming loss is upperbounded by the subset zero-one loss. When
-    normalized over samples, the Hamming loss is always between 0 and 1.
+    The Hamming loss is upperbounded by the subset zero-one loss, when
+    `normalize` parameter is set to True. It is always between 0 and 1,
+    lower being better.
 
     References
     ----------

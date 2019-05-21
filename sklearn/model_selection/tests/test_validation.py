@@ -775,7 +775,6 @@ def test_cross_val_score_multilabel():
     assert_almost_equal(score_samples, [1, 1 / 2, 3 / 4, 1 / 2, 1 / 4])
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of n_split')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
@@ -828,7 +827,6 @@ def test_cross_val_predict():
                          X, y, method='predict_proba', cv=KFold(2))
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_cross_val_predict_decision_function_shape():
@@ -878,7 +876,6 @@ def test_cross_val_predict_decision_function_shape():
                         cv=KFold(n_splits=3), method='decision_function')
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_cross_val_predict_predict_proba_shape():
@@ -895,7 +892,6 @@ def test_cross_val_predict_predict_proba_shape():
     assert_equal(preds.shape, (150, 3))
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_cross_val_predict_predict_log_proba_shape():
@@ -912,7 +908,6 @@ def test_cross_val_predict_predict_log_proba_shape():
     assert_equal(preds.shape, (150, 3))
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_cross_val_predict_input_types():
@@ -980,7 +975,6 @@ def test_cross_val_predict_pandas():
         cross_val_predict(clf, X_df, y_ser)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_cross_val_predict_unbalanced():
     X, y = make_classification(n_samples=100, n_features=2, n_redundant=0,
@@ -1426,7 +1420,6 @@ def check_cross_val_predict_with_method_multiclass(est):
         check_cross_val_predict_multiclass(est, X, y, method)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of n_split')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
@@ -1449,9 +1442,7 @@ def test_cross_val_predict_method_checking():
         check_cross_val_predict_multiclass(est, X, y, method)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')
 @pytest.mark.filterwarnings('ignore: The default value of n_split')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_gridsearchcv_cross_val_predict_with_method():
@@ -1474,8 +1465,7 @@ def test_cross_val_predict_with_method_multilabel_ovr():
     X, y = make_multilabel_classification(n_samples=n_samp, n_labels=3,
                                           n_classes=n_classes, n_features=5,
                                           random_state=42)
-    est = OneVsRestClassifier(LogisticRegression(random_state=0,
-                                                 solver='lbfgs'))
+    est = OneVsRestClassifier(LogisticRegression(random_state=0))
     for method in ['predict_proba', 'decision_function']:
         check_cross_val_predict_binary(est, X, y, method=method)
 
@@ -1560,7 +1550,6 @@ def get_expected_predictions(X, y, cv, classes, est, method):
     return expected_predictions
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_cross_val_predict_class_subset():
