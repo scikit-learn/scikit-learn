@@ -456,7 +456,7 @@ def _fill_predictor_node_array(predictor_nodes, grower_node,
         node['bin_threshold'] = bin_idx
         node['missing_go_to_left'] = split_info.missing_go_to_left
         if bin_thresholds is not None:
-            threshold = bin_thresholds[feature_idx][min(bin_idx, 253)]
+            threshold = bin_thresholds[feature_idx][bin_idx]
             node['threshold'] = threshold
         next_free_idx += 1
 

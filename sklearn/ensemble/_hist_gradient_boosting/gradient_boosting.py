@@ -123,7 +123,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if self.verbose:
             duration = toc - tic
             print("{:.3f} s".format(duration))
-        print(self.bin_mapper_.actual_n_bins_)
 
         self.loss_ = self._get_loss()
 

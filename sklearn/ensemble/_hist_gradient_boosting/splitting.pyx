@@ -450,7 +450,7 @@ cdef class Splitter:
             unsigned int n_samples_left
             unsigned int n_samples_right
             unsigned int n_samples_ = n_samples
-            unsigned int n_bins
+            unsigned int end
             Y_DTYPE_C sum_hessian_left
             Y_DTYPE_C sum_hessian_right
             Y_DTYPE_C sum_gradient_left
@@ -460,12 +460,14 @@ cdef class Splitter:
         sum_gradient_left, sum_hessian_left = 0., 0.
         n_samples_left = 0
 
-        n_bins = self.actual_n_bins[feature_idx]
+        # We don't need to consider splitting on the last bin since this would
+        # result in having 0 samples in the right child
+        end = self.actual_n_bins[feature_idx] - 1
         if self.has_missing_values[feature_idx]:
-            # if there are missing values, ignore the last bin
-            n_bins -= 1
+            # if there are missing values, skip one more bin
+            end -= 1
 
-        for bin_idx in range(n_bins):
+        for bin_idx in range(end):
             n_samples_left += histograms[feature_idx, bin_idx].count
             n_samples_right = n_samples_ - n_samples_left
 
@@ -525,7 +527,7 @@ cdef class Splitter:
             unsigned int n_samples_left
             unsigned int n_samples_right
             unsigned int n_samples_ = n_samples
-            unsigned int second_to_last_bin
+            unsigned int start
             Y_DTYPE_C sum_hessian_left
             Y_DTYPE_C sum_hessian_right
             Y_DTYPE_C sum_gradient_left
@@ -535,9 +537,12 @@ cdef class Splitter:
         sum_gradient_left, sum_hessian_left = 0., 0.
         n_samples_left = 0
 
-        second_to_last_bin = self.actual_n_bins[feature_idx] - 2
+        # - Skip last bin (where the missing values are)
+        # - Skip second to last bin (considering this split would result in 0
+        #   samples on the right node)
+        start = self.actual_n_bins[feature_idx] - 3
 
-        for bin_idx in range(second_to_last_bin, -1, -1):
+        for bin_idx in range(start, -1, -1):
             n_samples_right += histograms[feature_idx, bin_idx].count
             n_samples_left = n_samples_ - n_samples_right
 
