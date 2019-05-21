@@ -461,7 +461,7 @@ cdef class Splitter:
         n_samples_left = 0
 
         # We don't need to consider splitting on the last bin since this would
-        # result in having 0 samples in the right child
+        # result in having 0 samples in the right node
         end = self.actual_n_bins[feature_idx] - 1
         if self.has_missing_values[feature_idx]:
             # if there are missing values, skip one more bin
@@ -502,8 +502,7 @@ cdef class Splitter:
                 split_info.gain = gain
                 split_info.feature_idx = feature_idx
                 split_info.bin_idx = bin_idx
-                # since we scan from left to right, missing values go to the
-                # right.
+                # we scan from left to right so missing values go to the right
                 split_info.missing_go_to_left = False
                 split_info.sum_gradient_left = sum_gradient_left
                 split_info.sum_gradient_right = sum_gradient_right
@@ -520,27 +519,30 @@ cdef class Splitter:
             Y_DTYPE_C sum_gradients,
             Y_DTYPE_C sum_hessians,
             split_info_struct * split_info) nogil:  # OUT
-            # Only called if there are missing values. we ignore the last bin
 
         cdef:
             unsigned int bin_idx
             unsigned int n_samples_left
             unsigned int n_samples_right
             unsigned int n_samples_ = n_samples
-            unsigned int start
             Y_DTYPE_C sum_hessian_left
             Y_DTYPE_C sum_hessian_right
             Y_DTYPE_C sum_gradient_left
             Y_DTYPE_C sum_gradient_right
             Y_DTYPE_C gain
-
-        sum_gradient_left, sum_hessian_left = 0., 0.
-        n_samples_left = 0
+            unsigned int n_bins = self.actual_n_bins[feature_idx]
+            unsigned int start
 
         # - Skip last bin (where the missing values are)
         # - Skip second to last bin (considering this split would result in 0
         #   samples on the right node)
-        start = self.actual_n_bins[feature_idx] - 3
+        start = n_bins - 3
+
+        # n_bins - 2 is the index of the second to last bin, which we consider
+        # being on the right child.
+        sum_gradient_right = histograms[feature_idx, n_bins - 2].sum_gradients
+        sum_hessian_right = histograms[feature_idx, n_bins - 2].sum_hessians
+        n_samples_right = histograms[feature_idx, n_bins - 2].count
 
         for bin_idx in range(start, -1, -1):
             n_samples_right += histograms[feature_idx, bin_idx].count
@@ -577,8 +579,7 @@ cdef class Splitter:
                 split_info.gain = gain
                 split_info.feature_idx = feature_idx
                 split_info.bin_idx = bin_idx
-                # since we scan from right to left, missing values go to the
-                # left.
+                # we scan from right to left so missing values go to the left
                 split_info.missing_go_to_left = True
                 split_info.sum_gradient_left = sum_gradient_left
                 split_info.sum_gradient_right = sum_gradient_right

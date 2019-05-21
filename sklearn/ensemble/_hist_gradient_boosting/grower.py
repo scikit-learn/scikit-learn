@@ -187,6 +187,7 @@ class TreeGrower:
             min_gain_to_split, hessians_are_constant)
         self.max_leaf_nodes = max_leaf_nodes
         self.max_bins = max_bins
+        self.has_missing_values = has_missing_values
         self.n_features = X_binned.shape[1]
         self.max_depth = max_depth
         self.min_samples_leaf = min_samples_leaf
@@ -332,6 +333,13 @@ class TreeGrower:
         left_child_node.partition_stop = node.partition_start + right_child_pos
         right_child_node.partition_start = left_child_node.partition_stop
         right_child_node.partition_stop = node.partition_stop
+
+        if not self.has_missing_values[node.split_info.feature_idx]:
+            # If no missing values are encountered at fit time, then samples
+            # with missing values during predict() will go to whichever child
+            # has the most samples.
+            node.split_info.missing_go_to_left = (
+                left_child_node.n_samples > right_child_node.n_samples)
 
         self.n_nodes += 2
 
