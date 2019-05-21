@@ -285,6 +285,7 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin, MultiOutputMixin,
         self.n_iter_ = []
 
         # NIPALS algo: outer loop, over components
+        Y_eps = np.finfo(Yk.dtype).eps
         for k in range(self.n_components):
             if np.all(np.dot(Yk.T, Yk) < np.finfo(np.double).eps):
                 # Yk constant
@@ -294,8 +295,7 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin, MultiOutputMixin,
             # -----------------------------------
             if self.algorithm == "nipals":
                 # Replace columns that are all close to zero with zeros
-                Y_eps = np.finfo(Yk.dtype).eps
-                Yk_mask = np.all(np.abs(Yk) < 1e3 * Y_eps, axis=0)
+                Yk_mask = np.all(np.abs(Yk) < 10 * Y_eps, axis=0)
                 Yk[:, Yk_mask] = 0.0
 
                 x_weights, y_weights, n_iter_ = \
