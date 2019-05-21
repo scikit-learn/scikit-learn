@@ -1901,7 +1901,8 @@ def test_prune_tree_raises_negative_ccp_alpha():
 
 def assert_ccp_pruning_path_increases(estimator_cls, X, y):
     est = estimator_cls(max_leaf_nodes=20, random_state=0)
-    pruning_path = est.cost_complexity_pruning_path(X, y)
+    info = est.cost_complexity_pruning_path(X, y)
+    pruning_path = info.ccp_alphas
     assert np.all(np.diff(pruning_path) >= 0)
 
 
