@@ -1,18 +1,18 @@
 # Adapted from https://github.com/pandas-dev/pandas/blob/master/azure-pipelines.yml
-# jobs:
-# - template: build_tools/azure/posix.yml
-#   parameters:
-#     name: Linux
-#     vmImage: ubuntu-16.04
-#     matrix:
-#       # Linux environment to test that scikit-learn can be built against
-#       # versions of numpy, scipy with ATLAS that comes with Ubuntu Xenial 16.04
-#       # i.e. numpy 1.11 and scipy 0.17
-#       py35_np_atlas:
-#         DISTRIB: 'ubuntu'
-#         PYTHON_VERSION: '3.5'
-#         JOBLIB_VERSION: '0.11'
-#         SKLEARN_NO_OPENMP: 'True'
+jobs:
+- template: build_tools/azure/posix.yml
+  parameters:
+    name: Linux
+    vmImage: ubuntu-16.04
+    matrix:
+      # Linux environment to test that scikit-learn can be built against
+      # versions of numpy, scipy with ATLAS that comes with Ubuntu Xenial 16.04
+      # i.e. numpy 1.11 and scipy 0.17
+      # py35_np_atlas:
+      #   DISTRIB: 'ubuntu'
+      #   PYTHON_VERSION: '3.5'
+      #   JOBLIB_VERSION: '0.11'
+      #   SKLEARN_NO_OPENMP: 'True'
 #       # Linux + Python 3.5 build with OpenBLAS and without SITE_JOBLIB
 #       py35_conda_openblas:
 #         DISTRIB: 'conda'
@@ -28,22 +28,22 @@
 #         COVERAGE: 'true'
 #       # Linux environment to test the latest available dependencies and MKL.
 #       # It runs tests requiring pandas and PyAMG.
-#       pylatest_conda:
-#         DISTRIB: 'conda'
-#         PYTHON_VERSION: '*'
-#         INSTALL_MKL: 'true'
-#         NUMPY_VERSION: '*'
-#         SCIPY_VERSION: '*'
-#         PANDAS_VERSION: '*'
-#         CYTHON_VERSION: '*'
-#         PYAMG_VERSION: '*'
-#         PILLOW_VERSION: '*'
-#         JOBLIB_VERSION: '*'
-#         MATPLOTLIB_VERSION: '*'
-#         COVERAGE: 'true'
-#         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
-#         TEST_DOCSTRINGS: 'true'
-#         CHECK_WARNINGS: 'true'
+      pylatest_conda:
+        DISTRIB: 'conda'
+        PYTHON_VERSION: '*'
+        INSTALL_MKL: 'true'
+        NUMPY_VERSION: '*'
+        SCIPY_VERSION: '*'
+        PANDAS_VERSION: '*'
+        CYTHON_VERSION: '*'
+        PYAMG_VERSION: '*'
+        PILLOW_VERSION: '*'
+        JOBLIB_VERSION: '*'
+        MATPLOTLIB_VERSION: '*'
+        COVERAGE: 'true'
+        CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
+        TEST_DOCSTRINGS: 'true'
+        CHECK_WARNINGS: 'true'
 
 # - template: build_tools/azure/posix.yml
 #   parameters:
