@@ -436,7 +436,9 @@ cdef class Splitter:
         sum_gradient_left, sum_hessian_left = 0., 0.
         n_samples_left = 0
 
-        for bin_idx in range(self.actual_n_bins[feature_idx]):
+        for bin_idx in range(self.actual_n_bins[feature_idx] - 1):
+            # Note that considering splitting on the last bin is useless since
+            # it would result in having 0 samples in the right node (forbidden)
             n_samples_left += histograms[feature_idx, bin_idx].count
             n_samples_right = n_samples_ - n_samples_left
 
