@@ -26,7 +26,7 @@ from ..utils.metaestimators import _safe_split
 from ..utils._joblib import Parallel, delayed
 from ..metrics.scorer import check_scoring, _check_multimetric_scoring
 from ..exceptions import FitFailedWarning
-from ._split import check_cv
+from ._split import check_cv, train_test_split
 from ..preprocessing import LabelEncoder
 
 
@@ -36,8 +36,9 @@ __all__ = ['cross_validate', 'cross_val_score', 'cross_val_predict',
 
 def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
                    n_jobs=None, verbose=0, fit_params=None,
-                   pre_dispatch='2*n_jobs', return_train_score=False,
-                   return_estimator=False, error_score='raise-deprecating'):
+                   pre_dispatch='2*n_jobs', return_train_score="warn",
+                   return_estimator=False, error_score='raise-deprecating',
+                   train_score_size=None):
     """Evaluate metric(s) by cross-validation and also record fit/score times.
 
     Read more in the :ref:`User Guide <multimetric_cross_validation>`.
@@ -143,6 +144,16 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
         Default is 'raise-deprecating' but from version 0.22 it will change
         to np.nan.
 
+    train_score_size : int, or float, optional, default None
+        The size of the train set used to compute train scores if
+        `return_train_score` is set to True.
+
+        The default is None in which case the full train set is used.
+        If set to an integer then that many samples will be used.
+        If set to a float, it should be between 0 and 1. The train-set size
+        will be computed as a fraction of the total training set used
+        in a fold during cross validation.
+
     Returns
     -------
     scores : dict of float arrays of shape=(n_splits,)
@@ -227,7 +238,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
             clone(estimator), X, y, scorers, train, test, verbose, None,
             fit_params, return_train_score=return_train_score,
             return_times=True, return_estimator=return_estimator,
-            error_score=error_score)
+            error_score=error_score, train_score_size=train_score_size)
         for train, test in cv.split(X, y, groups))
 
     zipped_scores = list(zip(*scores))
@@ -394,7 +405,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                    parameters, fit_params, return_train_score=False,
                    return_parameters=False, return_n_test_samples=False,
                    return_times=False, return_estimator=False,
-                   error_score='raise-deprecating'):
+                   error_score='raise-deprecating', train_score_size=None):
     """Fit estimator and compute scores for a given dataset split.
 
     Parameters
@@ -554,8 +565,14 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         test_scores = _score(estimator, X_test, y_test, scorer, is_multimetric)
         score_time = time.time() - start_time - fit_time
         if return_train_score:
-            train_scores = _score(estimator, X_train, y_train, scorer,
-                                  is_multimetric)
+            if train_score_size is not None:
+                X_train_split, _, y_train_split, _ = train_test_split(
+                    X_train, y_train, train_size=train_score_size,
+                    stratify=y_train)
+            else:
+                X_train_split, y_train_split = X_train, y_train
+            train_scores = _score(estimator, X_train_split, y_train_split,
+                                  scorer, is_multimetric)
     if verbose > 2:
         if is_multimetric:
             for scorer_name in sorted(test_scores):
