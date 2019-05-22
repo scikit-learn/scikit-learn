@@ -300,18 +300,20 @@ def _convert_arff_data_dataframe(arrf_data, all_columns, features_dict):
     -------
     df : pd.DataFrame
     """
-    check_pandas_support('fetch_openml with return_frame=True')
-    import pandas as pd
-
-    df = pd.DataFrame(arrf_data['data'], columns=list(features_dict.keys()),
-                      dtype=object)
+    pd = check_pandas_support('fetch_openml with return_frame=True')
+    df = pd.DataFrame.from_records(arrf_data['data'],
+                                   columns=list(features_dict.keys()))
     df = df[all_columns].copy()
+
+    attributes = dict(arrf_data['attributes'])
 
     dtypes = {}
     for column in all_columns:
         dtype = _feature_to_dtype(features_dict[column])
         if dtype == object:
             continue
+        if dtype == 'category':
+            dtype = pd.CategoricalDtype(attributes[column])
         dtypes[column] = dtype
 
     return df.astype(dtypes)

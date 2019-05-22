@@ -840,6 +840,7 @@ def check_pandas_support(caller_name):
     """
     try:
         import pandas  # noqa
+        return pandas
     except ImportError as e:
         raise ImportError(
             "{} requires pandas. You can install pandas with "

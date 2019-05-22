@@ -37,7 +37,7 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 np.random.seed(0)
 
 # Read data from Titanic dataset.
-titantic = fetch_openml(data_id=40945, return_frame=False)
+titantic = fetch_openml(data_id=40945, return_frame=True)
 data = titantic.data
 
 # We will train our classifier with the following features:
