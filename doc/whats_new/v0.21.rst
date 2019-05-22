@@ -164,10 +164,6 @@ Support for Python 3.4 and below has been officially dropped.
   correctly relocated when using sample weights. :pr:`13486` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-- |Feature| :class:`cluster.SpectralClustering` now accepts precomputed sparse
-  neighbors graph as input. :issue:`10482` by `Tom Dupre la Tour`_ and
-  :user:`Kumar Ashutosh <thechargedneutron>`.
-
 - |API| The ``n_components_`` attribute in :class:`cluster.AgglomerativeClustering`
   and :class:`cluster.FeatureAgglomeration` has been renamed to
   ``n_connected_components_``.
@@ -574,19 +570,11 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.manifold`
 .......................
 
-- |Feature| :class:`manifold.Isomap`, :class:`manifold.TSNE`, and
-  :class:`manifold.SpectralEmbedding` now accept precomputed sparse
-  neighbors graph as input. :issue:`10482` by `Tom Dupre la Tour`_ and
-  :user:`Kumar Ashutosh <thechargedneutron>`.
-
 - |Efficiency| Make :func:`manifold.tsne.trustworthiness` use an inverted index
   instead of an `np.where` lookup to find the rank of neighbors in the input
   space. This improves efficiency in particular when computed with
   lots of neighbors and/or small datasets.
   :pr:`9907` by :user:`William de Vazelhes <wdevazelhes>`.
-
-- |API| Deprecate ``training_data_`` unused attribute in
-  :class:`manifold.Isomap`. :issue:`10482` by `Tom Dupre la Tour`_.
 
 :mod:`sklearn.metrics`
 ......................
@@ -735,20 +723,6 @@ Support for Python 3.4 and below has been officially dropped.
   metric learning, which implements the Neighborhood Components Analysis
   algorithm.  :pr:`10058` by :user:`William de Vazelhes <wdevazelhes>` and
   :user:`John Chiotellis <johny-c>`.
-
-- |MajorFeature| Added :class:`neighbors.KNeighborsTransformer` and
-  :class:`neighbors.RadiusNeighborsTransformer`, which transform input dataset
-  into a sparse neighbors graph. They give finer control on nearest neighbors
-  computations and enable easy pipeline caching for multiple use.
-  :issue:`10482` by `Tom Dupre la Tour`_.
-
-- |Feature| :class:`neighbors.KNeighborsClassifier`,
-  :class:`neighbors.KNeighborsRegressor`,
-  :class:`neighbors.RadiusNeighborsClassifier`,
-  :class:`neighbors.RadiusNeighborsRegressor`, and
-  :class:`neighbors.LocalOutlierFactor` now accept precomputed sparse
-  neighbors graph as input. :issue:`10482` by `Tom Dupre la Tour`_ and
-  :user:`Kumar Ashutosh <thechargedneutron>`.
 
 - |API| Methods in :class:`neighbors.NearestNeighbors` :
   :func:`~neighbors.NearestNeighbors.kneighbors`,

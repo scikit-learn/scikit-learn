@@ -196,7 +196,7 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
 
     The transformed data is a sparse graph as returned by kneighbors_graph.
 
-    .. versionadded:: 0.21
+    .. versionadded:: 0.22
 
     Parameters
     ----------
@@ -336,7 +336,7 @@ class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
     The transformed data is a sparse graph as returned by
     radius_neighbors_graph.
 
-    .. versionadded:: 0.21
+    .. versionadded:: 0.22
 
     Parameters
     ----------
