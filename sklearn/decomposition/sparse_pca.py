@@ -295,7 +295,7 @@ class MiniBatchSparsePCA(SparsePCA):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    normalize_components : True, optional (default='deprecated')
+    normalize_components : 'deprecated'
         This parameter does not have any effect. The components are always
         normalized.
 
