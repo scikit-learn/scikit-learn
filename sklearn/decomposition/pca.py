@@ -567,7 +567,7 @@ class PCA(_BasePCA):
         Using matrix inversion lemma, it can be written as
         a - a**2 components_.T * D * components,
         where D is a diagonal matrix
-        
+
         During the calculation of log-likelihood, the precision matrix
         is multiplied on the left side by a row vector.
         Hence, it is not needed to save the whole precision matrix
@@ -610,10 +610,9 @@ class PCA(_BasePCA):
 
             log_like_row = Xr / noise_var
             logdet = self._get_logdet_precision()
-            log_like_row -= \
-            np.dot(np.dot(Xr, components.T),
-                   components * self._get_mat_inv_lemma_diag().T) \
-                   / noise_var **2
+            log_like_row -= np.dot(np.dot(Xr, components.T), components *                                 
+                                   self._get_mat_inv_lemma_diag().T)
+            log_like_row /= noise_var ** 2
 
         log_like = -.5 * (Xr * log_like_row).sum(axis=1)
         log_like -= .5 * (n_features * log(2. * np.pi) -
