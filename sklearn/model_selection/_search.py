@@ -398,6 +398,11 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
     def _estimator_type(self):
         return self.estimator._estimator_type
 
+    @property
+    def _pairwise(self):
+        # this allows cross-validation to recognize 'precomputed' distance metric
+        return getattr(self.estimator, '_pairwise', False)
+
     def score(self, X, y=None):
         """Returns the score on the given data, if the estimator has been refit.
 
