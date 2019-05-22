@@ -2,7 +2,7 @@
 import numpy as np
 
 from ..utils import check_random_state
-from ..utils import check_X_y
+from ..compose._column_transformer import _check_X
 from ..metrics import check_scoring
 
 
@@ -54,13 +54,14 @@ def permutation_importance(estimator, X, y, scoring=None, n_rounds=1,
     .. [BRE] Breiman, L. Machine Learning (2001) 45: 5.
         https://doi.org/10.1023/A:1010933404324
     """
-
-    X, y = check_X_y(X, y, dtype=None, force_all_finite='allow-nan')
+    X = _check_X(X)
     random_state = check_random_state(random_state)
     scorer = check_scoring(estimator, scoring=scoring)
     scores = np.empty(shape=(X.shape[1], n_rounds), dtype=np.float)
 
     if hasattr(X, 'iloc'):  # pandas dataframe
+        # Need to copy in case where the dataframe is a view
+        X = X.copy()
         X_iloc = X.iloc
     else:
         X_iloc = X

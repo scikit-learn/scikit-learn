@@ -1,6 +1,7 @@
 import pytest
 import numpy as np
 
+from sklearn.compose import ColumnTransformer
 from sklearn.datasets import load_boston
 from sklearn.datasets import load_iris
 from sklearn.ensemble import RandomForestRegressor
@@ -8,7 +9,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.inspection import permutation_importance
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.utils.testing import assert_array_almost_equal
 
 
@@ -56,19 +57,27 @@ def test_permutation_importance_correlated_feature_regression(
 
 
 @pytest.mark.parametrize("convert_to_df", [True, False])
-def test_permutation_importance_strings(convert_to_df):
+def test_permutation_importance_mixed_types(convert_to_df):
     rng = np.random.RandomState(42)
     n_rounds = 10
 
     # Last column is correlated with y
-    X = np.array([['a', 'b', 'c', 'd'], ['a', 'b', 'a', 'b']]).T
+    X = np.array([[1, 2, 3, 4], ['a', 'b', 'a', 'b']]).T
     y = np.array([0, 1, 0, 1])
 
     if convert_to_df:
         pd = pytest.importorskip("pandas")
-        X = pd.DataFrame(X)
+        X = pd.DataFrame(X, columns=['num_col', 'cat_col'])
+        X['num_col'] = X['num_col'].astype(int)
+        preprocess = ColumnTransformer([
+            ('num', StandardScaler(), ['num_col']),
+            ('cat', OneHotEncoder(), ['cat_col'])
+        ])
+        clf = make_pipeline(preprocess, LogisticRegression(solver='lbfgs'))
+    else:
+        clf = make_pipeline(OneHotEncoder(),
+                            LogisticRegression(solver='lbfgs'))
 
-    clf = make_pipeline(OneHotEncoder(), LogisticRegression(solver='lbfgs'))
     clf.fit(X, y)
 
     X_before = X.copy()
