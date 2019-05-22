@@ -40,21 +40,3 @@ def test_score_samples():
                        clf2.decision_function([[2., 2.]]) + clf2.offset_)
     assert_array_equal(clf1.score_samples([[2., 2.]]),
                        clf2.score_samples([[2., 2.]]))
-
-
-def test_raw_values_deprecation():
-    X = [[0.0], [1.0]]
-    clf = EllipticEnvelope().fit(X)
-    assert_warns_message(DeprecationWarning,
-                         "raw_values parameter is deprecated in 0.20 and will"
-                         " be removed in 0.22.",
-                         clf.decision_function, X, raw_values=True)
-
-
-def test_threshold_deprecation():
-    X = [[0.0], [1.0]]
-    clf = EllipticEnvelope().fit(X)
-    assert_warns_message(DeprecationWarning,
-                         "threshold_ attribute is deprecated in 0.20 and will"
-                         " be removed in 0.22.",
-                         getattr, clf, "threshold_")

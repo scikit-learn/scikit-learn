@@ -101,7 +101,7 @@ class TreeNode:
         priority).
 
         Parameters
-        -----------
+        ----------
         other_node : TreeNode
             The node to compare with.
         """
