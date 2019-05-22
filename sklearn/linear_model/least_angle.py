@@ -1212,7 +1212,8 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
 
     alphas, active, coefs = lars_path(
         X_train, y_train, Gram=Gram, copy_X=False, copy_Gram=False,
-        method=method, verbose=max(0, verbose - 1), max_iter=max_iter, eps=eps)
+        method=method, verbose=max(0, verbose - 1), max_iter=max_iter, eps=eps,
+        positive=positive)
     if normalize:
         coefs[nonzeros] /= norms[nonzeros][:, np.newaxis]
     residues = np.dot(X_test, coefs) - y_test[:, np.newaxis]
@@ -1565,7 +1566,7 @@ class LassoLarsCV(LarsCV):
     def __init__(self, fit_intercept=True, verbose=False, max_iter=500,
                  normalize=True, precompute='auto', cv='warn',
                  max_n_alphas=1000, n_jobs=None, eps=np.finfo(np.float).eps,
-                 copy_X=True, positive=True):
+                 copy_X=True, positive=False):
         self.fit_intercept = fit_intercept
         self.verbose = verbose
         self.max_iter = max_iter
