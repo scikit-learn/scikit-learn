@@ -481,8 +481,9 @@ new feature of integers (0 to n_categories - 1)::
 
     >>> enc = preprocessing.OrdinalEncoder()
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
-    >>> enc.fit(X)  # doctest: +ELLIPSIS
-    OrdinalEncoder(categories='auto', dtype=<... 'numpy.float64'>)
+    >>> enc.fit(X)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+    OrdinalEncoder(categories='auto', dtype=<class 'numpy.float64'>,
+                   handle_unknown='error', unknown_category=None, unknown_value=-1)
     >>> enc.transform([['female', 'from US', 'uses Safari']])
     array([[0., 1., 1.]])
 
@@ -561,8 +562,8 @@ parameter allows the user to specify a category for each feature to be dropped.
 This is useful to avoid co-linearity in the input matrix in some classifiers.
 Such functionality is useful, for example, when using non-regularized
 regression (:class:`LinearRegression <sklearn.linear_model.LinearRegression>`),
-since co-linearity would cause the covariance matrix to be non-invertible. 
-When this paramenter is not None, ``handle_unknown`` must be set to 
+since co-linearity would cause the covariance matrix to be non-invertible.
+When this paramenter is not None, ``handle_unknown`` must be set to
 ``error``::
 
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
