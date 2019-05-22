@@ -5,7 +5,7 @@ Classifier Chain
 Example of using classifier chain on a multilabel dataset.
 
 For this example we will use the `yeast
-<http://mldata.org/repository/data/viewslug/yeast>`_ dataset which contains
+<https://www.openml.org/d/40597>`_ dataset which contains
 2417 datapoints each with 103 features and 14 possible labels. Each
 data point has at least one label. As a baseline we first train a logistic
 regression classifier for each of the 14 labels. To evaluate the performance of
