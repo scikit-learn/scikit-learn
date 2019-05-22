@@ -110,6 +110,14 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
         X_int = np.zeros((n_samples, n_features), dtype=np.int)
         X_mask = np.ones((n_samples, n_features), dtype=np.bool)
 
+        if n_features != len(self.categories_):
+            raise ValueError(
+                "The number of features in X is different to the number of "
+                "features of the fitted data. The fitted data had {} features "
+                "and the X has {} features."
+                .format(len(self.categories_,), n_features)
+            )
+
         for i in range(n_features):
             Xi = X_list[i]
             diff, valid_mask = _encode_check_unknown(Xi, self.categories_[i],

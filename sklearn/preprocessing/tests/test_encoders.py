@@ -54,7 +54,9 @@ def test_one_hot_encoder_diff_n_features():
     X2 = np.array([[1, 0]])
     enc = OneHotEncoder()
     enc.fit(X)
-    with pytest.raises(ValueError, match="broadcast"):
+    err_msg = ("The number of features in X is different to the number of "
+               "features of the fitted data.")
+    with pytest.raises(ValueError, match=err_msg):
         enc.transform(X2)
 
 

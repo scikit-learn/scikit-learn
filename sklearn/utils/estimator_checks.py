@@ -398,6 +398,9 @@ def set_checking_parameters(estimator):
         # datasets (only very shallow trees are built) that the checks use.
         estimator.set_params(min_samples_leaf=5)
 
+    if name == 'OneHotEncoder':
+        estimator.set_params(handle_unknown='ignore')
+
 
 class NotAnArray:
     """An object that is convertible to an array
