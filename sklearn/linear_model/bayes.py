@@ -58,6 +58,18 @@ class BayesianRidge(LinearModel, RegressorMixin):
         Gamma distribution prior over the lambda parameter.
         Default is 1.e-6
 
+    alpha_init : float
+        Initial value for alpha (precision of the noise).
+        If not set, alpha_init is 1/Var(y).
+
+            .. versionadded:: 0.22
+
+    lambda_init : float
+        Initial value for lambda (precision of the weights).
+        If not set, lambda_init is 1.
+
+            .. versionadded:: 0.22
+
     compute_score : boolean, optional
         If True, compute the log likelihood (logp) at each iteration of the
         optimization. Default is False.
@@ -119,9 +131,10 @@ class BayesianRidge(LinearModel, RegressorMixin):
     >>> clf = linear_model.BayesianRidge()
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
     ... # doctest: +NORMALIZE_WHITESPACE
-    BayesianRidge(alpha_1=1e-06, alpha_2=1e-06, compute_score=False,
-            copy_X=True, fit_intercept=True, lambda_1=1e-06, lambda_2=1e-06,
-            n_iter=300, normalize=False, tol=0.001, verbose=False)
+    BayesianRidge(alpha_1=1e-06, alpha_2=1e-06, alpha_init=None,
+                  compute_score=False, copy_X=True, fit_intercept=True,
+                  lambda_1=1e-06, lambda_2=1e-06, lambda_init=None, n_iter=300,
+                  normalize=False, tol=0.001, verbose=False)
     >>> clf.predict([[1, 1]])
     array([1.])
 
@@ -145,15 +158,17 @@ class BayesianRidge(LinearModel, RegressorMixin):
     """
 
     def __init__(self, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
-                 lambda_1=1.e-6, lambda_2=1.e-6, compute_score=False,
-                 fit_intercept=True, normalize=False, copy_X=True,
-                 verbose=False):
+                 lambda_1=1.e-6, lambda_2=1.e-6, alpha_init=None,
+                 lambda_init=None, compute_score=False, fit_intercept=True,
+                 normalize=False, copy_X=True, verbose=False):
         self.n_iter = n_iter
         self.tol = tol
         self.alpha_1 = alpha_1
         self.alpha_2 = alpha_2
         self.lambda_1 = lambda_1
         self.lambda_2 = lambda_2
+        self.alpha_init = alpha_init
+        self.lambda_init = lambda_init
         self.compute_score = compute_score
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -202,8 +217,12 @@ class BayesianRidge(LinearModel, RegressorMixin):
         eps = np.finfo(np.float64).eps
         # Add `eps` in the denominator to omit division by zero if `np.var(y)`
         # is zero
-        alpha_ = 1. / (np.var(y) + eps)
-        lambda_ = 1.
+        alpha_ = self.alpha_init
+        lambda_ = self.lambda_init
+        if alpha_ is None:
+            alpha_ = 1. / (np.var(y) + eps)
+        if lambda_ is None:
+            lambda_ = 1.
 
         verbose = self.verbose
         lambda_1 = self.lambda_1
