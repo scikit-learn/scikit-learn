@@ -66,6 +66,7 @@ def test_dict_learning_lars_positive_parameter():
 
 
 @pytest.mark.parametrize("transform_algorithm", [
+    "lasso_lars",
     "lasso_cd",
     "threshold",
 ])
@@ -97,19 +98,14 @@ def test_dict_learning_positivity(transform_algorithm,
         assert (code < 0).any()
 
 
-@pytest.mark.parametrize("transform_algorithm", [
-    "lasso_lars",
-    "lars",
-])
 @pytest.mark.parametrize("positive_dict", [
     False,
     True,
 ])
-def test_dict_learning_lars_dict_positivity(transform_algorithm,
-                                            positive_dict):
+def test_dict_learning_lars_dict_positivity(positive_dict):
     n_components = 5
     dico = DictionaryLearning(
-        n_components, transform_algorithm=transform_algorithm, random_state=0,
+        n_components, transform_algorithm="lars", random_state=0,
         positive_dict=positive_dict, fit_algorithm="cd").fit(X)
 
     if positive_dict:
@@ -118,18 +114,14 @@ def test_dict_learning_lars_dict_positivity(transform_algorithm,
         assert (dico.components_ < 0).any()
 
 
-@pytest.mark.parametrize("transform_algorithm", [
-    "lasso_lars",
-    "lars",
-])
-def test_dict_learning_lars_code_positivity(transform_algorithm):
+def test_dict_learning_lars_code_positivity():
     n_components = 5
     dico = DictionaryLearning(
-        n_components, transform_algorithm=transform_algorithm, random_state=0,
+        n_components, transform_algorithm="lars", random_state=0,
         positive_code=True, fit_algorithm="cd").fit(X)
 
     err_msg = "Positive constraint not supported for '{}' coding method."
-    err_msg = err_msg.format(transform_algorithm)
+    err_msg = err_msg.format("lars")
     with pytest.raises(ValueError, match=err_msg):
         dico.transform(X)
 
@@ -222,6 +214,7 @@ def test_dict_learning_online_lars_positive_parameter():
 
 
 @pytest.mark.parametrize("transform_algorithm", [
+    "lasso_lars",
     "lasso_cd",
     "threshold",
 ])
@@ -233,8 +226,9 @@ def test_dict_learning_online_lars_positive_parameter():
     False,
     True,
 ])
-def test_minibatch_dictionary_learning_positivity(
-        transform_algorithm, positive_code, positive_dict):
+def test_minibatch_dictionary_learning_positivity(transform_algorithm,
+                                                  positive_code,
+                                                  positive_dict):
     n_components = 8
     dico = MiniBatchDictionaryLearning(
         n_components, transform_algorithm=transform_algorithm, random_state=0,
@@ -252,20 +246,15 @@ def test_minibatch_dictionary_learning_positivity(
         assert (code < 0).any()
 
 
-@pytest.mark.parametrize("transform_algorithm", [
-    "lasso_lars",
-    "lars"
-])
 @pytest.mark.parametrize("positive_dict", [
     False,
     True,
 ])
-def test_minibatch_dictionary_learning_lars(transform_algorithm,
-                                            positive_dict):
+def test_minibatch_dictionary_learning_lars(positive_dict):
     n_components = 8
 
     dico = MiniBatchDictionaryLearning(
-        n_components, transform_algorithm=transform_algorithm, random_state=0,
+        n_components, transform_algorithm="lars", random_state=0,
         positive_dict=positive_dict, fit_algorithm='cd').fit(X)
 
     if positive_dict:
@@ -391,6 +380,7 @@ def test_sparse_encode_shapes():
 
 
 @pytest.mark.parametrize("algo", [
+    'lasso_lars',
     'lasso_cd',
     'threshold'
 ])
@@ -411,7 +401,6 @@ def test_sparse_encode_positivity(algo, positive):
 
 
 @pytest.mark.parametrize("algo", [
-    'lasso_lars',
     'lars',
     'omp'
 ])
