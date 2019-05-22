@@ -126,7 +126,8 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
             # corrects the verbosity level.
             lasso_lars = LassoLars(alpha=alpha, fit_intercept=False,
                                    verbose=verbose, normalize=False,
-                                   precompute=gram, fit_path=False)
+                                   precompute=gram, fit_path=False,
+                                   positive=positive)
             lasso_lars.fit(dictionary.T, X.T, Xy=cov)
             new_code = lasso_lars.coef_
         finally:
