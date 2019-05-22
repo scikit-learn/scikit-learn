@@ -22,7 +22,7 @@ from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 
 
 def _check_positive_coding(method, positive):
-    if positive and method in ["omp", "lars", "lasso_lars"]:
+    if positive and method in ["omp", "lars"]:
         raise ValueError(
                 "Positive constraint not supported for '{}' "
                 "coding method.".format(method)
