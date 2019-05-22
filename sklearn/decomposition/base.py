@@ -24,6 +24,60 @@ class _BasePCA(BaseEstimator, TransformerMixin, metaclass=ABCMeta):
     Warning: This class should not be used directly.
     Use derived classes instead.
     """
+    def get_covariance(self):
+        """Compute data covariance with the generative model.
+
+        ``cov = components_.T * S**2 * components_ + sigma2 * eye(n_features)``
+        where  S**2 contains the explained variances, and sigma2 contains the
+        noise variances.
+
+        Returns
+        -------
+        cov : array, shape=(n_features, n_features)
+            Estimated covariance of data.
+        """
+        components_ = self.components_
+        exp_var = self.explained_variance_
+        if self.whiten:
+            components_ = components_ * np.sqrt(exp_var[:, np.newaxis])
+        exp_var_diff = np.maximum(exp_var - self.noise_variance_, 0.)
+        cov = np.dot(components_.T * exp_var_diff, components_)
+        cov.flat[::len(cov) + 1] += self.noise_variance_  # modify diag inplace
+        return cov
+
+    def get_precision(self):
+        """Compute data precision matrix with the generative model.
+
+        Equals the inverse of the covariance but computed with
+        the matrix inversion lemma for efficiency.
+
+        Returns
+        -------
+        precision : array, shape=(n_features, n_features)
+            Estimated precision of data.
+        """
+        n_features = self.components_.shape[1]
+
+        # handle corner cases first
+        if self.n_components_ == 0:
+            return np.eye(n_features) / self.noise_variance_
+        if self.n_components_ == n_features:
+            return linalg.inv(self.get_covariance())
+
+        # Get precision using matrix inversion lemma
+        components_ = self.components_
+        exp_var = self.explained_variance_
+        if self.whiten:
+            components_ = components_ * np.sqrt(exp_var[:, np.newaxis])
+        exp_var_diff = np.maximum(exp_var - self.noise_variance_, 0.)
+        precision = np.dot(components_, components_.T) / self.noise_variance_
+        precision.flat[::len(precision) + 1] += 1. / exp_var_diff
+        precision = np.dot(components_.T,
+                           np.dot(linalg.inv(precision), components_))
+        precision /= -(self.noise_variance_ ** 2)
+        precision.flat[::len(precision) + 1] += 1. / self.noise_variance_
+        return precision
+
     def _get_mat_inv_lemma_diag(self):
         """returns diagonal terms of the D matrix as a 1xn array.
         This is given by inverse of
