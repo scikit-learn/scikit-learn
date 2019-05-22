@@ -12,6 +12,12 @@ Version 0.21.2
 Changelog
 ---------
 
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Fixed a bug in :class:`cross_decomposition.CCA` improving numerical 
+  stability when `y` is close to zero. :pr:`13903` by `Thomas Fan`_.
+
 :mod:`sklearn.metrics`
 ......................
 
