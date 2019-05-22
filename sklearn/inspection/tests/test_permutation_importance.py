@@ -85,5 +85,3 @@ def test_permutation_importance_strings(convert_to_df):
     # the correlated feature with y is the last column and should
     # have the highest importance
     assert np.all(permute_score_means[-1] > permute_score_means[:-1])
-
-
