@@ -571,7 +571,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased.
 
-    multi_class : {'ovr', 'multinomial', 'auto'}, default='ovr'
+    multi_class : {'ovr', 'multinomial', 'auto'}, default='auto'
         If the option chosen is 'ovr', then a binary problem is fit for each
         label. For 'multinomial' the loss minimised is the multinomial loss fit
         across the entire probability distribution, *even when the data is
@@ -737,7 +737,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased.
 
-    multi_class : {'ovr', 'multinomial', 'auto'}, default='ovr'
+    multi_class : {'ovr', 'multinomial', 'auto'}, default='auto'
         If the option chosen is 'ovr', then a binary problem is fit for each
         label. For 'multinomial' the loss minimised is the multinomial loss fit
         across the entire probability distribution, *even when the data is
