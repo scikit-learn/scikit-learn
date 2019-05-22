@@ -849,7 +849,6 @@ class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
 
     """
     method = 'lar'
-    _positive = False
 
     def __init__(self, fit_intercept=True, verbose=False, normalize=True,
                  precompute='auto', n_nonzero_coefs=500,
@@ -859,6 +858,7 @@ class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
         self.normalize = normalize
         self.precompute = precompute
         self.n_nonzero_coefs = n_nonzero_coefs
+        self.positive = False
         self.eps = eps
         self.copy_X = copy_X
         self.fit_path = fit_path
@@ -901,7 +901,7 @@ class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
                     copy_Gram=True, alpha_min=alpha, method=self.method,
                     verbose=max(0, self.verbose - 1), max_iter=max_iter,
                     eps=self.eps, return_path=True,
-                    return_n_iter=True, positive=self._positive)
+                    return_n_iter=True, positive=self.positive)
                 self.alphas_.append(alphas)
                 self.active_.append(active)
                 self.n_iter_.append(n_iter_)
@@ -921,7 +921,7 @@ class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
                     copy_Gram=True, alpha_min=alpha, method=self.method,
                     verbose=max(0, self.verbose - 1), max_iter=max_iter,
                     eps=self.eps, return_path=False, return_n_iter=True,
-                    positive=self._positive)
+                    positive=self.positive)
                 self.alphas_.append(alphas)
                 self.n_iter_.append(n_iter_)
             if n_targets == 1:
@@ -1392,7 +1392,7 @@ class LarsCV(Lars):
                 X[train], y[train], X[test], y[test], Gram=Gram, copy=False,
                 method=self.method, verbose=max(0, self.verbose - 1),
                 normalize=self.normalize, fit_intercept=self.fit_intercept,
-                max_iter=self.max_iter, eps=self.eps, positive=self._positive)
+                max_iter=self.max_iter, eps=self.eps, positive=self.positive)
             for train, test in cv.split(X, y))
         all_alphas = np.concatenate(list(zip(*cv_paths))[0])
         # Unique also sorts
