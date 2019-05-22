@@ -984,7 +984,7 @@ def check_scalar(x, name, target_type, min_val=None, max_val=None):
         raise ValueError('`{}`= {}, must be <= {}.'.format(name, x, max_val))
 
 
-def check_psd_eigenvalues(lambdas, warn_on_zeros=False):
+def _check_psd_eigenvalues(lambdas, warn_on_zeros=False):
     """Check the eigenvalues of a positive semidefinite (PSD) matrix.
 
     Checks the provided array of PSD matrix eigenvalues for numerical or
@@ -1034,33 +1034,33 @@ def check_psd_eigenvalues(lambdas, warn_on_zeros=False):
 
     Examples
     --------
-    >>> check_psd_eigenvalues([1, 2])      # nominal case
+    >>> _check_psd_eigenvalues([1, 2])      # nominal case
     ... # doctest: +NORMALIZE_WHITESPACE
     array([1, 2])
-    >>> check_psd_eigenvalues([5, 5j])     # significant imag part
+    >>> _check_psd_eigenvalues([5, 5j])     # significant imag part
     ... # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     Traceback (most recent call last):
         ...
     ValueError: There are significant imaginary parts in eigenvalues (1.000000
         of the maximum real part). The matrix is maybe not PSD, or something
         went wrong with the eigenvalues decomposition.
-    >>> check_psd_eigenvalues([5, 5e-5j])  # insignificant imag part
+    >>> _check_psd_eigenvalues([5, 5e-5j])  # insignificant imag part
     ... # doctest: +NORMALIZE_WHITESPACE
     array([5., 0.])
-    >>> check_psd_eigenvalues([-5, -1])    # all negative
+    >>> _check_psd_eigenvalues([-5, -1])    # all negative
     ... # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     Traceback (most recent call last):
         ...
     ValueError: All eigenvalues are negative (maximum is -1.000000). The matrix
         is maybe not PSD, or something went wrong with the eigenvalues
         decomposition.
-    >>> check_psd_eigenvalues([5, -1])     # significant negative
+    >>> _check_psd_eigenvalues([5, -1])     # significant negative
     ... # doctest: +NORMALIZE_WHITESPACE
     array([5, 0])
-    >>> check_psd_eigenvalues([5, -5e-5])  # insignificant negative
+    >>> _check_psd_eigenvalues([5, -5e-5])  # insignificant negative
     ... # doctest: +NORMALIZE_WHITESPACE
     array([5., 0.])
-    >>> check_psd_eigenvalues([5, 4e-12])  # bad conditioning (too small)
+    >>> _check_psd_eigenvalues([5, 4e-12])  # bad conditioning (too small)
     ... # doctest: +NORMALIZE_WHITESPACE
     array([5., 0.])
 

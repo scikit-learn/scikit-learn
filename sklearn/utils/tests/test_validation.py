@@ -41,7 +41,7 @@ from sklearn.utils.validation import (
     check_non_negative,
     _num_samples,
     check_scalar,
-    check_psd_eigenvalues)
+    _check_psd_eigenvalues)
 import sklearn
 
 from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
@@ -887,12 +887,12 @@ _psd_cases_valid = {
 @pytest.mark.parametrize("warn_on_zeros", [True, False])
 def test_check_psd_eigenvalues_valid(lambdas, expected_lambdas, w_type, w_msg,
                                      warn_on_zeros):
-    """Test that check_psd_eigenvalues returns the right output for valid
+    """Test that ``_check_psd_eigenvalues`` returns the right output for valid
     input, possibly raising the right warning"""
 
     with pytest.warns(w_type, match=w_msg) as w:
         assert_array_equal(
-            check_psd_eigenvalues(lambdas, warn_on_zeros=warn_on_zeros),
+            _check_psd_eigenvalues(lambdas, warn_on_zeros=warn_on_zeros),
             expected_lambdas
         )
     if w_type is None:
@@ -900,20 +900,21 @@ def test_check_psd_eigenvalues_valid(lambdas, expected_lambdas, w_type, w_msg,
 
 
 def test_check_psd_eigenvalues_bad_conditioning_warning():
-    """Test that check_psd_eigenvalues raises a warning for bad conditioning
-    when warn_on_zeros is set to True, and does not when it is set to False"""
+    """Test that ``_check_psd_eigenvalues`` raises a warning for bad
+    conditioning when warn_on_zeros is set to True, and does not when it is set
+    to False"""
 
     input = (5, 4e-12)
     output = np.array([5, 0])
 
     with pytest.warns(None) as w:
-        assert_array_equal(check_psd_eigenvalues(input, warn_on_zeros=False),
+        assert_array_equal(_check_psd_eigenvalues(input, warn_on_zeros=False),
                            output)
     assert not w
 
     w_msg = "the largest eigenvalue is more than 1.00E\\+12 times the smallest"
     with pytest.warns(PositiveSpectrumWarning, match=w_msg) as w:
-        assert_array_equal(check_psd_eigenvalues(input, warn_on_zeros=True),
+        assert_array_equal(_check_psd_eigenvalues(input, warn_on_zeros=True),
                            output)
 
 
@@ -929,8 +930,8 @@ _psd_cases_invalid = {
                          list(_psd_cases_invalid.values()),
                          ids=list(_psd_cases_invalid.keys()))
 def test_check_psd_eigenvalues_invalid(lambdas, err_type, err_msg):
-    """Test that check_psd_eigenvalues raises the right error for invalid
+    """Test that ``_check_psd_eigenvalues`` raises the right error for invalid
     input"""
 
     with pytest.raises(err_type, match=err_msg):
-        check_psd_eigenvalues(lambdas)
+        _check_psd_eigenvalues(lambdas)

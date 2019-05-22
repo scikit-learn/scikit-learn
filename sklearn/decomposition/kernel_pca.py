@@ -10,7 +10,7 @@ from scipy.sparse.linalg import eigsh
 from ..utils import check_random_state
 from ..utils.extmath import svd_flip
 from ..utils.validation import (check_is_fitted, check_array,
-                                check_psd_eigenvalues)
+                                _check_psd_eigenvalues)
 from ..exceptions import NotFittedError
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import KernelCenterer
@@ -213,7 +213,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
                                                 v0=v0)
 
         # make sure that there are no numerical or conditioning issues
-        self.lambdas_ = check_psd_eigenvalues(self.lambdas_)
+        self.lambdas_ = _check_psd_eigenvalues(self.lambdas_)
 
         # flip eigenvectors' sign to enforce deterministic output
         self.alphas_, _ = svd_flip(self.alphas_,

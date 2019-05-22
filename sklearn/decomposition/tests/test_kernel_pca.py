@@ -11,7 +11,7 @@ from sklearn.linear_model import Perceptron
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics.pairwise import rbf_kernel
-from sklearn.utils import check_psd_eigenvalues
+from sklearn.utils.validation import _check_psd_eigenvalues
 
 
 def test_kernel_pca():
@@ -275,7 +275,7 @@ def test_nested_circles():
 
 
 def test_kernel_conditioning():
-    """Test that ``check_psd_eigenvalues`` is correctly called."""
+    """Test that ``_check_psd_eigenvalues`` is correctly called."""
 
     # create a pathological X leading to small non-zero eigenvalue
     X = [[5, 1],
@@ -287,4 +287,4 @@ def test_kernel_conditioning():
 
     # check that the small non-zero eigenvalue was correctly set to zero
     assert kpca.lambdas_.min() == 0
-    assert np.all(kpca.lambdas_ == check_psd_eigenvalues(kpca.lambdas_))
+    assert np.all(kpca.lambdas_ == _check_psd_eigenvalues(kpca.lambdas_))
