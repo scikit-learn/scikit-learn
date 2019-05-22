@@ -61,7 +61,7 @@ This example shows an example usage of the ``split`` method.
 
     >>> from sklearn.model_selection import KFold, cross_val_score
     >>> X = ["a", "a", "a", "b", "b", "c", "c", "c", "c", "c"]
-    >>> k_fold = KFold()
+    >>> k_fold = KFold(n_splits=5)
     >>> for train_indices, test_indices in k_fold.split(X):
     ...      print('Train: %s | test: %s' % (train_indices, test_indices))
     Train: [2 3 4 5 6 7 8 9] | test: [0 1]

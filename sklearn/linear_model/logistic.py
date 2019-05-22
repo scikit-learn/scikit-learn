@@ -1904,7 +1904,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.linear_model import LogisticRegressionCV
     >>> X, y = load_iris(return_X_y=True)
-    >>> clf = LogisticRegressionCV(random_state=0,
+    >>> clf = LogisticRegressionCV(cv=5, random_state=0,
     ...                            multi_class='multinomial').fit(X, y)
     >>> clf.predict(X[:2, :])
     array([0, 0])

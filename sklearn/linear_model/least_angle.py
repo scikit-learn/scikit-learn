@@ -1341,7 +1341,7 @@ class LarsCV(Lars):
     >>> from sklearn.linear_model import LarsCV
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(n_samples=200, noise=4.0, random_state=0)
-    >>> reg = LarsCV().fit(X, y)
+    >>> reg = LarsCV(cv=5).fit(X, y)
     >>> reg.score(X, y) # doctest: +ELLIPSIS
     0.9996...
     >>> reg.alpha_
@@ -1568,7 +1568,7 @@ class LassoLarsCV(LarsCV):
     >>> from sklearn.linear_model import LassoLarsCV
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(noise=4.0, random_state=0)
-    >>> reg = LassoLarsCV().fit(X, y)
+    >>> reg = LassoLarsCV(cv=5).fit(X, y)
     >>> reg.score(X, y) # doctest: +ELLIPSIS
     0.9992...
     >>> reg.alpha_

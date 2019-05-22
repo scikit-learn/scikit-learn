@@ -1363,7 +1363,7 @@ class LassoCV(LinearModelCV, RegressorMixin):
     >>> from sklearn.linear_model import LassoCV
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(noise=4, random_state=0)
-    >>> reg = LassoCV(random_state=0).fit(X, y)
+    >>> reg = LassoCV(cv=5, random_state=0).fit(X, y)
     >>> reg.score(X, y) # doctest: +ELLIPSIS
     0.9993...
     >>> reg.predict(X[:1,])
@@ -1537,7 +1537,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     >>> from sklearn.datasets import make_regression
 
     >>> X, y = make_regression(n_features=2, random_state=0)
-    >>> regr = ElasticNetCV(random_state=0)
+    >>> regr = ElasticNetCV(cv=5, random_state=0)
     >>> regr.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
     ElasticNetCV(alphas=None, copy_X=True, cv=None, eps=0.001,
            fit_intercept=True, l1_ratio=0.5, max_iter=1000, n_alphas=100,
@@ -2245,7 +2245,7 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
     >>> from sklearn.datasets import make_regression
     >>> from sklearn.metrics import r2_score
     >>> X, y = make_regression(n_targets=2, noise=4, random_state=0)
-    >>> reg = MultiTaskLassoCV(random_state=0).fit(X, y)
+    >>> reg = MultiTaskLassoCV(cv=5, random_state=0).fit(X, y)
     >>> r2_score(y, reg.predict(X)) # doctest: +ELLIPSIS
     0.9994...
     >>> reg.alpha_

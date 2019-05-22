@@ -81,7 +81,8 @@ The function :func:`validation_curve` can help in this case::
   >>> X, y = X[indices], y[indices]
 
   >>> train_scores, valid_scores = validation_curve(Ridge(), X, y, "alpha",
-  ...                                               np.logspace(-7, 3, 3))
+  ...                                               np.logspace(-7, 3, 3),
+  ...                                               cv=5)
   >>> train_scores            # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
   array([[0.93..., 0.94..., 0.92..., 0.91..., 0.92...],
          [0.93..., 0.94..., 0.92..., 0.91..., 0.92...],
@@ -144,7 +145,7 @@ average scores on the validation sets)::
   >>> from sklearn.svm import SVC
 
   >>> train_sizes, train_scores, valid_scores = learning_curve(
-  ...     SVC(kernel='linear'), X, y, train_sizes=[50, 80, 110])
+  ...     SVC(kernel='linear'), X, y, train_sizes=[50, 80, 110], cv=5)
   >>> train_sizes            # doctest: +NORMALIZE_WHITESPACE
   array([ 50, 80, 110])
   >>> train_scores           # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE

@@ -117,7 +117,7 @@ time)::
 
   >>> from sklearn.model_selection import cross_val_score
   >>> clf = svm.SVC(kernel='linear', C=1)
-  >>> scores = cross_val_score(clf, iris.data, iris.target)
+  >>> scores = cross_val_score(clf, iris.data, iris.target, cv=5)
   >>> scores                                              # doctest: +ELLIPSIS
   array([0.96..., 1.  ..., 0.96..., 0.96..., 1.        ])
 
@@ -133,7 +133,7 @@ scoring parameter::
 
   >>> from sklearn import metrics
   >>> scores = cross_val_score(
-  ...     clf, iris.data, iris.target, scoring='f1_macro')
+  ...     clf, iris.data, iris.target, cv=5, scoring='f1_macro')
   >>> scores                                              # doctest: +ELLIPSIS
   array([0.96..., 1.  ..., 0.96..., 0.96..., 1.        ])
 
@@ -246,7 +246,7 @@ Or as a dict mapping scorer name to a predefined or custom scoring function::
     >>> scoring = {'prec_macro': 'precision_macro',
     ...            'rec_macro': make_scorer(recall_score, average='macro')}
     >>> scores = cross_validate(clf, iris.data, iris.target, scoring=scoring,
-    ...                         return_train_score=True)
+    ...                         cv=5, return_train_score=True)
     >>> sorted(scores.keys())                 # doctest: +NORMALIZE_WHITESPACE
     ['fit_time', 'score_time', 'test_prec_macro', 'test_rec_macro',
      'train_prec_macro', 'train_rec_macro']
@@ -256,7 +256,7 @@ Or as a dict mapping scorer name to a predefined or custom scoring function::
 Here is an example of ``cross_validate`` using a single metric::
 
     >>> scores = cross_validate(clf, iris.data, iris.target,
-    ...                         scoring='precision_macro',
+    ...                         scoring='precision_macro', cv=5,
     ...                         return_estimator=True)
     >>> sorted(scores.keys())
     ['estimator', 'fit_time', 'score_time', 'test_score']

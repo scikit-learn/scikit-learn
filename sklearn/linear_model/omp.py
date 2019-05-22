@@ -832,7 +832,7 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(n_features=100, n_informative=10,
     ...                        noise=4, random_state=0)
-    >>> reg = OrthogonalMatchingPursuitCV().fit(X, y)
+    >>> reg = OrthogonalMatchingPursuitCV(cv=5).fit(X, y)
     >>> reg.score(X, y) # doctest: +ELLIPSIS
     0.9991...
     >>> reg.n_nonzero_coefs_

@@ -430,7 +430,7 @@ class RFECV(RFE, MetaEstimatorMixin):
     >>> from sklearn.svm import SVR
     >>> X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
     >>> estimator = SVR(kernel="linear")
-    >>> selector = RFECV(estimator, step=1)
+    >>> selector = RFECV(estimator, step=1, cv=5)
     >>> selector = selector.fit(X, y)
     >>> selector.support_ # doctest: +NORMALIZE_WHITESPACE
     array([ True,  True,  True,  True,  True, False, False, False, False,

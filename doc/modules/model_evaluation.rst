@@ -101,10 +101,10 @@ Usage examples:
     >>> iris = datasets.load_iris()
     >>> X, y = iris.data, iris.target
     >>> clf = svm.SVC(random_state=0)
-    >>> cross_val_score(clf, X, y, scoring='recall_macro')  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    >>> cross_val_score(clf, X, y, cv=5, scoring='recall_macro')  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     array([0.96..., 0.96..., 0.96..., 0.93..., 1.        ])
     >>> model = svm.SVC()
-    >>> cross_val_score(model, X, y, scoring='wrong_choice')
+    >>> cross_val_score(model, X, y, cv=5, scoring='wrong_choice')
     Traceback (most recent call last):
     ValueError: 'wrong_choice' is not a valid scoring value. Use sorted(sklearn.metrics.SCORERS.keys()) to get valid options.
 
@@ -153,7 +153,7 @@ the :func:`fbeta_score` function::
     >>> from sklearn.model_selection import GridSearchCV
     >>> from sklearn.svm import LinearSVC
     >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]},
-    ...                     scoring=ftwo_scorer)
+    ...                     scoring=ftwo_scorer, cv=5)
 
 The second use case is to build a completely custom scorer object
 from a simple python function using :func:`make_scorer`, which can
@@ -231,6 +231,7 @@ the following two rules:
         ...  X_train,
         ...  y_train,
         ...  scoring=make_scorer(custom_scoring_function, greater_is_better=False),
+        ...  cv=5,
         ...  n_jobs=-1) # doctest: +SKIP
 
 .. _multimetric_scoring:
@@ -271,7 +272,7 @@ permitted and will require a wrapper to return a single metric::
     >>> def tp(y_true, y_pred): return confusion_matrix(y_true, y_pred)[1, 1]
     >>> scoring = {'tp': make_scorer(tp), 'tn': make_scorer(tn),
     ...            'fp': make_scorer(fp), 'fn': make_scorer(fn)}
-    >>> cv_results = cross_validate(svm.fit(X, y), X, y, scoring=scoring)
+    >>> cv_results = cross_validate(svm.fit(X, y), X, y, cv=5, scoring=scoring)
     >>> # Getting the test set true positive scores
     >>> print(cv_results['test_tp'])  # doctest: +NORMALIZE_WHITESPACE
     [10  9  8  7  8]

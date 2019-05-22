@@ -167,19 +167,19 @@ in bias::
 
     >>> clf = DecisionTreeClassifier(max_depth=None, min_samples_split=2,
     ...     random_state=0)
-    >>> scores = cross_val_score(clf, X, y)
+    >>> scores = cross_val_score(clf, X, y, cv=5)
     >>> scores.mean()                               # doctest: +ELLIPSIS
     0.98...
 
     >>> clf = RandomForestClassifier(n_estimators=10, max_depth=None,
     ...     min_samples_split=2, random_state=0)
-    >>> scores = cross_val_score(clf, X, y)
+    >>> scores = cross_val_score(clf, X, y, cv=5)
     >>> scores.mean()                               # doctest: +ELLIPSIS
     0.999...
 
     >>> clf = ExtraTreesClassifier(n_estimators=10, max_depth=None,
     ...     min_samples_split=2, random_state=0)
-    >>> scores = cross_val_score(clf, X, y)
+    >>> scores = cross_val_score(clf, X, y, cv=5)
     >>> scores.mean() > 0.999
     True
 
@@ -384,7 +384,7 @@ learners::
 
     >>> iris = load_iris()
     >>> clf = AdaBoostClassifier(n_estimators=100)
-    >>> scores = cross_val_score(clf, iris.data, iris.target)
+    >>> scores = cross_val_score(clf, iris.data, iris.target, cv=5)
     >>> scores.mean()                             # doctest: +ELLIPSIS
     0.9...
 
@@ -888,7 +888,7 @@ The following example shows how to fit the majority rule classifier::
    >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='hard')
 
    >>> for clf, label in zip([clf1, clf2, clf3, eclf], ['Logistic Regression', 'Random Forest', 'naive Bayes', 'Ensemble']):
-   ...     scores = cross_val_score(clf, X, y, scoring='accuracy')
+   ...     scores = cross_val_score(clf, X, y, scoring='accuracy', cv=5)
    ...     print("Accuracy: %0.2f (+/- %0.2f) [%s]" % (scores.mean(), scores.std(), label))
    Accuracy: 0.95 (+/- 0.04) [Logistic Regression]
    Accuracy: 0.94 (+/- 0.04) [Random Forest]
@@ -974,7 +974,7 @@ to tune the hyperparameters of the individual estimators::
 
    >>> params = {'lr__C': [1.0, 100.0], 'rf__n_estimators': [20, 200]}
 
-   >>> grid = GridSearchCV(estimator=eclf, param_grid=params)
+   >>> grid = GridSearchCV(estimator=eclf, param_grid=params, cv=5)
    >>> grid = grid.fit(iris.data, iris.target)
 
 Usage
