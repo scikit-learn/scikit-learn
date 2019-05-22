@@ -295,7 +295,7 @@ def test_grid_search_groups():
     grid = {'C': [1]}
 
     group_cvs = [LeaveOneGroupOut(), LeavePGroupsOut(2),
-                 GroupKFold(n_splits=3), GroupShuffleSplit(n_splits=3)]
+                 GroupKFold(n_splits=3), GroupShuffleSplit()]
     for cv in group_cvs:
         gs = GridSearchCV(clf, grid, cv=cv)
         assert_raise_message(ValueError,

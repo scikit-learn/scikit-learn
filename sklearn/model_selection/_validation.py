@@ -37,7 +37,7 @@ __all__ = ['cross_validate', 'cross_val_score', 'cross_val_predict',
 def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
                    n_jobs=None, verbose=0, fit_params=None,
                    pre_dispatch='2*n_jobs', return_train_score=False,
-                   return_estimator=False, error_score='raise-deprecating'):
+                   return_estimator=False, error_score=np.nan):
     """Evaluate metric(s) by cross-validation and also record fit/score times.
 
     Read more in the :ref:`User Guide <multimetric_cross_validation>`.
@@ -132,15 +132,11 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     return_estimator : boolean, default False
         Whether to return the estimators fitted on each split.
 
-    error_score : 'raise' | 'raise-deprecating' or numeric
+    error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
-        If set to 'raise-deprecating', a FutureWarning is printed before the
-        error is raised.
         If a numeric value is given, FitFailedWarning is raised. This parameter
         does not affect the refit step, which will always raise the error.
-        Default is 'raise-deprecating' but from version 0.22 it will change
-        to np.nan.
 
     Returns
     -------
@@ -256,7 +252,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
 def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
                     n_jobs=None, verbose=0, fit_params=None,
-                    pre_dispatch='2*n_jobs', error_score='raise-deprecating'):
+                    pre_dispatch='2*n_jobs', error_score=np.nan):
     """Evaluate a score by cross-validation
 
     Read more in the :ref:`User Guide <cross_validation>`.
@@ -336,15 +332,11 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    error_score : 'raise' | 'raise-deprecating' or numeric
+    error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
-        If set to 'raise-deprecating', a FutureWarning is printed before the
-        error is raised.
         If a numeric value is given, FitFailedWarning is raised. This parameter
         does not affect the refit step, which will always raise the error.
-        Default is 'raise-deprecating' but from version 0.22 it will change
-        to np.nan.
 
     Returns
     -------
@@ -392,7 +384,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                    parameters, fit_params, return_train_score=False,
                    return_parameters=False, return_n_test_samples=False,
                    return_times=False, return_estimator=False,
-                   error_score='raise-deprecating'):
+                   error_score=np.nan):
     """Fit estimator and compute scores for a given dataset split.
 
     Parameters
@@ -426,15 +418,11 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     verbose : integer
         The verbosity level.
 
-    error_score : 'raise' | 'raise-deprecating' or numeric
+    error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
-        If set to 'raise-deprecating', a FutureWarning is printed before the
-        error is raised.
         If a numeric value is given, FitFailedWarning is raised. This parameter
         does not affect the refit step, which will always raise the error.
-        Default is 'raise-deprecating' but from version 0.22 it will change
-        to np.nan.
 
     parameters : dict or None
         Parameters to be set on the estimator.
@@ -516,14 +504,6 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         fit_time = time.time() - start_time
         score_time = 0.0
         if error_score == 'raise':
-            raise
-        elif error_score == 'raise-deprecating':
-            warnings.warn("From version 0.22, errors during fit will result "
-                          "in a cross validation score of NaN by default. Use "
-                          "error_score='raise' if you want an exception "
-                          "raised or error_score=np.nan to adopt the "
-                          "behavior from version 0.22.",
-                          FutureWarning)
             raise
         elif isinstance(error_score, numbers.Number):
             if is_multimetric:
@@ -1114,7 +1094,7 @@ def learning_curve(estimator, X, y, groups=None,
                    train_sizes=np.linspace(0.1, 1.0, 5), cv=None,
                    scoring=None, exploit_incremental_learning=False,
                    n_jobs=None, pre_dispatch="all", verbose=0, shuffle=False,
-                   random_state=None, error_score='raise-deprecating'):
+                   random_state=None, error_score=np.nan):
     """Learning curve.
 
     Determines cross-validated training and test scores for different training
@@ -1207,15 +1187,11 @@ def learning_curve(estimator, X, y, groups=None,
         If None, the random number generator is the RandomState instance used
         by `np.random`. Used when ``shuffle`` is True.
 
-    error_score : 'raise' | 'raise-deprecating' or numeric
+    error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
-        If set to 'raise-deprecating', a FutureWarning is printed before the
-        error is raised.
         If a numeric value is given, FitFailedWarning is raised. This parameter
         does not affect the refit step, which will always raise the error.
-        Default is 'raise-deprecating' but from version 0.22 it will change
-        to np.nan.
 
     Returns
     -------
@@ -1370,7 +1346,7 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
 
 def validation_curve(estimator, X, y, param_name, param_range, groups=None,
                      cv=None, scoring=None, n_jobs=None, pre_dispatch="all",
-                     verbose=0, error_score='raise-deprecating'):
+                     verbose=0, error_score=np.nan):
     """Validation curve.
 
     Determine training and test scores for varying parameter values.
@@ -1443,15 +1419,11 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
     verbose : integer, optional
         Controls the verbosity: the higher, the more messages.
 
-    error_score : 'raise' | 'raise-deprecating' or numeric
+    error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
-        If set to 'raise-deprecating', a FutureWarning is printed before the
-        error is raised.
         If a numeric value is given, FitFailedWarning is raised. This parameter
         does not affect the refit step, which will always raise the error.
-        Default is 'raise-deprecating' but from version 0.22 it will change
-        to np.nan.
 
     Returns
     -------

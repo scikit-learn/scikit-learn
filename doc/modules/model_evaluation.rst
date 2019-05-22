@@ -1848,23 +1848,33 @@ function::
 R² score, the coefficient of determination
 -------------------------------------------
 
-The :func:`r2_score` function computes R², the `coefficient of
-determination <https://en.wikipedia.org/wiki/Coefficient_of_determination>`_.
-It provides a measure of how well future samples are likely to
-be predicted by the model. Best possible score is 1.0 and it can be negative
+The :func:`r2_score` function computes the `coefficient of
+determination <https://en.wikipedia.org/wiki/Coefficient_of_determination>`_,
+usually denoted as R².
+
+It represents the proportion of variance (of y) that has been explained by the
+independent variables in the model. It provides an indication of goodness of
+fit and therefore a measure of how well unseen samples are likely to be
+predicted by the model, through the proportion of explained variance.
+
+As such variance is dataset dependent, R² may not be meaningfully comparable
+across different datasets. Best possible score is 1.0 and it can be negative
 (because the model can be arbitrarily worse). A constant model that always
 predicts the expected value of y, disregarding the input features, would get a
-R^2 score of 0.0.
+R² score of 0.0.
 
 If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample
-and :math:`y_i` is the corresponding true value, then the score R² estimated
-over :math:`n_{\text{samples}}` is defined as
+and :math:`y_i` is the corresponding true value for total :math:`n` samples,
+the estimated R² is defined as:
 
 .. math::
 
-  R^2(y, \hat{y}) = 1 - \frac{\sum_{i=0}^{n_{\text{samples}} - 1} (y_i - \hat{y}_i)^2}{\sum_{i=0}^{n_\text{samples} - 1} (y_i - \bar{y})^2}
+  R^2(y, \hat{y}) = 1 - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sum_{i=1}^{n} (y_i - \bar{y})^2}
 
-where :math:`\bar{y} =  \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}} - 1} y_i`.
+where :math:`\bar{y} = \frac{1}{n} \sum_{i=1}^{n} y_i` and :math:`\sum_{i=1}^{n} (y_i - \hat{y}_i)^2 = \sum_{i=1}^{n} \epsilon_i^2`.
+
+Note that :func:`r2_score` calculates unadjusted R² without correcting for
+bias in sample variance of y.
 
 Here is a small example of usage of the :func:`r2_score` function::
 
