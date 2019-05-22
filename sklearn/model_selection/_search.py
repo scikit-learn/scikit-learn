@@ -400,7 +400,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
 
     @property
     def _pairwise(self):
-        # this allows cross-validation to recognize 'precomputed' distance metric
+        # allows cross-validation to see 'precomputed' metrics
         return getattr(self.estimator, '_pairwise', False)
 
     def score(self, X, y=None):
