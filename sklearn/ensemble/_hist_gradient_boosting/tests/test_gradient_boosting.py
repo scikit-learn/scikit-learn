@@ -163,22 +163,3 @@ def test_missing_values():
     gb.fit(X, y)
 
     assert gb.score(X, y) == 1
-
-
-def test_missing_value_predict_only():
-    # Make sure that missing values are supported at predict time even if they
-    # were not encountered during fit time
-    # The missing values are assigned to whichever child has the most samples
-
-    rng = np.random.RandomState(0)
-    X, y = make_classification(random_state=rng)
-
-    gb = HistGradientBoostingClassifier()
-    gb.fit(X, y)
-    assert gb.score(X, y) == 1
-
-    # Half the values are now missing
-    missing_mask = rng.binomial(1, .5, size=X.shape).astype(np.bool)
-    X[missing_mask] = np.nan
-
-    assert gb.score(X, y) >= .8

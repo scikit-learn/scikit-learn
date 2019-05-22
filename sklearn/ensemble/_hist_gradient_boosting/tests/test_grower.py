@@ -307,3 +307,36 @@ def test_init_parameters_validation():
                        match="min_hessian_to_split=-1 must be positive"):
         TreeGrower(X_binned, all_gradients, all_hessians,
                    min_hessian_to_split=-1)
+
+
+def test_missing_value_predict_only():
+    # Make sure that missing values are supported at predict time even if they
+    # were not encountered during fit time: the missing values are assigned to
+    # whichever child has the most samples
+
+    rng = np.random.RandomState(0)
+    n_samples = 100
+    X_binned = rng.randint(0, 256, size=(n_samples, 1), dtype=np.uint8)
+
+    gradients = rng.normal(size=n_samples).astype(G_H_DTYPE)
+    hessians = np.ones(shape=1, dtype=G_H_DTYPE)
+
+    grower = TreeGrower(X_binned, gradients, hessians, min_samples_leaf=5)
+    grower.grow()
+
+    predictor = grower.make_predictor()
+
+    # go from root to a leaf, always following node with the most samples.
+    # That's the path nans are supposed to take
+    node = predictor.nodes[0]
+    while not node['is_leaf']:
+        left = predictor.nodes[node['left']]
+        right = predictor.nodes[node['right']]
+        node = left if left['count'] > right['count'] else right
+
+    prediction_main_path = node['value']
+
+    # now build X_test with only nans, and make sure all predictions are equal
+    # to prediction_main_path
+    all_nans = np.full(shape=(n_samples, 1), fill_value=np.nan)
+    assert np.all(predictor.predict(all_nans) == prediction_main_path)
