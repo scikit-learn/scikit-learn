@@ -25,9 +25,9 @@ class _BasePCA(BaseEstimator, TransformerMixin, metaclass=ABCMeta):
     Use derived classes instead.
     """
     def _get_mat_inv_lemma_diag(self):
-        """returns diagonal terms of the D matrix as a 1xn array. This is given by
-        inverse of 1/noise_variance + inv(S**2 - noise_variance) or
-        inverse of S**2/noise_variance + inv(S**2 - noise_variance) if whiten is True
+        """returns diagonal terms of the D matrix as a 1xn array.
+        This is given by inverse of
+        1/noise_variance + inv(S**2 - noise_variance)
         S**2 is the first n_components of explained_variance.
         """
         exp_var = self.explained_variance_
