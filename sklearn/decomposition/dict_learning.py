@@ -524,10 +524,7 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
         raise ValueError('Coding method %r not supported as a fit algorithm.'
                          % method)
 
-    if method == 'lars' and positive_code:
-        raise ValueError(
-            "Positive constraint not supported for 'lars' coding method."
-        )
+    _check_positive_coding(method, positive_code)
 
     method = 'lasso_' + method
 
@@ -740,10 +737,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     if method not in ('lars', 'cd'):
         raise ValueError('Coding method not supported as a fit algorithm.')
 
-    if method == 'lars' and positive_code:
-        raise ValueError(
-            "Positive constraint not supported for 'lars' coding method."
-        )
+    _check_positive_coding(method, positive_code)
 
     method = 'lasso_' + method
 
