@@ -76,6 +76,5 @@ plt.title("Original space after inverse transform")
 plt.xlabel("$x_1$")
 plt.ylabel("$x_2$")
 
-plt.subplots_adjust(0.02, 0.10, 0.98, 0.94, 0.04, 0.35)
-
+plt.tight_layout()
 plt.show()

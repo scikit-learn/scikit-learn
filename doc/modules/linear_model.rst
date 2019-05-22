@@ -631,11 +631,12 @@ jointly during the fit of the model, the regularization parameters
 *log marginal likelihood*. The scikit-learn implementation
 is based on the algorithm described in Appendix A of (Tipping, 2001)
 where the update of the parameters :math:`\alpha` and :math:`\lambda` is done
-as suggested in (MacKay, 1992).
+as suggested in (MacKay, 1992). The initial value of the maximization procedure
+can be set with the hyperparameters ``alpha_init`` and ``lambda_init``.
 
-The remaining hyperparameters are the parameters :math:`\alpha_1`,
-:math:`\alpha_2`, :math:`\lambda_1` and :math:`\lambda_2` of the gamma priors
-over :math:`\alpha` and :math:`\lambda`. These are usually chosen to be
+There are four more hyperparameters, :math:`\alpha_1`, :math:`\alpha_2`,
+:math:`\lambda_1` and :math:`\lambda_2` of the gamma prior distributions over
+:math:`\alpha` and :math:`\lambda`. These are usually chosen to be
 *non-informative*. By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 10^{-6}`.
 
 
@@ -652,9 +653,10 @@ Bayesian Ridge Regression is used for regression::
     >>> Y = [0., 1., 2., 3.]
     >>> reg = linear_model.BayesianRidge()
     >>> reg.fit(X, Y)  # doctest: +NORMALIZE_WHITESPACE
-    BayesianRidge(alpha_1=1e-06, alpha_2=1e-06, compute_score=False, copy_X=True,
-           fit_intercept=True, lambda_1=1e-06, lambda_2=1e-06, n_iter=300,
-           normalize=False, tol=0.001, verbose=False)
+    BayesianRidge(alpha_1=1e-06, alpha_2=1e-06, alpha_init=None,
+                  compute_score=False, copy_X=True, fit_intercept=True,
+                  lambda_1=1e-06, lambda_2=1e-06, lambda_init=None, n_iter=300,
+                  normalize=False, tol=0.001, verbose=False)
 
 After being fitted, the model can then be used to predict new values::
 
@@ -673,6 +675,7 @@ is more robust to ill-posed problems.
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_linear_model_plot_bayesian_ridge.py`
+ * :ref:`sphx_glr_auto_examples_linear_model_plot_bayesian_ridge_curvefit.py`
 
 .. topic:: References:
 
