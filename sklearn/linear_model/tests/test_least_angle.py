@@ -533,24 +533,23 @@ estimator_parameter_map = {'LassoLars': {'alpha': 0.1},
                            'LassoLarsIC': {}}
 
 
-@pytest.mark.parametrize("estimator_parameter_map", [
-    ['LassoLars', {'alpha': 0.1}],
-    ['LassoLarsCV', {}],
-    ['LassoLarsIC', {}],
-])
-def test_estimatorclasses_positive_constraint(estimator_parameter_map):
+def test_estimatorclasses_positive_constraint():
     # testing the transmissibility for the positive option of all estimator
     # classes in this same function here
-    params = {'fit_intercept': False}
+    default_parameter = {'fit_intercept': False}
 
-    estname = estimator_parameter_map[0]
-    params.update(estimator_parameter_map[1])
-    estimator = getattr(linear_model, estname)(positive=False, **params)
-    estimator.fit(X, y)
-    assert estimator.coef_.min() < 0
-    estimator = getattr(linear_model, estname)(positive=True, **params)
-    estimator.fit(X, y)
-    assert min(estimator.coef_) >= 0
+    estimator_parameter_map = {'LassoLars': {'alpha': 0.1},
+                               'LassoLarsCV': {},
+                               'LassoLarsIC': {}}
+    for estname in estimator_parameter_map:
+        params = default_parameter.copy()
+        params.update(estimator_parameter_map[estname])
+        estimator = getattr(linear_model, estname)(positive=False, **params)
+        estimator.fit(X, y)
+        assert estimator.coef_.min() < 0
+        estimator = getattr(linear_model, estname)(positive=True, **params)
+        estimator.fit(X, y)
+        assert min(estimator.coef_) >= 0
 
 
 def test_lasso_lars_vs_lasso_cd_positive():
