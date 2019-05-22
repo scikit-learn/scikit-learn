@@ -567,23 +567,22 @@ cdef class Splitter:
 
         # n_bins - 2 is the index of the second to last bin, which we consider
         # being on the right child.
-        sum_gradient_right = histograms[feature_idx, n_bins - 2].sum_gradients
-        sum_hessian_right = histograms[feature_idx, n_bins - 2].sum_hessians
-        n_samples_right = histograms[feature_idx, n_bins - 2].count
+        sum_gradient_right, sum_hessian_right = 0., 0.
+        n_samples_right = 0
 
         for bin_idx in range(start, -1, -1):
-            n_samples_right += histograms[feature_idx, bin_idx].count
+            n_samples_right += histograms[feature_idx, bin_idx + 1].count
             n_samples_left = n_samples_ - n_samples_right
 
             if self.hessians_are_constant:
-                sum_hessian_right += histograms[feature_idx, bin_idx].count
+                sum_hessian_right += histograms[feature_idx, bin_idx + 1].count
             else:
                 sum_hessian_right += \
-                    histograms[feature_idx, bin_idx].sum_hessians
+                    histograms[feature_idx, bin_idx + 1].sum_hessians
             sum_hessian_left = sum_hessians - sum_hessian_right
 
             sum_gradient_right += \
-                histograms[feature_idx, bin_idx].sum_gradients
+                histograms[feature_idx, bin_idx + 1].sum_gradients
             sum_gradient_left = sum_gradients - sum_gradient_right
 
             if n_samples_right < self.min_samples_leaf:
