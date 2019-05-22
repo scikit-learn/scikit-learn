@@ -4,7 +4,7 @@ from numpy.testing import assert_approx_equal
 
 from sklearn.utils.testing import (assert_equal, assert_array_almost_equal,
                                    assert_array_equal, assert_raise_message,
-                                   assert_warns, assert_allclose)
+                                   assert_warns)
 from sklearn.datasets import load_linnerud
 from sklearn.cross_decomposition import pls_, CCA
 from sklearn.preprocessing import StandardScaler
@@ -358,13 +358,13 @@ def test_scale_and_stability():
             X_score, Y_score = clf.fit_transform(X, Y)
             clf.set_params(scale=False)
             X_s_score, Y_s_score = clf.fit_transform(X_s, Y_s)
-            assert_allclose(X_s_score, X_score)
-            assert_allclose(Y_s_score, Y_score)
+            assert_array_almost_equal(X_s_score, X_score)
+            assert_array_almost_equal(Y_s_score, Y_score)
             # Scaling should be idempotent
             clf.set_params(scale=True)
             X_score, Y_score = clf.fit_transform(X_s, Y_s)
-            assert_allclose(X_s_score, X_score)
-            assert_allclose(Y_s_score, Y_score)
+            assert_array_almost_equal(X_s_score, X_score)
+            assert_array_almost_equal(Y_s_score, Y_score)
 
 
 def test_pls_errors():
