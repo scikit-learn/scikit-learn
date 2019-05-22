@@ -545,6 +545,7 @@ class PCA(_BasePCA):
 
         return U, S, V
 
+
     def score_samples(self, X):
         """Return the log-likelihood of each sample.
 
@@ -562,16 +563,54 @@ class PCA(_BasePCA):
         ll : array, shape (n_samples,)
             Log-likelihood of each sample under the current model
         """
+	
+        '''
+        precision matrix is defined as the inverse of covariance matrix.
+        Using matrix inversion lemma, it can be written as 
+        a - a**2 components_.T * D * components, where D is a diagonal matrix
+        During the calculation of log-likelihood, the precision matrix is multiplied
+        on the left side by a row vector. Hence, it is not needed to save the whole
+        precision matrix on memory. In fact, only the diagonal terms of D is needed.
+        '''
         check_is_fitted(self, 'mean_')
 
         X = check_array(X)
-        Xr = X - self.mean_
+        
         n_features = X.shape[1]
-        precision = self.get_precision()
-        log_like = -.5 * (Xr * (np.dot(Xr, precision))).sum(axis=1)
-        log_like -= .5 * (n_features * log(2. * np.pi) -
-                          fast_logdet(precision))
+        components = self.components_
+        exp_var = self.explained_variance_
+        noise_var = self.noise_variance_
+
+        Xr = X - self.mean_
+        
+        # handle corner cases first
+        if self.n_components_ == n_features:
+            if self.whiten: #this should be commented out, sklearn is wrong
+                exp_var = exp_var * exp_var
+                
+            logdet = - np.sum(np.log(exp_var))
+            inv_exp_var = 1 / exp_var.reshape(-1, 1)
+            log_like_row = np.dot(np.dot(Xr, components.T),
+                                  components * inv_exp_var)
+
+        elif self.n_components_ == 0:
+            log_like_row = Xr / noise_var
+            logdet = - math.log(noise_var) * n_features
+             
+        else:
+#            if self.whiten: #old implementation for whiten==True is wrong. Uncomment to obtain same output as old implementation.
+#                components = components * np.sqrt(exp_var[:, np.newaxis])
+            
+            log_like_row = Xr / noise_var
+            logdet = self._get_logdet_precision()
+            log_like_row -= np.dot(np.dot(Xr, components.T),
+                               components * self._get_mat_inv_lemma_diag().T) / noise_var **2
+                           
+        log_like = -.5 * (Xr * log_like_row).sum(axis=1)
+        log_like -= .5 * (n_features * math.log(2. * np.pi) -
+                          logdet)
         return log_like
+		
 
     def score(self, X, y=None):
         """Return the average log-likelihood of all samples.
