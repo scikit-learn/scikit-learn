@@ -233,7 +233,7 @@ def test_dict_learning_online_lars_positive_parameter():
     False,
     True,
 ])
-def test_minibatch_dictionnary_learning_positivity(
+def test_minibatch_dictionary_learning_positivity(
         transform_algorithm, positive_code, positive_dict):
     n_components = 8
     dico = MiniBatchDictionaryLearning(
@@ -260,8 +260,8 @@ def test_minibatch_dictionnary_learning_positivity(
     False,
     True,
 ])
-def test_minibatch_dictionnary_learning_lars(transform_algorithm,
-                                             positive_dict):
+def test_minibatch_dictionary_learning_lars(transform_algorithm,
+                                            positive_dict):
     n_components = 8
 
     dico = MiniBatchDictionaryLearning(
