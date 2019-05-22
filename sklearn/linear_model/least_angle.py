@@ -156,6 +156,13 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
         warnings.warn('Use lars_path_gram to avoid passing X and y. '
                       'The current option will be removed in v0.23.',
                       DeprecationWarning)
+
+    if method == 'lar' and positive:
+        raise ValueError(
+                "Positive constraint not supported for 'lar' "
+                "coding method."
+            )
+
     return _lars_path_solver(
         X=X, y=y, Xy=Xy, Gram=Gram, n_samples=None, max_iter=max_iter,
         alpha_min=alpha_min, method=method, copy_X=copy_X,
@@ -1386,7 +1393,7 @@ class LarsCV(Lars):
                 X[train], y[train], X[test], y[test], Gram=Gram, copy=False,
                 method=self.method, verbose=max(0, self.verbose - 1),
                 normalize=self.normalize, fit_intercept=self.fit_intercept,
-                max_iter=self.max_iter, eps=self.eps)
+                max_iter=self.max_iter, eps=self.eps, positive=self._positive)
             for train, test in cv.split(X, y))
         all_alphas = np.concatenate(list(zip(*cv_paths))[0])
         # Unique also sorts
@@ -1503,6 +1510,18 @@ class LassoLarsCV(LarsCV):
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
+
+    positive : boolean (default=False)
+        Restrict coefficients to be >= 0. Be aware that you might want to
+        remove fit_intercept which is set True by default.
+        Under the positive restriction the model coefficients do not converge
+        to the ordinary-least-squares solution for small values of alpha.
+        Only coefficients up to the smallest alpha value (``alphas_[alphas_ >
+        0.].min()`` when fit_path=True) reached by the stepwise Lars-Lasso
+        algorithm are typically in congruence with the solution of the
+        coordinate descent Lasso estimator.
+        As a consequence using LassoLarsCV only makes sense for problems where
+        a sparse solution is expected and/or reached.
 
     Attributes
     ----------
@@ -1637,11 +1656,6 @@ class LassoLarsIC(LassoLars):
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
 
-    Attributes
-    ----------
-    coef_ : array, shape (n_features,)
-        parameter vector (w in the formulation formula)
-
     positive : boolean (default=False)
         Restrict coefficients to be >= 0. Be aware that you might want to
         remove fit_intercept which is set True by default.
@@ -1653,6 +1667,11 @@ class LassoLarsIC(LassoLars):
         coordinate descent Lasso estimator.
         As a consequence using LassoLarsIC only makes sense for problems where
         a sparse solution is expected and/or reached.
+
+    Attributes
+    ----------
+    coef_ : array, shape (n_features,)
+        parameter vector (w in the formulation formula)
 
     intercept_ : float
         independent term in decision function.
