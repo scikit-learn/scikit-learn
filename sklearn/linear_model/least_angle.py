@@ -849,6 +849,7 @@ class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
 
     """
     method = 'lar'
+    positive = False
 
     def __init__(self, fit_intercept=True, verbose=False, normalize=True,
                  precompute='auto', n_nonzero_coefs=500,
@@ -858,7 +859,6 @@ class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
         self.normalize = normalize
         self.precompute = precompute
         self.n_nonzero_coefs = n_nonzero_coefs
-        self.positive = False
         self.eps = eps
         self.copy_X = copy_X
         self.fit_path = fit_path
