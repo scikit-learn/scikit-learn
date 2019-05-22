@@ -22,7 +22,7 @@ from scipy.sparse.linalg import svds
 from .base import _BasePCA
 from ..utils import check_random_state
 from ..utils import check_array
-from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
+from ..utils.extmath import randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 
@@ -611,8 +611,8 @@ class PCA(_BasePCA):
             log_like_row = Xr / noise_var
             logdet = self._get_logdet_precision()
             log_like_row -= \
-            np.dot(np.dot(Xr, components.T), components
-                   * self._get_mat_inv_lemma_diag().T) / noise_var ** 2
+                np.dot(np.dot(Xr, components.T), components
+                       * self._get_mat_inv_lemma_diag().T) / noise_var ** 2
 
         log_like = -.5 * (Xr * log_like_row).sum(axis=1)
         log_like -= .5 * (n_features * log(2. * np.pi) -
