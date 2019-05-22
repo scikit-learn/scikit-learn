@@ -21,6 +21,14 @@ from ..utils.validation import check_is_fitted
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 
 
+def _check_positive_coding(method, positive):
+    if positive and method in ["omp", "lars", "lasso_lars"]:
+        raise ValueError(
+                "Positive constraint not supported for '{}' "
+                "coding method.".format(method)
+            )
+
+
 def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
                    regularization=None, copy_cov=True,
                    init=None, max_iter=1000, check_input=True, verbose=0,
@@ -172,14 +180,6 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
     if new_code.ndim != 2:
         return new_code.reshape(n_samples, n_components)
     return new_code
-
-
-def _check_positive_coding(method, positive):
-    if positive and method in ["omp", "lars", "lasso_lars"]:
-        raise ValueError(
-                "Positive constraint not supported for '{}' "
-                "coding method.".format(method)
-            )
 
 
 # XXX : could be moved to the linear_model module
