@@ -157,12 +157,6 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
                       'The current option will be removed in v0.23.',
                       DeprecationWarning)
 
-    if method == 'lar' and positive:
-        raise ValueError(
-                "Positive constraint not supported for 'lar' "
-                "coding method."
-            )
-
     return _lars_path_solver(
         X=X, y=y, Xy=Xy, Gram=Gram, n_samples=None, max_iter=max_iter,
         alpha_min=alpha_min, method=method, copy_X=copy_X,
@@ -403,6 +397,12 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
            <https://en.wikipedia.org/wiki/Lasso_(statistics)>`_
 
     """
+    if method == 'lar' and positive:
+        raise ValueError(
+                "Positive constraint not supported for 'lar' "
+                "coding method."
+            )
+            
     n_samples = n_samples if n_samples is not None else y.size
 
     if Xy is None:
