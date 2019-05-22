@@ -350,8 +350,8 @@ def test_fetch_openml_cpu_pandas(monkeypatch):
                                      'perkin-elmer', 'prime', 'siemens',
                                      'sperry', 'sratus', 'wang'])
     expected_dtypes = [cat_dtype] + [np.float64] * 7
-    expected_feature_names = ['vendor', 'MYCT', 'MMIN', 'MMAX', 'CACH', 'CHMIN',
-                              'CHMAX']
+    expected_feature_names = ['vendor', 'MYCT', 'MMIN', 'MMAX', 'CACH',
+                              'CHMIN', 'CHMAX']
     expected_target_names = ['class']
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
