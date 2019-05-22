@@ -300,25 +300,6 @@ def test_preserve_trustworthiness_approximately_with_precomputed_distances():
         assert t > .95
 
 
-def test_trustworthiness_precomputed_deprecation():
-    # FIXME: Remove this test in v0.23
-
-    # Use of the flag `precomputed` in trustworthiness parameters has been
-    # deprecated, but will still work until v0.23.
-    random_state = check_random_state(0)
-    X = random_state.randn(100, 2)
-    assert_equal(assert_warns(DeprecationWarning, trustworthiness,
-                              pairwise_distances(X), X, precomputed=True), 1.)
-    assert_equal(assert_warns(DeprecationWarning, trustworthiness,
-                              pairwise_distances(X), X, metric='precomputed',
-                              precomputed=True), 1.)
-    assert_raises(ValueError, assert_warns, DeprecationWarning,
-                  trustworthiness, X, X, metric='euclidean', precomputed=True)
-    assert_equal(assert_warns(DeprecationWarning, trustworthiness,
-                              pairwise_distances(X), X, metric='euclidean',
-                              precomputed=True), 1.)
-
-
 def test_trustworthiness_not_euclidean_metric():
     # Test trustworthiness with a metric different from 'euclidean' and
     # 'precomputed'
