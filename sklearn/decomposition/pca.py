@@ -611,8 +611,8 @@ class PCA(_BasePCA):
             log_like_row = Xr / noise_var
             logdet = self._get_logdet_precision()
             log_like_row -= np.dot(np.dot(Xr, components.T), components
-                                   * self._get_mat_inv_lemma_diag().T)
-            log_like_row /= noise_var ** 2
+                                   * self._get_mat_inv_lemma_diag().T) \
+                                   / noise_var ** 2
 
         log_like = -.5 * (Xr * log_like_row).sum(axis=1)
         log_like -= .5 * (n_features * log(2. * np.pi) -
