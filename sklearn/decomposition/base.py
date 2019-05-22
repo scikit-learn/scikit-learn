@@ -25,32 +25,32 @@ class _BasePCA(BaseEstimator, TransformerMixin, metaclass=ABCMeta):
     Use derived classes instead.
     """
     def _get_mat_inv_lemma_diag(self):
-        '''
-        returns diagonal terms of the D matrix as a 1xn array. This is given by 
+        """returns diagonal terms of the D matrix as a 1xn array. This is given by
         inverse of 1/noise_variance + inv(S**2 - noise_variance) or
         inverse of S**2/noise_variance + inv(S**2 - noise_variance) if whiten is True
         S**2 is the first n_components of explained_variance.
-        '''
+        """
         exp_var = self.explained_variance_
         exp_var_diff = np.maximum(exp_var - self.noise_variance_, 0.)
         pre_precision = 1 / self.noise_variance_
-        '''old implementation for whiten==True is wrong. 
-        Uncomment to obtain same output as old implementation.'''
+        """old implementation for whiten==True is wrong
+        Uncomment to obtain same output as old implementation.
+        """
 #        if self.whiten:
 #            pre_precision *= exp_var
-        
+
         pre_precision += 1 / exp_var_diff
 
         return (1 / pre_precision).reshape(1, -1)
-		
-        
+
     def _get_logdet_precision(self):
         n_features = self.mean_.shape[0]
         noise_var = self.noise_variance_
 
         exp_var = self.explained_variance_
-        '''old implementation for whiten==True is wrong. 
-        Uncomment to obtain same output as old implementation.'''
+        """old implementation for whiten==True is wrong
+        Uncomment to obtain same output as old implementation.
+        """
 #        if self.whiten:
 #            exp_var = exp_var * (exp_var - noise_var) + noise_var
 
