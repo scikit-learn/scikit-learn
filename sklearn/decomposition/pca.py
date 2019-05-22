@@ -585,8 +585,10 @@ class PCA(_BasePCA):
         
         # handle corner cases first
         if self.n_components_ == n_features:
-            if self.whiten: #this should be commented out, sklearn is wrong
-                exp_var = exp_var * exp_var
+            '''old implementation for whiten==True is wrong. 
+            Uncomment to obtain same output as old implementation.'''
+#            if self.whiten:
+#                exp_var = exp_var * exp_var
                 
             logdet = - np.sum(np.log(exp_var))
             inv_exp_var = 1 / exp_var.reshape(-1, 1)
@@ -595,10 +597,12 @@ class PCA(_BasePCA):
 
         elif self.n_components_ == 0:
             log_like_row = Xr / noise_var
-            logdet = - math.log(noise_var) * n_features
+            logdet = - log(noise_var) * n_features
              
         else:
-#            if self.whiten: #old implementation for whiten==True is wrong. Uncomment to obtain same output as old implementation.
+            '''old implementation for whiten==True is wrong. 
+            Uncomment to obtain same output as old implementation.'''
+#            if self.whiten:
 #                components = components * np.sqrt(exp_var[:, np.newaxis])
             
             log_like_row = Xr / noise_var
@@ -607,7 +611,7 @@ class PCA(_BasePCA):
                                components * self._get_mat_inv_lemma_diag().T) / noise_var **2
                            
         log_like = -.5 * (Xr * log_like_row).sum(axis=1)
-        log_like -= .5 * (n_features * math.log(2. * np.pi) -
+        log_like -= .5 * (n_features * log(2. * np.pi) -
                           logdet)
         return log_like
 		
