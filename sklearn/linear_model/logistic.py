@@ -571,7 +571,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased.
 
-    multi_class : str, {'ovr', 'multinomial', 'auto'}, default: 'ovr'
+    multi_class : {'ovr', 'multinomial', 'auto'}, default='ovr'
         If the option chosen is 'ovr', then a binary problem is fit for each
         label. For 'multinomial' the loss minimised is the multinomial loss fit
         across the entire probability distribution, *even when the data is
@@ -737,7 +737,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased.
 
-    multi_class : str, {'ovr', 'multinomial', 'auto'}, default: 'ovr'
+    multi_class : {'ovr', 'multinomial', 'auto'}, default='ovr'
         If the option chosen is 'ovr', then a binary problem is fit for each
         label. For 'multinomial' the loss minimised is the multinomial loss fit
         across the entire probability distribution, *even when the data is
@@ -1083,7 +1083,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased.
 
-    multi_class : str, {'ovr', 'multinomial'}
+    multi_class : {'ovr', 'multinomial'}
         If the option chosen is 'ovr', then a binary problem is fit for each
         label. For 'multinomial' the loss minimised is the multinomial loss fit
         across the entire probability distribution, *even when the data is
@@ -1304,8 +1304,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     max_iter : int, optional (default=100)
         Maximum number of iterations taken for the solvers to converge.
 
-    multi_class : str, {'ovr', 'multinomial', 'auto'}, optional \
-(default='auto')
+    multi_class : {'ovr', 'multinomial', 'auto'}, default='auto'
         If the option chosen is 'ovr', then a binary problem is fit for each
         label. For 'multinomial' the loss minimised is the multinomial loss fit
         across the entire probability distribution, *even when the data is
@@ -1802,8 +1801,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased.
 
-    multi_class : str, {'ovr', 'multinomial', 'auto'}, optional \
-(default='auto')
+    multi_class : {'ovr', 'multinomial', 'auto'}, default='auto'
         If the option chosen is 'ovr', then a binary problem is fit for each
         label. For 'multinomial' the loss minimised is the multinomial loss fit
         across the entire probability distribution, *even when the data is
