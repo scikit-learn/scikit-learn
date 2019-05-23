@@ -456,6 +456,39 @@ The module :mod:`sklearn.ensemble` provides methods
 for both classification and regression via gradient boosted regression
 trees.
 
+
+.. note::
+
+  Scikit-learn 0.21 introduces two new experimental implementation of
+  gradient boosting trees, namely :class:`HistGradientBoostingClassifier`
+  and :class:`HistGradientBoostingRegressor`, inspired by
+  `LightGBM <https://github.com/Microsoft/LightGBM>`_. These fast estimators
+  first bin the input samples ``X`` into integer-valued bins (typically 256
+  bins) which tremendously reduces the number of splitting points to
+  consider, and allow the algorithm to leverage integer-based data
+  structures (histograms) instead of relying on sorted continuous values.
+
+  The new histogram-based estimators can be orders of magnitude faster than
+  their continuous counterparts when the number of samples is larger than
+  tens of thousands of samples. The API of these new estimators is slightly
+  different, and some of the features from :class:`GradientBoostingClassifier`
+  and :class:`GradientBoostingRegressor` are not yet supported.
+
+  These new estimators are still **experimental** for now: their predictions
+  and their API might change without any deprecation cycle. To use them, you
+  need to explicitly import ``enable_hist_gradient_boosting``::
+
+    >>> # explicitly require this experimental feature
+    >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+    >>> # now you can import normally from ensemble
+    >>> from sklearn.ensemble import HistGradientBoostingClassifier
+
+  The following guide focuses on :class:`GradientBoostingClassifier` and
+  :class:`GradientBoostingRegressor` only, which might be preferred for small
+  sample sizes since binning may lead to split points that are too approximate
+  in this setting.
+
+
 Classification
 ---------------
 
@@ -848,8 +881,7 @@ The following example shows how to fit the majority rule classifier::
    >>> iris = datasets.load_iris()
    >>> X, y = iris.data[:, 1:3], iris.target
 
-   >>> clf1 = LogisticRegression(solver='lbfgs', multi_class='multinomial',
-   ...                           random_state=1)
+   >>> clf1 = LogisticRegression(random_state=1)
    >>> clf2 = RandomForestClassifier(n_estimators=50, random_state=1)
    >>> clf3 = GaussianNB()
 
@@ -914,7 +946,7 @@ Vector Machine, a Decision Tree, and a K-nearest neighbor classifier::
    >>> # Training classifiers
    >>> clf1 = DecisionTreeClassifier(max_depth=4)
    >>> clf2 = KNeighborsClassifier(n_neighbors=7)
-   >>> clf3 = SVC(gamma='scale', kernel='rbf', probability=True)
+   >>> clf3 = SVC(kernel='rbf', probability=True)
    >>> eclf = VotingClassifier(estimators=[('dt', clf1), ('knn', clf2), ('svc', clf3)],
    ...                         voting='soft', weights=[2, 1, 2])
 
@@ -935,8 +967,7 @@ The `VotingClassifier` can also be used together with `GridSearchCV` in order
 to tune the hyperparameters of the individual estimators::
 
    >>> from sklearn.model_selection import GridSearchCV
-   >>> clf1 = LogisticRegression(solver='lbfgs', multi_class='multinomial',
-   ...                           random_state=1)
+   >>> clf1 = LogisticRegression(random_state=1)
    >>> clf2 = RandomForestClassifier(random_state=1)
    >>> clf3 = GaussianNB()
    >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='soft')

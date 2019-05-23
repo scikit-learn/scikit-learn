@@ -27,7 +27,7 @@ class KernelRidge(BaseEstimator, RegressorMixin, MultiOutputMixin):
     squared error loss while support vector regression uses epsilon-insensitive
     loss, both combined with l2 regularization. In contrast to SVR, fitting a
     KRR model can be done in closed-form and is typically faster for
-    medium-sized datasets. On the other  hand, the learned model is non-sparse
+    medium-sized datasets. On the other hand, the learned model is non-sparse
     and thus slower than SVR, which learns a sparse model for epsilon > 0, at
     prediction-time.
 
