@@ -121,7 +121,8 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
     return tree
 
 
-class BaseForest(BaseEnsemble, MultiOutputMixin, ForestMixin, metaclass=ABCMeta):
+class BaseForest(BaseEnsemble, MultiOutputMixin, ForestMixin,
+                 metaclass=ABCMeta):
     """Base class for forests of trees.
 
     Warning: This class should not be used directly. Use derived classes

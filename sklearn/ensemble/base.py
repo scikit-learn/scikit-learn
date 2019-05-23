@@ -151,7 +151,8 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
 
 
 class ForestMixin:
-    """ Mixin class for all tree-based ensemble model classes in scikit-learn."""
+    """ Mixin class for all tree-based ensemble model classes in
+    scikit-learn."""
 
     def decision_path(self, X):
         """Return the decision path in the forest
