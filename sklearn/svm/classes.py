@@ -1160,11 +1160,7 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
     >>> from sklearn.datasets import make_circles
     >>> from sklearn.svm import OneClassSVM
     >>> X, y = make_circles(n_samples=6, factor=0.4, random_state=41)
-    >>> clf = OneClassSVM(gamma='auto')
-    >>> clf.fit(X)   # doctest: +NORMALIZE_WHITESPACE
-    OneClassSVM(cache_size=200, coef0=0.0, degree=3, gamma='auto',
-       kernel='rbf', max_iter=-1, nu=0.5, random_state=None, shrinking=True,
-       tol=0.001, verbose=False)
+    >>> clf = OneClassSVM(gamma='auto').fit(X)
     >>> clf.predict(X)
     array([-1,  1, -1,  1,  1, -1])
     """
