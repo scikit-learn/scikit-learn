@@ -1808,5 +1808,8 @@ def test_search_cv__pairwise_property():
         setattr(est, '_pairwise', _pairwise_setting)
         cv = PairwiseCV(est)
 
+        # check if cv is pairwise
+        cv_is_pairwise = getattr(cv, '_pairwise', False)
+
         # verity the _pairwise property in cv matches est
-        assert _pairwise_setting == getattr(cv, '_pairwise', False), attr_message
+        assert _pairwise_setting == cv_is_pairwise, attr_message
