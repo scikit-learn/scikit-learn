@@ -346,6 +346,7 @@ def test_transform_accepts_nan_inf():
     data[1] = np.Inf
     model.transform(data)
 
+
 def test_allow_nan_tag_comes_from_estimator():
     allow_nan_est = NaNTag()
     model = SelectFromModel(estimator=allow_nan_est)
@@ -354,7 +355,3 @@ def test_allow_nan_tag_comes_from_estimator():
     no_nan_est = NoNaNTag()
     model = SelectFromModel(estimator=no_nan_est)
     assert_equal(model._get_tags()['allow_nan'], False)
-
-
-
-
