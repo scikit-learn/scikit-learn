@@ -150,6 +150,7 @@ def test_should_stop(scores, n_iter_no_change, tol, stopping):
 
 def test_binning_train_validation_are_separated():
     # Make sure training and validation data are binned separately.
+    # See issue 13926
 
     rng = np.random.RandomState(0)
     gb = HistGradientBoostingClassifier(n_iter_no_change=5,
@@ -163,7 +164,5 @@ def test_binning_train_validation_are_separated():
     mapper_whole_data = _BinMapper(random_state=0)
     mapper_whole_data.fit(X_classification)
 
-    for feature_idx in range(X_classification.shape[1]):
-        n_bins_training = mapper_training_data.actual_n_bins_[feature_idx]
-        n_bins_whole = mapper_whole_data.actual_n_bins_[feature_idx]
-        assert n_bins_training != n_bins_whole
+    assert np.all(mapper_training_data.actual_n_bins_ !=
+                  mapper_whole_data.actual_n_bins_)
