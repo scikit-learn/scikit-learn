@@ -15,10 +15,17 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
-- |Fix| Fixed a bug in :func:`euclidean_distances` where a part of the distance
-  matrix was left un-instanciated for suffiently large float32 datasets
-  (regression introduced in 0.21) :issue:`13910`
-  by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+- |Fix| Fixed a bug in :func:`metrics.euclidean_distances` where a part of the
+  distance matrix was left un-instanciated for suffiently large float32
+  datasets (regression introduced in 0.21). :pr:`13910` by :user:`Jérémie du
+  Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.preprocessing`
+......................
+
+- |Fix| Fixed a bug in :class:`preprocessing.OneHotEncoder` where the new
+  `drop` parameter was not reflected in `get_feature_names`. :pr:`13894`
+  by :user:`James Myatt <jamesmyatt>`.
 
 .. _changes_0_21_1:
 
