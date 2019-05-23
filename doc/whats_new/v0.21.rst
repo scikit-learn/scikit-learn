@@ -16,7 +16,7 @@ Changelog
 ............................
 
 - |Fix| Fixed a bug in :class:`cross_decomposition.CCA` improving numerical 
-  stability when `y` is close to zero. :pr:`13903` by `Thomas Fan`_.
+  stability when `Y` is close to zero. :pr:`13903` by `Thomas Fan`_.
 
 :mod:`sklearn.metrics`
 ......................
