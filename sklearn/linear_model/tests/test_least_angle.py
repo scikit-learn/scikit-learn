@@ -451,16 +451,23 @@ def test_lars_cv():
     assert not hasattr(lars_cv, 'n_nonzero_coefs')
 
 
-@pytest.mark.filterwarnings('ignore::FutureWarning')
-def test_lars_cv_max_iter():
-    with warnings.catch_warnings(record=True) as w:
+def test_lars_cv_max_iter(recwarn):
+    warnings.simplefilter('always')
+    with np.errstate(divide='raise', invalid='raise'):
+        X = diabetes.data
+        y = diabetes.target
         rng = np.random.RandomState(42)
         x = rng.randn(len(y))
         X = diabetes.data
         X = np.c_[X, x, x]  # add correlated features
-        lars_cv = linear_model.LassoLarsCV(max_iter=5)
+        lars_cv = linear_model.LassoLarsCV(max_iter=5, cv=5)
         lars_cv.fit(X, y)
-    assert len(w) == 0
+    # Check that there is no warning in general and no ConvergenceWarning
+    # in particular.
+    # Materialize the string representation of the warning to get a more
+    # informative error message in case of AssertionError.
+    recorded_warnings = [str(w) for w in recwarn]
+    assert recorded_warnings == []
 
 
 def test_lasso_lars_ic():
@@ -497,7 +504,6 @@ def test_lars_path_readonly_data():
         _lars_path_residues(X_train, y_train, X_test, y_test, copy=False)
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_lars_path_positive_constraint():
     # this is the main test for the positive parameter on the lars_path method
     # the estimator classes just make use of this function

@@ -24,6 +24,7 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
 from sklearn.model_selection import cross_val_score, ShuffleSplit
@@ -349,10 +350,10 @@ def test_cross_validate_invalid_scoring_param():
 
     # Multiclass Scorers that return multiple values are not supported yet
     assert_raises_regex(ValueError, "scoring must return a number, got",
-                        cross_validate, SVC(gamma='scale'), X, y,
+                        cross_validate, SVC(), X, y,
                         scoring=multivalued_scorer)
     assert_raises_regex(ValueError, "scoring must return a number, got",
-                        cross_validate, SVC(gamma='scale'), X, y,
+                        cross_validate, SVC(), X, y,
                         scoring={"foo": multivalued_scorer})
 
     assert_raises_regex(ValueError, "'mse' is not a valid scoring value.",
@@ -566,7 +567,7 @@ def test_cross_val_score_precomputed():
     assert_array_almost_equal(score_precomputed, score_linear)
 
     # test with callable
-    svm = SVC(gamma='scale', kernel=lambda x, y: np.dot(x, y.T))
+    svm = SVC(kernel=lambda x, y: np.dot(x, y.T))
     score_callable = cross_val_score(svm, X, y)
     assert_array_almost_equal(score_precomputed, score_callable)
 
@@ -774,8 +775,6 @@ def test_cross_val_score_multilabel():
     assert_almost_equal(score_samples, [1, 1 / 2, 3 / 4, 1 / 2, 1 / 4])
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of n_split')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_cross_val_predict():
@@ -827,8 +826,6 @@ def test_cross_val_predict():
                          X, y, method='predict_proba', cv=KFold(2))
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_cross_val_predict_decision_function_shape():
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
@@ -877,8 +874,6 @@ def test_cross_val_predict_decision_function_shape():
                         cv=KFold(n_splits=3), method='decision_function')
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_cross_val_predict_predict_proba_shape():
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
@@ -894,8 +889,6 @@ def test_cross_val_predict_predict_proba_shape():
     assert_equal(preds.shape, (150, 3))
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_cross_val_predict_predict_log_proba_shape():
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
@@ -911,8 +904,6 @@ def test_cross_val_predict_predict_log_proba_shape():
     assert_equal(preds.shape, (150, 3))
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_cross_val_predict_input_types():
     iris = load_iris()
@@ -979,8 +970,6 @@ def test_cross_val_predict_pandas():
         cross_val_predict(clf, X_df, y_ser)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_cross_val_predict_unbalanced():
     X, y = make_classification(n_samples=100, n_features=2, n_redundant=0,
                                n_informative=2, n_clusters_per_class=1,
@@ -1333,8 +1322,8 @@ def check_cross_val_predict_binary(est, X, y, method):
 
     # Check actual outputs for several representations of y
     for tg in [y, y + 1, y - 2, y.astype('str')]:
-        assert_array_equal(cross_val_predict(est, X, tg, method=method, cv=cv),
-                           expected_predictions)
+        assert_allclose(cross_val_predict(est, X, tg, method=method, cv=cv),
+                        expected_predictions)
 
 
 def check_cross_val_predict_multiclass(est, X, y, method):
@@ -1358,8 +1347,8 @@ def check_cross_val_predict_multiclass(est, X, y, method):
 
     # Check actual outputs for several representations of y
     for tg in [y, y + 1, y - 2, y.astype('str')]:
-        assert_array_equal(cross_val_predict(est, X, tg, method=method, cv=cv),
-                           expected_predictions)
+        assert_allclose(cross_val_predict(est, X, tg, method=method, cv=cv),
+                        expected_predictions)
 
 
 def check_cross_val_predict_multilabel(est, X, y, method):
@@ -1406,7 +1395,7 @@ def check_cross_val_predict_multilabel(est, X, y, method):
         cv_predict_output = cross_val_predict(est, X, tg, method=method, cv=cv)
         assert_equal(len(cv_predict_output), len(expected_preds))
         for i in range(len(cv_predict_output)):
-            assert_array_equal(cv_predict_output[i], expected_preds[i])
+            assert_allclose(cv_predict_output[i], expected_preds[i])
 
 
 def check_cross_val_predict_with_method_binary(est):
@@ -1425,8 +1414,6 @@ def check_cross_val_predict_with_method_multiclass(est):
         check_cross_val_predict_multiclass(est, X, y, method)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of n_split')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_cross_val_predict_with_method():
@@ -1448,9 +1435,6 @@ def test_cross_val_predict_method_checking():
         check_cross_val_predict_multiclass(est, X, y, method)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')
 @pytest.mark.filterwarnings('ignore: The default value of n_split')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_gridsearchcv_cross_val_predict_with_method():
@@ -1473,8 +1457,7 @@ def test_cross_val_predict_with_method_multilabel_ovr():
     X, y = make_multilabel_classification(n_samples=n_samp, n_labels=3,
                                           n_classes=n_classes, n_features=5,
                                           random_state=42)
-    est = OneVsRestClassifier(LogisticRegression(random_state=0,
-                                                 solver='lbfgs'))
+    est = OneVsRestClassifier(LogisticRegression(random_state=0))
     for method in ['predict_proba', 'decision_function']:
         check_cross_val_predict_binary(est, X, y, method=method)
 
@@ -1559,8 +1542,6 @@ def get_expected_predictions(X, y, cv, classes, est, method):
     return expected_predictions
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_cross_val_predict_class_subset():
 
@@ -1675,16 +1656,6 @@ def test_fit_and_score_failing():
     # check if the same warning is triggered
     assert_warns_message(FitFailedWarning, warning_message, _fit_and_score,
                          *fit_and_score_args, **fit_and_score_kwargs)
-
-    # check if warning was raised, with default error_score argument
-    warning_message = ("From version 0.22, errors during fit will result "
-                       "in a cross validation score of NaN by default. Use "
-                       "error_score='raise' if you want an exception "
-                       "raised or error_score=np.nan to adopt the "
-                       "behavior from version 0.22.")
-    with pytest.raises(ValueError):
-        assert_warns_message(FutureWarning, warning_message, _fit_and_score,
-                             *fit_and_score_args)
 
     fit_and_score_kwargs = {'error_score': 'raise'}
     # check if exception was raised, with default error_score='raise'
