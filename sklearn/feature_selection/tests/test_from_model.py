@@ -29,6 +29,11 @@ class NoNaNTag(BaseEstimator):
         return {'allow_nan': False}
 
 
+class NaNTagRandomForest(RandomForestClassifier):
+    def _more_tags(self):
+        return {'allow_nan': True}
+
+
 iris = datasets.load_iris()
 data, y = iris.data, iris.target
 rng = np.random.RandomState(0)
@@ -333,6 +338,18 @@ def test_threshold_without_refitting():
     # Set a higher threshold to filter out more features.
     model.threshold = "1.0 * mean"
     assert_greater(X_transform.shape[1], model.transform(data).shape[1])
+
+
+def test_transform_accepts_nan_inf():
+	    # Test that transform doesn't check for np.inf and np.nan values.
+	    clf = NaNTagRandomForest(n_estimators=100, random_state=0)
+
+	    model = SelectFromModel(estimator=clf)
+	    model.fit(data, y)
+
+	    data[0] = np.NaN
+	    data[1] = np.Inf
+	    model.transform(data)
 
 
 def test_allow_nan_tag_comes_from_estimator():
