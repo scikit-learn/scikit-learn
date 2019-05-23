@@ -31,6 +31,13 @@ The bundled version of joblib was upgraded from 0.13.0 to 0.13.2.
   ``remainder`` transformer.
   :pr:`14237` by `Andreas Schuderer <schuderer>`.
 
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Fixed a bug in :class:`cross_decomposition.CCA` improving numerical 
+  stability when `Y` is close to zero. :pr:`13903` by `Thomas Fan`_.
+
+
 :mod:`sklearn.model_selection`
 ..............................
 
