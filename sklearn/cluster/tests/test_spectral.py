@@ -213,14 +213,13 @@ def test_n_components():
     sp = SpectralClustering(n_clusters=2, random_state=0)
     labels = sp.fit(X).labels_
     # set n_components = n_cluster and test if result is the same
-    sp = SpectralClustering(n_clusters=2, n_components=2,
-                            random_state=0)
-    labels_same_ncomp = sp.fit(X).labels_
+    labels_same_ncomp = SpectralClustering(n_clusters=2, n_components=2,
+                                           random_state=0).fit(X).labels_
     # test that n_components=n_clusters by default
     assert_array_equal(labels, labels_same_ncomp)
 
     # test that n_components affect result
-    sp = SpectralClustering(n_clusters=2, n_components=1,
-                            random_state=0)
-    labels_diff_ncomp = sp.fit(X).labels_
+    # n_clusters=8 by default, and set n_components=2
+    labels_diff_ncomp = SpectralClustering(n_components=2,
+                                           random_state=0).fit(X).labels_
     assert not np.array_equal(labels, labels_diff_ncomp)
