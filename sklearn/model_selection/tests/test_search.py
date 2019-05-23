@@ -1788,6 +1788,7 @@ def test_random_search_bad_cv():
                              'splits, got \\d+'):
         ridge.fit(X[:train_size], y[:train_size])
 
+
 def test_search_cv__pairwise_property():
     """
     Test implementation of BaseSearchCV has the _pairwise property
