@@ -533,6 +533,7 @@ estimator_parameter_map = {'LassoLars': {'alpha': 0.1},
                            'LassoLarsIC': {}}
 
 
+@pytest.mark.filterwarnings('ignore: The default value of cv')
 def test_estimatorclasses_positive_constraint():
     # testing the transmissibility for the positive option of all estimator
     # classes in this same function here
