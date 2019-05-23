@@ -1787,3 +1787,26 @@ def test_random_search_bad_cv():
                              'inconsistent results. Expected \\d+ '
                              'splits, got \\d+'):
         ridge.fit(X[:train_size], y[:train_size])
+
+def test_search_cv__pairwise_property():
+    """
+    Test implementation of BaseSearchCV has the _pairwise property
+    which matches the _pairwise property of its estimator.
+    """
+
+    class PairwiseCV(BaseSearchCV):
+        def __init__(self, estimator, **kwargs):
+            super().__init__(estimator, **kwargs)
+
+    # simple estimator with _pairwise property
+    est = BaseEstimator()
+
+    attr_message = "BaseSearchCV _pairwise property must match estimator"
+
+    # check estimator with and without _pairwise
+    for _pairwise_setting in [True, False]:
+        setattr(est, '_pairwise', _pairwise_setting)
+        cv = PairwiseCV(est)
+
+        # verity the _pairwise property in cv matches est
+        assert _pairwise_setting == getattr(cv, '_pairwise', False), attr_message
