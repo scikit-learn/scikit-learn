@@ -401,7 +401,7 @@ cdef class Splitter:
                 # there are any missing values, we will also scan bins from
                 # right to left. This way, we can consider whichever case
                 # yields the best gain: either missing values go to the right
-                # (left to right scan) or to the left (left to right case).
+                # (left to right scan) or to the left (right to left case).
                 # See algo 3 from the XGBoost paper
                 # https://arxiv.org/abs/1603.02754
 
