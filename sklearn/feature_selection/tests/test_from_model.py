@@ -341,15 +341,15 @@ def test_threshold_without_refitting():
 
 
 def test_transform_accepts_nan_inf():
-        # Test that transform doesn't check for np.inf and np.nan values.
-        clf = NaNTagRandomForest(n_estimators=100, random_state=0)
+    # Test that transform doesn't check for np.inf and np.nan values.
+    clf = NaNTagRandomForest(n_estimators=100, random_state=0)
 
-        model = SelectFromModel(estimator=clf)
-        model.fit(data, y)
+    model = SelectFromModel(estimator=clf)
+    model.fit(data, y)
 
-        data[0] = np.NaN
-        data[1] = np.Inf
-        model.transform(data)
+    data[0] = np.NaN
+    data[1] = np.Inf
+    model.transform(data)
 
 
 def test_allow_nan_tag_comes_from_estimator():
