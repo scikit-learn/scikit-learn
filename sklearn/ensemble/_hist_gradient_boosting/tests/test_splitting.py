@@ -100,8 +100,7 @@ def test_gradient_and_hessian_sanity(constant_hessian):
 
     actual_n_bins = np.array([n_bins] * X_binned.shape[1],
                              dtype=np.uint32)
-    has_missing_values = np.array([False] * X_binned.shape[1],
-                                    dtype=np.uint8)
+    has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
     builder = HistogramBuilder(X_binned, n_bins, all_gradients,
                                all_hessians, constant_hessian)
     splitter = Splitter(X_binned, n_bins, actual_n_bins, has_missing_values,
@@ -198,8 +197,7 @@ def test_split_indices():
 
     actual_n_bins = np.array([n_bins] * X_binned.shape[1],
                              dtype=np.uint32)
-    has_missing_values = np.array([False] * X_binned.shape[1],
-                                    dtype=np.uint8)
+    has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
     builder = HistogramBuilder(X_binned, n_bins,
                                all_gradients, all_hessians,
                                hessians_are_constant)
@@ -256,8 +254,7 @@ def test_min_gain_to_split():
 
     actual_n_bins = np.array([n_bins] * X_binned.shape[1],
                              dtype=np.uint32)
-    has_missing_values = np.array([False] * X_binned.shape[1],
-                                    dtype=np.uint8)
+    has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
     builder = HistogramBuilder(X_binned, n_bins, all_gradients,
                                all_hessians, hessians_are_constant)
     splitter = Splitter(X_binned, n_bins, actual_n_bins, has_missing_values,
@@ -298,7 +295,7 @@ def test_min_gain_to_split():
         # Same, this time replacing 2 samples that were on the right.
         ([1, 2, 3, 4, 0, 5, 0, 6, 7, 8],
          [1, 1, 1, 1, 5, 5, 5, 5, 5, 5],
-         True,  # missing values (bin_idx=8)
+         True,  # missing values (bin_idx=0)
          4,  # cut on bin_idx=4 (like in first case, with +1 because of offset)
          False),  # missing values go to right
     ]
@@ -308,9 +305,10 @@ def test_splitting_missing_values(X_binned, all_gradients,
                                   expected_go_to_left):
     # Make sure missing values are properly supported.
     # we build an artificial example with gradients such that the best split
-    # is on bin_idx=3.
+    # is on bin_idx=3, when there are no missing values.
     # Then we introduce missing values and:
-    #   - make sure the chosen bin is still correct (find_best_bin())
+    #   - make sure the chosen bin is still correct (find_best_bin()): it's
+    #     still the same bin, even though its index changes
     #   - make sure the missing values are mapped to the correct child
     #     (split_indices())
 
