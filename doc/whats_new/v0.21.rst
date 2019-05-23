@@ -33,6 +33,14 @@ Changelog
   `drop` parameter was not reflected in `get_feature_names`. :pr:`13894`
   by :user:`James Myatt <jamesmyatt>`.
 
+:mod:`sklearn.utils.sparsefuncs`
+................................
+
+- |Fix| Fixed a bug where :func:`min_max_axis` would fail on 32-bit systems
+  for certain large inputs. This affects :class:`preprocessing.MaxAbsScaler`, 
+  :func:`preprocessing.normalize` and :class:`preprocessing.LabelBinarizer`.
+  :pr:`13741` by :user:`Roddy MacSween <rlms>`.
+
 .. _changes_0_21_1:
 
 Version 0.21.1
