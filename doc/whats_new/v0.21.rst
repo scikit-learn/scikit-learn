@@ -429,22 +429,6 @@ Support for Python 3.4 and below has been officially dropped.
   passing the file name(s) or the file object(s) to the analyzer.
   :pr:`13641` by `Adrin Jalali`_.
 
-:mod:`sklearn.feature_selection`
-...........................
-
-- |Enhancement| Updated all :mod:`feature_selection` estimators to allow
-  NaN/Inf values in ``transform`` and ``fit``. This includes
-  :class:`feature_selection.GenericUnivariateSelect`,
-  :class:`feature_selection.RFE`, :class:`feature_selection.RFECV`,
-  :class:`feature_selection.SelectFdr`, :class:`feature_selection.SelectFpr`,
-  :class:`feature_selection.SelectFromModel`,
-  :class:`feature_selection.SelectFwe`, :class:`feature_selection.SelectKBest`,
-  :class:`feature_selection.SelectPercentile`,
-  and :class:`feature_selection.VarianceThreshold`. Note that if the underlying
-  estimator or score function of the feature selector does not allow NaN/Inf then it will still
-  error, but the feature selectors themselves no longer enforce this
-  restriction unnecessarily. :issue:`11635` by :user:`Alec Peters <adpeters>`.
-
 :mod:`sklearn.impute`
 .....................
 
