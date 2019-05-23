@@ -590,36 +590,18 @@ def test_one_hot_encoder_feature_names_unicode():
     assert_array_equal(['n👍me_c❤t1', 'n👍me_dat2'], feature_names)
 
 
-@pytest.mark.parametrize("drop", ['first',
-                                  ['c', 2, 'b']],
+@pytest.mark.parametrize("drop, expected_names",
+                         [('first', ['x0_c', 'x2_b']),
+                          (['c', 2, 'b'], ['x0_b', 'x2_a'])],
                          ids=['first', 'manual'])
-def test_one_hot_encoder_feature_names_drop(drop):
+def test_one_hot_encoder_feature_names_drop(drop, expected_names):
     X = [['c', 2, 'a'],
          ['b', 2, 'b']]
 
-    # Assume "drop=None" version has the right names in the right order
-    ohe_base = OneHotEncoder()
-    ohe_base.fit(X)
-
-    if drop == 'first':
-        drop_cats = [x[0] for x in ohe_base.categories_]
-    else:
-        drop_cats = drop
-
-    expected_names = list(ohe_base.get_feature_names())
-    for i, cat_drop in enumerate(drop_cats):
-        feat_drop = "x{}_{}".format(i, cat_drop)
-        expected_names.remove(feat_drop)
-
-    ohe_test = OneHotEncoder(drop=drop)
-
-    # Act
-    ohe_test.fit(X)
-
-    # Assert
-    feature_names = ohe_test.get_feature_names()
+    ohe = OneHotEncoder(drop=drop)
+    ohe.fit(X)
+    feature_names = ohe.get_feature_names()
     assert isinstance(feature_names, np.ndarray)
-
     assert_array_equal(expected_names, feature_names)
 
 
