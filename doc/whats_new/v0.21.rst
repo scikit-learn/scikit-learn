@@ -21,7 +21,7 @@ Changelog
   Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.preprocessing`
-......................
+............................
 
 - |Fix| Fixed a bug in :class:`preprocessing.OneHotEncoder` where the new
   `drop` parameter was not reflected in `get_feature_names`. :pr:`13894`
