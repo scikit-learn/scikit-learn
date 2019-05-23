@@ -137,16 +137,25 @@ class _BinMapper(BaseEstimator, TransformerMixin):
         self : object
         """
         X = check_array(X, dtype=[X_DTYPE], force_all_finite='allow-nan')
-        self.bin_thresholds_, has_missing_values = _find_binning_thresholds(
-                    X, self.max_bins, subsample=self.subsample,
-                    random_state=self.random_state)
+        all_bin_thresholds, has_missing_values = _find_binning_thresholds(
+            X, self.max_bins, subsample=self.subsample,
+            random_state=self.random_state)
 
+        # If there are missing value in a given feature, we prepend a fake
+        # threshold (nan) corresponding to the first bin were missing values
+        # are mapped. This threshold is never used in practice, but we use it
+        # to keep the indexes of the bins synchronized with the
+        # bin_thresholds_ attribute.
+        for feature_idx, bin_thresholds in enumerate(all_bin_thresholds):
+            if has_missing_values[feature_idx]:
+                all_bin_thresholds[feature_idx] = \
+                    np.insert(bin_thresholds, 0, np.nan)
+
+        self.bin_thresholds_ = all_bin_thresholds
         self.has_missing_values_ = np.array(has_missing_values, dtype=np.uint8)
 
         self.actual_n_bins_ = np.array(
-            [thresholds.shape[0] + 1 + has_missing_values
-             for (thresholds, has_missing_values)
-             in zip(self.bin_thresholds_, self.has_missing_values_)],
+            [thresholds.shape[0] + 1 for thresholds in self.bin_thresholds_],
             dtype=np.uint32)
 
         return self

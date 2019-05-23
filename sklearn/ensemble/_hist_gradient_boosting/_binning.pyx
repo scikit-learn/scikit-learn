@@ -65,11 +65,11 @@ cpdef void _map_num_col_to_bins(const X_DTYPE_C [:] data,
             binned[i] = 0
         else:
             # for known values, use binary search
-            left, right = 0, binning_thresholds.shape[0]
+            left, right = has_missing_values, binning_thresholds.shape[0]
             while left < right:
                 middle = (right + left - 1) // 2
                 if data[i] <= binning_thresholds[middle]:
                     right = middle
                 else:
                     left = middle + 1
-            binned[i] = left + has_missing_values
+            binned[i] = left

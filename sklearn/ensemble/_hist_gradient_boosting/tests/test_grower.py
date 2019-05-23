@@ -173,12 +173,13 @@ def test_predictor_from_grower():
         [129, 255],
         [242, 100],
     ], dtype=np.uint8)
-    predictions = predictor.predict_binned(input_data)
+    has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
+    predictions = predictor.predict_binned(input_data, has_missing_values)
     expected_targets = [1, 1, 1, 1, 1, 1, -1, -1, -1]
     assert np.allclose(predictions, expected_targets)
 
     # Check that training set can be recovered exactly:
-    predictions = predictor.predict_binned(X_binned)
+    predictions = predictor.predict_binned(X_binned, has_missing_values)
     assert np.allclose(predictions, -all_gradients)
 
 
