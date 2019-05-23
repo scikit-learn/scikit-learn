@@ -93,11 +93,8 @@ def test_map_to_bins(n_bins):
     bin_thresholds = _find_binning_thresholds(DATA, max_bins=n_bins,
                                               random_state=0)
     binned = np.zeros_like(DATA, dtype=X_BINNED_DTYPE, order='F')
-    actual_n_bins = np.array(
-        [len(thresholds) + 1 for thresholds in bin_thresholds],
-        dtype=np.uint32
-    )
-    _map_to_bins(DATA, bin_thresholds, actual_n_bins, binned)
+    has_missing_values = np.array([False] * DATA.shape[1], dtype=np.uint8)
+    _map_to_bins(DATA, bin_thresholds, has_missing_values, binned)
     assert binned.shape == DATA.shape
     assert binned.dtype == np.uint8
     assert binned.flags.f_contiguous

@@ -2,6 +2,7 @@
 # Author: Nicolas Hug
 
 from abc import ABC, abstractmethod
+from functools import partial
 
 import numpy as np
 from timeit import default_timer as time
@@ -281,7 +282,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     if self._use_validation_data:
                         for k, pred in enumerate(self._predictors[-1]):
                             raw_predictions_val[k, :] += (
-                                pred.predict_binned(X_binned_val))
+                                pred.predict_binned(
+                                    X_binned_val,
+                                    self.bin_mapper_.has_missing_values_)
+                            )
 
                     should_early_stop = self._check_early_stopping_loss(
                         raw_predictions, y_train,
@@ -458,8 +462,13 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         raw_predictions += self._baseline_prediction
         for predictors_of_ith_iteration in self._predictors:
             for k, predictor in enumerate(predictors_of_ith_iteration):
-                predict = (predictor.predict_binned if is_binned
-                           else predictor.predict)
+                if is_binned:
+                    predict = partial(
+                        predictor.predict_binned,
+                        has_missing_values=self.bin_mapper_.has_missing_values_
+                    )
+                else:
+                    predict = predictor.predict
                 raw_predictions[k, :] += predict(X)
 
         return raw_predictions

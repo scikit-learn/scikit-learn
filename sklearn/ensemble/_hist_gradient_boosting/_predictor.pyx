@@ -36,8 +36,9 @@ def _predict_from_numeric_data(nodes, numeric_data, out):
     _predict_from_numeric_data_parallel(nodes, numeric_data, out)
 
 
-def _predict_from_binned_data(nodes, binned_data, out):
-    _predict_from_binned_data_parallel(nodes, binned_data, out)
+def _predict_from_binned_data(nodes, binned_data, has_missing_values, out):
+    _predict_from_binned_data_parallel(nodes, binned_data,
+                                       has_missing_values, out)
 
 
 cdef void _predict_from_numeric_data_parallel(
@@ -81,18 +82,21 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
 cdef void _predict_from_binned_data_parallel(
         node_struct [:] nodes,
         const X_BINNED_DTYPE_C [:, :] binned_data,
+        const unsigned char [:] has_missing_features,
         Y_DTYPE_C [:] out):
 
     cdef:
         int i
 
     for i in prange(binned_data.shape[0], schedule='static', nogil=True):
-        out[i] = _predict_one_from_binned_data(nodes, binned_data, i)
+        out[i] = _predict_one_from_binned_data(nodes, binned_data,
+                                               has_missing_features, i)
 
 
 cdef inline Y_DTYPE_C _predict_one_from_binned_data(
         node_struct [:] nodes,
         const X_BINNED_DTYPE_C [:, :] binned_data,
+        const unsigned char [:] has_missing_features,
         const int row) nogil:
     # Need to pass the whole array and the row index, else prange won't work.
     # See issue Cython #2798
@@ -103,7 +107,14 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
     while True:
         if node.is_leaf:
             return node.value
-        if binned_data[row, node.feature_idx] <= node.bin_threshold:
-            node = nodes[node.left]
+        if (has_missing_features[node.feature_idx] and
+                binned_data[row, node.feature_idx] == 0):
+            if node.missing_go_to_left:
+                node = nodes[node.left]
+            else:
+                node = nodes[node.right]
         else:
-            node = nodes[node.right]
+            if binned_data[row, node.feature_idx] <= node.bin_threshold:
+                node = nodes[node.left]
+            else:
+                node = nodes[node.right]

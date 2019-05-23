@@ -137,10 +137,11 @@ class _BinMapper(BaseEstimator, TransformerMixin):
         self : object
         """
         X = check_array(X, dtype=[X_DTYPE], force_all_finite='allow-nan')
-        self.bin_thresholds_, self.has_missing_values_ = \
-            _find_binning_thresholds(
+        self.bin_thresholds_, has_missing_values = _find_binning_thresholds(
                     X, self.max_bins, subsample=self.subsample,
                     random_state=self.random_state)
+
+        self.has_missing_values_ = np.array(has_missing_values, dtype=np.uint8)
 
         self.actual_n_bins_ = np.array(
             [thresholds.shape[0] + 1 + has_missing_values
