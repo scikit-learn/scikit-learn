@@ -18,6 +18,17 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.base import BaseEstimator
 
+
+class NaNTag(BaseEstimator):
+    def _more_tags(self):
+        return {'allow_nan': True}
+
+
+class NoNaNTag(BaseEstimator):
+    def _more_tags(self):
+        return {'allow_nan': False}
+
+
 iris = datasets.load_iris()
 data, y = iris.data, iris.target
 rng = np.random.RandomState(0)
@@ -340,3 +351,16 @@ def test_transform_accepts_nan_inf():
     data[0] = np.NaN
     data[1] = np.Inf
     model.transform(data)
+
+def test_allow_nan_tag_comes_from_estimator():
+    allow_nan_est = NaNTag()
+    model = SelectFromModel(estimator=allow_nan_est)
+    assert_equal(model._get_tags()['allow_nan'], True)
+
+    no_nan_est = NoNaNTag()
+    model = SelectFromModel(estimator=no_nan_est)
+    assert_equal(model._get_tags()['allow_nan'], False)
+
+
+
+

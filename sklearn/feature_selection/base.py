@@ -72,7 +72,7 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
             The input samples with only the selected features.
         """
         X = check_array(X, dtype=None, accept_sparse='csr',
-                        force_all_finite=False)
+                        force_all_finite=not self._get_tags().get('allow_nan', True))
         mask = self.get_support()
         if not mask.any():
             warn("No features were selected: either the data is"

@@ -233,4 +233,5 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
         return self
 
     def _more_tags(self):
-        return {'allow_nan': True}
+        estimator_tags = self.estimator._get_tags()
+        return {'allow_nan': estimator_tags.get('allow_nan', True)}
