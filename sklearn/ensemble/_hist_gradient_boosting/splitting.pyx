@@ -471,6 +471,7 @@ cdef class Splitter:
             unsigned int n_samples_right
             unsigned int n_samples_ = n_samples
             unsigned int start = 0
+            unsigned int end = self.actual_n_bins[feature_idx] - 1
             Y_DTYPE_C sum_hessian_left
             Y_DTYPE_C sum_hessian_right
             Y_DTYPE_C sum_gradient_left
@@ -484,7 +485,7 @@ cdef class Splitter:
             # if there are missing values (in the first bin), skip it
             start = 1
 
-        for bin_idx in range(start, self.actual_n_bins[feature_idx] - 1):
+        for bin_idx in range(start, end):
             # Note that considering splitting on the last bin is useless since
             # it would result in having 0 samples in the right node (forbidden)
             n_samples_left += histograms[feature_idx, bin_idx].count
@@ -559,15 +560,14 @@ cdef class Splitter:
             Y_DTYPE_C sum_gradient_left
             Y_DTYPE_C sum_gradient_right
             Y_DTYPE_C gain
-            unsigned int n_bins = self.actual_n_bins[feature_idx]
-            unsigned int start
+            unsigned int start = self.actual_n_bins[feature_idx] - 2
 
         # n_bins - 2 is the index of the second to last bin, which we consider
         # being on the right child.
         sum_gradient_right, sum_hessian_right = 0., 0.
         n_samples_right = 0
 
-        for bin_idx in range(self.actual_n_bins[feature_idx] - 2, 0, -1):
+        for bin_idx in range(start, 0, -1):
             # We start at the second to last bin (we don't need to consider
             # splitting on the last bin since it would result in having zero
             # samples on the right node).
