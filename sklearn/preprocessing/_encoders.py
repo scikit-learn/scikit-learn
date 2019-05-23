@@ -367,7 +367,8 @@ class OneHotEncoder(_BaseEncoder):
             msg = (
                 "Passing 'n_values' is deprecated in version 0.20 and will be "
                 "removed in 0.22. You can use the 'categories' keyword "
-                "instead. 'n_values=n' corresponds to 'categories=[range(n)]'."
+                "instead. 'n_values=n' corresponds to "
+                "'categories=[range(n)] * n_features'."
             )
             warnings.warn(msg, DeprecationWarning)
             self._legacy_mode = True
