@@ -685,7 +685,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             # The weights are all 1. for SAMME.R
             pred = sum(_samme_proba(estimator, n_classes, X)
                        for estimator in self.estimators_)
-        else:   # self.algorithm == "SAMME"
+        else:  # self.algorithm == "SAMME"
             pred = sum((estimator.predict(X) == classes).T * w
                        for estimator, w in zip(self.estimators_,
                                                self.estimator_weights_))
@@ -780,7 +780,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             # The weights are all 1. for SAMME.R
             proba = sum(_samme_proba(estimator, n_classes, X)
                         for estimator in self.estimators_)
-        else:   # self.algorithm == "SAMME"
+        else:  # self.algorithm == "SAMME"
             proba = sum(estimator.predict_proba(X) * w
                         for estimator, w in zip(self.estimators_,
                                                 self.estimator_weights_))
