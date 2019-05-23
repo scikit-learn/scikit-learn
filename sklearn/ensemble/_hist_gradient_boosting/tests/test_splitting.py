@@ -283,21 +283,23 @@ def test_min_gain_to_split():
          3,  # expected_bin_idx
          'not_applicable'),
 
-        # We replace 2 samples by NaNs (bin_idx=8)
+        # We replace 2 samples by NaNs (bin_idx=0)
         # These 2 samples were mapped to the left node before, so they should
         # be mapped to left node again
-        # Notice how the bin_idx threshold changes from 3 to 1.
-        ([8, 0, 1, 8, 2, 3, 4, 5, 6, 7],
+        # Notice how the bin_idx threshold changes from 3 to 2.
+        # Also, the bins of the previous non-nan samples have bin shiffted by
+        # one
+        ([0, 1, 2, 0, 3, 4, 5, 6, 7, 8],
          [1, 1, 1, 1, 2, 2, 2, 2, 2, 2],
-         True,  # missing values (bin_idx=8)
-         1,  # cut on bin_idx=1
+         True,  # missing values (bin_idx=0)
+         2,  # cut on bin_idx=2
          True),  # missing values go to left
 
         # Same, this time replacing 2 samples that were on the right.
-        ([0, 1, 2, 3, 8, 4, 8, 5, 6, 7],
+        ([1, 2, 3, 4, 0, 5, 0, 6, 7, 8],
          [1, 1, 1, 1, 5, 5, 5, 5, 5, 5],
          True,  # missing values (bin_idx=8)
-         3,  # cut on bin_idx=3 (like in first case)
+         4,  # cut on bin_idx=4 (like in first case, with +1 because of offset)
          False),  # missing values go to right
     ]
 )
@@ -345,7 +347,7 @@ def test_splitting_missing_values(X_binned, all_gradients,
     if has_missing_values:
         assert split_info.missing_go_to_left == expected_go_to_left
 
-    # Whatever the missing values, the split shouhld always be the same. This
+    # Whatever the missing values, the split should always be the same. This
     # also make sure missing values are properly assigned to the correct child
     # in split_indices()
     samples_left, samples_right, _ = splitter.split_indices(

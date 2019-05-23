@@ -251,8 +251,6 @@ cdef class Splitter:
             int feature_idx = split_info.feature_idx
             unsigned char has_missing_values = \
                 self.has_missing_values[feature_idx]
-            X_BINNED_DTYPE_C missing_values_bin = \
-                self.actual_n_bins[feature_idx] - 1
             const X_BINNED_DTYPE_C [::1] X_binned = \
                 self.X_binned[:, feature_idx]
             unsigned int [::1] left_indices_buffer = self.left_indices_buffer
@@ -297,15 +295,20 @@ cdef class Splitter:
                 stop = start + sizes[thread_idx]
                 for i in range(start, stop):
                     sample_idx = sample_indices[i]
-                    if ((has_missing_values and
-                            X_binned[sample_idx] == missing_values_bin and
-                            missing_go_to_left) or
-                            X_binned[sample_idx] <= bin_idx):
-                        left_indices_buffer[start + left_count] = sample_idx
-                        left_count = left_count + 1
+                    if (has_missing_values and X_binned[sample_idx] == 0):
+                        if missing_go_to_left:
+                            left_indices_buffer[start + left_count] = sample_idx
+                            left_count = left_count + 1
+                        else:
+                            right_indices_buffer[start + right_count] = sample_idx
+                            right_count = right_count + 1
                     else:
-                        right_indices_buffer[start + right_count] = sample_idx
-                        right_count = right_count + 1
+                        if X_binned[sample_idx] <= bin_idx:
+                            left_indices_buffer[start + left_count] = sample_idx
+                            left_count = left_count + 1
+                        else:
+                            right_indices_buffer[start + right_count] = sample_idx
+                            right_count = right_count + 1
 
                 left_counts[thread_idx] = left_count
                 right_counts[thread_idx] = right_count
@@ -467,10 +470,7 @@ cdef class Splitter:
             unsigned int n_samples_left
             unsigned int n_samples_right
             unsigned int n_samples_ = n_samples
-            # We don't need to consider splitting on the last bin (or second to
-            # last bin if there are missing values) since this would result in
-            # having 0 samples in the right node
-            unsigned int end = self.actual_n_bins[feature_idx] - 1
+            unsigned int start = 0
             Y_DTYPE_C sum_hessian_left
             Y_DTYPE_C sum_hessian_right
             Y_DTYPE_C sum_gradient_left
@@ -481,10 +481,12 @@ cdef class Splitter:
         n_samples_left = 0
 
         if self.has_missing_values[feature_idx]:
-            # if there are missing values (in the last bin), skip one more bin
-            end -= 1
+            # if there are missing values (in the first bin), skip it
+            start = 1
 
-        for bin_idx in range(end):
+        for bin_idx in range(start, self.actual_n_bins[feature_idx] - 1):
+            # Note that considering splitting on the last bin is useless since
+            # it would result in having 0 samples in the right node (forbidden)
             n_samples_left += histograms[feature_idx, bin_idx].count
             n_samples_right = n_samples_ - n_samples_left
 
@@ -560,17 +562,16 @@ cdef class Splitter:
             unsigned int n_bins = self.actual_n_bins[feature_idx]
             unsigned int start
 
-        # - Skip last bin (where the missing values are)
-        # - Skip second to last bin (considering this split would result in 0
-        #   samples on the right node)
-        start = n_bins - 3
-
         # n_bins - 2 is the index of the second to last bin, which we consider
         # being on the right child.
         sum_gradient_right, sum_hessian_right = 0., 0.
         n_samples_right = 0
 
-        for bin_idx in range(start, -1, -1):
+        for bin_idx in range(self.actual_n_bins[feature_idx] - 2, 0, -1):
+            # We start at the second to last bin (we don't need to consider
+            # splitting on the last bin since it would result in having zero
+            # samples on the right node).
+            # We also skip the first bin (where the missing values are)
             n_samples_right += histograms[feature_idx, bin_idx + 1].count
             n_samples_left = n_samples_ - n_samples_right
 

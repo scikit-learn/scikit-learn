@@ -249,33 +249,35 @@ def test_subsample():
 
 @pytest.mark.parametrize(
     'max_bins, actual_n_bins, X_trans_expected', [
-        (256, [5, 3, 2], [[0, 0, 0],
-                          [4, 2, 0],
-                          [1, 0, 0],
-                          [4, 1, 1],
-                          [2, 1, 1],
-                          [3, 0, 0]]),
-        # With max_bins=2, we expect all non-nan values to be mapped to bin 0
-        # and all nans to be mapped to bin 1
-        (2, [2, 2, 2], [[0, 0, 0],
+        (256, [5, 3, 2], [[1, 1, 0],
+                          [0, 0, 0],
+                          [2, 1, 0],
+                          [0, 2, 1],
+                          [3, 2, 1],
+                          [4, 1, 0]]),
+        # With max_bins=2, we expect all nan values to be mapped to bin 0
+        # and all non-nans to be mapped to bin 1
+        (2, [2, 2, 2], [[1, 1, 0],
+                        [0, 0, 0],
                         [1, 1, 0],
-                        [0, 0, 0],
-                        [1, 0, 1],
-                        [0, 0, 1],
-                        [0, 0, 0]]),
-
-        (3, [3, 3, 2], [[0, 0, 0],
-                        [2, 2, 0],
-                        [0, 0, 0],
-                        [2, 1, 1],
+                        [0, 1, 1],
                         [1, 1, 1],
-                        [1, 0, 0]])])
+                        [1, 1, 0]]),
+
+        (3, [3, 3, 2], [[1, 1, 0],
+                        [0, 0, 0],
+                        [1, 1, 0],
+                        [0, 2, 1],
+                        [2, 2, 1],
+                        [2, 1, 0]])])
 def test_missing_values_support(max_bins, actual_n_bins, X_trans_expected):
-    # check for missing values: make sure nans are mapped to last bins
+    # check for missing values: make sure nans are mapped to the first bin
     # and that attributes are correct
 
-    # Note that the extra bin for missing values is only allocated if needed
-    # (no need to allocate extra bin for third column here.)
+    # Note that the extra bin for missing values is only allocated if needed:
+    # - no need to allocate extra bin for third column here
+    # - due to the extra bin, the features with missing values are "shifted"
+    #   with an offset of 1
 
     X = [[1,      1,      1],
          [np.NaN, np.NaN, 1],
@@ -291,14 +293,16 @@ def test_missing_values_support(max_bins, actual_n_bins, X_trans_expected):
     assert_array_equal(mapper.actual_n_bins_, actual_n_bins)
     assert_array_equal(mapper.has_missing_values_, [True, True, False])
     X_trans = mapper.transform(X)
+    print()
+    print(X_trans)
     assert_array_equal(X_trans, X_trans_expected)
 
 
 def test_missing_values_different_X_fit_transform():
     # Test to illustrate the fact that missing values are always mapped to the
-    # last bin.
+    # first bin.
     # If there are no missing values at fit time (second column), then during
-    # transform(), missing values are treated as the biggest values, which is
+    # transform(), missing values are treated as the smallest values, which is
     # not a desired behaviour in general.
 
     # Note that in practice this case never happens, since the GBDT code only
@@ -318,16 +322,16 @@ def test_missing_values_different_X_fit_transform():
 
     X2 = [[1,      1],
           [3,      1],
-          [1,      np.NaN],  # Nan mapped in same bin as the biggest value
+          [1,      np.NaN],  # Nan mapped in same bin as the smallest value
           [2,      2],
           [np.NaN, 2],  # Nan mapped in a special bin, as expected
           [1,      1]]
 
     X2_trans = mapper.transform(X2)
-    X2_trans_expected = [[0, 0],
+    X2_trans_expected = [[1, 0],
+                         [2, 0],
                          [1, 0],
-                         [0, 1],
-                         [1, 1],
                          [2, 1],
-                         [0, 0]]
+                         [0, 1],
+                         [1, 0]]
     assert_array_equal(X2_trans, X2_trans_expected)

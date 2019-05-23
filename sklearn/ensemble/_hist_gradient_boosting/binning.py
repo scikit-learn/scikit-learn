@@ -123,7 +123,7 @@ class _BinMapper(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         """Fit data X by computing the binning thresholds.
 
-        The last bin is reserved for missing values, if any.
+        The first bin is reserved for missing values, if any.
 
         Parameters
         ----------
@@ -153,7 +153,7 @@ class _BinMapper(BaseEstimator, TransformerMixin):
     def transform(self, X):
         """Bin data X.
 
-        Missing values will be mapped to the last bin (whether or not missing
+        Missing values will be mapped to the first bin (whether or not missing
         values were encountered at fit time). For this reason, `X` should be
         the fitting data, though we do not enforce this. Note that the GBDT
         code only ever uses mapper.fit_transform(), so this assumption is OK.
@@ -177,5 +177,5 @@ class _BinMapper(BaseEstimator, TransformerMixin):
                                         X.shape[1])
             )
         binned = np.zeros_like(X, dtype=X_BINNED_DTYPE, order='F')
-        _map_to_bins(X, self.bin_thresholds_, self.actual_n_bins_, binned)
+        _map_to_bins(X, self.bin_thresholds_, self.has_missing_values_, binned)
         return binned

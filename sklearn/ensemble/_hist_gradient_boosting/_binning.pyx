@@ -17,7 +17,7 @@ from .types cimport X_DTYPE_C, X_BINNED_DTYPE_C
 
 cpdef _map_to_bins(const X_DTYPE_C [:, :] data,
                    list binning_thresholds,
-                   const unsigned int [:] actual_n_bins,
+                   list has_missing_values,
                    X_BINNED_DTYPE_C [::1, :] binned):
     """Bin numerical values to discrete integer-coded levels.
 
@@ -28,9 +28,6 @@ cpdef _map_to_bins(const X_DTYPE_C [:, :] data,
     binning_thresholds : list of arrays
         For each feature, stores the increasing numeric values that are
         used to separate the bins.
-    actual_n_bins : ndarray, shape (n_features,)
-        For each feature, indicate the actual number of bins, including the bin
-        for missing values, if any.
     binned : ndarray, shape (n_samples, n_features)
         Output array, must be fortran aligned.
     """
@@ -41,13 +38,13 @@ cpdef _map_to_bins(const X_DTYPE_C [:, :] data,
 
         _map_num_col_to_bins(data[:, feature_idx],
                              binning_thresholds[feature_idx],
-                             actual_n_bins[feature_idx],
+                             has_missing_values[feature_idx],
                              binned[:, feature_idx])
 
 
 cpdef void _map_num_col_to_bins(const X_DTYPE_C [:] data,
                                 const X_DTYPE_C [:] binning_thresholds,
-                                const unsigned int actual_n_bins,
+                                const int has_missing_values,
                                 X_BINNED_DTYPE_C [:] binned):
     """Binary search to find the bin index for each value in the data."""
     cdef:
@@ -59,10 +56,11 @@ cpdef void _map_num_col_to_bins(const X_DTYPE_C [:] data,
     for i in prange(data.shape[0], schedule='static', nogil=True):
 
         if isnan(data[i]):
-            # unkown values are mapped to last bin
+            # unkown values are mapped to first bin
             # Note that this is only correct if missing values were
-            # encountered at fit time (else actual_n_bins is incorrect).
-            binned[i] = actual_n_bins - 1
+            # encountered at fit time (else non-missing values will also be
+            # mapped to this bin)
+            binned[i] = 0
         else:
             # for known values, use binary search
             left, right = 0, binning_thresholds.shape[0]
@@ -72,4 +70,4 @@ cpdef void _map_num_col_to_bins(const X_DTYPE_C [:] data,
                     right = middle
                 else:
                     left = middle + 1
-            binned[i] = left
+            binned[i] = left + has_missing_values
