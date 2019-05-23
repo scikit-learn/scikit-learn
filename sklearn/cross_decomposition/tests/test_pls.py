@@ -358,13 +358,13 @@ def test_scale_and_stability():
             X_score, Y_score = clf.fit_transform(X, Y)
             clf.set_params(scale=False)
             X_s_score, Y_s_score = clf.fit_transform(X_s, Y_s)
-            assert_array_almost_equal(X_s_score, X_score)
-            assert_array_almost_equal(Y_s_score, Y_score)
+            assert_array_almost_equal(X_s_score, X_score, decimal=4)
+            assert_array_almost_equal(Y_s_score, Y_score, decimal=4)
             # Scaling should be idempotent
             clf.set_params(scale=True)
             X_score, Y_score = clf.fit_transform(X_s, Y_s)
-            assert_array_almost_equal(X_s_score, X_score)
-            assert_array_almost_equal(Y_s_score, Y_score)
+            assert_array_almost_equal(X_s_score, X_score, decimal=4)
+            assert_array_almost_equal(Y_s_score, Y_score, decimal=4)
 
 
 def test_pls_errors():
