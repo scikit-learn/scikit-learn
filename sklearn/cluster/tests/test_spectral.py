@@ -203,3 +203,23 @@ def test_spectral_clustering_with_arpack_amg_solvers():
         assert_raises(
             ValueError, spectral_clustering,
             graph, n_clusters=2, eigen_solver='amg', random_state=0)
+
+
+def test_n_components():
+    # Test that after adding n_components, result is different and
+    # n_components = n_clusters by default
+    X, y = make_blobs(n_samples=20, random_state=0,
+                      centers=[[1, 1], [-1, -1]], cluster_std=0.01)
+    sp = SpectralClustering(n_clusters=2, random_state=0)
+    labels = sp.fit(X).labels_
+    sp = SpectralClustering(n_clusters=2, n_components=2,
+                            random_state=0)
+    labels_same_ncomp = sp.fit(X).labels_
+    # test that n_components=n_clusters by default
+    assert_array_equal(labels, labels_same_ncomp)
+
+    # test that n_components affect result
+    sp = SpectralClustering(n_clusters=2, n_components=3,
+                            random_state=0)
+    labels_diff_ncomp = sp.fit(X).labels_
+    assert not np.array_equal(labels, labels_diff_ncomp)

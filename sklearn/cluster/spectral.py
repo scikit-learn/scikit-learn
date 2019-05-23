@@ -307,7 +307,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities.
 
-    n_components : integer, optional, default is n_clusters
+    n_components : integer, optional, default=n_clusters
         Number of eigen vectors to use for the spectral embedding
 
     random_state : int, RandomState instance or None (default)
