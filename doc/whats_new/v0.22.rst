@@ -45,7 +45,7 @@ Changelog
 - |Fix| :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` now bin the training and
   validation data separately to avoid any data leak. :pr:`13933` by
-  :user:`NicolasHug`_.
+  `NicolasHug`_.
 
 :mod:`sklearn.linear_model`
 ..................
