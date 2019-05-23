@@ -136,7 +136,6 @@ def _compute_partial_dependence(
     """
 
     cdef:
-
         unsigned int current_node_idx
         unsigned int [:] node_idx_stack = np.zeros(shape=nodes.shape[0],
                                                    dtype=np.uint32)

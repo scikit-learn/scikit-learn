@@ -1754,7 +1754,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         if self.init is not None:
             warnings.warn(
                 'Using recursion method with a non-constant init predictor '
-                'will lead to incorrect partial dependence values.',
+                'will lead to incorrect partial dependence values. '
+                'Got init=%s.' % self.init,
                 UserWarning
             )
         grid = np.asarray(grid, dtype=DTYPE, order='C')

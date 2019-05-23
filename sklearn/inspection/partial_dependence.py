@@ -440,15 +440,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
           computationally intensive.
 
         - 'auto':
-
-          - 'recursion' is used for
-            :class:`GradientBoostingClassifier<sklearn.ensemble.GradientBoostingClassifier>`
-            and
-            :class:`GradientBoostingRegressor<sklearn.ensemble.GradientBoostingRegressor>`
-            if ``init=None``, and for
-            :class:`HistGradientBoostingClassifier<sklearn.ensemble.HistGradientBoostingClassifier>`
-            and
-            :class:`HistGradientBoostingRegressor<sklearn.ensemble.HistGradientBoostingRegressor>`.
+          - 'recursion' is used for estimators that supports it.
           - 'brute' is used for all other estimators.
     n_jobs : int, optional (default=None)
         The number of CPUs to use to compute the partial dependences.
