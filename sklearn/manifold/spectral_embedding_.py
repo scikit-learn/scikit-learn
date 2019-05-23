@@ -296,12 +296,13 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         # theory:
         #     see https://doi.org/10.1007/s10208-015-9297-1
         # Shift the Laplacian so its diagononal is not all ones. The shift
-        # does change the eigenpairs, however, if the shift is small, the
-        # changes are insignificant.
+        # does change the eigenpairs however, so we'll feed the shifted
+        # matrix to the solver and afterward set it back to the original.
         laplacian = laplacian + 1e-5 * sparse.eye(laplacian.shape[0])
-
         # noinspection PyUnboundLocalVariable
         ml = smoothed_aggregation_solver(check_array(laplacian, 'csr'))
+        laplacian = laplacian - 1e-5 * sparse.eye(laplacian.shape[0])
+
         M = ml.aspreconditioner()
         X = random_state.rand(laplacian.shape[0], n_components + 1)
         X[:, 0] = dd.ravel()
