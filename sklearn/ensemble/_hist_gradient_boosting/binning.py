@@ -163,10 +163,13 @@ class _BinMapper(BaseEstimator, TransformerMixin):
     def transform(self, X):
         """Bin data X.
 
-        Missing values will be mapped to the first bin (whether or not missing
-        values were encountered at fit time). For this reason, `X` should be
-        the fitting data, though we do not enforce this. Note that the GBDT
-        code only ever uses mapper.fit_transform(), so this assumption is OK.
+        Missing values will be mapped to the first bin, but only if missing
+        values were encountered at fit time. Else, due to side effect of
+        comparing with NaNs (always results in False), missing values are
+        mapped to the last bin.
+        For this reason, `X` should be the fitting data, though we do not
+        enforce this. Note that the GBDT code only ever uses
+        mapper.fit_transform(), so this assumption is OK.
 
         Parameters
         ----------

@@ -57,11 +57,8 @@ cpdef void _map_num_col_to_bins(const X_DTYPE_C [:] data,
 
     for i in prange(data.shape[0], schedule='static', nogil=True):
 
-        if isnan(data[i]):
+        if has_missing_values and isnan(data[i]):
             # unkown values are mapped to first bin
-            # Note that this is only correct if missing values were
-            # encountered at fit time (else non-missing values will also be
-            # mapped to this bin)
             binned[i] = 0
         else:
             # for known values, use binary search

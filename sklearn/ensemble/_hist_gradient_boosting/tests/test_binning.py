@@ -290,17 +290,15 @@ def test_missing_values_support(max_bins, actual_n_bins, X_trans_expected):
     assert_array_equal(mapper.actual_n_bins_, actual_n_bins)
     assert_array_equal(mapper.has_missing_values_, [True, True, False])
     X_trans = mapper.transform(X)
-    print()
-    print(X_trans)
     assert_array_equal(X_trans, X_trans_expected)
 
 
 def test_missing_values_different_X_fit_transform():
-    # Test to illustrate the fact that missing values are always mapped to the
-    # first bin.
+    # Test to illustrate the fact that missing values are mapped to the
+    # first bin only if missing values were encountered at fit time.
     # If there are no missing values at fit time (second column), then during
-    # transform(), missing values are treated as the smallest values, which is
-    # not a desired behaviour in general.
+    # transform(), missing values will be mapped to the last bin, not a
+    # desired behaviour in general.
 
     # Note that in practice this case never happens, since the GBDT code only
     # ever uses mapper.fit_transform().
@@ -319,16 +317,17 @@ def test_missing_values_different_X_fit_transform():
 
     X2 = [[1,      1],
           [3,      1],
-          [1,      np.NaN],  # Nan mapped in same bin as the smallest value
+          [1,      np.NaN],  # Nan mapped in biggest bin
           [2,      2],
-          [np.NaN, 2],  # Nan mapped in a special bin, as expected
+          [np.NaN, 2],  # Nan mapped in a first bin, as expected
           [1,      1]]
 
     X2_trans = mapper.transform(X2)
     X2_trans_expected = [[1, 0],
                          [2, 0],
-                         [1, 0],
+                         [1, 1],
                          [2, 1],
                          [0, 1],
                          [1, 0]]
+    print(X2_trans)
     assert_array_equal(X2_trans, X2_trans_expected)
