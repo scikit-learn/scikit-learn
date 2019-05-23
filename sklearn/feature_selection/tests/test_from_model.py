@@ -335,18 +335,6 @@ def test_threshold_without_refitting():
     assert_greater(X_transform.shape[1], model.transform(data).shape[1])
 
 
-def test_transform_accepts_nan_inf():
-    # Test that transform doesn't check for np.inf and np.nan values.
-    clf = RandomForestClassifier(n_estimators=100, random_state=0)
-
-    model = SelectFromModel(estimator=clf)
-    model.fit(data, y)
-
-    data[0] = np.NaN
-    data[1] = np.Inf
-    model.transform(data)
-
-
 def test_allow_nan_tag_comes_from_estimator():
     allow_nan_est = NaNTag()
     model = SelectFromModel(estimator=allow_nan_est)
