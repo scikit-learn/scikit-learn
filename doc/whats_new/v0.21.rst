@@ -7,18 +7,39 @@
 Version 0.21.2
 ==============
 
-**June 2019**
+**24 May 2019**
 
 Changelog
 ---------
 
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Fixed a bug in :class:`cross_decomposition.CCA` improving numerical 
+  stability when `Y` is close to zero. :pr:`13903` by `Thomas Fan`_.
+
 :mod:`sklearn.metrics`
 ......................
 
-- |Fix| Fixed a bug in :func:`euclidean_distances` where a part of the distance
-  matrix was left un-instanciated for suffiently large float32 datasets
-  (regression introduced in 0.21) :issue:`13910`
-  by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+- |Fix| Fixed a bug in :func:`metrics.euclidean_distances` where a part of the
+  distance matrix was left un-instanciated for suffiently large float32
+  datasets (regression introduced in 0.21). :pr:`13910` by :user:`Jérémie du
+  Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| Fixed a bug in :class:`preprocessing.OneHotEncoder` where the new
+  `drop` parameter was not reflected in `get_feature_names`. :pr:`13894`
+  by :user:`James Myatt <jamesmyatt>`.
+
+:mod:`sklearn.utils.sparsefuncs`
+................................
+
+- |Fix| Fixed a bug where :func:`min_max_axis` would fail on 32-bit systems
+  for certain large inputs. This affects :class:`preprocessing.MaxAbsScaler`, 
+  :func:`preprocessing.normalize` and :class:`preprocessing.LabelBinarizer`.
+  :pr:`13741` by :user:`Roddy MacSween <rlms>`.
 
 .. _changes_0_21_1:
 
