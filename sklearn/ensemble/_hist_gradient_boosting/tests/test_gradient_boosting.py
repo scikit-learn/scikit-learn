@@ -6,6 +6,7 @@ from sklearn.datasets import make_classification, make_regression
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 
 
 X_classification, y_classification = make_classification(random_state=0)
@@ -145,3 +146,24 @@ def test_should_stop(scores, n_iter_no_change, tol, stopping):
         n_iter_no_change=n_iter_no_change, tol=tol
     )
     assert gbdt._should_stop(scores) == stopping
+
+
+def test_binning_train_validation_are_separated():
+    # Make sure training and validation data are binned separately.
+
+    rng = np.random.RandomState(0)
+    gb = HistGradientBoostingClassifier(n_iter_no_change=5,
+                                        validation_fraction=.2,
+                                        random_state=rng)
+    gb.fit(X_classification, y_classification)
+    mapper_training_data = gb.bin_mapper_
+
+    # Note that since the data is small there is no subsampling and the
+    # random_state doesn't matter
+    mapper_whole_data = _BinMapper(random_state=0)
+    mapper_whole_data.fit(X_classification)
+
+    for feature_idx in range(X_classification.shape[1]):
+        n_bins_training = mapper_training_data.actual_n_bins_[feature_idx]
+        n_bins_whole = mapper_whole_data.actual_n_bins_[feature_idx]
+        assert n_bins_training != n_bins_whole
