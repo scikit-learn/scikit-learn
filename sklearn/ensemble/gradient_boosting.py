@@ -23,7 +23,7 @@ The module structure is the following:
 from abc import ABCMeta
 from abc import abstractmethod
 
-from .base import BaseEnsemble
+from .base import BaseEnsemble, ForestMixin
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import BaseEstimator
@@ -1163,7 +1163,7 @@ class VerboseReporter(object):
                 self.verbose_mod *= 10
 
 
-class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
+class BaseGradientBoosting(BaseEnsemble, ForestMixin, metaclass=ABCMeta):
     """Abstract base class for Gradient Boosting. """
 
     @abstractmethod

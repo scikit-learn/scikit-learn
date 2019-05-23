@@ -46,7 +46,6 @@ import threading
 from abc import ABCMeta, abstractmethod
 import numpy as np
 from scipy.sparse import issparse
-from scipy.sparse import hstack as sparse_hstack
 
 from ..base import ClassifierMixin, RegressorMixin, MultiOutputMixin
 from ..utils._joblib import Parallel, delayed
@@ -57,7 +56,7 @@ from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
 from ..tree._tree import DTYPE, DOUBLE
 from ..utils import check_random_state, check_array, compute_sample_weight
 from ..exceptions import DataConversionWarning
-from .base import BaseEnsemble, _partition_estimators
+from .base import BaseEnsemble, ForestMixin, _partition_estimators
 from ..utils.fixes import parallel_helper, _joblib_parallel_args
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
@@ -122,7 +121,7 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
     return tree
 
 
-class BaseForest(BaseEnsemble, MultiOutputMixin, metaclass=ABCMeta):
+class BaseForest(BaseEnsemble, MultiOutputMixin, ForestMixin, metaclass=ABCMeta):
     """Base class for forests of trees.
 
     Warning: This class should not be used directly. Use derived classes
@@ -177,42 +176,6 @@ class BaseForest(BaseEnsemble, MultiOutputMixin, metaclass=ABCMeta):
             for tree in self.estimators_)
 
         return np.array(results).T
-
-    def decision_path(self, X):
-        """Return the decision path in the forest
-
-        .. versionadded:: 0.18
-
-        Parameters
-        ----------
-        X : array-like or sparse matrix, shape = [n_samples, n_features]
-            The input samples. Internally, its dtype will be converted to
-            ``dtype=np.float32``. If a sparse matrix is provided, it will be
-            converted into a sparse ``csr_matrix``.
-
-        Returns
-        -------
-        indicator : sparse csr array, shape = [n_samples, n_nodes]
-            Return a node indicator matrix where non zero elements
-            indicates that the samples goes through the nodes.
-
-        n_nodes_ptr : array of size (n_estimators + 1, )
-            The columns from indicator[n_nodes_ptr[i]:n_nodes_ptr[i+1]]
-            gives the indicator value for the i-th estimator.
-
-        """
-        X = self._validate_X_predict(X)
-        indicators = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                              **_joblib_parallel_args(prefer='threads'))(
-            delayed(parallel_helper)(tree, 'decision_path', X,
-                                     check_input=False)
-            for tree in self.estimators_)
-
-        n_nodes = [0]
-        n_nodes.extend([i.shape[1] for i in indicators])
-        n_nodes_ptr = np.array(n_nodes).cumsum()
-
-        return sparse_hstack(indicators).tocsr(), n_nodes_ptr
 
     def fit(self, X, y, sample_weight=None):
         """Build a forest of trees from the training set (X, y).

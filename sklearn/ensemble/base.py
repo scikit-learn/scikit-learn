@@ -7,12 +7,14 @@ Base class for ensemble-based estimators.
 
 import numpy as np
 import numbers
+from scipy.sparse import hstack as sparse_hstack
 
 from ..base import clone
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..utils import check_random_state
-from ..utils._joblib import effective_n_jobs
+from ..utils.fixes import parallel_helper, _joblib_parallel_args
+from ..utils._joblib import Parallel, delayed, effective_n_jobs
 from abc import ABCMeta, abstractmethod
 
 MAX_RAND_SEED = np.iinfo(np.int32).max
@@ -146,6 +148,46 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
     def __iter__(self):
         """Returns iterator over estimators in the ensemble."""
         return iter(self.estimators_)
+
+
+class ForestMixin:
+    """ Mixin class for all tree-based ensemble model classes in scikit-learn."""
+
+    def decision_path(self, X):
+        """Return the decision path in the forest
+
+        .. versionadded:: 0.18
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape = [n_samples, n_features]
+            The input samples. Internally, its dtype will be converted to
+            ``dtype=np.float32``. If a sparse matrix is provided, it will be
+            converted into a sparse ``csr_matrix``.
+
+        Returns
+        -------
+        indicator : sparse csr array, shape = [n_samples, n_nodes]
+            Return a node indicator matrix where non zero elements
+            indicates that the samples goes through the nodes.
+
+        n_nodes_ptr : array of size (n_estimators + 1, )
+            The columns from indicator[n_nodes_ptr[i]:n_nodes_ptr[i+1]]
+            gives the indicator value for the i-th estimator.
+
+        """
+        X = self._validate_X_predict(X)
+        indicators = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
+                              **_joblib_parallel_args(prefer='threads'))(
+            delayed(parallel_helper)(tree, 'decision_path', X,
+                                     check_input=False)
+            for tree in self.estimators_)
+
+        n_nodes = [0]
+        n_nodes.extend([i.shape[1] for i in indicators])
+        n_nodes_ptr = np.array(n_nodes).cumsum()
+
+        return sparse_hstack(indicators).tocsr(), n_nodes_ptr
 
 
 def _partition_estimators(n_estimators, n_jobs):

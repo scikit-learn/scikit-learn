@@ -20,13 +20,14 @@ from ..utils.validation import check_is_fitted, _num_samples
 from ..base import OutlierMixin
 
 from .bagging import BaseBagging
+from .base import ForestMixin
 
 __all__ = ["IsolationForest"]
 
 INTEGER_TYPES = (numbers.Integral, np.integer)
 
 
-class IsolationForest(BaseBagging, OutlierMixin):
+class IsolationForest(BaseBagging, OutlierMixin, ForestMixin):
     """Isolation Forest Algorithm
 
     Return the anomaly score of each sample using the IsolationForest algorithm
