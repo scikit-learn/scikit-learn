@@ -212,6 +212,7 @@ def test_n_components():
                       centers=[[1, 1], [-1, -1]], cluster_std=0.01)
     sp = SpectralClustering(n_clusters=2, random_state=0)
     labels = sp.fit(X).labels_
+    # set n_components = n_cluster and test if result is the same
     sp = SpectralClustering(n_clusters=2, n_components=2,
                             random_state=0)
     labels_same_ncomp = sp.fit(X).labels_
@@ -219,7 +220,7 @@ def test_n_components():
     assert_array_equal(labels, labels_same_ncomp)
 
     # test that n_components affect result
-    sp = SpectralClustering(n_clusters=2, n_components=3,
+    sp = SpectralClustering(n_clusters=2, n_components=1,
                             random_state=0)
     labels_diff_ncomp = sp.fit(X).labels_
     assert not np.array_equal(labels, labels_diff_ncomp)
