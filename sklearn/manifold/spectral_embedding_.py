@@ -292,7 +292,8 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         # The Laplacian matrix is always singular, having at least one zero
         # eigenvalue, corresponding to the trivial eigenvector, which is a
         # constant. Using a singular matrix for preconditioning may result in
-        # random failures in LOBPCG and is not supported by the existing theory:
+        # random failures in LOBPCG and is not supported by the existing
+        # theory:
         #     see https://doi.org/10.1007/s10208-015-9297-1
         # Shift the Laplacian so its diagononal is not all ones. The shift
         # does change the eigenpairs, however, if the shift is small, the
