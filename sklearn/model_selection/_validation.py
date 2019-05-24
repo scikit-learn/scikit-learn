@@ -1209,7 +1209,13 @@ def learning_curve(estimator, X, y, groups=None,
         Scores on training sets.
 
     test_scores : array, shape (n_ticks, n_cv_folds)
-        Scores on test set.
+        Scores on test set.    
+
+    fit_times : array, shape (n_ticks, n_cv_folds)
+        Times spent for fitting in seconds.
+
+    score_times : array, shape (n_ticks, n_cv_folds)
+        Times spent for scoring in seconds.
 
     Notes
     -----
@@ -1248,7 +1254,7 @@ def learning_curve(estimator, X, y, groups=None,
         classes = np.unique(y) if is_classifier(estimator) else None
         out = parallel(delayed(_incremental_fit_estimator)(
             clone(estimator), X, y, classes, train, test, train_sizes_abs,
-            scorer, verbose) for train, test in cv_iter)
+            scorer, verbose, return_times=True) for train, test in cv_iter)
     else:
         train_test_proportions = []
         for train, test in cv_iter:
@@ -1258,15 +1264,15 @@ def learning_curve(estimator, X, y, groups=None,
         out = parallel(delayed(_fit_and_score)(
             clone(estimator), X, y, scorer, train, test, verbose,
             parameters=None, fit_params=None, return_train_score=True,
-            error_score=error_score)
+            error_score=error_score, return_times=True)
             for train, test in train_test_proportions)
         out = np.array(out)
         n_cv_folds = out.shape[0] // n_unique_ticks
-        out = out.reshape(n_cv_folds, n_unique_ticks, 2)
+        out = out.reshape(n_cv_folds, n_unique_ticks, 4)
 
     out = np.asarray(out).transpose((2, 1, 0))
 
-    return train_sizes_abs, out[0], out[1]
+    return train_sizes_abs, out[0], out[1], out[2], out[3]
 
 
 def _translate_train_sizes(train_sizes, n_max_training_samples):
