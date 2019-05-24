@@ -1029,7 +1029,7 @@ def test_learning_curve():
         with warnings.catch_warnings(record=True) as w:
             train_sizes2, train_scores2, test_scores2, _, _ = \
                 learning_curve(estimator, X, y,
-                               cv=OneTimeSplitter(n_splits=n_splits, 
+                               cv=OneTimeSplitter(n_splits=n_splits,
                                                   n_samples=n_samples),
                                train_sizes=np.linspace(0.1, 1.0, 10),
                                shuffle=shuffle_train)
