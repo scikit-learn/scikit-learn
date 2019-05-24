@@ -147,7 +147,7 @@ def test_should_stop(scores, n_iter_no_change, tol, stopping):
     assert gbdt._should_stop(scores) == stopping
 
 
-def test_missing_values():
+def test_missing_values_trivial():
     # sanity check for missing values support. With only one feature and
     # y == isnan(X), the gbdt is supposed to reach perfect accuracy.
 
@@ -163,3 +163,40 @@ def test_missing_values():
     gb.fit(X, y)
 
     assert gb.score(X, y) == 1
+
+
+@pytest.mark.parametrize('problem', ('classification', 'regression'))
+@pytest.mark.parametrize('missing_proportion, '
+                         'expected_min_score_classification, '
+                         'expected_min_score_regression', [
+    (.1, .97, .9),
+    (.2, .94, .82),
+    (.5, .79, .52),
+])
+def test_missing_values_resilience(problem, missing_proportion,
+                                   expected_min_score_classification,
+                                   expected_min_score_regression):
+    # Make sure the estimators can deal with missing values and still yield
+    # decent predictions
+
+    rng = np.random.RandomState(0)
+    n_samples = 1000
+    n_features = 2
+    if problem == 'regression':
+        X, y = make_regression(n_samples=n_samples, n_features=n_features,
+                               n_informative=n_features, random_state=rng)
+        gb = HistGradientBoostingRegressor()
+        expected_min_score = expected_min_score_regression
+    else:
+        X, y = make_classification(n_samples=n_samples, n_features=n_features,
+                                   n_informative=n_features, n_redundant=0,
+                                   n_repeated=0, random_state=rng)
+        gb = HistGradientBoostingClassifier()
+        expected_min_score = expected_min_score_classification
+
+    mask = rng.binomial(1, missing_proportion, size=X.shape).astype(np.bool)
+    X[mask] = np.nan
+
+    gb.fit(X, y)
+
+    assert gb.score(X, y) > expected_min_score

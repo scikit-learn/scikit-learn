@@ -273,8 +273,8 @@ def test_missing_values_support(max_bins, actual_n_bins, X_trans_expected):
 
     # Note that the extra bin for missing values is only allocated if needed:
     # - no need to allocate extra bin for third column here
-    # - due to the extra bin, the features with missing values are "shifted"
-    #   with an offset of 1
+    # - due to the extra bin allocated for missing values, the bin values of
+    #   feature 0 and 1 are "shifted" with an offset of 1
 
     X = [[1,      1,      1],
          [np.NaN, np.NaN, 1],

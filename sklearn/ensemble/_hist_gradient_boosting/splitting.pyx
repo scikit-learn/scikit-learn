@@ -546,7 +546,7 @@ cdef class Splitter:
 
         We scan node from right to left. This version is only called when
         there are missing values. If there's no missing value, calling
-        _find_best_bin_to_split_left_to_right is enough. If any, missing
+        _find_best_bin_to_split_left_to_right is enough. Missing
         values are assigned to the left node.
         """
 
