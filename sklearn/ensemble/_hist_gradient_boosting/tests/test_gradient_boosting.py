@@ -166,13 +166,12 @@ def test_missing_values_trivial():
 
 
 @pytest.mark.parametrize('problem', ('classification', 'regression'))
-@pytest.mark.parametrize('missing_proportion, '
-                         'expected_min_score_classification, '
-                         'expected_min_score_regression', [
-    (.1, .97, .9),
-    (.2, .94, .82),
-    (.5, .79, .52),
-])
+@pytest.mark.parametrize(
+    'missing_proportion, expected_min_score_classification, '
+    'expected_min_score_regression', [
+        (.1, .97, .9),
+        (.2, .94, .82),
+        (.5, .79, .52)])
 def test_missing_values_resilience(problem, missing_proportion,
                                    expected_min_score_classification,
                                    expected_min_score_regression):
