@@ -1029,9 +1029,10 @@ def test_learning_curve():
         with warnings.catch_warnings(record=True) as w:
             train_sizes2, train_scores2, test_scores2, _, _ = \
                 learning_curve(estimator, X, y,
-                    cv=OneTimeSplitter(n_splits=n_splits, n_samples=n_samples),
-                    train_sizes=np.linspace(0.1, 1.0, 10),
-                    shuffle=shuffle_train)
+                               cv=OneTimeSplitter(n_splits=n_splits, 
+                                                  n_samples=n_samples),
+                               train_sizes=np.linspace(0.1, 1.0, 10),
+                               shuffle=shuffle_train)
         if len(w) > 0:
             raise RuntimeError("Unexpected warning: %r" % w[0].message)
         assert_array_almost_equal(train_scores2, train_scores)
@@ -1125,9 +1126,9 @@ def test_learning_curve_batch_and_incremental_learning_are_equal():
     train_sizes_inc, train_scores_inc, test_scores_inc, _, _ = learning_curve(
         estimator, X, y, train_sizes=train_sizes,
         cv=3, exploit_incremental_learning=True)
-    train_sizes_batch, train_scores_batch, test_scores_batch, _, _ = learning_curve(
-        estimator, X, y, cv=3, train_sizes=train_sizes,
-        exploit_incremental_learning=False)
+    train_sizes_batch, train_scores_batch, test_scores_batch, _, _ = \
+        learning_curve(estimator, X, y, cv=3, train_sizes=train_sizes,
+                       exploit_incremental_learning=False)
 
     assert_array_equal(train_sizes_inc, train_sizes_batch)
     assert_array_almost_equal(train_scores_inc.mean(axis=1),
@@ -1195,9 +1196,10 @@ def test_learning_curve_with_shuffle():
                                             shuffle=False)
 
     cv = GroupKFold(n_splits=2)
-    train_sizes_batch, train_scores_batch, test_scores_batch, _, _ = learning_curve(
-        estimator, X, y, cv=cv, n_jobs=1, train_sizes=np.linspace(0.3, 1.0, 3),
-        groups=groups, shuffle=True, random_state=2)
+    train_sizes_batch, train_scores_batch, test_scores_batch, _, _ = \
+        learning_curve(estimator, X, y, cv=cv, n_jobs=1,
+                       train_sizes=np.linspace(0.3, 1.0, 3),
+                       groups=groups, shuffle=True, random_state=2)
     assert_array_almost_equal(train_scores_batch.mean(axis=1),
                               np.array([0.75, 0.3, 0.36111111]))
     assert_array_almost_equal(test_scores_batch.mean(axis=1),
