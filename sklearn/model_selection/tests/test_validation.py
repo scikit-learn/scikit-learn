@@ -1007,7 +1007,7 @@ def test_learning_curve():
     estimator = MockImprovingEstimator(n_samples * ((n_splits - 1) / n_splits))
     for shuffle_train in [False, True]:
         with warnings.catch_warnings(record=True) as w:
-            train_sizes, train_scores, test_scores, fit_times, score_times = \ 
+            train_sizes, train_scores, test_scores, fit_times, score_times = \
                 learning_curve(estimator, X, y, cv=KFold(n_splits=n_splits),
                                train_sizes=np.linspace(0.1, 1.0, 10),
                                shuffle=shuffle_train)
