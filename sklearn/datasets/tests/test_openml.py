@@ -377,7 +377,7 @@ def test_fetch_openml_australian_pandas_error_sparse(monkeypatch):
 
 
 def test_fetch_openml_adultcensus_pandas_return_X_y_errors(monkeypatch):
-    data_id =  1119
+    data_id = 1119
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
 
