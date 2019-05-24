@@ -1013,10 +1013,10 @@ def test_learning_curve():
                                shuffle=shuffle_train)
         if len(w) > 0:
             raise RuntimeError("Unexpected warning: %r" % w[0].message)
-        assert_equal(train_scores.shape, (10, 5))
-        assert_equal(test_scores.shape, (10, 5))
-        assert_equal(fit_times.shape, (10, 5))
-        assert_equal(score_times.shape, (10, 5))
+        assert_equal(train_scores.shape, (10, 3))
+        assert_equal(test_scores.shape, (10, 3))
+        assert_equal(fit_times.shape, (10, 3))
+        assert_equal(score_times.shape, (10, 3))
         assert_array_equal(train_sizes, np.linspace(2, 20, 10))
         assert_array_almost_equal(train_scores.mean(axis=1),
                                   np.linspace(1.9, 1.0, 10))
