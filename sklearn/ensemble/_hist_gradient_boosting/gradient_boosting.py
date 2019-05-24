@@ -503,6 +503,14 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
     might be preferred since binning may lead to split points that are too
     approximate in this setting.
 
+    This estimator has native support for missing values (Nans). During
+    training, the tree grower learns at each split point whether nodes with
+    missing values should go to the left or right child, based on the
+    potential gain. When predicting, nodes with missing values are assigned to
+    the left or right child consequently. If no missing values were encountered
+    for a given feature during training, then nodes with missing values are
+    mapped to whichever child has the most samples.
+
     This implementation is inspired by
     `LightGBM <https://github.com/Microsoft/LightGBM>`_.
 
@@ -549,8 +557,9 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
         The maximum number of bins to use. Before training, each feature of
         the input array ``X`` is binned into at most ``max_bins`` bins, which
         allows for a much faster training stage. Features with a small
-        number of unique values may use less than ``max_bins`` bins. Must be no
-        larger than 256.
+        number of unique values may use less than ``max_bins`` bins. One bin is
+        specifically allocated for missing values, if any. Must be no larger
+        than 256.
     scoring : str or callable or None, optional (default=None)
         Scoring parameter to use for early stopping. It can be a single
         string (see :ref:`scoring_parameter`) or a callable (see
@@ -669,6 +678,14 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
     might be preferred since binning may lead to split points that are too
     approximate in this setting.
 
+    This estimator has native support for missing values (Nans). During
+    training, the tree grower learns at each split point whether nodes with
+    missing values should go to the left or right child, based on the
+    potential gain. When predicting, nodes with missing values are assigned to
+    the left or right child consequently. If no missing values were encountered
+    for a given feature during training, then nodes with missing values are
+    mapped to whichever child has the most samples.
+
     This implementation is inspired by
     `LightGBM <https://github.com/Microsoft/LightGBM>`_.
 
@@ -717,8 +734,9 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         The maximum number of bins to use. Before training, each feature of
         the input array ``X`` is binned into at most ``max_bins`` bins, which
         allows for a much faster training stage. Features with a small
-        number of unique values may use less than ``max_bins`` bins. Must be no
-        larger than 256.
+        number of unique values may use less than ``max_bins`` bins. One bin is
+        specifically allocated for missing values, if any. Must be no larger
+        than 256.
     scoring : str or callable or None, optional (default=None)
         Scoring parameter to use for early stopping. It can be a single
         string (see :ref:`scoring_parameter`) or a callable (see

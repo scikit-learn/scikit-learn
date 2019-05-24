@@ -145,7 +145,7 @@ class _BinMapper(BaseEstimator, TransformerMixin):
         # threshold (nan) corresponding to the first bin were missing values
         # are mapped. This threshold is never used in practice, but we use it
         # to keep the indexes of the bins synchronized with the
-        # bin_thresholds_ attribute.
+        # bin_thresholds_ attribute: bin k is at index k.
         for feature_idx, bin_thresholds in enumerate(all_bin_thresholds):
             if has_missing_values[feature_idx]:
                 all_bin_thresholds[feature_idx] = \

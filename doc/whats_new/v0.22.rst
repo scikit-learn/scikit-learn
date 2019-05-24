@@ -39,6 +39,14 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.ensemble`
+..................
+
+- |Feature| :class:`ensemble.HistGradientBoostingClassifier`
+  and :class:`ensemble.HistGradientBoostingRegressor` now natively supports
+  data with missing values both for training and predicting. :pr:`13911` by
+  `NicolasHug`_.
+
 :mod:`sklearn.linear_model`
 ..................
 
