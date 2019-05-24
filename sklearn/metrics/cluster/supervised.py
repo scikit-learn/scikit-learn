@@ -870,6 +870,10 @@ def normalized_mutual_info_score(labels_true, labels_pred,
     normalizer = _generalized_average(h_true, h_pred, average_method)
     # Avoid 0.0 / 0.0 when either entropy is zero.
     normalizer = max(normalizer, np.finfo('float64').eps)
+
+    # Handling sparse input
+    if normalizer < np.finfo('float64').eps:
+        return 0
     nmi = mi / normalizer
     return nmi
 
