@@ -320,7 +320,8 @@ def test_splitting_missing_values(X_binned, all_gradients,
     min_gain_to_split = 0.
 
     sample_indices = np.arange(n_samples, dtype=np.uint32)
-    X_binned = np.asfortranarray(X_binned, dtype=X_BINNED_DTYPE).reshape(-1, 1)
+    X_binned = np.array(X_binned, dtype=X_BINNED_DTYPE).reshape(-1, 1)
+    X_binned = np.asfortranarray(X_binned)
     all_gradients = np.array(all_gradients, dtype=G_H_DTYPE)
     has_missing_values = np.array([has_missing_values], dtype=np.uint8)
     all_hessians = np.ones(1, dtype=G_H_DTYPE)

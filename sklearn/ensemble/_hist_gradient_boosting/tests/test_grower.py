@@ -318,6 +318,7 @@ def test_missing_value_predict_only():
     rng = np.random.RandomState(0)
     n_samples = 100
     X_binned = rng.randint(0, 256, size=(n_samples, 1), dtype=np.uint8)
+    X_binned = np.asfortranarray(X_binned)
 
     gradients = rng.normal(size=n_samples).astype(G_H_DTYPE)
     hessians = np.ones(shape=1, dtype=G_H_DTYPE)
