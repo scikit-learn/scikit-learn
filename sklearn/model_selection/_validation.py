@@ -1209,7 +1209,7 @@ def learning_curve(estimator, X, y, groups=None,
         Scores on training sets.
 
     test_scores : array, shape (n_ticks, n_cv_folds)
-        Scores on test set.    
+        Scores on test set.
 
     fit_times : array, shape (n_ticks, n_cv_folds)
         Times spent for fitting in seconds.
