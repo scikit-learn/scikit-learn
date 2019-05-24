@@ -59,11 +59,13 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.cluster import KMeans
 from sklearn.neighbors import KernelDensity
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import f1_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
+from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import Ridge, SGDClassifier
@@ -1794,23 +1796,41 @@ def test_search_cv__pairwise_property():
     Test implementation of BaseSearchCV has the _pairwise property
     which matches the _pairwise property of its estimator.
     """
-
     class PairwiseCV(BaseSearchCV):
         def __init__(self, estimator, **kwargs):
             super().__init__(estimator, **kwargs)
 
-    # simple estimator with _pairwise property
+    # first test: check BaseSearchCV children copy _pairwise
     est = BaseEstimator()
 
     attr_message = "BaseSearchCV _pairwise property must match estimator"
 
-    # check estimator with and without _pairwise
     for _pairwise_setting in [True, False]:
         setattr(est, '_pairwise', _pairwise_setting)
         cv = PairwiseCV(est)
+        assert _pairwise_setting == cv._pairwise, attr_message
 
-        # check if cv is pairwise
-        cv_is_pairwise = getattr(cv, '_pairwise', False)
+    # second test: ensure equivalence of 'precomputed'
+    n_samples = 50
+    n_splits = 2
+    X, y = make_classification(n_samples=n_samples, random_state=0)
+    grid_params = {'n_neighbors': [10]}
 
-        # verity the _pairwise property in cv matches est
-        assert _pairwise_setting == cv_is_pairwise, attr_message
+    # defaults to euclidean metric (minkowski p = 2)
+    clf = KNeighborsClassifier()
+    cv = GridSearchCV(clf, grid_params, cv=n_splits)
+    cv.fit(X, y)
+
+    preds_original = cv.predict(X)
+
+    # precompute euclidean metric to validate _pairwise is working
+    X_precomputed = euclidean_distances(X)
+    clf = KNeighborsClassifier(metric='precomputed')
+    cv = GridSearchCV(clf, grid_params, cv=n_splits)
+    cv.fit(X_precomputed, y)
+
+    preds_precomputed = cv.predict(X_precomputed)
+
+    attr_message = "GridSearchCV not identical with precomputed metric"
+
+    assert (preds_original == preds_precomputed).all(), attr_message
