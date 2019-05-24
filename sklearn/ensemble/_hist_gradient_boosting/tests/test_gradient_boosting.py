@@ -148,7 +148,7 @@ def test_should_stop(scores, n_iter_no_change, tol, stopping):
 
 
 def test_missing_values():
-    # sanity check for missing value support. With only one feature and
+    # sanity check for missing values support. With only one feature and
     # y == isnan(X), the gbdt is supposed to reach perfect accuracy.
 
     n_samples = 100

@@ -289,6 +289,14 @@ def test_missing_values_support(max_bins, actual_n_bins, X_trans_expected):
     mapper.fit(X)
     assert_array_equal(mapper.actual_n_bins_, actual_n_bins)
     assert_array_equal(mapper.has_missing_values_, [True, True, False])
+    for feature_idx in range(X.shape[1]):
+        assert len(mapper.bin_thresholds_[feature_idx]) == \
+            actual_n_bins[feature_idx] - 1
+    for feature_idx in (0, 1):
+        # For features with missing values, we add a fake threshold (nan) to
+        # keep the bin_thresholds_ array synchronized with the bin values, i.e.
+        # bin k has threhold at index k.
+        assert np.isnan(mapper.bin_thresholds_[feature_idx][0])
     X_trans = mapper.transform(X)
     assert_array_equal(X_trans, X_trans_expected)
 
@@ -317,17 +325,16 @@ def test_missing_values_different_X_fit_transform():
 
     X2 = [[1,      1],
           [3,      1],
-          [1,      np.NaN],  # Nan mapped in biggest bin
+          [1,      np.NaN],
           [2,      2],
-          [np.NaN, 2],  # Nan mapped in a first bin, as expected
+          [np.NaN, 2],
           [1,      1]]
 
     X2_trans = mapper.transform(X2)
     X2_trans_expected = [[1, 0],
                          [2, 0],
-                         [1, 1],
+                         [1, 1],  # Nan mapped in biggest bin (treated as 2)
                          [2, 1],
-                         [0, 1],
+                         [0, 1],  # Nan mapped in the first bin, as expected
                          [1, 0]]
-    print(X2_trans)
     assert_array_equal(X2_trans, X2_trans_expected)
