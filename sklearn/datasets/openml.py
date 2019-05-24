@@ -8,7 +8,6 @@ from contextlib import closing
 from functools import wraps
 import itertools
 from collections.abc import Generator
-from collections import OrderedDict
 from itertools import zip_longest
 
 from urllib.request import urlopen, Request
@@ -329,7 +328,7 @@ def _convert_arff_data_dataframe(arrf, columns, features_dict, chunksize):
     columns : list
         Columns from dataframe to return.
 
-    features_dict : OrderedDict
+    features_dict : dict
         Maps feature name to feature info from openml.
 
     chunksize : int
