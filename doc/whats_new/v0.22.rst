@@ -48,6 +48,17 @@ Changelog
   :pr:`13618` by :user:`Yoshihiro Uchida <c56pony>`.
 
 
+:mod:`sklearn.model_selection`
+..................
+
+- |Fix| :class:`model_selection.BaseSearchCV` now supports the
+  :term:`_pairwise` property, which prevents an error during cross-validation
+  for estimators with pairwise inputs (such as
+  :class:`neighbors.KNeighborsClassifier` when :term:`metric` is set to
+  'precomputed').
+  :pr:`13925` by :user:`Isaac S. Robson <isrobson>`.
+
+
 :mod:`sklearn.svm`
 ..................
 
