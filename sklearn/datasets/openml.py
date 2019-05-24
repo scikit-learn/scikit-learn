@@ -9,6 +9,7 @@ from functools import wraps
 import itertools
 from collections.abc import Generator
 from collections import OrderedDict
+from itertools import zip_longest
 
 from urllib.request import urlopen, Request
 
@@ -268,55 +269,96 @@ def _convert_arff_data(arff_data, col_slice_x, col_slice_y, shape=None):
 def _feature_to_dtype(feature):
     """Map feature to dtype for pandas DataFrame
     """
-    if feature["data_type"] == "string":
+    if feature['data_type'] == 'string':
         return object
-    elif feature["data_type"] == "nominal":
+    elif feature['data_type'] == 'nominal':
         return 'category'
     # only numeric, integer, real are left
-    elif (feature["number_of_missing_values"] != "0" or
-          feature["data_type"] in ["numeric", "real"]):
+    elif (feature['number_of_missing_values'] != '0' or
+          feature['data_type'] in ['numeric', 'real']):
+        # cast to floats when there are any missing values
         return np.float64
-    elif feature["data_type"] == "integer":
+    elif feature['data_type'] == 'integer':
         return np.int64
-    raise ValueError("Unsupported feature: {}".format(feature))
+    raise ValueError('Unsupported feature: {}'.format(feature))
 
 
-def _convert_arff_data_dataframe(arrf_data, all_columns, features_dict):
+def _chunk_iterable(seq, chunksize):
+
+    pad_value = '__PADDING__'
+
+    args = [iter(seq)] * chunksize
+    it = zip_longest(*args, fillvalue=pad_value)
+    try:
+        prev = next(it)
+    except StopIteration:
+        # Nothing to iterate
+        return
+
+    # yield everything except the final value
+    for item in it:
+        yield prev
+        prev = item
+
+    # handle final value
+    if prev[-1] is pad_value:
+        # uses binary search to find the final index
+        lo, hi = 0, chunksize
+        while lo < hi:
+            mid = (lo + hi) // 2
+            if prev[mid] is pad_value:
+                hi = mid
+            else:
+                lo = mid + 1
+        yield prev[:lo]
+    else:
+        # no padding needed
+        yield prev
+
+
+def _convert_arff_data_dataframe(arrf, columns, features_dict, nrows):
     """Convert the ARFF object into a pandas DataFrame.
 
     Parameters
     ----------
-    arff_data : list or dict
-        as obtained from liac-arff object
+    arrf : dict
+        As obtained from liac-arff object.
 
-    all_columns : list
-        columns to return
+    columns : list
+        Columns to return.
 
     features_dict : OrderedDict
-        map from feature to feature info from openml. This includes
-        columns that are not ignored.
+        Maps feature name to feature info from openml.
+
+    nrows : int
+        Number of rows to read at a time.
 
     Returns
     -------
-    df : pd.DataFrame
+    dataframe : pandas DataFrame
     """
     pd = check_pandas_support('fetch_openml with return_frame=True')
-    df = pd.DataFrame.from_records(arrf_data['data'],
-                                   columns=list(features_dict.keys()))
-    df = df[all_columns].copy()
 
-    attributes = dict(arrf_data['attributes'])
+    attributes = dict(arrf['attributes'])
+    arrf_columns = list(attributes)
 
-    dtypes = {}
-    for column in all_columns:
+    arrf_data_gen = _chunk_iterable(arrf['data'], nrows)
+    dfs = [pd.DataFrame(list(data), columns=arrf_columns)
+           for data in arrf_data_gen]
+    df = pd.concat(dfs, copy=False)
+
+    columns_to_keep = [col for col in arrf_columns if col in columns]
+
+    # copy dataframe when there are columns that needs to be removed
+    if len(columns_to_keep) != len(arrf_columns):
+        df = df[columns_to_keep].copy()
+
+    for column in columns_to_keep:
         dtype = _feature_to_dtype(features_dict[column])
-        if dtype == object:
-            continue
         if dtype == 'category':
             dtype = pd.CategoricalDtype(attributes[column])
-        dtypes[column] = dtype
-
-    return df.astype(dtypes)
+        df[column] = df[column].astype(dtype, copy=False)
+    return df
 
 
 def _get_data_info_by_name(name, version, data_home):
@@ -493,7 +535,7 @@ def _valid_data_column_names(features_list, target_columns):
 
 def fetch_openml(name=None, version='active', data_id=None, data_home=None,
                  target_column='default-target', cache=True, return_X_y=False,
-                 return_frame=False):
+                 return_frame=False, nrows=10000):
     """Fetch dataset from openml by name or dataset id.
 
     Datasets are uniquely identified by either an integer ID or by a
@@ -550,19 +592,27 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         If True, returns a Bunch where the data attribute is a pandas
         DataFrame.
 
+    nrows : int, default=10000
+        Number of rows to read at a time when constructing a dataframe.
+        Only used when ``return_frame`` is True.
+
     Returns
     -------
 
     data : Bunch
         Dictionary-like object, with attributes:
 
-        data : np.array, scipy.sparse.csr_matrix of floats, or pandas Dataframe
+        data : np.array, scipy.sparse.csr_matrix of floats, or None
             The feature matrix. Categorical features are encoded as ordinals.
-            If ``return_frame`` is True, this is a pandas DataFrame.
+            If ``return_frame`` is True, this is None.
         target : np.array or None
             The regression target or classification labels, if applicable.
             Dtype is float if numeric, and object if categorical.
             If ``return_frame`` is True, this is None.
+        dataframe : pandas DataFrame
+            The pandas DataFrame that includes the data and the target.
+            Use ``feature_names`` and ``target_names`` to seperate the target
+            from the features. If ``return_frame`` is False, this is None.
         DESCR : str
             The full description of the dataset
         feature_names : list
@@ -638,8 +688,12 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     if data_description['format'].lower() == 'sparse_arff':
         return_sparse = True
 
-    if return_sparse and return_frame:
-        raise ValueError('Cannot return dataframe with sparse data')
+    if return_frame:
+        if return_sparse:
+            raise ValueError('Cannot return dataframe with sparse data')
+        if return_X_y:
+            raise ValueError('return_X_y=True can not be set when '
+                             'return_frame=True')
 
     # download data features, meta-info about column types
     features_list = _get_data_features(data_id, data_home)
@@ -710,9 +764,11 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         data_description.pop('description'))
 
     if return_frame:
-        all_columns = data_columns + target_column
-        df = _convert_arff_data_dataframe(arff, all_columns, features_dict)
-        return Bunch(data=df, target=None, feature_names=data_columns,
+        columns = data_columns + target_column
+        df = _convert_arff_data_dataframe(arff, columns, features_dict, nrows)
+
+        return Bunch(dataframe=df, data=None, target=None,
+                     feature_names=data_columns,
                      target_names=target_column, DESCR=description,
                      details=data_description, categories=None,
                      url="https://www.openml.org/d/{}".format(data_id))

@@ -300,7 +300,7 @@ def test_fetch_openml_iris_pandas(monkeypatch):
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
 
     bunch = fetch_openml(data_id=data_id, return_frame=True, cache=False)
-    df = bunch.data
+    df = bunch.dataframe
 
     assert isinstance(df, pd.DataFrame)
     assert np.all(df.dtypes == expected_dtypes)
@@ -323,7 +323,7 @@ def test_fetch_openml_anneal_pandas(monkeypatch):
 
     bunch = fetch_openml(data_id=data_id, return_frame=True,
                          target_column=target_column, cache=False)
-    df = bunch.data
+    df = bunch.dataframe
 
     assert isinstance(df, pd.DataFrame)
     assert df.shape == expected_shape
@@ -356,7 +356,7 @@ def test_fetch_openml_cpu_pandas(monkeypatch):
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
     bunch = fetch_openml(data_id=data_id, return_frame=True, cache=False)
-    df = bunch.data
+    df = bunch.dataframe
 
     assert isinstance(df, pd.DataFrame)
     assert df.shape == expected_shape
@@ -376,6 +376,17 @@ def test_fetch_openml_australian_pandas_error_sparse(monkeypatch):
         fetch_openml(data_id=data_id, return_frame=True, cache=False)
 
 
+def test_fetch_openml_adultcensus_pandas_return_X_y_errors(monkeypatch):
+    data_id =  1119
+
+    _monkey_patch_webbased_functions(monkeypatch, data_id, True)
+
+    msg = 'return_X_y=True can not be set when return_frame=True'
+    with pytest.raises(ValueError, match=msg):
+        fetch_openml(data_id=data_id, return_frame=True, cache=False,
+                     return_X_y=True)
+
+
 def test_fetch_openml_adultcensus_pandas(monkeypatch):
     pd = pytest.importorskip('pandas')
     # Check because of the numeric row attribute (issue #12329)
@@ -386,7 +397,7 @@ def test_fetch_openml_adultcensus_pandas(monkeypatch):
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
     bunch = fetch_openml(data_id=data_id, return_frame=True, cache=False)
-    df = bunch.data
+    df = bunch.dataframe
 
     assert isinstance(df, pd.DataFrame)
     assert df.shape == expected_shape
@@ -409,8 +420,7 @@ def test_fetch_openml_miceprotein_pandas(monkeypatch):
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
     bunch = fetch_openml(data_id=data_id, return_frame=True, cache=False)
-
-    df = bunch.data
+    df = bunch.dataframe
 
     assert isinstance(df, pd.DataFrame)
     assert df.shape == expected_shape
@@ -435,8 +445,7 @@ def test_fetch_openml_emotions_pandas(monkeypatch):
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
     bunch = fetch_openml(data_id=data_id, return_frame=True, cache=False,
                          target_column=target_column)
-
-    df = bunch.data
+    df = bunch.dataframe
 
     assert isinstance(df, pd.DataFrame)
     assert df.shape == expected_shape
@@ -470,9 +479,9 @@ def test_fetch_openml_titanic_pandas(monkeypatch):
         'home.dest': object,
         'survived': pd.CategoricalDtype(['0', '1'])
     }
-    expected_columns = ['pclass', 'name', 'sex', 'age', 'sibsp',
+    expected_columns = ['pclass', 'survived', 'name', 'sex', 'age', 'sibsp',
                         'parch', 'ticket', 'fare', 'cabin', 'embarked',
-                        'boat', 'body', 'home.dest', 'survived']
+                        'boat', 'body', 'home.dest']
     expected_dtypes = [name_to_dtype[col] for col in expected_columns]
     expected_feature_names = ['pclass', 'name', 'sex', 'age', 'sibsp',
                               'parch', 'ticket', 'fare', 'cabin', 'embarked',
@@ -481,7 +490,7 @@ def test_fetch_openml_titanic_pandas(monkeypatch):
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
     bunch = fetch_openml(data_id=data_id, return_frame=True, cache=False)
-    df = bunch.data
+    df = bunch.dataframe
 
     assert isinstance(df, pd.DataFrame)
     assert df.shape == expected_shape
