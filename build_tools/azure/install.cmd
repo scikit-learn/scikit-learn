@@ -10,6 +10,7 @@ IF "%PYTHON_ARCH%"=="64" (
     @rem Deactivate any environment
     call deactivate
     @rem Clean up any left-over from a previous build
+    conda update -y conda
     conda remove --all -q -y -n %VIRTUALENV%
     conda create -n %VIRTUALENV% -q -y python=%PYTHON_VERSION% numpy scipy cython matplotlib pytest wheel pillow joblib
 
