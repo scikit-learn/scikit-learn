@@ -843,6 +843,5 @@ def check_pandas_support(caller_name):
         return pandas
     except ImportError as e:
         raise ImportError(
-            "{} requires pandas. You can install pandas with "
-            "`pip install pandas`".format(caller_name)
+            "{} requires pandas.".format(caller_name)
         ) from e

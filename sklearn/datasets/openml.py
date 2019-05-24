@@ -284,6 +284,8 @@ def _feature_to_dtype(feature):
 
 
 def _chunk_iterable(seq, chunksize):
+    """Chunk ``seq`` into tuples of length ``chunksize``. The last chunk may
+    have a length less than ``chunksize``."""
 
     pad_value = '__PADDING__'
 
@@ -325,7 +327,7 @@ def _convert_arff_data_dataframe(arrf, columns, features_dict, nrows):
         As obtained from liac-arff object.
 
     columns : list
-        Columns to return.
+        Columns from dataframe to return.
 
     features_dict : OrderedDict
         Maps feature name to feature info from openml.
