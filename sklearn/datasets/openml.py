@@ -318,7 +318,7 @@ def _chunk_iterable(seq, chunksize):
         yield prev
 
 
-def _convert_arff_data_dataframe(arrf, columns, features_dict, nrows):
+def _convert_arff_data_dataframe(arrf, columns, features_dict, chunksize):
     """Convert the ARFF object into a pandas DataFrame.
 
     Parameters
@@ -332,7 +332,7 @@ def _convert_arff_data_dataframe(arrf, columns, features_dict, nrows):
     features_dict : OrderedDict
         Maps feature name to feature info from openml.
 
-    nrows : int
+    chunksize : int
         Number of rows to read at a time.
 
     Returns
@@ -344,10 +344,10 @@ def _convert_arff_data_dataframe(arrf, columns, features_dict, nrows):
     attributes = dict(arrf['attributes'])
     arrf_columns = list(attributes)
 
-    arrf_data_gen = _chunk_iterable(arrf['data'], nrows)
-    dfs = [pd.DataFrame(list(data), columns=arrf_columns, dtype=object)
+    arrf_data_gen = _chunk_iterable(arrf['data'], chunksize)
+    dfs = [pd.DataFrame(list(data), columns=arrf_columns)
            for data in arrf_data_gen]
-    df = pd.concat(dfs, copy=False)
+    df = pd.concat(dfs)
 
     columns_to_keep = [col for col in arrf_columns if col in columns]
 
@@ -537,7 +537,7 @@ def _valid_data_column_names(features_list, target_columns):
 
 def fetch_openml(name=None, version='active', data_id=None, data_home=None,
                  target_column='default-target', cache=True, return_X_y=False,
-                 return_frame=False, nrows=10000):
+                 return_frame=False, chunksize=5000):
     """Fetch dataset from openml by name or dataset id.
 
     Datasets are uniquely identified by either an integer ID or by a
@@ -594,7 +594,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         If True, returns a Bunch where the data attribute is a pandas
         DataFrame.
 
-    nrows : int, default=5000
+    chunksize : int, default=5000
         Number of rows to read at a time when constructing a dataframe.
         Only used when ``return_frame`` is True.
 
@@ -766,7 +766,8 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     if return_frame:
         columns = data_columns + target_column
-        df = _convert_arff_data_dataframe(arff, columns, features_dict, nrows)
+        df = _convert_arff_data_dataframe(arff, columns, features_dict,
+                                          chunksize)
 
         return Bunch(dataframe=df, data=None, target=None,
                      feature_names=data_columns,
