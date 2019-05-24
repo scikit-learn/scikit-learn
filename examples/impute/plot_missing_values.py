@@ -23,6 +23,8 @@ print(__doc__)
 import numpy as np
 import matplotlib.pyplot as plt
 
+# To use the experimental IterativeImputer, we need to explicitly ask for it:
+from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.datasets import load_diabetes
 from sklearn.datasets import load_boston
 from sklearn.ensemble import RandomForestRegressor
@@ -33,7 +35,7 @@ from sklearn.model_selection import cross_val_score
 rng = np.random.RandomState(0)
 
 N_SPLITS = 5
-REGRESSOR = RandomForestRegressor(random_state=0, n_estimators=100)
+REGRESSOR = RandomForestRegressor(random_state=0)
 
 
 def get_scores_for_imputer(imputer, X_missing, y_missing):

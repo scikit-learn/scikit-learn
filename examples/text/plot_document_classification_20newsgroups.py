@@ -251,7 +251,7 @@ for clf, name in (
         (PassiveAggressiveClassifier(max_iter=50, tol=1e-3),
          "Passive-Aggressive"),
         (KNeighborsClassifier(n_neighbors=10), "kNN"),
-        (RandomForestClassifier(n_estimators=100), "Random forest")):
+        (RandomForestClassifier(), "Random forest")):
     print('=' * 80)
     print(name)
     results.append(benchmark(clf))
