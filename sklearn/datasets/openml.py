@@ -345,7 +345,7 @@ def _convert_arff_data_dataframe(arrf, columns, features_dict, nrows):
     arrf_columns = list(attributes)
 
     arrf_data_gen = _chunk_iterable(arrf['data'], nrows)
-    dfs = [pd.DataFrame(list(data), columns=arrf_columns)
+    dfs = [pd.DataFrame(list(data), columns=arrf_columns, dtype=object)
            for data in arrf_data_gen]
     df = pd.concat(dfs, copy=False)
 
@@ -594,7 +594,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         If True, returns a Bunch where the data attribute is a pandas
         DataFrame.
 
-    nrows : int, default=10000
+    nrows : int, default=5000
         Number of rows to read at a time when constructing a dataframe.
         Only used when ``return_frame`` is True.
 
@@ -728,8 +728,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
                                             target_column)
 
     # prepare which columns and data types should be returned for the X and y
-    features_dict = OrderedDict([(feature['name'], feature)
-                                for feature in features_list])
+    features_dict = {feature['name']: feature for feature in features_list}
 
     # XXX: col_slice_y should be all nominal or all numeric
     _verify_target_data_type(features_dict, target_column)
