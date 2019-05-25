@@ -568,7 +568,8 @@ class _MPLTreeExporter(_BaseTreeExporter):
             ax = plt.gca()
         ax.clear()
         ax.set_axis_off()
-        my_tree = self._make_tree(0, decision_tree.tree_, decision_tree.criterion)
+        my_tree = self._make_tree(0, decision_tree.tree_,
+                                  decision_tree.criterion)
         draw_tree = buchheim(my_tree)
 
         # important to make sure we're still
