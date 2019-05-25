@@ -560,7 +560,7 @@ class RandomSuccessiveHalving(BaseSuccessiveHalving):
     """Randomized search on hyper parameters.
 
     The search strategy starts evaluating all the candidates with a small
-    amount a resource and iteratively selects the best candidates, using more
+    amount of resources and iteratively selects the best candidates, using more
     and more resources.
 
     Read more in the :ref:`User guide<successive_halving_user_guide>`.
