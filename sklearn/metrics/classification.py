@@ -28,7 +28,7 @@ import numpy as np
 from scipy.sparse import coo_matrix
 from scipy.sparse import csr_matrix
 
-from ..preprocessing import LabelBinarizer, label_binarize
+from ..preprocessing import LabelBinarizer
 from ..preprocessing import LabelEncoder
 from ..utils import assert_all_finite
 from ..utils import check_array
@@ -1066,7 +1066,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     The F-beta score is the weighted harmonic mean of precision and recall,
     reaching its optimal value at 1 and its worst value at 0.
 
-    The `beta` parameter determines the weight of precision in the combined
+    The `beta` parameter determines the weight of recall in the combined
     score. ``beta < 1`` lends more weight to precision, while ``beta > 1``
     favors recall (``beta -> 0`` considers only precision, ``beta -> inf``
     only recall).
@@ -1989,16 +1989,18 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
     -----
     In multiclass classification, the Hamming loss corresponds to the Hamming
     distance between ``y_true`` and ``y_pred`` which is equivalent to the
-    subset ``zero_one_loss`` function.
+    subset ``zero_one_loss`` function, when `normalize` parameter is set to
+    True.
 
     In multilabel classification, the Hamming loss is different from the
     subset zero-one loss. The zero-one loss considers the entire set of labels
-    for a given sample incorrect if it does entirely match the true set of
-    labels. Hamming loss is more forgiving in that it penalizes the individual
-    labels.
+    for a given sample incorrect if it does not entirely match the true set of
+    labels. Hamming loss is more forgiving in that it penalizes only the
+    individual labels.
 
-    The Hamming loss is upperbounded by the subset zero-one loss. When
-    normalized over samples, the Hamming loss is always between 0 and 1.
+    The Hamming loss is upperbounded by the subset zero-one loss, when
+    `normalize` parameter is set to True. It is always between 0 and 1,
+    lower being better.
 
     References
     ----------
@@ -2301,25 +2303,6 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
     return np.average(losses, weights=sample_weight)
 
 
-def _check_binary_probabilistic_predictions(y_true, y_prob):
-    """Check that y_true is binary and y_prob contains valid probabilities"""
-    check_consistent_length(y_true, y_prob)
-
-    labels = np.unique(y_true)
-
-    if len(labels) > 2:
-        raise ValueError("Only binary classification is supported. "
-                         "Provided labels %s." % labels)
-
-    if y_prob.max() > 1:
-        raise ValueError("y_prob contains values greater than 1.")
-
-    if y_prob.min() < 0:
-        raise ValueError("y_prob contains values less than 0.")
-
-    return label_binarize(y_true, labels)[:, 0]
-
-
 def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     """Compute the Brier score.
     The smaller the Brier score, the better, hence the naming with "loss".
@@ -2353,8 +2336,9 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
         Sample weights.
 
     pos_label : int or str, default=None
-        Label of the positive class. If None, the maximum label is used as
-        positive class
+        Label of the positive class.
+        Defaults to the greater label unless y_true is all 0 or all -1
+        in which case pos_label defaults to 1.
 
     Returns
     -------
@@ -2389,8 +2373,25 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     assert_all_finite(y_prob)
     check_consistent_length(y_true, y_prob, sample_weight)
 
+    labels = np.unique(y_true)
+    if len(labels) > 2:
+        raise ValueError("Only binary classification is supported. "
+                         "Labels in y_true: %s." % labels)
+    if y_prob.max() > 1:
+        raise ValueError("y_prob contains values greater than 1.")
+    if y_prob.min() < 0:
+        raise ValueError("y_prob contains values less than 0.")
+
+    # if pos_label=None, when y_true is in {-1, 1} or {0, 1},
+    # pos_labe is set to 1 (consistent with precision_recall_curve/roc_curve),
+    # otherwise pos_label is set to the greater label
+    # (different from precision_recall_curve/roc_curve,
+    # the purpose is to keep backward compatibility).
     if pos_label is None:
-        pos_label = y_true.max()
+        if (np.array_equal(labels, [0]) or
+                np.array_equal(labels, [-1])):
+            pos_label = 1
+        else:
+            pos_label = y_true.max()
     y_true = np.array(y_true == pos_label, int)
-    y_true = _check_binary_probabilistic_predictions(y_true, y_prob)
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)

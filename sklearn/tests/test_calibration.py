@@ -25,7 +25,6 @@ from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
 from sklearn.calibration import calibration_curve
 
 
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_calibration():
     """Test calibration objects with isotonic and sigmoid"""
