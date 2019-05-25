@@ -283,7 +283,8 @@ def test_feature_to_dtype_error(feature):
         _feature_to_dtype(feature)
 
 
-def test_fetch_openml_iris_pandas(monkeypatch):
+@pytest.mark.parametrize('chunksize', [10, 1000])
+def test_fetch_openml_iris_pandas(monkeypatch, chunksize):
     # classification dataset with numeric only columns
     pd = pytest.importorskip('pandas')
     CategoricalDtype = pd.api.types.CategoricalDtype
@@ -300,7 +301,8 @@ def test_fetch_openml_iris_pandas(monkeypatch):
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
 
-    bunch = fetch_openml(data_id=data_id, return_frame=True, cache=False)
+    bunch = fetch_openml(data_id=data_id, return_frame=True, cache=False,
+                         chunksize=chunksize)
     df = bunch.dataframe
 
     assert isinstance(df, pd.DataFrame)
