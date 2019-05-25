@@ -9,6 +9,7 @@ from functools import wraps
 import itertools
 from collections.abc import Generator
 from itertools import zip_longest
+from collections import OrderedDict
 
 from urllib.request import urlopen, Request
 
@@ -340,7 +341,7 @@ def _convert_arff_data_dataframe(arrf, columns, features_dict, chunksize):
     """
     pd = check_pandas_support('fetch_openml with return_frame=True')
 
-    attributes = dict(arrf['attributes'])
+    attributes = OrderedDict(arrf['attributes'])
     arrf_columns = list(attributes)
 
     arrf_data_gen = _chunk_iterable(arrf['data'], chunksize)
@@ -357,7 +358,7 @@ def _convert_arff_data_dataframe(arrf, columns, features_dict, chunksize):
     for column in columns_to_keep:
         dtype = _feature_to_dtype(features_dict[column])
         if dtype == 'category':
-            dtype = pd.CategoricalDtype(attributes[column])
+            dtype = pd.api.types.CategoricalDtype(attributes[column])
         df[column] = df[column].astype(dtype, copy=False)
     return df
 
