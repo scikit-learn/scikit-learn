@@ -86,8 +86,6 @@ def test_sparse_graph_connected_component():
         assert_array_equal(component_1, component_2)
 
 
-@pytest.mark.filterwarnings("ignore:the behavior of nmi will "
-                            "change in version 0.22")
 def test_spectral_embedding_two_components(seed=36):
     # Test spectral embedding with two components
     random_state = np.random.RandomState(seed)
@@ -209,6 +207,8 @@ def test_spectral_embedding_amg_solver_failure(seed=36):
 
 @pytest.mark.filterwarnings("ignore:the behavior of nmi will "
                             "change in version 0.22")
+
+
 def test_pipeline_spectral_clustering(seed=36):
     # Test using pipeline to do spectral clustering
     random_state = np.random.RandomState(seed)

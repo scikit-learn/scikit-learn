@@ -1694,7 +1694,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             Regression and binary classification are special cases with
             ``k == 1``, otherwise ``k==n_classes``.
         """
-        X = check_array(X, dtype=DTYPE, order="C",  accept_sparse='csr')
+        X = check_array(X, dtype=DTYPE, order="C", accept_sparse='csr')
         raw_predictions = self._raw_predict_init(X)
         for i in range(self.estimators_.shape[0]):
             predict_stage(self.estimators_, i, X, self.learning_rate,
@@ -1709,17 +1709,26 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         Returns
         -------
         feature_importances_ : array, shape (n_features,)
+            The values of this array sum to 1, unless all trees are single node
+            trees consisting of only the root node, in which case it will be an
+            array of zeros.
         """
         self._check_initialized()
 
-        total_sum = np.zeros((self.n_features_, ), dtype=np.float64)
-        for stage in self.estimators_:
-            stage_sum = sum(tree.tree_.compute_feature_importances(
-                normalize=False) for tree in stage) / len(stage)
-            total_sum += stage_sum
+        relevant_trees = [tree
+                          for stage in self.estimators_ for tree in stage
+                          if tree.tree_.node_count > 1]
+        if not relevant_trees:
+            # degenerate case where all trees have only one node
+            return np.zeros(shape=self.n_features_, dtype=np.float64)
 
-        importances = total_sum / total_sum.sum()
-        return importances
+        relevant_feature_importances = [
+            tree.tree_.compute_feature_importances(normalize=False)
+            for tree in relevant_trees
+        ]
+        avg_feature_importances = np.mean(relevant_feature_importances,
+                                          axis=0, dtype=np.float64)
+        return avg_feature_importances / np.sum(avg_feature_importances)
 
     def _validate_y(self, y, sample_weight):
         # 'sample_weight' is not utilised but is used for
@@ -2003,6 +2012,7 @@ shape (n_estimators, ``loss_.K``)
 
     See also
     --------
+    sklearn.ensemble.HistGradientBoostingClassifier,
     sklearn.tree.DecisionTreeClassifier, RandomForestClassifier
     AdaBoostClassifier
 
@@ -2075,7 +2085,7 @@ shape (n_estimators, ``loss_.K``)
             `classes_`. Regression and binary classification produce an
             array of shape [n_samples].
         """
-        X = check_array(X, dtype=DTYPE, order="C",  accept_sparse='csr')
+        X = check_array(X, dtype=DTYPE, order="C", accept_sparse='csr')
         raw_predictions = self._raw_predict(X)
         if raw_predictions.shape[1] == 1:
             return raw_predictions.ravel()
@@ -2463,7 +2473,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
     See also
     --------
-    DecisionTreeRegressor, RandomForestRegressor
+    sklearn.ensemble.HistGradientBoostingRegressor,
+    sklearn.tree.DecisionTreeRegressor, RandomForestRegressor
 
     References
     ----------
@@ -2516,7 +2527,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         y : array, shape (n_samples,)
             The predicted values.
         """
-        X = check_array(X, dtype=DTYPE, order="C",  accept_sparse='csr')
+        X = check_array(X, dtype=DTYPE, order="C", accept_sparse='csr')
         # In regression we can directly return the raw value from the trees.
         return self._raw_predict(X).ravel()
 

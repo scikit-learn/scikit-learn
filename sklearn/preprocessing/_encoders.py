@@ -134,7 +134,10 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                         Xi = Xi.copy()
 
                     Xi[~valid_mask] = self.categories_[i][0]
-            _, encoded = _encode(Xi, self.categories_[i], encode=True)
+            # We use check_unknown=False, since _encode_check_unknown was
+            # already called above.
+            _, encoded = _encode(Xi, self.categories_[i], encode=True,
+                                 check_unknown=False)
             X_int[:, i] = encoded
 
         return X_int, X_mask
@@ -328,23 +331,23 @@ class OneHotEncoder(_BaseEncoder):
 
     # Deprecated attributes
 
-    @property
     @deprecated("The ``active_features_`` attribute was deprecated in version "
                 "0.20 and will be removed 0.22.")
+    @property
     def active_features_(self):
         check_is_fitted(self, 'categories_')
         return self._active_features_
 
-    @property
     @deprecated("The ``feature_indices_`` attribute was deprecated in version "
                 "0.20 and will be removed 0.22.")
+    @property
     def feature_indices_(self):
         check_is_fitted(self, 'categories_')
         return self._feature_indices_
 
-    @property
     @deprecated("The ``n_values_`` attribute was deprecated in version "
                 "0.20 and will be removed 0.22.")
+    @property
     def n_values_(self):
         check_is_fitted(self, 'categories_')
         return self._n_values_
@@ -367,7 +370,8 @@ class OneHotEncoder(_BaseEncoder):
             msg = (
                 "Passing 'n_values' is deprecated in version 0.20 and will be "
                 "removed in 0.22. You can use the 'categories' keyword "
-                "instead. 'n_values=n' corresponds to 'categories=[range(n)]'."
+                "instead. 'n_values=n' corresponds to "
+                "'categories=[range(n)] * n_features'."
             )
             warnings.warn(msg, DeprecationWarning)
             self._legacy_mode = True
@@ -847,6 +851,8 @@ class OneHotEncoder(_BaseEncoder):
         for i in range(len(cats)):
             names = [
                 input_features[i] + '_' + str(t) for t in cats[i]]
+            if self.drop is not None:
+                names.pop(self.drop_idx_[i])
             feature_names.extend(names)
 
         return np.array(feature_names, dtype=object)

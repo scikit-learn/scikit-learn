@@ -292,7 +292,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
       https://arxiv.org/abs/1708.07481
 
     Notes
-    ------
+    -----
     The graph should contain only one connect component, elsewhere
     the results make little sense.
 
