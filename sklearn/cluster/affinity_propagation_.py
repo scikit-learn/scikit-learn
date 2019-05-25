@@ -364,7 +364,11 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
         y : Ignored
 
         """
-        X = check_array(X, accept_sparse='csr')
+        if self.affinity == "precomputed":
+            accept_sparse = False
+        else:
+            accept_sparse = 'csr'
+        X = check_array(X, accept_sparse=accept_sparse)
         if self.affinity == "precomputed":
             self.affinity_matrix_ = X
         elif self.affinity == "euclidean":

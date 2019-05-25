@@ -30,7 +30,8 @@ class NotFittedError(ValueError, AttributeError):
     ... except NotFittedError as e:
     ...     print(repr(e))
     ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    NotFittedError('This LinearSVC instance is not fitted yet'...)
+    NotFittedError("This LinearSVC instance is not fitted yet. Call 'fit' with
+    appropriate arguments before using this method.")
 
     .. versionchanged:: 0.18
        Moved from sklearn.utils.validation.

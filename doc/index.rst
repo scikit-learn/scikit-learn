@@ -209,7 +209,7 @@
                     </li>
                     <li><strong>Scikit-learn from 0.21 requires Python 3.5 or greater.</strong>
                     </li>
-                    <li><em>May 2019.</em> scikit-learn 0.21 is available for download (<a href="whats_new.html#version-0-21">Changelog</a>).
+                    <li><em>May 2019.</em> scikit-learn 0.21.0 to 0.21.2 are available for download (<a href="whats_new.html#version-0-21">Changelog</a>).
                     </li>
                     <li><em>March 2019.</em> scikit-learn 0.20.3 is available for download (<a href="whats_new.html#version-0-20-3">Changelog</a>).
                     </li>
