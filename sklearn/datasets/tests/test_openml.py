@@ -287,12 +287,11 @@ def test_feature_to_dtype_error(feature):
 def test_fetch_openml_iris_pandas(monkeypatch, chunksize):
     # classification dataset with numeric only columns
     pd = pytest.importorskip('pandas')
-    CategoricalDtype = pd.api.types.CategoricalDtype
     data_id = 61
     expected_shape = (150, 5)
 
-    cat_dtype = CategoricalDtype(['Iris-setosa', 'Iris-versicolor',
-                                  'Iris-virginica'])
+    cat_dtype = pd.CategoricalDtype(['Iris-setosa', 'Iris-versicolor',
+                                     'Iris-virginica'])
     expected_dtypes = [np.float64] * 4 + [cat_dtype]
     expected_feature_names = ['sepallength', 'sepalwidth', 'petallength',
                               'petalwidth']
@@ -316,7 +315,6 @@ def test_fetch_openml_iris_pandas(monkeypatch, chunksize):
 def test_fetch_openml_anneal_pandas(monkeypatch):
     # classification dataset with numeric and categorical columns
     pd = pytest.importorskip('pandas')
-    CategoricalDtype = pd.api.types.CategoricalDtype
 
     data_id = 2
     target_column = 'class'
@@ -333,7 +331,7 @@ def test_fetch_openml_anneal_pandas(monkeypatch):
     assert isinstance(df, pd.DataFrame)
     assert df.shape == expected_shape
     n_categories = len([dtype for dtype in df.dtypes
-                       if isinstance(dtype, CategoricalDtype)])
+                       if isinstance(dtype, pd.CategoricalDtype)])
     n_floats = len([dtype for dtype in df.dtypes if dtype.kind == 'f'])
     assert expected_categories == n_categories
     assert expected_floats == n_floats
@@ -343,18 +341,17 @@ def test_fetch_openml_anneal_pandas(monkeypatch):
 def test_fetch_openml_cpu_pandas(monkeypatch):
     # regression dataset with numeric and categorical columns
     pd = pytest.importorskip('pandas')
-    CategoricalDtype = pd.api.types.CategoricalDtype
     data_id = 561
     expected_shape = (209, 8)
 
-    cat_dtype = CategoricalDtype(['adviser', 'amdahl', 'apollo', 'basf',
-                                  'bti', 'burroughs', 'c.r.d', 'cdc',
-                                  'cambex', 'dec', 'dg', 'formation',
-                                  'four-phase', 'gould', 'hp', 'harris',
-                                  'honeywell', 'ibm', 'ipl', 'magnuson',
-                                  'microdata', 'nas', 'ncr', 'nixdorf',
-                                  'perkin-elmer', 'prime', 'siemens',
-                                  'sperry', 'sratus', 'wang'])
+    cat_dtype = pd.CategoricalDtype(['adviser', 'amdahl', 'apollo', 'basf',
+                                     'bti', 'burroughs', 'c.r.d', 'cdc',
+                                     'cambex', 'dec', 'dg', 'formation',
+                                     'four-phase', 'gould', 'hp', 'harris',
+                                     'honeywell', 'ibm', 'ipl', 'magnuson',
+                                     'microdata', 'nas', 'ncr', 'nixdorf',
+                                     'perkin-elmer', 'prime', 'siemens',
+                                     'sperry', 'sratus', 'wang'])
     expected_dtypes = [cat_dtype] + [np.float64] * 7
     expected_feature_names = ['vendor', 'MYCT', 'MMIN', 'MMAX', 'CACH',
                               'CHMIN', 'CHMAX']
@@ -395,7 +392,6 @@ def test_fetch_openml_adultcensus_pandas_return_X_y_errors(monkeypatch):
 
 def test_fetch_openml_adultcensus_pandas(monkeypatch):
     pd = pytest.importorskip('pandas')
-    CategoricalDtype = pd.api.types.CategoricalDtype
 
     # Check because of the numeric row attribute (issue #12329)
     data_id = 1119
@@ -410,7 +406,7 @@ def test_fetch_openml_adultcensus_pandas(monkeypatch):
     assert isinstance(df, pd.DataFrame)
     assert df.shape == expected_shape
     n_categories = len([dtype for dtype in df.dtypes
-                       if isinstance(dtype, CategoricalDtype)])
+                       if isinstance(dtype, pd.CategoricalDtype)])
     n_floats = len([dtype for dtype in df.dtypes if dtype.kind == 'f'])
     assert expected_categories == n_categories
     assert expected_floats == n_floats
@@ -421,7 +417,6 @@ def test_fetch_openml_miceprotein_pandas(monkeypatch):
     # and ignore attributes. Note that data_features json has 82 attributes,
     # and row id (1), ignore attributes (3) have been removed.
     pd = pytest.importorskip('pandas')
-    CategoricalDtype = pd.api.types.CategoricalDtype
 
     data_id = 40966
     expected_shape = (7, 78)
@@ -435,7 +430,7 @@ def test_fetch_openml_miceprotein_pandas(monkeypatch):
     assert isinstance(df, pd.DataFrame)
     assert df.shape == expected_shape
     n_categories = len([dtype for dtype in df.dtypes
-                       if isinstance(dtype, CategoricalDtype)])
+                       if isinstance(dtype, pd.CategoricalDtype)])
     n_floats = len([dtype for dtype in df.dtypes if dtype.kind == 'f'])
     assert expected_categories == n_categories
     assert expected_floats == n_floats
@@ -444,7 +439,6 @@ def test_fetch_openml_miceprotein_pandas(monkeypatch):
 def test_fetch_openml_emotions_pandas(monkeypatch):
     # classification dataset with multiple targets (natively)
     pd = pytest.importorskip('pandas')
-    CategoricalDtype = pd.api.types.CategoricalDtype
 
     data_id = 40589
     target_column = ['amazed.suprised', 'happy.pleased', 'relaxing.calm',
@@ -461,7 +455,7 @@ def test_fetch_openml_emotions_pandas(monkeypatch):
     assert isinstance(df, pd.DataFrame)
     assert df.shape == expected_shape
     n_categories = len([dtype for dtype in df.dtypes
-                       if isinstance(dtype, CategoricalDtype)])
+                       if isinstance(dtype, pd.CategoricalDtype)])
     n_floats = len([dtype for dtype in df.dtypes if dtype.kind == 'f'])
     assert expected_categories == n_categories
     assert expected_floats == n_floats
@@ -471,25 +465,24 @@ def test_fetch_openml_emotions_pandas(monkeypatch):
 def test_fetch_openml_titanic_pandas(monkeypatch):
     # dataset with strings
     pd = pytest.importorskip('pandas')
-    CategoricalDtype = pd.api.types.CategoricalDtype
 
     data_id = 40945
     expected_shape = (1309, 14)
     name_to_dtype = {
         'pclass': np.float64,
         'name': object,
-        'sex': CategoricalDtype(['female', 'male']),
+        'sex': pd.CategoricalDtype(['female', 'male']),
         'age': np.float64,
         'sibsp': np.float64,
         'parch': np.float64,
         'ticket': object,
         'fare': np.float64,
         'cabin': object,
-        'embarked': CategoricalDtype(['C', 'Q', 'S']),
+        'embarked': pd.CategoricalDtype(['C', 'Q', 'S']),
         'boat': object,
         'body': np.float64,
         'home.dest': object,
-        'survived': CategoricalDtype(['0', '1'])
+        'survived': pd.CategoricalDtype(['0', '1'])
     }
     expected_columns = ['pclass', 'survived', 'name', 'sex', 'age', 'sibsp',
                         'parch', 'ticket', 'fare', 'cabin', 'embarked',

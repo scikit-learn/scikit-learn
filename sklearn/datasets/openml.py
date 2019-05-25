@@ -358,7 +358,7 @@ def _convert_arff_data_dataframe(arrf, columns, features_dict, chunksize):
     for column in columns_to_keep:
         dtype = _feature_to_dtype(features_dict[column])
         if dtype == 'category':
-            dtype = pd.api.types.CategoricalDtype(attributes[column])
+            dtype = pd.CategoricalDtype(attributes[column])
         df[column] = df[column].astype(dtype, copy=False)
     return df
 
