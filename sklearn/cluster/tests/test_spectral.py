@@ -29,7 +29,11 @@ except ImportError:
 
 
 @pytest.mark.parametrize('eigen_solver', ('arpack', 'lobpcg'))
-@pytest.mark.parametrize('assign_labels', ('kmeans', 'discretize'))
+@pytest.mark.parametrize(
+    'assign_labels',
+    ('kmeans',
+     'discretize',
+     'clusterQR'))
 def test_spectral_clustering(eigen_solver, assign_labels):
     S = np.array([[1.0, 1.0, 1.0, 0.2, 0.0, 0.0, 0.0],
                   [1.0, 1.0, 1.0, 0.2, 0.0, 0.0, 0.0],
@@ -108,7 +112,7 @@ def test_affinities():
     # on OSX and Linux
     X, y = make_blobs(n_samples=20, random_state=0,
                       centers=[[1, 1], [-1, -1]], cluster_std=0.01
-                     )
+                      )
     # nearest neighbors affinity
     sp = SpectralClustering(n_clusters=2, affinity='nearest_neighbors',
                             random_state=0)

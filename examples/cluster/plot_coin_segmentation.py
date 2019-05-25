@@ -10,16 +10,20 @@ partly-homogeneous regions.
 This procedure (spectral clustering on an image) is an efficient
 approximate solution for finding normalized graph cuts.
 
-There are two options to assign labels:
+There are three options to assign labels:
 
 * with 'kmeans' spectral clustering will cluster samples in the embedding space
-  using a kmeans algorithm
+  using a kmeans algorithm,
+* with 'clusterQR' will cluster samples in the embedding space
+  using a clusterQR algorithm,
 * whereas 'discrete' will iteratively search for the closest partition
   space to the embedding space.
+
 """
 print(__doc__)
 
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>, Brian Cheung
+# Andrew Knyazev added clusterQR
 # License: BSD 3 clause
 
 import time
@@ -62,28 +66,34 @@ beta = 10
 eps = 1e-6
 graph.data = np.exp(-beta * graph.data / graph.data.std()) + eps
 
-# Apply spectral clustering (this step goes much faster if you have pyamg
-# installed)
-N_REGIONS = 25
+# The actual number of regions in this example is 27: background and 26 coins
+N_REGIONS = 26
 
 #############################################################################
-# Visualize the resulting regions
+# Compute and visualize the resulting regions
 
-for assign_labels in ('kmeans', 'discretize'):
+# Any eigen_solver: 'arpack', 'lobpcg', 'amg' can be used. AMG is usually best
+# It often helps the spectral clustering to compute a few extra eigenvectors
+N_REGIONS_PLUS = 3
+
+for assign_labels in ('kmeans', 'discretize', 'clusterQR'):
     t0 = time.time()
-    labels = spectral_clustering(graph, n_clusters=N_REGIONS,
-                                 assign_labels=assign_labels, random_state=42)
+    labels = spectral_clustering(graph,
+                                 n_clusters=(N_REGIONS + N_REGIONS_PLUS),
+                                 assign_labels=assign_labels, random_state=42,
+                                 eigen_solver='arpack')
     t1 = time.time()
     labels = labels.reshape(rescaled_coins.shape)
 
     plt.figure(figsize=(5, 5))
-    plt.imshow(rescaled_coins, cmap=plt.cm.gray)
-    for l in range(N_REGIONS):
-        plt.contour(labels == l,
-                    colors=[plt.cm.nipy_spectral(l / float(N_REGIONS))])
+    plt.imshow(rescaled_coins, cmap=plt.get_cmap('gray'))
     plt.xticks(())
     plt.yticks(())
     title = 'Spectral clustering: %s, %.2fs' % (assign_labels, (t1 - t0))
     print(title)
     plt.title(title)
+    for l in range(N_REGIONS):
+        plt.contour(labels == l,
+                    colors=[plt.cm.nipy_spectral((l+3) / float(N_REGIONS+3))])
+        plt.pause(0.5)
 plt.show()
