@@ -553,10 +553,10 @@ class _MPLTreeExporter(_BaseTreeExporter):
         name = self.node_to_str(et, node_id, criterion=criterion)
         if (et.children_left[node_id] != _tree.TREE_LEAF
                 and (self.max_depth is None or depth <= self.max_depth)):
-            children = [self._make_tree(et.children_left[node_id], et, criterion,
-                                        depth=depth + 1),
-                        self._make_tree(et.children_right[node_id], et, criterion,
-                                        depth=depth + 1)]
+            children = [self._make_tree(et.children_left[node_id], et,
+                                        criterion, depth=depth + 1),
+                        self._make_tree(et.children_right[node_id], et,
+                                        criterion, depth=depth + 1)]
         else:
             return Tree(name, node_id)
         return Tree(name, node_id, *children)
