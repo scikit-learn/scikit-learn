@@ -42,7 +42,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
     Read more in the :ref:`User Guide <least_angle_regression>`.
 
     Parameters
-    -----------
+    ----------
     X : None or array, shape (n_samples, n_features)
         Input data. Note that if X is None then the Gram matrix must be
         specified, i.e., cannot be None or False.
@@ -112,7 +112,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
         solution of the coordinate descent lasso_path function.
 
     Returns
-    --------
+    -------
     alphas : array, shape (n_alphas + 1,)
         Maximum of covariances (in absolute value) at each iteration.
         ``n_alphas`` is either ``max_iter``, ``n_features`` or the
@@ -179,7 +179,7 @@ def lars_path_gram(Xy, Gram, n_samples, max_iter=500, alpha_min=0,
     Read more in the :ref:`User Guide <least_angle_regression>`.
 
     Parameters
-    -----------
+    ----------
     Xy : array-like, shape (n_samples,) or (n_samples, n_targets)
         Xy = np.dot(X.T, y).
 
@@ -231,7 +231,7 @@ def lars_path_gram(Xy, Gram, n_samples, max_iter=500, alpha_min=0,
         solution of the coordinate descent lasso_path function.
 
     Returns
-    --------
+    -------
     alphas : array, shape (n_alphas + 1,)
         Maximum of covariances (in absolute value) at each iteration.
         ``n_alphas`` is either ``max_iter``, ``n_features`` or the
@@ -295,7 +295,7 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
     Read more in the :ref:`User Guide <least_angle_regression>`.
 
     Parameters
-    -----------
+    ----------
     X : None or ndarray, shape (n_samples, n_features)
         Input data. Note that if X is None then Gram must be specified,
         i.e., cannot be None or False.
@@ -358,7 +358,7 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
         solution of the coordinate descent lasso_path function.
 
     Returns
-    --------
+    -------
     alphas : array, shape (n_alphas + 1,)
         Maximum of covariances (in absolute value) at each iteration.
         ``n_alphas`` is either ``max_iter``, ``n_features`` or the
@@ -1128,7 +1128,7 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
     """Compute the residues on left-out data for a full LARS path
 
     Parameters
-    -----------
+    ----------
     X_train : array, shape (n_samples, n_features)
         The data to fit the LARS on
 
@@ -1189,7 +1189,7 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
 
 
     Returns
-    --------
+    -------
     alphas : array, shape (n_alphas,)
         Maximum of covariances (in absolute value) at each iteration.
         ``n_alphas`` is either ``max_iter`` or ``n_features``, whichever
