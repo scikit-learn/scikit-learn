@@ -10,7 +10,7 @@ import numpy as np
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_array
 from ..utils import check_random_state
-from ..preprocessing import normalize
+# from ..preprocessing import normalize
 
 
 def reconstruct_label(labels):
