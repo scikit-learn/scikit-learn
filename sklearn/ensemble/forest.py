@@ -154,30 +154,6 @@ class BaseForest(BaseEnsemble, MultiOutputMixin, ForestMixin,
         self.warm_start = warm_start
         self.class_weight = class_weight
 
-    def apply(self, X):
-        """Apply trees in the forest to X, return leaf indices.
-
-        Parameters
-        ----------
-        X : array-like or sparse matrix, shape = [n_samples, n_features]
-            The input samples. Internally, its dtype will be converted to
-            ``dtype=np.float32``. If a sparse matrix is provided, it will be
-            converted into a sparse ``csr_matrix``.
-
-        Returns
-        -------
-        X_leaves : array_like, shape = [n_samples, n_estimators]
-            For each datapoint x in X and for each tree in the forest,
-            return the index of the leaf x ends up in.
-        """
-        X = self._validate_X_predict(X)
-        results = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                           **_joblib_parallel_args(prefer="threads"))(
-            delayed(parallel_helper)(tree, 'apply', X, check_input=False)
-            for tree in self.estimators_)
-
-        return np.array(results).T
-
     def fit(self, X, y, sample_weight=None):
         """Build a forest of trees from the training set (X, y).
 
