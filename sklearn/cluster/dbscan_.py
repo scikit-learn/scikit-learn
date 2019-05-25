@@ -333,17 +333,20 @@ class DBSCAN(BaseEstimator, ClusterMixin):
 
         Parameters
         ----------
-        X : array or sparse (CSR) matrix of shape (n_samples, n_features), or \
-                array of shape (n_samples, n_samples)
-            A feature array, or array of distances between samples if
-            ``metric='precomputed'``.
+        X : array-like or sparse matrix, shape (n_samples, n_features), or \
+            (n_samples, n_samples)
+            Training instances to cluster or distances between instances if
+            ``metric='precomputed'``. If a sparse matrix is provided, it will
+            be converted into a sparse ``csr_matrix`̀ .
+
         sample_weight : array, shape (n_samples,), optional
             Weight of each sample, such that a sample with a weight of at least
-            ``min_samples`` is by itself a core sample; a sample with negative
-            weight may inhibit its eps-neighbor from being core.
+            ``min_samples`` is by itself a core sample; a sample with a
+            negative weight may inhibit its eps-neighbor from being core.
             Note that weights are absolute, and default to 1.
 
         y : Ignored
+            Not used, present here for API consistency by convention.
 
         """
         X = check_array(X, accept_sparse='csr')
@@ -359,26 +362,30 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         return self
 
     def fit_predict(self, X, y=None, sample_weight=None):
-        """Performs clustering on X and returns cluster labels.
+        """Perform DBSCAN clustering from features or distance matrix,
+        and return cluster labels.
 
         Parameters
         ----------
-        X : array or sparse (CSR) matrix of shape (n_samples, n_features), or \
-                array of shape (n_samples, n_samples)
-            A feature array, or array of distances between samples if
-            ``metric='precomputed'``.
+        X : array-like or sparse matrix, shape (n_samples, n_features), or \
+            (n_samples, n_samples)
+            Training instances to cluster or distances between instances if
+            ``metric='precomputed'``. If a sparse matrix is provided, it will
+            be converted into a sparse ``csr_matrix`̀ .
+
         sample_weight : array, shape (n_samples,), optional
             Weight of each sample, such that a sample with a weight of at least
-            ``min_samples`` is by itself a core sample; a sample with negative
-            weight may inhibit its eps-neighbor from being core.
+            ``min_samples`` is by itself a core sample; a sample with a
+            negative weight may inhibit its eps-neighbor from being core.
             Note that weights are absolute, and default to 1.
 
         y : Ignored
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
         y : ndarray, shape (n_samples,)
-            cluster labels
+            Cluster labels.
         """
         self.fit(X, sample_weight=sample_weight)
         return self.labels_
