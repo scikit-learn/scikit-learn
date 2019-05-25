@@ -26,7 +26,7 @@ def reconstruct_label(labels):
     return labels
 
 
-def fcm(X, n_clusters, m=2, eps=3, random_state=None, max_iter=300,
+def fcm(X, n_clusters, eps=3, m=2, random_state=None, max_iter=300,
         sample_weight=None):
     """Fuzzy CMeans clustering
 
@@ -46,7 +46,7 @@ def fcm(X, n_clusters, m=2, eps=3, random_state=None, max_iter=300,
     m : float, optional (default = 2)
         The fuzzy number.
 
-    random_state : int, RandomState instance
+    random_state : int, RandomState instance or None (default)
         The generator used to initialize the centers. Use an int to make the
         randomness deterministic.
 
@@ -137,7 +137,7 @@ class FCM(BaseEstimator, ClusterMixin):
     m : float, optional (default = 2)
         The fuzzy number.
 
-    random_state : int, RandomState instance
+    random_state : int, RandomState instance or None (default)
         The generator used to initialize the centers. Use an int to make the
         randomness deterministic.
 
@@ -163,8 +163,8 @@ class FCM(BaseEstimator, ClusterMixin):
     Now, something remains implementing: sample weighted \
     section and parallel run the model.
     """
-    def __init__(self, n_clusters=3, m=2, eps=3, init='random',
-                 max_iter=300, random_state=None):
+    def __init__(self, n_clusters=3, eps=3, m=2, init='random',
+                 random_state=None, max_iter=300):
         self.n_clusters = n_clusters
         self.init = init
         self.m = m
