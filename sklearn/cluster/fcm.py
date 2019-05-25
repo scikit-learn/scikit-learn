@@ -84,7 +84,7 @@ def fcm(X, n_clusters, eps=3, m=2, random_state=None, max_iter=300,
         n_clusters = len(X)
 
     X = check_array(X, accept_sparse='csr')
-    X = normalize(X)
+    # X = normalize(X)
     membership_mat = np.random.random((len(X), n_clusters))
     membership_mat = membership_mat / np.sum(membership_mat,
                                              axis=1)[:, np.newaxis]
