@@ -1543,20 +1543,3 @@ To be removed in 0.23
 
    ensemble.partial_dependence.partial_dependence
    ensemble.partial_dependence.plot_partial_dependence
-
-
-To be removed in 0.22
----------------------
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_class.rst
-
-   utils.testing.mock_mldata_urlopen
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_function.rst
-
-   datasets.fetch_mldata
-   datasets.mldata_filename
