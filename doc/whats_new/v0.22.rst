@@ -57,6 +57,14 @@ Changelog
   ``decision_function_shape='ovr'``, and the number of target classes > 2.
   :pr:`12557` by `Adrin Jalali`_.
 
+:mod:`sklearn.feature_selection`
+................................
+- |Enhancement| :class:`feature_selection.VarianceThreshold` now uses range
+  rather than variance when :term:`threshold` is 0. This prevents constant
+  features from sometimes being incorrectly kept due to floating-point error
+  in variance calculation.
+  :pr:`13704` by `Roddy MacSween <rlms>`.
+
 Miscellaneous
 .............
 
