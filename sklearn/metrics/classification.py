@@ -1357,13 +1357,13 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     recall : float (if average is not None) or array of float, shape =\
         [n_unique_labels]
 
-    fbeta_score : 
-                if beta is a float : 
+    fbeta_score :
+                if beta is a float :
                     if average is not None :
                         float
                     else :
                         array of float, shape = [n_unique_labels]
-                
+
                 elif beta is an array of float :
                     if average is not None :
                         array of float, shape = [len(beta)]
@@ -1476,7 +1476,9 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         precision = np.average(precision, weights=weights)
         recall = np.average(recall, weights=weights)
         if many_beta:
-            f_score = np.apply_along_axis(lambda x: np.average(x, weights=weights), axis=1, arr=f_score)
+            f_score = np.apply_along_axis(lambda x:
+                                          np.average(x, weights=weights),
+                                          axis=1, arr=f_score)
         else:
             f_score = np.average(f_score, weights=weights)
         true_sum = None  # return no support
