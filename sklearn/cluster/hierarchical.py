@@ -876,7 +876,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
             self.labels_ = np.searchsorted(np.unique(labels), labels)
         return self
 
-    def fit_predict(self, X, y=None, sample_weight=None):
+    def fit_predict(self, X, y=None):
         """Fit the hierarchical clustering from features or distance matrix,
         and return cluster labels.
 
