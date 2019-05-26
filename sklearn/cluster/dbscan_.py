@@ -335,7 +335,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         ----------
         X : array-like or sparse matrix, shape (n_samples, n_features), or \
             (n_samples, n_samples)
-            Training instances to cluster or distances between instances if
+            Training instances to cluster, or distances between instances if
             ``metric='precomputed'``. If a sparse matrix is provided, it will
             be converted into a sparse ``csr_matrix`̀ .
 
@@ -369,7 +369,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         ----------
         X : array-like or sparse matrix, shape (n_samples, n_features), or \
             (n_samples, n_samples)
-            Training instances to cluster or distances between instances if
+            Training instances to cluster, or distances between instances if
             ``metric='precomputed'``. If a sparse matrix is provided, it will
             be converted into a sparse ``csr_matrix`̀ .
 
