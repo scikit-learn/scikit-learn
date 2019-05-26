@@ -417,7 +417,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
                           "Labeling every sample as '-1'.", ConvergenceWarning)
             return np.array([-1] * X.shape[0])
 
-    def fit_predict(self, X, y=None, sample_weight=None):
+    def fit_predict(self, X, y=None):
         """Fit the clustering from features or affinity matrix, and return
         cluster labels.
 
