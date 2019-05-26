@@ -156,7 +156,7 @@ You first need to have OpenMP library installed::
     sudo pkg install openmp
     
 This will install headers files in ``/usr/local/include`` and libs in ``/usr/local/lib``.
-Then set the environment variables to this locations::
+Then set the environment variables to these locations::
 
     export CFLAGS="$CFLAGS -I/usr/local/include"
     export CXXFLAGS="$CXXFLAGS -I/usr/local/include"
