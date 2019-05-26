@@ -2,6 +2,17 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_0_21_3:
+
+Version 0.21.3
+==============
+
+**In development**
+
+Changelog
+---------
+
+
 .. _changes_0_21_2:
 
 Version 0.21.2
