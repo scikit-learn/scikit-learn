@@ -132,6 +132,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             X_val, y_val = None, None
 
         # Bin the data
+        self.bin_mapper_ = _BinMapper(max_bins=self.max_bins, random_state=rng)
         X_binned_train = self._bin_data(X_train, rng, is_training_data=True)
         if X_val is not None:
             X_binned_val = self._bin_data(X_val, rng, is_training_data=False)
@@ -390,20 +391,18 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             print("Binning {:.3f} GB of {} data: ".format(
                 X.nbytes / 1e9, description), end="", flush=True)
         tic = time()
-        bin_mapper = _BinMapper(max_bins=self.max_bins, random_state=rng)
-        X_binned = bin_mapper.fit_transform(X)  # F-aligned array
+        if is_training_data:
+            X_binned = self.bin_mapper_.fit_transform(X)  # F-aligned array
+        else:
+            X_binned = self.bin_mapper_.transform(X)  # F-aligned array
+            # We convert the array to C-contiguous since predicting is faster
+            # with this layout (training is faster on F-arrays though)
+            X_binned = np.ascontiguousarray(X_binned)
         toc = time()
         if self.verbose:
             duration = toc - tic
             print("{:.3f} s".format(duration))
 
-        if is_training_data:
-            self.bin_mapper_ = bin_mapper
-        else:
-            # Validation data. We convert the array to C-contiguous since
-            # predicting is faster with this layout (training is faster on
-            # F-arrays though)
-            X_binned = np.ascontiguousarray(X_binned)
         return X_binned
 
     def _print_iteration_stats(self, iteration_start_time):
