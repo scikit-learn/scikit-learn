@@ -148,6 +148,24 @@ Then you need to set the following environment variables::
 
 Finally you can build the package using the standard command.
 
+FreeBSD
+-------
+
+You first need to have OpenMP library installed::
+
+    sudo pkg install openmp
+    
+This will install headers files in ``/usr/local/include`` and libs in ``/usr/local/lib``.
+Then set the environment variables to this locations::
+
+    export CFLAGS="$CFLAGS -I/usr/local/include"
+    export CXXFLAGS="$CXXFLAGS -I/usr/local/include"
+    export LDFLAGS="$LDFLAGS -L/usr/local/lib -lomp"
+    export DYLD_LIBRARY_PATH=/usr/local/lib
+
+Finally you can build the package using the standard command.
+
+
 Installing build dependencies
 =============================
 
