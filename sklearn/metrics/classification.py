@@ -1422,8 +1422,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     """
     many_beta = isinstance(beta, Iterable)
 
-    if many_beta :
-        if any([b <= 0 for b in beta]) :
+    if many_beta:
+        if any([b <= 0 for b in beta]):
             raise ValueError("all beta should be >0 in the F-beta scores")
     elif beta <= 0:
         raise ValueError("beta should be >0 in the F-beta score")
@@ -1446,8 +1446,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     # Finally, we have all our sufficient statistics. Divide! #
     beta2 = (beta ** 2)
-    if many_beta :
-        beta2 = np.reshape(beta2,(-1,1))
+    if many_beta:
+        beta2 = np.reshape(beta2, (-1, 1))
 
     # Divide, and on zero-division, set scores to 0 and warn:
 
@@ -1475,9 +1475,9 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         assert average != 'binary' or len(precision) == 1
         precision = np.average(precision, weights=weights)
         recall = np.average(recall, weights=weights)
-        if many_beta :
-            f_score = np.apply_along_axis(lambda x: np.average(x, weights=weights) , axis=1, arr=f_score)
-        else :
+        if many_beta:
+            f_score = np.apply_along_axis(lambda x: np.average(x, weights=weights), axis=1, arr=f_score)
+        else:
             f_score = np.average(f_score, weights=weights)
         true_sum = None  # return no support
 

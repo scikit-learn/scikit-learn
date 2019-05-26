@@ -331,7 +331,7 @@ def test_precision_recall_fscore_support_errors():
     assert_raises(ValueError, precision_recall_fscore_support,
                   y_true, y_pred, beta=0.0)
     assert_raises(ValueError, precision_recall_fscore_support,
-                  y_true, y_pred, beta=np.array([-1.0,1.0,2.0]))
+                  y_true, y_pred, beta=np.array([-1.0, 1.0, 2.0]))
 
     # Bad pos_label
     assert_raises(ValueError, precision_recall_fscore_support,
@@ -1387,62 +1387,62 @@ def test_precision_recall_f1_score_multilabel_2():
     # fp = [ 1.  0.  0.  2.]
     # fn = [ 1.  1.  1.  0.]
 
-    p, r, f, s = precision_recall_fscore_support(y_true, y_pred, beta=np.array([1.0,3.0]),
+    p, r, f, s = precision_recall_fscore_support(y_true, y_pred, beta=np.array([1.0, 3.0]),
                                                  average=None)                                       
     assert_array_almost_equal(p, [0.0, 1.0, 0.0, 0.0], 2)
     assert_array_almost_equal(r, [0.0, 0.5, 0.0, 0.0], 2)
-    assert_array_almost_equal(f[0,], [0.0, 0.66, 0.0, 0.0], 2)
-    assert_array_almost_equal(f[1,], [0.0, 0.53, 0.0, 0.0], 2)
+    assert_array_almost_equal(f[0, ], [0.0, 0.66, 0.0, 0.0], 2)
+    assert_array_almost_equal(f[1, ], [0.0, 0.53, 0.0, 0.0], 2)
     assert_array_almost_equal(s, [1, 2, 1, 0], 2)
 
     f2 = fbeta_score(y_true, y_pred, beta=2, average=None)
     support = s
     assert_array_almost_equal(f2, [0, 0.55, 0, 0], 2)
 
-    p, r, f, s = precision_recall_fscore_support(y_true, y_pred, beta=np.array([1.0,3.0]),
+    p, r, f, s = precision_recall_fscore_support(y_true, y_pred, beta=np.array([1.0, 3.0]),
                                                  average="micro")
     assert_almost_equal(p, 0.25)
     assert_almost_equal(r, 0.25)
-    assert_almost_equal(f[0,], 2 * 0.25 * 0.25 / 0.5)
-    assert_almost_equal(f[1,], 10 * 0.25 * 0.25 / (9 * 0.25 + 0.25))
+    assert_almost_equal(f[0, ], 2 * 0.25 * 0.25 / 0.5)
+    assert_almost_equal(f[1, ], 10 * 0.25 * 0.25 / (9 * 0.25 + 0.25))
     assert_equal(s, None)
     assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
                                     average="micro"),
                         (1 + 4) * p * r / (4 * p + r))
 
-    p, r, f, s = precision_recall_fscore_support(y_true, y_pred, beta=np.array([0.5,1.0]),
+    p, r, f, s = precision_recall_fscore_support(y_true, y_pred, beta=np.array([0.5, 1.0]),
                                                  average="macro")
     assert_almost_equal(p, 0.25)
     assert_almost_equal(r, 0.125)
-    assert_almost_equal(f[0,], 1.25 * 0.25 * 0.125 / (0.25 * 0.25 + 0.125))
-    assert_almost_equal(f[1,], 2 / 12)
+    assert_almost_equal(f[0, ], 1.25 * 0.25 * 0.125 / (0.25 * 0.25 + 0.125))
+    assert_almost_equal(f[1, ], 2 / 12)
     assert_equal(s, None)
     assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
                                     average="macro"),
                         np.mean(f2))
 
-    p, r, f, s = precision_recall_fscore_support(y_true, y_pred, beta=np.array([0.5,1.0]),
+    p, r, f, s = precision_recall_fscore_support(y_true, y_pred, beta=np.array([0.5, 1.0]),
                                                  average="weighted")
     assert_almost_equal(p, 2 / 4)
     assert_almost_equal(r, 1 / 4)
-    assert_almost_equal(f[0,], 1.25 * 1/8 / (0.25 * 0.5 + 0.25))
-    assert_almost_equal(f[1,], 2 / 3 * 2 / 4)
+    assert_almost_equal(f[0, ], 1.25 * 1/8 / (0.25 * 0.5 + 0.25))
+    assert_almost_equal(f[1, ], 2 / 3 * 2 / 4)
     assert_equal(s, None)
     assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
                                     average="weighted"),
                         np.average(f2, weights=support))
 
-    p, r, f, s = precision_recall_fscore_support(y_true, y_pred, beta=np.array([0.5,1.0]),
+    p, r, f, s = precision_recall_fscore_support(y_true, y_pred, beta=np.array([0.5, 1.0]),
                                                  average="samples")
     # Check samples
     # |h(x_i) inter y_i | = [0, 0, 1]
     # |y_i| = [1, 1, 2]
     # |h(x_i)| = [1, 1, 2]
-    
+
     assert_almost_equal(p, 1 / 6)
     assert_almost_equal(r, 1 / 6)
-    assert_almost_equal(f[0,], 2 / 12)
-    assert_almost_equal(f[1,], 2 / 4 * 1 / 3)
+    assert_almost_equal(f[0, ], 2 / 12)
+    assert_almost_equal(f[1, ], 2 / 4 * 1 / 3)
     assert_equal(s, None)
     assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
                                     average="samples"),
@@ -2048,4 +2048,3 @@ def test_multilabel_jaccard_similarity_score_deprecation():
     assert_equal(jss(y1, np.logical_not(y1)), 0)
     assert_equal(jss(y1, np.zeros(y1.shape)), 0)
     assert_equal(jss(y2, np.zeros(y1.shape)), 0)
-
