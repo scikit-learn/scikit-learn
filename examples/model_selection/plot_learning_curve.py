@@ -148,7 +148,7 @@ from sklearn.model_selection import ShuffleSplit
 
 
 def plot_learning_curve_times(estimators, X, y, train_sizes,
-                              cv=None, n_jobs=-1):
+                              cv=None, n_jobs=None):
     """
     Generate a simple plot of the test and training learning curve.
 
@@ -248,5 +248,6 @@ estimators.append(("SVR", SVR))
 estimators.append(("RandomForestRegressor", RandomForestRegressor))
 
 train_sizes = np.logspace(np.log10(1e-3), np.log10(1))
-fig = plot_learning_curve_times(estimators, X, y, train_sizes, cv=cv)
+fig = plot_learning_curve_times(estimators, X, y, train_sizes, cv=cv,
+                                n_jobs=4)
 fig.show()
