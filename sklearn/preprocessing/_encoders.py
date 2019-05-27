@@ -134,7 +134,10 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                         Xi = Xi.copy()
 
                     Xi[~valid_mask] = self.categories_[i][0]
-            _, encoded = _encode(Xi, self.categories_[i], encode=True)
+            # We use check_unknown=False, since _encode_check_unknown was
+            # already called above.
+            _, encoded = _encode(Xi, self.categories_[i], encode=True,
+                                 check_unknown=False)
             X_int[:, i] = encoded
 
         return X_int, X_mask
@@ -848,6 +851,8 @@ class OneHotEncoder(_BaseEncoder):
         for i in range(len(cats)):
             names = [
                 input_features[i] + '_' + str(t) for t in cats[i]]
+            if self.drop is not None:
+                names.pop(self.drop_idx_[i])
             feature_names.extend(names)
 
         return np.array(feature_names, dtype=object)
