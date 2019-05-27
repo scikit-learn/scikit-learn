@@ -463,7 +463,7 @@ cdef class Splitter:
                 # won't get any better (hessians are > 0 since loss is convex)
                 break
 
-            gain = _split_gain(sum_gradient_left, sum_hessian_left,
+            gain += _split_gain(sum_gradient_left, sum_hessian_left,
                                sum_gradient_right, sum_hessian_right,
                                sum_gradients, sum_hessians,
                                self.l2_regularization)
