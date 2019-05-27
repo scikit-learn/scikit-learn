@@ -111,8 +111,10 @@ You can check the latest sources with the command::
 
 Contributing
 ~~~~~~~~~~~~
-To learn more about making a contribution to scikit-learn, please view the contributing document: 
-https://github.com/scikit-learn/scikit-learn/blob/master/CONTRIBUTING.md
+
+To learn more about making a contribution to scikit-learn, please see our
+`Contributing guide
+<https://scikit-learn.org/dev/developers/contributing.html>`_.
 
 Testing
 ~~~~~~~

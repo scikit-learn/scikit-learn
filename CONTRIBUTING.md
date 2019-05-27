@@ -2,6 +2,11 @@
 Contributing to scikit-learn
 ============================
 
+The latest contributing guide is available in the repository at
+`doc/developers/contributing.rst`, or online at:
+
+https://scikit-learn.org/dev/developers/contributing.html
+
 There are many ways to contribute to scikit-learn, with the most common ones
 being contribution of code or documentation to the project. Improving the
 documentation is no less important than improving the library itself. If you
@@ -22,15 +27,9 @@ up" on issues that others reported and that are relevant to you. It also helps
 us if you spread the word: reference the project from your blog and articles,
 link to it from your website, or simply star it in GitHub to say "I use it".
 
-Guideline
----------
+Quick links
+-----------
 
-Full contribution guidelines are available in the repository at
-`doc/developers/contributing.rst`, or online at:
-
-http://scikit-learn.org/dev/developers/contributing.html
-
-Quick links to:
 * [Submitting a bug report or feature request](http://scikit-learn.org/dev/developers/contributing.html#submitting-a-bug-report-or-a-feature-request)
 * [Contributing code](http://scikit-learn.org/dev/developers/contributing.html#contributing-code)
 * [Coding guidelines](http://scikit-learn.org/dev/developers/contributing.html#coding-guidelines)

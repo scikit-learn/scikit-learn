@@ -106,5 +106,12 @@ Documentation of scikit-learn |version|
                     <blockquote>Roadmap of the project.
                     </blockquote>
                 </div>
+            </div>
+            <div class="row-fluid">
+                <div class="span4 box">
+                    <h2><a href="governance.html">Governance</a></h2>
+                    <blockquote>Governance of the project.
+                    </blockquote>
+                </div>
 
             </div>
