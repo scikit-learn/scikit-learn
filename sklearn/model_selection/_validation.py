@@ -1271,7 +1271,8 @@ def learning_curve(estimator, X, y, groups=None,
             for train, test in train_test_proportions)
         out = np.array(out)
         n_cv_folds = out.shape[0] // n_unique_ticks
-        out = out.reshape(n_cv_folds, n_unique_ticks, 4)
+        dim = 4 if return_times else 2
+        out = out.reshape(n_cv_folds, n_unique_ticks, dim)
 
     out = np.asarray(out).transpose((2, 1, 0))
 
