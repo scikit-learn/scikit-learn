@@ -467,7 +467,6 @@ cdef class Splitter:
 
             gain = _split_gain(sum_gradient_left, sum_hessian_left,
                                sum_gradient_right, sum_hessian_right,
-                               sum_gradients, sum_hessians,
                                negative_loss_current_node,
                                self.l2_regularization)
 
@@ -490,8 +489,6 @@ cdef inline Y_DTYPE_C _split_gain(
         Y_DTYPE_C sum_hessian_left,
         Y_DTYPE_C sum_gradient_right,
         Y_DTYPE_C sum_hessian_right,
-        Y_DTYPE_C sum_gradients,
-        Y_DTYPE_C sum_hessians,
         Y_DTYPE_C negative_loss_current_node,
         Y_DTYPE_C l2_regularization) nogil:
     """Loss reduction
