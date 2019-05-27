@@ -364,6 +364,10 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
         y : Ignored
             Not used, present here for API consistency by convention.
 
+        Returns
+        -------
+        self
+
         """
         if self.affinity == "precomputed":
             accept_sparse = False

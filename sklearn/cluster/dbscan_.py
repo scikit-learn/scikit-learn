@@ -348,6 +348,10 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         y : Ignored
             Not used, present here for API consistency by convention.
 
+        Returns
+        -------
+        self
+
         """
         X = check_array(X, accept_sparse='csr')
         clust = dbscan(X, sample_weight=sample_weight,
