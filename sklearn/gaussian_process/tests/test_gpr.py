@@ -13,6 +13,7 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels \
     import RBF, ConstantKernel as C, WhiteKernel
 from sklearn.gaussian_process.kernels import DotProduct
+from sklearn.gaussian_process.tests._mini_sequence_kernel import MiniSeqKernel
 
 from sklearn.utils._testing \
     import (assert_array_less,
@@ -49,6 +50,20 @@ def test_gpr_interpolation(kernel):
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
     y_pred, y_cov = gpr.predict(X, return_cov=True)
 
+    assert_almost_equal(y_pred, y)
+    assert_almost_equal(np.diag(y_cov), 0.)
+
+
+def test_gpr_interpolation_structured():
+    # Test the interpolating property for different kernels.
+    kernel = MiniSeqKernel(baseline_similarity_bounds='fixed')
+    X = ['A', 'B', 'C']
+    y = np.array([1, 2, 3])
+    gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+    y_pred, y_cov = gpr.predict(X, return_cov=True)
+
+    assert_almost_equal(kernel(X, eval_gradient=True)[1].ravel(),
+                        (1 - np.eye(len(X))).ravel())
     assert_almost_equal(y_pred, y)
     assert_almost_equal(np.diag(y_cov), 0.)
 

@@ -14,7 +14,7 @@ from sklearn.metrics.pairwise \
 from sklearn.gaussian_process.kernels \
     import (RBF, Matern, RationalQuadratic, ExpSineSquared, DotProduct,
             ConstantKernel, WhiteKernel, PairwiseKernel, KernelOperator,
-            Exponentiation, Kernel)
+            Exponentiation, CompoundKernel)
 from sklearn.base import clone
 
 from sklearn.utils._testing import (assert_almost_equal, assert_array_equal,
@@ -25,11 +25,11 @@ from sklearn.utils._testing import (assert_almost_equal, assert_array_equal,
 X = np.random.RandomState(0).normal(0, 1, (5, 2))
 Y = np.random.RandomState(0).normal(0, 1, (6, 2))
 
-kernel_white = RBF(length_scale=2.0) + WhiteKernel(noise_level=3.0)
+kernel_rbf_plus_white = RBF(length_scale=2.0) + WhiteKernel(noise_level=3.0)
 kernels = [RBF(length_scale=2.0), RBF(length_scale_bounds=(0.5, 2.0)),
            ConstantKernel(constant_value=10.0),
            2.0 * RBF(length_scale=0.33, length_scale_bounds="fixed"),
-           2.0 * RBF(length_scale=0.5), kernel_white,
+           2.0 * RBF(length_scale=0.5), kernel_rbf_plus_white,
            2.0 * RBF(length_scale=[0.5, 2.0]),
            2.0 * Matern(length_scale=0.33, length_scale_bounds="fixed"),
            2.0 * Matern(length_scale=0.5, nu=0.5),
@@ -42,13 +42,14 @@ kernels = [RBF(length_scale=2.0), RBF(length_scale_bounds=(0.5, 2.0)),
            ExpSineSquared(length_scale=0.5, periodicity=1.5),
            DotProduct(sigma_0=2.0), DotProduct(sigma_0=2.0) ** 2,
            RBF(length_scale=[2.0]), Matern(length_scale=[2.0])]
+kernels_fixed = [WhiteKernel(noise_level=3.0, noise_level_bounds='fixed')]
 for metric in PAIRWISE_KERNEL_FUNCTIONS:
     if metric in ["additive_chi2", "chi2"]:
         continue
     kernels.append(PairwiseKernel(gamma=1.0, metric=metric))
 
 
-@pytest.mark.parametrize('kernel', kernels)
+@pytest.mark.parametrize('kernel', kernels + kernels_fixed)
 def test_kernel_gradient(kernel):
     # Compare analytic and numeric gradient of kernels.
     K, K_gradient = kernel(X, eval_gradient=True)
@@ -129,7 +130,7 @@ def test_kernel_theta(kernel):
 @pytest.mark.parametrize('kernel',
                          [kernel for kernel in kernels
                           # Identity is not satisfied on diagonal
-                          if kernel != kernel_white])
+                          if kernel != kernel_rbf_plus_white])
 def test_auto_vs_cross(kernel):
     # Auto-correlation and cross-correlation should be consistent.
     K_auto = kernel(X)
@@ -184,6 +185,25 @@ def test_kernel_stationary(kernel):
     # Test stationarity of kernels.
     K = kernel(X, X + 1)
     assert_almost_equal(K[0, 0], np.diag(K))
+
+
+@pytest.mark.parametrize('kernel',  kernels)
+def test_kernel_vector_X_only(kernel):
+    # Test whether kernels is for vectors or structured data
+    if isinstance(kernel, Exponentiation):
+        assert_equal(kernel.vector_X_only(), kernel.kernel.vector_X_only())
+    if isinstance(kernel, KernelOperator):
+        assert_equal(kernel.vector_X_only(),
+                     kernel.k1.vector_X_only() or kernel.k2.vector_X_only())
+
+
+def test_kernel_vector_X_only_compound():
+    kernel = CompoundKernel([WhiteKernel(noise_level=3.0)])
+    assert_equal(kernel.vector_X_only(), False)
+
+    kernel = CompoundKernel([WhiteKernel(noise_level=3.0),
+                             RBF(length_scale=2.0)])
+    assert_equal(kernel.vector_X_only(), True)
 
 
 def check_hyperparameters_equal(kernel1, kernel2):
@@ -266,7 +286,7 @@ def test_kernel_versus_pairwise(kernel):
     # Check that GP kernels can also be used as pairwise kernels.
 
     # Test auto-kernel
-    if kernel != kernel_white:
+    if kernel != kernel_rbf_plus_white:
         # For WhiteKernel: k(X) != k(X,X). This is assumed by
         # pairwise_kernels
         K1 = kernel(X)

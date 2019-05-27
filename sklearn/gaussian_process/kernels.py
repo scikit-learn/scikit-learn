@@ -31,6 +31,7 @@ from scipy.spatial.distance import pdist, cdist, squareform
 
 from ..metrics.pairwise import pairwise_kernels
 from ..base import clone
+from ..utils.validation import _num_samples
 
 
 def _check_length_scale(X, length_scale):
@@ -352,7 +353,7 @@ class Kernel(metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
+        X : sequence of length n_samples
             Left argument of the returned kernel k(X, Y)
 
         Returns
@@ -364,6 +365,10 @@ class Kernel(metaclass=ABCMeta):
     @abstractmethod
     def is_stationary(self):
         """Returns whether the kernel is stationary. """
+
+    @abstractmethod
+    def vector_X_only(self):
+        """Returns whether the kernel is defined on discrete structures. """
 
 
 class NormalizedKernelMixin:
@@ -381,7 +386,7 @@ class NormalizedKernelMixin:
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
+        X : sequence of length n_samples
             Left argument of the returned kernel k(X, Y)
 
         Returns
@@ -401,6 +406,27 @@ class StationaryKernelMixin:
     def is_stationary(self):
         """Returns whether the kernel is stationary. """
         return True
+
+
+class VectorOnlyKernelMixin:
+    """Mixin for kernels which operate on fixed-length feature vectors
+
+    .. versionadded:: TBD
+    """
+    def vector_X_only(self):
+        """whether the kernel only works on fixed-length feature vectors."""
+        return True
+
+
+class StructureOrGenericKernelMixin:
+    """Mixin for kernels which operate on discrete structures
+       such as sequences, trees, and graphs
+
+    .. versionadded:: TBD
+    """
+    def vector_X_only(self):
+        """whether the kernel only works on fixed-length feature vectors."""
+        return False
 
 
 class CompoundKernel(Kernel):
@@ -481,12 +507,15 @@ class CompoundKernel(Kernel):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
+        X : sequence of length n_samples_X
             Left argument of the returned kernel k(X, Y)
+            Could either be array-like with shape = (n_samples_X, n_features)
+            or a list of objects.
 
-        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+        Y : sequence of length n_samples_Y
             Right argument of the returned kernel k(X, Y). If None, k(X, X)
-            if evaluated instead.
+            is evaluated instead. Y could either be array-like with
+            shape = (n_samples_Y, n_features) or a list of objects.
 
         eval_gradient : bool (optional, default=False)
             Determines whether the gradient with respect to the kernel
@@ -524,6 +553,10 @@ class CompoundKernel(Kernel):
         """Returns whether the kernel is stationary. """
         return np.all([kernel.is_stationary() for kernel in self.kernels])
 
+    def vector_X_only(self):
+        """Returns whether the kernel is defined on discrete structures. """
+        return np.any([kernel.vector_X_only() for kernel in self.kernels])
+
     def diag(self, X):
         """Returns the diagonal of the kernel k(X, X).
 
@@ -533,8 +566,9 @@ class CompoundKernel(Kernel):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
-            Left argument of the returned kernel k(X, Y)
+        X : sequence of length n_samples_X
+            Argument to the kernel. Could either be array-like with
+            shape = (n_samples_X, n_features) or a list of objects.
 
         Returns
         -------
@@ -646,6 +680,10 @@ class KernelOperator(Kernel):
         """Returns whether the kernel is stationary. """
         return self.k1.is_stationary() and self.k2.is_stationary()
 
+    def vector_X_only(self):
+        """Returns whether the kernel is stationary. """
+        return self.k1.vector_X_only() or self.k2.vector_X_only()
+
 
 class Sum(KernelOperator):
     """Sum-kernel k1 + k2 of two kernels k1 and k2.
@@ -670,12 +708,15 @@ class Sum(KernelOperator):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
+        X : sequence of length n_samples_X
             Left argument of the returned kernel k(X, Y)
+            Could either be array-like with shape = (n_samples_X, n_features)
+            or a list of objects.
 
-        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+        Y : sequence of length n_samples_Y
             Right argument of the returned kernel k(X, Y). If None, k(X, X)
-            if evaluated instead.
+            is evaluated instead. Y could either be array-like with
+            shape = (n_samples_Y, n_features) or a list of objects.
 
         eval_gradient : bool (optional, default=False)
             Determines whether the gradient with respect to the kernel
@@ -707,8 +748,9 @@ class Sum(KernelOperator):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
-            Left argument of the returned kernel k(X, Y)
+        X : sequence of length n_samples_X
+            Argument to the kernel. Could either be array-like with
+            shape = (n_samples_X, n_features) or a list of objects.
 
         Returns
         -------
@@ -744,12 +786,15 @@ class Product(KernelOperator):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
+        X : sequence of length n_samples_X
             Left argument of the returned kernel k(X, Y)
+            Could either be array-like with shape = (n_samples_X, n_features)
+            or a list of objects.
 
-        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+        Y : sequence of length n_samples_Y
             Right argument of the returned kernel k(X, Y). If None, k(X, X)
-            if evaluated instead.
+            is evaluated instead. Y could either be array-like with
+            shape = (n_samples_Y, n_features) or a list of objects.
 
         eval_gradient : bool (optional, default=False)
             Determines whether the gradient with respect to the kernel
@@ -782,8 +827,9 @@ class Product(KernelOperator):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
-            Left argument of the returned kernel k(X, Y)
+        X : sequence of length n_samples_X
+            Argument to the kernel. Could either be array-like with
+            shape = (n_samples_X, n_features) or a list of objects.
 
         Returns
         -------
@@ -896,12 +942,15 @@ class Exponentiation(Kernel):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
+        X : sequence of length n_samples_X
             Left argument of the returned kernel k(X, Y)
+            Could either be array-like with shape = (n_samples_X, n_features)
+            or a list of objects.
 
-        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+        Y : sequence of length n_samples_Y
             Right argument of the returned kernel k(X, Y). If None, k(X, X)
-            if evaluated instead.
+            is evaluated instead. Y could either be array-like with
+            shape = (n_samples_Y, n_features) or a list of objects.
 
         eval_gradient : bool (optional, default=False)
             Determines whether the gradient with respect to the kernel
@@ -935,8 +984,9 @@ class Exponentiation(Kernel):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
-            Left argument of the returned kernel k(X, Y)
+        X : sequence of length n_samples_X
+            Argument to the kernel. Could either be array-like with
+            shape = (n_samples_X, n_features) or a list of objects.
 
         Returns
         -------
@@ -952,8 +1002,13 @@ class Exponentiation(Kernel):
         """Returns whether the kernel is stationary. """
         return self.kernel.is_stationary()
 
+    def vector_X_only(self):
+        """Returns whether the kernel is defined on discrete structures. """
+        return self.kernel.vector_X_only()
 
-class ConstantKernel(StationaryKernelMixin, Kernel):
+
+class ConstantKernel(StationaryKernelMixin, StructureOrGenericKernelMixin,
+                     Kernel):
     """Constant kernel.
 
     Can be used as part of a product-kernel where it scales the magnitude of
@@ -988,12 +1043,15 @@ class ConstantKernel(StationaryKernelMixin, Kernel):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
+        X : sequence of length n_samples_X
             Left argument of the returned kernel k(X, Y)
+            Could either be array-like with shape = (n_samples_X, n_features)
+            or a list of objects.
 
-        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+        Y : sequence of length n_samples_Y
             Right argument of the returned kernel k(X, Y). If None, k(X, X)
-            if evaluated instead.
+            is evaluated instead. Y could either be array-like with
+            shape = (n_samples_Y, n_features) or a list of objects.
 
         eval_gradient : bool (optional, default=False)
             Determines whether the gradient with respect to the kernel
@@ -1009,21 +1067,20 @@ class ConstantKernel(StationaryKernelMixin, Kernel):
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
-        X = np.atleast_2d(X)
         if Y is None:
             Y = X
         elif eval_gradient:
             raise ValueError("Gradient can only be evaluated when Y is None.")
 
-        K = np.full((X.shape[0], Y.shape[0]), self.constant_value,
+        K = np.full((_num_samples(X), _num_samples(Y)), self.constant_value,
                     dtype=np.array(self.constant_value).dtype)
         if eval_gradient:
             if not self.hyperparameter_constant_value.fixed:
-                return (K, np.full((X.shape[0], X.shape[0], 1),
+                return (K, np.full((_num_samples(X), _num_samples(X), 1),
                                    self.constant_value,
                                    dtype=np.array(self.constant_value).dtype))
             else:
-                return K, np.empty((X.shape[0], X.shape[0], 0))
+                return K, np.empty((_num_samples(X), _num_samples(X), 0))
         else:
             return K
 
@@ -1036,22 +1093,24 @@ class ConstantKernel(StationaryKernelMixin, Kernel):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
-            Left argument of the returned kernel k(X, Y)
+        X : sequence of length n_samples_X
+            Argument to the kernel. Could either be array-like with
+            shape = (n_samples_X, n_features) or a list of objects.
 
         Returns
         -------
         K_diag : array, shape (n_samples_X,)
             Diagonal of kernel k(X, X)
         """
-        return np.full(X.shape[0], self.constant_value,
+        return np.full(_num_samples(X), self.constant_value,
                        dtype=np.array(self.constant_value).dtype)
 
     def __repr__(self):
         return "{0:.3g}**2".format(np.sqrt(self.constant_value))
 
 
-class WhiteKernel(StationaryKernelMixin, Kernel):
+class WhiteKernel(StationaryKernelMixin, StructureOrGenericKernelMixin,
+                  Kernel):
     """White kernel.
 
     The main use-case of this kernel is as part of a sum-kernel where it
@@ -1085,12 +1144,15 @@ class WhiteKernel(StationaryKernelMixin, Kernel):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
+        X : sequence of length n_samples_X
             Left argument of the returned kernel k(X, Y)
+            Could either be array-like with shape = (n_samples_X, n_features)
+            or a list of objects.
 
-        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+        Y : sequence of length n_samples_Y
             Right argument of the returned kernel k(X, Y). If None, k(X, X)
-            if evaluated instead.
+            is evaluated instead. Y could either be array-like with
+            shape = (n_samples_Y, n_features) or a list of objects.
 
         eval_gradient : bool (optional, default=False)
             Determines whether the gradient with respect to the kernel
@@ -1106,22 +1168,21 @@ class WhiteKernel(StationaryKernelMixin, Kernel):
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
-        X = np.atleast_2d(X)
         if Y is not None and eval_gradient:
             raise ValueError("Gradient can only be evaluated when Y is None.")
 
         if Y is None:
-            K = self.noise_level * np.eye(X.shape[0])
+            K = self.noise_level * np.eye(_num_samples(X))
             if eval_gradient:
                 if not self.hyperparameter_noise_level.fixed:
                     return (K, self.noise_level
-                            * np.eye(X.shape[0])[:, :, np.newaxis])
+                            * np.eye(_num_samples(X))[:, :, np.newaxis])
                 else:
-                    return K, np.empty((X.shape[0], X.shape[0], 0))
+                    return K, np.empty((_num_samples(X), _num_samples(X), 0))
             else:
                 return K
         else:
-            return np.zeros((X.shape[0], Y.shape[0]))
+            return np.zeros((_num_samples(X), _num_samples(Y)))
 
     def diag(self, X):
         """Returns the diagonal of the kernel k(X, X).
@@ -1132,15 +1193,16 @@ class WhiteKernel(StationaryKernelMixin, Kernel):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
-            Left argument of the returned kernel k(X, Y)
+        X : sequence of length n_samples_X
+            Argument to the kernel. Could either be array-like with
+            shape = (n_samples_X, n_features) or a list of objects.
 
         Returns
         -------
         K_diag : array, shape (n_samples_X,)
             Diagonal of kernel k(X, X)
         """
-        return np.full(X.shape[0], self.noise_level,
+        return np.full(_num_samples(X), self.noise_level,
                        dtype=np.array(self.noise_level).dtype)
 
     def __repr__(self):
@@ -1148,7 +1210,8 @@ class WhiteKernel(StationaryKernelMixin, Kernel):
                                                  self.noise_level)
 
 
-class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
+class RBF(StationaryKernelMixin, NormalizedKernelMixin, VectorOnlyKernelMixin,
+          Kernel):
     """Radial-basis function kernel (aka squared-exponential kernel).
 
     The RBF kernel is a stationary kernel. It is also known as the
@@ -1412,7 +1475,8 @@ class Matern(RBF):
                 self.nu)
 
 
-class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
+class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin,
+                        VectorOnlyKernelMixin, Kernel):
     """Rational Quadratic kernel.
 
     The RationalQuadratic kernel can be seen as a scale mixture (an infinite
@@ -1528,7 +1592,8 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
             self.__class__.__name__, self.alpha, self.length_scale)
 
 
-class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
+class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin,
+                     VectorOnlyKernelMixin, Kernel):
     r"""Exp-Sine-Squared kernel.
 
     The ExpSineSquared kernel allows modeling periodic functions. It is
@@ -1641,7 +1706,7 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
             self.__class__.__name__, self.length_scale, self.periodicity)
 
 
-class DotProduct(Kernel):
+class DotProduct(VectorOnlyKernelMixin, Kernel):
     r"""Dot-Product kernel.
 
     The DotProduct kernel is non-stationary and can be obtained from linear
@@ -1763,7 +1828,7 @@ def _approx_fprime(xk, f, epsilon, args=()):
     return grad
 
 
-class PairwiseKernel(Kernel):
+class PairwiseKernel(VectorOnlyKernelMixin, Kernel):
     """Wrapper for kernels in sklearn.metrics.pairwise.
 
     A thin wrapper around the functionality of the kernels in
