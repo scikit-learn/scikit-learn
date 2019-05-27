@@ -448,16 +448,24 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         self.n_jobs = n_jobs
 
     def fit(self, X, y=None):
-        """Creates an affinity matrix for X using the selected affinity,
-        then applies spectral clustering to this affinity matrix.
+        """Perform spectral clustering from features, or affinity matrix.
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape (n_samples, n_features)
-            OR, if affinity==`precomputed`, a precomputed affinity
-            matrix of shape (n_samples, n_samples)
+        X : array-like or sparse matrix, shape (n_samples, n_features), or \
+            array-like, shape (n_samples, n_samples)
+            Training instances to cluster, or similarities / affinities between
+            instances if ``affinity='precomputed'``. If a sparse matrix is
+            provided in a format other than ``csr_matrix``, ``csc_matrix``,
+            or ``coo_matrix``, it will be converted into a sparse
+            ``csr_matrix``.
 
         y : Ignored
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        self
 
         """
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
@@ -497,6 +505,30 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
                                            eigen_tol=self.eigen_tol,
                                            assign_labels=self.assign_labels)
         return self
+
+    def fit_predict(self, X, y=None):
+        """Perform spectral clustering from features, or affinity matrix,
+        and return cluster labels.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape (n_samples, n_features), or \
+            array-like, shape (n_samples, n_samples)
+            Training instances to cluster, or similarities / affinities between
+            instances if ``affinity='precomputed'``. If a sparse matrix is
+            provided in a format other than ``csr_matrix``, ``csc_matrix``,
+            or ``coo_matrix``, it will be converted into a sparse
+            ``csr_matrix``.
+
+        y : Ignored
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        labels : ndarray, shape (n_samples,)
+            Cluster labels.
+        """
+        return super().fit_predict(X, y)
 
     @property
     def _pairwise(self):
