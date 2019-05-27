@@ -384,8 +384,8 @@ class DBSCAN(BaseEstimator, ClusterMixin):
 
         Returns
         -------
-        y : ndarray, shape (n_samples,)
-            Cluster labels.
+        labels : ndarray, shape (n_samples,)
+            Cluster labels. Noisy samples are given the label -1.
         """
         self.fit(X, sample_weight=sample_weight)
         return self.labels_

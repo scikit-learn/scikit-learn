@@ -402,7 +402,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
         Returns
         -------
         labels : ndarray, shape (n_samples,)
-            Index of the cluster each sample belongs to.
+            Cluster labels.
         """
         check_is_fitted(self, "cluster_centers_indices_")
         if not hasattr(self, "cluster_centers_"):
@@ -434,7 +434,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
 
         Returns
         -------
-        y : ndarray, shape (n_samples,)
-            Index of the cluster each sample belongs to.
+        labels : ndarray, shape (n_samples,)
+            Cluster labels.
         """
         return super().fit_predict(X, y)

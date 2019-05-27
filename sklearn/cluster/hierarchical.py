@@ -891,7 +891,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
 
         Returns
         -------
-        y : ndarray, shape (n_samples,)
+        labels : ndarray, shape (n_samples,)
             Cluster labels.
         """
         return super().fit_predict(X, y)
