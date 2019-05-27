@@ -435,6 +435,7 @@ cdef class Splitter:
         best_split.gain = -1.
         sum_gradient_left, sum_hessian_left = 0., 0.
         n_samples_left = 0
+        gain = -negative_loss(sum_gradients, sum_hessians, l2_regularization)
 
         for bin_idx in range(self.actual_n_bins[feature_idx]):
             n_samples_left += histograms[feature_idx, bin_idx].count
@@ -462,7 +463,7 @@ cdef class Splitter:
                 # won't get any better (hessians are > 0 since loss is convex)
                 break
 
-            gain = _split_gain(sum_gradient_left, sum_hessian_left,
+            gain += _split_gain(sum_gradient_left, sum_hessian_left,
                                sum_gradient_right, sum_hessian_right,
                                sum_gradients, sum_hessians,
                                self.l2_regularization)
@@ -500,11 +501,10 @@ cdef inline Y_DTYPE_C _split_gain(
     """
     cdef:
         Y_DTYPE_C gain
-    gain = negative_loss(sum_gradient_left, sum_hessian_left,
+    gain += negative_loss(sum_gradient_left, sum_hessian_left,
                          l2_regularization)
     gain += negative_loss(sum_gradient_right, sum_hessian_right,
                           l2_regularization)
-    gain -= negative_loss(sum_gradients, sum_hessians, l2_regularization)
     return gain
 
 cdef inline Y_DTYPE_C negative_loss(
