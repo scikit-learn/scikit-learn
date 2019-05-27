@@ -44,6 +44,13 @@ Changelog
   `drop` parameter was not reflected in `get_feature_names`. :pr:`13894`
   by :user:`James Myatt <jamesmyatt>`.
 
+:mod:`sklearn.tree`
+................................
+
+- |Fix| Fixed an issue with :func:`plot_tree` where it display
+  entropy calculations even for `gini` criterion in DecisionTreeClassifiers.
+  :pr:`13947` by :user:`Frank Hoang <fhoang7>`.
+
 :mod:`sklearn.utils.sparsefuncs`
 ................................
 
@@ -885,10 +892,6 @@ Support for Python 3.4 and below has been officially dropped.
   ``max_depth`` were both specified by the user. Please note that this also
   affects all ensemble methods using decision trees.
   :pr:`12344` by :user:`Adrin Jalali <adrinjalali>`.
-  
-- |Fix| Fixed an issue with :class:`MLPTreeExporter` where it display
-  entropy calculations even for `gini` criterion in DecisionTreeClassifiers.
-  :pr:`13947` by :user:`Frank Hoang <fhoang7>`.
 
 :mod:`sklearn.utils`
 ....................
