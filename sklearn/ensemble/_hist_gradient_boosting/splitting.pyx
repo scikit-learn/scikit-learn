@@ -435,7 +435,7 @@ cdef class Splitter:
         best_split.gain = -1.
         sum_gradient_left, sum_hessian_left = 0., 0.
         n_samples_left = 0
-        gain = -negative_loss(sum_gradients, sum_hessians, self.l2_regularization)
+        gain = -negative_loss(sum_gradients, sum_hessians, l2_regularization)
 
         for bin_idx in range(self.actual_n_bins[feature_idx]):
             n_samples_left += histograms[feature_idx, bin_idx].count
