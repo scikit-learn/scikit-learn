@@ -406,7 +406,7 @@ cdef class Splitter:
         return best_feature_idx
 
     cdef split_info_struct _find_best_bin_to_split_helper(
-            self,
+            Splitter self,
             unsigned int feature_idx,
             const hist_struct [:, ::1] histograms,  # IN
             unsigned int n_samples,
