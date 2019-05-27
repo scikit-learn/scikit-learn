@@ -247,6 +247,6 @@ estimators.append(("KNeighborsRegressor", KNeighborsRegressor))
 estimators.append(("SVR", SVR))
 estimators.append(("RandomForestRegressor", RandomForestRegressor))
 
-train_sizes = np.geomspace(1e-3, 1.0, 8)
+train_sizes = np.logspace(np.log10(1e-3), np.log10(1))
 fig = plot_learning_curve_times(estimators, X, y, train_sizes, cv=cv)
 fig.show()
