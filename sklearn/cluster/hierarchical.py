@@ -773,7 +773,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         return self.n_connected_components_
 
     def fit(self, X, y=None):
-        """Fit the hierarchical clustering from features or distance matrix.
+        """Fit the hierarchical clustering from features, or distance matrix.
 
         Parameters
         ----------

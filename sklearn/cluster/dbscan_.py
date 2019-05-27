@@ -329,7 +329,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         self.n_jobs = n_jobs
 
     def fit(self, X, y=None, sample_weight=None):
-        """Perform DBSCAN clustering from features or distance matrix.
+        """Perform DBSCAN clustering from features, or distance matrix.
 
         Parameters
         ----------

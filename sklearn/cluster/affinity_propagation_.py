@@ -351,7 +351,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
         return self.affinity == "precomputed"
 
     def fit(self, X, y=None):
-        """Fit the clustering from features or affinity matrix.
+        """Fit the clustering from features, or affinity matrix.
 
         Parameters
         ----------
