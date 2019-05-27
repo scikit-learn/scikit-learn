@@ -337,7 +337,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
             (n_samples, n_samples)
             Training instances to cluster, or distances between instances if
             ``metric='precomputed'``. If a sparse matrix is provided, it will
-            be converted into a sparse ``csr_matrix`̀ .
+            be converted into a sparse ``csr_matrix``.
 
         sample_weight : array, shape (n_samples,), optional
             Weight of each sample, such that a sample with a weight of at least
@@ -371,7 +371,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
             (n_samples, n_samples)
             Training instances to cluster, or distances between instances if
             ``metric='precomputed'``. If a sparse matrix is provided, it will
-            be converted into a sparse ``csr_matrix`̀ .
+            be converted into a sparse ``csr_matrix``.
 
         sample_weight : array, shape (n_samples,), optional
             Weight of each sample, such that a sample with a weight of at least
