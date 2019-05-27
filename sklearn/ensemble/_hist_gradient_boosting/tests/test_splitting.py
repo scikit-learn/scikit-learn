@@ -37,6 +37,7 @@ def test_histogram_split(n_bins):
                                      dtype=np.uint32)
             has_missing_values = np.array([False] * X_binned.shape[1],
                                           dtype=np.uint8)
+            support_missing_values = has_missing_values
             builder = HistogramBuilder(X_binned,
                                        n_bins,
                                        all_gradients,
@@ -46,6 +47,7 @@ def test_histogram_split(n_bins):
                                 n_bins,
                                 actual_n_bins,
                                 has_missing_values,
+                                support_missing_values,
                                 l2_regularization,
                                 min_hessian_to_split,
                                 min_samples_leaf, min_gain_to_split,
@@ -101,11 +103,13 @@ def test_gradient_and_hessian_sanity(constant_hessian):
     actual_n_bins = np.array([n_bins] * X_binned.shape[1],
                              dtype=np.uint32)
     has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
+    support_missing_values = has_missing_values
     builder = HistogramBuilder(X_binned, n_bins, all_gradients,
                                all_hessians, constant_hessian)
     splitter = Splitter(X_binned, n_bins, actual_n_bins, has_missing_values,
-                        l2_regularization, min_hessian_to_split,
-                        min_samples_leaf, min_gain_to_split, constant_hessian)
+                        support_missing_values, l2_regularization,
+                        min_hessian_to_split, min_samples_leaf,
+                        min_gain_to_split, constant_hessian)
 
     hists_parent = builder.compute_histograms_brute(sample_indices)
     si_parent = splitter.find_node_split(sample_indices, hists_parent,
@@ -198,13 +202,14 @@ def test_split_indices():
     actual_n_bins = np.array([n_bins] * X_binned.shape[1],
                              dtype=np.uint32)
     has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
+    support_missing_values = has_missing_values
     builder = HistogramBuilder(X_binned, n_bins,
                                all_gradients, all_hessians,
                                hessians_are_constant)
     splitter = Splitter(X_binned, n_bins, actual_n_bins, has_missing_values,
-                        l2_regularization, min_hessian_to_split,
-                        min_samples_leaf, min_gain_to_split,
-                        hessians_are_constant)
+                        support_missing_values, l2_regularization,
+                        min_hessian_to_split, min_samples_leaf,
+                        min_gain_to_split, hessians_are_constant)
 
     assert np.all(sample_indices == splitter.partition)
 
@@ -255,12 +260,13 @@ def test_min_gain_to_split():
     actual_n_bins = np.array([n_bins] * X_binned.shape[1],
                              dtype=np.uint32)
     has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
+    support_missing_values = has_missing_values
     builder = HistogramBuilder(X_binned, n_bins, all_gradients,
                                all_hessians, hessians_are_constant)
     splitter = Splitter(X_binned, n_bins, actual_n_bins, has_missing_values,
-                        l2_regularization, min_hessian_to_split,
-                        min_samples_leaf, min_gain_to_split,
-                        hessians_are_constant)
+                        support_missing_values, l2_regularization,
+                        min_hessian_to_split, min_samples_leaf,
+                        min_gain_to_split, hessians_are_constant)
 
     histograms = builder.compute_histograms_brute(sample_indices)
     split_info = splitter.find_node_split(sample_indices, histograms,
@@ -324,6 +330,7 @@ def test_splitting_missing_values(X_binned, all_gradients,
     X_binned = np.asfortranarray(X_binned)
     all_gradients = np.array(all_gradients, dtype=G_H_DTYPE)
     has_missing_values = np.array([has_missing_values], dtype=np.uint8)
+    support_missing_values = has_missing_values
     all_hessians = np.ones(1, dtype=G_H_DTYPE)
     sum_gradients = all_gradients.sum()
     sum_hessians = 1 * n_samples
@@ -334,9 +341,9 @@ def test_splitting_missing_values(X_binned, all_gradients,
                                all_gradients, all_hessians,
                                hessians_are_constant)
     splitter = Splitter(X_binned, max_bins, actual_n_bins, has_missing_values,
-                        l2_regularization, min_hessian_to_split,
-                        min_samples_leaf, min_gain_to_split,
-                        hessians_are_constant)
+                        support_missing_values, l2_regularization,
+                        min_hessian_to_split, min_samples_leaf,
+                        min_gain_to_split, hessians_are_constant)
 
     histograms = builder.compute_histograms_brute(sample_indices)
     split_info = splitter.find_node_split(sample_indices, histograms,

@@ -103,6 +103,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self._validate_parameters()
         self.n_features_ = X.shape[1]  # used for validation in predict()
 
+        # support_missing_values_ indicates whether the first bin should be
+        # reserved for missing values. In order for the training and
+        # validation data to be treated equally, we need to determine this
+        # before the train/val split.
+        self.support_missing_values_ = np.isnan(X).any(axis=0).astype(np.uint8)
+
         # we need this stateful variable to tell raw_predict() that it was
         # called from fit() (this current method), and that the data it has
         # received is pre-binned.
@@ -128,9 +134,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             X_train, X_val, y_train, y_val = train_test_split(
                 X, y, test_size=self.validation_fraction, stratify=stratify,
                 random_state=rng)
+            has_missing_values = np.isnan(X_train).any(axis=0).astype(np.uint8)
         else:
             X_train, y_train = X, y
             X_val, y_val = None, None
+            has_missing_values = self.support_missing_values_
 
         # Bin the data
         self.bin_mapper_ = _BinMapper(max_bins=self.max_bins, random_state=rng)
@@ -243,7 +251,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     X_binned_train, gradients[k, :], hessians[k, :],
                     max_bins=self.max_bins,
                     actual_n_bins=self.bin_mapper_.actual_n_bins_,
-                    has_missing_values=self.bin_mapper_.has_missing_values_,
+                    has_missing_values=has_missing_values,
+                    support_missing_values=self.support_missing_values_,
                     max_leaf_nodes=self.max_leaf_nodes,
                     max_depth=self.max_depth,
                     min_samples_leaf=self.min_samples_leaf,
@@ -276,7 +285,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                             raw_predictions_val[k, :] += (
                                 pred.predict_binned(
                                     X_binned_val,
-                                    self.bin_mapper_.has_missing_values_)
+                                    self.support_missing_values_)
                             )
 
                     should_early_stop = self._check_early_stopping_loss(
@@ -396,13 +405,21 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             print("Binning {:.3f} GB of {} data: ".format(
                 X.nbytes / 1e9, description), end="", flush=True)
         tic = time()
+
         if is_training_data:
-            X_binned = self.bin_mapper_.fit_transform(X)  # F-aligned array
-        else:
-            X_binned = self.bin_mapper_.transform(X)  # F-aligned array
+            # Fit X. If missing values were found in the original data (before
+            # any train/val split), the first bin is reserved for missing
+            # values, even if there aren't missing value in the training data.
+            self.bin_mapper_.fit(
+                X, support_missing_values=self.support_missing_values_)
+
+        X_binned = self.bin_mapper_.transform(X)  # F-aligned array
+
+        if not is_training_data:
             # We convert the array to C-contiguous since predicting is faster
             # with this layout (training is faster on F-arrays though)
             X_binned = np.ascontiguousarray(X_binned)
+
         toc = time()
         if self.verbose:
             duration = toc - tic
@@ -483,7 +500,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 if is_binned:
                     predict = partial(
                         predictor.predict_binned,
-                        has_missing_values=self.bin_mapper_.has_missing_values_
+                        support_missing_values=self.support_missing_values_
                     )
                 else:
                     predict = predictor.predict

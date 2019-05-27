@@ -310,10 +310,15 @@ def test_init_parameters_validation():
                    min_hessian_to_split=-1)
 
 
-def test_missing_value_predict_only():
+@pytest.mark.parametrize('support_missing_values', [True, False])
+def test_missing_value_predict_only(support_missing_values):
     # Make sure that missing values are supported at predict time even if they
-    # were not encountered during fit time: the missing values are assigned to
-    # whichever child has the most samples
+    # were not encountered in the training data: the missing values are
+    # assigned to whichever child has the most samples.
+
+    # Passing support_missing_values=True tests the case where missing values
+    # were in the original data (train + val), but not present anymore in the
+    # tradata after the train/val split.
 
     rng = np.random.RandomState(0)
     n_samples = 100
@@ -323,7 +328,9 @@ def test_missing_value_predict_only():
     gradients = rng.normal(size=n_samples).astype(G_H_DTYPE)
     hessians = np.ones(shape=1, dtype=G_H_DTYPE)
 
-    grower = TreeGrower(X_binned, gradients, hessians, min_samples_leaf=5)
+    grower = TreeGrower(X_binned, gradients, hessians, min_samples_leaf=5,
+                        has_missing_values=False,
+                        support_missing_values=support_missing_values)
     grower.grow()
 
     predictor = grower.make_predictor()

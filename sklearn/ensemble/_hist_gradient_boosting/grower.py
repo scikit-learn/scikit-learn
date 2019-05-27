@@ -145,8 +145,15 @@ class TreeGrower:
         have the same number of bins. If None, all features are considered to
         have ``max_bins`` bins.
     has_missing_values : ndarray of bool or bool, optional (default=False)
-        Whether each feature contains missing values. If it's a bool, the same
-        values is used for all features.
+        Whether each feature contains missing values (in the training data).
+        If it's a bool, the same values is used for all features.
+    support_missing_values : ndarray of bool or bool, optional (default=False)
+        Whether the first bin is reserved for missing values, for each
+        feature. Naturally, has_missing_values implies
+        support_missing_values. However, support_missing_values might True
+        while has_missing_values is False, in the case where there are
+        missing values in the training data before the train/val split, but
+        not after. If it's a bool, the same values is used for all features.
     l2_regularization : float, optional (default=0)
         The L2 regularization parameter.
     min_hessian_to_split : float, optional (default=1e-3)
@@ -160,8 +167,8 @@ class TreeGrower:
     def __init__(self, X_binned, gradients, hessians, max_leaf_nodes=None,
                  max_depth=None, min_samples_leaf=20, min_gain_to_split=0.,
                  max_bins=256, actual_n_bins=None, has_missing_values=False,
-                 l2_regularization=0., min_hessian_to_split=1e-3,
-                 shrinkage=1.):
+                 support_missing_values=False, l2_regularization=0.,
+                 min_hessian_to_split=1e-3, shrinkage=1.):
 
         self._validate_parameters(X_binned, max_leaf_nodes, max_depth,
                                   min_samples_leaf, min_gain_to_split,
@@ -181,13 +188,19 @@ class TreeGrower:
             has_missing_values = [has_missing_values] * actual_n_bins.shape[0]
         has_missing_values = np.array(has_missing_values, dtype=np.uint8)
 
+        if isinstance(support_missing_values, bool):
+            support_missing_values = \
+                [support_missing_values] * actual_n_bins.shape[0]
+        support_missing_values = np.array(support_missing_values,
+                                          dtype=np.uint8)
+
         hessians_are_constant = hessians.shape[0] == 1
         self.histogram_builder = HistogramBuilder(
             X_binned, max_bins, gradients, hessians, hessians_are_constant)
         self.splitter = Splitter(
             X_binned, max_bins, actual_n_bins, has_missing_values,
-            l2_regularization, min_hessian_to_split, min_samples_leaf,
-            min_gain_to_split, hessians_are_constant)
+            support_missing_values, l2_regularization, min_hessian_to_split,
+            min_samples_leaf, min_gain_to_split, hessians_are_constant)
         self.max_leaf_nodes = max_leaf_nodes
         self.max_bins = max_bins
         self.has_missing_values = has_missing_values

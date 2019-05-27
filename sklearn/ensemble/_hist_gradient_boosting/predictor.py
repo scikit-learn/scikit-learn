@@ -63,18 +63,16 @@ class TreePredictor:
         _predict_from_numeric_data(self.nodes, X, out)
         return out
 
-    def predict_binned(self, X, has_missing_values):
+    def predict_binned(self, X, support_missing_values):
         """Predict raw values for binned data.
 
         Parameters
         ----------
         X : ndarray, shape (n_samples, n_features)
             The input samples.
-        has_missing_values : ndarray, shape (n_features,)
-            Whether each feature has missing values (at fit time).
-            This parameter is only needed for predict_binned(): we need to know
-            whether the first bin should be treated as the bin for missing
-            data.
+        support_missing_values : ndarray, shape (n_features,)
+            For each feature, indicates whether the first bin is reserved
+            for missing values.
 
         Returns
         -------
@@ -82,5 +80,5 @@ class TreePredictor:
             The raw predicted values.
         """
         out = np.empty(X.shape[0], dtype=Y_DTYPE)
-        _predict_from_binned_data(self.nodes, X, has_missing_values, out)
+        _predict_from_binned_data(self.nodes, X, support_missing_values, out)
         return out

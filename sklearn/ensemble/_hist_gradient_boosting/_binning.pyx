@@ -17,7 +17,7 @@ from .types cimport X_DTYPE_C, X_BINNED_DTYPE_C
 
 cpdef _map_to_bins(const X_DTYPE_C [:, :] data,
                    list binning_thresholds,
-                   const unsigned char [:] has_missing_values,
+                   const unsigned char [:] support_missing_values,
                    X_BINNED_DTYPE_C [::1, :] binned):
     """Bin numerical values to discrete integer-coded levels.
 
@@ -28,8 +28,9 @@ cpdef _map_to_bins(const X_DTYPE_C [:, :] data,
     binning_thresholds : list of arrays
         For each feature, stores the increasing numeric values that are
         used to separate the bins.
-    has_missing_values : ndarray, shape (n_features,)
-        Whether each feature has missing values.
+    support_missing_values: ndarray, shape (n_features,)
+        For each feature, indicate whether the first bin is reserved for
+        missing values.
     binned : ndarray, shape (n_samples, n_features)
         Output array, must be fortran aligned.
     """
@@ -40,13 +41,13 @@ cpdef _map_to_bins(const X_DTYPE_C [:, :] data,
 
         _map_num_col_to_bins(data[:, feature_idx],
                              binning_thresholds[feature_idx],
-                             has_missing_values[feature_idx],
+                             support_missing_values[feature_idx],
                              binned[:, feature_idx])
 
 
 cpdef void _map_num_col_to_bins(const X_DTYPE_C [:] data,
                                 const X_DTYPE_C [:] binning_thresholds,
-                                const unsigned char has_missing_values,
+                                const unsigned char support_missing_values,
                                 X_BINNED_DTYPE_C [:] binned):
     """Binary search to find the bin index for each value in the data."""
     cdef:
@@ -57,12 +58,13 @@ cpdef void _map_num_col_to_bins(const X_DTYPE_C [:] data,
 
     for i in prange(data.shape[0], schedule='static', nogil=True):
 
-        if has_missing_values and isnan(data[i]):
-            # unkown values are mapped to first bin
+        if isnan(data[i]):
+            # unkown values are mapped to first bin. For this to be correct,
+            # support_missing_values must have been correctly set at fit time.
             binned[i] = 0
         else:
             # for known values, use binary search
-            left, right = has_missing_values, binning_thresholds.shape[0]
+            left, right = support_missing_values, binning_thresholds.shape[0]
             while left < right:
                 middle = (right + left - 1) // 2
                 if data[i] <= binning_thresholds[middle]:
