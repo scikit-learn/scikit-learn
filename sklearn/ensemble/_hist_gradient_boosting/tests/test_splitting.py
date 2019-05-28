@@ -44,7 +44,6 @@ def test_histogram_split(n_bins):
                                        all_hessians,
                                        hessians_are_constant)
             splitter = Splitter(X_binned,
-                                n_bins,
                                 actual_n_bins,
                                 has_missing_values,
                                 support_missing_values,
@@ -106,7 +105,7 @@ def test_gradient_and_hessian_sanity(constant_hessian):
     support_missing_values = has_missing_values
     builder = HistogramBuilder(X_binned, n_bins, all_gradients,
                                all_hessians, constant_hessian)
-    splitter = Splitter(X_binned, n_bins, actual_n_bins, has_missing_values,
+    splitter = Splitter(X_binned, actual_n_bins, has_missing_values,
                         support_missing_values, l2_regularization,
                         min_hessian_to_split, min_samples_leaf,
                         min_gain_to_split, constant_hessian)
@@ -206,7 +205,7 @@ def test_split_indices():
     builder = HistogramBuilder(X_binned, n_bins,
                                all_gradients, all_hessians,
                                hessians_are_constant)
-    splitter = Splitter(X_binned, n_bins, actual_n_bins, has_missing_values,
+    splitter = Splitter(X_binned, actual_n_bins, has_missing_values,
                         support_missing_values, l2_regularization,
                         min_hessian_to_split, min_samples_leaf,
                         min_gain_to_split, hessians_are_constant)
@@ -263,7 +262,7 @@ def test_min_gain_to_split():
     support_missing_values = has_missing_values
     builder = HistogramBuilder(X_binned, n_bins, all_gradients,
                                all_hessians, hessians_are_constant)
-    splitter = Splitter(X_binned, n_bins, actual_n_bins, has_missing_values,
+    splitter = Splitter(X_binned, actual_n_bins, has_missing_values,
                         support_missing_values, l2_regularization,
                         min_hessian_to_split, min_samples_leaf,
                         min_gain_to_split, hessians_are_constant)
@@ -340,7 +339,7 @@ def test_splitting_missing_values(X_binned, all_gradients,
     builder = HistogramBuilder(X_binned, max_bins,
                                all_gradients, all_hessians,
                                hessians_are_constant)
-    splitter = Splitter(X_binned, max_bins, actual_n_bins, has_missing_values,
+    splitter = Splitter(X_binned, actual_n_bins, has_missing_values,
                         support_missing_values, l2_regularization,
                         min_hessian_to_split, min_samples_leaf,
                         min_gain_to_split, hessians_are_constant)

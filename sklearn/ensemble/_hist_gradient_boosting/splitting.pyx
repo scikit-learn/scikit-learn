@@ -95,9 +95,6 @@ cdef class Splitter:
     ----------
     X_binned : ndarray of int, shape (n_samples, n_features)
         The binned input samples. Must be Fortran-aligned.
-    max_bins : int
-        The maximum number of bins. Used to define the shape of the
-        histograms.
     actual_n_bins : ndarray, shape (n_features,)
         The actual number of bins needed for each feature, which is lower or
         equal to max_bins.
@@ -127,7 +124,6 @@ cdef class Splitter:
     cdef public:
         const X_BINNED_DTYPE_C [::1, :] X_binned
         unsigned int n_features
-        unsigned int max_bins
         unsigned int [::1] actual_n_bins
         unsigned char [::1] has_missing_values
         unsigned char [::1] support_missing_values
@@ -143,7 +139,6 @@ cdef class Splitter:
 
     def __init__(self,
                  const X_BINNED_DTYPE_C [::1, :] X_binned,
-                 unsigned int max_bins,
                  np.ndarray[np.uint32_t] actual_n_bins,
                  np.ndarray[np.uint8_t] has_missing_values,
                  np.ndarray[np.uint8_t] support_missing_values,
@@ -155,9 +150,6 @@ cdef class Splitter:
 
         self.X_binned = X_binned
         self.n_features = X_binned.shape[1]
-        # Note: all histograms will have <max_bins> bins, but some of the
-        # last bins may be unused if actual_n_bins[f] < max_bins
-        self.max_bins = max_bins
         self.actual_n_bins = actual_n_bins
         self.has_missing_values = has_missing_values
         self.support_missing_values = support_missing_values
