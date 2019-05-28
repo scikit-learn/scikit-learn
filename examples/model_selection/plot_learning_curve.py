@@ -199,7 +199,7 @@ def plot_learning_curve_times(estimators, X, y, train_sizes,
 
     axes[0].set_title("Learning Curves computation times")
     axes[0].set_xlabel("Training examples")
-    axes[0].set_ylabel("Training time (s)")
+    axes[0].set_ylabel("Fit times (s)")
     axes[0].grid()
 
     axes[1].set_title("Estimators fit times with scores")
