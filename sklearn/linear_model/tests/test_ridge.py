@@ -394,12 +394,12 @@ def _make_sparse_offset_regression(
 
 
 @pytest.mark.parametrize(
-    'solver', ['svd', 'sag', 'sparse_cg', 'lsqr', 'saga', 'ridgecv'])
+    'solver', ['cholesky', 'sag', 'sparse_cg', 'lsqr', 'saga', 'ridgecv'])
 @pytest.mark.parametrize(
     'n_samples,dtype,proportion_nonzero',
     [(20, 'float32', .1), (40, 'float32', 1.), (20, 'float64', .2)])
 @pytest.mark.parametrize('sparse_X', [True, False])
-@pytest.mark.parametrize('seed', np.arange(3))
+@pytest.mark.parametrize('seed', np.arange(300))
 def test_solver_consistency(
         solver, proportion_nonzero, n_samples, dtype, sparse_X, seed):
     accept_sparse = ['sparse_cg', 'ridgecv']
@@ -410,8 +410,8 @@ def test_solver_consistency(
     X, y = _make_sparse_offset_regression(
         bias=10, n_features=30, proportion_nonzero=proportion_nonzero,
         noise=noise, random_state=seed, n_samples=n_samples)
-    cholesky_ridge = Ridge(
-        solver='cholesky', normalize=True, alpha=alpha).fit(X, y)
+    svd_ridge = Ridge(
+        solver='svd', normalize=True, alpha=alpha).fit(X, y)
     X = X.astype(dtype)
     y = y.astype(dtype)
     if sparse_X:
@@ -422,9 +422,9 @@ def test_solver_consistency(
         ridge = Ridge(solver=solver, tol=1e-10, normalize=True, alpha=alpha)
     ridge.fit(X, y)
     assert_allclose(
-        ridge.coef_, cholesky_ridge.coef_, atol=1e-3, rtol=1e-3)
+        ridge.coef_, svd_ridge.coef_, atol=1e-3, rtol=1e-3)
     assert_allclose(
-        ridge.intercept_, cholesky_ridge.intercept_, atol=1e-3, rtol=1e-3)
+        ridge.intercept_, svd_ridge.intercept_, atol=1e-3, rtol=1e-3)
 
 
 @pytest.mark.parametrize('gcv_mode', ['svd', 'eigen'])
