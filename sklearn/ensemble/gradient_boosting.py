@@ -23,7 +23,7 @@ The module structure is the following:
 from abc import ABCMeta
 from abc import abstractmethod
 
-from .base import BaseEnsemble, ForestMixin
+from .base import BaseEnsemble
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import BaseEstimator
@@ -1163,7 +1163,7 @@ class VerboseReporter(object):
                 self.verbose_mod *= 10
 
 
-class BaseGradientBoosting(BaseEnsemble, ForestMixin, metaclass=ABCMeta):
+class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     """Abstract base class for Gradient Boosting. """
 
     @abstractmethod
@@ -1391,6 +1391,11 @@ class BaseGradientBoosting(BaseEnsemble, ForestMixin, metaclass=ABCMeta):
     def _check_initialized(self):
         """Check that the estimator is initialized, raising an error if not."""
         check_is_fitted(self, 'estimators_')
+
+    def _validate_X_predict(self, X):
+        """Validate X whenever one tries to predict, apply, predict_proba"""
+        self._check_initialized()
+        return check_array(X, dtype=DTYPE, order="C", accept_sparse='csr')
 
     def fit(self, X, y, sample_weight=None, monitor=None):
         """Fit the gradient boosting model.
@@ -1774,6 +1779,33 @@ class BaseGradientBoosting(BaseEnsemble, ForestMixin, metaclass=ABCMeta):
 
         return leaves
 
+    def decision_path(self, X):
+        """Return the decision path in the forest.
+
+        .. versionadded:: 0.22
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape = [n_samples, n_features]
+            The input samples. Internally, its dtype will be converted to
+            ``dtype=np.float32``. If a sparse matrix is provided, it will be
+            converted into a sparse ``csr_matrix``.
+
+        Returns
+        -------
+        indicator : sparse csr array, shape = [n_samples, n_nodes]
+            Return a node indicator matrix where non zero elements
+            indicates that the samples goes through the nodes.
+
+        n_nodes_ptr : array of size (n_estimators + 1, )
+            The columns from indicator[n_nodes_ptr[i]:n_nodes_ptr[i+1]]
+            gives the indicator value for the i-th estimator.
+
+        """
+        X = self._validate_X_predict(X)
+
+        return 'TO BE IMPLEMENTED'
+
 
 class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     """Gradient Boosting for classification.
@@ -2085,7 +2117,7 @@ shape (n_estimators, ``loss_.K``)
             `classes_`. Regression and binary classification produce an
             array of shape [n_samples].
         """
-        X = check_array(X, dtype=DTYPE, order="C", accept_sparse='csr')
+        X = self._validate_X_predict(X)
         raw_predictions = self._raw_predict(X)
         if raw_predictions.shape[1] == 1:
             return raw_predictions.ravel()
@@ -2527,7 +2559,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         y : array, shape (n_samples,)
             The predicted values.
         """
-        X = check_array(X, dtype=DTYPE, order="C", accept_sparse='csr')
+        X = self._validate_X_predict(X)
         # In regression we can directly return the raw value from the trees.
         return self._raw_predict(X).ravel()
 
