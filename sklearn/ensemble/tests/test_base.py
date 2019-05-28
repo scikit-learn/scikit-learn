@@ -7,12 +7,21 @@ Testing for the base module (sklearn.ensemble.base).
 
 import numpy as np
 from numpy.testing import assert_equal
+import pytest
 
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_not_equal
 
+from sklearn import datasets
 from sklearn.datasets import load_iris
 from sklearn.ensemble import BaggingClassifier
+from sklearn.ensemble import ExtraTreesClassifier
+from sklearn.ensemble import ExtraTreesRegressor
+from sklearn.ensemble import IsolationForest
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble.base import _set_random_states
 from sklearn.linear_model import Perceptron
 from collections import OrderedDict
@@ -128,3 +137,43 @@ def test_set_random_states():
                      est2.get_params()['sel__estimator__random_state'])
         assert_equal(est1.get_params()['clf__random_state'],
                      est2.get_params()['clf__random_state'])
+
+
+hastie_X, hastie_y = datasets.make_hastie_10_2(n_samples=20, random_state=1)
+hastie_X = hastie_X.astype(np.float32)
+
+
+FOREST_CLASSIFIERS_REGRESSORS = {
+    "ExtraTreesClassifier": ExtraTreesClassifier,
+    "RandomForestClassifier": RandomForestClassifier,
+    "ExtraTreesRegressor": ExtraTreesRegressor,
+    "RandomForestRegressor": RandomForestRegressor,
+    "IsolationForest": IsolationForest
+}
+
+
+def check_decision_path(name):
+    X, y = hastie_X, hastie_y
+    n_samples = X.shape[0]
+    ForestEstimator = FOREST_CLASSIFIERS_REGRESSORS[name]
+    est = ForestEstimator(n_estimators=5, max_depth=1, warm_start=False,
+                          random_state=1)
+    est.fit(X, y)
+    indicator, n_nodes_ptr = est.decision_path(X)
+
+    assert_equal(indicator.shape[1], n_nodes_ptr[-1])
+    assert_equal(indicator.shape[0], n_samples)
+    assert_array_equal(np.diff(n_nodes_ptr),
+                       [e.tree_.node_count for e in est.estimators_])
+
+    # Assert that leaves index are correct
+    leaves = est.apply(X)
+    for est_id in range(leaves.shape[1]):
+        leave_indicator = [indicator[i, n_nodes_ptr[est_id] + j]
+                           for i, j in enumerate(leaves[:, est_id])]
+        assert_array_almost_equal(leave_indicator, np.ones(shape=n_samples))
+
+
+@pytest.mark.parametrize('name', FOREST_CLASSIFIERS_REGRESSORS)
+def test_decision_path(name):
+    check_decision_path(name)

@@ -37,7 +37,6 @@ from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import skip_if_no_parallel
 
@@ -1216,33 +1215,6 @@ def test_dtype_convert(n_classes=15):
     result = classifier.fit(X, y).predict(X)
     assert_array_equal(classifier.classes_, y)
     assert_array_equal(result, y)
-
-
-def check_decision_path(name):
-    X, y = hastie_X, hastie_y
-    n_samples = X.shape[0]
-    ForestEstimator = FOREST_ESTIMATORS[name]
-    est = ForestEstimator(n_estimators=5, max_depth=1, warm_start=False,
-                          random_state=1)
-    est.fit(X, y)
-    indicator, n_nodes_ptr = est.decision_path(X)
-
-    assert_equal(indicator.shape[1], n_nodes_ptr[-1])
-    assert_equal(indicator.shape[0], n_samples)
-    assert_array_equal(np.diff(n_nodes_ptr),
-                       [e.tree_.node_count for e in est.estimators_])
-
-    # Assert that leaves index are correct
-    leaves = est.apply(X)
-    for est_id in range(leaves.shape[1]):
-        leave_indicator = [indicator[i, n_nodes_ptr[est_id] + j]
-                           for i, j in enumerate(leaves[:, est_id])]
-        assert_array_almost_equal(leave_indicator, np.ones(shape=n_samples))
-
-
-@pytest.mark.parametrize('name', FOREST_CLASSIFIERS_REGRESSORS)
-def test_decision_path(name):
-    check_decision_path(name)
 
 
 def test_min_impurity_split():

@@ -306,8 +306,7 @@ class IsolationForest(BaseBagging, OutlierMixin, ForestMixin):
             For each observation, tells whether or not (+1 or -1) it should
             be considered as an inlier according to the fitted model.
         """
-        check_is_fitted(self, ["offset_"])
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_X_predict(X)
         is_inlier = np.ones(X.shape[0], dtype=int)
         is_inlier[self.decision_function(X) < 0] = -1
         return is_inlier
@@ -381,6 +380,11 @@ class IsolationForest(BaseBagging, OutlierMixin, ForestMixin):
         # Take the opposite of the scores as bigger is better (here less
         # abnormal)
         return -self._compute_chunked_score_samples(X)
+
+    def _validate_X_predict(self, X):
+        """Validate X whenever one tries to predict, apply, predict_proba"""
+        check_is_fitted(self, ["offset_"])
+        return check_array(X, accept_sparse='csr')
 
     def _compute_chunked_score_samples(self, X):
 
