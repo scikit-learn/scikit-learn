@@ -207,7 +207,7 @@ then submit a "pull request" (PR):
 
        $ pip install numpy scipy cython pytest flake8
 
-5. Install library in editable mode::
+5. Install scikit-learn in editable mode::
 
        $ pip install --editable .
 
