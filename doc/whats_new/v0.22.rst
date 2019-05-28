@@ -67,7 +67,7 @@ Changelog
 
 :mod:`sklearn.feature_selection`
 ................................
-- |Enhancement| :class:`feature_selection.VarianceThreshold` now uses range
+- |Fix| :class:`feature_selection.VarianceThreshold` now uses range
   rather than variance when :term:`threshold` is 0. This prevents constant
   features from sometimes being incorrectly kept due to floating-point error
   in variance calculation.
