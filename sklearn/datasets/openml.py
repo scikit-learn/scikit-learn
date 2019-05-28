@@ -8,6 +8,7 @@ from contextlib import closing
 from functools import wraps
 import itertools
 from collections.abc import Generator
+from itertools import islice
 from itertools import zip_longest
 from collections import OrderedDict
 
@@ -283,39 +284,15 @@ def _feature_to_dtype(feature):
     raise ValueError('Unsupported feature: {}'.format(feature))
 
 
-def _chunk_iterable(seq, chunksize):
-    """Chunk ``seq`` into tuples of length ``chunksize``. The last chunk may
-    have a length less than ``chunksize``."""
-
-    pad_value = '__PADDING__'
-
-    args = [iter(seq)] * chunksize
-    it = zip_longest(*args, fillvalue=pad_value)
-    try:
-        prev = next(it)
-    except StopIteration:
-        # Nothing to iterate
-        return
-
-    # yield everything except the final value
-    for item in it:
-        yield prev
-        prev = item
-
-    # handle final value
-    if prev[-1] is pad_value:
-        # uses binary search to find the final index
-        lo, hi = 0, chunksize
-        while lo < hi:
-            mid = (lo + hi) // 2
-            if prev[mid] is pad_value:
-                hi = mid
-            else:
-                lo = mid + 1
-        yield prev[:lo]
-    else:
-        # no padding needed
-        yield prev
+def _chunk_generator(gen, chunksize):
+    """Chunk generator, ``gen`` into tuples of length ``chunksize``. The last
+    chunk may have a length less than ``chunksize``."""
+    while True:
+        chunk = tuple(islice(gen, chunksize))
+        if chunk:
+            yield chunk
+        else:
+            return
 
 
 def _convert_arff_data_dataframe(arrf, columns, features_dict, chunksize):
@@ -344,7 +321,7 @@ def _convert_arff_data_dataframe(arrf, columns, features_dict, chunksize):
     attributes = OrderedDict(arrf['attributes'])
     arrf_columns = list(attributes)
 
-    arrf_data_gen = _chunk_iterable(arrf['data'], chunksize)
+    arrf_data_gen = _chunk_generator(arrf['data'], chunksize)
     dfs = [pd.DataFrame(list(data), columns=arrf_columns)
            for data in arrf_data_gen]
     df = pd.concat(dfs)
@@ -595,7 +572,8 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         DataFrame.
 
     chunksize : int, default=5000
-        Number of rows to read at a time when constructing a dataframe.
+        Number of rows of arrf file to read at a time. Higher values leads to
+        more memory usage.
         Only used when ``return_frame`` is True.
 
     Returns
@@ -604,17 +582,12 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     data : Bunch
         Dictionary-like object, with attributes:
 
-        data : np.array, scipy.sparse.csr_matrix of floats, or None
+        data : np.array, scipy.sparse.csr_matrix of floats, or pandas DataFrame
             The feature matrix. Categorical features are encoded as ordinals.
-            If ``return_frame`` is True, this is None.
-        target : np.array or None
+        target : np.array, pandas Series or DataFrame
             The regression target or classification labels, if applicable.
-            Dtype is float if numeric, and object if categorical.
-            If ``return_frame`` is True, this is None.
-        dataframe : pandas DataFrame
-            The pandas DataFrame that includes the data and the target.
-            Use ``feature_names`` and ``target_names`` to seperate the target
-            from the features. If ``return_frame`` is False, this is None.
+            Dtype is float if numeric, and object if categorical. If
+            ``return_frame`` is True, ``target`` is a pandas object.
         DESCR : str
             The full description of the dataset
         feature_names : list
