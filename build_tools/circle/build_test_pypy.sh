@@ -21,7 +21,7 @@ which python
 # XXX: numpy version pinning can be reverted once PyPy
 #      compatibility is resolved for numpy v1.6.x. For instance,
 #      when PyPy3 >6.0 is released (see numpy/numpy#12740)
-pip install --extra-index https://antocuni.github.io/pypy-wheels/ubuntu "numpy==1.15.*" Cython pytest
+pip install --extra-index https://antocuni.github.io/pypy-wheels/ubuntu numpy Cython pytest
 pip install "scipy>=1.1.0" sphinx numpydoc docutils joblib pillow
 
 ccache -M 512M
@@ -33,6 +33,6 @@ export PYPY_GC_MAX="4GB"
 
 pip install -vv -e .
 
-python -m pytest sklearn/
-python -m pytest doc/sphinxext/
-python -m pytest $(find doc -name '*.rst' | sort)
+python -m pytest -vl sklearn/ensemble/_hist_gradient_boosting/tests
+# python -m pytest doc/sphinxext/
+# python -m pytest $(find doc -name '*.rst' | sort)
