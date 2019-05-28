@@ -9,7 +9,6 @@ from functools import wraps
 import itertools
 from collections.abc import Generator
 from itertools import islice
-from itertools import zip_longest
 from collections import OrderedDict
 
 from urllib.request import urlopen, Request
@@ -285,10 +284,10 @@ def _feature_to_dtype(feature):
 
 
 def _chunk_generator(gen, chunksize):
-    """Chunk generator, ``gen`` into tuples of length ``chunksize``. The last
+    """Chunk generator, ``gen`` into lists of length ``chunksize``. The last
     chunk may have a length less than ``chunksize``."""
     while True:
-        chunk = tuple(islice(gen, chunksize))
+        chunk = list(islice(gen, chunksize))
         if chunk:
             yield chunk
         else:
@@ -322,7 +321,7 @@ def _convert_arff_data_dataframe(arrf, columns, features_dict, chunksize):
     arrf_columns = list(attributes)
 
     arrf_data_gen = _chunk_generator(arrf['data'], chunksize)
-    dfs = [pd.DataFrame(list(data), columns=arrf_columns)
+    dfs = [pd.DataFrame(data, columns=arrf_columns)
            for data in arrf_data_gen]
     df = pd.concat(dfs)
 
