@@ -47,6 +47,12 @@ Changelog
   of the maximization procedure in :term:`fit`.
   :pr:`13618` by :user:`Yoshihiro Uchida <c56pony>`.
 
+:mod:`sklearn.pipeline`
+..................
+
+- |Enhancement| :class:`pipeline.Pipeline` now supports :term:`score_samples` if
+  the final estimator does.
+  :pr:`13806` by :user:`Anaël Beaugnon <ab-anssi>`.
 
 :mod:`sklearn.svm`
 ..................
