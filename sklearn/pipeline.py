@@ -493,7 +493,7 @@ class Pipeline(_BaseComposition):
 
     @if_delegate_has_method(delegate='_final_estimator')
     def score_samples(self, X):
-        """Apply transforms, and score_samples of the final estimator
+        """Apply transforms, and score_samples of the final estimator.
 
         Parameters
         ----------
@@ -503,7 +503,7 @@ class Pipeline(_BaseComposition):
 
         Returns
         -------
-        y_score : array-like, shape = [n_samples, n_classes]
+        y_score : array-like, shape (n_samples, n_classes)
         """
         Xt = X
         for _, name, transform in self._iter(with_final=False):
