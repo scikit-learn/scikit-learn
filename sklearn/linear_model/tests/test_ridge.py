@@ -396,19 +396,20 @@ def _make_sparse_offset_regression(
 @pytest.mark.parametrize(
     'solver', ['svd', 'sag', 'sparse_cg', 'lsqr', 'saga', 'ridgecv'])
 @pytest.mark.parametrize(
-    'n_samples,dtype,p',
+    'n_samples,dtype,proportion_nonzero',
     [(20, 'float32', .1), (40, 'float32', 1.), (20, 'float64', .2)])
 @pytest.mark.parametrize('sparse_X', [True, False])
 @pytest.mark.parametrize('seed', np.arange(3))
-def test_solver_consistency(solver, p, n_samples, dtype, sparse_X, seed):
+def test_solver_consistency(
+        solver, proportion_nonzero, n_samples, dtype, sparse_X, seed):
     accept_sparse = ['sparse_cg', 'ridgecv']
     if sparse_X and solver not in accept_sparse:
         pytest.skip()
     alpha = 1.
-    noise = 50. if p > .9 else 500.
+    noise = 50. if proportion_nonzero > .9 else 500.
     X, y = _make_sparse_offset_regression(
-        bias=10, n_features=30, proportion_nonzero=p, noise=noise,
-        random_state=seed, n_samples=n_samples)
+        bias=10, n_features=30, proportion_nonzero=proportion_nonzero,
+        noise=noise, random_state=seed, n_samples=n_samples)
     cholesky_ridge = Ridge(
         solver='cholesky', normalize=True, alpha=alpha).fit(X, y)
     X = X.astype(dtype)
