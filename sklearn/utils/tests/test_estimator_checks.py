@@ -285,9 +285,16 @@ class BinaryDecisionTreeClassifier(DecisionTreeClassifier):
     def fit(self, X, y, sample_weight=None):
         super().fit(X, y, sample_weight)
         if self.n_classes_ != 2:
-            raise ValueError("y contains %d class after sample_weight "
-                             "trimmed classes with zero weights, while 2 "
-                             "classes are required." % self.n_classes_)
+            raise ValueError('Only 2 classes are supported')
+        return self
+
+
+class UntaggedBinaryDecisionTreeClassifier(DecisionTreeClassifier):
+    # Toy classifier that only supports binary classification, will fail tests.
+    def fit(self, X, y, sample_weight=None):
+        super().fit(X, y, sample_weight)
+        if self.n_classes_ != 2:
+            raise ValueError('Only 2 classes are supported')
         return self
 
 
@@ -402,6 +409,11 @@ def test_check_estimator():
 
     # doesn't error on binary_only tagged estimator
     check_estimator(BinaryDecisionTreeClassifier)
+
+    # does error on binary_only untagged estimator
+    msg = 'Only 2 classes are supported'
+    assert_raises_regex(ValueError, msg, check_estimator,
+                        UntaggedBinaryDecisionTreeClassifier)
 
 
 def test_check_outlier_corruption():
