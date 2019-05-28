@@ -486,10 +486,14 @@ cdef class Splitter:
             Y_DTYPE_C sum_hessian_right
             Y_DTYPE_C sum_gradient_left
             Y_DTYPE_C sum_gradient_right
+            Y_DTYPE_C negative_loss_current_node
             Y_DTYPE_C gain
 
         sum_gradient_left, sum_hessian_left = 0., 0.
         n_samples_left = 0
+        negative_loss_current_node = negative_loss(sum_gradients,
+                                                   sum_hessians,
+                                                   self.l2_regularization)
 
         if self.support_missing_values[feature_idx]:
             # if first bin is reserved for missing values, skip it
@@ -525,7 +529,7 @@ cdef class Splitter:
 
             gain = _split_gain(sum_gradient_left, sum_hessian_left,
                                sum_gradient_right, sum_hessian_right,
-                               sum_gradients, sum_hessians,
+                               negative_loss_current_node,
                                self.l2_regularization)
 
             if gain > split_info.gain and gain > self.min_gain_to_split:
@@ -569,6 +573,7 @@ cdef class Splitter:
             Y_DTYPE_C sum_hessian_right
             Y_DTYPE_C sum_gradient_left
             Y_DTYPE_C sum_gradient_right
+            Y_DTYPE_C negative_loss_current_node
             Y_DTYPE_C gain
             unsigned int start = self.actual_n_bins[feature_idx] - 2
 
@@ -576,6 +581,9 @@ cdef class Splitter:
         # being on the right child.
         sum_gradient_right, sum_hessian_right = 0., 0.
         n_samples_right = 0
+        negative_loss_current_node = negative_loss(sum_gradients,
+                                                   sum_hessians,
+                                                   self.l2_regularization)
 
         for bin_idx in range(start, 0, -1):
             # We start at the second to last bin (we don't need to consider
@@ -610,7 +618,7 @@ cdef class Splitter:
 
             gain = _split_gain(sum_gradient_left, sum_hessian_left,
                                sum_gradient_right, sum_hessian_right,
-                               sum_gradients, sum_hessians,
+                               negative_loss_current_node,
                                self.l2_regularization)
 
             if gain > split_info.gain and gain > self.min_gain_to_split:
@@ -631,8 +639,7 @@ cdef inline Y_DTYPE_C _split_gain(
         Y_DTYPE_C sum_hessian_left,
         Y_DTYPE_C sum_gradient_right,
         Y_DTYPE_C sum_hessian_right,
-        Y_DTYPE_C sum_gradients,
-        Y_DTYPE_C sum_hessians,
+        Y_DTYPE_C negative_loss_current_node,
         Y_DTYPE_C l2_regularization) nogil:
     """Loss reduction
 
@@ -649,7 +656,7 @@ cdef inline Y_DTYPE_C _split_gain(
                          l2_regularization)
     gain += negative_loss(sum_gradient_right, sum_hessian_right,
                           l2_regularization)
-    gain -= negative_loss(sum_gradients, sum_hessians, l2_regularization)
+    gain -= negative_loss_current_node
     return gain
 
 cdef inline Y_DTYPE_C negative_loss(

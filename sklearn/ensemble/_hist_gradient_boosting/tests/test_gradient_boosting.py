@@ -153,9 +153,12 @@ def test_binning_train_validation_are_separated():
     # See issue 13926
 
     rng = np.random.RandomState(0)
-    gb = HistGradientBoostingClassifier(n_iter_no_change=5,
-                                        validation_fraction=.2,
-                                        random_state=rng)
+    validation_fraction = .2
+    gb = HistGradientBoostingClassifier(
+        n_iter_no_change=5,
+        validation_fraction=validation_fraction,
+        random_state=rng
+    )
     gb.fit(X_classification, y_classification)
     mapper_training_data = gb.bin_mapper_
 
@@ -164,6 +167,9 @@ def test_binning_train_validation_are_separated():
     mapper_whole_data = _BinMapper(random_state=0)
     mapper_whole_data.fit(X_classification)
 
+    n_samples = X_classification.shape[0]
+    assert np.all(mapper_training_data.actual_n_bins_ ==
+                  int((1 - validation_fraction) * n_samples))
     assert np.all(mapper_training_data.actual_n_bins_ !=
                   mapper_whole_data.actual_n_bins_)
 

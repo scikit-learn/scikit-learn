@@ -70,6 +70,16 @@ Changelog
   ``decision_function_shape='ovr'``, and the number of target classes > 2.
   :pr:`12557` by `Adrin Jalali`_.
 
+
+:mod:`sklearn.cluster`
+..................
+
+- |Enhancement| :class:`cluster.SpectralClustering` now accepts a ``n_components`` 
+  parameter. This parameter extends `SpectralClustering` class functionality to
+  match `spectral_clustering`.
+  :pr:`13726` by :user:`Shuzhe Xiao <fdas3213>`.
+  
+	
 Miscellaneous
 .............
 
