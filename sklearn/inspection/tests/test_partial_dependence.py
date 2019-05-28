@@ -43,7 +43,6 @@ regression_data = (make_regression(random_state=0), 1)
 multioutput_regression_data = (make_regression(n_targets=2, random_state=0), 2)
 
 
-@pytest.mark.filterwarnings('ignore:Default multi_class will be')  # 0.22
 @pytest.mark.parametrize('Estimator, method, data', [
     (GradientBoostingClassifier, 'recursion', binary_classification_data),
     (GradientBoostingClassifier, 'recursion', multiclass_classification_data),
@@ -513,7 +512,6 @@ def test_plot_partial_dependence_multioutput(pyplot):
       {'features': [0, 1, 2], 'feature_names': ['a', 'b', 'a']},
       'feature_names should not contain duplicates')]
 )
-@pytest.mark.filterwarnings('ignore:Default multi_class will be')  # 0.22
 def test_plot_partial_dependence_error(pyplot, data, params, err_msg):
     X, y = data
     estimator = LinearRegression().fit(X, y)

@@ -41,7 +41,7 @@ ticket to the
 also welcome to post feature requests or pull requests.
 
 Governance
-----------
+==========
 The decision making process and governance structure of scikit-learn is laid
 out in the governance document: :ref:`governance`.
 
