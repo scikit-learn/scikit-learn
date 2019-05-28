@@ -29,8 +29,9 @@ export CCACHE_COMPRESS=1
 export PATH=/usr/lib/ccache:$PATH
 export LOKY_MAX_CPU_COUNT="2"
 export OMP_NUM_THREADS="2"
+export PYPY_GC_MAX="2GB"
 
-pip install -vv -e . 
+pip install -vv -e .
 
 python -m pytest sklearn/
 python -m pytest doc/sphinxext/
