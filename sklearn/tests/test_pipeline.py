@@ -16,6 +16,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_dict_equal
@@ -340,8 +341,8 @@ def test_pipeline_score_samples_pca_lof():
     pca = PCA(svd_solver='full', n_components='mle', whiten=True)
     pipe = Pipeline([('pca', pca), ('lof', clf)])
     pipe.fit(X)
-    assert_array_almost_equal(pipe.score_samples(X[:2]),
-                              [-0.9564705258081416, -1.0371487183896932])
+    assert_allclose(pipe.score_samples(X[:2]),
+                    [-0.9564705258081416, -1.0371487183896932])
 
 
 def test_pipeline_methods_preprocessing_svm():
