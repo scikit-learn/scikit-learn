@@ -28,7 +28,8 @@ ccache -M 512M
 export CCACHE_COMPRESS=1
 export PATH=/usr/lib/ccache:$PATH
 export LOKY_MAX_CPU_COUNT="2"
-export OMP_NUM_THREADS="2"
+export OMP_NUM_THREADS="1"
+export SKLEARN_NO_OPENMP='True'
 export PYPY_GC_MAX="4GB"
 
 pip install -vv -e .
