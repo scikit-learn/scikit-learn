@@ -48,7 +48,7 @@ Changelog
   :pr:`13618` by :user:`Yoshihiro Uchida <c56pony>`.
 
 :mod:`sklearn.pipeline`
-..................
+.......................
 
 - |Enhancement| :class:`pipeline.Pipeline` now supports :term:`score_samples` if
   the final estimator does.
