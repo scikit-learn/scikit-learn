@@ -177,7 +177,7 @@ class TreeGrower:
         self.histogram_builder = HistogramBuilder(
             X_binned, max_bins, gradients, hessians, hessians_are_constant)
         self.splitter = Splitter(
-            X_binned, max_bins, actual_n_bins, l2_regularization,
+            X_binned, actual_n_bins, l2_regularization,
             min_hessian_to_split, min_samples_leaf, min_gain_to_split,
             hessians_are_constant)
         self.max_leaf_nodes = max_leaf_nodes
