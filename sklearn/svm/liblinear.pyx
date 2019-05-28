@@ -61,6 +61,11 @@ def train_wrap(X, np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
     with nogil:
         model = train(problem, param, &blas_functions)
 
+    ### FREE
+    free_problem(problem)
+    free_parameter(param)
+    # destroy_param(param)  don't call this or it will destroy class_weight_label and class_weight
+
     # coef matrix holder created as fortran since that's what's used in liblinear
     cdef np.ndarray[np.float64_t, ndim=2, mode='fortran'] w
     cdef int nr_class = get_nr_class(model)
@@ -81,11 +86,7 @@ def train_wrap(X, np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
         w = np.empty((nr_class, nr_feature),order='F')
         copy_w(w.data, model, len_w)
 
-    ### FREE
     free_and_destroy_model(&model)
-    free_problem(problem)
-    free_parameter(param)
-    # destroy_param(param)  don't call this or it will destroy class_weight_label and class_weight
 
     return w, n_iter
 
