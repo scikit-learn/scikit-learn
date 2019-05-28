@@ -156,8 +156,7 @@ def check_decision_path(name):
     X, y = hastie_X, hastie_y
     n_samples = X.shape[0]
     ForestEstimator = FOREST_CLASSIFIERS_REGRESSORS[name]
-    est = ForestEstimator(n_estimators=5, max_depth=1, warm_start=False,
-                          random_state=1)
+    est = ForestEstimator(n_estimators=5, warm_start=False, random_state=1)
     est.fit(X, y)
     indicator, n_nodes_ptr = est.decision_path(X)
 
