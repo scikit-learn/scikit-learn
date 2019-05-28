@@ -515,7 +515,6 @@ class ForestClassifier(BaseForest, ClassifierMixin, metaclass=ABCMeta):
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
-        check_is_fitted(self, 'estimators_')
         # Check data
         X = self._validate_X_predict(X)
 
@@ -620,7 +619,6 @@ class ForestRegressor(BaseForest, RegressorMixin, metaclass=ABCMeta):
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted values.
         """
-        check_is_fitted(self, 'estimators_')
         # Check data
         X = self._validate_X_predict(X)
 
