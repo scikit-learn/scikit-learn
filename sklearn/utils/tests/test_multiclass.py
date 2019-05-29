@@ -62,6 +62,8 @@ EXAMPLES = {
         NotAnArray(np.array([[-3, 3], [3, -3]])),
     ],
     'multiclass': [
+        csr_matrix(np.array([[1], [0], [0], [0], [2], [0]], dtype=np.int8)),
+        csr_matrix(np.array([[1], [0], [0], [0], [2], [0], [0], [0], [3]])),
         [1, 0, 2, 2, 1, 4, 2, 4, 4, 4],
         np.array([1, 0, 2]),
         np.array([1, 0, 2], dtype=np.int8),
@@ -75,6 +77,7 @@ EXAMPLES = {
         np.array(['a', 'b', 'c']),
         np.array(['a', 'b', 'c'], dtype=object),
         np.array(['a', 'b', 'c'], dtype=object),
+        csr_matrix(np.array([1, 0, 0, 0, 2, 0], dtype=np.uint8)).transpose(),
     ],
     'multiclass-multioutput': [
         np.array([[1, 0, 2, 2], [1, 4, 2, 4]]),
@@ -87,6 +90,10 @@ EXAMPLES = {
         np.array([['a', 'b'], ['c', 'd']], dtype=object),
         np.array([[1, 0, 2]]),
         NotAnArray(np.array([[1, 0, 2]])),
+        csr_matrix(np.array([[1, 0, 0, 2, 0, 4], [0, 0, 3, 0, 0, 1]],
+                            dtype=np.int8)),
+        csr_matrix(np.array([[1, 0, 0, 2, 0, 4], [0, 0, 3, 0, 0, 1]],
+                            dtype=np.uint8)),
     ],
     'binary': [
         [0, 1],
@@ -109,6 +116,12 @@ EXAMPLES = {
         np.array(['abc', 'def']),
         ['a', 'b'],
         np.array(['abc', 'def'], dtype=object),
+        csr_matrix(np.array([0, 1, 0, 0, 0, 0, 0, 0, 0],
+                            dtype=np.bool)).transpose(),
+        csr_matrix(np.array([0, 1, 0, 0, 0, 0, 0, 0, 0],
+                            dtype=np.int8)).transpose(),
+        csr_matrix(np.array([0, 1, 0, 0, 0, 0, 0, 0, 0],
+                            dtype=np.uint8)).transpose(),
     ],
     'continuous': [
         [1e-5],

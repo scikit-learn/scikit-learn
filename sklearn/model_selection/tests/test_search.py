@@ -27,6 +27,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
+from sklearn.utils.sparsefuncs import sparse_unique
 
 from scipy.stats import bernoulli, expon, uniform
 
@@ -78,9 +79,13 @@ class MockClassifier(object):
     def __init__(self, foo_param=0):
         self.foo_param = foo_param
 
-    def fit(self, X, Y):
-        assert len(X) == len(Y)
-        self.classes_ = np.unique(Y)
+    def fit(self, X, y):
+        if sp.issparse(y):
+            assert len(X) == y.shape[0]
+            self.classes_ = sparse_unique(y)
+        else:
+            assert len(X) == len(y)
+            self.classes_ = np.unique(y)
         return self
 
     def predict(self, T):
@@ -472,6 +477,29 @@ def test_grid_search_sparse():
     assert_equal(C, C2)
 
 
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
+def test_grid_search_sparsetarget():
+    # Multi-label with sparse target
+    X_, y_ = make_multilabel_classification(n_samples=100,
+                                            return_indicator=True,
+                                            random_state=0)
+    y_sparse = sp.csr_matrix(y_)
+    clf = MockClassifier(foo_param=0)
+    gs = GridSearchCV(clf, {'foo_param': [0.1, 1.]})
+    gs.fit(X_, y_sparse)
+    assert hasattr(gs, 'cv_results_')
+
+    # Binary classification example with sparse target
+    X_, y_ = make_classification(n_samples=100)
+    y_sparse = sp.csr_matrix(y_).transpose()
+    _cv = [StratifiedKFold(n_splits=2), StratifiedShuffleSplit(n_splits=2)]
+    for cv in _cv:
+        gs = GridSearchCV(clf, {'foo_param': [0.1, 1.]}, cv=cv)
+        gs.fit(X_, y_sparse)
+        assert hasattr(gs, 'cv_results_')
+
+
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_grid_search_sparse_scoring():
     X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)

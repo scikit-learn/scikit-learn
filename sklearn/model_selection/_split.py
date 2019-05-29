@@ -15,6 +15,7 @@ from itertools import chain, combinations
 from math import ceil, floor
 import numbers
 from abc import ABCMeta, abstractmethod
+import scipy.sparse as sp
 from inspect import signature
 
 import numpy as np
@@ -69,7 +70,7 @@ class BaseCrossValidator(metaclass=ABCMeta):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, of length n_samples
+        y : {array-like, sparse matrix} of shape (n_samples,)
             The target variable for supervised learning problems.
 
         groups : array-like, with shape (n_samples,), optional
@@ -309,7 +310,7 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, shape (n_samples,)
+        y : {array-like, sparse matrix} of shape (n_samples,)
             The target variable for supervised learning problems.
 
         groups : array-like, with shape (n_samples,), optional
@@ -632,7 +633,22 @@ class StratifiedKFold(_BaseKFold):
 
     def _make_test_folds(self, X, y=None):
         rng = check_random_state(self.random_state)
-        y = np.asarray(y)
+
+        # For compatibility with GridSearchCV (which accepts y to be a sparse
+        # matrix), if y is sparse we convert it to a dense matrix. An error is
+        # raised if y does not have the right shape, to avoid creating a large
+        # dense matrix (whose shape will raise an error in ``column_or_1d``).
+        if sp.issparse(y):
+            shape = y.shape
+            if len(shape) > 2 or (len(shape) == 2 and shape[1] != 1):
+                raise ValueError("StratifiedKFold only supports sparse ``y`` "
+                                 "with shape ``(n_samples,1)`` or "
+                                 "``(n_samples,)``. Got invalid shape "
+                                 "{0}.".format(shape))
+            else:
+                y = y.toarray()
+        else:
+            y = np.asarray(y)
         type_of_target_y = type_of_target(y)
         allowed_target_types = ('binary', 'multiclass')
         if type_of_target_y not in allowed_target_types:
@@ -700,7 +716,7 @@ class StratifiedKFold(_BaseKFold):
             hence ``np.zeros(n_samples)`` may be used as a placeholder for
             ``X`` instead of actual training data.
 
-        y : array-like, shape (n_samples,)
+        y : {array-like, sparse matrix} of shape (n_samples,)
             The target variable for supervised learning problems.
             Stratification is done based on the y labels.
 
@@ -721,7 +737,7 @@ class StratifiedKFold(_BaseKFold):
         split. You can make the results identical by setting ``random_state``
         to an integer.
         """
-        y = check_array(y, ensure_2d=False, dtype=None)
+        y = check_array(y, accept_sparse=True, ensure_2d=False, dtype=None)
         return super().split(X, y, groups)
 
 
@@ -795,7 +811,7 @@ class TimeSeriesSplit(_BaseKFold):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, shape (n_samples,)
+        y : {array-like, sparse matrix} of shape (n_samples,)
             Always ignored, exists for compatibility.
 
         groups : array-like, with shape (n_samples,)
@@ -1120,7 +1136,7 @@ class _RepeatedSplits(metaclass=ABCMeta):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, of length n_samples
+        y : {array-like, sparse matrix}  of shape (n_samples,)
             The target variable for supervised learning problems.
 
         groups : array-like, with shape (n_samples,), optional
@@ -1618,7 +1634,23 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
     def _iter_indices(self, X, y, groups=None):
         n_samples = _num_samples(X)
-        y = check_array(y, ensure_2d=False, dtype=None)
+        y = check_array(y, accept_sparse=True, ensure_2d=False, dtype=None)
+
+        # For compatibility with GridSearchCV (which accepts y to be a sparse
+        # matrix), if y is sparse we convert it to a dense matrix. An error is
+        # raised if y does not have the right shape, to avoid creating a large
+        # dense matrix (whose shape will raise an error in ``column_or_1d``).
+        if sp.issparse(y):
+            shape = y.shape
+            if len(shape) > 2 or (len(shape) == 2 and shape[1] != 1):
+                raise ValueError("StratifiedShuffleSplit only supports sparse "
+                                 "``y`` with shape ``(n_samples,1)`` or "
+                                 "``(n_samples,)``. Got invalid shape "
+                                 "{0}.".format(shape))
+            else:
+                y = y.toarray()
+        else:
+            y = np.asarray(y)
         n_train, n_test = _validate_shuffle_split(
             n_samples, self.test_size, self.train_size,
             default_test_size=self._default_test_size)
@@ -1711,7 +1743,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         split. You can make the results identical by setting ``random_state``
         to an integer.
         """
-        y = check_array(y, ensure_2d=False, dtype=None)
+        y = check_array(y, accept_sparse=True, ensure_2d=False, dtype=None)
         return super().split(X, y, groups)
 
 

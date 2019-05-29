@@ -290,6 +290,17 @@ def test_cross_validate_many_jobs():
 
 
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
+def test_cross_validate_sparsetarget():
+    X_, y_ = make_multilabel_classification(n_samples=100,
+                                            return_indicator=True,
+                                            random_state=0)
+    y_sparse = csr_matrix(y_)
+    clf = MockClassifier(a=0)
+    cv_scores = cross_validate(clf, X_, y_sparse)
+    assert_array_equal(cv_scores['test_score'], clf.score(X_, y_sparse))
+
+
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_cross_validate_invalid_scoring_param():
     X, y = make_classification(random_state=0)
     estimator = MockClassifier()

@@ -15,7 +15,8 @@ from sklearn.utils.sparsefuncs import (mean_variance_axis,
                                        inplace_row_scale,
                                        inplace_swap_row, inplace_swap_column,
                                        min_max_axis,
-                                       count_nonzero, csc_median_axis_0)
+                                       count_nonzero, csc_median_axis_0,
+                                       sparse_unique)
 from sklearn.utils.sparsefuncs_fast import (assign_rows_csr,
                                             inplace_csr_row_normalize_l1,
                                             inplace_csr_row_normalize_l2)
@@ -526,3 +527,21 @@ def test_inplace_normalize():
                 if inplace_csr_row_normalize is inplace_csr_row_normalize_l2:
                     X_csr.data **= 2
                 assert_array_almost_equal(np.abs(X_csr).sum(axis=1), ones)
+
+
+def test_sparse_unique():
+    _X = np.array([[1, 0, 0, 0],
+                   [0, 1, 0, 0],
+                   [0, 0, 0, 3],
+                   [4, 0, 0, 0]], dtype=np.int8)
+    Xr = sp.csr_matrix(_X)
+    Xc = sp.csc_matrix(_X)
+    Xo = sp.coo_matrix(_X)
+    assert_equal(sparse_unique(Xr), np.array([0, 1, 3, 4]))
+    assert_equal(sparse_unique(Xc), np.array([0, 1, 3, 4]))
+    assert_equal(sparse_unique(Xo), np.array([0, 1, 3, 4]))
+
+    # Degenerate case where one uses CSR/CSC/COO matrices to store dense data
+    X_notsparse = sp.csr_matrix(np.array([1, 1, 1, 2, 3]))
+    unique2 = sparse_unique(X_notsparse)
+    assert_array_equal(unique2, np.array([1, 2, 3]))
