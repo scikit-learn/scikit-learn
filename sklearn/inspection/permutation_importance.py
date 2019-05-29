@@ -12,17 +12,14 @@ def _calculate_permutation_scores(estimator, X, y, col_idx, random_state,
                                   n_rounds, scorer):
     """Calcuate permutation scores for a column"""
     if hasattr(X, 'iloc'):  # pandas dataframe
-        X_iloc = X.iloc
+        X_col = X.iloc[:, col_idx].values
     else:
-        X_iloc = X
+        X_col = X[:, col_idx]
 
     scores = np.zeros(n_rounds)
-    temp = X_iloc[:, col_idx].copy()
 
     for n_round in range(n_rounds):
-        random_state.shuffle(temp)
-        X_iloc[:, col_idx] = temp
-
+        random_state.shuffle(X_col)
         feature_score = scorer(estimator, X, y)
         scores[n_round] = feature_score
     return scores
