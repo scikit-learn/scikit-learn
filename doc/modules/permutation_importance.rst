@@ -7,14 +7,14 @@ Permutation feature importance
 .. currentmodule:: sklearn.inspection
 
 Permutation feature importance is a model inspection technique that can be used
-for any `estimator`, which is especially useful for non-linear or opaque
-`estimators`. The permutation feature importance is
-defined to be the decrease in a model score when the feature value is
-randomly shuffled [1]_. This procedure breaks the relationship between the
-feature and the target, thus the drop in the model score is analogous to how
-much the model depends on the feature. This technique benefits from being model
-agnostic, only requiring the model to be `fitted` once, and can be calculated
-many times with different permutations of the feature.
+for any `fitted` `estimator` and the data is rectangular. This is especially 
+useful for non-linear or opaque `estimators`. The permutation feature 
+importance is defined to be the decrease in a model score when the feature 
+value is randomly shuffled [1]_. This procedure breaks the relationship between 
+the feature and the target, thus the drop in the model score is analogous to 
+how much the model depends on the feature. This technique benefits from being 
+model agnostic and can be calculated many times with different permutations of 
+the feature.
 
 The :func:`permutation_importance` function calculates the feature importance
 of `estimators` for a given dataset. The ``n_rounds`` parameter sets the number
@@ -26,10 +26,11 @@ overfitting and the feature is not important. Feature importance based on the
 test set gives the importance of a feature on unseen data, which gives a sense
 of the features that are *actually* important.
 
-The :class:`sklearn.ensemble.RandomForestClassifer` provides its own tree
-based feature importance that computes statistics derived from the training
-dataset. This can give importances to features that are not predictive of the
-target on unseen data. This use case is explored in
+Tree based models provides their own feature importances based on statistics
+derived from the training set. This gives importances to features that may
+not be predictive on unseen data. The permutation feature importance avoids
+this issue, since it can be applied to unseen data. These two methods of 
+obtaining feature importance is explored in:
 :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`.
 
 When multi-collinear features are present in a dataset, it can decrease the
@@ -47,5 +48,5 @@ feature from each cluster. This use case is explored in: :ref:`sphx_glr_auto_exa
 
 .. topic:: References:
 
-   .. [1] Breiman, L. Machine Learning (2001) 45: 5.
-     https://doi.org/10.1023/A:1010933404324
+   .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
+       2001. https://doi.org/10.1023/A:1010933404324
