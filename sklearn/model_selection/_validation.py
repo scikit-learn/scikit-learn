@@ -476,7 +476,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
             msg = ''
         else:
             msg = '%s' % (', '.join('%s=%s' % (k, v)
-                                    for k, v in parameters.items()))
+                          for k, v in parameters.items()))
         print("[CV] %s %s" % (msg, (64 - len(msg)) * '.'))
 
     # Adjust length of sample weights
@@ -510,10 +510,10 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         elif isinstance(error_score, numbers.Number):
             if is_multimetric:
                 test_scores = dict(zip(scorer.keys(),
-                                       [error_score, ] * n_scorers))
+                                   [error_score, ] * n_scorers))
                 if return_train_score:
                     train_scores = dict(zip(scorer.keys(),
-                                            [error_score, ] * n_scorers))
+                                        [error_score, ] * n_scorers))
             else:
                 test_scores = error_score
                 if return_train_score:
@@ -1198,7 +1198,7 @@ def learning_curve(estimator, X, y, groups=None,
         If a numeric value is given, FitFailedWarning is raised. This parameter
         does not affect the refit step, which will always raise the error.
 
-    return_times : boolean, optional, default: False
+    return_times : boolean, optional (default: False)
         Whether to return the fit/score times.
 
     Returns
@@ -1354,21 +1354,22 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
         X_partial_train, y_partial_train = _safe_split(estimator, X, y,
                                                        partial_train)
         X_test, y_test = _safe_split(estimator, X, y, test, train_subset)
-        start = time.time()
+        start_fit = time.time()
         if y_partial_train is None:
             estimator.partial_fit(X_partial_train, classes=classes)
         else:
             estimator.partial_fit(X_partial_train, y_partial_train,
                                   classes=classes)
-        fit_time = time.time() - start
+        fit_time = time.time() - start_fit
         fit_times.append(fit_time)
 
+        start_score = time.time()
+
         test_scores.append(_score(estimator, X_test, y_test, scorer))
-
-        score_time = time.time() - start - fit_time
-        score_times.append(score_time)
-
         train_scores.append(_score(estimator, X_train, y_train, scorer))
+
+        score_time = time.time() - start_score
+        score_times.append(score_time)
 
     ret = (train_scores, test_scores, fit_times, score_times) \
         if return_times else (train_scores, test_scores)

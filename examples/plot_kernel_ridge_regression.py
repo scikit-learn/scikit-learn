@@ -151,12 +151,12 @@ plt.figure()
 
 svr = SVR(kernel='rbf', C=1e1, gamma=0.1)
 kr = KernelRidge(kernel='rbf', alpha=0.1, gamma=0.1)
-train_sizes, train_scores_svr, test_scores_svr = learning_curve(
-    svr, X[:100], y[:100], train_sizes=np.linspace(0.1, 1, 10),
-    scoring="neg_mean_squared_error", cv=10)
-train_sizes_abs, train_scores_kr, test_scores_kr = learning_curve(
-    kr, X[:100], y[:100], train_sizes=np.linspace(0.1, 1, 10),
-    scoring="neg_mean_squared_error", cv=10)
+train_sizes, train_scores_svr, test_scores_svr = \
+    learning_curve(svr, X[:100], y[:100], train_sizes=np.linspace(0.1, 1, 10),
+                   scoring="neg_mean_squared_error", cv=10)
+train_sizes_abs, train_scores_kr, test_scores_kr = \
+    learning_curve(kr, X[:100], y[:100], train_sizes=np.linspace(0.1, 1, 10),
+                   scoring="neg_mean_squared_error", cv=10)
 
 plt.plot(train_sizes, -test_scores_svr.mean(1), 'o-', color="r",
          label="SVR")
