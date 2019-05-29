@@ -346,14 +346,7 @@ def set_checking_parameters(estimator):
         # randomized lasso
         estimator.set_params(n_resampling=5)
     if "n_estimators" in params:
-        # especially gradient boosting with default 100
-        # FIXME: The default number of trees was changed and is set to 'warn'
-        # for some of the ensemble methods. We need to catch this case to avoid
-        # an error during the comparison. To be reverted in 0.22.
-        if estimator.n_estimators == 'warn':
-            estimator.set_params(n_estimators=5)
-        else:
-            estimator.set_params(n_estimators=min(5, estimator.n_estimators))
+        estimator.set_params(n_estimators=min(5, estimator.n_estimators))
     if "max_trials" in params:
         # RANSAC
         estimator.set_params(max_trials=10)
@@ -382,13 +375,6 @@ def set_checking_parameters(estimator):
     if name == "TheilSenRegressor":
         estimator.max_subpopulation = 100
 
-    if estimator.__class__.__name__ == "IsolationForest":
-        # XXX to be removed in 0.22.
-        # this is used because the old IsolationForest does not
-        # respect the outlier detection API and thus and does not
-        # pass the outlier detection common tests.
-        estimator.set_params(behaviour='new')
-
     if isinstance(estimator, BaseRandomProjection):
         # Due to the jl lemma and often very few samples, the number
         # of components of the random matrix projection will be probably
@@ -406,6 +392,16 @@ def set_checking_parameters(estimator):
         # The default min_samples_leaf (20) isn't appropriate for small
         # datasets (only very shallow trees are built) that the checks use.
         estimator.set_params(min_samples_leaf=5)
+
+    # Speed-up by reducing the number of CV or splits for CV estimators
+    loo_cv = ['RidgeCV']
+    if name not in loo_cv and hasattr(estimator, 'cv'):
+        estimator.set_params(cv=3)
+    if hasattr(estimator, 'n_splits'):
+        estimator.set_params(n_splits=3)
+
+    if name == 'OneHotEncoder':
+        estimator.set_params(handle_unknown='ignore')
 
 
 class NotAnArray:
@@ -1961,6 +1957,8 @@ def check_class_weight_balanced_linear_classifier(name, Classifier):
         classifier.set_params(n_iter=1000)
     if hasattr(classifier, "max_iter"):
         classifier.set_params(max_iter=1000)
+    if hasattr(classifier, 'cv'):
+        classifier.set_params(cv=3)
     set_random_state(classifier)
 
     # Let the model compute the class frequencies
