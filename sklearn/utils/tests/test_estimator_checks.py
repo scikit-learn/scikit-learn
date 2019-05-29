@@ -284,7 +284,7 @@ class BinaryDecisionTreeClassifier(DecisionTreeClassifier):
 
     def fit(self, X, y, sample_weight=None):
         super().fit(X, y, sample_weight)
-        if self.n_classes_ != 2:
+        if self.n_classes_ > 2:
             raise ValueError('Only 2 classes are supported')
         return self
 
@@ -293,7 +293,7 @@ class UntaggedBinaryDecisionTreeClassifier(DecisionTreeClassifier):
     # Toy classifier that only supports binary classification, will fail tests.
     def fit(self, X, y, sample_weight=None):
         super().fit(X, y, sample_weight)
-        if self.n_classes_ != 2:
+        if self.n_classes_ > 2:
             raise ValueError('Only 2 classes are supported')
         return self
 
