@@ -45,7 +45,7 @@ cpdef _map_to_bins(const X_DTYPE_C [:, :] data,
                              binned[:, feature_idx])
 
 
-cpdef void _map_num_col_to_bins(const X_DTYPE_C [:] data,
+cdef void _map_num_col_to_bins(const X_DTYPE_C [:] data,
                                 const X_DTYPE_C [:] binning_thresholds,
                                 const unsigned char support_missing_values,
                                 X_BINNED_DTYPE_C [:] binned):

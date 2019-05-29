@@ -451,7 +451,7 @@ cdef class Splitter:
         return best_feature_idx
 
     cdef void _find_best_bin_to_split_left_to_right(
-            self,
+            Splitter self,
             unsigned int feature_idx,
             const hist_struct [:, ::1] histograms,  # IN
             unsigned int n_samples,
