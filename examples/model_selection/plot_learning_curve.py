@@ -1,3 +1,21 @@
+"""
+========================
+Plotting Learning Curves
+========================
+In the first row the learning curve of a naive Bayes classifier is shown for
+the digits dataset. Note that the training score and the cross-validation score
+are both not very good at the end. However, the shape of the curve can be found
+in more complex datasets very often: the training score is very high at the
+beginning and decreases and the cross-validation score is very low at the
+beginning and increases. In the second row we see the learning curve of an SVM
+with RBF kernel. We can see clearly that the training score is still around
+the maximum and the validation score could be increased with more training
+samples. The plots in the second column show the times required by the model to
+train with various sizes of training dataset. The plots in the third column
+show how many time was required to train the models for each training sizes.
+"""
+print(__doc__)
+
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.naive_bayes import GaussianNB
@@ -10,7 +28,8 @@ from sklearn.model_selection import ShuffleSplit
 def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
                         n_jobs=None, train_sizes=np.linspace(.1, 1.0, 5)):
     """
-    Generate a simple plot of the test and training learning curve.
+    Generate 3 plots: the test and training learning curve, the training
+    samples vs fit times curve, the fit times vs score curve.
 
     Parameters
     ----------
@@ -96,21 +115,18 @@ def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
 
     # Plot n_samples vs fit_times
     axes[1].grid()
-    p = axes[1].plot(train_sizes, fit_times_mean, 'o-')
+    axes[1].plot(train_sizes, fit_times_mean, 'o-')
     axes[1].fill_between(train_sizes, fit_times_mean - fit_times_std,
-                         fit_times_mean + fit_times_std, alpha=0.1,
-                         color=p[0].get_color())
+                         fit_times_mean + fit_times_std, alpha=0.1)
     axes[1].set_xlabel("Training examples")
     axes[1].set_ylabel("fit_times")
     axes[1].set_title("Scalability of the model")
 
     # Plot fit_time vs score
     axes[2].grid()
-    p = axes[2].plot(fit_times_mean, test_scores_mean, 'o-')
-    axes[2].fill_between(fit_times_mean,
-                         test_scores_mean - test_scores_std,
-                         test_scores_mean + test_scores_std,
-                         alpha=0.1, color=p[0].get_color())
+    axes[2].plot(fit_times_mean, test_scores_mean, 'o-')
+    axes[2].fill_between(fit_times_mean, test_scores_mean - test_scores_std,
+                         test_scores_mean + test_scores_std, alpha=0.1)
     axes[2].set_xlabel("fit_times")
     axes[2].set_ylabel("Score")
     axes[2].set_title("Performance of the model")
