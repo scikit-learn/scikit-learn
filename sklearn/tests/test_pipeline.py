@@ -337,7 +337,7 @@ def test_pipeline_score_samples_pca_lof():
     iris = load_iris()
     X = iris.data
     # Test with PCA + OneClassSVM
-    clf = LocalOutlierFactor(novelty=True)
+    lof = LocalOutlierFactor(novelty=True)
     pca = PCA(svd_solver='full', n_components='mle', whiten=True)
     pipe = Pipeline([('pca', pca), ('lof', clf)])
     pipe.fit(X)
