@@ -506,8 +506,8 @@ class Pipeline(_BaseComposition):
         y_score : ndarray, shape (n_samples,)
         """
         Xt = X
-        for _, name, transform in self._iter(with_final=False):
-            Xt = transform.transform(Xt)
+        for _, _, transformer in self._iter(with_final=False):
+            Xt = transformer.transform(Xt)
         return self.steps[-1][-1].score_samples(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
