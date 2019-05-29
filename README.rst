@@ -26,8 +26,9 @@
 scikit-learn
 ============
 
-scikit-learn is a Python module for machine learning built on top of
-SciPy and distributed under the 3-Clause BSD license.
+scikit-learn is a Python library for machine learning built on top of SciPy and
+NumPy. scikit-learn contains models for supervised and unsupervised learning, as well as
+tools for preprocessing, model selection and evaluation.
 
 The project was started in 2007 by David Cournapeau as a Google Summer
 of Code project, and since then many volunteers have contributed. See
