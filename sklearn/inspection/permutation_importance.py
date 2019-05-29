@@ -58,9 +58,11 @@ def permutation_importance(estimator, X, y, scoring=None, n_rounds=1,
     if not (hasattr(X, '__array__') or sp.issparse(X)):
         X = check_array(X, force_all_finite='allow-nan', dtype=np.object)
 
+    n_features = X.shape[1]
+
     random_state = check_random_state(random_state)
     scorer = check_scoring(estimator, scoring=scoring)
-    scores = np.empty(shape=(X.shape[1], n_rounds), dtype=np.float)
+    scores = np.empty(shape=(n_features, n_rounds), dtype=np.float)
 
     if hasattr(X, 'iloc'):  # pandas dataframe
         # Need to copy in case where the dataframe is a view
@@ -70,7 +72,7 @@ def permutation_importance(estimator, X, y, scoring=None, n_rounds=1,
         X_iloc = X
 
     baseline_score = scorer(estimator, X, y)
-    for col_idx in range(X.shape[1]):
+    for col_idx in range(n_features):
         original_feature = X_iloc[:, col_idx].copy()
 
         for n_round in range(n_rounds):
