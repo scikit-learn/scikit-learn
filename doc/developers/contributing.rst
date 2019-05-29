@@ -9,6 +9,9 @@ contribute.
 
 The project is hosted on https://github.com/scikit-learn/scikit-learn
 
+The decision making process and governance structure of scikit-learn is laid
+out in the governance document: :ref:`governance`.
+
 Scikit-learn is somewhat :ref:`selective <selectiveness>` when it comes to
 adding new algorithms, and the best way to contribute and to help the project
 is to start working on known issues.
@@ -35,8 +38,9 @@ See :ref:`new_contributors` to get started.
 
 In case you experience issues using this package, do not hesitate to submit a
 ticket to the
-`GitHub issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_. You are
-also welcome to post feature requests or pull requests.
+`GitHub issue tracker
+<https://github.com/scikit-learn/scikit-learn/issues>`_. You are also
+welcome to post feature requests or pull requests.
 
 Ways to contribute
 ==================
@@ -268,9 +272,22 @@ documentation related to resolving merge conflict using the command line
 Pull request checklist
 ----------------------
 
+Before a PR can be merged, it needs to be approved by two core developers.
+Please prefix the title of your pull request with ``[MRG]`` if the
+contribution is complete and should be subjected to a detailed review. An
+incomplete contribution -- where you expect to do more work before receiving
+a full review -- should be prefixed ``[WIP]`` (to indicate a work in
+progress) and changed to ``[MRG]`` when it matures. WIPs may be useful to:
+indicate you are working on something to avoid duplicated work, request
+broad review of functionality or API, or seek collaborators. WIPs often
+benefit from the inclusion of a `task list
+<https://github.com/blog/1375-task-lists-in-gfm-issues-pulls-comments>`_ in
+the PR description.
+
 In order to ease the reviewing process, we recommend that your contribution
-complies with the following rules before submitting a pull request. The
+complies with the following rules before marking a PR as ``[MRG]``. The
 **bolded** ones are especially important:
+
 
 1. **Make sure your code passes the tests**. The whole test suite can be run
    with `pytest`, but it is usually not recommended since it takes a long
@@ -289,11 +306,12 @@ complies with the following rules before submitting a pull request. The
 
    There may be other failing tests, but they will be caught by the CI so
    you don't need to run the whole test suite locally. Read more in
-   `testing_coverage`_.
+   :ref:`testing_coverage`.
 
 2. **Make sure your code is properly commented and documented**, and **make
    sure the documentation renders properly**. To build the documentation, please
-   refer to our `contribute_documentation`_ guidelines.
+   refer to our :ref:`contribute_documentation` guidelines. The CI will also
+   build the docs: please refer to :ref:`generated_doc_CI`.
 
 3. **Tests are necessary for enhancements to be
    accepted**. Bug-fixes or new features should be provided with
@@ -301,13 +319,15 @@ complies with the following rules before submitting a pull request. The
    <https://en.wikipedia.org/wiki/Non-regression_testing>`_. These tests
    verify the correct behavior of the fix or feature. In this manner, further
    modifications on the code base are granted to be consistent with the
-   desired behavior. For the case of bug fixes, at the time of the PR, the
+   desired behavior. In the case of bug fixes, at the time of the PR, the
    non-regression tests should fail for the code base in the master branch
    and pass for the PR code.
 
 4. **Make sure that your PR does not add PEP8 violations**. Please run
    `./build_tools/circle/flake8_diff.sh` or `make flake8-diff` on a Unix-like
-   system. You can also directly use `flake8 path_to_file`.
+   system. You can also directly use `flake8 path_to_file`, but please avoid
+   reformatting parts of the file that your pull request doesn't change, as
+   it distracts from code review.
 
 5. Follow the `coding-guidelines`_ (see below).
 
@@ -316,8 +336,9 @@ complies with the following rules before submitting a pull request. The
    for developers can be found in the :ref:`developers-utils` page.
 
 7. Give your pull request a helpful title that summarises what your
-   contribution does. In some cases "Fix <ISSUE TITLE>" is enough.
-   "Fix #<ISSUE NUMBER>" is not enough.
+   contribution does. This title will often become the commit message once
+   merged so it should summarise your contribution for posterity. In some
+   cases "Fix <ISSUE TITLE>" is enough. "Fix #<ISSUE NUMBER>" is not enough.
 
 8. Often pull requests resolve one or more other issues (or pull requests).
    If merging your pull request means that some other issues/PRs should
@@ -329,32 +350,18 @@ complies with the following rules before submitting a pull request. The
    related to some other issues/PRs, create a link to them without using
    the keywords (e.g., ``See also #1234``).
 
-9. Please prefix the title of your pull request with ``[MRG]`` if the
-   contribution is complete and should be subjected to a detailed review.
-   Two core developers will review your code and change the prefix of the pull
-   request to ``[MRG + 1]`` and ``[MRG + 2]`` on approval, making it eligible
-   for merging. An incomplete contribution -- where you expect to do more
-   work before receiving a full review -- should be prefixed ``[WIP]`` (to
-   indicate a work in progress) and changed to ``[MRG]`` when it matures.
-   WIPs may be useful to: indicate you are working on something to avoid
-   duplicated work, request broad review of functionality or API, or seek
-   collaborators. WIPs often benefit from the inclusion of a
-   `task list
-   <https://github.com/blog/1375-task-lists-in-gfm-issues-pulls-comments>`_
-   in the PR description.
+9. PRs should often substantiate the change, through benchmarks of
+   performance and efficiency or through examples of usage. Examples also
+   illustrate the features and intricacies of the library to users. Have a
+   look at other examples for reference. Examples should demonstrate why
+   the new functionality is useful in practice and, if possible, compare it
+   to other methods available in scikit-learn.
 
-10. When adding additional functionality, provide at least one example script
-    in the ``examples/`` folder. Have a look at other examples for reference.
-    Examples should demonstrate why the new functionality is useful in
-    practice and, if possible, compare it to other methods available in
-    scikit-learn.
+10. New features often need to be illustrated with narrative documentation in
+    the user guide. If relevant, please also add references in the
+    literature, with PDF links when possible.
 
-11. At least one paragraph of narrative documentation with links to
-    references in the literature (with PDF links when possible) and
-    the example. For more details on writing and building the
-    documentation, see the :ref:`contribute_documentation` section.
-
-12. The documentation should also include expected time and space complexity
+11. The documentation should also include expected time and space complexity
     of the algorithm and scalability, e.g. "this algorithm can scale to a
     large number of samples > 100000, but does not scale in dimensionality:
     n_features is expected to be lower than 100".
@@ -524,7 +531,7 @@ without the example gallery::
     make
 
 The documentation will be generated in the ``_build/html/stable`` directory.
-To also generating the example gallery you can use::
+To also generate the example gallery you can use::
 
     make html
 
@@ -595,6 +602,8 @@ Finally, follow the formatting rules below to make it consistently good:
 
 * When editing reStructuredText (``.rst``) files, try to keep line length under
   80 characters when possible (exceptions include links and tables).
+
+.. _generated_doc_CI:
 
 Generated documentation on CircleCI
 -----------------------------------

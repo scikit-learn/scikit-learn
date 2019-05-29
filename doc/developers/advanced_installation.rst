@@ -47,7 +47,7 @@ Building from source
 In the vast majority of cases, building scikit-learn for development purposes
 can be done with::
 
-    pip install numpy scipy cython pytest sphinx sphinx-gallery flake8
+    pip install numpy scipy cython pytest flake8
 
 Then, in the main repository::
 
@@ -132,7 +132,7 @@ builds the extension in place and creates a link to the development directory
 
     every time the source code of a compiled extension is changed (for
     instance when switching branches or pulling changes from upstream).
-    Compiled extensions are Cython files (ending in `.pyx` or `pxd`).
+    Compiled extensions are Cython files (ending in `.pyx` or `.pxd`).
 
 On Unix-like systems, you can equivalently type ``make in`` from the
 top-level folder. Have a look at the ``Makefile`` for additional utilities.
