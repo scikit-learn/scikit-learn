@@ -7,9 +7,11 @@ from sklearn.datasets import load_iris
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
+from sklearn.impute import SimpleImputer
 from sklearn.inspection import permutation_importance
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import StandardScaler
 from sklearn.utils.testing import assert_array_almost_equal
 
 
@@ -62,15 +64,15 @@ def test_permutation_importance_mixed_types(convert_to_df, n_rounds):
     rng = np.random.RandomState(42)
 
     # Last column is correlated with y
-    X = np.array([[1, 2, 3, 4], ['a', 'b', 'a', 'b']]).T
+    X = np.array([[1.0, 2.0, 3.0, np.nan], ['a', 'b', 'a', 'b']]).T
     y = np.array([0, 1, 0, 1])
 
     if convert_to_df:
         pd = pytest.importorskip("pandas")
         X = pd.DataFrame(X, columns=['num_col', 'cat_col'])
-        X['num_col'] = X['num_col'].astype(int)
+        num_preprocess = make_pipeline(SimpleImputer(), StandardScaler())
         preprocess = ColumnTransformer([
-            ('num', StandardScaler(), ['num_col']),
+            ('num', num_preprocess, ['num_col']),
             ('cat', OneHotEncoder(), ['cat_col'])
         ])
         clf = make_pipeline(preprocess, LogisticRegression(solver='lbfgs'))
