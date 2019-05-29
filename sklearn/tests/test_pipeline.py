@@ -339,7 +339,7 @@ def test_pipeline_score_samples_pca_lof():
     # Test with PCA + OneClassSVM
     lof = LocalOutlierFactor(novelty=True)
     pca = PCA(svd_solver='full', n_components='mle', whiten=True)
-    pipe = Pipeline([('pca', pca), ('lof', clf)])
+    pipe = Pipeline([('pca', pca), ('lof', lof)])
     pipe.fit(X)
     assert_allclose(pipe.score_samples(X[:2]),
                     [-0.9564705258081416, -1.0371487183896932])
