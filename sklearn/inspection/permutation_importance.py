@@ -82,6 +82,7 @@ def permutation_importance(estimator, X, y, scoring=None, n_rounds=1,
 
     """
     if not hasattr(X, 'iloc'):
+        # Not a dataframe
         X = check_array(X, force_all_finite='allow-nan', dtype=None)
 
     random_state = check_random_state(random_state)
