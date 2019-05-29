@@ -1,6 +1,5 @@
 """Permutation importance for estimators"""
 import numpy as np
-import scipy.sparse as sp
 from joblib import Parallel, delayed
 
 from ..utils import check_random_state
@@ -10,14 +9,13 @@ from ..metrics import check_scoring
 
 def _calculate_permutation_scores(estimator, X, y, col_idx, random_state,
                                   n_rounds, scorer):
-    """Calcuate permutation scores for a column"""
+    """Calcuate permutation scores for a column. X will be modified in place"""
     if hasattr(X, 'iloc'):  # pandas dataframe
         X_col = X.iloc[:, col_idx].values
     else:
         X_col = X[:, col_idx]
 
     scores = np.zeros(n_rounds)
-
     for n_round in range(n_rounds):
         random_state.shuffle(X_col)
         feature_score = scorer(estimator, X, y)
@@ -79,12 +77,10 @@ def permutation_importance(estimator, X, y, scoring=None, n_rounds=1,
     .. [BRE] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
         2001.https://doi.org/10.1023/A:1010933404324
     """
-    # Use check_array only on lists and other non-array-likes / sparse
-    if not (hasattr(X, '__array__') or sp.issparse(X)):
-        X = check_array(X, force_all_finite='allow-nan',
-                        dtype=np.object, copy=True)
-    else:
+    if hasattr(X, 'iloc'):  # pandas dataframe
         X = X.copy()
+    else:
+        X = check_array(X, force_all_finite='allow-nan', dtype=None, copy=True)
 
     random_state = check_random_state(random_state)
     scorer = check_scoring(estimator, scoring=scoring)
