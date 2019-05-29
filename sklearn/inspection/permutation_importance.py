@@ -1,8 +1,9 @@
 """Permutation importance for estimators"""
 import numpy as np
+import scipy.sparse as sp
 
 from ..utils import check_random_state
-from ..compose._column_transformer import _check_X
+from ..utils.validation import check_array
 from ..metrics import check_scoring
 
 
@@ -54,7 +55,9 @@ def permutation_importance(estimator, X, y, scoring=None, n_rounds=1,
     .. [BRE] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
         2001.https://doi.org/10.1023/A:1010933404324
     """
-    X = _check_X(X)
+    if not (hasattr(X, '__array__') or sp.issparse(X)):
+        X = check_array(X, force_all_finite='allow-nan', dtype=np.object)
+
     random_state = check_random_state(random_state)
     scorer = check_scoring(estimator, scoring=scoring)
     scores = np.empty(shape=(X.shape[1], n_rounds), dtype=np.float)
