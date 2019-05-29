@@ -163,8 +163,6 @@ class OneHotEncoder(_BaseEncoder):
     By default, the encoder derives the categories based on the unique values
     in each feature. Alternatively, you can also specify the `categories`
     manually.
-    The OneHotEncoder previously assumed that the input features take on
-    values in the range [0, max(values)). This behaviour is deprecated.
 
     This encoding is needed for feeding categorical data to many scikit-learn
     estimators, notably linear models and SVMs with the standard kernels.
