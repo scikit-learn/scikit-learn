@@ -82,6 +82,7 @@ def permutation_importance(estimator, X, y, scoring=None, n_rounds=1,
     .. [BRE] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
         2001.https://doi.org/10.1023/A:1010933404324
     """
+    # Use check_array only on lists and other non-array-likes / sparse
     if not (hasattr(X, '__array__') or sp.issparse(X)):
         X = check_array(X, force_all_finite='allow-nan',
                         dtype=np.object, copy=True)
