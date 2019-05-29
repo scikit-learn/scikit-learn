@@ -503,7 +503,7 @@ class Pipeline(_BaseComposition):
 
         Returns
         -------
-        y_score : array-like, shape (n_samples, n_classes)
+        y_score : array-like, shape (n_samples,)
         """
         Xt = X
         for _, name, transform in self._iter(with_final=False):
