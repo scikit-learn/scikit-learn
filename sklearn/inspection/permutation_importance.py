@@ -17,10 +17,8 @@ def _calculate_permutation_scores(estimator, X, y, col_idx, random_state,
         X_iloc = X
 
     scores = np.zeros(n_rounds)
-    temp = X_iloc[:, col_idx].copy()
     for n_round in range(n_rounds):
-        random_state.shuffle(temp)
-        X_iloc[:, col_idx] = temp
+        X_iloc[:, col_idx] = random_state.permutation(X_iloc[:, col_idx])
         feature_score = scorer(estimator, X, y)
         scores[n_round] = feature_score
     return scores
