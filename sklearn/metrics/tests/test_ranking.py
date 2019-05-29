@@ -488,6 +488,7 @@ def test_binary_clf_curve():
     assert_raise_message(ValueError, msg, precision_recall_curve,
                          y_true, y_pred)
 
+
 def test_precision_recall_curve():
     y_true, _, probas_pred = make_prediction(binary=True)
     _test_precision_recall_curve(y_true, probas_pred)
@@ -506,6 +507,7 @@ def test_precision_recall_curve():
     assert_array_almost_equal(t, np.array([1, 2, 3, 4]))
     assert_equal(p.size, r.size)
     assert_equal(p.size, t.size + 1)
+
 
 def test_precision_recall_curve_nan():
     y_true, _, probas_pred = make_prediction(binary=True)
@@ -528,6 +530,7 @@ def test_precision_recall_curve_nan():
     assert_array_almost_equal(t, np.array([4]))
     assert_equal(p.size, r.size)
     assert_equal(p.size, t.size + 1)
+
 
 def _test_precision_recall_curve(y_true, probas_pred):
     # Test Precision-Recall and aread under PR curve
