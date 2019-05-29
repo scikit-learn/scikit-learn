@@ -398,6 +398,9 @@ def set_checking_parameters(estimator):
     if hasattr(estimator, 'n_splits'):
         estimator.set_params(n_splits=3)
 
+    if name == 'OneHotEncoder':
+        estimator.set_params(handle_unknown='ignore')
+
 
 class NotAnArray:
     """An object that is convertible to an array
