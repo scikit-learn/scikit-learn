@@ -367,7 +367,7 @@ class Kernel(metaclass=ABCMeta):
         """Returns whether the kernel is stationary. """
 
     @abstractmethod
-    def vector_X_only(self):
+    def requires_vector_input(self):
         """Returns whether the kernel is defined on discrete structures. """
 
 
@@ -413,7 +413,7 @@ class VectorOnlyKernelMixin:
 
     .. versionadded:: TBD
     """
-    def vector_X_only(self):
+    def requires_vector_input(self):
         """whether the kernel only works on fixed-length feature vectors."""
         return True
 
@@ -424,7 +424,7 @@ class StructureOrGenericKernelMixin:
 
     .. versionadded:: TBD
     """
-    def vector_X_only(self):
+    def requires_vector_input(self):
         """whether the kernel only works on fixed-length feature vectors."""
         return False
 
@@ -553,9 +553,10 @@ class CompoundKernel(Kernel):
         """Returns whether the kernel is stationary. """
         return np.all([kernel.is_stationary() for kernel in self.kernels])
 
-    def vector_X_only(self):
+    def requires_vector_input(self):
         """Returns whether the kernel is defined on discrete structures. """
-        return np.any([kernel.vector_X_only() for kernel in self.kernels])
+        return np.any([kernel.requires_vector_input()
+                       for kernel in self.kernels])
 
     def diag(self, X):
         """Returns the diagonal of the kernel k(X, X).
@@ -680,9 +681,10 @@ class KernelOperator(Kernel):
         """Returns whether the kernel is stationary. """
         return self.k1.is_stationary() and self.k2.is_stationary()
 
-    def vector_X_only(self):
+    def requires_vector_input(self):
         """Returns whether the kernel is stationary. """
-        return self.k1.vector_X_only() or self.k2.vector_X_only()
+        return np.any([self.k1.requires_vector_input(),
+                       self.k2.requires_vector_input()])
 
 
 class Sum(KernelOperator):
@@ -1002,9 +1004,9 @@ class Exponentiation(Kernel):
         """Returns whether the kernel is stationary. """
         return self.kernel.is_stationary()
 
-    def vector_X_only(self):
+    def requires_vector_input(self):
         """Returns whether the kernel is defined on discrete structures. """
-        return self.kernel.vector_X_only()
+        return self.kernel.requires_vector_input()
 
 
 class ConstantKernel(StationaryKernelMixin, StructureOrGenericKernelMixin,

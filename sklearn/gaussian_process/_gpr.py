@@ -186,8 +186,9 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
         self._rng = check_random_state(self.random_state)
 
-        if self.kernel_.vector_X_only():
-            X, y = check_X_y(X, y, multi_output=True, y_numeric=True)
+        if self.kernel_.requires_vector_input():
+            X, y = check_X_y(X, y, multi_output=True, y_numeric=True,
+                             ensure_2d=True, dtype="numeric")
         else:
             X, y = check_X_y(X, y, multi_output=True, y_numeric=True,
                              ensure_2d=False, dtype=None)
@@ -312,8 +313,8 @@ class GaussianProcessRegressor(MultiOutputMixin,
                 "Not returning standard deviation of predictions when "
                 "returning full covariance.")
 
-        if self.kernel is None or self.kernel.vector_X_only():
-            X = check_array(X)
+        if self.kernel is None or self.kernel.requires_vector_input():
+            X = check_array(X, ensure_2d=True, dtype="numeric")
         else:
             X = check_array(X, ensure_2d=False, dtype=None)
 

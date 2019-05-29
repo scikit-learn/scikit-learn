@@ -188,22 +188,24 @@ def test_kernel_stationary(kernel):
 
 
 @pytest.mark.parametrize('kernel',  kernels)
-def test_kernel_vector_X_only(kernel):
+def test_kernel_input_type(kernel):
     # Test whether kernels is for vectors or structured data
     if isinstance(kernel, Exponentiation):
-        assert_equal(kernel.vector_X_only(), kernel.kernel.vector_X_only())
+        assert_equal(kernel.requires_vector_input(),
+                     kernel.kernel.requires_vector_input())
     if isinstance(kernel, KernelOperator):
-        assert_equal(kernel.vector_X_only(),
-                     kernel.k1.vector_X_only() or kernel.k2.vector_X_only())
+        assert_equal(kernel.requires_vector_input(),
+                     np.any([kernel.k1.requires_vector_input(),
+                             kernel.k2.requires_vector_input()]))
 
 
-def test_kernel_vector_X_only_compound():
+def test_compound_kernel_input_type():
     kernel = CompoundKernel([WhiteKernel(noise_level=3.0)])
-    assert_equal(kernel.vector_X_only(), False)
+    assert_equal(kernel.requires_vector_input(), False)
 
     kernel = CompoundKernel([WhiteKernel(noise_level=3.0),
                              RBF(length_scale=2.0)])
-    assert_equal(kernel.vector_X_only(), True)
+    assert_equal(kernel.requires_vector_input(), True)
 
 
 def check_hyperparameters_equal(kernel1, kernel2):
