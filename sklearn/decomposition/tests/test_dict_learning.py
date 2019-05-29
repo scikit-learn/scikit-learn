@@ -70,14 +70,8 @@ def test_dict_learning_lars_positive_parameter():
     "lasso_cd",
     "threshold",
 ])
-@pytest.mark.parametrize("positive_code", [
-    False,
-    True,
-])
-@pytest.mark.parametrize("positive_dict", [
-    False,
-    True,
-])
+@pytest.mark.parametrize("positive_code", [False, True])
+@pytest.mark.parametrize("positive_dict", [False, True])
 def test_dict_learning_positivity(transform_algorithm,
                                   positive_code,
                                   positive_dict):
@@ -98,10 +92,7 @@ def test_dict_learning_positivity(transform_algorithm,
         assert (code < 0).any()
 
 
-@pytest.mark.parametrize("positive_dict", [
-    False,
-    True,
-])
+@pytest.mark.parametrize("positive_dict", [False, True])
 def test_dict_learning_lars_dict_positivity(positive_dict):
     n_components = 5
     dico = DictionaryLearning(
@@ -218,14 +209,8 @@ def test_dict_learning_online_lars_positive_parameter():
     "lasso_cd",
     "threshold",
 ])
-@pytest.mark.parametrize("positive_code", [
-    False,
-    True,
-])
-@pytest.mark.parametrize("positive_dict", [
-    False,
-    True,
-])
+@pytest.mark.parametrize("positive_code", [False, True])
+@pytest.mark.parametrize("positive_dict", [False, True])
 def test_minibatch_dictionary_learning_positivity(transform_algorithm,
                                                   positive_code,
                                                   positive_dict):
@@ -246,10 +231,7 @@ def test_minibatch_dictionary_learning_positivity(transform_algorithm,
         assert (code < 0).any()
 
 
-@pytest.mark.parametrize("positive_dict", [
-    False,
-    True,
-])
+@pytest.mark.parametrize("positive_dict", [False, True])
 def test_minibatch_dictionary_learning_lars(positive_dict):
     n_components = 8
 
@@ -263,14 +245,8 @@ def test_minibatch_dictionary_learning_lars(positive_dict):
         assert (dico.components_ < 0).any()
 
 
-@pytest.mark.parametrize("positive_code", [
-    False,
-    True,
-])
-@pytest.mark.parametrize("positive_dict", [
-    False,
-    True,
-])
+@pytest.mark.parametrize("positive_code", [False, True])
+@pytest.mark.parametrize("positive_dict", [False, True])
 def test_dict_learning_online_positivity(positive_code,
                                          positive_dict):
     rng = np.random.RandomState(0)
@@ -384,10 +360,7 @@ def test_sparse_encode_shapes():
     'lasso_cd',
     'threshold'
 ])
-@pytest.mark.parametrize("positive", [
-    False,
-    True,
-])
+@pytest.mark.parametrize("positive", [False, True])
 def test_sparse_encode_positivity(algo, positive):
     n_components = 12
     rng = np.random.RandomState(0)
@@ -400,10 +373,7 @@ def test_sparse_encode_positivity(algo, positive):
         assert (code < 0).any()
 
 
-@pytest.mark.parametrize("algo", [
-    'lars',
-    'omp'
-])
+@pytest.mark.parametrize("algo", ['lars', 'omp'])
 def test_sparse_encode_unavailable_positivity(algo):
     n_components = 12
     rng = np.random.RandomState(0)
