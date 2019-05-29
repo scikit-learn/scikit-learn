@@ -397,10 +397,11 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
 
     """
     if method == 'lar' and positive:
-        warnings.warn('positive option is broken for Least'
-                      ' Angle Regression (LAR). Use method="lasso".'
-                      ' This option will be removed in version 0.22.',
-                      DeprecationWarning)
+        raise ValueError(
+                "Positive constraint not supported for 'lar' "
+                "coding method."
+            )
+
     n_samples = n_samples if n_samples is not None else y.size
 
     if Xy is None:
@@ -804,14 +805,6 @@ class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
         setting ``fit_path`` to ``False`` will lead to a speedup, especially
         with a small alpha.
 
-    positive : boolean (default=False)
-        Restrict coefficients to be >= 0. Be aware that you might want to
-        remove fit_intercept which is set True by default.
-
-        .. deprecated:: 0.20
-
-            The option is broken and deprecated. It will be removed in v0.22.
-
     Attributes
     ----------
     alphas_ : array, shape (n_alphas + 1,) | list of n_targets such arrays
@@ -844,7 +837,7 @@ class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
     >>> reg.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111])
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     Lars(copy_X=True, eps=..., fit_intercept=True, fit_path=True,
-       n_nonzero_coefs=1, normalize=True, positive=False, precompute='auto',
+       n_nonzero_coefs=1, normalize=True, precompute='auto',
        verbose=False)
     >>> print(reg.coef_) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     [ 0. -1.11...]
@@ -856,17 +849,16 @@ class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
 
     """
     method = 'lar'
+    positive = False
 
     def __init__(self, fit_intercept=True, verbose=False, normalize=True,
                  precompute='auto', n_nonzero_coefs=500,
-                 eps=np.finfo(np.float).eps, copy_X=True, fit_path=True,
-                 positive=False):
+                 eps=np.finfo(np.float).eps, copy_X=True, fit_path=True):
         self.fit_intercept = fit_intercept
         self.verbose = verbose
         self.normalize = normalize
         self.precompute = precompute
         self.n_nonzero_coefs = n_nonzero_coefs
-        self.positive = positive
         self.eps = eps
         self.copy_X = copy_X
         self.fit_path = fit_path
@@ -1303,13 +1295,6 @@ class LarsCV(Lars):
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
 
-    positive : boolean (default=False)
-        Restrict coefficients to be >= 0. Be aware that you might want to
-        remove fit_intercept which is set True by default.
-
-        .. deprecated:: 0.20
-            The option is broken and deprecated. It will be removed in v0.22.
-
     Attributes
     ----------
     coef_ : array, shape (n_features,)
@@ -1360,7 +1345,7 @@ class LarsCV(Lars):
     def __init__(self, fit_intercept=True, verbose=False, max_iter=500,
                  normalize=True, precompute='auto', cv='warn',
                  max_n_alphas=1000, n_jobs=None, eps=np.finfo(np.float).eps,
-                 copy_X=True, positive=False):
+                 copy_X=True):
         self.max_iter = max_iter
         self.cv = cv
         self.max_n_alphas = max_n_alphas
@@ -1369,8 +1354,7 @@ class LarsCV(Lars):
                          verbose=verbose, normalize=normalize,
                          precompute=precompute,
                          n_nonzero_coefs=500,
-                         eps=eps, copy_X=copy_X, fit_path=True,
-                         positive=positive)
+                         eps=eps, copy_X=copy_X, fit_path=True)
 
     def fit(self, X, y):
         """Fit the model using X, y as training data.
@@ -1682,7 +1666,6 @@ class LassoLarsIC(LassoLars):
         coordinate descent Lasso estimator.
         As a consequence using LassoLarsIC only makes sense for problems where
         a sparse solution is expected and/or reached.
-
 
     Attributes
     ----------
