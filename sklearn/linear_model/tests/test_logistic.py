@@ -1312,7 +1312,7 @@ def test_dtype_match(solver, multi_class):
     X_64 = np.array(X).astype(np.float64)
     y_64 = np.array(Y1).astype(np.float64)
     X_sparse_32 = sp.csr_matrix(X, dtype=np.float32)
-    solver_tol = 1e-5
+    solver_tol = 5e-4
 
     lr_templ = LogisticRegression(
         solver=solver, multi_class=multi_class,
@@ -1333,13 +1333,16 @@ def test_dtype_match(solver, multi_class):
     assert_equal(lr_64.coef_.dtype, X_64.dtype)
 
     # solver_tol bounds the norm of the loss gradient
-    # dw ~= inv(H)*grad ==>  |dw| ~= |inv(H)| * solver_tol, where H - hessian
+    # dw ~= inv(H)*grad ==> |dw| ~= |inv(H)| * solver_tol, where H - hessian
+    #
+    # See https://github.com/scikit-learn/scikit-learn/pull/13645
     #
     # with  Z = np.hstack((np.ones((3,1)), np.array(X)))
-    # In [18]: np.linalg.norm(np.linalg.inv(0.25 * Z.T @ Z))
-    # Out[18]: 41.32740565066648
+    # In [8]: np.linalg.norm(np.diag([0,2,2]) + np.linalg.inv((Z.T @ Z)/4))
+    # Out[8]: 1.7193336918135917
 
-    atol = 10*solver_tol
+    # factor of 2 to get the ball diameter
+    atol = 2 * 1.72 * solver_tol
     if os.name == 'nt' and _IS_32BIT:
         # FIXME
         atol = 1e-2
