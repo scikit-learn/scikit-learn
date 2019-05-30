@@ -46,9 +46,8 @@ def _find_binning_thresholds(data, max_bins, support_missing_values,
     binning_thresholds: list of arrays
         For each feature, stores the increasing numeric values that can
         be used to separate the bins. Thus ``len(binning_thresholds) ==
-        n_features``.
-    has_missing_values: list of bool
-        For each feature, indicates whether missing values were encountered.
+        n_features``. If support_missing_values is True for a given feature,
+        the first threshold is set to NaN.
     """
     if not (2 <= max_bins <= 256):
         raise ValueError('max_bins={} should be no smaller than 2 '
@@ -76,12 +75,19 @@ def _find_binning_thresholds(data, max_bins, support_missing_values,
             # np.unique(col_data, return_counts) instead but this is more
             # work and the performance benefit will be limited because we
             # work on a fixed-size subsample of the full data.
-            n_percentiles = (max_bins if support_missing_values[f_idx]
-                             else max_bins + 1)
+            n_percentiles = max_bins + 1 - support_missing_values[f_idx]
             percentiles = np.linspace(0, 100, num=n_percentiles)
             percentiles = percentiles[1:-1]
             midpoints = np.percentile(col_data, percentiles,
                                       interpolation='midpoint').astype(X_DTYPE)
+
+        # If the first bin is reserved for missing vaules, we prepend a fake
+        # threshold (nan) for the first bin. This threshold is never used in
+        # practice, but we use it to keep the indexes of the bins synchronized
+        # with the bin_thresholds_ attribute: bin k must be at index k.
+        if support_missing_values[f_idx]:
+            midpoints = np.insert(midpoints, 0, np.nan)
+
         binning_thresholds.append(midpoints)
     return binning_thresholds
 
@@ -131,7 +137,12 @@ class _BinMapper(BaseEstimator, TransformerMixin):
             The data to bin.
         support_missing_values : ndarray of bool or bool, shape (n_features,)
             For each feature, indicates whether the first bin should be
-            reserved for missing values.
+            reserved for missing values. Note that inferring this from X would
+            be incorrect here, in general. The X that is passed here is the
+            training data (after the train/val split).
+            support_missing_values must be computed on the whole data
+            (before the split) so that the first bin is allocated if there are
+            missing values in the training data OR in the validation data.
 
         Returns
         -------
@@ -142,20 +153,11 @@ class _BinMapper(BaseEstimator, TransformerMixin):
         if isinstance(support_missing_values, bool):
             support_missing_values = \
                 np.array([support_missing_values] * X.shape[1], dtype=np.uint8)
-        self.support_missing_values = support_missing_values
+        self.support_missing_values_ = support_missing_values
 
         all_bin_thresholds = _find_binning_thresholds(
-            X, self.max_bins, self.support_missing_values,
+            X, self.max_bins, self.support_missing_values_,
             subsample=self.subsample, random_state=self.random_state)
-
-        # If the first bin is reserved for missing vaules, we prepend a fake
-        # threshold (nan) for the first bin. This threshold is never used in
-        # practice, but we use it to keep the indexes of the bins synchronized
-        # with the bin_thresholds_ attribute: bin k is at index k.
-        for feature_idx, bin_thresholds in enumerate(all_bin_thresholds):
-            if support_missing_values[feature_idx]:
-                all_bin_thresholds[feature_idx] = \
-                    np.insert(bin_thresholds, 0, np.nan)
 
         self.bin_thresholds_ = all_bin_thresholds
 
@@ -190,6 +192,6 @@ class _BinMapper(BaseEstimator, TransformerMixin):
                                         X.shape[1])
             )
         binned = np.zeros_like(X, dtype=X_BINNED_DTYPE, order='F')
-        _map_to_bins(X, self.bin_thresholds_, self.support_missing_values,
+        _map_to_bins(X, self.bin_thresholds_, self.support_missing_values_,
                      binned)
         return binned

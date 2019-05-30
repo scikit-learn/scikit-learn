@@ -124,9 +124,9 @@ cdef class Splitter:
     cdef public:
         const X_BINNED_DTYPE_C [::1, :] X_binned
         unsigned int n_features
-        unsigned int [::1] actual_n_bins
-        unsigned char [::1] has_missing_values
-        unsigned char [::1] support_missing_values
+        const unsigned int [::1] actual_n_bins
+        const unsigned char [::1] has_missing_values
+        const unsigned char [::1] support_missing_values
         unsigned char hessians_are_constant
         Y_DTYPE_C l2_regularization
         Y_DTYPE_C min_hessian_to_split
@@ -139,9 +139,9 @@ cdef class Splitter:
 
     def __init__(self,
                  const X_BINNED_DTYPE_C [::1, :] X_binned,
-                 np.ndarray[np.uint32_t] actual_n_bins,
-                 np.ndarray[np.uint8_t] has_missing_values,
-                 np.ndarray[np.uint8_t] support_missing_values,
+                 const unsigned int [::1] actual_n_bins,
+                 const unsigned char [::1] has_missing_values,
+                 const unsigned char [::1] support_missing_values,
                  Y_DTYPE_C l2_regularization,
                  Y_DTYPE_C min_hessian_to_split=1e-3,
                  unsigned int min_samples_leaf=20,
@@ -383,7 +383,7 @@ cdef class Splitter:
             int n_features = self.n_features
             split_info_struct split_info
             split_info_struct * split_infos
-            unsigned char [:] has_missing_values = self.has_missing_values
+            const unsigned char [:] has_missing_values = self.has_missing_values
 
         with nogil:
             n_samples = sample_indices.shape[0]
@@ -472,7 +472,8 @@ cdef class Splitter:
             unsigned int n_samples_left
             unsigned int n_samples_right
             unsigned int n_samples_ = n_samples
-            unsigned int start = 0
+            # if first bin is reserved for missing values, skip it
+            unsigned int start = self.support_missing_values[feature_idx]
             unsigned int end = self.actual_n_bins[feature_idx] - 1
             Y_DTYPE_C sum_hessian_left
             Y_DTYPE_C sum_hessian_right
@@ -487,9 +488,6 @@ cdef class Splitter:
                                                    sum_hessians,
                                                    self.l2_regularization)
 
-        if self.support_missing_values[feature_idx]:
-            # if first bin is reserved for missing values, skip it
-            start = 1
 
         for bin_idx in range(start, end):
             # Note that considering splitting on the last bin is useless since
@@ -569,8 +567,7 @@ cdef class Splitter:
             Y_DTYPE_C gain
             unsigned int start = self.actual_n_bins[feature_idx] - 2
 
-        # n_bins - 2 is the index of the second to last bin, which we consider
-        # being on the right child.
+        # n_bins - 2 is the index of the second to last bin
         sum_gradient_right, sum_hessian_right = 0., 0.
         n_samples_right = 0
         negative_loss_current_node = negative_loss(sum_gradients,
