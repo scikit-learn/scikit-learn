@@ -59,41 +59,41 @@ from sklearn.utils.testing import assert_array_almost_equal
 #     assert np.all(permute_score_means[-1] > permute_score_means[:-1])
 
 
-@pytest.mark.parametrize("convert_to_df", [True, False])
-@pytest.mark.parametrize("n_rounds", [3, 5])
-def test_permutation_importance_mixed_types(convert_to_df, n_rounds):
-    rng = np.random.RandomState(42)
+# @pytest.mark.parametrize("convert_to_df", [True, False])
+# @pytest.mark.parametrize("n_rounds", [3, 5])
+# def test_permutation_importance_mixed_types(convert_to_df, n_rounds):
+#     rng = np.random.RandomState(42)
 
-    # Last column is correlated with y
-    X = np.array([[1.0, 2.0, 3.0, np.nan], ['a', 'b', 'a', 'b']]).T
-    y = np.array([0, 1, 0, 1])
+#     # Last column is correlated with y
+#     X = np.array([[1.0, 2.0, 3.0, np.nan], ['a', 'b', 'a', 'b']]).T
+#     y = np.array([0, 1, 0, 1])
 
-    if convert_to_df:
-        pd = pytest.importorskip("pandas")
-        X = pd.DataFrame(X, columns=['num_col', 'cat_col'])
-        num_preprocess = make_pipeline(SimpleImputer(), StandardScaler())
-        preprocess = ColumnTransformer([
-            ('num', num_preprocess, ['num_col']),
-            ('cat', OneHotEncoder(), ['cat_col'])
-        ])
-        clf = make_pipeline(preprocess, LogisticRegression(solver='lbfgs'))
-    else:
-        clf = make_pipeline(OneHotEncoder(),
-                            LogisticRegression(solver='lbfgs'))
+#     if convert_to_df:
+#         pd = pytest.importorskip("pandas")
+#         X = pd.DataFrame(X, columns=['num_col', 'cat_col'])
+#         num_preprocess = make_pipeline(SimpleImputer(), StandardScaler())
+#         preprocess = ColumnTransformer([
+#             ('num', num_preprocess, ['num_col']),
+#             ('cat', OneHotEncoder(), ['cat_col'])
+#         ])
+#         clf = make_pipeline(preprocess, LogisticRegression(solver='lbfgs'))
+#     else:
+#         clf = make_pipeline(OneHotEncoder(),
+#                             LogisticRegression(solver='lbfgs'))
 
-    clf.fit(X, y)
+#     clf.fit(X, y)
 
-    X_before = X.copy()
-    permute_imp = permutation_importance(clf, X, y, n_rounds=n_rounds,
-                                         random_state=rng)
+#     X_before = X.copy()
+#     permute_imp = permutation_importance(clf, X, y, n_rounds=n_rounds,
+#                                          random_state=rng)
 
-    assert permute_imp.shape == (X.shape[1], n_rounds)
+#     assert permute_imp.shape == (X.shape[1], n_rounds)
 
-    # permutation_importance does not change X
-    assert np.all(X_before == X)
+#     # permutation_importance does not change X
+#     assert np.all(X_before == X)
 
-    permute_score_means = np.mean(permute_imp, axis=-1)
+#     permute_score_means = np.mean(permute_imp, axis=-1)
 
-    # the correlated feature with y is the last column and should
-    # have the highest importance
-    assert np.all(permute_score_means[-1] > permute_score_means[:-1])
+#     # the correlated feature with y is the last column and should
+#     # have the highest importance
+#     assert np.all(permute_score_means[-1] > permute_score_means[:-1])
