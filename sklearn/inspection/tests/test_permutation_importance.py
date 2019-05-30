@@ -16,18 +16,18 @@ from sklearn.utils.testing import assert_array_almost_equal
 
 
 @pytest.mark.parametrize("convert_to_df", [True, False])
-@pytest.mark.parametrize("load_dataset,clf", [
-    (load_boston, RandomForestRegressor(n_estimators=10, random_state=42)),
-    (load_iris, RandomForestClassifier(n_estimators=10, random_state=42))
+@pytest.mark.parametrize("data_bunch,clf", [
+    (load_boston(), RandomForestRegressor(n_estimators=10, random_state=42)),
+    (load_iris(), RandomForestClassifier(n_estimators=10, random_state=42))
 ])
 @pytest.mark.parametrize("n_rounds", [3, 5])
 def test_permutation_importance_correlated_feature_regression(
-        convert_to_df, load_dataset, clf, n_rounds):
+        convert_to_df, data_bunch, clf, n_rounds):
     # Make sure that feature highly correlated to the target have a higher
     # importance
     rng = np.random.RandomState(42)
 
-    dataset = load_dataset()
+    dataset = data_bunch
     X, y = dataset.data, dataset.target
     y_with_little_noise = (
         y + rng.normal(scale=0.001, size=y.shape[0])).reshape(-1, 1)
