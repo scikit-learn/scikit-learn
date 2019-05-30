@@ -579,8 +579,7 @@ class PLSRegression(_PLS):
     >>> pls2 = PLSRegression(n_components=2)
     >>> pls2.fit(X, Y)
     ... # doctest: +NORMALIZE_WHITESPACE
-    PLSRegression(copy=True, max_iter=500, n_components=2, scale=True,
-            tol=1e-06)
+    PLSRegression()
     >>> Y_pred = pls2.predict(X)
 
     References
@@ -721,8 +720,7 @@ class PLSCanonical(_PLS):
     >>> plsca = PLSCanonical(n_components=2)
     >>> plsca.fit(X, Y)
     ... # doctest: +NORMALIZE_WHITESPACE
-    PLSCanonical(algorithm='nipals', copy=True, max_iter=500, n_components=2,
-                 scale=True, tol=1e-06)
+    PLSCanonical()
     >>> X_c, Y_c = plsca.transform(X, Y)
 
     References
@@ -797,7 +795,7 @@ class PLSSVD(BaseEstimator, TransformerMixin):
     ...     [11.9, 12.3]])
     >>> plsca = PLSSVD(n_components=2)
     >>> plsca.fit(X, Y)
-    PLSSVD(copy=True, n_components=2, scale=True)
+    PLSSVD()
     >>> X_c, Y_c = plsca.transform(X, Y)
     >>> X_c.shape, Y_c.shape
     ((4, 2), (4, 2))

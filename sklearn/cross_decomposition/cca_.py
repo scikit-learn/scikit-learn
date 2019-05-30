@@ -80,7 +80,7 @@ class CCA(_PLS, _UnstableArchMixin):
     >>> cca = CCA(n_components=1)
     >>> cca.fit(X, Y)
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    CCA(copy=True, max_iter=500, n_components=1, scale=True, tol=1e-06)
+    CCA(n_components=1)
     >>> X_c, Y_c = cca.transform(X, Y)
 
     References
