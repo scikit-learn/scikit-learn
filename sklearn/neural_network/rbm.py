@@ -81,8 +81,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
     >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
     >>> model = BernoulliRBM(n_components=2)
     >>> model.fit(X)  # doctest: +NORMALIZE_WHITESPACE
-    BernoulliRBM(batch_size=10, learning_rate=0.1, n_components=2, n_iter=10,
-           random_state=None, verbose=0)
+    BernoulliRBM(n_components=2)
 
     References
     ----------
