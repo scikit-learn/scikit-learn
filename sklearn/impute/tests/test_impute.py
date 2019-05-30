@@ -20,15 +20,11 @@ from sklearn.impute import MissingIndicator
 from sklearn.impute import SimpleImputer, IterativeImputer
 from sklearn.dummy import DummyRegressor
 from sklearn.linear_model import BayesianRidge, ARDRegression, RidgeCV
-from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.pipeline import Pipeline
 from sklearn.pipeline import make_union
-from sklearn.model_selection import PredefinedSplit
-from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import GridSearchCV
 from sklearn import tree
 from sklearn.random_projection import sparse_random_matrix
-
-from sklearn.linear_model import LogisticRegression
 
 
 def _check_statistics(X, X_true,
