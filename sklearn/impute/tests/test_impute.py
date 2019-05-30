@@ -20,11 +20,15 @@ from sklearn.impute import MissingIndicator
 from sklearn.impute import SimpleImputer, IterativeImputer
 from sklearn.dummy import DummyRegressor
 from sklearn.linear_model import BayesianRidge, ARDRegression, RidgeCV
-from sklearn.pipeline import Pipeline
+from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.pipeline import make_union
+from sklearn.model_selection import PredefinedSplit
+from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import GridSearchCV
 from sklearn import tree
 from sklearn.random_projection import sparse_random_matrix
+
+from sklearn.linear_model import LogisticRegression
 
 
 def _check_statistics(X, X_true,
@@ -205,12 +209,12 @@ def test_imputation_median_special_cases():
     X = np.array([
         [0, np.nan, np.nan],  # odd: implicit zero
         [5, np.nan, np.nan],  # odd: explicit nonzero
-        [0, 0, np.nan],    # even: average two zeros
-        [-5, 0, np.nan],   # even: avg zero and neg
-        [0, 5, np.nan],    # even: avg zero and pos
-        [4, 5, np.nan],    # even: avg nonzeros
+        [0, 0, np.nan],  # even: average two zeros
+        [-5, 0, np.nan],  # even: avg zero and neg
+        [0, 5, np.nan],  # even: avg zero and pos
+        [4, 5, np.nan],  # even: avg nonzeros
         [-4, -5, np.nan],  # even: avg negatives
-        [-1, 2, np.nan],   # even: crossing neg and pos
+        [-1, 2, np.nan],  # even: crossing neg and pos
     ]).transpose()
 
     X_imputed_median = np.array([
@@ -445,6 +449,21 @@ def test_imputation_constant_pandas(dtype):
     assert_array_equal(X_trans, X_true)
 
 
+def test_simple_imputation_splitting_missing_value_in_test_array():
+    # [Non Regression Test] Missing value in test set should not throw an error
+    # and return a finite dataset
+    X = np.array([1, 2, 3, np.nan]).T
+    y = np.array([0, 1, 1, 1])
+    test_fold = np.array([0, 1, 0, 1])
+
+    ps = PredefinedSplit(test_fold)
+    pipe1 = make_pipeline(SimpleImputer(add_indicator=True),
+                          LogisticRegression(solver='lbfgs'))
+    scores = cross_val_score(pipe1, X, y, cv=ps)
+
+    assert np.isnan(scores).any() == True
+
+
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_imputation_pipeline_grid_search():
     # Test imputation within a pipeline + gridsearch.
@@ -588,12 +607,12 @@ def test_iterative_imputer_imputation_order(imputation_order):
             imputer.n_features_with_missing_)
 
     if imputation_order == 'roman':
-        assert np.all(ordered_idx[:d-1] == np.arange(1, d))
+        assert np.all(ordered_idx[:d - 1] == np.arange(1, d))
     elif imputation_order == 'arabic':
-        assert np.all(ordered_idx[:d-1] == np.arange(d-1, 0, -1))
+        assert np.all(ordered_idx[:d - 1] == np.arange(d - 1, 0, -1))
     elif imputation_order == 'random':
-        ordered_idx_round_1 = ordered_idx[:d-1]
-        ordered_idx_round_2 = ordered_idx[d-1:]
+        ordered_idx_round_1 = ordered_idx[:d - 1]
+        ordered_idx_round_2 = ordered_idx[d - 1:]
         assert ordered_idx_round_1 != ordered_idx_round_2
     elif 'ending' in imputation_order:
         assert len(ordered_idx) == max_iter * (d - 1)
@@ -849,7 +868,7 @@ def test_iterative_imputer_additive_matrix():
     X_filled = np.zeros(A.shape)
     for i in range(d):
         for j in range(d):
-            X_filled[:, (i+j) % d] += (A[:, i] + B[:, j]) / 2
+            X_filled[:, (i + j) % d] += (A[:, i] + B[:, j]) / 2
     # a quarter is randomly missing
     nan_mask = rng.rand(n, d) < 0.25
     X_missing = X_filled.copy()
@@ -939,18 +958,18 @@ def test_missing_indicator_error(X_fit, X_trans, params, msg_err):
 @pytest.mark.parametrize(
     "missing_values, dtype, arr_type",
     [(np.nan, np.float64, np.array),
-     (0,      np.int32,   np.array),
-     (-1,     np.int32,   np.array),
+     (0, np.int32, np.array),
+     (-1, np.int32, np.array),
      (np.nan, np.float64, sparse.csc_matrix),
-     (-1,     np.int32,   sparse.csc_matrix),
+     (-1, np.int32, sparse.csc_matrix),
      (np.nan, np.float64, sparse.csr_matrix),
-     (-1,     np.int32,   sparse.csr_matrix),
+     (-1, np.int32, sparse.csr_matrix),
      (np.nan, np.float64, sparse.coo_matrix),
-     (-1,     np.int32,   sparse.coo_matrix),
+     (-1, np.int32, sparse.coo_matrix),
      (np.nan, np.float64, sparse.lil_matrix),
-     (-1,     np.int32,   sparse.lil_matrix),
+     (-1, np.int32, sparse.lil_matrix),
      (np.nan, np.float64, sparse.bsr_matrix),
-     (-1,     np.int32,   sparse.bsr_matrix)
+     (-1, np.int32, sparse.bsr_matrix)
      ])
 @pytest.mark.parametrize(
     "param_features, n_features, features_indices",
@@ -1031,7 +1050,7 @@ def test_missing_indicator_raise_on_sparse_with_missing_0(arr_type):
 @pytest.mark.parametrize("param_sparse", [True, False, 'auto'])
 @pytest.mark.parametrize("missing_values, arr_type",
                          [(np.nan, np.array),
-                          (0,      np.array),
+                          (0, np.array),
                           (np.nan, sparse.csc_matrix),
                           (np.nan, sparse.csr_matrix),
                           (np.nan, sparse.coo_matrix),
@@ -1153,10 +1172,10 @@ def test_missing_indicator_sparse_no_explicit_zeros():
                          [SimpleImputer, IterativeImputer])
 def test_imputers_add_indicator(marker, imputer_constructor):
     X = np.array([
-        [marker, 1,      5,      marker, 1],
-        [2,      marker, 1,      marker, 2],
-        [6,      3,      marker, marker, 3],
-        [1,      2,      9,      marker, 4]
+        [marker, 1, 5, marker, 1],
+        [2, marker, 1, marker, 2],
+        [6, 3, marker, marker, 3],
+        [1, 2, 9, marker, 4]
     ])
     X_true_indicator = np.array([
         [1., 0., 0., 1.],
