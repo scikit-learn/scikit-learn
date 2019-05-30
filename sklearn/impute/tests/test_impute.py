@@ -461,7 +461,7 @@ def test_simple_imputation_splitting_missing_value_in_test_array():
                           LogisticRegression(solver='lbfgs'))
     scores = cross_val_score(pipe1, X, y, cv=ps)
 
-    assert np.isnan(scores).any() == True
+    assert np.isnan(scores).any()
 
 
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
