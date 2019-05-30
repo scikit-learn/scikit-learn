@@ -315,7 +315,7 @@ def _convert_arff_data_dataframe(arrf, columns, features_dict, chunksize):
     -------
     dataframe : pandas DataFrame
     """
-    pd = check_pandas_support('fetch_openml with return_frame=True')
+    pd = check_pandas_support('fetch_openml with as_frame=True')
 
     attributes = OrderedDict(arrf['attributes'])
     arrf_columns = list(attributes)
@@ -513,7 +513,7 @@ def _valid_data_column_names(features_list, target_columns):
 
 def fetch_openml(name=None, version='active', data_id=None, data_home=None,
                  target_column='default-target', cache=True, return_X_y=False,
-                 return_frame=False, chunksize=5000):
+                 as_frame=False, chunksize=5000):
     """Fetch dataset from openml by name or dataset id.
 
     Datasets are uniquely identified by either an integer ID or by a
@@ -566,14 +566,14 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         If True, returns ``(data, target)`` instead of a Bunch object. See
         below for more information about the `data` and `target` objects.
 
-    return_frame : boolean, default=False
+    as_frame : boolean, default=False
         If True, returns a Bunch where the data attribute is a pandas
         DataFrame.
 
     chunksize : int, default=5000
         Number of rows of arrf file to read at a time. Higher values leads to
         more memory usage.
-        Only used when ``return_frame`` is True.
+        Only used when ``as_frame`` is True.
 
     Returns
     -------
@@ -586,16 +586,14 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         target : np.array, pandas Series or DataFrame
             The regression target or classification labels, if applicable.
             Dtype is float if numeric, and object if categorical. If
-            ``return_frame`` is True, ``target`` is a pandas object.
+            ``as_frame`` is True, ``target`` is a pandas object.
         DESCR : str
             The full description of the dataset
         feature_names : list
             The names of the dataset columns
-        target_names : list
-            The names of the target columns
         categories : dict or None
             Maps each categorical feature name to a list of values, such
-            that the value encoded as i is ith in the list. If ``return_frame``
+            that the value encoded as i is ith in the list. If ``as_frame``
             is True, this is None.
         details : dict
             More metadata from OpenML
@@ -662,24 +660,24 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     if data_description['format'].lower() == 'sparse_arff':
         return_sparse = True
 
-    if return_frame:
+    if as_frame:
         if return_sparse:
             raise ValueError('Cannot return dataframe with sparse data')
         if return_X_y:
             raise ValueError('return_X_y=True can not be set when '
-                             'return_frame=True')
+                             'as_frame=True')
 
     # download data features, meta-info about column types
     features_list = _get_data_features(data_id, data_home)
 
-    if not return_frame:
+    if not as_frame:
         for feature in features_list:
             if 'true' in (feature['is_ignore'], feature['is_row_identifier']):
                 continue
             if feature['data_type'] == 'string':
                 raise ValueError('STRING attributes are not supported for '
                                  'arrays as a return value. Try '
-                                 'return_frame=True')
+                                 'as_frame=True')
 
     if target_column == "default-target":
         # determines the default target based on the data feature results
@@ -731,19 +729,18 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     # obtain the data
     arff = _download_data_arff(data_description['file_id'], return_sparse,
-                               data_home, encode_nominal=not return_frame)
+                               data_home, encode_nominal=not as_frame)
 
     description = "{}\n\nDownloaded from openml.org.".format(
         data_description.pop('description'))
 
-    if return_frame:
+    if as_frame:
         columns = data_columns + target_column
         df = _convert_arff_data_dataframe(arff, columns, features_dict,
                                           chunksize)
 
         return Bunch(dataframe=df, data=None, target=None,
-                     feature_names=data_columns,
-                     target_names=target_column, DESCR=description,
+                     feature_names=data_columns, DESCR=description,
                      details=data_description, categories=None,
                      url="https://www.openml.org/d/{}".format(data_id))
 
@@ -782,7 +779,6 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     bunch = Bunch(
         data=X, target=y, feature_names=data_columns,
-        target_names=target_column,
         DESCR=description, details=data_description,
         categories=nominal_attributes,
         url="https://www.openml.org/d/{}".format(data_id))

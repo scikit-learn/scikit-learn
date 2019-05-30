@@ -289,28 +289,80 @@ def test_fetch_openml_iris_pandas(monkeypatch, chunksize):
     pd = pytest.importorskip('pandas')
     CategoricalDtype = pd.api.types.CategoricalDtype
     data_id = 61
-    expected_shape = (150, 5)
+    data_shape = (150, 4)
+    target_shape = (150, )
+    frame_shape = (150, 5)
 
-    cat_dtype = CategoricalDtype(['Iris-setosa', 'Iris-versicolor',
-                                  'Iris-virginica'])
-    expected_dtypes = [np.float64] * 4 + [cat_dtype]
-    expected_feature_names = ['sepallength', 'sepalwidth', 'petallength',
-                              'petalwidth']
-    expected_target_names = ['class']
-    expected_columns = expected_feature_names + expected_target_names
+    target_dtype = CategoricalDtype(['Iris-setosa', 'Iris-versicolor',
+                                     'Iris-virginica'])
+    data_dtypes = [np.float64] * 4
+    data_names = ['sepallength', 'sepalwidth', 'petallength', 'petalwidth']
+    target_names = 'class'
+    columns = data_names + [target_names]
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
 
-    bunch = fetch_openml(data_id=data_id, return_frame=True, cache=False,
+    bunch = fetch_openml(data_id=data_id, as_frame=True, cache=False,
                          chunksize=chunksize)
-    df = bunch.dataframe
+    data = bunch.data
+    target = bunch.target
+    frame = bunch.frame
 
-    assert isinstance(df, pd.DataFrame)
-    assert np.all(df.dtypes == expected_dtypes)
-    assert df.shape == expected_shape
-    assert np.all(df.columns == expected_columns)
-    assert np.all(bunch.feature_names == expected_feature_names)
-    assert np.all(bunch.target_names == expected_target_names)
+    assert isinstance(data, pd.DataFrame)
+    assert np.all(data.dtypes == data_dtypes)
+    assert data.shape == data_shape
+    assert np.all(data.columns == columns)
+    assert np.all(bunch.feature_names == data_names)
+
+    assert isinstance(target, pd.Series)
+    assert target.dtype == target_dtype
+    assert target.shape == target_shape
+
+    assert isinstance(frame, pd.DataFrame)
+    assert frame.shape == frame_shape
+    assert np.all(frame.dtype == data_dtypes + [target_dtype])
+
+
+@pytest.mark.parametrize('chunksize', [10, 1000])
+def test_fetch_openml_iris_multitarget_pandas(monkeypatch, chunksize):
+    # classification dataset with numeric only columns
+    pd = pytest.importorskip('pandas')
+    CategoricalDtype = pd.api.types.CategoricalDtype
+    data_id = 61
+    data_shape = (150, 3)
+    target_shape = (150, 2)
+    frame_shape = (150, 5)
+    target_column = ['petalwidth', 'petallength']
+
+    target_dtype = [CategoricalDtype(['Iris-setosa', 'Iris-versicolor',
+                                     'Iris-virginica']), np.float64]
+    data_dtypes = [np.float64] * 3
+    data_names = ['sepallength', 'sepalwidth', 'class']
+    target_names = ['petalwidth', 'petallength']
+    columns = data_names + target_names
+
+    _monkey_patch_webbased_functions(monkeypatch, data_id, True)
+
+    bunch = fetch_openml(data_id=data_id, as_frame=True, cache=False,
+                         chunksize=chunksize, target_column=target_column)
+    data = bunch.data
+    target = bunch.target
+    frame = bunch.frame
+
+    assert isinstance(data, pd.DataFrame)
+    assert np.all(data.dtypes == data_dtypes)
+    assert data.shape == data_shape
+    assert np.all(data.columns == columns)
+    assert np.all(bunch.feature_names == data_names)
+
+    assert isinstance(target, pd.DataFrame)
+    assert np.all(target.dtypes == target_dtype)
+    assert target.shape == target_shape
+    assert np.all(target.columns == target_column)
+
+    assert isinstance(frame, pd.DataFrame)
+    assert frame.shape == frame_shape
+    assert np.all(frame.dtype == data_dtypes + target_dtype)
 
 
 def test_fetch_openml_anneal_pandas(monkeypatch):
@@ -320,24 +372,34 @@ def test_fetch_openml_anneal_pandas(monkeypatch):
 
     data_id = 2
     target_column = 'class'
-    expected_shape = (11, 39)
-    expected_categories = 33
-    expected_floats = 6
+    data_shape = (11, 38)
+    target_shape = (11,)
+    frame_shape = (11, 39)
+    expected_data_categories = 32
+    expected_data_floats = 6
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
 
-    bunch = fetch_openml(data_id=data_id, return_frame=True,
+    bunch = fetch_openml(data_id=data_id, as_frame=True,
                          target_column=target_column, cache=False)
-    df = bunch.dataframe
+    data = bunch.data
+    target = bunch.target
+    frame = bunch.frame
 
-    assert isinstance(df, pd.DataFrame)
-    assert df.shape == expected_shape
-    n_categories = len([dtype for dtype in df.dtypes
+    assert isinstance(data, pd.DataFrame)
+    assert data.shape == data_shape
+    n_categories = len([dtype for dtype in data.dtypes
                        if isinstance(dtype, CategoricalDtype)])
-    n_floats = len([dtype for dtype in df.dtypes if dtype.kind == 'f'])
-    assert expected_categories == n_categories
-    assert expected_floats == n_floats
-    assert np.all(bunch.target_names == [target_column])
+    n_floats = len([dtype for dtype in data.dtypes if dtype.kind == 'f'])
+    assert expected_data_categories == n_categories
+    assert expected_data_floats == n_floats
+
+    assert isinstance(target, pd.Series)
+    assert target.shape == target_shape
+    assert isinstance(target.dtype, CategoricalDtype)
+
+    assert isinstance(frame, pd.DataFrame)
+    assert frame.shape == frame_shape
 
 
 def test_fetch_openml_cpu_pandas(monkeypatch):
@@ -345,7 +407,9 @@ def test_fetch_openml_cpu_pandas(monkeypatch):
     pd = pytest.importorskip('pandas')
     CategoricalDtype = pd.api.types.CategoricalDtype
     data_id = 561
-    expected_shape = (209, 8)
+    data_shape = (209, 7)
+    target_shape = (209, )
+    frame_shape = (209, 8)
 
     cat_dtype = CategoricalDtype(['adviser', 'amdahl', 'apollo', 'basf',
                                   'bti', 'burroughs', 'c.r.d', 'cdc',
@@ -355,21 +419,30 @@ def test_fetch_openml_cpu_pandas(monkeypatch):
                                   'microdata', 'nas', 'ncr', 'nixdorf',
                                   'perkin-elmer', 'prime', 'siemens',
                                   'sperry', 'sratus', 'wang'])
-    expected_dtypes = [cat_dtype] + [np.float64] * 7
-    expected_feature_names = ['vendor', 'MYCT', 'MMIN', 'MMAX', 'CACH',
-                              'CHMIN', 'CHMAX']
-    expected_target_names = ['class']
+    data_dtypes = [cat_dtype] + [np.float64] * 6
+    feature_names = ['vendor', 'MYCT', 'MMIN', 'MMAX', 'CACH',
+                     'CHMIN', 'CHMAX']
+    target_name = 'class'
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
-    bunch = fetch_openml(data_id=data_id, return_frame=True, cache=False)
-    df = bunch.dataframe
+    bunch = fetch_openml(data_id=data_id, as_frame=True, cache=False)
+    data = bunch.data
+    target = bunch.target
+    frame = bunch.frame
 
-    assert isinstance(df, pd.DataFrame)
-    assert df.shape == expected_shape
-    assert np.all(df.dtypes == expected_dtypes)
-    assert np.all(df.columns == expected_feature_names + expected_target_names)
-    assert np.all(bunch.feature_names == expected_feature_names)
-    assert np.all(bunch.target_names == expected_target_names)
+    assert isinstance(data, pd.DataFrame)
+    assert data.shape == data_shape
+    assert np.all(data.dtypes == data_dtypes)
+    assert np.all(data.columns == feature_names)
+    assert np.all(bunch.feature_names == feature_names)
+
+    assert isinstance(target, pd.Series)
+    assert target.shape == target_shape
+    assert target.dtype == np.float64
+    assert target.name == target_name
+
+    assert isinstance(frame, pd.DataFrame)
+    assert frame.shape == frame_shape
 
 
 def test_fetch_openml_australian_pandas_error_sparse(monkeypatch):
@@ -379,7 +452,7 @@ def test_fetch_openml_australian_pandas_error_sparse(monkeypatch):
 
     msg = 'Cannot return dataframe with sparse data'
     with pytest.raises(ValueError, match=msg):
-        fetch_openml(data_id=data_id, return_frame=True, cache=False)
+        fetch_openml(data_id=data_id, as_frame=True, cache=False)
 
 
 def test_fetch_openml_adultcensus_pandas_return_X_y_errors(monkeypatch):
@@ -387,9 +460,9 @@ def test_fetch_openml_adultcensus_pandas_return_X_y_errors(monkeypatch):
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
 
-    msg = 'return_X_y=True can not be set when return_frame=True'
+    msg = 'return_X_y=True can not be set when as_frame=True'
     with pytest.raises(ValueError, match=msg):
-        fetch_openml(data_id=data_id, return_frame=True, cache=False,
+        fetch_openml(data_id=data_id, as_frame=True, cache=False,
                      return_X_y=True)
 
 
@@ -399,21 +472,34 @@ def test_fetch_openml_adultcensus_pandas(monkeypatch):
 
     # Check because of the numeric row attribute (issue #12329)
     data_id = 1119
-    expected_shape = (10, 15)
-    expected_categories = 9
-    expected_floats = 6
+    data_shape = (10, 14)
+    target_shape = (10, )
+    frame_shape = (10, 15)
+
+    expected_data_categories = 8
+    expected_data_floats = 6
+    target_column = 'class'
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
-    bunch = fetch_openml(data_id=data_id, return_frame=True, cache=False)
-    df = bunch.dataframe
+    bunch = fetch_openml(data_id=data_id, as_frame=True, cache=False)
+    data = bunch.data
+    target = bunch.target
+    frame = bunch.frame
 
-    assert isinstance(df, pd.DataFrame)
-    assert df.shape == expected_shape
-    n_categories = len([dtype for dtype in df.dtypes
+    assert isinstance(data, pd.DataFrame)
+    assert data.shape == data_shape
+    n_categories = len([dtype for dtype in data.dtypes
                        if isinstance(dtype, CategoricalDtype)])
-    n_floats = len([dtype for dtype in df.dtypes if dtype.kind == 'f'])
-    assert expected_categories == n_categories
-    assert expected_floats == n_floats
+    n_floats = len([dtype for dtype in data.dtypes if dtype.kind == 'f'])
+    assert expected_data_categories == n_categories
+    assert expected_data_floats == n_floats
+
+    assert isinstance(target, pd.Series)
+    assert target.shape == target_shape
+    assert target.name == target_column
+
+    assert isinstance(frame, pd.DataFrame)
+    assert frame.shape == frame_shape
 
 
 def test_fetch_openml_miceprotein_pandas(monkeypatch):
@@ -424,21 +510,36 @@ def test_fetch_openml_miceprotein_pandas(monkeypatch):
     CategoricalDtype = pd.api.types.CategoricalDtype
 
     data_id = 40966
-    expected_shape = (7, 78)
-    expected_floats = 77
-    expected_categories = 1
+    data_shape = (7, 77)
+    target_shape = (7, )
+    frame_shape = (7, 78)
+
+    target_column = 'class'
+    frame_n_categories = 1
+    frame_n_floats = 77
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
-    bunch = fetch_openml(data_id=data_id, return_frame=True, cache=False)
-    df = bunch.dataframe
+    bunch = fetch_openml(data_id=data_id, as_frame=True, cache=False)
+    data = bunch.data
+    target = bunch.target
+    frame = bunch.frame
 
-    assert isinstance(df, pd.DataFrame)
-    assert df.shape == expected_shape
-    n_categories = len([dtype for dtype in df.dtypes
+    assert isinstance(data, pd.DataFrame)
+    assert data.shape == data_shape
+    assert np.all(data.dtypes == np.float64)
+
+    assert isinstance(target, pd.Series)
+    assert isinstance(target.dtype, CategoricalDtype)
+    assert target.shape == target_shape
+    assert target.name == target_column
+
+    assert isinstance(frame, pd.DataFrame)
+    assert frame.shape == frame_shape
+    n_categories = len([dtype for dtype in data.dtypes
                        if isinstance(dtype, CategoricalDtype)])
-    n_floats = len([dtype for dtype in df.dtypes if dtype.kind == 'f'])
-    assert expected_categories == n_categories
-    assert expected_floats == n_floats
+    n_floats = len([dtype for dtype in data.dtypes if dtype.kind == 'f'])
+    assert frame_n_categories == n_categories
+    assert frame_n_floats == n_floats
 
 
 def test_fetch_openml_emotions_pandas(monkeypatch):
@@ -449,23 +550,34 @@ def test_fetch_openml_emotions_pandas(monkeypatch):
     data_id = 40589
     target_column = ['amazed.suprised', 'happy.pleased', 'relaxing.calm',
                      'quiet.still', 'sad.lonely', 'angry.aggresive']
-    expected_shape = (13, 78)
-    expected_categories = 6
-    expected_floats = 72
+    data_shape = (13, 72)
+    target_shape = (13, 6)
+    frame_shape = (13, 78)
+
+    expected_frame_categories = 6
+    expected_frame_floats = 72
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
-    bunch = fetch_openml(data_id=data_id, return_frame=True, cache=False,
+    bunch = fetch_openml(data_id=data_id, as_frame=True, cache=False,
                          target_column=target_column)
-    df = bunch.dataframe
+    data = bunch.data
+    target = bunch.target
+    frame = bunch.frame
 
-    assert isinstance(df, pd.DataFrame)
-    assert df.shape == expected_shape
-    n_categories = len([dtype for dtype in df.dtypes
+    assert isinstance(data, pd.DataFrame)
+    assert data.shape == data_shape
+
+    assert isinstance(target, pd.DataFrame)
+    assert target.shape == target_shape
+    assert np.all(target.columns == target_column)
+
+    assert isinstance(frame, pd.DataFrame)
+    assert frame.shape == frame_shape
+    n_categories = len([dtype for dtype in frame.dtypes
                        if isinstance(dtype, CategoricalDtype)])
-    n_floats = len([dtype for dtype in df.dtypes if dtype.kind == 'f'])
-    assert expected_categories == n_categories
-    assert expected_floats == n_floats
-    assert np.all(bunch.target_names == target_column)
+    n_floats = len([dtype for dtype in frame.dtypes if dtype.kind == 'f'])
+    assert expected_frame_categories == n_categories
+    assert expected_frame_floats == n_floats
 
 
 def test_fetch_openml_titanic_pandas(monkeypatch):
@@ -474,7 +586,9 @@ def test_fetch_openml_titanic_pandas(monkeypatch):
     CategoricalDtype = pd.api.types.CategoricalDtype
 
     data_id = 40945
-    expected_shape = (1309, 14)
+    data_shape = (1309, 13)
+    target_shape = (1309, )
+    frame_shape = (1309, 14)
     name_to_dtype = {
         'pclass': np.float64,
         'name': object,
@@ -491,25 +605,34 @@ def test_fetch_openml_titanic_pandas(monkeypatch):
         'home.dest': object,
         'survived': CategoricalDtype(['0', '1'])
     }
-    expected_columns = ['pclass', 'survived', 'name', 'sex', 'age', 'sibsp',
-                        'parch', 'ticket', 'fare', 'cabin', 'embarked',
-                        'boat', 'body', 'home.dest']
-    expected_dtypes = [name_to_dtype[col] for col in expected_columns]
-    expected_feature_names = ['pclass', 'name', 'sex', 'age', 'sibsp',
-                              'parch', 'ticket', 'fare', 'cabin', 'embarked',
-                              'boat', 'body', 'home.dest']
-    expected_target_names = ['survived']
+
+    frame_columns = ['pclass', 'survived', 'name', 'sex', 'age', 'sibsp',
+                     'parch', 'ticket', 'fare', 'cabin', 'embarked',
+                     'boat', 'body', 'home.dest']
+    frame_dtypes = [name_to_dtype[col] for col in frame_columns]
+    feature_names = ['pclass', 'name', 'sex', 'age', 'sibsp',
+                     'parch', 'ticket', 'fare', 'cabin', 'embarked',
+                     'boat', 'body', 'home.dest']
+    target_name = 'survived'
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
-    bunch = fetch_openml(data_id=data_id, return_frame=True, cache=False)
-    df = bunch.dataframe
+    bunch = fetch_openml(data_id=data_id, as_frame=True, cache=False)
+    data = bunch.data
+    target = bunch.target
+    frame = bunch.frame
 
-    assert isinstance(df, pd.DataFrame)
-    assert df.shape == expected_shape
-    assert np.all(df.dtypes == expected_dtypes)
-    assert np.all(df.columns == expected_columns)
-    assert np.all(bunch.feature_names == expected_feature_names)
-    assert np.all(bunch.target_names == expected_target_names)
+    assert isinstance(data, pd.DataFrame)
+    assert data.shape == data_shape
+    assert np.all(data.columns == feature_names)
+
+    assert isinstance(target, pd.Series)
+    assert target.shape == target_shape
+    assert target.name == target_name
+    assert target.dtype == name_to_dtype[target_name]
+
+    assert isinstance(frame, pd.DataFrame)
+    assert frame.shape == frame_shape
+    assert np.all(data.dtypes == frame_dtypes)
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
@@ -924,7 +1047,7 @@ def test_string_attribute_without_dataframe(monkeypatch, gzip_response):
     # single column test
     assert_raise_message(ValueError,
                          ('STRING attributes are not supported for arrays as '
-                          'a return value. Try return_frame=True'),
+                          'a return value. Try as_frame=True'),
                          fetch_openml, data_id=data_id, cache=False)
 
 
