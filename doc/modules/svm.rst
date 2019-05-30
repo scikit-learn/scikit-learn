@@ -77,10 +77,7 @@ n_features]`` holding the training samples, and an array y of class labels
     >>> y = [0, 1]
     >>> clf = svm.SVC()
     >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-    SVC(C=1.0, break_ties=False, cache_size=200, class_weight=None, coef0=0.0,
-        decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
-        max_iter=-1, probability=False,
-        random_state=None, shrinking=True, tol=0.001, verbose=False)
+    SVC()
 
 After being fitted, the model can then be used to predict new values::
 
@@ -121,10 +118,7 @@ n_classes)``.
     >>> Y = [0, 1, 2, 3]
     >>> clf = svm.SVC(decision_function_shape='ovo')
     >>> clf.fit(X, Y) # doctest: +NORMALIZE_WHITESPACE
-    SVC(C=1.0, break_ties=False, cache_size=200, class_weight=None, coef0=0.0,
-        decision_function_shape='ovo', degree=3, gamma='scale', kernel='rbf',
-        max_iter=-1, probability=False,
-        random_state=None, shrinking=True, tol=0.001, verbose=False)
+    SVC(decision_function_shape='ovo')
     >>> dec = clf.decision_function([[1]])
     >>> dec.shape[1] # 4 classes: 4*3/2 = 6
     6
@@ -139,10 +133,7 @@ two classes, only one model is trained::
 
     >>> lin_clf = svm.LinearSVC()
     >>> lin_clf.fit(X, Y) # doctest: +NORMALIZE_WHITESPACE
-    LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
-         intercept_scaling=1, loss='squared_hinge', max_iter=1000,
-         multi_class='ovr', penalty='l2', random_state=None, tol=0.0001,
-         verbose=0)
+    LinearSVC()
     >>> dec = lin_clf.decision_function([[1]])
     >>> dec.shape[1]
     4
@@ -330,9 +321,7 @@ floating point values instead of integer values::
     >>> y = [0.5, 2.5]
     >>> clf = svm.SVR()
     >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
-    SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.1,
-        gamma='scale', kernel='rbf', max_iter=-1, shrinking=True,
-        tol=0.001, verbose=False)
+    SVR()
     >>> clf.predict([[1, 1]])
     array([1.5])
 
@@ -541,11 +530,7 @@ test vectors must be provided.
     >>> # linear kernel computation
     >>> gram = np.dot(X, X.T)
     >>> clf.fit(gram, y) # doctest: +NORMALIZE_WHITESPACE
-    SVC(C=1.0, break_ties=False, cache_size=200, class_weight=None, coef0=0.0,
-        decision_function_shape='ovr', degree=3, gamma='scale',
-        kernel='precomputed', max_iter=-1,
-        probability=False, random_state=None, shrinking=True, tol=0.001,
-        verbose=False)
+    SVC(kernel='precomputed')
     >>> # predict on training examples
     >>> clf.predict(gram)
     array([0, 1])
