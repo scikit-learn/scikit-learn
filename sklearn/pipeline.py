@@ -96,9 +96,7 @@ class Pipeline(_BaseComposition):
     >>> # and a parameter 'C' of the svm
     >>> anova_svm.set_params(anova__k=10, svc__C=.1).fit(X, y)
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    Pipeline(memory=None,
-             steps=[('anova', SelectKBest(...)),
-                    ('svc', SVC(...))], verbose=False)
+    Pipeline(steps=[('anova', SelectKBest(...)), ('svc', SVC(...))])
     >>> prediction = anova_svm.predict(X)
     >>> anova_svm.score(X, y)  # doctest: +ELLIPSIS
     0.83
@@ -117,7 +115,7 @@ class Pipeline(_BaseComposition):
     >>> # Indexing can also be used to extract a sub-pipeline.
     >>> sub_pipeline = anova_svm[:1]
     >>> sub_pipeline  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    Pipeline(memory=None, steps=[('anova', ...)], verbose=False)
+    Pipeline(steps=[('anova', SelectKBest(...))])
     >>> coef = anova_svm[-1].coef_
     >>> anova_svm['svc'] is anova_svm[-1]
     True
@@ -671,12 +669,8 @@ def make_pipeline(*steps, **kwargs):
     >>> from sklearn.preprocessing import StandardScaler
     >>> make_pipeline(StandardScaler(), GaussianNB(priors=None))
     ... # doctest: +NORMALIZE_WHITESPACE
-    Pipeline(memory=None,
-             steps=[('standardscaler',
-                     StandardScaler(copy=True, with_mean=True, with_std=True)),
-                    ('gaussiannb',
-                     GaussianNB(priors=None, var_smoothing=1e-09))],
-             verbose=False)
+    Pipeline(steps=[('standardscaler', StandardScaler()),
+                    ('gaussiannb', GaussianNB())])
 
     Returns
     -------
@@ -1008,16 +1002,8 @@ def make_union(*transformers, **kwargs):
     >>> from sklearn.decomposition import PCA, TruncatedSVD
     >>> from sklearn.pipeline import make_union
     >>> make_union(PCA(), TruncatedSVD())  # doctest: +NORMALIZE_WHITESPACE
-    FeatureUnion(n_jobs=None,
-           transformer_list=[('pca',
-                              PCA(copy=True, iterated_power='auto',
-                                  n_components=None, random_state=None,
-                                  svd_solver='auto', tol=0.0, whiten=False)),
-                             ('truncatedsvd',
-                              TruncatedSVD(algorithm='randomized',
-                              n_components=2, n_iter=5,
-                              random_state=None, tol=0.0))],
-           transformer_weights=None, verbose=False)
+     FeatureUnion(transformer_list=[('pca', PCA()),
+                                   ('truncatedsvd', TruncatedSVD())])
     """
     n_jobs = kwargs.pop('n_jobs', None)
     verbose = kwargs.pop('verbose', False)
