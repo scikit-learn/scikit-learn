@@ -684,7 +684,6 @@ To test code coverage, you need to install the `coverage
 
 Issue Tracker Tags
 ------------------
-
 All issues and pull requests on the
 `GitHub issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_
 should have (at least) one of the following tags:
