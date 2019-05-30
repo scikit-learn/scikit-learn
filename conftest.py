@@ -71,3 +71,9 @@ def pytest_configure(config):
 def pytest_unconfigure(config):
     import sys
     del sys._is_pytest_session
+
+
+def pytest_runtest_setup(item):
+    if isinstance(item, DoctestItem):
+        from sklearn import set_config
+        set_config(print_changed_only=True)

@@ -298,8 +298,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
     ...               [4, 2], [4, 4], [4, 0]])
     >>> clustering = AffinityPropagation().fit(X)
     >>> clustering # doctest: +NORMALIZE_WHITESPACE
-    AffinityPropagation(affinity='euclidean', convergence_iter=15, copy=True,
-              damping=0.5, max_iter=200, preference=None, verbose=False)
+    AffinityPropagation()
     >>> clustering.labels_
     array([0, 0, 0, 1, 1, 1])
     >>> clustering.predict([[0, 0], [4, 4]])
