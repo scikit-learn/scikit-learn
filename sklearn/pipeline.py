@@ -609,6 +609,10 @@ class Pipeline(_BaseComposition):
         # check if first estimator expects pairwise input
         return getattr(self.steps[0][1], '_pairwise', False)
 
+    @property
+    def n_features_in_(self):
+        return self.steps[0][1].n_features_in_
+
 
 def _name_estimators(estimators):
     """Generate names for estimators."""

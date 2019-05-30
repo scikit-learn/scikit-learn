@@ -541,6 +541,11 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         return self.best_estimator_.inverse_transform(Xt)
 
     @property
+    def n_features_in_(self):
+        check_is_fitted(self, 'best_estimator_')
+        return self.best_estimator_.n_features_in_
+
+    @property
     def classes_(self):
         self._check_is_fitted("classes_")
         return self.best_estimator_.classes_

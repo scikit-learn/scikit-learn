@@ -21,6 +21,11 @@ from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction import DictVectorizer
+from sklearn.experimental import enable_hist_gradient_boosting
+from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.datasets import make_classification
+from sklearn.pipeline import make_pipeline
+from sklearn.exceptions import NotFittedError
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
@@ -546,3 +551,29 @@ def test_n_features_in_attribute():
     d = [{'foo': 1, 'bar': 2}, {'foo': 3, 'baz': 1}]
     dv.fit(d)
     assert dv.n_features_in_ is None
+
+    # meta estimator need specific ways of dealing with the attribute:
+    # grid search delegates this to # the best estimator
+    n_features = 4
+    X, y = make_classification(n_features=n_features)
+    gbdt = HistGradientBoostingClassifier()
+    param_grid = {'max_iter': [3, 4]}
+    gs = GridSearchCV(gbdt, param_grid)
+    assert hasattr(ss, 'n_features_in_')  # that might be a bit unintuitive
+    with pytest.raises(NotFittedError):
+        gs.n_features_in_
+    gs.fit(X, y)
+    assert gs.n_features_in_ == n_features
+
+    # pipelines delegate to the first step
+    pipe = make_pipeline(gbdt)
+    assert not hasattr(pipe, 'n_features_in_')
+    pipe.fit(X, y)
+    assert pipe.n_features_in_ == n_features
+
+    dv = DictVectorizer()
+    pipe = make_pipeline(dv)
+    assert pipe.n_features_in_ is None
+    d = [{'foo': 1, 'bar': 2}, {'foo': 3, 'baz': 1}]
+    dv.fit(d)
+    assert pipe.n_features_in_ is None
