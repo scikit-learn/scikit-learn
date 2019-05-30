@@ -297,7 +297,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
     >>> X = np.array([[1, 2], [1, 4], [1, 0],
     ...               [4, 2], [4, 4], [4, 0]])
     >>> clustering = AffinityPropagation().fit(X)
-    >>> clustering # doctest: +NORMALIZE_WHITESPACE
+    >>> clustering
     AffinityPropagation()
     >>> clustering.labels_
     array([0, 0, 0, 1, 1, 1])

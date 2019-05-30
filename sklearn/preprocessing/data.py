@@ -1109,7 +1109,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     ...      [ -2.,  1.,  3.],
     ...      [ 4.,  1., -2.]]
     >>> transformer = RobustScaler().fit(X)
-    >>> transformer  # doctest: +NORMALIZE_WHITESPACE
+    >>> transformer
     RobustScaler()
     >>> transformer.transform(X)
     array([[ 0. , -2. ,  0. ],
@@ -2096,7 +2096,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
     >>> rng = np.random.RandomState(0)
     >>> X = np.sort(rng.normal(loc=0.5, scale=0.25, size=(25, 1)), axis=0)
     >>> qt = QuantileTransformer(n_quantiles=10, random_state=0)
-    >>> qt.fit_transform(X) # doctest: +ELLIPSIS
+    >>> qt.fit_transform(X)
     array([...])
 
     See also
@@ -2517,7 +2517,6 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
     >>> rng = np.random.RandomState(0)
     >>> X = np.sort(rng.normal(loc=0.5, scale=0.25, size=(25, 1)), axis=0)
     >>> quantile_transform(X, n_quantiles=10, random_state=0, copy=True)
-    ... # doctest: +ELLIPSIS
     array([...])
 
     See also
@@ -2967,7 +2966,7 @@ def power_transform(X, method='warn', standardize=True, copy=True):
     >>> import numpy as np
     >>> from sklearn.preprocessing import power_transform
     >>> data = [[1, 2], [3, 2], [4, 5]]
-    >>> print(power_transform(data, method='box-cox'))  # doctest: +ELLIPSIS
+    >>> print(power_transform(data, method='box-cox'))
     [[-1.332... -0.707...]
      [ 0.256... -0.707...]
      [ 1.076...  1.414...]]

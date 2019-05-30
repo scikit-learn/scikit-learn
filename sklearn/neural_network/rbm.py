@@ -80,7 +80,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
     >>> from sklearn.neural_network import BernoulliRBM
     >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
     >>> model = BernoulliRBM(n_components=2)
-    >>> model.fit(X)  # doctest: +NORMALIZE_WHITESPACE
+    >>> model.fit(X)
     BernoulliRBM(n_components=2)
 
     References

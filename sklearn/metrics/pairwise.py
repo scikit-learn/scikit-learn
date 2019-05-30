@@ -1358,7 +1358,7 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
     >>> from sklearn.metrics import pairwise_distances_chunked
     >>> X = np.random.RandomState(0).rand(5, 3)
     >>> D_chunk = next(pairwise_distances_chunked(X))
-    >>> D_chunk  # doctest: +ELLIPSIS
+    >>> D_chunk
     array([[0.  ..., 0.29..., 0.41..., 0.19..., 0.57...],
            [0.29..., 0.  ..., 0.57..., 0.41..., 0.76...],
            [0.41..., 0.57..., 0.  ..., 0.44..., 0.90...],
@@ -1376,7 +1376,7 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
     >>> neigh, avg_dist = next(gen)
     >>> neigh
     [array([0, 3]), array([1]), array([2]), array([0, 3]), array([4])]
-    >>> avg_dist  # doctest: +ELLIPSIS
+    >>> avg_dist
     array([0.039..., 0.        , 0.        , 0.039..., 0.        ])
 
     Where r is defined per sample, we need to make use of ``start``:

@@ -127,7 +127,6 @@ class BayesianRidge(LinearModel, RegressorMixin):
     >>> from sklearn import linear_model
     >>> clf = linear_model.BayesianRidge()
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
-    ... # doctest: +NORMALIZE_WHITESPACE
     BayesianRidge()
     >>> clf.predict([[1, 1]])
     array([1.])
@@ -465,7 +464,6 @@ class ARDRegression(LinearModel, RegressorMixin):
     >>> from sklearn import linear_model
     >>> clf = linear_model.ARDRegression()
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
-    ... # doctest: +NORMALIZE_WHITESPACE
     ARDRegression()
     >>> clf.predict([[1, 1]])
     array([1.])

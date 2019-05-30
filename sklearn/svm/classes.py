@@ -117,7 +117,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     >>> from sklearn.datasets import make_classification
     >>> X, y = make_classification(n_features=4, random_state=0)
     >>> clf = LinearSVC(random_state=0, tol=1e-5)
-    >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
+    >>> clf.fit(X, y)
     LinearSVC(random_state=0, tol=1e-05)
     >>> print(clf.coef_)
     [[0.085... 0.394... 0.498... 0.375...]]
@@ -327,7 +327,7 @@ class LinearSVR(LinearModel, RegressorMixin):
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(n_features=4, random_state=0)
     >>> regr = LinearSVR(random_state=0, tol=1e-5)
-    >>> regr.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
+    >>> regr.fit(X, y)
     LinearSVR(random_state=0, tol=1e-05)
     >>> print(regr.coef_)
     [16.35... 26.91... 42.30... 60.47...]

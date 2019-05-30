@@ -342,8 +342,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         >>> support = SelectKBest(chi2, k=2).fit(X, [0, 1])
         >>> v.get_feature_names()
         ['bar', 'baz', 'foo']
-        >>> v.restrict(support.get_support()) # doctest: +ELLIPSIS
-        ...                                   # doctest: +NORMALIZE_WHITESPACE
+        >>> v.restrict(support.get_support())
         DictVectorizer()
         >>> v.get_feature_names()
         ['bar', 'foo']

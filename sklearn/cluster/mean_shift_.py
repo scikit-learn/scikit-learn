@@ -367,7 +367,7 @@ class MeanShift(BaseEstimator, ClusterMixin):
     array([1, 1, 1, 0, 0, 0])
     >>> clustering.predict([[0, 0], [5, 5]])
     array([1, 0])
-    >>> clustering # doctest: +NORMALIZE_WHITESPACE
+    >>> clustering
     MeanShift(bandwidth=2)
 
     Notes

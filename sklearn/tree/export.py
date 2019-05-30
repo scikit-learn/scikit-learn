@@ -750,7 +750,7 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
     >>> iris = load_iris()
 
     >>> clf = clf.fit(iris.data, iris.target)
-    >>> tree.export_graphviz(clf) # doctest: +ELLIPSIS
+    >>> tree.export_graphviz(clf)
     'digraph Tree {...
     """
 

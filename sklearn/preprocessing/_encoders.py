@@ -233,8 +233,6 @@ class OneHotEncoder(_BaseEncoder):
     >>> enc = OneHotEncoder(handle_unknown='ignore')
     >>> X = [['Male', 1], ['Female', 3], ['Female', 2]]
     >>> enc.fit(X)
-    ... # doctest: +ELLIPSIS
-    ... # doctest: +NORMALIZE_WHITESPACE
     OneHotEncoder(handle_unknown='ignore')
 
     >>> enc.categories_
@@ -572,7 +570,6 @@ class OrdinalEncoder(_BaseEncoder):
     >>> enc = OrdinalEncoder()
     >>> X = [['Male', 1], ['Female', 3], ['Female', 2]]
     >>> enc.fit(X)
-    ... # doctest: +ELLIPSIS
     OrdinalEncoder()
     >>> enc.categories_
     [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]

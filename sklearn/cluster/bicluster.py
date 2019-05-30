@@ -265,7 +265,7 @@ class SpectralCoclustering(BaseSpectral):
     array([0, 1, 1, 0, 0, 0], dtype=int32)
     >>> clustering.column_labels_
     array([0, 0], dtype=int32)
-    >>> clustering # doctest: +NORMALIZE_WHITESPACE
+    >>> clustering
     SpectralCoclustering(n_clusters=2, random_state=0)
 
     References
@@ -409,7 +409,7 @@ class SpectralBiclustering(BaseSpectral):
     array([1, 1, 1, 0, 0, 0], dtype=int32)
     >>> clustering.column_labels_
     array([0, 1], dtype=int32)
-    >>> clustering # doctest: +NORMALIZE_WHITESPACE
+    >>> clustering
     SpectralBiclustering(n_clusters=2, random_state=0)
 
     References

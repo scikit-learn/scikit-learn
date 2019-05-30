@@ -387,7 +387,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
     ...         random_state=0).fit(X)
     >>> clustering.labels_
     array([1, 1, 1, 0, 0, 0])
-    >>> clustering # doctest: +NORMALIZE_WHITESPACE
+    >>> clustering
     SpectralClustering(assign_labels='discretize', n_clusters=2,
         random_state=0)
 

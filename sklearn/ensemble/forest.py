@@ -953,7 +953,7 @@ class RandomForestClassifier(ForestClassifier):
     ...                            n_informative=2, n_redundant=0,
     ...                            random_state=0, shuffle=False)
     >>> clf = RandomForestClassifier(max_depth=2, random_state=0)
-    >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
+    >>> clf.fit(X, y)
     RandomForestClassifier(max_depth=2, random_state=0)
     >>> print(clf.feature_importances_)
     [0.14205973 0.76664038 0.0282433  0.06305659]
@@ -1200,7 +1200,7 @@ class RandomForestRegressor(ForestRegressor):
     >>> X, y = make_regression(n_features=4, n_informative=2,
     ...                        random_state=0, shuffle=False)
     >>> regr = RandomForestRegressor(max_depth=2, random_state=0)
-    >>> regr.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
+    >>> regr.fit(X, y)
     RandomForestRegressor(max_depth=2, random_state=0)
     >>> print(regr.feature_importances_)
     [0.18146984 0.81473937 0.00145312 0.00233767]

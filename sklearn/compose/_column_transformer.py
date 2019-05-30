@@ -153,7 +153,7 @@ boolean mask array or callable
     >>> # Normalizer scales each row of X to unit norm. A separate scaling
     >>> # is applied for the two first and two last elements of each
     >>> # row independently.
-    >>> ct.fit_transform(X)    # doctest: +NORMALIZE_WHITESPACE
+    >>> ct.fit_transform(X)
     array([[0. , 1. , 0.5, 0.5],
            [0.5, 0.5, 0. , 1. ]])
 
@@ -764,7 +764,6 @@ def make_column_transformer(*transformers, **kwargs):
     >>> make_column_transformer(
     ...     (StandardScaler(), ['numerical_column']),
     ...     (OneHotEncoder(), ['categorical_column']))
-    ...     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     ColumnTransformer(transformers=[('standardscaler', StandardScaler(...),
                                      ['numerical_column']),
                                     ('onehotencoder', OneHotEncoder(...),

@@ -54,7 +54,6 @@ class RBFSampler(BaseEstimator, TransformerMixin):
     >>> X_features = rbf_feature.fit_transform(X)
     >>> clf = SGDClassifier(max_iter=5, tol=1e-3)
     >>> clf.fit(X_features, y)
-    ... # doctest: +NORMALIZE_WHITESPACE
     SGDClassifier(max_iter=5)
     >>> clf.score(X_features, y)
     1.0
@@ -158,7 +157,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
     ...                                  random_state=0)
     >>> X_features = chi2_feature.fit_transform(X, y)
     >>> clf = SGDClassifier(max_iter=10, tol=1e-3)
-    >>> clf.fit(X_features, y)  # doctest: +NORMALIZE_WHITESPACE
+    >>> clf.fit(X_features, y)
     SGDClassifier(max_iter=10)
     >>> clf.score(X_features, y)
     1.0
@@ -273,9 +272,9 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
     >>> chi2sampler = AdditiveChi2Sampler(sample_steps=2)
     >>> X_transformed = chi2sampler.fit_transform(X, y)
     >>> clf = SGDClassifier(max_iter=5, random_state=0, tol=1e-3)
-    >>> clf.fit(X_transformed, y)  # doctest: +NORMALIZE_WHITESPACE
+    >>> clf.fit(X_transformed, y)
     SGDClassifier(max_iter=5, random_state=0)
-    >>> clf.score(X_transformed, y) # doctest: +ELLIPSIS
+    >>> clf.score(X_transformed, y)
     0.9499...
 
     Notes
@@ -490,9 +489,8 @@ class Nystroem(BaseEstimator, TransformerMixin):
     ...                                 n_components=300)
     >>> data_transformed = feature_map_nystroem.fit_transform(data)
     >>> clf.fit(data_transformed, digits.target)
-    ... # doctest: +NORMALIZE_WHITESPACE
     LinearSVC()
-    >>> clf.score(data_transformed, digits.target) # doctest: +ELLIPSIS
+    >>> clf.score(data_transformed, digits.target)
     0.9987...
 
     References

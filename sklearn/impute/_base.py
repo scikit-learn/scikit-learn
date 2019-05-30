@@ -152,11 +152,9 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
     >>> from sklearn.impute import SimpleImputer
     >>> imp_mean = SimpleImputer(missing_values=np.nan, strategy='mean')
     >>> imp_mean.fit([[7, 2, 3], [4, np.nan, 6], [10, 5, 9]])
-    ... # doctest: +NORMALIZE_WHITESPACE
     SimpleImputer()
     >>> X = [[np.nan, 2, 3], [4, np.nan, 6], [10, np.nan, 9]]
     >>> print(imp_mean.transform(X))
-    ... # doctest: +NORMALIZE_WHITESPACE
     [[ 7.   2.   3. ]
      [ 4.   3.5  6. ]
      [10.   3.5  9. ]]
@@ -488,7 +486,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
     ...                [np.nan, 2, 3],
     ...                [2, 4, 0]])
     >>> indicator = MissingIndicator()
-    >>> indicator.fit(X1)  # doctest: +NORMALIZE_WHITESPACE
+    >>> indicator.fit(X1)
     MissingIndicator()
     >>> X2_tr = indicator.transform(X2)
     >>> X2_tr

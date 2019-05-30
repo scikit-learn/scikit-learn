@@ -578,7 +578,6 @@ class PLSRegression(_PLS):
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
     >>> pls2 = PLSRegression(n_components=2)
     >>> pls2.fit(X, Y)
-    ... # doctest: +NORMALIZE_WHITESPACE
     PLSRegression()
     >>> Y_pred = pls2.predict(X)
 
@@ -719,7 +718,6 @@ class PLSCanonical(_PLS):
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
     >>> plsca = PLSCanonical(n_components=2)
     >>> plsca.fit(X, Y)
-    ... # doctest: +NORMALIZE_WHITESPACE
     PLSCanonical()
     >>> X_c, Y_c = plsca.transform(X, Y)
 

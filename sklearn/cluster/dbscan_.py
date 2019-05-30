@@ -271,7 +271,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
     >>> clustering = DBSCAN(eps=3, min_samples=2).fit(X)
     >>> clustering.labels_
     array([ 0,  0,  0,  1,  1, -1])
-    >>> clustering # doctest: +NORMALIZE_WHITESPACE
+    >>> clustering
     DBSCAN(eps=3, min_samples=2)
 
     See also
