@@ -765,14 +765,10 @@ def make_column_transformer(*transformers, **kwargs):
     ...     (StandardScaler(), ['numerical_column']),
     ...     (OneHotEncoder(), ['categorical_column']))
     ...     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    ColumnTransformer(n_jobs=None, remainder='drop', sparse_threshold=0.3,
-             transformer_weights=None,
-             transformers=[('standardscaler',
-                            StandardScaler(...),
-                            ['numerical_column']),
-                           ('onehotencoder',
-                            OneHotEncoder(...),
-                            ['categorical_column'])], verbose=False)
+    ColumnTransformer(transformers=[('standardscaler', StandardScaler(...),
+                                     ['numerical_column']),
+                                    ('onehotencoder', OneHotEncoder(...),
+                                     ['categorical_column'])])
 
     """
     # transformer_weights keyword is not passed through because the user
