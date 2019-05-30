@@ -84,6 +84,7 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
     target_variables : array-like, dtype=int
         The target features for which the partial dependency should be
         computed (size should be smaller than 3 for visual renderings).
+        
     grid : array-like, shape=(n_points, len(target_variables))
         The grid of ``target_variables`` values for which the
         partial dependency should be evaluated (either ``grid`` or ``X``
