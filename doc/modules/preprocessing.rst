@@ -80,7 +80,7 @@ This class is hence suitable for use in the early steps of a
 
   >>> scaler = preprocessing.StandardScaler().fit(X_train)
   >>> scaler
-  StandardScaler(copy=True, with_mean=True, with_std=True)
+  StandardScaler()
 
   >>> scaler.mean_                                      # doctest: +ELLIPSIS
   array([1. ..., 0. ..., 0.33...])
@@ -438,7 +438,7 @@ This class is hence suitable for use in the early steps of a
 
   >>> normalizer = preprocessing.Normalizer().fit(X)  # fit does nothing
   >>> normalizer
-  Normalizer(copy=True, norm='l2')
+  Normalizer()
 
 
 The normalizer instance can then be used on sample vectors as any transformer::
@@ -482,7 +482,7 @@ new feature of integers (0 to n_categories - 1)::
     >>> enc = preprocessing.OrdinalEncoder()
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
     >>> enc.fit(X)  # doctest: +ELLIPSIS
-    OrdinalEncoder(categories='auto', dtype=<... 'numpy.float64'>)
+    OrdinalEncoder()
     >>> enc.transform([['female', 'from US', 'uses Safari']])
     array([[0., 1., 1.]])
 
@@ -504,8 +504,7 @@ Continuing the example above::
   >>> enc = preprocessing.OneHotEncoder()
   >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
   >>> enc.fit(X)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-  OneHotEncoder(categories='auto', drop=None, dtype=<... 'numpy.float64'>,
-                handle_unknown='error', sparse=True)
+  OneHotEncoder()
   >>> enc.transform([['female', 'from US', 'uses Safari'],
   ...                ['male', 'from Europe', 'uses Safari']]).toarray()
   array([[1., 0., 0., 1., 0., 1.],
@@ -529,8 +528,11 @@ dataset::
     >>> # feature
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
     >>> enc.fit(X) # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    OneHotEncoder(categories=[...], drop=None, dtype=<... 'numpy.float64'>,
-                  handle_unknown='error', sparse=True)
+    OneHotEncoder(categories=[['female', 'male'],
+                              ['from Africa', 'from Asia', 'from Europe',
+                               'from US'],
+                              ['uses Chrome', 'uses Firefox', 'uses IE',
+                               'uses Safari']])
     >>> enc.transform([['female', 'from Asia', 'uses Chrome']]).toarray()
     array([[1., 0., 0., 1., 0., 0., 1., 0., 0., 0.]])
 
@@ -545,8 +547,7 @@ columns for this feature will be all zeros
     >>> enc = preprocessing.OneHotEncoder(handle_unknown='ignore')
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
     >>> enc.fit(X) # doctest: +ELLIPSIS  +NORMALIZE_WHITESPACE
-    OneHotEncoder(categories='auto', drop=None, dtype=<... 'numpy.float64'>,
-                  handle_unknown='ignore', sparse=True)
+    OneHotEncoder(handle_unknown='ignore')
     >>> enc.transform([['female', 'from Asia', 'uses Chrome']]).toarray()
     array([[1., 0., 0., 0., 0., 0.]])
 
@@ -662,7 +663,7 @@ as each sample is treated independently of others::
 
   >>> binarizer = preprocessing.Binarizer().fit(X)  # fit does nothing
   >>> binarizer
-  Binarizer(copy=True, threshold=0.0)
+  Binarizer()
 
   >>> binarizer.transform(X)
   array([[1., 0., 1.],
