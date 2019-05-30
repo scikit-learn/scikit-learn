@@ -513,4 +513,5 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
 
     @property
     def _pairwise(self):
-        return self.affinity == "precomputed"
+        return self.affinity in ["precomputed",
+                                 "precomputed_nearest_neighbors"]

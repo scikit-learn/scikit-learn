@@ -441,7 +441,8 @@ class SpectralEmbedding(BaseEstimator):
 
     @property
     def _pairwise(self):
-        return self.affinity == "precomputed"
+        return self.affinity in ["precomputed",
+                                 "precomputed_nearest_neighbors"]
 
     def _get_affinity_matrix(self, X, Y=None):
         """Calculate the affinity matrix from data
