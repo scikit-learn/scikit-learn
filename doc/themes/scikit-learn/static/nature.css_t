@@ -197,6 +197,10 @@ div.navbar div.nav-icon {
     }
 }
 
+.section > p {
+    margin-top: 1em;
+}
+
 /*-------------------------------------------------------------*/
 /* The next few elements have to do with the gsc (referring to */
 /* Google's custom search bar */
@@ -231,6 +235,9 @@ input.gsc-search-button {
     border-radius: 5px !important;
     border-color: #FFFFFF !important;
     background-color: #ff9c34 !important;
+}
+
+.gsc-search-button-v2 {
     line-height: 1em;
 }
 
