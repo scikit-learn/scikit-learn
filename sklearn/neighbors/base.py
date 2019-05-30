@@ -367,7 +367,7 @@ class KNeighborsMixin:
         >>> from sklearn.neighbors import NearestNeighbors
         >>> neigh = NearestNeighbors(n_neighbors=1)
         >>> neigh.fit(samples) # doctest: +ELLIPSIS
-        NearestNeighbors(algorithm='auto', leaf_size=30, ...)
+        NearestNeighbors(n_neighbors=1)
         >>> print(neigh.kneighbors([[1., 1., 1.]])) # doctest: +ELLIPSIS
         (array([[0.5]]), array([[2]]))
 
@@ -524,7 +524,7 @@ class KNeighborsMixin:
         >>> from sklearn.neighbors import NearestNeighbors
         >>> neigh = NearestNeighbors(n_neighbors=2)
         >>> neigh.fit(X) # doctest: +ELLIPSIS
-        NearestNeighbors(algorithm='auto', leaf_size=30, ...)
+        NearestNeighbors(n_neighbors=2)
         >>> A = neigh.kneighbors_graph(X)
         >>> A.toarray()
         array([[1., 0., 1.],
@@ -664,7 +664,7 @@ class RadiusNeighborsMixin:
         >>> from sklearn.neighbors import NearestNeighbors
         >>> neigh = NearestNeighbors(radius=1.6)
         >>> neigh.fit(samples) # doctest: +ELLIPSIS
-        NearestNeighbors(algorithm='auto', leaf_size=30, ...)
+        NearestNeighbors(radius=1.6)
         >>> rng = neigh.radius_neighbors([[1., 1., 1.]])
         >>> print(np.asarray(rng[0][0])) # doctest: +ELLIPSIS
         [1.5 0.5]
@@ -809,7 +809,7 @@ class RadiusNeighborsMixin:
         >>> from sklearn.neighbors import NearestNeighbors
         >>> neigh = NearestNeighbors(radius=1.5)
         >>> neigh.fit(X) # doctest: +ELLIPSIS
-        NearestNeighbors(algorithm='auto', leaf_size=30, ...)
+        NearestNeighbors(radius=1.5)
         >>> A = neigh.radius_neighbors_graph(X)
         >>> A.toarray()
         array([[1., 0., 1.],
