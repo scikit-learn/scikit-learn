@@ -614,9 +614,7 @@ class ElasticNet(LinearModel, RegressorMixin, MultiOutputMixin):
     >>> X, y = make_regression(n_features=2, random_state=0)
     >>> regr = ElasticNet(random_state=0)
     >>> regr.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-    ElasticNet(alpha=1.0, copy_X=True, fit_intercept=True, l1_ratio=0.5,
-          max_iter=1000, normalize=False, positive=False, precompute=False,
-          random_state=0, selection='cyclic', tol=0.0001, warm_start=False)
+    ElasticNet(random_state=0)
     >>> print(regr.coef_) # doctest: +ELLIPSIS
     [18.83816048 64.55968825]
     >>> print(regr.intercept_) # doctest: +ELLIPSIS
@@ -894,9 +892,7 @@ class Lasso(ElasticNet):
     >>> clf = linear_model.Lasso(alpha=0.1)
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
     ... # doctest: +NORMALIZE_WHITESPACE
-    Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
-       normalize=False, positive=False, precompute=False, random_state=None,
-       selection='cyclic', tol=0.0001, warm_start=False)
+    Lasso(alpha=0.1)
     >>> print(clf.coef_)
     [0.85 0.  ]
     >>> print(clf.intercept_)  # doctest: +ELLIPSIS
@@ -1539,10 +1535,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     >>> X, y = make_regression(n_features=2, random_state=0)
     >>> regr = ElasticNetCV(cv=5, random_state=0)
     >>> regr.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-    ElasticNetCV(alphas=None, copy_X=True, cv=5, eps=0.001,
-           fit_intercept=True, l1_ratio=0.5, max_iter=1000, n_alphas=100,
-           n_jobs=None, normalize=False, positive=False, precompute='auto',
-           random_state=0, selection='cyclic', tol=0.0001, verbose=0)
+    ElasticNetCV(cv=5, random_state=0)
     >>> print(regr.alpha_) # doctest: +ELLIPSIS
     0.199...
     >>> print(regr.intercept_) # doctest: +ELLIPSIS
@@ -1704,9 +1697,7 @@ class MultiTaskElasticNet(Lasso):
     >>> clf = linear_model.MultiTaskElasticNet(alpha=0.1)
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [[0, 0], [1, 1], [2, 2]])
     ... #doctest: +NORMALIZE_WHITESPACE
-    MultiTaskElasticNet(alpha=0.1, copy_X=True, fit_intercept=True,
-            l1_ratio=0.5, max_iter=1000, normalize=False, random_state=None,
-            selection='cyclic', tol=0.0001, warm_start=False)
+    MultiTaskElasticNet(alpha=0.1)
     >>> print(clf.coef_)
     [[0.45663524 0.45612256]
      [0.45663524 0.45612256]]
@@ -1892,9 +1883,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
     >>> clf = linear_model.MultiTaskLasso(alpha=0.1)
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [[0, 0], [1, 1], [2, 2]])
     ... # doctest: +NORMALIZE_WHITESPACE
-    MultiTaskLasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
-            normalize=False, random_state=None, selection='cyclic', tol=0.0001,
-            warm_start=False)
+    MultiTaskLasso(alpha=0.1)
     >>> print(clf.coef_)
     [[0.89393398 0.        ]
      [0.89393398 0.        ]]
@@ -2072,10 +2061,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
     >>> clf.fit([[0,0], [1, 1], [2, 2]],
     ...         [[0, 0], [1, 1], [2, 2]])
     ... #doctest: +NORMALIZE_WHITESPACE
-    MultiTaskElasticNetCV(alphas=None, copy_X=True, cv=3, eps=0.001,
-           fit_intercept=True, l1_ratio=0.5, max_iter=1000, n_alphas=100,
-           n_jobs=None, normalize=False, random_state=None, selection='cyclic',
-           tol=0.0001, verbose=0)
+    MultiTaskElasticNetCV(cv=3)
     >>> print(clf.coef_)
     [[0.52875032 0.46958558]
      [0.52875032 0.46958558]]

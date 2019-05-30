@@ -123,10 +123,7 @@ class Perceptron(BaseSGDClassifier):
     >>> X, y = load_digits(return_X_y=True)
     >>> clf = Perceptron(tol=1e-3, random_state=0)
     >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-    Perceptron(alpha=0.0001, class_weight=None, early_stopping=False, eta0=1.0,
-          fit_intercept=True, max_iter=1000, n_iter_no_change=5, n_jobs=None,
-          penalty=None, random_state=0, shuffle=True, tol=0.001,
-          validation_fraction=0.1, verbose=0, warm_start=False)
+    Perceptron()
     >>> clf.score(X, y) # doctest: +ELLIPSIS
     0.939...
 
