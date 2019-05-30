@@ -859,7 +859,6 @@ def export_text(decision_tree, feature_names=None, max_depth=10,
     |   |   |--- class: 1
     |   |--- petal width (cm) >  1.75
     |   |   |--- class: 2
-    ...
     """
     check_is_fitted(decision_tree, 'tree_')
     tree_ = decision_tree.tree_
