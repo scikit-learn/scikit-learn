@@ -28,49 +28,49 @@ jobs:
         COVERAGE: 'true'
       # Linux environment to test the latest available dependencies and MKL.
       # It runs tests requiring pandas and PyAMG.
-      pylatest_conda:
-        DISTRIB: 'conda'
-        PYTHON_VERSION: '*'
-        INSTALL_MKL: 'true'
-        NUMPY_VERSION: '*'
-        SCIPY_VERSION: '*'
-        PANDAS_VERSION: '*'
-        CYTHON_VERSION: '*'
-        PYAMG_VERSION: '*'
-        PILLOW_VERSION: '*'
-        JOBLIB_VERSION: '*'
-        MATPLOTLIB_VERSION: '*'
-        COVERAGE: 'true'
-        CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
-        TEST_DOCSTRINGS: 'true'
-        CHECK_WARNINGS: 'true'
+#       pylatest_conda:
+#         DISTRIB: 'conda'
+#         PYTHON_VERSION: '*'
+#         INSTALL_MKL: 'true'
+#         NUMPY_VERSION: '*'
+#         SCIPY_VERSION: '*'
+#         PANDAS_VERSION: '*'
+#         CYTHON_VERSION: '*'
+#         PYAMG_VERSION: '*'
+#         PILLOW_VERSION: '*'
+#         JOBLIB_VERSION: '*'
+#         MATPLOTLIB_VERSION: '*'
+#         COVERAGE: 'true'
+#         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
+#         TEST_DOCSTRINGS: 'true'
+#         CHECK_WARNINGS: 'true'
 
-- template: build_tools/azure/posix.yml
-  parameters:
-    name: macOS
-    vmImage: xcode9-macos10.13
-    matrix:
-      pylatest_conda:
-        DISTRIB: 'conda'
-        PYTHON_VERSION: '*'
-        INSTALL_MKL: 'true'
-        NUMPY_VERSION: '*'
-        SCIPY_VERSION: '*'
-        CYTHON_VERSION: '*'
-        PILLOW_VERSION: '*'
-        JOBLIB_VERSION: '*'
-        COVERAGE: 'true'
+# - template: build_tools/azure/posix.yml
+#   parameters:
+#     name: macOS
+#     vmImage: xcode9-macos10.13
+#     matrix:
+#       pylatest_conda:
+#         DISTRIB: 'conda'
+#         PYTHON_VERSION: '*'
+#         INSTALL_MKL: 'true'
+#         NUMPY_VERSION: '*'
+#         SCIPY_VERSION: '*'
+#         CYTHON_VERSION: '*'
+#         PILLOW_VERSION: '*'
+#         JOBLIB_VERSION: '*'
+#         COVERAGE: 'true'
 
-- template: build_tools/azure/windows.yml
-  parameters:
-    name: Windows
-    vmImage: vs2017-win2016
-    matrix:
-      py37_64:
-        PYTHON_VERSION: '3.7'
-        CHECK_WARNINGS: 'true'
-        PYTHON_ARCH: '64'
-        COVERAGE: 'true'
-      py35_32:
-        PYTHON_VERSION: '3.5'
-        PYTHON_ARCH: '32'
+# - template: build_tools/azure/windows.yml
+#   parameters:
+#     name: Windows
+#     vmImage: vs2017-win2016
+#     matrix:
+#       py37_64:
+#         PYTHON_VERSION: '3.7'
+#         CHECK_WARNINGS: 'true'
+#         PYTHON_ARCH: '64'
+#         COVERAGE: 'true'
+#       py35_32:
+#         PYTHON_VERSION: '3.5'
+#         PYTHON_ARCH: '32'
