@@ -106,7 +106,11 @@ class NMSlibTransformer(BaseEstimator, TransformerMixin):
     def transform(self, X):
         n_samples_transform = X.shape[0]
 
-        results = self.nmslib_.knnQueryBatch(X, k=self.n_neighbors,
+        # For compatibility reasons, as each sample is considered as its own
+        # neighbor, one extra neighbor will be computed.
+        n_neighbors = self.n_neighbors + 1
+
+        results = self.nmslib_.knnQueryBatch(X, k=n_neighbors,
                                              num_threads=self.n_jobs)
         indices, distances = zip(*results)
         indices, distances = np.vstack(indices), np.vstack(distances)
@@ -114,8 +118,8 @@ class NMSlibTransformer(BaseEstimator, TransformerMixin):
         if self.metric == 'sqeuclidean':
             distances **= 2
 
-        indptr = np.arange(0, n_samples_transform * self.n_neighbors + 1,
-                           self.n_neighbors)
+        indptr = np.arange(0, n_samples_transform * n_neighbors + 1,
+                           n_neighbors)
         kneighbors_graph = csr_matrix((distances.ravel(), indices.ravel(),
                                        indptr), shape=(n_samples_transform,
                                                        self.n_samples_fit))
@@ -151,13 +155,15 @@ class AnnoyTransformer(BaseEstimator, TransformerMixin):
         else:
             n_samples_transform = X.shape[0]
 
-        indices = np.empty((n_samples_transform, self.n_neighbors),
+        # For compatibility reasons, as each sample is considered as its own
+        # neighbor, one extra neighbor will be computed.
+        n_neighbors = self.n_neighbors + 1
+
+        indices = np.empty((n_samples_transform, n_neighbors),
                            dtype=np.int)
-        distances = np.empty((n_samples_transform, self.n_neighbors))
+        distances = np.empty((n_samples_transform, n_neighbors))
 
         if X is None:
-            n_neighbors = self.n_neighbors
-
             for i in range(self.annoy_.get_n_items()):
                 ind, dist = self.annoy_.get_nns_by_item(
                     i, n_neighbors, self.search_k, include_distances=True)
@@ -166,14 +172,14 @@ class AnnoyTransformer(BaseEstimator, TransformerMixin):
         else:
             for i, x in enumerate(X):
                 indices[i], distances[i] = self.annoy_.get_nns_by_vector(
-                    x.tolist(), self.n_neighbors, self.search_k,
+                    x.tolist(), n_neighbors, self.search_k,
                     include_distances=True)
 
         if self.metric == 'sqeuclidean':
             distances **= 2
 
-        indptr = np.arange(0, n_samples_transform * self.n_neighbors + 1,
-                           self.n_neighbors)
+        indptr = np.arange(0, n_samples_transform * n_neighbors + 1,
+                           n_neighbors)
         kneighbors_graph = csr_matrix((distances.ravel(), indices.ravel(),
                                        indptr), shape=(n_samples_transform,
                                                        self.n_samples_fit))
@@ -189,22 +195,22 @@ def test_transformers():
     """
     X = np.random.RandomState(42).randn(10, 2)
 
-    knn = KNeighborsTransformer(mode='distance')
-    Xt = knn.fit_transform(X)
+    knn = KNeighborsTransformer()
+    Xt0 = knn.fit_transform(X)
 
     ann = AnnoyTransformer()
-    Xt2 = ann.fit_transform(X)
+    Xt1 = ann.fit_transform(X)
 
     nms = NMSlibTransformer()
-    Xt3 = nms.fit_transform(X)
+    Xt2 = nms.fit_transform(X)
 
-    assert_array_almost_equal(Xt.toarray(), Xt2.toarray(), decimal=5)
-    assert_array_almost_equal(Xt.toarray(), Xt3.toarray(), decimal=5)
+    assert_array_almost_equal(Xt0.toarray(), Xt1.toarray(), decimal=5)
+    assert_array_almost_equal(Xt0.toarray(), Xt2.toarray(), decimal=5)
 
 
 def load_mnist(n_samples):
     """Load MNIST, shuffle the data, and return only n_samples."""
-    mnist = fetch_openml('MNIST original')
+    mnist = fetch_openml(data_id=41063)
     X, y = shuffle(mnist.data, mnist.target, random_state=42)
     return X[:n_samples], y[:n_samples]
 
@@ -215,7 +221,7 @@ def run_benchmark():
         ('MNIST_10000', load_mnist(n_samples=10000)),
     ]
 
-    n_iter = 250
+    n_iter = 500
     perplexity = 30
     # TSNE requires a certain number of neighbors which depends on the
     # perplexity parameter
@@ -272,7 +278,7 @@ def run_benchmark():
 
             # plot TSNE embedding which should be very similar across methods
             if 'TSNE' in transformer_name:
-                axes[i_ax].set_title(transformer_name + ' on ' + dataset_name)
+                axes[i_ax].set_title(transformer_name + '\non ' + dataset_name)
                 axes[i_ax].scatter(Xt[:, 0], Xt[:, 1], c=y, alpha=0.2,
                                    cmap=plt.cm.viridis)
                 axes[i_ax].xaxis.set_major_formatter(NullFormatter())
