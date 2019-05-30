@@ -342,13 +342,13 @@ class BaseEstimator:
                 )
         self.n_features_in_ = X.shape[1]
 
-    def validate_X(self, X, check_n_features=False, **check_array_params):
+    def _validate_X(self, X, check_n_features=False, **check_array_params):
         X = check_array(X, **check_array_params)
         self._validate_n_features(X, check_n_features)
         return X
 
-    def validate_X_y(self, X, y, check_n_features=False, **check_X_y_params):
-        X, y = check_X_y(X, **check_X_y_params)
+    def _validate_X_y(self, X, y, check_n_features=False, **check_X_y_params):
+        X, y = check_X_y(X, y, **check_X_y_params)
         self._validate_n_features(X, check_n_features)
         return X, y
 
