@@ -101,8 +101,7 @@ Usage examples:
     >>> iris = datasets.load_iris()
     >>> X, y = iris.data, iris.target
     >>> clf = svm.SVC(random_state=0)
-    >>> cross_val_score(clf, X, y, scoring='recall_macro',
-    ...                 cv=5)  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    >>> cross_val_score(clf, X, y, cv=5, scoring='recall_macro')  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     array([0.96..., 0.96..., 0.96..., 0.93..., 1.        ])
     >>> model = svm.SVC()
     >>> cross_val_score(model, X, y, cv=5, scoring='wrong_choice')
@@ -273,8 +272,7 @@ permitted and will require a wrapper to return a single metric::
     >>> def tp(y_true, y_pred): return confusion_matrix(y_true, y_pred)[1, 1]
     >>> scoring = {'tp': make_scorer(tp), 'tn': make_scorer(tn),
     ...            'fp': make_scorer(fp), 'fn': make_scorer(fn)}
-    >>> cv_results = cross_validate(svm.fit(X, y), X, y,
-    ...                             scoring=scoring, cv=5)
+    >>> cv_results = cross_validate(svm.fit(X, y), X, y, cv=5, scoring=scoring)
     >>> # Getting the test set true positive scores
     >>> print(cv_results['test_tp'])  # doctest: +NORMALIZE_WHITESPACE
     [10  9  8  7  8]
