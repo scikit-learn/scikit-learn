@@ -348,7 +348,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
             raise TypeError("MinMaxScaler does no support sparse input. "
                             "You may consider to use MaxAbsScaler instead.")
 
-        X = check_array(X, copy=self.copy,
+        X = check_array(X,
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite="allow-nan")
 
@@ -658,7 +658,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         y
             Ignored
         """
-        X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
+        X = check_array(X, accept_sparse=('csr', 'csc'),
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
 
@@ -921,7 +921,7 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
         y
             Ignored
         """
-        X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
+        X = check_array(X, accept_sparse=('csr', 'csc'),
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
 
@@ -1153,7 +1153,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         """
         # at fit, convert sparse matrices to csc for optimized computation of
         # the quantiles
-        X = check_array(X, accept_sparse='csc', copy=self.copy, estimator=self,
+        X = check_array(X, accept_sparse='csc', estimator=self,
                         dtype=FLOAT_DTYPES, force_all_finite='allow-nan')
 
         q_min, q_max = self.quantile_range
