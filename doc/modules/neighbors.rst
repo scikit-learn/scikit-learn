@@ -516,17 +516,19 @@ Nearest Neighbors Transformer
 Many scikit-learn estimators rely on nearest neighbors: Several classifiers and
 regressors such as :class:`KNeighborsClassifier` and
 :class:`KNeighborsRegressor`, but also some clustering methods such as
-:class:`cluster.DBSCAN` and :class:`cluster.SpectralClustering`, and some
-manifold embeddings such as :class:`manifold.TSNE` and :class:`manifold.Isomap`.
+:class:`~sklearn.cluster.DBSCAN` and
+:class:`~sklearn.cluster.SpectralClustering`, and some manifold embeddings such
+as :class:`~sklearn.manifold.TSNE` and :class:`~sklearn.manifold.Isomap`.
 
 All these estimators can compute internally the nearest neighbors, but most of
-them also accept precomputed nearest neighbors :term:`Glossary <sparse graph>`,
-as given by :func:`neighbors.kneighbors_graph` and
-:func:`neighbors.radius_neighbors_graph`. With mode `mode='connectivity'`, these
-functions return an binary adjacency sparse graph as required for instance in
-:class:`cluster.SpectralClustering`, whereas with `mode='distance'`, they return
-a distance sparse graph as required for instance in :class:`cluster.DBSCAN`. The
-benefits of precomputation are multiple.
+them also accept precomputed nearest neighbors :term:`sparse graph`,
+as given by :func:`~sklearn.neighbors.kneighbors_graph` and
+:func:`~sklearn.neighbors.radius_neighbors_graph`. With mode
+`mode='connectivity'`, these functions return an binary adjacency sparse graph
+as required for instance in :class:`~sklearn.cluster.SpectralClustering`,
+whereas with `mode='distance'`, they return a distance sparse graph as required
+for instance in :class:`~sklearn.cluster.DBSCAN`. The benefits of precomputation
+are multiple.
 
 First, the precomputed graph can be re-used multiple times, for instance while
 varying a parameter of the estimator. This can be done manually, or using the
@@ -549,7 +551,7 @@ Finally, the precomputation can be performed by custom estimators to use
 different implementations, such as approximate nearest neighbors methods, or
 implementation with special data types. The precomputed neighbors
 :term:`sparse graph` needs to be formatted as in
-:func:`neighbors.radius_neighbors_graph` output:
+:func:`~sklearn.neighbors.radius_neighbors_graph` output:
 
 * a CSR matrix (although COO, CSC or LIL will be accepted).
 * only explicitly store nearest neighborhoods of each sample with respect to the
@@ -565,7 +567,6 @@ implementation with special data types. The precomputed neighbors
   each row.
 
 .. topic:: Examples:
-
   * :ref:`sphx_glr_auto_examples_neighbors_pipeline_api.py`: an
     example of pipelining KNeighborsTransformer and TSNE, and of using custom
     nearest neighbors estimator.
