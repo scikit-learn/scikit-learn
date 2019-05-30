@@ -323,19 +323,21 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         Kernel coefficient for rbf, poly, sigmoid, laplacian and chi2 kernels.
         Ignored for ``affinity='nearest_neighbors'``.
 
-    affinity : string, array-like or callable, default 'rbf'
-        If a string, this may be one of 'nearest_neighbors', 'precomputed',
-        'precomputed_nearest_neighbors', rbf', or one of the kernels supported
-        by `sklearn.metrics.pairwise_kernels`.
+    affinity : string or callable, default 'rbf'
+        How to construct the affinity matrix.
+         - 'nearest_neighbors' : construct the affinity matrix by computing a
+           graph of nearest neighbors.
+         - 'rbf' : construct the affinity matrix using a radial basis function
+           (RBF) kernel.
+         - 'precomputed' : interpret ``X`` as a precomputed affinity matrix.
+         - 'precomputed_nearest_neighbors' : interpret ``X`` as a sparse graph
+           of precomputed nearest neighbors, and constructs the affinity matrix
+           by selecting the ``n_neighbors`` nearest neighbors.
+         - one of the kernels supported by `sklearn.metrics.pairwise_kernels`.
 
         Only kernels that produce similarity scores (non-negative values that
         increase with similarity) should be used. This property is not checked
         by the clustering algorithm.
-
-        Note that 'precomputed' uses directly ``X`` as the affinity matrix,
-        whereas 'precomputed_nearest_neighbors' filters the affinity matrix
-        corresponding to ``n_neighbors`` neighbors from a precomputed sparse
-        neighbors graph .
 
     n_neighbors : integer
         Number of neighbors to use when constructing the affinity matrix using

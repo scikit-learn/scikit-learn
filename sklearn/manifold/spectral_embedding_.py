@@ -354,9 +354,14 @@ class SpectralEmbedding(BaseEstimator):
 
     affinity : string or callable, default : "nearest_neighbors"
         How to construct the affinity matrix.
-         - 'nearest_neighbors' : construct affinity matrix by knn graph
-         - 'rbf' : construct affinity matrix by rbf kernel
-         - 'precomputed' : interpret X as precomputed affinity matrix
+         - 'nearest_neighbors' : construct the affinity matrix by computing a
+           graph of nearest neighbors.
+         - 'rbf' : construct the affinity matrix by computing a radial basis
+           function (RBF) kernel.
+         - 'precomputed' : interpret ``X`` as a precomputed affinity matrix.
+         - 'precomputed_nearest_neighbors' : interpret ``X`` as a sparse graph
+           of precomputed nearest neighbors, and constructs the affinity matrix
+           by selecting the ``n_neighbors`` nearest neighbors.
          - callable : use passed in function as affinity
            the function takes in data matrix (n_samples, n_features)
            and return affinity matrix (n_samples, n_samples).
