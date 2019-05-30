@@ -26,7 +26,7 @@ persistence model, namely `pickle <https://docs.python.org/2/library/pickle.html
   >>> clf = svm.SVC()
   >>> iris = datasets.load_iris()
   >>> X, y = iris.data, iris.target
-  >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
+  >>> clf.fit(X, y)
   SVC()
 
   >>> import pickle

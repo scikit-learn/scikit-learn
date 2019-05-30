@@ -103,7 +103,7 @@ its ``coef_`` member::
 
     >>> from sklearn import linear_model
     >>> reg = linear_model.Ridge(alpha=.5)
-    >>> reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1]) # doctest: +NORMALIZE_WHITESPACE
+    >>> reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])
     Ridge(alpha=0.5)
     >>> reg.coef_
     array([0.34545455, 0.34545455])
@@ -140,7 +140,7 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
     >>> import numpy as np
     >>> from sklearn import linear_model
     >>> reg = linear_model.RidgeCV(alphas=np.logspace(-6, 6, 13))
-    >>> reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])       # doctest: +NORMALIZE_WHITESPACE
+    >>> reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])
     RidgeCV(alphas=array([1.e-06, 1.e-05, 1.e-04, 1.e-03, 1.e-02, 1.e-01, 1.e+00, 1.e+01,
           1.e+02, 1.e+03, 1.e+04, 1.e+05, 1.e+06]))
     >>> reg.alpha_
@@ -188,7 +188,7 @@ for another implementation::
 
     >>> from sklearn import linear_model
     >>> reg = linear_model.Lasso(alpha=0.1)
-    >>> reg.fit([[0, 0], [1, 1]], [0, 1])  # doctest: +NORMALIZE_WHITESPACE
+    >>> reg.fit([[0, 0], [1, 1]], [0, 1])
     Lasso(alpha=0.1)
     >>> reg.predict([[1, 1]])
     array([0.8])
@@ -476,9 +476,9 @@ function of the norm of its coefficients.
 
    >>> from sklearn import linear_model
    >>> reg = linear_model.LassoLars(alpha=.1)
-   >>> reg.fit([[0, 0], [1, 1]], [0, 1])  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+   >>> reg.fit([[0, 0], [1, 1]], [0, 1])
    LassoLars(alpha=0.1)
-   >>> reg.coef_    # doctest: +ELLIPSIS
+   >>> reg.coef_
    array([0.717157..., 0.        ])
 
 .. topic:: Examples:
@@ -643,7 +643,7 @@ Bayesian Ridge Regression is used for regression::
     >>> X = [[0., 0.], [1., 1.], [2., 2.], [3., 3.]]
     >>> Y = [0., 1., 2., 3.]
     >>> reg = linear_model.BayesianRidge()
-    >>> reg.fit(X, Y)  # doctest: +NORMALIZE_WHITESPACE
+    >>> reg.fit(X, Y)
     BayesianRidge()
 
 After being fitted, the model can then be used to predict new values::

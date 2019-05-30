@@ -93,7 +93,7 @@ Scikit-learn documentation for more information about this type of classifier.)
     >>> # Create and fit a nearest-neighbor classifier
     >>> from sklearn.neighbors import KNeighborsClassifier
     >>> knn = KNeighborsClassifier()
-    >>> knn.fit(iris_X_train, iris_y_train) # doctest: +NORMALIZE_WHITESPACE
+    >>> knn.fit(iris_X_train, iris_y_train)
     KNeighborsClassifier()
     >>> knn.predict(iris_X_test)
     array([1, 2, 1, 0, 0, 0, 2, 1, 2, 0])
@@ -182,13 +182,12 @@ Linear models: :math:`y = X\beta + \epsilon`
 
     >>> # The mean square error
     >>> np.mean((regr.predict(diabetes_X_test) - diabetes_y_test)**2)
-    ...                                                   # doctest: +ELLIPSIS
     2004.56760268...
 
     >>> # Explained variance score: 1 is perfect prediction
     >>> # and 0 means that there is no linear relationship
     >>> # between X and y.
-    >>> regr.score(diabetes_X_test, diabetes_y_test) # doctest: +ELLIPSIS
+    >>> regr.score(diabetes_X_test, diabetes_y_test)
     0.5850753022690...
 
 
@@ -258,7 +257,6 @@ diabetes dataset rather than our synthetic data::
     ...            .fit(diabetes_X_train, diabetes_y_train)
     ...            .score(diabetes_X_test, diabetes_y_test)
     ...        for alpha in alphas])
-    ...                            # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     [0.5851110683883..., 0.5852073015444..., 0.5854677540698...,
      0.5855512036503..., 0.5830717085554..., 0.57058999437...]
 
@@ -330,7 +328,7 @@ application of Occam's razor: *prefer simpler models*.
     >>> regr.alpha = best_alpha
     >>> regr.fit(diabetes_X_train, diabetes_y_train)
     Lasso(alpha=0.025118864315095794)
-    >>> print(regr.coef_)  # doctest: +NORMALIZE_WHITESPACE
+    >>> print(regr.coef_)
     [   0.         -212.43764548  517.19478111  313.77959962 -160.8303982    -0.
      -187.19554705   69.38229038  508.66011217   71.84239008]
 
@@ -369,7 +367,7 @@ function or **logistic** function:
 ::
 
     >>> log = linear_model.LogisticRegression(C=1e5)
-    >>> log.fit(iris_X_train, iris_y_train)  # doctest: +NORMALIZE_WHITESPACE
+    >>> log.fit(iris_X_train, iris_y_train)
     LogisticRegression(C=100000.0)
 
 This is known as :class:`LogisticRegression`.
@@ -450,7 +448,7 @@ classification --:class:`SVC` (Support Vector Classification).
 
     >>> from sklearn import svm
     >>> svc = svm.SVC(kernel='linear')
-    >>> svc.fit(iris_X_train, iris_y_train)    # doctest: +NORMALIZE_WHITESPACE
+    >>> svc.fit(iris_X_train, iris_y_train)
     SVC(kernel='linear')
 
 

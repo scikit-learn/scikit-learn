@@ -60,7 +60,7 @@ a linear algorithm, for example a linear SVM::
     >>> rbf_feature = RBFSampler(gamma=1, random_state=1)
     >>> X_features = rbf_feature.fit_transform(X)
     >>> clf = SGDClassifier(max_iter=5)
-    >>> clf.fit(X_features, y)   # doctest: +NORMALIZE_WHITESPACE
+    >>> clf.fit(X_features, y)
     SGDClassifier(max_iter=5)
     >>> clf.score(X_features, y)
     1.0

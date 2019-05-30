@@ -89,7 +89,7 @@ training samples::
     >>> clf = MLPClassifier(solver='lbfgs', alpha=1e-5,
     ...                     hidden_layer_sizes=(5, 2), random_state=1)
     ...
-    >>> clf.fit(X, y)                         # doctest: +NORMALIZE_WHITESPACE
+    >>> clf.fit(X, y)
     MLPClassifier(alpha=1e-05, hidden_layer_sizes=(5, 2), random_state=1,
                   solver='lbfgs')
 
@@ -113,7 +113,7 @@ gradient descent and the gradients are calculated using Backpropagation. For
 classification, it minimizes the Cross-Entropy loss function, giving a vector
 of probability estimates :math:`P(y|x)` per sample :math:`x`::
 
-    >>> clf.predict_proba([[2., 2.], [1., 2.]])  # doctest: +ELLIPSIS
+    >>> clf.predict_proba([[2., 2.], [1., 2.]])
     array([[1.967...e-04, 9.998...-01],
            [1.967...e-04, 9.998...-01]])
 
@@ -132,7 +132,7 @@ indices where the value is `1` represents the assigned classes of that sample::
     >>> clf = MLPClassifier(solver='lbfgs', alpha=1e-5,
     ...                     hidden_layer_sizes=(15,), random_state=1)
     ...
-    >>> clf.fit(X, y)                         # doctest: +NORMALIZE_WHITESPACE
+    >>> clf.fit(X, y)
     MLPClassifier(alpha=1e-05, hidden_layer_sizes=(15,), random_state=1,
                   solver='lbfgs')
     >>> clf.predict([[1., 2.]])
@@ -350,7 +350,7 @@ or want to do additional monitoring, using ``warm_start=True`` and
     >>> clf = MLPClassifier(hidden_layer_sizes=(15,), random_state=1, max_iter=1, warm_start=True)
     >>> for i in range(10):
     ...     clf.fit(X, y)
-    ...     # additional monitoring / inspection # doctest: +ELLIPSIS
+    ...     # additional monitoring / inspection
     MLPClassifier(...
 
 .. topic:: References:

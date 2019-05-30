@@ -38,7 +38,7 @@ algorithms. The simplest clustering algorithm is
     >>> y_iris = iris.target
 
     >>> k_means = cluster.KMeans(n_clusters=3)
-    >>> k_means.fit(X_iris) # doctest: +ELLIPSIS
+    >>> k_means.fit(X_iris)
     KMeans(n_clusters=3)
     >>> print(k_means.labels_[::10])
     [1 1 1 1 1 0 0 0 0 0 2 2 2 2 2]
@@ -117,7 +117,7 @@ algorithms. The simplest clustering algorithm is
         ...    face = misc.face(gray=True)
     	>>> X = face.reshape((-1, 1)) # We need an (n_sample, n_feature) array
     	>>> k_means = cluster.KMeans(n_clusters=5, n_init=1)
-    	>>> k_means.fit(X) # doctest: +ELLIPSIS
+    	>>> k_means.fit(X)
         KMeans(n_clusters=5, n_init=1)
     	>>> values = k_means.cluster_centers_.squeeze()
     	>>> labels = k_means.labels_
@@ -214,7 +214,7 @@ transposed data.
 
    >>> agglo = cluster.FeatureAgglomeration(connectivity=connectivity,
    ...                                      n_clusters=32)
-   >>> agglo.fit(X) # doctest: +ELLIPSIS
+   >>> agglo.fit(X)
    FeatureAgglomeration(connectivity=..., n_clusters=32)
    >>> X_reduced = agglo.transform(X)
 
@@ -274,7 +274,7 @@ data by projecting on a principal subspace.
 
     >>> from sklearn import decomposition
     >>> pca = decomposition.PCA()
-    >>> pca.fit(X)  # doctest: +NORMALIZE_WHITESPACE
+    >>> pca.fit(X)
     PCA()
     >>> print(pca.explained_variance_)  # doctest: +SKIP
     [  2.18565811e+00   1.19346747e+00   8.43026679e-32]
