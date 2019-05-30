@@ -231,6 +231,7 @@ input.gsc-search-button {
     border-radius: 5px !important;
     border-color: #FFFFFF !important;
     background-color: #ff9c34 !important;
+    line-height: 1em;
 }
 
 a.gs-title, a.gs-title > b{
@@ -525,13 +526,13 @@ div.bodywrapper {
 
 
 div.bodywrapper h1 {
-    margin: 0 -10px 0 -10px;
     text-align: center;
     background-color: #cde8ef;
     font-family: Helvetica, Arial, sans-serif;
     font-size: 190%;
     border-radius: 0 15px 0 15px;
     -moz-border-radius: 0 15px 0 15px;
+    margin: 0 0 0 0;
 }
 
 div.body h3 {
@@ -862,11 +863,6 @@ pre {
     margin: .1em 0 .5em 0;
 }
 
-div.body p {
-    margin-top: 1.2em;
-    margin-bottom: .1em;
-}
-
 .float-right {
   float: right;
 }
@@ -1097,6 +1093,11 @@ p.citing {
 
 .field-odd, .field-even {
     background-color: #fff;
+    margin-top: 0;
+}
+
+.field-odd > dl, .field-even > dl {
+    margin-top: 0;
 }
 
 .field-name {
@@ -1105,6 +1106,29 @@ p.citing {
 
 .field-body {
     background-color: #fff;
+}
+
+dl.field-list > dt { 
+    flex-basis: 12%;
+}
+
+dl.field-list > dd {
+    flex-basis: 88%;
+}
+
+.field-odd, .field-even {
+    border-bottom: 1px solid #ddd;
+    border-top: 1px solid #ddd;
+    box-sizing: border-box;
+}
+
+dt.field-odd, dt.field-even {
+    background-color: #F0F7FA;
+    padding: 4px 0 0 4px;
+}
+
+dd.field-old, dd.field-even {
+    padding-top: 0.3em;
 }
 
 dl.class > dt, dl.function > dt, dl.method > dt {
@@ -1129,7 +1153,7 @@ table.docutils.citation td, table.docutils.citation tr, table.docutils.footnote 
     background-color: transparent;
 }
 
-table.docutils.citation tr td.label, table.docutils.footnote tr td.label {
+table.docutils.citation tr td.label, table.docutils.footnote tr td.label dt.label{
     font-size: 0.9em;
     background-color: transparent;
     border-radius: 0px;
@@ -1137,11 +1161,12 @@ table.docutils.citation tr td.label, table.docutils.footnote tr td.label {
     text-shadow: none;
 }
 
-table.longtable {
+table.longtable p{
     -moz-hyphens: none;
     -ms-hyphens: none;
     -webkit-hyphens: none;
     hyphens: none;
+    line-height: 1em;
 }
 
 /*----- testimonials ----------*/
