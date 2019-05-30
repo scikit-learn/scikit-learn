@@ -39,7 +39,6 @@ def test_permutation_importance_correlated_feature_regression(
                                          random_state=rng)
 
     assert permute_imp.shape == (X.shape[1], n_rounds)
-
     permute_score_means = np.mean(permute_imp, axis=-1)
 
     # the correlated feature with y was added as the last column and should
@@ -76,7 +75,6 @@ def test_permutation_importance_correlated_feature_regression_pandas(
                                          random_state=rng)
 
     assert permute_imp.shape == (X.shape[1], n_rounds)
-
     permute_score_means = np.mean(permute_imp, axis=-1)
 
     # the correlated feature with y was added as the last column and should
@@ -128,7 +126,6 @@ def test_permutation_importance_mixed_types_pandas(n_rounds):
                                          random_state=rng)
 
     assert permute_imp.shape == (X.shape[1], n_rounds)
-
     permute_score_means = np.mean(permute_imp, axis=-1)
     # the correlated feature with y is the last column and should
     # have the highest importance
