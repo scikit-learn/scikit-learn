@@ -449,19 +449,22 @@ def test_imputation_constant_pandas(dtype):
     assert_array_equal(X_trans, X_true)
 
 
-def test_simple_imputation_splitting_missing_value_in_test_array():
+def test_simple_imputation_missing_value_in_test_array():
     # [Non Regression Test] Missing value in test set should not throw an error
     # and return a finite dataset
-    X = np.array([1, 2, 3, np.nan]).T
-    y = np.array([0, 1, 1, 1])
-    test_fold = np.array([0, 1, 0, 1])
+    train = [[1], [2]]
+    test = [[3], [np.nan]]
+    imputer = SimpleImputer(add_indicator=True)
+    imputer.fit(train).transform(test)
 
-    ps = PredefinedSplit(test_fold)
-    pipe1 = make_pipeline(SimpleImputer(add_indicator=True),
-                          LogisticRegression(solver='lbfgs'))
-    scores = cross_val_score(pipe1, X, y, cv=ps)
 
-    assert np.isnan(scores).any()
+def test_iterative_imputation_missing_value_in_test_array():
+    # [Non Regression Test] Missing value in test set should not throw an error
+    # and return a finite dataset
+    train = [[1], [2]]
+    test = [[3], [np.nan]]
+    imputer = IterativeImputer(add_indicator=True)
+    imputer.fit(train).transform(test)
 
 
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
