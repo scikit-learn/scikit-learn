@@ -567,7 +567,7 @@ implementation with special data types. The precomputed neighbors
   each row.
 
 .. topic:: Examples:
-  * :ref:`sphx_glr_auto_examples_neighbors_pipeline_api.py`: an
+  * :ref:`sphx_glr_auto_examples_neighbors_neighbors_in_pipeline_api.py`: an
     example of pipelining KNeighborsTransformer and TSNE, and of using custom
     nearest neighbors estimator.
 
