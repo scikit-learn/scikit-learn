@@ -14,25 +14,20 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import StandardScaler
 
 
-@pytest.mark.parametrize("load_dataset,RandomForest", [
-    (load_boston, RandomForestRegressor),
-    (load_iris, RandomForestClassifier)
-])
 @pytest.mark.parametrize("n_rounds", [3, 5])
-def test_permutation_importance_correlated_feature_regression(
-        load_dataset, RandomForest, n_rounds):
+def test_permutation_importance_correlated_feature_regression(n_rounds):
     # Make sure that feature highly correlated to the target have a higher
     # importance
     rng = np.random.RandomState(42)
 
-    dataset = load_dataset()
+    dataset = load_boston()
     X, y = dataset.data, dataset.target
     y_with_little_noise = (
         y + rng.normal(scale=0.001, size=y.shape[0])).reshape(-1, 1)
 
     X = np.hstack([X, y_with_little_noise])
 
-    clf = RandomForest(n_estimators=10, random_state=42)
+    clf = RandomForestRegressor(n_estimators=10, random_state=42)
     clf.fit(X, y)
 
     permute_imp = permutation_importance(clf, X, y, n_rounds=n_rounds,
@@ -46,20 +41,15 @@ def test_permutation_importance_correlated_feature_regression(
     assert np.all(permute_score_means[-1] > permute_score_means[:-1])
 
 
-@pytest.mark.parametrize("load_dataset,RandomForest", [
-    (load_boston, RandomForestRegressor),
-    (load_iris, RandomForestClassifier)
-])
 @pytest.mark.parametrize("n_rounds", [3, 5])
-def test_permutation_importance_correlated_feature_regression_pandas(
-        load_dataset, RandomForest, n_rounds):
+def test_permutation_importance_correlated_feature_regression_pandas(n_rounds):
     pd = pytest.importorskip("pandas")
 
     # Make sure that feature highly correlated to the target have a higher
     # importance
     rng = np.random.RandomState(42)
 
-    dataset = load_dataset()
+    dataset = load_iris()
     X, y = dataset.data, dataset.target
     y_with_little_noise = (
         y + rng.normal(scale=0.001, size=y.shape[0])).reshape(-1, 1)
@@ -68,7 +58,7 @@ def test_permutation_importance_correlated_feature_regression_pandas(
     X = pd.DataFrame(X, columns=dataset.feature_names)
     X['correlated_feature'] = y_with_little_noise
 
-    clf = RandomForest(n_estimators=10, random_state=42)
+    clf = RandomForestClassifier(n_estimators=10, random_state=42)
     clf.fit(X, y)
 
     permute_imp = permutation_importance(clf, X, y, n_rounds=n_rounds,
