@@ -11,17 +11,20 @@ from ..metrics import check_scoring
 def _calculate_permutation_scores(estimator, X, y, col_idx, random_state,
                                   n_rounds, scorer):
     """Calcuate permutation scores for a column."""
-    X = X.copy()
     if hasattr(X, 'iloc'):  # pandas dataframe
         X_iloc = X.iloc
     else:
         X_iloc = X
 
+    original_feature = X_iloc[:, col_idx].copy()
     scores = np.zeros(n_rounds)
+
     for n_round in range(n_rounds):
-        X_iloc[:, col_idx] = random_state.permutation(X_iloc[:, col_idx])
+        X_iloc[:, col_idx] = random_state.permutation(original_feature)
         feature_score = scorer(estimator, X, y)
         scores[n_round] = feature_score
+
+    X_iloc[:, col_idx] = original_feature
     return scores
 
 
@@ -80,9 +83,11 @@ def permutation_importance(estimator, X, y, scoring=None, n_rounds=1,
         2001.https://doi.org/10.1023/A:1010933404324
 
     """
-    if not hasattr(X, 'iloc'):
+    if hasattr(X, 'iloc'):
+        X = X.copy()
+    else:
         # Not a dataframe
-        X = check_array(X, force_all_finite='allow-nan', dtype=None)
+        X = check_array(X, force_all_finite='allow-nan', dtype=None, copy=True)
 
     random_state = check_random_state(random_state)
     scorer = check_scoring(estimator, scoring=scoring)
