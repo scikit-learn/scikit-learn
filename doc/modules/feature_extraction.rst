@@ -290,12 +290,7 @@ reasonable (please see  the :ref:`reference documentation
 
   >>> vectorizer = CountVectorizer()
   >>> vectorizer                     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-  CountVectorizer(analyzer=...'word', binary=False, decode_error=...'strict',
-          dtype=<... 'numpy.int64'>, encoding=...'utf-8', input=...'content',
-          lowercase=True, max_df=1.0, max_features=None, min_df=1,
-          ngram_range=(1, 1), preprocessor=None, stop_words=None,
-          strip_accents=None, token_pattern=...'(?u)\\b\\w\\w+\\b',
-          tokenizer=None, vocabulary=None)
+  CountVectorizer()
 
 Let's use it to tokenize and count the word occurrences of a minimalistic
 corpus of text documents::
@@ -471,8 +466,7 @@ class::
   >>> from sklearn.feature_extraction.text import TfidfTransformer
   >>> transformer = TfidfTransformer(smooth_idf=False)
   >>> transformer   # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-  TfidfTransformer(norm=...'l2', smooth_idf=False, sublinear_tf=False,
-                   use_idf=True)
+  TfidfTransformer(smooth_idf=False)
 
 Again please see the :ref:`reference documentation
 <text_feature_extraction_ref>` for the details on all the parameters.
