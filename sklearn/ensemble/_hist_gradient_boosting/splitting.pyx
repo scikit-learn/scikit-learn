@@ -474,6 +474,8 @@ cdef class Splitter:
             unsigned int n_samples_ = n_samples
             # if first bin is reserved for missing values, skip it
             unsigned int start = self.support_missing_values[feature_idx]
+            # Note that considering splitting on the last bin is useless since
+            # it would result in having 0 samples in the right node (forbidden)
             unsigned int end = self.actual_n_bins[feature_idx] - 1
             Y_DTYPE_C sum_hessian_left
             Y_DTYPE_C sum_hessian_right
@@ -490,8 +492,6 @@ cdef class Splitter:
 
 
         for bin_idx in range(start, end):
-            # Note that considering splitting on the last bin is useless since
-            # it would result in having 0 samples in the right node (forbidden)
             n_samples_left += histograms[feature_idx, bin_idx].count
             n_samples_right = n_samples_ - n_samples_left
 
