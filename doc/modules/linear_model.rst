@@ -44,9 +44,7 @@ and will store the coefficients :math:`w` of the linear model in its
     >>> from sklearn import linear_model
     >>> reg = linear_model.LinearRegression()
     >>> reg.fit([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
-    ...                                       # doctest: +NORMALIZE_WHITESPACE
-    LinearRegression(copy_X=True, fit_intercept=True, n_jobs=None,
-                     normalize=False)
+    LinearRegression()
     >>> reg.coef_
     array([0.5, 0.5])
 
@@ -106,8 +104,7 @@ its ``coef_`` member::
     >>> from sklearn import linear_model
     >>> reg = linear_model.Ridge(alpha=.5)
     >>> reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1]) # doctest: +NORMALIZE_WHITESPACE
-    Ridge(alpha=0.5, copy_X=True, fit_intercept=True, max_iter=None,
-          normalize=False, random_state=None, solver='auto', tol=0.001)
+    Ridge(alpha=0.5)
     >>> reg.coef_
     array([0.34545455, 0.34545455])
     >>> reg.intercept_ #doctest: +ELLIPSIS
@@ -145,9 +142,7 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
     >>> reg = linear_model.RidgeCV(alphas=np.logspace(-6, 6, 13))
     >>> reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])       # doctest: +NORMALIZE_WHITESPACE
     RidgeCV(alphas=array([1.e-06, 1.e-05, 1.e-04, 1.e-03, 1.e-02, 1.e-01, 1.e+00, 1.e+01,
-          1.e+02, 1.e+03, 1.e+04, 1.e+05, 1.e+06]),
-            cv=None, fit_intercept=True, gcv_mode=None, normalize=False,
-            scoring=None, store_cv_values=False)
+          1.e+02, 1.e+03, 1.e+04, 1.e+05, 1.e+06]))
     >>> reg.alpha_
     0.01
 
@@ -194,9 +189,7 @@ for another implementation::
     >>> from sklearn import linear_model
     >>> reg = linear_model.Lasso(alpha=0.1)
     >>> reg.fit([[0, 0], [1, 1]], [0, 1])  # doctest: +NORMALIZE_WHITESPACE
-    Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
-       normalize=False, positive=False, precompute=False, random_state=None,
-       selection='cyclic', tol=0.0001, warm_start=False)
+    Lasso(alpha=0.1)
     >>> reg.predict([[1, 1]])
     array([0.8])
 
@@ -484,9 +477,7 @@ function of the norm of its coefficients.
    >>> from sklearn import linear_model
    >>> reg = linear_model.LassoLars(alpha=.1)
    >>> reg.fit([[0, 0], [1, 1]], [0, 1])  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-   LassoLars(alpha=0.1, copy_X=True, eps=..., fit_intercept=True,
-        fit_path=True, max_iter=500, normalize=True, positive=False,
-        precompute='auto', verbose=False)
+   LassoLars(alpha=0.1)
    >>> reg.coef_    # doctest: +ELLIPSIS
    array([0.717157..., 0.        ])
 
@@ -653,10 +644,7 @@ Bayesian Ridge Regression is used for regression::
     >>> Y = [0., 1., 2., 3.]
     >>> reg = linear_model.BayesianRidge()
     >>> reg.fit(X, Y)  # doctest: +NORMALIZE_WHITESPACE
-    BayesianRidge(alpha_1=1e-06, alpha_2=1e-06, alpha_init=None,
-                  compute_score=False, copy_X=True, fit_intercept=True,
-                  lambda_1=1e-06, lambda_2=1e-06, lambda_init=None, n_iter=300,
-                  normalize=False, tol=0.001, verbose=False)
+    BayesianRidge()
 
 After being fitted, the model can then be used to predict new values::
 
