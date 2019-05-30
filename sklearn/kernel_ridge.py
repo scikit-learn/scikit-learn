@@ -102,8 +102,7 @@ class KernelRidge(BaseEstimator, RegressorMixin, MultiOutputMixin):
     >>> X = rng.randn(n_samples, n_features)
     >>> clf = KernelRidge(alpha=1.0)
     >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
-    KernelRidge(alpha=1.0, coef0=1, degree=3, gamma=None, kernel='linear',
-                kernel_params=None)
+    KernelRidge(alpha=1.0)
     """
     def __init__(self, alpha=1, kernel="linear", gamma=None, degree=3, coef0=1,
                  kernel_params=None):
