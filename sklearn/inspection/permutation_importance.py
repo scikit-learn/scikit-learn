@@ -1,8 +1,9 @@
 """Permutation importance for estimators"""
 import numpy as np
-from joblib import Parallel, delayed
 
 from ..utils import check_random_state
+from ..utils._joblib import Parallel
+from ..utils._joblib import delayed
 from ..utils.validation import check_array
 from ..metrics import check_scoring
 
