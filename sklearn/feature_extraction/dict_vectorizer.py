@@ -344,8 +344,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         ['bar', 'baz', 'foo']
         >>> v.restrict(support.get_support()) # doctest: +ELLIPSIS
         ...                                   # doctest: +NORMALIZE_WHITESPACE
-        DictVectorizer(dtype=..., separator='=', sort=True,
-                sparse=True)
+        DictVectorizer()
         >>> v.get_feature_names()
         ['bar', 'foo']
         """
