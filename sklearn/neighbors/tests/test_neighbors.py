@@ -267,7 +267,6 @@ def test_precomputed_sparse_invalid():
                         n_neighbors=1)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_precomputed_cross_validation():
     # Ensure array is split correctly
     rng = np.random.RandomState(0)

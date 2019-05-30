@@ -788,7 +788,7 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 3-fold cross-validation,
+        - None, to use the default 5-fold cross-validation,
         - integer, to specify the number of folds.
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -798,9 +798,8 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.20
-            ``cv`` default value if None will change from 3-fold to 5-fold
-            in v0.22.
+        .. versionchanged:: 0.22
+            ``cv`` default value if None changed from 3-fold to 5-fold.
 
     n_jobs : int or None, optional (default=None)
         Number of CPUs to use during the cross validation.
@@ -855,7 +854,7 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
 
     """
     def __init__(self, copy=True, fit_intercept=True, normalize=True,
-                 max_iter=None, cv='warn', n_jobs=None, verbose=False):
+                 max_iter=None, cv=None, n_jobs=None, verbose=False):
         self.copy = copy
         self.fit_intercept = fit_intercept
         self.normalize = normalize
