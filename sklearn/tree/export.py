@@ -547,16 +547,16 @@ class _MPLTreeExporter(_BaseTreeExporter):
 
         self.arrow_args = dict(arrowstyle="<-")
 
-    def _make_tree(self, node_id, et, depth=0):
+    def _make_tree(self, node_id, et, criterion, depth=0):
         # traverses _tree.Tree recursively, builds intermediate
         # "_reingold_tilford.Tree" object
-        name = self.node_to_str(et, node_id, criterion='entropy')
+        name = self.node_to_str(et, node_id, criterion=criterion)
         if (et.children_left[node_id] != _tree.TREE_LEAF
                 and (self.max_depth is None or depth <= self.max_depth)):
             children = [self._make_tree(et.children_left[node_id], et,
-                                        depth=depth + 1),
+                                        criterion, depth=depth + 1),
                         self._make_tree(et.children_right[node_id], et,
-                                        depth=depth + 1)]
+                                        criterion, depth=depth + 1)]
         else:
             return Tree(name, node_id)
         return Tree(name, node_id, *children)
@@ -568,7 +568,8 @@ class _MPLTreeExporter(_BaseTreeExporter):
             ax = plt.gca()
         ax.clear()
         ax.set_axis_off()
-        my_tree = self._make_tree(0, decision_tree.tree_)
+        my_tree = self._make_tree(0, decision_tree.tree_,
+                                  decision_tree.criterion)
         draw_tree = buchheim(my_tree)
 
         # important to make sure we're still

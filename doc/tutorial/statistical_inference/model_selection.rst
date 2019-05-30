@@ -263,18 +263,18 @@ scikit-learn exposes :ref:`cross_validation` estimators that set their
 parameter automatically by cross-validation::
 
     >>> from sklearn import linear_model, datasets
-    >>> lasso = linear_model.LassoCV(cv=3)
+    >>> lasso = linear_model.LassoCV()
     >>> diabetes = datasets.load_diabetes()
     >>> X_diabetes = diabetes.data
     >>> y_diabetes = diabetes.target
     >>> lasso.fit(X_diabetes, y_diabetes)  # doctest: +NORMALIZE_WHITESPACE
-    LassoCV(alphas=None, copy_X=True, cv=3, eps=0.001, fit_intercept=True,
+    LassoCV(alphas=None, copy_X=True, cv=None, eps=0.001, fit_intercept=True,
         max_iter=1000, n_alphas=100, n_jobs=None, normalize=False,
         positive=False, precompute='auto', random_state=None,
         selection='cyclic', tol=0.0001, verbose=False)
     >>> # The estimator chose automatically its lambda:
     >>> lasso.alpha_ # doctest: +ELLIPSIS
-    0.01229...
+    0.00375...
 
 These estimators are called similarly to their counterparts, with 'CV'
 appended to their name.
