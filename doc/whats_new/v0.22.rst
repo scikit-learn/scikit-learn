@@ -1,0 +1,98 @@
+.. include:: _contributors.rst
+
+.. currentmodule:: sklearn
+
+.. _changes_0_22:
+
+Version 0.22.0
+==============
+
+**In Development**
+
+Changed models
+--------------
+
+The following estimators and functions, when fit with the same data and
+parameters, may produce different models from the previous version. This often
+occurs due to changes in the modelling logic (bug fixes or enhancements), or in
+random sampling procedures.
+
+..
+    TO FILL IN AS WE GO
+
+Details are listed in the changelog below.
+
+(While we are trying to better inform users by providing this information, we
+cannot assure that this list is complete.)
+
+Changelog
+---------
+
+..
+    Entries should be grouped by module (in alphabetic order) and prefixed with
+    one of the labels: |MajorFeature|, |Feature|, |Efficiency|, |Enhancement|,
+    |Fix| or |API| (see whats_new.rst for descriptions).
+    Entries should be ordered by those labels (e.g. |Fix| after |Efficiency|).
+    Changes not specific to a module should be listed under *Multiple Modules*
+    or *Miscellaneous*.
+    Entries should end with:
+    :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
+    where 123456 is the *pull request* number, not the issue number.
+
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` now bin the training and
+  validation data separately to avoid any data leak. :pr:`13933` by
+  `NicolasHug`_.
+
+:mod:`sklearn.linear_model`
+..................
+
+- |Enhancement| :class:`linearmodel.BayesianRidge` now accepts hyperparameters
+  ``alpha_init`` and ``lambda_init`` which can be used to set the initial value
+  of the maximization procedure in :term:`fit`.
+  :pr:`13618` by :user:`Yoshihiro Uchida <c56pony>`.
+
+
+:mod:`sklearn.svm`
+..................
+
+- |Enhancement| :class:`svm.SVC` and :class:`svm.NuSVC` now accept a
+  ``break_ties`` parameter. This parameter results in :term:`predict` breaking
+  the ties according to the confidence values of :term:`decision_function`, if
+  ``decision_function_shape='ovr'``, and the number of target classes > 2.
+  :pr:`12557` by `Adrin Jalali`_.
+
+:mod:`sklearn.cluster`
+..................
+
+- |Enhancement| :class:`cluster.SpectralClustering` now accepts a ``n_components`` 
+  parameter. This parameter extends `SpectralClustering` class functionality to
+  match `spectral_clustering`.
+  :pr:`13726` by :user:`Shuzhe Xiao <fdas3213>`.
+
+:mod:`sklearn.feature_selection`
+................................
+- |Fix| Fixed a bug where :class:`VarianceThreshold` with `threshold=0` did not
+  remove constant features due to numerical instability, by using range
+  rather than variance in this case.
+  :pr:`13704` by `Roddy MacSween <rlms>`.
+  
+Miscellaneous
+.............
+
+- |API| Replace manual checks with ``check_is_fitted``. Errors thrown when
+  using a non-fitted estimators are now more uniform.
+  :pr:`13013` by :user:`Agamemnon Krasoulis <agamemnonc>`.
+
+Changes to estimator checks
+---------------------------
+
+These changes mostly affect library developers.
+
+- Estimators are now expected to raise a ``NotFittedError`` if ``predict`` or
+  ``transform`` is called before ``fit``; previously an ``AttributeError`` or
+  ``ValueError`` was acceptable.
+  :pr:`13013` by by :user:`Agamemnon Krasoulis <agamemnonc>`.

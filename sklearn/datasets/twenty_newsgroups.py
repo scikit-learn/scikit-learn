@@ -43,7 +43,6 @@ from .base import _fetch_remote
 from .base import RemoteFileMetadata
 from ..feature_extraction.text import CountVectorizer
 from ..preprocessing import normalize
-from ..utils import deprecated
 from ..utils import _joblib
 from ..utils import check_random_state, Bunch
 
@@ -60,13 +59,6 @@ ARCHIVE = RemoteFileMetadata(
 CACHE_NAME = "20news-bydate.pkz"
 TRAIN_FOLDER = "20news-bydate-train"
 TEST_FOLDER = "20news-bydate-test"
-
-
-@deprecated("Function 'download_20newsgroups' was renamed to "
-            "'_download_20newsgroups' in version 0.20 and will be removed in "
-            "release 0.22.")
-def download_20newsgroups(target_dir, cache_path):
-    return _download_20newsgroups(target_dir, cache_path)
 
 
 def _download_20newsgroups(target_dir, cache_path):

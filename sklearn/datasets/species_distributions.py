@@ -49,8 +49,8 @@ from .base import get_data_home
 from .base import _fetch_remote
 from .base import RemoteFileMetadata
 from ..utils import Bunch
-from sklearn.datasets.base import _pkl_filepath
-from sklearn.utils import _joblib
+from .base import _pkl_filepath
+from ..utils import _joblib
 
 # The original data can be found at:
 # https://biodiversityinformatics.amnh.org/open_source/maxent/samples.zip
@@ -154,7 +154,7 @@ def fetch_species_distributions(data_home=None,
         instead of trying to download the data from the source site.
 
     Returns
-    --------
+    -------
     The data is returned as a Bunch object with the following attributes:
 
     coverages : array, shape = [14, 1592, 1212]

@@ -27,6 +27,18 @@ There are different ways to get scikit-learn installed:
     If you wish to contribute to the project, you need to
     :ref:`install the latest development version<install_bleeding_edge>`.
 
+.. _install_nightly_builds:
+
+Installing nightly builds
+=========================
+
+The continuous integration servers of the scikit-learn project build, test
+and upload wheel packages for the most recent Python version on a nightly
+basis to help users test bleeding edge features or bug fixes::
+
+  pip install --pre -f https://sklearn-nightly.scdn8.secure.raxcdn.com scikit-learn
+
+
 .. _install_bleeding_edge:
 
 Building from source
@@ -48,6 +60,14 @@ Building Scikit-learn also requires
 
 - Cython >=0.28.5
 - OpenMP
+
+.. note::
+
+   It is possible to build scikit-learn without OpenMP support by setting the
+   ``SKLEARN_NO_OPENMP`` environment variable (before cythonization). This is
+   not recommended since it will force some estimators to run in sequential
+   mode and their ``n_jobs`` parameter will be ignored.
+
 
 Running tests requires
 
@@ -127,6 +147,30 @@ Then you need to set the following environment variables::
     export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
 
 Finally you can build the package using the standard command.
+
+FreeBSD
+-------
+
+The clang compiler included in FreeBSD 12.0 and 11.2 base systems does not 
+include OpenMP support. You need to install the `openmp` library from packages 
+(or ports)::
+
+    sudo pkg install openmp
+    
+This will install header files in ``/usr/local/include`` and libs in 
+``/usr/local/lib``. Since these directories are not searched by default, you 
+can set the environment variables to these locations::
+
+    export CFLAGS="$CFLAGS -I/usr/local/include"
+    export CXXFLAGS="$CXXFLAGS -I/usr/local/include"
+    export LDFLAGS="$LDFLAGS -L/usr/local/lib -lomp"
+    export DYLD_LIBRARY_PATH=/usr/local/lib
+
+Finally you can build the package using the standard command.
+
+For the upcomming FreeBSD 12.1 and 11.3 versions, OpenMP will be included in 
+the base system and these steps will not be necessary.
+
 
 Installing build dependencies
 =============================
