@@ -1157,12 +1157,13 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
 
     Examples
     --------
-    >>> from sklearn.datasets import make_circles
     >>> from sklearn.svm import OneClassSVM
-    >>> X, y = make_circles(n_samples=6, factor=0.4, random_state=41)
+    >>> X = [[0], [0.44], [0.45], [0.46], [1]]
     >>> clf = OneClassSVM(gamma='auto').fit(X)
     >>> clf.predict(X)
-    array([-1,  1, -1,  1,  1, -1])
+    array([-1,  1,  1,  1, -1])
+    >>> clf.score_samples(X)  # doctest: +ELLIPSIS
+    array([1.7798..., 2.0547..., 2.0556..., 2.0561..., 1.7332...])
     """
 
     _impl = 'one_class'
