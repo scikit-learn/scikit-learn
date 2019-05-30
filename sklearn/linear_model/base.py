@@ -97,7 +97,7 @@ def make_dataset(X, y, sample_weight, random_state=None):
     return dataset, intercept_decay
 
 
-def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
+def _preprocess_data(X, y, fit_intercept, normalize=False, copy=None,
                      sample_weight=None, return_mean=False, check_input=True):
     """
     Centers data to have mean zero along axis 0. If fit_intercept=False or if
@@ -121,17 +121,17 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
         sample_weight = None
 
     if check_input:
-        X = check_array(X, copy=copy, accept_sparse=['csr', 'csc'],
+        X = check_array(X, accept_sparse=['csr', 'csc'],
                         dtype=FLOAT_DTYPES)
-    elif copy:
-        if sp.issparse(X):
-            X = X.copy()
-        else:
-            X = X.copy(order='K')
 
     y = np.asarray(y, dtype=X.dtype)
 
     if fit_intercept:
+        if copy is None or copy:
+            if sp.issparse(X):
+                X = X.copy()
+            else:
+                X = X.copy(order='K')
         if sp.issparse(X):
             X_offset, X_var = mean_variance_axis(X, axis=0)
             if not return_mean:
