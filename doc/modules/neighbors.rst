@@ -548,7 +548,7 @@ estimation, for instance enabling multiprocessing though the parameter `n_jobs`.
 Finally, the precomputation can be performed by custom estimators to use
 different implementations, such as approximate nearest neighbors methods, or
 implementation with special data types. The precomputed neighbors
-:term:`Glossary <sparse graph>` needs to be formatted as in
+:term:`sparse graph` needs to be formatted as in
 :func:`neighbors.radius_neighbors_graph` output:
 
 * a CSR matrix (although COO, CSC or LIL will be accepted).
