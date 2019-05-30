@@ -868,14 +868,14 @@ def normalized_mutual_info_score(labels_true, labels_pred,
     # Calculate entropy for each labeling
     h_true, h_pred = entropy(labels_true), entropy(labels_pred)
     normalizer = _generalized_average(h_true, h_pred, average_method)
-    # Avoid 0.0 / 0.0 when either entropy is zero.
-    normalizer = max(normalizer, np.finfo('float64').eps)
 
-    # Handling sparse input
+    # Handling sparse input to avoid 0.0 / 0.0
+    # when either entropy is zero.
     if normalizer < np.finfo('float64').eps:
         return 0
-    nmi = mi / normalizer
-    return nmi
+    else:
+        nmi = mi / normalizer
+        return nmi
 
 
 def fowlkes_mallows_score(labels_true, labels_pred, sparse=False):
