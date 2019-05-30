@@ -11,4 +11,4 @@ from .export import export_graphviz, plot_tree, export_text
 
 __all__ = ["DecisionTreeClassifier", "DecisionTreeRegressor",
            "ExtraTreeClassifier", "ExtraTreeRegressor", "export_graphviz",
-           "plot_tree",  "export_text"]
+           "plot_tree", "export_text"]

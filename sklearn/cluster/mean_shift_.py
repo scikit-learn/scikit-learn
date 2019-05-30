@@ -183,8 +183,8 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     if bandwidth is None:
         bandwidth = estimate_bandwidth(X, n_jobs=n_jobs)
     elif bandwidth <= 0:
-        raise ValueError("bandwidth needs to be greater than zero or None,\
-            got %f" % bandwidth)
+        raise ValueError("bandwidth needs to be greater than zero or None,"
+                         " got %f" % bandwidth)
     if seeds is None:
         if bin_seeding:
             seeds = get_bin_seeds(X, bandwidth, min_bin_freq)
@@ -409,7 +409,7 @@ class MeanShift(BaseEstimator, ClusterMixin):
         """Perform clustering.
 
         Parameters
-        -----------
+        ----------
         X : array-like, shape=[n_samples, n_features]
             Samples to cluster.
 
