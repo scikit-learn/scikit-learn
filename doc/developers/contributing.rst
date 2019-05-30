@@ -402,8 +402,8 @@ profiling and Cython optimizations.
 Continuous Integration (CI)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* Azure is used for testing scikit-learn on Linux, Mac and Windows, with
-  different dependencies and settings.
+* Azure pipelines are used for testing scikit-learn on Linux, Mac and Windows,
+  with different dependencies and settings.
 * CircleCI is used to build the docs for viewing, for linting with flake8, and
   for testing with PyPy on Linux
 
@@ -680,6 +680,49 @@ To test code coverage, you need to install the `coverage
     write or adapt a test specifically for these lines.
 
 3. Loop.
+
+
+Issue Tracker Tags
+------------------
+
+All issues and pull requests on the
+`GitHub issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_
+should have (at least) one of the following tags:
+
+:Bug / Crash:
+    Something is happening that clearly shouldn't happen.
+    Wrong results as well as unexpected errors from estimators go here.
+
+:Cleanup / Enhancement:
+    Improving performance, usability, consistency.
+
+:Documentation:
+    Missing, incorrect or sub-standard documentations and examples.
+
+:New Feature:
+    Feature requests and pull requests implementing a new feature.
+
+There are four other tags to help new contributors:
+
+:good first issue:
+    This issue is ideal for a first contribution to scikit-learn. Ask for help
+    if the formulation is unclear. If you have already contributed to
+    scikit-learn, look at Easy issues instead.
+
+:Easy:
+    This issue can be tackled without much prior experience.
+
+:Moderate:
+    Might need some knowledge of machine learning or the package,
+    but is still approachable for someone new to the project.
+
+:help wanted:
+    This tag marks an issue which currently lacks a contributor or a
+    PR that needs another contributor to take over the work. These
+    issues can range in difficulty, and may not be approachable
+    for new contributors. Note that not all issues which need
+    contributors will have this tag.
+
 
 .. _coding-guidelines:
 
