@@ -348,7 +348,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     >>> from sklearn import preprocessing
     >>> lb = preprocessing.LabelBinarizer()
     >>> lb.fit([1, 2, 6, 4, 2])
-    LabelBinarizer(neg_label=0, pos_label=1, sparse_output=False)
+    LabelBinarizer()
     >>> lb.classes_
     array([1, 2, 4, 6])
     >>> lb.transform([1, 6])
@@ -368,7 +368,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
     >>> import numpy as np
     >>> lb.fit(np.array([[0, 1, 1], [1, 0, 0]]))
-    LabelBinarizer(neg_label=0, pos_label=1, sparse_output=False)
+    LabelBinarizer()
     >>> lb.classes_
     array([0, 1, 2])
     >>> lb.transform([0, 1, 2, 1])

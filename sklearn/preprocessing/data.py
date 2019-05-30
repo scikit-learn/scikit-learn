@@ -265,7 +265,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     >>> data = [[-1, 2], [-0.5, 6], [0, 10], [1, 18]]
     >>> scaler = MinMaxScaler()
     >>> print(scaler.fit(data))
-    MinMaxScaler(copy=True, feature_range=(0, 1))
+    MinMaxScaler()
     >>> print(scaler.data_max_)
     [ 1. 18.]
     >>> print(scaler.transform(data))
@@ -570,7 +570,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     >>> data = [[0, 0], [0, 0], [1, 1], [1, 1]]
     >>> scaler = StandardScaler()
     >>> print(scaler.fit(data))
-    StandardScaler(copy=True, with_mean=True, with_std=True)
+    StandardScaler()
     >>> print(scaler.mean_)
     [0.5 0.5]
     >>> print(scaler.transform(data))
@@ -856,7 +856,7 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
     ...      [ 0.,  1., -1.]]
     >>> transformer = MaxAbsScaler().fit(X)
     >>> transformer
-    MaxAbsScaler(copy=True)
+    MaxAbsScaler()
     >>> transformer.transform(X)
     array([[ 0.5, -1. ,  1. ],
            [ 1. ,  0. ,  0. ],
@@ -1110,8 +1110,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     ...      [ 4.,  1., -2.]]
     >>> transformer = RobustScaler().fit(X)
     >>> transformer  # doctest: +NORMALIZE_WHITESPACE
-    RobustScaler(copy=True, quantile_range=(25.0, 75.0), with_centering=True,
-           with_scaling=True)
+    RobustScaler()
     >>> transformer.transform(X)
     array([[ 0. , -2. ,  0. ],
            [-1. ,  0. ,  0.4],
@@ -1685,7 +1684,7 @@ class Normalizer(BaseEstimator, TransformerMixin):
     ...      [5, 7, 5, 1]]
     >>> transformer = Normalizer().fit(X)  # fit does nothing.
     >>> transformer
-    Normalizer(copy=True, norm='l2')
+    Normalizer()
     >>> transformer.transform(X)
     array([[0.8, 0.2, 0.4, 0.4],
            [0.1, 0.3, 0.9, 0.3],
@@ -1821,7 +1820,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
     ...      [ 0.,  1., -1.]]
     >>> transformer = Binarizer().fit(X)  # fit does nothing.
     >>> transformer
-    Binarizer(copy=True, threshold=0.0)
+    Binarizer()
     >>> transformer.transform(X)
     array([[1., 0., 1.],
            [1., 0., 0.],
@@ -2615,7 +2614,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     >>> pt = PowerTransformer()
     >>> data = [[1, 2], [3, 2], [4, 5]]
     >>> print(pt.fit(data))
-    PowerTransformer(copy=True, method='yeo-johnson', standardize=True)
+    PowerTransformer()
     >>> print(pt.lambdas_)
     [ 1.386... -3.100...]
     >>> print(pt.transform(data))

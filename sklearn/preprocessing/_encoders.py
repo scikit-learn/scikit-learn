@@ -235,8 +235,7 @@ class OneHotEncoder(_BaseEncoder):
     >>> enc.fit(X)
     ... # doctest: +ELLIPSIS
     ... # doctest: +NORMALIZE_WHITESPACE
-    OneHotEncoder(categories='auto', drop=None, dtype=<... 'numpy.float64'>,
-                  handle_unknown='ignore', sparse=True)
+    OneHotEncoder(handle_unknown='ignore')
 
     >>> enc.categories_
     [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]
@@ -574,7 +573,7 @@ class OrdinalEncoder(_BaseEncoder):
     >>> X = [['Male', 1], ['Female', 3], ['Female', 2]]
     >>> enc.fit(X)
     ... # doctest: +ELLIPSIS
-    OrdinalEncoder(categories='auto', dtype=<... 'numpy.float64'>)
+    OrdinalEncoder()
     >>> enc.categories_
     [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]
     >>> enc.transform([['Female', 3], ['Male', 1]])
