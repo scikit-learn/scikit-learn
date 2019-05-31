@@ -16,7 +16,6 @@ from .types import HISTOGRAM_DTYPE
 from .types cimport hist_struct
 from .types cimport X_BINNED_DTYPE_C
 from .types cimport G_H_DTYPE_C
-from .types cimport hist_struct
 
 # Notes:
 # - IN views are read-only, OUT views are write-only

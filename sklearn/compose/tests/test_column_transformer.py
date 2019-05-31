@@ -1057,7 +1057,7 @@ def test_column_transformer_negative_column_indexes():
     X_categories = np.array([[1], [2]])
     X = np.concatenate([X, X_categories], axis=1)
 
-    ohe = OneHotEncoder(categories='auto')
+    ohe = OneHotEncoder()
 
     tf_1 = ColumnTransformer([('ohe', ohe, [-1])], remainder='passthrough')
     tf_2 = ColumnTransformer([('ohe', ohe,  [2])], remainder='passthrough')
