@@ -9,6 +9,7 @@
 
 
 from itertools import chain, combinations
+import numbers
 import warnings
 from itertools import combinations_with_replacement as combinations_w_r
 
@@ -670,7 +671,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         # transform it to a NumPy array of shape (n_features,) required by
         # incr_mean_variance_axis and _incremental_variance_axis
         if (hasattr(self, 'n_samples_seen_') and
-                isinstance(self.n_samples_seen_, (int, np.integer))):
+                isinstance(self.n_samples_seen_, numbers.Integral)):
             self.n_samples_seen_ = np.repeat(
                 self.n_samples_seen_, X.shape[1]).astype(np.int64, copy=False)
 

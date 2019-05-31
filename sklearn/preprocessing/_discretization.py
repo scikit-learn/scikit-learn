@@ -211,7 +211,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         """
         orig_bins = self.n_bins
         if isinstance(orig_bins, numbers.Number):
-            if not isinstance(orig_bins, (numbers.Integral, np.integer)):
+            if not isinstance(orig_bins, numbers.Integral):
                 raise ValueError("{} received an invalid n_bins type. "
                                  "Received {}, expected int."
                                  .format(KBinsDiscretizer.__name__,
