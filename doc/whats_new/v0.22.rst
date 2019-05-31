@@ -39,6 +39,14 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` now bin the training and
+  validation data separately to avoid any data leak. :pr:`13933` by
+  `NicolasHug`_.
+
 :mod:`sklearn.linear_model`
 ..................
 
@@ -57,7 +65,6 @@ Changelog
   ``decision_function_shape='ovr'``, and the number of target classes > 2.
   :pr:`12557` by `Adrin Jalali`_.
 
-
 :mod:`sklearn.cluster`
 ..................
 
@@ -65,8 +72,14 @@ Changelog
   parameter. This parameter extends `SpectralClustering` class functionality to
   match `spectral_clustering`.
   :pr:`13726` by :user:`Shuzhe Xiao <fdas3213>`.
+
+:mod:`sklearn.feature_selection`
+................................
+- |Fix| Fixed a bug where :class:`VarianceThreshold` with `threshold=0` did not
+  remove constant features due to numerical instability, by using range
+  rather than variance in this case.
+  :pr:`13704` by `Roddy MacSween <rlms>`.
   
-	
 Miscellaneous
 .............
 

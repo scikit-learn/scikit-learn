@@ -234,8 +234,7 @@ predefined scorer names::
     >>> from sklearn.metrics import recall_score
     >>> scoring = ['precision_macro', 'recall_macro']
     >>> clf = svm.SVC(kernel='linear', C=1, random_state=0)
-    >>> scores = cross_validate(clf, iris.data, iris.target, scoring=scoring,
-    ...                         cv=5)
+    >>> scores = cross_validate(clf, iris.data, iris.target, scoring=scoring)
     >>> sorted(scores.keys())
     ['fit_time', 'score_time', 'test_precision_macro', 'test_recall_macro']
     >>> scores['test_recall_macro']                       # doctest: +ELLIPSIS
@@ -498,8 +497,7 @@ Here is a usage example::
 
   >>> from sklearn.model_selection import ShuffleSplit
   >>> X = np.arange(10)
-  >>> ss = ShuffleSplit(n_splits=5, test_size=0.25,
-  ...     random_state=0)
+  >>> ss = ShuffleSplit(n_splits=5, test_size=0.25, random_state=0)
   >>> for train_index, test_index in ss.split(X):
   ...     print("%s %s" % (train_index, test_index))
   [9 1 6 7 3 0 5] [2 8 4]

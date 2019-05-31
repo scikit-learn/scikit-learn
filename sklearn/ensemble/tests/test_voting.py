@@ -99,7 +99,7 @@ def test_majority_label_iris():
     eclf = VotingClassifier(estimators=[
                 ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
                 voting='hard')
-    scores = cross_val_score(eclf, X, y, cv=5, scoring='accuracy')
+    scores = cross_val_score(eclf, X, y, scoring='accuracy')
     assert_almost_equal(scores.mean(), 0.95, decimal=2)
 
 
@@ -123,7 +123,7 @@ def test_weights_iris():
                             ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
                             voting='soft',
                             weights=[1, 2, 10])
-    scores = cross_val_score(eclf, X, y, cv=5, scoring='accuracy')
+    scores = cross_val_score(eclf, X, y, scoring='accuracy')
     assert_almost_equal(scores.mean(), 0.93, decimal=2)
 
 
@@ -267,7 +267,7 @@ def test_gridsearch():
               'voting': ['soft', 'hard'],
               'weights': [[0.5, 0.5, 0.5], [1.0, 0.5, 0.5]]}
 
-    grid = GridSearchCV(estimator=eclf, param_grid=params, cv=5)
+    grid = GridSearchCV(estimator=eclf, param_grid=params)
     grid.fit(iris.data, iris.target)
 
 

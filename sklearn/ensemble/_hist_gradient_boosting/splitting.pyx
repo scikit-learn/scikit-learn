@@ -91,9 +91,6 @@ cdef class Splitter:
     ----------
     X_binned : ndarray of int, shape (n_samples, n_features)
         The binned input samples. Must be Fortran-aligned.
-    max_bins : int
-        The maximum number of bins. Used to define the shape of the
-        histograms.
     actual_n_bins : ndarray, shape (n_features,)
         The actual number of bins needed for each feature, which is lower or
         equal to max_bins.
@@ -114,7 +111,6 @@ cdef class Splitter:
     cdef public:
         const X_BINNED_DTYPE_C [::1, :] X_binned
         unsigned int n_features
-        unsigned int max_bins
         unsigned int [::1] actual_n_bins
         unsigned char hessians_are_constant
         Y_DTYPE_C l2_regularization
@@ -126,8 +122,8 @@ cdef class Splitter:
         unsigned int [::1] left_indices_buffer
         unsigned int [::1] right_indices_buffer
 
-    def __init__(self, const X_BINNED_DTYPE_C [::1, :] X_binned, unsigned int
-                 max_bins, np.ndarray[np.uint32_t] actual_n_bins,
+    def __init__(self, const X_BINNED_DTYPE_C [::1, :] X_binned,
+                 np.ndarray[np.uint32_t] actual_n_bins,
                  Y_DTYPE_C l2_regularization, Y_DTYPE_C
                  min_hessian_to_split=1e-3, unsigned int
                  min_samples_leaf=20, Y_DTYPE_C min_gain_to_split=0.,
@@ -135,9 +131,6 @@ cdef class Splitter:
 
         self.X_binned = X_binned
         self.n_features = X_binned.shape[1]
-        # Note: all histograms will have <max_bins> bins, but some of the
-        # last bins may be unused if actual_n_bins[f] < max_bins
-        self.max_bins = max_bins
         self.actual_n_bins = actual_n_bins
         self.l2_regularization = l2_regularization
         self.min_hessian_to_split = min_hessian_to_split
@@ -406,7 +399,7 @@ cdef class Splitter:
         return best_feature_idx
 
     cdef split_info_struct _find_best_bin_to_split_helper(
-            self,
+            Splitter self,
             unsigned int feature_idx,
             const hist_struct [:, ::1] histograms,  # IN
             unsigned int n_samples,
@@ -439,7 +432,9 @@ cdef class Splitter:
         negative_loss_current_node = negative_loss(sum_gradients,
             sum_hessians, self.l2_regularization)
 
-        for bin_idx in range(self.actual_n_bins[feature_idx]):
+        for bin_idx in range(self.actual_n_bins[feature_idx] - 1):
+            # Note that considering splitting on the last bin is useless since
+            # it would result in having 0 samples in the right node (forbidden)
             n_samples_left += histograms[feature_idx, bin_idx].count
             n_samples_right = n_samples_ - n_samples_left
 
