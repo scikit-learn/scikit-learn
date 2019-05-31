@@ -1695,6 +1695,7 @@ class MultiTaskElasticNet(Lasso):
     >>> from sklearn import linear_model
     >>> clf = linear_model.MultiTaskElasticNet(alpha=0.1)
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [[0, 0], [1, 1], [2, 2]])
+    ... #doctest: +NORMALIZE_WHITESPACE
     MultiTaskElasticNet(alpha=0.1)
     >>> print(clf.coef_)
     [[0.45663524 0.45612256]
@@ -2057,6 +2058,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
     >>> clf = linear_model.MultiTaskElasticNetCV(cv=3)
     >>> clf.fit([[0,0], [1, 1], [2, 2]],
     ...         [[0, 0], [1, 1], [2, 2]])
+    ... #doctest: +NORMALIZE_WHITESPACE
     MultiTaskElasticNetCV(cv=3)
     >>> print(clf.coef_)
     [[0.52875032 0.46958558]

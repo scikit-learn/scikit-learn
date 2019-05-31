@@ -2243,7 +2243,7 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
     LinearSVC()
     >>> pred_decision = est.decision_function([[-1], [2], [3]])
     >>> y_true = [0, 2, 3]
-    >>> hinge_loss(y_true, pred_decision, labels)
+    >>> hinge_loss(y_true, pred_decision, labels)  #doctest: +ELLIPSIS
     0.56...
     """
     check_consistent_length(y_true, pred_decision, sample_weight)

@@ -916,6 +916,7 @@ class SGDClassifier(BaseSGDClassifier):
     >>> Y = np.array([1, 1, 2, 2])
     >>> clf = linear_model.SGDClassifier(max_iter=1000, tol=1e-3)
     >>> clf.fit(X, Y)
+    ... #doctest: +NORMALIZE_WHITESPACE
     SGDClassifier()
 
     >>> print(clf.predict([[-0.8, -1]]))
@@ -1509,6 +1510,7 @@ class SGDRegressor(BaseSGDRegressor):
     >>> X = rng.randn(n_samples, n_features)
     >>> clf = linear_model.SGDRegressor(max_iter=1000, tol=1e-3)
     >>> clf.fit(X, y)
+    ... #doctest: +NORMALIZE_WHITESPACE
     SGDRegressor()
 
     See also

@@ -542,9 +542,9 @@ def gen_even_slices(n, n_packs, n_samples=None):
     >>> from sklearn.utils import gen_even_slices
     >>> list(gen_even_slices(10, 1))
     [slice(0, 10, None)]
-    >>> list(gen_even_slices(10, 10))
+    >>> list(gen_even_slices(10, 10))                     #doctest: +ELLIPSIS
     [slice(0, 1, None), slice(1, 2, None), ..., slice(9, 10, None)]
-    >>> list(gen_even_slices(10, 5))
+    >>> list(gen_even_slices(10, 5))                      #doctest: +ELLIPSIS
     [slice(0, 2, None), slice(2, 4, None), ..., slice(8, 10, None)]
     >>> list(gen_even_slices(10, 3))
     [slice(0, 4, None), slice(4, 7, None), slice(7, 10, None)]
