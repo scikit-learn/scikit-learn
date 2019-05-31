@@ -639,10 +639,6 @@ Support for Python 3.4 and below has been officially dropped.
   neighbors calculation.) :pr:`12568` by :user:`Wei Xue <xuewei4d>`,
   :user:`Emmanuel Arias <eamanu>` and `Joel Nothman`_.
 
-- |Feature| Added multiclass support to :func:`metrics.roc_auc_score`.
-  :issue:`12789` by :user:`Kathy Chen <kathyxchen>`,
-  :user:`Mohamed Maskani <maskani-moh>`, and :user:`Thomas Fan <thomasjpfan>`.
-  
 - |Efficiency| Faster :func:`metrics.pairwise_distances` with `n_jobs`
   > 1 by using a thread-based backend, instead of process-based backends.
   :pr:`8216` by :user:`Pierre Glaser <pierreglaser>` and
