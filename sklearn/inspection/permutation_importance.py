@@ -4,27 +4,40 @@ import numpy as np
 from ..utils import check_random_state
 from ..utils._joblib import Parallel
 from ..utils._joblib import delayed
-from ..utils.validation import check_array
+from ..utils import check_array
 from ..metrics import check_scoring
+
+
+def _safe_column_setting(X, col_idx, values):
+    """Set column on X using col_idx"""
+    if hasattr(X, "iloc"):
+        X.iloc[:, col_idx] = values
+    else:
+        X[:, col_idx] = values
+
+
+def _safe_column_indexing(X, col_idx):
+    """Return column from X using col_idx"""
+    if hasattr(X, "iloc"):
+        return X.iloc[:, col_idx].values
+    else:
+        return X[:, col_idx]
 
 
 def _calculate_permutation_scores(estimator, X, y, col_idx, random_state,
                                   n_rounds, scorer):
-    """Calcuate permutation scores for a column."""
-    if hasattr(X, 'iloc'):  # pandas dataframe
-        X_iloc = X.iloc
-    else:
-        X_iloc = X
+    """Calculate score when ``col_idx`` is permuted."""
+    original_feature = _safe_column_indexing(X, col_idx).copy()
+    temp = original_feature.copy()
 
-    original_feature = X_iloc[:, col_idx].copy()
     scores = np.zeros(n_rounds)
-
     for n_round in range(n_rounds):
-        X_iloc[:, col_idx] = random_state.permutation(original_feature)
+        random_state.shuffle(temp)
+        _safe_column_setting(X, col_idx, temp)
         feature_score = scorer(estimator, X, y)
         scores[n_round] = feature_score
 
-    X_iloc[:, col_idx] = original_feature
+    _safe_column_setting(X, col_idx, original_feature)
     return scores
 
 
@@ -48,7 +61,7 @@ def permutation_importance(estimator, X, y, scoring=None, n_rounds=1,
         An estimator that has already been `fit` and is compatible with
         ``scorer``.
 
-    X : array-like or DataFrame, shape = (n_samples, n_features)
+    X : numpy array or DataFrame, shape = (n_samples, n_features)
         Data on which permutation importance will be computed.
 
     y : array-like, shape = (n_samples, ...)
@@ -83,19 +96,20 @@ def permutation_importance(estimator, X, y, scoring=None, n_rounds=1,
         2001.https://doi.org/10.1023/A:1010933404324
 
     """
-    if hasattr(X, 'iloc'):
-        X = X.copy()
+    if hasattr(X, "iloc"):
+        X = X.copy()  # Dataframe
     else:
-        # Not a dataframe
-        X = check_array(X, force_all_finite='allow-nan', dtype=None, copy=True)
+        X = check_array(X, force_all_finite='allow-nan', dtype=np.object,
+                        copy=True)
 
     random_state = check_random_state(random_state)
     scorer = check_scoring(estimator, scoring=scoring)
 
     baseline_score = scorer(estimator, X, y)
-    scores_returned = Parallel(n_jobs=n_jobs)(
-        delayed(_calculate_permutation_scores)(estimator, X, y, col_idx,
-                                               random_state, n_rounds, scorer)
-        for col_idx in range(X.shape[1]))
+    scores = np.zeros((X.shape[1], n_rounds))
 
-    return baseline_score - np.array(scores_returned)
+    scores = Parallel(n_jobs=n_jobs)(delayed(_calculate_permutation_scores)(
+        estimator, X, y, col_idx, random_state, n_rounds, scorer
+    ) for col_idx in range(X.shape[1]))
+
+    return baseline_score - np.array(scores)
