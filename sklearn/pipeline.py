@@ -628,7 +628,7 @@ class Pipeline(_BaseComposition):
         """
         feature_names = input_features
         with_final = hasattr(self._final_estimator, "transform")
-        for name, transform in self._iter(with_final=with_final):
+        for i, name, transform in self._iter(with_final=with_final):
             if not hasattr(transform, "get_feature_names"):
                 raise TypeError("Transformer {} does provide"
                                 " get_feature_names".format(name))
