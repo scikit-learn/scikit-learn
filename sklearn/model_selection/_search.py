@@ -507,23 +507,6 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         return self.best_estimator_.decision_function(X)
 
     @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
-    def score_samples(self, X):
-        """Call score_samples on the estimator with the best found parameters.
-
-        Only available if ``refit=True`` and the underlying estimator supports
-        ``score_samples``.
-
-        Parameters
-        ----------
-        X : indexable, length n_samples
-            Must fulfill the input assumptions of the
-            underlying estimator.
-
-        """
-        self._check_is_fitted('score_samples')
-        return self.best_estimator_.score_samples(X)
-
-    @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
     def transform(self, X):
         """Call transform on the estimator with the best found parameters.
 
