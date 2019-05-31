@@ -105,7 +105,16 @@ of ``y``.  This is done for each feature in an iterative fashion, and then is
 repeated for ``max_iter`` imputation rounds. The results of the final
 imputation round are returned.
 
+.. note::
+
+   This estimator is still **experimental** for now: the predictions
+   and the API might change without any deprecation cycle. To use it,
+   you need to explicitly import ``enable_iterative_imputer``.
+
+::
+
     >>> import numpy as np
+    >>> from sklearn.experimental import enable_iterative_imputer
     >>> from sklearn.impute import IterativeImputer
     >>> imp = IterativeImputer(max_iter=10, random_state=0)
     >>> imp.fit([[1, 2], [3, 6], [4, 8], [np.nan, 3], [7, np.nan]])  # doctest: +NORMALIZE_WHITESPACE
@@ -187,7 +196,11 @@ The :class:`MissingIndicator` transformer is useful to transform a dataset into
 corresponding binary matrix indicating the presence of missing values in the
 dataset. This transformation is useful in conjunction with imputation. When
 using imputation, preserving the information about which values had been
-missing can be informative.
+missing can be informative. Note that both the :class:`SimpleImputer` and
+:class:`IterativeImputer` have the boolean parameter ``add_indicator``
+(``False`` by default) which when set to ``True`` provides a convenient way of
+stacking the output of the :class:`MissingIndicator` transformer with the
+output of the imputer.
 
 ``NaN`` is usually used as the placeholder for missing values. However, it
 enforces the data type to be float. The parameter ``missing_values`` allows to
@@ -214,7 +227,7 @@ mask of the features containing missing values at ``fit`` time::
 
 The ``features`` parameter can be set to ``'all'`` to returned all features
 whether or not they contain missing values::
-    
+
   >>> indicator = MissingIndicator(missing_values=-1, features="all")
   >>> mask_all = indicator.fit_transform(X)
   >>> mask_all

@@ -63,7 +63,8 @@ def test_affinity_propagation():
     assert_raises(ValueError, affinity_propagation, S, damping=0)
     af = AffinityPropagation(affinity="unknown")
     assert_raises(ValueError, af.fit, X)
-
+    af_2 = AffinityPropagation(affinity='precomputed')
+    assert_raises(TypeError, af_2.fit, csr_matrix((3, 3)))
 
 def test_affinity_propagation_predict():
     # Test AffinityPropagation.predict

@@ -148,6 +148,30 @@ Then you need to set the following environment variables::
 
 Finally you can build the package using the standard command.
 
+FreeBSD
+-------
+
+The clang compiler included in FreeBSD 12.0 and 11.2 base systems does not 
+include OpenMP support. You need to install the `openmp` library from packages 
+(or ports)::
+
+    sudo pkg install openmp
+    
+This will install header files in ``/usr/local/include`` and libs in 
+``/usr/local/lib``. Since these directories are not searched by default, you 
+can set the environment variables to these locations::
+
+    export CFLAGS="$CFLAGS -I/usr/local/include"
+    export CXXFLAGS="$CXXFLAGS -I/usr/local/include"
+    export LDFLAGS="$LDFLAGS -L/usr/local/lib -lomp"
+    export DYLD_LIBRARY_PATH=/usr/local/lib
+
+Finally you can build the package using the standard command.
+
+For the upcomming FreeBSD 12.1 and 11.3 versions, OpenMP will be included in 
+the base system and these steps will not be necessary.
+
+
 Installing build dependencies
 =============================
 

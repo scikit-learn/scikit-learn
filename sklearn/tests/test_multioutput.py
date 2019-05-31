@@ -31,6 +31,7 @@ from sklearn.multioutput import MultiOutputRegressor
 from sklearn.svm import LinearSVC
 from sklearn.base import ClassifierMixin
 from sklearn.utils import shuffle
+from sklearn.model_selection import GridSearchCV
 
 
 def test_multi_target_regression():
@@ -176,6 +177,34 @@ def test_multi_output_classification_partial_fit_parallelism():
         assert est1 is not est2
 
 
+# check predict_proba passes
+def test_multi_output_predict_proba():
+    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5, tol=1e-3)
+    param = {'loss': ('hinge', 'log', 'modified_huber')}
+
+    # inner function for custom scoring
+    def custom_scorer(estimator, X, y):
+        if hasattr(estimator, "predict_proba"):
+            return 1.0
+        else:
+            return 0.0
+    grid_clf = GridSearchCV(sgd_linear_clf, param_grid=param,
+                            scoring=custom_scorer, cv=3)
+    multi_target_linear = MultiOutputClassifier(grid_clf)
+    multi_target_linear.fit(X, y)
+
+    multi_target_linear.predict_proba(X)
+
+    # SGDClassifier defaults to loss='hinge' which is not a probabilistic
+    # loss function; therefore it does not expose a predict_proba method
+    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5, tol=1e-3)
+    multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
+    multi_target_linear.fit(X, y)
+    err_msg = "The base estimator should implement predict_proba method"
+    with pytest.raises(ValueError, match=err_msg):
+        multi_target_linear.predict_proba(X)
+
+
 # 0.23. warning about tol not having its correct default value.
 @pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_multi_output_classification_partial_fit():
@@ -285,7 +314,7 @@ def test_multiclass_multioutput_estimator_predict_proba():
     Y = np.concatenate([y1, y2], axis=1)
 
     clf = MultiOutputClassifier(LogisticRegression(
-        multi_class='ovr', solver='liblinear', random_state=seed))
+        solver='liblinear', random_state=seed))
 
     clf.fit(X, Y)
 
@@ -393,8 +422,6 @@ def test_classifier_chain_fit_and_predict_with_linear_svc():
     assert not hasattr(classifier_chain, 'predict_proba')
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_classifier_chain_fit_and_predict_with_sparse_data():
     # Fit classifier chain with sparse data
     X, Y = generate_multilabel_dataset_with_correlations()
@@ -411,8 +438,6 @@ def test_classifier_chain_fit_and_predict_with_sparse_data():
     assert_array_equal(Y_pred_sparse, Y_pred_dense)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_classifier_chain_vs_independent_models():
     # Verify that an ensemble of classifier chains (each of length
     # N) can achieve a higher Jaccard similarity score than N independent
@@ -435,8 +460,6 @@ def test_classifier_chain_vs_independent_models():
                    jaccard_score(Y_test, Y_pred_ovr, average='samples'))
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_base_chain_fit_and_predict():
     # Fit base chain and verify predict performance
     X, Y = generate_multilabel_dataset_with_correlations()
@@ -456,8 +479,6 @@ def test_base_chain_fit_and_predict():
     assert isinstance(chains[1], ClassifierMixin)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_base_chain_fit_and_predict_with_sparse_data_and_cv():
     # Fit base chain with sparse data cross_val_predict
     X, Y = generate_multilabel_dataset_with_correlations()
@@ -470,8 +491,6 @@ def test_base_chain_fit_and_predict_with_sparse_data_and_cv():
         assert_equal(Y_pred.shape, Y.shape)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_base_chain_random_order():
     # Fit base chain with random order
     X, Y = generate_multilabel_dataset_with_correlations()
@@ -492,8 +511,6 @@ def test_base_chain_random_order():
             assert_array_almost_equal(est1.coef_, est2.coef_)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_base_chain_crossval_fit_and_predict():
     # Fit chain with cross_val_predict and verify predict
     # performance

@@ -251,9 +251,9 @@ def test_path_parameters():
 def test_same_output_sparse_dense_lasso_and_enet_cv():
     X, y = make_sparse_data(n_samples=40, n_features=10)
     for normalize in [True, False]:
-        clfs = ElasticNetCV(max_iter=100, cv=5, normalize=normalize)
+        clfs = ElasticNetCV(max_iter=100, normalize=normalize)
         ignore_warnings(clfs.fit)(X, y)
-        clfd = ElasticNetCV(max_iter=100, cv=5, normalize=normalize)
+        clfd = ElasticNetCV(max_iter=100, normalize=normalize)
         ignore_warnings(clfd.fit)(X.toarray(), y)
         assert_almost_equal(clfs.alpha_, clfd.alpha_, 7)
         assert_almost_equal(clfs.intercept_, clfd.intercept_, 7)
