@@ -47,7 +47,7 @@ Building from source
 In the vast majority of cases, building scikit-learn for development purposes
 can be done with::
 
-    pip install numpy scipy cython pytest flake8
+    pip install numpy scipy joblib cython pytest flake8
 
 Then, in the main repository::
 

@@ -209,7 +209,7 @@ then submit a "pull request" (PR):
 
 4. Install the development dependencies::
 
-       $ pip install numpy scipy cython pytest flake8
+       $ pip install numpy scipy joblib cython pytest flake8
 
 5. Install scikit-learn in editable mode::
 
@@ -218,14 +218,20 @@ then submit a "pull request" (PR):
    for more details about advanced installation, see the
    :ref:`install_bleeding_edge` section.
 
-6. Create a branch to hold your development changes::
+6. Add the ``upstream`` remote. This saves a reference to the main
+   scikit-learn repository, which you can use to keep your repository
+   synchronized with the latest changes::
 
-       $ git checkout -b my-feature
+    $ git remote add upstream https://github.com/scikit-learn/scikit-learn.git
 
-   and start making changes. Always use a ``feature`` branch. It's good practice to
-   never work on the ``master`` branch!
+7. Create a branch to hold your development changes::
 
-7. Develop the feature on your feature branch on your computer, using Git to do the
+       $ git checkout -b my-feature upstream/master
+
+   and start making changes. Always use a ``feature`` branch. It's good
+   practice to never work on the ``master`` branch!
+
+8. Develop the feature on your feature branch on your computer, using Git to do the
    version control. When you're done editing, add changed files using ``git add``
    and then ``git commit`` files::
 
@@ -236,7 +242,7 @@ then submit a "pull request" (PR):
 
        $ git push -u origin my-feature
 
-8. Follow `these
+9. Follow `these
    <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
    instructions to create a pull request from your fork. This will send an
    email to the committers. You may want to consider sending an email to the
@@ -247,27 +253,20 @@ then submit a "pull request" (PR):
   If you are modifying a Cython module, you have to re-run step 5 after modifications
   and before testing them.
 
-
-If any of the above seems like magic to you, then look up the `Git documentation
-<https://git-scm.com/documentation>`_ and the `Git development workflow
-<http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ on the
-web, or ask a friend or another contributor for help.
-
-In order to keep your local branch synchronized with the latest
-changes of the main scikit-learn repository, you will need to add
-the ``upstream`` remote::
-
-    $ git remote add upstream https://github.com/scikit-learn/scikit-learn.git
-
-You can now synchronize your local branch with::
+It is often helpful to keep your local branch synchronized with the latest
+changes of the main scikit-learn repository::
 
     $ git fetch upstream
     $ git merge upstream/master
 
-Subsequently, you might need to solve the conflicts. You can refer to the `Git
-documentation related to resolving merge conflict using the command line
+Subsequently, you might need to solve the conflicts. You can refer to the
+`Git documentation related to resolving merge conflict using the command
+line
 <https://help.github.com/articles/resolving-a-merge-conflict-using-the-command-line/>`_.
 
+The `Git documentation <https://git-scm.com/documentation>`_ is an excellent
+resource to get started with git, and understanding all of the commands shown
+here.
 
 Pull request checklist
 ----------------------
@@ -303,9 +302,12 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    - `pytest sklearn/linear_model` to test the whole `linear_model` module
    - `pytest sklearn/doc/linear_model.rst` to make sure the user guide
      examples are correct.
+   - `pytest sklearn/tests/test_common.py -k LogisticRegression` to run all our
+     estimator checks (specifically for `LogisticRegression`, if that's the
+     estimator you changed).
 
    There may be other failing tests, but they will be caught by the CI so
-   you don't need to run the whole test suite locally. Read more in
+   you don't need to run the whole test suite locally. You can read more in
    :ref:`testing_coverage`.
 
 2. **Make sure your code is properly commented and documented**, and **make
@@ -338,7 +340,8 @@ complies with the following rules before marking a PR as ``[MRG]``. The
 7. Give your pull request a helpful title that summarises what your
    contribution does. This title will often become the commit message once
    merged so it should summarise your contribution for posterity. In some
-   cases "Fix <ISSUE TITLE>" is enough. "Fix #<ISSUE NUMBER>" is not enough.
+   cases "Fix <ISSUE TITLE>" is enough. "Fix #<ISSUE NUMBER>" is never a
+   good title.
 
 8. Often pull requests resolve one or more other issues (or pull requests).
    If merging your pull request means that some other issues/PRs should
@@ -353,13 +356,15 @@ complies with the following rules before marking a PR as ``[MRG]``. The
 9. PRs should often substantiate the change, through benchmarks of
    performance and efficiency or through examples of usage. Examples also
    illustrate the features and intricacies of the library to users. Have a
-   look at other examples for reference. Examples should demonstrate why
-   the new functionality is useful in practice and, if possible, compare it
-   to other methods available in scikit-learn.
+   look at other examples in the `examples/
+   <https://github.com/scikit-learn/scikit-learn/tree/master/examples>`_
+   directory for reference. Examples should demonstrate why the new
+   functionality is useful in practice and, if possible, compare it to other
+   methods available in scikit-learn.
 
 10. New features often need to be illustrated with narrative documentation in
-    the user guide. If relevant, please also add references in the
-    literature, with PDF links when possible.
+    the user guide, with small code snipets. If relevant, please also add
+    references in the literature, with PDF links when possible.
 
 11. The documentation should also include expected time and space complexity
     of the algorithm and scalability, e.g. "this algorithm can scale to a
@@ -512,18 +517,16 @@ placed in ``_build/html/stable`` and are viewable in a web browser.
 Building the documentation
 --------------------------
 
+First, make sure you have :ref:`properly installed <install_bleeding_edge>`
+the development version.
+
 Building the documentation requires installing some additional packages::
 
-    pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas scikit-image joblib
+    pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas scikit-image
 
 To build the documentation, you need to be in the ``doc`` folder::
 
     cd doc
-
-It also requires having the version of scikit-learn installed that corresponds
-to the documentation, e.g.::
-
-    pip install --editable ..
 
 In the vast majority of cases, you only need to generate the full web site,
 without the example gallery::
