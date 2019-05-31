@@ -1017,9 +1017,9 @@ class CategoricalNB(BaseDiscreteNB):
         Prior probabilities of the classes. If specified the priors are not
         adjusted according to the data.
 
-    handle_unknown : String, (default='warn')
+    handle_unknown : one of {'ignore', 'warn' (default), 'error'}
         Can be 'ignore', 'warn' or 'error'. Determines the behaviour of the
-        classifier, if it encounters unseen categories in the prediction step.
+        classifier if it encounters unseen categories in the prediction step.
 
     Attributes
     ----------
@@ -1142,7 +1142,7 @@ class CategoricalNB(BaseDiscreteNB):
     def _check_settings(self):
         if self.handle_unknown not in ('ignore', 'warn', 'raise'):
             raise ValueError("The attribute 'handle_unknown' is '{}' and "
-                             "should either be 'ignore', 'warn' or 'raise'"
+                             "should be one of 'ignore', 'warn' or 'raise'"
                              .format(self.handle_unknown))
 
     def _init_counters(self, n_effective_classes, n_features):
