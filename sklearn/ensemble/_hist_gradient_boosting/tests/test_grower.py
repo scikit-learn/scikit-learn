@@ -159,7 +159,8 @@
 #     assert predictor.nodes['is_leaf'].sum() == 3
 
 #     # Probe some predictions for each leaf of the tree
-#     # each group of 3 samples corresponds to a condition in _make_training_data
+#     # each group of 3 samples corresponds to a condition in
+#     # _make_training_data
 #     input_data = np.array([
 #         [0, 0],
 #         [42, 99],
