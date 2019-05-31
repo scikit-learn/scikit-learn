@@ -28,8 +28,6 @@ from sklearn.utils.testing import (assert_raises, assert_greater,
 from sklearn.utils.testing import assert_raise_message
 
 
-np.seterr(all='warn')
-
 ACTIVATION_TYPES = ["identity", "logistic", "tanh", "relu"]
 
 digits_dataset_multi = load_digits(n_class=3)
@@ -177,7 +175,8 @@ def test_gradient():
     for n_labels in [2, 3]:
         n_samples = 5
         n_features = 10
-        X = np.random.random((n_samples, n_features))
+        random_state = np.random.RandomState(seed=42)
+        X = random_state.rand(n_samples, n_features)
         y = 1 + np.mod(np.arange(n_samples) + 1, n_labels)
         Y = LabelBinarizer().fit_transform(y)
 

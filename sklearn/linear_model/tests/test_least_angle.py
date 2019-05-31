@@ -199,7 +199,6 @@ def test_no_path_all_precomputed():
     assert alpha_ == alphas_[-1]
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 @pytest.mark.parametrize(
         'classifier',
         [linear_model.Lars, linear_model.LarsCV, linear_model.LassoLarsIC])
@@ -434,7 +433,6 @@ def test_multitarget():
             assert_array_almost_equal(Y_pred[:, k], y_pred)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_lars_cv():
     # Test the LassoLarsCV object by checking that the optimal alpha
     # increases as the number of samples increases.
@@ -451,16 +449,23 @@ def test_lars_cv():
     assert not hasattr(lars_cv, 'n_nonzero_coefs')
 
 
-@pytest.mark.filterwarnings('ignore::FutureWarning')
-def test_lars_cv_max_iter():
-    with warnings.catch_warnings(record=True) as w:
+def test_lars_cv_max_iter(recwarn):
+    warnings.simplefilter('always')
+    with np.errstate(divide='raise', invalid='raise'):
+        X = diabetes.data
+        y = diabetes.target
         rng = np.random.RandomState(42)
         x = rng.randn(len(y))
         X = diabetes.data
         X = np.c_[X, x, x]  # add correlated features
-        lars_cv = linear_model.LassoLarsCV(max_iter=5)
+        lars_cv = linear_model.LassoLarsCV(max_iter=5, cv=5)
         lars_cv.fit(X, y)
-    assert len(w) == 0
+    # Check that there is no warning in general and no ConvergenceWarning
+    # in particular.
+    # Materialize the string representation of the warning to get a more
+    # informative error message in case of AssertionError.
+    recorded_warnings = [str(w) for w in recwarn]
+    assert recorded_warnings == []
 
 
 def test_lasso_lars_ic():
@@ -497,7 +502,6 @@ def test_lars_path_readonly_data():
         _lars_path_residues(X_train, y_train, X_test, y_test, copy=False)
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_lars_path_positive_constraint():
     # this is the main test for the positive parameter on the lars_path method
     # the estimator classes just make use of this function
@@ -508,13 +512,11 @@ def test_lars_path_positive_constraint():
     # and all positive when positive=True
     # for method 'lar' (default) and lasso
 
-    # Once deprecation of LAR + positive option is done use these:
-    # assert_raises(ValueError, linear_model.lars_path, diabetes['data'],
-    #               diabetes['target'], method='lar', positive=True)
-    with pytest.warns(DeprecationWarning, match='broken'):
+    err_msg = "Positive constraint not supported for 'lar' coding method."
+    with pytest.raises(ValueError, match=err_msg):
         linear_model.lars_path(diabetes['data'], diabetes['target'],
-                               return_path=True, method='lar',
-                               positive=True)
+                               method='lar', positive=True)
+
     method = 'lasso'
     _, _, coefs = \
         linear_model.lars_path(X, y, return_path=True, method=method,
@@ -536,7 +538,6 @@ estimator_parameter_map = {'LassoLars': {'alpha': 0.1},
                            'LassoLarsIC': {}}
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_estimatorclasses_positive_constraint():
     # testing the transmissibility for the positive option of all estimator
     # classes in this same function here

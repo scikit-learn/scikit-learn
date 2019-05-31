@@ -1,6 +1,4 @@
 # License: BSD 3 clause
-#
-# cython: language_level=3
 """Helper to load LossFunction from sgd_fast.pyx to sag_fast.pyx"""
 
 cdef class LossFunction:

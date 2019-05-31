@@ -42,6 +42,8 @@ PENALTY_TYPES = {"none": 0, "l2": 2, "l1": 1, "elasticnet": 3}
 DEFAULT_EPSILON = 0.1
 # Default value of ``epsilon`` parameter.
 
+MAX_INT = np.iinfo(np.int32).max
+
 
 class _ValidationScoreCallback:
     """Callback for early stopping based on validation score"""
@@ -322,7 +324,8 @@ def _prepare_fit_binary(est, y, i):
 
 
 def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
-               pos_weight, neg_weight, sample_weight, validation_mask=None):
+               pos_weight, neg_weight, sample_weight, validation_mask=None,
+               random_state=None):
     """Fit a single binary classifier.
 
     The i'th class is considered the "positive" class.
@@ -366,13 +369,22 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
     validation_mask : numpy array of shape [n_samples, ] or None
         Precomputed validation mask in case _fit_binary is called in the
         context of a one-vs-rest reduction.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
     """
     # if average is not true, average_coef, and average_intercept will be
     # unused
     y_i, coef, intercept, average_coef, average_intercept = \
         _prepare_fit_binary(est, y, i)
     assert y_i.shape[0] == y.shape[0] == sample_weight.shape[0]
-    dataset, intercept_decay = make_dataset(X, y_i, sample_weight)
+
+    random_state = check_random_state(random_state)
+    dataset, intercept_decay = make_dataset(
+        X, y_i, sample_weight, random_state=random_state)
 
     penalty_type = est._get_penalty_type(est.penalty)
     learning_rate_type = est._get_learning_rate_type(learning_rate)
@@ -383,11 +395,9 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
     validation_score_cb = est._make_validation_score_cb(
         validation_mask, X, y_i, sample_weight, classes=classes)
 
-    # XXX should have random_state_!
-    random_state = check_random_state(est.random_state)
     # numpy mtrand expects a C long which is a signed 32 bit integer under
     # Windows
-    seed = random_state.randint(0, np.iinfo(np.int32).max)
+    seed = random_state.randint(MAX_INT)
 
     tol = est.tol if est.tol is not None else -np.inf
 
@@ -558,7 +568,8 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin, metaclass=ABCMeta):
                                               learning_rate, max_iter,
                                               self._expanded_class_weight[1],
                                               self._expanded_class_weight[0],
-                                              sample_weight)
+                                              sample_weight,
+                                              random_state=self.random_state)
 
         self.t_ += n_iter_ * X.shape[0]
         self.n_iter_ = n_iter_
@@ -589,13 +600,19 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin, metaclass=ABCMeta):
         validation_mask = self._make_validation_split(y)
 
         # Use joblib to fit OvA in parallel.
+        # Pick the random seed for each job outside of fit_binary to avoid
+        # sharing the estimator random state between threads which could lead
+        # to non-deterministic behavior
+        random_state = check_random_state(self.random_state)
+        seeds = random_state.randint(MAX_INT, size=len(self.classes_))
         result = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                           **_joblib_parallel_args(require="sharedmem"))(
             delayed(fit_binary)(self, i, X, y, alpha, C, learning_rate,
                                 max_iter, self._expanded_class_weight[i],
                                 1., sample_weight,
-                                validation_mask=validation_mask)
-            for i in range(len(self.classes_)))
+                                validation_mask=validation_mask,
+                                random_state=seed)
+            for i, seed in enumerate(seeds))
 
         # take the maximum of n_iter_ over every binary fit
         n_iter_ = 0.

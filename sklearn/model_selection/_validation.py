@@ -19,11 +19,11 @@ import numpy as np
 import scipy.sparse as sp
 
 from ..base import is_classifier, clone
-from ..utils import indexable, check_random_state, safe_indexing
+from ..utils import (indexable, check_random_state, safe_indexing,
+                     _message_with_time)
 from ..utils.validation import _is_arraylike, _num_samples
 from ..utils.metaestimators import _safe_split
 from ..utils._joblib import Parallel, delayed
-from ..utils._joblib import logger
 from ..metrics.scorer import check_scoring, _check_multimetric_scoring
 from ..exceptions import FitFailedWarning
 from ._split import check_cv
@@ -34,10 +34,10 @@ __all__ = ['cross_validate', 'cross_val_score', 'cross_val_predict',
            'permutation_test_score', 'learning_curve', 'validation_curve']
 
 
-def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
+def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
                    n_jobs=None, verbose=0, fit_params=None,
                    pre_dispatch='2*n_jobs', return_train_score=False,
-                   return_estimator=False, error_score='raise-deprecating'):
+                   return_estimator=False, error_score=np.nan):
     """Evaluate metric(s) by cross-validation and also record fit/score times.
 
     Read more in the :ref:`User Guide <multimetric_cross_validation>`.
@@ -77,7 +77,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 3-fold cross validation,
+        - None, to use the default 5-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -89,9 +89,8 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.20
-            ``cv`` default value if None will change from 3-fold to 5-fold
-            in v0.22.
+        .. versionchanged:: 0.22
+            ``cv`` default value if None changed from 3-fold to 5-fold.
 
     n_jobs : int or None, optional (default=None)
         The number of CPUs to use to do the computation.
@@ -133,15 +132,11 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
     return_estimator : boolean, default False
         Whether to return the estimators fitted on each split.
 
-    error_score : 'raise' | 'raise-deprecating' or numeric
+    error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
-        If set to 'raise-deprecating', a FutureWarning is printed before the
-        error is raised.
         If a numeric value is given, FitFailedWarning is raised. This parameter
         does not affect the refit step, which will always raise the error.
-        Default is 'raise-deprecating' but from version 0.22 it will change
-        to np.nan.
 
     Returns
     -------
@@ -255,9 +250,9 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
     return ret
 
 
-def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv='warn',
+def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
                     n_jobs=None, verbose=0, fit_params=None,
-                    pre_dispatch='2*n_jobs', error_score='raise-deprecating'):
+                    pre_dispatch='2*n_jobs', error_score=np.nan):
     """Evaluate a score by cross-validation
 
     Read more in the :ref:`User Guide <cross_validation>`.
@@ -293,7 +288,7 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv='warn',
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 3-fold cross validation,
+        - None, to use the default 5-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -305,9 +300,8 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv='warn',
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.20
-            ``cv`` default value if None will change from 3-fold to 5-fold
-            in v0.22.
+        .. versionchanged:: 0.22
+            ``cv`` default value if None changed from 3-fold to 5-fold.
 
     n_jobs : int or None, optional (default=None)
         The number of CPUs to use to do the computation.
@@ -338,15 +332,11 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv='warn',
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    error_score : 'raise' | 'raise-deprecating' or numeric
+    error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
-        If set to 'raise-deprecating', a FutureWarning is printed before the
-        error is raised.
         If a numeric value is given, FitFailedWarning is raised. This parameter
         does not affect the refit step, which will always raise the error.
-        Default is 'raise-deprecating' but from version 0.22 it will change
-        to np.nan.
 
     Returns
     -------
@@ -394,7 +384,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                    parameters, fit_params, return_train_score=False,
                    return_parameters=False, return_n_test_samples=False,
                    return_times=False, return_estimator=False,
-                   error_score='raise-deprecating'):
+                   error_score=np.nan):
     """Fit estimator and compute scores for a given dataset split.
 
     Parameters
@@ -428,15 +418,11 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     verbose : integer
         The verbosity level.
 
-    error_score : 'raise' | 'raise-deprecating' or numeric
+    error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
-        If set to 'raise-deprecating', a FutureWarning is printed before the
-        error is raised.
         If a numeric value is given, FitFailedWarning is raised. This parameter
         does not affect the refit step, which will always raise the error.
-        Default is 'raise-deprecating' but from version 0.22 it will change
-        to np.nan.
 
     parameters : dict or None
         Parameters to be set on the estimator.
@@ -519,14 +505,6 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         score_time = 0.0
         if error_score == 'raise':
             raise
-        elif error_score == 'raise-deprecating':
-            warnings.warn("From version 0.22, errors during fit will result "
-                          "in a cross validation score of NaN by default. Use "
-                          "error_score='raise' if you want an exception "
-                          "raised or error_score=np.nan to adopt the "
-                          "behavior from version 0.22.",
-                          FutureWarning)
-            raise
         elif isinstance(error_score, numbers.Number):
             if is_multimetric:
                 test_scores = dict(zip(scorer.keys(),
@@ -572,8 +550,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     if verbose > 1:
         total_time = score_time + fit_time
-        end_msg = "%s, total=%s" % (msg, logger.short_format_time(total_time))
-        print("[CV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
+        print(_message_with_time('CV', msg, total_time))
 
     ret = [train_scores, test_scores] if return_train_score else [test_scores]
 
@@ -643,7 +620,7 @@ def _multimetric_score(estimator, X_test, y_test, scorers):
     return scores
 
 
-def cross_val_predict(estimator, X, y=None, groups=None, cv='warn',
+def cross_val_predict(estimator, X, y=None, groups=None, cv=None,
                       n_jobs=None, verbose=0, fit_params=None,
                       pre_dispatch='2*n_jobs', method='predict'):
     """Generate cross-validated estimates for each input data point
@@ -673,7 +650,7 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv='warn',
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 3-fold cross validation,
+        - None, to use the default 5-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -685,9 +662,8 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv='warn',
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.20
-            ``cv`` default value if None will change from 3-fold to 5-fold
-            in v0.22.
+        .. versionchanged:: 0.22
+            ``cv`` default value if None changed from 3-fold to 5-fold.
 
     n_jobs : int or None, optional (default=None)
         The number of CPUs to use to do the computation.
@@ -757,9 +733,20 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv='warn',
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
 
-    if method in ['decision_function', 'predict_proba', 'predict_log_proba']:
-        le = LabelEncoder()
-        y = le.fit_transform(y)
+    # If classification methods produce multiple columns of output,
+    # we need to manually encode classes to ensure consistent column ordering.
+    encode = method in ['decision_function', 'predict_proba',
+                        'predict_log_proba']
+    if encode:
+        y = np.asarray(y)
+        if y.ndim == 1:
+            le = LabelEncoder()
+            y = le.fit_transform(y)
+        elif y.ndim == 2:
+            y_enc = np.zeros_like(y, dtype=np.int)
+            for i_label in range(y.shape[1]):
+                y_enc[:, i_label] = LabelEncoder().fit_transform(y[:, i_label])
+            y = y_enc
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
@@ -780,12 +767,26 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv='warn',
     inv_test_indices = np.empty(len(test_indices), dtype=int)
     inv_test_indices[test_indices] = np.arange(len(test_indices))
 
-    # Check for sparse predictions
     if sp.issparse(predictions[0]):
         predictions = sp.vstack(predictions, format=predictions[0].format)
+    elif encode and isinstance(predictions[0], list):
+        # `predictions` is a list of method outputs from each fold.
+        # If each of those is also a list, then treat this as a
+        # multioutput-multiclass task. We need to separately concatenate
+        # the method outputs for each label into an `n_labels` long list.
+        n_labels = y.shape[1]
+        concat_pred = []
+        for i_label in range(n_labels):
+            label_preds = np.concatenate([p[i_label] for p in predictions])
+            concat_pred.append(label_preds)
+        predictions = concat_pred
     else:
         predictions = np.concatenate(predictions)
-    return predictions[inv_test_indices]
+
+    if isinstance(predictions, list):
+        return [p[inv_test_indices] for p in predictions]
+    else:
+        return predictions[inv_test_indices]
 
 
 def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
@@ -844,52 +845,74 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
     func = getattr(estimator, method)
     predictions = func(X_test)
     if method in ['decision_function', 'predict_proba', 'predict_log_proba']:
-        n_classes = len(set(y))
-        if n_classes != len(estimator.classes_):
-            recommendation = (
-                'To fix this, use a cross-validation '
-                'technique resulting in properly '
-                'stratified folds')
-            warnings.warn('Number of classes in training fold ({}) does '
-                          'not match total number of classes ({}). '
-                          'Results may not be appropriate for your use case. '
-                          '{}'.format(len(estimator.classes_),
-                                      n_classes, recommendation),
-                          RuntimeWarning)
-            if method == 'decision_function':
-                if (predictions.ndim == 2 and
-                        predictions.shape[1] != len(estimator.classes_)):
-                    # This handles the case when the shape of predictions
-                    # does not match the number of classes used to train
-                    # it with. This case is found when sklearn.svm.SVC is
-                    # set to `decision_function_shape='ovo'`.
-                    raise ValueError('Output shape {} of {} does not match '
-                                     'number of classes ({}) in fold. '
-                                     'Irregular decision_function outputs '
-                                     'are not currently supported by '
-                                     'cross_val_predict'.format(
-                                        predictions.shape, method,
-                                        len(estimator.classes_),
-                                        recommendation))
-                if len(estimator.classes_) <= 2:
-                    # In this special case, `predictions` contains a 1D array.
-                    raise ValueError('Only {} class/es in training fold, this '
-                                     'is not supported for decision_function '
-                                     'with imbalanced folds. {}'.format(
-                                        len(estimator.classes_),
-                                        recommendation))
-
-            float_min = np.finfo(predictions.dtype).min
-            default_values = {'decision_function': float_min,
-                              'predict_log_proba': float_min,
-                              'predict_proba': 0.0}
-            predictions_for_all_classes = np.full((_num_samples(predictions),
-                                                   n_classes),
-                                                  default_values[method],
-                                                  predictions.dtype)
-            predictions_for_all_classes[:, estimator.classes_] = predictions
-            predictions = predictions_for_all_classes
+        if isinstance(predictions, list):
+            predictions = [_enforce_prediction_order(
+                estimator.classes_[i_label], predictions[i_label],
+                n_classes=len(set(y[:, i_label])), method=method)
+                for i_label in range(len(predictions))]
+        else:
+            # A 2D y array should be a binary label indicator matrix
+            n_classes = len(set(y)) if y.ndim == 1 else y.shape[1]
+            predictions = _enforce_prediction_order(
+                estimator.classes_, predictions, n_classes, method)
     return predictions, test
+
+
+def _enforce_prediction_order(classes, predictions, n_classes, method):
+    """Ensure that prediction arrays have correct column order
+
+    When doing cross-validation, if one or more classes are
+    not present in the subset of data used for training,
+    then the output prediction array might not have the same
+    columns as other folds. Use the list of class names
+    (assumed to be integers) to enforce the correct column order.
+
+    Note that `classes` is the list of classes in this fold
+    (a subset of the classes in the full training set)
+    and `n_classes` is the number of classes in the full training set.
+    """
+    if n_classes != len(classes):
+        recommendation = (
+            'To fix this, use a cross-validation '
+            'technique resulting in properly '
+            'stratified folds')
+        warnings.warn('Number of classes in training fold ({}) does '
+                      'not match total number of classes ({}). '
+                      'Results may not be appropriate for your use case. '
+                      '{}'.format(len(classes), n_classes, recommendation),
+                      RuntimeWarning)
+        if method == 'decision_function':
+            if (predictions.ndim == 2 and
+                    predictions.shape[1] != len(classes)):
+                # This handles the case when the shape of predictions
+                # does not match the number of classes used to train
+                # it with. This case is found when sklearn.svm.SVC is
+                # set to `decision_function_shape='ovo'`.
+                raise ValueError('Output shape {} of {} does not match '
+                                 'number of classes ({}) in fold. '
+                                 'Irregular decision_function outputs '
+                                 'are not currently supported by '
+                                 'cross_val_predict'.format(
+                                    predictions.shape, method, len(classes)))
+            if len(classes) <= 2:
+                # In this special case, `predictions` contains a 1D array.
+                raise ValueError('Only {} class/es in training fold, but {} '
+                                 'in overall dataset. This '
+                                 'is not supported for decision_function '
+                                 'with imbalanced folds. {}'.format(
+                                    len(classes), n_classes, recommendation))
+
+        float_min = np.finfo(predictions.dtype).min
+        default_values = {'decision_function': float_min,
+                          'predict_log_proba': float_min,
+                          'predict_proba': 0}
+        predictions_for_all_classes = np.full((_num_samples(predictions),
+                                               n_classes),
+                                              default_values[method],
+                                              dtype=predictions.dtype)
+        predictions_for_all_classes[:, classes] = predictions
+        predictions = predictions_for_all_classes
+    return predictions
 
 
 def _check_is_permutation(indices, n_samples):
@@ -926,7 +949,7 @@ def _index_param_value(X, v, indices):
     return safe_indexing(v, indices)
 
 
-def permutation_test_score(estimator, X, y, groups=None, cv='warn',
+def permutation_test_score(estimator, X, y, groups=None, cv=None,
                            n_permutations=100, n_jobs=None, random_state=0,
                            verbose=0, scoring=None):
     """Evaluate the significance of a cross-validated score with permutations
@@ -965,7 +988,7 @@ def permutation_test_score(estimator, X, y, groups=None, cv='warn',
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 3-fold cross validation,
+        - None, to use the default 5-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -977,9 +1000,8 @@ def permutation_test_score(estimator, X, y, groups=None, cv='warn',
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.20
-            ``cv`` default value if None will change from 3-fold to 5-fold
-            in v0.22.
+        .. versionchanged:: 0.22
+            ``cv`` default value if None changed from 3-fold to 5-fold.
 
     n_permutations : integer, optional
         Number of times to permute ``y``.
@@ -1069,10 +1091,10 @@ def _shuffle(y, groups, random_state):
 
 
 def learning_curve(estimator, X, y, groups=None,
-                   train_sizes=np.linspace(0.1, 1.0, 5), cv='warn',
+                   train_sizes=np.linspace(0.1, 1.0, 5), cv=None,
                    scoring=None, exploit_incremental_learning=False,
                    n_jobs=None, pre_dispatch="all", verbose=0, shuffle=False,
-                   random_state=None,  error_score='raise-deprecating'):
+                   random_state=None, error_score=np.nan):
     """Learning curve.
 
     Determines cross-validated training and test scores for different training
@@ -1117,7 +1139,7 @@ def learning_curve(estimator, X, y, groups=None,
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 3-fold cross validation,
+        - None, to use the default 5-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -1129,9 +1151,8 @@ def learning_curve(estimator, X, y, groups=None,
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.20
-            ``cv`` default value if None will change from 3-fold to 5-fold
-            in v0.22.
+        .. versionchanged:: 0.22
+            ``cv`` default value if None changed from 3-fold to 5-fold.
 
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
@@ -1166,15 +1187,11 @@ def learning_curve(estimator, X, y, groups=None,
         If None, the random number generator is the RandomState instance used
         by `np.random`. Used when ``shuffle`` is True.
 
-    error_score : 'raise' | 'raise-deprecating' or numeric
+    error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
-        If set to 'raise-deprecating', a FutureWarning is printed before the
-        error is raised.
         If a numeric value is given, FitFailedWarning is raised. This parameter
         does not affect the refit step, which will always raise the error.
-        Default is 'raise-deprecating' but from version 0.22 it will change
-        to np.nan.
 
     Returns
     -------
@@ -1328,8 +1345,8 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
 
 
 def validation_curve(estimator, X, y, param_name, param_range, groups=None,
-                     cv='warn', scoring=None, n_jobs=None, pre_dispatch="all",
-                     verbose=0, error_score='raise-deprecating'):
+                     cv=None, scoring=None, n_jobs=None, pre_dispatch="all",
+                     verbose=0, error_score=np.nan):
     """Validation curve.
 
     Determine training and test scores for varying parameter values.
@@ -1368,7 +1385,7 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 3-fold cross validation,
+        - None, to use the default 5-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -1380,9 +1397,8 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.20
-            ``cv`` default value if None will change from 3-fold to 5-fold
-            in v0.22.
+        .. versionchanged:: 0.22
+            ``cv`` default value if None changed from 3-fold to 5-fold.
 
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
@@ -1403,15 +1419,11 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
     verbose : integer, optional
         Controls the verbosity: the higher, the more messages.
 
-    error_score : 'raise' | 'raise-deprecating' or numeric
+    error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
-        If set to 'raise-deprecating', a FutureWarning is printed before the
-        error is raised.
         If a numeric value is given, FitFailedWarning is raised. This parameter
         does not affect the refit step, which will always raise the error.
-        Default is 'raise-deprecating' but from version 0.22 it will change
-        to np.nan.
 
     Returns
     -------

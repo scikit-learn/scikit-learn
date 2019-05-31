@@ -11,51 +11,51 @@ import numpy as np
 from scipy import sparse
 from scipy.stats import rankdata
 
-from sklearn.utils import IS_PYPY
-from sklearn.utils import _joblib
-from sklearn.utils.testing import assert_raises, _get_args
-from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_not_equal
-from sklearn.utils.testing import assert_in
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_allclose_dense_sparse
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import set_random_state
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_greater_equal
-from sklearn.utils.testing import SkipTest
-from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_dict_equal
-from sklearn.utils.testing import create_memmap_backed_data
-from sklearn.utils import is_scalar_nan
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.linear_model import Ridge
+from . import IS_PYPY
+from . import _joblib
+from .testing import assert_raises, _get_args
+from .testing import assert_raises_regex
+from .testing import assert_raise_message
+from .testing import assert_equal
+from .testing import assert_not_equal
+from .testing import assert_in
+from .testing import assert_array_equal
+from .testing import assert_array_almost_equal
+from .testing import assert_allclose
+from .testing import assert_allclose_dense_sparse
+from .testing import assert_warns_message
+from .testing import set_random_state
+from .testing import assert_greater
+from .testing import assert_greater_equal
+from .testing import SkipTest
+from .testing import ignore_warnings
+from .testing import assert_dict_equal
+from .testing import create_memmap_backed_data
+from . import is_scalar_nan
+from ..discriminant_analysis import LinearDiscriminantAnalysis
+from ..linear_model import Ridge
 
 
-from sklearn.base import (clone, ClusterMixin, is_classifier, is_regressor,
-                          _DEFAULT_TAGS, RegressorMixin, is_outlier_detector)
+from ..base import (clone, ClusterMixin, is_classifier, is_regressor,
+                    _DEFAULT_TAGS, RegressorMixin, is_outlier_detector)
 
-from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
+from ..metrics import accuracy_score, adjusted_rand_score, f1_score
 
-from sklearn.random_projection import BaseRandomProjection
-from sklearn.feature_selection import SelectKBest
-from sklearn.pipeline import make_pipeline
-from sklearn.exceptions import DataConversionWarning
-from sklearn.exceptions import SkipTestWarning
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import ShuffleSplit
-from sklearn.model_selection._validation import _safe_split
-from sklearn.metrics.pairwise import (rbf_kernel, linear_kernel,
-                                      pairwise_distances)
+from ..random_projection import BaseRandomProjection
+from ..feature_selection import SelectKBest
+from ..pipeline import make_pipeline
+from ..exceptions import DataConversionWarning
+from ..exceptions import NotFittedError
+from ..exceptions import SkipTestWarning
+from ..model_selection import train_test_split
+from ..model_selection import ShuffleSplit
+from ..model_selection._validation import _safe_split
+from ..metrics.pairwise import (rbf_kernel, linear_kernel, pairwise_distances)
 
-from sklearn.utils import shuffle
-from sklearn.utils.validation import has_fit_parameter, _num_samples
-from sklearn.preprocessing import StandardScaler
-from sklearn.datasets import load_iris, load_boston, make_blobs
+from .import shuffle
+from .validation import has_fit_parameter, _num_samples
+from ..preprocessing import StandardScaler
+from ..datasets import load_iris, load_boston, make_blobs
 
 
 BOSTON = None
@@ -128,7 +128,8 @@ def _yield_classifier_checks(name, classifier):
     if not tags["no_validation"]:
         yield check_supervised_y_no_nan
         yield check_supervised_y_2d
-    yield check_estimators_unfitted
+    if tags["requires_fit"]:
+        yield check_estimators_unfitted
     if 'class_weight' in classifier.get_params().keys():
         yield check_class_weight_classifiers
 
@@ -176,7 +177,8 @@ def _yield_regressor_checks(name, regressor):
     if name != 'CCA':
         # check that the regressor handles int input
         yield check_regressors_int
-    yield check_estimators_unfitted
+    if tags["requires_fit"]:
+        yield check_estimators_unfitted
     yield check_non_transformer_estimators_n_iter
 
 
@@ -222,7 +224,8 @@ def _yield_outliers_checks(name, estimator):
         # test outlier detectors can handle non-array data
         yield check_classifier_data_not_an_array
         # test if NotFittedError is raised
-        yield check_estimators_unfitted
+        if _safe_tags(estimator, "requires_fit"):
+            yield check_estimators_unfitted
 
 
 def _yield_all_checks(name, estimator):
@@ -341,14 +344,7 @@ def set_checking_parameters(estimator):
         # randomized lasso
         estimator.set_params(n_resampling=5)
     if "n_estimators" in params:
-        # especially gradient boosting with default 100
-        # FIXME: The default number of trees was changed and is set to 'warn'
-        # for some of the ensemble methods. We need to catch this case to avoid
-        # an error during the comparison. To be reverted in 0.22.
-        if estimator.n_estimators == 'warn':
-            estimator.set_params(n_estimators=5)
-        else:
-            estimator.set_params(n_estimators=min(5, estimator.n_estimators))
+        estimator.set_params(n_estimators=min(5, estimator.n_estimators))
     if "max_trials" in params:
         # RANSAC
         estimator.set_params(max_trials=10)
@@ -377,13 +373,6 @@ def set_checking_parameters(estimator):
     if name == "TheilSenRegressor":
         estimator.max_subpopulation = 100
 
-    if estimator.__class__.__name__ == "IsolationForest":
-        # XXX to be removed in 0.22.
-        # this is used because the old IsolationForest does not
-        # respect the outlier detection API and thus and does not
-        # pass the outlier detection common tests.
-        estimator.set_params(behaviour='new')
-
     if isinstance(estimator, BaseRandomProjection):
         # Due to the jl lemma and often very few samples, the number
         # of components of the random matrix projection will be probably
@@ -395,6 +384,22 @@ def set_checking_parameters(estimator):
         # SelectKBest has a default of k=10
         # which is more feature than we have in most case.
         estimator.set_params(k=1)
+
+    if name in ('HistGradientBoostingClassifier',
+                'HistGradientBoostingRegressor'):
+        # The default min_samples_leaf (20) isn't appropriate for small
+        # datasets (only very shallow trees are built) that the checks use.
+        estimator.set_params(min_samples_leaf=5)
+
+    # Speed-up by reducing the number of CV or splits for CV estimators
+    loo_cv = ['RidgeCV']
+    if name not in loo_cv and hasattr(estimator, 'cv'):
+        estimator.set_params(cv=3)
+    if hasattr(estimator, 'n_splits'):
+        estimator.set_params(n_splits=3)
+
+    if name == 'OneHotEncoder':
+        estimator.set_params(handle_unknown='ignore')
 
 
 class NotAnArray:
@@ -866,6 +871,10 @@ def check_fit2d_1sample(name, estimator_orig):
         estimator.n_clusters = 1
 
     set_random_state(estimator, 1)
+
+    # min_cluster_size cannot be less than the data size for OPTICS.
+    if name == 'OPTICS':
+        estimator.set_params(min_samples=1)
 
     msgs = ["1 sample", "n_samples = 1", "n_samples=1", "one sample",
             "1 class", "one class"]
@@ -1640,47 +1649,16 @@ def check_estimators_fit_returns_self(name, estimator_orig,
 def check_estimators_unfitted(name, estimator_orig):
     """Check that predict raises an exception in an unfitted estimator.
 
-    Unfitted estimators should raise either AttributeError or ValueError.
-    The specific exception type NotFittedError inherits from both and can
-    therefore be adequately raised for that purpose.
+    Unfitted estimators should raise a NotFittedError.
     """
-
     # Common test for Regressors, Classifiers and Outlier detection estimators
     X, y = _boston_subset()
 
     estimator = clone(estimator_orig)
-
-    msg = "fit"
-    if hasattr(estimator, 'predict'):
-        can_predict = False
-        try:
-            # some models can predict without fitting
-            # like GaussianProcess regressors
-            # in this case, we skip this test
-            pred = estimator.predict(X)
-            assert pred.shape[0] == X.shape[0]
-            can_predict = True
-        except ValueError:
-            pass
-        if can_predict:
-            raise SkipTest(
-                "{} can predict without fitting, skipping "
-                "check_estimator_unfitted.".format(name))
-
-        assert_raise_message((AttributeError, ValueError), msg,
-                             estimator.predict, X)
-
-    if hasattr(estimator, 'decision_function'):
-        assert_raise_message((AttributeError, ValueError), msg,
-                             estimator.decision_function, X)
-
-    if hasattr(estimator, 'predict_proba'):
-        assert_raise_message((AttributeError, ValueError), msg,
-                             estimator.predict_proba, X)
-
-    if hasattr(estimator, 'predict_log_proba'):
-        assert_raise_message((AttributeError, ValueError), msg,
-                             estimator.predict_log_proba, X)
+    for method in ('decision_function', 'predict', 'predict_proba',
+                   'predict_log_proba'):
+        if hasattr(estimator, method):
+            assert_raises(NotFittedError, getattr(estimator, method), X)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
@@ -1977,6 +1955,8 @@ def check_class_weight_balanced_linear_classifier(name, Classifier):
         classifier.set_params(n_iter=1000)
     if hasattr(classifier, "max_iter"):
         classifier.set_params(max_iter=1000)
+    if hasattr(classifier, 'cv'):
+        classifier.set_params(cv=3)
     set_random_state(classifier)
 
     # Let the model compute the class frequencies
@@ -2462,6 +2442,7 @@ def check_fit_idempotent(name, estimator_orig):
               if hasattr(estimator, method)}
 
     # Fit again
+    set_random_state(estimator)
     estimator.fit(X_train, y_train)
 
     for method in check_methods:

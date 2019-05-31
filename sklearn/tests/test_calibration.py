@@ -4,13 +4,15 @@
 import pytest
 import numpy as np
 from scipy import sparse
+
+from sklearn.base import BaseEstimator
 from sklearn.model_selection import LeaveOneOut
 
 from sklearn.utils.testing import (assert_array_almost_equal, assert_equal,
                                    assert_greater, assert_almost_equal,
                                    assert_greater_equal,
                                    assert_array_equal,
-                                   assert_raises)
+                                   assert_raises, ignore_warnings)
 from sklearn.datasets import make_classification, make_blobs
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
@@ -23,8 +25,6 @@ from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
 from sklearn.calibration import calibration_curve
 
 
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_calibration():
     """Test calibration objects with isotonic and sigmoid"""
     n_samples = 100
@@ -100,7 +100,6 @@ def test_calibration():
         assert_raises(RuntimeError, clf_base_regressor.fit, X_train, y_train)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_sample_weight():
     n_samples = 100
     X, y = make_classification(n_samples=2 * n_samples, n_features=6,
@@ -320,3 +319,26 @@ def test_calibration_less_classes():
         assert_array_equal(proba[:, i], np.zeros(len(y)))
         assert_equal(np.all(np.hstack([proba[:, :i],
                                        proba[:, i + 1:]])), True)
+
+
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
+@pytest.mark.parametrize('X', [np.random.RandomState(42).randn(15, 5, 2),
+                               np.random.RandomState(42).randn(15, 5, 2, 6)])
+def test_calibration_accepts_ndarray(X):
+    """Test that calibration accepts n-dimensional arrays as input"""
+    y = [1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0]
+
+    class MockTensorClassifier(BaseEstimator):
+        """A toy estimator that accepts tensor inputs"""
+
+        def fit(self, X, y):
+            self.classes_ = np.unique(y)
+            return self
+
+        def decision_function(self, X):
+            # toy decision function that just needs to have the right shape:
+            return X.reshape(X.shape[0], -1).sum(axis=1)
+
+    calibrated_clf = CalibratedClassifierCV(MockTensorClassifier())
+    # we should be able to fit this classifier with no error
+    calibrated_clf.fit(X, y)
