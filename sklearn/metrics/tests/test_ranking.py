@@ -442,15 +442,6 @@ def test_auc_errors():
     assert_raise_message(ValueError, error_message, auc, x, y)
 
 
-def test_deprecated_auc_reorder():
-    depr_message = ("The 'reorder' parameter has been deprecated in version "
-                    "0.20 and will be removed in 0.22. It is recommended not "
-                    "to set 'reorder' and ensure that x is monotonic "
-                    "increasing or monotonic decreasing.")
-    assert_warns_message(DeprecationWarning, depr_message, auc,
-                         [1, 2], [2, 3], reorder=True)
-
-
 @pytest.mark.parametrize(
     "y_true, labels",
     [(np.array([0, 1, 0, 2]), [0, 1, 2]),
