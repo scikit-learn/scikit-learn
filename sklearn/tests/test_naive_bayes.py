@@ -212,9 +212,9 @@ def test_discretenb_partial_fit(cls):
     clf2.partial_fit([[0, 1], [1, 0], [1, 1]], [0, 1, 1], classes=[0, 1])
     assert_array_equal(clf1.class_count_, clf2.class_count_)
     if cls is CategoricalNB:
-        for i in range(len(clf1.cat_count_)):
-            assert_array_equal(clf1.cat_count_[i],
-                               clf2.cat_count_[i])
+        for i in range(len(clf1.category_count_)):
+            assert_array_equal(clf1.category_count_[i],
+                               clf2.category_count_[i])
     else:
         assert_array_equal(clf1.feature_count_, clf2.feature_count_)
 
@@ -227,33 +227,33 @@ def test_discretenb_partial_fit(cls):
         # the categories for each feature of CategoricalNB are mapped to an
         # index chronologically with each call of partial fit and therefore
         # the category_count matrices cannot be compared for equality
-        for i in range(len(clf1.cat_count_)):
-            assert_array_equal(clf1.cat_count_[i].shape,
-                               clf3.cat_count_[i].shape)
-            assert_array_equal(np.sum(clf1.cat_count_[i], axis=1),
-                               np.sum(clf3.cat_count_[i], axis=1))
+        for i in range(len(clf1.category_count_)):
+            assert_array_equal(clf1.category_count_[i].shape,
+                               clf3.category_count_[i].shape)
+            assert_array_equal(np.sum(clf1.category_count_[i], axis=1),
+                               np.sum(clf3.category_count_[i], axis=1))
 
         # assert 1st feature
-        # get indices for categories 0 and 1 for the first class, class 0
+        # get indices for categories 0 and 1 for the first feature
         ix0 = clf1.feature_cat_index_mapping_[0][0]
         ix1 = clf1.feature_cat_index_mapping_[0][1]
         # assert category 0 occurs 1x in the first class and 0x in the 2nd
         # class
-        assert_array_equal(clf1.cat_count_[0][ix0], np.array([1, 0]))
+        assert_array_equal(clf1.category_count_[0][ix0], np.array([1, 0]))
         # assert category 1 occurs 0x in the first class and 2x in the 2nd
         # class
-        assert_array_equal(clf1.cat_count_[0][ix1], np.array([0, 2]))
+        assert_array_equal(clf1.category_count_[0][ix1], np.array([0, 2]))
 
         # assert 2nd feature
-        # get indices for categories 0 and 1 for the first class, class 0
+        # get indices for categories 0 and 1 for the second feature
         ix0 = clf1.feature_cat_index_mapping_[1][0]
         ix1 = clf1.feature_cat_index_mapping_[1][1]
         # assert category 0 occurs 0x in the first class and 1x in the 2nd
         # class
-        assert_array_equal(clf1.cat_count_[1][ix0], np.array([0, 1]))
+        assert_array_equal(clf1.category_count_[1][ix0], np.array([0, 1]))
         # assert category 1 occurs 1x in the first class and 1x in the 2nd
         # class
-        assert_array_equal(clf1.cat_count_[1][ix1], np.array([1, 1]))
+        assert_array_equal(clf1.category_count_[1][ix1], np.array([1, 1]))
     else:
         assert_array_equal(clf1.feature_count_, clf3.feature_count_)
 
@@ -660,7 +660,7 @@ def test_cnb():
 
 
 def test_catnb():
-    # Check the ability to predict the learning set.
+    # Check the ability to predict the training set.
     clf = CategoricalNB()
     y_pred = clf.fit(X2, y2).predict(X2)
     assert_array_equal(y_pred, y2)
@@ -681,10 +681,10 @@ def test_catnb():
     X3_test = np.array([[2, 5]])
     # alpha=1 increases the count of all categories by one so the final
     # probability for each category is not 50/50 but 1/3 to 2/3
-    bayes_nominator = np.array([[1/3*1/3, 2/3*2/3]])
-    bayes_denominator = bayes_nominator.sum()
+    bayes_numerator = np.array([[1/3*1/3, 2/3*2/3]])
+    bayes_denominator = bayes_numerator.sum()
     assert_array_almost_equal(clf.predict_proba(X3_test),
-                              bayes_nominator / bayes_denominator)
+                              bayes_numerator / bayes_denominator)
 
     # Assert category_count has counted all features
     assert len(clf.feature_cat_index_mapping_) == X3.shape[1]
@@ -703,10 +703,10 @@ def test_catnb():
     X3_test = np.array([[0, 5]])
     assert_array_equal(clf.predict(X3_test), np.array([2]))
     # as above, due to alpha the probability is 1/3 and 2/3 for category 5
-    bayes_nominator = np.array([[1/3, 2/3]])
-    bayes_denominator = bayes_nominator.sum()
+    bayes_numerator = np.array([[1/3, 2/3]])
+    bayes_denominator = bayes_numerator.sum()
     assert_array_almost_equal(clf.predict_proba(X3_test),
-                              bayes_nominator / bayes_denominator)
+                              bayes_numerator / bayes_denominator)
 
     # Check that unseen cats throw an error or warn accordingly
     error_msg = ("Category {} not expected for feature {} "
@@ -727,8 +727,10 @@ def test_catnb():
     sample_weight = np.array([0.25, 1., 0.5])
     clf = CategoricalNB(alpha=1, fit_prior=False)
     clf.fit(X, y, sample_weight=sample_weight)
-    assert_array_equal(clf.cat_count_[0], np.array([[0.25, 0], [1.0, 0.5]]))
-    assert_array_equal(clf.cat_count_[1], np.array([[0.25, 0], [1.0, 0.5]]))
+    assert_array_equal(clf.category_count_[0],
+                       np.array([[0.25, 0], [1.0, 0.5]]))
+    assert_array_equal(clf.category_count_[1],
+                       np.array([[0.25, 0], [1.0, 0.5]]))
     assert_array_equal(clf.predict(np.array([[1, 3]])), np.array([2]))
 
 

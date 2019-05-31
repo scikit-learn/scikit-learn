@@ -1147,8 +1147,8 @@ class CategoricalNB(BaseDiscreteNB):
 
     def _init_counters(self, n_effective_classes, n_features):
         self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
-        self.cat_count_ = [np.zeros((self.class_count_.shape[0], 0))
-                           for _ in range(n_features)]
+        self.category_count_ = [np.zeros((self.class_count_.shape[0], 0))
+                                for _ in range(n_features)]
         self.feature_cat_index_mapping_ = [{} for _ in range(n_features)]
 
     def _count(self, X, Y):
@@ -1159,10 +1159,10 @@ class CategoricalNB(BaseDiscreteNB):
             self._update_cat_mapping(self.feature_cat_index_mapping_[i], cats)
             # update category_count_dimensions in case partial_fit is used, to
             # to account for unseen categories
-            self.cat_count_[i] = self._update_cat_count_dims(
-                self.cat_count_[i], self.feature_cat_index_mapping_[i])
+            self.category_count_[i] = self._update_cat_count_dims(
+                self.category_count_[i], self.feature_cat_index_mapping_[i])
             self._update_cat_count(X_feature, Y,
-                                   self.cat_count_[i],
+                                   self.category_count_[i],
                                    self.feature_cat_index_mapping_[i])
 
     def _update_cat_mapping(self, cat_mapping, cats):
@@ -1194,7 +1194,7 @@ class CategoricalNB(BaseDiscreteNB):
     def _update_feature_log_prob(self, alpha):
         feature_log_prob = {}
         for i in range(self.n_features_):
-            smoothed_cat_count = self.cat_count_[i] + alpha
+            smoothed_cat_count = self.category_count_[i] + alpha
             smoothed_class_count = smoothed_cat_count.sum(axis=1)
             feature_log_prob[i] = (np.log(smoothed_cat_count) -
                                    np.log(smoothed_class_count.reshape(-1, 1)))
