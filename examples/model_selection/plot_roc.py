@@ -15,9 +15,6 @@ curve (AUC) is usually better.
 The "steepness" of ROC curves is also important, since it is ideal to maximize
 the true positive rate while minimizing the false positive rate.
 
-Multi-label settings
--------------------
-
 ROC curves are typically used in binary classification to study the output of
 a classifier. In order to extend ROC curve and ROC area to multi-label
 classification, it is necessary to binarize the output. One ROC
@@ -103,7 +100,7 @@ plt.show()
 
 ##############################################################################
 # Plot ROC curves for the multilabel problem
-
+# ..........................................
 # Compute macro-average ROC curve and ROC area
 
 # First aggregate all false positive rates

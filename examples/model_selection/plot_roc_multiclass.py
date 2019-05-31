@@ -6,12 +6,12 @@ Multiclass Receiver Operating Characteristic (ROC)
 The multiclass One-vs-Rest scheme is functionally the same as the multilabel
 case with one label per sample. See
 :ref:`sphx_glr_auto_examples_model_selection_plot_roc.py` for an example
-of multilabel roc.
+of multilabel ROC.
 
 The mutliclass One-vs-One scheme compares every unique pairwise combination
 of classes. [1]_ In this example, we train a SVM classifier on the iris dataset
-and calcuate the AUC using a macro average and a average weighted by the number
-of true instances for each label combination.
+and calcuate the AUC using the OvR and OvO schemes. We report a macro
+average, and a prevalence-weighted average.
 
 .. topic:: References:
 
@@ -53,20 +53,27 @@ y_prob = classifier.fit(X_train, y_train).predict_proba(X_test)
 ###############################################################################
 # Compute the AUC score
 # .....................
-# The ROC area can be calculated by taking the a macro average or an
-# average weighted by the number of true instances for each label combination.
+# The ROC area can be calculated by taking the a macro average and a
+# prevalence-weighted average.
 from sklearn.metrics import roc_auc_score
 
 macro_roc_auc_ovo = roc_auc_score(y_test, y_prob, multiclass="ovo",
                                   average="macro")
 weighted_roc_auc_ovo = roc_auc_score(y_test, y_prob, multiclass="ovo",
                                      average="weighted")
-print("One-vs-One ROC AUC scores:\n{:.6f} (uniform),\n{:.6f} "
+macro_roc_auc_ovr = roc_auc_score(y_test, y_prob, multiclass="ovr",
+                                  average="macro")
+weighted_roc_auc_ovr = roc_auc_score(y_test, y_prob, multiclass="ovr",
+                                     average="weighted")
+print("One-vs-One ROC AUC scores:\n{:.6f} (macro),\n{:.6f} "
       "(weighted by prevalence)"
       .format(macro_roc_auc_ovo, weighted_roc_auc_ovo))
+print("One-vs-Rest ROC AUC scores:\n{:.6f} (macro),\n{:.6f} "
+      "(weighted by prevalence)"
+      .format(macro_roc_auc_ovr, weighted_roc_auc_ovr))
 
 ###############################################################################
-# Manually calcuate the one-vs-one multiclass auc score
+# Manually calcuate the one-vs-one multiclass AUC score
 # .....................................................
 import matplotlib.pyplot as plt
 from itertools import combinations, permutations
@@ -74,24 +81,24 @@ from sklearn.metrics import roc_curve, auc
 
 n_classes = len(np.unique(y))
 
-fpr = dict()
-tpr = dict()
-roc_auc = dict()
-prevalence = dict()
+fpr = {}
+tpr = {}
+roc_auc = {}
+prevalence = {}
 for a, b in combinations(range(n_classes), 2):
     ab_mask = np.logical_or(y_test == a, y_test == b)
 
     # Compute ROC curve and ROC area with `a` as the positive class
-    fpr[(a, b)], tpr[(a, b)], _ = roc_curve(
+    fpr[a, b], tpr[a, b], _ = roc_curve(
           y_test[ab_mask] == a, y_prob[ab_mask, a])
-    roc_auc[(a, b)] = auc(fpr[(a, b)], tpr[(a, b)])
-    prevalence[(a, b)] = np.average(ab_mask)
+    roc_auc[a, b] = auc(fpr[a, b], tpr[a, b])
+    prevalence[a, b] = np.average(ab_mask)
 
     # Compute ROC curve and ROC area with `b` as the positive class
-    fpr[(b, a)], tpr[(b, a)], _ = roc_curve(
+    fpr[b, a], tpr[b, a], _ = roc_curve(
           y_test[ab_mask] == b, y_prob[ab_mask, b])
-    roc_auc[(b, a)] = auc(fpr[(b, a)], tpr[(b, a)])
-    prevalence[(b, a)] = np.average(ab_mask)
+    roc_auc[b, a] = auc(fpr[b, a], tpr[b, a])
+    prevalence[b, a] = np.average(ab_mask)
 
 roc_auc_values = np.fromiter(roc_auc.values(), dtype=np.float32)
 prevalence_values = np.fromiter(prevalence.values(), dtype=np.float32)
@@ -99,7 +106,7 @@ prevalence_values = np.fromiter(prevalence.values(), dtype=np.float32)
 macro_roc_auc_ovo_manual = np.average(roc_auc_values)
 weighted_roc_auc_ovo_manual = np.average(roc_auc_values,
                                          weights=prevalence_values)
-print(("Manual One-vs-One ROC AUC scores: \n{:.6f} (uniform),\n{:.6f} "
+print(("Manual One-vs-One ROC AUC scores: \n{:.6f} (macro),\n{:.6f} "
       "(weighted by prevalence)").format(macro_roc_auc_ovo_manual,
                                          weighted_roc_auc_ovo_manual))
 
@@ -110,7 +117,7 @@ fig, ax = plt.subplots()
 # plot roc curve for every of classes
 for a, b in permutations(range(n_classes), 2):
     ax.plot(
-          fpr[(a, b)], tpr[(a, b)],
+          fpr[a, b], tpr[a, b],
           lw=2, label='class {0} vs. {1} '
           '(area = {2:0.2f})'.format(a, b, roc_auc[(a, b)]))
 ax.plot([0, 1], [0, 1], 'k--', lw=2)

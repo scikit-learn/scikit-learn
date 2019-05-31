@@ -1285,7 +1285,7 @@ def test_thresholded_multilabel_multioutput_permutations_invariance(name):
 @pytest.mark.parametrize(
     'name',
     set(THRESHOLDED_METRICS) - METRIC_UNDEFINED_BINARY_MULTICLASS)
-def test_thresdhold_metric_is_permutation_invariance(name):
+def test_thresdhold_metric_permutation_invariance(name):
     n_samples, n_classes = 100, 3
     random_state = check_random_state(0)
 

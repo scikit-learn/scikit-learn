@@ -490,7 +490,6 @@ def _multiclass_roc_auc_score(binary_metric, y_true, y_score, labels,
                              " for multiclass one-vs-one ROC AUC."
                              " 'sample_weight' must be None in this case.")
         _, y_true_encoded = _encode(y_true, uniques=classes, encode=True)
-        print(classes, y_true_encoded)
         # Hand & Till (2001) implementation (ovo)
         return _average_multiclass_ovo_score(binary_metric, y_true_encoded,
                                              y_score, average=average)
