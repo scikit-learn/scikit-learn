@@ -71,7 +71,8 @@ Changelog
 
 - |Enhancement| Avoid unnecessary data copy when fitting preprocessors
   :class:`preprocessing.StandardScaler`, :class:`preprocessing.MinMaxScaler`,
-  :class:`MaxAbsScaler`, and :class:`RobustScaler` which results in a slight
+  :class:`preprocessing.MaxAbsScaler`, :class:`preprocessing.RobustScaler`
+  and :class:`preprocessing.QuantileTransformer` which results in a slight
   performance improvement. :pr:`13987` by `Roman Yurchak`_.
 
 
