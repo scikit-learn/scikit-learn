@@ -27,8 +27,7 @@ def pyplot():
 is_pypy = '__pypy__' in sys.builtin_module_names
 
 
-@pytest.hookimpl(hookwrapper=True)
-def pytest_runtest_call(item):
+def pytest_runtest_teardown(item, nextitem):
     """Setup pytest calls to trigger garbage collector
 
     Parameters
@@ -36,6 +35,5 @@ def pytest_runtest_call(item):
     item : pytest item
         Pytest item
     """
-    yield
     if is_pypy:
         gc.collect()
