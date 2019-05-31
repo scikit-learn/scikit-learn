@@ -3,6 +3,7 @@
 # License: BSD 3 clause
 
 
+from joblib import Parallel, delayed
 import numbers
 import numpy as np
 from scipy.sparse import issparse
@@ -414,37 +415,48 @@ class IsolationForest(BaseBagging, OutlierMixin):
         return scores
 
     def _compute_score_samples(self, X, subsample_features):
-        """Compute the score of each samples in X going through the extra trees.
+        """Compute the score of each samples in X going through the extra
+        trees.
 
         Parameters
         ----------
         X : array-like or sparse matrix
-
         subsample_features : bool,
             whether features should be subsampled
+
+        Returns
+        -------
+        ndarray
+            The anomaly scores for each sample
         """
+        def get_score(_X, _tree, _features, _subsample_features):
+            X_subset = _X[:, _features] if _subsample_features else _X
+
+            leaves_index = _tree.apply(X_subset)
+            node_indicator = _tree.decision_path(X_subset)
+            n_samples_leaf = _tree.tree_.n_node_samples[leaves_index]
+
+            return np.ravel(node_indicator.sum(axis=1)) + _average_path_length(
+                n_samples_leaf) - 1.0
+
         n_samples = X.shape[0]
 
         depths = np.zeros(n_samples, order="f")
 
-        for tree, features in zip(self.estimators_, self.estimators_features_):
-            X_subset = X[:, features] if subsample_features else X
+        par_exec = Parallel(n_jobs=self.n_jobs, prefer="threads",
+                            require='sharedmem')
+        par_results = par_exec(
+            delayed(get_score)(_X=X, _tree=tree, _features=features,
+                               _subsample_features=subsample_features)
+            for tree, features in zip(self.estimators_,
+                                      self.estimators_features_))
 
-            leaves_index = tree.apply(X_subset)
-            node_indicator = tree.decision_path(X_subset)
-            n_samples_leaf = tree.tree_.n_node_samples[leaves_index]
+        for result in par_results:
+            depths += result
 
-            depths += (
-                np.ravel(node_indicator.sum(axis=1))
-                + _average_path_length(n_samples_leaf)
-                - 1.0
-            )
+        scores = 2 ** (-depths / (len(self.estimators_)
+                                  * _average_path_length([self.max_samples_])))
 
-        scores = 2 ** (
-            -depths
-            / (len(self.estimators_)
-               * _average_path_length([self.max_samples_]))
-        )
         return scores
 
 
