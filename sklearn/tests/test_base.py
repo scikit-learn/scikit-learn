@@ -21,7 +21,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction import DictVectorizer
-from sklearn.experimental import enable_hist_gradient_boosting
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.datasets import make_classification
 from sklearn.pipeline import make_pipeline
