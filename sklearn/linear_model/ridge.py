@@ -659,8 +659,7 @@ class Ridge(_BaseRidge, RegressorMixin):
           scaler from sklearn.preprocessing.
 
         All last five solvers support both dense and sparse data. However, only
-        'sag' and 'sparse_cg' supports sparse input when `fit_intercept` is
-        True.
+        'sparse_cg' supports sparse input when `fit_intercept` is True.
 
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.
