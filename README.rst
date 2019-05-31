@@ -1,12 +1,12 @@
 .. -*- mode: rst -*-
 
-|Travis|_ |AppVeyor|_ |Codecov|_ |CircleCI|_ |Python35|_ |PyPi|_ |DOI|_
+|Azure|_ |Travis|_ |Codecov|_ |CircleCI|_ |Python35|_ |PyPi|_ |DOI|_
+
+.. |Azure| image:: https://dev.azure.com/scikit-learn/scikit-learn/_apis/build/status/scikit-learn.scikit-learn?branchName=master
+.. _Azure: https://dev.azure.com/scikit-learn/scikit-learn/_build/latest?definitionId=1&branchName=master
 
 .. |Travis| image:: https://api.travis-ci.org/scikit-learn/scikit-learn.svg?branch=master
 .. _Travis: https://travis-ci.org/scikit-learn/scikit-learn
-
-.. |AppVeyor| image:: https://ci.appveyor.com/api/projects/status/github/scikit-learn/scikit-learn?branch=master&svg=true
-.. _AppVeyor: https://ci.appveyor.com/project/sklearn-ci/scikit-learn/history
 
 .. |Codecov| image:: https://codecov.io/github/scikit-learn/scikit-learn/badge.svg?branch=master&service=github
 .. _Codecov: https://codecov.io/github/scikit-learn/scikit-learn?branch=master
@@ -50,13 +50,13 @@ scikit-learn requires:
 - Python (>= 3.5)
 - NumPy (>= 1.11.0)
 - SciPy (>= 0.17.0)
+- joblib (>= 0.11)
 
 **Scikit-learn 0.20 was the last version to support Python2.7.**
 Scikit-learn 0.21 and later require Python 3.5 or newer.
 
 For running the examples Matplotlib >= 1.5.1 is required. A few examples
-require scikit-image >= 0.12.3, a few examples require pandas >= 0.18.0
-and a few example require joblib >= 0.11.
+require scikit-image >= 0.12.3, a few examples require pandas >= 0.18.0.
 
 scikit-learn also uses CBLAS, the C interface to the Basic Linear Algebra
 Subprograms library. scikit-learn comes with a reference implementation, but
@@ -109,11 +109,10 @@ You can check the latest sources with the command::
 
     git clone https://github.com/scikit-learn/scikit-learn.git
 
-Setting up a development environment
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Quick tutorial on how to go about setting up your environment to
-contribute to scikit-learn: https://github.com/scikit-learn/scikit-learn/blob/master/CONTRIBUTING.md
+Contributing
+~~~~~~~~~~~~
+To learn more about making a contribution to scikit-learn, please view the contributing document: 
+https://github.com/scikit-learn/scikit-learn/blob/master/CONTRIBUTING.md
 
 Testing
 ~~~~~~~

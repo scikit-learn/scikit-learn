@@ -5,12 +5,12 @@ Classifier Chain
 Example of using classifier chain on a multilabel dataset.
 
 For this example we will use the `yeast
-<http://mldata.org/repository/data/viewslug/yeast>`_ dataset which contains
+<https://www.openml.org/d/40597>`_ dataset which contains
 2417 datapoints each with 103 features and 14 possible labels. Each
 data point has at least one label. As a baseline we first train a logistic
 regression classifier for each of the 14 labels. To evaluate the performance of
 these classifiers we predict on a held-out test set and calculate the
-:ref:`jaccard similarity score <jaccard_similarity_score>`.
+:ref:`jaccard score <jaccard_score>` for each sample.
 
 Next we create 10 classifier chains. Each classifier chain contains a
 logistic regression model for each of the 14 labels. The models in each
@@ -41,7 +41,7 @@ from sklearn.datasets import fetch_openml
 from sklearn.multioutput import ClassifierChain
 from sklearn.model_selection import train_test_split
 from sklearn.multiclass import OneVsRestClassifier
-from sklearn.metrics import jaccard_similarity_score
+from sklearn.metrics import jaccard_score
 from sklearn.linear_model import LogisticRegression
 
 print(__doc__)
@@ -54,11 +54,11 @@ X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=.2,
 
 # Fit an independent logistic regression model for each class using the
 # OneVsRestClassifier wrapper.
-base_lr = LogisticRegression(solver='lbfgs')
+base_lr = LogisticRegression()
 ovr = OneVsRestClassifier(base_lr)
 ovr.fit(X_train, Y_train)
 Y_pred_ovr = ovr.predict(X_test)
-ovr_jaccard_score = jaccard_similarity_score(Y_test, Y_pred_ovr)
+ovr_jaccard_score = jaccard_score(Y_test, Y_pred_ovr, average='samples')
 
 # Fit an ensemble of logistic regression classifier chains and take the
 # take the average prediction of all the chains.
@@ -69,12 +69,14 @@ for chain in chains:
 
 Y_pred_chains = np.array([chain.predict(X_test) for chain in
                           chains])
-chain_jaccard_scores = [jaccard_similarity_score(Y_test, Y_pred_chain >= .5)
+chain_jaccard_scores = [jaccard_score(Y_test, Y_pred_chain >= .5,
+                                      average='samples')
                         for Y_pred_chain in Y_pred_chains]
 
 Y_pred_ensemble = Y_pred_chains.mean(axis=0)
-ensemble_jaccard_score = jaccard_similarity_score(Y_test,
-                                                  Y_pred_ensemble >= .5)
+ensemble_jaccard_score = jaccard_score(Y_test,
+                                       Y_pred_ensemble >= .5,
+                                       average='samples')
 
 model_scores = [ovr_jaccard_score] + chain_jaccard_scores
 model_scores.append(ensemble_jaccard_score)

@@ -20,6 +20,7 @@ from sklearn.utils.estimator_checks import set_checking_parameters
 from sklearn.utils.estimator_checks import check_estimators_unfitted
 from sklearn.utils.estimator_checks import check_fit_score_takes_y
 from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
+from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.estimator_checks import check_outlier_corruption
 from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
 from sklearn.linear_model import LinearRegression, SGDClassifier
@@ -167,8 +168,7 @@ class CorrectNotFittedErrorClassifier(BaseBadClassifier):
         return self
 
     def predict(self, X):
-        if not hasattr(self, 'coef_'):
-            raise CorrectNotFittedError("estimator is not fitted yet")
+        check_is_fitted(self, 'coef_')
         X = check_array(X)
         return np.ones(X.shape[0])
 
@@ -434,7 +434,7 @@ def test_check_estimator_clones():
 def test_check_estimators_unfitted():
     # check that a ValueError/AttributeError is raised when calling predict
     # on an unfitted estimator
-    msg = "AttributeError or ValueError not raised by predict"
+    msg = "NotFittedError not raised by predict"
     assert_raises_regex(AssertionError, msg, check_estimators_unfitted,
                         "estimator", NoSparseClassifier())
 

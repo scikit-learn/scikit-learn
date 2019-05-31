@@ -63,7 +63,7 @@ def get_name(estimator):
 
 # list of (estimator, param_grid), where param_grid is used in GridSearchCV
 classifiers = [
-    (LogisticRegression(solver='lbfgs', random_state=0), {
+    (LogisticRegression(random_state=0), {
         'C': np.logspace(-2, 7, 10)
     }),
     (LinearSVC(random_state=0), {
@@ -71,7 +71,7 @@ classifiers = [
     }),
     (make_pipeline(
         KBinsDiscretizer(encode='onehot'),
-        LogisticRegression(solver='lbfgs', random_state=0)), {
+        LogisticRegression(random_state=0)), {
             'kbinsdiscretizer__n_bins': np.arange(2, 10),
             'logisticregression__C': np.logspace(-2, 7, 10),
         }),
@@ -83,7 +83,7 @@ classifiers = [
     (GradientBoostingClassifier(n_estimators=50, random_state=0), {
         'learning_rate': np.logspace(-4, 0, 10)
     }),
-    (SVC(random_state=0, gamma='scale'), {
+    (SVC(random_state=0), {
         'C': np.logspace(-2, 7, 10)
     }),
 ]
@@ -140,8 +140,7 @@ for ds_cnt, (X, y) in enumerate(datasets):
             enumerate(zip(names, classifiers)):
         ax = axes[ds_cnt, est_idx + 1]
 
-        clf = GridSearchCV(estimator=estimator, param_grid=param_grid, cv=5,
-                           iid=False)
+        clf = GridSearchCV(estimator=estimator, param_grid=param_grid, cv=5)
         with ignore_warnings(category=ConvergenceWarning):
             clf.fit(X_train, y_train)
         score = clf.score(X_test, y_test)
