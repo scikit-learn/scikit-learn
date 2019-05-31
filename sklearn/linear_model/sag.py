@@ -206,7 +206,6 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
     >>> y = rng.randn(n_samples)
     >>> clf = linear_model.Ridge(solver='sag')
     >>> clf.fit(X, y)
-    ... #doctest: +NORMALIZE_WHITESPACE
     Ridge(solver='sag')
 
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
@@ -214,7 +213,6 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
     >>> clf = linear_model.LogisticRegression(
     ...     solver='sag', multi_class='multinomial')
     >>> clf.fit(X, y)
-    ... #doctest: +NORMALIZE_WHITESPACE
     LogisticRegression(multi_class='multinomial', solver='sag')
 
     References

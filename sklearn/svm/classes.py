@@ -582,7 +582,7 @@ class SVC(BaseSVC):
     >>> y = np.array([1, 1, 2, 2])
     >>> from sklearn.svm import SVC
     >>> clf = SVC(gamma='auto')
-    >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
+    >>> clf.fit(X, y)
     SVC(gamma='auto')
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
@@ -762,7 +762,7 @@ class NuSVC(BaseSVC):
     >>> y = np.array([1, 1, 2, 2])
     >>> from sklearn.svm import NuSVC
     >>> clf = NuSVC()
-    >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
+    >>> clf.fit(X, y)
     NuSVC()
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
@@ -898,7 +898,7 @@ class SVR(BaseLibSVM, RegressorMixin):
     >>> y = rng.randn(n_samples)
     >>> X = rng.randn(n_samples, n_features)
     >>> clf = SVR(C=1.0, epsilon=0.2)
-    >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
+    >>> clf.fit(X, y)
     SVR(epsilon=0.2)
 
     See also
@@ -1024,7 +1024,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     >>> y = np.random.randn(n_samples)
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = NuSVR(C=1.0, nu=0.1)
-    >>> clf.fit(X, y)  #doctest: +NORMALIZE_WHITESPACE
+    >>> clf.fit(X, y)
     NuSVR(nu=0.1)
 
     See also

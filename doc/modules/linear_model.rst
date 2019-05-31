@@ -107,7 +107,7 @@ its ``coef_`` member::
     Ridge(alpha=0.5)
     >>> reg.coef_
     array([0.34545455, 0.34545455])
-    >>> reg.intercept_ #doctest: +ELLIPSIS
+    >>> reg.intercept_
     0.13636...
 
 
