@@ -295,11 +295,11 @@ def test_type_of_target():
         assert_raises_regex(ValueError, msg, type_of_target, example)
 
     try:
-        from pandas import SparseSeries
+        import pandas as pd
     except ImportError:
         raise SkipTest("Pandas not found")
 
-    y = SparseSeries([1, 0, 0, 1, 0])
+    y = pd.Series([1, 0, 0, 1, 0]).to_sparse()
     msg = "y cannot be class 'SparseSeries'."
     assert_raises_regex(ValueError, msg, type_of_target, y)
 
