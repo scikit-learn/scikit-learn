@@ -1361,7 +1361,8 @@ prevalence:
 
 where :math:`c` is the number of classes. This algorithm is used by setting
 the keyword argument ``multiclass`` to ``'ovo'`` and ``average`` to
-``'weighted'``.
+``'weighted'``. The ``'weighted'`` option returns a prevalence-weighted average 
+as described in [FC2009]_.
 
 **One-vs-rest Algorithm**: Computes the AUC of each class against the rest.
 The algorithm is functionally the same as the multilabel case. To enable this
