@@ -124,7 +124,8 @@
 #     # The right split has not been applied yet. Let's do it now:
 #     assert len(grower.splittable_nodes) == 1
 #     right_left_node, right_right_node = grower.split_next()
-#     _check_children_consistency(right_node, right_left_node, right_right_node)
+#     _check_children_consistency(right_node, right_left_node,
+#     right_right_node)
 #     assert len(right_left_node.sample_indices) > 0.1 * n_samples
 #     assert len(right_left_node.sample_indices) < 0.2 * n_samples
 
