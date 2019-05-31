@@ -38,14 +38,7 @@ __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB', 'ComplementNB',
 
 
 class BaseNB(BaseEstimator, ClassifierMixin, metaclass=ABCMeta):
-    """Abstract base class for naive Bayes estimators
-
-    Parameters
-    ----------
-
-    _check_kw : dict
-        argument configuration for input checks
-    """
+    """Abstract base class for naive Bayes estimators"""
 
     @abstractmethod
     def _joint_log_likelihood(self, X):
@@ -1020,6 +1013,9 @@ class CategoricalNB(BaseDiscreteNB):
     handle_unknown : one of {'ignore', 'warn' (default), 'error'}
         Can be 'ignore', 'warn' or 'error'. Determines the behaviour of the
         classifier if it encounters unseen categories in the prediction step.
+        The setting 'ignore' does not notify the user if an unseen category
+        appears in the predict step. Unseen categories during the prediction
+        step are accounted for with probability 1.
 
     Attributes
     ----------

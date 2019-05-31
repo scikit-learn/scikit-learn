@@ -247,10 +247,13 @@ The probability of category :math:`t` in feature :math:`i` given class
 
 where :math:`N_{tic} = |\{j \in J \mid x_{ij} = t, y_j = c\}|` is the number
 of times category :math:`t` appears in the samples :math:`x_{i}`, which belong
-to class :math:`c`, :math:`N_{c} = |\{ j \in J\mid y_j = c\}|` is the total
-count of  all features for class :math:`c`, :math:`\alpha` is a smoothing
-parameter and :math:`n_i` is the number of available categories of feature
-:math:`x_i`.
+to class :math:`c`, :math:`N_{c} = |\{ j \in J\mid y_j = c\}|` is the number
+of samples with class c, :math:`\alpha` is a smoothing parameter and
+:math:`n_i` is the number of available categories of feature :math:`i`.
+
+Unseen categories during the prediction step are accounted for with
+probability :math:`1`. This, effectively, ignores the given dimension for the
+classification of the respective sample.
 
 
 Out-of-core naive Bayes model fitting
