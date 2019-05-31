@@ -983,14 +983,14 @@ def test_n_iter():
 
 
 def test_ridge_fit_intercept_sparse():
-    X, y = make_regression(n_samples=1000, n_features=2, n_informative=2,
-                           bias=10., random_state=42)
-
+    X, y = _make_sparse_offset_regression(
+        n_features=20, random_state=0)
     X_csr = sp.csr_matrix(X)
 
-    for solver in ['sag', 'sparse_cg']:
-        dense = Ridge(alpha=1., tol=1.e-15, solver=solver, fit_intercept=True)
-        sparse = Ridge(alpha=1., tol=1.e-15, solver=solver, fit_intercept=True)
+    # for now only sparse_cg can fit an intercept with sparse X
+    for solver in ['sparse_cg']:
+        dense = Ridge(alpha=1., solver=solver, fit_intercept=True)
+        sparse = Ridge(alpha=1., solver=solver, fit_intercept=True)
         dense.fit(X, y)
         with pytest.warns(None) as record:
             sparse.fit(X_csr, y)
@@ -999,9 +999,9 @@ def test_ridge_fit_intercept_sparse():
         assert_array_almost_equal(dense.coef_, sparse.coef_)
 
     # test the solver switch and the corresponding warning
-    for solver in ['saga', 'lsqr']:
-        sparse = Ridge(alpha=1., tol=1.e-15, solver=solver, fit_intercept=True)
-        assert_raises_regex(ValueError, "In Ridge,", sparse.fit, X_csr, y)
+    for solver in ['saga', 'lsqr', 'sag']:
+        sparse = Ridge(alpha=1., solver=solver, fit_intercept=True)
+        assert_warns(UserWarning, sparse.fit, X_csr, y)
 
 
 @pytest.mark.parametrize('return_intercept', [False, True])

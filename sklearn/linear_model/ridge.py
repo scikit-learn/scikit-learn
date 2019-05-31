@@ -545,6 +545,13 @@ class _BaseRidge(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
                          accept_sparse=_accept_sparse,
                          dtype=_dtype,
                          multi_output=True, y_numeric=True)
+        if sparse.issparse(X) and self.fit_intercept:
+            solver = 'sparse_cg'
+            if self.solver not in ['auto', 'sparse_cg']:
+                warnings.warn(
+                    'setting solver to "sparse_cg" because X is sparse')
+        else:
+            solver = self.solver
 
         if ((sample_weight is not None) and
                 np.atleast_1d(sample_weight).ndim > 1):
@@ -555,30 +562,19 @@ class _BaseRidge(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
             X, y, self.fit_intercept, self.normalize, self.copy_X,
             sample_weight=sample_weight, return_mean=True)
 
-        # temporary fix for fitting the intercept with sparse data using 'sag'
-        if (sparse.issparse(X) and self.fit_intercept and
-           self.solver != 'sparse_cg'):
-            self.coef_, self.n_iter_, self.intercept_ = _ridge_regression(
-                X, y, alpha=self.alpha, sample_weight=sample_weight,
-                max_iter=self.max_iter, tol=self.tol, solver=self.solver,
-                random_state=self.random_state, return_n_iter=True,
-                return_intercept=True, check_input=False)
-            # add the offset which was subtracted by _preprocess_data
-            self.intercept_ += y_offset
+        if sparse.issparse(X) and self.fit_intercept:
+            # required to fit intercept with sparse_cg solver
+            params = {'X_offset': X_offset, 'X_scale': X_scale}
         else:
-            if sparse.issparse(X) and self.solver == 'sparse_cg':
-                # required to fit intercept with sparse_cg solver
-                params = {'X_offset': X_offset, 'X_scale': X_scale}
-            else:
-                # for dense matrices or when intercept is set to 0
-                params = {}
+            # for dense matrices or when intercept is set to 0
+            params = {}
 
-            self.coef_, self.n_iter_ = _ridge_regression(
-                X, y, alpha=self.alpha, sample_weight=sample_weight,
-                max_iter=self.max_iter, tol=self.tol, solver=self.solver,
-                random_state=self.random_state, return_n_iter=True,
-                return_intercept=False, check_input=False, **params)
-            self._set_intercept(X_offset, y_offset, X_scale)
+        self.coef_, self.n_iter_ = _ridge_regression(
+            X, y, alpha=self.alpha, sample_weight=sample_weight,
+            max_iter=self.max_iter, tol=self.tol, solver=solver,
+            random_state=self.random_state, return_n_iter=True,
+            return_intercept=False, check_input=False, **params)
+        self._set_intercept(X_offset, y_offset, X_scale)
 
         return self
 
