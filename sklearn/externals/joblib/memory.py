@@ -187,7 +187,7 @@ class MemorizedResult(Logger):
 
     func: function or str
         function whose output is cached. The string case is intended only for
-        instanciation based on the output of repr() on another instance.
+        instantiation based on the output of repr() on another instance.
         (namely eval(repr(memorized_instance)) works).
 
     argument_hash: str
@@ -471,7 +471,7 @@ class MemorizedFunc(Logger):
         metadata = None
         msg = None
 
-        # Wether or not the memorized function must be called
+        # Whether or not the memorized function must be called
         must_call = False
 
         # FIXME: The statements below should be try/excepted
@@ -845,7 +845,7 @@ class Memory(Logger):
             Limit in bytes of the size of the cache.
 
         backend_options: dict, optional
-            Contains a dictionnary of named parameters used to configure
+            Contains a dictionary of named parameters used to configure
             the store backend.
     """
     # ------------------------------------------------------------------------
