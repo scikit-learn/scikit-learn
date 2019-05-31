@@ -351,14 +351,11 @@ def test_pipeline_score_samples_pca_lof():
 
 
 def test_score_samples_on_pipeline_without_score_samples():
-    iris = load_iris()
-    X = iris.data
-    y = iris.target
+    X = np.array([[1], [2]])
+    y = np.array([1, 2])
     # Test that a pipeline does not have score_samples method when the final
     # step of the pipeline does not have score_samples defined.
-    pca = PCA(svd_solver='full', n_components='mle', whiten=True)
-    clf = LogisticRegression()
-    pipe = Pipeline([('pca', pca), ('clf', clf)])
+    pipe = make_pipeline(LogisticRegression())
     pipe.fit(X, y)
     with pytest.raises(AttributeError,
                        match="'LogisticRegression' object has no attribute "
