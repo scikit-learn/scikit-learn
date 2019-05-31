@@ -1,7 +1,7 @@
 import gc
-import sys
 
 import pytest
+from sklearn.utils import IS_PYPY
 
 
 @pytest.fixture(scope='function')
@@ -24,10 +24,7 @@ def pyplot():
     pyplot.close('all')
 
 
-is_pypy = '__pypy__' in sys.builtin_module_names
-
-
-def pytest_runtest_teardown(item, nextitem):
+def pytest_runtest_call(item):
     """Setup pytest calls to trigger garbage collector
 
     Parameters
@@ -35,5 +32,6 @@ def pytest_runtest_teardown(item, nextitem):
     item : pytest item
         Pytest item
     """
-    if is_pypy:
+    yield
+    if IS_PYPY:
         gc.collect()
