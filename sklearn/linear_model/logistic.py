@@ -30,7 +30,7 @@ from ..utils.fixes import logsumexp
 from ..utils.optimize import newton_cg
 from ..utils.validation import check_X_y
 from ..utils.validation import check_is_fitted
-from ..uitls.validation import deprecate_positional_args
+from ..utils.validation import deprecate_positional_args
 from ..utils import deprecated
 from ..exceptions import (ConvergenceWarning, ChangedBehaviorWarning)
 from ..utils.multiclass import check_classification_targets

@@ -1011,8 +1011,9 @@ def deprecate_positional_args(f):
             args_msg = ['{}={}'.format(name, arg)
                         for name, arg in zip(kwonlyargs[:extra_args],
                                              err_args[-extra_args:])]
-            warnings.warn("Should use keyword args: "
-                          "{}".format(', '.join(args_msg)),
+            warnings.warn("Pass {} as keyword args. From version 0.24 "
+                          "passing these as positional arguments will "
+                          "result in an error".format(", ".join(args_msg)),
                           DeprecationWarning)
         kwargs.update({k: arg for k, arg in zip(orig_spec, args)})
         return f(**kwargs)

@@ -864,13 +864,11 @@ def test_deprecate_positional_args_warns_for_function():
         pass
 
     with pytest.warns(DeprecationWarning,
-                      match=r"Should use keyword args: "
-                            r"c=3"):
+                      match=r"Pass c=3 as keyword args"):
         f1(1, 2, 3)
 
     with pytest.warns(DeprecationWarning,
-                      match=r"Should use keyword args: "
-                            r"c=3, d=4"):
+                      match=r"Pass c=3, d=4 as keyword args"):
         f1(1, 2, 3, 4)
 
     @deprecate_positional_args
@@ -878,8 +876,7 @@ def test_deprecate_positional_args_warns_for_function():
         pass
 
     with pytest.warns(DeprecationWarning,
-                      match=r"Should use keyword args: "
-                            r"b=2"):
+                      match=r"Pass b=2 as keyword args"):
         f2(1, 2)
 
 
@@ -891,13 +888,11 @@ def test_deprecate_positional_args_warns_for_class():
             pass
 
     with pytest.warns(DeprecationWarning,
-                      match=r"Should use keyword args: "
-                            r"c=3"):
+                      match=r"Pass c=3 as keyword args"):
         A1(1, 2, 3)
 
     with pytest.warns(DeprecationWarning,
-                      match=r"Should use keyword args: "
-                            r"c=3, d=4"):
+                      match=r"Pass c=3, d=4 as keyword args"):
         A1(1, 2, 3, 4)
 
     class A2:
@@ -906,11 +901,9 @@ def test_deprecate_positional_args_warns_for_class():
             pass
 
     with pytest.warns(DeprecationWarning,
-                      match=r"Should use keyword args: "
-                            r"c=3"):
+                      match=r"Pass c=3 as keyword args"):
         A2(1, 2, 3)
 
     with pytest.warns(DeprecationWarning,
-                      match=r"Should use keyword args: "
-                            r"c=3, d=4"):
+                      match=r"Pass c=3, d=4 as keyword args"):
         A2(1, 2, 3, 4)
