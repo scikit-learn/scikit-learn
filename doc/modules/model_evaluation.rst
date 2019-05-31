@@ -223,7 +223,7 @@ the following two rules:
     importing it from another module will be a more robust approach and work
     independently of the joblib backend.
 
-    For example, to use, ``n_jobs`` greater than 1 in the example below,
+    For example, to use ``n_jobs`` greater than 1 in the example below,
     ``custom_scoring_function`` function is saved in a user-created module
     (``custom_scorer_module.py``) and imported::
 
