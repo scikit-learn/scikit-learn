@@ -325,11 +325,10 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    non-regression tests should fail for the code base in the master branch
    and pass for the PR code.
 
-4. **Make sure that your PR does not add PEP8 violations**. Please run
-   `./build_tools/circle/flake8_diff.sh` or `make flake8-diff` on a Unix-like
-   system. You can also directly use `flake8 path_to_file`, but please avoid
-   reformatting parts of the file that your pull request doesn't change, as
-   it distracts from code review.
+4. **Make sure that your PR does not add PEP8 violations**. On a Unix-like
+   system, you can run `make flake8-diff`. `flake8 path_to_file`, would work
+   for any system, but please avoid reformatting parts of the file that your
+   pull request doesn't change, as it distracts from code review.
 
 5. Follow the `coding-guidelines`_ (see below).
 
