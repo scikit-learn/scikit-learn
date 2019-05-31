@@ -66,7 +66,7 @@ def test_early_stopping_regression(scoring, validation_fraction,
 
     max_iter = 200
 
-    X, y = make_regression(random_state=0)
+    X, y = make_regression(n_samples=50, random_state=0)
 
     gb = HistGradientBoostingRegressor(
         verbose=1,  # just for coverage
@@ -87,8 +87,9 @@ def test_early_stopping_regression(scoring, validation_fraction,
 
 
 @pytest.mark.parametrize('data', (
-    make_classification(random_state=0),
-    make_classification(n_classes=3, n_clusters_per_class=1, random_state=0)
+    make_classification(n_samples=30, random_state=0),
+    make_classification(n_samples=30, n_classes=3, n_clusters_per_class=1,
+                        random_state=0)
 ))
 @pytest.mark.parametrize(
     'scoring, validation_fraction, n_iter_no_change, tol', [
