@@ -596,20 +596,20 @@ def manhattan_distances(X, Y=None, sum_over_features=True):
     Examples
     --------
     >>> from sklearn.metrics.pairwise import manhattan_distances
-    >>> manhattan_distances([[3]], [[3]])#doctest:+ELLIPSIS
+    >>> manhattan_distances([[3]], [[3]])
     array([[0.]])
-    >>> manhattan_distances([[3]], [[2]])#doctest:+ELLIPSIS
+    >>> manhattan_distances([[3]], [[2]])
     array([[1.]])
-    >>> manhattan_distances([[2]], [[3]])#doctest:+ELLIPSIS
+    >>> manhattan_distances([[2]], [[3]])
     array([[1.]])
     >>> manhattan_distances([[1, 2], [3, 4]],\
-         [[1, 2], [0, 3]])#doctest:+ELLIPSIS
+         [[1, 2], [0, 3]])
     array([[0., 2.],
            [4., 4.]])
     >>> import numpy as np
     >>> X = np.ones((1, 2))
     >>> y = np.full((2, 2), 2.)
-    >>> manhattan_distances(X, y, sum_over_features=False)#doctest:+ELLIPSIS
+    >>> manhattan_distances(X, y, sum_over_features=False)
     array([[1., 1.],
            [1., 1.]])
     """

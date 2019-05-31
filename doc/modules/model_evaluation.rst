@@ -504,7 +504,7 @@ or *informedness*.
 
 .. topic:: References:
 
-  .. [Guyon2015] I. Guyon, K. Bennett, G. Cawley, H.J. Escalante, S. Escalera, T.K. Ho, N. MaciÃ ,
+  .. [Guyon2015] I. Guyon, K. Bennett, G. Cawley, H.J. Escalante, S. Escalera, T.K. Ho, N. Macià,
      B. Ray, M. Saeed, A.R. Statnikov, E. Viegas, `Design of the 2015 ChaLearn AutoML Challenge
      <https://ieeexplore.ieee.org/document/7280767>`_,
      IJCNN 2015.
@@ -757,7 +757,7 @@ binary classification and multilabel indicator format.
 
 .. topic:: References:
 
-  .. [Manning2008] C.D. Manning, P. Raghavan, H. SchÃ¼tze, `Introduction to Information Retrieval
+  .. [Manning2008] C.D. Manning, P. Raghavan, H. Schütze, `Introduction to Information Retrieval
      <https://nlp.stanford.edu/IR-book/html/htmledition/evaluation-of-ranked-retrieval-results-1.html>`_,
      2008.
   .. [Everingham2010] M. Everingham, L. Van Gool, C.K.I. Williams, J. Winn, A. Zisserman,
@@ -1030,7 +1030,7 @@ with a svm classifier in a multiclass problem::
   LinearSVC()
   >>> pred_decision = est.decision_function([[-1], [2], [3]])
   >>> y_true = [0, 2, 3]
-  >>> hinge_loss(y_true, pred_decision, labels)  #doctest: +ELLIPSIS
+  >>> hinge_loss(y_true, pred_decision, labels)
   0.56...
 
 .. _log_loss:
@@ -1570,7 +1570,7 @@ the ranking loss is defined as
 .. math::
   ranking\_loss(y, \hat{f}) =  \frac{1}{n_{\text{samples}}}
     \sum_{i=0}^{n_{\text{samples}} - 1} \frac{1}{||y_i||_0(n_\text{labels} - ||y_i||_0)}
-    \left|\left\{(k, l): \hat{f}_{ik} \leq \hat{f}_{il}, y_{ik} = 1, y_{il} = 0Â \right\}\right|
+    \left|\left\{(k, l): \hat{f}_{ik} \leq \hat{f}_{il}, y_{ik} = 1, y_{il} = 0 \right\}\right|
 
 where :math:`|\cdot|` computes the cardinality of the set (i.e., the number of
 elements in the set) and :math:`||\cdot||_0` is the :math:`\ell_0` "norm"
@@ -1833,27 +1833,27 @@ function::
 
 .. _r2_score:
 
-RÂ² score, the coefficient of determination
+R² score, the coefficient of determination
 -------------------------------------------
 
 The :func:`r2_score` function computes the `coefficient of
 determination <https://en.wikipedia.org/wiki/Coefficient_of_determination>`_,
-usually denoted as RÂ².
+usually denoted as R².
 
 It represents the proportion of variance (of y) that has been explained by the
 independent variables in the model. It provides an indication of goodness of
 fit and therefore a measure of how well unseen samples are likely to be
 predicted by the model, through the proportion of explained variance.
 
-As such variance is dataset dependent, RÂ² may not be meaningfully comparable
+As such variance is dataset dependent, R² may not be meaningfully comparable
 across different datasets. Best possible score is 1.0 and it can be negative
 (because the model can be arbitrarily worse). A constant model that always
 predicts the expected value of y, disregarding the input features, would get a
-RÂ² score of 0.0.
+R² score of 0.0.
 
 If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample
 and :math:`y_i` is the corresponding true value for total :math:`n` samples,
-the estimated RÂ² is defined as:
+the estimated R² is defined as:
 
 .. math::
 
@@ -1861,7 +1861,7 @@ the estimated RÂ² is defined as:
 
 where :math:`\bar{y} = \frac{1}{n} \sum_{i=1}^{n} y_i` and :math:`\sum_{i=1}^{n} (y_i - \hat{y}_i)^2 = \sum_{i=1}^{n} \epsilon_i^2`.
 
-Note that :func:`r2_score` calculates unadjusted RÂ² without correcting for
+Note that :func:`r2_score` calculates unadjusted R² without correcting for
 bias in sample variance of y.
 
 Here is a small example of usage of the :func:`r2_score` function::
@@ -1888,7 +1888,7 @@ Here is a small example of usage of the :func:`r2_score` function::
 .. topic:: Example:
 
   * See :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
-    for an example of RÂ² score usage to
+    for an example of R² score usage to
     evaluate Lasso and Elastic Net on sparse signals.
 
 .. _clustering_metrics:
