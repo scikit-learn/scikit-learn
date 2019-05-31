@@ -3,6 +3,7 @@ Test the fastica algorithm.
 """
 import itertools
 import warnings
+import pytest
 
 import numpy as np
 from scipy import stats
@@ -50,11 +51,12 @@ def test_gs():
     assert_less((tmp[:5] ** 2).sum(), 1.e-10)
 
 
-def test_fastica_simple(add_noise=False):
+@pytest.mark.parametrize("add_noise", [True, False])
+@pytest.mark.parametrize("seed", range(1))
+def test_fastica_simple(add_noise, seed):
     # Test the FastICA algorithm on very simple data.
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(seed)
     # scipy.stats uses the global RNG:
-    np.random.seed(0)
     n_samples = 1000
     # Generate two sources:
     s1 = (2 * np.sin(np.linspace(0, 100, n_samples)) > 0) - 1
@@ -83,12 +85,15 @@ def test_fastica_simple(add_noise=False):
     whitening = [True, False]
     for algo, nl, whiten in itertools.product(algos, nls, whitening):
         if whiten:
-            k_, mixing_, s_ = fastica(m.T, fun=nl, algorithm=algo)
+            k_, mixing_, s_ = fastica(m.T, fun=nl, algorithm=algo,
+                                      random_state=rng)
             assert_raises(ValueError, fastica, m.T, fun=np.tanh,
                           algorithm=algo)
         else:
-            X = PCA(n_components=2, whiten=True).fit_transform(m.T)
-            k_, mixing_, s_ = fastica(X, fun=nl, algorithm=algo, whiten=False)
+            pca = PCA(n_components=2, whiten=True, random_state=rng)
+            X = pca.fit_transform(m.T)
+            k_, mixing_, s_ = fastica(X, fun=nl, algorithm=algo, whiten=False,
+                                      random_state=rng)
             assert_raises(ValueError, fastica, X, fun=np.tanh,
                           algorithm=algo)
         s_ = s_.T
@@ -114,8 +119,9 @@ def test_fastica_simple(add_noise=False):
             assert_almost_equal(np.dot(s2_, s2) / n_samples, 1, decimal=1)
 
     # Test FastICA class
-    _, _, sources_fun = fastica(m.T, fun=nl, algorithm=algo, random_state=0)
-    ica = FastICA(fun=nl, algorithm=algo, random_state=0)
+    _, _, sources_fun = fastica(m.T, fun=nl, algorithm=algo,
+                                random_state=seed)
+    ica = FastICA(fun=nl, algorithm=algo, random_state=seed)
     sources = ica.fit_transform(m.T)
     assert_equal(ica.components_.shape, (2, 2))
     assert_equal(sources.shape, (1000, 2))
@@ -126,7 +132,7 @@ def test_fastica_simple(add_noise=False):
     assert_equal(ica.mixing_.shape, (2, 2))
 
     for fn in [np.tanh, "exp(-.5(x^2))"]:
-        ica = FastICA(fun=fn, algorithm=algo, random_state=0)
+        ica = FastICA(fun=fn, algorithm=algo)
         assert_raises(ValueError, ica.fit, m.T)
 
     assert_raises(TypeError, FastICA(fun=range(10)).fit, m.T)

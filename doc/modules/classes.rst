@@ -113,6 +113,9 @@ Functions
    :template: function.rst
 
    cluster.affinity_propagation
+   cluster.cluster_optics_dbscan
+   cluster.cluster_optics_xi
+   cluster.compute_optics_graph
    cluster.dbscan
    cluster.estimate_bandwidth
    cluster.k_means
@@ -343,6 +346,7 @@ Samples generator
    decomposition.dict_learning
    decomposition.dict_learning_online
    decomposition.fastica
+   decomposition.non_negative_factorization
    decomposition.sparse_encode
 
 .. _lda_ref:
@@ -419,27 +423,14 @@ Samples generator
    ensemble.RandomForestRegressor
    ensemble.RandomTreesEmbedding
    ensemble.VotingClassifier
+   ensemble.VotingRegressor
+   ensemble.HistGradientBoostingRegressor
+   ensemble.HistGradientBoostingClassifier
+
 
 .. autosummary::
    :toctree: generated/
    :template: function.rst
-
-
-partial dependence
-------------------
-
-.. automodule:: sklearn.ensemble.partial_dependence
-   :no-members:
-   :no-inherited-members:
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   ensemble.partial_dependence.partial_dependence
-   ensemble.partial_dependence.plot_partial_dependence
 
 
 .. _exceptions_ref:
@@ -466,6 +457,23 @@ partial dependence
    exceptions.NotFittedError
    exceptions.NonBLASDotWarning
    exceptions.UndefinedMetricWarning
+
+
+:mod:`sklearn.experimental`: Experimental
+=========================================
+
+.. automodule:: sklearn.experimental
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+
+   experimental.enable_hist_gradient_boosting
+   experimental.enable_iterative_imputer
+
 
 .. _feature_extraction_ref:
 
@@ -754,6 +762,7 @@ Kernels:
 
    linear_model.enet_path
    linear_model.lars_path
+   linear_model.lars_path_gram
    linear_model.lasso_path
    linear_model.orthogonal_mp
    linear_model.orthogonal_mp_gram
@@ -841,7 +850,7 @@ details.
    metrics.fbeta_score
    metrics.hamming_loss
    metrics.hinge_loss
-   metrics.jaccard_similarity_score
+   metrics.jaccard_score
    metrics.log_loss
    metrics.matthews_corrcoef
    metrics.multilabel_confusion_matrix
@@ -952,6 +961,7 @@ See the :ref:`metrics` section of the user guide for further details.
    metrics.pairwise.cosine_distances
    metrics.pairwise.distance_metrics
    metrics.pairwise.euclidean_distances
+   metrics.pairwise.haversine_distances
    metrics.pairwise.kernel_metrics
    metrics.pairwise.laplacian_kernel
    metrics.pairwise.linear_kernel
@@ -1225,6 +1235,25 @@ Model validation
    pipeline.make_union
 
 
+.. _inspection_ref:
+
+:mod:`sklearn.inspection`: inspection
+=====================================
+
+.. automodule:: sklearn.inspection
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   inspection.partial_dependence
+   inspection.plot_partial_dependence
+
+
 .. _preprocessing_ref:
 
 :mod:`sklearn.preprocessing`: Preprocessing and Normalization
@@ -1418,12 +1447,6 @@ Low-level methods
 
 .. autosummary::
    :toctree: generated/
-   :template: class.rst
-
-   utils.testing.mock_mldata_urlopen
-
-.. autosummary::
-   :toctree: generated/
    :template: function.rst
 
    utils.arrayfuncs.cholesky_delete
@@ -1488,6 +1511,7 @@ Utilities from joblib:
    utils.parallel_backend
    utils.register_parallel_backend
 
+
 Recently deprecated
 ===================
 
@@ -1508,24 +1532,12 @@ To be removed in 0.23
    utils.cpu_count
    utils.delayed
    metrics.calinski_harabaz_score
+   metrics.jaccard_similarity_score
    linear_model.logistic_regression_path
 
-
-To be removed in 0.22
----------------------
-
 .. autosummary::
    :toctree: generated/
-   :template: deprecated_class.rst
+   :template: function.rst
 
-   covariance.GraphLasso
-   covariance.GraphLassoCV
-   preprocessing.Imputer
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_function.rst
-
-   covariance.graph_lasso
-   datasets.fetch_mldata
-   datasets.mldata_filename
+   ensemble.partial_dependence.partial_dependence
+   ensemble.partial_dependence.plot_partial_dependence
