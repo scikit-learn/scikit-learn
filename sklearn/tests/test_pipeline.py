@@ -336,9 +336,11 @@ def test_pipeline_methods_pca_svm():
 def test_pipeline_score_samples_pca_lof():
     iris = load_iris()
     X = iris.data
-    # Test with PCA + OneClassSVM
-    lof = LocalOutlierFactor(novelty=True)
+    # Test that the score_samples method is implemented on a pipeline.
+    # Test that the score_samples method on pipeline yields same results as
+    # applying transform and score_samples steps separately.
     pca = PCA(svd_solver='full', n_components='mle', whiten=True)
+    lof = LocalOutlierFactor(novelty=True)
     pipe = Pipeline([('pca', pca), ('lof', lof)])
     pipe.fit(X)
     # Check the shapes
@@ -346,6 +348,18 @@ def test_pipeline_score_samples_pca_lof():
     # Check the values
     lof.fit(pca.fit_transform(X))
     assert_allclose(pipe.score_samples(X), lof.score_samples(pca.transform(X)))
+
+
+def test_score_samples_on_pipeline_without_score_samples():
+    # Test that a pipeline does not have score_samples method when the final
+    # step of the pipeline does not have score_samples defined.
+    pca = PCA(svd_solver='full', n_components='mle', whiten=True)
+    clf = LogisticRegression()
+    pipe = Pipeline([('pca', pca), ('clf', clf)])
+    assert_raises_regex(
+            AttributeError,
+            "'LogisticRegression' object has no attribute 'score_samples'",
+            getattr, pipe, 'score_samples')
 
 
 def test_pipeline_methods_preprocessing_svm():
