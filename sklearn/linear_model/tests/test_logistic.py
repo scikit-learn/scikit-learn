@@ -66,7 +66,6 @@ def check_predictions(clf, X, y):
     assert_array_equal(probabilities.argmax(axis=1), y)
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_predict_2_classes():
     # Simple sanity check on a 2 classes dataset
     # Make sure it predicts the correct result on simple datasets.
@@ -82,7 +81,6 @@ def test_predict_2_classes():
                                          random_state=0), X_sp, Y1)
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_error():
     # Test for appropriate exception on errors
     msg = "Penalty term must be positive"
@@ -106,7 +104,6 @@ def test_error():
         assert_raise_message(ValueError, msg, LR(max_iter="test").fit, X, Y1)
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_logistic_cv_mock_scorer():
 
     class MockScorer:
@@ -142,7 +139,7 @@ def test_logistic_cv_mock_scorer():
 
 
 def test_logistic_cv_score_does_not_warn_by_default():
-    lr = LogisticRegressionCV(cv=2, multi_class='ovr')
+    lr = LogisticRegressionCV(cv=2)
     lr.fit(X, Y1)
 
     with pytest.warns(None) as record:
@@ -155,7 +152,7 @@ def test_lr_liblinear_warning():
     n_samples, n_features = iris.data.shape
     target = iris.target_names[iris.target]
 
-    lr = LogisticRegression(solver='liblinear', multi_class='ovr', n_jobs=2)
+    lr = LogisticRegression(solver='liblinear', n_jobs=2)
     assert_warns_message(UserWarning,
                          "'n_jobs' > 1 does not have any effect when"
                          " 'solver' is set to 'liblinear'. Got 'n_jobs'"
@@ -163,7 +160,6 @@ def test_lr_liblinear_warning():
                          lr.fit, iris.data, target)
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_predict_3_classes():
     check_predictions(LogisticRegression(C=10), X, Y2)
     check_predictions(LogisticRegression(C=10), X_sp, Y2)
@@ -209,7 +205,6 @@ def test_multinomial_validation(solver):
     assert_raises(ValueError, lr.fit, [[0, 1], [1, 0]], [0, 1])
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.parametrize('LR', [LogisticRegression, LogisticRegressionCV])
 def test_check_solver_option(LR):
     X, y = iris.data, iris.target
@@ -256,23 +251,6 @@ def test_check_solver_option(LR):
     assert_raise_message(ValueError, msg, lr.fit, X, y)
 
 
-@pytest.mark.parametrize('model, params',
-                         [(LogisticRegression, {}),
-                          (LogisticRegressionCV, {'cv': 5})])
-def test_logistic_regression_warnings(model, params):
-    clf_multi_class_warning = model(**params)
-    clf_no_warnings = model(multi_class='ovr', **params)
-
-    multi_class_warning_msg = "Default multi_class will be changed to 'auto"
-    assert_no_warnings(clf_no_warnings.fit, iris.data, iris.target)
-    assert_warns_message(FutureWarning, multi_class_warning_msg,
-                         clf_multi_class_warning.fit, iris.data, iris.target)
-    # But no warning when binary target:
-    assert_no_warnings(clf_multi_class_warning.fit,
-                       iris.data, iris.target == 0)
-    assert_no_warnings(clf_no_warnings.fit, iris.data, iris.target)
-
-
 @pytest.mark.parametrize('solver', ['lbfgs', 'newton-cg', 'sag', 'saga'])
 def test_multinomial_binary(solver):
     # Test multinomial LR on a binary problem.
@@ -312,7 +290,6 @@ def test_multinomial_binary_probabilities():
     assert_almost_equal(proba, expected_proba)
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_sparsify():
     # Test sparsify and densify members.
     n_samples, n_features = iris.data.shape
@@ -336,7 +313,6 @@ def test_sparsify():
     assert_array_almost_equal(pred_d_d, pred_d_s)
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_inconsistent_input():
     # Test that an exception is raised on inconsistent input
     rng = np.random.RandomState(0)
@@ -355,7 +331,6 @@ def test_inconsistent_input():
                   rng.random_sample((3, 12)))
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_write_parameters():
     # Test that we can write to coef_ and intercept_
     clf = LogisticRegression(random_state=0)
@@ -365,7 +340,6 @@ def test_write_parameters():
     assert_array_almost_equal(clf.decision_function(X), 0)
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_nan():
     # Test proper NaN handling.
     # Regression test for Issue #252: fit used to go into an infinite loop.
@@ -522,7 +496,6 @@ def test_logistic_grad_hess():
         assert_array_almost_equal(grad_interp, grad_interp_2)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_logistic_cv():
     # test for LogisticRegressionCV object
     n_samples, n_features = 50, 5
@@ -532,7 +505,7 @@ def test_logistic_cv():
     X_ref -= X_ref.mean()
     X_ref /= X_ref.std()
     lr_cv = LogisticRegressionCV(Cs=[1.], fit_intercept=False,
-                                 solver='liblinear', multi_class='ovr')
+                                 solver='liblinear', multi_class='ovr', cv=3)
     lr_cv.fit(X_ref, y)
     lr = LogisticRegression(C=1., fit_intercept=False,
                             solver='liblinear', multi_class='ovr')
@@ -550,7 +523,6 @@ def test_logistic_cv():
     assert_array_equal(scores.shape, (1, 3, 1))
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 @pytest.mark.parametrize('scoring, multiclass_agg_list',
                          [('accuracy', ['']),
                           ('precision', ['_macro', '_weighted']),
@@ -584,7 +556,6 @@ def test_logistic_cv_multinomial_score(scoring, multiclass_agg_list):
             scorer(lr, X[test], y[test]))
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_multinomial_logistic_regression_string_inputs():
     # Test with string labels for LogisticRegression(CV)
     n_samples, n_features, n_classes = 50, 5, 3
@@ -624,8 +595,6 @@ def test_multinomial_logistic_regression_string_inputs():
     assert_equal(sorted(np.unique(lr_cv_str.predict(X_ref))), ['bar', 'baz'])
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_logistic_cv_sparse():
     X, y = make_classification(n_samples=50, n_features=5,
                                random_state=0)
@@ -788,7 +757,6 @@ def test_logistic_regression_solvers_multiclass():
     assert_array_almost_equal(saga.coef_, lib.coef_, decimal=4)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_logistic_regressioncv_class_weights():
     for weight in [{0: 0.1, 1: 0.2}, {0: 0.1, 1: 0.2, 2: 0.5}]:
         n_classes = len(weight)
@@ -833,7 +801,6 @@ def test_logistic_regressioncv_class_weights():
             assert_array_almost_equal(clf_saga.coef_, clf_lbf.coef_, decimal=4)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_logistic_regression_sample_weights():
     X, y = make_classification(n_samples=20, n_features=5, n_informative=3,
                                n_classes=2, random_state=0)
@@ -953,7 +920,6 @@ def test_logistic_regression_class_weights():
         assert_array_almost_equal(clf1.coef_, clf2.coef_, decimal=6)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_logistic_regression_multinomial():
     # Tests for the multinomial option in logistic regression
 
@@ -1048,7 +1014,6 @@ def test_liblinear_decision_function_zero():
     assert_array_equal(clf.predict(X), np.zeros(5))
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_liblinear_logregcv_sparse():
     # Test LogRegCV with solver='liblinear' works for sparse matrices
 
@@ -1057,8 +1022,6 @@ def test_liblinear_logregcv_sparse():
     clf.fit(sparse.csr_matrix(X), y)
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_saga_sparse():
     # Test LogRegCV with solver='liblinear' works for sparse matrices
 
@@ -1079,7 +1042,6 @@ def test_logreg_intercept_scaling():
         assert_raise_message(ValueError, msg, clf.fit, X, Y1)
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_logreg_intercept_scaling_zero():
     # Test that intercept_scaling is ignored when fit_intercept is False
 
@@ -1153,8 +1115,6 @@ def test_logreg_l1_sparse_data():
     assert_array_almost_equal(lr_saga.coef_, lr_saga_dense.coef_)
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 @pytest.mark.parametrize("random_seed", [42])
 @pytest.mark.parametrize("penalty", ["l1", "l2"])
 def test_logistic_regression_cv_refit(random_seed, penalty):
@@ -1453,7 +1413,7 @@ def test_elastic_net_vs_l1_l2(C):
 
     enet_clf = LogisticRegression(penalty='elasticnet', C=C, solver='saga',
                                   random_state=0)
-    gs = GridSearchCV(enet_clf, param_grid, cv=5, refit=True)
+    gs = GridSearchCV(enet_clf, param_grid, refit=True)
 
     l1_clf = LogisticRegression(penalty='l1', C=C, solver='saga',
                                 random_state=0)
@@ -1577,7 +1537,7 @@ def test_LogisticRegressionCV_no_refit(multi_class):
     l1_ratios = np.linspace(0, 1, 2)
 
     lrcv = LogisticRegressionCV(penalty='elasticnet', Cs=Cs, solver='saga',
-                                cv=5, l1_ratios=l1_ratios, random_state=0,
+                                l1_ratios=l1_ratios, random_state=0,
                                 multi_class=multi_class, refit=False)
     lrcv.fit(X, y)
     assert lrcv.C_.shape == (n_classes,)
@@ -1585,7 +1545,6 @@ def test_LogisticRegressionCV_no_refit(multi_class):
     assert lrcv.coef_.shape == (n_classes, n_features)
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_LogisticRegressionCV_elasticnet_attribute_shapes():
     # Make sure the shapes of scores_ and coefs_paths_ attributes are correct
     # when using elasticnet (added one dimension for l1_ratios)
@@ -1602,7 +1561,7 @@ def test_LogisticRegressionCV_elasticnet_attribute_shapes():
     n_folds = 2
     lrcv = LogisticRegressionCV(penalty='elasticnet', Cs=Cs, solver='saga',
                                 cv=n_folds, l1_ratios=l1_ratios,
-                                random_state=0)
+                                multi_class='ovr', random_state=0)
     lrcv.fit(X, y)
     coefs_paths = np.asarray(list(lrcv.coefs_paths_.values()))
     assert coefs_paths.shape == (n_classes, n_folds, Cs.size,

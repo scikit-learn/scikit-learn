@@ -287,7 +287,7 @@ class ParameterSampler:
 
 
 def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
-                   verbose, error_score='raise-deprecating', **fit_params):
+                   verbose, error_score=np.nan, **fit_params):
     """Run fit on one set of parameters.
 
     Parameters
@@ -329,8 +329,7 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error. Default is 'raise' but from
-        version 0.22 it will change to np.nan.
+        step, which will always raise the error. Default is ``np.nan``.
 
     Returns
     -------
@@ -381,8 +380,8 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
 
     @abstractmethod
     def __init__(self, estimator, scoring=None, n_jobs=None, iid='deprecated',
-                 refit=True, cv='warn', verbose=0, pre_dispatch='2*n_jobs',
-                 error_score='raise-deprecating', return_train_score=True):
+                 refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs',
+                 error_score=np.nan, return_train_score=True):
 
         self.scoring = scoring
         self.estimator = estimator
@@ -893,7 +892,7 @@ class GridSearchCV(BaseSearchCV):
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 3-fold cross validation,
+        - None, to use the default 5-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -905,9 +904,8 @@ class GridSearchCV(BaseSearchCV):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.20
-            ``cv`` default value if None will change from 3-fold to 5-fold
-            in v0.22.
+        .. versionchanged:: 0.22
+            ``cv`` default value if None changed from 3-fold to 5-fold.
 
     refit : boolean, string, or callable, default=True
         Refit an estimator using the best found parameters on the whole
@@ -943,8 +941,7 @@ class GridSearchCV(BaseSearchCV):
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error. Default is 'raise' but from
-        version 0.22 it will change to np.nan.
+        step, which will always raise the error. Default is ``np.nan``.
 
     return_train_score : boolean, default=False
         If ``False``, the ``cv_results_`` attribute will not include training
@@ -963,10 +960,10 @@ class GridSearchCV(BaseSearchCV):
     >>> iris = datasets.load_iris()
     >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
     >>> svc = svm.SVC()
-    >>> clf = GridSearchCV(svc, parameters, cv=5)
+    >>> clf = GridSearchCV(svc, parameters)
     >>> clf.fit(iris.data, iris.target)
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    GridSearchCV(cv=5, error_score=...,
+    GridSearchCV(cv=None, error_score=...,
            estimator=SVC(C=1.0, break_ties=False, cache_size=...,
                          class_weight=..., coef0=...,
                          decision_function_shape='ovr', degree=..., gamma=...,
@@ -1118,9 +1115,9 @@ class GridSearchCV(BaseSearchCV):
     _required_parameters = ["estimator", "param_grid"]
 
     def __init__(self, estimator, param_grid, scoring=None,
-                 n_jobs=None, iid='deprecated', refit=True, cv='warn',
+                 n_jobs=None, iid='deprecated', refit=True, cv=None,
                  verbose=0, pre_dispatch='2*n_jobs',
-                 error_score='raise-deprecating', return_train_score=False):
+                 error_score=np.nan, return_train_score=False):
         super().__init__(
             estimator=estimator, scoring=scoring,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
@@ -1233,7 +1230,7 @@ class RandomizedSearchCV(BaseSearchCV):
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 3-fold cross validation,
+        - None, to use the default 5-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -1245,9 +1242,8 @@ class RandomizedSearchCV(BaseSearchCV):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.20
-            ``cv`` default value if None will change from 3-fold to 5-fold
-            in v0.22.
+        .. versionchanged:: 0.22
+            ``cv`` default value if None changed from 3-fold to 5-fold.
 
     refit : boolean, string, or callable, default=True
         Refit an estimator using the best found parameters on the whole
@@ -1291,8 +1287,7 @@ class RandomizedSearchCV(BaseSearchCV):
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error. Default is 'raise' but from
-        version 0.22 it will change to np.nan.
+        step, which will always raise the error. Default is ``np.nan``.
 
     return_train_score : boolean, default=False
         If ``False``, the ``cv_results_`` attribute will not include training
@@ -1431,8 +1426,8 @@ class RandomizedSearchCV(BaseSearchCV):
 
     def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
                  n_jobs=None, iid='deprecated', refit=True,
-                 cv='warn', verbose=0, pre_dispatch='2*n_jobs',
-                 random_state=None, error_score='raise-deprecating',
+                 cv=None, verbose=0, pre_dispatch='2*n_jobs',
+                 random_state=None, error_score=np.nan,
                  return_train_score=False):
         self.param_distributions = param_distributions
         self.n_iter = n_iter

@@ -504,9 +504,8 @@ Continuing the example above::
   >>> enc = preprocessing.OneHotEncoder()
   >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
   >>> enc.fit(X)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-  OneHotEncoder(categorical_features=None, categories=None, drop=None,
-         dtype=<... 'numpy.float64'>, handle_unknown='error',
-         n_values=None, sparse=True)
+  OneHotEncoder(categories='auto', drop=None, dtype=<... 'numpy.float64'>,
+                handle_unknown='error', sparse=True)
   >>> enc.transform([['female', 'from US', 'uses Safari'],
   ...                ['male', 'from Europe', 'uses Safari']]).toarray()
   array([[1., 0., 0., 1., 0., 1.],
@@ -530,10 +529,8 @@ dataset::
     >>> # feature
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
     >>> enc.fit(X) # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    OneHotEncoder(categorical_features=None,
-           categories=[...], drop=None,
-           dtype=<... 'numpy.float64'>, handle_unknown='error',
-           n_values=None, sparse=True)
+    OneHotEncoder(categories=[...], drop=None, dtype=<... 'numpy.float64'>,
+                  handle_unknown='error', sparse=True)
     >>> enc.transform([['female', 'from Asia', 'uses Chrome']]).toarray()
     array([[1., 0., 0., 1., 0., 0., 1., 0., 0., 0.]])
 
@@ -548,9 +545,8 @@ columns for this feature will be all zeros
     >>> enc = preprocessing.OneHotEncoder(handle_unknown='ignore')
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
     >>> enc.fit(X) # doctest: +ELLIPSIS  +NORMALIZE_WHITESPACE
-    OneHotEncoder(categorical_features=None, categories=None, drop=None,
-           dtype=<... 'numpy.float64'>, handle_unknown='ignore',
-           n_values=None, sparse=True)
+    OneHotEncoder(categories='auto', drop=None, dtype=<... 'numpy.float64'>,
+                  handle_unknown='ignore', sparse=True)
     >>> enc.transform([['female', 'from Asia', 'uses Chrome']]).toarray()
     array([[1., 0., 0., 0., 0., 0.]])
 
