@@ -24,11 +24,13 @@ from sklearn.datasets import make_regression
 print("*" * 80)
 print("Regression example")
 print("*" * 80)
-print("Since all features are informative the LinearRegression model should capture perfect score")
-print("while the DummyRegressor should give a near non-X dependent result (a poor 0 score)")
+print("Since all features are informative the LinearRegression model should")
+print("capture perfect score while the DummyRegressor should give a near")
+print("non-X dependent result (a poor 0 score)")
 
 
-X, y = make_regression(random_state=0, n_samples=1000, n_features=100,n_informative=100)
+X, y = make_regression(random_state=0, n_samples=1000, n_features=100,
+                       n_informative=100)
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
@@ -44,17 +46,19 @@ print("Linear regression score {}".format(clf.score(X_test, y_test)))
 print("*" * 80)
 print("Time series regression example")
 print("*" * 80)
-print("Since this is a fibonnaci alike series, the last element is a good predictor of the next one,")
-print("giving the dummy regressor an informative score (in this case a score between 0 and 1).")
-print("But the linear regression should capture the full relationship between N and its two previous")
-print("elements (score near 1).")
+print("Since this is a fibonnaci alike series, the last element is a good")
+print("predictor of the next one, giving the dummy regressor an informative")
+print("score (in this case a score between 0 and 1).")
+print("But the linear regression should capture the full relationship")
+print("between N and its two previous elements (score near 1).")
 
 # sample time series with a linear relationship N = (N-1) + (N-2)
 full_time_series = [1, 2, 3, 5, 8, 13, 21, 34, 55, 87, 142]
 
 # splits the time series in a rolling window of size 2
 steps_for_prediction = 2
-X = [full_time_series[i:i+steps_for_prediction] for i in range(len(full_time_series) - steps_for_prediction)]
+count = len(full_time_series) - steps_for_prediction
+X = [full_time_series[i:i+steps_for_prediction] for i in range(count)]
 
 # y is the next step
 y = full_time_series[steps_for_prediction:]
@@ -70,17 +74,19 @@ clf.fit(X_train, y_train)
 print("Linear regression score {}".format(clf.score(X_test, y_test)))
 
 
-
 print("*" * 80)
 print("Classification example")
 print("*" * 80)
-print("Since the relationship between y and X is linear (X > 500 => 1), logistic regression")
-print("should give a near perfect score (1) while the default DummyClassifier will give a near 0.5 result.")
+print("Since the relationship between y and X is linear ")
+print("(X > 500 => 1), logistic regression should give a")
+print("near perfect score (1) while the default")
+print("DummyClassifier will give a near 0.5 result.")
 
 X = [[x] for x in range(1000)]
 y = np.array([x > 500 for x in range(1000)]) * 1
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0, stratify = y)
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0,
+                                                    stratify=y)
 
 clf = DummyClassifier(random_state=0)
 clf.fit(X_train, y_train)
