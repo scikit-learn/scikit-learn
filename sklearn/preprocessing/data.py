@@ -265,7 +265,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     >>> data = [[-1, 2], [-0.5, 6], [0, 10], [1, 18]]
     >>> scaler = MinMaxScaler()
     >>> print(scaler.fit(data))
-    MinMaxScaler(copy=True, feature_range=(0, 1))
+    MinMaxScaler()
     >>> print(scaler.data_max_)
     [ 1. 18.]
     >>> print(scaler.transform(data))
@@ -570,7 +570,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     >>> data = [[0, 0], [0, 0], [1, 1], [1, 1]]
     >>> scaler = StandardScaler()
     >>> print(scaler.fit(data))
-    StandardScaler(copy=True, with_mean=True, with_std=True)
+    StandardScaler()
     >>> print(scaler.mean_)
     [0.5 0.5]
     >>> print(scaler.transform(data))
@@ -856,7 +856,7 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
     ...      [ 0.,  1., -1.]]
     >>> transformer = MaxAbsScaler().fit(X)
     >>> transformer
-    MaxAbsScaler(copy=True)
+    MaxAbsScaler()
     >>> transformer.transform(X)
     array([[ 0.5, -1. ,  1. ],
            [ 1. ,  0. ,  0. ],
@@ -1109,9 +1109,8 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     ...      [ -2.,  1.,  3.],
     ...      [ 4.,  1., -2.]]
     >>> transformer = RobustScaler().fit(X)
-    >>> transformer  # doctest: +NORMALIZE_WHITESPACE
-    RobustScaler(copy=True, quantile_range=(25.0, 75.0), with_centering=True,
-           with_scaling=True)
+    >>> transformer
+    RobustScaler()
     >>> transformer.transform(X)
     array([[ 0. , -2. ,  0. ],
            [-1. ,  0. ,  0.4],
@@ -1685,7 +1684,7 @@ class Normalizer(BaseEstimator, TransformerMixin):
     ...      [5, 7, 5, 1]]
     >>> transformer = Normalizer().fit(X)  # fit does nothing.
     >>> transformer
-    Normalizer(copy=True, norm='l2')
+    Normalizer()
     >>> transformer.transform(X)
     array([[0.8, 0.2, 0.4, 0.4],
            [0.1, 0.3, 0.9, 0.3],
@@ -1821,7 +1820,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
     ...      [ 0.,  1., -1.]]
     >>> transformer = Binarizer().fit(X)  # fit does nothing.
     >>> transformer
-    Binarizer(copy=True, threshold=0.0)
+    Binarizer()
     >>> transformer.transform(X)
     array([[1., 0., 1.],
            [1., 0., 0.],
@@ -2097,7 +2096,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
     >>> rng = np.random.RandomState(0)
     >>> X = np.sort(rng.normal(loc=0.5, scale=0.25, size=(25, 1)), axis=0)
     >>> qt = QuantileTransformer(n_quantiles=10, random_state=0)
-    >>> qt.fit_transform(X) # doctest: +ELLIPSIS
+    >>> qt.fit_transform(X)
     array([...])
 
     See also
@@ -2518,7 +2517,6 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
     >>> rng = np.random.RandomState(0)
     >>> X = np.sort(rng.normal(loc=0.5, scale=0.25, size=(25, 1)), axis=0)
     >>> quantile_transform(X, n_quantiles=10, random_state=0, copy=True)
-    ... # doctest: +ELLIPSIS
     array([...])
 
     See also
@@ -2615,7 +2613,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     >>> pt = PowerTransformer()
     >>> data = [[1, 2], [3, 2], [4, 5]]
     >>> print(pt.fit(data))
-    PowerTransformer(copy=True, method='yeo-johnson', standardize=True)
+    PowerTransformer()
     >>> print(pt.lambdas_)
     [ 1.386... -3.100...]
     >>> print(pt.transform(data))
@@ -2968,7 +2966,7 @@ def power_transform(X, method='warn', standardize=True, copy=True):
     >>> import numpy as np
     >>> from sklearn.preprocessing import power_transform
     >>> data = [[1, 2], [3, 2], [4, 5]]
-    >>> print(power_transform(data, method='box-cox'))  # doctest: +ELLIPSIS
+    >>> print(power_transform(data, method='box-cox'))
     [[-1.332... -0.707...]
      [ 0.256... -0.707...]
      [ 1.076...  1.414...]]

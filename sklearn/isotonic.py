@@ -216,7 +216,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
     >>> from sklearn.isotonic import IsotonicRegression
     >>> X, y = make_regression(n_samples=10, n_features=1, random_state=41)
     >>> iso_reg = IsotonicRegression().fit(X.flatten(), y)
-    >>> iso_reg.predict([.1, .2])  # doctest: +ELLIPSIS
+    >>> iso_reg.predict([.1, .2])
     array([1.8628..., 3.7256...])
     """
     def __init__(self, y_min=None, y_max=None, increasing=True,

@@ -962,20 +962,9 @@ class GridSearchCV(BaseSearchCV):
     >>> svc = svm.SVC()
     >>> clf = GridSearchCV(svc, parameters)
     >>> clf.fit(iris.data, iris.target)
-    ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    GridSearchCV(cv=None, error_score=...,
-           estimator=SVC(C=1.0, break_ties=False, cache_size=...,
-                         class_weight=..., coef0=...,
-                         decision_function_shape='ovr', degree=..., gamma=...,
-                         kernel='rbf', max_iter=-1,
-                         probability=False,
-                         random_state=None, shrinking=True,
-                         tol=..., verbose=False),
-           iid=..., n_jobs=None,
-           param_grid=..., pre_dispatch=..., refit=..., return_train_score=...,
-           scoring=..., verbose=...)
+    GridSearchCV(estimator=SVC(),
+                 param_grid={'C': [1, 10], 'kernel': ('linear', 'rbf')})
     >>> sorted(clf.cv_results_.keys())
-    ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     ['mean_fit_time', 'mean_score_time', 'mean_test_score',...
      'param_C', 'param_kernel', 'params',...
      'rank_test_score', 'split0_test_score',...

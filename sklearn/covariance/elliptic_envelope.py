@@ -82,7 +82,7 @@ class EllipticEnvelope(MinCovDet, OutlierMixin):
     >>> cov.predict([[0, 0],
     ...              [3, 3]])
     array([ 1, -1])
-    >>> cov.covariance_ # doctest: +ELLIPSIS
+    >>> cov.covariance_
     array([[0.7411..., 0.2535...],
            [0.2535..., 0.3053...]])
     >>> cov.location_
