@@ -738,3 +738,57 @@ def test_dtype_of_classifier_probas(strategy):
     probas = model.fit(X, y).predict_proba(X)
 
     assert probas.dtype == np.float64
+
+
+def test_series_last_strategy():
+    X = [[0]] * 5  # ignored
+    y = [1, 2, 3, 4, 5]  # ignored
+    clf = DummyRegressor(strategy="series_last")
+    clf.fit(X, y)
+
+    X = [[1, 2, 3], [2, 3, 4], [3, 4, 5], [4, 5, 6]]
+    y_pred = clf.predict(X)
+
+    y_expected = [3, 4, 5, 6]
+    assert_array_almost_equal(y_expected, y_pred)
+
+
+def test_series_last_strategy_with_extra_dimension():
+    X = [[0]] * 5  # ignored
+    y = [1, 2, 3, 4, 5]  # ignored
+    clf = DummyRegressor(strategy="series_last")
+    clf.fit(X, y)
+
+    X = [[[1, 1], [2, 2], [3, 3]], [[2, 2], [3, 3], [4, 4]],
+         [[3, 3], [4, 4], [5, 5]], [[4, 4], [5, 5], [6, 6]]]
+    y_pred = clf.predict(X)
+
+    y_expected = [[3, 3], [4, 4], [5, 5], [6, 6]]
+    assert_array_almost_equal(y_expected, y_pred)
+
+
+def test_series_average_strategy():
+    X = [[0]] * 5  # ignored
+    y = [1, 2, 3, 4, 5]  # ignored
+    clf = DummyRegressor(strategy="series_average")
+    clf.fit(X, y)
+
+    X = [[1, 2, 3], [2, 3, 4], [3, 4, 5], [4, 5, 6]]
+    y_pred = clf.predict(X)
+
+    y_expected = [2, 3, 4, 5]
+    assert_array_almost_equal(y_expected, y_pred)
+
+
+def test_series_average_strategy_with_extra_dimension():
+    X = [[0]] * 5  # ignored
+    y = [1, 2, 3, 4, 5]  # ignored
+    clf = DummyRegressor(strategy="series_average")
+    clf.fit(X, y)
+
+    X = [[[1, 1], [2, 2], [9, 9]], [[2, 2], [3, 3], [10, 10]],
+         [[3, 3], [4, 4], [11, 11]], [[4, 4], [5, 5], [12, 12]]]
+    y_pred = clf.predict(X)
+
+    y_expected = [[4, 4], [5, 5], [6, 6], [7, 7]]
+    assert_array_almost_equal(y_expected, y_pred)

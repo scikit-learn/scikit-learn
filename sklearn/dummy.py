@@ -374,6 +374,8 @@ class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
           provided with the quantile parameter.
         * "constant": always predicts a constant value that is provided by
           the user.
+        * "series_last": Predicts the last element of x for each series x in X.
+        * "series_average": Predicts the average of x for each series x in X.
 
     constant : int or float or array of shape = [n_outputs]
         The explicit constant as predicted by the "constant" strategy. This
@@ -417,7 +419,8 @@ class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
         -------
         self : object
         """
-        allowed_strategies = ("mean", "median", "quantile", "constant")
+        allowed_strategies = ("mean", "median", "quantile", "constant",
+                              "series_last", "series_average")
         if self.strategy not in allowed_strategies:
             raise ValueError("Unknown strategy type: %s, expected one of %s."
                              % (self.strategy, allowed_strategies))
@@ -473,6 +476,9 @@ class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
                     "shape (%d, 1)." % y.shape[1])
 
             self.constant_ = self.constant
+        else:
+            # other strategies are non-constant
+            return self
 
         self.constant_ = np.reshape(self.constant_, (1, -1))
         return self
@@ -498,6 +504,14 @@ class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
         y_std : array, shape = [n_samples] or [n_samples, n_outputs]
             Standard deviation of predictive distribution of query points.
         """
+
+        if self.strategy == "series_last":
+            X = check_array(X, allow_nd=True)
+            return X[:, -1]
+
+        elif self.strategy == "series_average":
+            return np.mean(X, axis=1)
+
         check_is_fitted(self, "constant_")
         n_samples = _num_samples(X)
 
