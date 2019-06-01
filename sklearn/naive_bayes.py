@@ -26,6 +26,7 @@ from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize
 from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
+from .linear_model import LinearRegression
 from .utils import check_X_y, check_array, check_consistent_length
 from .utils.extmath import safe_sparse_dot
 from .utils.fixes import logsumexp
@@ -647,8 +648,11 @@ class MultinomialNB(BaseDiscreteNB):
     Parameters
     ----------
     alpha : float, optional (default=1.0)
-        Additive (Laplace/Lidstone) smoothing parameter
-        (0 for no smoothing).
+        Smoothing parameter (0 for no smoothing).
+
+    smoothing : string, optional (default='additive')
+        Smoothing method to perform before
+        updating the log probabilities
 
     fit_prior : boolean, optional (default=True)
         Whether to learn class prior probabilities or not.
@@ -692,7 +696,8 @@ class MultinomialNB(BaseDiscreteNB):
     >>> from sklearn.naive_bayes import MultinomialNB
     >>> clf = MultinomialNB()
     >>> clf.fit(X, y)
-    MultinomialNB(alpha=1.0, class_prior=None, fit_prior=True)
+    MultinomialNB(alpha=1.0, class_prior=None,
+            fit_prior=True, smoothing='additive')
     >>> print(clf.predict(X[2:3]))
     [3]
 
@@ -707,10 +712,16 @@ class MultinomialNB(BaseDiscreteNB):
     C.D. Manning, P. Raghavan and H. Schuetze (2008). Introduction to
     Information Retrieval. Cambridge University Press, pp. 234-265.
     https://nlp.stanford.edu/IR-book/html/htmledition/naive-bayes-text-classification-1.html
+
+    Gale, William A., and Geoffrey Sampson. 1996. Good-Turing Frequency
+    Estimation without Tears. Brighton: University of Sussex.
+    https://www.grsampson.net/AGtf1.html
     """
 
-    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
+    def __init__(self, alpha=1.0, smoothing='additive',
+                 fit_prior=True, class_prior=None):
         self.alpha = alpha
+        self.smoothing = smoothing
         self.fit_prior = fit_prior
         self.class_prior = class_prior
 
@@ -723,11 +734,16 @@ class MultinomialNB(BaseDiscreteNB):
 
     def _update_feature_log_prob(self, alpha):
         """Apply smoothing to raw counts and recompute log probabilities"""
-        smoothed_fc = self.feature_count_ + alpha
-        smoothed_cc = smoothed_fc.sum(axis=1)
-
-        self.feature_log_prob_ = (np.log(smoothed_fc) -
-                                  np.log(smoothed_cc.reshape(-1, 1)))
+        if self.smoothing == 'additive':
+            self.feature_log_prob_ = self._additive_smoothing(alpha)
+        elif self.smoothing == 'good-turing':
+            self.feature_log_prob_ = self._simple_good_turing()
+        elif self.smoothing == 'jelinek_mercer':
+            self.feature_log_prob_ = self._jelinek_mercer(alpha)
+        elif self.smoothing == 'absolute_discounting':
+            self.feature_log_prob_ = self._absolute_discounting(alpha)
+        else:
+            raise ValueError("unknown smoothing algorithm %r" % self.smoothing)
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
@@ -736,6 +752,92 @@ class MultinomialNB(BaseDiscreteNB):
         X = check_array(X, accept_sparse='csr')
         return (safe_sparse_dot(X, self.feature_log_prob_.T) +
                 self.class_log_prior_)
+
+    def _additive_smoothing(self, alpha):
+        """Compute log probabilities using additive smoothing"""
+        smoothed_fc = self.feature_count_ + alpha
+        smoothed_cc = smoothed_fc.sum(axis=1)
+        return np.log(smoothed_fc) - np.log(smoothed_cc.reshape(-1, 1))
+
+    def _simple_good_turing(self):
+        """Compute log probabilities using Simple Good-Turing smoothing"""
+        def sgt(fc):
+            # Get the frequencies of frequencies
+            n = dict()
+            for r in fc:
+                if r == 0:
+                    continue
+                n[r] = n.get(r, 0) + 1
+
+            # Compute the Z values
+            r = np.array(sorted(n.items(), key=lambda keyval: keyval[0]),
+                         dtype='int')[:, 0]
+            n = np.array(sorted(n.items(), key=lambda keyval: keyval[0]),
+                         dtype='int')[:, 1]
+            Z = dict()
+            Z[r[0]] = 2*n[0] / r[1]
+            Z[r[-1]] = n[-1] / (r[-1] - r[-2])
+            for (idx, j) in enumerate(r):
+                if idx == 0 or idx >= len(r) - 1:
+                    continue
+                i = r[idx-1]
+                k = r[idx+1]
+                Z[j] = 2*n[idx]/(k-i)
+            Z = np.array(sorted(Z.items()))[:, 1]
+
+            # Compute S using linear regression
+            log_r = np.log10(r).reshape(-1, 1)
+            log_Z = np.log10(Z).reshape(-1, 1)
+            reg = LinearRegression().fit(log_r, log_Z)
+            a, b = reg.intercept_, reg.coef_[0]
+            S = np.power(10, a+b*np.log(np.arange(1, np.max(r)+2)))
+
+            # Compute r*
+            r_star = np.zeros(len(r))
+            y = (r+1)*(S[r]/S[r-1])
+            x = (r+1)*(np.roll(n, -1)/n)
+            threshold = 1.96*np.sqrt(((r+1)**2)*(np.roll(n, -1)/n**2) *
+                                     (1+(np.roll(n, -1)/n)))
+            ineq_does_not_hold = np.where(np.abs(x-y) <= threshold)
+            if ineq_does_not_hold[0].size > 0:
+                cease_x_idx = np.min(ineq_does_not_hold)
+            else:  # this is unlikely to happen in practice
+                cease_x_idx = len(r_star) - 1
+            r_star[:cease_x_idx] = x[:cease_x_idx]
+            r_star[cease_x_idx:] = y[cease_x_idx:]
+
+            # Compute the probabilities of each frequency
+            P_0 = n[0]/fc.sum()
+            N_prime = np.inner(n, r_star)
+            p_r = (1-P_0)*(r_star/N_prime)
+
+            # Calculate probabilities for each feature
+            total_unseen = np.count_nonzero(fc == 0)
+            unseen_prob = P_0/total_unseen
+            prob = np.zeros(fc.size)
+            for i in range(len(p_r)):
+                idx = np.where(fc == r[i])
+                prob[idx] = p_r[i]
+            prob[np.where(fc == 0)] = unseen_prob
+
+            return np.log(prob)
+
+        return np.apply_along_axis(sgt, 1, self.feature_count_)
+
+    def _jelinek_mercer(self, lam):
+        """Compute log probabilities using Jelinek-Mercer smoothing"""
+        fc = self.feature_count_
+        mle = fc.sum(axis=0)/fc.sum()
+        return np.log((1-lam)*(fc/fc.sum(axis=1).reshape(-1, 1)) + lam*mle)
+
+    def _absolute_discounting(self, delta):
+        """Compute log probabilities using Absolute Discounting smoothing"""
+        fc = self.feature_count_
+        mle = fc.sum(axis=0)/fc.sum()
+        count_unique = np.count_nonzero(fc, axis=1).reshape(-1, 1)
+        cc = fc.sum(axis=1).reshape(-1, 1)
+        return (np.log(np.maximum(fc - delta, 0) + delta*count_unique*mle) -
+                np.log(cc))
 
 
 class ComplementNB(BaseDiscreteNB):
