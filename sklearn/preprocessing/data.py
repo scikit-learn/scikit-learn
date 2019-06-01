@@ -348,7 +348,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
             raise TypeError("MinMaxScaler does no support sparse input. "
                             "You may consider to use MaxAbsScaler instead.")
 
-        X = check_array(X, copy=self.copy,
+        X = check_array(X,
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite="allow-nan")
 
@@ -658,7 +658,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         y
             Ignored
         """
-        X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
+        X = check_array(X, accept_sparse=('csr', 'csc'),
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
 
@@ -921,7 +921,7 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
         y
             Ignored
         """
-        X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
+        X = check_array(X, accept_sparse=('csr', 'csc'),
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
 
@@ -1153,7 +1153,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         """
         # at fit, convert sparse matrices to csc for optimized computation of
         # the quantiles
-        X = check_array(X, accept_sparse='csc', copy=self.copy, estimator=self,
+        X = check_array(X, accept_sparse='csc', estimator=self,
                         dtype=FLOAT_DTYPES, force_all_finite='allow-nan')
 
         q_min, q_max = self.quantile_range
@@ -2229,7 +2229,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                              " and {} samples.".format(self.n_quantiles,
                                                        self.subsample))
 
-        X = self._check_inputs(X)
+        X = self._check_inputs(X, copy=False)
         n_samples = X.shape[0]
 
         if self.n_quantiles > n_samples:
@@ -2320,9 +2320,9 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
         return X_col
 
-    def _check_inputs(self, X, accept_sparse_negative=False):
+    def _check_inputs(self, X, accept_sparse_negative=False, copy=False):
         """Check inputs before fit and transform"""
-        X = check_array(X, accept_sparse='csc', copy=self.copy,
+        X = check_array(X, accept_sparse='csc', copy=copy,
                         dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
         # we only accept positive sparse matrix when ignore_implicit_zeros is
@@ -2400,7 +2400,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         Xt : ndarray or sparse matrix, shape (n_samples, n_features)
             The projected data.
         """
-        X = self._check_inputs(X)
+        X = self._check_inputs(X, copy=self.copy)
         self._check_is_fitted(X)
 
         return self._transform(X, inverse=False)
@@ -2421,7 +2421,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         Xt : ndarray or sparse matrix, shape (n_samples, n_features)
             The projected data.
         """
-        X = self._check_inputs(X, accept_sparse_negative=True)
+        X = self._check_inputs(X, accept_sparse_negative=True, copy=self.copy)
         self._check_is_fitted(X)
 
         return self._transform(X, inverse=True)
