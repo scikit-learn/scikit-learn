@@ -1988,12 +1988,14 @@ probably means that something went wrong: features are not helpful, a
 hyperparameter is not correctly tuned, the classifier is suffering from class
 imbalance, etc...
 
-:class:`DummyRegressor` also implements four simple rules of thumb for regression:
+:class:`DummyRegressor` also implements six simple rules of thumb for regression:
 
 - ``mean`` always predicts the mean of the training targets.
 - ``median`` always predicts the median of the training targets.
 - ``quantile`` always predicts a user provided quantile of the training targets.
 - ``constant`` always predicts a constant value that is provided by the user.
+- ``series_mean`` always predicts the mean of a testing sample.
+- ``series_last`` always predicts the last element of a testing sample.
 
-In all these strategies, the ``predict`` method completely ignores
+In all but the ``series`` strategies, the ``predict`` method completely ignores
 the input data.
