@@ -375,7 +375,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
         * "constant": always predicts a constant value that is provided by
           the user.
         * "series_last": Predicts the last element of x for each series x in X.
-        * "series_average": Predicts the average of x for each series x in X.
+        * "series_mean": Predicts the mean of x for each series x in X.
 
     constant : int or float or array of shape = [n_outputs]
         The explicit constant as predicted by the "constant" strategy. This
@@ -420,7 +420,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
         self : object
         """
         allowed_strategies = ("mean", "median", "quantile", "constant",
-                              "series_last", "series_average")
+                              "series_last", "series_mean")
         if self.strategy not in allowed_strategies:
             raise ValueError("Unknown strategy type: %s, expected one of %s."
                              % (self.strategy, allowed_strategies))
@@ -509,7 +509,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
             X = check_array(X, allow_nd=True)
             return X[:, -1]
 
-        elif self.strategy == "series_average":
+        elif self.strategy == "series_mean":
             return np.mean(X, axis=1)
 
         check_is_fitted(self, "constant_")

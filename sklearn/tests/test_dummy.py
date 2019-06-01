@@ -767,10 +767,10 @@ def test_series_last_strategy_with_extra_dimension():
     assert_array_almost_equal(y_expected, y_pred)
 
 
-def test_series_average_strategy():
+def test_series_mean_strategy():
     X = [[0]] * 5  # ignored
     y = [1, 2, 3, 4, 5]  # ignored
-    clf = DummyRegressor(strategy="series_average")
+    clf = DummyRegressor(strategy="series_mean")
     clf.fit(X, y)
 
     X = [[1, 2, 3], [2, 3, 4], [3, 4, 5], [4, 5, 6]]
@@ -780,10 +780,10 @@ def test_series_average_strategy():
     assert_array_almost_equal(y_expected, y_pred)
 
 
-def test_series_average_strategy_with_extra_dimension():
+def test_series_mean_strategy_with_extra_dimension():
     X = [[0]] * 5  # ignored
     y = [1, 2, 3, 4, 5]  # ignored
-    clf = DummyRegressor(strategy="series_average")
+    clf = DummyRegressor(strategy="series_mean")
     clf.fit(X, y)
 
     X = [[[1, 1], [2, 2], [9, 9]], [[2, 2], [3, 3], [10, 10]],
