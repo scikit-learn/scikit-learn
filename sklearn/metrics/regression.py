@@ -165,7 +165,6 @@ def mean_absolute_error(y_true, y_pred,
     >>> mean_absolute_error(y_true, y_pred, multioutput='raw_values')
     array([0.5, 1. ])
     >>> mean_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
-    ... # doctest: +ELLIPSIS
     0.85...
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
@@ -227,13 +226,11 @@ def mean_squared_error(y_true, y_pred,
     0.375
     >>> y_true = [[0.5, 1],[-1, 1],[7, -6]]
     >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
-    >>> mean_squared_error(y_true, y_pred)  # doctest: +ELLIPSIS
+    >>> mean_squared_error(y_true, y_pred)
     0.708...
     >>> mean_squared_error(y_true, y_pred, multioutput='raw_values')
-    ... # doctest: +ELLIPSIS
     array([0.41666667, 1.        ])
     >>> mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7])
-    ... # doctest: +ELLIPSIS
     0.825...
 
     """
@@ -294,17 +291,15 @@ def mean_squared_log_error(y_true, y_pred,
     >>> from sklearn.metrics import mean_squared_log_error
     >>> y_true = [3, 5, 2.5, 7]
     >>> y_pred = [2.5, 5, 4, 8]
-    >>> mean_squared_log_error(y_true, y_pred)  # doctest: +ELLIPSIS
+    >>> mean_squared_log_error(y_true, y_pred)
     0.039...
     >>> y_true = [[0.5, 1], [1, 2], [7, 6]]
     >>> y_pred = [[0.5, 2], [1, 2.5], [8, 8]]
-    >>> mean_squared_log_error(y_true, y_pred)  # doctest: +ELLIPSIS
+    >>> mean_squared_log_error(y_true, y_pred)
     0.044...
     >>> mean_squared_log_error(y_true, y_pred, multioutput='raw_values')
-    ... # doctest: +ELLIPSIS
     array([0.00462428, 0.08377444])
     >>> mean_squared_log_error(y_true, y_pred, multioutput=[0.3, 0.7])
-    ... # doctest: +ELLIPSIS
     0.060...
 
     """
@@ -402,12 +397,11 @@ def explained_variance_score(y_true, y_pred,
     >>> from sklearn.metrics import explained_variance_score
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
-    >>> explained_variance_score(y_true, y_pred)  # doctest: +ELLIPSIS
+    >>> explained_variance_score(y_true, y_pred)
     0.957...
     >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> explained_variance_score(y_true, y_pred, multioutput='uniform_average')
-    ... # doctest: +ELLIPSIS
     0.983...
 
     """
@@ -514,12 +508,12 @@ def r2_score(y_true, y_pred, sample_weight=None,
     >>> from sklearn.metrics import r2_score
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
-    >>> r2_score(y_true, y_pred)  # doctest: +ELLIPSIS
+    >>> r2_score(y_true, y_pred)
     0.948...
     >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> r2_score(y_true, y_pred,
-    ...          multioutput='variance_weighted') # doctest: +ELLIPSIS
+    ...          multioutput='variance_weighted')
     0.938...
     >>> y_true = [1, 2, 3]
     >>> y_pred = [1, 2, 3]

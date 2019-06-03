@@ -13,21 +13,7 @@ cimport numpy as np
 from .types cimport X_DTYPE_C
 from .types cimport Y_DTYPE_C
 from .types cimport X_BINNED_DTYPE_C
-
-
-cdef packed struct node_struct:
-    # Equivalent struct to PREDICTOR_RECORD_DTYPE to use in memory views. It
-    # needs to be packed since by default numpy dtypes aren't aligned
-    Y_DTYPE_C value
-    unsigned int count
-    unsigned int feature_idx
-    X_DTYPE_C threshold
-    unsigned int left
-    unsigned int right
-    Y_DTYPE_C gain
-    unsigned int depth
-    unsigned char is_leaf
-    X_BINNED_DTYPE_C bin_threshold
+from .types cimport node_struct
 
 
 def _predict_from_numeric_data(nodes, numeric_data, out):

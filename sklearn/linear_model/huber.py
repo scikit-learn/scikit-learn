@@ -202,7 +202,7 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     >>> X[:4] = rng.uniform(10, 20, (4, 2))
     >>> y[:4] = rng.uniform(10, 20, 4)
     >>> huber = HuberRegressor().fit(X, y)
-    >>> huber.score(X, y) # doctest: +ELLIPSIS
+    >>> huber.score(X, y)
     -7.284608623514573
     >>> huber.predict(X[:1,])
     array([806.7200...])
