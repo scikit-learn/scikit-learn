@@ -37,5 +37,5 @@ cp setup.cfg $TEST_DIR
 cd $TEST_DIR
 
 set -x
-$TEST_CMD --pyargs sklearn.model_selection
+$TEST_CMD --pyargs sklearn
 set +x
