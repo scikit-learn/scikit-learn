@@ -271,8 +271,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
         if not converged:
             warnings.warn("Optimization step did not converge. Increase the "
                           "number of iterations.", ConvergenceWarning)
-            # recompute coef_ and scores_ for consistency
-            # if converged is False
+            # recompute coef_ and scores_ for consistency if not converged
             coef_, rmse_ = self._update_coef_(X, y, n_samples, n_features,
                                               XT_y, U, Vh, eigen_vals_,
                                               alpha_, lambda_)
@@ -615,11 +614,9 @@ class ARDRegression(LinearModel, RegressorMixin):
 
             # Compute the objective function
             if self.compute_score:
-                L = L_offset + alpha_1_post * log(alpha_) - alpha_2 * alpha_
-                L += (lambda_1_post * np.log(lambda_) -
-                      lambda_2 * lambda_).sum()
-                L += 0.5 * (fast_logdet(sigma_) - alpha_ * rmse_ -
-                            (lambda_ * coef_ ** 2).sum())
+                L = self._compute_log_likelihood(n_samples, alpha_, lambda_,
+                                                 coef_, sigma_, rmse_,
+                                                 L_offset)
                 self.scores_.append(L)
 
             # Check for convergence
@@ -645,6 +642,16 @@ class ARDRegression(LinearModel, RegressorMixin):
         if not converged:
             warnings.warn("Optimization step did not converge. Increase the "
                           "number of iterations.", ConvergenceWarning)
+            # recompute coef_ and scores_ for consistence if not converged
+            sigma_ = update_sigma(X, alpha_, lambda_, keep_lambda, n_samples)
+            coef_ = update_coeff(X, y, coef_, alpha_, keep_lambda, sigma_)
+            rmse_ = np.sum((y - np.dot(X, coef_)) ** 2)
+            if self.compute_score:
+                # compute the objective function
+                L = self._compute_log_likelihood(n_samples, alpha_, lambda_,
+                                                 coef_, sigma_, rmse_,
+                                                 L_offset)
+                self.scores_.append(L)
         self.n_iter_ = iter_ + 1
 
         self.coef_ = coef_
@@ -707,3 +714,20 @@ class ARDRegression(LinearModel, RegressorMixin):
         offset -= n_features * (lambda_1_post * log(lambda_1_post / np.e) -
                                 gammaln(lambda_1_post))
         return offset
+
+    def _compute_log_likelihood(self, n_samples, alpha_, lambda_, coef_,
+                                sigma_, rmse_, offset):
+        """Computes the objective function (log likelihood).
+        """
+        alpha_1 = self.alpha_1
+        alpha_2 = self.alpha_2
+        lambda_1 = self.lambda_1
+        lambda_2 = self.lambda_2
+        alpha_1_post = alpha_1 + 0.5 * n_samples
+        lambda_1_post = lambda_1 + 0.5
+
+        L = offset + alpha_1_post * log(alpha_) - alpha_2 * alpha_
+        L += (lambda_1_post * np.log(lambda_) - lambda_2 * lambda_).sum()
+        L += 0.5 * (fast_logdet(sigma_) - alpha_ * rmse_ -
+                    (lambda_ * coef_ ** 2).sum())
+        return L
