@@ -87,14 +87,13 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     >>> from sklearn.random_projection import sparse_random_matrix
     >>> X = sparse_random_matrix(100, 100, density=0.01, random_state=42)
     >>> svd = TruncatedSVD(n_components=5, n_iter=7, random_state=42)
-    >>> svd.fit(X)  # doctest: +NORMALIZE_WHITESPACE
-    TruncatedSVD(algorithm='randomized', n_components=5, n_iter=7,
-            random_state=42, tol=0.0)
-    >>> print(svd.explained_variance_ratio_)  # doctest: +ELLIPSIS
+    >>> svd.fit(X)
+    TruncatedSVD(n_components=5, n_iter=7, random_state=42)
+    >>> print(svd.explained_variance_ratio_)
     [0.0606... 0.0584... 0.0497... 0.0434... 0.0372...]
-    >>> print(svd.explained_variance_ratio_.sum())  # doctest: +ELLIPSIS
+    >>> print(svd.explained_variance_ratio_.sum())
     0.249...
-    >>> print(svd.singular_values_)  # doctest: +ELLIPSIS
+    >>> print(svd.singular_values_)
     [2.5841... 2.5245... 2.3201... 2.1753... 2.0443...]
 
     See also
