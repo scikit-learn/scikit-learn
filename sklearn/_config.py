@@ -95,7 +95,6 @@ def config_context(**new_config):
     >>> with sklearn.config_context(assume_finite=True):
     ...     with sklearn.config_context(assume_finite=False):
     ...         assert_all_finite([float('nan')])
-    ... # doctest: +ELLIPSIS
     Traceback (most recent call last):
     ...
     ValueError: Input contains NaN, ...

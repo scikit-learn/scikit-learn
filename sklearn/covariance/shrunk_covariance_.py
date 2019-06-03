@@ -108,7 +108,7 @@ class ShrunkCovariance(EmpiricalCovariance):
     ...                                   cov=real_cov,
     ...                                   size=500)
     >>> cov = ShrunkCovariance().fit(X)
-    >>> cov.covariance_ # doctest: +ELLIPSIS
+    >>> cov.covariance_
     array([[0.7387..., 0.2536...],
            [0.2536..., 0.4110...]])
     >>> cov.location_
@@ -376,7 +376,7 @@ class LedoitWolf(EmpiricalCovariance):
     ...                                   cov=real_cov,
     ...                                   size=50)
     >>> cov = LedoitWolf().fit(X)
-    >>> cov.covariance_ # doctest: +ELLIPSIS
+    >>> cov.covariance_
     array([[0.4406..., 0.1616...],
            [0.1616..., 0.8022...]])
     >>> cov.location_

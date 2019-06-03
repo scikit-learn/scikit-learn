@@ -113,7 +113,7 @@ The extracted TF-IDF vectors are very sparse, with an average of 159 non-zero
 components by sample in a more than 30000-dimensional space
 (less than .5% non-zero features)::
 
-  >>> vectors.nnz / float(vectors.shape[0])       # doctest: +ELLIPSIS
+  >>> vectors.nnz / float(vectors.shape[0])
   159.01327...
 
 :func:`sklearn.datasets.fetch_20newsgroups_vectorized` is a function which 
@@ -144,7 +144,7 @@ which is fast to train and achieves a decent F-score::
   MultinomialNB(alpha=0.01, class_prior=None, fit_prior=True)
 
   >>> pred = clf.predict(vectors_test)
-  >>> metrics.f1_score(newsgroups_test.target, pred, average='macro')  # doctest: +ELLIPSIS
+  >>> metrics.f1_score(newsgroups_test.target, pred, average='macro')
   0.88213...
 
 (The example :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py` shuffles
@@ -195,7 +195,7 @@ blocks, and quotation blocks respectively.
   ...                                      categories=categories)
   >>> vectors_test = vectorizer.transform(newsgroups_test.data)
   >>> pred = clf.predict(vectors_test)
-  >>> metrics.f1_score(pred, newsgroups_test.target, average='macro')  # doctest: +ELLIPSIS
+  >>> metrics.f1_score(pred, newsgroups_test.target, average='macro')
   0.77310...
 
 This classifier lost over a lot of its F-score, just because we removed
@@ -212,7 +212,7 @@ It loses even more if we also strip this metadata from the training data:
 
   >>> vectors_test = vectorizer.transform(newsgroups_test.data)
   >>> pred = clf.predict(vectors_test)
-  >>> metrics.f1_score(newsgroups_test.target, pred, average='macro')  # doctest: +ELLIPSIS
+  >>> metrics.f1_score(newsgroups_test.target, pred, average='macro')
   0.76995...
 
 Some other classifiers cope better with this harder version of the task. Try

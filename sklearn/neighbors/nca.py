@@ -131,16 +131,16 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
     ... stratify=y, test_size=0.7, random_state=42)
     >>> nca = NeighborhoodComponentsAnalysis(random_state=42)
-    >>> nca.fit(X_train, y_train) # doctest: +ELLIPSIS
+    >>> nca.fit(X_train, y_train)
     NeighborhoodComponentsAnalysis(...)
     >>> knn = KNeighborsClassifier(n_neighbors=3)
-    >>> knn.fit(X_train, y_train) # doctest: +ELLIPSIS
+    >>> knn.fit(X_train, y_train)
     KNeighborsClassifier(...)
-    >>> print(knn.score(X_test, y_test)) # doctest: +ELLIPSIS
+    >>> print(knn.score(X_test, y_test))
     0.933333...
-    >>> knn.fit(nca.transform(X_train), y_train) # doctest: +ELLIPSIS
+    >>> knn.fit(nca.transform(X_train), y_train)
     KNeighborsClassifier(...)
-    >>> print(knn.score(nca.transform(X_test), y_test)) # doctest: +ELLIPSIS
+    >>> print(knn.score(nca.transform(X_test), y_test))
     0.961904...
 
     References

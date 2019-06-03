@@ -117,13 +117,13 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     >>> from sklearn.decomposition import SparsePCA
     >>> X, _ = make_friedman1(n_samples=200, n_features=30, random_state=0)
     >>> transformer = SparsePCA(n_components=5, random_state=0)
-    >>> transformer.fit(X) # doctest: +ELLIPSIS
+    >>> transformer.fit(X)
     SparsePCA(...)
     >>> X_transformed = transformer.transform(X)
     >>> X_transformed.shape
     (200, 5)
     >>> # most values in the components_ are zero (sparsity)
-    >>> np.mean(transformer.components_ == 0) # doctest: +ELLIPSIS
+    >>> np.mean(transformer.components_ == 0)
     0.9666...
 
     See also
@@ -325,7 +325,7 @@ class MiniBatchSparsePCA(SparsePCA):
     >>> X, _ = make_friedman1(n_samples=200, n_features=30, random_state=0)
     >>> transformer = MiniBatchSparsePCA(n_components=5, batch_size=50,
     ...                                  random_state=0)
-    >>> transformer.fit(X) # doctest: +ELLIPSIS
+    >>> transformer.fit(X)
     MiniBatchSparsePCA(...)
     >>> X_transformed = transformer.transform(X)
     >>> X_transformed.shape
