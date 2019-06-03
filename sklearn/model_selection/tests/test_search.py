@@ -810,8 +810,16 @@ def check_cv_results_array_types(search, param_keys, score_keys):
     assert all(cv_results[key].dtype == object for key in param_keys)
     assert not any(isinstance(cv_results[key], np.ma.MaskedArray)
                    for key in score_keys)
-    assert all(cv_results[key].dtype == np.float64
-               for key in score_keys if not key.startswith('rank'))
+    # assert all(cv_results[key].dtype == np.float64
+    #            for key in score_keys if not key.startswith('rank'))
+    for key in score_keys:
+        if key.startswith('rank'):
+            print('starts_with_rank', key)
+            print('values', cv_results[key])
+        else:
+            print('not starts_with_rank', key)
+            print('values', cv_results[key])
+            assert cv_results[key].dtype == np.float64
 
     scorer_keys = search.scorer_.keys() if search.multimetric_ else ['score']
 
