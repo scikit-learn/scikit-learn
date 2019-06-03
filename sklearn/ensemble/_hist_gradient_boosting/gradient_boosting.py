@@ -27,7 +27,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
     def __init__(self, loss, learning_rate, max_iter, max_leaf_nodes,
                  max_depth, min_samples_leaf, l2_regularization, max_bins,
                  scoring, validation_fraction, n_iter_no_change, tol, verbose,
-                 random_state):
+                 warm_start, random_state):
         self.loss = loss
         self.learning_rate = learning_rate
         self.max_iter = max_iter
@@ -41,6 +41,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self.scoring = scoring
         self.tol = tol
         self.verbose = verbose
+        self.warm_start = warm_start
         self.random_state = random_state
 
     def _validate_parameters(self):
@@ -87,7 +88,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         Returns
         -------
         self : object
+
         """
+        # if not warmstart - clear the estimator state
+        if not self.warm_start:
+            self._clear_state()
 
         fit_start_time = time()
         acc_find_split_time = 0.  # time spent finding the best splits
@@ -97,7 +102,13 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         acc_prediction_time = 0.
         X, y = check_X_y(X, y, dtype=[X_DTYPE])
         y = self._encode_y(y)
-        rng = check_random_state(self.random_state)
+
+        # The rng state must be preserved if warm_start is True
+        if (self.warm_start and hasattr(self, '_rng')):
+            rng = self._rng
+        else:
+            rng = check_random_state(self.random_state)
+            self._rng = rng
 
         self._validate_parameters()
         self.n_features_ = X.shape[1]  # used for validation in predict()
@@ -111,7 +122,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # there's no way to tell the scorer that it needs to predict binned
         # data.
         self._in_fit = True
-
 
         self.loss_ = self._get_loss()
 
@@ -317,6 +327,20 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self.validation_score_ = np.asarray(self.validation_score_)
         del self._in_fit  # hard delete so we're sure it can't be used anymore
         return self
+
+    def _is_initialized(self):
+        return getattr(self, 'n_iter_', 0) > 0
+
+    def _clear_state(self):
+        """Clear the state of the gradient boosting model."""
+        if hasattr(self, 'n_trees_per_iteration_'):
+            del self.n_trees_per_iteration_
+        if hasattr(self, 'train_score_'):
+            del self.train_score_
+        if hasattr(self, 'validation_score_'):
+            del self.init_
+        if hasattr(self, '_rng'):
+            del self._rng
 
     def _check_early_stopping_scorer(self, X_binned_small_train, y_small_train,
                                      X_binned_val, y_val):
@@ -568,7 +592,7 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
     n_iter_no_change : int or None, optional (default=None)
         Used to determine when to "early stop". The fitting process is
         stopped when none of the last ``n_iter_no_change`` scores are better
-        than the ``n_iter_no_change - 1``th-to-last one, up to some
+        than the ``n_iter_no_change - 1`` -th-to-last one, up to some
         tolerance. If None or 0, no early-stopping is done.
     tol : float or None, optional (default=1e-7)
         The absolute tolerance to use when comparing scores during early
@@ -578,6 +602,10 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
     verbose: int, optional (default=0)
         The verbosity level. If not zero, print some information about the
         fitting process.
+    warm_start : bool, optional (default=False)
+        When set to ``True``, reuse the solution of the previous call to fit
+        and add more estimators to the ensemble, otherwise, just erase the
+        previous solution. See :term:`the Glossary <warm_start>`.
     random_state : int, np.random.RandomStateInstance or None, \
         optional (default=None)
         Pseudo-random number generator to control the subsampling in the
@@ -622,7 +650,7 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
                  max_iter=100, max_leaf_nodes=31, max_depth=None,
                  min_samples_leaf=20, l2_regularization=0., max_bins=256,
                  scoring=None, validation_fraction=0.1, n_iter_no_change=None,
-                 tol=1e-7, verbose=0, random_state=None):
+                 tol=1e-7, verbose=0, warm_start=False, random_state=None):
         super(HistGradientBoostingRegressor, self).__init__(
             loss=loss, learning_rate=learning_rate, max_iter=max_iter,
             max_leaf_nodes=max_leaf_nodes, max_depth=max_depth,
@@ -630,7 +658,7 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
             l2_regularization=l2_regularization, max_bins=max_bins,
             scoring=scoring, validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol, verbose=verbose,
-            random_state=random_state)
+            warm_start=warm_start, random_state=random_state)
 
     def predict(self, X):
         """Predict values for X.
@@ -736,7 +764,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
     n_iter_no_change : int or None, optional (default=None)
         Used to determine when to "early stop". The fitting process is
         stopped when none of the last ``n_iter_no_change`` scores are better
-        than the ``n_iter_no_change - 1``th-to-last one, up to some
+        than the ``n_iter_no_change - 1`` -th-to-last one, up to some
         tolerance. If None or 0, no early-stopping is done.
     tol : float or None, optional (default=1e-7)
         The absolute tolerance to use when comparing scores. The higher the
@@ -746,6 +774,10 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
     verbose: int, optional (default=0)
         The verbosity level. If not zero, print some information about the
         fitting process.
+    warm_start : bool, optional (default=False)
+        When set to ``True``, reuse the solution of the previous call to fit
+        and add more estimators to the ensemble, otherwise, just erase the
+        previous solution. See :term:`the Glossary <warm_start>`.
     random_state : int, np.random.RandomStateInstance or None, \
         optional (default=None)
         Pseudo-random number generator to control the subsampling in the
@@ -792,7 +824,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
                  max_leaf_nodes=31, max_depth=None, min_samples_leaf=20,
                  l2_regularization=0., max_bins=256, scoring=None,
                  validation_fraction=0.1, n_iter_no_change=None, tol=1e-7,
-                 verbose=0, random_state=None):
+                 verbose=0, warm_start=False, random_state=None):
         super(HistGradientBoostingClassifier, self).__init__(
             loss=loss, learning_rate=learning_rate, max_iter=max_iter,
             max_leaf_nodes=max_leaf_nodes, max_depth=max_depth,
@@ -800,7 +832,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
             l2_regularization=l2_regularization, max_bins=max_bins,
             scoring=scoring, validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol, verbose=verbose,
-            random_state=random_state)
+            warm_start=warm_start, random_state=random_state)
 
     def predict(self, X):
         """Predict classes for X.
