@@ -549,9 +549,9 @@ class _BaseRidge(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
             if self.solver not in ['auto', 'sparse_cg']:
                 raise ValueError(
                     "solver={} does not support fitting the intercept "
-                    "on sparse data. please set the solver to 'auto' or "
-                    "'sparse_cg', or set `fit_intercept=False`".format(
-                        self.solver))
+                    "on sparse data. Please set the solver to 'auto' or "
+                    "'sparse_cg', or set `fit_intercept=False`"
+                    .format(self.solver))
             solver = 'sparse_cg'
         else:
             solver = self.solver
