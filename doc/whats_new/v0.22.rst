@@ -20,6 +20,8 @@ random sampling procedures.
 ..
     TO FILL IN AS WE GO
 
+- :class:`linear_model.Ridge` when `X` is sparse. |Fix|
+
 Details are listed in the changelog below.
 
 (While we are trying to better inform users by providing this information, we
@@ -54,6 +56,10 @@ Changelog
   ``alpha_init`` and ``lambda_init`` which can be used to set the initial value
   of the maximization procedure in :term:`fit`.
   :pr:`13618` by :user:`Yoshihiro Uchida <c56pony>`.
+- |Fix| :class:`linear_model.Ridge` now correctly fits an intercept when
+  `X` is sparse, `solver="auto"` and `fit_intercept=True`. Setting the solver to
+  "sag" in this configuration, which was allowed before, now results in a
+  `ValueError`. :pr:`13995` by :user:`Jérôme Dockès <jeromedockes>`.
 
 
 :mod:`sklearn.svm`
