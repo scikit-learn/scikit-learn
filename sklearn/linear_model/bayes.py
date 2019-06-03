@@ -570,8 +570,6 @@ class ARDRegression(LinearModel, RegressorMixin):
         lambda_2 = self.lambda_2
         alpha_1 = self.alpha_1
         alpha_2 = self.alpha_2
-        alpha_1_post = alpha_1 + 0.5 * n_samples
-        lambda_1_post = lambda_1 + 0.5
         verbose = self.verbose
 
         # Initialization of the values of the parameters
