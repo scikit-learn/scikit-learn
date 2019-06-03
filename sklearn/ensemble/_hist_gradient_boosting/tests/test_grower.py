@@ -318,7 +318,7 @@ def test_missing_value_predict_only(support_missing_values):
 
     # Passing support_missing_values=True tests the case where missing values
     # were in the original data (train + val), but not present anymore in the
-    # tradata after the train/val split.
+    # training data after the train/val split.
 
     rng = np.random.RandomState(0)
     n_samples = 100
