@@ -32,6 +32,8 @@ from sklearn.tree import DecisionTreeClassifier
 # that returns the effective alphas and the corresponding total leaf impurities
 # at each step of the pruning process. As alpha increases, more
 # of the tree is pruned, which increases the total impurity of its leaves.
+# In the following plot, the maximum effective alpha value is removed,
+# because it is the trivial tree with only one node.
 X, y = load_breast_cancer(return_X_y=True)
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
@@ -39,7 +41,7 @@ clf = DecisionTreeClassifier(random_state=0)
 path = clf.cost_complexity_pruning_path(X_train, y_train)
 ccp_alphas, impurities = path.ccp_alphas, path.impurities
 fig, ax = plt.subplots()
-ax.plot(ccp_alphas, impurities, drawstyle="steps-post")
+ax.plot(ccp_alphas[:-1], impurities[:-1], drawstyle="steps-post")
 ax.set_xlabel("effective alpha")
 ax.set_ylabel("total impurity of leaves")
 ax.set_title("Total Impurity vs effective alpha for training set")
