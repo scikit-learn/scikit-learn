@@ -1384,7 +1384,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     >>> clf = LogisticRegression(random_state=0).fit(X, y)
     >>> clf.predict(X[:2, :])
     array([0, 0])
-    >>> clf.predict_proba(X[:2, :]) # doctest: +ELLIPSIS
+    >>> clf.predict_proba(X[:2, :])
     array([[9.8...e-01, 1.8...e-02, 1.4...e-08],
            [9.7...e-01, 2.8...e-02, ...e-08]])
     >>> clf.score(X, y)
@@ -1902,7 +1902,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     array([0, 0])
     >>> clf.predict_proba(X[:2, :]).shape
     (2, 3)
-    >>> clf.score(X, y) # doctest: +ELLIPSIS
+    >>> clf.score(X, y)
     0.98...
 
     See also
