@@ -44,8 +44,8 @@ Changelog
 
 - |Feature| :class:`ensemble.HistGradientBoostingClassifier`
   and :class:`ensemble.HistGradientBoostingRegressor` now natively supports
-  data with missing values both for training and predicting. :pr:`13911` by
-  `NicolasHug`_.
+  dense data with missing values both for training and predicting.
+  :pr:`13911` by `NicolasHug`_.
 
 - |Fix| :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` now bin the training and

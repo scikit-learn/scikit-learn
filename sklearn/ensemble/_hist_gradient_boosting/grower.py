@@ -187,13 +187,13 @@ class TreeGrower:
 
         if isinstance(has_missing_values, bool):
             has_missing_values = [has_missing_values] * actual_n_bins.shape[0]
-        has_missing_values = np.array(has_missing_values, dtype=np.uint8)
+        has_missing_values = np.asarray(has_missing_values, dtype=np.uint8)
 
         if isinstance(support_missing_values, bool):
             support_missing_values = \
                 [support_missing_values] * actual_n_bins.shape[0]
-        support_missing_values = np.array(support_missing_values,
-                                          dtype=np.uint8)
+        support_missing_values = np.asarray(support_missing_values,
+                                            dtype=np.uint8)
 
         hessians_are_constant = hessians.shape[0] == 1
         self.histogram_builder = HistogramBuilder(

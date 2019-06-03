@@ -538,7 +538,7 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
     might be preferred since binning may lead to split points that are too
     approximate in this setting.
 
-    This estimator has native support for missing values (Nans). During
+    This estimator has native support for missing values (NaNs). During
     training, the tree grower learns at each split point whether nodes with
     missing values should go to the left or right child, based on the
     potential gain. When predicting, nodes with missing values are assigned to
@@ -713,7 +713,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
     might be preferred since binning may lead to split points that are too
     approximate in this setting.
 
-    This estimator has native support for missing values (Nans). During
+    This estimator has native support for missing values (NaNs). During
     training, the tree grower learns at each split point whether nodes with
     missing values should go to the left or right child, based on the
     potential gain. When predicting, nodes with missing values are assigned to

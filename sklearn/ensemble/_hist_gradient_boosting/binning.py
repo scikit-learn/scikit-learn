@@ -135,7 +135,7 @@ class _BinMapper(BaseEstimator, TransformerMixin):
         ----------
         X : array-like, shape (n_samples, n_features)
             The data to bin.
-        support_missing_values : ndarray of bool or bool, shape (n_features,)
+        support_missing_values : bool or ndarray of bool, shape (n_features,)
             For each feature, indicates whether the first bin should be
             reserved for missing values. Note that inferring this from X would
             be incorrect here, in general. The X that is passed here is the
@@ -143,6 +143,7 @@ class _BinMapper(BaseEstimator, TransformerMixin):
             support_missing_values must be computed on the whole data
             (before the split) so that the first bin is allocated if there are
             missing values in the training data OR in the validation data.
+            If it's a bool, the same values is used for all features.
 
         Returns
         -------
