@@ -71,8 +71,8 @@ class BayesianRidge(LinearModel, RegressorMixin):
             .. versionadded:: 0.22
 
     compute_score : boolean, optional
-        If True, compute the log likelihood (logp) at each iteration of the
-        optimization. Default is False.
+        If True, compute the log likelihood (objective function) at each
+        iteration of the optimization. Default is False.
 
     fit_intercept : boolean, optional, default True
         Whether to calculate the intercept for this model.
@@ -116,8 +116,8 @@ class BayesianRidge(LinearModel, RegressorMixin):
         Estimated variance-covariance matrix of the weights.
 
     scores_ : array, shape = (n_iter_ + 1,)
-        If compute_score is True, value of (the lower bound of) the log
-        likelihood (to be maximized) at each iteration of the optimization.
+        If compute_score is True, value of the log likelihood (to be
+        maximized) at each iteration of the optimization.
         The array starts with the value of the log likelihood obtained for the
         initial values of alpha and lambda and ends with the value obtained
         for the estimated alpha and lambda.
@@ -233,7 +233,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
         if self.compute_score:
             self.scores_ = list()
             # compute the constant terms for the objective function
-            L_offset = self._lower_bound_offset(n_samples, n_features)
+            L_offset = self._log_likelihood_offset(n_samples, n_features)
         converged = False
         coef_old_ = None
 
@@ -251,9 +251,9 @@ class BayesianRidge(LinearModel, RegressorMixin):
                                               alpha_, lambda_)
             if self.compute_score:
                 # compute the objective function
-                L = self._compute_lower_bound(n_samples, n_features,
-                                              eigen_vals_, alpha_, lambda_,
-                                              coef_, rmse_, L_offset)
+                L = self._compute_log_likelihood(n_samples, n_features,
+                                                 eigen_vals_, alpha_, lambda_,
+                                                 coef_, rmse_, L_offset)
                 self.scores_.append(L)
 
             # Check for convergence
@@ -275,6 +275,17 @@ class BayesianRidge(LinearModel, RegressorMixin):
         if not converged:
             warnings.warn("Optimization step did not converge. Increase the "
                           "number of iterations.", ConvergenceWarning)
+            # recompute coef_ and scores_ for consistency
+            # if converged is False
+            coef_, rmse_ = self._update_coef_(X, y, n_samples, n_features,
+                                              XT_y, U, Vh, eigen_vals_,
+                                              alpha_, lambda_)
+            if self.compute_score:
+                # compute the objective function
+                L = self._compute_log_likelihood(n_samples, n_features,
+                                                 eigen_vals_, alpha_, lambda_,
+                                                 coef_, rmse_, L_offset)
+                self.scores_.append(L)
         self.n_iter_ = iter_ + 1
 
         # return regularization parameters and corresponding posterior mean,
@@ -350,9 +361,8 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
         return coef_, rmse_
 
-    def _lower_bound_offset(self, n_samples, n_features):
-        """Constant terms for the objective function (variational lower bound
-        of the log likelihood).
+    def _log_likelihood_offset(self, n_samples, n_features):
+        """Constant terms for the objective function (log likelihood).
         """
         alpha_1 = self.alpha_1
         alpha_2 = self.alpha_2
@@ -370,10 +380,9 @@ class BayesianRidge(LinearModel, RegressorMixin):
                    gammaln(lambda_1_post))
         return offset
 
-    def _compute_lower_bound(self, n_samples, n_features, eigen_vals,
-                             alpha_, lambda_, coef, rmse, offset):
-        """Computes the objective function (variational lower bound of the
-        log likelihood).
+    def _compute_log_likelihood(self, n_samples, n_features, eigen_vals,
+                                alpha_, lambda_, coef, rmse, offset):
+        """Computes the objective function (log likelihood).
         """
         alpha_1 = self.alpha_1
         alpha_2 = self.alpha_2
@@ -584,7 +593,7 @@ class ARDRegression(LinearModel, RegressorMixin):
         if self.compute_score:
             self.scores_ = list()
             # compute the constant terms for the objective function
-            L_offset = self._lower_bound_offset(n_samples, n_features)
+            L_offset = self._log_likelihood_offset(n_samples, n_features)
         converged = False
         coef_old_ = None
 
@@ -688,9 +697,8 @@ class ARDRegression(LinearModel, RegressorMixin):
             y_std = np.sqrt(sigmas_squared_data + (1. / self.alpha_))
             return y_mean, y_std
 
-    def _lower_bound_offset(self, n_samples, n_features):
-        """Constant terms for the objective function (variational lower bound
-        of the log likelihood).
+    def _log_likelihood_offset(self, n_samples, n_features):
+        """Constant terms for the objective function (log likelihood).
         """
         alpha_1 = self.alpha_1
         alpha_2 = self.alpha_2
