@@ -445,21 +445,13 @@ def test_imputation_constant_pandas(dtype):
     assert_array_equal(X_trans, X_true)
 
 
-def test_simple_imputation_missing_value_in_test_array():
+@pytest.mark.parametrize('imputer', (SimpleImputer, IterativeImputer))
+def test_imputation_missing_value_in_test_array(imputer):
     # [Non Regression Test] Missing value in test set should not throw an error
     # and return a finite dataset
     train = [[1], [2]]
     test = [[3], [np.nan]]
-    imputer = SimpleImputer(add_indicator=True)
-    imputer.fit(train).transform(test)
-
-
-def test_iterative_imputation_missing_value_in_test_array():
-    # [Non Regression Test] Missing value in test set should not throw an error
-    # and return a finite dataset
-    train = [[1], [2]]
-    test = [[3], [np.nan]]
-    imputer = IterativeImputer(add_indicator=True)
+    imputer = imputer(add_indicator=True)
     imputer.fit(train).transform(test)
 
 
