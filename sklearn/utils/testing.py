@@ -21,16 +21,11 @@ import tempfile
 from subprocess import check_output, STDOUT, CalledProcessError
 from subprocess import TimeoutExpired
 
-
 import scipy as sp
-import scipy.io
 from functools import wraps
 from operator import itemgetter
 from inspect import signature
-from urllib.request import urlopen
-from urllib.error import HTTPError
 
-import tempfile
 import shutil
 import atexit
 import unittest
