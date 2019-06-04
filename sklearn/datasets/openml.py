@@ -738,8 +738,14 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         columns = data_columns + target_column
         df = _convert_arff_data_dataframe(arff, columns, features_dict,
                                           chunksize)
-
-        return Bunch(dataframe=df, data=None, target=None,
+        X = df[data_columns]
+        if len(target_column) >= 2:
+            y = df[target_column]
+        elif len(target_column) == 1:
+            y = df[target_column[0]]
+        else:
+            y = None
+        return Bunch(frame=df, data=X, target=y,
                      feature_names=data_columns, DESCR=description,
                      details=data_description, categories=None,
                      url="https://www.openml.org/d/{}".format(data_id))

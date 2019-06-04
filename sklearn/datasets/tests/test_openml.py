@@ -298,7 +298,6 @@ def test_fetch_openml_iris_pandas(monkeypatch, chunksize):
     data_dtypes = [np.float64] * 4
     data_names = ['sepallength', 'sepalwidth', 'petallength', 'petalwidth']
     target_names = 'class'
-    columns = data_names + [target_names]
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
 
@@ -311,7 +310,7 @@ def test_fetch_openml_iris_pandas(monkeypatch, chunksize):
     assert isinstance(data, pd.DataFrame)
     assert np.all(data.dtypes == data_dtypes)
     assert data.shape == data_shape
-    assert np.all(data.columns == columns)
+    assert np.all(data.columns == data_names)
     assert np.all(bunch.feature_names == data_names)
 
     assert isinstance(target, pd.Series)
@@ -320,7 +319,7 @@ def test_fetch_openml_iris_pandas(monkeypatch, chunksize):
 
     assert isinstance(frame, pd.DataFrame)
     assert frame.shape == frame_shape
-    assert np.all(frame.dtype == data_dtypes + [target_dtype])
+    assert np.all(frame.dtypes == data_dtypes + [target_dtype])
 
 
 @pytest.mark.parametrize('chunksize', [10, 1000])
@@ -334,12 +333,12 @@ def test_fetch_openml_iris_multitarget_pandas(monkeypatch, chunksize):
     frame_shape = (150, 5)
     target_column = ['petalwidth', 'petallength']
 
-    target_dtype = [CategoricalDtype(['Iris-setosa', 'Iris-versicolor',
-                                     'Iris-virginica']), np.float64]
-    data_dtypes = [np.float64] * 3
+    cat_dtype = CategoricalDtype(['Iris-setosa', 'Iris-versicolor',
+                                  'Iris-virginica'])
+    data_dtypes = [np.float64, np.float64] + [cat_dtype]
     data_names = ['sepallength', 'sepalwidth', 'class']
+    target_dtypes = [np.float64, np.float64]
     target_names = ['petalwidth', 'petallength']
-    columns = data_names + target_names
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
 
@@ -352,17 +351,17 @@ def test_fetch_openml_iris_multitarget_pandas(monkeypatch, chunksize):
     assert isinstance(data, pd.DataFrame)
     assert np.all(data.dtypes == data_dtypes)
     assert data.shape == data_shape
-    assert np.all(data.columns == columns)
+    assert np.all(data.columns == data_names)
     assert np.all(bunch.feature_names == data_names)
 
     assert isinstance(target, pd.DataFrame)
-    assert np.all(target.dtypes == target_dtype)
+    assert np.all(target.dtypes == target_dtypes)
     assert target.shape == target_shape
-    assert np.all(target.columns == target_column)
+    assert np.all(target.columns == target_names)
 
     assert isinstance(frame, pd.DataFrame)
     assert frame.shape == frame_shape
-    assert np.all(frame.dtype == data_dtypes + target_dtype)
+    assert np.all(frame.dtypes == [np.float64] * 4 + [cat_dtype])
 
 
 def test_fetch_openml_anneal_pandas(monkeypatch):
@@ -535,9 +534,9 @@ def test_fetch_openml_miceprotein_pandas(monkeypatch):
 
     assert isinstance(frame, pd.DataFrame)
     assert frame.shape == frame_shape
-    n_categories = len([dtype for dtype in data.dtypes
+    n_categories = len([dtype for dtype in frame.dtypes
                        if isinstance(dtype, CategoricalDtype)])
-    n_floats = len([dtype for dtype in data.dtypes if dtype.kind == 'f'])
+    n_floats = len([dtype for dtype in frame.dtypes if dtype.kind == 'f'])
     assert frame_n_categories == n_categories
     assert frame_n_floats == n_floats
 
@@ -632,7 +631,7 @@ def test_fetch_openml_titanic_pandas(monkeypatch):
 
     assert isinstance(frame, pd.DataFrame)
     assert frame.shape == frame_shape
-    assert np.all(data.dtypes == frame_dtypes)
+    assert np.all(frame.dtypes == frame_dtypes)
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
