@@ -229,7 +229,8 @@ class BayesianRidge(LinearModel, RegressorMixin):
         if self.compute_score:
             self.scores_ = list()
             # compute the constant terms for the objective function
-            L_offset = self._log_likelihood_offset(n_samples, n_features)
+            log_likelihood_offset = \
+                self._log_likelihood_offset(n_samples, n_features)
         converged = False
         coef_old_ = None
 
@@ -245,12 +246,14 @@ class BayesianRidge(LinearModel, RegressorMixin):
             coef_, rmse_ = self._update_coef_(X, y, n_samples, n_features,
                                               XT_y, U, Vh, eigen_vals_,
                                               alpha_, lambda_)
+
             if self.compute_score:
                 # compute the objective function
-                L = self._compute_log_likelihood(n_samples, n_features,
-                                                 eigen_vals_, alpha_, lambda_,
-                                                 coef_, rmse_, L_offset)
-                self.scores_.append(L)
+                log_likelihood = self._compute_log_likelihood(
+                                    n_samples, n_features, eigen_vals_,
+                                    alpha_, lambda_, coef_, rmse_,
+                                    log_likelihood_offset)
+                self.scores_.append(log_likelihood)
 
             # Check for convergence
             if iter_ != 0 and np.sum(np.abs(coef_old_ - coef_)) < self.tol:
@@ -277,10 +280,11 @@ class BayesianRidge(LinearModel, RegressorMixin):
                                               alpha_, lambda_)
             if self.compute_score:
                 # compute the objective function
-                L = self._compute_log_likelihood(n_samples, n_features,
-                                                 eigen_vals_, alpha_, lambda_,
-                                                 coef_, rmse_, L_offset)
-                self.scores_.append(L)
+                log_likelihood = self._compute_log_likelihood(
+                                    n_samples, n_features, eigen_vals_,
+                                    alpha_, lambda_, coef_, rmse_,
+                                    log_likelihood_offset)
+                self.scores_.append(log_likelihood)
         self.n_iter_ = iter_ + 1
 
         # return regularization parameters and corresponding posterior mean,
@@ -397,11 +401,11 @@ class BayesianRidge(LinearModel, RegressorMixin):
             logdet_sigma[:n_samples] += alpha_ * eigen_vals
             logdet_sigma = - np.sum(np.log(logdet_sigma))
 
-        L = offset + alpha_1_post * log(alpha_) - alpha_2 * alpha_
-        L += lambda_1_post * log(lambda_) - lambda_2 * lambda_
-        L += 0.5 * (logdet_sigma - alpha_ * rmse -
-                    lambda_ * (coef ** 2).sum())
-        return L
+        logL = offset + alpha_1_post * log(alpha_) - alpha_2 * alpha_
+        logL += lambda_1_post * log(lambda_) - lambda_2 * lambda_
+        logL += 0.5 * (logdet_sigma - alpha_ * rmse -
+                       lambda_ * (coef ** 2).sum())
+        return logL
 
 
 ###############################################################################
@@ -582,7 +586,8 @@ class ARDRegression(LinearModel, RegressorMixin):
         if self.compute_score:
             self.scores_ = list()
             # compute the constant terms for the objective function
-            L_offset = self._log_likelihood_offset(n_samples, n_features)
+            log_likelihood_offset = \
+                self._log_likelihood_offset(n_samples, n_features)
         converged = False
         coef_old_ = None
 
@@ -590,8 +595,9 @@ class ARDRegression(LinearModel, RegressorMixin):
         def update_sigma(X, alpha_, lambda_, keep_lambda, n_samples):
             sigma_ = pinvh(np.eye(n_samples) / alpha_ +
                            np.dot(X[:, keep_lambda] *
-                           np.reshape(1. / lambda_[keep_lambda], [1, -1]),
-                           X[:, keep_lambda].T))
+                                  np.reshape(
+                                      1. / lambda_[keep_lambda], [1, -1]),
+                                  X[:, keep_lambda].T))
             sigma_ = np.dot(sigma_, X[:, keep_lambda] *
                             np.reshape(1. / lambda_[keep_lambda], [1, -1]))
             sigma_ = - np.dot(np.reshape(1. / lambda_[keep_lambda], [-1, 1]) *
@@ -612,10 +618,10 @@ class ARDRegression(LinearModel, RegressorMixin):
 
             # Compute the objective function
             if self.compute_score:
-                L = self._compute_log_likelihood(n_samples, alpha_, lambda_,
-                                                 coef_, sigma_, rmse_,
-                                                 L_offset)
-                self.scores_.append(L)
+                log_likelihood = self._compute_log_likelihood(
+                                    n_samples, alpha_, lambda_, coef_, sigma_,
+                                    rmse_, log_likelihood_offset)
+                self.scores_.append(log_likelihood)
 
             # Check for convergence
             if iter_ > 0 and np.sum(np.abs(coef_old_ - coef_)) < self.tol:
@@ -646,10 +652,10 @@ class ARDRegression(LinearModel, RegressorMixin):
             rmse_ = np.sum((y - np.dot(X, coef_)) ** 2)
             if self.compute_score:
                 # compute the objective function
-                L = self._compute_log_likelihood(n_samples, alpha_, lambda_,
-                                                 coef_, sigma_, rmse_,
-                                                 L_offset)
-                self.scores_.append(L)
+                log_likelihood = self._compute_log_likelihood(
+                                    n_samples, alpha_, lambda_, coef_, sigma_,
+                                    rmse_, log_likelihood_offset)
+                self.scores_.append(log_likelihood)
         self.n_iter_ = iter_ + 1
 
         self.coef_ = coef_
@@ -724,8 +730,8 @@ class ARDRegression(LinearModel, RegressorMixin):
         alpha_1_post = alpha_1 + 0.5 * n_samples
         lambda_1_post = lambda_1 + 0.5
 
-        L = offset + alpha_1_post * log(alpha_) - alpha_2 * alpha_
-        L += (lambda_1_post * np.log(lambda_) - lambda_2 * lambda_).sum()
-        L += 0.5 * (fast_logdet(sigma_) - alpha_ * rmse_ -
-                    (lambda_ * coef_ ** 2).sum())
-        return L
+        logL = offset + alpha_1_post * log(alpha_) - alpha_2 * alpha_
+        logL += (lambda_1_post * np.log(lambda_) - lambda_2 * lambda_).sum()
+        logL += 0.5 * (fast_logdet(sigma_) - alpha_ * rmse_ -
+                       (lambda_ * coef_ ** 2).sum())
+        return logL
