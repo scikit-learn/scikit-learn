@@ -91,9 +91,6 @@ cdef class Splitter:
     ----------
     X_binned : ndarray of int, shape (n_samples, n_features)
         The binned input samples. Must be Fortran-aligned.
-    max_bins : int
-        The maximum number of bins. Used to define the shape of the
-        histograms.
     actual_n_bins : ndarray, shape (n_features,)
         The actual number of bins needed for each feature, which is lower or
         equal to max_bins.
@@ -114,7 +111,6 @@ cdef class Splitter:
     cdef public:
         const X_BINNED_DTYPE_C [::1, :] X_binned
         unsigned int n_features
-        unsigned int max_bins
         unsigned int [::1] actual_n_bins
         unsigned char hessians_are_constant
         Y_DTYPE_C l2_regularization
@@ -126,8 +122,8 @@ cdef class Splitter:
         unsigned int [::1] left_indices_buffer
         unsigned int [::1] right_indices_buffer
 
-    def __init__(self, const X_BINNED_DTYPE_C [::1, :] X_binned, unsigned int
-                 max_bins, np.ndarray[np.uint32_t] actual_n_bins,
+    def __init__(self, const X_BINNED_DTYPE_C [::1, :] X_binned,
+                 np.ndarray[np.uint32_t] actual_n_bins,
                  Y_DTYPE_C l2_regularization, Y_DTYPE_C
                  min_hessian_to_split=1e-3, unsigned int
                  min_samples_leaf=20, Y_DTYPE_C min_gain_to_split=0.,
@@ -135,9 +131,6 @@ cdef class Splitter:
 
         self.X_binned = X_binned
         self.n_features = X_binned.shape[1]
-        # Note: all histograms will have <max_bins> bins, but some of the
-        # last bins may be unused if actual_n_bins[f] < max_bins
-        self.max_bins = max_bins
         self.actual_n_bins = actual_n_bins
         self.l2_regularization = l2_regularization
         self.min_hessian_to_split = min_hessian_to_split
@@ -326,7 +319,7 @@ cdef class Splitter:
 
     def find_node_split(
             Splitter self,
-            const unsigned int [::1] sample_indices,  # IN
+            unsigned int n_samples,
             hist_struct [:, ::1] histograms,  # IN
             const Y_DTYPE_C sum_gradients,
             const Y_DTYPE_C sum_hessians):
@@ -336,8 +329,8 @@ cdef class Splitter:
 
         Parameters
         ----------
-        sample_indices : ndarray of unsigned int, shape (n_samples_at_node,)
-            The indices of the samples at the node to split.
+        n_samples : int
+            The number of samples at the node.
         histograms : ndarray of HISTOGRAM_DTYPE of \
                 shape (n_features, max_bins)
             The histograms of the current node.
@@ -352,7 +345,6 @@ cdef class Splitter:
             The info about the best possible split among all features.
         """
         cdef:
-            int n_samples
             int feature_idx
             int best_feature_idx
             int n_features = self.n_features
@@ -360,7 +352,6 @@ cdef class Splitter:
             split_info_struct * split_infos
 
         with nogil:
-            n_samples = sample_indices.shape[0]
 
             split_infos = <split_info_struct *> malloc(
                 self.n_features * sizeof(split_info_struct))
@@ -406,7 +397,7 @@ cdef class Splitter:
         return best_feature_idx
 
     cdef split_info_struct _find_best_bin_to_split_helper(
-            self,
+            Splitter self,
             unsigned int feature_idx,
             const hist_struct [:, ::1] histograms,  # IN
             unsigned int n_samples,
@@ -429,14 +420,19 @@ cdef class Splitter:
             Y_DTYPE_C sum_hessian_right
             Y_DTYPE_C sum_gradient_left
             Y_DTYPE_C sum_gradient_right
+            Y_DTYPE_C negative_loss_current_node
             Y_DTYPE_C gain
             split_info_struct best_split
 
         best_split.gain = -1.
         sum_gradient_left, sum_hessian_left = 0., 0.
         n_samples_left = 0
+        negative_loss_current_node = negative_loss(sum_gradients,
+            sum_hessians, self.l2_regularization)
 
-        for bin_idx in range(self.actual_n_bins[feature_idx]):
+        for bin_idx in range(self.actual_n_bins[feature_idx] - 1):
+            # Note that considering splitting on the last bin is useless since
+            # it would result in having 0 samples in the right node (forbidden)
             n_samples_left += histograms[feature_idx, bin_idx].count
             n_samples_right = n_samples_ - n_samples_left
 
@@ -464,7 +460,7 @@ cdef class Splitter:
 
             gain = _split_gain(sum_gradient_left, sum_hessian_left,
                                sum_gradient_right, sum_hessian_right,
-                               sum_gradients, sum_hessians,
+                               negative_loss_current_node,
                                self.l2_regularization)
 
             if gain > best_split.gain and gain > self.min_gain_to_split:
@@ -486,8 +482,7 @@ cdef inline Y_DTYPE_C _split_gain(
         Y_DTYPE_C sum_hessian_left,
         Y_DTYPE_C sum_gradient_right,
         Y_DTYPE_C sum_hessian_right,
-        Y_DTYPE_C sum_gradients,
-        Y_DTYPE_C sum_hessians,
+        Y_DTYPE_C negative_loss_current_node,
         Y_DTYPE_C l2_regularization) nogil:
     """Loss reduction
 
@@ -504,7 +499,7 @@ cdef inline Y_DTYPE_C _split_gain(
                          l2_regularization)
     gain += negative_loss(sum_gradient_right, sum_hessian_right,
                           l2_regularization)
-    gain -= negative_loss(sum_gradients, sum_hessians, l2_regularization)
+    gain -= negative_loss_current_node
     return gain
 
 cdef inline Y_DTYPE_C negative_loss(

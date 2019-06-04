@@ -360,20 +360,20 @@ classes::
   (1080, 77)
   >>> mice.target.shape
   (1080,)
-  >>> np.unique(mice.target) # doctest: +NORMALIZE_WHITESPACE
+  >>> np.unique(mice.target)
   array(['c-CS-m', 'c-CS-s', 'c-SC-m', 'c-SC-s', 't-CS-m', 't-CS-s', 't-SC-m', 't-SC-s'], dtype=object)
 
 You can get more information on the dataset by looking at the ``DESCR``
 and ``details`` attributes::
 
-  >>> print(mice.DESCR) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS +SKIP
+  >>> print(mice.DESCR) # doctest: +SKIP
   **Author**: Clara Higuera, Katheleen J. Gardiner, Krzysztof J. Cios
   **Source**: [UCI](https://archive.ics.uci.edu/ml/datasets/Mice+Protein+Expression) - 2015
   **Please cite**: Higuera C, Gardiner KJ, Cios KJ (2015) Self-Organizing
   Feature Maps Identify Proteins Critical to Learning in a Mouse Model of Down
   Syndrome. PLoS ONE 10(6): e0129126...
 
-  >>> mice.details # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS +SKIP
+  >>> mice.details # doctest: +SKIP
   {'id': '40966', 'name': 'MiceProtein', 'version': '4', 'format': 'ARFF',
   'upload_date': '2017-11-08T16:00:15', 'licence': 'Public',
   'url': 'https://www.openml.org/data/v1/download/17928620/MiceProtein.arff',
@@ -398,7 +398,7 @@ dataset on the openml website::
 The ``data_id`` also uniquely identifies a dataset from OpenML::
 
   >>> mice = fetch_openml(data_id=40966)
-  >>> mice.details # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS +SKIP
+  >>> mice.details # doctest: +SKIP
   {'id': '4550', 'name': 'MiceProtein', 'version': '1', 'format': 'ARFF',
   'creator': ...,
   'upload_date': '2016-02-17T14:32:49', 'licence': 'Public', 'url':

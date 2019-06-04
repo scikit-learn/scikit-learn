@@ -22,7 +22,7 @@ from ..base import TransformerMixin
 from ..base import clone
 from ..preprocessing import LabelEncoder
 from ..utils._joblib import Parallel, delayed
-from ..utils.validation import has_fit_parameter, check_is_fitted
+from ..utils.validation import check_is_fitted
 from ..utils.metaestimators import _BaseComposition
 from ..utils import Bunch
 
