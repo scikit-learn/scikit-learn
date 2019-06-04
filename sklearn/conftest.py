@@ -1,4 +1,7 @@
+import gc
 import pytest
+
+from sklearn.utils import IS_PYPY
 
 
 @pytest.fixture(scope='function')
@@ -19,3 +22,18 @@ def pyplot():
     pyplot = pytest.importorskip('matplotlib.pyplot')
     yield pyplot
     pyplot.close('all')
+
+
+def pytest_runtest_call(item):
+    """Setup pytest calls to trigger garbage collector
+
+
+    Parameters
+    ----------
+    item : pytest item
+        Pytest item
+    """
+
+    yield
+    if IS_PYPY:
+        gc.collect()
