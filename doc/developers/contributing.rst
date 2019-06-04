@@ -209,7 +209,7 @@ then submit a "pull request" (PR):
 
 4. Install the development dependencies::
 
-       $ pip install numpy scipy cython pytest flake8
+       $ pip install cython pytest flake8
 
 5. Install scikit-learn in editable mode::
 
