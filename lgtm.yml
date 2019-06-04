@@ -1,7 +1,9 @@
 extraction:
   cpp:
     before_index:
-      - pip3 install --no-cache-dir numpy scipy Cython
+      - pip3 install numpy
+      - pip3 install scipy
+      - pip3 install Cython
     index:
       build_command:
         - python3 setup.py build_ext -i
