@@ -4,7 +4,6 @@ import sys
 
 import numpy as np
 from scipy import linalg
-import pytest
 
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_less

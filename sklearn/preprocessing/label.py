@@ -188,7 +188,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
     LabelEncoder()
     >>> le.classes_
     array([1, 2, 6])
-    >>> le.transform([1, 1, 2, 6]) #doctest: +ELLIPSIS
+    >>> le.transform([1, 1, 2, 6])
     array([0, 0, 1, 2]...)
     >>> le.inverse_transform([0, 0, 1, 2])
     array([1, 1, 2, 6])
@@ -201,7 +201,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
     LabelEncoder()
     >>> list(le.classes_)
     ['amsterdam', 'paris', 'tokyo']
-    >>> le.transform(["tokyo", "tokyo", "paris"]) #doctest: +ELLIPSIS
+    >>> le.transform(["tokyo", "tokyo", "paris"])
     array([2, 2, 1]...)
     >>> list(le.inverse_transform([2, 2, 1]))
     ['tokyo', 'tokyo', 'paris']
@@ -348,7 +348,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     >>> from sklearn import preprocessing
     >>> lb = preprocessing.LabelBinarizer()
     >>> lb.fit([1, 2, 6, 4, 2])
-    LabelBinarizer(neg_label=0, pos_label=1, sparse_output=False)
+    LabelBinarizer()
     >>> lb.classes_
     array([1, 2, 4, 6])
     >>> lb.transform([1, 6])
@@ -368,7 +368,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
     >>> import numpy as np
     >>> lb.fit(np.array([[0, 1, 1], [1, 0, 0]]))
-    LabelBinarizer(neg_label=0, pos_label=1, sparse_output=False)
+    LabelBinarizer()
     >>> lb.classes_
     array([0, 1, 2])
     >>> lb.transform([0, 1, 2, 1])

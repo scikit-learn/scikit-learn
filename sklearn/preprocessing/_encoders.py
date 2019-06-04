@@ -2,20 +2,14 @@
 #          Joris Van den Bossche <jorisvandenbossche@gmail.com>
 # License: BSD 3 clause
 
-import numbers
-import warnings
-
 import numpy as np
 from scipy import sparse
 
-from .. import get_config as _get_config
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
-from ..utils import deprecated
-from ..utils.fixes import _argmax, _object_dtype_isnan
+from ..utils.fixes import _argmax
 from ..utils.validation import check_is_fitted
 
-from .base import _transform_selected
 from .label import _encode, _encode_check_unknown
 
 
@@ -233,10 +227,7 @@ class OneHotEncoder(_BaseEncoder):
     >>> enc = OneHotEncoder(handle_unknown='ignore')
     >>> X = [['Male', 1], ['Female', 3], ['Female', 2]]
     >>> enc.fit(X)
-    ... # doctest: +ELLIPSIS
-    ... # doctest: +NORMALIZE_WHITESPACE
-    OneHotEncoder(categories='auto', drop=None, dtype=<... 'numpy.float64'>,
-                  handle_unknown='ignore', sparse=True)
+    OneHotEncoder(handle_unknown='ignore')
 
     >>> enc.categories_
     [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]
@@ -573,8 +564,7 @@ class OrdinalEncoder(_BaseEncoder):
     >>> enc = OrdinalEncoder()
     >>> X = [['Male', 1], ['Female', 3], ['Female', 2]]
     >>> enc.fit(X)
-    ... # doctest: +ELLIPSIS
-    OrdinalEncoder(categories='auto', dtype=<... 'numpy.float64'>)
+    OrdinalEncoder()
     >>> enc.categories_
     [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]
     >>> enc.transform([['Female', 3], ['Male', 1]])

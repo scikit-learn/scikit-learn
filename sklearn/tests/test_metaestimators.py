@@ -1,5 +1,4 @@
 """Common tests for metaestimators"""
-import pytest
 import functools
 
 import numpy as np

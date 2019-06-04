@@ -26,7 +26,6 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_no_warnings
 from sklearn.linear_model import SGDClassifier
 from sklearn.preprocessing import scale
 from sklearn.utils.testing import skip_if_no_parallel
