@@ -33,14 +33,22 @@ def test_n_iter():
     assert_raise_message(ValueError, msg, clf.fit, X, y)
 
 
-def test_bayesian_ridge_scores():
-    """Check scores attribute shape"""
-    X, y = diabetes.data, diabetes.target
+@pytest.mark.filterwarnings('ignore: Optimization step did not converge')
+@pytest.mark.parametrize('BR', [BayesianRidge, ARDRegression])
+def test_bayesian_ridge_scores(BR):
+    """Check shape and convergence of scores attribute"""
+    X, y = datasets.make_regression(n_features=10, n_informative=3,
+                                    noise=10, random_state=0)
 
-    clf = BayesianRidge(compute_score=True)
-    clf.fit(X, y)
+    # converged case
+    clf = BR(compute_score=True).fit(X, y)
+    assert_equal(clf.scores_.shape, (clf.n_iter_,))
+    assert_equal(np.max(clf.scores_), clf.scores_[-1])
 
-    assert clf.scores_.shape == (clf.n_iter_,)
+    # unconverged case
+    clf.set_params(n_iter=1, tol=1e-10).fit(X, y)
+    assert_equal(clf.scores_.shape, (clf.n_iter_,))
+    assert_equal(np.max(clf.scores_), clf.scores_[-1])
 
 
 @pytest.mark.filterwarnings('ignore: Optimization step did not')

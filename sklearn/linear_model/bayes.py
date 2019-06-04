@@ -231,7 +231,6 @@ class BayesianRidge(LinearModel, RegressorMixin):
             # compute the constant terms for the objective function
             log_likelihood_offset = \
                 self._log_likelihood_offset(n_samples, n_features)
-        converged = False
         coef_old_ = None
 
         XT_y = np.dot(X.T, y)
@@ -259,8 +258,11 @@ class BayesianRidge(LinearModel, RegressorMixin):
             if iter_ != 0 and np.sum(np.abs(coef_old_ - coef_)) < self.tol:
                 if verbose:
                     print("Convergence after ", str(iter_), " iterations")
-                converged = True
                 break
+            elif iter_ == self.n_iter - 1:
+                # If not converged, alpha and lambda are not updated in
+                # the last cycle.
+                continue
             coef_old_ = np.copy(coef_)
 
             # Update alpha and lambda according to (MacKay, 1992)
@@ -271,20 +273,9 @@ class BayesianRidge(LinearModel, RegressorMixin):
             alpha_ = ((n_samples - gamma_ + 2 * alpha_1) /
                       (rmse_ + 2 * alpha_2))
 
-        if not converged:
+        else:
             warnings.warn("Optimization step did not converge. Increase the "
                           "number of iterations.", ConvergenceWarning)
-            # recompute coef_ and scores_ for consistency if not converged
-            coef_, rmse_ = self._update_coef_(X, y, n_samples, n_features,
-                                              XT_y, U, Vh, eigen_vals_,
-                                              alpha_, lambda_)
-            if self.compute_score:
-                # compute the objective function
-                log_likelihood = self._compute_log_likelihood(
-                                    n_samples, n_features, eigen_vals_,
-                                    alpha_, lambda_, coef_, rmse_,
-                                    log_likelihood_offset)
-                self.scores_.append(log_likelihood)
         self.n_iter_ = iter_ + 1
 
         # return regularization parameters and corresponding posterior mean,
@@ -588,7 +579,6 @@ class ARDRegression(LinearModel, RegressorMixin):
             # compute the constant terms for the objective function
             log_likelihood_offset = \
                 self._log_likelihood_offset(n_samples, n_features)
-        converged = False
         coef_old_ = None
 
         # Compute sigma and mu (using Woodbury matrix identity)
@@ -627,8 +617,11 @@ class ARDRegression(LinearModel, RegressorMixin):
             if iter_ > 0 and np.sum(np.abs(coef_old_ - coef_)) < self.tol:
                 if verbose:
                     print("Converged after %s iterations" % iter_)
-                converged = True
                 break
+            elif iter_ == self.n_iter - 1:
+                # If not converged, alpha and lambda are not updated in
+                # the last cycle.
+                continue
             coef_old_ = np.copy(coef_)
 
             # Update alpha and lambda
@@ -642,20 +635,9 @@ class ARDRegression(LinearModel, RegressorMixin):
             # Prune the weights with a precision over a threshold
             keep_lambda = lambda_ < self.threshold_lambda
             coef_[~keep_lambda] = 0
-
-        if not converged:
+        else:
             warnings.warn("Optimization step did not converge. Increase the "
                           "number of iterations.", ConvergenceWarning)
-            # recompute coef_ and scores_ for consistence if not converged
-            sigma_ = update_sigma(X, alpha_, lambda_, keep_lambda, n_samples)
-            coef_ = update_coeff(X, y, coef_, alpha_, keep_lambda, sigma_)
-            rmse_ = np.sum((y - np.dot(X, coef_)) ** 2)
-            if self.compute_score:
-                # compute the objective function
-                log_likelihood = self._compute_log_likelihood(
-                                    n_samples, alpha_, lambda_, coef_, sigma_,
-                                    rmse_, log_likelihood_offset)
-                self.scores_.append(log_likelihood)
         self.n_iter_ = iter_ + 1
 
         self.coef_ = coef_
