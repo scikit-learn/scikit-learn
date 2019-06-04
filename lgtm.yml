@@ -1,7 +1,7 @@
 extraction:
   cpp:
     before_index:
-      - pip3 install numpy
+      - pip3 install numpy==1.6.3
       - pip3 install --no-deps scipy
       - pip3 install Cython
     index:
