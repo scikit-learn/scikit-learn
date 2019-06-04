@@ -1,3 +1,7 @@
+# Authors: Christian Lorentzen <lorentzen.ch@gmail.com>
+#
+# License: BSD 3 clause
+
 import numpy as np
 from numpy.testing import assert_allclose
 import pytest
@@ -5,7 +9,8 @@ import scipy as sp
 from scipy import linalg, optimize, sparse
 
 from sklearn.datasets import make_classification, make_regression
-from sklearn.linear_model.glm import (
+from sklearn.linear_model import GeneralizedLinearRegressor
+from sklearn.linear_model._glm import (
     Link,
     IdentityLink,
     LogLink,
@@ -14,7 +19,7 @@ from sklearn.linear_model.glm import (
     NormalDistribution, PoissonDistribution,
     GammaDistribution, InverseGaussianDistribution,
     GeneralizedHyperbolicSecant, BinomialDistribution,
-    GeneralizedLinearRegressor)
+)
 from sklearn.linear_model import ElasticNet, LogisticRegression, Ridge
 
 from sklearn.utils.testing import (
