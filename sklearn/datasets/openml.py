@@ -663,9 +663,6 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     if as_frame:
         if return_sparse:
             raise ValueError('Cannot return dataframe with sparse data')
-        if return_X_y:
-            raise ValueError('return_X_y=True can not be set when '
-                             'as_frame=True')
 
     # download data features, meta-info about column types
     features_list = _get_data_features(data_id, data_home)
@@ -745,6 +742,8 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
             y = df[target_column[0]]
         else:
             y = None
+        if return_X_y:
+            return X, y
         return Bunch(frame=df, data=X, target=y,
                      feature_names=data_columns, DESCR=description,
                      details=data_description, categories=None,

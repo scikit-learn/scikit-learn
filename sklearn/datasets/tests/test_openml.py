@@ -454,15 +454,33 @@ def test_fetch_openml_australian_pandas_error_sparse(monkeypatch):
         fetch_openml(data_id=data_id, as_frame=True, cache=False)
 
 
-def test_fetch_openml_adultcensus_pandas_return_X_y_errors(monkeypatch):
+def test_fetch_openml_adultcensus_pandas_return_X_y(monkeypatch):
+    pd = pytest.importorskip('pandas')
+    CategoricalDtype = pd.api.types.CategoricalDtype
+
+    # Check because of the numeric row attribute (issue #12329)
     data_id = 1119
+    data_shape = (10, 14)
+    target_shape = (10, )
+
+    expected_data_categories = 8
+    expected_data_floats = 6
+    target_column = 'class'
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
+    X, y = fetch_openml(data_id=data_id, as_frame=True, cache=False,
+                        return_X_y=True)
+    assert isinstance(X, pd.DataFrame)
+    assert X.shape == data_shape
+    n_categories = len([dtype for dtype in X.dtypes
+                       if isinstance(dtype, CategoricalDtype)])
+    n_floats = len([dtype for dtype in X.dtypes if dtype.kind == 'f'])
+    assert expected_data_categories == n_categories
+    assert expected_data_floats == n_floats
 
-    msg = 'return_X_y=True can not be set when as_frame=True'
-    with pytest.raises(ValueError, match=msg):
-        fetch_openml(data_id=data_id, as_frame=True, cache=False,
-                     return_X_y=True)
+    assert isinstance(y, pd.Series)
+    assert y.shape == target_shape
+    assert y.name == target_column
 
 
 def test_fetch_openml_adultcensus_pandas(monkeypatch):
