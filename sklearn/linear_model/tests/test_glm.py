@@ -23,7 +23,7 @@ from sklearn.linear_model._glm import (
 from sklearn.linear_model import ElasticNet, LogisticRegression, Ridge
 
 from sklearn.utils.testing import (
-    assert_equal, assert_almost_equal,
+    assert_almost_equal,
     assert_array_equal, assert_array_almost_equal)
 
 
@@ -35,16 +35,14 @@ def test_link_properties(link):
     """Test link inverse and derivative."""
     x = rng.rand(100)*100
     link = link()  # instantiate object
-    decimal = 10
     if isinstance(link, LogitLink):
         # careful for large x, note expit(36) = 1
         # limit max eta to 15
         x = x / 100 * 15
-        decimal = 8
-    assert_almost_equal(link.link(link.inverse(x)), x, decimal=decimal)
+    assert_allclose(link.link(link.inverse(x)), x)
     # if f(g(x)) = x, then f'(g(x)) = 1/g'(x)
-    assert_almost_equal(link.derivative(link.inverse(x)),
-                        1./link.inverse_derivative(x), decimal=decimal)
+    assert_allclose(link.derivative(link.inverse(x)),
+                    1./link.inverse_derivative(x))
     # for LogitLink, in the following x should be between 0 and 1.
     # assert_almost_equal(link.inverse_derivative(link.link(x)),
     #                     1./link.derivative(x), decimal=decimal)
@@ -79,7 +77,7 @@ def test_family_bounds(family, expected):
 def test_deviance_zero(family, chk_values):
     """Test deviance(y,y) = 0 for different families."""
     for x in chk_values:
-        assert_almost_equal(family.deviance(x, x), 0, decimal=10)
+        assert_allclose(family.deviance(x, x), 0, atol=1e-9)
 
 
 @pytest.mark.parametrize(
@@ -155,7 +153,7 @@ def test_glm_family_argument(f, fam):
     y = np.array([0.1, 0.5])  # in range of all distributions
     X = np.array([[1], [2]])
     glm = GeneralizedLinearRegressor(family=f, alpha=0).fit(X, y)
-    assert_equal(type(glm._family_instance), type(fam))
+    assert isinstance(glm._family_instance, fam.__class__)
 
     glm = GeneralizedLinearRegressor(family='not a family',
                                      fit_intercept=False)
@@ -172,7 +170,7 @@ def test_glm_link_argument(l, link):
     y = np.array([0.1, 0.5])  # in range of all distributions
     X = np.array([[1], [2]])
     glm = GeneralizedLinearRegressor(family='normal', link=l).fit(X, y)
-    assert_equal(type(glm._link_instance), type(link))
+    assert isinstance(glm._link_instance, link.__class__)
 
     glm = GeneralizedLinearRegressor(family='normal', link='not a link')
     with pytest.raises(ValueError):
@@ -366,7 +364,7 @@ def test_glm_identiy_regression(solver):
                                      fit_intercept=False, solver=solver,
                                      start_params='zero', tol=1e-7)
     res = glm.fit(X, y)
-    assert_array_almost_equal(res.coef_, coef)
+    assert_allclose(res.coef_, coef)
 
 
 @pytest.mark.parametrize(
@@ -375,11 +373,11 @@ def test_glm_identiy_regression(solver):
      GammaDistribution(), InverseGaussianDistribution(),
      TweedieDistribution(power=1.5), TweedieDistribution(power=4.5),
      GeneralizedHyperbolicSecant()])
-@pytest.mark.parametrize('solver, tol, dec', [('irls', 1e-6, 6),
-                                              ('lbfgs', 1e-6, 6),
-                                              ('newton-cg', 1e-7, 6),
-                                              ('cd', 1e-7, 6)])
-def test_glm_log_regression(family, solver, tol, dec):
+@pytest.mark.parametrize('solver, tol', [('irls', 1e-6),
+                                         ('lbfgs', 1e-6),
+                                         ('newton-cg', 1e-7),
+                                         ('cd', 1e-7)])
+def test_glm_log_regression(family, solver, tol):
     """Test GLM regression with log link on a simple dataset."""
     coef = [0.2, -0.1]
     X = np.array([[1, 1, 1, 1, 1], [0, 1, 2, 3, 4]]).T
@@ -388,7 +386,7 @@ def test_glm_log_regression(family, solver, tol, dec):
                 alpha=0, family=family, link='log', fit_intercept=False,
                 solver=solver, start_params='guess', tol=tol)
     res = glm.fit(X, y)
-    assert_array_almost_equal(res.coef_, coef, decimal=dec)
+    assert_allclose(res.coef_, coef)
 
 
 @pytest.mark.filterwarnings('ignore::DeprecationWarning')
@@ -421,10 +419,10 @@ def test_normal_ridge(solver, tol, dec):
                                      tol=tol, max_iter=100, solver=solver,
                                      check_input=False, random_state=rng)
     glm.fit(X, y)
-    assert_equal(glm.coef_.shape, (X.shape[1], ))
-    assert_array_almost_equal(glm.coef_, ridge.coef_, decimal=dec)
-    assert_almost_equal(glm.intercept_, ridge.intercept_, decimal=dec)
-    assert_array_almost_equal(glm.predict(T), ridge.predict(T), decimal=dec)
+    assert glm.coef_.shape == (X.shape[1], )
+    assert_allclose(glm.coef_, ridge.coef_)
+    assert glm.intercept_ == pytest.approx(ridge.intercept_)
+    assert_allclose(glm.predict(T), ridge.predict(T))
 
     ridge = Ridge(alpha=alpha*n_samples, fit_intercept=False, tol=1e-6,
                   solver='svd', normalize=False)
@@ -435,13 +433,13 @@ def test_normal_ridge(solver, tol, dec):
                                      check_input=False, random_state=rng,
                                      fit_dispersion='chisqr')
     glm.fit(X, y)
-    assert_equal(glm.coef_.shape, (X.shape[1], ))
-    assert_array_almost_equal(glm.coef_, ridge.coef_, decimal=dec)
+    assert glm.coef_.shape == (X.shape[1], )
+    assert_allclose(glm.coef_, ridge.coef_)
     assert_almost_equal(glm.intercept_, ridge.intercept_, decimal=dec)
-    assert_array_almost_equal(glm.predict(T), ridge.predict(T), decimal=dec)
+    assert_allclose(glm.predict(T), ridge.predict(T))
     mu = glm.predict(X)
-    assert_almost_equal(glm.dispersion_,
-                        np.sum((y-mu)**2/(n_samples-n_features)))
+    assert_allclose(glm.dispersion_,
+                    np.sum((y-mu)**2/(n_samples-n_features)))
 
     # 2. With more features than samples and sparse
     n_samples, n_features, n_predict = 10, 100, 10
@@ -461,7 +459,7 @@ def test_normal_ridge(solver, tol, dec):
                                      tol=tol, max_iter=300, solver=solver,
                                      check_input=False, random_state=rng)
     glm.fit(X, y)
-    assert_equal(glm.coef_.shape, (X.shape[1], ))
+    assert glm.coef_.shape == (X.shape[1], )
     assert_array_almost_equal(glm.coef_, ridge.coef_, decimal=dec)
     assert_almost_equal(glm.intercept_, ridge.intercept_, decimal=dec)
     assert_array_almost_equal(glm.predict(T), ridge.predict(T), decimal=dec)
@@ -474,7 +472,7 @@ def test_normal_ridge(solver, tol, dec):
                                      tol=tol*2, max_iter=300, solver=solver,
                                      check_input=False, random_state=rng)
     glm.fit(X, y)
-    assert_equal(glm.coef_.shape, (X.shape[1], ))
+    assert glm.coef_.shape == (X.shape[1], )
     assert_array_almost_equal(glm.coef_, ridge.coef_, decimal=dec-1)
     assert_almost_equal(glm.intercept_, ridge.intercept_, decimal=dec-1)
     assert_array_almost_equal(glm.predict(T), ridge.predict(T), decimal=dec-2)
