@@ -29,7 +29,7 @@ rng = np.random.RandomState(42)
 def test_link_properties(link):
     """Test link inverse and derivative."""
     x = rng.rand(100)*100
-    link = link()  # instatiate object
+    link = link()  # instantiate object
     decimal = 10
     if isinstance(link, LogitLink):
         # careful for large x, note expit(36) = 1
@@ -133,7 +133,7 @@ def test_sample_weights_validation():
     with pytest.raises(ValueError):
         glm.fit(X, y, weights)
 
-    # 5. 1d but weith a negative value
+    # 5. 1d but with a negative value
     weights = [2, -1]
     with pytest.raises(ValueError):
         glm.fit(X, y, weights)

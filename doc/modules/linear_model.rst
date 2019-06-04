@@ -887,7 +887,7 @@ combination of the input variables :math:`X` via an inverse link function
 .. math::    \hat{y}(w, x) = h(xw) = h(w_0 + w_1 x_1 + ... + w_p x_p).
 
 Secondly, the squared loss function is replaced by the deviance :math:`D` of an
-exponential dispersion model (EDM) [11]_. The objective function beeing minimized
+exponential dispersion model (EDM) [11]_. The objective function being minimized
 becomes
 
 .. math::    \frac{1}{2\mathrm{sum}(s)}D(y, \hat{y}; s) + \alpha \rho ||P_1w||_1
