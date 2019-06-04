@@ -37,8 +37,9 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 np.random.seed(0)
 
 # Read data from Titanic dataset.
-titantic = fetch_openml(data_id=40945, return_frame=True)
-data = titantic.dataframe
+titantic = fetch_openml(data_id=40945, as_frame=True)
+X = titantic.data
+y = titantic.target
 
 # We will train our classifier with the following features:
 # Numeric Features:
@@ -69,9 +70,6 @@ preprocessor = ColumnTransformer(
 # Now we have a full prediction pipeline.
 clf = Pipeline(steps=[('preprocessor', preprocessor),
                       ('classifier', LogisticRegression())])
-
-X = data.drop('survived', axis=1)
-y = data['survived']
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
