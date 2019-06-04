@@ -7,7 +7,7 @@ import json
 import time
 import os
 
-from joblib import delayed, Parallel, Memory
+from joblib import delayed, Parallel
 import matplotlib.pyplot as plt
 import numpy as np
 
