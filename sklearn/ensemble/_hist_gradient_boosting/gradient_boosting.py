@@ -158,80 +158,111 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # n_trees_per_iterations is n_classes in multiclass classification,
         # else 1.
         n_samples = X_binned_train.shape[0]
-        self._baseline_prediction = self.loss_.get_baseline_prediction(
-            y_train, self.n_trees_per_iteration_
-        )
-        raw_predictions = np.zeros(
-            shape=(self.n_trees_per_iteration_, n_samples),
-            dtype=self._baseline_prediction.dtype
-        )
-        raw_predictions += self._baseline_prediction
 
-        # initialize gradients and hessians (empty arrays).
-        # shape = (n_trees_per_iteration, n_samples).
-        gradients, hessians = self.loss_.init_gradients_and_hessians(
-            n_samples=n_samples,
-            prediction_dim=self.n_trees_per_iteration_
-        )
+        if not (self._is_initialized() and self.warm_start):
+            # Clear the state
+            self._clear_state()
 
-        # predictors is a matrix (list of lists) of TreePredictor objects
-        # with shape (n_iter_, n_trees_per_iteration)
-        self._predictors = predictors = []
+            self._baseline_prediction = self.loss_.get_baseline_prediction(
+                y_train, self.n_trees_per_iteration_
+            )
+            raw_predictions = np.zeros(
+                shape=(self.n_trees_per_iteration_, n_samples),
+                dtype=self._baseline_prediction.dtype
+            )
+            raw_predictions += self._baseline_prediction
 
-        # Initialize structures and attributes related to early stopping
-        self.scorer_ = None  # set if scoring != loss
-        raw_predictions_val = None  # set if scoring == loss and use val
-        self.train_score_ = []
-        self.validation_score_ = []
-        if self.do_early_stopping_:
-            # populate train_score and validation_score with the predictions
-            # of the initial model (before the first tree)
+            # initialize gradients and hessians (empty arrays).
+            # shape = (n_trees_per_iteration, n_samples).
+            gradients, hessians = self.loss_.init_gradients_and_hessians(
+                n_samples=n_samples,
+                prediction_dim=self.n_trees_per_iteration_
+            )
 
-            if self.scoring == 'loss':
-                # we're going to compute scoring w.r.t the loss. As losses
-                # take raw predictions as input (unlike the scorers), we can
-                # optimize a bit and avoid repeating computing the predictions
-                # of the previous trees. We'll re-use raw_predictions (as it's
-                # needed for training anyway) for evaluating the training
-                # loss, and create raw_predictions_val for storing the
-                # raw predictions of the validation data.
+            # predictors is a matrix (list of lists) of TreePredictor objects
+            # with shape (n_iter_, n_trees_per_iteration)
+            self._predictors = predictors = []
 
-                if self._use_validation_data:
-                    raw_predictions_val = np.zeros(
-                        shape=(self.n_trees_per_iteration_,
-                               X_binned_val.shape[0]),
-                        dtype=self._baseline_prediction.dtype
+            # Initialize structures and attributes related to early stopping
+            self.scorer_ = None  # set if scoring != loss
+            raw_predictions_val = None  # set if scoring == loss and use val
+            self.train_score_ = []
+            self.validation_score_ = []
+
+            if self.do_early_stopping_:
+                # populate train_score and validation_score with the
+                # predictions of the initial model (before the first tree)
+
+                if self.scoring == 'loss':
+                    # we're going to compute scoring w.r.t the loss. As losses
+                    # take raw predictions as input (unlike the scorers), we
+                    # can optimize a bit and avoid repeating computing the
+                    # predictions of the previous trees. We'll re-use
+                    # raw_predictions (as it's needed for training anyway) for
+                    # evaluating the training loss, and create
+                    # raw_predictions_val for storing the raw predictions of
+                    # the validation data.
+
+                    if self._use_validation_data:
+                        raw_predictions_val = np.zeros(
+                            shape=(self.n_trees_per_iteration_,
+                                   X_binned_val.shape[0]),
+                            dtype=self._baseline_prediction.dtype
+                        )
+
+                        raw_predictions_val += self._baseline_prediction
+
+                    self._check_early_stopping_loss(raw_predictions, y_train,
+                                                    raw_predictions_val, y_val)
+                else:
+                    self.scorer_ = check_scoring(self, self.scoring)
+                    # scorer_ is a callable with signature (est, X, y) and
+                    # calls est.predict() or est.predict_proba() depending on
+                    # its nature.
+                    # Unfortunately, each call to scorer_() will compute
+                    # the predictions of all the trees. So we use a subset of
+                    # the training set to compute train scores.
+                    subsample_size = 10000  # should we expose this parameter?
+                    indices = np.arange(X_binned_train.shape[0])
+                    self._indices = indices
+                    if X_binned_train.shape[0] > subsample_size:
+                        # TODO: not critical but stratify using resample()
+                        indices = rng.choice(indices, subsample_size,
+                                             replace=False)
+                    X_binned_small_train = X_binned_train[indices]
+                    y_small_train = y_train[indices]
+                    # Predicting is faster on C-contiguous arrays.
+                    X_binned_small_train = np.ascontiguousarray(
+                        X_binned_small_train)
+
+                    self._check_early_stopping_scorer(
+                        X_binned_small_train, y_small_train,
+                        X_binned_val, y_val,
                     )
+            begin_at_stage = 0
 
-                    raw_predictions_val += self._baseline_prediction
+        else:
+            # Convert array attributes to lists
+            self._tolist_state()
 
-                self._check_early_stopping_loss(raw_predictions, y_train,
-                                                raw_predictions_val, y_val)
-            else:
-                self.scorer_ = check_scoring(self, self.scoring)
-                # scorer_ is a callable with signature (est, X, y) and calls
-                # est.predict() or est.predict_proba() depending on its nature.
-                # Unfortunately, each call to scorer_() will compute
-                # the predictions of all the trees. So we use a subset of the
-                # training set to compute train scores.
-                subsample_size = 10000  # should we expose this parameter?
-                indices = np.arange(X_binned_train.shape[0])
-                if X_binned_train.shape[0] > subsample_size:
-                    # TODO: not critical but stratify using resample()
-                    indices = rng.choice(indices, subsample_size,
-                                         replace=False)
-                X_binned_small_train = X_binned_train[indices]
-                y_small_train = y_train[indices]
-                # Predicting is faster on C-contiguous arrays.
+            # Compute raw predictions
+            raw_predictions = self._raw_predict(X_binned_train)
+            if hasattr(self, '_indices'):
+                X_binned_small_train = X_binned_train[self._indices]
+                y_small_train = y_train[self._indices]
                 X_binned_small_train = np.ascontiguousarray(
                     X_binned_small_train)
 
-                self._check_early_stopping_scorer(
-                    X_binned_small_train, y_small_train,
-                    X_binned_val, y_val,
-                )
+            # Get the gradients and hessians from the previous fit
+            gradients = self._last_gradients
+            hessians = self._last_hessians
 
-        for iteration in range(self.max_iter):
+            # Get the predictors from the previous fit
+            predictors = self._predictors
+
+            begin_at_stage = len(predictors)
+
+        for iteration in range(begin_at_stage, self.max_iter):
 
             if self.verbose:
                 iteration_start_time = time()
@@ -326,21 +357,35 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self.train_score_ = np.asarray(self.train_score_)
         self.validation_score_ = np.asarray(self.validation_score_)
         del self._in_fit  # hard delete so we're sure it can't be used anymore
+        self._last_gradients = gradients
+        self._last_hessians = hessians
         return self
 
     def _is_initialized(self):
-        return getattr(self, 'n_iter_', 0) > 0
+        return len(getattr(self, '_predictors', [])) > 0
 
     def _clear_state(self):
         """Clear the state of the gradient boosting model."""
-        if hasattr(self, 'n_trees_per_iteration_'):
-            del self.n_trees_per_iteration_
         if hasattr(self, 'train_score_'):
             del self.train_score_
         if hasattr(self, 'validation_score_'):
-            del self.init_
+            del self.validation_score_
         if hasattr(self, '_rng'):
             del self._rng
+
+    def _tolist_state(self):
+        """Convert all array attributes to lists."""
+        # self.n_estimators is the number of additional est to fit
+        total_max_iter = self.max_iter
+        if total_max_iter < self.n_iter_:
+            raise ValueError(
+                'max_iter=%d must be larger than or equal to '
+                'n_iter_=%d when warm_start==True'
+                % (total_max_iter, self.n_iter_)
+            )
+
+        self.train_score_ = self.train_score_.tolist()
+        self.validation_score_ = self.validation_score_.tolist()
 
     def _check_early_stopping_scorer(self, X_binned_small_train, y_small_train,
                                      X_binned_val, y_val):
@@ -348,7 +393,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         Scores are computed on validation data or on training data.
         """
-
         self.train_score_.append(
             self.scorer_(self, X_binned_small_train, y_small_train)
         )
@@ -606,6 +650,11 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just erase the
         previous solution. See :term:`the Glossary <warm_start>`.
+        If ``n_iter_no_change`` and ``validation_fraction`` are not None,
+        it is assumed that the same data is provided, leading to
+        the same splits for the training and validation sets if
+        ``validation_fraction`` takes the same value as in the previous
+        fit, assuring no data leakage in the performance evaluation.
     random_state : int, np.random.RandomStateInstance or None, \
         optional (default=None)
         Pseudo-random number generator to control the subsampling in the
@@ -778,6 +827,11 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just erase the
         previous solution. See :term:`the Glossary <warm_start>`.
+        If ``n_iter_no_change`` and ``validation_fraction`` are not None,
+        it is assumed that the same data is provided, leading to
+        the same splits for the training and validation sets if
+        ``validation_fraction`` takes the same value as in the previous
+        fit, assuring no data leakage in the performance evaluation.
     random_state : int, np.random.RandomStateInstance or None, \
         optional (default=None)
         Pseudo-random number generator to control the subsampling in the
