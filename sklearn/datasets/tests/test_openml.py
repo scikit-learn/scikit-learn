@@ -94,12 +94,10 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
     if isinstance(target_column, str):
         # single target, so target is vector
         assert data_by_id.target.shape == (expected_observations, )
-        assert data_by_id.target_names[0] == target_column
     elif isinstance(target_column, list):
         # multi target, so target is array
         assert data_by_id.target.shape == (expected_observations,
                                            len(target_column))
-        assert np.all(data_by_id.target_names == target_column)
     assert data_by_id.data.dtype == np.float64
     assert data_by_id.target.dtype == expected_target_dtype
     assert len(data_by_id.feature_names) == expected_features
