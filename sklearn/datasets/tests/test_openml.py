@@ -297,7 +297,7 @@ def test_fetch_openml_iris_pandas(monkeypatch, chunksize):
                                      'Iris-virginica'])
     data_dtypes = [np.float64] * 4
     data_names = ['sepallength', 'sepalwidth', 'petallength', 'petalwidth']
-    target_names = 'class'
+    target_name = 'class'
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
 
@@ -316,6 +316,7 @@ def test_fetch_openml_iris_pandas(monkeypatch, chunksize):
     assert isinstance(target, pd.Series)
     assert target.dtype == target_dtype
     assert target.shape == target_shape
+    assert target.name == target_name
 
     assert isinstance(frame, pd.DataFrame)
     assert frame.shape == frame_shape
