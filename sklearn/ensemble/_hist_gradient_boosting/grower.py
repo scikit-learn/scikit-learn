@@ -18,6 +18,9 @@ from .utils import sum_parallel
 from .types import PREDICTOR_RECORD_DTYPE
 
 
+EPS = 1e-15  # to avoid zero division errors
+
+
 class TreeNode:
     """Tree Node class used in TreeGrower.
 
@@ -398,7 +401,7 @@ class TreeGrower:
         https://arxiv.org/abs/1603.02754
         """
         node.value = -self.shrinkage * node.sum_gradients / (
-            node.sum_hessians + self.splitter.l2_regularization)
+            node.sum_hessians + self.splitter.l2_regularization + EPS)
         self.finalized_leaves.append(node)
 
     def _finalize_splittable_nodes(self):
