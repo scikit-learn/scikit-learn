@@ -10,6 +10,7 @@ import itertools
 from collections.abc import Generator
 from itertools import islice
 from collections import OrderedDict
+import warnings
 
 from urllib.request import urlopen, Request
 
@@ -20,6 +21,7 @@ from ..externals import _arff
 from .base import get_data_home
 from urllib.error import HTTPError
 from ..utils import Bunch
+from .. import get_config
 from ..utils import check_pandas_support  # noqa
 
 __all__ = ['fetch_openml']
@@ -294,7 +296,7 @@ def _chunk_generator(gen, chunksize):
             return
 
 
-def _convert_arff_data_dataframe(arrf, columns, features_dict, chunksize):
+def _convert_arff_data_dataframe(arrf, columns, features_dict):
     """Convert the ARFF object into a pandas DataFrame.
 
     Parameters
@@ -308,9 +310,6 @@ def _convert_arff_data_dataframe(arrf, columns, features_dict, chunksize):
     features_dict : dict
         Maps feature name to feature info from openml.
 
-    chunksize : int
-        Number of rows to read at a time.
-
     Returns
     -------
     dataframe : pandas DataFrame
@@ -320,9 +319,25 @@ def _convert_arff_data_dataframe(arrf, columns, features_dict, chunksize):
     attributes = OrderedDict(arrf['attributes'])
     arrf_columns = list(attributes)
 
-    arrf_data_gen = _chunk_generator(arrf['data'], chunksize)
-    dfs = [pd.DataFrame(data, columns=arrf_columns)
-           for data in arrf_data_gen]
+    # calculate chunksize
+    working_memory = get_config()['working_memory']
+    first_row = next(arrf['data'])
+    first_df = pd.DataFrame([first_row], columns=arrf_columns)
+
+    row_bytes = first_df.memory_usage(deep=True).sum()
+    chunksize = int(working_memory * (2 ** 20) // row_bytes)
+
+    if chunksize < 1:
+        warnings.warn('Could not adhere to working_memory config. '
+                      'Currently %.0fMiB, %.0fMiB required.' %
+                      (working_memory, np.ceil(row_bytes * 2 ** -20)))
+        chunksize = 1
+
+    # read arrf data with chunks
+    dfs = []
+    dfs.append(first_df)
+    for data in _chunk_generator(arrf['data'], chunksize):
+        dfs.append(pd.DataFrame(data, columns=arrf_columns))
     df = pd.concat(dfs)
 
     columns_to_keep = [col for col in arrf_columns if col in columns]
@@ -570,11 +585,6 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         If True, returns a Bunch where the data attribute is a pandas
         DataFrame.
 
-    chunksize : int, default=5000
-        Number of rows of arrf file to read at a time. Higher values leads to
-        more memory usage.
-        Only used when ``as_frame`` is True.
-
     Returns
     -------
 
@@ -673,8 +683,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
                 continue
             if feature['data_type'] == 'string':
                 raise ValueError('STRING attributes are not supported for '
-                                 'arrays as a return value. Try '
-                                 'as_frame=True')
+                                 'array representation. Try as_frame=True')
 
     if target_column == "default-target":
         # determines the default target based on the data feature results
@@ -733,8 +742,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     if as_frame:
         columns = data_columns + target_column
-        df = _convert_arff_data_dataframe(arff, columns, features_dict,
-                                          chunksize)
+        df = _convert_arff_data_dataframe(arff, columns, features_dict)
         X = df[data_columns]
         if len(target_column) >= 2:
             y = df[target_column]

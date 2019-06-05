@@ -9,6 +9,7 @@ import scipy.sparse
 import sklearn
 import pytest
 
+from sklearn import config_context
 from sklearn.datasets import fetch_openml
 from sklearn.datasets.openml import (_open_openml_url,
                                      _get_data_description_by_id,
@@ -281,8 +282,7 @@ def test_feature_to_dtype_error(feature):
         _feature_to_dtype(feature)
 
 
-@pytest.mark.parametrize('chunksize', [10, 1000])
-def test_fetch_openml_iris_pandas(monkeypatch, chunksize):
+def test_fetch_openml_iris_pandas(monkeypatch):
     # classification dataset with numeric only columns
     pd = pytest.importorskip('pandas')
     CategoricalDtype = pd.api.types.CategoricalDtype
@@ -299,8 +299,7 @@ def test_fetch_openml_iris_pandas(monkeypatch, chunksize):
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
 
-    bunch = fetch_openml(data_id=data_id, as_frame=True, cache=False,
-                         chunksize=chunksize)
+    bunch = fetch_openml(data_id=data_id, as_frame=True, cache=False)
     data = bunch.data
     target = bunch.target
     frame = bunch.frame
@@ -321,8 +320,7 @@ def test_fetch_openml_iris_pandas(monkeypatch, chunksize):
     assert np.all(frame.dtypes == data_dtypes + [target_dtype])
 
 
-@pytest.mark.parametrize('chunksize', [10, 1000])
-def test_fetch_openml_iris_multitarget_pandas(monkeypatch, chunksize):
+def test_fetch_openml_iris_multitarget_pandas(monkeypatch):
     # classification dataset with numeric only columns
     pd = pytest.importorskip('pandas')
     CategoricalDtype = pd.api.types.CategoricalDtype
@@ -342,7 +340,7 @@ def test_fetch_openml_iris_multitarget_pandas(monkeypatch, chunksize):
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
 
     bunch = fetch_openml(data_id=data_id, as_frame=True, cache=False,
-                         chunksize=chunksize, target_column=target_column)
+                         target_column=target_column)
     data = bunch.data
     target = bunch.target
     frame = bunch.frame
@@ -453,11 +451,22 @@ def test_fetch_openml_australian_pandas_error_sparse(monkeypatch):
         fetch_openml(data_id=data_id, as_frame=True, cache=False)
 
 
+def test_convert_arff_data_dataframe_warning_low_memory_pandas(monkeypatch):
+    pytest.importorskip('pandas')
+
+    data_id = 1119
+    _monkey_patch_webbased_functions(monkeypatch, data_id, True)
+
+    msg = 'Could not adhere to working_memory config.'
+    with pytest.warns(UserWarning, match=msg):
+        with config_context(working_memory=1e-6):
+            fetch_openml(data_id=data_id, as_frame=True, cache=False)
+
+
 def test_fetch_openml_adultcensus_pandas_return_X_y(monkeypatch):
     pd = pytest.importorskip('pandas')
     CategoricalDtype = pd.api.types.CategoricalDtype
 
-    # Check because of the numeric row attribute (issue #12329)
     data_id = 1119
     data_shape = (10, 14)
     target_shape = (10, )
