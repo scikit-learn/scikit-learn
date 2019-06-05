@@ -528,7 +528,7 @@ def _valid_data_column_names(features_list, target_columns):
 
 def fetch_openml(name=None, version='active', data_id=None, data_home=None,
                  target_column='default-target', cache=True, return_X_y=False,
-                 as_frame=False, chunksize=5000):
+                 as_frame=False):
     """Fetch dataset from openml by name or dataset id.
 
     Datasets are uniquely identified by either an integer ID or by a
@@ -607,6 +607,9 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
             is True, this is None.
         details : dict
             More metadata from OpenML
+        frame : pandas DataFrame
+            DataFrame with ``data`` and ``target``. This is set when
+            ``as_frame`` is True.
 
     (data, target) : tuple if ``return_X_y`` is True
 
