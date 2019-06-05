@@ -649,7 +649,12 @@ def _get_column_indices(X, key):
     if (_check_key_type(key, int)
             or hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_)):
         # Convert key into positive indexes
-        idx = np.arange(n_columns)[key]
+        try:
+            idx = np.arange(n_columns)[key]
+        except IndexError as e:
+            raise ValueError(
+                'all features must be in [0, %d]' % (n_columns - 1)
+            ) from e
         return np.atleast_1d(idx).tolist()
     elif _check_key_type(key, str):
         try:
@@ -672,7 +677,16 @@ def _get_column_indices(X, key):
         else:
             columns = list(key)
 
-        return [all_columns.index(col) for col in columns]
+        try:
+            column_indices = [all_columns.index(col) for col in columns]
+        except ValueError as e:
+            if 'not in list' in str(e):
+                raise ValueError(
+                    "A given feature is not a column of the dataframe"
+                ) from e
+            raise
+
+        return column_indices
     else:
         raise ValueError("No valid specification of the columns. Only a "
                          "scalar, list or slice of all integers or all "
