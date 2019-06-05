@@ -68,7 +68,7 @@ __all__ = ['bytescale', 'imread', 'imsave', 'fromimage', 'toimage', 'imresize']
 
 PILLOW_ERROR_MESSAGE = (
     "The Python Imaging Library (PIL) is required to load data "
-    "from jpeg files. It can be installed with `pip install pillow`."
+    "from jpeg files. It can be installed with `pip install Pillow`."
 )
 
 
