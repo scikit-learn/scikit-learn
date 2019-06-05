@@ -53,9 +53,11 @@ def set_config(assume_finite=None, working_memory=None,
         all the non-changed parameters.
 
         .. versionadded:: 0.21
+
     See also
     --------
     config_context
+    get_config
     """
     if assume_finite is not None:
         _global_config['assume_finite'] = assume_finite
@@ -105,6 +107,7 @@ def config_context(**new_config):
     See also
     --------
     set_config
+    get_config
     """
     old_config = get_config().copy()
     set_config(**new_config)
