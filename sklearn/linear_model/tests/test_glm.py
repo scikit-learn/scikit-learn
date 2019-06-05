@@ -388,11 +388,11 @@ def test_glm_log_regression(family, solver, tol):
 
 
 @pytest.mark.filterwarnings('ignore::DeprecationWarning')
-@pytest.mark.parametrize('solver, tol, dec', [('irls', 1e-6, 6),
-                                              ('lbfgs', 1e-6, 5),
-                                              ('newton-cg', 1e-6, 5),
-                                              ('cd', 1e-6, 6)])
-def test_normal_ridge(solver, tol, dec):
+@pytest.mark.parametrize('solver, tol', [('irls', 1e-6),
+                                         ('lbfgs', 1e-6),
+                                         ('newton-cg', 1e-6),
+                                         ('cd', 1e-6)])
+def test_normal_ridge(solver, tol):
     """Test ridge regression for Normal distributions.
 
     Compare to test_ridge in test_ridge.py.
@@ -479,12 +479,12 @@ def test_normal_ridge(solver, tol, dec):
     assert_allclose(glm.predict(T), ridge.predict(T), rtol=1e-5)
 
 
-@pytest.mark.parametrize('solver, tol, dec',
-                         [('irls', 1e-7, 6),
-                          ('lbfgs', 1e-7, 5),
-                          ('newton-cg', 1e-7, 5),
-                          ('cd', 1e-7, 7)])
-def test_poisson_ridge(solver, tol, dec):
+@pytest.mark.parametrize('solver, tol',
+                         [('irls', 1e-7),
+                          ('lbfgs', 1e-7),
+                          ('newton-cg', 1e-7),
+                          ('cd', 1e-7)])
+def test_poisson_ridge(solver, tol):
     """Test ridge regression with poisson family and LogLink.
 
     Compare to R's glmnet"""
