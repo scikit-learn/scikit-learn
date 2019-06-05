@@ -36,7 +36,7 @@ class NHashingEncoder:
     Example
     -------
     >>> from category_encoders.hashing import HashingEncoder
-    >>> from n_hashing import NHashingEncoder
+    >>> from nhashing import NHashingEncoder
     >>> import time
     >>> import pandas as pd
     >>> from sklearn.datasets import load_boston
