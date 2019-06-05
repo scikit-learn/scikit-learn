@@ -172,3 +172,55 @@ def test_binning_train_validation_are_separated():
                   int((1 - validation_fraction) * n_samples))
     assert np.all(mapper_training_data.actual_n_bins_ !=
                   mapper_whole_data.actual_n_bins_)
+
+
+@pytest.mark.parametrize('GradientBoosting, X, y', [
+    (HistGradientBoostingClassifier, X_classification, y_classification),
+    (HistGradientBoostingRegressor, X_regression, y_regression)
+])
+@pytest.mark.parametrize(
+    'params_first, params_second, err_msg',
+    [({'max_iter': 50, 'warm_start': True},
+      {'max_iter': 25, 'warm_start': True},
+      'max_iter=25 must be larger than or equal to n_iter_=50 '
+      'when warm_start==True')]
+)
+def test_max_iter_with_warm_start_validation(GradientBoosting, X, y,
+                                             params_first, params_second,
+                                             err_msg):
+    with pytest.raises(ValueError, match=err_msg):
+        estimator = GradientBoosting(**params_first)
+        estimator.fit(X, y)
+        estimator.set_params(**params_second)
+        estimator.fit(X, y)
+
+
+@pytest.mark.parametrize('GradientBoosting, X, y', [
+    (HistGradientBoostingClassifier, X_classification, y_classification),
+    (HistGradientBoostingRegressor, X_regression, y_regression)
+])
+def test_warm_start_yields_identical_results(GradientBoosting, X, y):
+    rng = np.random.RandomState(0)
+    gb_warm_start = GradientBoosting(
+        n_iter_no_change=100, max_iter=50, random_state=rng, warm_start=True
+    )
+    gb_warm_start.fit(X, y).set_params(max_iter=75).fit(X, y)
+
+    gb_no_warm_start = GradientBoosting(
+        n_iter_no_change=100, max_iter=75, random_state=rng, warm_start=False
+    )
+    gb_no_warm_start.fit(X, y)
+
+    # Check identical nodes for each tree
+    for (pred_ith_warm, pred_ith_no_warm) in zip(gb_warm_start._predictors,
+                                                 gb_no_warm_start._predictors):
+        for (predictor_warm, predictor_no_warm) in zip(pred_ith_warm,
+                                                       pred_ith_no_warm):
+            np.testing.assert_array_equal(
+                predictor_warm.nodes,
+                predictor_no_warm.nodes
+            )
+
+    # Check identical predictions
+    np.testing.assert_array_equal(gb_warm_start.predict(X),
+                                  gb_no_warm_start.predict(X))
