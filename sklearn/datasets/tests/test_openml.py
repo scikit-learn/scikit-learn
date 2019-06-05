@@ -1071,8 +1071,8 @@ def test_string_attribute_without_dataframe(monkeypatch, gzip_response):
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     # single column test
     assert_raise_message(ValueError,
-                         ('STRING attributes are not supported for arrays as '
-                          'a return value. Try as_frame=True'),
+                         ('STRING attributes are not supported for '
+                          'array representation. Try as_frame=True'),
                          fetch_openml, data_id=data_id, cache=False)
 
 
