@@ -200,7 +200,7 @@ def test_max_iter_with_warm_start_validation(GradientBoosting, X, y,
     (HistGradientBoostingRegressor, X_regression, y_regression)
 ])
 def test_warm_start_yields_identical_results(GradientBoosting, X, y):
-    rng = np.random.RandomState(0)
+    rng = 42
     gb_warm_start = GradientBoosting(
         n_iter_no_change=100, max_iter=50, random_state=rng, warm_start=True
     )
