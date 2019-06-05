@@ -5,25 +5,9 @@ This module contains the TreePredictor class which is used for prediction.
 
 import numpy as np
 
-from .types import X_DTYPE
 from .types import Y_DTYPE
-from .types import X_BINNED_DTYPE
 from ._predictor import _predict_from_numeric_data
 from ._predictor import _predict_from_binned_data
-
-
-PREDICTOR_RECORD_DTYPE = np.dtype([
-    ('value', Y_DTYPE),
-    ('count', np.uint32),
-    ('feature_idx', np.uint32),
-    ('threshold', X_DTYPE),
-    ('left', np.uint32),
-    ('right', np.uint32),
-    ('gain', Y_DTYPE),
-    ('depth', np.uint32),
-    ('is_leaf', np.uint8),
-    ('bin_threshold', X_BINNED_DTYPE),
-])
 
 
 class TreePredictor:
@@ -31,7 +15,7 @@ class TreePredictor:
 
     Parameters
     ----------
-    nodes : list of PREDICTOR_RECORD_DTYPE
+    nodes : ndarray of PREDICTOR_RECORD_DTYPE
         The nodes of the tree.
     """
     def __init__(self, nodes):
