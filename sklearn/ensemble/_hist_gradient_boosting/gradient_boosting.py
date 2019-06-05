@@ -159,7 +159,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # else 1.
         n_samples = X_binned_train.shape[0]
 
-        if not (self._is_initialized() and self.warm_start):
+        if not (self._has_been_fitted() and self.warm_start):
             # Clear the state
             self._clear_state()
 
@@ -242,6 +242,15 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             begin_at_stage = 0
 
         else:
+            # Check that the maximum number of iterations is not smaller
+            # than the number of iterations from the previous fit
+            if self.max_iter < self.n_iter_:
+                raise ValueError(
+                    'max_iter=%d must be larger than or equal to '
+                    'n_iter_=%d when warm_start==True'
+                    % (self.max_iter, self.n_iter_)
+                )
+
             # Convert array attributes to lists
             self._tolist_state()
 
@@ -361,7 +370,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self._last_hessians = hessians
         return self
 
-    def _is_initialized(self):
+    def _has_been_fitted(self):
         return len(getattr(self, '_predictors', [])) > 0
 
     def _clear_state(self):
@@ -375,15 +384,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
     def _tolist_state(self):
         """Convert all array attributes to lists."""
-        # self.n_estimators is the number of additional est to fit
-        total_max_iter = self.max_iter
-        if total_max_iter < self.n_iter_:
-            raise ValueError(
-                'max_iter=%d must be larger than or equal to '
-                'n_iter_=%d when warm_start==True'
-                % (total_max_iter, self.n_iter_)
-            )
-
         self.train_score_ = self.train_score_.tolist()
         self.validation_score_ = self.validation_score_.tolist()
 
