@@ -344,7 +344,7 @@ def test_pipeline_score_samples_pca_lof():
     pipe = Pipeline([('pca', pca), ('lof', lof)])
     pipe.fit(X)
     # Check the shapes
-    assert_equal(pipe.score_samples(X).shape, (X.shape[0],))
+    assert pipe.score_samples(X).shape == (X.shape[0],)
     # Check the values
     lof.fit(pca.fit_transform(X))
     assert_allclose(pipe.score_samples(X), lof.score_samples(pca.transform(X)))
