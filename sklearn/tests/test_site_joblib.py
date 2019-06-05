@@ -1,6 +1,5 @@
-import os
-import pytest
-from sklearn.utils._joblib import Parallel, delayed, Memory, parallel_backend
+from sklearn.utils._joblib import Parallel, delayed  # noqa
+from sklearn.utils._joblib import Memory, parallel_backend # noqa
 
 
 def test_old_pickle(tmpdir):

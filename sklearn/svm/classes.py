@@ -117,10 +117,8 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     >>> from sklearn.datasets import make_classification
     >>> X, y = make_classification(n_features=4, random_state=0)
     >>> clf = LinearSVC(random_state=0, tol=1e-5)
-    >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-    LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
-         intercept_scaling=1, loss='squared_hinge', max_iter=1000,
-         multi_class='ovr', penalty='l2', random_state=0, tol=1e-05, verbose=0)
+    >>> clf.fit(X, y)
+    LinearSVC(random_state=0, tol=1e-05)
     >>> print(clf.coef_)
     [[0.085... 0.394... 0.498... 0.375...]]
     >>> print(clf.intercept_)
@@ -329,10 +327,8 @@ class LinearSVR(LinearModel, RegressorMixin):
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(n_features=4, random_state=0)
     >>> regr = LinearSVR(random_state=0, tol=1e-5)
-    >>> regr.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-    LinearSVR(C=1.0, dual=True, epsilon=0.0, fit_intercept=True,
-         intercept_scaling=1.0, loss='epsilon_insensitive', max_iter=1000,
-         random_state=0, tol=1e-05, verbose=0)
+    >>> regr.fit(X, y)
+    LinearSVR(random_state=0, tol=1e-05)
     >>> print(regr.coef_)
     [16.35... 26.91... 42.30... 60.47...]
     >>> print(regr.intercept_)
@@ -429,10 +425,10 @@ class LinearSVR(LinearModel, RegressorMixin):
 class SVC(BaseSVC):
     """C-Support Vector Classification.
 
-    The implementation is based on libsvm. The fit time complexity
-    is more than quadratic with the number of samples which makes it hard
-    to scale to datasets with more than a couple of 10000 samples. For large
-    datasets consider using :class:`sklearn.linear_model.LinearSVC` or
+    The implementation is based on libsvm. The fit time scales at least
+    quadratically with the number of samples and may be impractical
+    beyond tens of thousands of samples. For large datasets
+    consider using :class:`sklearn.linear_model.LinearSVC` or
     :class:`sklearn.linear_model.SGDClassifier` instead, possibly after a
     :class:`sklearn.kernel_approximation.Nystroem` transformer.
 
@@ -462,15 +458,15 @@ class SVC(BaseSVC):
         Degree of the polynomial kernel function ('poly').
         Ignored by all other kernels.
 
-    gamma : float, optional (default='auto')
+    gamma : {'scale', 'auto'} or float, optional (default='scale')
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
-        Current default is 'auto' which uses 1 / n_features,
-        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.var())
-        as value of gamma. The current default of gamma, 'auto', will change
-        to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
-        'auto' is used as a default indicating that no explicit value of gamma
-        was passed.
+        - if ``gamma='scale'`` (default) is passed then it uses
+          1 / (n_features * X.var()) as value of gamma,
+        - if 'auto', uses 1 / n_features.
+
+        .. versionchanged:: 0.22
+           The default value of ``gamma`` changed from 'auto' to 'scale'.
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
@@ -520,6 +516,15 @@ class SVC(BaseSVC):
 
         .. versionchanged:: 0.17
            Deprecated *decision_function_shape='ovo' and None*.
+
+    break_ties : bool, optional (default=False)
+        If true, ``decision_function_shape='ovr'``, and number of classes > 2,
+        :term:`predict` will break ties according to the confidence values of
+        :term:`decision_function`; otherwise the first class among the tied
+        classes is returned. Please note that breaking ties comes at a
+        relatively high computational cost compared to a simple predict.
+
+        .. versionadded:: 0.22
 
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator used when shuffling
@@ -577,11 +582,8 @@ class SVC(BaseSVC):
     >>> y = np.array([1, 1, 2, 2])
     >>> from sklearn.svm import SVC
     >>> clf = SVC(gamma='auto')
-    >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
-    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-        decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
-        max_iter=-1, probability=False, random_state=None, shrinking=True,
-        tol=0.001, verbose=False)
+    >>> clf.fit(X, y)
+    SVC(gamma='auto')
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -607,10 +609,11 @@ class SVC(BaseSVC):
 
     _impl = 'c_svc'
 
-    def __init__(self, C=1.0, kernel='rbf', degree=3, gamma='auto_deprecated',
+    def __init__(self, C=1.0, kernel='rbf', degree=3, gamma='scale',
                  coef0=0.0, shrinking=True, probability=False,
                  tol=1e-3, cache_size=200, class_weight=None,
                  verbose=False, max_iter=-1, decision_function_shape='ovr',
+                 break_ties=False,
                  random_state=None):
 
         super().__init__(
@@ -619,6 +622,7 @@ class SVC(BaseSVC):
             probability=probability, cache_size=cache_size,
             class_weight=class_weight, verbose=verbose, max_iter=max_iter,
             decision_function_shape=decision_function_shape,
+            break_ties=break_ties,
             random_state=random_state)
 
 
@@ -650,15 +654,15 @@ class NuSVC(BaseSVC):
         Degree of the polynomial kernel function ('poly').
         Ignored by all other kernels.
 
-    gamma : float, optional (default='auto')
+    gamma : {'scale', 'auto'} or float, optional (default='scale')
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
-        Current default is 'auto' which uses 1 / n_features,
-        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.var())
-        as value of gamma. The current default of gamma, 'auto', will change
-        to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
-        'auto' is used as a default indicating that no explicit value of gamma
-        was passed.
+        - if ``gamma='scale'`` (default) is passed then it uses
+          1 / (n_features * X.var()) as value of gamma,
+        - if 'auto', uses 1 / n_features.
+
+        .. versionchanged:: 0.22
+           The default value of ``gamma`` changed from 'auto' to 'scale'.
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
@@ -707,6 +711,15 @@ class NuSVC(BaseSVC):
         .. versionchanged:: 0.17
            Deprecated *decision_function_shape='ovo' and None*.
 
+    break_ties : bool, optional (default=False)
+        If true, ``decision_function_shape='ovr'``, and number of classes > 2,
+        :term:`predict` will break ties according to the confidence values of
+        :term:`decision_function`; otherwise the first class among the tied
+        classes is returned. Please note that breaking ties comes at a
+        relatively high computational cost compared to a simple predict.
+
+        .. versionadded:: 0.22
+
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator used when shuffling
         the data for probability estimates. If int, random_state is the seed
@@ -748,12 +761,9 @@ class NuSVC(BaseSVC):
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     >>> y = np.array([1, 1, 2, 2])
     >>> from sklearn.svm import NuSVC
-    >>> clf = NuSVC(gamma='scale')
-    >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
-    NuSVC(cache_size=200, class_weight=None, coef0=0.0,
-          decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
-          max_iter=-1, nu=0.5, probability=False, random_state=None,
-          shrinking=True, tol=0.001, verbose=False)
+    >>> clf = NuSVC()
+    >>> clf.fit(X, y)
+    NuSVC()
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -775,10 +785,11 @@ class NuSVC(BaseSVC):
 
     _impl = 'nu_svc'
 
-    def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma='auto_deprecated',
+    def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma='scale',
                  coef0=0.0, shrinking=True, probability=False, tol=1e-3,
                  cache_size=200, class_weight=None, verbose=False, max_iter=-1,
-                 decision_function_shape='ovr', random_state=None):
+                 decision_function_shape='ovr', break_ties=False,
+                 random_state=None):
 
         super().__init__(
             kernel=kernel, degree=degree, gamma=gamma,
@@ -786,6 +797,7 @@ class NuSVC(BaseSVC):
             probability=probability, cache_size=cache_size,
             class_weight=class_weight, verbose=verbose, max_iter=max_iter,
             decision_function_shape=decision_function_shape,
+            break_ties=break_ties,
             random_state=random_state)
 
 
@@ -816,15 +828,15 @@ class SVR(BaseLibSVM, RegressorMixin):
         Degree of the polynomial kernel function ('poly').
         Ignored by all other kernels.
 
-    gamma : float, optional (default='auto')
+    gamma : {'scale', 'auto'} or float, optional (default='scale')
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
-        Current default is 'auto' which uses 1 / n_features,
-        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.var())
-        as value of gamma. The current default of gamma, 'auto', will change
-        to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
-        'auto' is used as a default indicating that no explicit value of gamma
-        was passed.
+        - if ``gamma='scale'`` (default) is passed then it uses
+          1 / (n_features * X.var()) as value of gamma,
+        - if 'auto', uses 1 / n_features.
+
+        .. versionchanged:: 0.22
+           The default value of ``gamma`` changed from 'auto' to 'scale'.
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
@@ -885,10 +897,9 @@ class SVR(BaseLibSVM, RegressorMixin):
     >>> rng = np.random.RandomState(0)
     >>> y = rng.randn(n_samples)
     >>> X = rng.randn(n_samples, n_features)
-    >>> clf = SVR(gamma='scale', C=1.0, epsilon=0.2)
-    >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
-    SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.2, gamma='scale',
-        kernel='rbf', max_iter=-1, shrinking=True, tol=0.001, verbose=False)
+    >>> clf = SVR(C=1.0, epsilon=0.2)
+    >>> clf.fit(X, y)
+    SVR(epsilon=0.2)
 
     See also
     --------
@@ -909,7 +920,7 @@ class SVR(BaseLibSVM, RegressorMixin):
 
     _impl = 'epsilon_svr'
 
-    def __init__(self, kernel='rbf', degree=3, gamma='auto_deprecated',
+    def __init__(self, kernel='rbf', degree=3, gamma='scale',
                  coef0=0.0, tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
                  cache_size=200, verbose=False, max_iter=-1):
 
@@ -952,15 +963,15 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         Degree of the polynomial kernel function ('poly').
         Ignored by all other kernels.
 
-    gamma : float, optional (default='auto')
+    gamma : {'scale', 'auto'} or float, optional (default='scale')
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
-        Current default is 'auto' which uses 1 / n_features,
-        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.var())
-        as value of gamma. The current default of gamma, 'auto', will change
-        to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
-        'auto' is used as a default indicating that no explicit value of gamma
-        was passed.
+        - if ``gamma='scale'`` (default) is passed then it uses
+          1 / (n_features * X.var()) as value of gamma,
+        - if 'auto', uses 1 / n_features.
+
+        .. versionchanged:: 0.22
+           The default value of ``gamma`` changed from 'auto' to 'scale'.
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
@@ -1012,11 +1023,9 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     >>> np.random.seed(0)
     >>> y = np.random.randn(n_samples)
     >>> X = np.random.randn(n_samples, n_features)
-    >>> clf = NuSVR(gamma='scale', C=1.0, nu=0.1)
-    >>> clf.fit(X, y)  #doctest: +NORMALIZE_WHITESPACE
-    NuSVR(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma='scale',
-          kernel='rbf', max_iter=-1, nu=0.1, shrinking=True, tol=0.001,
-          verbose=False)
+    >>> clf = NuSVR(C=1.0, nu=0.1)
+    >>> clf.fit(X, y)
+    NuSVR(nu=0.1)
 
     See also
     --------
@@ -1037,7 +1046,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     _impl = 'nu_svr'
 
     def __init__(self, nu=0.5, C=1.0, kernel='rbf', degree=3,
-                 gamma='auto_deprecated', coef0=0.0, shrinking=True,
+                 gamma='scale', coef0=0.0, shrinking=True,
                  tol=1e-3, cache_size=200, verbose=False, max_iter=-1):
 
         super().__init__(
@@ -1069,15 +1078,15 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
         Degree of the polynomial kernel function ('poly').
         Ignored by all other kernels.
 
-    gamma : float, optional (default='auto')
+    gamma : {'scale', 'auto'} or float, optional (default='scale')
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
-        Current default is 'auto' which uses 1 / n_features,
-        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.var())
-        as value of gamma. The current default of gamma, 'auto', will change
-        to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
-        'auto' is used as a default indicating that no explicit value of gamma
-        was passed.
+        - if ``gamma='scale'`` (default) is passed then it uses
+          1 / (n_features * X.var()) as value of gamma,
+        - if 'auto', uses 1 / n_features.
+
+        .. versionchanged:: 0.22
+           The default value of ``gamma`` changed from 'auto' to 'scale'.
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
@@ -1106,13 +1115,6 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
     max_iter : int, optional (default=-1)
         Hard limit on iterations within solver, or -1 for no limit.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        Ignored.
-
-        .. deprecated:: 0.20
-           ``random_state`` has been deprecated in 0.20 and will be removed in
-           0.22.
-
     Attributes
     ----------
     support_ : array-like, shape = [n_SV]
@@ -1140,18 +1142,27 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
         The offset is the opposite of `intercept_` and is provided for
         consistency with other outlier detection algorithms.
 
+    Examples
+    --------
+    >>> from sklearn.svm import OneClassSVM
+    >>> X = [[0], [0.44], [0.45], [0.46], [1]]
+    >>> clf = OneClassSVM(gamma='auto').fit(X)
+    >>> clf.predict(X)
+    array([-1,  1,  1,  1, -1])
+    >>> clf.score_samples(X)  # doctest: +ELLIPSIS
+    array([1.7798..., 2.0547..., 2.0556..., 2.0561..., 1.7332...])
     """
 
     _impl = 'one_class'
 
-    def __init__(self, kernel='rbf', degree=3, gamma='auto_deprecated',
+    def __init__(self, kernel='rbf', degree=3, gamma='scale',
                  coef0=0.0, tol=1e-3, nu=0.5, shrinking=True, cache_size=200,
-                 verbose=False, max_iter=-1, random_state=None):
+                 verbose=False, max_iter=-1):
 
         super().__init__(
             kernel, degree, gamma, coef0, tol, 0., nu, 0.,
             shrinking, False, cache_size, None, verbose, max_iter,
-            random_state)
+            random_state=None)
 
     def fit(self, X, y=None, sample_weight=None, **params):
         """
@@ -1179,11 +1190,6 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
         If X is not a C-ordered contiguous array it is copied.
 
         """
-
-        if self.random_state is not None:
-            warnings.warn("The random_state parameter is deprecated and will"
-                          " be removed in version 0.22.", DeprecationWarning)
-
         super().fit(X, np.ones(_num_samples(X)),
                     sample_weight=sample_weight, **params)
         self.offset_ = -self._intercept_

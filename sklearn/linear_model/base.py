@@ -35,7 +35,6 @@ from ..utils.fixes import sparse_lsqr
 from ..utils.seq_dataset import ArrayDataset32, CSRDataset32
 from ..utils.seq_dataset import ArrayDataset64, CSRDataset64
 from ..utils.validation import check_is_fitted
-from ..exceptions import NotFittedError
 from ..preprocessing.data import normalize as f_normalize
 
 # TODO: bayesian_ridge_regression and bayesian_regression_ard
@@ -258,9 +257,7 @@ class LinearClassifierMixin(ClassifierMixin):
             case, confidence score for self.classes_[1] where >0 means this
             class would be predicted.
         """
-        if not hasattr(self, 'coef_') or self.coef_ is None:
-            raise NotFittedError("This %(name)s instance is not fitted "
-                                 "yet" % {'name': type(self).__name__})
+        check_is_fitted(self, 'coef_')
 
         X = check_array(X, accept_sparse='csr')
 
@@ -416,7 +413,7 @@ class LinearRegression(LinearModel, RegressorMixin, MultiOutputMixin):
     1.0
     >>> reg.coef_
     array([1., 2.])
-    >>> reg.intercept_ # doctest: +ELLIPSIS
+    >>> reg.intercept_
     3.0000...
     >>> reg.predict(np.array([[3, 5]]))
     array([16.])

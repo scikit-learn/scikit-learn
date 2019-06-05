@@ -8,7 +8,6 @@
 # * Fast Optimization for t-SNE:
 #   https://cseweb.ucsd.edu/~lvdmaaten/workshops/nips2010/papers/vandermaaten.pdf
 
-import warnings
 from time import time
 import numpy as np
 from scipy import linalg
@@ -392,8 +391,7 @@ def _gradient_descent(objective, p0, it, n_iter,
     return p, error, i
 
 
-def trustworthiness(X, X_embedded, n_neighbors=5,
-                    precomputed=False, metric='euclidean'):
+def trustworthiness(X, X_embedded, n_neighbors=5, metric='euclidean'):
     r"""Expresses to what extent the local structure is retained.
 
     The trustworthiness is within [0, 1]. It is defined as
@@ -427,13 +425,6 @@ def trustworthiness(X, X_embedded, n_neighbors=5,
     n_neighbors : int, optional (default: 5)
         Number of neighbors k that will be considered.
 
-    precomputed : bool, optional (default: False)
-        Set this flag if X is a precomputed square distance matrix.
-
-        ..deprecated:: 0.20
-            ``precomputed`` has been deprecated in version 0.20 and will be
-            removed in version 0.22. Use ``metric`` instead.
-
     metric : string, or callable, optional, default 'euclidean'
         Which metric to use for computing pairwise distances between samples
         from the original input space. If metric is 'precomputed', X must be a
@@ -446,11 +437,6 @@ def trustworthiness(X, X_embedded, n_neighbors=5,
     trustworthiness : float
         Trustworthiness of the low-dimensional embedding.
     """
-    if precomputed:
-        warnings.warn("The flag 'precomputed' has been deprecated in version "
-                      "0.20 and will be removed in 0.22. See 'metric' "
-                      "parameter instead.", DeprecationWarning)
-        metric = 'precomputed'
     dist_X = pairwise_distances(X, metric=metric)
     if metric == 'precomputed':
         dist_X = dist_X.copy()
@@ -663,10 +649,11 @@ class TSNE(BaseEstimator):
         ----------
         X : array, shape (n_samples, n_features) or (n_samples, n_samples)
             If the metric is 'precomputed' X must be a square distance
-            matrix. Otherwise it contains a sample per row. Note that this
-            when method='barnes_hut', X cannot be a sparse array and if need be
-            will be converted to a 32 bit float array. Method='exact' allows
-            sparse arrays and 64bit floating point inputs.
+            matrix. Otherwise it contains a sample per row. Note that
+            when method='barnes_hut', X cannot be a sparse array and
+            will be converted to a 32 bit float array if need be.
+            Method='exact' allows sparse arrays and 64 bit floating point
+            inputs.
 
         skip_num_points : int (optional, default:0)
             This does not compute the gradient for points with indices below

@@ -43,7 +43,8 @@ VALID_METRICS = dict(ball_tree=BallTree.valid_metrics,
 
 VALID_METRICS_SPARSE = dict(ball_tree=[],
                             kd_tree=[],
-                            brute=PAIRWISE_DISTANCE_FUNCTIONS.keys())
+                            brute=(PAIRWISE_DISTANCE_FUNCTIONS.keys() -
+                                   {'haversine'}))
 
 
 def _check_weights(weights):
@@ -61,14 +62,14 @@ def _get_weights(dist, weights):
     """Get the weights from an array of distances and a parameter ``weights``
 
     Parameters
-    ===========
+    ----------
     dist : ndarray
         The input distances
     weights : {'uniform', 'distance' or a callable}
         The kind of weighting used
 
     Returns
-    ========
+    -------
     weights_arr : array of the same shape as ``dist``
         if ``weights == 'uniform'``, then returns None
     """
@@ -365,9 +366,9 @@ class KNeighborsMixin:
         >>> samples = [[0., 0., 0.], [0., .5, 0.], [1., 1., .5]]
         >>> from sklearn.neighbors import NearestNeighbors
         >>> neigh = NearestNeighbors(n_neighbors=1)
-        >>> neigh.fit(samples) # doctest: +ELLIPSIS
-        NearestNeighbors(algorithm='auto', leaf_size=30, ...)
-        >>> print(neigh.kneighbors([[1., 1., 1.]])) # doctest: +ELLIPSIS
+        >>> neigh.fit(samples)
+        NearestNeighbors(n_neighbors=1)
+        >>> print(neigh.kneighbors([[1., 1., 1.]]))
         (array([[0.5]]), array([[2]]))
 
         As you can see, it returns [[0.5]], and [[2]], which means that the
@@ -375,7 +376,7 @@ class KNeighborsMixin:
         (indexes start at 0). You can also query for multiple points:
 
         >>> X = [[0., 1., 0.], [1., 0., 1.]]
-        >>> neigh.kneighbors(X, return_distance=False) # doctest: +ELLIPSIS
+        >>> neigh.kneighbors(X, return_distance=False)
         array([[1],
                [2]]...)
 
@@ -522,8 +523,8 @@ class KNeighborsMixin:
         >>> X = [[0], [3], [1]]
         >>> from sklearn.neighbors import NearestNeighbors
         >>> neigh = NearestNeighbors(n_neighbors=2)
-        >>> neigh.fit(X) # doctest: +ELLIPSIS
-        NearestNeighbors(algorithm='auto', leaf_size=30, ...)
+        >>> neigh.fit(X)
+        NearestNeighbors(n_neighbors=2)
         >>> A = neigh.kneighbors_graph(X)
         >>> A.toarray()
         array([[1., 0., 1.],
@@ -662,12 +663,12 @@ class RadiusNeighborsMixin:
         >>> samples = [[0., 0., 0.], [0., .5, 0.], [1., 1., .5]]
         >>> from sklearn.neighbors import NearestNeighbors
         >>> neigh = NearestNeighbors(radius=1.6)
-        >>> neigh.fit(samples) # doctest: +ELLIPSIS
-        NearestNeighbors(algorithm='auto', leaf_size=30, ...)
+        >>> neigh.fit(samples)
+        NearestNeighbors(radius=1.6)
         >>> rng = neigh.radius_neighbors([[1., 1., 1.]])
-        >>> print(np.asarray(rng[0][0])) # doctest: +ELLIPSIS
+        >>> print(np.asarray(rng[0][0]))
         [1.5 0.5]
-        >>> print(np.asarray(rng[1][0])) # doctest: +ELLIPSIS
+        >>> print(np.asarray(rng[1][0]))
         [1 2]
 
         The first array returned contains the distances to all points which
@@ -807,8 +808,8 @@ class RadiusNeighborsMixin:
         >>> X = [[0], [3], [1]]
         >>> from sklearn.neighbors import NearestNeighbors
         >>> neigh = NearestNeighbors(radius=1.5)
-        >>> neigh.fit(X) # doctest: +ELLIPSIS
-        NearestNeighbors(algorithm='auto', leaf_size=30, ...)
+        >>> neigh.fit(X)
+        NearestNeighbors(radius=1.5)
         >>> A = neigh.radius_neighbors_graph(X)
         >>> A.toarray()
         array([[1., 0., 1.],
