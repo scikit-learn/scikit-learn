@@ -22,9 +22,7 @@ from sklearn.linear_model._glm import (
 )
 from sklearn.linear_model import ElasticNet, LogisticRegression, Ridge
 
-from sklearn.utils.testing import (
-    assert_almost_equal,
-    assert_array_equal, assert_array_almost_equal)
+from sklearn.utils.testing import assert_array_equal
 
 
 rng = np.random.RandomState(42)
@@ -355,16 +353,16 @@ def test_glm_check_input_argument(check_input):
 
 
 @pytest.mark.parametrize('solver', ['irls', 'lbfgs', 'newton-cg', 'cd'])
-def test_glm_identiy_regression(solver):
+def test_glm_identity_regression(solver):
     """Test GLM regression with identity link on a simple dataset."""
-    coef = [1, 2]
+    coef = [1., 2.]
     X = np.array([[1, 1, 1, 1, 1], [0, 1, 2, 3, 4]]).T
     y = np.dot(X, coef)
     glm = GeneralizedLinearRegressor(alpha=0, family='normal', link='identity',
                                      fit_intercept=False, solver=solver,
                                      start_params='zero', tol=1e-7)
     res = glm.fit(X, y)
-    assert_allclose(res.coef_, coef)
+    assert_allclose(res.coef_, coef, rtol=1e-6)
 
 
 @pytest.mark.parametrize(
@@ -386,7 +384,7 @@ def test_glm_log_regression(family, solver, tol):
                 alpha=0, family=family, link='log', fit_intercept=False,
                 solver=solver, start_params='guess', tol=tol)
     res = glm.fit(X, y)
-    assert_allclose(res.coef_, coef)
+    assert_allclose(res.coef_, coef, rtol=5e-6)
 
 
 @pytest.mark.filterwarnings('ignore::DeprecationWarning')
@@ -420,9 +418,9 @@ def test_normal_ridge(solver, tol, dec):
                                      check_input=False, random_state=rng)
     glm.fit(X, y)
     assert glm.coef_.shape == (X.shape[1], )
-    assert_allclose(glm.coef_, ridge.coef_)
-    assert glm.intercept_ == pytest.approx(ridge.intercept_)
-    assert_allclose(glm.predict(T), ridge.predict(T))
+    assert_allclose(glm.coef_, ridge.coef_, rtol=1e-6)
+    assert_allclose(glm.intercept_, ridge.intercept_, rtol=1e-5)
+    assert_allclose(glm.predict(T), ridge.predict(T), rtol=1e-6)
 
     ridge = Ridge(alpha=alpha*n_samples, fit_intercept=False, tol=1e-6,
                   solver='svd', normalize=False)
@@ -434,9 +432,9 @@ def test_normal_ridge(solver, tol, dec):
                                      fit_dispersion='chisqr')
     glm.fit(X, y)
     assert glm.coef_.shape == (X.shape[1], )
-    assert_allclose(glm.coef_, ridge.coef_)
-    assert_almost_equal(glm.intercept_, ridge.intercept_, decimal=dec)
-    assert_allclose(glm.predict(T), ridge.predict(T))
+    assert_allclose(glm.coef_, ridge.coef_, rtol=1e-5)
+    assert_allclose(glm.intercept_, ridge.intercept_, rtol=1e-6)
+    assert_allclose(glm.predict(T), ridge.predict(T), rtol=1e-6)
     mu = glm.predict(X)
     assert_allclose(glm.dispersion_,
                     np.sum((y-mu)**2/(n_samples-n_features)))
@@ -452,7 +450,8 @@ def test_normal_ridge(solver, tol, dec):
 
     # GLM has 1/(2*n) * Loss + 1/2*L2, Ridge has Loss + L2
     ridge = Ridge(alpha=alpha*n_samples, fit_intercept=True, tol=1e-9,
-                  solver='sag', normalize=False, max_iter=100000)
+                  solver='sag', normalize=False, max_iter=100000,
+                  random_state=42)
     ridge.fit(X, y)
     glm = GeneralizedLinearRegressor(alpha=1.0, l1_ratio=0, family='normal',
                                      link='identity', fit_intercept=True,
@@ -460,22 +459,24 @@ def test_normal_ridge(solver, tol, dec):
                                      check_input=False, random_state=rng)
     glm.fit(X, y)
     assert glm.coef_.shape == (X.shape[1], )
-    assert_array_almost_equal(glm.coef_, ridge.coef_, decimal=dec)
-    assert_almost_equal(glm.intercept_, ridge.intercept_, decimal=dec)
-    assert_array_almost_equal(glm.predict(T), ridge.predict(T), decimal=dec)
+    assert_allclose(glm.coef_, ridge.coef_, rtol=1e-6)
+    assert_allclose(glm.intercept_, ridge.intercept_, rtol=1e-6)
+    assert_allclose(glm.predict(T), ridge.predict(T), rtol=1e-5)
 
     ridge = Ridge(alpha=alpha*n_samples, fit_intercept=False, tol=1e-7,
-                  solver='sag', normalize=False, max_iter=1000)
+                  solver='sag', normalize=False, max_iter=1000,
+                  random_state=42)
     ridge.fit(X, y)
+
     glm = GeneralizedLinearRegressor(alpha=1.0, l1_ratio=0, family='normal',
                                      link='identity', fit_intercept=False,
                                      tol=tol*2, max_iter=300, solver=solver,
                                      check_input=False, random_state=rng)
     glm.fit(X, y)
     assert glm.coef_.shape == (X.shape[1], )
-    assert_array_almost_equal(glm.coef_, ridge.coef_, decimal=dec-1)
-    assert_almost_equal(glm.intercept_, ridge.intercept_, decimal=dec-1)
-    assert_array_almost_equal(glm.predict(T), ridge.predict(T), decimal=dec-2)
+    assert_allclose(glm.coef_, ridge.coef_, rtol=1e-4)
+    assert_allclose(glm.intercept_, ridge.intercept_, rtol=1e-5)
+    assert_allclose(glm.predict(T), ridge.predict(T), rtol=1e-5)
 
 
 @pytest.mark.parametrize('solver, tol, dec',
@@ -506,10 +507,8 @@ def test_poisson_ridge(solver, tol, dec):
                                      solver=solver, max_iter=300,
                                      random_state=rng)
     glm.fit(X, y)
-    assert_almost_equal(glm.intercept_, -0.12889386979,
-                        decimal=dec)
-    assert_array_almost_equal(glm.coef_, [0.29019207995, 0.03741173122],
-                              decimal=dec)
+    assert_allclose(glm.intercept_, -0.12889386979, rtol=1e-5)
+    assert_allclose(glm.coef_, [0.29019207995, 0.03741173122], rtol=1e-6)
 
 
 @pytest.mark.parametrize('diag_fisher', [False, True])
@@ -535,14 +534,14 @@ def test_normal_enet(diag_fisher):
                       normalize=False, tol=1e-8, copy_X=True)
     enet.fit(X, y)
 
-    assert_almost_equal(glm.intercept_, enet.intercept_, decimal=7)
-    assert_array_almost_equal(glm.coef_, enet.coef_, decimal=7)
+    assert_allclose(glm.intercept_, enet.intercept_, rtol=2e-7)
+    assert_allclose(glm.coef_, enet.coef_, rtol=5e-5)
 
     # 2. test normal enet on sparse data
     X = sparse.csc_matrix(X)
     glm.fit(X, y)
-    assert_almost_equal(glm.intercept_, enet.intercept_, decimal=7)
-    assert_array_almost_equal(glm.coef_, enet.coef_, decimal=7)
+    assert_allclose(glm.intercept_, enet.intercept_, rtol=2e-7)
+    assert_allclose(glm.coef_, enet.coef_, rtol=5e-5)
 
 
 def test_poisson_enet():
@@ -569,8 +568,8 @@ def test_poisson_enet():
                                      selection='random', random_state=rng,
                                      start_params='guess')
     glm.fit(X, y)
-    assert_almost_equal(glm.intercept_, glmnet_intercept, decimal=7)
-    assert_array_almost_equal(glm.coef_, glmnet_coef, decimal=7)
+    assert_allclose(glm.intercept_, glmnet_intercept, rtol=2e-6)
+    assert_allclose(glm.coef_, glmnet_coef, rtol=2e-7)
 
     # test results with general optimization procedure
     def obj(coef):
@@ -584,10 +583,10 @@ def test_poisson_enet():
             + alpha * l1_ratio * np.sum(np.abs(coef[1:]))
     res = optimize.minimize(obj, [0, 0, 0], method='nelder-mead', tol=1e-10,
                             options={'maxiter': 1000, 'disp': False})
-    assert_almost_equal(glm.intercept_, res.x[0], decimal=5)
-    assert_almost_equal(glm.coef_, res.x[1:], decimal=5)
-    assert_almost_equal(obj(np.concatenate(([glm.intercept_], glm.coef_))),
-                        res.fun, decimal=8)
+    assert_allclose(glm.intercept_, res.x[0], rtol=1e-5)
+    assert_allclose(glm.coef_, res.x[1:], rtol=1e-5, atol=1e-9)
+    assert_allclose(obj(np.concatenate(([glm.intercept_], glm.coef_))),
+                    res.fun, rtol=1e-8)
 
     # same for start_params='zero' and selection='cyclic'
     # with reduced precision
@@ -595,8 +594,8 @@ def test_poisson_enet():
                                      link='log', solver='cd', tol=1e-5,
                                      selection='cyclic', start_params='zero')
     glm.fit(X, y)
-    assert_almost_equal(glm.intercept_, glmnet_intercept, decimal=4)
-    assert_array_almost_equal(glm.coef_, glmnet_coef, decimal=4)
+    assert_allclose(glm.intercept_, glmnet_intercept, rtol=1e-4)
+    assert_allclose(glm.coef_, glmnet_coef, rtol=1e-4)
 
     # check warm_start, therefore start with different alpha
     glm = GeneralizedLinearRegressor(alpha=0.005, l1_ratio=0.5,
@@ -609,8 +608,8 @@ def test_poisson_enet():
     glm.alpha = 1
     X = sparse.csr_matrix(X)
     glm.fit(X, y)
-    assert_almost_equal(glm.intercept_, glmnet_intercept, decimal=4)
-    assert_array_almost_equal(glm.coef_, glmnet_coef, decimal=4)
+    assert_allclose(glm.intercept_, glmnet_intercept, rtol=1e-4)
+    assert_allclose(glm.coef_, glmnet_coef, rtol=1e-4)
 
 
 @pytest.mark.parametrize('alpha', [0.01, 0.1, 1, 10])
@@ -629,10 +628,11 @@ def test_binomial_enet(alpha):
         max_iter=1000, l1_ratio=l1_ratio, C=1./(n_samples * alpha),
         solver='saga')
     log.fit(X, y)
+
     glm = GeneralizedLinearRegressor(
         family=BinomialDistribution(), link=LogitLink(), fit_intercept=False,
         alpha=alpha, l1_ratio=l1_ratio, solver='cd', selection='cyclic',
         tol=1e-7)
     glm.fit(X, y)
-    assert_almost_equal(log.intercept_[0], glm.intercept_, decimal=6)
-    assert_array_almost_equal(log.coef_[0, :], glm.coef_, decimal=6)
+    assert_allclose(log.intercept_[0], glm.intercept_, rtol=1e-6)
+    assert_allclose(log.coef_[0, :], glm.coef_, rtol=2e-6)
