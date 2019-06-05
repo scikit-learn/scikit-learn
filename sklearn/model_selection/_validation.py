@@ -1371,8 +1371,8 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
         score_time = time.time() - start_score
         score_times.append(score_time)
 
-    ret = (train_scores, test_scores, fit_times, score_times) \
-        if return_times else (train_scores, test_scores)
+    ret = ((train_scores, test_scores, fit_times, score_times)
+           if return_times else (train_scores, test_scores))
 
     return np.array(ret).T
 

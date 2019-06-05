@@ -25,7 +25,7 @@ from sklearn.model_selection import learning_curve
 from sklearn.model_selection import ShuffleSplit
 
 
-def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
+def plot_learning_curve(estimator, title, X, y, axes=None, ylim=None, cv=None,
                         n_jobs=None, train_sizes=np.linspace(.1, 1.0, 5)):
     """
     Generate 3 plots: the test and training learning curve, the training
@@ -46,6 +46,9 @@ def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
     y : array-like, shape (n_samples) or (n_samples, n_features), optional
         Target relative to X for classification or regression;
         None for unsupervised learning.
+
+    axes : array of 3 axes, optional (default=None)
+        Axes to use for plotting the curves.
 
     ylim : tuple, shape (ymin, ymax), optional
         Defines minimum and maximum yvalues plotted.
@@ -81,7 +84,9 @@ def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
         be big enough to contain at least one sample from each class.
         (default: np.linspace(0.1, 1.0, 5))
     """
-    fig, axes = plt.subplots(1, 3, figsize=(20, 5))
+    if axes is None:
+        _, axes = plt.subplots(1, 3, figsize=(20, 5))
+
     axes[0].set_title(title)
     if ylim is not None:
         axes[0].set_ylim(*ylim)
@@ -134,9 +139,10 @@ def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
     return plt
 
 
+fig, axes = plt.subplots(2, 3, figsize=(20, 12))
+
 digits = load_digits()
 X, y = digits.data, digits.target
-
 
 title = "Learning Curves (Naive Bayes)"
 # Cross validation with 100 iterations to get smoother mean test and train
@@ -144,12 +150,14 @@ title = "Learning Curves (Naive Bayes)"
 cv = ShuffleSplit(n_splits=100, test_size=0.2, random_state=0)
 
 estimator = GaussianNB()
-plot_learning_curve(estimator, title, X, y, ylim=(0.7, 1.01), cv=cv, n_jobs=4)
+plot_learning_curve(estimator, title, X, y, axes=axes[0], ylim=(0.7, 1.01),
+                    cv=cv, n_jobs=4)
 
 title = r"Learning Curves (SVM, RBF kernel, $\gamma=0.001$)"
 # SVC is more expensive so we do a lower number of CV iterations:
 cv = ShuffleSplit(n_splits=10, test_size=0.2, random_state=0)
 estimator = SVC(gamma=0.001)
-plot_learning_curve(estimator, title, X, y, (0.7, 1.01), cv=cv, n_jobs=4)
+plot_learning_curve(estimator, title, X, y, axes=axes[1], ylim=(0.7, 1.01),
+                    cv=cv, n_jobs=4)
 
 plt.show()
