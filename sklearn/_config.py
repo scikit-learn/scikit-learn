@@ -53,6 +53,9 @@ def set_config(assume_finite=None, working_memory=None,
         all the non-changed parameters.
 
         .. versionadded:: 0.21
+    See also
+    --------
+    config_context
     """
     if assume_finite is not None:
         _global_config['assume_finite'] = assume_finite
@@ -98,6 +101,10 @@ def config_context(**new_config):
     Traceback (most recent call last):
     ...
     ValueError: Input contains NaN, ...
+
+    See also
+    --------
+    set_config
     """
     old_config = get_config().copy()
     set_config(**new_config)
