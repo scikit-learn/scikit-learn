@@ -55,6 +55,14 @@ Changelog
   of the maximization procedure in :term:`fit`.
   :pr:`13618` by :user:`Yoshihiro Uchida <c56pony>`.
 
+:mod:`sklearn.metrics`
+......................
+
+- |Feature| New ranking metrics :func:`metrics.ndcg_score` and
+  `metrics.dcg_score` have been added to compute Discounted Cumulative Gain and
+  Normalized Discounted Cumulative Gain. :pr:`9951` by :user:`Jérôme Dockès
+  <jeromedockes>`.
+
 :mod:`sklearn.pipeline`
 .......................
 
