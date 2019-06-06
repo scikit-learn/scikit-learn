@@ -1233,16 +1233,15 @@ def check_sparse_input(EstimatorClass, X, X_sparse, y):
                             presort=False).fit(X_sparse, y)
     auto = EstimatorClass(n_estimators=10, random_state=0, max_depth=2,
                           presort='auto').fit(X_sparse, y)
-
     assert_array_almost_equal(sparse.apply(X), dense.apply(X))
     dense_indicator, dense_nodes_ptr = dense.decision_path(X)
     sparse_indicator, sparse_nodes_prt = sparse.decision_path(X)
     assert_array_equal(dense_nodes_ptr, sparse_nodes_prt)
-    if isinstance(EstimatorClass, GradientBoostingClassifier):
+    if issubclass(EstimatorClass, GradientBoostingClassifier):
         assert len(dense_indicator) == len(sparse_indicator)
         for dense_ind, sparse_ind in zip(dense_indicator, sparse_indicator):
             assert_array_equal(dense_ind.toarray(), sparse_ind.toarray())
-    elif isinstance(EstimatorClass, GradientBoostingRegressor):
+    elif issubclass(EstimatorClass, GradientBoostingRegressor):
         assert_array_equal(dense_indicator.toarray(),
                            sparse_indicator.toarray())
     assert_array_almost_equal(sparse.predict(X), dense.predict(X))
@@ -1252,11 +1251,11 @@ def check_sparse_input(EstimatorClass, X, X_sparse, y):
     assert_array_almost_equal(sparse.apply(X), auto.apply(X))
     auto_indicator, auto_nodes_ptr = auto.decision_path(X)
     assert_array_equal(auto_nodes_ptr, sparse_nodes_prt)
-    if isinstance(EstimatorClass, GradientBoostingClassifier):
+    if issubclass(EstimatorClass, GradientBoostingClassifier):
         assert len(auto_indicator) == len(sparse_indicator)
         for auto_ind, sparse_ind in zip(auto_indicator, sparse_indicator):
             assert_array_equal(auto_ind.toarray(), sparse_ind.toarray())
-    elif isinstance(EstimatorClass, GradientBoostingRegressor):
+    elif issubclass(EstimatorClass, GradientBoostingRegressor):
         assert_array_equal(auto_indicator.toarray(),
                            sparse_indicator.toarray())
     assert_array_almost_equal(sparse.predict(X), auto.predict(X))
@@ -1267,11 +1266,11 @@ def check_sparse_input(EstimatorClass, X, X_sparse, y):
     assert_array_almost_equal(dense.predict(X_sparse), sparse.predict(X))
     sparse_indicator, sparse_nodes_prt = dense.decision_path(X_sparse)
     assert_array_equal(dense_nodes_ptr, sparse_nodes_prt)
-    if isinstance(EstimatorClass, GradientBoostingClassifier):
+    if issubclass(EstimatorClass, GradientBoostingClassifier):
         assert len(dense_indicator) == len(sparse_indicator)
         for dense_ind, sparse_ind in zip(dense_indicator, sparse_indicator):
             assert_array_equal(dense_ind.toarray(), sparse_ind.toarray())
-    elif isinstance(EstimatorClass, GradientBoostingRegressor):
+    elif issubclass(EstimatorClass, GradientBoostingRegressor):
         assert_array_equal(dense_indicator.toarray(),
                            sparse_indicator.toarray())
     assert_array_almost_equal(sparse.predict(X), dense.predict(X))
