@@ -369,8 +369,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self.train_score_ = np.asarray(self.train_score_)
         self.validation_score_ = np.asarray(self.validation_score_)
         del self._in_fit  # hard delete so we're sure it can't be used anymore
-        self._last_gradients = gradients
-        self._last_hessians = hessians
         return self
 
     def _has_been_fitted(self):
