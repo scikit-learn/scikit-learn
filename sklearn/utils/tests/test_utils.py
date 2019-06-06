@@ -25,6 +25,9 @@ from sklearn.utils import is_scalar_nan
 from sklearn.utils.mocking import MockDataFrame
 from sklearn import config_context
 
+# toy array
+X = np.arange(9).reshape((3, 3))
+
 
 def test_make_rng():
     # Check the check_random_state utility function behavior
@@ -190,7 +193,7 @@ def test_column_or_1d():
             assert_raises(ValueError, column_or_1d, y)
 
 
-def test_safe_indexing():
+def test_safe_indexing_axis_0():
     X = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
     inds = np.array([1, 2])
     X_inds = safe_indexing(X, inds)
@@ -199,11 +202,35 @@ def test_safe_indexing():
     assert_array_equal(np.array(X_inds), np.array(X)[inds])
 
 
+@pytest.mark.parametrize("idx", [0, [0, 1]], ids=['scalar', 'list'])
+def test_safe_indexing_axis_1_sparse(idx):
+    X_true = safe_indexing(X, idx, axis=1)
+
+    X_sparse = sp.csc_matrix(X)
+    assert_array_equal(
+        safe_indexing(X_sparse.toarray(), idx, axis=1), X_true
+    )
+
+
+@pytest.mark.parametrize(
+    "idx_true, idx_df",
+    [(0, 0), (0, 'col_0'),
+     ([0, 1], [0, 1]), ([0, 1], ['col_0', 'col_1']),
+     ([0, 1], slice(0, 2)), ([0, 1], [True, True, False])],
+    ids=['scalar-int', 'scalar-str', 'list-int', 'list-str', 'slice', 'mask']
+)
+def test_safe_indexing_axis_1_pandas(idx_true, idx_df):
+    pd = pytest.importorskip('pandas')
+
+    X_true = safe_indexing(X, idx_true, axis=1)
+    X_df = pd.DataFrame(X, columns=['col_{}'.format(i) for i in range(3)])
+    assert_array_equal(
+        safe_indexing(X_df, idx_df, axis=1).values, X_true
+    )
+
+
 def test_safe_indexing_pandas():
-    try:
-        import pandas as pd
-    except ImportError:
-        raise SkipTest("Pandas not found")
+    pd = pytest.importorskip("pandas")
     X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
     X_df = pd.DataFrame(X)
     inds = np.array([1, 2])
