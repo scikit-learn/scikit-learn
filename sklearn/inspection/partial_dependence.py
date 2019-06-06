@@ -300,7 +300,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
         raise ValueError('Multiclass-multioutput estimators are not supported')
 
     if not(hasattr(X, '__array__') or sparse.issparse(X)):
-        return check_array(X, force_all_finite='allow-nan', dtype=np.object)
+        X = check_array(X, force_all_finite='allow-nan', dtype=np.object)
 
     accepted_responses = ('auto', 'predict_proba', 'decision_function')
     if response_method not in accepted_responses:
@@ -313,6 +313,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
             "The response_method parameter is ignored for regressors and "
             "must be 'auto'."
         )
+
     accepted_methods = ('brute', 'recursion', 'auto')
     if method not in accepted_methods:
         raise ValueError(
