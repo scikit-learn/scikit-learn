@@ -38,6 +38,7 @@ import numpy as np
 
 from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
+from scipy.sparse import hstack as sparse_hstack
 from scipy.sparse import issparse
 from scipy.special import expit
 
@@ -1751,7 +1752,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : array-like or sparse matrix, shape (n_samples, n_features)
             The input samples. Internally, its dtype will be converted to
             ``dtype=np.float32``. If a sparse matrix is provided, it will
             be converted to a sparse ``csr_matrix``.
@@ -1786,25 +1787,40 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape = [n_samples, n_features]
+        X : array-like or sparse matrix, shape (n_samples, n_features)
             The input samples. Internally, its dtype will be converted to
             ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
 
         Returns
         -------
-        indicator : sparse csr array, shape = [n_samples, n_nodes]
-            Return a node indicator matrix where non zero elements
-            indicates that the samples goes through the nodes.
+        indicator : list of sparse csr matrices, n_classes_ elements of shape \
+                (n_samples, n_nodes)
+            Return a list of node indicator matrices of size `n_classes_`.
+            Non zero elements of indicator matrices indicate that the samples
+            go through the nodes.
 
-        n_nodes_ptr : array of size (n_estimators + 1, )
-            The columns from indicator[n_nodes_ptr[i]:n_nodes_ptr[i+1]]
-            gives the indicator value for the i-th estimator.
+        n_nodes_ptr : ndarray, shape (n_classes_, n_estimators + 1)
+            The columns from indicator[c][n_nodes_ptr[i]:n_nodes_ptr[i+1]]
+            give the indicator value for the i-th estimator of the class c.
 
         """
         X = self._validate_X_predict(X)
 
-        return 'TO BE IMPLEMENTED'
+        # n_classes will be equal to 1 in the binary classification or the
+        # regression case.
+        n_estimators, n_classes = self.estimators_.shape
+        indicators = [None for _ in range(n_classes)]
+        n_nodes_ptr = np.zeros((n_classes, n_estimators + 1))
+
+        for c in range(n_classes):
+            indicators[c] = [tree.decision_path(X, check_input=False)
+                             for tree in self.estimators_[:, c]]
+            n_nodes = [0]
+            n_nodes.extend([i.shape[1] for i in indicators[c]])
+            n_nodes_ptr[c, :] = np.array(n_nodes).cumsum()
+        indicators = [sparse_hstack(indic).tocsr() for indic in indicators]
+        return indicators, n_nodes_ptr
 
 
 class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
@@ -2591,14 +2607,14 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : array-like or sparse matrix, shape (n_samples, n_features)
             The input samples. Internally, its dtype will be converted to
             ``dtype=np.float32``. If a sparse matrix is provided, it will
-            be converted to a sparse ``csr_matrix``.
+            be converted into a sparse ``csr_matrix``.
 
         Returns
         -------
-        X_leaves : array-like, shape (n_samples, n_estimators)
+        X_leaves : ndarray, shape (n_samples, n_estimators)
             For each datapoint x in X and for each tree in the ensemble,
             return the index of the leaf x ends up in each estimator.
         """
@@ -2606,3 +2622,31 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         leaves = super().apply(X)
         leaves = leaves.reshape(X.shape[0], self.estimators_.shape[0])
         return leaves
+
+    def decision_path(self, X):
+        """Return the decision path in the forest.
+
+        .. versionadded:: 0.22
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape (n_samples, n_features)
+            The input samples. Internally, its dtype will be converted to
+            ``dtype=np.float32``. If a sparse matrix is provided, it will be
+            converted into a sparse ``csr_matrix``.
+
+        Returns
+        -------
+        indicator : sparse ``csr_matrix``, shape (n_samples, n_nodes)
+            Return a node indicator matrix where non zero elements
+            indicate that the sample goes through the nodes.
+
+        n_nodes_ptr : ndarray, shape (n_estimators + 1, )
+            The columns from indicator[n_nodes_ptr[i]:n_nodes_ptr[i+1]]
+            give the indicator value for the i-th estimator.
+
+        """
+
+        indicators, n_nodes_ptr = super().decision_path(X)
+        n_estimators = self.estimators_.shape[0]
+        return indicators[0], n_nodes_ptr.reshape(n_estimators + 1)

@@ -71,20 +71,31 @@ iris.target = iris.target[perm]
 
 def check_classification_toy(presort, loss):
     # Check classification on a toy dataset.
-    clf = GradientBoostingClassifier(loss=loss, n_estimators=10,
+    n_estimators = 10
+    n_instances = len(X)
+    n_classes = 1
+    clf = GradientBoostingClassifier(loss=loss, n_estimators=n_estimators,
                                      random_state=1, presort=presort)
 
     assert_raises(ValueError, clf.predict, T)
 
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
-    assert_equal(10, len(clf.estimators_))
+    assert n_estimators == len(clf.estimators_)
 
     deviance_decrease = (clf.train_score_[:-1] - clf.train_score_[1:])
     assert np.any(deviance_decrease >= 0.0)
 
     leaves = clf.apply(X)
-    assert_equal(leaves.shape, (6, 10, 1))
+    assert leaves.shape == (n_instances, n_estimators, n_classes)
+
+    indicators, n_nodes_ptr = clf.decision_path(X)
+    assert len(indicators) == n_classes
+    for i, indicator in enumerate(indicators):
+        n_nodes = sum([estimator.tree_.node_count for
+                       estimator in clf.estimators_[:, i]])
+        assert indicator.shape == (n_instances, n_nodes)
+    assert n_nodes_ptr.shape == (n_classes, n_estimators + 1)
 
 
 @pytest.mark.parametrize('presort', ('auto', True, False))
@@ -236,8 +247,9 @@ def check_boston(presort, loss, subsample):
     # and least absolute deviation.
     ones = np.ones(len(boston.target))
     last_y_pred = None
+    n_estimators = 100
     for sample_weight in None, ones, 2 * ones:
-        clf = GradientBoostingRegressor(n_estimators=100,
+        clf = GradientBoostingRegressor(n_estimators=n_estimators,
                                         loss=loss,
                                         max_depth=4,
                                         subsample=subsample,
@@ -248,8 +260,15 @@ def check_boston(presort, loss, subsample):
         assert_raises(ValueError, clf.predict, boston.data)
         clf.fit(boston.data, boston.target,
                 sample_weight=sample_weight)
+        n_instances = boston.data.shape[0]
         leaves = clf.apply(boston.data)
-        assert_equal(leaves.shape, (506, 100))
+        assert leaves.shape == (n_instances, n_estimators)
+
+        indicator, n_nodes_ptr = clf.decision_path(boston.data)
+        n_nodes = sum([estimator.tree_.node_count
+                       for estimator in clf.estimators_[:, 0]])
+        assert indicator.shape == (n_instances, n_nodes)
+        assert n_nodes_ptr.shape == (n_estimators + 1,)
 
         y_pred = clf.predict(boston.data)
         mse = mean_squared_error(boston.target, y_pred)
@@ -270,7 +289,10 @@ def test_boston(presort, loss, subsample):
 
 def check_iris(presort, subsample, sample_weight):
     # Check consistency on dataset iris.
-    clf = GradientBoostingClassifier(n_estimators=100,
+    n_estimators = 100
+    n_instances = iris.data.shape[0]
+    n_classes = 3
+    clf = GradientBoostingClassifier(n_estimators=n_estimators,
                                      loss='deviance',
                                      random_state=1,
                                      subsample=subsample,
@@ -280,7 +302,15 @@ def check_iris(presort, subsample, sample_weight):
     assert_greater(score, 0.9)
 
     leaves = clf.apply(iris.data)
-    assert_equal(leaves.shape, (150, 100, 3))
+    assert leaves.shape == (n_instances, n_estimators, n_classes)
+
+    indicators, n_nodes_ptr = clf.decision_path(iris.data)
+    assert len(indicators) == n_classes
+    for i, indicator in enumerate(indicators):
+        n_nodes = sum([estimator.tree_.node_count for
+                       estimator in clf.estimators_[:, i]])
+        assert indicator.shape == (n_instances, n_nodes)
+    assert n_nodes_ptr.shape == (n_classes, n_estimators + 1)
 
 
 @pytest.mark.parametrize('presort', ('auto', True, False))
@@ -1205,17 +1235,48 @@ def check_sparse_input(EstimatorClass, X, X_sparse, y):
                           presort='auto').fit(X_sparse, y)
 
     assert_array_almost_equal(sparse.apply(X), dense.apply(X))
+    dense_indicator, dense_nodes_ptr = dense.decision_path(X)
+    sparse_indicator, sparse_nodes_prt = sparse.decision_path(X)
+    assert_array_equal(dense_nodes_ptr, sparse_nodes_prt)
+    if isinstance(EstimatorClass, GradientBoostingClassifier):
+        assert len(dense_indicator) == len(sparse_indicator)
+        for dense_ind, sparse_ind in zip(dense_indicator, sparse_indicator):
+            assert_array_equal(dense_ind.toarray(), sparse_ind.toarray())
+    elif isinstance(EstimatorClass, GradientBoostingRegressor):
+        assert_array_equal(dense_indicator.toarray(),
+                           sparse_indicator.toarray())
     assert_array_almost_equal(sparse.predict(X), dense.predict(X))
     assert_array_almost_equal(sparse.feature_importances_,
                               dense.feature_importances_)
 
     assert_array_almost_equal(sparse.apply(X), auto.apply(X))
+    auto_indicator, auto_nodes_ptr = auto.decision_path(X)
+    assert_array_equal(auto_nodes_ptr, sparse_nodes_prt)
+    if isinstance(EstimatorClass, GradientBoostingClassifier):
+        assert len(auto_indicator) == len(sparse_indicator)
+        for auto_ind, sparse_ind in zip(auto_indicator, sparse_indicator):
+            assert_array_equal(auto_ind.toarray(), sparse_ind.toarray())
+    elif isinstance(EstimatorClass, GradientBoostingRegressor):
+        assert_array_equal(auto_indicator.toarray(),
+                           sparse_indicator.toarray())
     assert_array_almost_equal(sparse.predict(X), auto.predict(X))
     assert_array_almost_equal(sparse.feature_importances_,
                               auto.feature_importances_)
 
     assert_array_almost_equal(sparse.predict(X_sparse), dense.predict(X))
     assert_array_almost_equal(dense.predict(X_sparse), sparse.predict(X))
+    sparse_indicator, sparse_nodes_prt = dense.decision_path(X_sparse)
+    assert_array_equal(dense_nodes_ptr, sparse_nodes_prt)
+    if isinstance(EstimatorClass, GradientBoostingClassifier):
+        assert len(dense_indicator) == len(sparse_indicator)
+        for dense_ind, sparse_ind in zip(dense_indicator, sparse_indicator):
+            assert_array_equal(dense_ind.toarray(), sparse_ind.toarray())
+    elif isinstance(EstimatorClass, GradientBoostingRegressor):
+        assert_array_equal(dense_indicator.toarray(),
+                           sparse_indicator.toarray())
+    assert_array_almost_equal(sparse.predict(X), dense.predict(X))
+    assert_array_almost_equal(sparse.feature_importances_,
+                              dense.feature_importances_)
 
     if isinstance(EstimatorClass, GradientBoostingClassifier):
         assert_array_almost_equal(sparse.predict_proba(X),
