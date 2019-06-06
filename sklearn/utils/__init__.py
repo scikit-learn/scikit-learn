@@ -210,7 +210,7 @@ def safe_indexing(X, indices, axis=0):
     CSR, CSC, and LIL sparse matrices are supported. COO sparse matrices are
     not supported.
     """
-    if axis ==0:
+    if axis == 0:
         return _safe_indexing_row(X, indices)
     return _safe_indexing_column(X, indices)
 

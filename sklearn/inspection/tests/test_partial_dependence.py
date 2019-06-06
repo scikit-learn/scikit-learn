@@ -494,6 +494,29 @@ def test_partial_dependence_dataframe(estimator, preprocessor, features):
         assert_allclose(values_pipe[1], values_clf[1])
 
 
+@pytest.mark.parametrize(
+    "features",
+    [0, iris.feature_names[0],
+     [0, 2], [iris.feature_names[i] for i in (0, 2)],
+     slice(0, 2, 1), [True, False, True, False]],
+    ids=['scalar-int', 'scalar-str', 'list-int', 'list-str', 'slice', 'mask']
+)
+def test_partial_dependence_feature_type(features):
+    # check all possible features type supported in PDP
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame(iris.data, columns=iris.feature_names)
+
+    preprocessor = make_column_transformer(
+        (StandardScaler(), [iris.feature_names[i] for i in (0, 2)]),
+        (RobustScaler(), [iris.feature_names[i] for i in (1, 3)])
+    )
+    pipe = make_pipeline(
+        preprocessor, LogisticRegression(max_iter=1000, random_state=0)
+    )
+    pipe.fit(df, iris.target)
+    pdp_pipe, values_pipe = partial_dependence(pipe, df, features=features)
+
+
 def test_plot_partial_dependence(pyplot):
     # Test partial dependence plot function.
     boston = load_boston()
