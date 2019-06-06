@@ -222,13 +222,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     # Unfortunately, each call to scorer_() will compute
                     # the predictions of all the trees. So we use a subset of
                     # the training set to compute train scores.
-                    subsample_size = 10000  # should we expose this parameter?
-                    indices = np.arange(X_binned_train.shape[0])
-                    self._indices = indices
-                    if X_binned_train.shape[0] > subsample_size:
-                        # TODO: not critical but stratify using resample()
-                        indices = rng.choice(indices, subsample_size,
-                                             replace=False)
+                    indices = self._compute_subsample_indices(
+                        X_binned_train, rng, subsample_size=10000
+                    )
                     X_binned_small_train = X_binned_train[indices]
                     y_small_train = y_train[indices]
                     # Predicting is faster on C-contiguous arrays.
@@ -256,15 +252,22 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
             # Compute raw predictions
             raw_predictions = self._raw_predict(X_binned_train)
-            if hasattr(self, '_indices'):
-                X_binned_small_train = X_binned_train[self._indices]
-                y_small_train = y_train[self._indices]
+
+            if self.do_early_stopping_ and self.scoring != 'loss':
+                # Compute the indices of the subsample set
+                indices = self._compute_subsample_indices(
+                    X_binned_train, rng, subsample_size=10000
+                )
+                X_binned_small_train = X_binned_train[indices]
+                y_small_train = y_train[indices]
                 X_binned_small_train = np.ascontiguousarray(
                     X_binned_small_train)
 
-            # Get the gradients and hessians from the previous fit
-            gradients = self._last_gradients
-            hessians = self._last_hessians
+            # Initialize the gradients and hessians
+            gradients, hessians = self.loss_.init_gradients_and_hessians(
+                n_samples=n_samples,
+                prediction_dim=self.n_trees_per_iteration_
+            )
 
             # Get the predictors from the previous fit
             predictors = self._predictors
@@ -386,6 +389,28 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         """Convert all array attributes to lists."""
         self.train_score_ = self.train_score_.tolist()
         self.validation_score_ = self.validation_score_.tolist()
+
+    def _compute_subsample_indices(self, X_binned_train, rng,
+                                   subsample_size=10000):
+        """Compute the indices of the subsample set.
+
+        Parameters
+        ----------
+        X_binned_train : array, shape (n_samples, n_features)
+            Binned training input data.
+
+        rng : RandomState instance
+            Random number generator.
+
+        subsample_size : int (default=100000)
+            The maximum size of the subsample set.
+
+        """
+        indices = np.arange(X_binned_train.shape[0])
+        if X_binned_train.shape[0] > subsample_size:
+            # TODO: not critical but stratify using resample()
+            indices = rng.choice(indices, subsample_size, replace=False)
+        return indices
 
     def _check_early_stopping_scorer(self, X_binned_small_train, y_small_train,
                                      X_binned_val, y_val):
