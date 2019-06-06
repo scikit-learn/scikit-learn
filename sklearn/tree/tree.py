@@ -728,12 +728,12 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         When using either a smaller dataset or a restricted depth, this may
         speed up the training.
 
-    ccp_alpha : positive float, optional (default=0.0)
+    ccp_alpha : non-negative float, optional (default=0.0)
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed.
 
-        .. versionadded:: 0.21
+        .. versionadded:: 0.22
 
     Attributes
     ----------
@@ -1089,12 +1089,12 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         When using either a smaller dataset or a restricted depth, this may
         speed up the training.
 
-    ccp_alpha : positive float, optional (default=0.0)
+    ccp_alpha : non-negative float, optional (default=0.0)
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed.
 
-        .. versionadded:: 0.21
+        .. versionadded:: 0.22
 
     Attributes
     ----------
@@ -1375,12 +1375,12 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
 
-    ccp_alpha : positive float, optional (default=0.0)
+    ccp_alpha : non-negative float, optional (default=0.0)
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed.
 
-        .. versionadded:: 0.21
+        .. versionadded:: 0.22
 
     See also
     --------
@@ -1552,12 +1552,12 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
-    ccp_alpha : positive float, optional (default=0.0)
+    ccp_alpha : non-negative float, optional (default=0.0)
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed.
 
-        .. versionadded:: 0.21
+        .. versionadded:: 0.22
 
     See also
     --------
