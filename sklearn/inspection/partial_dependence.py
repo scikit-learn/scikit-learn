@@ -15,13 +15,12 @@ from scipy import sparse
 from scipy.stats.mstats import mquantiles
 from joblib import Parallel, delayed
 
-from ..compose._column_transformer import _get_column
-from ..compose._column_transformer import _get_column_indices
-
 from ..base import is_classifier, is_regressor
 from ..utils.extmath import cartesian
 from ..utils import check_array
 from ..utils import check_matplotlib_support  # noqa
+from ..utils import safe_indexing
+from ..utils import _get_column_indices
 from ..utils.validation import check_is_fitted
 from ..tree._tree import DTYPE
 from ..exceptions import NotFittedError
@@ -74,14 +73,14 @@ def _grid_from_X(X, percentiles, grid_resolution):
 
     values = []
     for feature in range(X.shape[1]):
-        uniques = np.unique(_get_column(X, feature))
+        uniques = np.unique(safe_indexing(X, feature, axis=1))
         if uniques.shape[0] < grid_resolution:
             # feature has low resolution use unique vals
             axis = uniques
         else:
             # create axis based on percentiles and grid resolution
             emp_percentiles = mquantiles(
-                _get_column(X, feature), prob=percentiles, axis=0
+                safe_indexing(X, feature, axis=1), prob=percentiles, axis=0
             )
             if np.allclose(emp_percentiles[0], emp_percentiles[1]):
                 raise ValueError(
@@ -301,7 +300,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
         raise ValueError('Multiclass-multioutput estimators are not supported')
 
     if not(hasattr(X, '__array__') or sparse.issparse(X)):
-        X = check_array(X, force_all_finite='allow-nan', dtype=np.object)
+        return check_array(X, force_all_finite='allow-nan', dtype=np.object)
 
     accepted_responses = ('auto', 'predict_proba', 'decision_function')
     if response_method not in accepted_responses:
@@ -348,7 +347,8 @@ def partial_dependence(estimator, X, features, response_method='auto',
     ).ravel()
 
     grid, values = _grid_from_X(
-        _get_column(X, features_indices), percentiles, grid_resolution
+        safe_indexing(X, features_indices, axis=1), percentiles,
+         grid_resolution
     )
 
     if method == 'brute':
