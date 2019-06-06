@@ -34,7 +34,7 @@ from sklearn.utils.testing import (assert_equal, assert_not_equal,
                                    assert_almost_equal, assert_in,
                                    assert_less, assert_greater,
                                    assert_warns_message, assert_raise_message,
-                                   clean_warning_registry, ignore_warnings,
+                                   clean_warning_registry,
                                    SkipTest, assert_raises, assert_no_warnings,
                                    fails_if_pypy, assert_allclose_dense_sparse,
                                    skip_if_32bit)
@@ -733,8 +733,6 @@ def test_vectorizer_inverse_transform(Vectorizer):
         assert_array_equal(np.sort(terms), np.sort(terms2))
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_count_vectorizer_pipeline_grid_selection():
     # raw documents
     data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
@@ -756,7 +754,7 @@ def test_count_vectorizer_pipeline_grid_selection():
 
     # find the best parameters for both the feature extraction and the
     # classifier
-    grid_search = GridSearchCV(pipeline, parameters, n_jobs=1)
+    grid_search = GridSearchCV(pipeline, parameters, n_jobs=1, cv=3)
 
     # Check that the best model found by grid search is 100% correct on the
     # held out evaluation set.
@@ -771,8 +769,6 @@ def test_count_vectorizer_pipeline_grid_selection():
     assert_equal(best_vectorizer.ngram_range, (1, 1))
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_vectorizer_pipeline_grid_selection():
     # raw documents
     data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS

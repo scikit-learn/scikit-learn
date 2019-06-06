@@ -14,8 +14,6 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn import linear_model, datasets, metrics
@@ -1568,7 +1566,7 @@ def test_multi_core_gridsearch_and_early_stopping():
     }
     clf = SGDClassifier(tol=1e-3, max_iter=1000, early_stopping=True,
                         random_state=0)
-    search = RandomizedSearchCV(clf, param_grid, n_iter=10, cv=5, n_jobs=2,
+    search = RandomizedSearchCV(clf, param_grid, n_iter=10, n_jobs=2,
                                 random_state=0)
     search.fit(iris.data, iris.target)
     assert search.best_score_ > 0.8

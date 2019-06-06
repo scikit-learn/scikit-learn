@@ -61,7 +61,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 3-fold cross-validation,
+        - None, to use the default 5-fold cross-validation,
         - integer, to specify the number of folds.
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -77,9 +77,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         If "prefit" is passed, it is assumed that base_estimator has been
         fitted already and all data is used for calibration.
 
-        .. versionchanged:: 0.20
-            ``cv`` default value if None will change from 3-fold to 5-fold
-            in v0.22.
+        .. versionchanged:: 0.22
+            ``cv`` default value if None changed from 3-fold to 5-fold.
 
     Attributes
     ----------
@@ -105,7 +104,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
     .. [4] Predicting Good Probabilities with Supervised Learning,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
-    def __init__(self, base_estimator=None, method='sigmoid', cv='warn'):
+    def __init__(self, base_estimator=None, method='sigmoid', cv=None):
         self.base_estimator = base_estimator
         self.method = method
         self.cv = cv

@@ -16,7 +16,6 @@ better.
 
 
 from math import log
-import warnings
 
 import numpy as np
 from scipy import sparse as sp
@@ -186,13 +185,13 @@ def adjusted_rand_score(labels_true, labels_pred):
     Labelings that assign all classes members to the same clusters
     are complete be not always pure, hence penalized::
 
-      >>> adjusted_rand_score([0, 0, 1, 2], [0, 0, 1, 1])  # doctest: +ELLIPSIS
+      >>> adjusted_rand_score([0, 0, 1, 2], [0, 0, 1, 1])
       0.57...
 
     ARI is symmetric, so labelings that have pure clusters with members
     coming from the same classes but unnecessary splits are penalized::
 
-      >>> adjusted_rand_score([0, 0, 1, 1], [0, 0, 1, 2])  # doctest: +ELLIPSIS
+      >>> adjusted_rand_score([0, 0, 1, 1], [0, 0, 1, 2])
       0.57...
 
     If classes members are completely split across different clusters, the
@@ -375,20 +374,16 @@ def homogeneity_score(labels_true, labels_pred):
     perfectly homogeneous::
 
       >>> print("%.6f" % homogeneity_score([0, 0, 1, 1], [0, 0, 1, 2]))
-      ...                                                  # doctest: +ELLIPSIS
       1.000000
       >>> print("%.6f" % homogeneity_score([0, 0, 1, 1], [0, 1, 2, 3]))
-      ...                                                  # doctest: +ELLIPSIS
       1.000000
 
     Clusters that include samples from different classes do not make for an
     homogeneous labeling::
 
       >>> print("%.6f" % homogeneity_score([0, 0, 1, 1], [0, 1, 0, 1]))
-      ...                                                  # doctest: +ELLIPSIS
       0.0...
       >>> print("%.6f" % homogeneity_score([0, 0, 1, 1], [0, 0, 0, 0]))
-      ...                                                  # doctest: +ELLIPSIS
       0.0...
 
     """
@@ -535,10 +530,8 @@ def v_measure_score(labels_true, labels_pred, beta=1.0):
     are complete be not homogeneous, hence penalized::
 
       >>> print("%.6f" % v_measure_score([0, 0, 1, 2], [0, 0, 1, 1]))
-      ...                                                  # doctest: +ELLIPSIS
       0.8...
       >>> print("%.6f" % v_measure_score([0, 1, 2, 3], [0, 0, 1, 1]))
-      ...                                                  # doctest: +ELLIPSIS
       0.66...
 
     Labelings that have pure clusters with members coming from the same
@@ -546,24 +539,20 @@ def v_measure_score(labels_true, labels_pred, beta=1.0):
     and thus penalize V-measure as well::
 
       >>> print("%.6f" % v_measure_score([0, 0, 1, 1], [0, 0, 1, 2]))
-      ...                                                  # doctest: +ELLIPSIS
       0.8...
       >>> print("%.6f" % v_measure_score([0, 0, 1, 1], [0, 1, 2, 3]))
-      ...                                                  # doctest: +ELLIPSIS
       0.66...
 
     If classes members are completely split across different clusters,
     the assignment is totally incomplete, hence the V-Measure is null::
 
       >>> print("%.6f" % v_measure_score([0, 0, 0, 0], [0, 1, 2, 3]))
-      ...                                                  # doctest: +ELLIPSIS
       0.0...
 
     Clusters that include samples from totally different classes totally
     destroy the homogeneity of the labeling, hence::
 
       >>> print("%.6f" % v_measure_score([0, 0, 1, 1], [0, 0, 0, 0]))
-      ...                                                  # doctest: +ELLIPSIS
       0.0...
 
     """
@@ -654,7 +643,7 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
 
 
 def adjusted_mutual_info_score(labels_true, labels_pred,
-                               average_method='warn'):
+                               average_method='arithmetic'):
     """Adjusted Mutual Information between two clusterings.
 
     Adjusted Mutual Information (AMI) is an adjustment of the Mutual
@@ -687,13 +676,15 @@ def adjusted_mutual_info_score(labels_true, labels_pred,
     labels_pred : array, shape = [n_samples]
         A clustering of the data into disjoint subsets.
 
-    average_method : string, optional (default: 'warn')
+    average_method : string, optional (default: 'arithmetic')
         How to compute the normalizer in the denominator. Possible options
         are 'min', 'geometric', 'arithmetic', and 'max'.
-        If 'warn', 'max' will be used. The default will change to
-        'arithmetic' in version 0.22.
 
         .. versionadded:: 0.20
+
+        .. versionchanged:: 0.22
+           The default value of ``average_method`` changed from 'max' to
+           'arithmetic'.
 
     Returns
     -------
@@ -739,12 +730,6 @@ def adjusted_mutual_info_score(labels_true, labels_pred,
        <https://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
 
     """
-    if average_method == 'warn':
-        warnings.warn("The behavior of AMI will change in version 0.22. "
-                      "To match the behavior of 'v_measure_score', AMI will "
-                      "use average_method='arithmetic' by default.",
-                      FutureWarning)
-        average_method = 'max'
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     n_samples = labels_true.shape[0]
     classes = np.unique(labels_true)
@@ -779,7 +764,7 @@ def adjusted_mutual_info_score(labels_true, labels_pred,
 
 
 def normalized_mutual_info_score(labels_true, labels_pred,
-                                 average_method='warn'):
+                                 average_method='arithmetic'):
     """Normalized Mutual Information between two clusterings.
 
     Normalized Mutual Information (NMI) is a normalization of the Mutual
@@ -810,13 +795,15 @@ def normalized_mutual_info_score(labels_true, labels_pred,
     labels_pred : array, shape = [n_samples]
         A clustering of the data into disjoint subsets.
 
-    average_method : string, optional (default: 'warn')
+    average_method : string, optional (default: 'arithmetic')
         How to compute the normalizer in the denominator. Possible options
         are 'min', 'geometric', 'arithmetic', and 'max'.
-        If 'warn', 'geometric' will be used. The default will change to
-        'arithmetic' in version 0.22.
 
         .. versionadded:: 0.20
+
+        .. versionchanged:: 0.22
+           The default value of ``average_method`` changed from 'geometric' to
+           'arithmetic'.
 
     Returns
     -------
@@ -852,12 +839,6 @@ def normalized_mutual_info_score(labels_true, labels_pred,
       0.0
 
     """
-    if average_method == 'warn':
-        warnings.warn("The behavior of NMI will change in version 0.22. "
-                      "To match the behavior of 'v_measure_score', NMI will "
-                      "use average_method='arithmetic' by default.",
-                      FutureWarning)
-        average_method = 'geometric'
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     classes = np.unique(labels_true)
     clusters = np.unique(labels_pred)

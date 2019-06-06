@@ -285,6 +285,7 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin, MultiOutputMixin,
         self.n_iter_ = []
 
         # NIPALS algo: outer loop, over components
+        Y_eps = np.finfo(Yk.dtype).eps
         for k in range(self.n_components):
             if np.all(np.dot(Yk.T, Yk) < np.finfo(np.double).eps):
                 # Yk constant
@@ -293,6 +294,10 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin, MultiOutputMixin,
             # 1) weights estimation (inner loop)
             # -----------------------------------
             if self.algorithm == "nipals":
+                # Replace columns that are all close to zero with zeros
+                Yk_mask = np.all(np.abs(Yk) < 10 * Y_eps, axis=0)
+                Yk[:, Yk_mask] = 0.0
+
                 x_weights, y_weights, n_iter_ = \
                     _nipals_twoblocks_inner_loop(
                         X=Xk, Y=Yk, mode=self.mode, max_iter=self.max_iter,
@@ -573,9 +578,7 @@ class PLSRegression(_PLS):
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
     >>> pls2 = PLSRegression(n_components=2)
     >>> pls2.fit(X, Y)
-    ... # doctest: +NORMALIZE_WHITESPACE
-    PLSRegression(copy=True, max_iter=500, n_components=2, scale=True,
-            tol=1e-06)
+    PLSRegression()
     >>> Y_pred = pls2.predict(X)
 
     References
@@ -715,9 +718,7 @@ class PLSCanonical(_PLS):
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
     >>> plsca = PLSCanonical(n_components=2)
     >>> plsca.fit(X, Y)
-    ... # doctest: +NORMALIZE_WHITESPACE
-    PLSCanonical(algorithm='nipals', copy=True, max_iter=500, n_components=2,
-                 scale=True, tol=1e-06)
+    PLSCanonical()
     >>> X_c, Y_c = plsca.transform(X, Y)
 
     References
@@ -792,7 +793,7 @@ class PLSSVD(BaseEstimator, TransformerMixin):
     ...     [11.9, 12.3]])
     >>> plsca = PLSSVD(n_components=2)
     >>> plsca.fit(X, Y)
-    PLSSVD(copy=True, n_components=2, scale=True)
+    PLSSVD()
     >>> X_c, Y_c = plsca.transform(X, Y)
     >>> X_c.shape, Y_c.shape
     ((4, 2), (4, 2))

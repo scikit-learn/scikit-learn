@@ -330,7 +330,7 @@ The names ``vect``, ``tfidf`` and ``clf`` (classifier) are arbitrary.
 We will use them to perform grid search for suitable hyperparameters below.
 We can now train the model with a single command::
 
-  >>> text_clf.fit(twenty_train.data, twenty_train.target)  # doctest: +ELLIPSIS
+  >>> text_clf.fit(twenty_train.data, twenty_train.target)
   Pipeline(...)
 
 
@@ -344,7 +344,7 @@ Evaluating the predictive accuracy of the model is equally easy::
   ...     categories=categories, shuffle=True, random_state=42)
   >>> docs_test = twenty_test.data
   >>> predicted = text_clf.predict(docs_test)
-  >>> np.mean(predicted == twenty_test.target)            # doctest: +ELLIPSIS
+  >>> np.mean(predicted == twenty_test.target)
   0.8348...
 
 We achieved 83.5% accuracy. Let's see if we can do better with a
@@ -363,10 +363,10 @@ classifier object into our pipeline::
   ...                           max_iter=5, tol=None)),
   ... ])
 
-  >>> text_clf.fit(twenty_train.data, twenty_train.target)  # doctest: +ELLIPSIS
+  >>> text_clf.fit(twenty_train.data, twenty_train.target)
   Pipeline(...)
   >>> predicted = text_clf.predict(docs_test)
-  >>> np.mean(predicted == twenty_test.target)            # doctest: +ELLIPSIS
+  >>> np.mean(predicted == twenty_test.target)
   0.9101...
 
 We achieved 91.3% accuracy using the SVM. ``scikit-learn`` provides further
@@ -375,7 +375,6 @@ utilities for more detailed performance analysis of the results::
   >>> from sklearn import metrics
   >>> print(metrics.classification_report(twenty_test.target, predicted,
   ...     target_names=twenty_test.target_names))
-  ...                                         # doctest: +NORMALIZE_WHITESPACE
                           precision    recall  f1-score   support
   <BLANKLINE>
              alt.atheism       0.95      0.80      0.87       319
@@ -446,7 +445,7 @@ parameter combinations in parallel with the ``n_jobs`` parameter. If we give
 this parameter a value of ``-1``, grid search will detect how many cores
 are installed and use them all::
 
-  >>> gs_clf = GridSearchCV(text_clf, parameters, cv=5, iid=False, n_jobs=-1)
+  >>> gs_clf = GridSearchCV(text_clf, parameters, cv=5, n_jobs=-1)
 
 The grid search instance behaves like a normal ``scikit-learn``
 model. Let's perform the search on a smaller subset of the training data
@@ -463,7 +462,7 @@ that we can use to ``predict``::
 The object's ``best_score_`` and ``best_params_`` attributes store the best
 mean score and the parameters setting corresponding to that score::
 
-  >>> gs_clf.best_score_                                  # doctest: +ELLIPSIS
+  >>> gs_clf.best_score_
   0.9...
   >>> for param_name in sorted(parameters.keys()):
   ...     print("%s: %r" % (param_name, gs_clf.best_params_[param_name]))
