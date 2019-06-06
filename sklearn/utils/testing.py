@@ -581,17 +581,6 @@ try:
     skip_if_no_parallel = pytest.mark.skipif(not joblib.parallel.mp,
                                              reason="joblib is in serial mode")
 
-    def has_pandas():
-        try:
-            import pandas
-            return True
-        except ImportError:
-            return False
-
-    skip_if_no_pandas = pytest.mark.skipif(
-        not has_pandas, reason="pandas is not installed"
-    )
-
     #  Decorator for tests involving both BLAS calls and multiprocessing.
     #
     #  Under POSIX (e.g. Linux or OSX), using multiprocessing in conjunction

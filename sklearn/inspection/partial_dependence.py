@@ -19,7 +19,6 @@ from ..compose._column_transformer import _get_column
 from ..compose._column_transformer import _get_column_indices
 
 from ..base import is_classifier, is_regressor
-from ..pipeline import Pipeline
 from ..utils.extmath import cartesian
 from ..utils import check_array
 from ..utils import check_matplotlib_support  # noqa
@@ -293,16 +292,12 @@ def partial_dependence(estimator, X, features, response_method='auto',
     dependence values are incorrect for 'recursion'.
 
     """
-    preprocessor = estimator[:-1] if isinstance(estimator, Pipeline) else None
-    final_estimator = (estimator[-1] if isinstance(estimator, Pipeline)
-                       else estimator)
-
-    if not (is_classifier(final_estimator) or is_regressor(final_estimator)):
+    if not (is_classifier(estimator) or is_regressor(estimator)):
         raise ValueError(
             "'estimator' must be a fitted regressor or classifier.")
 
-    if (hasattr(final_estimator, 'classes_') and
-            isinstance(final_estimator.classes_[0], np.ndarray)):
+    if (hasattr(estimator, 'classes_') and
+            isinstance(estimator.classes_[0], np.ndarray)):
         raise ValueError('Multiclass-multioutput estimators are not supported')
 
     if not(hasattr(X, '__array__') or sparse.issparse(X)):
@@ -314,7 +309,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
             'response_method {} is invalid. Accepted response_method names '
             'are {}.'.format(response_method, ', '.join(accepted_responses)))
 
-    if is_regressor(final_estimator) and response_method != 'auto':
+    if is_regressor(estimator) and response_method != 'auto':
         raise ValueError(
             "The response_method parameter is ignored for regressors and "
             "must be 'auto'."
@@ -326,14 +321,14 @@ def partial_dependence(estimator, X, features, response_method='auto',
                 method, ', '.join(accepted_methods)))
 
     if method == 'auto':
-        if (isinstance(final_estimator, BaseGradientBoosting) and
-                final_estimator.init is None):
+        if (isinstance(estimator, BaseGradientBoosting) and
+                estimator.init is None):
             method = 'recursion'
         else:
             method = 'brute'
 
     if method == 'recursion':
-        if not isinstance(final_estimator, BaseGradientBoosting):
+        if not isinstance(estimator, BaseGradientBoosting):
             raise ValueError(
                 "'estimator' must be an instance of BaseGradientBoosting "
                 "for the 'recursion' method. Try using method='brute'.")
@@ -345,21 +340,15 @@ def partial_dependence(estimator, X, features, response_method='auto',
                 "With the 'recursion' method, the response_method must be "
                 "'decision_function'. Got {}.".format(response_method)
             )
-        check_is_fitted(final_estimator, 'estimators_',
+        check_is_fitted(estimator, 'estimators_',
                         msg="'estimator' parameter must be a fitted estimator")
 
     features_indices = np.asarray(
         _get_column_indices(X, features), dtype=np.int32, order='C'
     ).ravel()
 
-    if method == 'recursion' and preprocessor is not None:
-        X_preprocessed = preprocessor.transform(X)
-    else:
-        X_preprocessed = X
-
     grid, values = _grid_from_X(
-        _get_column(X_preprocessed, features_indices), percentiles,
-        grid_resolution
+        _get_column(X, features_indices), percentiles, grid_resolution
     )
 
     if method == 'brute':
@@ -368,7 +357,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
         )
     else:
         averaged_predictions = _partial_dependence_recursion(
-            final_estimator, grid, features_indices
+            estimator, grid, features_indices
         )
 
     # reshape averaged_predictions to

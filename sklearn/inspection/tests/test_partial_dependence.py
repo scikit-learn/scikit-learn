@@ -31,7 +31,6 @@ from sklearn.dummy import DummyClassifier
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import skip_if_no_pandas
 
 
 # toy sample
@@ -437,7 +436,7 @@ def test_partial_dependence_pipeline():
     assert_allclose(pdp_pipe, pdp_clf)
     assert_allclose(
         values_pipe[0],
-        (values_clf[0] * scaler.scale_[features]) + scaler.mean_[features]
+        values_clf[0] * scaler.scale_[features] + scaler.mean_[features]
     )
 
 
@@ -450,13 +449,14 @@ def test_partial_dependence_pipeline():
 @pytest.mark.parametrize(
     "preprocessor",
     [None,
-     make_column_transformer((StandardScaler(), iris.feature_names[:2]),
-                             (RobustScaler(), iris.feature_names[2:]))],
+     make_column_transformer(
+         (StandardScaler(), [iris.feature_names[i] for i in (0, 2)]),
+         (RobustScaler(), [iris.feature_names[i] for i in (1, 3)]))],
     ids=['None', 'column-transformer']
 )
 @pytest.mark.parametrize(
     "features",
-    [[0, 1], iris.feature_names[:2]],
+    [[0, 2], [iris.feature_names[i] for i in (0, 2)]],
     ids=['features-integer', 'features-string']
 )
 def test_partial_dependence_dataframe(estimator, preprocessor, features):
@@ -468,15 +468,30 @@ def test_partial_dependence_dataframe(estimator, preprocessor, features):
     pipe.fit(df, iris.target)
     pdp_pipe, values_pipe = partial_dependence(pipe, df, features=features)
 
-    X_preprocessed = (clone(preprocessor).fit_transform(df)
-                      if preprocessor is not None else df.values)
-    clf = clone(estimator).fit(X_preprocessed, iris.target)
+    # the column transformer will reorder the column when transforming
+    # we mixed the index to be sure that we are computing the partial
+    # dependence of the right columns
+    if preprocessor is not None:
+        X_proc = clone(preprocessor).fit_transform(df)
+        features_clf = [0, 1]
+    else:
+        X_proc = df
+        features_clf = [0, 2]
+
+    clf = clone(estimator).fit(X_proc, iris.target)
     pdp_clf, values_clf = partial_dependence(
-        clf, X_preprocessed, features=[0, 1]
+        clf, X_proc, features=features_clf, method='brute'
     )
 
     assert_allclose(pdp_pipe, pdp_clf)
-    # assert_allclose(values_pipe, values_clf)
+    if preprocessor is not None:
+        scaler = preprocessor.named_transformers_['standardscaler']
+        assert_allclose(
+            values_pipe[1],
+            values_clf[1] * scaler.scale_[1] + scaler.mean_[1]
+        )
+    else:
+        assert_allclose(values_pipe[1], values_clf[1])
 
 
 def test_plot_partial_dependence(pyplot):
