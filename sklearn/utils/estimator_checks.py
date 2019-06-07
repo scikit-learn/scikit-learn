@@ -2353,8 +2353,8 @@ def check_decision_proba_consistency(name, estimator_orig):
 
         estimator.fit(X, y)
         # Since the link function from decision_function() to predict_proba()
-        # sometimes not precise enough (typically expit), we round to the 10th
-        # decimal to avoid numerical issues.
+        # is sometimes not precise enough (typically expit), we round to the
+        # 10th decimal to avoid numerical issues.
         a = estimator.predict_proba(X_test)[:, 1].round(decimals=10)
         b = estimator.decision_function(X_test).round(decimals=10)
         assert_array_equal(rankdata(a), rankdata(b))

@@ -16,9 +16,10 @@ from .histogram import HistogramBuilder
 from .predictor import TreePredictor
 from .utils import sum_parallel
 from .types import PREDICTOR_RECORD_DTYPE
+from .types import Y_DTYPE
 
 
-EPS = 1e-15  # to avoid zero division errors
+EPS = np.finfo(Y_DTYPE).eps  # to avoid zero division errors
 
 
 class TreeNode:
