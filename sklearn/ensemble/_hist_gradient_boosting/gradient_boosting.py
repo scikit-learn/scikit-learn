@@ -152,17 +152,18 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if self.verbose:
             print("Fitting gradient boosted rounds:")
 
-        # initialize raw_predictions: those are the accumulated values
-        # predicted by the trees for the training data. raw_predictions has
-        # shape (n_trees_per_iteration, n_samples) where
-        # n_trees_per_iterations is n_classes in multiclass classification,
-        # else 1.
         n_samples = X_binned_train.shape[0]
 
+        # First time calling fit, or no warm start
         if not (self._has_been_fitted() and self.warm_start):
-            # Clear the state
+            # Clear random state and score attributes
             self._clear_state()
 
+            # initialize raw_predictions: those are the accumulated values
+            # predicted by the trees for the training data. raw_predictions has
+            # shape (n_trees_per_iteration, n_samples) where
+            # n_trees_per_iterations is n_classes in multiclass classification,
+            # else 1.
             self._baseline_prediction = self.loss_.get_baseline_prediction(
                 y_train, self.n_trees_per_iteration_
             )
@@ -222,7 +223,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     # Unfortunately, each call to scorer_() will compute
                     # the predictions of all the trees. So we use a subset of
                     # the training set to compute train scores.
-                    indices = self._compute_subsample_indices(
+                    indices = self._compute_small_trainset_indices(
                         X_binned_train, rng, subsample_size=10000
                     )
                     X_binned_small_train = X_binned_train[indices]
@@ -237,6 +238,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     )
             begin_at_stage = 0
 
+        # warm start: this is not the first time fit was called
         else:
             # Check that the maximum number of iterations is not smaller
             # than the number of iterations from the previous fit
@@ -248,14 +250,15 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 )
 
             # Convert array attributes to lists
-            self._tolist_state()
+            self.train_score_ = self.train_score_.tolist()
+            self.validation_score_ = self.validation_score_.tolist()
 
             # Compute raw predictions
             raw_predictions = self._raw_predict(X_binned_train)
 
             if self.do_early_stopping_ and self.scoring != 'loss':
                 # Compute the indices of the subsample set
-                indices = self._compute_subsample_indices(
+                indices = self._compute_small_trainset_indices(
                     X_binned_train, rng, subsample_size=10000
                 )
                 X_binned_small_train = X_binned_train[indices]
@@ -383,14 +386,14 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if hasattr(self, '_rng'):
             del self._rng
 
-    def _tolist_state(self):
-        """Convert all array attributes to lists."""
-        self.train_score_ = self.train_score_.tolist()
-        self.validation_score_ = self.validation_score_.tolist()
-
-    def _compute_subsample_indices(self, X_binned_train, rng,
-                                   subsample_size=10000):
+    def _compute_small_trainset_indices(self, X_binned_train, rng,
+                                        subsample_size=10000):
         """Compute the indices of the subsample set.
+
+        For efficiency, we need to subsample the training set to compute scores
+        with scorers. Also note that the returned indices are not expected to
+        be the same between different calls to fit() in a warm start context,
+        since the rng may have been consumed.
 
         Parameters
         ----------
@@ -671,13 +674,9 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
         fitting process.
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
-        and add more estimators to the ensemble, otherwise, just erase the
-        previous solution. See :term:`the Glossary <warm_start>`.
-        If ``n_iter_no_change`` and ``validation_fraction`` are not None,
-        it is assumed that the same data is provided, leading to
-        the same splits for the training and validation sets if
-        ``validation_fraction`` takes the same value as in the previous
-        fit, assuring no data leakage in the performance evaluation.
+        and add more estimators to the ensemble. For results to be valid, the
+        estimator should be re-trained on the same data only.
+        See :term:`the Glossary <warm_start>`.
     random_state : int, np.random.RandomStateInstance or None, \
         optional (default=None)
         Pseudo-random number generator to control the subsampling in the
@@ -697,7 +696,8 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
         is the score of the ensemble before the first iteration. Scores are
         computed according to the ``scoring`` parameter. If ``scoring`` is
         not 'loss', scores are computed on a subset of at most 10 000
-        samples. Empty if no early stopping.
+        samples. This subset may vary between different calls to ``fit`` if
+        ``warm_start`` is True. Empty if no early stopping.
     validation_score_ : ndarray, shape (n_iter_ + 1,)
         The scores at each iteration on the held-out validation data. The
         first entry is the score of the ensemble before the first iteration.
@@ -848,13 +848,9 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         fitting process.
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
-        and add more estimators to the ensemble, otherwise, just erase the
-        previous solution. See :term:`the Glossary <warm_start>`.
-        If ``n_iter_no_change`` and ``validation_fraction`` are not None,
-        it is assumed that the same data is provided, leading to
-        the same splits for the training and validation sets if
-        ``validation_fraction`` takes the same value as in the previous
-        fit, assuring no data leakage in the performance evaluation.
+        and add more estimators to the ensemble. For results to be valid, the
+        estimator should be re-trained on the same data only.
+        See :term:`the Glossary <warm_start>`.
     random_state : int, np.random.RandomStateInstance or None, \
         optional (default=None)
         Pseudo-random number generator to control the subsampling in the
@@ -875,7 +871,8 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         is the score of the ensemble before the first iteration. Scores are
         computed according to the ``scoring`` parameter. If ``scoring`` is
         not 'loss', scores are computed on a subset of at most 10 000
-        samples. Empty if no early stopping.
+        samples. This subset may vary between different calls to ``fit`` if
+        ``warm_start`` is True. Empty if no early stopping.
     validation_score_ : ndarray, shape (n_iter_ + 1,)
         The scores at each iteration on the held-out validation data. The
         first entry is the score of the ensemble before the first iteration.

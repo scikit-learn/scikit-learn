@@ -178,20 +178,20 @@ def test_binning_train_validation_are_separated():
     (HistGradientBoostingClassifier, X_classification, y_classification),
     (HistGradientBoostingRegressor, X_regression, y_regression)
 ])
-@pytest.mark.parametrize(
-    'params_first, params_second, err_msg',
-    [({'max_iter': 50, 'warm_start': True},
-      {'max_iter': 25, 'warm_start': True},
-      'max_iter=25 must be larger than or equal to n_iter_=50 '
-      'when warm_start==True')]
-)
-def test_max_iter_with_warm_start_validation(GradientBoosting, X, y,
-                                             params_first, params_second,
-                                             err_msg):
+def test_max_iter_with_warm_start_validation(GradientBoosting, X, y):
+    """Check that max_iter >= n_iter_ with warm starting.
+
+    Check that a ValueError is raised when the maximum number of iterations is
+    smaller than the number of iterations from the previous fit when warm_start
+    is True.
+
+    """
+    estimator = GradientBoosting(max_iter=50, warm_start=True)
+    estimator.fit(X, y)
+    estimator.set_params(max_iter=25)
+    err_msg = ('max_iter=25 must be larger than or equal to n_iter_=50 '
+               'when warm_start==True')
     with pytest.raises(ValueError, match=err_msg):
-        estimator = GradientBoosting(**params_first)
-        estimator.fit(X, y)
-        estimator.set_params(**params_second)
         estimator.fit(X, y)
 
 
@@ -200,6 +200,12 @@ def test_max_iter_with_warm_start_validation(GradientBoosting, X, y,
     (HistGradientBoostingRegressor, X_regression, y_regression)
 ])
 def test_warm_start_yields_identical_results(GradientBoosting, X, y):
+    """Test that two fits with warm start yield the same results as one fit.
+
+    Make sure that fitting 50 iterations and then 25 with warm start is
+    equivalent to fitting 75 iterations.
+
+    """
     rng = 42
     gb_warm_start = GradientBoosting(
         n_iter_no_change=100, max_iter=50, random_state=rng, warm_start=True
@@ -222,5 +228,37 @@ def test_warm_start_yields_identical_results(GradientBoosting, X, y):
             )
 
     # Check identical predictions
-    np.testing.assert_array_equal(gb_warm_start.predict(X),
-                                  gb_no_warm_start.predict(X))
+    np.testing.assert_allclose(gb_warm_start.predict(X),
+                               gb_no_warm_start.predict(X))
+
+
+@pytest.mark.parametrize('GradientBoosting, X, y', [
+    (HistGradientBoostingClassifier, X_classification, y_classification),
+    (HistGradientBoostingRegressor, X_regression, y_regression)
+])
+def test_warm_start_max_depth(GradientBoosting, X, y):
+    """I did not understand what you expect."""
+    pass
+
+
+@pytest.mark.parametrize('GradientBoosting, X, y', [
+    (HistGradientBoostingClassifier, X_classification, y_classification),
+    (HistGradientBoostingRegressor, X_regression, y_regression)
+])
+def test_warm_start_early_stopping(GradientBoosting, X, y):
+    """Test that early stopping works as expected with warm starting.
+
+    Make sure that early stopping occurs after a small number of iterations
+    when fitting a second time with warm starting.
+
+    """
+    n_iter_no_change = 5
+    gb = GradientBoosting(
+        n_iter_no_change=n_iter_no_change, max_iter=10000,
+        random_state=42, warm_start=True, tol=1e-3
+    )
+    gb.fit(X, y)
+    n_iter_first_fit = gb.n_iter_
+    gb.fit(X, y)
+    n_iter_second_fit = gb.n_iter_
+    assert n_iter_second_fit - n_iter_first_fit < 2 * n_iter_no_change
