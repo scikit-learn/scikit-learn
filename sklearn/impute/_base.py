@@ -668,4 +668,4 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
     def _more_tags(self):
         return {'allow_nan': True,
-                'X_types': ['2darray', 'str']}
+                'X_types': ['2darray', 'string']}
