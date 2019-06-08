@@ -300,7 +300,7 @@ def test_type_of_target():
         raise SkipTest("Pandas not found")
 
     y = pd.Series(pd.SparseArray([1, 0, 0, 1, 0]))
-    msg = "y cannot be class 'SparseSeries'."
+    msg = "y cannot be a sparse array."
     assert_raises_regex(ValueError, msg, type_of_target, y)
 
 

@@ -15,6 +15,7 @@ from scipy.sparse import dok_matrix
 from scipy.sparse import lil_matrix
 
 import numpy as np
+import pandas as pd
 
 from .validation import check_array, _assert_all_finite
 
@@ -240,9 +241,9 @@ def type_of_target(y):
         raise ValueError('Expected array-like (array or non-string sequence), '
                          'got %r' % y)
 
-    sparseseries = (y.__class__.__name__ == 'SparseSeries')
+    sparseseries = pd.api.types.is_sparse(y)
     if sparseseries:
-        raise ValueError("y cannot be class 'SparseSeries'.")
+        raise ValueError("y cannot be a sparse array.")
 
     if is_multilabel(y):
         return 'multilabel-indicator'
