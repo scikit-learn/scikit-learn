@@ -1435,7 +1435,7 @@ class SGDRegressor(BaseSGDRegressor):
 
     eta0 : double
         The initial learning rate for the 'constant', 'invscaling' or
-        'adaptive' schedules. The default value is 0.0 as eta0 is not used by
+        'adaptive' schedules. The default value is 0.01 as eta0 is not used by
         the default schedule 'optimal'.
 
     power_t : double
