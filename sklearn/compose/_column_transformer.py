@@ -306,7 +306,11 @@ boolean mask array or callable
         for columns in self._columns:
             cols.extend(_get_column_indices(X, columns))
         remaining_idx = sorted(list(set(range(n_columns)) - set(cols))) or None
-
+        if hasattr(X, 'columns') and remaining_idx is not None:
+            columns = X.columns
+            self._remainder_names = [columns[idx] for idx in remaining_idx]
+        else:
+            self._remainder_names = remaining_idx
         self._remainder = ('remainder', self.remainder, remaining_idx)
 
     @property
@@ -332,13 +336,16 @@ boolean mask array or callable
         """
         check_is_fitted(self, 'transformers_')
         feature_names = []
-        for name, trans, _, _ in self._iter(fitted=True):
+        for name, trans, column, _ in self._iter(fitted=True):
             if trans == 'drop':
                 continue
             elif trans == 'passthrough':
-                raise NotImplementedError(
-                    "get_feature_names is not yet supported when using "
-                    "a 'passthrough' transformer.")
+                if name == 'remainder':
+                    feature_names.extend(self._remainder_names)
+                else:
+                    feature_names.extend([name + "__" + str(c)
+                                          for c in column])
+                continue
             elif not hasattr(trans, 'get_feature_names'):
                 raise AttributeError("Transformer %s (type %s) does not "
                                      "provide get_feature_names."

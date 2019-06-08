@@ -249,6 +249,14 @@ def test_column_transformer_dataframe():
     assert ct.transformers_[-1][1] == 'drop'
     assert_array_equal(ct.transformers_[-1][2], [1])
 
+    assert_array_equal(ct.fit_transform(X_df2), X_res_first)
+    assert_array_equal(ct.fit(X_df2).transform(X_df2), X_res_first)
+
+    assert len(ct.transformers_) == 2
+    assert ct.transformers_[-1][0] == 'remainder'
+    assert ct.transformers_[-1][1] == 'drop'
+    assert_array_equal(ct.transformers_[-1][2], [1])
+
 
 @pytest.mark.parametrize("pandas", [True, False], ids=['pandas', 'numpy'])
 @pytest.mark.parametrize("column", [[], np.array([False, False])],
@@ -649,25 +657,53 @@ def test_column_transformer_get_feature_names():
     ct.fit(X)
     assert_equal(ct.get_feature_names(), ['col0__a', 'col0__b', 'col1__c'])
 
-    # passthrough transformers not supported
-    ct = ColumnTransformer([('trans', 'passthrough', [0, 1])])
-    ct.fit(X)
-    assert_raise_message(
-        NotImplementedError, 'get_feature_names is not yet supported',
-        ct.get_feature_names)
-
-    ct = ColumnTransformer([('trans', DictVectorizer(), 0)],
-                           remainder='passthrough')
-    ct.fit(X)
-    assert_raise_message(
-        NotImplementedError, 'get_feature_names is not yet supported',
-        ct.get_feature_names)
-
     # drop transformer
     ct = ColumnTransformer(
         [('col0', DictVectorizer(), 0), ('col1', 'drop', 1)])
     ct.fit(X)
     assert_equal(ct.get_feature_names(), ['col0__a', 'col0__b'])
+
+    # passthrough transformer
+    ct = ColumnTransformer([('trans', 'passthrough', [0, 1])])
+    ct.fit(X)
+    assert_equal(ct.get_feature_names(), ['trans__0', 'trans__1'])
+
+    ct = ColumnTransformer([('trans', DictVectorizer(), 0)],
+                           remainder='passthrough')
+    ct.fit(X)
+    assert_equal(ct.get_feature_names(), ['trans__a', 'trans__b', 1])
+
+    ct = ColumnTransformer([('trans', 'passthrough', [1])],
+                           remainder='passthrough')
+    ct.fit(X)
+    assert_equal(ct.get_feature_names(), ['trans__1', 0])
+
+    # passthough transformer with a dataframe
+    pd = pytest.importorskip('pandas')
+    X_df = pd.DataFrame(X, columns=['col0', 'col1'])
+
+    ct = ColumnTransformer([('trans', 'passthrough', ['col0', 'col1'])])
+    ct.fit(X_df)
+    assert_equal(ct.get_feature_names(), ['trans__col0', 'trans__col1'])
+
+    ct = ColumnTransformer([('trans', 'passthrough', [0, 1])])
+    ct.fit(X_df)
+    assert_equal(ct.get_feature_names(), ['trans__0', 'trans__1'])
+
+    ct = ColumnTransformer([('col0', DictVectorizer(), 0)],
+                           remainder='passthrough')
+    ct.fit(X_df)
+    assert_equal(ct.get_feature_names(), ['col0__a', 'col0__b', 'col1'])
+
+    ct = ColumnTransformer([('trans', 'passthrough', ['col1'])],
+                           remainder='passthrough')
+    ct.fit(X_df)
+    assert_equal(ct.get_feature_names(), ['trans__col1', 'col0'])
+
+    ct = ColumnTransformer([('trans', 'passthrough', [1])],
+                           remainder='passthrough')
+    ct.fit(X_df)
+    assert_equal(ct.get_feature_names(), ['trans__1', 'col0'])
 
 
 def test_column_transformer_special_strings():
