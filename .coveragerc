@@ -5,3 +5,4 @@ parallel = True
 omit =
     */sklearn/externals/*
     */benchmarks/*
+    **/setup.py
