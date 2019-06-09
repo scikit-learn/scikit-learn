@@ -69,7 +69,7 @@ Ordinary Least Squares Complexity
 
 The least squares solution is computed using the singular value
 decomposition of X. If X is a matrix of shape `(n_samples, n_features)`
-this method has a cost of 
+this method has a cost of
 :math:`O(n_{\text{samples}} n_{\text{features}}^2)`, assuming that
 :math:`n_{\text{samples}} \geq n_{\text{features}}`.
 
@@ -437,7 +437,7 @@ between the features.
 
 The advantages of LARS are:
 
-  - It is numerically efficient in contexts where the number of features 
+  - It is numerically efficient in contexts where the number of features
     is significantly greater than the number of samples.
 
   - It is computationally just as fast as forward selection and has
@@ -744,9 +744,9 @@ classifier. In this model, the probabilities describing the possible outcomes
 of a single trial are modeled using a
 `logistic function <https://en.wikipedia.org/wiki/Logistic_function>`_.
 
-Logistic regression is implemented in :class:`LogisticRegression`. 
-This implementation can fit binary, One-vs-Rest, or multinomial logistic 
-regression with optional :math:`\ell_1`, :math:`\ell_2` or Elastic-Net 
+Logistic regression is implemented in :class:`LogisticRegression`.
+This implementation can fit binary, One-vs-Rest, or multinomial logistic
+regression with optional :math:`\ell_1`, :math:`\ell_2` or Elastic-Net
 regularization. Note that regularization is applied by default.
 
 As an optimization problem, binary class :math:`\ell_2` penalized logistic
@@ -906,7 +906,7 @@ combination of the input variables :math:`X` via an inverse link function
 .. math::    \hat{y}(w, x) = h(xw) = h(w_0 + w_1 x_1 + ... + w_p x_p).
 
 Secondly, the squared loss function is replaced by the deviance :math:`D` of an
-exponential dispersion model (EDM) [11]_. The objective function beeing minimized
+exponential dispersion model (EDM) [11]_. The objective function being minimized
 becomes
 
 .. math::    \frac{1}{2\mathrm{sum}(s)}D(y, \hat{y}; s) + \alpha \rho ||P_1w||_1

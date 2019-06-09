@@ -5,7 +5,7 @@ Poisson Regression with B-Splines
 
 As in the :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_regression.py`
 example, a Poisson regression with penalized B-splines (P-splines) [1]_ is
-fitted on slightly different sinusodial, Poisson distributed data and
+fitted on slightly different sinusoidal, Poisson distributed data and
 compared to an AdaBoost model with decision trees.
 One can see, that this is a hard problem for both estimators.
 
