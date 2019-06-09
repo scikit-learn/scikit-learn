@@ -27,8 +27,8 @@ Generalized Linear Models with Exponential Dispersion Family
 #   L2: w*P2*w with P2 a positive (semi-) definite matrix, e.g. P2 could be
 #   a 1st or 2nd order difference matrix (compare B-spline penalties and
 #   Tikhonov regularization).
-# - The link funtion (instance of class Link) is necessary for the evaluation
-#   of deviance, score, Fisher and Hessian matrix as a functions of the
+# - The link function (instance of class Link) is necessary for the evaluation
+#   of deviance, score, Fisher and Hessian matrix as functions of the
 #   coefficients, which is needed by optimizers.
 #   Solution: link as argument in those functions
 # - Which name/symbol for sample_weight in docu?
@@ -168,7 +168,7 @@ def _min_norm_sugrad(coef, grad, P2, P1):
 
 
 class Link(metaclass=ABCMeta):
-    """Abstract base class for Link funtions."""
+    """Abstract base class for Link functions."""
 
     @abstractmethod
     def link(self, mu):
@@ -199,7 +199,7 @@ class Link(metaclass=ABCMeta):
     def inverse(self, lin_pred):
         """Compute the inverse link function h(lin_pred).
 
-        Gives the inverse relationship between linkear predictor and the mean
+        Gives the inverse relationship between linear predictor and the mean
         mu=E[Y], i.e. h(linear predictor) = mu.
 
         Parameters
@@ -355,7 +355,7 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
 
     @property
     def include_upper_bound(self):
-        """Get True if upper bound for y is includede: y <= upper_bound."""
+        """Get True if upper bound for y is included: y <= upper_bound."""
         return self._include_upper_bound
 
     def in_y_range(self, x):
@@ -857,7 +857,7 @@ class InverseGaussianDistribution(TweedieDistribution):
 class GeneralizedHyperbolicSecant(ExponentialDispersionModel):
     """A class for the Generalized Hyperbolic Secant (GHS) distribution.
 
-    The GHS distribution is for tagets y in (-inf, inf).
+    The GHS distribution is for targets y in (-inf, inf).
     """
     def __init__(self):
         self._lower_bound = -np.Inf
@@ -879,7 +879,7 @@ class GeneralizedHyperbolicSecant(ExponentialDispersionModel):
 class BinomialDistribution(ExponentialDispersionModel):
     """A class for the Binomial distribution.
 
-    The Binomial distribution is for tagets y in [0, 1].
+    The Binomial distribution is for targets y in [0, 1].
     """
     def __init__(self):
         self._lower_bound = 0
@@ -1129,7 +1129,7 @@ def _cd_cycle(d, X, coef, score, fisher, P1, P2, n_cycles, inner_tol,
             else:
                 b = B[jdx, jdx]
 
-            # those ten lines aree what it is all about
+            # those ten lines are what it is all about
             if b <= 0:
                 z = 0
             elif P1[j] == 0:
@@ -1197,7 +1197,7 @@ def _cd_solver(coef, X, y, weights, P1, P2, fit_intercept, family, link,
                diag_fisher=False, copy_X=True):
     """Solve GLM with L1 and L2 penalty by coordinate descent algorithm.
 
-    The objective beeing minimized in the coefficients w=coef is::
+    The objective being minimized in the coefficients w=coef is::
 
         F = f + g, f(w) = 1/2 deviance, g = 1/2 w*P2*w + ||P1*w||_1
 
@@ -1205,7 +1205,7 @@ def _cd_solver(coef, X, y, weights, P1, P2, fit_intercept, family, link,
 
     1. Find optimal descent direction d by minimizing
        min_d F(w+d) = min_d F(w+d) - F(w)
-    2. Quadrdatic approximation of F(w+d)-F(w) = q(d):
+    2. Quadratic approximation of F(w+d)-F(w) = q(d):
        using f(w+d) = f(w) + f'(w)*d + 1/2 d*H(w)*d + O(d^3) gives:
        q(d) = (f'(w) + w*P2)*d + 1/2 d*(H(w)+P2)*d
        + ||P1*(w+d)||_1 - ||P1*w||_1
@@ -1226,7 +1226,7 @@ def _cd_solver(coef, X, y, weights, P1, P2, fit_intercept, family, link,
     ----------
     coef : ndarray, shape (c,)
         If fit_intercept=False, shape c=X.shape[1].
-        If fit_intercept=True, then c=X.shapee[1] + 1.
+        If fit_intercept=True, then c=X.shape[1] + 1.
 
     X : {ndarray, csc sparse matrix}, shape (n_samples, n_features)
         Training data (with intercept included if present). If not sparse,
@@ -1263,7 +1263,7 @@ def _cd_solver(coef, X, y, weights, P1, P2, fit_intercept, family, link,
         cycles over all features per inner loop.
 
     tol : float, optional (default=1e-4)
-        Covergence criterion is
+        Convergence criterion is
         sum_i(|minimum of norm of subgrad of objective_i|)<=tol.
 
     selection : str, optional (default='cyclic')
@@ -1283,9 +1283,9 @@ def _cd_solver(coef, X, y, weights, P1, P2, fit_intercept, family, link,
     -------
     coef : ndarray, shape (c,)
         If fit_intercept=False, shape c=X.shape[1].
-        If fit_intercept=True, then c=X.shapee[1] + 1.
+        If fit_intercept=True, then c=X.shape[1] + 1.
 
-    n_iter : numer of outer iterations = newton iterations
+    n_iter : number of outer iterations = newton iterations
 
     n_cycles : number of cycles over features
 
@@ -1310,7 +1310,7 @@ def _cd_solver(coef, X, y, weights, P1, P2, fit_intercept, family, link,
                              "format. Got P2 not sparse.")
     random_state = check_random_state(random_state)
     # Note: we already set P2 = l2*P2, P1 = l1*P1
-    # Note: we already symmetriezed P2 = 1/2 (P2 + P2')
+    # Note: we already symmetrized P2 = 1/2 (P2 + P2')
     n_iter = 0  # number of outer iterations
     n_cycles = 0  # number of (complete) cycles over features
     converged = False
@@ -1425,7 +1425,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     Parameters
     ----------
     alpha : float, optional (default=1)
-        Constant that multiplies the penalty terms und thus determines the
+        Constant that multiplies the penalty terms and thus determines the
         regularization strength.
         See the notes for the exact mathematical meaning of this
         parameter.``alpha = 0`` is equivalent to unpenalized GLMs. In this
@@ -1479,9 +1479,9 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         - 'logit' for family 'binomial'
 
-    fit_dispersion : {None, 'chisqr', 'deviance'}, optional (defaul=None)
+    fit_dispersion : {None, 'chisqr', 'deviance'}, optional (default=None)
         Method for estimation of the dispersion parameter phi. Whether to use
-        the chi squared statisic or the deviance statistic. If None, the
+        the chi squared statistic or the deviance statistic. If None, the
         dispersion is not estimated.
 
     solver : {'auto', 'cd', 'irls', 'lbfgs', 'newton-cg'}, \
@@ -1518,7 +1518,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         Stopping criterion. For the irls, newton-cg and lbfgs solvers,
         the iteration will stop when ``max{|g_i|, i = 1, ..., n} <= tol``
         where ``g_i`` is the i-th component of the gradient (derivative) of
-        the objective function. For the cd solver, covergence is reached
+        the objective function. For the cd solver, convergence is reached
         when ``sum_i(|minimum-norm of g_i|)``, where ``g_i`` is the
         subgradient of the objective and minimum-norm of ``g_i`` is the element
         of the subgradient ``g_i`` with the smallest L2-norm.
@@ -1624,7 +1624,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
     If the target y is a ratio, appropriate sample weights s should be
     provided.
-    As an example, consider Poission distributed counts z (integers) and
+    As an example, consider Poisson distributed counts z (integers) and
     weights s=exposure (time, money, persons years, ...). Then you fit
     y = z/s, i.e. ``GeneralizedLinearModel(family='poisson').fit(X, y,
     sample_weight=s)``. The weights are necessary for the right (finite
@@ -1679,7 +1679,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             Target values.
 
         sample_weight : {None, array-like}, shape (n_samples,),\
-                optinal (default=None)
+                optional (default=None)
             Individual weights w_i for each sample. Note that for an
             Exponential Dispersion Model (EDM), one has
             Var[Y_i]=phi/w_i * v(mu).
@@ -1751,7 +1751,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                     "an element of ['auto', 'identity', 'log', 'logit']; "
                     "got (link={0})".format(self.link))
 
-        # validate further arguments
         if not isinstance(self.alpha, numbers.Number) or self.alpha < 0:
             raise ValueError("Penalty term must be a non-negative number;"
                              " got (alpha={0})".format(self.alpha))
@@ -1994,7 +1993,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                     if self.fit_intercept:
                         score = np.concatenate(([temp.sum()], temp @ X))
                     else:
-                        score = temp @ X  # sampe as X.T @ temp
+                        score = temp @ X  # same as X.T @ temp
 
                     d2_sigma_inv = d1 * d1 * sigma_inv
                     diag_fisher = self.diag_fisher
@@ -2050,12 +2049,12 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         #######################################################################
         # 4. fit                                                              #
         #######################################################################
-        # algorithms for optimiation
+        # algorithms for optimization
         # TODO: Parallelize it?
 
         # 4.1 IRLS ############################################################
         # Note: we already set P2 = l2*P2, see above
-        # Note: we already symmetriezed P2 = 1/2 (P2 + P2')
+        # Note: we already symmetrized P2 = 1/2 (P2 + P2')
         if solver == 'irls':
             coef, self.n_iter_ = \
                 _irls_solver(coef=coef, X=X, y=y, weights=weights, P2=P2,
@@ -2136,7 +2135,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                     grad = np.concatenate(([0.5 * temp.sum()],
                                            0.5 * temp @ X + L2))
                 else:
-                    grad = 0.5 * temp @ X + L2  # sampe as 0.5* X.T @ temp + L2
+                    grad = 0.5 * temp @ X + L2  # same as 0.5* X.T @ temp + L2
 
                 # expected hessian = fisher = X.T @ diag_matrix @ X
                 # calculate only diag_matrix
@@ -2167,7 +2166,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         # 4.4 coordinate descent ##############################################
         # Note: we already set P1 = l1*P1, see above
         # Note: we already set P2 = l2*P2, see above
-        # Note: we already symmetriezed P2 = 1/2 (P2 + P2')
+        # Note: we already symmetrized P2 = 1/2 (P2 + P2')
         elif solver == 'cd':
             coef, self.n_iter_, self._n_cycles = \
                 _cd_solver(coef=coef, X=X, y=y, weights=weights, P1=P1,
@@ -2214,7 +2213,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         return X @ self.coef_ + self.intercept_
 
     def predict(self, X, sample_weight=None):
-        """Predict uing GLM with feature matrix X.
+        """Predict using GLM with feature matrix X.
+
         If sample_weight is given, returns prediction*sample_weight.
 
         Parameters
