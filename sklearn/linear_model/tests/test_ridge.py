@@ -399,7 +399,7 @@ def _make_sparse_offset_regression(
     'n_samples,dtype,proportion_nonzero',
     [(20, 'float32', .1), (40, 'float32', 1.), (20, 'float64', .2)])
 @pytest.mark.parametrize('sparse_X', [True, False])
-@pytest.mark.parametrize('seed', np.arange(300))
+@pytest.mark.parametrize('seed', np.arange(3))
 def test_solver_consistency(
         solver, proportion_nonzero, n_samples, dtype, sparse_X, seed):
     accept_sparse = ['sparse_cg', 'ridgecv']
