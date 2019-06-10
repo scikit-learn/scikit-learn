@@ -17,7 +17,6 @@ from sklearn.datasets import make_sparse_coded_signal
 n_components, n_features = 512, 100
 n_nonzero_coefs = 17
 
-# #############################################################################
 # generate the data
 
 # y = Xw
@@ -31,11 +30,9 @@ y, X, w = make_sparse_coded_signal(n_samples=1,
 
 idx, = w.nonzero()
 
-# #############################################################################
 # distort the clean signal
 y_noisy = y + 0.05 * np.random.randn(len(y))
 
-# #############################################################################
 # plot the sparse signal
 plt.figure(figsize=(7, 7))
 plt.subplot(4, 1, 1)
@@ -43,7 +40,6 @@ plt.xlim(0, 512)
 plt.title("Sparse signal")
 plt.stem(idx, w[idx])
 
-# #############################################################################
 # plot the noise-free reconstruction
 omp = OrthogonalMatchingPursuit(n_nonzero_coefs=n_nonzero_coefs)
 omp.fit(X, y)
@@ -54,7 +50,6 @@ plt.xlim(0, 512)
 plt.title("Recovered signal from noise-free measurements")
 plt.stem(idx_r, coef[idx_r])
 
-# #############################################################################
 # plot the noisy reconstruction
 omp.fit(X, y_noisy)
 coef = omp.coef_
@@ -64,7 +59,6 @@ plt.xlim(0, 512)
 plt.title("Recovered signal from noisy measurements")
 plt.stem(idx_r, coef[idx_r])
 
-# #############################################################################
 # plot the noisy reconstruction with number of non-zeros set by CV
 omp_cv = OrthogonalMatchingPursuitCV(cv=5)
 omp_cv.fit(X, y_noisy)
