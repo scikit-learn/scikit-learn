@@ -34,7 +34,7 @@ Changelog
   by :user:`James Myatt <jamesmyatt>`.
 
 :mod:`sklearn.tree`
-................................
+...................
 
 - |Fix| Fixed an issue with :func:`plot_tree` where it display
   entropy calculations even for `gini` criterion in DecisionTreeClassifiers.
@@ -76,7 +76,7 @@ Changelog
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.neighbors`
-......................
+........................
 
 - |Fix| Fixed a bug in :class:`neighbors.KernelDensity` which could not be
   restored from a pickle if ``sample_weight`` had been used.
@@ -355,6 +355,7 @@ Support for Python 3.4 and below has been officially dropped.
   - all the single node trees in feature importance calculation are ignored
   - in case all trees have only one single node (i.e. a root node),
     feature importances will be an array of all zeros.
+
   :pr:`13636` and :pr:`13620` by `Adrin Jalali`_.
 
 - |Fix| Fixed a bug in :class:`ensemble.GradientBoostingClassifier` and
@@ -494,7 +495,7 @@ Support for Python 3.4 and below has been officially dropped.
 ...........................
 
 - |Enhancement| :class:`linear_model.Ridge` now preserves ``float32`` and
-  ``float64`` dtypes. :issues:`8769` and :issues:`11000` by
+  ``float64`` dtypes. :issue:`8769` and :issue:`11000` by
   :user:`Guillaume Lemaitre <glemaitre>`, and :user:`Joan Massich <massich>`
 
 - |Feature| :class:`linear_model.LogisticRegression` and
