@@ -1888,7 +1888,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
                                           [i.item() for i in scores]))
     else:
         longest_last_line_heading = 'weighted avg'
-        name_width = max(len(cn) for cn in target_names)
+        name_width = max(len(cn) for str(cn) in target_names)
         width = max(name_width, len(longest_last_line_heading), digits)
         head_fmt = '{:>{width}s} ' + ' {:>9}' * len(headers)
         report = head_fmt.format('', *headers, width=width)
