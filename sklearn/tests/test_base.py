@@ -479,13 +479,78 @@ def test_tag_inheritance():
     assert nan_tag_est._get_tags()['allow_nan']
     assert not no_nan_tag_est._get_tags()['allow_nan']
 
-    invalid_tags_est = OverrideTag()
-    with pytest.raises(TypeError, match="Inconsistent values for tag"):
-        invalid_tags_est._get_tags()
-
     diamond_tag_est = DiamondOverwriteTag()
     with pytest.raises(TypeError, match="Inconsistent values for tag"):
         diamond_tag_est._get_tags()
+
+
+def test_tags_consistent_parents():
+    # As long as parents have consistent tags, the child can inherit from them
+
+    class B(BaseEstimator):
+        def _more_tags(self):
+            return {'allow_nan': True}
+
+    class C(BaseEstimator):
+        def _more_tags(self):
+            return {'allow_nan': True}
+
+    class D(B, C):
+        pass
+
+    assert D()._get_tags()['allow_nan']
+
+
+def test_tags_inconsistent_parents():
+    # tags of direct parents should be consistent, unless the child class
+    # overrides the inconsistent tags.
+
+    class B(BaseEstimator):
+        def _more_tags(self):
+            return {'allow_nan': True}
+
+    class C(BaseEstimator):
+        def _more_tags(self):
+            return {'allow_nan': False}
+
+    class D(B, C):
+        pass
+
+    with pytest.raises(TypeError, match="Inconsistent values for tag"):
+        D()._get_tags()
+
+    # inconsistency of direct parents is fine as long as the child class
+    # overrides the tags
+    class D(B, C):
+        def _more_tags(self):
+            return {'allow_nan': False}
+
+    assert not D()._get_tags()['allow_nan']
+
+    class D(C, B):  # same but different MRO (shoudn't matter)
+        def _more_tags(self):
+            return {'allow_nan': False}
+
+    assert not D()._get_tags()['allow_nan']
+
+
+def test_tags_no_override():
+    # Make sure that even if we only update the tags dict with the tags of the
+    # direct parent, tags are still properly overridden. Here B does not
+    # override anything, but C's tags are still appropriately set to those of
+    # A.
+
+    class A(BaseEstimator):
+        def _more_tags(self):
+            return {'allow_nan': True}
+
+    class B(A):
+        pass
+
+    class C(B):
+        pass
+
+    assert C()._get_tags()['allow_nan']
 
 
 # XXX: Remove in 0.23

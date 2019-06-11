@@ -312,15 +312,29 @@ class BaseEstimator:
 
     def _get_tags(self):
         collected_tags = {}
-        for base_class in inspect.getmro(self.__class__):
-            if (hasattr(base_class, '_more_tags')
-                    and base_class != self.__class__):
-                more_tags = base_class._more_tags(self)
+
+        if '_more_tags' in self.__class__.__dict__:
+            # we cannot use getattr since it would resolve to the parent's
+            # attribute if self.__class__ does not overrides it. So we use
+            # __dict__ instead.
+            overridden_tags = self._more_tags()
+        else:
+            overridden_tags = {}
+
+        # Collect tags of the direct parents.
+        # __bases__ gives the direct parents, not the whole MRO
+        for direct_parent_class in self.__class__.__bases__:
+            if (hasattr(direct_parent_class, '_more_tags')
+                    and direct_parent_class != self.__class__):
+                more_tags = direct_parent_class._more_tags(self)
+                more_tags = {key: val for (key, val) in more_tags.items()
+                             if key not in overridden_tags.keys()}
+
                 collected_tags = _update_if_consistent(collected_tags,
                                                        more_tags)
-        if hasattr(self, '_more_tags'):
-            more_tags = self._more_tags()
-            collected_tags = _update_if_consistent(collected_tags, more_tags)
+
+        collected_tags.update(overridden_tags)
+
         tags = _DEFAULT_TAGS.copy()
         tags.update(collected_tags)
         return tags
