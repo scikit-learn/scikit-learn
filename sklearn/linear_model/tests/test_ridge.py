@@ -394,17 +394,18 @@ def _make_sparse_offset_regression(
 
 
 @pytest.mark.parametrize(
-    'solver', ['cholesky', 'sag', 'sparse_cg', 'lsqr', 'saga', 'ridgecv'])
+    'solver, sparse_X',
+    ((solver, sparse_X) for
+     (solver, sparse_X) in product(
+         ['cholesky', 'sag', 'sparse_cg', 'lsqr', 'saga', 'ridgecv'],
+         [False, True])
+     if not (sparse_X and solver not in ['sparse_cg', 'ridgecv'])))
 @pytest.mark.parametrize(
     'n_samples,dtype,proportion_nonzero',
     [(20, 'float32', .1), (40, 'float32', 1.), (20, 'float64', .2)])
-@pytest.mark.parametrize('sparse_X', [True, False])
 @pytest.mark.parametrize('seed', np.arange(3))
 def test_solver_consistency(
         solver, proportion_nonzero, n_samples, dtype, sparse_X, seed):
-    accept_sparse = ['sparse_cg', 'ridgecv']
-    if sparse_X and solver not in accept_sparse:
-        pytest.skip()
     alpha = 1.
     noise = 50. if proportion_nonzero > .9 else 500.
     X, y = _make_sparse_offset_regression(
