@@ -13,7 +13,9 @@ from sklearn.utils.testing import (assert_equal, assert_raises,
                                    assert_raises_regex,
                                    assert_warns_message, assert_no_warnings)
 from sklearn.utils import check_random_state
+from sklearn.utils import _check_key_type
 from sklearn.utils import deprecated
+from sklearn.utils import _get_column_indices
 from sklearn.utils import resample
 from sklearn.utils import safe_mask
 from sklearn.utils import column_or_1d
@@ -194,6 +196,29 @@ def test_column_or_1d():
             assert_raises(ValueError, column_or_1d, y)
 
 
+@pytest.mark.parametrize(
+    "key, clazz, is_expected_type",
+    [(0, int, True),
+     ('0', int, False),
+     ([0, 1, 2], int, True),
+     (['0', '1', '2'], int, False),
+     (slice(0, 2), int, True),
+     (np.array([0, 1, 2], dtype=np.int32), int, True),
+     (np.array([0, 1, 2], dtype=np.int64), int, True),
+     (np.array([0, 1, 2], dtype=np.uint8), int, False),
+     ([True, False], bool, True),
+     (np.array([True, False]), bool, True),
+     (np.array([True, False]), int, False),
+     ('col_0', str, True),
+     (['col_0', 'col_1', 'col_2'], str, True),
+     (slice('begin', 'end'), str, True),
+     (np.array(['col_0', 'col_1', 'col_2']), str, True),
+     (np.array(['col_0', 'col_1', 'col_2'], dtype=object), str, True)]
+)
+def test_check_key_type(key, clazz, is_expected_type):
+    assert _check_key_type(key, clazz) is is_expected_type
+
+
 @pytest.mark.parametrize("asarray", [True, False], ids=["array-like", "array"])
 def test_safe_indexing_axis_0(asarray):
     X = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -228,8 +253,10 @@ def test_safe_indexing_axis_1_sparse(idx, asarray):
      ([0, 1], [0, 1]),
      ([0, 1], ['col_0', 'col_1']),
      ([0, 1], slice(0, 2)),
+     ([1, 2], slice(1, None)),
      ([0, 1], [True, True, False])],
-    ids=['scalar-int', 'scalar-str', 'list-int', 'list-str', 'slice', 'mask']
+    ids=['scalar-int', 'scalar-str', 'list-int', 'list-str', 'slice',
+         'slice-no-stop', 'mask']
 )
 @pytest.mark.parametrize("asarray", [True, False], ids=["array-like", "array"])
 def test_safe_indexing_axis_1_pandas(idx_array, idx_df, asarray):
@@ -268,6 +295,29 @@ def test_safe_indexing_pandas():
             X_df_indexed = safe_indexing(this_df, this_inds)
 
         assert_array_equal(np.array(X_df_indexed), X_indexed)
+
+
+@pytest.mark.parametrize(
+    "X, key, err_msg",
+    [(X_toy, 1.0, "No valid specification of the columns."),
+     (X_toy, ['col_0'], "Specifying the columns using strings is only")]
+)
+def test_safe_indexing_axis_1_error(X, key, err_msg):
+    with pytest.raises(ValueError, match=err_msg):
+        safe_indexing(X, key, axis=1)
+
+
+@pytest.mark.parametrize(
+    "key, err_msg",
+    [(10, r"all features must be in \[0, 2\]"),
+     ('whatever', 'A given feature is not a column of the dataframe')]
+)
+def test_get_column_indices_error(key, err_msg):
+    pd = pytest.importorskip("pandas")
+    X_df = pd.DataFrame(X_toy, columns=['col_0', 'col_1', 'col_2'])
+
+    with pytest.raises(ValueError, match=err_msg):
+        _get_column_indices(X_df, key)
 
 
 @pytest.mark.parametrize(

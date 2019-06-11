@@ -283,6 +283,8 @@ def _check_key_type(key, superclass):
     if hasattr(key, 'dtype'):
         if superclass is int:
             return key.dtype.kind == 'i'
+        elif superclass is bool:
+            return key.dtype.kind == 'b'
         else:
             # superclass = str
             return key.dtype.kind in ('O', 'U', 'S')
