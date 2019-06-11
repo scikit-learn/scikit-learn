@@ -183,7 +183,7 @@ def safe_indexing(X, indices, axis=0):
 
     Parameters
     ----------
-    X : array-like, sparse-matrix, list, pandas.DataFrame, pandas.Series.
+    X : array-like, sparse-matrix, list, pandas.DataFrame, pandas.Series
         Data from which to sample rows, items or columns.
     indices : see below
         When ``axis=0``, indices need to be an array of integer.
@@ -220,7 +220,7 @@ def _safe_indexing_row(X, indices):
 
     Parameters
     ----------
-    X : array-like, sparse-matrix, list, pandas.DataFrame, pandas.Series.
+    X : array-like, sparse-matrix, list, pandas.DataFrame, pandas.Series
         Data from which to sample rows or items.
     indices : array-like of int
         Indices according to which X will be subsampled.
@@ -235,6 +235,7 @@ def _safe_indexing_row(X, indices):
     CSR, CSC, and LIL sparse matrices are supported. COO sparse matrices are
     not supported.
     """
+    indices = np.asarray(indices)
     if hasattr(X, "iloc"):
         # Work-around for indexing with read-only indices in pandas
         indices = indices if indices.flags.writeable else indices.copy()
@@ -261,7 +262,7 @@ def _safe_indexing_row(X, indices):
 def _check_key_type(key, superclass):
     """Check that scalar, list or slice is of a certain type.
 
-    This is only used in _get_column and _get_column_indices to check
+    This is only used in _safe_indexing_column and _get_column_indices to check
     if the ``key`` (column specification) is fully integer or fully
     string-like.
 

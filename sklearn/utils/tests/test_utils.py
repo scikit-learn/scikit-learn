@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 from itertools import chain, product
 import warnings
 import string
@@ -193,9 +194,10 @@ def test_column_or_1d():
             assert_raises(ValueError, column_or_1d, y)
 
 
-def test_safe_indexing_axis_0():
+@pytest.mark.parametrize("asarray", [True, False], ids=["array-like", "array"])
+def test_safe_indexing_axis_0(asarray):
     X = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    inds = np.array([1, 2])
+    inds = np.array([1, 2]) if asarray else [1, 2]
     X_inds = safe_indexing(X, inds)
     X_arrays = safe_indexing(np.array(X), inds)
     assert_array_equal(np.array(X_inds), X_arrays)
@@ -203,7 +205,10 @@ def test_safe_indexing_axis_0():
 
 
 @pytest.mark.parametrize("idx", [0, [0, 1]], ids=['scalar', 'list'])
-def test_safe_indexing_axis_1_sparse(idx):
+@pytest.mark.parametrize("asarray", [True, False], ids=["array-like", "array"])
+def test_safe_indexing_axis_1_sparse(idx, asarray):
+    if isinstance(idx, Iterable) and asarray:
+        idx = np.asarray(idx)
     X_true = safe_indexing(X_toy, idx, axis=1)
 
     # scipy matrix will always return a 2D array
@@ -226,8 +231,14 @@ def test_safe_indexing_axis_1_sparse(idx):
      ([0, 1], [True, True, False])],
     ids=['scalar-int', 'scalar-str', 'list-int', 'list-str', 'slice', 'mask']
 )
-def test_safe_indexing_axis_1_pandas(idx_array, idx_df):
+@pytest.mark.parametrize("asarray", [True, False], ids=["array-like", "array"])
+def test_safe_indexing_axis_1_pandas(idx_array, idx_df, asarray):
     pd = pytest.importorskip('pandas')
+    if asarray and isinstance(idx_array, Iterable):
+        idx_array = np.asarray(idx_array)
+    if (asarray and (not isinstance(idx_df, str) and
+                     isinstance(idx_df, Iterable))):
+        idx_df = np.asarray(idx_df)
 
     X_true = safe_indexing(X_toy, idx_array, axis=1)
     X_df = pd.DataFrame(X_toy, columns=['col_{}'.format(i) for i in range(3)])
@@ -259,10 +270,24 @@ def test_safe_indexing_pandas():
         assert_array_equal(np.array(X_df_indexed), X_indexed)
 
 
-def test_safe_indexing_mock_pandas():
+@pytest.mark.parametrize(
+    "idx",
+    [[0, 1],
+     [True, True, False, False]]
+)
+@pytest.mark.parametrize("asarray", [True, False], ids=["array-like", "array"])
+def test_safe_indexing_pandas_series(idx, asarray):
+    pd = pytest.importorskip("pandas")
+    idx = np.asarray(idx) if asarray and isinstance(idx, Iterable) else idx
+    serie = pd.Series(np.arange(3))
+    assert_array_equal(safe_indexing(serie, idx).values, [0, 1])
+
+
+@pytest.mark.parametrize("asarray", [True, False], ids=["array-like", "array"])
+def test_safe_indexing_mock_pandas(asarray):
     X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
     X_df = MockDataFrame(X)
-    inds = np.array([1, 2])
+    inds = np.array([1, 2]) if asarray else [1, 2]
     X_df_indexed = safe_indexing(X_df, inds)
     X_indexed = safe_indexing(X_df, inds)
     assert_array_equal(np.array(X_df_indexed), X_indexed)
