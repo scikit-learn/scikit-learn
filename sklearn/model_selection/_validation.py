@@ -1199,7 +1199,7 @@ def learning_curve(estimator, X, y, groups=None,
         does not affect the refit step, which will always raise the error.
 
     return_times : boolean, optional (default: False)
-        Whether to return the fit/score times.
+        Whether to return the fit and score times.
 
     Returns
     -------
