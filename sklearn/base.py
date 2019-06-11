@@ -339,7 +339,6 @@ class BaseEstimator:
         collected_tags = {}
         _resolve_tags(self.__class__)
 
-
         collected_tags.update(overridden_tags)
 
         tags = _DEFAULT_TAGS.copy()
