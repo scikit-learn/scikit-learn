@@ -7,3 +7,4 @@ omit =
     */benchmarks/*
     **/setup.py
     *test_*
+
