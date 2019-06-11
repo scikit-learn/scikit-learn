@@ -152,7 +152,7 @@ def test_kde_pipeline_gridsearch():
     pipe1 = make_pipeline(StandardScaler(with_mean=False, with_std=False),
                           KernelDensity(kernel="gaussian"))
     params = dict(kerneldensity__bandwidth=[0.001, 0.01, 0.1, 1, 10])
-    search = GridSearchCV(pipe1, param_grid=params, cv=5)
+    search = GridSearchCV(pipe1, param_grid=params)
     search.fit(X)
     assert_equal(search.best_params_['kerneldensity__bandwidth'], .1)
 

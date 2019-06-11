@@ -248,7 +248,6 @@ def test_linearsvc_iris():
     assert_array_equal(pred, sp_clf.predict(iris.data))
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_weight():
     # Test class weights
     X_, y_ = make_classification(n_samples=200, n_features=100,

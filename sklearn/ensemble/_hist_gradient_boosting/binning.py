@@ -140,7 +140,7 @@ class _BinMapper(BaseEstimator, TransformerMixin):
         Returns
         -------
         X_binned : array-like, shape (n_samples, n_features)
-            The binned data.
+            The binned data (fortran-aligned).
         """
         X = check_array(X, dtype=[X_DTYPE])
         check_is_fitted(self, ['bin_thresholds_', 'actual_n_bins_'])

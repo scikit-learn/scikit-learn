@@ -66,6 +66,14 @@ except ImportError:
 __all__ = ['bytescale', 'imread', 'imsave', 'fromimage', 'toimage', 'imresize']
 
 
+PILLOW_ERROR_MESSAGE = (
+    "The Python Imaging Library (PIL) is required to load data "
+    "from jpeg files. Please refer to "
+    "https://pillow.readthedocs.io/en/stable/installation.html "
+    "for installing PIL."
+)
+
+
 def bytescale(data, cmin=None, cmax=None, high=255, low=0):
     """
     Byte scales an array (image).
@@ -194,8 +202,7 @@ def imread(name, flatten=False, mode=None):
 
     """
     if not pillow_installed:
-        raise ImportError("The Python Imaging Library (PIL) "
-                          "is required to load data from jpeg files")
+        raise ImportError(PILLOW_ERROR_MESSAGE)
 
     im = Image.open(name)
     return fromimage(im, flatten=flatten, mode=mode)
@@ -281,8 +288,7 @@ def fromimage(im, flatten=False, mode=None):
 
     """
     if not pillow_installed:
-        raise ImportError("The Python Imaging Library (PIL) "
-                          "is required to load data from jpeg files")
+        raise ImportError(PILLOW_ERROR_MESSAGE)
 
     if not Image.isImageType(im):
         raise TypeError("Input is not a PIL image.")
@@ -349,8 +355,7 @@ def toimage(arr, high=255, low=0, cmin=None, cmax=None, pal=None,
 
     """
     if not pillow_installed:
-        raise ImportError("The Python Imaging Library (PIL) "
-                          "is required to load data from jpeg files")
+        raise ImportError(PILLOW_ERROR_MESSAGE)
 
     data = asarray(arr)
     if iscomplexobj(data):
