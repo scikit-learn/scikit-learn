@@ -311,8 +311,6 @@ class BaseEstimator:
             self.__dict__.update(state)
 
     def _get_tags(self):
-        collected_tags = {}
-
         if '_more_tags' in self.__class__.__dict__:
             # we cannot use getattr since it would resolve to the parent's
             # attribute if self.__class__ does not overrides it. So we use
@@ -321,17 +319,23 @@ class BaseEstimator:
         else:
             overridden_tags = {}
 
-        # Collect tags of the direct parents.
-        # __bases__ gives the direct parents, not the whole MRO
-        for direct_parent_class in self.__class__.__bases__:
-            if (hasattr(direct_parent_class, '_more_tags')
-                    and direct_parent_class != self.__class__):
-                more_tags = direct_parent_class._more_tags(self)
-                more_tags = {key: val for (key, val) in more_tags.items()
-                             if key not in overridden_tags.keys()}
+        collected_tags = {}
+        def _resolve_tags(c):
+            nonlocal collected_tags
+            if c is BaseEstimator or c is object:
+                return
 
-                collected_tags = _update_if_consistent(collected_tags,
-                                                       more_tags)
+            for direct_parent_class in c.__bases__:
+                _resolve_tags(direct_parent_class)
+                if '_more_tags' in direct_parent_class.__dict__:
+                    more_tags = direct_parent_class._more_tags(self)
+                    more_tags = {key: val for (key, val) in more_tags.items()
+                                 if key not in overridden_tags.keys()}
+
+                    collected_tags = _update_if_consistent(collected_tags,
+                                                           more_tags)
+
+        _resolve_tags(self.__class__)
 
         collected_tags.update(overridden_tags)
 
