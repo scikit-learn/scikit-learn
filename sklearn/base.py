@@ -319,7 +319,6 @@ class BaseEstimator:
         else:
             overridden_tags = {}
 
-        collected_tags = {}
         def _resolve_tags(c):
             nonlocal collected_tags
             if c is BaseEstimator or c is object:
@@ -329,13 +328,17 @@ class BaseEstimator:
                 _resolve_tags(direct_parent_class)
                 if '_more_tags' in direct_parent_class.__dict__:
                     more_tags = direct_parent_class._more_tags(self)
+
+                    # filter-out tags that will be overridden in child class
                     more_tags = {key: val for (key, val) in more_tags.items()
                                  if key not in overridden_tags.keys()}
 
                     collected_tags = _update_if_consistent(collected_tags,
                                                            more_tags)
 
+        collected_tags = {}
         _resolve_tags(self.__class__)
+
 
         collected_tags.update(overridden_tags)
 
