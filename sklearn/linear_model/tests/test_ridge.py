@@ -412,8 +412,8 @@ def test_solver_consistency(
         noise=noise, random_state=seed, n_samples=n_samples)
     svd_ridge = Ridge(
         solver='svd', normalize=True, alpha=alpha).fit(X, y)
-    X = X.astype(dtype)
-    y = y.astype(dtype)
+    X = X.astype(dtype, copy=False)
+    y = y.astype(dtype, copy=False)
     if sparse_X:
         X = sp.csr_matrix(X)
     if solver == 'ridgecv':
