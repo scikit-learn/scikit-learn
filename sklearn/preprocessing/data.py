@@ -1550,35 +1550,38 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
 
                 if self.include_bias:
                     XP[:, 0] = 1
+                    current_col = 1
+                else:
+                    current_col = 0
 
-                current_col = 1 if self.include_bias else 0
-                for d in range(0, self.degree):
-                    if d == 0:
-                        XP[:, current_col:current_col + n_features] = X
-                        index = list(range(current_col,
-                                           current_col + n_features))
-                        current_col += n_features
-                        index.append(current_col)
-                    else:
-                        new_index = []
-                        end = index[-1]
-                        for feature_idx in range(n_features):
-                            start = index[feature_idx]
-                            new_index.append(current_col)
-                            if self.interaction_only:
-                                start += index[feature_idx + 1] - \
-                                         index[feature_idx]
-                            next_col = current_col + end - start
-                            if next_col <= current_col:
-                                break
-                            np.multiply(XP[:, start:end],
-                                        X[:, feature_idx:feature_idx + 1],
-                                        out=XP[:, current_col:next_col],
-                                        casting='no')
-                            current_col = next_col
-
+                # d = 0
+                XP[:, current_col:current_col + n_features] = X
+                index = list(range(current_col,
+                                   current_col + n_features))
+                current_col += n_features
+                index.append(current_col)
+                
+                # d >= 1
+                for d in range(1, self.degree):
+                    new_index = []
+                    end = index[-1]
+                    for feature_idx in range(n_features):
+                        start = index[feature_idx]
                         new_index.append(current_col)
-                        index = new_index
+                        if self.interaction_only:
+                            start += (index[feature_idx + 1] -
+                                      index[feature_idx])
+                        next_col = current_col + end - start
+                        if next_col <= current_col:
+                            break
+                        np.multiply(XP[:, start:end],
+                                    X[:, feature_idx:feature_idx + 1],
+                                    out=XP[:, current_col:next_col],
+                                    casting='no')
+                        current_col = next_col
+
+                    new_index.append(current_col)
+                    index = new_index
 
         return XP
 
