@@ -84,7 +84,7 @@ Changelog
 :mod:`sklearn.cluster`
 ..................
 
-- |Enhancement| :class:`cluster.SpectralClustering` now accepts a ``n_components`` 
+- |Enhancement| :class:`cluster.SpectralClustering` now accepts a ``n_components``
   parameter. This parameter extends `SpectralClustering` class functionality to
   match `spectral_clustering`.
   :pr:`13726` by :user:`Shuzhe Xiao <fdas3213>`.
@@ -95,7 +95,7 @@ Changelog
   remove constant features due to numerical instability, by using range
   rather than variance in this case.
   :pr:`13704` by `Roddy MacSween <rlms>`.
-
+   
 Miscellaneous
 .............
 
