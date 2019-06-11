@@ -88,12 +88,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         Returns
         -------
         self : object
-
         """
-        # if not warmstart - clear the estimator state
-        if not self.warm_start:
-            self._clear_state()
-
         fit_start_time = time()
         acc_find_split_time = 0.  # time spent finding the best splits
         acc_apply_split_time = 0.  # time spent splitting nodes
