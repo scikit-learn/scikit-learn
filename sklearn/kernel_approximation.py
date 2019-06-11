@@ -54,13 +54,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
     >>> X_features = rbf_feature.fit_transform(X)
     >>> clf = SGDClassifier(max_iter=5, tol=1e-3)
     >>> clf.fit(X_features, y)
-    ... # doctest: +NORMALIZE_WHITESPACE
-    SGDClassifier(alpha=0.0001, average=False, class_weight=None,
-           early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
-           l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=5,
-           n_iter_no_change=5, n_jobs=None, penalty='l2', power_t=0.5,
-           random_state=None, shuffle=True, tol=0.001, validation_fraction=0.1,
-           verbose=0, warm_start=False)
+    SGDClassifier(max_iter=5)
     >>> clf.score(X_features, y)
     1.0
 
@@ -163,13 +157,8 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
     ...                                  random_state=0)
     >>> X_features = chi2_feature.fit_transform(X, y)
     >>> clf = SGDClassifier(max_iter=10, tol=1e-3)
-    >>> clf.fit(X_features, y)  # doctest: +NORMALIZE_WHITESPACE
-    SGDClassifier(alpha=0.0001, average=False, class_weight=None,
-           early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
-           l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=10,
-           n_iter_no_change=5, n_jobs=None, penalty='l2', power_t=0.5,
-           random_state=None, shuffle=True, tol=0.001, validation_fraction=0.1,
-           verbose=0, warm_start=False)
+    >>> clf.fit(X_features, y)
+    SGDClassifier(max_iter=10)
     >>> clf.score(X_features, y)
     1.0
 
@@ -283,14 +272,9 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
     >>> chi2sampler = AdditiveChi2Sampler(sample_steps=2)
     >>> X_transformed = chi2sampler.fit_transform(X, y)
     >>> clf = SGDClassifier(max_iter=5, random_state=0, tol=1e-3)
-    >>> clf.fit(X_transformed, y)  # doctest: +NORMALIZE_WHITESPACE
-    SGDClassifier(alpha=0.0001, average=False, class_weight=None,
-           early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
-           l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=5,
-           n_iter_no_change=5, n_jobs=None, penalty='l2', power_t=0.5,
-           random_state=0, shuffle=True, tol=0.001, validation_fraction=0.1,
-           verbose=0, warm_start=False)
-    >>> clf.score(X_transformed, y) # doctest: +ELLIPSIS
+    >>> clf.fit(X_transformed, y)
+    SGDClassifier(max_iter=5, random_state=0)
+    >>> clf.score(X_transformed, y)
     0.9499...
 
     Notes
@@ -505,12 +489,8 @@ class Nystroem(BaseEstimator, TransformerMixin):
     ...                                 n_components=300)
     >>> data_transformed = feature_map_nystroem.fit_transform(data)
     >>> clf.fit(data_transformed, digits.target)
-    ... # doctest: +NORMALIZE_WHITESPACE
-    LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
-         intercept_scaling=1, loss='squared_hinge', max_iter=1000,
-         multi_class='ovr', penalty='l2', random_state=None, tol=0.0001,
-         verbose=0)
-    >>> clf.score(data_transformed, digits.target) # doctest: +ELLIPSIS
+    LinearSVC()
+    >>> clf.score(data_transformed, digits.target)
     0.9987...
 
     References

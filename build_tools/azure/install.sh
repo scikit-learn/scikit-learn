@@ -54,6 +54,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
 	make_conda $TO_INSTALL
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
+    sudo add-apt-repository --remove ppa:ubuntu-toolchain-r/test
     sudo apt-get install python3-scipy python3-matplotlib libatlas3-base libatlas-base-dev libatlas-dev python3-virtualenv
     python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
     source $VIRTUALENV/bin/activate

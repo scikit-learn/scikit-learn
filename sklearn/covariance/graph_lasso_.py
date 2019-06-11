@@ -19,7 +19,6 @@ from .empirical_covariance_ import (empirical_covariance, EmpiricalCovariance,
 
 from ..exceptions import ConvergenceWarning
 from ..utils.validation import check_random_state, check_array
-from ..utils import deprecated
 from ..linear_model import cd_fast
 from ..linear_model import lars_path_gram
 from ..model_selection import check_cv, cross_val_score
@@ -516,7 +515,7 @@ class GraphicalLassoCV(GraphicalLasso):
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 3-fold cross-validation,
+        - None, to use the default 5-fold cross-validation,
         - integer, to specify the number of folds.
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -527,8 +526,7 @@ class GraphicalLassoCV(GraphicalLasso):
         cross-validation strategies that can be used here.
 
         .. versionchanged:: 0.20
-            ``cv`` default value if None will change from 3-fold to 5-fold
-            in v0.22.
+            ``cv`` default value if None changed from 3-fold to 5-fold.
 
     tol : positive float, optional
         The tolerance to declare convergence: if the dual gap goes below
@@ -600,7 +598,7 @@ class GraphicalLassoCV(GraphicalLasso):
     >>> X = np.random.multivariate_normal(mean=[0, 0, 0, 0],
     ...                                   cov=true_cov,
     ...                                   size=200)
-    >>> cov = GraphicalLassoCV(cv=5).fit(X)
+    >>> cov = GraphicalLassoCV().fit(X)
     >>> np.around(cov.covariance_, decimals=3)
     array([[0.816, 0.051, 0.22 , 0.017],
            [0.051, 0.364, 0.018, 0.036],
@@ -626,7 +624,7 @@ class GraphicalLassoCV(GraphicalLasso):
     be close to these missing values.
     """
 
-    def __init__(self, alphas=4, n_refinements=4, cv='warn', tol=1e-4,
+    def __init__(self, alphas=4, n_refinements=4, cv=None, tol=1e-4,
                  enet_tol=1e-4, max_iter=100, mode='cd', n_jobs=None,
                  verbose=False, assume_centered=False):
         super().__init__(
