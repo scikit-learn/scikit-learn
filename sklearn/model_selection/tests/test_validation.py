@@ -1023,7 +1023,10 @@ def test_learning_curve():
         assert_array_almost_equal(test_scores.mean(axis=1),
                                   np.linspace(0.1, 1.0, 10))
 
-        # No test for fit and score times because it is hardware-dependant
+        # Cannot use assert_array_almost_equal for fit and score times because
+        # the values are hardware-dependant
+        assert_equal(fit_times.dtype, "float64")
+        assert_equal(score_times.dtype, "float64")
 
         # Test a custom cv splitter that can iterate only once
         with warnings.catch_warnings(record=True) as w:
@@ -1123,9 +1126,9 @@ def test_learning_curve_batch_and_incremental_learning_are_equal():
     estimator = PassiveAggressiveClassifier(max_iter=1, tol=None,
                                             shuffle=False)
 
-    train_sizes_inc, train_scores_inc, test_scores_inc = learning_curve(
-        estimator, X, y, train_sizes=train_sizes,
-        cv=3, exploit_incremental_learning=True)
+    train_sizes_inc, train_scores_inc, test_scores_inc = \
+        learning_curve(estimator, X, y, train_sizes=train_sizes,
+                       cv=3, exploit_incremental_learning=True)
     train_sizes_batch, train_scores_batch, test_scores_batch = \
         learning_curve(estimator, X, y, cv=3, train_sizes=train_sizes,
                        exploit_incremental_learning=False)

@@ -2,17 +2,18 @@
 ========================
 Plotting Learning Curves
 ========================
-In the first row the learning curve of a naive Bayes classifier is shown for
-the digits dataset. Note that the training score and the cross-validation score
-are both not very good at the end. However, the shape of the curve can be found
-in more complex datasets very often: the training score is very high at the
-beginning and decreases and the cross-validation score is very low at the
-beginning and increases. In the second row we see the learning curve of an SVM
-with RBF kernel. We can see clearly that the training score is still around
-the maximum and the validation score could be increased with more training
-samples. The plots in the second column show the times required by the model to
-train with various sizes of training dataset. The plots in the third column
-show how many time was required to train the models for each training sizes.
+In the first column, first row the learning curve of a naive Bayes classifier
+is shown for the digits dataset. Note that the training score and the
+cross-validation score are both not very good at the end. However, the shape
+of the curve can be found in more complex datasets very often: the training
+score is very high at the beginning and decreases and the cross-validation
+score is very low at the beginning and increases. In the second column, first
+row we see the learning curve of an SVM with RBF kernel. We can see clearly
+that the training score is still around the maximum and the validation score
+could be increased with more training samples. The plots in the second row
+show the times required by the models to train with various sizes of training
+dataset. The plots in the third row show how much time was required to train
+the models for each training sizes.
 """
 print(__doc__)
 
@@ -139,7 +140,7 @@ def plot_learning_curve(estimator, title, X, y, axes=None, ylim=None, cv=None,
     return plt
 
 
-fig, axes = plt.subplots(2, 3, figsize=(20, 12))
+fig, axes = plt.subplots(3, 2, figsize=(10, 15))
 
 digits = load_digits()
 X, y = digits.data, digits.target
@@ -150,14 +151,14 @@ title = "Learning Curves (Naive Bayes)"
 cv = ShuffleSplit(n_splits=100, test_size=0.2, random_state=0)
 
 estimator = GaussianNB()
-plot_learning_curve(estimator, title, X, y, axes=axes[0], ylim=(0.7, 1.01),
+plot_learning_curve(estimator, title, X, y, axes=axes[:, 0], ylim=(0.7, 1.01),
                     cv=cv, n_jobs=4)
 
 title = r"Learning Curves (SVM, RBF kernel, $\gamma=0.001$)"
 # SVC is more expensive so we do a lower number of CV iterations:
 cv = ShuffleSplit(n_splits=10, test_size=0.2, random_state=0)
 estimator = SVC(gamma=0.001)
-plot_learning_curve(estimator, title, X, y, axes=axes[1], ylim=(0.7, 1.01),
+plot_learning_curve(estimator, title, X, y, axes=axes[:, 1], ylim=(0.7, 1.01),
                     cv=cv, n_jobs=4)
 
 plt.show()
