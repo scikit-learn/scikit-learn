@@ -1031,7 +1031,7 @@ def test_ridge_fit_intercept_sparse():
         sparse = Ridge(alpha=1., solver=solver, fit_intercept=True)
         with pytest.raises(
                 ValueError,
-                message='solver={} does not support'.format(solver)):
+                match='solver={} does not support'.format(solver)):
             sparse.fit(X_csr, y)
 
 
