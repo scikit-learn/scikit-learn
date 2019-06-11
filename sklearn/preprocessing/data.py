@@ -1560,7 +1560,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
                                    current_col + n_features))
                 current_col += n_features
                 index.append(current_col)
-                
+
                 # d >= 1
                 for d in range(1, self.degree):
                     new_index = []
