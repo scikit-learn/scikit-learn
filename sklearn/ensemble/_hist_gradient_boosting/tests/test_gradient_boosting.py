@@ -1,6 +1,8 @@
 import numpy as np
 import pytest
+from sklearn.base import clone
 from sklearn.datasets import make_classification, make_regression
+from sklearn.utils.testing import assert_equal
 
 # To use this experimental feature, we need to explicitly ask for it:
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
@@ -179,13 +181,10 @@ def test_binning_train_validation_are_separated():
     (HistGradientBoostingRegressor, X_regression, y_regression)
 ])
 def test_max_iter_with_warm_start_validation(GradientBoosting, X, y):
-    """Check that max_iter >= n_iter_ with warm starting.
+    # Check that a ValueError is raised when the maximum number of iterations
+    # is smaller than the number of iterations from the previous fit when warm
+    # start is True.
 
-    Check that a ValueError is raised when the maximum number of iterations is
-    smaller than the number of iterations from the previous fit when warm_start
-    is True.
-
-    """
     estimator = GradientBoosting(max_iter=50, warm_start=True)
     estimator.fit(X, y)
     estimator.set_params(max_iter=25)
@@ -200,12 +199,9 @@ def test_max_iter_with_warm_start_validation(GradientBoosting, X, y):
     (HistGradientBoostingRegressor, X_regression, y_regression)
 ])
 def test_warm_start_yields_identical_results(GradientBoosting, X, y):
-    """Test that two fits with warm start yield the same results as one fit.
+    # Make sure that fitting 50 iterations and then 25 with warm start is
+    # equivalent to fitting 75 iterations.
 
-    Make sure that fitting 50 iterations and then 25 with warm start is
-    equivalent to fitting 75 iterations.
-
-    """
     rng = 42
     gb_warm_start = GradientBoosting(
         n_iter_no_change=100, max_iter=50, random_state=rng, warm_start=True
@@ -232,13 +228,30 @@ def test_warm_start_yields_identical_results(GradientBoosting, X, y):
                                gb_no_warm_start.predict(X))
 
 
-@pytest.mark.parametrize('GradientBoosting, X, y', [
-    (HistGradientBoostingClassifier, X_classification, y_classification),
-    (HistGradientBoostingRegressor, X_regression, y_regression)
-])
-def test_warm_start_max_depth(GradientBoosting, X, y):
-    """I did not understand what you expect."""
-    pass
+def test_warm_start_max_depth():
+    # Test if possible to fit trees of different depth in ensemble.
+
+    X_classification, y_classification = make_classification(
+        n_samples=1000, n_features=100, n_informative=70, random_state=0)
+    X_regression, y_regression = make_regression(
+        n_samples=1000, n_features=100, n_informative=70, random_state=0)
+
+    for (GradientBoosting, X, y) in zip(
+        [HistGradientBoostingClassifier, HistGradientBoostingRegressor],
+        [X_classification, X_regression],
+        [y_classification, y_regression]
+    ):
+        gb = GradientBoosting(max_iter=100, warm_start=True, max_depth=2)
+        gb.fit(X, y)
+        gb.set_params(max_iter=110, max_depth=3)
+        gb.fit(X, y)
+
+        # First 100 trees have max_depth == 2
+        for i in range(100):
+            assert_equal(gb._predictors[i][0].get_max_depth(), 2)
+        # Last 10 trees have max_depth == 3
+        for i in range(1, 11):
+            assert_equal(gb._predictors[-i][0].get_max_depth(), 3)
 
 
 @pytest.mark.parametrize('GradientBoosting, X, y', [
@@ -246,12 +259,9 @@ def test_warm_start_max_depth(GradientBoosting, X, y):
     (HistGradientBoostingRegressor, X_regression, y_regression)
 ])
 def test_warm_start_early_stopping(GradientBoosting, X, y):
-    """Test that early stopping works as expected with warm starting.
+    # Make sure that early stopping occurs after a small number of iterations
+    # when fitting a second time with warm starting.
 
-    Make sure that early stopping occurs after a small number of iterations
-    when fitting a second time with warm starting.
-
-    """
     n_iter_no_change = 5
     gb = GradientBoosting(
         n_iter_no_change=n_iter_no_change, max_iter=10000,
@@ -262,3 +272,54 @@ def test_warm_start_early_stopping(GradientBoosting, X, y):
     gb.fit(X, y)
     n_iter_second_fit = gb.n_iter_
     assert n_iter_second_fit - n_iter_first_fit < 2 * n_iter_no_change
+
+
+@pytest.mark.parametrize('GradientBoosting, X, y', [
+    (HistGradientBoostingClassifier, X_classification, y_classification),
+    (HistGradientBoostingRegressor, X_regression, y_regression)
+])
+def test_warm_start_equal_n_estimators(GradientBoosting, X, y):
+    # Test if warm start with equal n_estimators does nothing
+    gb_1 = GradientBoosting(max_iter=100, max_depth=2)
+    gb_1.fit(X, y)
+
+    gb_2 = clone(gb_1)
+    gb_2.set_params(max_iter=gb_1.max_iter, warm_start=True)
+    gb_2.fit(X, y)
+
+    # Check identical nodes for each tree
+    for (pred_ith_1, pred_ith_2) in zip(gb_1._predictors, gb_2._predictors):
+        for (predictor_1, predictor_2) in zip(pred_ith_1, pred_ith_2):
+            np.testing.assert_array_equal(
+                predictor_1.nodes,
+                predictor_2.nodes
+            )
+
+    # Check identical predictions
+    np.testing.assert_allclose(gb_1.predict(X), gb_2.predict(X))
+
+
+@pytest.mark.parametrize('GradientBoosting, X, y', [
+    (HistGradientBoostingClassifier, X_classification, y_classification),
+    (HistGradientBoostingRegressor, X_regression, y_regression)
+])
+def test_warm_start_clear(GradientBoosting, X, y):
+    # Test if fit clears state.
+    gb_1 = GradientBoosting(max_iter=100, max_depth=2)
+    gb_1.fit(X, y)
+
+    gb_2 = GradientBoosting(max_iter=100, max_depth=2, warm_start=True)
+    gb_2.fit(X, y)  # inits state
+    gb_2.set_params(warm_start=False)
+    gb_2.fit(X, y)  # clears old state and equals est
+
+    # Check identical nodes for each tree
+    for (pred_ith_1, pred_ith_2) in zip(gb_1._predictors, gb_2._predictors):
+        for (predictor_1, predictor_2) in zip(pred_ith_1, pred_ith_2):
+            np.testing.assert_array_equal(
+                predictor_1.nodes,
+                predictor_2.nodes
+            )
+
+    # Check identical predictions
+    np.testing.assert_allclose(gb_1.predict(X), gb_2.predict(X))
