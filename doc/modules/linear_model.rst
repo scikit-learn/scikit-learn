@@ -67,7 +67,7 @@ Ordinary Least Squares Complexity
 
 The least squares solution is computed using the singular value
 decomposition of X. If X is a matrix of shape `(n_samples, n_features)`
-this method has a cost of 
+this method has a cost of
 :math:`O(n_{\text{samples}} n_{\text{features}}^2)`, assuming that
 :math:`n_{\text{samples}} \geq n_{\text{features}}`.
 
@@ -430,7 +430,7 @@ between the features.
 
 The advantages of LARS are:
 
-  - It is numerically efficient in contexts where the number of features 
+  - It is numerically efficient in contexts where the number of features
     is significantly greater than the number of samples.
 
   - It is computationally just as fast as forward selection and has
@@ -888,6 +888,129 @@ to warm-starting (see :term:`Glossary <warm_start>`).
     .. [9] `"Performance Evaluation of Lbfgs vs other solvers"
             <http://www.fuzihao.org/blog/2016/01/16/Comparison-of-Gradient-Descent-Stochastic-Gradient-Descent-and-L-BFGS/>`_
 
+.. _Generalized_linear_regression:
+
+Generalized Linear Regression
+=============================
+
+:class:`GeneralizedLinearRegressor` generalizes the :ref:`elastic_net` in two
+ways [10]_. First, the predicted values :math:`\hat{y}` are linked to a linear
+combination of the input variables :math:`X` via an inverse link function
+:math:`h` as
+
+.. math::    \hat{y}(w, x) = h(xw) = h(w_0 + w_1 x_1 + ... + w_p x_p).
+
+Secondly, the squared loss function is replaced by the deviance :math:`D` of an
+exponential dispersion model (EDM) [11]_. The objective function being minimized
+becomes
+
+.. math::    \frac{1}{2\mathrm{sum}(s)}D(y, \hat{y}; s) + \alpha \rho ||P_1w||_1
+            +\frac{\alpha(1-\rho)}{2} w^T P_2 w
+
+with sample weights :math:`s`.
+:math:`P_1` (diagonal matrix) can be used to exclude some of the coefficients in
+the L1 penalty, the matrix :math:`P_2` (must be positive semi-definite) allows
+for a more versatile L2 penalty.
+
+Use cases, where a loss different from the squared loss might be appropriate,
+are the following:
+
+  * If the target values :math:`y` are counts (non-negative integer valued) or
+    frequencies (non-negative), you might use a Poisson deviance with log-link.
+
+  * If the target values are positive valued and skewed, you might try a
+    Gamma deviance with log-link.
+
+  * If the target values seem to be heavier tailed than a Gamma distribution,
+    you might try an Inverse Gaussian deviance (or even higher variance powers
+    of the Tweedie family).
+
+Since the linear predictor :math:`Xw` can be negative and
+Poisson, Gamma and Inverse Gaussian distributions don't support negative values,
+it is convenient to apply a link function different from the identity link
+:math:`h(Xw)=Xw` that guarantees the non-negativeness, e.g. the log-link with
+:math:`h(Xw)=\exp(Xw)`.
+
+Note that the feature matrix `X` should be standardized before fitting. This
+ensures that the penalty treats features equally. The estimator can be used as
+follows:
+
+    >>> from sklearn.linear_model import GeneralizedLinearRegressor
+    >>> reg = GeneralizedLinearRegressor(alpha=0.5, family='poisson', link='log')
+    >>> reg.fit([[0, 0], [0, 1], [2, 2]], [0, 1, 2])
+    GeneralizedLinearRegressor(alpha=0.5, family='poisson', link='log')
+    >>> reg.coef_
+    array([0.24630169, 0.43373464])
+    >>> reg.intercept_
+    -0.76383633...
+
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_poisson_spline_regression.py`
+
+Mathematical formulation
+------------------------
+
+In the unpenalized case, the assumptions are the following:
+
+    * The target values :math:`y_i` are realizations of random variables
+      :math:`Y_i \overset{i.i.d}{\sim} \mathrm{EDM}(\mu_i, \frac{\phi}{s_i})`
+      with expectation :math:`\mu_i=\mathrm{E}[Y]`, dispersion parameter
+      :math:`\phi` and sample weights :math:`s_i`.
+    * The aim is to predict the expectation :math:`\mu_i` with
+      :math:`\hat{y_i} = h(\eta_i)`, linear predictor
+      :math:`\eta_i=(Xw)_i` and inverse link function :math:`h(\eta)`.
+
+Note that the first assumption implies
+:math:`\mathrm{Var}[Y_i]=\frac{\phi}{s_i} v(\mu_i)` with unit variance
+function :math:`v(\mu)`. Specifying a particular distribution of an EDM is the
+same as specifying a unit variance function (they are one-to-one).
+
+Including penalties helps to avoid overfitting or, in case of L1 penalty, to
+obtain sparse solutions. But there are also other motivations to include them,
+e.g. accounting for the dependence structure of :math:`y`.
+
+The objective function, which is independent of :math:`\phi`, is minimized with
+respect to the coefficients :math:`w`.
+
+The deviance is defined by the log of the :math:`\mathrm{EDM}(\mu, \phi)`
+likelihood as
+
+.. math::     d(y, \mu) = -2\phi\cdot
+              \left(loglike(y,\mu,\phi)
+              - loglike(y,y,\phi)\right) \\
+              D(y, \mu; s) = \sum_i s_i \cdot d(y_i, \mu_i)
+
+===================================== ===============================  ================================= ============================================
+Distribution                          Target Domain                    Variance Function :math:`v(\mu)`  Unit Deviance :math:`d(y, \mu)`
+===================================== ===============================  ================================= ============================================
+Normal ("normal")                     :math:`y \in (-\infty, \infty)`  :math:`1`                         :math:`(y-\mu)^2`
+Poisson ("poisson")                   :math:`y \in [0, \infty)`        :math:`\mu`                       :math:`2(y\log\frac{y}{\mu}-y+\mu)`
+Gamma ("gamma")                       :math:`y \in (0, \infty)`        :math:`\mu^2`                     :math:`2(\log\frac{\mu}{y}+\frac{y}{\mu}-1)`
+Inverse Gaussian ("inverse.gaussian") :math:`y \in (0, \infty)`        :math:`\mu^3`                     :math:`\frac{(y-\mu)^2}{y\mu^2}`
+===================================== ===============================  ================================= ============================================
+
+Two remarks:
+
+* The deviances for at least Normal, Poisson and Gamma distributions are
+  strictly consistent scoring functions for the mean :math:`\mu`, see Eq.
+  (19)-(20) in [12]_.
+
+* If you want to model a frequency, i.e. counts per exposure (time, volume, ...)
+  you can do so by a Poisson distribution and passing
+  :math:`y=\frac{\mathrm{counts}}{\mathrm{exposure}}` as target values together
+  with :math:`s=\mathrm{exposure}` as sample weights.
+
+
+.. topic:: References:
+
+    .. [10] McCullagh, Peter; Nelder, John (1989). Generalized Linear Models, Second Edition. Boca Raton: Chapman and Hall/CRC. ISBN 0-412-31760-5.
+
+    .. [11] Jørgensen, B. (1992). The theory of exponential dispersion models and analysis of deviance. Monografias de matemática, no. 51.
+           See also `Exponential dispersion model. <https://en.wikipedia.org/wiki/Exponential_dispersion_model>`_
+
+    .. [12] Gneiting, T. (2010). `Making and Evaluating Point Forecasts. <https://arxiv.org/pdf/0912.0902.pdf>`_
 
 Stochastic Gradient Descent - SGD
 =================================
