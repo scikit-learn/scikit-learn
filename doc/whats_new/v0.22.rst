@@ -47,10 +47,10 @@ Changelog
 - |Fix| :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` now bin the training and
   validation data separately to avoid any data leak. :pr:`13933` by
-  `NicolasHug`_.
+  `Nicolas Hug`_.
 
 :mod:`sklearn.linear_model`
-..................
+...........................
 
 - |Enhancement| :class:`linearmodel.BayesianRidge` now accepts hyperparameters
   ``alpha_init`` and ``lambda_init`` which can be used to set the initial value
@@ -61,6 +61,12 @@ Changelog
   "sag" in this configuration, which was allowed before, now results in a
   `ValueError`. :pr:`13995` by :user:`Jérôme Dockès <jeromedockes>`.
 
+:mod:`sklearn.pipeline`
+.......................
+
+- |Enhancement| :class:`pipeline.Pipeline` now supports :term:`score_samples` if
+  the final estimator does.
+  :pr:`13806` by :user:`Anaël Beaugnon <ab-anssi>`.
 
 :mod:`sklearn.svm`
 ..................
@@ -72,15 +78,31 @@ Changelog
   :pr:`12557` by `Adrin Jalali`_.
 
 
+:mod:`sklearn.preprocessing`
+............................
+
+- |Enhancement| Avoid unnecessary data copy when fitting preprocessors
+  :class:`preprocessing.StandardScaler`, :class:`preprocessing.MinMaxScaler`,
+  :class:`preprocessing.MaxAbsScaler`, :class:`preprocessing.RobustScaler`
+  and :class:`preprocessing.QuantileTransformer` which results in a slight
+  performance improvement. :pr:`13987` by `Roman Yurchak`_.
+
+
 :mod:`sklearn.cluster`
-..................
+......................
 
 - |Enhancement| :class:`cluster.SpectralClustering` now accepts a ``n_components`` 
   parameter. This parameter extends `SpectralClustering` class functionality to
   match `spectral_clustering`.
   :pr:`13726` by :user:`Shuzhe Xiao <fdas3213>`.
+
+:mod:`sklearn.feature_selection`
+................................
+- |Fix| Fixed a bug where :class:`VarianceThreshold` with `threshold=0` did not
+  remove constant features due to numerical instability, by using range
+  rather than variance in this case.
+  :pr:`13704` by `Roddy MacSween <rlms>`.
   
-	
 Miscellaneous
 .............
 

@@ -26,7 +26,6 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_no_warnings
 from sklearn.linear_model import SGDClassifier
 from sklearn.preprocessing import scale
 from sklearn.utils.testing import skip_if_no_parallel
@@ -496,7 +495,6 @@ def test_logistic_grad_hess():
         assert_array_almost_equal(grad_interp, grad_interp_2)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_logistic_cv():
     # test for LogisticRegressionCV object
     n_samples, n_features = 50, 5
@@ -506,7 +504,7 @@ def test_logistic_cv():
     X_ref -= X_ref.mean()
     X_ref /= X_ref.std()
     lr_cv = LogisticRegressionCV(Cs=[1.], fit_intercept=False,
-                                 solver='liblinear', multi_class='ovr')
+                                 solver='liblinear', multi_class='ovr', cv=3)
     lr_cv.fit(X_ref, y)
     lr = LogisticRegression(C=1., fit_intercept=False,
                             solver='liblinear', multi_class='ovr')
@@ -524,7 +522,6 @@ def test_logistic_cv():
     assert_array_equal(scores.shape, (1, 3, 1))
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 @pytest.mark.parametrize('scoring, multiclass_agg_list',
                          [('accuracy', ['']),
                           ('precision', ['_macro', '_weighted']),
@@ -558,7 +555,6 @@ def test_logistic_cv_multinomial_score(scoring, multiclass_agg_list):
             scorer(lr, X[test], y[test]))
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_multinomial_logistic_regression_string_inputs():
     # Test with string labels for LogisticRegression(CV)
     n_samples, n_features, n_classes = 50, 5, 3
@@ -598,7 +594,6 @@ def test_multinomial_logistic_regression_string_inputs():
     assert_equal(sorted(np.unique(lr_cv_str.predict(X_ref))), ['bar', 'baz'])
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_logistic_cv_sparse():
     X, y = make_classification(n_samples=50, n_features=5,
                                random_state=0)
@@ -761,7 +756,6 @@ def test_logistic_regression_solvers_multiclass():
     assert_array_almost_equal(saga.coef_, lib.coef_, decimal=4)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_logistic_regressioncv_class_weights():
     for weight in [{0: 0.1, 1: 0.2}, {0: 0.1, 1: 0.2, 2: 0.5}]:
         n_classes = len(weight)
@@ -806,7 +800,6 @@ def test_logistic_regressioncv_class_weights():
             assert_array_almost_equal(clf_saga.coef_, clf_lbf.coef_, decimal=4)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_logistic_regression_sample_weights():
     X, y = make_classification(n_samples=20, n_features=5, n_informative=3,
                                n_classes=2, random_state=0)
@@ -926,7 +919,6 @@ def test_logistic_regression_class_weights():
         assert_array_almost_equal(clf1.coef_, clf2.coef_, decimal=6)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_logistic_regression_multinomial():
     # Tests for the multinomial option in logistic regression
 
@@ -1021,7 +1013,6 @@ def test_liblinear_decision_function_zero():
     assert_array_equal(clf.predict(X), np.zeros(5))
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_liblinear_logregcv_sparse():
     # Test LogRegCV with solver='liblinear' works for sparse matrices
 
@@ -1030,7 +1021,6 @@ def test_liblinear_logregcv_sparse():
     clf.fit(sparse.csr_matrix(X), y)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_saga_sparse():
     # Test LogRegCV with solver='liblinear' works for sparse matrices
 
@@ -1124,7 +1114,6 @@ def test_logreg_l1_sparse_data():
     assert_array_almost_equal(lr_saga.coef_, lr_saga_dense.coef_)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 @pytest.mark.parametrize("random_seed", [42])
 @pytest.mark.parametrize("penalty", ["l1", "l2"])
 def test_logistic_regression_cv_refit(random_seed, penalty):
@@ -1423,7 +1412,7 @@ def test_elastic_net_vs_l1_l2(C):
 
     enet_clf = LogisticRegression(penalty='elasticnet', C=C, solver='saga',
                                   random_state=0)
-    gs = GridSearchCV(enet_clf, param_grid, cv=5, refit=True)
+    gs = GridSearchCV(enet_clf, param_grid, refit=True)
 
     l1_clf = LogisticRegression(penalty='l1', C=C, solver='saga',
                                 random_state=0)
@@ -1547,7 +1536,7 @@ def test_LogisticRegressionCV_no_refit(multi_class):
     l1_ratios = np.linspace(0, 1, 2)
 
     lrcv = LogisticRegressionCV(penalty='elasticnet', Cs=Cs, solver='saga',
-                                cv=5, l1_ratios=l1_ratios, random_state=0,
+                                l1_ratios=l1_ratios, random_state=0,
                                 multi_class=multi_class, refit=False)
     lrcv.fit(X, y)
     assert lrcv.C_.shape == (n_classes,)

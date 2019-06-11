@@ -15,7 +15,7 @@ class deprecated:
     in an empty of parentheses:
 
     >>> from sklearn.utils import deprecated
-    >>> deprecated() # doctest: +ELLIPSIS
+    >>> deprecated()
     <sklearn.utils.deprecation.deprecated object at ...>
 
     >>> @deprecated()

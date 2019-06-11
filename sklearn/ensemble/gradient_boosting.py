@@ -50,7 +50,6 @@ from . import _gb_losses
 
 from ..utils import check_random_state
 from ..utils import check_array
-from ..utils import check_X_y
 from ..utils import column_or_1d
 from ..utils import check_consistent_length
 from ..utils import deprecated

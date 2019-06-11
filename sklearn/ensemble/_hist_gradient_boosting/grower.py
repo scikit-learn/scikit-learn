@@ -13,8 +13,9 @@ import numbers
 
 from .splitting import Splitter
 from .histogram import HistogramBuilder
-from .predictor import TreePredictor, PREDICTOR_RECORD_DTYPE
+from .predictor import TreePredictor
 from .utils import sum_parallel
+from .types import PREDICTOR_RECORD_DTYPE
 
 
 class TreeNode:
@@ -177,7 +178,7 @@ class TreeGrower:
         self.histogram_builder = HistogramBuilder(
             X_binned, max_bins, gradients, hessians, hessians_are_constant)
         self.splitter = Splitter(
-            X_binned, max_bins, actual_n_bins, l2_regularization,
+            X_binned, actual_n_bins, l2_regularization,
             min_hessian_to_split, min_samples_leaf, min_gain_to_split,
             hessians_are_constant)
         self.max_leaf_nodes = max_leaf_nodes
@@ -275,7 +276,7 @@ class TreeGrower:
         """
 
         node.split_info = self.splitter.find_node_split(
-            node.sample_indices, node.histograms, node.sum_gradients,
+            node.n_samples, node.histograms, node.sum_gradients,
             node.sum_hessians)
 
         if node.split_info.gain <= 0:  # no valid split

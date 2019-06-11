@@ -710,9 +710,8 @@ class Ridge(_BaseRidge, RegressorMixin):
     >>> y = rng.randn(n_samples)
     >>> X = rng.randn(n_samples, n_features)
     >>> clf = Ridge(alpha=1.0)
-    >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
-    Ridge(alpha=1.0, copy_X=True, fit_intercept=True, max_iter=None,
-          normalize=False, random_state=None, solver='auto', tol=0.001)
+    >>> clf.fit(X, y)
+    Ridge()
 
     """
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
@@ -852,7 +851,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     >>> from sklearn.linear_model import RidgeClassifier
     >>> X, y = load_breast_cancer(return_X_y=True)
     >>> clf = RidgeClassifier().fit(X, y)
-    >>> clf.score(X, y) # doctest: +ELLIPSIS
+    >>> clf.score(X, y)
     0.9595...
 
     See also
@@ -1657,7 +1656,7 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
     >>> from sklearn.linear_model import RidgeCV
     >>> X, y = load_diabetes(return_X_y=True)
     >>> clf = RidgeCV(alphas=[1e-3, 1e-2, 1e-1, 1]).fit(X, y)
-    >>> clf.score(X, y) # doctest: +ELLIPSIS
+    >>> clf.score(X, y)
     0.5166...
 
     See also
@@ -1760,7 +1759,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     >>> from sklearn.linear_model import RidgeClassifierCV
     >>> X, y = load_breast_cancer(return_X_y=True)
     >>> clf = RidgeClassifierCV(alphas=[1e-3, 1e-2, 1e-1, 1]).fit(X, y)
-    >>> clf.score(X, y) # doctest: +ELLIPSIS
+    >>> clf.score(X, y)
     0.9630...
 
     See also

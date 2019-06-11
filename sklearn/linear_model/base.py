@@ -413,7 +413,7 @@ class LinearRegression(LinearModel, RegressorMixin, MultiOutputMixin):
     1.0
     >>> reg.coef_
     array([1., 2.])
-    >>> reg.intercept_ # doctest: +ELLIPSIS
+    >>> reg.intercept_
     3.0000...
     >>> reg.predict(np.array([[3, 5]]))
     array([16.])
