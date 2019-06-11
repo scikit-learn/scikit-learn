@@ -6,3 +6,4 @@ omit =
     */sklearn/externals/*
     */benchmarks/*
     */setup.py
+    *test_*
