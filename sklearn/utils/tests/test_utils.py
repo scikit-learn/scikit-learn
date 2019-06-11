@@ -206,6 +206,10 @@ def test_safe_indexing_axis_0():
 def test_safe_indexing_axis_1_sparse(idx):
     X_true = safe_indexing(X_toy, idx, axis=1)
 
+    # scipy matrix will always return a 2D array
+    if X_true.ndim == 1:
+        X_true = X_true[:, np.newaxis]
+
     X_sparse = sp.csc_matrix(X_toy)
     assert_array_equal(
         safe_indexing(X_sparse, idx, axis=1).toarray(), X_true
@@ -230,7 +234,6 @@ def test_safe_indexing_axis_1_pandas(idx_array, idx_df):
     assert_array_equal(
         safe_indexing(X_df, idx_df, axis=1).values, X_true
     )
-    print(safe_indexing(X_df, idx_df, axis=1).values)
 
 
 def test_safe_indexing_pandas():
