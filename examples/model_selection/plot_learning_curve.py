@@ -145,6 +145,7 @@ fig, axes = plt.subplots(3, 2, figsize=(10, 15))
 digits = load_digits()
 X, y = digits.data, digits.target
 
+
 title = "Learning Curves (Naive Bayes)"
 # Cross validation with 100 iterations to get smoother mean test and train
 # score curves, each time with 20% data randomly selected as a validation set.

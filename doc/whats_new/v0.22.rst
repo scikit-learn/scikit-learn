@@ -79,6 +79,7 @@ Changelog
   ``decision_function_shape='ovr'``, and the number of target classes > 2.
   :pr:`12557` by `Adrin Jalali`_.
 
+
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -87,6 +88,7 @@ Changelog
   :class:`preprocessing.MaxAbsScaler`, :class:`preprocessing.RobustScaler`
   and :class:`preprocessing.QuantileTransformer` which results in a slight
   performance improvement. :pr:`13987` by `Roman Yurchak`_.
+
 
 :mod:`sklearn.cluster`
 ......................
