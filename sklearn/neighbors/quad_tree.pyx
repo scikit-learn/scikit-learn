@@ -6,7 +6,7 @@
 # Author: Olivier Grisel <olivier.grisel@ensta.fr>
 
 
-from cpython cimport Py_INCREF, PyObject
+from cpython cimport Py_INCREF, PyObject, PyTypeObject
 
 from libc.stdlib cimport malloc, free
 from libc.string cimport memcpy
@@ -23,7 +23,7 @@ cdef extern from "math.h":
     float fabsf(float x) nogil
 
 cdef extern from "numpy/arrayobject.h":
-    object PyArray_NewFromDescr(object subtype, np.dtype descr,
+    object PyArray_NewFromDescr(PyTypeObject* subtype, np.dtype descr,
                                 int nd, np.npy_intp* dims,
                                 np.npy_intp* strides,
                                 void* data, int flags, object obj)
@@ -470,7 +470,7 @@ cdef class _QuadTree:
         return idx
 
     def get_cell(self, point):
-        """return the id of the cell containing the query point or raise 
+        """return the id of the cell containing the query point or raise
         ValueError if the point is not in the tree
         """
         cdef DTYPE_t[3] query_pt
@@ -488,7 +488,7 @@ cdef class _QuadTree:
     cdef int _get_cell(self, DTYPE_t[3] point, SIZE_t cell_id=0
                        ) nogil except -1:
         """guts of get_cell.
-        
+
         Return the id of the cell containing the query point or raise ValueError
         if the point is not in the tree"""
         cdef:
@@ -572,7 +572,8 @@ cdef class _QuadTree:
         strides[0] = sizeof(Cell)
         cdef np.ndarray arr
         Py_INCREF(CELL_DTYPE)
-        arr = PyArray_NewFromDescr(np.ndarray, CELL_DTYPE, 1, shape,
+        arr = PyArray_NewFromDescr(<PyTypeObject *> np.ndarray,
+                                   CELL_DTYPE, 1, shape,
                                    strides, <void*> self.cells,
                                    np.NPY_DEFAULT, None)
         Py_INCREF(self)
