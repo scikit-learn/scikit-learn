@@ -663,8 +663,7 @@ def check_dtype_object(name, estimator_orig):
         if "Unknown label type" not in str(e):
             raise
 
-    tags = _safe_tags(estimator)
-    if 'string' not in tags['X_types']:
+    if 'string' not in _safe_tags(estimator, 'X_types'):
         X[0, 0] = {'foo': 'bar'}
         msg = "argument must be a string.* number"
         assert_raises_regex(TypeError, msg, estimator.fit, X, y)
