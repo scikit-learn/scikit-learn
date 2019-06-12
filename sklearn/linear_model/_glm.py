@@ -182,7 +182,7 @@ class Link(metaclass=ABCMeta):
         mu : array, shape (n_samples,)
             Usually the (predicted) mean.
         """
-        raise NotImplementedError
+        pass
 
     @abstractmethod
     def derivative(self, mu):
@@ -193,7 +193,7 @@ class Link(metaclass=ABCMeta):
         mu : array, shape (n_samples,)
             Usually the (predicted) mean.
         """
-        raise NotImplementedError
+        pass
 
     @abstractmethod
     def inverse(self, lin_pred):
@@ -207,7 +207,7 @@ class Link(metaclass=ABCMeta):
         lin_pred : array, shape (n_samples,)
             Usually the (fitted) linear predictor.
         """
-        raise NotImplementedError
+        pass
 
     @abstractmethod
     def inverse_derivative(self, lin_pred):
@@ -218,7 +218,7 @@ class Link(metaclass=ABCMeta):
         lin_pred : array, shape (n_samples,)
             Usually the (fitted) linear predictor.
         """
-        raise NotImplementedError
+        pass
 
     @abstractmethod
     def inverse_derivative2(self, lin_pred):
@@ -229,7 +229,7 @@ class Link(metaclass=ABCMeta):
         lin_pred : array, shape (n_samples,)
             Usually the (fitted) linear predictor.
         """
-        raise NotImplementedError
+        pass
 
 
 class IdentityLink(Link):
@@ -400,7 +400,7 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         mu : array, shape (n_samples,)
             Predicted mean.
         """
-        raise NotImplementedError()
+        pass
 
     @abstractmethod
     def unit_variance_derivative(self, mu):
@@ -413,7 +413,7 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         mu : array, shape (n_samples,)
             Target values.
         """
-        raise NotImplementedError()
+        pass
 
     def variance(self, mu, phi=1, weights=1):
         r"""Compute the variance function.
@@ -473,7 +473,7 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         mu : array, shape (n_samples,)
             Predicted mean.
         """
-        raise NotImplementedError()
+        pass
 
     def unit_deviance_derivative(self, y, mu):
         r"""Compute the derivative of the unit deviance w.r.t. mu.
@@ -1079,7 +1079,6 @@ def _cd_cycle(d, X, coef, score, fisher, P1, P2, n_cycles, inner_tol,
                 B[idx:, idx:] += P2.toarray()
             else:
                 B[idx:, idx:] += P2
-    # A = -score + coef_P2
     A = -score
     A[idx:] += coef_P2
     # A += d @ (H+P2) but so far d=0
@@ -1302,9 +1301,6 @@ def _cd_solver(coef, X, y, weights, P1, P2, fit_intercept, family, link,
         P2 = check_array(P2, 'csc', dtype=[np.float64, np.float32],
                          order='F', copy=copy_X)
     if sparse.issparse(X):
-        if not sparse.isspmatrix_csc(X):
-            raise ValueError("If X is sparse, it must be in csc format"
-                             "; got (format={})".format(X.format))
         if not sparse.isspmatrix_csc(P2):
             raise ValueError("If X is sparse, P2 must also be sparse csc"
                              "format. Got P2 not sparse.")
@@ -2021,7 +2017,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                         _cd_cycle(d, X, coef, score, fisher, P1, P2, n_cycles,
                                   inner_tol, max_inner_iter=1000,
                                   selection=self.selection,
-                                  random_state=self.random_state,
+                                  random_state=random_state,
                                   diag_fisher=self.diag_fisher)
                     coef += d  # for simplicity no line search here
                 else:
