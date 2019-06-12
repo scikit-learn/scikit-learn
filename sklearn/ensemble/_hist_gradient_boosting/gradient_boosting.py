@@ -129,9 +129,15 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             # stratify for classification
             stratify = y if hasattr(self.loss_, 'predict_proba') else None
 
+            # Save the state of the RNG for the training and validation split.
+            # This is needed in order to have the same split when using
+            # warm starting.
+            if not (self._has_been_fitted() and self.warm_start):
+                self._train_val_split_seed = rng.randint(1024, size=1).item()
+
             X_train, X_val, y_train, y_val = train_test_split(
                 X, y, test_size=self.validation_fraction, stratify=stratify,
-                random_state=rng)
+                random_state=self._train_val_split_seed)
         else:
             X_train, y_train = X, y
             X_val, y_val = None, None
@@ -218,14 +224,17 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     # Unfortunately, each call to scorer_() will compute
                     # the predictions of all the trees. So we use a subset of
                     # the training set to compute train scores.
-                    indices = self._compute_small_trainset_indices(
-                        X_binned_train, rng, subsample_size=10000
+
+                    # Save the seed for the small trainset generator
+                    self._small_trainset_seed = rng.randint(
+                        1024, size=1).item()
+
+                    # Compute the subsample set
+                    (X_binned_small_train,
+                     y_small_train) = self._get_small_trainset(
+                        X_binned_train, y_train, self._small_trainset_seed,
+                        subsample_size=10000
                     )
-                    X_binned_small_train = X_binned_train[indices]
-                    y_small_train = y_train[indices]
-                    # Predicting is faster on C-contiguous arrays.
-                    X_binned_small_train = np.ascontiguousarray(
-                        X_binned_small_train)
 
                     self._check_early_stopping_scorer(
                         X_binned_small_train, y_small_train,
@@ -252,14 +261,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             raw_predictions = self._raw_predict(X_binned_train)
 
             if self.do_early_stopping_ and self.scoring != 'loss':
-                # Compute the indices of the subsample set
-                indices = self._compute_small_trainset_indices(
-                    X_binned_train, rng, subsample_size=10000
+                # Compute the subsample set
+                X_binned_small_train, y_small_train = self._get_small_trainset(
+                    X_binned_train, y_train, self._small_trainset_seed,
+                    subsample_size=10000
                 )
-                X_binned_small_train = X_binned_train[indices]
-                y_small_train = y_train[indices]
-                X_binned_small_train = np.ascontiguousarray(
-                    X_binned_small_train)
 
             # Initialize the gradients and hessians
             gradients, hessians = self.loss_.init_gradients_and_hessians(
@@ -381,9 +387,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if hasattr(self, '_rng'):
             del self._rng
 
-    def _compute_small_trainset_indices(self, X_binned_train, rng,
-                                        subsample_size=10000):
-        """Compute the indices of the subsample set.
+    def _get_small_trainset(self, X_binned_train, y_train,
+                            seed, subsample_size=10000):
+        """Compute the indices of the subsample set and return this set.
 
         For efficiency, we need to subsample the training set to compute scores
         with scorers. Also note that the returned indices are not expected to
@@ -395,18 +401,33 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         X_binned_train : array, shape (n_samples, n_features)
             Binned training input data.
 
-        rng : RandomState instance
-            Random number generator.
+        y_train : array, shape (n_samples,)
+            Target training vector.
+
+        seed : int
+            Seed for the random number generator.
 
         subsample_size : int (default=100000)
             The maximum size of the subsample set.
 
+        Returns
+        -------
+        X_binned_small_train : array, shape (subsample_size, n_features)
+            Binned under-sampled training input data.
+
+        y_small_train : array, shape (subsample_size,)
+            Target under-sampled training vector.
+
         """
+        rng = check_random_state(seed)
         indices = np.arange(X_binned_train.shape[0])
         if X_binned_train.shape[0] > subsample_size:
             # TODO: not critical but stratify using resample()
             indices = rng.choice(indices, subsample_size, replace=False)
-        return indices
+        X_binned_small_train = X_binned_train[indices]
+        y_small_train = y_train[indices]
+        X_binned_small_train = np.ascontiguousarray(X_binned_small_train)
+        return X_binned_small_train, y_small_train
 
     def _check_early_stopping_scorer(self, X_binned_small_train, y_small_train,
                                      X_binned_val, y_val):
