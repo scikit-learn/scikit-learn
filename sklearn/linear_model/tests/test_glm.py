@@ -22,6 +22,7 @@ from sklearn.linear_model._glm import (
 )
 from sklearn.linear_model import ElasticNet, LogisticRegression, Ridge
 from sklearn.metrics import mean_absolute_error
+from sklearn.exceptions import ConvergenceWarning
 
 from sklearn.utils.testing import assert_array_equal
 
@@ -72,6 +73,23 @@ def test_family_bounds(family, expected):
     assert_array_equal(result, expected)
 
 
+def test_tweedie_distribution_power():
+    with pytest.raises(ValueError, match="no distribution exists"):
+        TweedieDistribution(power=0.5)
+
+    with pytest.raises(TypeError, match="must be a real number"):
+        TweedieDistribution(power=1j)
+
+    with pytest.raises(TypeError, match="must be a real number"):
+        dist = TweedieDistribution()
+        dist.power = 1j
+
+    dist = TweedieDistribution()
+    assert dist._include_lower_bound is False
+    dist.power = 1
+    assert dist._include_lower_bound is True
+
+
 @pytest.mark.parametrize(
     'family, chk_values',
     [(NormalDistribution(), [-1.5, -0.1, 0.1, 2.5]),
@@ -97,7 +115,8 @@ def test_deviance_zero(family, chk_values):
      (GammaDistribution(), LogLink()),
      (InverseGaussianDistribution(), LogLink()),
      (TweedieDistribution(power=1.5), LogLink()),
-     (TweedieDistribution(power=4.5), LogLink())])
+     (TweedieDistribution(power=4.5), LogLink())],
+    ids=lambda args: args.__class__.__name__)
 def test_fisher_matrix(family, link):
     """Test the Fisher matrix numerically.
     Trick: Use numerical differentiation with y = mu"""
@@ -110,6 +129,11 @@ def test_fisher_matrix(family, link):
     weights = rng.randn(10)**2 + 1
     fisher = family._fisher_matrix(coef=coef, phi=phi, X=X, y=mu,
                                    weights=weights, link=link)
+    # check that the Fisher matrix is square and positive definite
+    assert fisher.ndim == 2
+    assert fisher.shape[0] == fisher.shape[1]
+    assert np.all(np.linalg.eigvals(fisher) >= 0)
+
     approx = np.array([]).reshape(0, coef.shape[0])
     for i in range(coef.shape[0]):
         def f(coef):
@@ -118,6 +142,13 @@ def test_fisher_matrix(family, link):
         approx = np.vstack(
             [approx, sp.optimize.approx_fprime(xk=coef, f=f, epsilon=1e-5)])
     assert_allclose(fisher, approx, rtol=1e-3)
+
+    # check the observed information matrix
+    oim = family._observed_information(coef=coef, phi=phi, X=X, y=mu,
+                                       weights=weights, link=link)
+    assert oim.ndim == 2
+    assert oim.shape == fisher.shape
+    assert_allclose(oim, fisher)
 
 
 def test_sample_weights_validation():
@@ -713,3 +744,13 @@ def test_fit_dispersion(regression_data):
     assert isinstance(est3.dispersion_, float)
 
     assert_allclose(est2.dispersion_,  est3.dispersion_)
+
+
+@pytest.mark.parametrize("solver", ["irls", "lbfgs", "newton-cg", "cd"])
+def test_convergence_warning(solver, regression_data):
+    X, y = regression_data
+
+    est = GeneralizedLinearRegressor(solver=solver, random_state=2,
+                                     max_iter=1, tol=1e-20)
+    with pytest.warns(ConvergenceWarning):
+        est.fit(X, y)
