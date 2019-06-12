@@ -513,7 +513,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                 for batch_slice in gen_batches(n_samples, batch_size):
                     activations[0] = X[idx[batch_slice]]
                     batch_loss, coef_grads, intercept_grads = self._backprop(
-                        X[idx[batch_slice]], y[idx[batch_slice]], activations, deltas,
+                        X[idx[batch_slice]], y[idx[batch_slice]],
+                        activations, deltas,
                         coef_grads, intercept_grads)
                     accumulated_loss += batch_loss * (batch_slice.stop -
                                                       batch_slice.start)
