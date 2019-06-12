@@ -21,8 +21,18 @@ from sklearn.linear_model._glm import (
     GeneralizedHyperbolicSecant, BinomialDistribution,
 )
 from sklearn.linear_model import ElasticNet, LogisticRegression, Ridge
+from sklearn.metrics import mean_absolute_error
 
 from sklearn.utils.testing import assert_array_equal
+
+
+@pytest.fixture(scope="module")
+def regression_data():
+    X, y = make_regression(n_samples=107,
+                           n_features=10,
+                           n_informative=80, noise=0.5,
+                           random_state=2)
+    return X, y
 
 
 @pytest.mark.parametrize('link', Link.__subclasses__())
@@ -39,6 +49,10 @@ def test_link_properties(link):
     # if f(g(x)) = x, then f'(g(x)) = 1/g'(x)
     assert_allclose(link.derivative(link.inverse(x)),
                     1./link.inverse_derivative(x))
+
+    assert (
+      link.inverse_derivative2(x).shape == link.inverse_derivative(x).shape)
+
     # for LogitLink, in the following x should be between 0 and 1.
     # assert_almost_equal(link.inverse_derivative(link.link(x)),
     #                     1./link.derivative(x), decimal=decimal)
@@ -108,7 +122,7 @@ def test_fisher_matrix(family, link):
 
 def test_sample_weights_validation():
     """Test the raised errors in the validation of sample_weight."""
-    # 1. scalar value but not positive
+    # scalar value but not positive
     X = [[1]]
     y = [1]
     weights = 0
@@ -116,17 +130,20 @@ def test_sample_weights_validation():
     with pytest.raises(ValueError):
         glm.fit(X, y, weights)
 
-    # 2. 2d array
+    # Positive weights are accepted
+    glm.fit(X, y, sample_weight=1)
+
+    # 2d array
     weights = [[0]]
     with pytest.raises(ValueError):
         glm.fit(X, y, weights)
 
-    # 3. 1d but wrong length
+    # 1d but wrong length
     weights = [1, 0]
     with pytest.raises(ValueError):
         glm.fit(X, y, weights)
 
-    # 4. 1d but only zeros (sum not greater than 0)
+    # 1d but only zeros (sum not greater than 0)
     weights = [0, 0]
     X = [[0], [1]]
     y = [1, 2]
@@ -643,3 +660,56 @@ def test_binomial_enet(alpha):
     glm.fit(X, y)
     assert_allclose(log.intercept_[0], glm.intercept_, rtol=1e-6)
     assert_allclose(log.coef_[0, :], glm.coef_, rtol=5e-6)
+
+
+@pytest.mark.parametrize(
+        "params",
+        [
+            {"solver": "irls", "start_params": "guess"},
+            {"solver": "irls", "start_params": "zero"},
+            {"solver": "lbfgs", "start_params": "guess"},
+            {"solver": "lbfgs", "start_params": "zero"},
+            {"solver": "newton-cg"},
+            {"solver": "cd", "selection": "cyclic", "diag_fisher": False},
+            {"solver": "cd", "selection": "cyclic", "diag_fisher": True},
+            {"solver": "cd", "selection": "random", "diag_fisher": False},
+        ],
+        ids=lambda params: ', '.join("%s=%s" % (key, val)
+                                     for key,  val in params.items())
+)
+def test_solver_equivalence(params, regression_data):
+    X, y = regression_data
+    est_ref = GeneralizedLinearRegressor(random_state=2)
+    est_ref.fit(X, y)
+
+    estimator = GeneralizedLinearRegressor(**params)
+    estimator.set_params(random_state=2)
+
+    estimator.fit(X, y)
+
+    assert_allclose(estimator.intercept_, est_ref.intercept_, rtol=1e-4)
+    assert_allclose(estimator.coef_, est_ref.coef_, rtol=1e-4)
+    assert_allclose(
+        mean_absolute_error(estimator.predict(X), y),
+        mean_absolute_error(est_ref.predict(X), y),
+        rtol=1e-4
+    )
+
+
+def test_fit_dispersion(regression_data):
+    X, y = regression_data
+
+    est1 = GeneralizedLinearRegressor(random_state=2)
+    est1.fit(X, y)
+    assert not hasattr(est1, "dispersion_")
+
+    est2 = GeneralizedLinearRegressor(random_state=2, fit_dispersion="chisqr")
+    est2.fit(X, y)
+    assert isinstance(est2.dispersion_, float)
+
+    est3 = GeneralizedLinearRegressor(
+            random_state=2, fit_dispersion="deviance")
+    est3.fit(X, y)
+    assert isinstance(est3.dispersion_, float)
+
+    assert_allclose(est2.dispersion_,  est3.dispersion_)
