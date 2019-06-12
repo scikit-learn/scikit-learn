@@ -307,6 +307,12 @@ def test_safe_indexing_axis_1_error(X, key, err_msg):
         safe_indexing(X, key, axis=1)
 
 
+@pytest.mark.parametrize("axis", [None, 3])
+def test_safe_indexing_error_axis(axis):
+    with pytest.raises(ValueError, match="'axis' should be either 0"):
+        safe_indexing(X_toy, [0, 1], axis=axis)
+
+
 @pytest.mark.parametrize(
     "key, err_msg",
     [(10, r"all features must be in \[0, 2\]"),

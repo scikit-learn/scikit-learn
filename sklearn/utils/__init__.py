@@ -210,7 +210,13 @@ def safe_indexing(X, indices, axis=0):
     """
     if axis == 0:
         return _safe_indexing_row(X, indices)
-    return _safe_indexing_column(X, indices)
+    elif axis == 1:
+        return _safe_indexing_column(X, indices)
+    else:
+        raise ValueError(
+            "'axis' should be either 0 (to index rows) or 1 (to index "
+            " column). Got {} instead.".format(axis)
+        )
 
 
 def _safe_indexing_row(X, indices):
