@@ -6,8 +6,6 @@ Generalized Linear Models with Exponential Dispersion Family
 # some parts and tricks stolen from other sklearn files.
 # License: BSD 3 clause
 
-# TODO: Should the option `normalize` be included (like other linear models)?
-#       So far, it is not included. User must pass a normalized X.
 # TODO: Add cross validation support, e.g. GCV?
 # TODO: Should GeneralizedLinearRegressor inherit from LinearModel?
 #       So far, it does not.
@@ -287,7 +285,6 @@ class LogitLink(Link):
         return ep * (1. - ep)
 
     def inverse_derivative2(self, lin_pred):
-        ep = special.expit(lin_pred)
         ep = special.expit(lin_pred)
         return ep * (1. - ep) * (1. - 2 * ep)
 
@@ -738,7 +735,19 @@ class TweedieDistribution(ExponentialDispersionModel):
             For ``0<power<1``, no distribution exists.
     """
     def __init__(self, power=0):
+        # validate power and set _upper_bound, _include_upper_bound attrs
         self.power = power
+
+    @property
+    def power(self):
+        return self._power
+
+    @power.setter
+    def power(self, power):
+        if not isinstance(power, numbers.Real):
+            raise TypeError('power must be a real number, input was {0}'
+                            .format(power))
+
         self._upper_bound = np.Inf
         self._include_upper_bound = False
         if power < 0:
@@ -775,19 +784,10 @@ class TweedieDistribution(ExponentialDispersionModel):
             # Positive Stable
             self._lower_bound = 0
             self._include_lower_bound = False
-        else:
-            raise ValueError('The power must be a float, i.e. real number, '
-                             'got (power={})'.format(power))
+        else:  # pragma: no cover
+            # this branch should be unreachable.
+            raise ValueError
 
-    @property
-    def power(self):
-        return self._power
-
-    @power.setter
-    def power(self, power):
-        if not isinstance(power, numbers.Real):
-            raise TypeError('power must be a real number, input was {0}'
-                            .format(power))
         self._power = power
 
     def unit_variance(self, mu):
@@ -962,7 +962,7 @@ def _irls_step(X, W, P2, z, fit_intercept=True):
             A += P2.toarray()
         else:
             A += P2
-    # coef = linalg.solve(A, b, overwrite_a=True, overwrite_b=True)
+
     coef, *_ = linalg.lstsq(A, b, overwrite_a=True, overwrite_b=True)
     return coef
 
@@ -991,12 +991,13 @@ def _irls_solver(coef, X, y, weights, P2, fit_intercept, family, link,
     # Note: P2 must be symmetrized
     # Note: ' denotes derivative, but also transpose for matrices
 
-    # eta = linear predictor
     eta = _safe_lin_pred(X, coef)
     mu = link.inverse(eta)
     # D = h'(eta)
     hp = link.inverse_derivative(eta)
     V = family.variance(mu, phi=1, weights=weights)
+
+    converged = False
     n_iter = 0
     while n_iter < max_iter:
         n_iter += 1
@@ -1360,7 +1361,6 @@ def _cd_solver(coef, X, y, weights, P1, P2, fit_intercept, family, link,
             if Fwd - Fw <= sigma * la * bound:
                 break
         # update coefficients
-        # coef_old = coef.copy()
         coef += la * d
         # calculate eta, mu, score, Fisher matrix for next iteration
         eta, mu, score, fisher = family._eta_mu_score_fisher(
@@ -2079,14 +2079,13 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                 func, coef, fprime=None, args=args,
                 iprint=(self.verbose > 0) - 1, pgtol=self.tol,
                 maxiter=self.max_iter, factr=1e3)
-            if self.verbose > 0:
-                if info["warnflag"] == 1:
-                    warnings.warn("lbfgs failed to converge."
-                                  " Increase the number of iterations.",
-                                  ConvergenceWarning)
-                elif info["warnflag"] == 2:
-                    warnings.warn("lbfgs failed for the reason: {0}"
-                                  .format(info["task"]))
+            if info["warnflag"] == 1:
+                warnings.warn("lbfgs failed to converge."
+                              " Increase the number of iterations.",
+                              ConvergenceWarning)
+            elif info["warnflag"] == 2:
+                warnings.warn("lbfgs failed for the reason: {0}"
+                              .format(info["task"]))
             self.n_iter_ = info['nit']
 
         # 4.3 Newton-CG #######################################################
