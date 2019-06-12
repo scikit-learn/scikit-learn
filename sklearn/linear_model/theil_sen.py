@@ -281,7 +281,7 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
     >>> X, y = make_regression(
     ...     n_samples=200, n_features=2, noise=4.0, random_state=0)
     >>> reg = TheilSenRegressor(random_state=0).fit(X, y)
-    >>> reg.score(X, y) # doctest: +ELLIPSIS
+    >>> reg.score(X, y)
     0.9884...
     >>> reg.predict(X[:1,])
     array([-31.5871...])

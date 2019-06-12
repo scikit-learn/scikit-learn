@@ -241,9 +241,8 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = LinearDiscriminantAnalysis()
-    >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-    LinearDiscriminantAnalysis(n_components=None, priors=None, shrinkage=None,
-                  solver='svd', store_covariance=False, tol=0.0001)
+    >>> clf.fit(X, y)
+    LinearDiscriminantAnalysis()
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
     """
@@ -620,9 +619,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
     >>> y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = QuadraticDiscriminantAnalysis()
     >>> clf.fit(X, y)
-    ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    QuadraticDiscriminantAnalysis(priors=None, reg_param=0.0,
-                                  store_covariance=False, tol=0.0001)
+    QuadraticDiscriminantAnalysis()
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 

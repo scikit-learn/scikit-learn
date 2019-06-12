@@ -96,7 +96,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     >>> estimator = SVR(kernel="linear")
     >>> selector = RFE(estimator, 5, step=1)
     >>> selector = selector.fit(X, y)
-    >>> selector.support_ # doctest: +NORMALIZE_WHITESPACE
+    >>> selector.support_
     array([ True,  True,  True,  True,  True, False, False, False, False,
            False])
     >>> selector.ranking_
@@ -432,7 +432,7 @@ class RFECV(RFE, MetaEstimatorMixin):
     >>> estimator = SVR(kernel="linear")
     >>> selector = RFECV(estimator, step=1, cv=5)
     >>> selector = selector.fit(X, y)
-    >>> selector.support_ # doctest: +NORMALIZE_WHITESPACE
+    >>> selector.support_
     array([ True,  True,  True,  True,  True, False, False, False, False,
            False])
     >>> selector.ranking_

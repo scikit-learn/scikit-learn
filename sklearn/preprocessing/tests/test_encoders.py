@@ -8,14 +8,8 @@ import pytest
 
 from sklearn.exceptions import NotFittedError
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_no_warnings
 
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import OrdinalEncoder
@@ -596,7 +590,7 @@ def test_encoder_dtypes_pandas():
     assert_array_equal(enc.transform(X).toarray(), exp)
 
     X = pd.DataFrame({'A': [1, 2], 'B': ['a', 'b'], 'C': [3., 4.]})
-    X_type = [int, object, float]
+    X_type = [X['A'].dtype, X['B'].dtype, X['C'].dtype]
     enc.fit(X)
     assert all([enc.categories_[i].dtype == X_type[i] for i in range(3)])
     assert_array_equal(enc.transform(X).toarray(), exp)

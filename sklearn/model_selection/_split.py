@@ -385,7 +385,7 @@ class KFold(_BaseKFold):
     >>> kf = KFold(n_splits=2)
     >>> kf.get_n_splits(X)
     2
-    >>> print(kf)  # doctest: +NORMALIZE_WHITESPACE
+    >>> print(kf)
     KFold(n_splits=2, random_state=None, shuffle=False)
     >>> for train_index, test_index in kf.split(X):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
@@ -590,7 +590,7 @@ class StratifiedKFold(_BaseKFold):
     >>> skf = StratifiedKFold(n_splits=2)
     >>> skf.get_n_splits(X, y)
     2
-    >>> print(skf)  # doctest: +NORMALIZE_WHITESPACE
+    >>> print(skf)
     StratifiedKFold(n_splits=2, random_state=None, shuffle=False)
     >>> for train_index, test_index in skf.split(X, y):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
@@ -742,7 +742,7 @@ class TimeSeriesSplit(_BaseKFold):
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([1, 2, 3, 4, 5, 6])
     >>> tscv = TimeSeriesSplit()
-    >>> print(tscv)  # doctest: +NORMALIZE_WHITESPACE
+    >>> print(tscv)
     TimeSeriesSplit(max_train_size=None, n_splits=5)
     >>> for train_index, test_index in tscv.split(X):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
@@ -1379,7 +1379,6 @@ class ShuffleSplit(BaseShuffleSplit):
     ShuffleSplit(n_splits=5, random_state=0, test_size=0.25, train_size=None)
     >>> for train_index, test_index in rs.split(X):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
-    ...  # doctest: +ELLIPSIS
     TRAIN: [1 3 0 4] TEST: [5 2]
     TRAIN: [4 0 2 5] TEST: [1 3]
     TRAIN: [1 2 4 0] TEST: [3 5]
@@ -1389,7 +1388,6 @@ class ShuffleSplit(BaseShuffleSplit):
     ...                   random_state=0)
     >>> for train_index, test_index in rs.split(X):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
-    ...  # doctest: +ELLIPSIS
     TRAIN: [1 3 0] TEST: [5 2]
     TRAIN: [4 0 2] TEST: [1 3]
     TRAIN: [1 2 4] TEST: [3 5]
@@ -1573,7 +1571,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     >>> sss = StratifiedShuffleSplit(n_splits=5, test_size=0.5, random_state=0)
     >>> sss.get_n_splits(X, y)
     5
-    >>> print(sss)       # doctest: +ELLIPSIS
+    >>> print(sss)
     StratifiedShuffleSplit(n_splits=5, random_state=0, ...)
     >>> for train_index, test_index in sss.split(X, y):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
@@ -1790,7 +1788,7 @@ class PredefinedSplit(BaseCrossValidator):
     >>> ps = PredefinedSplit(test_fold)
     >>> ps.get_n_splits()
     2
-    >>> print(ps)       # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    >>> print(ps)
     PredefinedSplit(test_fold=array([ 0,  1, -1,  1]))
     >>> for train_index, test_index in ps.split():
     ...    print("TRAIN:", train_index, "TEST:", test_index)
