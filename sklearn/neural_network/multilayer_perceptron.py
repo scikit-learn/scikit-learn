@@ -498,6 +498,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             y_val = None
 
         n_samples = X.shape[0]
+        idx = np.arange(n_samples, dtype=int)
 
         if self.batch_size == 'auto':
             batch_size = min(200, n_samples)
@@ -507,12 +508,12 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         try:
             for it in range(self.max_iter):
                 if self.shuffle:
-                    X, y = shuffle(X, y, random_state=self._random_state)
+                    idx = shuffle(idx, random_state=self._random_state)
                 accumulated_loss = 0.0
                 for batch_slice in gen_batches(n_samples, batch_size):
-                    activations[0] = X[batch_slice]
+                    activations[0] = X[idx[batch_slice]]
                     batch_loss, coef_grads, intercept_grads = self._backprop(
-                        X[batch_slice], y[batch_slice], activations, deltas,
+                        X[idx[batch_slice]], y[idx[batch_slice]], activations, deltas,
                         coef_grads, intercept_grads)
                     accumulated_loss += batch_loss * (batch_slice.stop -
                                                       batch_slice.start)
