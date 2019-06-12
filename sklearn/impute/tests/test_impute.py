@@ -447,15 +447,14 @@ def test_imputation_constant_pandas(dtype):
 
 @pytest.mark.parametrize('imputer', (SimpleImputer, IterativeImputer))
 def test_imputation_missing_value_in_test_array(imputer):
-    # [Non Regression Test] Missing value in test set should not throw an error
-    # and return a finite dataset
+    # [Non Regression Test for issue #13968] Missing value in test set should
+    # not throw an error and return a finite dataset
     train = [[1], [2]]
     test = [[3], [np.nan]]
     imputer = imputer(add_indicator=True)
     imputer.fit(train).transform(test)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_imputation_pipeline_grid_search():
     # Test imputation within a pipeline + gridsearch.
     X = sparse_random_matrix(100, 100, density=0.10)
