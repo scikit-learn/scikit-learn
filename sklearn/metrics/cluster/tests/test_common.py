@@ -129,9 +129,7 @@ SUPERVISED_UNSUPERVISED_METRICS = {**SUPERVISED_METRICS,
 
 # 0.22 AMI and NMI changes
 @pytest.mark.filterwarnings('ignore::FutureWarning')
-@pytest.mark.parametrize(
-    "metric_name", sorted(SUPERVISED_UNSUPERVISED_METRICS)
-)
+@pytest.mark.parametrize("metric_name", SUPERVISED_UNSUPERVISED_METRICS)
 def test_permute_labels(metric_name):
     # All clustering metrics do not change score due to permutations of labels
     # that is when 0 and 1 exchanged.
@@ -152,9 +150,7 @@ def test_permute_labels(metric_name):
 
 # 0.22 AMI and NMI changes
 @pytest.mark.filterwarnings('ignore::FutureWarning')
-@pytest.mark.parametrize(
-    "metric_name", sorted(SUPERVISED_UNSUPERVISED_METRICS)
-)
+@pytest.mark.parametrize("metric_name", SUPERVISED_UNSUPERVISED_METRICS)
 # For all clustering metrics Input parameters can be both
 # in the form of arrays lists, positive, negetive or string
 def test_format_invariance(metric_name):
