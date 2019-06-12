@@ -981,3 +981,86 @@ def check_scalar(x, name, target_type, min_val=None, max_val=None):
 
     if max_val is not None and x > max_val:
         raise ValueError('`{}`= {}, must be <= {}.'.format(name, x, max_val))
+
+
+def check_param(param, name, valid_options):
+    """
+
+    Parameters
+    ----------
+    x : object
+        The scalar parameter to validate.
+
+    name : str
+        The name of the parameter to be printed in error messages.
+
+    valid_options : dict of type, constraint
+        Constraint can be a list: check that param in list
+        an Interval: check param in interval
+        None: no constraint
+
+    Raises
+    -------
+    ValueError
+        If the parameter does not satisfy any type or constraint.
+    """
+    satisfy_one = False
+
+    err_msg = 'Invalid {0} parameter: {1}. {0} should '.format(name, param)
+    single_constraint = len(valid_options) == 1
+
+    for i, (type_, constraint) in enumerate(valid_options.items()):
+        if i == 0:
+            if not single_constraint:
+                err_msg += 'either '
+            err_msg += 'be'
+        else:
+            err_msg += ' or'
+        err_msg += ' a {}'.format(type_.__name__)
+
+        if constraint is not None:
+                err_msg += ' in {}'.format(constraint)
+
+        if isinstance(param, type_):
+            if constraint is None or param in constraint:
+                satisfy_one = True
+                break
+
+    err_msg += '.'
+
+    if not satisfy_one:
+        raise ValueError(err_msg)
+
+
+class Interval():                                                                               
+    def __init__(self, left=-np.inf, right=np.inf, closed='both'):
+        self.left = left
+        self.right = right
+        self.closed = closed
+
+        self.check_params()
+
+    def check_params(self):
+        check_param(self.closed, 'closed', {str: ['left', 'right', 'both', 'neither']})
+        check_param(self.left, 'left', {numbers.Real: None})
+        check_param(self.right, 'right', {numbers.Real: None})
+
+        self.left_comp = le if self.closed in ('left', 'both') else lt
+        self.right_comp = ge if self.closed in ('right', 'both') else gt
+
+    def __contains__(self, val):
+        return self.left_comp(self.left, val) and self.right_comp(self.right, val)
+
+    def __repr__(self):
+        if self.left > self.right:
+            return '()'
+
+        left = '[' if self.closed in ('left', 'both') else '('
+        right = ']' if self.closed in ('right', 'both') else ')'
+
+        if self.left == -np.inf:
+            left = '('
+        if self.right == np.inf:
+            right = ')'
+
+        return (left + '{}, {}' + right).format(self.left, self.right)
