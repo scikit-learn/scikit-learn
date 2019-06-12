@@ -2,7 +2,6 @@ import numpy as np
 import pytest
 from sklearn.base import clone
 from sklearn.datasets import make_classification, make_regression
-from sklearn.utils.testing import assert_equal, assert_not_equal
 
 # To use this experimental feature, we need to explicitly ask for it:
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
@@ -250,10 +249,10 @@ def test_warm_start_max_depth(GradientBoosting, X, y):
 
     # First 100 trees have max_depth == 2
     for i in range(100):
-        assert_equal(gb._predictors[i][0].get_max_depth(), 2)
+        assert gb._predictors[i][0].get_max_depth() == 2
     # Last 10 trees have max_depth == 3
     for i in range(1, 11):
-        assert_equal(gb._predictors[-i][0].get_max_depth(), 3)
+        assert gb._predictors[-i][0].get_max_depth() == 3
 
 
 @pytest.mark.parametrize('GradientBoosting, X, y', [
@@ -312,123 +311,48 @@ def test_warm_start_clear(GradientBoosting, X, y):
 
 
 @pytest.mark.parametrize('GradientBoosting, X, y', [
-    (HistGradientBoostingClassifier, X_classification, y_classification),
-    (HistGradientBoostingRegressor, X_regression, y_regression)
-])
-def test_identical_train_val_split_int(GradientBoosting, X, y):
-    # Test if identical splits are generated when random_state is an int.
-    gb_1 = GradientBoosting(n_iter_no_change=5, random_state=42)
-    gb_1.fit(X, y)
-    train_val_seed_1 = gb_1._train_val_split_seed
-
-    gb_2 = GradientBoosting(n_iter_no_change=5, random_state=42,
-                            warm_start=True)
-    gb_2.fit(X, y)  # inits state
-    train_val_seed_2 = gb_2._train_val_split_seed
-    gb_2.fit(X, y)  # clears old state and equals est
-    train_val_seed_3 = gb_2._train_val_split_seed
-
-    # Check that all seeds are equal
-    assert_equal(train_val_seed_1, train_val_seed_2)
-    assert_equal(train_val_seed_1, train_val_seed_3)
-
-
-@pytest.mark.parametrize('GradientBoosting, X, y', [
-    (HistGradientBoostingClassifier, X_classification, y_classification),
-    (HistGradientBoostingRegressor, X_regression, y_regression)
-])
-def test_identical_train_val_split_random_state(GradientBoosting, X, y):
-    # Test if identical splits are generated when random_state is RandomState
-    # instance.
-    rng = np.random.RandomState(42)
-    gb_1 = GradientBoosting(n_iter_no_change=5, random_state=rng)
-    gb_1.fit(X, y)
-    train_val_seed_1 = gb_1._train_val_split_seed
-
-    rng = np.random.RandomState(42)
-    gb_2 = GradientBoosting(n_iter_no_change=5, random_state=rng,
-                            warm_start=True)
-    gb_2.fit(X, y)  # inits state
-    train_val_seed_2 = gb_2._train_val_split_seed
-    gb_2.fit(X, y)  # clears old state and equals est
-    train_val_seed_3 = gb_2._train_val_split_seed
-
-    # Check that both seeds are equal
-    assert_equal(train_val_seed_1, train_val_seed_2)
-    assert_equal(train_val_seed_1, train_val_seed_3)
-
-
-@pytest.mark.parametrize('GradientBoosting, X, y', [
-    (HistGradientBoostingClassifier, X_classification, y_classification),
-    (HistGradientBoostingRegressor, X_regression, y_regression)
-])
-def test_different_train_val_splits(GradientBoosting, X, y):
-    # Test if two fits with random_state=None have different splits
-    gb_1 = GradientBoosting(n_iter_no_change=5)
-    gb_1.fit(X, y)
-    train_val_seed_1 = gb_1._train_val_split_seed
-
-    gb_2 = GradientBoosting(n_iter_no_change=5)
-    gb_2.fit(X, y)
-    train_val_seed_2 = gb_2._train_val_split_seed
-
-    gb_3 = GradientBoosting(n_iter_no_change=5, warm_start=True)
-    gb_3.fit(X, y)
-    train_val_seed_3 = gb_3._train_val_split_seed
-
-    # Check that all seeds are different
-    assert_not_equal(train_val_seed_1, train_val_seed_2)
-    assert_not_equal(train_val_seed_1, train_val_seed_3)
-    assert_not_equal(train_val_seed_2, train_val_seed_3)
-
-
-@pytest.mark.parametrize('GradientBoosting, X, y', [
-    (HistGradientBoostingClassifier, X_classification, y_classification),
-    (HistGradientBoostingRegressor, X_regression, y_regression)
-])
-def test_identical_small_trainset(GradientBoosting, X, y):
-    # Test if two fits with random_state=None have different small trainsets
-    gb_1 = GradientBoosting(max_iter=2, max_depth=2, n_iter_no_change=5)
-    gb_1.fit(X, y)
-    small_trainset_seed_1 = gb_1._small_trainset_seed
-
-    gb_2 = GradientBoosting(max_iter=2, max_depth=2, n_iter_no_change=5)
-    gb_2.fit(X, y)
-    small_trainset_seed_2 = gb_2._small_trainset_seed
-
-    gb_3 = GradientBoosting(max_iter=2, max_depth=2, n_iter_no_change=5,
-                            warm_start=True)
-    gb_3.fit(X, y)
-    small_trainset_seed_3 = gb_3._small_trainset_seed
-
-    # Check that all seeds are different
-    assert_not_equal(small_trainset_seed_1, small_trainset_seed_2)
-    assert_not_equal(small_trainset_seed_1, small_trainset_seed_3)
-    assert_not_equal(small_trainset_seed_2, small_trainset_seed_3)
-
-
-@pytest.mark.parametrize('GradientBoosting, X, y', [
     (HistGradientBoostingClassifier, X_classification_large,
      y_classification_large),
     (HistGradientBoostingRegressor, X_regression_large,
      y_regression_large)
 ])
-def test_different_small_trainsets(GradientBoosting, X, y):
-    # Test if two fits with random_state=None have different splits
-    gb_1 = GradientBoosting(max_iter=2, max_depth=2, n_iter_no_change=5)
+@pytest.mark.parametrize('rng_type', ('int', 'instance', None))
+def test_random_seeds_warm_start(GradientBoosting, X, y, rng_type):
+    # Make sure the seeds for train/val split and small trainset subsampling
+    # are correctly set in a warm start context.
+    def _get_rng(rng_type):
+        # Helper to avoid consuming rngs
+        if rng_type == 'int':
+            return 42
+        elif rng_type == 'instance':
+            return np.random.RandomState(0)
+        else:
+            return None
+
+    random_state = _get_rng(rng_type)
+    gb_1 = GradientBoosting(n_iter_no_change=5, max_iter=2,
+                            random_state=random_state)
     gb_1.fit(X, y)
+    train_val_seed_1 = gb_1._train_val_split_seed
     small_trainset_seed_1 = gb_1._small_trainset_seed
 
-    gb_2 = GradientBoosting(max_iter=2, max_depth=2, n_iter_no_change=5)
-    gb_2.fit(X, y)
+    random_state = _get_rng(rng_type)
+    gb_2 = GradientBoosting(n_iter_no_change=5, max_iter=2,
+                            random_state=random_state, warm_start=True)
+    gb_2.fit(X, y)  # inits state
+    train_val_seed_2 = gb_2._train_val_split_seed
     small_trainset_seed_2 = gb_2._small_trainset_seed
+    gb_2.fit(X, y)  # clears old state and equals est
+    train_val_seed_3 = gb_2._train_val_split_seed
+    small_trainset_seed_3 = gb_2._small_trainset_seed
 
-    gb_3 = GradientBoosting(max_iter=2, max_depth=2, n_iter_no_change=5,
-                            warm_start=True)
-    gb_3.fit(X, y)
-    small_trainset_seed_3 = gb_3._small_trainset_seed
+    # Check that all seeds are equal
+    if rng_type is None:
+        assert train_val_seed_1 != train_val_seed_2
+        assert small_trainset_seed_1 != small_trainset_seed_2
+    else:
+        assert train_val_seed_1 == train_val_seed_2
+        assert small_trainset_seed_1 == small_trainset_seed_2
 
-    # Check that all seeds are different
-    assert_not_equal(small_trainset_seed_1, small_trainset_seed_2)
-    assert_not_equal(small_trainset_seed_1, small_trainset_seed_3)
-    assert_not_equal(small_trainset_seed_2, small_trainset_seed_3)
+    assert train_val_seed_2 == train_val_seed_3
+    assert small_trainset_seed_2 == small_trainset_seed_3

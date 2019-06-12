@@ -133,7 +133,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             # This is needed in order to have the same split when using
             # warm starting.
             if not (self._has_been_fitted() and self.warm_start):
-                self._train_val_split_seed = rng.randint(1024, size=1).item()
+                self._train_val_split_seed = rng.randint(1024)
 
             X_train, X_val, y_train, y_val = train_test_split(
                 X, y, test_size=self.validation_fraction, stratify=stratify,
@@ -226,15 +226,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     # the training set to compute train scores.
 
                     # Save the seed for the small trainset generator
-                    self._small_trainset_seed = rng.randint(
-                        1024, size=1).item()
+                    self._small_trainset_seed = rng.randint(1024)
 
                     # Compute the subsample set
                     (X_binned_small_train,
                      y_small_train) = self._get_small_trainset(
-                        X_binned_train, y_train, self._small_trainset_seed,
-                        subsample_size=10000
-                    )
+                        X_binned_train, y_train, self._small_trainset_seed)
 
                     self._check_early_stopping_scorer(
                         X_binned_small_train, y_small_train,
@@ -263,9 +260,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             if self.do_early_stopping_ and self.scoring != 'loss':
                 # Compute the subsample set
                 X_binned_small_train, y_small_train = self._get_small_trainset(
-                    X_binned_train, y_train, self._small_trainset_seed,
-                    subsample_size=10000
-                )
+                    X_binned_train, y_train, self._small_trainset_seed)
 
             # Initialize the gradients and hessians
             gradients, hessians = self.loss_.init_gradients_and_hessians(
@@ -387,38 +382,13 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if hasattr(self, '_rng'):
             del self._rng
 
-    def _get_small_trainset(self, X_binned_train, y_train,
-                            seed, subsample_size=10000):
+    def _get_small_trainset(self, X_binned_train, y_train, seed):
         """Compute the indices of the subsample set and return this set.
 
         For efficiency, we need to subsample the training set to compute scores
-        with scorers. Also note that the returned indices are not expected to
-        be the same between different calls to fit() in a warm start context,
-        since the rng may have been consumed.
-
-        Parameters
-        ----------
-        X_binned_train : array, shape (n_samples, n_features)
-            Binned training input data.
-
-        y_train : array, shape (n_samples,)
-            Target training vector.
-
-        seed : int
-            Seed for the random number generator.
-
-        subsample_size : int (default=100000)
-            The maximum size of the subsample set.
-
-        Returns
-        -------
-        X_binned_small_train : array, shape (subsample_size, n_features)
-            Binned under-sampled training input data.
-
-        y_small_train : array, shape (subsample_size,)
-            Target under-sampled training vector.
-
+        with scorers.
         """
+        subsample_size = 10000
         rng = check_random_state(seed)
         indices = np.arange(X_binned_train.shape[0])
         if X_binned_train.shape[0] > subsample_size:
