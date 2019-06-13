@@ -643,11 +643,9 @@ def test_column_transformer_get_feature_names():
     ct = ColumnTransformer([('trans', Trans(), [0, 1])])
     # raise correct error when not fitted
     assert_raises(NotFittedError, ct.get_feature_names)
-    # raise correct error when no feature names are available
+    # provides default names when no feature names are available
     ct.fit(X_array)
-    assert_raise_message(AttributeError,
-                         "Transformer trans (type Trans) does not provide "
-                         "get_feature_names", ct.get_feature_names)
+    assert_equal(ct.get_feature_names(), ['trans__x0', 'trans__x1'])
 
     # working example
     X = np.array([[{'a': 1, 'b': 2}, {'a': 3, 'b': 4}],
@@ -678,7 +676,7 @@ def test_column_transformer_get_feature_names():
     ct.fit(X)
     assert_equal(ct.get_feature_names(), ['trans__1', 0])
 
-    # passthough transformer with a dataframe
+    # passthrough transformer with a dataframe
     pd = pytest.importorskip('pandas')
     X_df = pd.DataFrame(X, columns=['col0', 'col1'])
 
@@ -704,6 +702,12 @@ def test_column_transformer_get_feature_names():
                            remainder='passthrough')
     ct.fit(X_df)
     assert_equal(ct.get_feature_names(), ['trans__1', 'col0'])
+
+    # check default names provided when no feature names available
+    ct = ColumnTransformer([('col0', DictVectorizer(), 0),
+                            ('trans', Trans(), ['col1'])])
+    ct.fit(X_df)
+    assert_equal(ct.get_feature_names(), ['col0__a', 'col0__b', 'trans__x0'])
 
 
 def test_column_transformer_special_strings():
