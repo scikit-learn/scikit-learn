@@ -45,16 +45,22 @@ Changelog
 - |Fix| :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` now bin the training and
   validation data separately to avoid any data leak. :pr:`13933` by
-  `NicolasHug`_.
+  `Nicolas Hug`_.
 
 :mod:`sklearn.linear_model`
-..................
+...........................
 
 - |Enhancement| :class:`linearmodel.BayesianRidge` now accepts hyperparameters
   ``alpha_init`` and ``lambda_init`` which can be used to set the initial value
   of the maximization procedure in :term:`fit`.
   :pr:`13618` by :user:`Yoshihiro Uchida <c56pony>`.
 
+:mod:`sklearn.pipeline`
+.......................
+
+- |Enhancement| :class:`pipeline.Pipeline` now supports :term:`score_samples` if
+  the final estimator does.
+  :pr:`13806` by :user:`Anaël Beaugnon <ab-anssi>`.
 
 :mod:`sklearn.svm`
 ..................
@@ -65,8 +71,19 @@ Changelog
   ``decision_function_shape='ovr'``, and the number of target classes > 2.
   :pr:`12557` by `Adrin Jalali`_.
 
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Enhancement| Avoid unnecessary data copy when fitting preprocessors
+  :class:`preprocessing.StandardScaler`, :class:`preprocessing.MinMaxScaler`,
+  :class:`preprocessing.MaxAbsScaler`, :class:`preprocessing.RobustScaler`
+  and :class:`preprocessing.QuantileTransformer` which results in a slight
+  performance improvement. :pr:`13987` by `Roman Yurchak`_.
+
+
 :mod:`sklearn.cluster`
-..................
+......................
 
 - |Enhancement| :class:`cluster.SpectralClustering` now accepts a ``n_components`` 
   parameter. This parameter extends `SpectralClustering` class functionality to
@@ -96,3 +113,7 @@ These changes mostly affect library developers.
   ``transform`` is called before ``fit``; previously an ``AttributeError`` or
   ``ValueError`` was acceptable.
   :pr:`13013` by by :user:`Agamemnon Krasoulis <agamemnonc>`.
+
+- |Enhancement| Binary only classifiers are now supported in estimator checks.
+  Such classifiers need to have the `binary_only=True` estimator tag.
+  :pr:`13875` by `Trevor Stephens`_.

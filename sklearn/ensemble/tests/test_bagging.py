@@ -5,7 +5,6 @@ Testing for the bagging ensemble module (sklearn.ensemble.bagging).
 # Author: Gilles Louppe
 # License: BSD 3 clause
 
-import pytest
 import numpy as np
 
 from sklearn.base import BaseEstimator

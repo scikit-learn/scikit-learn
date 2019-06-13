@@ -306,3 +306,6 @@ warnings.filterwarnings("ignore", category=UserWarning,
                         module="matplotlib",
                         message='Matplotlib is currently using agg, which is a'
                                 ' non-GUI backend, so cannot show the figure.')
+
+# Reduces the output of estimators
+sklearn.set_config(print_changed_only=True)

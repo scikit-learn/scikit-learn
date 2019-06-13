@@ -26,7 +26,6 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_no_warnings
 from sklearn.linear_model import SGDClassifier
 from sklearn.preprocessing import scale
 from sklearn.utils.testing import skip_if_no_parallel
@@ -1312,32 +1311,42 @@ def test_dtype_match(solver, multi_class):
     X_64 = np.array(X).astype(np.float64)
     y_64 = np.array(Y1).astype(np.float64)
     X_sparse_32 = sp.csr_matrix(X, dtype=np.float32)
+    solver_tol = 5e-4
 
+    lr_templ = LogisticRegression(
+        solver=solver, multi_class=multi_class,
+        random_state=42, tol=solver_tol, fit_intercept=True)
     # Check type consistency
-    lr_32 = LogisticRegression(solver=solver, multi_class=multi_class,
-                               random_state=42)
+    lr_32 = clone(lr_templ)
     lr_32.fit(X_32, y_32)
     assert_equal(lr_32.coef_.dtype, X_32.dtype)
 
     # check consistency with sparsity
-    lr_32_sparse = LogisticRegression(solver=solver,
-                                      multi_class=multi_class,
-                                      random_state=42)
+    lr_32_sparse = clone(lr_templ)
     lr_32_sparse.fit(X_sparse_32, y_32)
     assert_equal(lr_32_sparse.coef_.dtype, X_sparse_32.dtype)
 
     # Check accuracy consistency
-    lr_64 = LogisticRegression(solver=solver, multi_class=multi_class,
-                               random_state=42)
+    lr_64 = clone(lr_templ)
     lr_64.fit(X_64, y_64)
     assert_equal(lr_64.coef_.dtype, X_64.dtype)
 
-    rtol = 1e-6
+    # solver_tol bounds the norm of the loss gradient
+    # dw ~= inv(H)*grad ==> |dw| ~= |inv(H)| * solver_tol, where H - hessian
+    #
+    # See https://github.com/scikit-learn/scikit-learn/pull/13645
+    #
+    # with  Z = np.hstack((np.ones((3,1)), np.array(X)))
+    # In [8]: np.linalg.norm(np.diag([0,2,2]) + np.linalg.inv((Z.T @ Z)/4))
+    # Out[8]: 1.7193336918135917
+
+    # factor of 2 to get the ball diameter
+    atol = 2 * 1.72 * solver_tol
     if os.name == 'nt' and _IS_32BIT:
         # FIXME
-        rtol = 1e-2
+        atol = 1e-2
 
-    assert_allclose(lr_32.coef_, lr_64.coef_.astype(np.float32), rtol=rtol)
+    assert_allclose(lr_32.coef_, lr_64.coef_.astype(np.float32), atol=atol)
 
 
 def test_warm_start_converge_LR():
