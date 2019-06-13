@@ -145,6 +145,9 @@ def test_warm_start_clear(GradientBoosting, X, y):
     np.testing.assert_allclose(gb_1.train_score_, gb_2.train_score_)
     np.testing.assert_allclose(gb_1.validation_score_, gb_2.validation_score_)
 
+    # Check that both predictors are equal
+    _assert_predictor_equal(gb_1, gb_2, X)
+
 
 @pytest.mark.parametrize('GradientBoosting, X, y', [
     (HistGradientBoostingClassifier, X_classification, y_classification),
