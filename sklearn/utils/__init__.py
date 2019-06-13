@@ -315,6 +315,13 @@ def _safe_indexing_column(X, key):
         - So no keys other than strings are allowed (while in principle you
           can use any hashable object as key).
     """
+    # check that X is a 2D structure
+    if X.ndim != 2:
+        raise ValueError(
+            "'X' should be a 2D NumPy array, 2D sparse matrix or pandas "
+            "dataframe when indexing the columns (i.e. 'axis=1'). "
+            "Got {} instead with {} dimension(s).".format(type(X), X.ndim)
+        )
     # check whether we have string column names or integers
     if _check_key_type(key, int):
         column_names = False

@@ -313,6 +313,22 @@ def test_safe_indexing_error_axis(axis):
         safe_indexing(X_toy, [0, 1], axis=axis)
 
 
+@pytest.mark.parametrize("X_constructor", ['array', 'series'])
+def test_safe_indexing_1d_array_error(X_constructor):
+    # check that we are raising an error if the array-like passed is 1D and
+    # we try to index on the 2nd dimension
+    X = list(range(5))
+    if X_constructor == 'array':
+        X_constructor = np.asarray(X)
+    elif X_constructor == 'series':
+        pd = pytest.importorskip("pandas")
+        X_constructor = pd.Series(X)
+
+    err_msg = "'X' should be a 2D NumPy array, 2D sparse matrix or pandas"
+    with pytest.raises(ValueError, match=err_msg):
+        safe_indexing(X_constructor, [0, 1], axis=1)
+
+
 @pytest.mark.parametrize(
     "key, err_msg",
     [(10, r"all features must be in \[0, 2\]"),
