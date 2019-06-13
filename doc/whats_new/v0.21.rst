@@ -16,7 +16,8 @@ Changelog
 ...........................
 - |Fix| Fixed a bug in :class:`linear_model.LogisticRegressionCV` where
   ``refit=False`` would fail depending on the ``'multiclass'`` and
-  ``'penalty'`` parameters. :pr:`14087` by `Nicolas Hug`_.
+  ``'penalty'`` parameters (regression introduced in 0.21). :pr:`14087` by
+  `Nicolas Hug`_.
 
 .. _changes_0_21_2:
 
