@@ -350,7 +350,7 @@ def test_get_column_indices_error(key, err_msg):
 @pytest.mark.parametrize("asarray", [True, False], ids=["array-like", "array"])
 def test_safe_indexing_pandas_series(idx, asarray):
     pd = pytest.importorskip("pandas")
-    idx = np.asarray(idx) if asarray and isinstance(idx, Iterable) else idx
+    idx = np.asarray(idx) if asarray else idx
     serie = pd.Series(np.arange(3))
     assert_array_equal(safe_indexing(serie, idx).values, [0, 1])
 
