@@ -1051,8 +1051,7 @@ class CategoricalNB(BaseDiscreteNB):
     >>> from sklearn.naive_bayes import CategoricalNB
     >>> clf = CategoricalNB()
     >>> clf.fit(X, y)
-    CategoricalNB(alpha=1.0, class_prior=None, fit_prior=True,
-                  handle_unknown='warn')
+    CategoricalNB()
     >>> print(clf.predict(X[2:3]))
     [3]
     """
