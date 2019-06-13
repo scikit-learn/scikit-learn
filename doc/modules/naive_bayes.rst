@@ -90,14 +90,17 @@ classification. The likelihood of the features is assumed to be Gaussian:
 The parameters :math:`\sigma_y` and :math:`\mu_y`
 are estimated using maximum likelihood.
 
-    >>> from sklearn import datasets
-    >>> iris = datasets.load_iris()
-    >>> from sklearn.naive_bayes import GaussianNB
-    >>> gnb = GaussianNB()
-    >>> y_pred = gnb.fit(iris.data, iris.target).predict(iris.data)
-    >>> print("Number of mislabeled points out of a total %d points : %d"
-    ...       % (iris.data.shape[0],(iris.target != y_pred).sum()))
-    Number of mislabeled points out of a total 150 points : 6
+   >>> from sklearn import datasets
+   >>> iris = datasets.load_iris()
+   >>> X, y = iris.data, iris.target
+   >>> from sklearn.model_selection import train_test_split
+   >>> X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=21)
+   >>> from sklearn.naive_bayes import GaussianNB
+   >>> gnb = GaussianNB()
+   >>> y_pred = gnb.fit(X_train, y_train).predict(X_test)
+   >>> print("Number of mislabeled points out of a total %d points : %d"
+   ...       % (iris.data.shape[0],(y_test != y_pred).sum()))
+   Number of mislabeled points out of a total 150 points : 4
 
 .. _multinomial_naive_bayes:
 
