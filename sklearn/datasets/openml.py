@@ -10,7 +10,6 @@ import itertools
 from collections.abc import Generator
 from itertools import islice
 from collections import OrderedDict
-import warnings
 
 from urllib.request import urlopen, Request
 
@@ -22,7 +21,6 @@ from .base import get_data_home
 from urllib.error import HTTPError
 from ..utils import Bunch
 from ..utils import get_chunk_n_rows
-from .. import get_config
 from ..utils import check_pandas_support  # noqa
 
 __all__ = ['fetch_openml']
@@ -750,13 +748,14 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
             y = None
     else:
         # nominal attributes is a dict mapping from the attribute name to the
-        # possible values. Includes also the target column (which will be popped
-        # off below, before it will be packed in the Bunch object)
+        # possible values. Includes also the target column (which will be
+        # popped off below, before it will be packed in the Bunch object)
         nominal_attributes = {k: v for k, v in arff['attributes']
                               if isinstance(v, list) and
                               k in data_columns + target_columns}
 
-        X, y = _convert_arff_data(arff['data'], col_slice_x, col_slice_y, shape)
+        X, y = _convert_arff_data(arff['data'], col_slice_x,
+                                  col_slice_y, shape)
 
         is_classification = {col_name in nominal_attributes
                              for col_name in target_columns}
