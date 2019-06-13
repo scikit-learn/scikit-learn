@@ -5,6 +5,8 @@ from distutils.version import LooseVersion
 from tempfile import mkdtemp
 import shutil
 import time
+import re
+import itertools
 
 import pytest
 import numpy as np
@@ -15,6 +17,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_dict_equal
@@ -23,6 +26,7 @@ from sklearn.utils.testing import assert_no_warnings
 from sklearn.base import clone, BaseEstimator
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
 from sklearn.svm import SVC
+from sklearn.neighbors import LocalOutlierFactor
 from sklearn.linear_model import LogisticRegression, Lasso
 from sklearn.linear_model import LinearRegression
 from sklearn.cluster import KMeans
@@ -232,8 +236,6 @@ def test_pipeline_init_tuple():
     pipe.score(X)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_pipeline_methods_anova():
     # Test the various methods of the pipeline (anova).
     iris = load_iris()
@@ -319,7 +321,7 @@ def test_pipeline_methods_pca_svm():
     X = iris.data
     y = iris.target
     # Test with PCA + SVC
-    clf = SVC(gamma='scale', probability=True, random_state=0)
+    clf = SVC(probability=True, random_state=0)
     pca = PCA(svd_solver='full', n_components='mle', whiten=True)
     pipe = Pipeline([('pca', pca), ('svc', clf)])
     pipe.fit(X, y)
@@ -327,6 +329,36 @@ def test_pipeline_methods_pca_svm():
     pipe.predict_proba(X)
     pipe.predict_log_proba(X)
     pipe.score(X, y)
+
+
+def test_pipeline_score_samples_pca_lof():
+    iris = load_iris()
+    X = iris.data
+    # Test that the score_samples method is implemented on a pipeline.
+    # Test that the score_samples method on pipeline yields same results as
+    # applying transform and score_samples steps separately.
+    pca = PCA(svd_solver='full', n_components='mle', whiten=True)
+    lof = LocalOutlierFactor(novelty=True)
+    pipe = Pipeline([('pca', pca), ('lof', lof)])
+    pipe.fit(X)
+    # Check the shapes
+    assert pipe.score_samples(X).shape == (X.shape[0],)
+    # Check the values
+    lof.fit(pca.fit_transform(X))
+    assert_allclose(pipe.score_samples(X), lof.score_samples(pca.transform(X)))
+
+
+def test_score_samples_on_pipeline_without_score_samples():
+    X = np.array([[1], [2]])
+    y = np.array([1, 2])
+    # Test that a pipeline does not have score_samples method when the final
+    # step of the pipeline does not have score_samples defined.
+    pipe = make_pipeline(LogisticRegression())
+    pipe.fit(X, y)
+    with pytest.raises(AttributeError,
+                       match="'LogisticRegression' object has no attribute "
+                             "'score_samples'"):
+        pipe.score_samples(X)
 
 
 def test_pipeline_methods_preprocessing_svm():
@@ -338,8 +370,7 @@ def test_pipeline_methods_preprocessing_svm():
     n_classes = len(np.unique(y))
     scaler = StandardScaler()
     pca = PCA(n_components=2, svd_solver='randomized', whiten=True)
-    clf = SVC(gamma='scale', probability=True, random_state=0,
-              decision_function_shape='ovr')
+    clf = SVC(probability=True, random_state=0, decision_function_shape='ovr')
 
     for preprocessing in [scaler, pca]:
         pipe = Pipeline([('preprocess', preprocessing), ('svc', clf)])
@@ -646,6 +677,7 @@ def test_set_pipeline_step_passthrough(passthrough):
                        'memory': None,
                        'm2__mult': 2,
                        'last__mult': 5,
+                       'verbose': False
                        })
 
     pipeline.set_params(m2=passthrough)
@@ -830,8 +862,6 @@ def test_feature_union_feature_names():
                          'get_feature_names', ft.get_feature_names)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_classes_property():
     iris = load_iris()
     X = iris.data
@@ -942,8 +972,6 @@ def test_step_name_validation():
                                  [[1]], [1])
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_set_params_nested_pipeline():
     estimator = Pipeline([
         ('a', Pipeline([
@@ -1003,7 +1031,7 @@ def test_pipeline_memory():
         else:
             memory = joblib.Memory(location=cachedir, verbose=10)
         # Test with Transformer + SVC
-        clf = SVC(gamma='scale', probability=True, random_state=0)
+        clf = SVC(probability=True, random_state=0)
         transf = DummyTransf()
         pipe = Pipeline([('transf', clone(transf)), ('svc', clf)])
         cached_pipe = Pipeline([('transf', transf), ('svc', clf)],
@@ -1037,7 +1065,7 @@ def test_pipeline_memory():
         assert_equal(ts, cached_pipe.named_steps['transf'].timestamp_)
         # Create a new pipeline with cloned estimators
         # Check that even changing the name step does not affect the cache hit
-        clf_2 = SVC(gamma='scale', probability=True, random_state=0)
+        clf_2 = SVC(probability=True, random_state=0)
         transf_2 = DummyTransf()
         cached_pipe_2 = Pipeline([('transf_2', transf_2), ('svc', clf_2)],
                                  memory=memory)
@@ -1078,3 +1106,56 @@ def test_pipeline_param_error():
     with pytest.raises(ValueError, match="Pipeline.fit does not accept "
                                          "the sample_weight parameter"):
         clf.fit([[0], [0]], [0, 1], sample_weight=[1, 1])
+
+
+parameter_grid_test_verbose = ((est, pattern, method) for
+                               (est, pattern), method in itertools.product(
+    [
+     (Pipeline([('transf', Transf()), ('clf', FitParamT())]),
+      r'\[Pipeline\].*\(step 1 of 2\) Processing transf.* total=.*\n'
+      r'\[Pipeline\].*\(step 2 of 2\) Processing clf.* total=.*\n$'),
+     (Pipeline([('transf', Transf()), ('noop', None),
+               ('clf', FitParamT())]),
+      r'\[Pipeline\].*\(step 1 of 3\) Processing transf.* total=.*\n'
+      r'\[Pipeline\].*\(step 2 of 3\) Processing noop.* total=.*\n'
+      r'\[Pipeline\].*\(step 3 of 3\) Processing clf.* total=.*\n$'),
+     (Pipeline([('transf', Transf()), ('noop', 'passthrough'),
+               ('clf', FitParamT())]),
+      r'\[Pipeline\].*\(step 1 of 3\) Processing transf.* total=.*\n'
+      r'\[Pipeline\].*\(step 2 of 3\) Processing noop.* total=.*\n'
+      r'\[Pipeline\].*\(step 3 of 3\) Processing clf.* total=.*\n$'),
+     (Pipeline([('transf', Transf()), ('clf', None)]),
+      r'\[Pipeline\].*\(step 1 of 2\) Processing transf.* total=.*\n'
+      r'\[Pipeline\].*\(step 2 of 2\) Processing clf.* total=.*\n$'),
+     (Pipeline([('transf', None), ('mult', Mult())]),
+      r'\[Pipeline\].*\(step 1 of 2\) Processing transf.* total=.*\n'
+      r'\[Pipeline\].*\(step 2 of 2\) Processing mult.* total=.*\n$'),
+     (Pipeline([('transf', 'passthrough'), ('mult', Mult())]),
+      r'\[Pipeline\].*\(step 1 of 2\) Processing transf.* total=.*\n'
+      r'\[Pipeline\].*\(step 2 of 2\) Processing mult.* total=.*\n$'),
+     (FeatureUnion([('mult1', Mult()), ('mult2', Mult())]),
+      r'\[FeatureUnion\].*\(step 1 of 2\) Processing mult1.* total=.*\n'
+      r'\[FeatureUnion\].*\(step 2 of 2\) Processing mult2.* total=.*\n$'),
+     (FeatureUnion([('mult1', None), ('mult2', Mult()), ('mult3', None)]),
+      r'\[FeatureUnion\].*\(step 1 of 1\) Processing mult2.* total=.*\n$')
+    ], ['fit', 'fit_transform', 'fit_predict'])
+    if hasattr(est, method) and not (
+        method == 'fit_transform' and hasattr(est, 'steps') and
+        isinstance(est.steps[-1][1], FitParamT))
+)
+
+
+@pytest.mark.parametrize('est, pattern, method', parameter_grid_test_verbose)
+def test_verbose(est, method, pattern, capsys):
+    func = getattr(est, method)
+
+    X = [[1, 2, 3], [4, 5, 6]]
+    y = [[7], [8]]
+
+    est.set_params(verbose=False)
+    func(X, y)
+    assert not capsys.readouterr().out, 'Got output for verbose=False'
+
+    est.set_params(verbose=True)
+    func(X, y)
+    assert re.match(pattern, capsys.readouterr().out)

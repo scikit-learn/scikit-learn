@@ -12,7 +12,7 @@ to_file=$2
 
 logged_prs() {
 	git log --oneline $from_branch..master sklearn/ |
-		grep -wv -e CI -e DOC -e doc -e MNT -e MAINT -e BLD -e COSMIT -e EXA -e examples -e example -e minor -e STY -e Style -e docstring |
+		grep -wv -e CLN -e TST -e CI -e DOC -e doc -e MNT -e MAINT -e BLD -e COSMIT -e EXA -e examples -e example -e minor -e STY -e Style -e docstring |
 		grep -o '(#[0-9][0-9]\+)$' |
 		grep -o '[0-9]\+'
 }

@@ -35,28 +35,44 @@ Emeritus Core Developers
 ------------------------
 The following people have been active contributors in the past, but are no longer active in the project
 
-- Angel Soler Gollonet
+
 - Alexander Fabisch
 - Alexandre Passos
+- Angel Soler Gollonet
+- Arnaud Joly
 - Chris Gorgolewski
 - David Cournapeau
 - David Warde-Farley
+- Eduard Duchesnay
+- Fabian Pedragosa
+- Gilles Louppe
+- Jacob Schreiber
 - Jake Vanderplas
+- Jaques Grobler
+- Jarrod Millman
 - Kyle Kastner
+- Lars Buitinck
+- Manoj Kumar
+- Mathieu Blondel
 - Matthieu Brucher
+- Noel Dawe
+- Paolo Losi
+- Peter Prettenhofer
 - Raghav Rajagopalan
 - Robert Layton
 - Ron Weiss
+- Satrajit Ghosh
 - Shiqiao Du
 - Thouis (Ray) Jones
 - Vincent Dubourg
 - Vincent Michel
 - Virgile Fritsch
+- Wei Li
 
 Governance
 ----------
 The decision making process and governance structure of scikit-learn is laid
-out in the `governance document <governance>`_.
+out in the :ref:`governance document <governance>`.
 
 .. _citing-scikit-learn:
 

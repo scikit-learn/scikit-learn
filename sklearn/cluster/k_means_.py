@@ -42,7 +42,7 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
     """Init n_clusters seeds according to k-means++
 
     Parameters
-    -----------
+    ----------
     X : array or sparse matrix, shape (n_samples, n_features)
         The data to pick seeds for. To avoid memory copy, the input data
         should be double precision (dtype=np.float64).
@@ -704,7 +704,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
         an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
 
-    x_squared_norms :  array, shape (n_samples,), optional
+    x_squared_norms : array, shape (n_samples,), optional
         Squared euclidean norm of each data point. Pass it if you have it at
         hands already to avoid it being recomputed here. Default: None
 
@@ -885,7 +885,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         probably much faster than the default batch implementation.
 
     Notes
-    ------
+    -----
     The k-means problem is solved using either Lloyd's or Elkan's algorithm.
 
     The average complexity is given by O(k n T), were n is the number of
@@ -1417,8 +1417,8 @@ class MiniBatchKMeans(KMeans):
     ...               [3, 2], [5, 5], [1, -1]])
     >>> # manually fit on batches
     >>> kmeans = MiniBatchKMeans(n_clusters=2,
-    ...         random_state=0,
-    ...         batch_size=6)
+    ...                          random_state=0,
+    ...                          batch_size=6)
     >>> kmeans = kmeans.partial_fit(X[0:6,:])
     >>> kmeans = kmeans.partial_fit(X[6:12,:])
     >>> kmeans.cluster_centers_
@@ -1428,9 +1428,9 @@ class MiniBatchKMeans(KMeans):
     array([0, 1], dtype=int32)
     >>> # fit on the whole data
     >>> kmeans = MiniBatchKMeans(n_clusters=2,
-    ...         random_state=0,
-    ...         batch_size=6,
-    ...         max_iter=10).fit(X)
+    ...                          random_state=0,
+    ...                          batch_size=6,
+    ...                          max_iter=10).fit(X)
     >>> kmeans.cluster_centers_
     array([[3.95918367, 2.40816327],
            [1.12195122, 1.3902439 ]])

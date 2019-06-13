@@ -1,5 +1,3 @@
-import os
-import pytest
 
 
 def test_old_pickle(tmpdir):

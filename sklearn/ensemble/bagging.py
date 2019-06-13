@@ -299,7 +299,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         # Validate max_samples
         if max_samples is None:
             max_samples = self.max_samples
-        elif not isinstance(max_samples, (numbers.Integral, np.integer)):
+        elif not isinstance(max_samples, numbers.Integral):
             max_samples = int(max_samples * X.shape[0])
 
         if not (0 < max_samples <= X.shape[0]):
@@ -309,7 +309,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         self._max_samples = max_samples
 
         # Validate max_features
-        if isinstance(self.max_features, (numbers.Integral, np.integer)):
+        if isinstance(self.max_features, numbers.Integral):
             max_features = self.max_features
         elif isinstance(self.max_features, np.float):
             max_features = self.max_features * self.n_features_

@@ -98,9 +98,9 @@ make_args="SPHINXOPTS=-T $make_args"  # show full traceback on exception
 # notation in the HTML documentation
 sudo -E apt-get -yq update
 sudo -E apt-get -yq remove texlive-binaries --purge
-sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes \
+sudo -E apt-get -yq --no-install-suggests --no-install-recommends \
     install dvipng texlive-latex-base texlive-latex-extra \
-    texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended\
+    texlive-latex-recommended texlive-fonts-recommended \
     latexmk gsfonts
 
 # deactivate circleci virtualenv and setup a miniconda env instead
@@ -113,7 +113,6 @@ wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
    -O miniconda.sh
 chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
 export PATH="$MINICONDA_PATH/bin:$PATH"
-conda update --yes --quiet conda
 
 # Configure the conda environment and put it in the path using the
 # provided versions
@@ -125,7 +124,7 @@ conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
 
 source activate testenv
 pip install "sphinx-gallery>=0.2,<0.3"
-pip install numpydoc==0.8
+pip install numpydoc==0.9
 
 # Build and install scikit-learn in dev mode
 python setup.py develop

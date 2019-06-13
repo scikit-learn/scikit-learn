@@ -331,7 +331,7 @@ def _ensure_no_complex_data(array):
 def check_array(array, accept_sparse=False, accept_large_sparse=True,
                 dtype="numeric", order=None, copy=False, force_all_finite=True,
                 ensure_2d=True, allow_nd=False, ensure_min_samples=1,
-                ensure_min_features=1, warn_on_dtype=False, estimator=None):
+                ensure_min_features=1, warn_on_dtype=None, estimator=None):
 
     """Input validation on an array, list, sparse matrix or similar.
 
@@ -406,9 +406,13 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         dimensions or is originally 1D and ``ensure_2d`` is True. Setting to 0
         disables this check.
 
-    warn_on_dtype : boolean (default=False)
+    warn_on_dtype : boolean or None, optional (default=None)
         Raise DataConversionWarning if the dtype of the input data structure
         does not match the requested dtype, causing a memory copy.
+
+        .. deprecated:: 0.21
+            ``warn_on_dtype`` is deprecated in version 0.21 and will be
+            removed in 0.23.
 
     estimator : str or estimator instance (default=None)
         If passed, include the name of the estimator in warning messages.
@@ -417,8 +421,15 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     -------
     array_converted : object
         The converted and validated array.
-
     """
+    # warn_on_dtype deprecation
+    if warn_on_dtype is not None:
+        warnings.warn(
+            "'warn_on_dtype' is deprecated in version 0.21 and will be "
+            "removed in 0.23. Don't set `warn_on_dtype` to remove this "
+            "warning.",
+            DeprecationWarning)
+
     # store reference to original array to check if copy is needed when
     # function returns
     array_orig = array
@@ -589,7 +600,7 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
               dtype="numeric", order=None, copy=False, force_all_finite=True,
               ensure_2d=True, allow_nd=False, multi_output=False,
               ensure_min_samples=1, ensure_min_features=1, y_numeric=False,
-              warn_on_dtype=False, estimator=None):
+              warn_on_dtype=None, estimator=None):
     """Input validation for standard estimators.
 
     Checks X and y for consistent length, enforces X to be 2D and y 1D. By
@@ -674,9 +685,13 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
         it is converted to float64. Should only be used for regression
         algorithms.
 
-    warn_on_dtype : boolean (default=False)
+    warn_on_dtype : boolean or None, optional (default=None)
         Raise DataConversionWarning if the dtype of the input data structure
         does not match the requested dtype, causing a memory copy.
+
+        .. deprecated:: 0.21
+            ``warn_on_dtype`` is deprecated in version 0.21 and will be
+             removed in 0.23.
 
     estimator : str or estimator instance (default=None)
         If passed, include the name of the estimator in warning messages.
@@ -757,7 +772,7 @@ def check_random_state(seed):
     """
     if seed is None or seed is np.random:
         return np.random.mtrand._rand
-    if isinstance(seed, (numbers.Integral, np.integer)):
+    if isinstance(seed, numbers.Integral):
         return np.random.RandomState(seed)
     if isinstance(seed, np.random.RandomState):
         return seed

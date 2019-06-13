@@ -168,13 +168,13 @@ in bias::
     >>> clf = DecisionTreeClassifier(max_depth=None, min_samples_split=2,
     ...     random_state=0)
     >>> scores = cross_val_score(clf, X, y, cv=5)
-    >>> scores.mean()                               # doctest: +ELLIPSIS
+    >>> scores.mean()
     0.98...
 
     >>> clf = RandomForestClassifier(n_estimators=10, max_depth=None,
     ...     min_samples_split=2, random_state=0)
     >>> scores = cross_val_score(clf, X, y, cv=5)
-    >>> scores.mean()                               # doctest: +ELLIPSIS
+    >>> scores.mean()
     0.999...
 
     >>> clf = ExtraTreesClassifier(n_estimators=10, max_depth=None,
@@ -385,7 +385,7 @@ learners::
     >>> iris = load_iris()
     >>> clf = AdaBoostClassifier(n_estimators=100)
     >>> scores = cross_val_score(clf, iris.data, iris.target, cv=5)
-    >>> scores.mean()                             # doctest: +ELLIPSIS
+    >>> scores.mean()
     0.9...
 
 The number of weak learners is controlled by the parameter ``n_estimators``. The
@@ -456,6 +456,39 @@ The module :mod:`sklearn.ensemble` provides methods
 for both classification and regression via gradient boosted regression
 trees.
 
+
+.. note::
+
+  Scikit-learn 0.21 introduces two new experimental implementation of
+  gradient boosting trees, namely :class:`HistGradientBoostingClassifier`
+  and :class:`HistGradientBoostingRegressor`, inspired by
+  `LightGBM <https://github.com/Microsoft/LightGBM>`_. These fast estimators
+  first bin the input samples ``X`` into integer-valued bins (typically 256
+  bins) which tremendously reduces the number of splitting points to
+  consider, and allow the algorithm to leverage integer-based data
+  structures (histograms) instead of relying on sorted continuous values.
+
+  The new histogram-based estimators can be orders of magnitude faster than
+  their continuous counterparts when the number of samples is larger than
+  tens of thousands of samples. The API of these new estimators is slightly
+  different, and some of the features from :class:`GradientBoostingClassifier`
+  and :class:`GradientBoostingRegressor` are not yet supported.
+
+  These new estimators are still **experimental** for now: their predictions
+  and their API might change without any deprecation cycle. To use them, you
+  need to explicitly import ``enable_hist_gradient_boosting``::
+
+    >>> # explicitly require this experimental feature
+    >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+    >>> # now you can import normally from ensemble
+    >>> from sklearn.ensemble import HistGradientBoostingClassifier
+
+  The following guide focuses on :class:`GradientBoostingClassifier` and
+  :class:`GradientBoostingRegressor` only, which might be preferred for small
+  sample sizes since binning may lead to split points that are too approximate
+  in this setting.
+
+
 Classification
 ---------------
 
@@ -473,7 +506,7 @@ with 100 decision stumps as weak learners::
 
     >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
     ...     max_depth=1, random_state=0).fit(X_train, y_train)
-    >>> clf.score(X_test, y_test)                 # doctest: +ELLIPSIS
+    >>> clf.score(X_test, y_test)
     0.913...
 
 The number of weak learners (i.e. regression trees) is controlled by the parameter ``n_estimators``; :ref:`The size of each tree <gradient_boosting_tree_size>` can be controlled either by setting the tree depth via ``max_depth`` or by setting the number of leaf nodes via ``max_leaf_nodes``. The ``learning_rate`` is a hyper-parameter in the range (0.0, 1.0] that controls overfitting via :ref:`shrinkage <gradient_boosting_shrinkage>` .
@@ -507,7 +540,7 @@ for regression which can be specified via the argument
     >>> y_train, y_test = y[:200], y[200:]
     >>> est = GradientBoostingRegressor(n_estimators=100, learning_rate=0.1,
     ...     max_depth=1, random_state=0, loss='ls').fit(X_train, y_train)
-    >>> mean_squared_error(y_test, est.predict(X_test))    # doctest: +ELLIPSIS
+    >>> mean_squared_error(y_test, est.predict(X_test))
     5.00...
 
 The figure below shows the results of applying :class:`GradientBoostingRegressor`
@@ -546,7 +579,7 @@ fitted model.
 
   >>> _ = est.set_params(n_estimators=200, warm_start=True)  # set warm_start and new nr of trees
   >>> _ = est.fit(X_train, y_train) # fit additional 100 trees to est
-  >>> mean_squared_error(y_test, est.predict(X_test))    # doctest: +ELLIPSIS
+  >>> mean_squared_error(y_test, est.predict(X_test))
   3.84...
 
 .. _gradient_boosting_tree_size:
@@ -790,137 +823,12 @@ accessed via the ``feature_importances_`` property::
     >>> X, y = make_hastie_10_2(random_state=0)
     >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
     ...     max_depth=1, random_state=0).fit(X, y)
-    >>> clf.feature_importances_  # doctest: +ELLIPSIS
+    >>> clf.feature_importances_
     array([0.10..., 0.10..., 0.11..., ...
 
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regression.py`
-
-.. currentmodule:: sklearn.ensemble.partial_dependence
-
-.. _partial_dependence:
-
-Partial dependence
-..................
-
-Partial dependence plots (PDP) show the dependence between the target response
-and a set of 'target' features, marginalizing over the
-values of all other features (the 'complement' features).
-Intuitively, we can interpret the partial dependence as the expected
-target response [1]_ as a function of the 'target' features [2]_.
-
-Due to the limits of human perception the size of the target feature
-set must be small (usually, one or two) thus the target features are
-usually chosen among the most important features.
-
-The Figure below shows four one-way and one two-way partial dependence plots
-for the California housing dataset:
-
-.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_partial_dependence_001.png
-   :target: ../auto_examples/ensemble/plot_partial_dependence.html
-   :align: center
-   :scale: 70
-
-One-way PDPs tell us about the interaction between the target
-response and the target feature (e.g. linear, non-linear).
-The upper left plot in the above Figure shows the effect of the
-median income in a district on the median house price; we can
-clearly see a linear relationship among them.
-
-PDPs with two target features show the
-interactions among the two features. For example, the two-variable PDP in the
-above Figure shows the dependence of median house price on joint
-values of house age and avg. occupants per household. We can clearly
-see an interaction between the two features:
-For an avg. occupancy greater than two, the house price is nearly independent
-of the house age, whereas for values less than two there is a strong dependence
-on age.
-
-The module :mod:`partial_dependence` provides a convenience function
-:func:`~sklearn.ensemble.partial_dependence.plot_partial_dependence`
-to create one-way and two-way partial dependence plots. In the below example
-we show how to create a grid of partial dependence plots: two one-way
-PDPs for the features ``0`` and ``1`` and a two-way PDP between the two
-features::
-
-    >>> from sklearn.datasets import make_hastie_10_2
-    >>> from sklearn.ensemble import GradientBoostingClassifier
-    >>> from sklearn.ensemble.partial_dependence import plot_partial_dependence
-
-    >>> X, y = make_hastie_10_2(random_state=0)
-    >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
-    ...     max_depth=1, random_state=0).fit(X, y)
-    >>> features = [0, 1, (0, 1)]
-    >>> fig, axs = plot_partial_dependence(clf, X, features) #doctest: +SKIP
-
-For multi-class models, you need to set the class label for which the
-PDPs should be created via the ``label`` argument::
-
-    >>> from sklearn.datasets import load_iris
-    >>> iris = load_iris()
-    >>> mc_clf = GradientBoostingClassifier(n_estimators=10,
-    ...     max_depth=1).fit(iris.data, iris.target)
-    >>> features = [3, 2, (3, 2)]
-    >>> fig, axs = plot_partial_dependence(mc_clf, X, features, label=0) #doctest: +SKIP
-
-If you need the raw values of the partial dependence function rather
-than the plots you can use the
-:func:`~sklearn.ensemble.partial_dependence.partial_dependence` function::
-
-    >>> from sklearn.ensemble.partial_dependence import partial_dependence
-
-    >>> pdp, axes = partial_dependence(clf, [0], X=X)
-    >>> pdp  # doctest: +ELLIPSIS
-    array([[ 2.46643157,  2.46643157, ...
-    >>> axes  # doctest: +ELLIPSIS
-    [array([-1.62497054, -1.59201391, ...
-
-The function requires either the argument ``grid`` which specifies the
-values of the target features on which the partial dependence function
-should be evaluated or the argument ``X`` which is a convenience mode
-for automatically creating ``grid`` from the training data. If ``X``
-is given, the ``axes`` value returned by the function gives the axis
-for each target feature.
-
-For each value of the 'target' features in the ``grid`` the partial
-dependence function need to marginalize the predictions of a tree over
-all possible values of the 'complement' features. In decision trees
-this function can be evaluated efficiently without reference to the
-training data. For each grid point a weighted tree traversal is
-performed: if a split node involves a 'target' feature, the
-corresponding left or right branch is followed, otherwise both
-branches are followed, each branch is weighted by the fraction of
-training samples that entered that branch. Finally, the partial
-dependence is given by a weighted average of all visited leaves. For
-tree ensembles the results of each individual tree are again
-averaged.
-
-.. rubric:: Footnotes
-
-.. [1] For classification with ``loss='deviance'``  the target
-   response is logit(p).
-
-.. [2] More precisely its the expectation of the target response after
-   accounting for the initial model; partial dependence plots
-   do not include the ``init`` model.
-
-.. topic:: Examples:
-
- * :ref:`sphx_glr_auto_examples_ensemble_plot_partial_dependence.py`
-
-
-.. topic:: References
-
- .. [F2001] J. Friedman, "Greedy Function Approximation: A Gradient Boosting Machine",
-   The Annals of Statistics, Vol. 29, No. 5, 2001.
-
- .. [F1999] J. Friedman, "Stochastic Gradient Boosting", 1999
-
- .. [HTF2009] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical Learning Ed. 2", Springer, 2009.
-
- .. [R2007] G. Ridgeway, "Generalized Boosted Models: A guide to the gbm package", 2007
-
 
  .. _voting_classifier:
 
@@ -973,15 +881,14 @@ The following example shows how to fit the majority rule classifier::
    >>> iris = datasets.load_iris()
    >>> X, y = iris.data[:, 1:3], iris.target
 
-   >>> clf1 = LogisticRegression(solver='lbfgs', multi_class='multinomial',
-   ...                           random_state=1)
+   >>> clf1 = LogisticRegression(random_state=1)
    >>> clf2 = RandomForestClassifier(n_estimators=50, random_state=1)
    >>> clf3 = GaussianNB()
 
    >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='hard')
 
    >>> for clf, label in zip([clf1, clf2, clf3, eclf], ['Logistic Regression', 'Random Forest', 'naive Bayes', 'Ensemble']):
-   ...     scores = cross_val_score(clf, X, y, cv=5, scoring='accuracy')
+   ...     scores = cross_val_score(clf, X, y, scoring='accuracy', cv=5)
    ...     print("Accuracy: %0.2f (+/- %0.2f) [%s]" % (scores.mean(), scores.std(), label))
    Accuracy: 0.95 (+/- 0.04) [Logistic Regression]
    Accuracy: 0.94 (+/- 0.04) [Random Forest]
@@ -1039,7 +946,7 @@ Vector Machine, a Decision Tree, and a K-nearest neighbor classifier::
    >>> # Training classifiers
    >>> clf1 = DecisionTreeClassifier(max_depth=4)
    >>> clf2 = KNeighborsClassifier(n_neighbors=7)
-   >>> clf3 = SVC(gamma='scale', kernel='rbf', probability=True)
+   >>> clf3 = SVC(kernel='rbf', probability=True)
    >>> eclf = VotingClassifier(estimators=[('dt', clf1), ('knn', clf2), ('svc', clf3)],
    ...                         voting='soft', weights=[2, 1, 2])
 
@@ -1060,8 +967,7 @@ The `VotingClassifier` can also be used together with `GridSearchCV` in order
 to tune the hyperparameters of the individual estimators::
 
    >>> from sklearn.model_selection import GridSearchCV
-   >>> clf1 = LogisticRegression(solver='lbfgs', multi_class='multinomial',
-   ...                           random_state=1)
+   >>> clf1 = LogisticRegression(random_state=1)
    >>> clf2 = RandomForestClassifier(random_state=1)
    >>> clf3 = GaussianNB()
    >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='soft')

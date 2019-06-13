@@ -500,7 +500,7 @@ sufficient to not generate the relevant features, leaving their columns empty.
 Links
 ......
 
-  - `scikit-learn developer performance documentation <../developers/performance.html>`_
+  - :ref:`scikit-learn developer performance documentation <performance-howto>`
   - `Scipy sparse matrix formats documentation <https://docs.scipy.org/doc/scipy/reference/sparse.html>`_
 
 Parallelism, resource management, and configuration

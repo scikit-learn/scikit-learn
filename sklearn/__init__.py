@@ -45,7 +45,7 @@ warnings.filterwarnings('always', category=DeprecationWarning,
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = '0.21.dev0'
+__version__ = '0.22.dev0'
 
 
 # On OSX, we can get a runtime error due to multiple OpenMP libraries loaded
@@ -80,10 +80,11 @@ else:
 
     __all__ = ['calibration', 'cluster', 'covariance', 'cross_decomposition',
                'datasets', 'decomposition', 'dummy', 'ensemble', 'exceptions',
-               'externals', 'feature_extraction', 'feature_selection',
-               'gaussian_process', 'isotonic', 'kernel_approximation',
-               'kernel_ridge', 'linear_model', 'manifold', 'metrics',
-               'mixture', 'model_selection', 'multiclass', 'multioutput',
+               'experimental', 'externals', 'feature_extraction',
+               'feature_selection', 'gaussian_process', 'inspection',
+               'isotonic', 'kernel_approximation', 'kernel_ridge',
+               'linear_model', 'manifold', 'metrics', 'mixture',
+               'model_selection', 'multiclass', 'multioutput',
                'naive_bayes', 'neighbors', 'neural_network', 'pipeline',
                'preprocessing', 'random_projection', 'semi_supervised',
                'svm', 'tree', 'discriminant_analysis', 'impute', 'compose',

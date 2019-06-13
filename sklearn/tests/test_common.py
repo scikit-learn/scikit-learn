@@ -215,7 +215,7 @@ def test_import_all_consistency():
 
 
 def test_root_import_all_completeness():
-    EXCEPTIONS = ('utils', 'tests', 'base', 'setup')
+    EXCEPTIONS = ('utils', 'tests', 'base', 'setup', 'conftest')
     for _, modname, _ in pkgutil.walk_packages(path=sklearn.__path__,
                                                onerror=lambda _: None):
         if '.' in modname or modname.startswith('_') or modname in EXCEPTIONS:

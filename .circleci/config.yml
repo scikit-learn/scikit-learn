@@ -3,7 +3,7 @@ version: 2
 jobs:
   doc-min-dependencies:
     docker:
-      - image: circleci/python:3.6
+      - image: circleci/python:3.7.3-stretch
     environment:
       - MINICONDA_PATH: ~/miniconda
       - CONDA_ENV_NAME: testenv
@@ -32,7 +32,7 @@ jobs:
 
   doc:
     docker:
-      - image: circleci/python:3.6
+      - image: circleci/python:3.7.3-stretch
     environment:
       - MINICONDA_PATH: ~/miniconda
       - CONDA_ENV_NAME: testenv
@@ -71,6 +71,9 @@ jobs:
       - run:
           name: flake8
           command: ./build_tools/circle/flake8_diff.sh
+      - run:
+          name: deprecated_properties_checks
+          command: ./build_tools/circle/check_deprecated_properties.sh
 
   pypy3:
     docker:

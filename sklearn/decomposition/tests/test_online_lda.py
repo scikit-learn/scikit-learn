@@ -180,12 +180,12 @@ def test_lda_negative_input():
 
 
 def test_lda_no_component_error():
-    # test `transform` and `perplexity` before `fit`
+    # test `perplexity` before `fit`
     rng = np.random.RandomState(0)
     X = rng.randint(4, size=(20, 10))
     lda = LatentDirichletAllocation()
-    regex = r"^no 'components_' attribute"
-    assert_raises_regexp(NotFittedError, regex, lda.transform, X)
+    regex = ("This LatentDirichletAllocation instance is not fitted yet. "
+             "Call 'fit' with appropriate arguments before using this method.")
     assert_raises_regexp(NotFittedError, regex, lda.perplexity, X)
 
 

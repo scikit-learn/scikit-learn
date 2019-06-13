@@ -40,6 +40,10 @@ ticket to the
 `GitHub issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_. You are
 also welcome to post feature requests or pull requests.
 
+Governance
+==========
+The decision making process and governance structure of scikit-learn is laid
+out in the governance document: :ref:`governance`.
 
 Ways to contribute
 ==================
@@ -61,6 +65,13 @@ Another way to contribute is to report issues you're facing, and give a "thumbs
 up" on issues that others reported and that are relevant to you.  It also helps
 us if you spread the word: reference the project from your blog and articles,
 link to it from your website, or simply star to say "I use it":
+
+In case a contribution/issue involves changes to the API principles
+or changes to dependencies or supported versions, it must be backed by a
+:ref:`slep`, where a SLEP must be submitted as a pull-request to
+`enhancement proposals <https://scikit-learn-enhancement-proposals.readthedocs.io>`_
+using the `SLEP template <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep_template.html>`_
+and follows the decision-making process outlined in :ref:`governance`.
 
 .. raw:: html
 
@@ -184,67 +195,67 @@ The preferred way to contribute to scikit-learn is to fork the `main
 repository <https://github.com/scikit-learn/scikit-learn/>`__ on GitHub,
 then submit a "pull request" (PR):
 
- 1. `Create an account <https://github.com/join>`_ on
-    GitHub if you do not already have one.
+1. `Create an account <https://github.com/join>`_ on
+   GitHub if you do not already have one.
 
- 2. Fork the `project repository
-    <https://github.com/scikit-learn/scikit-learn>`__: click on the 'Fork'
-    button near the top of the page. This creates a copy of the code under your
-    account on the GitHub user account. For more details on how to fork a
-    repository see `this guide <https://help.github.com/articles/fork-a-repo/>`_.
+2. Fork the `project repository
+   <https://github.com/scikit-learn/scikit-learn>`__: click on the 'Fork'
+   button near the top of the page. This creates a copy of the code under your
+   account on the GitHub user account. For more details on how to fork a
+   repository see `this guide <https://help.github.com/articles/fork-a-repo/>`_.
 
- 3. Clone your fork of the scikit-learn repo from your GitHub account to your
-    local disk::
+3. Clone your fork of the scikit-learn repo from your GitHub account to your
+   local disk::
 
-        $ git clone git@github.com:YourLogin/scikit-learn.git
-        $ cd scikit-learn
+       $ git clone git@github.com:YourLogin/scikit-learn.git
+       $ cd scikit-learn
 
- 4. Install library in editable mode::
+4. Install library in editable mode::
 
-        $ pip install --editable .
+       $ pip install --editable .
 
-    for more details about advanced installation, see the
-    :ref:`install_bleeding_edge` section.
+   for more details about advanced installation, see the
+   :ref:`install_bleeding_edge` section.
 
- 5. Create a branch to hold your development changes::
+5. Create a branch to hold your development changes::
 
-        $ git checkout -b my-feature
+       $ git checkout -b my-feature
 
-    and start making changes. Always use a ``feature`` branch. It's good practice to
-    never work on the ``master`` branch!
+   and start making changes. Always use a ``feature`` branch. It's good practice to
+   never work on the ``master`` branch!
 
-.. note::
+   .. note::
 
-  In the above setup, your ``origin`` remote repository points to
-  ``YourLogin/scikit-learn.git``. If you wish to fetch/merge from the main
-  repository instead of your forked one, you will need to add another remote
-  to use instead of ``origin``. If we choose the name ``upstream`` for it, the
-  command will be::
+     In the above setup, your ``origin`` remote repository points to
+     ``YourLogin/scikit-learn.git``. If you wish to fetch/merge from the main
+     repository instead of your forked one, you will need to add another remote
+     to use instead of ``origin``. If we choose the name ``upstream`` for it, the
+     command will be::
 
-        $ git remote add upstream https://github.com/scikit-learn/scikit-learn.git
+         $ git remote add upstream https://github.com/scikit-learn/scikit-learn.git
 
-  And in order to fetch the new remote and base your work on the latest changes
-  of it you can::
+     And in order to fetch the new remote and base your work on the latest changes
+     of it you can::
 
-        $ git fetch upstream
-        $ git checkout -b my-feature upstream/master
+         $ git fetch upstream
+         $ git checkout -b my-feature upstream/master
 
- 6. Develop the feature on your feature branch on your computer, using Git to do the
-    version control. When you're done editing, add changed files using ``git add``
-    and then ``git commit`` files::
+6. Develop the feature on your feature branch on your computer, using Git to do the
+   version control. When you're done editing, add changed files using ``git add``
+   and then ``git commit`` files::
 
-        $ git add modified_files
-        $ git commit
+       $ git add modified_files
+       $ git commit
 
-    to record your changes in Git, then push the changes to your GitHub account with::
+   to record your changes in Git, then push the changes to your GitHub account with::
 
-        $ git push -u origin my-feature
+       $ git push -u origin my-feature
 
- 7. Follow `these
-    <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
-    instructions to create a pull request from your fork. This will send an
-    email to the committers. You may want to consider sending an email to the
-    mailing list for more visibility.
+7. Follow `these
+   <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
+   instructions to create a pull request from your fork. This will send an
+   email to the committers. You may want to consider sending an email to the
+   mailing list for more visibility.
 
 .. note::
 
@@ -615,7 +626,7 @@ reviewing pull requests, you may find :ref:`this tip
 .. _testing_coverage:
 
 Testing and improving test coverage
-------------------------------------
+-----------------------------------
 
 High-quality `unit testing <https://en.wikipedia.org/wiki/Unit_testing>`_
 is a corner-stone of the scikit-learn development process. For this
@@ -630,22 +641,42 @@ the corresponding subpackages.
 
 We expect code coverage of new features to be at least around 90%.
 
-.. note:: **Workflow to improve test coverage**
-
-   To test code coverage, you need to install the `coverage
-   <https://pypi.org/project/coverage/>`_ package in addition to pytest.
-
-   1. Run 'make test-coverage'. The output lists for each file the line
-      numbers that are not tested.
-
-   2. Find a low hanging fruit, looking at which lines are not tested,
-      write or adapt a test specifically for these lines.
-
-   3. Loop.
-
 For guidelines on how to use ``pytest`` efficiently, see the
 :ref:`pytest_tips`.
 
+Writing matplotlib related tests
+................................
+
+Test fixtures ensure that a set of tests will be executing with the appropriate
+initialization and cleanup. The scikit-learn test suite implements a fixture
+which can be used with ``matplotlib``.
+
+``pyplot``
+    The ``pyplot`` fixture should be used when a test function is dealing with
+    ``matplotlib``. ``matplotlib`` is a soft dependency and is not required.
+    This fixture is in charge of skipping the tests if ``matplotlib`` is not
+    installed. In addition, figures created during the tests will be
+    automatically closed once the test function has been executed.
+
+To use this fixture in a test function, one needs to pass it as an
+argument::
+
+    def test_requiring_mpl_fixture(pyplot):
+        # you can now safely use matplotlib
+
+Workflow to improve test coverage
+.................................
+
+To test code coverage, you need to install the `coverage
+<https://pypi.org/project/coverage/>`_ package in addition to pytest.
+
+1. Run 'make test-coverage'. The output lists for each file the line
+    numbers that are not tested.
+
+2. Find a low hanging fruit, looking at which lines are not tested,
+    write or adapt a test specifically for these lines.
+
+3. Loop.
 
 Developers web site
 -------------------
@@ -860,12 +891,14 @@ to ``zero_one`` and call ``zero_one_loss`` from that function::
         return zero_one_loss(y_true, y_pred, normalize)
 
 If an attribute is to be deprecated,
-use the decorator ``deprecated`` on a property.
+use the decorator ``deprecated`` on a property. Please note that the
+``property`` decorator should be placed before the ``deprecated``
+decorator for the docstrings to be rendered properly.
 E.g., renaming an attribute ``labels_`` to ``classes_`` can be done as::
 
-    @property
     @deprecated("Attribute labels_ was deprecated in version 0.13 and "
                 "will be removed in 0.15. Use 'classes_' instead")
+    @property
     def labels_(self):
         return self.classes_
 
@@ -1475,8 +1508,8 @@ decide what tests to run and what input data is appropriate. Tags can depend on
 estimator parameters or even system architecture and can in general only be
 determined at runtime.
 
-The default value of all tags except for ``X_types`` is ``False``. These are
-defined in the ``BaseEstimator`` class.
+The default value of all tags except for ``X_types`` and ``requires_fit`` is
+``False``. These are defined in the ``BaseEstimator`` class.
 
 The current set of estimator tags are:
 
@@ -1499,6 +1532,10 @@ stateless
     whether the estimator needs access to data for fitting. Even though
     an estimator is stateless, it might still need a call to ``fit`` for initialization.
 
+requires_fit
+    whether the estimator requires to be fitted before calling one of
+    `transform`, `predict`, `predict_proba`, or `decision_function`.
+
 allow_nan
     whether the estimator supports data with missing values encoded as np.NaN
 
@@ -1512,6 +1549,10 @@ poor_score
 
 multioutput_only
     whether estimator supports only multi-output classification or regression.
+
+binary_only
+    whether estimator supports binary classification but lacks multi-class
+    classification support.
 
 _skip_test
     whether to skip common tests entirely. Don't use this unless you have a *very good* reason.

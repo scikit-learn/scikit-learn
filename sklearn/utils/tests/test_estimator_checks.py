@@ -20,6 +20,7 @@ from sklearn.utils.estimator_checks import set_checking_parameters
 from sklearn.utils.estimator_checks import check_estimators_unfitted
 from sklearn.utils.estimator_checks import check_fit_score_takes_y
 from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
+from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.estimator_checks import check_outlier_corruption
 from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
 from sklearn.linear_model import LinearRegression, SGDClassifier
@@ -29,6 +30,7 @@ from sklearn.decomposition import NMF
 from sklearn.linear_model import MultiTaskElasticNet
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsRegressor
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.validation import check_X_y, check_array
 
 
@@ -167,8 +169,7 @@ class CorrectNotFittedErrorClassifier(BaseBadClassifier):
         return self
 
     def predict(self, X):
-        if not hasattr(self, 'coef_'):
-            raise CorrectNotFittedError("estimator is not fitted yet")
+        check_is_fitted(self, 'coef_')
         X = check_array(X)
         return np.ones(X.shape[0])
 
@@ -274,6 +275,21 @@ class SparseTransformer(BaseEstimator):
         if X.shape[1] != self.X_shape_[1]:
             raise ValueError('Bad number of features')
         return sp.csr_matrix(X)
+
+
+class UntaggedBinaryClassifier(DecisionTreeClassifier):
+    # Toy classifier that only supports binary classification, will fail tests.
+    def fit(self, X, y, sample_weight=None):
+        super().fit(X, y, sample_weight)
+        if self.n_classes_ > 2:
+            raise ValueError('Only 2 classes are supported')
+        return self
+
+
+class TaggedBinaryClassifier(UntaggedBinaryClassifier):
+    # Toy classifier that only supports binary classification.
+    def _more_tags(self):
+        return {'binary_only': True}
 
 
 def test_check_fit_score_takes_y_works_on_deprecated_fit():
@@ -385,6 +401,14 @@ def test_check_estimator():
     check_estimator(MultiTaskElasticNet)
     check_estimator(MultiTaskElasticNet())
 
+    # doesn't error on binary_only tagged estimator
+    check_estimator(TaggedBinaryClassifier)
+
+    # does error on binary_only untagged estimator
+    msg = 'Only 2 classes are supported'
+    assert_raises_regex(ValueError, msg, check_estimator,
+                        UntaggedBinaryClassifier)
+
 
 def test_check_outlier_corruption():
     # should raise AssertionError
@@ -434,7 +458,7 @@ def test_check_estimator_clones():
 def test_check_estimators_unfitted():
     # check that a ValueError/AttributeError is raised when calling predict
     # on an unfitted estimator
-    msg = "AttributeError or ValueError not raised by predict"
+    msg = "NotFittedError not raised by predict"
     assert_raises_regex(AssertionError, msg, check_estimators_unfitted,
                         "estimator", NoSparseClassifier())
 
