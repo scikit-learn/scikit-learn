@@ -150,12 +150,12 @@ class GaussianNB(BaseNB):
     >>> from sklearn.naive_bayes import GaussianNB
     >>> clf = GaussianNB()
     >>> clf.fit(X, Y)
-    GaussianNB(priors=None, var_smoothing=1e-09)
+    GaussianNB()
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
     >>> clf_pf = GaussianNB()
     >>> clf_pf.partial_fit(X, Y, np.unique(Y))
-    GaussianNB(priors=None, var_smoothing=1e-09)
+    GaussianNB()
     >>> print(clf_pf.predict([[-0.8, -1]]))
     [1]
     """
@@ -692,7 +692,7 @@ class MultinomialNB(BaseDiscreteNB):
     >>> from sklearn.naive_bayes import MultinomialNB
     >>> clf = MultinomialNB()
     >>> clf.fit(X, y)
-    MultinomialNB(alpha=1.0, class_prior=None, fit_prior=True)
+    MultinomialNB()
     >>> print(clf.predict(X[2:3]))
     [3]
 
@@ -793,7 +793,7 @@ class ComplementNB(BaseDiscreteNB):
     >>> from sklearn.naive_bayes import ComplementNB
     >>> clf = ComplementNB()
     >>> clf.fit(X, y)
-    ComplementNB(alpha=1.0, class_prior=None, fit_prior=True, norm=False)
+    ComplementNB()
     >>> print(clf.predict(X[2:3]))
     [3]
 
@@ -895,7 +895,7 @@ class BernoulliNB(BaseDiscreteNB):
     >>> from sklearn.naive_bayes import BernoulliNB
     >>> clf = BernoulliNB()
     >>> clf.fit(X, Y)
-    BernoulliNB(alpha=1.0, binarize=0.0, class_prior=None, fit_prior=True)
+    BernoulliNB()
     >>> print(clf.predict(X[2:3]))
     [3]
 

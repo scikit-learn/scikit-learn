@@ -1446,8 +1446,7 @@ functions or non-estimator constructors.
         - An iterable yielding train/test splits.
 
         With some exceptions (especially where not using cross validation at
-        all is an option), the default is 3-fold and will change to 5-fold
-        in version 0.22.
+        all is an option), the default is 5-fold.
 
         ``cv`` values are validated and interpreted with :func:`utils.check_cv`.
 

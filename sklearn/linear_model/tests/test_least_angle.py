@@ -199,7 +199,6 @@ def test_no_path_all_precomputed():
     assert alpha_ == alphas_[-1]
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 @pytest.mark.parametrize(
         'classifier',
         [linear_model.Lars, linear_model.LarsCV, linear_model.LassoLarsIC])
@@ -434,7 +433,6 @@ def test_multitarget():
             assert_array_almost_equal(Y_pred[:, k], y_pred)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_lars_cv():
     # Test the LassoLarsCV object by checking that the optimal alpha
     # increases as the number of samples increases.
@@ -514,13 +512,11 @@ def test_lars_path_positive_constraint():
     # and all positive when positive=True
     # for method 'lar' (default) and lasso
 
-    # Once deprecation of LAR + positive option is done use these:
-    # assert_raises(ValueError, linear_model.lars_path, diabetes['data'],
-    #               diabetes['target'], method='lar', positive=True)
-    with pytest.warns(DeprecationWarning, match='broken'):
+    err_msg = "Positive constraint not supported for 'lar' coding method."
+    with pytest.raises(ValueError, match=err_msg):
         linear_model.lars_path(diabetes['data'], diabetes['target'],
-                               return_path=True, method='lar',
-                               positive=True)
+                               method='lar', positive=True)
+
     method = 'lasso'
     _, _, coefs = \
         linear_model.lars_path(X, y, return_path=True, method=method,
@@ -542,7 +538,6 @@ estimator_parameter_map = {'LassoLars': {'alpha': 0.1},
                            'LassoLarsIC': {}}
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_estimatorclasses_positive_constraint():
     # testing the transmissibility for the positive option of all estimator
     # classes in this same function here
