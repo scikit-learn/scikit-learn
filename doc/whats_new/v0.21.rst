@@ -12,6 +12,11 @@ Version 0.21.3
 Changelog
 ---------
 
+:mod:`sklearn.tree`
+...................
+
+- |Fix| Fixed bug in :func:`tree.export_text` when the tree has one feature and 
+  a single feature name is passed in. :pr:`14053` by `Thomas Fan`
 
 .. _changes_0_21_2:
 
