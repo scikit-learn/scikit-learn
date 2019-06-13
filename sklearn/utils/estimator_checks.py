@@ -190,10 +190,6 @@ def _yield_transformer_checks(name, transformer):
     # these don't actually fit the data, so don't raise errors
     yield check_transformer_general
     yield partial(check_transformer_general, readonly_memmap=True)
-    if not _safe_tags(transformer, "no_validation"):
-        yield check_transformer_list
-        yield partial(check_transformer_list, readonly_memmap=True)
-
     if not _safe_tags(transformer, "stateless"):
         yield check_transformers_unfitted
     # Dependent on external solvers and hence accessing the iter
@@ -960,19 +956,6 @@ def check_transformer_general(name, transformer, readonly_memmap=False):
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
-def check_transformer_list(name, transformer, readonly_memmap=False):
-    X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
-                      random_state=0, n_features=2, cluster_std=0.1)
-    X = StandardScaler().fit_transform(X)
-    X -= X.min()
-
-    if readonly_memmap:
-        X, y = create_memmap_backed_data([X, y])
-
-    _check_transformer(name, transformer, X.tolist(), y.tolist())
-
-
-@ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_transformer_data_not_an_array(name, transformer):
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
@@ -983,6 +966,8 @@ def check_transformer_data_not_an_array(name, transformer):
     this_X = NotAnArray(X)
     this_y = NotAnArray(np.asarray(y))
     _check_transformer(name, transformer, this_X, this_y)
+    # try the same with some list
+    _check_transformer(name, transformer, X.tolist(), y.tolist())
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
