@@ -21,6 +21,7 @@ from ..externals import _arff
 from .base import get_data_home
 from urllib.error import HTTPError
 from ..utils import Bunch
+from ..utils import get_chunk_n_rows
 from .. import get_config
 from ..utils import check_pandas_support  # noqa
 
@@ -320,18 +321,11 @@ def _convert_arff_data_dataframe(arrf, columns, features_dict):
     arrf_columns = list(attributes)
 
     # calculate chunksize
-    working_memory = get_config()['working_memory']
     first_row = next(arrf['data'])
     first_df = pd.DataFrame([first_row], columns=arrf_columns)
 
     row_bytes = first_df.memory_usage(deep=True).sum()
-    chunksize = int(working_memory * (2 ** 20) // row_bytes)
-
-    if chunksize < 1:
-        warnings.warn('Could not adhere to working_memory config. '
-                      'Currently %.0fMiB, %.0fMiB required.' %
-                      (working_memory, np.ceil(row_bytes * 2 ** -20)))
-        chunksize = 1
+    chunksize = get_chunk_n_rows(row_bytes)
 
     # read arrf data with chunks
     dfs = []
@@ -582,8 +576,11 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         below for more information about the `data` and `target` objects.
 
     as_frame : boolean, default=False
-        If True, returns a Bunch where the data attribute is a pandas
-        DataFrame.
+        If True, where the data is a pandas DataFrame including columns with
+        appropriate dtypes (numeric, string or categorical). The target is
+        a pandas DataFrame or Series depending on the number of target_columns.
+        If ``return_X_y`` is True, then ``(data, target)`` will be pandas
+        DataFrames or Series as describe above.
 
     Returns
     -------
@@ -673,9 +670,8 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     if data_description['format'].lower() == 'sparse_arff':
         return_sparse = True
 
-    if as_frame:
-        if return_sparse:
-            raise ValueError('Cannot return dataframe with sparse data')
+    if as_frame and return_sparse:
+        raise ValueError('Cannot return dataframe with sparse data')
 
     # download data features, meta-info about column types
     features_list = _get_data_features(data_id, data_home)
@@ -692,28 +688,30 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         # determines the default target based on the data feature results
         # (which is currently more reliable than the data description;
         # see issue: https://github.com/openml/OpenML/issues/768)
-        target_column = [feature['name'] for feature in features_list
-                         if feature['is_target'] == 'true']
+        target_columns = [feature['name'] for feature in features_list
+                          if feature['is_target'] == 'true']
     elif isinstance(target_column, str):
         # for code-simplicity, make target_column by default a list
-        target_column = [target_column]
+        target_columns = [target_column]
     elif target_column is None:
-        target_column = []
-    elif not isinstance(target_column, list):
+        target_columns = []
+    elif isinstance(target_column, list):
+        target_columns = target_column
+    else:
         raise TypeError("Did not recognize type of target_column"
                         "Should be str, list or None. Got: "
                         "{}".format(type(target_column)))
     data_columns = _valid_data_column_names(features_list,
-                                            target_column)
+                                            target_columns)
 
     # prepare which columns and data types should be returned for the X and y
     features_dict = {feature['name']: feature for feature in features_list}
 
     # XXX: col_slice_y should be all nominal or all numeric
-    _verify_target_data_type(features_dict, target_column)
+    _verify_target_data_type(features_dict, target_columns)
 
     col_slice_y = [int(features_dict[col_name]['index'])
-                   for col_name in target_column]
+                   for col_name in target_columns]
 
     col_slice_x = [int(features_dict[col_name]['index'])
                    for col_name in data_columns]
@@ -746,13 +744,13 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     nominal_attributes = None
     frame = None
     if as_frame:
-        columns = data_columns + target_column
+        columns = data_columns + target_columns
         frame = _convert_arff_data_dataframe(arff, columns, features_dict)
         X = frame[data_columns]
-        if len(target_column) >= 2:
-            y = frame[target_column]
-        elif len(target_column) == 1:
-            y = frame[target_column[0]]
+        if len(target_columns) >= 2:
+            y = frame[target_columns]
+        elif len(target_columns) == 1:
+            y = frame[target_columns[0]]
         else:
             y = None
     else:
@@ -761,12 +759,12 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         # off below, before it will be packed in the Bunch object)
         nominal_attributes = {k: v for k, v in arff['attributes']
                               if isinstance(v, list) and
-                              k in data_columns + target_column}
+                              k in data_columns + target_columns}
 
         X, y = _convert_arff_data(arff['data'], col_slice_x, col_slice_y, shape)
 
         is_classification = {col_name in nominal_attributes
-                             for col_name in target_column}
+                             for col_name in target_columns}
         if not is_classification:
             # No target
             pass
@@ -775,7 +773,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
                 np.take(
                     np.asarray(nominal_attributes.pop(col_name), dtype='O'),
                     y[:, i:i + 1].astype(int, copy=False))
-                for i, col_name in enumerate(target_column)
+                for i, col_name in enumerate(target_columns)
             ])
         elif any(is_classification):
             raise ValueError('Mix of nominal and non-nominal targets is not '
