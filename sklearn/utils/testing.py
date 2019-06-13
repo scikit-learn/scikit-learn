@@ -111,7 +111,6 @@ def assert_warns(warning_class, func, *args, **kw):
     result : the return value of `func`
 
     """
-    clean_warning_registry()
     with warnings.catch_warnings(record=True) as w:
         # Cause all warnings to always be triggered.
         warnings.simplefilter("always")
@@ -160,7 +159,6 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
     result : the return value of `func`
 
     """
-    clean_warning_registry()
     with warnings.catch_warnings(record=True) as w:
         # Cause all warnings to always be triggered.
         warnings.simplefilter("always")
@@ -236,7 +234,6 @@ def assert_no_warnings(func, *args, **kw):
     **kw
     """
     # very important to avoid uncontrolled state propagation
-    clean_warning_registry()
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter('always')
 
@@ -319,7 +316,6 @@ class _IgnoreWarnings:
         """Decorator to catch and hide warnings without visual nesting."""
         @wraps(fn)
         def wrapper(*args, **kwargs):
-            clean_warning_registry()
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", self.category)
                 return fn(*args, **kwargs)
@@ -342,7 +338,6 @@ class _IgnoreWarnings:
         self._filters = self._module.filters
         self._module.filters = self._filters[:]
         self._showwarning = self._module.showwarning
-        clean_warning_registry()
         warnings.simplefilter("ignore", self.category)
 
     def __exit__(self, *exc_info):
@@ -351,7 +346,6 @@ class _IgnoreWarnings:
         self._module.filters = self._filters
         self._module.showwarning = self._showwarning
         self.log[:] = []
-        clean_warning_registry()
 
 
 def assert_raise_message(exceptions, message, function, *args, **kwargs):
@@ -615,10 +609,10 @@ def clean_warning_registry():
     https://bugs.python.org/issue21724 for more details.
 
     """
-    reg = "__warningregistry__"
-    for mod_name, mod in list(sys.modules.items()):
-        if hasattr(mod, reg):
-            getattr(mod, reg).clear()
+    for mod in sys.modules.values():
+        registry = getattr(mod, "__warningregistry__", None)
+        if registry is not None:
+            registry.clear()
 
 
 def check_skip_network():
