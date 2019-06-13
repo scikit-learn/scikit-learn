@@ -158,7 +158,7 @@ def test_sample_weights_validation():
     y = [1]
     weights = 0
     glm = GeneralizedLinearRegressor(fit_intercept=False)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="weights must be non-negative"):
         glm.fit(X, y, weights)
 
     # Positive weights are accepted
@@ -166,24 +166,26 @@ def test_sample_weights_validation():
 
     # 2d array
     weights = [[0]]
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="must be 1D array or scalar"):
         glm.fit(X, y, weights)
 
     # 1d but wrong length
     weights = [1, 0]
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError,
+                       match="weights must have the same length as y"):
         glm.fit(X, y, weights)
 
     # 1d but only zeros (sum not greater than 0)
     weights = [0, 0]
     X = [[0], [1]]
     y = [1, 2]
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError,
+                       match="must have at least one positive element"):
         glm.fit(X, y, weights)
 
     # 5. 1d but with a negative value
     weights = [2, -1]
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="weights must be non-negative"):
         glm.fit(X, y, weights)
 
 
@@ -202,7 +204,7 @@ def test_glm_family_argument(f, fam):
 
     glm = GeneralizedLinearRegressor(family='not a family',
                                      fit_intercept=False)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="family must be"):
         glm.fit(X, y)
 
 
@@ -218,7 +220,7 @@ def test_glm_link_argument(l, link):
     assert isinstance(glm._link_instance, link.__class__)
 
     glm = GeneralizedLinearRegressor(family='normal', link='not a link')
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="link must be"):
         glm.fit(X, y)
 
 
@@ -228,7 +230,8 @@ def test_glm_alpha_argument(alpha):
     y = np.array([1, 2])
     X = np.array([[1], [2]])
     glm = GeneralizedLinearRegressor(family='normal', alpha=alpha)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError,
+                       match="Penalty term must be a non-negative"):
         glm.fit(X, y)
 
 
@@ -238,7 +241,8 @@ def test_glm_l1_ratio_argument(l1_ratio):
     y = np.array([1, 2])
     X = np.array([[1], [2]])
     glm = GeneralizedLinearRegressor(family='normal', l1_ratio=l1_ratio)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError,
+                       match="l1_ratio must be a number in interval.*0, 1"):
         glm.fit(X, y)
 
 
@@ -276,13 +280,13 @@ def test_glm_P2_positive_semidefinite():
     P2 = Q.T @ P2 @ Q
     glm = GeneralizedLinearRegressor(P2=P2, fit_intercept=False,
                                      check_input=True)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="P2 must be positive semi-definite"):
         glm.fit(X, y)
 
     P2 = sparse.csr_matrix(P2)
     glm = GeneralizedLinearRegressor(P2=P2, fit_intercept=False,
                                      check_input=True)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="P2 must be positive semi-definite"):
         glm.fit(X, y)
 
 
@@ -292,7 +296,7 @@ def test_glm_fit_intercept_argument(fit_intercept):
     y = np.array([1, 2])
     X = np.array([[1], [1]])
     glm = GeneralizedLinearRegressor(fit_intercept=fit_intercept)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="fit_intercept must be bool"):
         glm.fit(X, y)
 
 
@@ -314,7 +318,7 @@ def test_glm_max_iter_argument(max_iter):
     y = np.array([1, 2])
     X = np.array([[1], [2]])
     glm = GeneralizedLinearRegressor(max_iter=max_iter)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="must be a positive integer"):
         glm.fit(X, y)
 
 
@@ -324,7 +328,7 @@ def test_glm_tol_argument(tol):
     y = np.array([1, 2])
     X = np.array([[1], [2]])
     glm = GeneralizedLinearRegressor(tol=tol)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="stopping criteria must be positive"):
         glm.fit(X, y)
 
 
@@ -334,7 +338,7 @@ def test_glm_warm_start_argument(warm_start):
     y = np.array([1, 2])
     X = np.array([[1], [1]])
     glm = GeneralizedLinearRegressor(warm_start=warm_start)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="warm_start must be bool"):
         glm.fit(X, y)
 
 
@@ -356,7 +360,7 @@ def test_glm_selection_argument(selection):
     y = np.array([1, 2])
     X = np.array([[1], [1]])
     glm = GeneralizedLinearRegressor(selection=selection)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="argument selection must be"):
         glm.fit(X, y)
 
 
@@ -366,7 +370,7 @@ def test_glm_random_state_argument(random_state):
     y = np.array([1, 2])
     X = np.array([[1], [1]])
     glm = GeneralizedLinearRegressor(random_state=random_state)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="cannot be used to seed"):
         glm.fit(X, y)
 
 
@@ -376,7 +380,7 @@ def test_glm_diag_fisher_argument(diag_fisher):
     y = np.array([1, 2])
     X = np.array([[1], [1]])
     glm = GeneralizedLinearRegressor(diag_fisher=diag_fisher)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="diag_fisher must be bool"):
         glm.fit(X, y)
 
 
@@ -386,7 +390,7 @@ def test_glm_copy_X_argument(copy_X):
     y = np.array([1, 2])
     X = np.array([[1], [1]])
     glm = GeneralizedLinearRegressor(copy_X=copy_X)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="copy_X must be bool"):
         glm.fit(X, y)
 
 
@@ -396,7 +400,7 @@ def test_glm_check_input_argument(check_input):
     y = np.array([1, 2])
     X = np.array([[1], [1]])
     glm = GeneralizedLinearRegressor(check_input=check_input)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="check_input must be bool"):
         glm.fit(X, y)
 
 
