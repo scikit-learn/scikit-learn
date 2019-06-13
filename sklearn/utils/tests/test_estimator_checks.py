@@ -30,6 +30,7 @@ from sklearn.decomposition import NMF
 from sklearn.linear_model import MultiTaskElasticNet
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsRegressor
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.validation import check_X_y, check_array
 
 
@@ -276,6 +277,21 @@ class SparseTransformer(BaseEstimator):
         return sp.csr_matrix(X)
 
 
+class UntaggedBinaryClassifier(DecisionTreeClassifier):
+    # Toy classifier that only supports binary classification, will fail tests.
+    def fit(self, X, y, sample_weight=None):
+        super().fit(X, y, sample_weight)
+        if self.n_classes_ > 2:
+            raise ValueError('Only 2 classes are supported')
+        return self
+
+
+class TaggedBinaryClassifier(UntaggedBinaryClassifier):
+    # Toy classifier that only supports binary classification.
+    def _more_tags(self):
+        return {'binary_only': True}
+
+
 def test_check_fit_score_takes_y_works_on_deprecated_fit():
     # Tests that check_fit_score_takes_y works on a class with
     # a deprecated fit method
@@ -384,6 +400,14 @@ def test_check_estimator():
     check_estimator(AdaBoostClassifier())
     check_estimator(MultiTaskElasticNet)
     check_estimator(MultiTaskElasticNet())
+
+    # doesn't error on binary_only tagged estimator
+    check_estimator(TaggedBinaryClassifier)
+
+    # does error on binary_only untagged estimator
+    msg = 'Only 2 classes are supported'
+    assert_raises_regex(ValueError, msg, check_estimator,
+                        UntaggedBinaryClassifier)
 
 
 def test_check_outlier_corruption():

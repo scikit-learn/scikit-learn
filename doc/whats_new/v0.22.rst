@@ -45,7 +45,7 @@ Changelog
 - |Fix| :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` now bin the training and
   validation data separately to avoid any data leak. :pr:`13933` by
-  `NicolasHug`_.
+  `Nicolas Hug`_.
 
 - |MajorFeature| Added :class:`ensemble.StackingClassifier` and
   :class:`ensemble.StackingRegressor` to stack predictors using a final
@@ -54,7 +54,7 @@ Changelog
   :user:`Caio Oliveira <caioaao>`.
 
 :mod:`sklearn.linear_model`
-..................
+...........................
 
 - |Enhancement| :class:`linearmodel.BayesianRidge` now accepts hyperparameters
   ``alpha_init`` and ``lambda_init`` which can be used to set the initial value
@@ -79,7 +79,7 @@ Changelog
 
 
 :mod:`sklearn.preprocessing`
-..................
+............................
 
 - |Enhancement| Avoid unnecessary data copy when fitting preprocessors
   :class:`preprocessing.StandardScaler`, :class:`preprocessing.MinMaxScaler`,
@@ -89,7 +89,7 @@ Changelog
 
 
 :mod:`sklearn.cluster`
-..................
+......................
 
 - |Enhancement| :class:`cluster.SpectralClustering` now accepts a ``n_components`` 
   parameter. This parameter extends `SpectralClustering` class functionality to
@@ -119,3 +119,7 @@ These changes mostly affect library developers.
   ``transform`` is called before ``fit``; previously an ``AttributeError`` or
   ``ValueError`` was acceptable.
   :pr:`13013` by by :user:`Agamemnon Krasoulis <agamemnonc>`.
+
+- |Enhancement| Binary only classifiers are now supported in estimator checks.
+  Such classifiers need to have the `binary_only=True` estimator tag.
+  :pr:`13875` by `Trevor Stephens`_.
