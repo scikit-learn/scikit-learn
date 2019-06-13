@@ -743,58 +743,56 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     description = "{}\n\nDownloaded from openml.org.".format(
         data_description.pop('description'))
 
+    nominal_attributes = None
+    frame = None
     if as_frame:
         columns = data_columns + target_column
-        df = _convert_arff_data_dataframe(arff, columns, features_dict)
-        X = df[data_columns]
+        frame = _convert_arff_data_dataframe(arff, columns, features_dict)
+        X = frame[data_columns]
         if len(target_column) >= 2:
-            y = df[target_column]
+            y = frame[target_column]
         elif len(target_column) == 1:
-            y = df[target_column[0]]
+            y = frame[target_column[0]]
         else:
             y = None
-        if return_X_y:
-            return X, y
-        return Bunch(frame=df, data=X, target=y,
-                     feature_names=data_columns, DESCR=description,
-                     details=data_description, categories=None,
-                     url="https://www.openml.org/d/{}".format(data_id))
+    else:
+        # nominal attributes is a dict mapping from the attribute name to the
+        # possible values. Includes also the target column (which will be popped
+        # off below, before it will be packed in the Bunch object)
+        nominal_attributes = {k: v for k, v in arff['attributes']
+                              if isinstance(v, list) and
+                              k in data_columns + target_column}
 
-    # nominal attributes is a dict mapping from the attribute name to the
-    # possible values. Includes also the target column (which will be popped
-    # off below, before it will be packed in the Bunch object)
-    nominal_attributes = {k: v for k, v in arff['attributes']
-                          if isinstance(v, list) and
-                          k in data_columns + target_column}
+        X, y = _convert_arff_data(arff['data'], col_slice_x, col_slice_y, shape)
 
-    X, y = _convert_arff_data(arff['data'], col_slice_x, col_slice_y, shape)
+        is_classification = {col_name in nominal_attributes
+                             for col_name in target_column}
+        if not is_classification:
+            # No target
+            pass
+        elif all(is_classification):
+            y = np.hstack([
+                np.take(
+                    np.asarray(nominal_attributes.pop(col_name), dtype='O'),
+                    y[:, i:i + 1].astype(int, copy=False))
+                for i, col_name in enumerate(target_column)
+            ])
+        elif any(is_classification):
+            raise ValueError('Mix of nominal and non-nominal targets is not '
+                             'currently supported')
 
-    is_classification = {col_name in nominal_attributes
-                         for col_name in target_column}
-    if not is_classification:
-        # No target
-        pass
-    elif all(is_classification):
-        y = np.hstack([np.take(np.asarray(nominal_attributes.pop(col_name),
-                                          dtype='O'),
-                               y[:, i:i+1].astype(int, copy=False))
-                       for i, col_name in enumerate(target_column)])
-    elif any(is_classification):
-        raise ValueError('Mix of nominal and non-nominal targets is not '
-                         'currently supported')
-
-    # reshape y back to 1-D array, if there is only 1 target column; back
-    # to None if there are not target columns
-    if y.shape[1] == 1:
-        y = y.reshape((-1,))
-    elif y.shape[1] == 0:
-        y = None
+        # reshape y back to 1-D array, if there is only 1 target column; back
+        # to None if there are not target columns
+        if y.shape[1] == 1:
+            y = y.reshape((-1,))
+        elif y.shape[1] == 0:
+            y = None
 
     if return_X_y:
         return X, y
 
     bunch = Bunch(
-        data=X, target=y, feature_names=data_columns,
+        data=X, target=y, frame=frame, feature_names=data_columns,
         DESCR=description, details=data_description,
         categories=nominal_attributes,
         url="https://www.openml.org/d/{}".format(data_id))
