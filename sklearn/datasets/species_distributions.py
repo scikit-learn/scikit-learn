@@ -44,6 +44,8 @@ from os.path import exists
 import logging
 import numpy as np
 
+import joblib
+
 from .base import get_data_home
 from .base import _fetch_remote
 from .base import RemoteFileMetadata
@@ -255,8 +257,8 @@ def fetch_species_distributions(data_home=None,
                       test=test,
                       train=train,
                       **extra_params)
-        _joblib.dump(bunch, archive_path, compress=9)
+        joblib.dump(bunch, archive_path, compress=9)
     else:
-        bunch = _joblib.load(archive_path)
+        bunch = joblib.load(archive_path)
 
     return bunch
