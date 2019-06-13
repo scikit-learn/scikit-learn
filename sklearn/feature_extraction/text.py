@@ -878,8 +878,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         self.lowercase = lowercase
         self.token_pattern = token_pattern
         self.stop_words = stop_words
-        self.max_df = max_df
-        self.min_df = min_df
+        self.max_df = float(max_df)
+        self.min_df = float(min_df)
         if max_df < 0 or min_df < 0:
             raise ValueError("negative value for max_df or min_df")
         self.max_features = max_features
