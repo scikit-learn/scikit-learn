@@ -360,26 +360,16 @@ directly as Cython extension), the default Python profiler is useless:
 we need a dedicated tool to introspect what's happening inside the
 compiled extension it-self.
 
-Using yep and google-perftools
---------------------------------
+Using yep and gperftools
+------------------------
 
 Easy profiling without special compilation options use yep:
 
 - https://pypi.org/project/yep/
 - http://fa.bianp.net/blog/2011/a-profiler-for-python-extensions
 
-.. note::
-
-  google-perftools provides a nice 'line by line' report mode that
-  can be triggered with the ``--lines`` option. However this
-  does not seem to work correctly at the time of writing. This
-  issue can be tracked on the `project issue tracker
-  <https://github.com/gperftools/gperftools>`_.
-
-
-
 Using gprof
--------------
+-----------
 
 In order to profile compiled Python extensions one could use ``gprof``
 after having recompiled the project with ``gcc -pg`` and using the
@@ -390,12 +380,25 @@ with ``-pg`` which is rather complicated to get working.
 Fortunately there exist two alternative profilers that don't require you to
 recompile everything.
 
-
 Using valgrind / callgrind / kcachegrind
 ----------------------------------------
 
-TODO
+kcachegrind
+~~~~~~~~~~~
 
+``yep`` can be used to create a profiling report.
+``kcachegrind`` provides a graphical environment to visualize this report::
+
+  # Run yep to profile some python script
+  python -m yep -c my_file.py
+
+  # open my_file.py.callgrin with kcachegrind
+  kcachegrind my_file.py.prof
+
+.. note::
+
+   ``yep`` can be executed with the argument ``--lines`` or ``-l`` to compile
+   a profiling report 'line by line'.
 
 Multi-core parallelism using ``joblib.Parallel``
 ================================================
