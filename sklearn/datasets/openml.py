@@ -319,10 +319,11 @@ def _convert_arff_data_dataframe(arrf, columns, features_dict):
 
     attributes = OrderedDict(arrf['attributes'])
     arrf_columns = list(attributes)
+    columns_to_keep = [col for col in arrf_columns if col in columns]
 
     # calculate chunksize
     first_row = next(arrf['data'])
-    first_df = pd.DataFrame([first_row], columns=arrf_columns)
+    first_df = pd.DataFrame([first_row], columns=arrf_columns)[columns_to_keep]
 
     row_bytes = first_df.memory_usage(deep=True).sum()
     chunksize = get_chunk_n_rows(row_bytes)
@@ -331,14 +332,8 @@ def _convert_arff_data_dataframe(arrf, columns, features_dict):
     dfs = []
     dfs.append(first_df)
     for data in _chunk_generator(arrf['data'], chunksize):
-        dfs.append(pd.DataFrame(data, columns=arrf_columns))
+        dfs.append(pd.DataFrame(data, columns=arrf_columns)[columns_to_keep])
     df = pd.concat(dfs)
-
-    columns_to_keep = [col for col in arrf_columns if col in columns]
-
-    # copy dataframe when there are columns that needs to be removed
-    if len(columns_to_keep) != len(arrf_columns):
-        df = df[columns_to_keep].copy()
 
     for column in columns_to_keep:
         dtype = _feature_to_dtype(features_dict[column])
