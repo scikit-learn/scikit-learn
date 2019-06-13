@@ -23,12 +23,6 @@ def _assert_predictor_equal(gb_1, gb_2, X):
                 predictor_2.nodes
             )
 
-    # Check identical attributes
-    assert gb_1.n_iter_ == gb_2.n_iter_
-    assert gb_1.n_trees_per_iteration_ == gb_2.n_trees_per_iteration_
-    np.testing.assert_allclose(gb_1.train_score_, gb_2.train_score_)
-    np.testing.assert_allclose(gb_1.validation_score_, gb_2.validation_score_)
-
     # Check identical predictions
     np.testing.assert_allclose(gb_1.predict(X), gb_2.predict(X))
 
