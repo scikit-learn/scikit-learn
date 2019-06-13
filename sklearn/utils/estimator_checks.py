@@ -651,7 +651,7 @@ def check_dtype_object(name, estimator_orig):
             raise
 
     tags = _safe_tags(estimator)
-    if 'str' not in tags['X_types']:
+    if 'string' not in tags['X_types']:
         X[0, 0] = {'foo': 'bar'}
         msg = "argument must be a string.* number"
         assert_raises_regex(TypeError, msg, estimator.fit, X, y)
