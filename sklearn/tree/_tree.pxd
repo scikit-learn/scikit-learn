@@ -58,9 +58,9 @@ cdef class Tree:
     cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
                           SIZE_t feature, double threshold, double impurity,
                           SIZE_t n_node_samples,
-                          double weighted_n_samples) nogil
-    cdef void _resize(self, SIZE_t capacity) except *
-    cdef int _resize_c(self, SIZE_t capacity=*) nogil
+                          double weighted_n_samples) nogil except -1
+    cdef int _resize(self, SIZE_t capacity) nogil except -1
+    cdef int _resize_c(self, SIZE_t capacity=*) nogil except -1
 
     cdef np.ndarray _get_value_ndarray(self)
     cdef np.ndarray _get_node_ndarray(self)
@@ -90,13 +90,14 @@ cdef class TreeBuilder:
     # This class controls the various stopping criteria and the node splitting
     # evaluation order, e.g. depth-first or best-first.
 
-    cdef Splitter splitter          # Splitting algorithm
+    cdef Splitter splitter              # Splitting algorithm
 
-    cdef SIZE_t min_samples_split   # Minimum number of samples in an internal node
-    cdef SIZE_t min_samples_leaf    # Minimum number of samples in a leaf
-    cdef double min_weight_leaf     # Minimum weight in a leaf
-    cdef SIZE_t max_depth           # Maximal tree depth
-    cdef double min_impurity_split  # Impurity threshold for early stopping
+    cdef SIZE_t min_samples_split       # Minimum number of samples in an internal node
+    cdef SIZE_t min_samples_leaf        # Minimum number of samples in a leaf
+    cdef double min_weight_leaf         # Minimum weight in a leaf
+    cdef SIZE_t max_depth               # Maximal tree depth
+    cdef double min_impurity_split
+    cdef double min_impurity_decrease   # Impurity threshold for early stopping
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=*,

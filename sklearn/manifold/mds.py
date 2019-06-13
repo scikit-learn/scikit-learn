@@ -12,15 +12,15 @@ import warnings
 from ..base import BaseEstimator
 from ..metrics import euclidean_distances
 from ..utils import check_random_state, check_array, check_symmetric
-from ..externals.joblib import Parallel
-from ..externals.joblib import delayed
+from ..utils._joblib import Parallel
+from ..utils._joblib import delayed
+from ..utils._joblib import effective_n_jobs
 from ..isotonic import IsotonicRegression
 
 
 def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
                    max_iter=300, verbose=0, eps=1e-3, random_state=None):
-    """
-    Computes multidimensional scaling using SMACOF algorithm
+    """Computes multidimensional scaling using SMACOF algorithm
 
     Parameters
     ----------
@@ -50,10 +50,11 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
         Relative tolerance with respect to stress at which to declare
         convergence.
 
-    random_state : integer or numpy.RandomState, optional
-        The generator used to initialize the centers. If an integer is
-        given, it fixes the seed. Defaults to the global numpy random
-        number generator.
+    random_state : int, RandomState instance or None, optional, default: None
+        The generator used to initialize the centers.  If int, random_state is
+        the seed used by the random number generator; If RandomState instance,
+        random_state is the random number generator; If None, the random number
+        generator is the RandomState instance used by `np.random`.
 
     Returns
     -------
@@ -132,10 +133,9 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
 
 
 def smacof(dissimilarities, metric=True, n_components=2, init=None, n_init=8,
-           n_jobs=1, max_iter=300, verbose=0, eps=1e-3, random_state=None,
+           n_jobs=None, max_iter=300, verbose=0, eps=1e-3, random_state=None,
            return_n_iter=False):
-    """
-    Computes multidimensional scaling using the SMACOF algorithm.
+    """Computes multidimensional scaling using the SMACOF algorithm.
 
     The SMACOF (Scaling by MAjorizing a COmplicated Function) algorithm is a
     multidimensional scaling algorithm which minimizes an objective function
@@ -178,15 +178,14 @@ def smacof(dissimilarities, metric=True, n_components=2, init=None, n_init=8,
         determined by the run with the smallest final stress. If ``init`` is
         provided, this option is overridden and a single run is performed.
 
-    n_jobs : int, optional, default: 1
+    n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation. If multiple
         initializations are used (``n_init``), each run of the algorithm is
         computed in parallel.
 
-        If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debugging. For ``n_jobs`` below -1,
-        (``n_cpus + 1 + n_jobs``) are used. Thus for ``n_jobs = -2``, all CPUs
-        but one are used.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     max_iter : int, optional, default: 300
         Maximum number of iterations of the SMACOF algorithm for a single run.
@@ -198,10 +197,11 @@ def smacof(dissimilarities, metric=True, n_components=2, init=None, n_init=8,
         Relative tolerance with respect to stress at which to declare
         convergence.
 
-    random_state : integer or numpy.RandomState, optional, default: None
-        The generator used to initialize the centers. If an integer is given,
-        it fixes the seed. Defaults to the global numpy random number
-        generator.
+    random_state : int, RandomState instance or None, optional, default: None
+        The generator used to initialize the centers.  If int, random_state is
+        the seed used by the random number generator; If RandomState instance,
+        random_state is the random number generator; If None, the random number
+        generator is the RandomState instance used by `np.random`.
 
     return_n_iter : bool, optional, default: False
         Whether or not to return the number of iterations.
@@ -245,7 +245,7 @@ def smacof(dissimilarities, metric=True, n_components=2, init=None, n_init=8,
 
     best_pos, best_stress = None, None
 
-    if n_jobs == 1:
+    if effective_n_jobs(n_jobs) == 1:
         for it in range(n_init):
             pos, stress, n_iter_ = _smacof_single(
                 dissimilarities, metric=metric,
@@ -304,20 +304,20 @@ class MDS(BaseEstimator):
         Relative tolerance with respect to stress at which to declare
         convergence.
 
-    n_jobs : int, optional, default: 1
+    n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation. If multiple
         initializations are used (``n_init``), each run of the algorithm is
         computed in parallel.
 
-        If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debugging. For ``n_jobs`` below -1,
-        (``n_cpus + 1 + n_jobs``) are used. Thus for ``n_jobs = -2``, all CPUs
-        but one are used.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
-    random_state : integer or numpy.RandomState, optional, default: None
-        The generator used to initialize the centers. If an integer is given,
-        it fixes the seed. Defaults to the global numpy random number
-        generator.
+    random_state : int, RandomState instance or None, optional, default: None
+        The generator used to initialize the centers.  If int, random_state is
+        the seed used by the random number generator; If RandomState instance,
+        random_state is the random number generator; If None, the random number
+        generator is the RandomState instance used by `np.random`.
 
     dissimilarity : 'euclidean' | 'precomputed', optional, default: 'euclidean'
         Dissimilarity measure to use:
@@ -331,13 +331,24 @@ class MDS(BaseEstimator):
 
     Attributes
     ----------
-    embedding_ : array-like, shape (n_components, n_samples)
+    embedding_ : array-like, shape (n_samples, n_components)
         Stores the position of the dataset in the embedding space.
 
     stress_ : float
         The final value of the stress (sum of squared distance of the
         disparities and the distances for all constrained points).
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.manifold import MDS
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> X.shape
+    (1797, 64)
+    >>> embedding = MDS(n_components=2)
+    >>> X_transformed = embedding.fit_transform(X[:100])
+    >>> X_transformed.shape
+    (100, 2)
 
     References
     ----------
@@ -352,7 +363,7 @@ class MDS(BaseEstimator):
 
     """
     def __init__(self, n_components=2, metric=True, n_init=4,
-                 max_iter=300, verbose=0, eps=1e-3, n_jobs=1,
+                 max_iter=300, verbose=0, eps=1e-3, n_jobs=None,
                  random_state=None, dissimilarity="euclidean"):
         self.n_components = n_components
         self.dissimilarity = dissimilarity
@@ -378,6 +389,8 @@ class MDS(BaseEstimator):
             Input data. If ``dissimilarity=='precomputed'``, the input should
             be the dissimilarity matrix.
 
+        y : Ignored
+
         init : ndarray, shape (n_samples,), optional, default: None
             Starting configuration of the embedding to initialize the SMACOF
             algorithm. By default, the algorithm is initialized with a randomly
@@ -395,6 +408,8 @@ class MDS(BaseEstimator):
         X : array, shape (n_samples, n_features) or (n_samples, n_samples)
             Input data. If ``dissimilarity=='precomputed'``, the input should
             be the dissimilarity matrix.
+
+        y : Ignored
 
         init : ndarray, shape (n_samples,), optional, default: None
             Starting configuration of the embedding to initialize the SMACOF

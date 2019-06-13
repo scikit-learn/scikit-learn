@@ -25,15 +25,15 @@ distance is the most common choice.
 Neighbors-based methods are known as *non-generalizing* machine
 learning methods, since they simply "remember" all of its training data
 (possibly transformed into a fast indexing structure such as a
-:ref:`Ball Tree <ball_tree>` or :ref:`KD Tree <kd_tree>`.).
+:ref:`Ball Tree <ball_tree>` or :ref:`KD Tree <kd_tree>`).
 
 Despite its simplicity, nearest neighbors has been successful in a
 large number of classification and regression problems, including
-handwritten digits or satellite image scenes. Being a non-parametric method,
+handwritten digits and satellite image scenes. Being a non-parametric method,
 it is often successful in classification situations where the decision
 boundary is very irregular.
 
-The classes in :mod:`sklearn.neighbors` can handle either Numpy arrays or
+The classes in :mod:`sklearn.neighbors` can handle either NumPy arrays or
 `scipy.sparse` matrices as input.  For dense matrices, a large number of
 possible distance metrics are supported.  For sparse matrices, arbitrary
 Minkowski metrics are supported for searches.
@@ -62,8 +62,8 @@ of each option, see `Nearest Neighbor Algorithms`_.
     .. warning::
 
         Regarding the Nearest Neighbors algorithms, if two
-        neighbors, neighbor :math:`k+1` and :math:`k`, have identical distances
-        but different labels, the results will depend on the ordering of the
+        neighbors :math:`k+1` and :math:`k` have identical distances
+        but different labels, the result will depend on the ordering of the
         training data.
 
 Finding the Nearest Neighbors
@@ -77,7 +77,7 @@ used:
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> nbrs = NearestNeighbors(n_neighbors=2, algorithm='ball_tree').fit(X)
     >>> distances, indices = nbrs.kneighbors(X)
-    >>> indices                                           # doctest: +ELLIPSIS
+    >>> indices
     array([[0, 1],
            [1, 0],
            [2, 1],
@@ -85,12 +85,12 @@ used:
            [4, 3],
            [5, 4]]...)
     >>> distances
-    array([[ 0.        ,  1.        ],
-           [ 0.        ,  1.        ],
-           [ 0.        ,  1.41421356],
-           [ 0.        ,  1.        ],
-           [ 0.        ,  1.        ],
-           [ 0.        ,  1.41421356]])
+    array([[0.        , 1.        ],
+           [0.        , 1.        ],
+           [0.        , 1.41421356],
+           [0.        , 1.        ],
+           [0.        , 1.        ],
+           [0.        , 1.41421356]])
 
 Because the query set matches the training set, the nearest neighbor of each
 point is the point itself, at a distance of zero.
@@ -99,14 +99,14 @@ It is also possible to efficiently produce a sparse graph showing the
 connections between neighboring points:
 
     >>> nbrs.kneighbors_graph(X).toarray()
-    array([[ 1.,  1.,  0.,  0.,  0.,  0.],
-           [ 1.,  1.,  0.,  0.,  0.,  0.],
-           [ 0.,  1.,  1.,  0.,  0.,  0.],
-           [ 0.,  0.,  0.,  1.,  1.,  0.],
-           [ 0.,  0.,  0.,  1.,  1.,  0.],
-           [ 0.,  0.,  0.,  0.,  1.,  1.]])
+    array([[1., 1., 0., 0., 0., 0.],
+           [1., 1., 0., 0., 0., 0.],
+           [0., 1., 1., 0., 0., 0.],
+           [0., 0., 0., 1., 1., 0.],
+           [0., 0., 0., 1., 1., 0.],
+           [0., 0., 0., 0., 1., 1.]])
 
-Our dataset is structured such that points nearby in index order are nearby
+The dataset is structured such that points nearby in index order are nearby
 in parameter space, leading to an approximately block-diagonal matrix of
 K-nearest neighbors.  Such a sparse graph is useful in a variety of
 circumstances which make use of spatial relationships between points for
@@ -125,7 +125,7 @@ have the same interface; we'll show an example of using the KD Tree here:
     >>> import numpy as np
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> kdt = KDTree(X, leaf_size=30, metric='euclidean')
-    >>> kdt.query(X, k=2, return_distance=False)          # doctest: +ELLIPSIS
+    >>> kdt.query(X, k=2, return_distance=False)
     array([[0, 1],
            [1, 0],
            [2, 1],
@@ -134,10 +134,10 @@ have the same interface; we'll show an example of using the KD Tree here:
            [5, 4]]...)
 
 Refer to the :class:`KDTree` and :class:`BallTree` class documentation
-for more information on the options available for neighbors searches,
-including specification of query strategies, of various distance metrics, etc.
-For a list of available metrics, see the documentation of the
-:class:`DistanceMetric` class.
+for more information on the options available for nearest neighbors searches,
+including specification of query strategies, distance metrics, etc. For a list 
+of available metrics, see the documentation of the :class:`DistanceMetric` 
+class.
 
 .. _classification:
 
@@ -160,10 +160,9 @@ training point, where :math:`r` is a floating-point value specified by
 the user.
 
 The :math:`k`-neighbors classification in :class:`KNeighborsClassifier`
-is the more commonly used of the two techniques.  The
-optimal choice of the value :math:`k` is highly data-dependent: in general
-a larger :math:`k` suppresses the effects of noise, but makes the
-classification boundaries less distinct.
+is the most commonly used technique. The optimal choice of the value :math:`k` 
+is highly data-dependent: in general a larger :math:`k` suppresses the effects 
+of noise, but makes the classification boundaries less distinct.
 
 In cases where the data is not uniformly sampled, radius-based neighbors
 classification in :class:`RadiusNeighborsClassifier` can be a better choice.
@@ -180,9 +179,7 @@ be accomplished through the ``weights`` keyword.  The default value,
 ``weights = 'uniform'``, assigns uniform weights to each neighbor.
 ``weights = 'distance'`` assigns weights proportional to the inverse of the
 distance from the query point.  Alternatively, a user-defined function of the
-distance can be supplied which is used to compute the weights.
-
-
+distance can be supplied to compute the weights.
 
 .. |classification_1| image:: ../auto_examples/neighbors/images/sphx_glr_plot_classification_001.png
    :target: ../auto_examples/neighbors/plot_classification.html
@@ -206,7 +203,7 @@ Nearest Neighbors Regression
 
 Neighbors-based regression can be used in cases where the data labels are
 continuous rather than discrete variables.  The label assigned to a query
-point is computed based the mean of the labels of its nearest neighbors.
+point is computed based on the mean of the labels of its nearest neighbors.
 
 scikit-learn implements two different neighbors regressors:
 :class:`KNeighborsRegressor` implements learning based on the :math:`k`
@@ -261,7 +258,7 @@ Brute Force
 -----------
 
 Fast computation of nearest neighbors is an active area of research in
-machine learning.  The most naive neighbor search implementation involves
+machine learning. The most naive neighbor search implementation involves
 the brute-force computation of distances between all pairs of points in the
 dataset: for :math:`N` samples in :math:`D` dimensions, this approach scales
 as :math:`O[D N^2]`.  Efficient brute-force neighbors searches can be very
@@ -286,7 +283,7 @@ The basic idea is that if point :math:`A` is very distant from point
 then we know that points :math:`A` and :math:`C`
 are very distant, *without having to explicitly calculate their distance*.
 In this way, the computational cost of a nearest neighbors search can be
-reduced to :math:`O[D N \log(N)]` or better.  This is a significant
+reduced to :math:`O[D N \log(N)]` or better. This is a significant
 improvement over brute-force for large :math:`N`.
 
 An early approach to taking advantage of this aggregate information was
@@ -294,10 +291,10 @@ the *KD tree* data structure (short for *K-dimensional tree*), which
 generalizes two-dimensional *Quad-trees* and 3-dimensional *Oct-trees*
 to an arbitrary number of dimensions.  The KD tree is a binary tree
 structure which recursively partitions the parameter space along the data
-axes, dividing it into nested orthotopic regions into which data points
+axes, dividing it into nested orthotropic regions into which data points
 are filed.  The construction of a KD tree is very fast: because partitioning
 is performed only along the data axes, no :math:`D`-dimensional distances
-need to be computed.  Once constructed, the nearest neighbor of a query
+need to be computed. Once constructed, the nearest neighbor of a query
 point can be determined with only :math:`O[\log(N)]` distance computations.
 Though the KD tree approach is very fast for low-dimensional (:math:`D < 20`)
 neighbors searches, it becomes inefficient as :math:`D` grows very large:
@@ -310,7 +307,7 @@ keyword ``algorithm = 'kd_tree'``, and are computed using the class
 .. topic:: References:
 
    * `"Multidimensional binary search trees used for associative searching"
-     <http://dl.acm.org/citation.cfm?doid=361002.361007>`_,
+     <https://dl.acm.org/citation.cfm?doid=361002.361007>`_,
      Bentley, J.L., Communications of the ACM (1975)
 
 
@@ -323,9 +320,8 @@ To address the inefficiencies of KD Trees in higher dimensions, the *ball tree*
 data structure was developed.  Where KD trees partition data along
 Cartesian axes, ball trees partition data in a series of nesting
 hyper-spheres.  This makes tree construction more costly than that of the
-KD tree, but
-results in a data structure which can be very efficient on highly-structured
-data, even in very high dimensions.
+KD tree, but results in a data structure which can be very efficient on 
+highly structured data, even in very high dimensions.
 
 A ball tree recursively divides the data into
 nodes defined by a centroid :math:`C` and radius :math:`r`, such that each
@@ -419,13 +415,14 @@ depends on a number of factors:
   a significant fraction of the total cost.  If very few query points
   will be required, brute force is better than a tree-based method.
 
-Currently, ``algorithm = 'auto'`` selects ``'kd_tree'`` if :math:`k < N/2` 
-and the ``'effective_metric_'`` is in the ``'VALID_METRICS'`` list of 
-``'kd_tree'``. It selects ``'ball_tree'`` if :math:`k < N/2` and the 
-``'effective_metric_'`` is not in the ``'VALID_METRICS'`` list of 
-``'kd_tree'``. It selects ``'brute'`` if :math:`k >= N/2`. This choice is based on the assumption that the number of query points is at least the 
-same order as the number of training points, and that ``leaf_size`` is 
-close to its default value of ``30``.
+Currently, ``algorithm = 'auto'`` selects ``'brute'`` if :math:`k >= N/2`,
+the input data is sparse, or ``effective_metric_`` isn't in
+the ``VALID_METRICS`` list for either ``'kd_tree'`` or ``'ball_tree'``.
+Otherwise, it selects the first out of ``'kd_tree'`` and ``'ball_tree'``
+that has ``effective_metric_`` in its ``VALID_METRICS`` list.
+This choice is based on the assumption that the number of query points is at
+least the same order as the number of training points, and that ``leaf_size``
+is close to its default value of ``30``.
 
 Effect of ``leaf_size``
 -----------------------
@@ -478,7 +475,7 @@ for more complex methods that do not make this assumption. Usage of the default
     >>> y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = NearestCentroid()
     >>> clf.fit(X, y)
-    NearestCentroid(metric='euclidean', shrink_threshold=None)
+    NearestCentroid()
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -512,179 +509,216 @@ the model from 0.81 to 0.82.
   * :ref:`sphx_glr_auto_examples_neighbors_plot_nearest_centroid.py`: an example of
     classification using nearest centroid with different shrink thresholds.
 
-.. _approximate_nearest_neighbors:
 
-Approximate Nearest Neighbors
-=============================
+.. _nca:
 
-There are many efficient exact nearest neighbor search algorithms for low
-dimensions :math:`d` (approximately 50). However these algorithms perform poorly
-with respect to space and query time when :math:`d` increases. These algorithms
-are not any better than comparing query point to each point from the database in
-a high dimension (see :ref:`brute_force`). This is a well-known consequence of
-the phenomenon called “The Curse of Dimensionality”.
+Neighborhood Components Analysis
+================================
 
-There are certain applications where we do not need the exact nearest neighbors
-but having a “good guess” would suffice.  When answers do not have to be exact,
-the :class:`LSHForest` class implements an approximate nearest neighbor search.
-Approximate nearest neighbor search methods have been designed to try to speedup
-query time with high dimensional data. These techniques are useful when the aim
-is to characterize the neighborhood rather than identifying the exact neighbors
-themselves (eg: k-nearest neighbors classification and regression). Some of the
-most popular approximate nearest neighbor search techniques are locality
-sensitive hashing, best bin fit and balanced box-decomposition tree based
-search.
+.. sectionauthor:: William de Vazelhes <william.de-vazelhes@inria.fr>
 
-Locality Sensitive Hashing Forest
----------------------------------
+Neighborhood Components Analysis (NCA, :class:`NeighborhoodComponentsAnalysis`)
+is a distance metric learning algorithm which aims to improve the accuracy of
+nearest neighbors classification compared to the standard Euclidean distance.
+The algorithm directly maximizes a stochastic variant of the leave-one-out
+k-nearest neighbors (KNN) score on the training set. It can also learn a
+low-dimensional linear projection of data that can be used for data
+visualization and fast classification.
 
-The vanilla implementation of locality sensitive hashing has a hyper-parameter
-that is hard to tune in practice, therefore scikit-learn implements a variant
-called :class:`LSHForest` that has more reasonable hyperparameters.
-Both methods use internally random hyperplanes to index the samples into
-buckets and actual cosine similarities are only computed for samples that
-collide with the query hence achieving sublinear scaling.
-(see :ref:`Mathematical description of Locality Sensitive
-Hashing <mathematical_description_of_lsh>`).
-
-:class:`LSHForest` has two main hyper-parameters: ``n_estimators`` and
-``n_candidates``. The accuracy of queries can be controlled using these
-parameters as demonstrated in the following plots:
-
-.. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_approximate_nearest_neighbors_hyperparameters_001.png
-   :target: ../auto_examples/neighbors/plot_approximate_nearest_neighbors_hyperparameters.html
-   :align: center
+.. |nca_illustration_1| image:: ../auto_examples/neighbors/images/sphx_glr_plot_nca_illustration_001.png
+   :target: ../auto_examples/neighbors/plot_nca_illustration.html
    :scale: 50
 
-.. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_approximate_nearest_neighbors_hyperparameters_002.png
-   :target: ../auto_examples/neighbors/plot_approximate_nearest_neighbors_hyperparameters.html
-   :align: center
+.. |nca_illustration_2| image:: ../auto_examples/neighbors/images/sphx_glr_plot_nca_illustration_002.png
+   :target: ../auto_examples/neighbors/plot_nca_illustration.html
    :scale: 50
 
-As a rule of thumb, a user can set ``n_estimators`` to a large enough value
-(e.g. between 10 and 50) and then adjust ``n_candidates`` to trade off accuracy
-for query time.
+.. centered:: |nca_illustration_1| |nca_illustration_2|
 
-For small data sets, the brute force method for exact nearest neighbor search
-can be faster than LSH Forest. However LSH Forest has a sub-linear query time
-scalability with the index size. The exact break even point where LSH Forest
-queries become faster than brute force depends on the dimensionality, structure
-of the dataset, required level of precision, characteristics of the runtime
-environment such as availability of BLAS optimizations, number of CPU cores and
-size of the CPU caches. Following graphs depict scalability of LSHForest queries
-with index size.
+In the above illustrating figure, we consider some points from a randomly
+generated dataset. We focus on the stochastic KNN classification of point no.
+3. The thickness of a link between sample 3 and another point is proportional
+to their distance, and can be seen as the relative weight (or probability) that
+a stochastic nearest neighbor prediction rule would assign to this point. In
+the original space, sample 3 has many stochastic neighbors from various
+classes, so the right class is not very likely. However, in the projected space
+learned by NCA, the only stochastic neighbors with non-negligible weight are
+from the same class as sample 3, guaranteeing that the latter will be well
+classified. See the :ref:`mathematical formulation <nca_mathematical_formulation>`
+for more details.
 
-.. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_approximate_nearest_neighbors_scalability_001.png
-   :target: ../auto_examples/neighbors/plot_approximate_nearest_neighbors_scalability.html
-   :align: center
+
+Classification
+--------------
+
+Combined with a nearest neighbors classifier (:class:`KNeighborsClassifier`),
+NCA is attractive for classification because it can naturally handle
+multi-class problems without any increase in the model size, and does not
+introduce additional parameters that require fine-tuning by the user.
+
+NCA classification has been shown to work well in practice for data sets of
+varying size and difficulty. In contrast to related methods such as Linear
+Discriminant Analysis, NCA does not make any assumptions about the class
+distributions. The nearest neighbor classification can naturally produce highly
+irregular decision boundaries.
+
+To use this model for classification, one needs to combine a
+:class:`NeighborhoodComponentsAnalysis` instance that learns the optimal
+transformation with a :class:`KNeighborsClassifier` instance that performs the
+classification in the projected space. Here is an example using the two
+classes:
+
+    >>> from sklearn.neighbors import (NeighborhoodComponentsAnalysis,
+    ... KNeighborsClassifier)
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sklearn.pipeline import Pipeline
+    >>> X, y = load_iris(return_X_y=True)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
+    ... stratify=y, test_size=0.7, random_state=42)
+    >>> nca = NeighborhoodComponentsAnalysis(random_state=42)
+    >>> knn = KNeighborsClassifier(n_neighbors=3)
+    >>> nca_pipe = Pipeline([('nca', nca), ('knn', knn)])
+    >>> nca_pipe.fit(X_train, y_train)
+    Pipeline(...)
+    >>> print(nca_pipe.score(X_test, y_test))
+    0.96190476...
+
+.. |nca_classification_1| image:: ../auto_examples/neighbors/images/sphx_glr_plot_nca_classification_001.png
+   :target: ../auto_examples/neighbors/plot_nca_classification.html
    :scale: 50
 
-.. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_approximate_nearest_neighbors_scalability_002.png
-   :target: ../auto_examples/neighbors/plot_approximate_nearest_neighbors_scalability.html
-   :align: center
+.. |nca_classification_2| image:: ../auto_examples/neighbors/images/sphx_glr_plot_nca_classification_002.png
+   :target: ../auto_examples/neighbors/plot_nca_classification.html
    :scale: 50
 
-.. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_approximate_nearest_neighbors_scalability_003.png
-   :target: ../auto_examples/neighbors/plot_approximate_nearest_neighbors_scalability.html
-   :align: center
-   :scale: 50
+.. centered:: |nca_classification_1| |nca_classification_2|
 
-For fixed :class:`LSHForest` parameters, the accuracy of queries tends to slowly
-decrease with larger datasets. The error bars on the previous plots represent
-standard deviation across different queries.
+The plot shows decision boundaries for Nearest Neighbor Classification and
+Neighborhood Components Analysis classification on the iris dataset, when
+training and scoring on only two features, for visualisation purposes.
+
+.. _nca_dim_reduction:
+
+Dimensionality reduction
+------------------------
+
+NCA can be used to perform supervised dimensionality reduction. The input data
+are projected onto a linear subspace consisting of the directions which
+minimize the NCA objective. The desired dimensionality can be set using the
+parameter ``n_components``. For instance, the following figure shows a
+comparison of dimensionality reduction with Principal Component Analysis
+(:class:`sklearn.decomposition.PCA`), Linear Discriminant Analysis
+(:class:`sklearn.discriminant_analysis.LinearDiscriminantAnalysis`) and
+Neighborhood Component Analysis (:class:`NeighborhoodComponentsAnalysis`) on
+the Digits dataset, a dataset with size :math:`n_{samples} = 1797` and
+:math:`n_{features} = 64`. The data set is split into a training and a test set
+of equal size, then standardized. For evaluation the 3-nearest neighbor
+classification accuracy is computed on the 2-dimensional projected points found
+by each method. Each data sample belongs to one of 10 classes.
+
+.. |nca_dim_reduction_1| image:: ../auto_examples/neighbors/images/sphx_glr_plot_nca_dim_reduction_001.png
+   :target: ../auto_examples/neighbors/plot_nca_dim_reduction.html
+   :width: 32%
+
+.. |nca_dim_reduction_2| image:: ../auto_examples/neighbors/images/sphx_glr_plot_nca_dim_reduction_002.png
+   :target: ../auto_examples/neighbors/plot_nca_dim_reduction.html
+   :width: 32%
+
+.. |nca_dim_reduction_3| image:: ../auto_examples/neighbors/images/sphx_glr_plot_nca_dim_reduction_003.png
+   :target: ../auto_examples/neighbors/plot_nca_dim_reduction.html
+   :width: 32%
+
+.. centered:: |nca_dim_reduction_1| |nca_dim_reduction_2| |nca_dim_reduction_3|
+
 
 .. topic:: Examples:
 
-  * :ref:`sphx_glr_auto_examples_neighbors_plot_approximate_nearest_neighbors_hyperparameters.py`: an example of
-    the behavior of hyperparameters of approximate nearest neighbor search using LSH Forest.
+ * :ref:`sphx_glr_auto_examples_neighbors_plot_nca_classification.py`
+ * :ref:`sphx_glr_auto_examples_neighbors_plot_nca_dim_reduction.py`
+ * :ref:`sphx_glr_auto_examples_manifold_plot_lle_digits.py`
 
-  * :ref:`sphx_glr_auto_examples_neighbors_plot_approximate_nearest_neighbors_scalability.py`: an example of
-    scalability of approximate nearest neighbor search using LSH Forest.
+.. _nca_mathematical_formulation:
 
-.. _mathematical_description_of_lsh:
+Mathematical formulation
+------------------------
 
-Mathematical description of Locality Sensitive Hashing
-------------------------------------------------------
+The goal of NCA is to learn an optimal linear transformation matrix of size
+``(n_components, n_features)``, which maximises the sum over all samples
+:math:`i` of the probability :math:`p_i` that :math:`i` is correctly
+classified, i.e.:
 
-Locality sensitive hashing (LSH) techniques have been used in many areas where
-nearest neighbor search is performed in high dimensions. The main concept
-behind LSH is to hash each data point in the database using multiple
-(often simple) hash functions to form a digest (also called a *hash*). At this
-point the probability of collision - where two objects have similar digests
-- is much higher for the points which are close to each other than that of the
-distant points. We describe the requirements for a hash function family to be
-locality sensitive as follows.
+.. math::
 
-A family :math:`H` of functions from a domain :math:`S` to a range :math:`U`
-is called :math:`(r, e , p1 , p2 )`-sensitive, with :math:`r, e > 0`,
-:math:`p_1 > p_2 > 0`, if for any :math:`p, q \in S`, the following conditions
-hold (:math:`D` is the distance function):
+  \underset{L}{\arg\max} \sum\limits_{i=0}^{N - 1} p_{i}
 
-* If :math:`D(p,q) <= r` then :math:`P_H[h(p) = h(q)] >= p_1`,
-* If :math:`D(p,q) > r(1 + e)` then :math:`P_H[h(p) = h(q)] <= p_2`.
+with :math:`N` = ``n_samples`` and :math:`p_i` the probability of sample
+:math:`i` being correctly classified according to a stochastic nearest
+neighbors rule in the learned embedded space:
 
-As defined, nearby points within a distance of :math:`r` to each other are
-likely to collide with probability :math:`p_1`. In contrast, distant points
-which are located with the distance more than :math:`r(1 + e)` have a small
-probability of :math:`p_2` of collision. Suppose there is a family of LSH
-function :math:`H`. An *LSH index* is built as follows:
+.. math::
 
-1. Choose :math:`k` functions :math:`h_1, h_2, … h_k` uniformly at
-   random (with replacement) from :math:`H`. For any :math:`p \in S`, place
-   :math:`p` in the bucket with label
-   :math:`g(p) = (h_1(p), h_2(p), … h_k(p))`. Observe that if
-   each :math:`h_i` outputs one “digit”, each bucket has a k-digit label.
+  p_{i}=\sum\limits_{j \in C_i}{p_{i j}}
 
-2. Independently perform step 1 :math:`l` times to construct :math:`l`
-   separate estimators, with hash functions :math:`g_1, g_2, … g_l`.
+where :math:`C_i` is the set of points in the same class as sample :math:`i`,
+and :math:`p_{i j}` is the softmax over Euclidean distances in the embedded
+space:
 
-The reason to concatenate hash functions in the step 1 is to decrease the
-probability of the collision of distant points as much as possible. The
-probability drops from :math:`p_2` to :math:`p_2^k` which is negligibly
-small for large :math:`k`.  The choice of :math:`k` is strongly dependent on
-the data set size and structure and is therefore hard to tune in practice.
-There is a side effect of having a large :math:`k`; it has the potential of
-decreasing the chance of nearby points getting collided. To address this
-issue, multiple estimators are constructed in step 2.
+.. math::
 
-The requirement to tune :math:`k` for a given dataset makes classical LSH
-cumbersome to use in practice. The LSH Forest variant has benn designed to
-alleviate this requirement by automatically adjusting the number of digits
-used to hash the samples.
+  p_{i j} = \frac{\exp(-||L x_i - L x_j||^2)}{\sum\limits_{k \ne
+            i} {\exp{-(||L x_i - L x_k||^2)}}} , \quad p_{i i} = 0
 
-LSH Forest is formulated with prefix trees with each leaf of
-a tree corresponding to an actual data point in the database. There are
-:math:`l` such trees which compose the forest and they are constructed using
-independently drawn random sequence of hash functions from :math:`H`. In this
-implementation, "Random Projections" is being used as the LSH technique which
-is an approximation for the cosine distance. The length of the sequence of
-hash functions is kept fixed at 32. Moreover, a prefix tree is implemented
-using sorted arrays and binary search.
 
-There are two phases of tree traversals used in order to answer a query to find
-the :math:`m` nearest neighbors of a point :math:`q`. First, a top-down
-traversal is performed using a binary search to identify the leaf having the
-longest prefix match (maximum depth) with :math:`q`'s label after subjecting
-:math:`q` to the same hash functions. :math:`M >> m` points (total candidates)
-are extracted from the forest, moving up from the previously found maximum 
-depth towards the root synchronously across all trees in the bottom-up
-traversal. `M` is set to  :math:`cl` where :math:`c`, the number of candidates
-extracted from each tree, is a constant. Finally, the similarity of each of
-these :math:`M` points against point :math:`q` is calculated and the top
-:math:`m` points are returned as the nearest neighbors of :math:`q`. Since
-most of the time in these queries is spent calculating the distances to
-candidates, the speedup compared to brute force search is approximately
-:math:`N/M`, where :math:`N` is the number of points in database.
+Mahalanobis distance
+^^^^^^^^^^^^^^^^^^^^
+
+NCA can be seen as learning a (squared) Mahalanobis distance metric:
+
+.. math::
+
+    || L(x_i - x_j)||^2 = (x_i - x_j)^TM(x_i - x_j),
+
+where :math:`M = L^T L` is a symmetric positive semi-definite matrix of size
+``(n_features, n_features)``.
+
+
+Implementation
+--------------
+
+This implementation follows what is explained in the original paper [1]_. For
+the optimisation method, it currently uses scipy's L-BFGS-B with a full
+gradient computation at each iteration, to avoid to tune the learning rate and
+provide stable learning.
+
+See the examples below and the docstring of
+:meth:`NeighborhoodComponentsAnalysis.fit` for further information.
+
+Complexity
+----------
+
+Training
+^^^^^^^^
+NCA stores a matrix of pairwise distances, taking ``n_samples ** 2`` memory.
+Time complexity depends on the number of iterations done by the optimisation
+algorithm. However, one can set the maximum number of iterations with the
+argument ``max_iter``. For each iteration, time complexity is
+``O(n_components x n_samples x min(n_samples, n_features))``.
+
+
+Transform
+^^^^^^^^^
+Here the ``transform`` operation returns :math:`LX^T`, therefore its time
+complexity equals ``n_components * n_features * n_samples_test``. There is no
+added space complexity in the operation.
+
 
 .. topic:: References:
 
-   * `"Near-Optimal Hashing Algorithms for Approximate Nearest Neighbor in
-     High Dimensions"
-     <http://web.mit.edu/andoni/www/papers/cSquared.pdf>`_,
-     Alexandr, A., Indyk, P., Foundations of Computer Science, 2006. FOCS
-     '06. 47th Annual IEEE Symposium
+    .. [1] `"Neighbourhood Components Analysis". Advances in Neural Information"
+      <http://www.cs.nyu.edu/~roweis/papers/ncanips.pdf>`_,
+      J. Goldberger, G. Hinton, S. Roweis, R. Salakhutdinov, Advances in
+      Neural Information Processing Systems, Vol. 17, May 2005, pp. 513-520.
 
-   * `“LSH Forest: Self-Tuning Indexes for Similarity Search”
-     <http://infolab.stanford.edu/~bawa/Pub/similarity.pdf>`_,
-     Bawa, M., Condie, T., Ganesan, P., WWW '05 Proceedings of the 14th
-     international conference on World Wide Web  Pages 651-660
+    .. [2] `Wikipedia entry on Neighborhood Components Analysis
+      <https://en.wikipedia.org/wiki/Neighbourhood_components_analysis>`_

@@ -1,3 +1,6 @@
+# Author: Jake Vanderplas  -- <vanderplas@astro.washington.edu>
+# License: BSD 3 clause, (C) 2011
+
 """
 Routines for performing shortest-path graph searches
 
@@ -5,9 +8,6 @@ The main interface is in the function `graph_shortest_path`.  This
 calls cython routines that compute the shortest path using either
 the Floyd-Warshall algorithm, or Dykstra's algorithm with Fibonacci Heaps.
 """
-
-# Author: Jake Vanderplas  -- <vanderplas@astro.washington.edu>
-# License: BSD 3 clause, (C) 2011
 
 import numpy as np
 cimport numpy as np
@@ -101,7 +101,7 @@ cdef np.ndarray floyd_warshall(np.ndarray[DTYPE_t, ndim=2, mode='c'] graph,
     Parameters
     ----------
     graph : ndarray
-        on input, graph is the matrix of distances betweeen connected points.
+        on input, graph is the matrix of distances between connected points.
         unconnected points have distance=0
         on exit, graph is overwritten with the output
     directed : bool, default = False
@@ -164,14 +164,14 @@ cdef np.ndarray dijkstra(dist_matrix,
     Parameters
     ----------
     graph : array or sparse matrix
-        dist_matrix is the matrix of distances betweeen connected points.
+        dist_matrix is the matrix of distances between connected points.
         unconnected points have distance=0.  It will be converted to
         a csr_matrix internally
     indptr :
         These arrays encode a distance matrix in compressed-sparse-row
         format.
     graph : ndarray
-        on input, graph is the matrix of distances betweeen connected points.
+        on input, graph is the matrix of distances between connected points.
         unconnected points have distance=0
         on exit, graph is overwritten with the output
     directed : bool, default = False

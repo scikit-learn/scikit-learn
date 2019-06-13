@@ -6,9 +6,6 @@
 #         Tom Dupre la Tour
 # License: BSD 3 clause
 
-
-from __future__ import division, print_function
-
 from math import sqrt
 import warnings
 import numbers
@@ -20,26 +17,37 @@ import scipy.sparse as sp
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_random_state, check_array
 from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
-from ..utils.extmath import fast_dot, safe_min
+from ..utils.extmath import safe_min
 from ..utils.validation import check_is_fitted, check_non_negative
 from ..exceptions import ConvergenceWarning
 from .cdnmf_fast import _update_cdnmf_fast
 
 EPSILON = np.finfo(np.float32).eps
 
-INTEGER_TYPES = (numbers.Integral, np.integer)
-
 
 def norm(x):
     """Dot product-based Euclidean norm implementation
 
     See: http://fseoane.net/blog/2011/computing-the-vector-norm/
+
+    Parameters
+    ----------
+    x : array-like
+        Vector for which to compute the norm
     """
     return sqrt(squared_norm(x))
 
 
 def trace_dot(X, Y):
-    """Trace of np.dot(X, Y.T)."""
+    """Trace of np.dot(X, Y.T).
+
+    Parameters
+    ----------
+    X : array-like
+        First matrix
+    Y : array-like
+        Second matrix
+    """
     return np.dot(X.ravel(), Y.ravel())
 
 
@@ -109,13 +117,14 @@ def _beta_divergence(X, W, H, beta, square_root=False):
         WH_data = _special_sparse_dot(W, H, X).data
         X_data = X.data
     else:
-        WH = fast_dot(W, H)
+        WH = np.dot(W, H)
         WH_data = WH.ravel()
         X_data = X.ravel()
 
     # do not affect the zeros: here 0 ** (-1) = 0 and not infinity
-    WH_data = WH_data[X_data != 0]
-    X_data = X_data[X_data != 0]
+    indices = X_data > EPSILON
+    WH_data = WH_data[indices]
+    X_data = X_data[indices]
 
     # used to avoid division by zero
     WH_data[WH_data == 0] = EPSILON
@@ -142,7 +151,7 @@ def _beta_divergence(X, W, H, beta, square_root=False):
             # np.sum(np.dot(W, H) ** beta)
             sum_WH_beta = 0
             for i in range(X.shape[1]):
-                sum_WH_beta += np.sum(fast_dot(W, H[:, i]) ** beta)
+                sum_WH_beta += np.sum(np.dot(W, H[:, i]) ** beta)
 
         else:
             sum_WH_beta = np.sum(WH ** beta)
@@ -166,7 +175,7 @@ def _special_sparse_dot(W, H, X):
         WH = sp.coo_matrix((dot_vals, (ii, jj)), shape=X.shape)
         return WH.tocsr()
     else:
-        return fast_dot(W, H)
+        return np.dot(W, H)
 
 
 def _compute_regularization(alpha, l1_ratio, regularization):
@@ -247,8 +256,11 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
 
     init :  None | 'random' | 'nndsvd' | 'nndsvda' | 'nndsvdar'
         Method used to initialize the procedure.
-        Default: 'nndsvd' if n_components < n_features, otherwise 'random'.
+        Default: None.
         Valid options:
+
+        - None: 'nndsvd' if n_components <= min(n_samples, n_features),
+            otherwise 'random'.
 
         - 'random': non-negative random matrices, scaled with:
             sqrt(X.mean() / n_components)
@@ -268,9 +280,11 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
     eps : float
         Truncate all values less then this in output to zero.
 
-    random_state : int seed, RandomState instance, or None (default)
-        Random number generator seed control, used in 'nndsvdar' and
-        'random' modes.
+    random_state : int, RandomState instance or None, optional, default: None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`. Used when ``random`` == 'nndsvdar' or 'random'.
 
     Returns
     -------
@@ -289,8 +303,14 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
     check_non_negative(X, "NMF initialization")
     n_samples, n_features = X.shape
 
+    if (init is not None and init != 'random'
+            and n_components > min(n_samples, n_features)):
+        raise ValueError("init = '{}' can only be used when "
+                         "n_components <= min(n_samples, n_features)"
+                         .format(init))
+
     if init is None:
-        if n_components < n_features:
+        if n_components <= min(n_samples, n_features):
             init = 'nndsvd'
         else:
             init = 'random'
@@ -377,7 +397,7 @@ def _update_coordinate_descent(X, W, Ht, l1_reg, l2_reg, shuffle,
     """
     n_components = Ht.shape[1]
 
-    HHt = fast_dot(Ht.T, Ht)
+    HHt = np.dot(Ht.T, Ht)
     XHt = safe_sparse_dot(X, Ht)
 
     # L2 regularization corresponds to increase of the diagonal of HHt
@@ -445,8 +465,11 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
     shuffle : boolean, default: False
         If true, randomize the order of coordinates in the CD solver.
 
-    random_state : integer seed, RandomState instance, or None (default)
-        Random number generator seed control.
+    random_state : int, RandomState instance or None, optional, default: None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Returns
     -------
@@ -461,7 +484,7 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
 
     References
     ----------
-    Cichocki, Andrzej, and P. H. A. N. Anh-Huy. "Fast local algorithms for
+    Cichocki, Andrzej, and Phan, Anh-Huy. "Fast local algorithms for
     large scale nonnegative matrix and tensor factorizations."
     IEICE transactions on fundamentals of electronics, communications and
     computer sciences 92.3: 708-721, 2009.
@@ -516,8 +539,8 @@ def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
 
         # Denominator
         if HHt is None:
-            HHt = fast_dot(H, H.T)
-        denominator = fast_dot(W, HHt)
+            HHt = np.dot(H, H.T)
+        denominator = np.dot(W, HHt)
 
     else:
         # Numerator
@@ -540,6 +563,13 @@ def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
 
         if beta_loss == 1:
             np.divide(X_data, WH_safe_X_data, out=WH_safe_X_data)
+        elif beta_loss == 0:
+            # speeds up computation time
+            # refer to /numpy/numpy/issues/9363
+            WH_safe_X_data **= -1
+            WH_safe_X_data **= 2
+            # element-wise multiplication
+            WH_safe_X_data *= X_data
         else:
             WH_safe_X_data **= beta_loss - 2
             # element-wise multiplication
@@ -561,14 +591,14 @@ def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
                 # (compute row by row, avoiding the dense matrix WH)
                 WHHt = np.empty(W.shape)
                 for i in range(X.shape[0]):
-                    WHi = fast_dot(W[i, :], H)
+                    WHi = np.dot(W[i, :], H)
                     if beta_loss - 1 < 0:
                         WHi[WHi == 0] = EPSILON
                     WHi **= beta_loss - 1
-                    WHHt[i, :] = fast_dot(WHi, H.T)
+                    WHHt[i, :] = np.dot(WHi, H.T)
             else:
                 WH **= beta_loss - 1
-                WHHt = fast_dot(WH, H.T)
+                WHHt = np.dot(WH, H.T)
             denominator = WHHt
 
     # Add L1 and L2 regularization
@@ -592,7 +622,7 @@ def _multiplicative_update_h(X, W, H, beta_loss, l1_reg_H, l2_reg_H, gamma):
     """update H in Multiplicative Update NMF"""
     if beta_loss == 2:
         numerator = safe_sparse_dot(W.T, X)
-        denominator = fast_dot(fast_dot(W.T, W), H)
+        denominator = np.dot(np.dot(W.T, W), H)
 
     else:
         # Numerator
@@ -614,6 +644,13 @@ def _multiplicative_update_h(X, W, H, beta_loss, l1_reg_H, l2_reg_H, gamma):
 
         if beta_loss == 1:
             np.divide(X_data, WH_safe_X_data, out=WH_safe_X_data)
+        elif beta_loss == 0:
+            # speeds up computation time
+            # refer to /numpy/numpy/issues/9363
+            WH_safe_X_data **= -1
+            WH_safe_X_data **= 2
+            # element-wise multiplication
+            WH_safe_X_data *= X_data
         else:
             WH_safe_X_data **= beta_loss - 2
             # element-wise multiplication
@@ -636,14 +673,14 @@ def _multiplicative_update_h(X, W, H, beta_loss, l1_reg_H, l2_reg_H, gamma):
                 # (compute column by column, avoiding the dense matrix WH)
                 WtWH = np.empty(H.shape)
                 for i in range(X.shape[1]):
-                    WHi = fast_dot(W, H[:, i])
+                    WHi = np.dot(W, H[:, i])
                     if beta_loss - 1 < 0:
                         WHi[WHi == 0] = EPSILON
                     WHi **= beta_loss - 1
-                    WtWH[:, i] = fast_dot(W.T, WHi)
+                    WtWH[:, i] = np.dot(W.T, WHi)
             else:
                 WH **= beta_loss - 1
-                WtWH = fast_dot(W.T, WH)
+                WtWH = np.dot(W.T, WH)
             denominator = WtWH
 
     # Add L1 and L2 regularization
@@ -798,12 +835,12 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
 
 
 def non_negative_factorization(X, W=None, H=None, n_components=None,
-                               init='random', update_H=True, solver='cd',
+                               init='warn', update_H=True, solver='cd',
                                beta_loss='frobenius', tol=1e-4,
                                max_iter=200, alpha=0., l1_ratio=0.,
                                regularization=None, random_state=None,
                                verbose=0, shuffle=False):
-    """Compute Non-negative Matrix Factorization (NMF)
+    r"""Compute Non-negative Matrix Factorization (NMF)
 
     Find two non-negative matrices (W, H) whose product approximates the non-
     negative matrix X. This factorization can be used for example for
@@ -845,10 +882,16 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         Number of components, if n_components is not set all features
         are kept.
 
-    init :  None | 'random' | 'nndsvd' | 'nndsvda' | 'nndsvdar' | 'custom'
+    init : None | 'random' | 'nndsvd' | 'nndsvda' | 'nndsvdar' | 'custom'
         Method used to initialize the procedure.
-        Default: 'nndsvd' if n_components < n_features, otherwise random.
+        Default: 'random'.
+
+        The default value will change from 'random' to None in version 0.23
+        to make it consistent with decomposition.NMF.
+
         Valid options:
+
+        - None: 'nndsvd' if n_components < n_features, otherwise 'random'.
 
         - 'random': non-negative random matrices, scaled with:
             sqrt(X.mean() / n_components)
@@ -871,7 +914,8 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
 
     solver : 'cd' | 'mu'
         Numerical solver to use:
-        'cd' is a Coordinate Descent solver.
+        'cd' is a Coordinate Descent solver that uses Fast Hierarchical
+            Alternating Least Squares (Fast HALS).
         'mu' is a Multiplicative Update solver.
 
         .. versionadded:: 0.17
@@ -910,8 +954,11 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         Select whether the regularization affects the components (H), the
         transformation (W), both or none of them.
 
-    random_state : integer seed, RandomState instance, or None (default)
-        Random number generator seed control.
+    random_state : int, RandomState instance or None, optional, default: None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     verbose : integer, default: 0
         The verbosity level.
@@ -935,8 +982,8 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     >>> import numpy as np
     >>> X = np.array([[1,1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
     >>> from sklearn.decomposition import non_negative_factorization
-    >>> W, H, n_iter = non_negative_factorization(X, n_components=2, \
-        init='random', random_state=0)
+    >>> W, H, n_iter = non_negative_factorization(X, n_components=2,
+    ... init='random', random_state=0)
 
     References
     ----------
@@ -949,7 +996,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     factorization with the beta-divergence. Neural Computation, 23(9).
     """
 
-    X = check_array(X, accept_sparse=('csr', 'csc'))
+    X = check_array(X, accept_sparse=('csr', 'csc'), dtype=float)
     check_non_negative(X, "NMF (input X)")
     beta_loss = _check_string_param(solver, regularization, beta_loss, init)
 
@@ -962,15 +1009,22 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     if n_components is None:
         n_components = n_features
 
-    if not isinstance(n_components, INTEGER_TYPES) or n_components <= 0:
+    if not isinstance(n_components, numbers.Integral) or n_components <= 0:
         raise ValueError("Number of components must be a positive integer;"
                          " got (n_components=%r)" % n_components)
-    if not isinstance(max_iter, INTEGER_TYPES) or max_iter < 0:
+    if not isinstance(max_iter, numbers.Integral) or max_iter < 0:
         raise ValueError("Maximum number of iterations must be a positive "
                          "integer; got (max_iter=%r)" % max_iter)
     if not isinstance(tol, numbers.Number) or tol < 0:
         raise ValueError("Tolerance for stopping criteria must be "
                          "positive; got (tol=%r)" % tol)
+
+    if init == "warn":
+        if n_components < n_features:
+            warnings.warn("The default value of init will change from "
+                          "random to None in 0.23 to make it consistent "
+                          "with decomposition.NMF.", FutureWarning)
+        init = "random"
 
     # check W and H, or initialize them
     if init == 'custom' and update_H:
@@ -981,7 +1035,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         # 'mu' solver should not be initialized by zeros
         if solver == 'mu':
             avg = np.sqrt(X.mean() / n_components)
-            W = avg * np.ones((n_samples, n_components))
+            W = np.full((n_samples, n_components), avg)
         else:
             W = np.zeros((n_samples, n_components))
     else:
@@ -1016,7 +1070,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
 
 
 class NMF(BaseEstimator, TransformerMixin):
-    """Non-Negative Matrix Factorization (NMF)
+    r"""Non-Negative Matrix Factorization (NMF)
 
     Find two non-negative matrices (W, H) whose product approximates the non-
     negative matrix X. This factorization can be used for example for
@@ -1050,10 +1104,13 @@ class NMF(BaseEstimator, TransformerMixin):
         Number of components, if n_components is not set all features
         are kept.
 
-    init :  'random' | 'nndsvd' |  'nndsvda' | 'nndsvdar' | 'custom'
+    init : None | 'random' | 'nndsvd' |  'nndsvda' | 'nndsvdar' | 'custom'
         Method used to initialize the procedure.
-        Default: 'nndsvd' if n_components < n_features, otherwise random.
+        Default: None.
         Valid options:
+
+        - None: 'nndsvd' if n_components <= min(n_samples, n_features),
+            otherwise random.
 
         - 'random': non-negative random matrices, scaled with:
             sqrt(X.mean() / n_components)
@@ -1097,8 +1154,11 @@ class NMF(BaseEstimator, TransformerMixin):
     max_iter : integer, default: 200
         Maximum number of iterations before timing out.
 
-    random_state : integer seed, RandomState instance, or None (default)
-        Random number generator seed control.
+    random_state : int, RandomState instance or None, optional, default: None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     alpha : double, default: 0.
         Constant that multiplies the regularization terms. Set it to zero to
@@ -1117,6 +1177,9 @@ class NMF(BaseEstimator, TransformerMixin):
         .. versionadded:: 0.17
            Regularization parameter *l1_ratio* used in the Coordinate Descent
            solver.
+
+    verbose : bool, default=False
+        Whether to be verbose.
 
     shuffle : boolean, default: False
         If true, randomize the order of coordinates in the CD solver.
@@ -1156,6 +1219,7 @@ class NMF(BaseEstimator, TransformerMixin):
     Fevotte, C., & Idier, J. (2011). Algorithms for nonnegative matrix
     factorization with the beta-divergence. Neural Computation, 23(9).
     """
+
     def __init__(self, n_components=None, init=None, solver='cd',
                  beta_loss='frobenius', tol=1e-4, max_iter=200,
                  random_state=None, alpha=0., l1_ratio=0., verbose=0,
@@ -1182,6 +1246,8 @@ class NMF(BaseEstimator, TransformerMixin):
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Data matrix to be decomposed
 
+        y : Ignored
+
         W : array-like, shape (n_samples, n_components)
             If init='custom', it is used as initial guess for the solution.
 
@@ -1193,7 +1259,7 @@ class NMF(BaseEstimator, TransformerMixin):
         W : array, shape (n_samples, n_components)
             Transformed data.
         """
-        X = check_array(X, accept_sparse=('csr', 'csc'))
+        X = check_array(X, accept_sparse=('csr', 'csc'), dtype=float)
 
         W, H, n_iter_ = non_negative_factorization(
             X=X, W=W, H=H, n_components=self.n_components, init=self.init,
@@ -1219,6 +1285,8 @@ class NMF(BaseEstimator, TransformerMixin):
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Data matrix to be decomposed
+
+        y : Ignored
 
         Returns
         -------

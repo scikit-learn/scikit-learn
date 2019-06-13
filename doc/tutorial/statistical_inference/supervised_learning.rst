@@ -88,15 +88,13 @@ Scikit-learn documentation for more information about this type of classifier.)
     >>> indices = np.random.permutation(len(iris_X))
     >>> iris_X_train = iris_X[indices[:-10]]
     >>> iris_y_train = iris_y[indices[:-10]]
-    >>> iris_X_test  = iris_X[indices[-10:]]
-    >>> iris_y_test  = iris_y[indices[-10:]]
+    >>> iris_X_test = iris_X[indices[-10:]]
+    >>> iris_y_test = iris_y[indices[-10:]]
     >>> # Create and fit a nearest-neighbor classifier
     >>> from sklearn.neighbors import KNeighborsClassifier
     >>> knn = KNeighborsClassifier()
-    >>> knn.fit(iris_X_train, iris_y_train) # doctest: +NORMALIZE_WHITESPACE
-    KNeighborsClassifier(algorithm='auto', leaf_size=30, metric='minkowski',
-               metric_params=None, n_jobs=1, n_neighbors=5, p=2,
-               weights='uniform')
+    >>> knn.fit(iris_X_train, iris_y_train)
+    KNeighborsClassifier()
     >>> knn.predict(iris_X_test)
     array([1, 2, 1, 0, 0, 0, 2, 1, 2, 0])
     >>> iris_y_test
@@ -109,21 +107,21 @@ The curse of dimensionality
 
 For an estimator to be effective, you need the distance between neighboring
 points to be less than some value :math:`d`, which depends on the problem.
-In one dimension, this requires on average :math:`n ~ 1/d` points.
+In one dimension, this requires on average :math:`n \sim 1/d` points.
 In the context of the above :math:`k`-NN example, if the data is described by
 just one feature with values ranging from 0 to 1 and with :math:`n` training
 observations, then new data will be no further away than :math:`1/n`.
 Therefore, the nearest neighbor decision rule will be efficient as soon as
 :math:`1/n` is small compared to the scale of between-class feature variations.
 
-If the number of features is :math:`p`, you now require :math:`n ~ 1/d^p`
+If the number of features is :math:`p`, you now require :math:`n \sim 1/d^p`
 points.  Let's say that we require 10 points in one dimension: now :math:`10^p`
 points are required in :math:`p` dimensions to pave the :math:`[0, 1]` space.
 As :math:`p` becomes large, the number of training points required for a good
 estimator grows exponentially.
 
 For example, if each point is just a single number (8 bytes), then an
-effective :math:`k`-NN estimator in a paltry :math:`p~20` dimensions would
+effective :math:`k`-NN estimator in a paltry :math:`p \sim 20` dimensions would
 require more training data than the current estimated size of the entire
 internet (±1000 Exabytes or so).
 
@@ -176,19 +174,20 @@ Linear models: :math:`y = X\beta + \epsilon`
     >>> from sklearn import linear_model
     >>> regr = linear_model.LinearRegression()
     >>> regr.fit(diabetes_X_train, diabetes_y_train)
-    LinearRegression(copy_X=True, fit_intercept=True, n_jobs=1, normalize=False)
-    >>> print(regr.coef_)
+    LinearRegression()
+    >>> print(regr.coef_)  # doctest: +SKIP
     [   0.30349955 -237.63931533  510.53060544  327.73698041 -814.13170937
       492.81458798  102.84845219  184.60648906  743.51961675   76.09517222]
 
+
     >>> # The mean square error
-    >>> np.mean((regr.predict(diabetes_X_test)-diabetes_y_test)**2)# doctest: +ELLIPSIS
+    >>> np.mean((regr.predict(diabetes_X_test) - diabetes_y_test)**2)
     2004.56760268...
 
     >>> # Explained variance score: 1 is perfect prediction
     >>> # and 0 means that there is no linear relationship
     >>> # between X and y.
-    >>> regr.score(diabetes_X_test, diabetes_y_test) # doctest: +ELLIPSIS
+    >>> regr.score(diabetes_X_test, diabetes_y_test)
     0.5850753022690...
 
 
@@ -217,10 +216,10 @@ induces high variance:
 
     >>> np.random.seed(0)
     >>> for _ in range(6): # doctest: +SKIP
-    ...    this_X = .1*np.random.normal(size=(2, 1)) + X
-    ...    regr.fit(this_X, y)
-    ...    plt.plot(test, regr.predict(test)) # doctest: +SKIP
-    ...    plt.scatter(this_X, y, s=3)  # doctest: +SKIP
+    ...     this_X = .1 * np.random.normal(size=(2, 1)) + X
+    ...     regr.fit(this_X, y)
+    ...     plt.plot(test, regr.predict(test)) # doctest: +SKIP
+    ...     plt.scatter(this_X, y, s=3)  # doctest: +SKIP
 
 
 
@@ -242,10 +241,10 @@ regression:
 
     >>> np.random.seed(0)
     >>> for _ in range(6): # doctest: +SKIP
-    ...    this_X = .1*np.random.normal(size=(2, 1)) + X
-    ...    regr.fit(this_X, y)
-    ...    plt.plot(test, regr.predict(test)) # doctest: +SKIP
-    ...    plt.scatter(this_X, y, s=3) # doctest: +SKIP
+    ...     this_X = .1 * np.random.normal(size=(2, 1)) + X
+    ...     regr.fit(this_X, y)
+    ...     plt.plot(test, regr.predict(test)) # doctest: +SKIP
+    ...     plt.scatter(this_X, y, s=3) # doctest: +SKIP
 
 This is an example of **bias/variance tradeoff**: the larger the ridge
 ``alpha`` parameter, the higher the bias and the lower the variance.
@@ -254,11 +253,12 @@ We can choose ``alpha`` to minimize left out error, this time using the
 diabetes dataset rather than our synthetic data::
 
     >>> alphas = np.logspace(-4, -1, 6)
-    >>> from __future__ import print_function
-    >>> print([regr.set_params(alpha=alpha
-    ...             ).fit(diabetes_X_train, diabetes_y_train,
-    ...             ).score(diabetes_X_test, diabetes_y_test) for alpha in alphas]) # doctest: +ELLIPSIS
-    [0.5851110683883..., 0.5852073015444..., 0.5854677540698..., 0.5855512036503..., 0.5830717085554..., 0.57058999437...]
+    >>> print([regr.set_params(alpha=alpha)
+    ...            .fit(diabetes_X_train, diabetes_y_train)
+    ...            .score(diabetes_X_test, diabetes_y_test)
+    ...        for alpha in alphas])
+    [0.5851110683883..., 0.5852073015444..., 0.5854677540698...,
+     0.5855512036503..., 0.5830717085554..., 0.57058999437...]
 
 
 .. note::
@@ -320,16 +320,14 @@ application of Occam's razor: *prefer simpler models*.
 ::
 
     >>> regr = linear_model.Lasso()
-    >>> scores = [regr.set_params(alpha=alpha
-    ...             ).fit(diabetes_X_train, diabetes_y_train
-    ...             ).score(diabetes_X_test, diabetes_y_test)
-    ...        for alpha in alphas]
+    >>> scores = [regr.set_params(alpha=alpha)
+    ...               .fit(diabetes_X_train, diabetes_y_train)
+    ...               .score(diabetes_X_test, diabetes_y_test)
+    ...           for alpha in alphas]
     >>> best_alpha = alphas[scores.index(max(scores))]
     >>> regr.alpha = best_alpha
     >>> regr.fit(diabetes_X_train, diabetes_y_train)
-    Lasso(alpha=0.025118864315095794, copy_X=True, fit_intercept=True,
-       max_iter=1000, normalize=False, positive=False, precompute=False,
-       random_state=None, selection='cyclic', tol=0.0001, warm_start=False)
+    Lasso(alpha=0.025118864315095794)
     >>> print(regr.coef_)
     [   0.         -212.43764548  517.19478111  313.77959962 -160.8303982    -0.
      -187.19554705   69.38229038  508.66011217   71.84239008]
@@ -339,9 +337,9 @@ application of Occam's razor: *prefer simpler models*.
     Different algorithms can be used to solve the same mathematical
     problem. For instance the ``Lasso`` object in scikit-learn
     solves the lasso regression problem using a
-    `coordinate decent <https://en.wikipedia.org/wiki/Coordinate_descent>`_ method,
+    `coordinate descent <https://en.wikipedia.org/wiki/Coordinate_descent>`_ method,
     that is efficient on large datasets. However, scikit-learn also
-    provides the :class:`LassoLars` object using the *LARS* algorthm,
+    provides the :class:`LassoLars` object using the *LARS* algorithm,
     which is very efficient for problems in which the weight vector estimated
     is very sparse (i.e. problems with very few observations).
 
@@ -368,12 +366,9 @@ function or **logistic** function:
 
 ::
 
-    >>> logistic = linear_model.LogisticRegression(C=1e5)
-    >>> logistic.fit(iris_X_train, iris_y_train)
-    LogisticRegression(C=100000.0, class_weight=None, dual=False,
-              fit_intercept=True, intercept_scaling=1, max_iter=100,
-              multi_class='ovr', n_jobs=1, penalty='l2', random_state=None,
-              solver='liblinear', tol=0.0001, verbose=0, warm_start=False)
+    >>> log = linear_model.LogisticRegression(C=1e5)
+    >>> log.fit(iris_X_train, iris_y_train)
+    LogisticRegression(C=100000.0)
 
 This is known as :class:`LogisticRegression`.
 
@@ -402,10 +397,10 @@ This is known as :class:`LogisticRegression`.
    model. Leave out the last 10% and test prediction performance on these
    observations.
 
-   .. literalinclude:: ../../auto_examples/exercises/digits_classification_exercise.py
+   .. literalinclude:: ../../auto_examples/exercises/plot_digits_classification_exercise.py
        :lines: 15-19
 
-   Solution: :download:`../../auto_examples/exercises/digits_classification_exercise.py`
+   Solution: :download:`../../auto_examples/exercises/plot_digits_classification_exercise.py`
 
 
 Support vector machines (SVMs)
@@ -443,7 +438,7 @@ the separating line (less regularization).
 
 .. topic:: Example:
 
- - :ref:`sphx_glr_auto_examples_svm_plot_iris.py`
+ - :ref:`sphx_glr_auto_examples_svm_plot_iris_svc.py`
 
 
 SVMs can be used in regression --:class:`SVR` (Support Vector Regression)--, or in
@@ -453,11 +448,8 @@ classification --:class:`SVC` (Support Vector Classification).
 
     >>> from sklearn import svm
     >>> svc = svm.SVC(kernel='linear')
-    >>> svc.fit(iris_X_train, iris_y_train)    # doctest: +NORMALIZE_WHITESPACE
-    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-        decision_function_shape='ovr', degree=3, gamma='auto', kernel='linear',
-        max_iter=-1, probability=False, random_state=None, shrinking=True,
-        tol=0.001, verbose=False)
+    >>> svc.fit(iris_X_train, iris_y_train)
+    SVC(kernel='linear')
 
 
 .. warning:: **Normalizing data**

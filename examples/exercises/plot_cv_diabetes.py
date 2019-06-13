@@ -9,7 +9,6 @@ This exercise is used in the :ref:`cv_estimators_tut` part of the
 :ref:`model_selection_tut` section of the :ref:`stat_learn_tut_index`.
 """
 
-from __future__ import print_function
 print(__doc__)
 
 import numpy as np
@@ -19,28 +18,22 @@ from sklearn import datasets
 from sklearn.linear_model import LassoCV
 from sklearn.linear_model import Lasso
 from sklearn.model_selection import KFold
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import GridSearchCV
 
 diabetes = datasets.load_diabetes()
 X = diabetes.data[:150]
 y = diabetes.target[:150]
 
-lasso = Lasso(random_state=0)
+lasso = Lasso(random_state=0, max_iter=10000)
 alphas = np.logspace(-4, -0.5, 30)
 
-scores = list()
-scores_std = list()
+tuned_parameters = [{'alpha': alphas}]
+n_folds = 5
 
-n_folds = 3
-
-for alpha in alphas:
-    lasso.alpha = alpha
-    this_scores = cross_val_score(lasso, X, y, cv=n_folds, n_jobs=1)
-    scores.append(np.mean(this_scores))
-    scores_std.append(np.std(this_scores))
-
-scores, scores_std = np.array(scores), np.array(scores_std)
-
+clf = GridSearchCV(lasso, tuned_parameters, cv=n_folds, refit=False)
+clf.fit(X, y)
+scores = clf.cv_results_['mean_test_score']
+scores_std = clf.cv_results_['std_test_score']
 plt.figure().set_size_inches(8, 6)
 plt.semilogx(alphas, scores)
 
@@ -58,7 +51,7 @@ plt.xlabel('alpha')
 plt.axhline(np.max(scores), linestyle='--', color='.5')
 plt.xlim([alphas[0], alphas[-1]])
 
-##############################################################################
+# #############################################################################
 # Bonus: how much can you trust the selection of alpha?
 
 # To answer this question we use the LassoCV object that sets its alpha
@@ -66,7 +59,7 @@ plt.xlim([alphas[0], alphas[-1]])
 # performs cross-validation on the training data it receives).
 # We use external cross-validation to see how much the automatically obtained
 # alphas differ across different cross-validation folds.
-lasso_cv = LassoCV(alphas=alphas, random_state=0)
+lasso_cv = LassoCV(alphas=alphas, random_state=0, max_iter=10000)
 k_fold = KFold(3)
 
 print("Answer to the bonus question:",

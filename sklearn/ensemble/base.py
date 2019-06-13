@@ -11,7 +11,9 @@ import numbers
 from ..base import clone
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
-from ..utils import _get_n_jobs, check_random_state
+from ..utils import check_random_state
+from ..utils._joblib import effective_n_jobs
+from abc import ABCMeta, abstractmethod
 
 MAX_RAND_SEED = np.iinfo(np.int32).max
 
@@ -29,8 +31,11 @@ def _set_random_states(estimator, random_state=None):
         Estimator with potential randomness managed by random_state
         parameters.
 
-    random_state : numpy.RandomState or int, optional
-        Random state used to generate integer values.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Notes
     -----
@@ -52,7 +57,7 @@ def _set_random_states(estimator, random_state=None):
         estimator.set_params(**to_set)
 
 
-class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
+class BaseEnsemble(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
     """Base class for all ensemble classes.
 
     Warning: This class should not be used directly. Use derived classes
@@ -78,7 +83,10 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
     estimators_ : list of estimators
         The collection of fitted base estimators.
     """
+    # overwrite _required_parameters from MetaEstimatorMixin
+    _required_parameters = []
 
+    @abstractmethod
     def __init__(self, base_estimator, n_estimators=10,
                  estimator_params=tuple()):
         # Set parameters
@@ -93,7 +101,7 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
     def _validate_estimator(self, default=None):
         """Check the estimator and the n_estimator attribute, set the
         `base_estimator_` attribute."""
-        if not isinstance(self.n_estimators, (numbers.Integral, np.integer)):
+        if not isinstance(self.n_estimators, numbers.Integral):
             raise ValueError("n_estimators must be an integer, "
                              "got {0}.".format(type(self.n_estimators)))
 
@@ -116,8 +124,8 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
         sub-estimators.
         """
         estimator = clone(self.base_estimator_)
-        estimator.set_params(**dict((p, getattr(self, p))
-                                    for p in self.estimator_params))
+        estimator.set_params(**{p: getattr(self, p)
+                                for p in self.estimator_params})
 
         if random_state is not None:
             _set_random_states(estimator, random_state)
@@ -143,11 +151,11 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
 def _partition_estimators(n_estimators, n_jobs):
     """Private function used to partition estimators between jobs."""
     # Compute the number of jobs
-    n_jobs = min(_get_n_jobs(n_jobs), n_estimators)
+    n_jobs = min(effective_n_jobs(n_jobs), n_estimators)
 
     # Partition estimators between jobs
-    n_estimators_per_job = (n_estimators // n_jobs) * np.ones(n_jobs,
-                                                              dtype=np.int)
+    n_estimators_per_job = np.full(n_jobs, n_estimators // n_jobs,
+                                   dtype=np.int)
     n_estimators_per_job[:n_estimators % n_jobs] += 1
     starts = np.cumsum(n_estimators_per_job)
 

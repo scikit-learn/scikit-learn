@@ -10,7 +10,7 @@ This data sets consists of 3 different types of irises'
 length, stored in a 150x4 numpy.ndarray
 
 The rows being the samples and the columns being:
-Sepal Length, Sepal Width, Petal Length	and Petal Width.
+Sepal Length, Sepal Width, Petal Length and Petal Width.
 
 The below plot uses the first two features.
 See `here <https://en.wikipedia.org/wiki/Iris_flower_data_set>`_ for more
@@ -40,7 +40,8 @@ plt.figure(2, figsize=(8, 6))
 plt.clf()
 
 # Plot the training points
-plt.scatter(X[:, 0], X[:, 1], c=y, cmap=plt.cm.Paired)
+plt.scatter(X[:, 0], X[:, 1], c=y, cmap=plt.cm.Set1,
+            edgecolor='k')
 plt.xlabel('Sepal length')
 plt.ylabel('Sepal width')
 
@@ -55,7 +56,7 @@ fig = plt.figure(1, figsize=(8, 6))
 ax = Axes3D(fig, elev=-150, azim=110)
 X_reduced = PCA(n_components=3).fit_transform(iris.data)
 ax.scatter(X_reduced[:, 0], X_reduced[:, 1], X_reduced[:, 2], c=y,
-           cmap=plt.cm.Paired)
+           cmap=plt.cm.Set1, edgecolor='k', s=40)
 ax.set_title("First three PCA directions")
 ax.set_xlabel("1st eigenvector")
 ax.w_xaxis.set_ticklabels([])

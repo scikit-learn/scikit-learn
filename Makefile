@@ -4,16 +4,11 @@
 
 PYTHON ?= python
 CYTHON ?= cython
-NOSETESTS ?= nosetests
+PYTEST ?= pytest
 CTAGS ?= ctags
 
 # skip doctests on 32bit python
 BITS := $(shell python -c 'import struct; print(8 * struct.calcsize("P"))')
-
-ifeq ($(BITS),32)
-  NOSETESTS:=$(NOSETESTS) -c setup32.cfg
-endif
-
 
 all: clean inplace test
 
@@ -29,19 +24,17 @@ inplace:
 	$(PYTHON) setup.py build_ext -i
 
 test-code: in
-	$(NOSETESTS) -s -v sklearn
+	$(PYTEST) --showlocals -v sklearn --durations=20
 test-sphinxext:
-	$(NOSETESTS) -s -v doc/sphinxext/
+	$(PYTEST) --showlocals -v doc/sphinxext/
 test-doc:
 ifeq ($(BITS),64)
-	$(NOSETESTS) -s -v doc/*.rst doc/modules/ doc/datasets/ \
-	doc/developers doc/tutorial/basic doc/tutorial/statistical_inference \
-	doc/tutorial/text_analytics
+	$(PYTEST) $(shell find doc -name '*.rst' | sort)
 endif
 
 test-coverage:
 	rm -rf coverage .coverage
-	$(NOSETESTS) -s -v --with-coverage sklearn
+	$(PYTEST) sklearn --showlocals -v --cov=sklearn --cov-report=html:coverage
 
 test: test-code test-sphinxext test-doc
 
@@ -67,4 +60,4 @@ code-analysis:
 	pylint -E -i y sklearn/ -d E1103,E0611,E1101
 
 flake8-diff:
-	./build_tools/travis/flake8_diff.sh
+	./build_tools/circle/flake8_diff.sh

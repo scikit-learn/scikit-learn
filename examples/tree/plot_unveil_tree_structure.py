@@ -54,7 +54,7 @@ threshold = estimator.tree_.threshold
 
 # The tree structure can be traversed to compute various properties such
 # as the depth of each node and whether or not it is a leaf.
-node_depth = np.zeros(shape=n_nodes)
+node_depth = np.zeros(shape=n_nodes, dtype=np.int64)
 is_leaves = np.zeros(shape=n_nodes, dtype=bool)
 stack = [(0, -1)]  # seed is the root node id and its parent depth
 while len(stack) > 0:
@@ -106,7 +106,7 @@ node_index = node_indicator.indices[node_indicator.indptr[sample_id]:
 
 print('Rules used to predict sample %s: ' % sample_id)
 for node_id in node_index:
-    if leave_id[sample_id] != node_id:
+    if leave_id[sample_id] == node_id:
         continue
 
     if (X_test[sample_id, feature[node_id]] <= threshold[node_id]):
@@ -114,11 +114,11 @@ for node_id in node_index:
     else:
         threshold_sign = ">"
 
-    print("decision id node %s : (X[%s, %s] (= %s) %s %s)"
+    print("decision id node %s : (X_test[%s, %s] (= %s) %s %s)"
           % (node_id,
              sample_id,
              feature[node_id],
-             X_test[i, feature[node_id]],
+             X_test[sample_id, feature[node_id]],
              threshold_sign,
              threshold[node_id]))
 

@@ -29,17 +29,24 @@ as well.
 # Author: Jake Vanderplas <jakevdp@cs.washington.edu>
 #
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
+from distutils.version import LooseVersion
 from scipy.stats import norm
 from sklearn.neighbors import KernelDensity
 
+# `normed` is being deprecated in favor of `density` in histograms
+if LooseVersion(matplotlib.__version__) >= '2.1':
+    density_param = {'density': True}
+else:
+    density_param = {'normed': True}
 
 #----------------------------------------------------------------------
 # Plot the progression of histograms to kernels
 np.random.seed(1)
 N = 20
-X = np.concatenate((np.random.normal(0, 1, 0.3 * N),
-                    np.random.normal(5, 1, 0.7 * N)))[:, np.newaxis]
+X = np.concatenate((np.random.normal(0, 1, int(0.3 * N)),
+                    np.random.normal(5, 1, int(0.7 * N))))[:, np.newaxis]
 X_plot = np.linspace(-5, 10, 1000)[:, np.newaxis]
 bins = np.linspace(-5, 10, 10)
 
@@ -47,11 +54,11 @@ fig, ax = plt.subplots(2, 2, sharex=True, sharey=True)
 fig.subplots_adjust(hspace=0.05, wspace=0.05)
 
 # histogram 1
-ax[0, 0].hist(X[:, 0], bins=bins, fc='#AAAAFF', normed=True)
+ax[0, 0].hist(X[:, 0], bins=bins, fc='#AAAAFF', **density_param)
 ax[0, 0].text(-3.5, 0.31, "Histogram")
 
 # histogram 2
-ax[0, 1].hist(X[:, 0], bins=bins + 0.75, fc='#AAAAFF', normed=True)
+ax[0, 1].hist(X[:, 0], bins=bins + 0.75, fc='#AAAAFF', **density_param)
 ax[0, 1].text(-3.5, 0.31, "Histogram, bins shifted")
 
 # tophat KDE
@@ -67,7 +74,7 @@ ax[1, 1].fill(X_plot[:, 0], np.exp(log_dens), fc='#AAAAFF')
 ax[1, 1].text(-3.5, 0.31, "Gaussian Kernel Density")
 
 for axi in ax.ravel():
-    axi.plot(X[:, 0], np.zeros(X.shape[0]) - 0.01, '+k')
+    axi.plot(X[:, 0], np.full(X.shape[0], -0.01), '+k')
     axi.set_xlim(-4, 9)
     axi.set_ylim(-0.02, 0.34)
 
@@ -116,8 +123,8 @@ ax[0, 1].set_title('Available Kernels')
 # Plot a 1D density example
 N = 100
 np.random.seed(1)
-X = np.concatenate((np.random.normal(0, 1, 0.3 * N),
-                    np.random.normal(5, 1, 0.7 * N)))[:, np.newaxis]
+X = np.concatenate((np.random.normal(0, 1, int(0.3 * N)),
+                    np.random.normal(5, 1, int(0.7 * N))))[:, np.newaxis]
 
 X_plot = np.linspace(-5, 10, 1000)[:, np.newaxis]
 

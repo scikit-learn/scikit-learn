@@ -4,17 +4,20 @@
 #
 # License: BSD 3 clause
 
-import numpy as np
 import warnings
 
+import numpy as np
+
+from .base import make_dataset
+from .sag_fast import sag32, sag64
 from ..exceptions import ConvergenceWarning
 from ..utils import check_array
 from ..utils.extmath import row_norms
-from .base import make_dataset
-from .sag_fast import sag
 
 
-def get_auto_step_size(max_squared_sum, alpha_scaled, loss, fit_intercept):
+def get_auto_step_size(max_squared_sum, alpha_scaled, loss, fit_intercept,
+                       n_samples=None,
+                       is_saga=False):
     """Compute automatic step size for SAG solver
 
     The step size is set to 1 / (alpha_scaled + L + fit_intercept) where L is
@@ -36,6 +39,13 @@ def get_auto_step_size(max_squared_sum, alpha_scaled, loss, fit_intercept):
         Specifies if a constant (a.k.a. bias or intercept) will be
         added to the decision function.
 
+    n_samples : int, optional
+        Number of rows in X. Useful if is_saga=True.
+
+    is_saga : boolean, optional
+        Whether to return step size for the SAGA algorithm or the SAG
+        algorithm.
+
     Returns
     -------
     step_size : float
@@ -46,23 +56,38 @@ def get_auto_step_size(max_squared_sum, alpha_scaled, loss, fit_intercept):
     Schmidt, M., Roux, N. L., & Bach, F. (2013).
     Minimizing finite sums with the stochastic average gradient
     https://hal.inria.fr/hal-00860051/document
+
+    Defazio, A., Bach F. & Lacoste-Julien S. (2014).
+    SAGA: A Fast Incremental Gradient Method With Support
+    for Non-Strongly Convex Composite Objectives
+    https://arxiv.org/abs/1407.0202
     """
     if loss in ('log', 'multinomial'):
-        # inverse Lipschitz constant for log loss
-        return 4.0 / (max_squared_sum + int(fit_intercept)
-                      + 4.0 * alpha_scaled)
+        L = (0.25 * (max_squared_sum + int(fit_intercept)) + alpha_scaled)
     elif loss == 'squared':
         # inverse Lipschitz constant for squared loss
-        return 1.0 / (max_squared_sum + int(fit_intercept) + alpha_scaled)
+        L = max_squared_sum + int(fit_intercept) + alpha_scaled
     else:
         raise ValueError("Unknown loss function for SAG solver, got %s "
                          "instead of 'log' or 'squared'" % loss)
+    if is_saga:
+        # SAGA theoretical step size is 1/3L or 1 / (2 * (L + mu n))
+        # See Defazio et al. 2014
+        mun = min(2 * n_samples * alpha_scaled, L)
+        step = 1. / (2 * L + mun)
+    else:
+        # SAG theoretical step size is 1/16L but it is recommended to use 1 / L
+        # see http://www.birs.ca//workshops//2014/14w5003/files/schmidt.pdf,
+        # slide 65
+        step = 1. / L
+    return step
 
 
-def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
+def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
                max_iter=1000, tol=0.001, verbose=0, random_state=None,
                check_input=True, max_squared_sum=None,
-               warm_start_mem=None):
+               warm_start_mem=None,
+               is_saga=False):
     """SAG solver for Ridge and LogisticRegression
 
     SAG stands for Stochastic Average Gradient: the gradient of the loss is
@@ -106,7 +131,13 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
            *loss='multinomial'*
 
     alpha : float, optional
-        Constant that multiplies the regularization term. Defaults to 1.
+        L2 regularization term in the objective function
+        ``(0.5 * alpha * || W ||_F^2)``. Defaults to 1.
+
+    beta : float, optional
+        L1 regularization term in the objective function
+        ``(beta * || W ||_1)``. Only applied if ``is_saga`` is set to True.
+        Defaults to 0.
 
     max_iter : int, optional
         The max number of passes over the training data if the stopping
@@ -119,9 +150,12 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
     verbose : integer, optional
         The verbosity level.
 
-    random_state : int seed, RandomState instance, or None (default)
-        The seed of the pseudo random number generator to use when
-        shuffling the data.
+    random_state : int, RandomState instance or None, optional, default None
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     check_input : bool, default True
         If False, the input arrays X and y will not be checked.
@@ -145,6 +179,10 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
             - 'seen': array of boolean describing the seen samples.
             - 'num_seen': the number of seen samples.
 
+    is_saga : boolean, optional
+        Whether to use the SAGA algorithm or the SAG algorithm. SAGA behaves
+        better in the first epochs, and allow for l1 regularisation.
+
     Returns
     -------
     coef_ : array, shape (n_features)
@@ -163,30 +201,30 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
     >>> import numpy as np
     >>> from sklearn import linear_model
     >>> n_samples, n_features = 10, 5
-    >>> np.random.seed(0)
-    >>> X = np.random.randn(n_samples, n_features)
-    >>> y = np.random.randn(n_samples)
+    >>> rng = np.random.RandomState(0)
+    >>> X = rng.randn(n_samples, n_features)
+    >>> y = rng.randn(n_samples)
     >>> clf = linear_model.Ridge(solver='sag')
     >>> clf.fit(X, y)
-    ... #doctest: +NORMALIZE_WHITESPACE
-    Ridge(alpha=1.0, copy_X=True, fit_intercept=True, max_iter=None,
-          normalize=False, random_state=None, solver='sag', tol=0.001)
+    Ridge(solver='sag')
 
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     >>> y = np.array([1, 1, 2, 2])
-    >>> clf = linear_model.LogisticRegression(solver='sag')
+    >>> clf = linear_model.LogisticRegression(
+    ...     solver='sag', multi_class='multinomial')
     >>> clf.fit(X, y)
-    ... #doctest: +NORMALIZE_WHITESPACE
-    LogisticRegression(C=1.0, class_weight=None, dual=False,
-        fit_intercept=True, intercept_scaling=1, max_iter=100,
-        multi_class='ovr', n_jobs=1, penalty='l2', random_state=None,
-        solver='sag', tol=0.0001, verbose=0, warm_start=False)
+    LogisticRegression(multi_class='multinomial', solver='sag')
 
     References
     ----------
     Schmidt, M., Roux, N. L., & Bach, F. (2013).
     Minimizing finite sums with the stochastic average gradient
     https://hal.inria.fr/hal-00860051/document
+
+    Defazio, A., Bach F. & Lacoste-Julien S. (2014).
+    SAGA: A Fast Incremental Gradient Method With Support
+    for Non-Strongly Convex Composite Objectives
+    https://arxiv.org/abs/1407.0202
 
     See also
     --------
@@ -200,25 +238,27 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
         max_iter = 1000
 
     if check_input:
-        X = check_array(X, dtype=np.float64, accept_sparse='csr', order='C')
-        y = check_array(y, dtype=np.float64, ensure_2d=False, order='C')
+        _dtype = [np.float64, np.float32]
+        X = check_array(X, dtype=_dtype, accept_sparse='csr', order='C')
+        y = check_array(y, dtype=_dtype, ensure_2d=False, order='C')
 
     n_samples, n_features = X.shape[0], X.shape[1]
     # As in SGD, the alpha is scaled by n_samples.
     alpha_scaled = float(alpha) / n_samples
+    beta_scaled = float(beta) / n_samples
 
     # if loss == 'multinomial', y should be label encoded.
     n_classes = int(y.max()) + 1 if loss == 'multinomial' else 1
 
     # initialization
     if sample_weight is None:
-        sample_weight = np.ones(n_samples, dtype=np.float64, order='C')
+        sample_weight = np.ones(n_samples, dtype=X.dtype, order='C')
 
     if 'coef' in warm_start_mem.keys():
         coef_init = warm_start_mem['coef']
     else:
         # assume fit_intercept is False
-        coef_init = np.zeros((n_features, n_classes), dtype=np.float64,
+        coef_init = np.zeros((n_features, n_classes), dtype=X.dtype,
                              order='C')
 
     # coef_init contains possibly the intercept_init at the end.
@@ -228,23 +268,23 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
         intercept_init = coef_init[-1, :]
         coef_init = coef_init[:-1, :]
     else:
-        intercept_init = np.zeros(n_classes, dtype=np.float64)
+        intercept_init = np.zeros(n_classes, dtype=X.dtype)
 
     if 'intercept_sum_gradient' in warm_start_mem.keys():
         intercept_sum_gradient = warm_start_mem['intercept_sum_gradient']
     else:
-        intercept_sum_gradient = np.zeros(n_classes, dtype=np.float64)
+        intercept_sum_gradient = np.zeros(n_classes, dtype=X.dtype)
 
     if 'gradient_memory' in warm_start_mem.keys():
         gradient_memory_init = warm_start_mem['gradient_memory']
     else:
         gradient_memory_init = np.zeros((n_samples, n_classes),
-                                        dtype=np.float64, order='C')
+                                        dtype=X.dtype, order='C')
     if 'sum_gradient' in warm_start_mem.keys():
         sum_gradient_init = warm_start_mem['sum_gradient']
     else:
         sum_gradient_init = np.zeros((n_features, n_classes),
-                                     dtype=np.float64, order='C')
+                                     dtype=X.dtype, order='C')
 
     if 'seen' in warm_start_mem.keys():
         seen_init = warm_start_mem['seen']
@@ -261,18 +301,20 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
     if max_squared_sum is None:
         max_squared_sum = row_norms(X, squared=True).max()
     step_size = get_auto_step_size(max_squared_sum, alpha_scaled, loss,
-                                   fit_intercept)
-
+                                   fit_intercept, n_samples=n_samples,
+                                   is_saga=is_saga)
     if step_size * alpha_scaled == 1:
         raise ZeroDivisionError("Current sag implementation does not handle "
                                 "the case step_size * alpha_scaled == 1")
 
+    sag = sag64 if X.dtype == np.float64 else sag32
     num_seen, n_iter_ = sag(dataset, coef_init,
                             intercept_init, n_samples,
                             n_features, n_classes, tol,
                             max_iter,
                             loss,
                             step_size, alpha_scaled,
+                            beta_scaled,
                             sum_gradient_init,
                             gradient_memory_init,
                             seen_init,
@@ -280,7 +322,9 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
                             fit_intercept,
                             intercept_sum_gradient,
                             intercept_decay,
+                            is_saga,
                             verbose)
+
     if n_iter_ == max_iter:
         warnings.warn("The max_iter was reached which means "
                       "the coef_ did not converge", ConvergenceWarning)

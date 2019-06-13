@@ -4,8 +4,6 @@
 # Modified by Thierry Guillemot <thierry.guillemot.work@gmail.com>
 # License: BSD 3 clause
 
-from __future__ import print_function
-
 import warnings
 from abc import ABCMeta, abstractmethod
 from time import time
@@ -15,10 +13,9 @@ import numpy as np
 from .. import cluster
 from ..base import BaseEstimator
 from ..base import DensityMixin
-from ..externals import six
 from ..exceptions import ConvergenceWarning
 from ..utils import check_array, check_random_state
-from ..utils.extmath import logsumexp
+from ..utils.fixes import logsumexp
 
 
 def _check_shape(param, param_shape, name):
@@ -38,7 +35,7 @@ def _check_shape(param, param_shape, name):
                          "but got %s" % (name, param_shape, param.shape))
 
 
-def _check_X(X, n_components=None, n_features=None):
+def _check_X(X, n_components=None, n_features=None, ensure_min_samples=1):
     """Check the input data X.
 
     Parameters
@@ -51,7 +48,8 @@ def _check_X(X, n_components=None, n_features=None):
     -------
     X : array, shape (n_samples, n_features)
     """
-    X = check_array(X, dtype=[np.float64, np.float32])
+    X = check_array(X, dtype=[np.float64, np.float32],
+                    ensure_min_samples=ensure_min_samples)
     if n_components is not None and X.shape[0] < n_components:
         raise ValueError('Expected n_samples >= n_components '
                          'but got n_components = %d, n_samples = %d'
@@ -63,7 +61,7 @@ def _check_X(X, n_components=None, n_features=None):
     return X
 
 
-class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
+class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for mixture models.
 
     This abstract class specifies an interface for all mixture classes and
@@ -171,11 +169,14 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
     def fit(self, X, y=None):
         """Estimate model parameters with the EM algorithm.
 
-        The method fit the model `n_init` times and set the parameters with
+        The method fits the model ``n_init`` times and sets the parameters with
         which the model has the largest likelihood or lower bound. Within each
-        trial, the method iterates between E-step and M-step for `max_iter`
+        trial, the method iterates between E-step and M-step for ``max_iter``
         times until the change of likelihood or lower bound is less than
-        `tol`, otherwise, a `ConvergenceWarning` is raised.
+        ``tol``, otherwise, a ``ConvergenceWarning`` is raised.
+        If ``warm_start`` is ``True``, then ``n_init`` is ignored and a single
+        initialization is performed upon the first call. Upon consecutive
+        calls, training starts where it left off.
 
         Parameters
         ----------
@@ -187,7 +188,33 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         -------
         self
         """
-        X = _check_X(X, self.n_components)
+        self.fit_predict(X, y)
+        return self
+
+    def fit_predict(self, X, y=None):
+        """Estimate model parameters using X and predict the labels for X.
+
+        The method fits the model n_init times and sets the parameters with
+        which the model has the largest likelihood or lower bound. Within each
+        trial, the method iterates between E-step and M-step for `max_iter`
+        times until the change of likelihood or lower bound is less than
+        `tol`, otherwise, a `ConvergenceWarning` is raised. After fitting, it
+        predicts the most probable label for the input data points.
+
+        .. versionadded:: 0.20
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            List of n_features-dimensional data points. Each row
+            corresponds to a single data point.
+
+        Returns
+        -------
+        labels : array, shape (n_samples,)
+            Component labels.
+        """
+        X = _check_X(X, self.n_components, ensure_min_samples=2)
         self._check_initial_parameters(X)
 
         # if we enable warm_start, we will have a unique initialisation
@@ -205,32 +232,33 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
 
             if do_init:
                 self._initialize_parameters(X, random_state)
-                self.lower_bound_ = -np.infty
 
-            for n_iter in range(self.max_iter):
-                prev_lower_bound = self.lower_bound_
+            lower_bound = (-np.infty if do_init else self.lower_bound_)
+
+            for n_iter in range(1, self.max_iter + 1):
+                prev_lower_bound = lower_bound
 
                 log_prob_norm, log_resp = self._e_step(X)
                 self._m_step(X, log_resp)
-                self.lower_bound_ = self._compute_lower_bound(
+                lower_bound = self._compute_lower_bound(
                     log_resp, log_prob_norm)
 
-                change = self.lower_bound_ - prev_lower_bound
+                change = lower_bound - prev_lower_bound
                 self._print_verbose_msg_iter_end(n_iter, change)
 
                 if abs(change) < self.tol:
                     self.converged_ = True
                     break
 
-            self._print_verbose_msg_init_end(self.lower_bound_)
+            self._print_verbose_msg_init_end(lower_bound)
 
-            if self.lower_bound_ > max_lower_bound:
-                max_lower_bound = self.lower_bound_
+            if lower_bound > max_lower_bound:
+                max_lower_bound = lower_bound
                 best_params = self._get_parameters()
                 best_n_iter = n_iter
 
         if not self.converged_:
-            warnings.warn('Initialization %d did not converged. '
+            warnings.warn('Initialization %d did not converge. '
                           'Try different init parameters, '
                           'or increase max_iter, tol '
                           'or check for degenerate data.'
@@ -238,8 +266,14 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
 
         self._set_parameters(best_params)
         self.n_iter_ = best_n_iter
+        self.lower_bound_ = max_lower_bound
 
-        return self
+        # Always do a final e-step to guarantee that the labels returned by
+        # fit_predict(X) are always consistent with fit(X).predict(X)
+        # for any value of max_iter and tol (and any random_state).
+        _, log_resp = self._e_step(X)
+
+        return log_resp.argmax(axis=1)
 
     def _e_step(self, X):
         """E step.
@@ -321,7 +355,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         """
         return self.score_samples(X).mean()
 
-    def predict(self, X, y=None):
+    def predict(self, X):
         """Predict the labels for the data samples in X using trained model.
 
         Parameters
@@ -340,7 +374,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         return self._estimate_weighted_log_prob(X).argmax(axis=1)
 
     def predict_proba(self, X):
-        """Predict posterior probability of data per each component.
+        """Predict posterior probability of each component given the data.
 
         Parameters
         ----------
@@ -351,8 +385,8 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         Returns
         -------
         resp : array, shape (n_samples, n_components)
-            Returns the probability of the sample for each Gaussian
-            (state) in the model.
+            Returns the probability each Gaussian (state) in
+            the model given each sample.
         """
         self._check_is_fitted()
         X = _check_X(X, None, self.means_.shape[1])
@@ -403,7 +437,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
                 for (mean, covariance, sample) in zip(
                     self.means_, self.covariances_, n_samples_comp)])
 
-        y = np.concatenate([j * np.ones(sample, dtype=int)
+        y = np.concatenate([np.full(sample, j, dtype=int)
                            for j, sample in enumerate(n_samples_comp)])
 
         return (X, y)
@@ -417,7 +451,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
 
         Returns
         -------
-        weighted_log_prob : array, shape (n_features, n_component)
+        weighted_log_prob : array, shape (n_samples, n_component)
         """
         return self._estimate_log_prob(X) + self._estimate_log_weights()
 

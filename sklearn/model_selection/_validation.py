@@ -3,42 +3,44 @@ The :mod:`sklearn.model_selection._validation` module includes classes and
 functions to validate the model.
 """
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
-#         Gael Varoquaux <gael.varoquaux@normalesup.org>,
+# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
+#         Gael Varoquaux <gael.varoquaux@normalesup.org>
 #         Olivier Grisel <olivier.grisel@ensta.org>
+#         Raghav RV <rvraghav93@gmail.com>
 # License: BSD 3 clause
 
-
-from __future__ import print_function
-from __future__ import division
 
 import warnings
 import numbers
 import time
+from traceback import format_exception_only
 
 import numpy as np
 import scipy.sparse as sp
 
 from ..base import is_classifier, clone
-from ..utils import indexable, check_random_state, safe_indexing
-from ..utils.fixes import astype
+from ..utils import (indexable, check_random_state, safe_indexing,
+                     _message_with_time)
 from ..utils.validation import _is_arraylike, _num_samples
 from ..utils.metaestimators import _safe_split
-from ..externals.joblib import Parallel, delayed, logger
-from ..metrics.scorer import check_scoring
+from ..utils._joblib import Parallel, delayed
+from ..metrics.scorer import check_scoring, _check_multimetric_scoring
 from ..exceptions import FitFailedWarning
 from ._split import check_cv
-
-__all__ = ['cross_val_score', 'cross_val_predict', 'permutation_test_score',
-           'learning_curve', 'validation_curve']
+from ..preprocessing import LabelEncoder
 
 
-def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
-                    n_jobs=1, verbose=0, fit_params=None,
-                    pre_dispatch='2*n_jobs'):
-    """Evaluate a score by cross-validation
+__all__ = ['cross_validate', 'cross_val_score', 'cross_val_predict',
+           'permutation_test_score', 'learning_curve', 'validation_curve']
 
-    Read more in the :ref:`User Guide <cross_validation>`.
+
+def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
+                   n_jobs=None, verbose=0, fit_params=None,
+                   pre_dispatch='2*n_jobs', return_train_score=False,
+                   return_estimator=False, error_score=np.nan):
+    """Evaluate metric(s) by cross-validation and also record fit/score times.
+
+    Read more in the :ref:`User Guide <multimetric_cross_validation>`.
 
     Parameters
     ----------
@@ -46,7 +48,7 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
         The object to use to fit the data.
 
     X : array-like
-        The data to fit. Can be, for example a list, or an array at least 2d.
+        The data to fit. Can be for example a list, or an array.
 
     y : array-like, optional, default: None
         The target variable to try to predict in the case of
@@ -56,18 +58,29 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
         Group labels for the samples used while splitting the dataset into
         train/test set.
 
-    scoring : string, callable or None, optional, default: None
-        A string (see model evaluation documentation) or
-        a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
+    scoring : string, callable, list/tuple, dict or None, default: None
+        A single string (see :ref:`scoring_parameter`) or a callable
+        (see :ref:`scoring`) to evaluate the predictions on the test set.
+
+        For evaluating multiple metrics, either give a list of (unique) strings
+        or a dict with names as keys and callables as values.
+
+        NOTE that when using custom scorers, each scorer should return a single
+        value. Metric functions returning a list/array of values can be wrapped
+        into multiple scorers that return one value each.
+
+        See :ref:`multimetric_grid_search` for an example.
+
+        If None, the estimator's score method is used.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross validation,
-          - integer, to specify the number of folds in a `(Stratified)KFold`,
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train, test splits.
+
+        - None, to use the default 5-fold cross validation,
+        - integer, to specify the number of folds in a `(Stratified)KFold`,
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -76,9 +89,14 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-    n_jobs : integer, optional
-        The number of CPUs to use to do the computation. -1 means
-        'all CPUs'.
+        .. versionchanged:: 0.22
+            ``cv`` default value if None changed from 3-fold to 5-fold.
+
+    n_jobs : int or None, optional (default=None)
+        The number of CPUs to use to do the computation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     verbose : integer, optional
         The verbosity level.
@@ -103,6 +121,223 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
+    return_train_score : boolean, default=False
+        Whether to include train scores.
+        Computing training scores is used to get insights on how different
+        parameter settings impact the overfitting/underfitting trade-off.
+        However computing the scores on the training set can be computationally
+        expensive and is not strictly required to select the parameters that
+        yield the best generalization performance.
+
+    return_estimator : boolean, default False
+        Whether to return the estimators fitted on each split.
+
+    error_score : 'raise' or numeric
+        Value to assign to the score if an error occurs in estimator fitting.
+        If set to 'raise', the error is raised.
+        If a numeric value is given, FitFailedWarning is raised. This parameter
+        does not affect the refit step, which will always raise the error.
+
+    Returns
+    -------
+    scores : dict of float arrays of shape=(n_splits,)
+        Array of scores of the estimator for each run of the cross validation.
+
+        A dict of arrays containing the score/time arrays for each scorer is
+        returned. The possible keys for this ``dict`` are:
+
+            ``test_score``
+                The score array for test scores on each cv split.
+            ``train_score``
+                The score array for train scores on each cv split.
+                This is available only if ``return_train_score`` parameter
+                is ``True``.
+            ``fit_time``
+                The time for fitting the estimator on the train
+                set for each cv split.
+            ``score_time``
+                The time for scoring the estimator on the test set for each
+                cv split. (Note time for scoring on the train set is not
+                included even if ``return_train_score`` is set to ``True``
+            ``estimator``
+                The estimator objects for each cv split.
+                This is available only if ``return_estimator`` parameter
+                is set to ``True``.
+
+    Examples
+    --------
+    >>> from sklearn import datasets, linear_model
+    >>> from sklearn.model_selection import cross_validate
+    >>> from sklearn.metrics.scorer import make_scorer
+    >>> from sklearn.metrics import confusion_matrix
+    >>> from sklearn.svm import LinearSVC
+    >>> diabetes = datasets.load_diabetes()
+    >>> X = diabetes.data[:150]
+    >>> y = diabetes.target[:150]
+    >>> lasso = linear_model.Lasso()
+
+    Single metric evaluation using ``cross_validate``
+
+    >>> cv_results = cross_validate(lasso, X, y, cv=3)
+    >>> sorted(cv_results.keys())
+    ['fit_time', 'score_time', 'test_score']
+    >>> cv_results['test_score']
+    array([0.33150734, 0.08022311, 0.03531764])
+
+    Multiple metric evaluation using ``cross_validate``
+    (please refer the ``scoring`` parameter doc for more information)
+
+    >>> scores = cross_validate(lasso, X, y, cv=3,
+    ...                         scoring=('r2', 'neg_mean_squared_error'),
+    ...                         return_train_score=True)
+    >>> print(scores['test_neg_mean_squared_error'])
+    [-3635.5... -3573.3... -6114.7...]
+    >>> print(scores['train_r2'])
+    [0.28010158 0.39088426 0.22784852]
+
+    See Also
+    ---------
+    :func:`sklearn.model_selection.cross_val_score`:
+        Run cross-validation for single metric evaluation.
+
+    :func:`sklearn.model_selection.cross_val_predict`:
+        Get predictions from each split of cross-validation for diagnostic
+        purposes.
+
+    :func:`sklearn.metrics.make_scorer`:
+        Make a scorer from a performance metric or loss function.
+
+    """
+    X, y, groups = indexable(X, y, groups)
+
+    cv = check_cv(cv, y, classifier=is_classifier(estimator))
+    scorers, _ = _check_multimetric_scoring(estimator, scoring=scoring)
+
+    # We clone the estimator to make sure that all the folds are
+    # independent, and that it is pickle-able.
+    parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
+                        pre_dispatch=pre_dispatch)
+    scores = parallel(
+        delayed(_fit_and_score)(
+            clone(estimator), X, y, scorers, train, test, verbose, None,
+            fit_params, return_train_score=return_train_score,
+            return_times=True, return_estimator=return_estimator,
+            error_score=error_score)
+        for train, test in cv.split(X, y, groups))
+
+    zipped_scores = list(zip(*scores))
+    if return_train_score:
+        train_scores = zipped_scores.pop(0)
+        train_scores = _aggregate_score_dicts(train_scores)
+    if return_estimator:
+        fitted_estimators = zipped_scores.pop()
+    test_scores, fit_times, score_times = zipped_scores
+    test_scores = _aggregate_score_dicts(test_scores)
+
+    ret = {}
+    ret['fit_time'] = np.array(fit_times)
+    ret['score_time'] = np.array(score_times)
+
+    if return_estimator:
+        ret['estimator'] = fitted_estimators
+
+    for name in scorers:
+        ret['test_%s' % name] = np.array(test_scores[name])
+        if return_train_score:
+            key = 'train_%s' % name
+            ret[key] = np.array(train_scores[name])
+
+    return ret
+
+
+def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
+                    n_jobs=None, verbose=0, fit_params=None,
+                    pre_dispatch='2*n_jobs', error_score=np.nan):
+    """Evaluate a score by cross-validation
+
+    Read more in the :ref:`User Guide <cross_validation>`.
+
+    Parameters
+    ----------
+    estimator : estimator object implementing 'fit'
+        The object to use to fit the data.
+
+    X : array-like
+        The data to fit. Can be for example a list, or an array.
+
+    y : array-like, optional, default: None
+        The target variable to try to predict in the case of
+        supervised learning.
+
+    groups : array-like, with shape (n_samples,), optional
+        Group labels for the samples used while splitting the dataset into
+        train/test set.
+
+    scoring : string, callable or None, optional, default: None
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)`` which should return only
+        a single value.
+
+        Similar to :func:`cross_validate`
+        but only a single metric is permitted.
+
+        If None, the estimator's default scorer (if available) is used.
+
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+
+        - None, to use the default 5-fold cross validation,
+        - integer, to specify the number of folds in a `(Stratified)KFold`,
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
+
+        For integer/None inputs, if the estimator is a classifier and ``y`` is
+        either binary or multiclass, :class:`StratifiedKFold` is used. In all
+        other cases, :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
+
+        .. versionchanged:: 0.22
+            ``cv`` default value if None changed from 3-fold to 5-fold.
+
+    n_jobs : int or None, optional (default=None)
+        The number of CPUs to use to do the computation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+
+    verbose : integer, optional
+        The verbosity level.
+
+    fit_params : dict, optional
+        Parameters to pass to the fit method of the estimator.
+
+    pre_dispatch : int, or string, optional
+        Controls the number of jobs that get dispatched during parallel
+        execution. Reducing this number can be useful to avoid an
+        explosion of memory consumption when more jobs get dispatched
+        than CPUs can process. This parameter can be:
+
+            - None, in which case all the jobs are immediately
+              created and spawned. Use this for lightweight and
+              fast-running jobs, to avoid delays due to on-demand
+              spawning of the jobs
+
+            - An int, giving the exact number of total jobs that are
+              spawned
+
+            - A string, giving an expression as a function of n_jobs,
+              as in '2*n_jobs'
+
+    error_score : 'raise' or numeric
+        Value to assign to the score if an error occurs in estimator fitting.
+        If set to 'raise', the error is raised.
+        If a numeric value is given, FitFailedWarning is raised. This parameter
+        does not affect the refit step, which will always raise the error.
+
     Returns
     -------
     scores : array of float, shape=(len(list(cv)),)
@@ -116,34 +351,40 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
     >>> X = diabetes.data[:150]
     >>> y = diabetes.target[:150]
     >>> lasso = linear_model.Lasso()
-    >>> print(cross_val_score(lasso, X, y))  # doctest: +ELLIPSIS
-    [ 0.33150734  0.08022311  0.03531764]
+    >>> print(cross_val_score(lasso, X, y, cv=3))
+    [0.33150734 0.08022311 0.03531764]
 
     See Also
     ---------
+    :func:`sklearn.model_selection.cross_validate`:
+        To run cross-validation on multiple metrics and also to return
+        train scores, fit times and score times.
+
+    :func:`sklearn.model_selection.cross_val_predict`:
+        Get predictions from each split of cross-validation for diagnostic
+        purposes.
+
     :func:`sklearn.metrics.make_scorer`:
         Make a scorer from a performance metric or loss function.
 
     """
-    X, y, groups = indexable(X, y, groups)
-
-    cv = check_cv(cv, y, classifier=is_classifier(estimator))
+    # To ensure multimetric format is not supported
     scorer = check_scoring(estimator, scoring=scoring)
-    # We clone the estimator to make sure that all the folds are
-    # independent, and that it is pickle-able.
-    parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
-                        pre_dispatch=pre_dispatch)
-    scores = parallel(delayed(_fit_and_score)(clone(estimator), X, y, scorer,
-                                              train, test, verbose, None,
-                                              fit_params)
-                      for train, test in cv.split(X, y, groups))
-    return np.array(scores)[:, 0]
+
+    cv_results = cross_validate(estimator=estimator, X=X, y=y, groups=groups,
+                                scoring={'score': scorer}, cv=cv,
+                                n_jobs=n_jobs, verbose=verbose,
+                                fit_params=fit_params,
+                                pre_dispatch=pre_dispatch,
+                                error_score=error_score)
+    return cv_results['test_score']
 
 
 def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                    parameters, fit_params, return_train_score=False,
                    return_parameters=False, return_n_test_samples=False,
-                   return_times=False, error_score='raise'):
+                   return_times=False, return_estimator=False,
+                   error_score=np.nan):
     """Fit estimator and compute scores for a given dataset split.
 
     Parameters
@@ -158,8 +399,14 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         The target variable to try to predict in the case of
         supervised learning.
 
-    scorer : callable
-        A scorer callable object / function with signature
+    scorer : A single callable or dict mapping scorer name to the callable
+        If it is a single callable, the return value for ``train_scores`` and
+        ``test_scores`` is a single float.
+
+        For a dict, it should be one mapping the scorer name to the scorer
+        callable object / function.
+
+        The callable object / fn should have signature
         ``scorer(estimator, X, y)``.
 
     train : array-like, shape (n_train_samples,)
@@ -171,11 +418,11 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     verbose : integer
         The verbosity level.
 
-    error_score : 'raise' (default) or numeric
+    error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
-        If set to 'raise', the error is raised. If a numeric value is given,
-        FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error.
+        If set to 'raise', the error is raised.
+        If a numeric value is given, FitFailedWarning is raised. This parameter
+        does not affect the refit step, which will always raise the error.
 
     parameters : dict or None
         Parameters to be set on the estimator.
@@ -189,13 +436,23 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     return_parameters : boolean, optional, default: False
         Return parameters that has been used for the estimator.
 
+    return_n_test_samples : boolean, optional, default: False
+        Whether to return the ``n_test_samples``
+
+    return_times : boolean, optional, default: False
+        Whether to return the fit/score times.
+
+    return_estimator : boolean, optional, default: False
+        Whether to return the fitted estimator.
+
     Returns
     -------
-    train_score : float, optional
-        Score on training set, returned only if `return_train_score` is `True`.
+    train_scores : dict of scorer name -> float, optional
+        Score on training set (for all the scorers),
+        returned only if `return_train_score` is `True`.
 
-    test_score : float
-        Score on test set.
+    test_scores : dict of scorer name -> float, optional
+        Score on testing set (for all the scorers).
 
     n_test_samples : int
         Number of test samples.
@@ -208,6 +465,9 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     parameters : dict or None, optional
         The parameters that have been evaluated.
+
+    estimator : estimator object
+        The fitted estimator
     """
     if verbose > 1:
         if parameters is None:
@@ -219,9 +479,10 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
-    fit_params = dict([(k, _index_param_value(X, v, train))
-                      for k, v in fit_params.items()])
+    fit_params = {k: _index_param_value(X, v, train)
+                  for k, v in fit_params.items()}
 
+    train_scores = {}
     if parameters is not None:
         estimator.set_params(**parameters)
 
@@ -230,6 +491,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, y_test = _safe_split(estimator, X, y, test, train)
 
+    is_multimetric = not callable(scorer)
+    n_scorers = len(scorer.keys()) if is_multimetric else 1
     try:
         if y_train is None:
             estimator.fit(X_train, **fit_params)
@@ -243,12 +506,21 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         if error_score == 'raise':
             raise
         elif isinstance(error_score, numbers.Number):
-            test_score = error_score
-            if return_train_score:
-                train_score = error_score
-            warnings.warn("Classifier fit failed. The score on this train-test"
+            if is_multimetric:
+                test_scores = dict(zip(scorer.keys(),
+                                   [error_score, ] * n_scorers))
+                if return_train_score:
+                    train_scores = dict(zip(scorer.keys(),
+                                        [error_score, ] * n_scorers))
+            else:
+                test_scores = error_score
+                if return_train_score:
+                    train_scores = error_score
+            warnings.warn("Estimator fit failed. The score on this train-test"
                           " partition for these parameters will be set to %f. "
-                          "Details: \n%r" % (error_score, e), FitFailedWarning)
+                          "Details: \n%s" %
+                          (error_score, format_exception_only(type(e), e)[0]),
+                          FitFailedWarning)
         else:
             raise ValueError("error_score must be the string 'raise' or a"
                              " numeric value. (Hint: if using 'raise', please"
@@ -256,19 +528,31 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     else:
         fit_time = time.time() - start_time
-        test_score = _score(estimator, X_test, y_test, scorer)
+        # _score will return dict if is_multimetric is True
+        test_scores = _score(estimator, X_test, y_test, scorer, is_multimetric)
         score_time = time.time() - start_time - fit_time
         if return_train_score:
-            train_score = _score(estimator, X_train, y_train, scorer)
-
+            train_scores = _score(estimator, X_train, y_train, scorer,
+                                  is_multimetric)
     if verbose > 2:
-        msg += ", score=%f" % test_score
+        if is_multimetric:
+            for scorer_name in sorted(test_scores):
+                msg += ", %s=" % scorer_name
+                if return_train_score:
+                    msg += "(train=%.3f," % train_scores[scorer_name]
+                    msg += " test=%.3f)" % test_scores[scorer_name]
+                else:
+                    msg += "%.3f" % test_scores[scorer_name]
+        else:
+            msg += ", score="
+            msg += ("%.3f" % test_scores if not return_train_score else
+                    "(train=%.3f, test=%.3f)" % (train_scores, test_scores))
+
     if verbose > 1:
         total_time = score_time + fit_time
-        end_msg = "%s, total=%s" % (msg, logger.short_format_time(total_time))
-        print("[CV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
+        print(_message_with_time('CV', msg, total_time))
 
-    ret = [train_score, test_score] if return_train_score else [test_score]
+    ret = [train_scores, test_scores] if return_train_score else [test_scores]
 
     if return_n_test_samples:
         ret.append(_num_samples(X_test))
@@ -276,32 +560,73 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         ret.extend([fit_time, score_time])
     if return_parameters:
         ret.append(parameters)
+    if return_estimator:
+        ret.append(estimator)
     return ret
 
 
-def _score(estimator, X_test, y_test, scorer):
-    """Compute the score of an estimator on a given test set."""
-    if y_test is None:
-        score = scorer(estimator, X_test)
+def _score(estimator, X_test, y_test, scorer, is_multimetric=False):
+    """Compute the score(s) of an estimator on a given test set.
+
+    Will return a single float if is_multimetric is False and a dict of floats,
+    if is_multimetric is True
+    """
+    if is_multimetric:
+        return _multimetric_score(estimator, X_test, y_test, scorer)
     else:
-        score = scorer(estimator, X_test, y_test)
-    if hasattr(score, 'item'):
-        try:
-            # e.g. unwrap memmapped scalars
-            score = score.item()
-        except ValueError:
-            # non-scalar?
-            pass
-    if not isinstance(score, numbers.Number):
-        raise ValueError("scoring must return a number, got %s (%s) instead."
-                         % (str(score), type(score)))
+        if y_test is None:
+            score = scorer(estimator, X_test)
+        else:
+            score = scorer(estimator, X_test, y_test)
+
+        if hasattr(score, 'item'):
+            try:
+                # e.g. unwrap memmapped scalars
+                score = score.item()
+            except ValueError:
+                # non-scalar?
+                pass
+
+        if not isinstance(score, numbers.Number):
+            raise ValueError("scoring must return a number, got %s (%s) "
+                             "instead. (scorer=%r)"
+                             % (str(score), type(score), scorer))
     return score
 
 
-def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
-                      verbose=0, fit_params=None, pre_dispatch='2*n_jobs',
-                      method='predict'):
+def _multimetric_score(estimator, X_test, y_test, scorers):
+    """Return a dict of score for multimetric scoring"""
+    scores = {}
+
+    for name, scorer in scorers.items():
+        if y_test is None:
+            score = scorer(estimator, X_test)
+        else:
+            score = scorer(estimator, X_test, y_test)
+
+        if hasattr(score, 'item'):
+            try:
+                # e.g. unwrap memmapped scalars
+                score = score.item()
+            except ValueError:
+                # non-scalar?
+                pass
+        scores[name] = score
+
+        if not isinstance(score, numbers.Number):
+            raise ValueError("scoring must return a number, got %s (%s) "
+                             "instead. (scorer=%s)"
+                             % (str(score), type(score), name))
+    return scores
+
+
+def cross_val_predict(estimator, X, y=None, groups=None, cv=None,
+                      n_jobs=None, verbose=0, fit_params=None,
+                      pre_dispatch='2*n_jobs', method='predict'):
     """Generate cross-validated estimates for each input data point
+
+    It is not appropriate to pass these predictions into an evaluation
+    metric. Use :func:`cross_validate` to measure generalization error.
 
     Read more in the :ref:`User Guide <cross_validation>`.
 
@@ -324,10 +649,11 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross validation,
-          - integer, to specify the number of folds in a `(Stratified)KFold`,
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train, test splits.
+
+        - None, to use the default 5-fold cross validation,
+        - integer, to specify the number of folds in a `(Stratified)KFold`,
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -336,9 +662,14 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-    n_jobs : integer, optional
-        The number of CPUs to use to do the computation. -1 means
-        'all CPUs'.
+        .. versionchanged:: 0.22
+            ``cv`` default value if None changed from 3-fold to 5-fold.
+
+    n_jobs : int or None, optional (default=None)
+        The number of CPUs to use to do the computation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     verbose : integer, optional
         The verbosity level.
@@ -364,12 +695,29 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
               as in '2*n_jobs'
 
     method : string, optional, default: 'predict'
-        Invokes the passed method name of the passed estimator.
+        Invokes the passed method name of the passed estimator. For
+        method='predict_proba', the columns correspond to the classes
+        in sorted order.
 
     Returns
     -------
     predictions : ndarray
         This is the result of calling ``method``
+
+    See also
+    --------
+    cross_val_score : calculate score for each CV split
+
+    cross_validate : calculate one or more scores and timings for each CV split
+
+    Notes
+    -----
+    In the case that one or more classes are absent in a training portion, a
+    default score needs to be assigned to all instances for that class if
+    ``method`` produces columns per class, as in {'decision_function',
+    'predict_proba', 'predict_log_proba'}.  For ``predict_proba`` this value is
+    0.  In order to ensure finite output, we approximate negative infinity by
+    the minimum finite float value for the dtype in other cases.
 
     Examples
     --------
@@ -379,16 +727,26 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
     >>> X = diabetes.data[:150]
     >>> y = diabetes.target[:150]
     >>> lasso = linear_model.Lasso()
-    >>> y_pred = cross_val_predict(lasso, X, y)
+    >>> y_pred = cross_val_predict(lasso, X, y, cv=3)
     """
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
 
-    # Ensure the estimator has implemented the passed decision function
-    if not callable(getattr(estimator, method)):
-        raise AttributeError('{} not implemented in estimator'
-                             .format(method))
+    # If classification methods produce multiple columns of output,
+    # we need to manually encode classes to ensure consistent column ordering.
+    encode = method in ['decision_function', 'predict_proba',
+                        'predict_log_proba']
+    if encode:
+        y = np.asarray(y)
+        if y.ndim == 1:
+            le = LabelEncoder()
+            y = le.fit_transform(y)
+        elif y.ndim == 2:
+            y_enc = np.zeros_like(y, dtype=np.int)
+            for i_label in range(y.shape[1]):
+                y_enc[:, i_label] = LabelEncoder().fit_transform(y[:, i_label])
+            y = y_enc
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
@@ -409,12 +767,26 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
     inv_test_indices = np.empty(len(test_indices), dtype=int)
     inv_test_indices[test_indices] = np.arange(len(test_indices))
 
-    # Check for sparse predictions
     if sp.issparse(predictions[0]):
         predictions = sp.vstack(predictions, format=predictions[0].format)
+    elif encode and isinstance(predictions[0], list):
+        # `predictions` is a list of method outputs from each fold.
+        # If each of those is also a list, then treat this as a
+        # multioutput-multiclass task. We need to separately concatenate
+        # the method outputs for each label into an `n_labels` long list.
+        n_labels = y.shape[1]
+        concat_pred = []
+        for i_label in range(n_labels):
+            label_preds = np.concatenate([p[i_label] for p in predictions])
+            concat_pred.append(label_preds)
+        predictions = concat_pred
     else:
         predictions = np.concatenate(predictions)
-    return predictions[inv_test_indices]
+
+    if isinstance(predictions, list):
+        return [p[inv_test_indices] for p in predictions]
+    else:
+        return predictions[inv_test_indices]
 
 
 def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
@@ -460,8 +832,8 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
     """
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
-    fit_params = dict([(k, _index_param_value(X, v, train))
-                      for k, v in fit_params.items()])
+    fit_params = {k: _index_param_value(X, v, train)
+                  for k, v in fit_params.items()}
 
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, _ = _safe_split(estimator, X, y, test, train)
@@ -472,7 +844,75 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
         estimator.fit(X_train, y_train, **fit_params)
     func = getattr(estimator, method)
     predictions = func(X_test)
+    if method in ['decision_function', 'predict_proba', 'predict_log_proba']:
+        if isinstance(predictions, list):
+            predictions = [_enforce_prediction_order(
+                estimator.classes_[i_label], predictions[i_label],
+                n_classes=len(set(y[:, i_label])), method=method)
+                for i_label in range(len(predictions))]
+        else:
+            # A 2D y array should be a binary label indicator matrix
+            n_classes = len(set(y)) if y.ndim == 1 else y.shape[1]
+            predictions = _enforce_prediction_order(
+                estimator.classes_, predictions, n_classes, method)
     return predictions, test
+
+
+def _enforce_prediction_order(classes, predictions, n_classes, method):
+    """Ensure that prediction arrays have correct column order
+
+    When doing cross-validation, if one or more classes are
+    not present in the subset of data used for training,
+    then the output prediction array might not have the same
+    columns as other folds. Use the list of class names
+    (assumed to be integers) to enforce the correct column order.
+
+    Note that `classes` is the list of classes in this fold
+    (a subset of the classes in the full training set)
+    and `n_classes` is the number of classes in the full training set.
+    """
+    if n_classes != len(classes):
+        recommendation = (
+            'To fix this, use a cross-validation '
+            'technique resulting in properly '
+            'stratified folds')
+        warnings.warn('Number of classes in training fold ({}) does '
+                      'not match total number of classes ({}). '
+                      'Results may not be appropriate for your use case. '
+                      '{}'.format(len(classes), n_classes, recommendation),
+                      RuntimeWarning)
+        if method == 'decision_function':
+            if (predictions.ndim == 2 and
+                    predictions.shape[1] != len(classes)):
+                # This handles the case when the shape of predictions
+                # does not match the number of classes used to train
+                # it with. This case is found when sklearn.svm.SVC is
+                # set to `decision_function_shape='ovo'`.
+                raise ValueError('Output shape {} of {} does not match '
+                                 'number of classes ({}) in fold. '
+                                 'Irregular decision_function outputs '
+                                 'are not currently supported by '
+                                 'cross_val_predict'.format(
+                                    predictions.shape, method, len(classes)))
+            if len(classes) <= 2:
+                # In this special case, `predictions` contains a 1D array.
+                raise ValueError('Only {} class/es in training fold, but {} '
+                                 'in overall dataset. This '
+                                 'is not supported for decision_function '
+                                 'with imbalanced folds. {}'.format(
+                                    len(classes), n_classes, recommendation))
+
+        float_min = np.finfo(predictions.dtype).min
+        default_values = {'decision_function': float_min,
+                          'predict_log_proba': float_min,
+                          'predict_proba': 0}
+        predictions_for_all_classes = np.full((_num_samples(predictions),
+                                               n_classes),
+                                              default_values[method],
+                                              dtype=predictions.dtype)
+        predictions_for_all_classes[:, classes] = predictions
+        predictions = predictions_for_all_classes
+    return predictions
 
 
 def _check_is_permutation(indices, n_samples):
@@ -510,7 +950,7 @@ def _index_param_value(X, v, indices):
 
 
 def permutation_test_score(estimator, X, y, groups=None, cv=None,
-                           n_permutations=100, n_jobs=1, random_state=0,
+                           n_permutations=100, n_jobs=None, random_state=0,
                            verbose=0, scoring=None):
     """Evaluate the significance of a cross-validated score with permutations
 
@@ -539,17 +979,19 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
         the dataset into train/test set.
 
     scoring : string, callable or None, optional, default: None
-        A string (see model evaluation documentation) or
-        a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
+        A single string (see :ref:`scoring_parameter`) or a callable
+        (see :ref:`scoring`) to evaluate the predictions on the test set.
+
+        If None the estimator's score method is used.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross validation,
-          - integer, to specify the number of folds in a `(Stratified)KFold`,
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train, test splits.
+
+        - None, to use the default 5-fold cross validation,
+        - integer, to specify the number of folds in a `(Stratified)KFold`,
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -558,16 +1000,23 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
+        .. versionchanged:: 0.22
+            ``cv`` default value if None changed from 3-fold to 5-fold.
+
     n_permutations : integer, optional
         Number of times to permute ``y``.
 
-    n_jobs : integer, optional
-        The number of CPUs to use to do the computation. -1 means
-        'all CPUs'.
+    n_jobs : int or None, optional (default=None)
+        The number of CPUs to use to do the computation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
-    random_state : RandomState or an int seed (0 by default)
-        A random number generator instance to define the state of the
-        random permutations generator.
+    random_state : int, RandomState instance or None, optional (default=0)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     verbose : integer, optional
         The verbosity level.
@@ -581,11 +1030,14 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
         The scores obtained for each permutations.
 
     pvalue : float
-        The returned value equals p-value if `scoring` returns bigger
-        numbers for better scores (e.g., accuracy_score). If `scoring` is
-        rather a loss function (i.e. when lower is better such as with
-        `mean_squared_error`) then this is actually the complement of the
-        p-value:  1 - p-value.
+        The p-value, which approximates the probability that the score would
+        be obtained by chance. This is calculated as:
+
+        `(C + 1) / (n_permutations + 1)`
+
+        Where C is the number of permutations whose score >= the true score.
+
+        The best possible p-value is 1/(n_permutations + 1), the worst is 1.0.
 
     Notes
     -----
@@ -615,9 +1067,6 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
     return score, permutation_scores, pvalue
 
 
-permutation_test_score.__test__ = False  # to avoid a pb with nosetests
-
-
 def _permutation_test_score(estimator, X, y, groups, cv, scorer):
     """Auxiliary function for permutation_test_score"""
     avg_score = []
@@ -642,10 +1091,10 @@ def _shuffle(y, groups, random_state):
 
 
 def learning_curve(estimator, X, y, groups=None,
-                   train_sizes=np.linspace(0.1, 1.0, 5), cv=None, scoring=None,
-                   exploit_incremental_learning=False, n_jobs=1,
-                   pre_dispatch="all", verbose=0, shuffle=False,
-                   random_state=None):
+                   train_sizes=np.linspace(0.1, 1.0, 5), cv=None,
+                   scoring=None, exploit_incremental_learning=False,
+                   n_jobs=None, pre_dispatch="all", verbose=0, shuffle=False,
+                   random_state=None, error_score=np.nan):
     """Learning curve.
 
     Determines cross-validated training and test scores for different training
@@ -689,10 +1138,11 @@ def learning_curve(estimator, X, y, groups=None,
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross validation,
-          - integer, to specify the number of folds in a `(Stratified)KFold`,
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train, test splits.
+
+        - None, to use the default 5-fold cross validation,
+        - integer, to specify the number of folds in a `(Stratified)KFold`,
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -700,6 +1150,9 @@ def learning_curve(estimator, X, y, groups=None,
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
+
+        .. versionchanged:: 0.22
+            ``cv`` default value if None changed from 3-fold to 5-fold.
 
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
@@ -710,8 +1163,11 @@ def learning_curve(estimator, X, y, groups=None,
         If the estimator supports incremental learning, this will be
         used to speed up fitting for different training set sizes.
 
-    n_jobs : integer, optional
-        Number of jobs to run in parallel (default 1).
+    n_jobs : int or None, optional (default=None)
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     pre_dispatch : integer or string, optional
         Number of predispatched jobs for parallel execution (default is
@@ -725,12 +1181,21 @@ def learning_curve(estimator, X, y, groups=None,
         Whether to shuffle training data before taking prefixes of it
         based on``train_sizes``.
 
-    random_state : None, int or RandomState
-        When shuffle=True, pseudo-random number generator state used for
-        shuffling. If None, use default numpy RNG for shuffling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`. Used when ``shuffle`` is True.
 
+    error_score : 'raise' or numeric
+        Value to assign to the score if an error occurs in estimator fitting.
+        If set to 'raise', the error is raised.
+        If a numeric value is given, FitFailedWarning is raised. This parameter
+        does not affect the refit step, which will always raise the error.
+
+    Returns
     -------
-    train_sizes_abs : array, shape = (n_unique_ticks,), dtype int
+    train_sizes_abs : array, shape (n_unique_ticks,), dtype int
         Numbers of training examples that has been used to generate the
         learning curve. Note that the number of ticks might be less
         than n_ticks because duplicate entries will be removed.
@@ -786,8 +1251,9 @@ def learning_curve(estimator, X, y, groups=None,
                 train_test_proportions.append((train[:n_train_samples], test))
 
         out = parallel(delayed(_fit_and_score)(
-            clone(estimator), X, y, scorer, train, test,
-            verbose, parameters=None, fit_params=None, return_train_score=True)
+            clone(estimator), X, y, scorer, train, test, verbose,
+            parameters=None, fit_params=None, return_train_score=True,
+            error_score=error_score)
             for train, test in train_test_proportions)
         out = np.array(out)
         n_cv_folds = out.shape[0] // n_unique_ticks
@@ -826,15 +1292,15 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
     n_ticks = train_sizes_abs.shape[0]
     n_min_required_samples = np.min(train_sizes_abs)
     n_max_required_samples = np.max(train_sizes_abs)
-    if np.issubdtype(train_sizes_abs.dtype, np.float):
+    if np.issubdtype(train_sizes_abs.dtype, np.floating):
         if n_min_required_samples <= 0.0 or n_max_required_samples > 1.0:
             raise ValueError("train_sizes has been interpreted as fractions "
                              "of the maximum number of training samples and "
                              "must be within (0, 1], but is within [%f, %f]."
                              % (n_min_required_samples,
                                 n_max_required_samples))
-        train_sizes_abs = astype(train_sizes_abs * n_max_training_samples,
-                                 dtype=np.int, copy=False)
+        train_sizes_abs = (train_sizes_abs * n_max_training_samples).astype(
+                             dtype=np.int, copy=False)
         train_sizes_abs = np.clip(train_sizes_abs, 1,
                                   n_max_training_samples)
     else:
@@ -879,8 +1345,8 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
 
 
 def validation_curve(estimator, X, y, param_name, param_range, groups=None,
-                     cv=None, scoring=None, n_jobs=1, pre_dispatch="all",
-                     verbose=0):
+                     cv=None, scoring=None, n_jobs=None, pre_dispatch="all",
+                     verbose=0, error_score=np.nan):
     """Validation curve.
 
     Determine training and test scores for varying parameter values.
@@ -918,10 +1384,11 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross validation,
-          - integer, to specify the number of folds in a `(Stratified)KFold`,
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train, test splits.
+
+        - None, to use the default 5-fold cross validation,
+        - integer, to specify the number of folds in a `(Stratified)KFold`,
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -930,13 +1397,19 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
+        .. versionchanged:: 0.22
+            ``cv`` default value if None changed from 3-fold to 5-fold.
+
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
-    n_jobs : integer, optional
-        Number of jobs to run in parallel (default 1).
+    n_jobs : int or None, optional (default=None)
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     pre_dispatch : integer or string, optional
         Number of predispatched jobs for parallel execution (default is
@@ -945,6 +1418,12 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
 
     verbose : integer, optional
         Controls the verbosity: the higher, the more messages.
+
+    error_score : 'raise' or numeric
+        Value to assign to the score if an error occurs in estimator fitting.
+        If set to 'raise', the error is raised.
+        If a numeric value is given, FitFailedWarning is raised. This parameter
+        does not affect the refit step, which will always raise the error.
 
     Returns
     -------
@@ -967,14 +1446,41 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
                         verbose=verbose)
     out = parallel(delayed(_fit_and_score)(
-        estimator, X, y, scorer, train, test, verbose,
-        parameters={param_name: v}, fit_params=None, return_train_score=True)
+        clone(estimator), X, y, scorer, train, test, verbose,
+        parameters={param_name: v}, fit_params=None, return_train_score=True,
+        error_score=error_score)
         # NOTE do not change order of iteration to allow one time cv splitters
         for train, test in cv.split(X, y, groups) for v in param_range)
-
     out = np.asarray(out)
     n_params = len(param_range)
     n_cv_folds = out.shape[0] // n_params
     out = out.reshape(n_cv_folds, n_params, 2).transpose((2, 1, 0))
 
     return out[0], out[1]
+
+
+def _aggregate_score_dicts(scores):
+    """Aggregate the list of dict to dict of np ndarray
+
+    The aggregated output of _fit_and_score will be a list of dict
+    of form [{'prec': 0.1, 'acc':1.0}, {'prec': 0.1, 'acc':1.0}, ...]
+    Convert it to a dict of array {'prec': np.array([0.1 ...]), ...}
+
+    Parameters
+    ----------
+
+    scores : list of dict
+        List of dicts of the scores for all scorers. This is a flat list,
+        assumed originally to be of row major order.
+
+    Example
+    -------
+
+    >>> scores = [{'a': 1, 'b':10}, {'a': 2, 'b':2}, {'a': 3, 'b':3},
+    ...           {'a': 10, 'b': 10}]                         # doctest: +SKIP
+    >>> _aggregate_score_dicts(scores)                        # doctest: +SKIP
+    {'a': array([1, 2, 3, 10]),
+     'b': array([10, 2, 3, 10])}
+    """
+    return {key: np.asarray([score[key] for score in scores])
+            for key in scores[0]}

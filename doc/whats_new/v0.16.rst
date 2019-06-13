@@ -1,0 +1,541 @@
+.. include:: _contributors.rst
+
+.. currentmodule:: sklearn
+
+.. _changes_0_16_1:
+
+Version 0.16.1
+===============
+
+**April 14, 2015**
+
+Changelog
+---------
+
+Bug fixes
+.........
+
+- Allow input data larger than ``block_size`` in
+  :class:`covariance.LedoitWolf` by `Andreas Müller`_.
+
+- Fix a bug in :class:`isotonic.IsotonicRegression` deduplication that
+  caused unstable result in :class:`calibration.CalibratedClassifierCV` by
+  `Jan Hendrik Metzen`_.
+
+- Fix sorting of labels in func:`preprocessing.label_binarize` by Michael Heilman.
+
+- Fix several stability and convergence issues in
+  :class:`cross_decomposition.CCA` and
+  :class:`cross_decomposition.PLSCanonical` by `Andreas Müller`_
+
+- Fix a bug in :class:`cluster.KMeans` when ``precompute_distances=False``
+  on fortran-ordered data.
+
+- Fix a speed regression in :class:`ensemble.RandomForestClassifier`'s ``predict``
+  and ``predict_proba`` by `Andreas Müller`_.
+
+- Fix a regression where ``utils.shuffle`` converted lists and dataframes to arrays, by `Olivier Grisel`_
+
+.. _changes_0_16:
+
+Version 0.16
+============
+
+**March 26, 2015**
+
+Highlights
+-----------
+
+- Speed improvements (notably in :class:`cluster.DBSCAN`), reduced memory
+  requirements, bug-fixes and better default settings.
+
+- Multinomial Logistic regression and a path algorithm in
+  :class:`linear_model.LogisticRegressionCV`.
+
+- Out-of core learning of PCA via :class:`decomposition.IncrementalPCA`.
+
+- Probability callibration of classifiers using
+  :class:`calibration.CalibratedClassifierCV`.
+
+- :class:`cluster.Birch` clustering method for large-scale datasets.
+
+- Scalable approximate nearest neighbors search with Locality-sensitive
+  hashing forests in :class:`neighbors.LSHForest`.
+
+- Improved error messages and better validation when using malformed input data.
+
+- More robust integration with pandas dataframes.
+
+Changelog
+---------
+
+New features
+............
+
+- The new :class:`neighbors.LSHForest` implements locality-sensitive hashing
+  for approximate nearest neighbors search. By :user:`Maheshakya Wijewardena<maheshakya>`.
+
+- Added :class:`svm.LinearSVR`. This class uses the liblinear implementation
+  of Support Vector Regression which is much faster for large
+  sample sizes than :class:`svm.SVR` with linear kernel. By
+  `Fabian Pedregosa`_ and Qiang Luo.
+
+- Incremental fit for :class:`GaussianNB <naive_bayes.GaussianNB>`.
+
+- Added ``sample_weight`` support to :class:`dummy.DummyClassifier` and
+  :class:`dummy.DummyRegressor`. By `Arnaud Joly`_.
+
+- Added the :func:`metrics.label_ranking_average_precision_score` metrics.
+  By `Arnaud Joly`_.
+
+- Add the :func:`metrics.coverage_error` metrics. By `Arnaud Joly`_.
+
+- Added :class:`linear_model.LogisticRegressionCV`. By
+  `Manoj Kumar`_, `Fabian Pedregosa`_, `Gael Varoquaux`_
+  and `Alexandre Gramfort`_.
+
+- Added ``warm_start`` constructor parameter to make it possible for any
+  trained forest model to grow additional trees incrementally. By
+  :user:`Laurent Direr<ldirer>`.
+
+- Added ``sample_weight`` support to :class:`ensemble.GradientBoostingClassifier` and
+  :class:`ensemble.GradientBoostingRegressor`. By `Peter Prettenhofer`_.
+
+- Added :class:`decomposition.IncrementalPCA`, an implementation of the PCA
+  algorithm that supports out-of-core learning with a ``partial_fit``
+  method. By `Kyle Kastner`_.
+
+- Averaged SGD for :class:`SGDClassifier <linear_model.SGDClassifier>`
+  and :class:`SGDRegressor <linear_model.SGDRegressor>` By
+  :user:`Danny Sullivan <dsullivan7>`.
+
+- Added :func:`cross_val_predict <cross_validation.cross_val_predict>`
+  function which computes cross-validated estimates. By `Luis Pedro Coelho`_
+
+- Added :class:`linear_model.TheilSenRegressor`, a robust
+  generalized-median-based estimator. By :user:`Florian Wilhelm <FlorianWilhelm>`.
+
+- Added :func:`metrics.median_absolute_error`, a robust metric.
+  By `Gael Varoquaux`_ and :user:`Florian Wilhelm <FlorianWilhelm>`.
+
+- Add :class:`cluster.Birch`, an online clustering algorithm. By
+  `Manoj Kumar`_, `Alexandre Gramfort`_ and `Joel Nothman`_.
+
+- Added shrinkage support to :class:`discriminant_analysis.LinearDiscriminantAnalysis`
+  using two new solvers. By :user:`Clemens Brunner <cle1109>` and `Martin Billinger`_.
+
+- Added :class:`kernel_ridge.KernelRidge`, an implementation of
+  kernelized ridge regression.
+  By `Mathieu Blondel`_ and `Jan Hendrik Metzen`_.
+
+- All solvers in :class:`linear_model.Ridge` now support `sample_weight`.
+  By `Mathieu Blondel`_.
+
+- Added :class:`cross_validation.PredefinedSplit` cross-validation
+  for fixed user-provided cross-validation folds.
+  By :user:`Thomas Unterthiner <untom>`.
+
+- Added :class:`calibration.CalibratedClassifierCV`, an approach for
+  calibrating the predicted probabilities of a classifier.
+  By `Alexandre Gramfort`_, `Jan Hendrik Metzen`_, `Mathieu Blondel`_
+  and :user:`Balazs Kegl <kegl>`.
+
+
+Enhancements
+............
+
+- Add option ``return_distance`` in :func:`hierarchical.ward_tree`
+  to return distances between nodes for both structured and unstructured
+  versions of the algorithm. By `Matteo Visconti di Oleggio Castello`_.
+  The same option was added in :func:`hierarchical.linkage_tree`.
+  By `Manoj Kumar`_
+
+- Add support for sample weights in scorer objects.  Metrics with sample
+  weight support will automatically benefit from it. By `Noel Dawe`_ and
+  `Vlad Niculae`_.
+
+- Added ``newton-cg`` and `lbfgs` solver support in
+  :class:`linear_model.LogisticRegression`. By `Manoj Kumar`_.
+
+- Add ``selection="random"`` parameter to implement stochastic coordinate
+  descent for :class:`linear_model.Lasso`, :class:`linear_model.ElasticNet`
+  and related. By `Manoj Kumar`_.
+
+- Add ``sample_weight`` parameter to
+  :func:`metrics.jaccard_similarity_score` and :func:`metrics.log_loss`.
+  By :user:`Jatin Shah <jatinshah>`.
+
+- Support sparse multilabel indicator representation in
+  :class:`preprocessing.LabelBinarizer` and
+  :class:`multiclass.OneVsRestClassifier` (by :user:`Hamzeh Alsalhi <hamsal>` with thanks
+  to Rohit Sivaprasad), as well as evaluation metrics (by
+  `Joel Nothman`_).
+
+- Add ``sample_weight`` parameter to `metrics.jaccard_similarity_score`.
+  By `Jatin Shah`.
+
+- Add support for multiclass in `metrics.hinge_loss`. Added ``labels=None``
+  as optional parameter. By `Saurabh Jha`.
+
+- Add ``sample_weight`` parameter to `metrics.hinge_loss`.
+  By `Saurabh Jha`.
+
+- Add ``multi_class="multinomial"`` option in
+  :class:`linear_model.LogisticRegression` to implement a Logistic
+  Regression solver that minimizes the cross-entropy or multinomial loss
+  instead of the default One-vs-Rest setting. Supports `lbfgs` and
+  `newton-cg` solvers. By `Lars Buitinck`_ and `Manoj Kumar`_. Solver option
+  `newton-cg` by Simon Wu.
+
+- ``DictVectorizer`` can now perform ``fit_transform`` on an iterable in a
+  single pass, when giving the option ``sort=False``. By :user:`Dan
+  Blanchard <dan-blanchard>`.
+
+- :class:`GridSearchCV` and :class:`RandomizedSearchCV` can now be
+  configured to work with estimators that may fail and raise errors on
+  individual folds. This option is controlled by the `error_score`
+  parameter. This does not affect errors raised on re-fit. By
+  :user:`Michal Romaniuk <romaniukm>`.
+
+- Add ``digits`` parameter to `metrics.classification_report` to allow
+  report to show different precision of floating point numbers. By
+  :user:`Ian Gilmore <agileminor>`.
+
+- Add a quantile prediction strategy to the :class:`dummy.DummyRegressor`.
+  By :user:`Aaron Staple <staple>`.
+
+- Add ``handle_unknown`` option to :class:`preprocessing.OneHotEncoder` to
+  handle unknown categorical features more gracefully during transform.
+  By `Manoj Kumar`_.
+
+- Added support for sparse input data to decision trees and their ensembles.
+  By `Fares Hedyati`_ and `Arnaud Joly`_.
+
+- Optimized :class:`cluster.AffinityPropagation` by reducing the number of
+  memory allocations of large temporary data-structures. By `Antony Lee`_.
+
+- Parellization of the computation of feature importances in random forest.
+  By `Olivier Grisel`_ and `Arnaud Joly`_.
+
+- Add ``n_iter_`` attribute to estimators that accept a ``max_iter`` attribute
+  in their constructor. By `Manoj Kumar`_.
+
+- Added decision function for :class:`multiclass.OneVsOneClassifier`
+  By `Raghav RV`_ and :user:`Kyle Beauchamp <kyleabeauchamp>`.
+
+- :func:`neighbors.kneighbors_graph` and :func:`radius_neighbors_graph`
+  support non-Euclidean metrics. By `Manoj Kumar`_
+
+- Parameter ``connectivity`` in :class:`cluster.AgglomerativeClustering`
+  and family now accept callables that return a connectivity matrix.
+  By `Manoj Kumar`_.
+
+- Sparse support for :func:`paired_distances`. By `Joel Nothman`_.
+
+- :class:`cluster.DBSCAN` now supports sparse input and sample weights and
+  has been optimized: the inner loop has been rewritten in Cython and
+  radius neighbors queries are now computed in batch. By `Joel Nothman`_
+  and `Lars Buitinck`_.
+
+- Add ``class_weight`` parameter to automatically weight samples by class
+  frequency for :class:`ensemble.RandomForestClassifier`,
+  :class:`tree.DecisionTreeClassifier`, :class:`ensemble.ExtraTreesClassifier`
+  and :class:`tree.ExtraTreeClassifier`. By `Trevor Stephens`_.
+
+- :class:`grid_search.RandomizedSearchCV` now does sampling without
+  replacement if all parameters are given as lists. By `Andreas Müller`_.
+
+- Parallelized calculation of :func:`pairwise_distances` is now supported
+  for scipy metrics and custom callables. By `Joel Nothman`_.
+
+- Allow the fitting and scoring of all clustering algorithms in
+  :class:`pipeline.Pipeline`. By `Andreas Müller`_.
+
+- More robust seeding and improved error messages in :class:`cluster.MeanShift`
+  by `Andreas Müller`_.
+
+- Make the stopping criterion for :class:`mixture.GMM`,
+  :class:`mixture.DPGMM` and :class:`mixture.VBGMM` less dependent on the
+  number of samples by thresholding the average log-likelihood change
+  instead of its sum over all samples. By `Hervé Bredin`_.
+
+- The outcome of :func:`manifold.spectral_embedding` was made deterministic
+  by flipping the sign of eigenvectors. By :user:`Hasil Sharma <Hasil-Sharma>`.
+
+- Significant performance and memory usage improvements in
+  :class:`preprocessing.PolynomialFeatures`. By `Eric Martin`_.
+
+- Numerical stability improvements for :class:`preprocessing.StandardScaler`
+  and :func:`preprocessing.scale`. By `Nicolas Goix`_
+
+- :class:`svm.SVC` fitted on sparse input now implements ``decision_function``.
+  By `Rob Zinkov`_ and `Andreas Müller`_.
+
+- :func:`cross_validation.train_test_split` now preserves the input type,
+  instead of converting to numpy arrays.
+
+
+Documentation improvements
+..........................
+
+- Added example of using :class:`FeatureUnion` for heterogeneous input.
+  By :user:`Matt Terry <mrterry>`
+
+- Documentation on scorers was improved, to highlight the handling of loss
+  functions. By :user:`Matt Pico <MattpSoftware>`.
+
+- A discrepancy between liblinear output and scikit-learn's wrappers
+  is now noted. By `Manoj Kumar`_.
+
+- Improved documentation generation: examples referring to a class or
+  function are now shown in a gallery on the class/function's API reference
+  page. By `Joel Nothman`_.
+
+- More explicit documentation of sample generators and of data
+  transformation. By `Joel Nothman`_.
+
+- :class:`sklearn.neighbors.BallTree` and :class:`sklearn.neighbors.KDTree`
+  used to point to empty pages stating that they are aliases of BinaryTree.
+  This has been fixed to show the correct class docs. By `Manoj Kumar`_.
+
+- Added silhouette plots for analysis of KMeans clustering using
+  :func:`metrics.silhouette_samples` and :func:`metrics.silhouette_score`.
+  See :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_silhouette_analysis.py`
+
+Bug fixes
+.........
+- Metaestimators now support ducktyping for the presence of ``decision_function``,
+  ``predict_proba`` and other methods. This fixes behavior of
+  :class:`grid_search.GridSearchCV`,
+  :class:`grid_search.RandomizedSearchCV`, :class:`pipeline.Pipeline`,
+  :class:`feature_selection.RFE`, :class:`feature_selection.RFECV` when nested.
+  By `Joel Nothman`_
+
+- The ``scoring`` attribute of grid-search and cross-validation methods is no longer
+  ignored when a :class:`grid_search.GridSearchCV` is given as a base estimator or
+  the base estimator doesn't have predict.
+
+- The function :func:`hierarchical.ward_tree` now returns the children in
+  the same order for both the structured and unstructured versions. By
+  `Matteo Visconti di Oleggio Castello`_.
+
+- :class:`feature_selection.RFECV` now correctly handles cases when
+  ``step`` is not equal to 1. By :user:`Nikolay Mayorov <nmayorov>`
+
+- The :class:`decomposition.PCA` now undoes whitening in its
+  ``inverse_transform``. Also, its ``components_`` now always have unit
+  length. By :user:`Michael Eickenberg <eickenberg>`.
+
+- Fix incomplete download of the dataset when
+  :func:`datasets.download_20newsgroups` is called. By `Manoj Kumar`_.
+
+- Various fixes to the Gaussian processes subpackage by Vincent Dubourg
+  and Jan Hendrik Metzen.
+
+- Calling ``partial_fit`` with ``class_weight=='auto'`` throws an
+  appropriate error message and suggests a work around.
+  By :user:`Danny Sullivan <dsullivan7>`.
+
+- :class:`RBFSampler <kernel_approximation.RBFSampler>` with ``gamma=g``
+  formerly approximated :func:`rbf_kernel <metrics.pairwise.rbf_kernel>`
+  with ``gamma=g/2.``; the definition of ``gamma`` is now consistent,
+  which may substantially change your results if you use a fixed value.
+  (If you cross-validated over ``gamma``, it probably doesn't matter
+  too much.) By :user:`Dougal Sutherland <dougalsutherland>`.
+
+- Pipeline object delegate the ``classes_`` attribute to the underlying
+  estimator. It allows, for instance, to make bagging of a pipeline object.
+  By `Arnaud Joly`_
+
+- :class:`neighbors.NearestCentroid` now uses the median as the centroid
+  when metric is set to ``manhattan``. It was using the mean before.
+  By `Manoj Kumar`_
+
+- Fix numerical stability issues in :class:`linear_model.SGDClassifier`
+  and :class:`linear_model.SGDRegressor` by clipping large gradients and
+  ensuring that weight decay rescaling is always positive (for large
+  l2 regularization and large learning rate values).
+  By `Olivier Grisel`_
+
+- When `compute_full_tree` is set to "auto", the full tree is
+  built when n_clusters is high and is early stopped when n_clusters is
+  low, while the behavior should be vice-versa in
+  :class:`cluster.AgglomerativeClustering` (and friends).
+  This has been fixed By `Manoj Kumar`_
+
+- Fix lazy centering of data in :func:`linear_model.enet_path` and
+  :func:`linear_model.lasso_path`. It was centered around one. It has
+  been changed to be centered around the origin. By `Manoj Kumar`_
+
+- Fix handling of precomputed affinity matrices in
+  :class:`cluster.AgglomerativeClustering` when using connectivity
+  constraints. By :user:`Cathy Deng <cathydeng>`
+
+- Correct ``partial_fit`` handling of ``class_prior`` for
+  :class:`sklearn.naive_bayes.MultinomialNB` and
+  :class:`sklearn.naive_bayes.BernoulliNB`. By `Trevor Stephens`_.
+
+- Fixed a crash in :func:`metrics.precision_recall_fscore_support`
+  when using unsorted ``labels`` in the multi-label setting.
+  By `Andreas Müller`_.
+
+- Avoid skipping the first nearest neighbor in the methods ``radius_neighbors``,
+  ``kneighbors``, ``kneighbors_graph`` and ``radius_neighbors_graph`` in
+  :class:`sklearn.neighbors.NearestNeighbors` and family, when the query
+  data is not the same as fit data. By `Manoj Kumar`_.
+
+- Fix log-density calculation in the :class:`mixture.GMM` with
+  tied covariance. By `Will Dawson`_
+
+- Fixed a scaling error in :class:`feature_selection.SelectFdr`
+  where a factor ``n_features`` was missing. By `Andrew Tulloch`_
+
+- Fix zero division in :class:`neighbors.KNeighborsRegressor` and related
+  classes when using distance weighting and having identical data points.
+  By `Garret-R <https://github.com/Garrett-R>`_.
+
+- Fixed round off errors with non positive-definite covariance matrices
+  in GMM. By :user:`Alexis Mignon <AlexisMignon>`.
+
+- Fixed a error in the computation of conditional probabilities in
+  :class:`naive_bayes.BernoulliNB`. By `Hanna Wallach`_.
+
+- Make the method ``radius_neighbors`` of
+  :class:`neighbors.NearestNeighbors` return the samples lying on the
+  boundary for ``algorithm='brute'``. By `Yan Yi`_.
+
+- Flip sign of ``dual_coef_`` of :class:`svm.SVC`
+  to make it consistent with the documentation and
+  ``decision_function``. By Artem Sobolev.
+
+- Fixed handling of ties in :class:`isotonic.IsotonicRegression`.
+  We now use the weighted average of targets (secondary method). By
+  `Andreas Müller`_ and `Michael Bommarito <http://bommaritollc.com/>`_.
+
+API changes summary
+-------------------
+
+- :class:`GridSearchCV <grid_search.GridSearchCV>` and
+  :func:`cross_val_score <cross_validation.cross_val_score>` and other
+  meta-estimators don't convert pandas DataFrames into arrays any more,
+  allowing DataFrame specific operations in custom estimators.
+
+- :func:`multiclass.fit_ovr`, :func:`multiclass.predict_ovr`,
+  :func:`predict_proba_ovr`,
+  :func:`multiclass.fit_ovo`, :func:`multiclass.predict_ovo`,
+  :func:`multiclass.fit_ecoc` and :func:`multiclass.predict_ecoc`
+  are deprecated. Use the underlying estimators instead.
+
+- Nearest neighbors estimators used to take arbitrary keyword arguments
+  and pass these to their distance metric. This will no longer be supported
+  in scikit-learn 0.18; use the ``metric_params`` argument instead.
+
+- `n_jobs` parameter of the fit method shifted to the constructor of the
+       LinearRegression class.
+
+- The ``predict_proba`` method of :class:`multiclass.OneVsRestClassifier`
+  now returns two probabilities per sample in the multiclass case; this
+  is consistent with other estimators and with the method's documentation,
+  but previous versions accidentally returned only the positive
+  probability. Fixed by Will Lamond and `Lars Buitinck`_.
+
+- Change default value of precompute in :class:`ElasticNet` and :class:`Lasso`
+  to False. Setting precompute to "auto" was found to be slower when
+  n_samples > n_features since the computation of the Gram matrix is
+  computationally expensive and outweighs the benefit of fitting the Gram
+  for just one alpha.
+  ``precompute="auto"`` is now deprecated and will be removed in 0.18
+  By `Manoj Kumar`_.
+
+- Expose ``positive`` option in :func:`linear_model.enet_path` and
+  :func:`linear_model.enet_path` which constrains coefficients to be
+  positive. By `Manoj Kumar`_.
+
+- Users should now supply an explicit ``average`` parameter to
+  :func:`sklearn.metrics.f1_score`, :func:`sklearn.metrics.fbeta_score`,
+  :func:`sklearn.metrics.recall_score` and
+  :func:`sklearn.metrics.precision_score` when performing multiclass
+  or multilabel (i.e. not binary) classification. By `Joel Nothman`_.
+
+- `scoring` parameter for cross validation now accepts `'f1_micro'`,
+  `'f1_macro'` or `'f1_weighted'`. `'f1'` is now for binary classification
+  only. Similar changes apply to `'precision'` and `'recall'`.
+  By `Joel Nothman`_.
+
+- The ``fit_intercept``, ``normalize`` and ``return_models`` parameters in
+  :func:`linear_model.enet_path` and :func:`linear_model.lasso_path` have
+  been removed. They were deprecated since 0.14
+
+- From now onwards, all estimators will uniformly raise ``NotFittedError``
+  (:class:`utils.validation.NotFittedError`), when any of the ``predict``
+  like methods are called before the model is fit. By `Raghav RV`_.
+
+- Input data validation was refactored for more consistent input
+  validation. The ``check_arrays`` function was replaced by ``check_array``
+  and ``check_X_y``. By `Andreas Müller`_.
+
+- Allow ``X=None`` in the methods ``radius_neighbors``, ``kneighbors``,
+  ``kneighbors_graph`` and ``radius_neighbors_graph`` in
+  :class:`sklearn.neighbors.NearestNeighbors` and family. If set to None,
+  then for every sample this avoids setting the sample itself as the
+  first nearest neighbor. By `Manoj Kumar`_.
+
+- Add parameter ``include_self`` in :func:`neighbors.kneighbors_graph`
+  and :func:`neighbors.radius_neighbors_graph` which has to be explicitly
+  set by the user. If set to True, then the sample itself is considered
+  as the first nearest neighbor.
+
+- `thresh` parameter is deprecated in favor of new `tol` parameter in
+  :class:`GMM`, :class:`DPGMM` and :class:`VBGMM`. See `Enhancements`
+  section for details. By `Hervé Bredin`_.
+
+- Estimators will treat input with dtype object as numeric when possible.
+  By `Andreas Müller`_
+
+- Estimators now raise `ValueError` consistently when fitted on empty
+  data (less than 1 sample or less than 1 feature for 2D input).
+  By `Olivier Grisel`_.
+
+
+- The ``shuffle`` option of :class:`.linear_model.SGDClassifier`,
+  :class:`linear_model.SGDRegressor`, :class:`linear_model.Perceptron`,
+  :class:`linear_model.PassiveAggressiveClassifier` and
+  :class:`linear_model.PassiveAggressiveRegressor` now defaults to ``True``.
+
+- :class:`cluster.DBSCAN` now uses a deterministic initialization. The
+  `random_state` parameter is deprecated. By :user:`Erich Schubert <kno10>`.
+
+Code Contributors
+-----------------
+A. Flaxman, Aaron Schumacher, Aaron Staple, abhishek thakur, Akshay, akshayah3,
+Aldrian Obaja, Alexander Fabisch, Alexandre Gramfort, Alexis Mignon, Anders
+Aagaard, Andreas Mueller, Andreas van Cranenburgh, Andrew Tulloch, Andrew
+Walker, Antony Lee, Arnaud Joly, banilo, Barmaley.exe, Ben Davies, Benedikt
+Koehler, bhsu, Boris Feld, Borja Ayerdi, Boyuan Deng, Brent Pedersen, Brian
+Wignall, Brooke Osborn, Calvin Giles, Cathy Deng, Celeo, cgohlke, chebee7i,
+Christian Stade-Schuldt, Christof Angermueller, Chyi-Kwei Yau, CJ Carey,
+Clemens Brunner, Daiki Aminaka, Dan Blanchard, danfrankj, Danny Sullivan, David
+Fletcher, Dmitrijs Milajevs, Dougal J. Sutherland, Erich Schubert, Fabian
+Pedregosa, Florian Wilhelm, floydsoft, Félix-Antoine Fortin, Gael Varoquaux,
+Garrett-R, Gilles Louppe, gpassino, gwulfs, Hampus Bengtsson, Hamzeh Alsalhi,
+Hanna Wallach, Harry Mavroforakis, Hasil Sharma, Helder, Herve Bredin,
+Hsiang-Fu Yu, Hugues SALAMIN, Ian Gilmore, Ilambharathi Kanniah, Imran Haque,
+isms, Jake VanderPlas, Jan Dlabal, Jan Hendrik Metzen, Jatin Shah, Javier López
+Peña, jdcaballero, Jean Kossaifi, Jeff Hammerbacher, Joel Nothman, Jonathan
+Helmus, Joseph, Kaicheng Zhang, Kevin Markham, Kyle Beauchamp, Kyle Kastner,
+Lagacherie Matthieu, Lars Buitinck, Laurent Direr, leepei, Loic Esteve, Luis
+Pedro Coelho, Lukas Michelbacher, maheshakya, Manoj Kumar, Manuel, Mario
+Michael Krell, Martin, Martin Billinger, Martin Ku, Mateusz Susik, Mathieu
+Blondel, Matt Pico, Matt Terry, Matteo Visconti dOC, Matti Lyra, Max Linke,
+Mehdi Cherti, Michael Bommarito, Michael Eickenberg, Michal Romaniuk, MLG,
+mr.Shu, Nelle Varoquaux, Nicola Montecchio, Nicolas, Nikolay Mayorov, Noel
+Dawe, Okal Billy, Olivier Grisel, Óscar Nájera, Paolo Puggioni, Peter
+Prettenhofer, Pratap Vardhan, pvnguyen, queqichao, Rafael Carrascosa, Raghav R
+V, Rahiel Kasim, Randall Mason, Rob Zinkov, Robert Bradshaw, Saket Choudhary,
+Sam Nicholls, Samuel Charron, Saurabh Jha, sethdandridge, sinhrks, snuderl,
+Stefan Otte, Stefan van der Walt, Steve Tjoa, swu, Sylvain Zimmer, tejesh95,
+terrycojones, Thomas Delteil, Thomas Unterthiner, Tomas Kazmar, trevorstephens,
+tttthomasssss, Tzu-Ming Kuo, ugurcaliskan, ugurthemaster, Vinayak Mehta,
+Vincent Dubourg, Vjacheslav Murashkin, Vlad Niculae, wadawson, Wei Xue, Will
+Lamond, Wu Jiang, x0l, Xinfan Meng, Yan Yi, Yu-Chin
+
