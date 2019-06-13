@@ -41,10 +41,8 @@ from io import BytesIO
 from os import makedirs, remove
 from os.path import exists
 
-
 import logging
 import numpy as np
-import joblib
 
 from .base import get_data_home
 from .base import _fetch_remote

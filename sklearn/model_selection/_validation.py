@@ -17,7 +17,7 @@ from traceback import format_exception_only
 
 import numpy as np
 import scipy.sparse as sp
-from joblib import Parallel, delayed, logger
+from joblib import Parallel, delayed
 
 from ..base import is_classifier, clone
 from ..utils import (indexable, check_random_state, safe_indexing,

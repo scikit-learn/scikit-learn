@@ -439,7 +439,8 @@ class KNeighborsMixin:
                 raise ValueError(
                     "%s does not work with sparse matrices. Densify the data, "
                     "or set algorithm='brute'" % self._fit_method)
-            old_joblib = LooseVersion(joblib.__version__) < LooseVersion('0.12')
+            old_joblib = (
+                    LooseVersion(joblib.__version__) < LooseVersion('0.12'))
             if old_joblib:
                 # Deal with change of API in joblib
                 check_pickle = False if old_joblib else None
