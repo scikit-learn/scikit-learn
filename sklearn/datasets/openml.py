@@ -319,18 +319,18 @@ def _convert_arff_data_dataframe(arrf, columns, features_dict):
 
     attributes = OrderedDict(arrf['attributes'])
     arrf_columns = list(attributes)
-    columns_to_keep = [col for col in arrf_columns if col in columns]
 
     # calculate chunksize
     first_row = next(arrf['data'])
-    first_df = pd.DataFrame([first_row], columns=arrf_columns)[columns_to_keep]
+    first_df = pd.DataFrame([first_row], columns=arrf_columns)
 
     row_bytes = first_df.memory_usage(deep=True).sum()
     chunksize = get_chunk_n_rows(row_bytes)
 
     # read arrf data with chunks
+    columns_to_keep = [col for col in arrf_columns if col in columns]
     dfs = []
-    dfs.append(first_df)
+    dfs.append(first_df[columns_to_keep])
     for data in _chunk_generator(arrf['data'], chunksize):
         dfs.append(pd.DataFrame(data, columns=arrf_columns)[columns_to_keep])
     df = pd.concat(dfs)
