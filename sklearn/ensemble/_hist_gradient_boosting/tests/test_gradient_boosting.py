@@ -177,7 +177,7 @@ def test_binning_train_validation_are_separated():
 @pytest.mark.parametrize('data', [
     make_classification(random_state=0, n_classes=2),
     make_classification(random_state=0, n_classes=3, n_informative=3)
-], ids=['binary_crossentropy', 'categorical_crossentropy']))
+], ids=['binary_crossentropy', 'categorical_crossentropy'])
 def test_zero_division_hessians(data):
     # non regression test for issue #14018
     # make sure we avoid zero division errors when computing the leaves values.
