@@ -131,16 +131,19 @@ def test_warm_start_equal_n_estimators(GradientBoosting, X, y):
 ])
 def test_warm_start_clear(GradientBoosting, X, y):
     # Test if fit clears state.
-    gb_1 = GradientBoosting(max_depth=2)
+    gb_1 = GradientBoosting(n_iter_no_change=5, random_state=42)
     gb_1.fit(X, y)
 
-    gb_2 = GradientBoosting(max_depth=2, warm_start=True)
+    gb_2 = GradientBoosting(n_iter_no_change=5, random_state=42,
+                            warm_start=True)
     gb_2.fit(X, y)  # inits state
     gb_2.set_params(warm_start=False)
     gb_2.fit(X, y)  # clears old state and equals est
 
-    # Check that both predictors are equal
-    _assert_predictor_equal(gb_1, gb_2, X)
+    # Check that both predictors have the same train_score_ and
+    # validation_score_ attributes
+    np.testing.assert_allclose(gb_1.train_score_, gb_2.train_score_)
+    np.testing.assert_allclose(gb_1.validation_score_, gb_2.validation_score_)
 
 
 @pytest.mark.parametrize('GradientBoosting, X, y', [
