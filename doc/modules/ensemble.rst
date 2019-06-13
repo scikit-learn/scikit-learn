@@ -1095,7 +1095,7 @@ It is possible to get the final predictions using the ``predict`` or
    >>> y_pred = reg.predict(X_test)
    >>> from sklearn.metrics import r2_score
    >>> print('R2 score: {:.2f}'.format(r2_score(y_test, y_pred)))
-   R2 score: 0.85
+   R2 score: 0.81
 
 Note that it is also possible to get the output of the stacked outputs of the
 ``estimators`` using the ``transform`` method::
