@@ -1011,27 +1011,25 @@ def test_n_iter():
 
 
 def test_ridge_fit_intercept_sparse():
-    X, y = _make_sparse_offset_regression(
-        n_features=20, random_state=0)
+    X, y = _make_sparse_offset_regression(n_features=20, random_state=0)
     X_csr = sp.csr_matrix(X)
 
     # for now only sparse_cg can fit an intercept with sparse X
-    for solver in ['sparse_cg']:
-        dense = Ridge(alpha=1., solver=solver, fit_intercept=True)
-        sparse = Ridge(alpha=1., solver=solver, fit_intercept=True)
-        dense.fit(X, y)
-        with pytest.warns(None) as record:
-            sparse.fit(X_csr, y)
-        assert len(record) == 0
-        assert_almost_equal(dense.intercept_, sparse.intercept_)
-        assert_array_almost_equal(dense.coef_, sparse.coef_)
+    solver = 'sparse_cg'
+    dense_ridge = Ridge(alpha=1., solver=solver, fit_intercept=True)
+    sparse_ridge = Ridge(alpha=1., solver=solver, fit_intercept=True)
+    dense_ridge.fit(X, y)
+    with pytest.warns(None) as record:
+        sparse_ridge.fit(X_csr, y)
+    assert len(record) == 0
+    assert_almost_equal(dense_ridge.intercept_, sparse_ridge.intercept_)
+    assert_array_almost_equal(dense_ridge.coef_, sparse_ridge.coef_)
 
     # test the solver switch and the corresponding warning
     for solver in ['saga', 'lsqr', 'sag']:
         sparse = Ridge(alpha=1., solver=solver, fit_intercept=True)
-        with pytest.raises(
-                ValueError,
-                match='solver={} does not support'.format(solver)):
+        err_msg = "solver='{}' does not support".format(solver)
+        with pytest.raises(ValueError, match=err_msg):
             sparse.fit(X_csr, y)
 
 
