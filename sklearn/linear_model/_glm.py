@@ -1941,8 +1941,10 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                     k = np.min([10, n_features // 10 + 1])
                     sigma = 0  # start searching near this value
                     which = 'SA'  # find smallest algebraic eigenvalues first
-                    if not np.all(splinalg.eigsh(P2, k=k, sigma=sigma,
-                                                 which=which) >= epsneg):
+                    eigenvalues = splinalg.eigsh(P2, k=k, sigma=sigma,
+                                                 which=which,
+                                                 return_eigenvectors=False)
+                    if not np.all(eigenvalues >= epsneg):
                         raise ValueError("P2 must be positive semi-definite.")
                 else:
                     if not np.all(linalg.eigvalsh(P2) >= epsneg):
