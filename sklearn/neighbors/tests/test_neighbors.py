@@ -49,7 +49,7 @@ SPARSE_OR_DENSE = SPARSE_TYPES + (np.asarray,)
 
 ALGORITHMS = ('ball_tree', 'brute', 'kd_tree', 'auto')
 P = (1, 2, 3, 4, np.inf)
-JOBLIB_BACKENDS = sorted(joblib.parallel.BACKENDS.keys())
+JOBLIB_BACKENDS = list(joblib.parallel.BACKENDS.keys())
 
 # Filter deprecation warnings.
 neighbors.kneighbors_graph = ignore_warnings(neighbors.kneighbors_graph)

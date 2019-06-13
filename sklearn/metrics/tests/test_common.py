@@ -685,7 +685,7 @@ def test_classification_invariance_string_vs_numbers_labels(name):
                                        "invariance test".format(name))
 
 
-@pytest.mark.parametrize('name', sorted(THRESHOLDED_METRICS))
+@pytest.mark.parametrize('name', THRESHOLDED_METRICS)
 def test_thresholded_invariance_string_vs_numbers_labels(name):
     # Ensure that thresholded metrics with string labels are invariant
     random_state = check_random_state(0)
