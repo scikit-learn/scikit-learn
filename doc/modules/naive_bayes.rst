@@ -91,8 +91,7 @@ The parameters :math:`\sigma_y` and :math:`\mu_y`
 are estimated using maximum likelihood.
 
    >>> from sklearn import datasets
-   >>> iris = datasets.load_iris()
-   >>> X, y = load_iris(return_X_y=True)
+   >>> X, y = datasets.load_iris(return_X_y=True)
    >>> from sklearn.model_selection import train_test_split
    >>> X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=21)
    >>> from sklearn.naive_bayes import GaussianNB
