@@ -373,29 +373,42 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
                 "got {}.".format(tpr_range)
             )
 
-        # PAUC Calculation
+        def _find_mid_point(xs, ys, x_val, side):
+            """
+            Given xs and ys, x_val.
+            Find index to insert x_val where the order is maintained.
+            Also find the corresponding y_val by linear interpolation.
+
+            Parameters
+            ----------
+            xs : List[float]
+            ys : List[float]
+            x_val : float
+            side : str
+                "left" or "right".
+                If "left", the first suitable location found is used.
+                If "right", the last suitable location found is used.
+            """
+            idx = np.searchsorted(xs, x_val, side)
+
+            x1, x3, x2 = [xs[max(idx-1, 0)], x_val, xs[min(idx, len(xs) - 1)]]
+            y1, y2 = [ys[max(idx-1, 0)], ys[min(idx, len(ys)-1)]]
+            if x2 == x1:
+                return y1, idx
+            else:
+                return (x3 - x1) / (x2 - x1) * (y2 - y1) + y1, idx
+
         if tpr_min != 0 or tpr_max != 1:
-            # tpr is specified.  Calculate corresponding fpr.
-            fpr_min = np.interp(tpr_min, tpr, fpr)
-            fpr_max = np.interp(tpr_max, tpr, fpr)
-
-            min_idx = np.searchsorted(tpr, tpr_min, "left")
-            max_idx = np.searchsorted(tpr, tpr_max, "right")
+            fpr_min, min_idx = _find_mid_point(tpr, fpr, tpr_min, "left")
+            fpr_max, max_idx = _find_mid_point(tpr, fpr, tpr_max, "right")
         else:
-            tpr_min = np.interp(fpr_min, fpr, tpr)
-            tpr_max = np.interp(fpr_max, fpr, tpr)
+            tpr_min, min_idx = _find_mid_point(fpr, tpr, fpr_min, "left")
+            tpr_max, max_idx = _find_mid_point(fpr, tpr, fpr_max, "right")
 
-            min_idx = np.searchsorted(fpr, fpr_min, "left")
-            max_idx = np.searchsorted(fpr, fpr_max, "right")
+        p_fpr = np.concatenate(([fpr_min], fpr[min_idx:max_idx], [fpr_max]))
+        p_tpr = np.concatenate(([tpr_min], tpr[min_idx:max_idx], [tpr_max]))
 
-        partial_fpr = np.concatenate((
-            [fpr_min], fpr[min_idx:max_idx], [fpr_max]
-        ))
-        partial_tpr = np.concatenate((
-            [tpr_min], tpr[min_idx:max_idx], [tpr_max]
-        ))
-
-        partial_auc = auc(partial_fpr, partial_tpr)
+        pauc = auc(p_fpr, p_tpr)
 
         # McClish standardization:
         # 0.5 if non-discriminant and 1 if maximal
@@ -405,9 +418,18 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
 
         if denom == 0:
             # Only if fpr_max == fpr_min
-            return 0
+            scaled_pauc = 0
         else:
-            return 0.5 * (1 + (partial_auc - min_area) / denom)
+            scaled_pauc = 0.5 * (1 + (pauc - min_area) / denom)
+
+        if scaled_pauc < 0.5:
+            warnings.warn(
+                "Standardized partial AUC is only well-defined when"
+                "the value is >= 0.5.",
+                UndefinedMetricWarning
+            )
+
+        return scaled_pauc
 
     y_type = type_of_target(y_true)
     if y_type == "binary":
@@ -453,7 +475,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     thresholds : array, shape = [n_thresholds]
         Decreasing score values.
     """
-    # Check to make sure y_true is valid
+    # Check to make sure y_true is alid
     y_type = type_of_target(y_true)
     if not (y_type == "binary" or
             (y_type == "multiclass" and pos_label is not None)):

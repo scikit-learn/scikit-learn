@@ -1098,6 +1098,10 @@ def test_partial_roc_auc_score():
     assert_warns_message(DeprecationWarning, "0.23", roc_auc_score, y_true,
                          y_true, max_fpr=0.1)
 
+    # Value need to be greater than 0.5
+    assert_warns_message(UndefinedMetricWarning, "0.5", roc_auc_score, [0, 1],
+                         [1, 0], fpr_range=(0., 0.9))
+
     # Out of range check
     assert_raises(ValueError, roc_auc_score, y_true, y_true,
                   fpr_range=(0, 1.1))
