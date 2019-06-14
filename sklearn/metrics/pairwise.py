@@ -812,7 +812,7 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True,
         else:
             if (isinstance(scale, list) and len(scale) != X_num.shape[1]) or\
                (isinstance(scale, np.ndarray) and
-               len(scale.flat) != X_num.shape[1]):
+                    len(scale.flat) != X_num.shape[1]):
                 raise ValueError("Length of scale parameter must be equal " +
                                  "to the number of numerical columns.")
             process_scale = True
