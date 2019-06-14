@@ -8,15 +8,15 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 
-from scipy.sparse import dia_matrix
-from scipy.sparse import issparse
+from scipy.linalg import norm
+from scipy.sparse import dia_matrix, issparse
+from scipy.sparse.linalg import eigsh, svds
 
 from . import KMeans, MiniBatchKMeans
 from ..base import BaseEstimator, BiclusterMixin
-from ..externals import six
-from ..utils.arpack import eigsh, svds
+from ..utils import check_random_state
 
-from ..utils.extmath import (make_nonnegative, norm, randomized_svd,
+from ..utils.extmath import (make_nonnegative, randomized_svd,
                              safe_sparse_dot)
 
 from ..utils.validation import assert_all_finite, check_array
@@ -58,7 +58,6 @@ def _bistochastic_normalize(X, max_iter=1000, tol=1e-5):
     # deviation reduction and balancing algorithms.
     X = make_nonnegative(X)
     X_scaled = X
-    dist = None
     for _ in range(max_iter):
         X_new, _, _ = _scale_normalize(X_scaled)
         if issparse(X):
@@ -85,14 +84,13 @@ def _log_normalize(X):
     return L - row_avg - col_avg + avg
 
 
-class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
-                                      BiclusterMixin)):
+class BaseSpectral(BaseEstimator, BiclusterMixin, metaclass=ABCMeta):
     """Base class for spectral biclustering."""
 
     @abstractmethod
     def __init__(self, n_clusters=3, svd_method="randomized",
                  n_svd_vecs=None, mini_batch=False, init="k-means++",
-                 n_init=10, n_jobs=1, random_state=None):
+                 n_init=10, n_jobs=None, random_state=None):
         self.n_clusters = n_clusters
         self.svd_method = svd_method
         self.n_svd_vecs = n_svd_vecs
@@ -109,17 +107,20 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
                              " one of {1}.".format(self.svd_method,
                                                    legal_svd_methods))
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Creates a biclustering for X.
 
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
 
+        y : Ignored
+
         """
         X = check_array(X, accept_sparse='csr', dtype=np.float64)
         self._check_parameters()
         self._fit(X)
+        return self
 
     def _svd(self, array, n_components, n_discard):
         """Returns first `n_components` left and right singular
@@ -140,12 +141,18 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
                 # some eigenvalues of A * A.T are negative, causing
                 # sqrt() to be np.nan. This causes some vectors in vt
                 # to be np.nan.
-                _, v = eigsh(safe_sparse_dot(array.T, array),
-                             ncv=self.n_svd_vecs)
+                A = safe_sparse_dot(array.T, array)
+                random_state = check_random_state(self.random_state)
+                # initialize with [-1,1] as in ARPACK
+                v0 = random_state.uniform(-1, 1, A.shape[0])
+                _, v = eigsh(A, ncv=self.n_svd_vecs, v0=v0)
                 vt = v.T
             if np.any(np.isnan(u)):
-                _, u = eigsh(safe_sparse_dot(array, array.T),
-                             ncv=self.n_svd_vecs)
+                A = safe_sparse_dot(array, array.T)
+                random_state = check_random_state(self.random_state)
+                # initialize with [-1,1] as in ARPACK
+                v0 = random_state.uniform(-1, 1, A.shape[0])
+                _, u = eigsh(A, ncv=self.n_svd_vecs, v0=v0)
 
         assert_all_finite(u)
         assert_all_finite(vt)
@@ -194,7 +201,7 @@ class SpectralCoclustering(BaseSpectral):
         'randomized' or 'arpack'. If 'randomized', use
         :func:`sklearn.utils.extmath.randomized_svd`, which may be faster
         for large matrices. If 'arpack', use
-        :func:`sklearn.utils.arpack.svds`, which is more accurate, but
+        :func:`scipy.sparse.linalg.svds`, which is more accurate, but
         possibly slower in some cases.
 
     n_svd_vecs : int, optional, default: None
@@ -218,19 +225,19 @@ class SpectralCoclustering(BaseSpectral):
         chosen and the algorithm runs once. Otherwise, the algorithm
         is run for each initialization and the best solution chosen.
 
-    n_jobs : int, optional, default: 1
+    n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation. This works by breaking
         down the pairwise matrix into n_jobs even slices and computing them in
         parallel.
 
-        If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debugging. For n_jobs below -1,
-        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
-        are used.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
-    random_state : int seed, RandomState instance, or None (default)
-        A pseudo random number generator used by the K-Means
-        initialization.
+    random_state : int, RandomState instance or None (default)
+        Used for randomizing the singular value decomposition and the k-means
+        initialization. Use an int to make the randomness deterministic.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -247,6 +254,20 @@ class SpectralCoclustering(BaseSpectral):
     column_labels_ : array-like, shape (n_cols,)
         The bicluster label of each column.
 
+    Examples
+    --------
+    >>> from sklearn.cluster import SpectralCoclustering
+    >>> import numpy as np
+    >>> X = np.array([[1, 1], [2, 1], [1, 0],
+    ...               [4, 7], [3, 5], [3, 6]])
+    >>> clustering = SpectralCoclustering(n_clusters=2, random_state=0).fit(X)
+    >>> clustering.row_labels_
+    array([0, 1, 1, 0, 0, 0], dtype=int32)
+    >>> clustering.column_labels_
+    array([0, 0], dtype=int32)
+    >>> clustering
+    SpectralCoclustering(n_clusters=2, random_state=0)
+
     References
     ----------
 
@@ -257,15 +278,15 @@ class SpectralCoclustering(BaseSpectral):
     """
     def __init__(self, n_clusters=3, svd_method='randomized',
                  n_svd_vecs=None, mini_batch=False, init='k-means++',
-                 n_init=10, n_jobs=1, random_state=None):
-        super(SpectralCoclustering, self).__init__(n_clusters,
-                                                   svd_method,
-                                                   n_svd_vecs,
-                                                   mini_batch,
-                                                   init,
-                                                   n_init,
-                                                   n_jobs,
-                                                   random_state)
+                 n_init=10, n_jobs=None, random_state=None):
+        super().__init__(n_clusters,
+                         svd_method,
+                         n_svd_vecs,
+                         mini_batch,
+                         init,
+                         n_init,
+                         n_jobs,
+                         random_state)
 
     def _fit(self, X):
         normalized_data, row_diag, col_diag = _scale_normalize(X)
@@ -280,10 +301,10 @@ class SpectralCoclustering(BaseSpectral):
         self.row_labels_ = labels[:n_rows]
         self.column_labels_ = labels[n_rows:]
 
-        self.rows_ = np.vstack(self.row_labels_ == c
-                               for c in range(self.n_clusters))
-        self.columns_ = np.vstack(self.column_labels_ == c
-                                  for c in range(self.n_clusters))
+        self.rows_ = np.vstack([self.row_labels_ == c
+                                for c in range(self.n_clusters)])
+        self.columns_ = np.vstack([self.column_labels_ == c
+                                   for c in range(self.n_clusters)])
 
 
 class SpectralBiclustering(BaseSpectral):
@@ -324,7 +345,7 @@ class SpectralBiclustering(BaseSpectral):
         'randomized' or 'arpack'. If 'randomized', uses
         `sklearn.utils.extmath.randomized_svd`, which may be faster
         for large matrices. If 'arpack', uses
-        `sklearn.utils.arpack.svds`, which is more accurate, but
+        `scipy.sparse.linalg.svds`, which is more accurate, but
         possibly slower in some cases.
 
     n_svd_vecs : int, optional, default: None
@@ -348,19 +369,19 @@ class SpectralBiclustering(BaseSpectral):
         chosen and the algorithm runs once. Otherwise, the algorithm
         is run for each initialization and the best solution chosen.
 
-    n_jobs : int, optional, default: 1
+    n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation. This works by breaking
         down the pairwise matrix into n_jobs even slices and computing them in
         parallel.
 
-        If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debugging. For n_jobs below -1,
-        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
-        are used.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
-    random_state : int seed, RandomState instance, or None (default)
-        A pseudo random number generator used by the K-Means
-        initialization.
+    random_state : int, RandomState instance or None (default)
+        Used for randomizing the singular value decomposition and the k-means
+        initialization. Use an int to make the randomness deterministic.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -377,6 +398,20 @@ class SpectralBiclustering(BaseSpectral):
     column_labels_ : array-like, shape (n_cols,)
         Column partition labels.
 
+    Examples
+    --------
+    >>> from sklearn.cluster import SpectralBiclustering
+    >>> import numpy as np
+    >>> X = np.array([[1, 1], [2, 1], [1, 0],
+    ...               [4, 7], [3, 5], [3, 6]])
+    >>> clustering = SpectralBiclustering(n_clusters=2, random_state=0).fit(X)
+    >>> clustering.row_labels_
+    array([1, 1, 1, 0, 0, 0], dtype=int32)
+    >>> clustering.column_labels_
+    array([0, 1], dtype=int32)
+    >>> clustering
+    SpectralBiclustering(n_clusters=2, random_state=0)
+
     References
     ----------
 
@@ -388,21 +423,21 @@ class SpectralBiclustering(BaseSpectral):
     def __init__(self, n_clusters=3, method='bistochastic',
                  n_components=6, n_best=3, svd_method='randomized',
                  n_svd_vecs=None, mini_batch=False, init='k-means++',
-                 n_init=10, n_jobs=1, random_state=None):
-        super(SpectralBiclustering, self).__init__(n_clusters,
-                                                   svd_method,
-                                                   n_svd_vecs,
-                                                   mini_batch,
-                                                   init,
-                                                   n_init,
-                                                   n_jobs,
-                                                   random_state)
+                 n_init=10, n_jobs=None, random_state=None):
+        super().__init__(n_clusters,
+                         svd_method,
+                         n_svd_vecs,
+                         mini_batch,
+                         init,
+                         n_init,
+                         n_jobs,
+                         random_state)
         self.method = method
         self.n_components = n_components
         self.n_best = n_best
 
     def _check_parameters(self):
-        super(SpectralBiclustering, self)._check_parameters()
+        super()._check_parameters()
         legal_methods = ('bistochastic', 'scale', 'log')
         if self.method not in legal_methods:
             raise ValueError("Unknown method: '{0}'. method must be"
@@ -462,12 +497,12 @@ class SpectralBiclustering(BaseSpectral):
         self.column_labels_ = self._project_and_cluster(X.T, best_ut.T,
                                                         n_col_clusters)
 
-        self.rows_ = np.vstack(self.row_labels_ == label
-                               for label in range(n_row_clusters)
-                               for _ in range(n_col_clusters))
-        self.columns_ = np.vstack(self.column_labels_ == label
-                                  for _ in range(n_row_clusters)
-                                  for label in range(n_col_clusters))
+        self.rows_ = np.vstack([self.row_labels_ == label
+                                for label in range(n_row_clusters)
+                                for _ in range(n_col_clusters)])
+        self.columns_ = np.vstack([self.column_labels_ == label
+                                   for _ in range(n_row_clusters)
+                                   for label in range(n_col_clusters)])
 
     def _fit_best_piecewise(self, vectors, n_best, n_clusters):
         """Find the ``n_best`` vectors that are best approximated by piecewise

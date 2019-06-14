@@ -1,4 +1,4 @@
-# Author: Lars Buitinck <L.J.Buitinck@uva.nl>
+# Author: Lars Buitinck
 # License: BSD 3 clause
 
 import numbers
@@ -6,8 +6,17 @@ import numbers
 import numpy as np
 import scipy.sparse as sp
 
-from . import _hashing
+from ..utils import IS_PYPY
 from ..base import BaseEstimator, TransformerMixin
+
+if not IS_PYPY:
+    from ._hashing import transform as _hashing_transform
+else:
+    def _hashing_transform(*args, **kwargs):
+        raise NotImplementedError(
+                'FeatureHasher is not compatible with PyPy (see '
+                'https://github.com/scikit-learn/scikit-learn/issues/11540 '
+                'for the status updates).')
 
 
 def _iteritems(d):
@@ -40,10 +49,6 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         The number of features (columns) in the output matrices. Small numbers
         of features are likely to cause hash collisions, but large numbers
         will cause larger coefficient dimensions in linear learners.
-    dtype : numpy type, optional, default np.float64
-        The type of feature values. Passed to scipy.sparse matrix constructors
-        as the dtype argument. Do not set this to bool, np.boolean or any
-        unsigned integer type.
     input_type : string, optional, default "dict"
         Either "dict" (the default) to accept dictionaries over
         (feature_name, value); "pair" to accept pairs of (feature_name, value);
@@ -53,11 +58,14 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         The feature_name is hashed to find the appropriate column for the
         feature. The value's sign might be flipped in the output (but see
         non_negative, below).
-    non_negative : boolean, optional, default False
-        Whether output matrices should contain non-negative values only;
-        effectively calls abs on the matrix prior to returning it.
-        When True, output values can be interpreted as frequencies.
-        When False, output values will have expected value zero.
+    dtype : numpy type, optional, default np.float64
+        The type of feature values. Passed to scipy.sparse matrix constructors
+        as the dtype argument. Do not set this to bool, np.boolean or any
+        unsigned integer type.
+    alternate_sign : boolean, optional, default True
+        When True, an alternating sign is added to the features as to
+        approximately conserve the inner product in the hashed space even for
+        small n_features. This approach is similar to sparse random projection.
 
     Examples
     --------
@@ -72,24 +80,23 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
     See also
     --------
     DictVectorizer : vectorizes string-valued features using a hash table.
-    sklearn.preprocessing.OneHotEncoder : handles nominal/categorical features
-      encoded as columns of integers.
+    sklearn.preprocessing.OneHotEncoder : handles nominal/categorical features.
     """
 
     def __init__(self, n_features=(2 ** 20), input_type="dict",
-                 dtype=np.float64, non_negative=False):
+                 dtype=np.float64, alternate_sign=True):
         self._validate_params(n_features, input_type)
 
         self.dtype = dtype
         self.input_type = input_type
         self.n_features = n_features
-        self.non_negative = non_negative
+        self.alternate_sign = alternate_sign
 
     @staticmethod
     def _validate_params(n_features, input_type):
         # strangely, np.int16 instances are not instances of Integral,
         # while np.int64 instances are...
-        if not isinstance(n_features, (numbers.Integral, np.integer)):
+        if not isinstance(n_features, numbers.Integral):
             raise TypeError("n_features must be integral, got %r (%s)."
                             % (n_features, type(n_features)))
         elif n_features < 1 or n_features >= 2 ** 31:
@@ -105,6 +112,10 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         This method doesn't do anything. It exists purely for compatibility
         with the scikit-learn transformer API.
 
+        Parameters
+        ----------
+        X : array-like
+
         Returns
         -------
         self : FeatureHasher
@@ -114,7 +125,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         self._validate_params(self.n_features, self.input_type)
         return self
 
-    def transform(self, raw_X, y=None):
+    def transform(self, raw_X):
         """Transform a sequence of instances to a scipy.sparse matrix.
 
         Parameters
@@ -125,7 +136,6 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
             the input_type constructor argument) which will be hashed.
             raw_X need not support the len function, so it can be the result
             of a generator; n_samples is determined on the fly.
-        y : (ignored)
 
         Returns
         -------
@@ -139,7 +149,8 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         elif self.input_type == "string":
             raw_X = (((f, 1) for f in x) for x in raw_X)
         indices, indptr, values = \
-            _hashing.transform(raw_X, self.n_features, self.dtype)
+            _hashing_transform(raw_X, self.n_features, self.dtype,
+                               self.alternate_sign)
         n_samples = indptr.shape[0] - 1
 
         if n_samples == 0:
@@ -148,6 +159,8 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         X = sp.csr_matrix((values, indices, indptr), dtype=self.dtype,
                           shape=(n_samples, self.n_features))
         X.sum_duplicates()  # also sorts the indices
-        if self.non_negative:
-            np.abs(X.data, X.data)
+
         return X
+
+    def _more_tags(self):
+        return {'X_types': [self.input_type]}

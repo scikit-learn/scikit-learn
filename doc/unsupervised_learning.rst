@@ -15,4 +15,4 @@ Unsupervised learning
     modules/covariance
     modules/outlier_detection
     modules/density
-    modules/neural_networks
+    modules/neural_networks_unsupervised

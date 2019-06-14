@@ -1,19 +1,17 @@
+# Author: Gael Varoquaux
+# License: BSD
 """
 Uses C++ map containers for fast dict-like behavior with keys being
 integers, and values float.
 """
-# Author: Gael Varoquaux
-# License: BSD
 
 from libcpp.map cimport map as cpp_map
 
 # Import the C-level symbols of numpy
 cimport numpy as np
 
-DTYPE = np.float64
 ctypedef np.float64_t DTYPE_t
 
-ITYPE = np.intp
 ctypedef np.intp_t ITYPE_t
 
 ###############################################################################

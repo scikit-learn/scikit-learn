@@ -18,17 +18,17 @@ import numpy as np
 import warnings
 
 from collections import defaultdict
-from ..externals import six
 from ..utils.validation import check_is_fitted
-from ..utils import extmath, check_random_state, gen_batches, check_array
+from ..utils import check_random_state, gen_batches, check_array
 from ..base import BaseEstimator, ClusterMixin
 from ..neighbors import NearestNeighbors
 from ..metrics.pairwise import pairwise_distances_argmin
-from ..externals.joblib import Parallel
-from ..externals.joblib import delayed
+from ..utils._joblib import Parallel
+from ..utils._joblib import delayed
 
 
-def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
+def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0,
+                       n_jobs=None):
     """Estimate the bandwidth to use with the mean-shift algorithm.
 
     That this function takes time at least quadratic in n_samples. For large
@@ -46,19 +46,34 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
     n_samples : int, optional
         The number of samples to use. If not given, all samples are used.
 
-    random_state : int or RandomState
-        Pseudo-random number generator state used for random sampling.
+    random_state : int, RandomState instance or None (default)
+        The generator used to randomly select the samples from input points
+        for bandwidth estimation. Use an int to make the randomness
+        deterministic.
+        See :term:`Glossary <random_state>`.
+
+    n_jobs : int or None, optional (default=None)
+        The number of parallel jobs to run for neighbors search.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Returns
     -------
     bandwidth : float
         The bandwidth parameter.
     """
+    X = check_array(X)
+
     random_state = check_random_state(random_state)
     if n_samples is not None:
         idx = random_state.permutation(X.shape[0])[:n_samples]
         X = X[idx]
-    nbrs = NearestNeighbors(n_neighbors=int(X.shape[0] * quantile))
+    n_neighbors = int(X.shape[0] * quantile)
+    if n_neighbors < 1:  # cannot fit NearestNeighbors with n_neighbors = 0
+        n_neighbors = 1
+    nbrs = NearestNeighbors(n_neighbors=n_neighbors,
+                            n_jobs=n_jobs)
     nbrs.fit(X)
 
     bandwidth = 0.
@@ -85,7 +100,7 @@ def _mean_shift_single_seed(my_mean, X, nbrs, max_iter):
         my_old_mean = my_mean  # save the old mean
         my_mean = np.mean(points_within, axis=0)
         # If converged or at max_iter, adds the cluster
-        if (extmath.norm(my_mean - my_old_mean) < stop_thresh or
+        if (np.linalg.norm(my_mean - my_old_mean) < stop_thresh or
                 completed_iterations == max_iter):
             return tuple(my_mean), len(points_within)
         completed_iterations += 1
@@ -93,7 +108,7 @@ def _mean_shift_single_seed(my_mean, X, nbrs, max_iter):
 
 def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
                min_bin_freq=1, cluster_all=True, max_iter=300,
-               n_jobs=1):
+               n_jobs=None):
     """Perform mean shift clustering of data using a flat kernel.
 
     Read more in the :ref:`User Guide <mean_shift>`.
@@ -138,14 +153,16 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
         Maximum number of iterations, per seed point before the clustering
         operation terminates (for that seed point), if has not converged yet.
 
-    n_jobs : int
+    n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation. This works by computing
         each of the n_init runs in parallel.
 
-        If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debugging. For n_jobs below -1,
-        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
-        are used.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+
+        .. versionadded:: 0.17
+           Parallel Execution using *n_jobs*.
 
     Returns
     -------
@@ -158,15 +175,16 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
 
     Notes
     -----
-    See examples/cluster/plot_meanshift.py for an example.
+    For an example, see :ref:`examples/cluster/plot_mean_shift.py
+    <sphx_glr_auto_examples_cluster_plot_mean_shift.py>`.
 
     """
 
     if bandwidth is None:
-        bandwidth = estimate_bandwidth(X)
+        bandwidth = estimate_bandwidth(X, n_jobs=n_jobs)
     elif bandwidth <= 0:
-        raise ValueError("bandwidth needs to be greater than zero or None,\
-            got %f" % bandwidth)
+        raise ValueError("bandwidth needs to be greater than zero or None,"
+                         " got %f" % bandwidth)
     if seeds is None:
         if bin_seeding:
             seeds = get_bin_seeds(X, bandwidth, min_bin_freq)
@@ -174,7 +192,11 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
             seeds = X
     n_samples, n_features = X.shape
     center_intensity_dict = {}
-    nbrs = NearestNeighbors(radius=bandwidth).fit(X)
+
+    # We use n_jobs=1 because this will be used in nested calls under
+    # parallel calls to _mean_shift_single_seed so there is no need for
+    # for further parallelism.
+    nbrs = NearestNeighbors(radius=bandwidth, n_jobs=1).fit(X)
 
     # execute iterations on all seeds in parallel
     all_res = Parallel(n_jobs=n_jobs)(
@@ -196,11 +218,14 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     # If the distance between two kernels is less than the bandwidth,
     # then we have to remove one because it is a duplicate. Remove the
     # one with fewer points.
+
     sorted_by_intensity = sorted(center_intensity_dict.items(),
-                                 key=lambda tup: tup[1], reverse=True)
+                                 key=lambda tup: (tup[1], tup[0]),
+                                 reverse=True)
     sorted_centers = np.array([tup[0] for tup in sorted_by_intensity])
     unique = np.ones(len(sorted_centers), dtype=np.bool)
-    nbrs = NearestNeighbors(radius=bandwidth).fit(sorted_centers)
+    nbrs = NearestNeighbors(radius=bandwidth,
+                            n_jobs=n_jobs).fit(sorted_centers)
     for i, center in enumerate(sorted_centers):
         if unique[i]:
             neighbor_idxs = nbrs.radius_neighbors([center],
@@ -210,7 +235,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     cluster_centers = sorted_centers[unique]
 
     # ASSIGN LABELS: a point belongs to the cluster that it is closest to
-    nbrs = NearestNeighbors(n_neighbors=1).fit(cluster_centers)
+    nbrs = NearestNeighbors(n_neighbors=1, n_jobs=n_jobs).fit(cluster_centers)
     labels = np.zeros(n_samples, dtype=np.int)
     distances, idxs = nbrs.kneighbors(X)
     if cluster_all:
@@ -259,7 +284,7 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
         bin_sizes[tuple(binned_point)] += 1
 
     # Select only those bins as seeds which have enough members
-    bin_seeds = np.array([point for point, freq in six.iteritems(bin_sizes) if
+    bin_seeds = np.array([point for point, freq in bin_sizes.items() if
                           freq >= min_bin_freq], dtype=np.float32)
     if len(bin_seeds) == len(X):
         warnings.warn("Binning data failed with provided bin_size=%f,"
@@ -315,14 +340,13 @@ class MeanShift(BaseEstimator, ClusterMixin):
         not within any kernel. Orphans are assigned to the nearest kernel.
         If false, then orphans are given cluster label -1.
 
-    n_jobs : int
+    n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation. This works by computing
         each of the n_init runs in parallel.
 
-        If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debugging. For n_jobs below -1,
-        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
-        are used.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Attributes
     ----------
@@ -332,14 +356,28 @@ class MeanShift(BaseEstimator, ClusterMixin):
     labels_ :
         Labels of each point.
 
+    Examples
+    --------
+    >>> from sklearn.cluster import MeanShift
+    >>> import numpy as np
+    >>> X = np.array([[1, 1], [2, 1], [1, 0],
+    ...               [4, 7], [3, 5], [3, 6]])
+    >>> clustering = MeanShift(bandwidth=2).fit(X)
+    >>> clustering.labels_
+    array([1, 1, 1, 0, 0, 0])
+    >>> clustering.predict([[0, 0], [5, 5]])
+    array([1, 0])
+    >>> clustering
+    MeanShift(bandwidth=2)
+
     Notes
     -----
 
     Scalability:
 
     Because this implementation uses a flat kernel and
-    a Ball Tree to look up members of each kernel, the complexity will is
-    to O(T*n*log(n)) in lower dimensions, with n the number of samples
+    a Ball Tree to look up members of each kernel, the complexity will tend
+    towards O(T*n*log(n)) in lower dimensions, with n the number of samples
     and T the number of points. In higher dimensions the complexity will
     tend towards O(T*n^2).
 
@@ -358,7 +396,7 @@ class MeanShift(BaseEstimator, ClusterMixin):
 
     """
     def __init__(self, bandwidth=None, seeds=None, bin_seeding=False,
-                 min_bin_freq=1, cluster_all=True, n_jobs=1):
+                 min_bin_freq=1, cluster_all=True, n_jobs=None):
         self.bandwidth = bandwidth
         self.seeds = seeds
         self.bin_seeding = bin_seeding
@@ -370,9 +408,12 @@ class MeanShift(BaseEstimator, ClusterMixin):
         """Perform clustering.
 
         Parameters
-        -----------
+        ----------
         X : array-like, shape=[n_samples, n_features]
             Samples to cluster.
+
+        y : Ignored
+
         """
         X = check_array(X)
         self.cluster_centers_, self.labels_ = \

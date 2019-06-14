@@ -11,7 +11,7 @@ PCA transformed data.
 import matplotlib.pyplot as plt
 import numpy as np
 
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.decomposition import PCA
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer
@@ -57,13 +57,16 @@ def drop_first_component(X, y):
 
 if __name__ == '__main__':
     X, y = generate_dataset()
-    plt.scatter(X[:, 0], X[:, 1], c=y, s=50)
-    plt.show()
+    lw = 0
+    plt.figure()
+    plt.scatter(X[:, 0], X[:, 1], c=y, lw=lw)
+    plt.figure()
     X_transformed, y_transformed = drop_first_component(*generate_dataset())
     plt.scatter(
         X_transformed[:, 0],
         np.zeros(len(X_transformed)),
         c=y_transformed,
-        s=50,
+        lw=lw,
+        s=60
     )
     plt.show()

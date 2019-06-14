@@ -22,7 +22,7 @@
         <strong>Applications</strong>: Spam detection, Image recognition.</br>
         <strong>Algorithms</strong>:&nbsp;
 
-    :ref:`SVM<svm>`, :ref:`nearest neighbors<classification>`, :ref:`random forest<forest>`, ...
+    :ref:`SVM<svm_classification>`, :ref:`nearest neighbors<classification>`, :ref:`random forest<forest>`, ...
 
     .. raw:: html
 
@@ -52,7 +52,7 @@
         <strong>Applications</strong>: Drug response, Stock prices.</br>
         <strong>Algorithms</strong>:&nbsp;
 
-    :ref:`SVR<svm>`, :ref:`ridge regression<ridge_regression>`, :ref:`Lasso<lasso>`, ...
+    :ref:`SVR<svm_regression>`, :ref:`ridge regression<ridge_regression>`, :ref:`Lasso<lasso>`, ...
 
     .. raw:: html
 
@@ -205,25 +205,23 @@
                     <h4>News</h4>
                     <ul>
                     <li><em>On-going development:</em>
-                    <a href="whats_new.html"><em>What's new</em> (changelog)</a>
+                    <a href="/dev/whats_new.html"><em>What's new</em> (Changelog)</a>
                     </li>
-                    <li><em>March 2015.</em> scikit-learn 0.16.0 is available for download (<a href="whats_new.html">Changelog</a>).
+                    <li><strong>Scikit-learn from 0.21 requires Python 3.5 or greater.</strong>
                     </li>
-                    <li><em>July 2014.</em> scikit-learn 0.15.0 is available for download (<a href="whats_new.html">Changelog</a>).
+                    <li><em>May 2019.</em> scikit-learn 0.21.0 to 0.21.2 are available for download (<a href="whats_new.html#version-0-21">Changelog</a>).
                     </li>
-                    <li><em>July 14-20th, 2014: international sprint.</em>
-                    During this week-long sprint, we gathered 18 of the core
-                    contributors in Paris.
-                    We want to thank our sponsors:
-                    <a href="http://www.campus-paris-saclay.fr/en/Idex-Paris-Saclay/Les-Lidex/Paris-Saclay-Center-for-Data-Science">
-                    Paris-Saclay Center for Data Science</a>
-                    & <a href="https://digicosme.lri.fr">Digicosme</a> and our
-                    hosts <a href="http://lapaillasse.org">La Paillasse</a>,
-                    <a href="http://www.criteo.com/">Criteo</a>,
-                    <a href="http://www.inria.fr/">Inria</a>,
-                    and <a href="http://www.tinyclues.com/">tinyclues</a>.
+                    <li><em>March 2019.</em> scikit-learn 0.20.3 is available for download (<a href="whats_new.html#version-0-20-3">Changelog</a>).
                     </li>
-                    <li><em>August 2013.</em> scikit-learn 0.14 is available for download (<a href="whats_new.html">Changelog</a>).
+                    <li><em>December 2018.</em> scikit-learn 0.20.2 is available for download (<a href="whats_new.html#version-0-20-2">Changelog</a>)
+                    </li>
+                    <li><em>November 2018.</em> scikit-learn 0.20.1 is available for download (<a href="whats_new.html#version-0-20-1">Changelog</a>).
+                    </li>
+                    <li><em>September 2018.</em> scikit-learn 0.20.0 is available for download (<a href="whats_new.html#version-0-20-0">Changelog</a>).
+                    </li>
+                    <li><em>July 2018.</em> scikit-learn 0.19.2 is available for download (<a href="whats_new.html#version-0-19">Changelog</a>).
+                    </li>
+                    <li><em>July 2017.</em> scikit-learn 0.19.0 is available for download (<a href="whats_new/v0.19.html#version-0-19">Changelog</a>).
                     </li>
                     </ul>
                 </div>
@@ -232,11 +230,11 @@
                 <div class="span4">
                     <h4>Community</h4>
                     <ul>
-                    <li><em>About us</em> See <a href="about.html#people">authors</a></li>
+                    <li><em>About us</em> See <a href="about.html#people">authors</a> and <a href="developers/contributing.html">contributing</a></li>
                     <li><em>More Machine Learning</em> Find <a href="related_projects.html">related projects</a></li>
-                    <li><em>Questions?</em> See <a href="faq/">FAQ</a> and <a href="http://stackoverflow.com/questions/tagged/scikit-learn">stackoverflow</a></li>
-                    <li><em>Mailing list:</em> <a href="https://lists.sourceforge.net/lists/listinfo/scikit-learn-general">scikit-learn-general@lists.sourceforge.net</a></li>
-                    <li><em>IRC:</em> #scikit-learn @ <a href="http://webchat.freenode.net/">freenode</a></li>
+                    <li><em>Questions?</em> See <a href="faq.html">FAQ</a> and <a href="https://stackoverflow.com/questions/tagged/scikit-learn">stackoverflow</a></li>
+                    <li><em>Mailing list:</em> <a href="https://mail.python.org/mailman/listinfo/scikit-learn">scikit-learn@python.org</a></li>
+                    <li><em>IRC:</em> #scikit-learn @ <a href="https://webchat.freenode.net/">freenode</a></li>
                     </ul>
 
                     <form target="_top" id="paypal-form" method="post" action="https://www.paypal.com/cgi-bin/webscr">
@@ -315,19 +313,22 @@
         <div class="container index-upper" >
         <div class="row-fluid">
           <div class="footer">
-              <div class="span4">
-                Generous funding provided by INRIA, Google and others.
+              <div class="span3">
+                Funding provided by INRIA and others.
               </div>
-              <div class="span4">
-                 <a class="reference internal" href="about.html#funding" style="text-decoration: none" >
+              <div class="span6">
+                 <a class="reference internal" href="about.html#funding" style="text-decoration: none; white-space: nowrap" >
                        <img id="index-funding-logo-big" src="_static/img/inria-small.png" title="INRIA">
                    <img id="index-funding-logo-small" src="_static/img/google.png" title="Google">
                    <!--Due to Télécom ParisTech's logo text being smaller, a style has been added to improve readability-->
                    <img id="index-funding-logo-small" src="_static/img/telecom.png" title="Télécom ParisTech" style="max-height: 36px">
                    <img id="index-funding-logo-small" src="_static/img/FNRS-logo.png" title="FNRS">
+                   <img id="index-funding-logo-small" src="_static/img/sloan_logo.jpg" title="Alfred P. Sloan Foundation" style="max-height: 36px">
+                   <img id="index-funding-logo-small" src="_static/img/columbia.png" title="Columbia University" style="max-height: 36px;">
+                   <img id="index-funding-logo-small" src="_static/img/sydney-stacked.jpeg" title="The University of Sydney" style="max-height: 36px;">
                  </a>
              </div>
-             <div class="span4">
+             <div class="span3">
                 <a class="reference internal" href="about.html#funding">
                    More information on our contributors
                 </a>
@@ -351,6 +352,7 @@
     preface
     tutorial/index
     user_guide
+    glossary
     auto_examples/index
     modules/classes
     developers/index

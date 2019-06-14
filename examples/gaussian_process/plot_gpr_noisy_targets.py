@@ -23,10 +23,10 @@ print(__doc__)
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 #         Jake Vanderplas <vanderplas@astro.washington.edu>
 #         Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>s
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 import numpy as np
-from matplotlib import pyplot as pl
+from matplotlib import pyplot as plt
 
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
@@ -49,7 +49,7 @@ y = f(X).ravel()
 # its MSE
 x = np.atleast_2d(np.linspace(0, 10, 1000)).T
 
-# Instanciate a Gaussian Process model
+# Instantiate a Gaussian Process model
 kernel = C(1.0, (1e-3, 1e3)) * RBF(10, (1e-2, 1e2))
 gp = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=9)
 
@@ -61,18 +61,18 @@ y_pred, sigma = gp.predict(x, return_std=True)
 
 # Plot the function, the prediction and the 95% confidence interval based on
 # the MSE
-fig = pl.figure()
-pl.plot(x, f(x), 'r:', label=u'$f(x) = x\,\sin(x)$')
-pl.plot(X, y, 'r.', markersize=10, label=u'Observations')
-pl.plot(x, y_pred, 'b-', label=u'Prediction')
-pl.fill(np.concatenate([x, x[::-1]]),
-        np.concatenate([y_pred - 1.9600 * sigma,
-                       (y_pred + 1.9600 * sigma)[::-1]]),
-        alpha=.5, fc='b', ec='None', label='95% confidence interval')
-pl.xlabel('$x$')
-pl.ylabel('$f(x)$')
-pl.ylim(-10, 20)
-pl.legend(loc='upper left')
+plt.figure()
+plt.plot(x, f(x), 'r:', label=r'$f(x) = x\,\sin(x)$')
+plt.plot(X, y, 'r.', markersize=10, label='Observations')
+plt.plot(x, y_pred, 'b-', label='Prediction')
+plt.fill(np.concatenate([x, x[::-1]]),
+         np.concatenate([y_pred - 1.9600 * sigma,
+                        (y_pred + 1.9600 * sigma)[::-1]]),
+         alpha=.5, fc='b', ec='None', label='95% confidence interval')
+plt.xlabel('$x$')
+plt.ylabel('$f(x)$')
+plt.ylim(-10, 20)
+plt.legend(loc='upper left')
 
 # ----------------------------------------------------------------------
 # now the noisy case
@@ -85,8 +85,8 @@ dy = 0.5 + 1.0 * np.random.random(y.shape)
 noise = np.random.normal(0, dy)
 y += noise
 
-# Instanciate a Gaussian Process model
-gp = GaussianProcessRegressor(kernel=kernel, alpha=(dy / y) ** 2,
+# Instantiate a Gaussian Process model
+gp = GaussianProcessRegressor(kernel=kernel, alpha=dy ** 2,
                               n_restarts_optimizer=10)
 
 # Fit to data using Maximum Likelihood Estimation of the parameters
@@ -97,17 +97,17 @@ y_pred, sigma = gp.predict(x, return_std=True)
 
 # Plot the function, the prediction and the 95% confidence interval based on
 # the MSE
-fig = pl.figure()
-pl.plot(x, f(x), 'r:', label=u'$f(x) = x\,\sin(x)$')
-pl.errorbar(X.ravel(), y, dy, fmt='r.', markersize=10, label=u'Observations')
-pl.plot(x, y_pred, 'b-', label=u'Prediction')
-pl.fill(np.concatenate([x, x[::-1]]),
-        np.concatenate([y_pred - 1.9600 * sigma,
-                       (y_pred + 1.9600 * sigma)[::-1]]),
-        alpha=.5, fc='b', ec='None', label='95% confidence interval')
-pl.xlabel('$x$')
-pl.ylabel('$f(x)$')
-pl.ylim(-10, 20)
-pl.legend(loc='upper left')
+plt.figure()
+plt.plot(x, f(x), 'r:', label=r'$f(x) = x\,\sin(x)$')
+plt.errorbar(X.ravel(), y, dy, fmt='r.', markersize=10, label='Observations')
+plt.plot(x, y_pred, 'b-', label='Prediction')
+plt.fill(np.concatenate([x, x[::-1]]),
+         np.concatenate([y_pred - 1.9600 * sigma,
+                        (y_pred + 1.9600 * sigma)[::-1]]),
+         alpha=.5, fc='b', ec='None', label='95% confidence interval')
+plt.xlabel('$x$')
+plt.ylabel('$f(x)$')
+plt.ylim(-10, 20)
+plt.legend(loc='upper left')
 
-pl.show()
+plt.show()

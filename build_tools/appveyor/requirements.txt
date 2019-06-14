@@ -1,0 +1,7 @@
+numpy
+scipy
+cython
+pytest
+wheel
+wheelhouse_uploader
+pillow

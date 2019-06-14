@@ -11,17 +11,15 @@ import time
 
 import numpy as np
 import scipy.sparse as sp
+from scipy.special import expit  # logistic function
 
 from ..base import BaseEstimator
 from ..base import TransformerMixin
-from ..externals.six.moves import xrange
 from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import gen_even_slices
-from ..utils import issparse
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import log_logistic
-from ..utils.fixes import expit             # logistic function
 from ..utils.validation import check_is_fitted
 
 
@@ -29,7 +27,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
     """Bernoulli Restricted Boltzmann Machine (RBM).
 
     A Restricted Boltzmann Machine with binary visible units and
-    binary hiddens. Parameters are estimated using Stochastic Maximum
+    binary hidden units. Parameters are estimated using Stochastic Maximum
     Likelihood (SML), also known as Persistent Contrastive Divergence (PCD)
     [2].
 
@@ -58,7 +56,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
     verbose : int, optional
         The verbosity level. The default, zero, means silent mode.
 
-    random_state : integer or numpy.RandomState, optional
+    random_state : integer or RandomState, optional
         A random number generator instance to define the state of the
         random permutations generator. If an integer is given, it fixes the
         seed. Defaults to the global numpy random number generator.
@@ -83,15 +81,14 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
     >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
     >>> model = BernoulliRBM(n_components=2)
     >>> model.fit(X)
-    BernoulliRBM(batch_size=10, learning_rate=0.1, n_components=2, n_iter=10,
-           random_state=None, verbose=0)
+    BernoulliRBM(n_components=2)
 
     References
     ----------
 
     [1] Hinton, G. E., Osindero, S. and Teh, Y. A fast learning algorithm for
         deep belief nets. Neural Computation 18, pp 1527-1554.
-        http://www.cs.toronto.edu/~hinton/absps/fastnc.pdf
+        https://www.cs.toronto.edu/~hinton/absps/fastnc.pdf
 
     [2] Tieleman, T. Training Restricted Boltzmann Machines using
         Approximations to the Likelihood Gradient. International Conference
@@ -243,7 +240,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
                     0.01,
                     (self.n_components, X.shape[1])
                 ),
-                order='fortran')
+                order='F')
         if not hasattr(self, 'intercept_hidden_'):
             self.intercept_hidden_ = np.zeros(self.n_components, )
         if not hasattr(self, 'intercept_visible_'):
@@ -310,7 +307,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         # Randomly corrupt one feature in each sample in v.
         ind = (np.arange(v.shape[0]),
                rng.randint(0, v.shape[1], v.shape[0]))
-        if issparse(v):
+        if sp.issparse(v):
             data = -2 * v[ind] + 1
             v_ = v + sp.csr_matrix((data.A.ravel(), ind), shape=v.shape)
         else:
@@ -340,7 +337,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
 
         self.components_ = np.asarray(
             rng.normal(0, 0.01, (self.n_components, X.shape[1])),
-            order='fortran')
+            order='F')
         self.intercept_hidden_ = np.zeros(self.n_components, )
         self.intercept_visible_ = np.zeros(X.shape[1], )
         self.h_samples_ = np.zeros((self.batch_size, self.n_components))
@@ -350,7 +347,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
                                             n_batches, n_samples))
         verbose = self.verbose
         begin = time.time()
-        for iteration in xrange(1, self.n_iter + 1):
+        for iteration in range(1, self.n_iter + 1):
             for batch_slice in batch_slices:
                 self._fit(X[batch_slice], rng)
 

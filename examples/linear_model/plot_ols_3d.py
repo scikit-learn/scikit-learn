@@ -37,7 +37,7 @@ ols = linear_model.LinearRegression()
 ols.fit(X_train, y_train)
 
 
-###############################################################################
+# #############################################################################
 # Plot the figure
 def plot_figs(fig_num, elev, azim, X_train, clf):
     fig = plt.figure(fig_num, figsize=(4, 3))

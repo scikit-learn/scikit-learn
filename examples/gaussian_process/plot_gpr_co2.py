@@ -8,39 +8,45 @@ Learning" [RW2006]. It illustrates an example of complex kernel engineering and
 hyperparameter optimization using gradient ascent on the
 log-marginal-likelihood. The data consists of the monthly average atmospheric
 CO2 concentrations (in parts per million by volume (ppmv)) collected at the
-Mauna Loa Observatory in Hawaii, between 1958 and 1997. The objective is to
+Mauna Loa Observatory in Hawaii, between 1958 and 2001. The objective is to
 model the CO2 concentration as a function of the time t.
 
 The kernel is composed of several terms that are responsible for explaining
 different properties of the signal:
- - a long term, smooth rising trend is to be explained by an RBF kernel. The
-   RBF kernel with a large length-scale enforces this component to be smooth;
-   it is not enforced that the trend is rising which leaves this choice to the
-   GP. The specific length-scale and the amplitude are free hyperparameters.
- - a seasonal component, which is to be explained by the periodic
-   ExpSineSquared kernel with a fixed periodicity of 1 year. The length-scale
-   of this periodic component, controlling its smoothness, is a free parameter.
-   In order to allow decaying away from exact periodicity, the product with an
-   RBF kernel is taken. The length-scale of this RBF component controls the
-   decay time and is a further free parameter.
- - smaller, medium term irregularities are to be explained by a
-   RationalQuadratic kernel component, whose length-scale and alpha parameter,
-   which determines the diffuseness of the length-scales, are to be determined.
-   According to [RW2006], these irregularities can better be explained by
-   a RationalQuadratic than an RBF kernel component, probably because it can
-   accommodate several length-scales.
- - a "noise" term, consisting of an RBF kernel contribution, which shall
-   explain the correlated noise components such as local weather phenomena,
-   and a WhiteKernel contribution for the white noise. The relative amplitudes
-   and the RBF's length scale are further free parameters.
+
+- a long term, smooth rising trend is to be explained by an RBF kernel. The
+  RBF kernel with a large length-scale enforces this component to be smooth;
+  it is not enforced that the trend is rising which leaves this choice to the
+  GP. The specific length-scale and the amplitude are free hyperparameters.
+
+- a seasonal component, which is to be explained by the periodic
+  ExpSineSquared kernel with a fixed periodicity of 1 year. The length-scale
+  of this periodic component, controlling its smoothness, is a free parameter.
+  In order to allow decaying away from exact periodicity, the product with an
+  RBF kernel is taken. The length-scale of this RBF component controls the
+  decay time and is a further free parameter.
+
+- smaller, medium term irregularities are to be explained by a
+  RationalQuadratic kernel component, whose length-scale and alpha parameter,
+  which determines the diffuseness of the length-scales, are to be determined.
+  According to [RW2006], these irregularities can better be explained by
+  a RationalQuadratic than an RBF kernel component, probably because it can
+  accommodate several length-scales.
+
+- a "noise" term, consisting of an RBF kernel contribution, which shall
+  explain the correlated noise components such as local weather phenomena,
+  and a WhiteKernel contribution for the white noise. The relative amplitudes
+  and the RBF's length scale are further free parameters.
 
 Maximizing the log-marginal-likelihood after subtracting the target's mean
-yields the following kernel with an LML of -83.214:
+yields the following kernel with an LML of -83.214::
+
    34.4**2 * RBF(length_scale=41.8)
    + 3.27**2 * RBF(length_scale=180) * ExpSineSquared(length_scale=1.44,
                                                       periodicity=1)
    + 0.446**2 * RationalQuadratic(alpha=17.7, length_scale=0.957)
    + 0.197**2 * RBF(length_scale=0.138) + WhiteKernel(noise_level=0.0336)
+
 Thus, most of the target signal (34.4ppm) is explained by a long-term rising
 trend (length-scale 41.8 years). The periodic component has an amplitude of
 3.27ppm, a decay time of 180 years and a length-scale of 1.44. The long decay
@@ -51,24 +57,49 @@ overall noise level is very small, indicating that the data can be very well
 explained by the model. The figure shows also that the model makes very
 confident predictions until around 2015.
 """
-print(__doc__)
-
 # Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 #
 # License: BSD 3 clause
 
+
 import numpy as np
 
 from matplotlib import pyplot as plt
-
+from sklearn.datasets import fetch_openml
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels \
     import RBF, WhiteKernel, RationalQuadratic, ExpSineSquared
-from sklearn.datasets import fetch_mldata
 
-data = fetch_mldata('mauna-loa-atmospheric-co2').data
-X = data[:, [1]]
-y = data[:, 0]
+print(__doc__)
+
+
+def load_mauna_loa_atmospheric_co2():
+    ml_data = fetch_openml(data_id=41187)
+    months = []
+    ppmv_sums = []
+    counts = []
+
+    y = ml_data.data[:, 0]
+    m = ml_data.data[:, 1]
+    month_float = y + (m - 1) / 12
+    ppmvs = ml_data.target
+
+    for month, ppmv in zip(month_float, ppmvs):
+        if not months or month != months[-1]:
+            months.append(month)
+            ppmv_sums.append(ppmv)
+            counts.append(1)
+        else:
+            # aggregate monthly sum to produce average
+            ppmv_sums[-1] += ppmv
+            counts[-1] += 1
+
+    months = np.asarray(months).reshape(-1, 1)
+    avg_ppmvs = np.asarray(ppmv_sums) / counts
+    return months, avg_ppmvs
+
+
+X, y = load_mauna_loa_atmospheric_co2()
 
 # Kernel with parameters given in GPML book
 k1 = 66.0**2 * RBF(length_scale=67.0)  # long term smooth rising trend

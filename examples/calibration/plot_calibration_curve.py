@@ -10,7 +10,7 @@ how well calibrated the predicted probabilities are and how to calibrate an
 uncalibrated classifier.
 
 The experiment is performed on an artificial dataset for binary classification
-with 100.000 samples (1.000 of them are used for model fitting) with 20
+with 100,000 samples (1,000 of them are used for model fitting) with 20
 features. Of the 20 features, only 2 are informative and 10 are redundant. The
 first figure shows the estimated probabilities obtained with logistic
 regression, Gaussian naive Bayes, and Gaussian naive Bayes with both isotonic
@@ -56,7 +56,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (brier_score_loss, precision_score, recall_score,
                              f1_score)
 from sklearn.calibration import CalibratedClassifierCV, calibration_curve
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 
 
 # Create dataset of classification task with many redundant and few
@@ -78,7 +78,7 @@ def plot_calibration_curve(est, name, fig_index):
     sigmoid = CalibratedClassifierCV(est, cv=2, method='sigmoid')
 
     # Logistic regression with no calibration as baseline
-    lr = LogisticRegression(C=1., solver='lbfgs')
+    lr = LogisticRegression(C=1.)
 
     fig = plt.figure(fig_index, figsize=(10, 10))
     ax1 = plt.subplot2grid((3, 1), (0, 0), rowspan=2)
@@ -125,10 +125,10 @@ def plot_calibration_curve(est, name, fig_index):
 
     plt.tight_layout()
 
-# Plot calibration cuve for Gaussian Naive Bayes
+# Plot calibration curve for Gaussian Naive Bayes
 plot_calibration_curve(GaussianNB(), "Naive Bayes", 1)
 
-# Plot calibration cuve for Linear SVC
-plot_calibration_curve(LinearSVC(), "SVC", 2)
+# Plot calibration curve for Linear SVC
+plot_calibration_curve(LinearSVC(max_iter=10000), "SVC", 2)
 
 plt.show()

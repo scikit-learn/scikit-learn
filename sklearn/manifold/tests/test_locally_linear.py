@@ -1,5 +1,4 @@
 from itertools import product
-from nose.tools import assert_true
 
 import numpy as np
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
@@ -9,11 +8,13 @@ from sklearn import neighbors, manifold
 from sklearn.manifold.locally_linear import barycenter_kneighbors_graph
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_raises
 
 eigen_solvers = ['dense', 'arpack']
 
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # Test utility routines
 def test_barycenter_kneighbors_graph():
     X = np.array([[0, 1], [1.01, 1.], [2, 0]])
@@ -32,14 +33,13 @@ def test_barycenter_kneighbors_graph():
     assert_less(linalg.norm(pred - X) / X.shape[0], 1)
 
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # Test LLE by computing the reconstruction error on some manifolds.
 
 def test_lle_simple_grid():
     # note: ARPACK is numerically unstable, so this test will fail for
     #       some random seeds.  We choose 2 because the tests pass.
     rng = np.random.RandomState(2)
-    tol = 0.1
 
     # grid of equidistant points in 2D, n_components = n_dim
     X = np.array(list(product(range(5), repeat=2)))
@@ -57,7 +57,7 @@ def test_lle_simple_grid():
     for solver in eigen_solvers:
         clf.set_params(eigen_solver=solver)
         clf.fit(X)
-        assert_true(clf.embedding_.shape[1] == n_components)
+        assert clf.embedding_.shape[1] == n_components
         reconstruction_error = linalg.norm(
             np.dot(N, clf.embedding_) - clf.embedding_, 'fro') ** 2
 
@@ -91,7 +91,7 @@ def test_lle_manifold():
         for solver in eigen_solvers:
             clf.set_params(eigen_solver=solver)
             clf.fit(X)
-            assert_true(clf.embedding_.shape[1] == n_components)
+            assert clf.embedding_.shape[1] == n_components
             reconstruction_error = linalg.norm(
                 np.dot(N, clf.embedding_) - clf.embedding_, 'fro') ** 2
             details = ("solver: %s, method: %s" % (solver, method))
@@ -99,6 +99,19 @@ def test_lle_manifold():
             assert_less(np.abs(clf.reconstruction_error_ -
                                reconstruction_error),
                         tol * reconstruction_error, msg=details)
+
+
+# Test the error raised when parameter passed to lle is invalid
+def test_lle_init_parameters():
+    X = np.random.rand(5, 3)
+
+    clf = manifold.LocallyLinearEmbedding(eigen_solver="error")
+    msg = "unrecognized eigen_solver 'error'"
+    assert_raise_message(ValueError, msg, clf.fit, X)
+
+    clf = manifold.LocallyLinearEmbedding(method="error")
+    msg = "unrecognized method 'error'"
+    assert_raise_message(ValueError, msg, clf.fit, X)
 
 
 def test_pipeline():
@@ -116,8 +129,17 @@ def test_pipeline():
 
 # Test the error raised when the weight matrix is singular
 def test_singular_matrix():
-    from nose.tools import assert_raises
     M = np.ones((10, 3))
     f = ignore_warnings
     assert_raises(ValueError, f(manifold.locally_linear_embedding),
                   M, 2, 1, method='standard', eigen_solver='arpack')
+
+
+# regression test for #6033
+def test_integer_input():
+    rand = np.random.RandomState(0)
+    X = rand.randint(0, 100, size=(20, 3))
+
+    for method in ["standard", "hessian", "modified", "ltsa"]:
+        clf = manifold.LocallyLinearEmbedding(method=method, n_neighbors=10)
+        clf.fit(X)  # this previously raised a TypeError

@@ -5,16 +5,19 @@ The :mod:`sklearn.pls` module implements Partial Least Squares (PLS).
 # Author: Edouard Duchesnay <edouard.duchesnay@cea.fr>
 # License: BSD 3 clause
 
-from ..base import BaseEstimator, RegressorMixin, TransformerMixin
-from ..utils import check_array, check_consistent_length
-from ..externals import six
-
 import warnings
 from abc import ABCMeta, abstractmethod
+
 import numpy as np
-from scipy import linalg
-from ..utils import arpack
+from scipy.linalg import pinv2, svd
+from scipy.sparse.linalg import svds
+
+from ..base import BaseEstimator, RegressorMixin, TransformerMixin
+from ..base import MultiOutputMixin
+from ..utils import check_array, check_consistent_length
+from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
+from ..exceptions import ConvergenceWarning
 
 __all__ = ['PLSCanonical', 'PLSRegression', 'PLSSVD']
 
@@ -38,11 +41,18 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
         # 1.1 Update u: the X weights
         if mode == "B":
             if X_pinv is None:
-                X_pinv = linalg.pinv(X)   # compute once pinv(X)
+                # We use slower pinv2 (same as np.linalg.pinv) for stability
+                # reasons
+                X_pinv = pinv2(X, check_finite=False)
             x_weights = np.dot(X_pinv, y_score)
         else:  # mode A
             # Mode A regress each X column on y_score
             x_weights = np.dot(X.T, y_score) / np.dot(y_score.T, y_score)
+        # If y_score only has zeros x_weights will only have zeros. In
+        # this case add an epsilon to converge to a more acceptable
+        # solution
+        if np.dot(x_weights.T, x_weights) < eps:
+            x_weights += eps
         # 1.2 Normalize u
         x_weights /= np.sqrt(np.dot(x_weights.T, x_weights)) + eps
         # 1.3 Update x_score: the X latent scores
@@ -50,7 +60,7 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
         # 2.1 Update y_weights
         if mode == "B":
             if Y_pinv is None:
-                Y_pinv = linalg.pinv(Y)    # compute once pinv(Y)
+                Y_pinv = pinv2(Y, check_finite=False)  # compute once pinv(Y)
             y_weights = np.dot(Y_pinv, x_score)
         else:
             # Mode A regress each Y column on x_score
@@ -65,7 +75,8 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
         if np.dot(x_weights_diff.T, x_weights_diff) < tol or Y.shape[1] == 1:
             break
         if ite == max_iter:
-            warnings.warn('Maximum number of iterations reached')
+            warnings.warn('Maximum number of iterations reached',
+                          ConvergenceWarning)
             break
         x_weights_old = x_weights
         ite += 1
@@ -74,7 +85,7 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
 
 def _svd_cross_product(X, Y):
     C = np.dot(X.T, Y)
-    U, s, Vh = linalg.svd(C, full_matrices=False)
+    U, s, Vh = svd(C, full_matrices=False)
     u = U[:, [0]]
     v = Vh.T[:, [0]]
     return u, v
@@ -106,8 +117,8 @@ def _center_scale_xy(X, Y, scale=True):
     return X, Y, x_mean, y_mean, x_std, y_std
 
 
-class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
-           RegressorMixin):
+class _PLS(BaseEstimator, TransformerMixin, RegressorMixin, MultiOutputMixin,
+           metaclass=ABCMeta):
     """Partial Least Squares (PLS)
 
     This class implements the generic PLS algorithm, constructors' parameters
@@ -138,13 +149,14 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
 
     mode : "A" classical PLS and "B" CCA. See notes.
 
-    norm_y_weights: boolean, normalize Y weights to one? (default False)
+    norm_y_weights : boolean, normalize Y weights to one? (default False)
 
     algorithm : string, "nipals" or "svd"
         The algorithm used to estimate the weights. It will be called
         n_components times, i.e. once for each iteration of the outer loop.
 
-    max_iter : an integer, the maximum number of iterations (default 500)
+    max_iter : int (default 500)
+        The maximum number of iterations
         of the NIPALS inner loop (used only if algorithm="nipals")
 
     tol : non-negative real, default 1e-06
@@ -180,7 +192,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
     y_rotations_ : array, [q, n_components]
         Y block to latents rotations.
 
-    coef_: array, [p, q]
+    coef_ : array, [p, q]
         The coefficients of the linear model: ``Y = X coef_ + Err``
 
     n_iter_ : array-like
@@ -226,17 +238,18 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-            Training vectors, where n_samples in the number of samples and
+            Training vectors, where n_samples is the number of samples and
             n_features is the number of predictors.
 
-        Y : array-like of response, shape = [n_samples, n_targets]
-            Target vectors, where n_samples in the number of samples and
+        Y : array-like, shape = [n_samples, n_targets]
+            Target vectors, where n_samples is the number of samples and
             n_targets is the number of response variables.
         """
 
         # copy since this will contains the residuals (deflated) matrices
         check_consistent_length(X, Y)
-        X = check_array(X, dtype=np.float64, copy=self.copy)
+        X = check_array(X, dtype=np.float64, copy=self.copy,
+                        ensure_min_samples=2)
         Y = check_array(Y, dtype=np.float64, copy=self.copy, ensure_2d=False)
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)
@@ -257,8 +270,8 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         if self.deflation_mode not in ["canonical", "regression"]:
             raise ValueError('The deflation mode is unknown')
         # Scale (in place)
-        X, Y, self.x_mean_, self.y_mean_, self.x_std_, self.y_std_\
-            = _center_scale_xy(X, Y, self.scale)
+        X, Y, self.x_mean_, self.y_mean_, self.x_std_, self.y_std_ = (
+            _center_scale_xy(X, Y, self.scale))
         # Residuals (deflated) matrices
         Xk = X
         Yk = Y
@@ -272,6 +285,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         self.n_iter_ = []
 
         # NIPALS algo: outer loop, over components
+        Y_eps = np.finfo(Yk.dtype).eps
         for k in range(self.n_components):
             if np.all(np.dot(Yk.T, Yk) < np.finfo(np.double).eps):
                 # Yk constant
@@ -280,6 +294,10 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             # 1) weights estimation (inner loop)
             # -----------------------------------
             if self.algorithm == "nipals":
+                # Replace columns that are all close to zero with zeros
+                Yk_mask = np.all(np.abs(Yk) < 10 * Y_eps, axis=0)
+                Yk[:, Yk_mask] = 0.0
+
                 x_weights, y_weights, n_iter_ = \
                     _nipals_twoblocks_inner_loop(
                         X=Xk, Y=Yk, mode=self.mode, max_iter=self.max_iter,
@@ -287,6 +305,11 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
                 self.n_iter_.append(n_iter_)
             elif self.algorithm == "svd":
                 x_weights, y_weights = _svd_cross_product(X=Xk, Y=Yk)
+            # Forces sign stability of x_weights and y_weights
+            # Sign undeterminacy issue from svd if algorithm == "svd"
+            # and from platform dependent computation if algorithm == 'nipals'
+            x_weights, y_weights = svd_flip(x_weights, y_weights.T)
+            y_weights = y_weights.T
             # compute scores
             x_scores = np.dot(Xk, x_weights)
             if self.norm_y_weights:
@@ -333,11 +356,13 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         # U = Y C(Q'C)^-1 = YC* (W* : q x k matrix)
         self.x_rotations_ = np.dot(
             self.x_weights_,
-            linalg.pinv(np.dot(self.x_loadings_.T, self.x_weights_)))
+            pinv2(np.dot(self.x_loadings_.T, self.x_weights_),
+                  check_finite=False))
         if Y.shape[1] > 1:
             self.y_rotations_ = np.dot(
                 self.y_weights_,
-                linalg.pinv(np.dot(self.y_loadings_.T, self.y_weights_)))
+                pinv2(np.dot(self.y_loadings_.T, self.y_weights_),
+                      check_finite=False))
         else:
             self.y_rotations_ = np.ones(1)
 
@@ -350,8 +375,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             # Y = X W(P'W)^-1Q' + Err = XB + Err
             # => B = W*Q' (p x q)
             self.coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
-            self.coef_ = (1. / self.x_std_.reshape((p, 1)) * self.coef_ *
-                          self.y_std_)
+            self.coef_ = self.coef_ * self.y_std_
         return self
 
     def transform(self, X, Y=None, copy=True):
@@ -359,13 +383,13 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
 
         Parameters
         ----------
-        X : array-like of predictors, shape = [n_samples, p]
-            Training vectors, where n_samples in the number of samples and
-            p is the number of predictors.
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples and
+            n_features is the number of predictors.
 
-        Y : array-like of response, shape = [n_samples, q], optional
-            Training vectors, where n_samples in the number of samples and
-            q is the number of response variables.
+        Y : array-like, shape = [n_samples, n_targets]
+            Target vectors, where n_samples is the number of samples and
+            n_targets is the number of response variables.
 
         copy : boolean, default True
             Whether to copy X and Y, or perform in-place normalization.
@@ -397,9 +421,9 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
 
         Parameters
         ----------
-        X : array-like of predictors, shape = [n_samples, p]
-            Training vectors, where n_samples in the number of samples and
-            p is the number of predictors.
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples and
+            n_features is the number of predictors.
 
         copy : boolean, default True
             Whether to copy X and Y, or perform in-place normalization.
@@ -417,28 +441,27 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         Ypred = np.dot(X, self.coef_)
         return Ypred + self.y_mean_
 
-    def fit_transform(self, X, y=None, **fit_params):
+    def fit_transform(self, X, y=None):
         """Learn and apply the dimension reduction on the train data.
 
         Parameters
         ----------
-        X : array-like of predictors, shape = [n_samples, p]
-            Training vectors, where n_samples in the number of samples and
-            p is the number of predictors.
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples and
+            n_features is the number of predictors.
 
-        Y : array-like of response, shape = [n_samples, q], optional
-            Training vectors, where n_samples in the number of samples and
-            q is the number of response variables.
-
-        copy : boolean, default True
-            Whether to copy X and Y, or perform in-place normalization.
+        y : array-like, shape = [n_samples, n_targets]
+            Target vectors, where n_samples is the number of samples and
+            n_targets is the number of response variables.
 
         Returns
         -------
         x_scores if Y is not given, (x_scores, y_scores) otherwise.
         """
-        check_is_fitted(self, 'x_mean_')
-        return self.fit(X, y, **fit_params).transform(X, y)
+        return self.fit(X, y).transform(X, y)
+
+    def _more_tags(self):
+        return {'poor_score': True}
 
 
 class PLSRegression(_PLS):
@@ -496,7 +519,7 @@ class PLSRegression(_PLS):
     y_rotations_ : array, [q, n_components]
         Y block to latents rotations.
 
-    coef_: array, [p, q]
+    coef_ : array, [p, q]
         The coefficients of the linear model: ``Y = X coef_ + Err``
 
     n_iter_ : array-like
@@ -505,8 +528,31 @@ class PLSRegression(_PLS):
 
     Notes
     -----
+    Matrices::
+
+        T: x_scores_
+        U: y_scores_
+        W: x_weights_
+        C: y_weights_
+        P: x_loadings_
+        Q: y_loadings_
+
+    Are computed such that::
+
+        X = T P.T + Err and Y = U Q.T + Err
+        T[:, k] = Xk W[:, k] for k in range(n_components)
+        U[:, k] = Yk C[:, k] for k in range(n_components)
+        x_rotations_ = W (P.T W)^(-1)
+        y_rotations_ = C (Q.T C)^(-1)
+
+    where Xk and Yk are residual matrices at iteration k.
+
+    `Slides explaining
+    PLS <http://www.eigenvector.com/Docs/Wise_pls_properties.pdf>`_
+
+
     For each component k, find weights u, v that optimizes:
-    ``max corr(Xk u, Yk v) * var(Xk u) var(Yk u)``, such that ``|u| = 1``
+    ``max corr(Xk u, Yk v) * std(Xk u) std(Yk u)``, such that ``|u| = 1``
 
     Note that it maximizes both the correlations between the scores and the
     intra-block variances.
@@ -532,9 +578,7 @@ class PLSRegression(_PLS):
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
     >>> pls2 = PLSRegression(n_components=2)
     >>> pls2.fit(X, Y)
-    ... # doctest: +NORMALIZE_WHITESPACE
-    PLSRegression(copy=True, max_iter=500, n_components=2, scale=True,
-            tol=1e-06)
+    PLSRegression()
     >>> Y_pred = pls2.predict(X)
 
     References
@@ -551,10 +595,11 @@ class PLSRegression(_PLS):
 
     def __init__(self, n_components=2, scale=True,
                  max_iter=500, tol=1e-06, copy=True):
-        _PLS.__init__(self, n_components=n_components, scale=scale,
-                      deflation_mode="regression", mode="A",
-                      norm_y_weights=False, max_iter=max_iter, tol=tol,
-                      copy=copy)
+        super().__init__(
+            n_components=n_components, scale=scale,
+            deflation_mode="regression", mode="A",
+            norm_y_weights=False, max_iter=max_iter, tol=tol,
+            copy=copy)
 
 
 class PLSCanonical(_PLS):
@@ -569,7 +614,11 @@ class PLSCanonical(_PLS):
 
     Parameters
     ----------
-    scale : boolean, scale data? (default True)
+    n_components : int, (default 2).
+        Number of components to keep
+
+    scale : boolean, (default True)
+        Option to scale data
 
     algorithm : string, "nipals" or "svd"
         The algorithm used to estimate the weights. It will be called
@@ -585,8 +634,6 @@ class PLSCanonical(_PLS):
     copy : boolean, default True
         Whether the deflation should be done on a copy. Let the default
         value to True unless you don't care about side effect
-
-    n_components : int, number of components to keep. (default 2).
 
     Attributes
     ----------
@@ -620,8 +667,31 @@ class PLSCanonical(_PLS):
 
     Notes
     -----
+    Matrices::
+
+        T: x_scores_
+        U: y_scores_
+        W: x_weights_
+        C: y_weights_
+        P: x_loadings_
+        Q: y_loadings__
+
+    Are computed such that::
+
+        X = T P.T + Err and Y = U Q.T + Err
+        T[:, k] = Xk W[:, k] for k in range(n_components)
+        U[:, k] = Yk C[:, k] for k in range(n_components)
+        x_rotations_ = W (P.T W)^(-1)
+        y_rotations_ = C (Q.T C)^(-1)
+
+    where Xk and Yk are residual matrices at iteration k.
+
+    `Slides explaining PLS
+    <http://www.eigenvector.com/Docs/Wise_pls_properties.pdf>`_
+
     For each component k, find weights u, v that optimize::
-    max corr(Xk u, Yk v) * var(Xk u) var(Yk u), such that ``|u| = |v| = 1``
+
+        max corr(Xk u, Yk v) * std(Xk u) std(Yk u), such that ``|u| = |v| = 1``
 
     Note that it maximizes both the correlations between the scores and the
     intra-block variances.
@@ -648,9 +718,7 @@ class PLSCanonical(_PLS):
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
     >>> plsca = PLSCanonical(n_components=2)
     >>> plsca.fit(X, Y)
-    ... # doctest: +NORMALIZE_WHITESPACE
-    PLSCanonical(algorithm='nipals', copy=True, max_iter=500, n_components=2,
-                 scale=True, tol=1e-06)
+    PLSCanonical()
     >>> X_c, Y_c = plsca.transform(X, Y)
 
     References
@@ -671,10 +739,11 @@ class PLSCanonical(_PLS):
 
     def __init__(self, n_components=2, scale=True, algorithm="nipals",
                  max_iter=500, tol=1e-06, copy=True):
-        _PLS.__init__(self, n_components=n_components, scale=scale,
-                      deflation_mode="canonical", mode="A",
-                      norm_y_weights=True, algorithm=algorithm,
-                      max_iter=max_iter, tol=tol, copy=copy)
+        super().__init__(
+            n_components=n_components, scale=scale,
+            deflation_mode="canonical", mode="A",
+            norm_y_weights=True, algorithm=algorithm,
+            max_iter=max_iter, tol=tol, copy=copy)
 
 
 class PLSSVD(BaseEstimator, TransformerMixin):
@@ -710,6 +779,25 @@ class PLSSVD(BaseEstimator, TransformerMixin):
     y_scores_ : array, [n_samples, n_components]
         Y scores.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.cross_decomposition import PLSSVD
+    >>> X = np.array([[0., 0., 1.],
+    ...     [1.,0.,0.],
+    ...     [2.,2.,2.],
+    ...     [2.,5.,4.]])
+    >>> Y = np.array([[0.1, -0.2],
+    ...     [0.9, 1.1],
+    ...     [6.2, 5.9],
+    ...     [11.9, 12.3]])
+    >>> plsca = PLSSVD(n_components=2)
+    >>> plsca.fit(X, Y)
+    PLSSVD()
+    >>> X_c, Y_c = plsca.transform(X, Y)
+    >>> X_c.shape, Y_c.shape
+    ((4, 2), (4, 2))
+
     See also
     --------
     PLSCanonical
@@ -722,9 +810,22 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         self.copy = copy
 
     def fit(self, X, Y):
+        """Fit model to data.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples and
+            n_features is the number of predictors.
+
+        Y : array-like, shape = [n_samples, n_targets]
+            Target vectors, where n_samples is the number of samples and
+            n_targets is the number of response variables.
+        """
         # copy since this will contains the centered data
         check_consistent_length(X, Y)
-        X = check_array(X, dtype=np.float64, copy=self.copy)
+        X = check_array(X, dtype=np.float64, copy=self.copy,
+                        ensure_min_samples=2)
         Y = check_array(Y, dtype=np.float64, copy=self.copy, ensure_2d=False)
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)
@@ -735,8 +836,8 @@ class PLSSVD(BaseEstimator, TransformerMixin):
                              % (self.n_components, str(X.shape), str(Y.shape)))
 
         # Scale (in place)
-        X, Y, self.x_mean_, self.y_mean_, self.x_std_, self.y_std_ =\
-            _center_scale_xy(X, Y, self.scale)
+        X, Y, self.x_mean_, self.y_mean_, self.x_std_, self.y_std_ = (
+            _center_scale_xy(X, Y, self.scale))
         # svd(X'Y)
         C = np.dot(X.T, Y)
 
@@ -745,9 +846,11 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         # all the components (C.shape[1]), we have to use another one. Else,
         # let's use arpacks to compute only the interesting components.
         if self.n_components >= np.min(C.shape):
-            U, s, V = linalg.svd(C, full_matrices=False)
+            U, s, V = svd(C, full_matrices=False)
         else:
-            U, s, V = arpack.svds(C, k=self.n_components)
+            U, s, V = svds(C, k=self.n_components)
+        # Deterministic output
+        U, V = svd_flip(U, V)
         V = V.T
         self.x_scores_ = np.dot(X, U)
         self.y_scores_ = np.dot(Y, V)
@@ -756,7 +859,19 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, Y=None):
-        """Apply the dimension reduction learned on the train data."""
+        """
+        Apply the dimension reduction learned on the train data.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples and
+            n_features is the number of predictors.
+
+        Y : array-like, shape = [n_samples, n_targets]
+            Target vectors, where n_samples is the number of samples and
+            n_targets is the number of response variables.
+        """
         check_is_fitted(self, 'x_mean_')
         X = check_array(X, dtype=np.float64)
         Xr = (X - self.x_mean_) / self.x_std_
@@ -769,21 +884,21 @@ class PLSSVD(BaseEstimator, TransformerMixin):
             return x_scores, y_scores
         return x_scores
 
-    def fit_transform(self, X, y=None, **fit_params):
+    def fit_transform(self, X, y=None):
         """Learn and apply the dimension reduction on the train data.
 
         Parameters
         ----------
-        X : array-like of predictors, shape = [n_samples, p]
-            Training vectors, where n_samples in the number of samples and
-            p is the number of predictors.
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples and
+            n_features is the number of predictors.
 
-        Y : array-like of response, shape = [n_samples, q], optional
-            Training vectors, where n_samples in the number of samples and
-            q is the number of response variables.
+        y : array-like, shape = [n_samples, n_targets]
+            Target vectors, where n_samples is the number of samples and
+            n_targets is the number of response variables.
 
         Returns
         -------
         x_scores if Y is not given, (x_scores, y_scores) otherwise.
         """
-        return self.fit(X, y, **fit_params).transform(X, y)
+        return self.fit(X, y).transform(X, y)

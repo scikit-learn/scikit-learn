@@ -16,11 +16,10 @@ import matplotlib.pyplot as plt
 from sklearn.datasets import load_digits
 from sklearn.neighbors import KernelDensity
 from sklearn.decomposition import PCA
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import GridSearchCV
 
 # load the data
 digits = load_digits()
-data = digits.data
 
 # project the 64-dimensional data to a lower dimension
 pca = PCA(n_components=15, whiten=False)
@@ -28,7 +27,7 @@ data = pca.fit_transform(digits.data)
 
 # use grid search cross-validation to optimize the bandwidth
 params = {'bandwidth': np.logspace(-1, 1, 20)}
-grid = GridSearchCV(KernelDensity(), params)
+grid = GridSearchCV(KernelDensity(), params, cv=5)
 grid.fit(data)
 
 print("best bandwidth: {0}".format(grid.best_estimator_.bandwidth))

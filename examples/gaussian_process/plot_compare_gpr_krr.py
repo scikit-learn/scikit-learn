@@ -57,7 +57,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn.kernel_ridge import KernelRidge
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import GridSearchCV
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import WhiteKernel, ExpSineSquared
 
@@ -91,7 +91,7 @@ stime = time.time()
 y_kr = kr.predict(X_plot)
 print("Time for KRR prediction: %.3f" % (time.time() - stime))
 
-# Predict using kernel ridge
+# Predict using gaussian process regressor
 stime = time.time()
 y_gpr = gpr.predict(X_plot, return_std=False)
 print("Time for GPR prediction: %.3f" % (time.time() - stime))
@@ -102,15 +102,20 @@ print("Time for GPR prediction with standard-deviation: %.3f"
       % (time.time() - stime))
 
 # Plot results
+plt.figure(figsize=(10, 5))
+lw = 2
 plt.scatter(X, y, c='k', label='data')
-plt.plot(X_plot, np.sin(X_plot), c='k', label='True')
-plt.plot(X_plot, y_kr, c='g', label='KRR (%s)' % kr.best_params_)
-plt.plot(X_plot, y_gpr, c='r', label='GPR (%s)' % gpr.kernel_)
-plt.fill_between(X_plot[:, 0], y_gpr - y_std, y_gpr + y_std, color='r',
+plt.plot(X_plot, np.sin(X_plot), color='navy', lw=lw, label='True')
+plt.plot(X_plot, y_kr, color='turquoise', lw=lw,
+         label='KRR (%s)' % kr.best_params_)
+plt.plot(X_plot, y_gpr, color='darkorange', lw=lw,
+         label='GPR (%s)' % gpr.kernel_)
+plt.fill_between(X_plot[:, 0], y_gpr - y_std, y_gpr + y_std, color='darkorange',
                  alpha=0.2)
 plt.xlabel('data')
 plt.ylabel('target')
 plt.xlim(0, 20)
+plt.ylim(-4, 4)
 plt.title('GPR versus Kernel Ridge')
-plt.legend(loc="best", prop={'size': 10})
+plt.legend(loc="best",  scatterpoints=1, prop={'size': 8})
 plt.show()

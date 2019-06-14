@@ -13,17 +13,17 @@ density estimation problem and use the `OneClassSVM` provided
 by the package `sklearn.svm` as our modeling tool.
 The dataset is provided by Phillips et. al. (2006).
 If available, the example uses
-`basemap <http://matplotlib.sourceforge.net/basemap/doc/html/>`_
+`basemap <https://matplotlib.org/basemap/>`_
 to plot the coast lines and national boundaries of South America.
 
 The two species are:
 
  - `"Bradypus variegatus"
-   <http://www.iucnredlist.org/apps/redlist/details/3038/0>`_ ,
+   <http://www.iucnredlist.org/details/3038/0>`_ ,
    the Brown-throated Sloth.
 
  - `"Microryzomys minutus"
-   <http://www.iucnredlist.org/apps/redlist/details/13408/0>`_ ,
+   <http://www.iucnredlist.org/details/13408/0>`_ ,
    also known as the Forest Small Rice Rat, a rodent that lives in Peru,
    Colombia, Ecuador, Peru, and Venezuela.
 
@@ -31,7 +31,7 @@ References
 ----------
 
  * `"Maximum entropy modeling of species geographic distributions"
-   <http://www.cs.princeton.edu/~schapire/papers/ecolmod.pdf>`_
+   <http://rob.schapire.net/papers/ecolmod.pdf>`_
    S. J. Phillips, R. P. Anderson, R. E. Schapire - Ecological Modelling,
    190:231-259, 2006.
 """
@@ -40,8 +40,6 @@ References
 #          Jake Vanderplas <vanderplas@astro.washington.edu>
 #
 # License: BSD 3 clause
-
-from __future__ import print_function
 
 from time import time
 
@@ -154,7 +152,7 @@ def plot_species_distribution(species=("bradypus_variegatus_0",
         else:
             print(" - plot coastlines from coverage")
             plt.contour(X, Y, land_reference,
-                        levels=[-9999], colors="k",
+                        levels=[-9998], colors="k",
                         linestyles="solid")
             plt.xticks([])
             plt.yticks([])
@@ -168,7 +166,7 @@ def plot_species_distribution(species=("bradypus_variegatus_0",
         idx = np.where(land_reference > -9999)
         coverages_land = data.coverages[:, idx[0], idx[1]].T
 
-        pred = clf.decision_function((coverages_land - mean) / std)[:, 0]
+        pred = clf.decision_function((coverages_land - mean) / std)
         Z *= pred.min()
         Z[idx[0], idx[1]] = pred
 
@@ -192,8 +190,7 @@ def plot_species_distribution(species=("bradypus_variegatus_0",
 
         # Compute AUC with regards to background points
         pred_background = Z[background_points[0], background_points[1]]
-        pred_test = clf.decision_function((species.cov_test - mean)
-                                          / std)[:, 0]
+        pred_test = clf.decision_function((species.cov_test - mean) / std)
         scores = np.r_[pred_test, pred_background]
         y = np.r_[np.ones(pred_test.shape), np.zeros(pred_background.shape)]
         fpr, tpr, thresholds = metrics.roc_curve(y, scores)

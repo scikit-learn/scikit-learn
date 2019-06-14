@@ -44,7 +44,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
    - Add support for instance weights, Fabian Pedregosa based on work
      by Ming-Wei Chang, Hsuan-Tien Lin, Ming-Hen Tsai, Chia-Hua Ho and
      Hsiang-Fu Yu,
-     <http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/#weights_for_data_instances>.
+     <https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/#weights_for_data_instances>.
 
    - Make labels sorted in svm_group_classes, Fabian Pedregosa.
 
@@ -1009,7 +1009,7 @@ int Solver::select_working_set(int &out_i, int &out_j)
 		}
 	}
 
-	if(Gmax+Gmax2 < eps)
+	if(Gmax+Gmax2 < eps || Gmin_idx == -1)
 		return 1;
 
 	out_i = Gmax_idx;
@@ -1261,7 +1261,7 @@ int Solver_NU::select_working_set(int &out_i, int &out_j)
 		}
 	}
 
-	if(max(Gmaxp+Gmaxp2,Gmaxn+Gmaxn2) < eps)
+	if(max(Gmaxp+Gmaxp2,Gmaxn+Gmaxn2) < eps || Gmin_idx == -1)
 		return 1;
 
 	if (y[Gmin_idx] == +1)

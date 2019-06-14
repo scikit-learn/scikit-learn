@@ -1,18 +1,20 @@
-from __future__ import unicode_literals
 
 import numpy as np
+from numpy.testing import assert_array_equal
 
 from sklearn.feature_extraction import FeatureHasher
+from sklearn.utils.testing import (assert_raises, assert_equal,
+                                   ignore_warnings, fails_if_pypy)
 
-from nose.tools import assert_raises, assert_true
-from numpy.testing import assert_array_equal, assert_equal
+pytestmark = fails_if_pypy
 
 
 def test_feature_hasher_dicts():
     h = FeatureHasher(n_features=16)
     assert_equal("dict", h.input_type)
 
-    raw_X = [{"dada": 42, "tzara": 37}, {"gaga": 17}]
+    raw_X = [{"foo": "bar", "dada": 42, "tzara": 37},
+             {"foo": "baz", "gaga": "string1"}]
     X1 = FeatureHasher(n_features=16).transform(raw_X)
     gen = (iter(d.items()) for d in raw_X)
     X2 = FeatureHasher(n_features=16, input_type="pair").transform(gen)
@@ -29,13 +31,13 @@ def test_feature_hasher_strings():
 
         it = (x for x in raw_X)                 # iterable
 
-        h = FeatureHasher(n_features, non_negative=True, input_type="string")
+        h = FeatureHasher(n_features, input_type="string",
+                          alternate_sign=False)
         X = h.transform(it)
 
         assert_equal(X.shape[0], len(raw_X))
         assert_equal(X.shape[1], n_features)
 
-        assert_true(np.all(X.data > 0))
         assert_equal(X[0].sum(), 4)
         assert_equal(X[1].sum(), 3)
 
@@ -51,6 +53,26 @@ def test_feature_hasher_pairs():
     x2_nz = sorted(np.abs(x2[x2 != 0]))
     assert_equal([1, 2], x1_nz)
     assert_equal([1, 3, 4], x2_nz)
+
+
+def test_feature_hasher_pairs_with_string_values():
+    raw_X = (iter(d.items()) for d in [{"foo": 1, "bar": "a"},
+                                       {"baz": "abc", "quux": 4, "foo": -1}])
+    h = FeatureHasher(n_features=16, input_type="pair")
+    x1, x2 = h.transform(raw_X).toarray()
+    x1_nz = sorted(np.abs(x1[x1 != 0]))
+    x2_nz = sorted(np.abs(x2[x2 != 0]))
+    assert_equal([1, 1], x1_nz)
+    assert_equal([1, 1, 4], x2_nz)
+
+    raw_X = (iter(d.items()) for d in [{"bax": "abc"},
+                                       {"bax": "abc"}])
+    x1, x2 = h.transform(raw_X).toarray()
+    x1_nz = np.abs(x1[x1 != 0])
+    x2_nz = np.abs(x2[x2 != 0])
+    assert_equal([1], x1_nz)
+    assert_equal([1], x2_nz)
+    assert_array_equal(x1, x2)
 
 
 def test_hash_empty_input():
@@ -86,3 +108,30 @@ def test_hasher_zeros():
     # Assert that no zeros are materialized in the output.
     X = FeatureHasher().transform([{'foo': 0}])
     assert_equal(X.data.shape, (0,))
+
+
+@ignore_warnings(category=DeprecationWarning)
+def test_hasher_alternate_sign():
+    X = [list("Thequickbrownfoxjumped")]
+
+    Xt = FeatureHasher(alternate_sign=True,
+                       input_type='string').fit_transform(X)
+    assert Xt.data.min() < 0 and Xt.data.max() > 0
+
+    Xt = FeatureHasher(alternate_sign=False,
+                       input_type='string').fit_transform(X)
+    assert Xt.data.min() > 0
+
+
+def test_hash_collisions():
+    X = [list("Thequickbrownfoxjumped")]
+
+    Xt = FeatureHasher(alternate_sign=True, n_features=1,
+                       input_type='string').fit_transform(X)
+    # check that some of the hashed tokens are added
+    # with an opposite sign and cancel out
+    assert abs(Xt.data[0]) < len(X[0])
+
+    Xt = FeatureHasher(alternate_sign=False, n_features=1,
+                       input_type='string').fit_transform(X)
+    assert Xt.data[0] == len(X[0])

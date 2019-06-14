@@ -16,7 +16,7 @@ For instance, in the example below, decision trees learn from data to
 approximate a sine curve with a set of if-then-else decision rules. The deeper
 the tree, the more complex the decision rules and the fitter the model.
 
-.. figure:: ../auto_examples/tree/images/plot_tree_regression_001.png
+.. figure:: ../auto_examples/tree/images/sphx_glr_plot_tree_regression_001.png
    :target: ../auto_examples/tree/plot_tree_regression.html
    :scale: 75
    :align: center
@@ -110,7 +110,7 @@ Alternatively, the probability of each class can be predicted, which is the
 fraction of training samples of the same class in a leaf::
 
     >>> clf.predict_proba([[2., 2.]])
-    array([[ 0.,  1.]])
+    array([[0., 1.]])
 
 :class:`DecisionTreeClassifier` is capable of both binary (where the
 labels are [-1, 1]) classification and multiclass (where the labels are
@@ -124,47 +124,48 @@ Using the Iris dataset, we can construct a tree as follows::
     >>> clf = tree.DecisionTreeClassifier()
     >>> clf = clf.fit(iris.data, iris.target)
 
-Once trained, we can export the tree in `Graphviz
-<http://www.graphviz.org/>`_ format using the :func:`export_graphviz`
-exporter. Below is an example export of a tree trained on the entire
-iris dataset::
+Once trained, you can plot the tree with the plot_tree function::
 
-    >>> from sklearn.externals.six import StringIO
-    >>> with open("iris.dot", 'w') as f:
-    ...     f = tree.export_graphviz(clf, out_file=f)
 
-Then we can use Graphviz's ``dot`` tool to create a PDF file (or any other
-supported file type): ``dot -Tpdf iris.dot -o iris.pdf``.
+    >>> tree.plot_tree(clf.fit(iris.data, iris.target)) # doctest: +SKIP
 
-::
+.. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_dtc_002.png
+   :target: ../auto_examples/tree/plot_iris_dtc.html
+   :scale: 75
+   :align: center
 
-    >>> import os
-    >>> os.unlink('iris.dot')
+We can also export the tree in `Graphviz
+<https://www.graphviz.org/>`_ format using the :func:`export_graphviz`
+exporter. If you use the `conda <https://conda.io>`_ package manager, the graphviz binaries  
 
-Alternatively, if we have Python module ``pydot`` installed, we can generate
-a PDF file (or any other supported file type) directly in Python::
+and the python package can be installed with 
 
-    >>> from sklearn.externals.six import StringIO  # doctest: +SKIP
-    >>> import pydot # doctest: +SKIP
-    >>> dot_data = StringIO() # doctest: +SKIP
-    >>> tree.export_graphviz(clf, out_file=dot_data) # doctest: +SKIP
-    >>> graph = pydot.graph_from_dot_data(dot_data.getvalue()) # doctest: +SKIP
-    >>> graph.write_pdf("iris.pdf") # doctest: +SKIP
+    conda install python-graphviz
+   
+Alternatively binaries for graphviz can be downloaded from the graphviz project homepage,
+and the Python wrapper installed from pypi with `pip install graphviz`. 
+
+Below is an example graphviz export of the above tree trained on the entire
+iris dataset; the results are saved in an output file `iris.pdf`::
+
+
+    >>> import graphviz # doctest: +SKIP
+    >>> dot_data = tree.export_graphviz(clf, out_file=None) # doctest: +SKIP
+    >>> graph = graphviz.Source(dot_data) # doctest: +SKIP
+    >>> graph.render("iris") # doctest: +SKIP
 
 The :func:`export_graphviz` exporter also supports a variety of aesthetic
 options, including coloring nodes by their class (or value for regression) and
-using explicit variable and class names if desired. IPython notebooks can also
-render these plots inline using the `Image()` function::
+using explicit variable and class names if desired. Jupyter notebooks also
+render these plots inline automatically::
 
-    >>> from IPython.display import Image  # doctest: +SKIP
-    >>> dot_data = StringIO()  # doctest: +SKIP
-    >>> tree.export_graphviz(clf, out_file=dot_data,  # doctest: +SKIP
-                             feature_names=iris.feature_names,  # doctest: +SKIP
-                             class_names=iris.target_names,  # doctest: +SKIP
-                             filled=True, rounded=True,  # doctest: +SKIP
-                             special_characters=True)  # doctest: +SKIP
-    >>> graph = pydot.graph_from_dot_data(dot_data.getvalue())  # doctest: +SKIP
-    >>> Image(graph.create_png())  # doctest: +SKIP
+    >>> dot_data = tree.export_graphviz(clf, out_file=None, # doctest: +SKIP
+    ...                      feature_names=iris.feature_names,  # doctest: +SKIP
+    ...                      class_names=iris.target_names,  # doctest: +SKIP
+    ...                      filled=True, rounded=True,  # doctest: +SKIP
+    ...                      special_characters=True)  # doctest: +SKIP
+    >>> graph = graphviz.Source(dot_data)  # doctest: +SKIP
+    >>> graph # doctest: +SKIP
 
 .. only:: html
 
@@ -176,33 +177,45 @@ render these plots inline using the `Image()` function::
     .. figure:: ../images/iris.pdf
        :align: center
 
-After being fitted, the model can then be used to predict the class of samples::
-
-    >>> clf.predict(iris.data[:1, :])
-    array([0])
-
-Alternatively, the probability of each class can be predicted, which is the
-fraction of training samples of the same class in a leaf::
-
-    >>> clf.predict_proba(iris.data[:1, :])
-    array([[ 1.,  0.,  0.]])
-
-.. figure:: ../auto_examples/tree/images/plot_iris_001.png
-   :target: ../auto_examples/tree/plot_iris.html
+.. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_dtc_001.png
+   :target: ../auto_examples/tree/plot_iris_dtc.html
    :align: center
    :scale: 75
 
+Alternatively, the tree can also be exported in textual format with the
+function :func:`export_text`. This method doesn't require the installation
+of external libraries and is more compact:
+
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.tree import DecisionTreeClassifier
+    >>> from sklearn.tree.export import export_text
+    >>> iris = load_iris()
+    >>> X = iris['data']
+    >>> y = iris['target']
+    >>> decision_tree = DecisionTreeClassifier(random_state=0, max_depth=2)
+    >>> decision_tree = decision_tree.fit(X, y)
+    >>> r = export_text(decision_tree, feature_names=iris['feature_names'])
+    >>> print(r)
+    |--- petal width (cm) <= 0.80
+    |   |--- class: 0
+    |--- petal width (cm) >  0.80
+    |   |--- petal width (cm) <= 1.75
+    |   |   |--- class: 1
+    |   |--- petal width (cm) >  1.75
+    |   |   |--- class: 2
+    <BLANKLINE>
+
 .. topic:: Examples:
 
- * :ref:`example_tree_plot_iris.py`
-
+ * :ref:`sphx_glr_auto_examples_tree_plot_iris_dtc.py`
+ * :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
 
 .. _tree_regression:
 
 Regression
 ==========
 
-.. figure:: ../auto_examples/tree/images/plot_tree_regression_001.png
+.. figure:: ../auto_examples/tree/images/sphx_glr_plot_tree_regression_001.png
    :target: ../auto_examples/tree/plot_tree_regression.html
    :scale: 75
    :align: center
@@ -220,11 +233,11 @@ instead of integer values::
     >>> clf = tree.DecisionTreeRegressor()
     >>> clf = clf.fit(X, y)
     >>> clf.predict([[1, 1]])
-    array([ 0.5])
+    array([0.5])
 
 .. topic:: Examples:
 
- * :ref:`example_tree_plot_tree_regression.py`
+ * :ref:`sphx_glr_auto_examples_tree_plot_tree_regression.py`
 
 
 .. _tree_multioutput:
@@ -263,28 +276,28 @@ of size ``[n_samples, n_outputs]`` then the resulting estimator will:
 
 
 The use of multi-output trees for regression is demonstrated in
-:ref:`example_tree_plot_tree_regression_multioutput.py`. In this example, the input
+:ref:`sphx_glr_auto_examples_tree_plot_tree_regression_multioutput.py`. In this example, the input
 X is a single real value and the outputs Y are the sine and cosine of X.
 
-.. figure:: ../auto_examples/tree/images/plot_tree_regression_multioutput_001.png
+.. figure:: ../auto_examples/tree/images/sphx_glr_plot_tree_regression_multioutput_001.png
    :target: ../auto_examples/tree/plot_tree_regression_multioutput.html
    :scale: 75
    :align: center
 
 The use of multi-output trees for classification is demonstrated in
-:ref:`example_plot_multioutput_face_completion.py`. In this example, the inputs
+:ref:`sphx_glr_auto_examples_plot_multioutput_face_completion.py`. In this example, the inputs
 X are the pixels of the upper half of faces and the outputs Y are the pixels of
 the lower half of those faces.
 
-.. figure:: ../auto_examples/images/plot_multioutput_face_completion_001.png
+.. figure:: ../auto_examples/images/sphx_glr_plot_multioutput_face_completion_001.png
    :target: ../auto_examples/plot_multioutput_face_completion.html
    :scale: 75
    :align: center
 
 .. topic:: Examples:
 
- * :ref:`example_tree_plot_tree_regression_multioutput.py`
- * :ref:`example_plot_multioutput_face_completion.py`
+ * :ref:`sphx_glr_auto_examples_tree_plot_tree_regression_multioutput.py`
+ * :ref:`sphx_glr_auto_examples_plot_multioutput_face_completion.py`
 
 .. topic:: References:
 
@@ -332,6 +345,10 @@ Tips on practical use
     :ref:`ICA <ICA>`, or :ref:`feature_selection`) beforehand to
     give your tree a better chance of finding features that are discriminative.
 
+  * :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py` will help
+    in gaining more insights about how the decision tree makes predictions, which is
+    important for understanding the important features in the data.
+
   * Visualise your tree as you are training by using the ``export``
     function.  Use ``max_depth=3`` as an initial tree depth to get a feel for
     how the tree is fitting to your data, and then increase the depth.
@@ -340,14 +357,17 @@ Tips on practical use
     for each additional level the tree grows to.  Use ``max_depth`` to control
     the size of the tree to prevent overfitting.
 
-  * Use ``min_samples_split`` or ``min_samples_leaf`` to control the number of
-    samples at a leaf node.  A very small number will usually mean the tree
-    will overfit, whereas a large number will prevent the tree from learning
-    the data.  Try ``min_samples_leaf=5`` as an initial value.
-    The main difference between the two is that ``min_samples_leaf`` guarantees
-    a minimum number of samples in a leaf, while ``min_samples_split`` can
-    create arbitrary small leaves, though ``min_samples_split`` is more common
-    in the literature.
+  * Use ``min_samples_split`` or ``min_samples_leaf`` to ensure that multiple
+    samples inform every decision in the tree, by controlling which splits will
+    be considered. A very small number will usually mean the tree will overfit,
+    whereas a large number will prevent the tree from learning the data. Try
+    ``min_samples_leaf=5`` as an initial value. If the sample size varies
+    greatly, a float number can be used as percentage in these two parameters.
+    While ``min_samples_split`` can create arbitrarily small leaves,
+    ``min_samples_leaf`` guarantees that each leaf has a minimum size, avoiding
+    low-variance, over-fit leaf nodes in regression problems.  For
+    classification with few classes, ``min_samples_leaf=1`` is often the best
+    choice.
 
   * Balance your dataset before training to prevent the tree from being biased
     toward the classes that are dominant. Class balancing can be done by
@@ -367,7 +387,7 @@ Tips on practical use
     If training data is not in this format, a copy of the dataset will be made.
 
   * If the input matrix X is very sparse, it is recommended to convert to sparse
-    ``csc_matrix` before calling fit and sparse ``csr_matrix`` before calling
+    ``csc_matrix`` before calling fit and sparse ``csr_matrix`` before calling
     predict. Training time can be orders of magnitude faster for a sparse
     matrix input compared to a dense matrix when features have zero values in
     most of the samples.
@@ -407,10 +427,11 @@ it differs in that it supports numerical target variables (regression) and
 does not compute rule sets. CART constructs binary trees using the feature
 and threshold that yield the largest information gain at each node.
 
-scikit-learn uses an optimised version of the CART algorithm.
+scikit-learn uses an optimised version of the CART algorithm; however, scikit-learn 
+implementation does not support categorical variables for now.
 
-.. _ID3: http://en.wikipedia.org/wiki/ID3_algorithm
-.. _CART: http://en.wikipedia.org/wiki/Predictive_analytics#Classification_and_regression_trees
+.. _ID3: https://en.wikipedia.org/wiki/ID3_algorithm
+.. _CART: https://en.wikipedia.org/wiki/Predictive_analytics#Classification_and_regression_trees_.28CART.29
 
 
 .. _tree_mathematical_formulation:
@@ -471,7 +492,7 @@ Common measures of impurity are Gini
 
     H(X_m) = \sum_k p_{mk} (1 - p_{mk})
 
-Cross-Entropy
+Entropy
 
 .. math::
 
@@ -483,25 +504,41 @@ and Misclassification
 
     H(X_m) = 1 - \max(p_{mk})
 
+where :math:`X_m` is the training data in node :math:`m`
+
 Regression criteria
 -------------------
 
 If the target is a continuous value, then for node :math:`m`,
-representing a region :math:`R_m` with :math:`N_m` observations, a common
-criterion to minimise is the Mean Squared Error
+representing a region :math:`R_m` with :math:`N_m` observations, common
+criteria to minimise as for determining locations for future
+splits are Mean Squared Error, which minimizes the L2 error
+using mean values at terminal nodes, and Mean Absolute Error, which 
+minimizes the L1 error using median values at terminal nodes. 
+
+Mean Squared Error:
 
 .. math::
 
-    c_m = \frac{1}{N_m} \sum_{i \in N_m} y_i
+    \bar{y}_m = \frac{1}{N_m} \sum_{i \in N_m} y_i
 
-    H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} (y_i - c_m)^2
+    H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} (y_i - \bar{y}_m)^2
 
+Mean Absolute Error:
+
+.. math::
+
+    \bar{y}_m = \frac{1}{N_m} \sum_{i \in N_m} y_i
+
+    H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} |y_i - \bar{y}_m|
+
+where :math:`X_m` is the training data in node :math:`m`
 
 .. topic:: References:
 
-    * http://en.wikipedia.org/wiki/Decision_tree_learning
+    * https://en.wikipedia.org/wiki/Decision_tree_learning
 
-    * http://en.wikipedia.org/wiki/Predictive_analytics
+    * https://en.wikipedia.org/wiki/Predictive_analytics
 
     * L. Breiman, J. Friedman, R. Olshen, and C. Stone. Classification and
       Regression Trees. Wadsworth, Belmont, CA, 1984.

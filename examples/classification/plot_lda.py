@@ -5,9 +5,6 @@ Normal and Shrinkage Linear Discriminant Analysis for classification
 
 Shows how shrinkage improves classification.
 """
-
-from __future__ import division
-
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -58,9 +55,9 @@ for n_features in n_features_range:
 features_samples_ratio = np.array(n_features_range) / n_train
 
 plt.plot(features_samples_ratio, acc_clf1, linewidth=2,
-         label="Linear Discriminant Analysis with shrinkage", color='r')
+         label="Linear Discriminant Analysis with shrinkage", color='navy')
 plt.plot(features_samples_ratio, acc_clf2, linewidth=2,
-         label="Linear Discriminant Analysis", color='g')
+         label="Linear Discriminant Analysis", color='gold')
 
 plt.xlabel('n_features / n_samples')
 plt.ylabel('Classification accuracy')

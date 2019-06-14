@@ -8,30 +8,117 @@ Novelty and Outlier Detection
 
 Many applications require being able to decide whether a new observation
 belongs to the same distribution as existing observations (it is an
-`inlier`), or should be considered as different (it is an outlier).
+*inlier*), or should be considered as different (it is an *outlier*).
 Often, this ability is used to clean real data sets. Two important
-distinction must be made:
-
-:novelty detection: 
-  The training data is not polluted by outliers, and we are interested in
-  detecting anomalies in new observations.
+distinctions must be made:
 
 :outlier detection:
-  The training data contains outliers, and we need to fit the central
-  mode of the training data, ignoring the deviant observations.
+  The training data contains outliers which are defined as observations that
+  are far from the others. Outlier detection estimators thus try to fit the
+  regions where the training data is the most concentrated, ignoring the
+  deviant observations.
+
+:novelty detection:
+  The training data is not polluted by outliers and we are interested in
+  detecting whether a **new** observation is an outlier. In this context an
+  outlier is also called a novelty.
+
+Outlier detection and novelty detection are both used for anomaly
+detection, where one is interested in detecting abnormal or unusual
+observations. Outlier detection is then also known as unsupervised anomaly
+detection and novelty detection as semi-supervised anomaly detection. In the
+context of outlier detection, the outliers/anomalies cannot form a
+dense cluster as available estimators assume that the outliers/anomalies are
+located in low density regions. On the contrary, in the context of novelty
+detection, novelties/anomalies can form a dense cluster as long as they are in
+a low density region of the training data, considered as normal in this
+context.
 
 The scikit-learn project provides a set of machine learning tools that
-can be used both for novelty or outliers detection. This strategy is
+can be used both for novelty or outlier detection. This strategy is
 implemented with objects learning in an unsupervised way from the data::
 
     estimator.fit(X_train)
 
 new observations can then be sorted as inliers or outliers with a
-`predict` method::
+``predict`` method::
 
     estimator.predict(X_test)
 
-Inliers are labeled 1, while outliers are labeled -1.
+Inliers are labeled 1, while outliers are labeled -1. The predict method
+makes use of a threshold on the raw scoring function computed by the
+estimator. This scoring function is accessible through the ``score_samples``
+method, while the threshold can be controlled by the ``contamination``
+parameter.
+
+The ``decision_function`` method is also defined from the scoring function,
+in such a way that negative values are outliers and non-negative ones are
+inliers::
+
+    estimator.decision_function(X_test)
+
+Note that :class:`neighbors.LocalOutlierFactor` does not support
+``predict``, ``decision_function`` and ``score_samples`` methods by default
+but only a ``fit_predict`` method, as this estimator was originally meant to
+be applied for outlier detection. The scores of abnormality of the training
+samples are accessible through the ``negative_outlier_factor_`` attribute.
+
+If you really want to use :class:`neighbors.LocalOutlierFactor` for novelty
+detection, i.e. predict labels or compute the score of abnormality of new
+unseen data, you can instantiate the estimator with the ``novelty`` parameter
+set to ``True`` before fitting the estimator. In this case, ``fit_predict`` is
+not available.
+
+.. warning:: **Novelty detection with Local Outlier Factor**
+
+  When ``novelty`` is set to ``True`` be aware that you must only use
+  ``predict``, ``decision_function`` and ``score_samples`` on new unseen data
+  and not on the training samples as this would lead to wrong results.
+  The scores of abnormality of the training samples are always accessible
+  through the ``negative_outlier_factor_`` attribute.
+
+The behavior of :class:`neighbors.LocalOutlierFactor` is summarized in the
+following table.
+
+===================== ================================ =====================
+Method                Outlier detection                Novelty detection
+===================== ================================ =====================
+``fit_predict``       OK                               Not available
+``predict``           Not available                    Use only on new data
+``decision_function`` Not available                    Use only on new data
+``score_samples``     Use ``negative_outlier_factor_`` Use only on new data
+===================== ================================ =====================
+
+
+Overview of outlier detection methods
+=====================================
+
+A comparison of the outlier detection algorithms in scikit-learn. Local
+Outlier Factor (LOF) does not show a decision boundary in black as it
+has no predict method to be applied on new data when it is used for outlier
+detection.
+
+.. figure:: ../auto_examples/images/sphx_glr_plot_anomaly_comparison_001.png
+   :target: ../auto_examples/plot_anomaly_comparison.html
+   :align: center
+   :scale: 50
+
+:class:`ensemble.IsolationForest` and :class:`neighbors.LocalOutlierFactor`
+perform reasonably well on the data sets considered here.
+The :class:`svm.OneClassSVM` is known to be sensitive to outliers and thus
+does not perform very well for outlier detection. Finally,
+:class:`covariance.EllipticEnvelope` assumes the data is Gaussian and learns
+an ellipse. For more details on the different estimators refer to the example
+:ref:`sphx_glr_auto_examples_plot_anomaly_comparison.py` and the sections
+hereunder.
+
+.. topic:: Examples:
+
+  * See :ref:`sphx_glr_auto_examples_plot_anomaly_comparison.py`
+    for a comparison of the :class:`svm.OneClassSVM`, the
+    :class:`ensemble.IsolationForest`, the
+    :class:`neighbors.LocalOutlierFactor` and
+    :class:`covariance.EllipticEnvelope`.
 
 Novelty Detection
 =================
@@ -53,7 +140,7 @@ coming from the same population than the initial
 observations. Otherwise, if they lay outside the frontier, we can say
 that they are abnormal with a given confidence in our assessment.
 
-The One-Class SVM has been introduced by Schölkopf et al. for that purpose 
+The One-Class SVM has been introduced by Schölkopf et al. for that purpose
 and implemented in the :ref:`svm` module in the
 :class:`svm.OneClassSVM` object. It requires the choice of a
 kernel and a scalar parameter to define a frontier.  The RBF kernel is
@@ -66,27 +153,28 @@ but regular, observation outside the frontier.
 .. topic:: References:
 
     * `Estimating the support of a high-dimensional distribution
-      <http://dl.acm.org/citation.cfm?id=1119749>`_ Schölkopf, 
+      <https://dl.acm.org/citation.cfm?id=1119749>`_ Schölkopf,
       Bernhard, et al. Neural computation 13.7 (2001): 1443-1471.
-      
+
 .. topic:: Examples:
 
-   * See :ref:`example_svm_plot_oneclass.py` for visualizing the
+   * See :ref:`sphx_glr_auto_examples_svm_plot_oneclass.py` for visualizing the
      frontier learned around some data by a
      :class:`svm.OneClassSVM` object.
+   * :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`
 
-.. figure:: ../auto_examples/svm/images/plot_oneclass_001.png
-   :target: ../auto_examples/svm/plot_oneclasse.html
+.. figure:: ../auto_examples/svm/images/sphx_glr_plot_oneclass_001.png
+   :target: ../auto_examples/svm/plot_oneclass.html
    :align: center
    :scale: 75%
-   
+
 
 Outlier Detection
 =================
 
 Outlier detection is similar to novelty detection in the sense that
 the goal is to separate a core of regular observations from some
-polluting ones, called "outliers". Yet, in the case of outlier
+polluting ones, called *outliers*. Yet, in the case of outlier
 detection, we don't have a clean data set representing the population
 of regular observations that can be used to train any tool.
 
@@ -98,7 +186,7 @@ One common way of performing outlier detection is to assume that the
 regular data come from a known distribution (e.g. data are Gaussian
 distributed). From this assumption, we generally try to define the
 "shape" of the data, and can define outlying observations as
-observations which stand far enough from the fit shape. 
+observations which stand far enough from the fit shape.
 
 The scikit-learn provides an object
 :class:`covariance.EllipticEnvelope` that fits a robust covariance
@@ -107,18 +195,18 @@ points, ignoring points outside the central mode.
 
 For instance, assuming that the inlier data are Gaussian distributed, it
 will estimate the inlier location and covariance in a robust way (i.e.
-whithout being influenced by outliers). The Mahalanobis distances
+without being influenced by outliers). The Mahalanobis distances
 obtained from this estimate is used to derive a measure of outlyingness.
 This strategy is illustrated below.
 
-.. figure:: ../auto_examples/covariance/images/plot_mahalanobis_distances_001.png
+.. figure:: ../auto_examples/covariance/images/sphx_glr_plot_mahalanobis_distances_001.png
    :target: ../auto_examples/covariance/plot_mahalanobis_distances.html
    :align: center
    :scale: 75%
 
 .. topic:: Examples:
 
-   * See :ref:`example_covariance_plot_mahalanobis_distances.py` for
+   * See :ref:`sphx_glr_auto_examples_covariance_plot_mahalanobis_distances.py` for
      an illustration of the difference between using a standard
      (:class:`covariance.EmpiricalCovariance`) or a robust estimate
      (:class:`covariance.MinCovDet`) of location and covariance to
@@ -126,70 +214,168 @@ This strategy is illustrated below.
 
 .. topic:: References:
 
-    ..  [RD1999] Rousseeuw, P.J., Van Driessen, K. "A fast algorithm for the minimum
-        covariance determinant estimator" Technometrics 41(3), 212 (1999)
-     
-One-class SVM versus elliptic envelope
---------------------------------------
+    * Rousseeuw, P.J., Van Driessen, K. "A fast algorithm for the minimum
+      covariance determinant estimator" Technometrics 41(3), 212 (1999)
 
-Strictly-speaking, the One-class SVM is not an outlier-detection method,
-but a novelty-detection method: its training set should not be
-contaminated by outliers as it may fit them. That said, outlier detection
-in high-dimension, or without any assumptions on the distribution of the
-inlying data is very challenging, and a One-class SVM gives useful
-results in these situations.
+.. _isolation_forest:
 
-The examples below illustrate how the performance of the
-:class:`covariance.EllipticEnvelope` degrades as the data is less and
-less unimodal.  :class:`svm.OneClassSVM` works better on data with
-multiple modes.
+Isolation Forest
+----------------------------
 
-.. |outlier1| image:: ../auto_examples/covariance/images/plot_outlier_detection_001.png
-   :target: ../auto_examples/covariance/plot_outlier_detection.html
-   :scale: 50%
+One efficient way of performing outlier detection in high-dimensional datasets
+is to use random forests.
+The :class:`ensemble.IsolationForest` 'isolates' observations by randomly selecting
+a feature and then randomly selecting a split value between the maximum and
+minimum values of the selected feature.
 
-.. |outlier2| image:: ../auto_examples/covariance/images/plot_outlier_detection_002.png
-   :target: ../auto_examples/covariance/plot_outlier_detection.html
-   :scale: 50%
+Since recursive partitioning can be represented by a tree structure, the
+number of splittings required to isolate a sample is equivalent to the path
+length from the root node to the terminating node.
 
-.. |outlier3| image:: ../auto_examples/covariance/images/plot_outlier_detection_003.png
-   :target: ../auto_examples/covariance/plot_outlier_detection.html
-   :scale: 50%
+This path length, averaged over a forest of such random trees, is a
+measure of normality and our decision function.
 
-.. list-table:: **Comparing One-class SVM approach, and elliptic envelope**
-   :widths: 40 60
+Random partitioning produces noticeably shorter paths for anomalies.
+Hence, when a forest of random trees collectively produce shorter path
+lengths for particular samples, they are highly likely to be anomalies.
 
-   *
-      - For a inlier mode well-centered and elliptic, the
-        :class:`svm.OneClassSVM` is not able to benefit from the
-        rotational symmetry of the inlier population. In addition, it
-        fits a bit the outliers present in the training set. On the
-        opposite, the decision rule based on fitting an
-        :class:`covariance.EllipticEnvelope` learns an ellipse, which
-        fits well the inlier distribution.
-      - |outlier1| 
+The implementation of :class:`ensemble.IsolationForest` is based on an ensemble
+of :class:`tree.ExtraTreeRegressor`. Following Isolation Forest original paper,
+the maximum depth of each tree is set to :math:`\lceil \log_2(n) \rceil` where
+:math:`n` is the number of samples used to build the tree (see (Liu et al.,
+2008) for more details).
 
-   * 
-      - As the inlier distribution becomes bimodal, the
-        :class:`covariance.EllipticEnvelope` does not fit well the
-        inliers. However, we can see that the :class:`svm.OneClassSVM`
-        tends to overfit: because it has not model of inliers, it
-        interprets a region where, by chance some outliers are
-        clustered, as inliers.
-      - |outlier2| 
+This algorithm is illustrated below.
 
-   * 
-      - If the inlier distribution is strongly non Gaussian, the
-        :class:`svm.OneClassSVM` is able to recover a reasonable
-        approximation, whereas the :class:`covariance.EllipticEnvelope`
-        completely fails.
-      - |outlier3|
+.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_isolation_forest_001.png
+   :target: ../auto_examples/ensemble/plot_isolation_forest.html
+   :align: center
+   :scale: 75%
+
+.. _iforest_warm_start:
+
+The :class:`ensemble.IsolationForest` supports ``warm_start=True`` which
+allows you to add more trees to an already fitted model::
+
+  >>> from sklearn.ensemble import IsolationForest
+  >>> import numpy as np
+  >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [0, 0], [-20, 50], [3, 5]])
+  >>> clf = IsolationForest(n_estimators=10, warm_start=True)
+  >>> clf.fit(X)  # fit 10 trees  # doctest: +SKIP
+  >>> clf.set_params(n_estimators=20)  # add 10 more trees  # doctest: +SKIP
+  >>> clf.fit(X)  # fit the added trees  # doctest: +SKIP
 
 .. topic:: Examples:
 
-   * See :ref:`example_covariance_plot_outlier_detection.py` for a
-     comparison of the :class:`svm.OneClassSVM` (tuned to perform like
-     an outlier detection method) and a covariance-based outlier
-     detection with :class:`covariance.MinCovDet`.
+   * See :ref:`sphx_glr_auto_examples_ensemble_plot_isolation_forest.py` for
+     an illustration of the use of IsolationForest.
 
+   * See :ref:`sphx_glr_auto_examples_plot_anomaly_comparison.py` for a
+     comparison of :class:`ensemble.IsolationForest` with
+     :class:`neighbors.LocalOutlierFactor`,
+     :class:`svm.OneClassSVM` (tuned to perform like an outlier detection
+     method) and a covariance-based outlier detection with
+     :class:`covariance.EllipticEnvelope`.
+
+.. topic:: References:
+
+    * Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua. "Isolation forest."
+      Data Mining, 2008. ICDM'08. Eighth IEEE International Conference on.
+
+
+Local Outlier Factor
+--------------------
+Another efficient way to perform outlier detection on moderately high dimensional
+datasets is to use the Local Outlier Factor (LOF) algorithm.
+
+The :class:`neighbors.LocalOutlierFactor` (LOF) algorithm computes a score
+(called local outlier factor) reflecting the degree of abnormality of the
+observations.
+It measures the local density deviation of a given data point with respect to
+its neighbors. The idea is to detect the samples that have a substantially
+lower density than their neighbors.
+
+In practice the local density is obtained from the k-nearest neighbors.
+The LOF score of an observation is equal to the ratio of the
+average local density of his k-nearest neighbors, and its own local density:
+a normal instance is expected to have a local density similar to that of its
+neighbors, while abnormal data are expected to have much smaller local density.
+
+The number k of neighbors considered, (alias parameter n_neighbors) is typically
+chosen 1) greater than the minimum number of objects a cluster has to contain,
+so that other objects can be local outliers relative to this cluster, and 2)
+smaller than the maximum number of close by objects that can potentially be
+local outliers.
+In practice, such informations are generally not available, and taking
+n_neighbors=20 appears to work well in general.
+When the proportion of outliers is high (i.e. greater than 10 \%, as in the
+example below), n_neighbors should be greater (n_neighbors=35 in the example
+below).
+
+The strength of the LOF algorithm is that it takes both local and global
+properties of datasets into consideration: it can perform well even in datasets
+where abnormal samples have different underlying densities.
+The question is not, how isolated the sample is, but how isolated it is
+with respect to the surrounding neighborhood.
+
+When applying LOF for outlier detection, there are no ``predict``,
+``decision_function`` and ``score_samples`` methods but only a ``fit_predict``
+method. The scores of abnormality of the training samples are accessible
+through the ``negative_outlier_factor_`` attribute.
+Note that ``predict``, ``decision_function`` and ``score_samples`` can be used
+on new unseen data when LOF is applied for novelty detection, i.e. when the
+``novelty`` parameter is set to ``True``. See :ref:`novelty_with_lof`.
+
+
+This strategy is illustrated below.
+
+.. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_lof_outlier_detection_001.png
+   :target: ../auto_examples/neighbors/sphx_glr_plot_lof_outlier_detection.html
+   :align: center
+   :scale: 75%
+
+.. topic:: Examples:
+
+   * See :ref:`sphx_glr_auto_examples_neighbors_plot_lof_outlier_detection.py`
+     for an illustration of the use of :class:`neighbors.LocalOutlierFactor`.
+
+   * See :ref:`sphx_glr_auto_examples_plot_anomaly_comparison.py` for a
+     comparison with other anomaly detection methods.
+
+.. topic:: References:
+
+   *  Breunig, Kriegel, Ng, and Sander (2000)
+      `LOF: identifying density-based local outliers.
+      <http://www.dbs.ifi.lmu.de/Publikationen/Papers/LOF.pdf>`_
+      Proc. ACM SIGMOD
+
+.. _novelty_with_lof:
+
+Novelty detection with Local Outlier Factor
+===========================================
+
+To use :class:`neighbors.LocalOutlierFactor` for novelty detection, i.e.
+predict labels or compute the score of abnormality of new unseen data, you
+need to instantiate the estimator with the ``novelty`` parameter
+set to ``True`` before fitting the estimator::
+
+  lof = LocalOutlierFactor(novelty=True)
+  lof.fit(X_train)
+
+Note that ``fit_predict`` is not available in this case.
+
+.. warning:: **Novelty detection with Local Outlier Factor`**
+
+  When ``novelty`` is set to ``True`` be aware that you must only use
+  ``predict``, ``decision_function`` and ``score_samples`` on new unseen data
+  and not on the training samples as this would lead to wrong results.
+  The scores of abnormality of the training samples are always accessible
+  through the ``negative_outlier_factor_`` attribute.
+
+Novelty detection with Local Outlier Factor is illustrated below.
+
+  .. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_lof_novelty_detection_001.png
+     :target: ../auto_examples/neighbors/sphx_glr_plot_lof_novelty_detection.html
+     :align: center
+     :scale: 75%
 
