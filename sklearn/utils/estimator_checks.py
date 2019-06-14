@@ -1087,10 +1087,8 @@ def check_pipeline_consistency(name, estimator_orig):
     X = pairwise_estimator_convert_X(X, estimator_orig, kernel=rbf_kernel)
     estimator = clone(estimator_orig)
     y = enforce_estimator_tags_y(estimator, y)
-
     set_random_state(estimator)
     pipeline = make_pipeline(estimator)
-
     estimator.fit(X, y)
     pipeline.fit(X, y)
 
@@ -1197,7 +1195,6 @@ def check_estimators_nan_inf(name, estimator_orig):
     y = np.ones(10)
     y[:5] = 0
     y = enforce_estimator_tags_y(estimator_orig, y)
-
     error_string_fit = "Estimator doesn't check for NaN and inf in fit."
     error_string_predict = ("Estimator doesn't check for NaN and inf in"
                             " predict.")
@@ -1279,7 +1276,6 @@ def check_estimators_pickle(name, estimator_orig):
 
     estimator = clone(estimator_orig)
 
-    # some estimators only take multioutputs
     y = enforce_estimator_tags_y(estimator, y)
 
     set_random_state(estimator)
@@ -2245,6 +2241,8 @@ def enforce_estimator_tags_y(estimator, y):
     # Estimators with a `requires_positive_y` tag only accept strictly positive
     # data
     if _safe_tags(estimator, "requires_positive_y"):
+        # Create strictly positive y. The minimal increment above 0 is 1, as
+        # y could be of integer dtype.
         y += 1 + abs(y.min())
     # Estimators in mono_output_task_error raise ValueError if y is of 1-D
     # Convert into a 2-D y for those estimators.
