@@ -2,6 +2,26 @@
 
 .. currentmodule:: sklearn
 
+<<<<<<< HEAD
+=======
+.. _changes_0_21_3:
+
+Version 0.21.3
+==============
+
+**In development**
+
+Changelog
+---------
+
+:mod:`sklearn.linear_model`
+...........................
+- |Fix| Fixed a bug in :class:`linear_model.LogisticRegressionCV` where
+  ``refit=False`` would fail depending on the ``'multiclass'`` and
+  ``'penalty'`` parameters (regression introduced in 0.21). :pr:`14087` by
+  `Nicolas Hug`_.
+
+>>>>>>> 36b688eb04... [MRG] fix refit=False error in LogisticRegressionCV (#14087)
 .. _changes_0_21_2:
 
 Version 0.21.2
