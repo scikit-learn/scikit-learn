@@ -735,7 +735,10 @@ of a single trial are modeled using a
 Logistic regression is implemented in :class:`LogisticRegression`. 
 This implementation can fit binary, One-vs-Rest, or multinomial logistic 
 regression with optional :math:`\ell_1`, :math:`\ell_2` or Elastic-Net 
-regularization. Note that regularization is applied by default.
+regularization.
+
+**Note that regularization is applied by default.** No regularization amounts
+to setting C to a very high value.
 
 As an optimization problem, binary class :math:`\ell_2` penalized logistic
 regression minimizes the following cost function:
