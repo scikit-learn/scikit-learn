@@ -775,7 +775,7 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True,
                                  force_all_finite=False)
 
     n_rows, n_cols = X.shape
-    
+
     categorical_features_obj, categorical_features_num, numerical_features = \
         _detect_categorical_features(X, categorical_features)
 
@@ -810,11 +810,11 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True,
         if isinstance(scale, bool):
             process_scale = scale
         else:
-            if (isinstance(scale, list) and len(scale) != X_num.shape[1]) or \
-               (isinstance(scale, np.ndarray) and len(scale.flat)\
-			   != X_num.shape[1]):
+            if (isinstance(scale, list) and len(scale) != X_num.shape[1]) or\
+               (isinstance(scale, np.ndarray) and
+                len(scale.flat) != X_num.shape[1]):
                 raise ValueError("Length of scale parameter must be equal " +
-				                 "to the number of numerical columns.""")
+                                 "to the number of numerical columns.")
             process_scale = True
 
         params = _precompute_metric_params(X_num, Y_num, metric='gower',
