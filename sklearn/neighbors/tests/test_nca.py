@@ -522,7 +522,7 @@ def test_convergence_warning():
 @pytest.mark.parametrize('param, value', [('n_components', np.int32(3)),
                                           ('max_iter', np.int32(100)),
                                           ('tol', np.float32(0.0001))])
-def test_parameters(param, value):
+def test_parameters_valid_types(param, value):
     # check that no error is raised when parameters have numpy integer or
     # floating types.
     nca = NeighborhoodComponentsAnalysis(**{param: value})
