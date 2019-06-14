@@ -26,8 +26,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
     @abstractmethod
     def __init__(self, loss, learning_rate, max_iter, max_leaf_nodes,
                  max_depth, min_samples_leaf, l2_regularization, max_bins,
-                 scoring, validation_fraction, n_iter_no_change, tol, verbose,
-                 warm_start, random_state):
+                 warm_start, scoring, validation_fraction, n_iter_no_change,
+                 tol, verbose, random_state):
         self.loss = loss
         self.learning_rate = learning_rate
         self.max_iter = max_iter
@@ -36,12 +36,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self.min_samples_leaf = min_samples_leaf
         self.l2_regularization = l2_regularization
         self.max_bins = max_bins
-        self.n_iter_no_change = n_iter_no_change
-        self.validation_fraction = validation_fraction
+        self.warm_start = warm_start
         self.scoring = scoring
+        self.validation_fraction = validation_fraction
+        self.n_iter_no_change = n_iter_no_change
         self.tol = tol
         self.verbose = verbose
-        self.warm_start = warm_start
         self.random_state = random_state
 
     def _validate_parameters(self):
@@ -635,6 +635,11 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
         allows for a much faster training stage. Features with a small
         number of unique values may use less than ``max_bins`` bins. Must be no
         larger than 256.
+    warm_start : bool, optional (default=False)
+        When set to ``True``, reuse the solution of the previous call to fit
+        and add more estimators to the ensemble. For results to be valid, the
+        estimator should be re-trained on the same data only.
+        See :term:`the Glossary <warm_start>`.
     scoring : str or callable or None, optional (default=None)
         Scoring parameter to use for early stopping. It can be a single
         string (see :ref:`scoring_parameter`) or a callable (see
@@ -658,11 +663,6 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
     verbose: int, optional (default=0)
         The verbosity level. If not zero, print some information about the
         fitting process.
-    warm_start : bool, optional (default=False)
-        When set to ``True``, reuse the solution of the previous call to fit
-        and add more estimators to the ensemble. For results to be valid, the
-        estimator should be re-trained on the same data only.
-        See :term:`the Glossary <warm_start>`.
     random_state : int, np.random.RandomStateInstance or None, \
         optional (default=None)
         Pseudo-random number generator to control the subsampling in the
@@ -706,16 +706,18 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
     def __init__(self, loss='least_squares', learning_rate=0.1,
                  max_iter=100, max_leaf_nodes=31, max_depth=None,
                  min_samples_leaf=20, l2_regularization=0., max_bins=256,
-                 scoring=None, validation_fraction=0.1, n_iter_no_change=None,
-                 tol=1e-7, verbose=0, warm_start=False, random_state=None):
+                 warm_start=False, scoring=None, validation_fraction=0.1,
+                 n_iter_no_change=None, tol=1e-7, verbose=0,
+                 random_state=None):
         super(HistGradientBoostingRegressor, self).__init__(
             loss=loss, learning_rate=learning_rate, max_iter=max_iter,
             max_leaf_nodes=max_leaf_nodes, max_depth=max_depth,
             min_samples_leaf=min_samples_leaf,
             l2_regularization=l2_regularization, max_bins=max_bins,
-            scoring=scoring, validation_fraction=validation_fraction,
+            warm_start=warm_start, scoring=scoring,
+            validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol, verbose=verbose,
-            warm_start=warm_start, random_state=random_state)
+            random_state=random_state)
 
     def predict(self, X):
         """Predict values for X.
@@ -808,6 +810,11 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         allows for a much faster training stage. Features with a small
         number of unique values may use less than ``max_bins`` bins. Must be no
         larger than 256.
+    warm_start : bool, optional (default=False)
+        When set to ``True``, reuse the solution of the previous call to fit
+        and add more estimators to the ensemble. For results to be valid, the
+        estimator should be re-trained on the same data only.
+        See :term:`the Glossary <warm_start>`.
     scoring : str or callable or None, optional (default=None)
         Scoring parameter to use for early stopping. It can be a single
         string (see :ref:`scoring_parameter`) or a callable (see
@@ -831,11 +838,6 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
     verbose: int, optional (default=0)
         The verbosity level. If not zero, print some information about the
         fitting process.
-    warm_start : bool, optional (default=False)
-        When set to ``True``, reuse the solution of the previous call to fit
-        and add more estimators to the ensemble. For results to be valid, the
-        estimator should be re-trained on the same data only.
-        See :term:`the Glossary <warm_start>`.
     random_state : int, np.random.RandomStateInstance or None, \
         optional (default=None)
         Pseudo-random number generator to control the subsampling in the
@@ -880,17 +882,18 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
 
     def __init__(self, loss='auto', learning_rate=0.1, max_iter=100,
                  max_leaf_nodes=31, max_depth=None, min_samples_leaf=20,
-                 l2_regularization=0., max_bins=256, scoring=None,
-                 validation_fraction=0.1, n_iter_no_change=None, tol=1e-7,
-                 verbose=0, warm_start=False, random_state=None):
+                 l2_regularization=0., max_bins=256, warm_start=False,
+                 scoring=None, validation_fraction=0.1, n_iter_no_change=None,
+                 tol=1e-7, verbose=0, random_state=None):
         super(HistGradientBoostingClassifier, self).__init__(
             loss=loss, learning_rate=learning_rate, max_iter=max_iter,
             max_leaf_nodes=max_leaf_nodes, max_depth=max_depth,
             min_samples_leaf=min_samples_leaf,
             l2_regularization=l2_regularization, max_bins=max_bins,
-            scoring=scoring, validation_fraction=validation_fraction,
+            warm_start=warm_start, scoring=scoring,
+            validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol, verbose=verbose,
-            warm_start=warm_start, random_state=random_state)
+            random_state=random_state)
 
     def predict(self, X):
         """Predict classes for X.
