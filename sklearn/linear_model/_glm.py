@@ -2326,3 +2326,166 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         y_mean = np.average(y, weights=weights)
         dev_null = self._family_instance.deviance(y, y_mean, weights=weights)
         return 1. - dev / dev_null
+
+    def _more_tags(self):
+        return {"requires_positive_y": True}
+
+
+class PoissonRegressor(GeneralizedLinearRegressor):
+    """Regression with the response variable y following a Poisson distribution
+
+    GLMs based on a reproductive Exponential Dispersion Model (EDM) aim at
+    fitting and predicting the mean of the target y as mu=h(X*w).
+    The fit minimizes the following objective function with L2 regularization::
+
+            1/(2*sum(s)) * deviance(y, h(X*w); s) + 1/2 * alpha * ||w||_2^2
+
+    with inverse link function h and s=sample_weight. Note that for
+    ``sample_weight=None``, one has s_i=1 and sum(s)=n_samples).
+
+    Read more in the :ref:`User Guide <Generalized_linear_regression>`.
+
+    Parameters
+    ----------
+    alpha : float, optional (default=1)
+        Constant that multiplies the penalty terms and thus determines the
+        regularization strength.
+        See the notes for the exact mathematical meaning of this
+        parameter.``alpha = 0`` is equivalent to unpenalized GLMs. In this
+        case, the design matrix X must have full column rank
+        (no collinearities).
+
+    fit_intercept : boolean, optional (default=True)
+        Specifies if a constant (a.k.a. bias or intercept) should be
+        added to the linear predictor (X*coef+intercept).
+
+    fit_dispersion : {None, 'chisqr', 'deviance'}, optional (default=None)
+        Method for estimation of the dispersion parameter phi. Whether to use
+        the chi squared statistic or the deviance statistic. If None, the
+        dispersion is not estimated.
+
+    solver : {'irls', 'lbfgs', 'newton-cg'}, optional (default='irls')
+        Algorithm to use in the optimization problem:
+
+        'irls'
+            Iterated reweighted least squares. It is the standard algorithm
+            for GLMs.
+
+        'lbfgs'
+            Calls scipy's L-BFGS-B optimizer.
+
+        'newton-cg'
+            Newton conjugate gradient algorithm.
+
+        Note that all solvers except lbfgs use the fisher matrix, i.e. the
+        expected Hessian instead of the Hessian matrix.
+
+    max_iter : int, optional (default=100)
+        The maximal number of iterations for solver algorithms.
+
+    tol : float, optional (default=1e-4)
+        Stopping criterion. For the irls, newton-cg and lbfgs solvers,
+        the iteration will stop when ``max{|g_i|, i = 1, ..., n} <= tol``
+        where ``g_i`` is the i-th component of the gradient (derivative) of
+        the objective function.
+
+    warm_start : boolean, optional (default=False)
+        If set to ``True``, reuse the solution of the previous call to ``fit``
+        as initialization for ``coef_`` and ``intercept_`` (supersedes option
+        ``start_params``). If set to ``True`` or if the attribute ``coef_``
+        does not exit (first call to ``fit``), option ``start_params`` sets the
+        start values for ``coef_`` and ``intercept_``.
+
+    start_params : {'guess', 'zero', array of shape (n_features*, )}, \
+            optional (default='guess')
+        Relevant only if ``warm_start=False`` or if fit is called
+        the first time (``self.coef_`` does not yet exist).
+
+        'guess'
+            Start values of mu are calculated by family.starting_mu(..). Then,
+            one Newton step obtains start values for ``coef_``. If
+            ``solver='irls'``, it uses one irls step. This gives usually good
+            starting values.
+
+        'zero'
+        All coefficients are set to zero. If ``fit_intercept=True``, the
+        start value for the intercept is obtained by the weighted average of y.
+
+        array
+        The array of size n_features* is directly used as start values
+        for ``coef_``. If ``fit_intercept=True``, the first element
+        is assumed to be the start value for the ``intercept_``.
+        Note that n_features* = X.shape[1] + fit_intercept, i.e. it includes
+        the intercept in counting.
+
+    random_state : {int, RandomState instance, None}, optional (default=None)
+        If int, random_state is the seed used by the random
+        number generator; if RandomState instance, random_state is the random
+        number generator; if None, the random number generator is the
+        RandomState instance used by `np.random`. Used when ``selection`` ==
+        'random'.
+
+    copy_X : boolean, optional, (default=True)
+        If ``True``, X will be copied; else, it may be overwritten.
+
+    verbose : int, optional (default=0)
+        For the lbfgs solver set verbose to any positive number for verbosity.
+
+    Attributes
+    ----------
+    coef_ : array, shape (n_features,)
+        Estimated coefficients for the linear predictor (X*coef_+intercept_) in
+        the GLM.
+
+    intercept_ : float
+        Intercept (a.k.a. bias) added to linear predictor.
+
+    dispersion_ : float
+        The dispersion parameter :math:`\\phi` if ``fit_dispersion`` was set.
+
+    n_iter_ : int
+        Actual number of iterations used in solver.
+
+    Notes
+    -----
+    The fit itself does not need Y to be from an EDM, but only assumes
+    the first two moments to be :math:`E[Y_i]=\\mu_i=h((Xw)_i)` and
+    :math:`Var[Y_i]=\\frac{\\phi}{s_i} v(\\mu_i)`. The unit variance function
+    :math:`v(\\mu_i)` is a property of and given by the specific EDM, see
+    :ref:`User Guide <Generalized_linear_regression>`.
+
+    The parameters :math:`w` (`coef_` and `intercept_`) are estimated by
+    minimizing the deviance plus penalty term, which is equivalent to
+    (penalized) maximum likelihood estimation.
+
+    For alpha > 0, the feature matrix X should be standardized in order to
+    penalize features equally strong.
+
+    If the target y is a ratio, appropriate sample weights s should be
+    provided.
+    As an example, consider Poisson distributed counts z (integers) and
+    weights s=exposure (time, money, persons years, ...). Then you fit
+    y = z/s, i.e. ``PoissonRegressor().fit(X, y, sample_weight=s)``.
+    The weights are necessary for the right (finite sample) mean.
+    Consider :math:`\\bar{y} = \\frac{\\sum_i s_i y_i}{\\sum_i s_i}`,
+    in this case one might say that y has a 'scaled' Poisson distributions.
+
+    References
+    ----------
+    For the coordinate descent implementation:
+        * Guo-Xun Yuan, Chia-Hua Ho, Chih-Jen Lin
+          An Improved GLMNET for L1-regularized Logistic Regression,
+          Journal of Machine Learning Research 13 (2012) 1999-2030
+          https://www.csie.ntu.edu.tw/~cjlin/papers/l1_glmnet/long-glmnet.pdf
+    """
+    def __init__(self, alpha=1.0, fit_intercept=True, fit_dispersion=None,
+                 solver='irls', max_iter=100,
+                 tol=1e-4, warm_start=False, start_params='guess',
+                 random_state=None, copy_X=True, check_input=True, verbose=0):
+
+        super().__init__(alpha=alpha, fit_intercept=fit_intercept,
+                         family="poisson", link='log',
+                         fit_dispersion=fit_dispersion, solver=solver,
+                         max_iter=max_iter, tol=tol, warm_start=warm_start,
+                         start_params=start_params, random_state=random_state,
+                         copy_X=copy_X, verbose=verbose)
