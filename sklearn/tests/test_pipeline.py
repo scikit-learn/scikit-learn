@@ -11,6 +11,7 @@ import itertools
 import pytest
 import numpy as np
 from scipy import sparse
+
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_raise_message
