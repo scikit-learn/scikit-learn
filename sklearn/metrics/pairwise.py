@@ -689,7 +689,8 @@ def cosine_distances(X, Y=None):
     return S
 
 
-def gower_distances(X, Y=None, categorical_features=None, scale=True, **kwargs):
+def gower_distances(X, Y=None, categorical_features=None, scale=True,
+                    **kwargs):
     """Compute the distances between the observations in X and Y,
     that may contain mixed types of data, using an implementation
     of Gower formula.
@@ -718,8 +719,8 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True, **kwargs):
         If false, it is assumed the numerical columns are already scaled.
         If a list or array, it must countain the ranges of values from
         numerical columns.
-        
-    metric_kwargs : dict, optional
+
+    kwargs : dict, optional
         Keyword arguments to pass to this function.
 
     Returns
@@ -805,18 +806,18 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True, **kwargs):
     # Calculates the min and max values, and if requested, scale the
     # input values as proposed by the Gower's paper.
     if n_col_num_present:
-        #TODO Test type(scale) is np.array properly
         process_scale = False
         if isinstance(scale, bool):
             process_scale = scale
-        else: #Check the dimentions if it is an array
+        else:
             if (isinstance(scale, list) and len(scale) != X_num.shape[1]) or \
-               (isinstance(scale, np.ndarray) and len(scale.flat) != X_num.shape[1]):
-                #TODO Improve this message
-                raise ValueError("Scale parameter with range values must have the same number of numerical columns.")
+               (isinstance(scale, np.ndarray) and len(scale.flat)\
+			   != X_num.shape[1]):
+                raise ValueError("Length of scale parameter must be equal " +
+				                 "to the number of numerical columns.""")
             process_scale = True
-            
-        params = _precompute_metric_params(X_num, Y_num, metric='gower', 
+
+        params = _precompute_metric_params(X_num, Y_num, metric='gower',
                                            scale=scale, **kwargs)
         kwargs.update(**params)
 
@@ -1015,7 +1016,7 @@ PAIRED_DISTANCES = {
     'l1': paired_manhattan_distances,
     'manhattan': paired_manhattan_distances,
     'cityblock': paired_manhattan_distances,
-    'gower': gower_distances,}
+    'gower': gower_distances, }
 
 
 def paired_distances(X, Y, metric="euclidean", **kwds):
@@ -1541,21 +1542,21 @@ def _precompute_metric_params(X, Y, metric=None, **kwds):
             scale = False
         else:
             scale = kwds['scale']
-            
+
         min = np.nanmin(X, axis=0)
         if X is not Y:
             min = np.nanmin([np.nanmin(Y, axis=0), min], axis=0)
-        
+
         max = None
-        if type(scale) is bool and scale==True:
+        if type(scale) is bool and scale:
             max = np.nanmax(X, axis=0)
             if X is not Y:
                 max = np.nanmax([np.nanmax(Y, axis=0), max], axis=0)
             scale = np.abs(max - min)
         else:
             max = min + np.asarray(scale)
-        #TODO REMOVE MIN AND MAX AFTER USE IT?
-        return {'min': min, 'max': max, 'scale':scale}
+
+        return {'min': min, 'max': max, 'scale': scale}
     if metric == "seuclidean" and 'V' not in kwds:
         if X is Y:
             V = np.var(X, axis=0, ddof=1)
