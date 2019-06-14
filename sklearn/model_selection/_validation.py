@@ -1094,7 +1094,7 @@ def learning_curve(estimator, X, y, groups=None,
                    train_sizes=np.linspace(0.1, 1.0, 5), cv=None,
                    scoring=None, exploit_incremental_learning=False,
                    n_jobs=None, pre_dispatch="all", verbose=0, shuffle=False,
-                   random_state=None, error_score=np.nan):
+                   random_state=None, error_score=np.nan, return_times=False):
     """Learning curve.
 
     Determines cross-validated training and test scores for different training
@@ -1193,6 +1193,9 @@ def learning_curve(estimator, X, y, groups=None,
         If a numeric value is given, FitFailedWarning is raised. This parameter
         does not affect the refit step, which will always raise the error.
 
+    return_times : boolean, optional (default: False)
+        Whether to return the fit and score times.
+
     Returns
     -------
     train_sizes_abs : array, shape (n_unique_ticks,), dtype int
@@ -1205,6 +1208,12 @@ def learning_curve(estimator, X, y, groups=None,
 
     test_scores : array, shape (n_ticks, n_cv_folds)
         Scores on test set.
+
+    fit_times : array, shape (n_ticks, n_cv_folds)
+        Times spent for fitting in seconds.
+
+    score_times : array, shape (n_ticks, n_cv_folds)
+        Times spent for scoring in seconds.
 
     Notes
     -----
@@ -1243,7 +1252,7 @@ def learning_curve(estimator, X, y, groups=None,
         classes = np.unique(y) if is_classifier(estimator) else None
         out = parallel(delayed(_incremental_fit_estimator)(
             clone(estimator), X, y, classes, train, test, train_sizes_abs,
-            scorer, verbose) for train, test in cv_iter)
+            scorer, verbose, return_times) for train, test in cv_iter)
     else:
         train_test_proportions = []
         for train, test in cv_iter:
@@ -1253,15 +1262,21 @@ def learning_curve(estimator, X, y, groups=None,
         out = parallel(delayed(_fit_and_score)(
             clone(estimator), X, y, scorer, train, test, verbose,
             parameters=None, fit_params=None, return_train_score=True,
-            error_score=error_score)
+            error_score=error_score, return_times=return_times)
             for train, test in train_test_proportions)
         out = np.array(out)
         n_cv_folds = out.shape[0] // n_unique_ticks
-        out = out.reshape(n_cv_folds, n_unique_ticks, 2)
+        dim = 4 if return_times else 2
+        out = out.reshape(n_cv_folds, n_unique_ticks, dim)
 
     out = np.asarray(out).transpose((2, 1, 0))
 
-    return train_sizes_abs, out[0], out[1]
+    ret = train_sizes_abs, out[0], out[1]
+
+    if return_times:
+        ret = ret + (out[2], out[3])
+
+    return ret
 
 
 def _translate_train_sizes(train_sizes, n_max_training_samples):
@@ -1324,9 +1339,9 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
 
 
 def _incremental_fit_estimator(estimator, X, y, classes, train, test,
-                               train_sizes, scorer, verbose):
+                               train_sizes, scorer, verbose, return_times):
     """Train estimator on training subsets incrementally and compute scores."""
-    train_scores, test_scores = [], []
+    train_scores, test_scores, fit_times, score_times = [], [], [], []
     partitions = zip(train_sizes, np.split(train, train_sizes)[:-1])
     for n_train_samples, partial_train in partitions:
         train_subset = train[:n_train_samples]
@@ -1334,14 +1349,27 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
         X_partial_train, y_partial_train = _safe_split(estimator, X, y,
                                                        partial_train)
         X_test, y_test = _safe_split(estimator, X, y, test, train_subset)
+        start_fit = time.time()
         if y_partial_train is None:
             estimator.partial_fit(X_partial_train, classes=classes)
         else:
             estimator.partial_fit(X_partial_train, y_partial_train,
                                   classes=classes)
-        train_scores.append(_score(estimator, X_train, y_train, scorer))
+        fit_time = time.time() - start_fit
+        fit_times.append(fit_time)
+
+        start_score = time.time()
+
         test_scores.append(_score(estimator, X_test, y_test, scorer))
-    return np.array((train_scores, test_scores)).T
+        train_scores.append(_score(estimator, X_train, y_train, scorer))
+
+        score_time = time.time() - start_score
+        score_times.append(score_time)
+
+    ret = ((train_scores, test_scores, fit_times, score_times)
+           if return_times else (train_scores, test_scores))
+
+    return np.array(ret).T
 
 
 def validation_curve(estimator, X, y, param_name, param_range, groups=None,

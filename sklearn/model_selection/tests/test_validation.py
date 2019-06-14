@@ -991,19 +991,26 @@ def test_learning_curve():
     estimator = MockImprovingEstimator(n_samples * ((n_splits - 1) / n_splits))
     for shuffle_train in [False, True]:
         with warnings.catch_warnings(record=True) as w:
-            train_sizes, train_scores, test_scores = learning_curve(
-                estimator, X, y, cv=KFold(n_splits=n_splits),
-                train_sizes=np.linspace(0.1, 1.0, 10),
-                shuffle=shuffle_train)
+            train_sizes, train_scores, test_scores, fit_times, score_times = \
+                learning_curve(estimator, X, y, cv=KFold(n_splits=n_splits),
+                               train_sizes=np.linspace(0.1, 1.0, 10),
+                               shuffle=shuffle_train, return_times=True)
         if len(w) > 0:
             raise RuntimeError("Unexpected warning: %r" % w[0].message)
         assert_equal(train_scores.shape, (10, 3))
         assert_equal(test_scores.shape, (10, 3))
+        assert_equal(fit_times.shape, (10, 3))
+        assert_equal(score_times.shape, (10, 3))
         assert_array_equal(train_sizes, np.linspace(2, 20, 10))
         assert_array_almost_equal(train_scores.mean(axis=1),
                                   np.linspace(1.9, 1.0, 10))
         assert_array_almost_equal(test_scores.mean(axis=1),
                                   np.linspace(0.1, 1.0, 10))
+
+        # Cannot use assert_array_almost_equal for fit and score times because
+        # the values are hardware-dependant
+        assert_equal(fit_times.dtype, "float64")
+        assert_equal(score_times.dtype, "float64")
 
         # Test a custom cv splitter that can iterate only once
         with warnings.catch_warnings(record=True) as w:
