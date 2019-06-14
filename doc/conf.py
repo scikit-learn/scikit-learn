@@ -263,6 +263,12 @@ carousel_thumbs = {'sphx_glr_plot_classifier_comparison_001.png': 600,
                    'sphx_glr_plot_compare_methods_001.png': 349}
 
 
+# enable experimental module so that experimental estimators can be
+# discovered properly by sphinx
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+from sklearn.experimental import enable_iterative_imputer  # noqa
+
+
 def make_carousel_thumbs(app, exception):
     """produces the final resized carousel images"""
     if exception is not None:
@@ -300,3 +306,6 @@ warnings.filterwarnings("ignore", category=UserWarning,
                         module="matplotlib",
                         message='Matplotlib is currently using agg, which is a'
                                 ' non-GUI backend, so cannot show the figure.')
+
+# Reduces the output of estimators
+sklearn.set_config(print_changed_only=True)

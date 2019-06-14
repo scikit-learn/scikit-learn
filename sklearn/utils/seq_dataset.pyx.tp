@@ -45,7 +45,7 @@ import numpy as np
 
 np.import_array()
 
-from . cimport _random
+from ._random cimport our_rand_r
 
 cdef class SequentialDataset{{name}}:
     """Base class for datasets with sequential data access.
@@ -155,7 +155,7 @@ cdef class SequentialDataset{{name}}:
         cdef int n = self.n_samples
         cdef unsigned i, j
         for i in range(n - 1):
-            j = i + _random.our_rand_r(&seed) % (n - i)
+            j = i + our_rand_r(&seed) % (n - i)
             ind[i], ind[j] = ind[j], ind[i]
 
     cdef int _get_next_index(self) nogil:
@@ -169,7 +169,7 @@ cdef class SequentialDataset{{name}}:
 
     cdef int _get_random_index(self) nogil:
         cdef int n = self.n_samples
-        cdef int current_index = _random.our_rand_r(&self.seed) % n
+        cdef int current_index = our_rand_r(&self.seed) % n
         self.current_index = current_index
         return current_index
 

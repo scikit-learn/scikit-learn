@@ -37,7 +37,7 @@ from ..linear_model import Ridge
 
 
 from ..base import (clone, ClusterMixin, is_classifier, is_regressor,
-                          _DEFAULT_TAGS, RegressorMixin, is_outlier_detector)
+                    _DEFAULT_TAGS, RegressorMixin, is_outlier_detector)
 
 from ..metrics import accuracy_score, adjusted_rand_score, f1_score
 
@@ -45,12 +45,12 @@ from ..random_projection import BaseRandomProjection
 from ..feature_selection import SelectKBest
 from ..pipeline import make_pipeline
 from ..exceptions import DataConversionWarning
+from ..exceptions import NotFittedError
 from ..exceptions import SkipTestWarning
 from ..model_selection import train_test_split
 from ..model_selection import ShuffleSplit
 from ..model_selection._validation import _safe_split
-from ..metrics.pairwise import (rbf_kernel, linear_kernel,
-                                      pairwise_distances)
+from ..metrics.pairwise import (rbf_kernel, linear_kernel, pairwise_distances)
 
 from .import shuffle
 from .validation import has_fit_parameter, _num_samples
@@ -128,7 +128,8 @@ def _yield_classifier_checks(name, classifier):
     if not tags["no_validation"]:
         yield check_supervised_y_no_nan
         yield check_supervised_y_2d
-    yield check_estimators_unfitted
+    if tags["requires_fit"]:
+        yield check_estimators_unfitted
     if 'class_weight' in classifier.get_params().keys():
         yield check_class_weight_classifiers
 
@@ -176,18 +177,19 @@ def _yield_regressor_checks(name, regressor):
     if name != 'CCA':
         # check that the regressor handles int input
         yield check_regressors_int
-    yield check_estimators_unfitted
+    if tags["requires_fit"]:
+        yield check_estimators_unfitted
     yield check_non_transformer_estimators_n_iter
 
 
 def _yield_transformer_checks(name, transformer):
     # All transformers should either deal with sparse data or raise an
     # exception with type TypeError and an intelligible error message
-    yield check_transformer_data_not_an_array
+    if not _safe_tags(transformer, "no_validation"):
+        yield check_transformer_data_not_an_array
     # these don't actually fit the data, so don't raise errors
     yield check_transformer_general
     yield partial(check_transformer_general, readonly_memmap=True)
-
     if not _safe_tags(transformer, "stateless"):
         yield check_transformers_unfitted
     # Dependent on external solvers and hence accessing the iter
@@ -222,7 +224,8 @@ def _yield_outliers_checks(name, estimator):
         # test outlier detectors can handle non-array data
         yield check_classifier_data_not_an_array
         # test if NotFittedError is raised
-        yield check_estimators_unfitted
+        if _safe_tags(estimator, "requires_fit"):
+            yield check_estimators_unfitted
 
 
 def _yield_all_checks(name, estimator):
@@ -341,14 +344,7 @@ def set_checking_parameters(estimator):
         # randomized lasso
         estimator.set_params(n_resampling=5)
     if "n_estimators" in params:
-        # especially gradient boosting with default 100
-        # FIXME: The default number of trees was changed and is set to 'warn'
-        # for some of the ensemble methods. We need to catch this case to avoid
-        # an error during the comparison. To be reverted in 0.22.
-        if estimator.n_estimators == 'warn':
-            estimator.set_params(n_estimators=5)
-        else:
-            estimator.set_params(n_estimators=min(5, estimator.n_estimators))
+        estimator.set_params(n_estimators=min(5, estimator.n_estimators))
     if "max_trials" in params:
         # RANSAC
         estimator.set_params(max_trials=10)
@@ -377,13 +373,6 @@ def set_checking_parameters(estimator):
     if name == "TheilSenRegressor":
         estimator.max_subpopulation = 100
 
-    if estimator.__class__.__name__ == "IsolationForest":
-        # XXX to be removed in 0.22.
-        # this is used because the old IsolationForest does not
-        # respect the outlier detection API and thus and does not
-        # pass the outlier detection common tests.
-        estimator.set_params(behaviour='new')
-
     if isinstance(estimator, BaseRandomProjection):
         # Due to the jl lemma and often very few samples, the number
         # of components of the random matrix projection will be probably
@@ -395,6 +384,22 @@ def set_checking_parameters(estimator):
         # SelectKBest has a default of k=10
         # which is more feature than we have in most case.
         estimator.set_params(k=1)
+
+    if name in ('HistGradientBoostingClassifier',
+                'HistGradientBoostingRegressor'):
+        # The default min_samples_leaf (20) isn't appropriate for small
+        # datasets (only very shallow trees are built) that the checks use.
+        estimator.set_params(min_samples_leaf=5)
+
+    # Speed-up by reducing the number of CV or splits for CV estimators
+    loo_cv = ['RidgeCV']
+    if name not in loo_cv and hasattr(estimator, 'cv'):
+        estimator.set_params(cv=3)
+    if hasattr(estimator, 'n_splits'):
+        estimator.set_params(n_splits=3)
+
+    if name == 'OneHotEncoder':
+        estimator.set_params(handle_unknown='ignore')
 
 
 class NotAnArray:
@@ -491,13 +496,16 @@ def _generate_sparse_matrix(X_csr):
 
 
 def check_estimator_sparse_data(name, estimator_orig):
-
     rng = np.random.RandomState(0)
     X = rng.rand(40, 10)
     X[X < .8] = 0
     X = pairwise_estimator_convert_X(X, estimator_orig)
     X_csr = sparse.csr_matrix(X)
-    y = (4 * rng.rand(40)).astype(np.int)
+    tags = _safe_tags(estimator_orig)
+    if tags['binary_only']:
+        y = (2 * rng.rand(40)).astype(np.int)
+    else:
+        y = (4 * rng.rand(40)).astype(np.int)
     # catch deprecation warnings
     with ignore_warnings(category=DeprecationWarning):
         estimator = clone(estimator_orig)
@@ -514,13 +522,17 @@ def check_estimator_sparse_data(name, estimator_orig):
                 estimator.fit(X, y)
             if hasattr(estimator, "predict"):
                 pred = estimator.predict(X)
-                if _safe_tags(estimator, "multioutput_only"):
+                if tags['multioutput_only']:
                     assert_equal(pred.shape, (X.shape[0], 1))
                 else:
                     assert_equal(pred.shape, (X.shape[0],))
             if hasattr(estimator, 'predict_proba'):
                 probs = estimator.predict_proba(X)
-                assert_equal(probs.shape, (X.shape[0], 4))
+                if tags['binary_only']:
+                    expected_probs_shape = (X.shape[0], 2)
+                else:
+                    expected_probs_shape = (X.shape[0], 4)
+                assert_equal(probs.shape, expected_probs_shape)
         except (TypeError, ValueError) as e:
             if 'sparse' not in repr(e).lower():
                 if "64" in matrix_format:
@@ -576,7 +588,10 @@ def check_sample_weights_list(name, estimator_orig):
         rnd = np.random.RandomState(0)
         X = pairwise_estimator_convert_X(rnd.uniform(size=(10, 3)),
                                          estimator_orig)
-        y = np.arange(10) % 3
+        if _safe_tags(estimator, 'binary_only'):
+            y = np.arange(10) % 2
+        else:
+            y = np.arange(10) % 3
         y = multioutput_estimator_convert_y_2d(estimator, y)
         sample_weight = [3] * 10
         # Test that estimators don't raise any exception
@@ -627,7 +642,11 @@ def check_dtype_object(name, estimator_orig):
     rng = np.random.RandomState(0)
     X = pairwise_estimator_convert_X(rng.rand(40, 10), estimator_orig)
     X = X.astype(object)
-    y = (X[:, 0] * 4).astype(np.int)
+    tags = _safe_tags(estimator_orig)
+    if tags['binary_only']:
+        y = (X[:, 0] * 2).astype(np.int)
+    else:
+        y = (X[:, 0] * 4).astype(np.int)
     estimator = clone(estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator, y)
 
@@ -644,8 +663,7 @@ def check_dtype_object(name, estimator_orig):
         if "Unknown label type" not in str(e):
             raise
 
-    tags = _safe_tags(estimator)
-    if 'str' not in tags['X_types']:
+    if 'string' not in tags['X_types']:
         X[0, 0] = {'foo': 'bar'}
         msg = "argument must be a string.* number"
         assert_raises_regex(TypeError, msg, estimator.fit, X, y)
@@ -722,6 +740,8 @@ def check_dont_overwrite_parameters(name, estimator_orig):
     X = 3 * rnd.uniform(size=(20, 3))
     X = pairwise_estimator_convert_X(X, estimator_orig)
     y = X[:, 0].astype(np.int)
+    if _safe_tags(estimator, 'binary_only'):
+        y[y == 2] = 1
     y = multioutput_estimator_convert_y_2d(estimator, y)
 
     if hasattr(estimator, "n_components"):
@@ -771,6 +791,9 @@ def check_fit2d_predict1d(name, estimator_orig):
     X = 3 * rnd.uniform(size=(20, 3))
     X = pairwise_estimator_convert_X(X, estimator_orig)
     y = X[:, 0].astype(np.int)
+    tags = _safe_tags(estimator_orig)
+    if tags['binary_only']:
+        y[y == 2] = 1
     estimator = clone(estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator, y)
 
@@ -781,7 +804,6 @@ def check_fit2d_predict1d(name, estimator_orig):
 
     set_random_state(estimator, 1)
     estimator.fit(X, y)
-    tags = _safe_tags(estimator)
     if tags["no_validation"]:
         # FIXME this is a bit loose
         return
@@ -813,11 +835,13 @@ def _apply_on_subsets(func, X):
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_methods_subset_invariance(name, estimator_orig):
     # check that method gives invariant results if applied
-    # on mini bathes or the whole set
+    # on mini batches or the whole set
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20, 3))
     X = pairwise_estimator_convert_X(X, estimator_orig)
     y = X[:, 0].astype(np.int)
+    if _safe_tags(estimator_orig, 'binary_only'):
+        y[y == 2] = 1
     estimator = clone(estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator, y)
 
@@ -866,6 +890,10 @@ def check_fit2d_1sample(name, estimator_orig):
         estimator.n_clusters = 1
 
     set_random_state(estimator, 1)
+
+    # min_cluster_size cannot be less than the data size for OPTICS.
+    if name == 'OPTICS':
+        estimator.set_params(min_samples=1)
 
     msgs = ["1 sample", "n_samples = 1", "n_samples=1", "one sample",
             "1 class", "one class"]
@@ -944,7 +972,6 @@ def check_transformer_general(name, transformer, readonly_memmap=False):
         X, y = create_memmap_backed_data([X, y])
 
     _check_transformer(name, transformer, X, y)
-    _check_transformer(name, transformer, X.tolist(), y.tolist())
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
@@ -958,6 +985,8 @@ def check_transformer_data_not_an_array(name, transformer):
     this_X = NotAnArray(X)
     this_y = NotAnArray(np.asarray(y))
     _check_transformer(name, transformer, this_X, this_y)
+    # try the same with some list
+    _check_transformer(name, transformer, X.tolist(), y.tolist())
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
@@ -1081,7 +1110,10 @@ def check_fit_score_takes_y(name, estimator_orig):
     rnd = np.random.RandomState(0)
     X = rnd.uniform(size=(10, 3))
     X = pairwise_estimator_convert_X(X, estimator_orig)
-    y = np.arange(10) % 3
+    if _safe_tags(estimator_orig, 'binary_only'):
+        y = np.arange(10) % 2
+    else:
+        y = np.arange(10) % 3
     estimator = clone(estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator, y)
     set_random_state(estimator)
@@ -1111,6 +1143,8 @@ def check_estimators_dtypes(name, estimator_orig):
     X_train_int_64 = X_train_32.astype(np.int64)
     X_train_int_32 = X_train_32.astype(np.int32)
     y = X_train_int_64[:, 0]
+    if _safe_tags(estimator_orig, 'binary_only'):
+        y[y == 2] = 1
     y = multioutput_estimator_convert_y_2d(estimator_orig, y)
 
     methods = ["predict", "transform", "decision_function", "predict_proba"]
@@ -1411,7 +1445,6 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False):
     # generate binary problem from multi-class one
     y_b = y_m[y_m != 2]
     X_b = X_m[y_m != 2]
-    tags = _safe_tags(classifier_orig)
 
     if name in ['BernoulliNB', 'MultinomialNB', 'ComplementNB']:
         X_m -= X_m.min()
@@ -1420,7 +1453,12 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False):
     if readonly_memmap:
         X_m, y_m, X_b, y_b = create_memmap_backed_data([X_m, y_m, X_b, y_b])
 
-    for (X, y) in [(X_m, y_m), (X_b, y_b)]:
+    problems = [(X_b, y_b)]
+    tags = _safe_tags(classifier_orig)
+    if not tags['binary_only']:
+        problems.append((X_m, y_m))
+
+    for (X, y) in problems:
         classes = np.unique(y)
         n_classes = len(classes)
         n_samples, n_features = X.shape
@@ -1621,7 +1659,11 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True):
 def check_estimators_fit_returns_self(name, estimator_orig,
                                       readonly_memmap=False):
     """Check if self is returned when calling fit"""
-    X, y = make_blobs(random_state=0, n_samples=9, n_features=4)
+    if _safe_tags(estimator_orig, 'binary_only'):
+        n_centers = 2
+    else:
+        n_centers = 3
+    X, y = make_blobs(random_state=0, n_samples=9, centers=n_centers)
     # some want non-negative input
     X -= X.min()
     X = pairwise_estimator_convert_X(X, estimator_orig)
@@ -1640,57 +1682,30 @@ def check_estimators_fit_returns_self(name, estimator_orig,
 def check_estimators_unfitted(name, estimator_orig):
     """Check that predict raises an exception in an unfitted estimator.
 
-    Unfitted estimators should raise either AttributeError or ValueError.
-    The specific exception type NotFittedError inherits from both and can
-    therefore be adequately raised for that purpose.
+    Unfitted estimators should raise a NotFittedError.
     """
-
     # Common test for Regressors, Classifiers and Outlier detection estimators
     X, y = _boston_subset()
 
     estimator = clone(estimator_orig)
-
-    msg = "fit"
-    if hasattr(estimator, 'predict'):
-        can_predict = False
-        try:
-            # some models can predict without fitting
-            # like GaussianProcess regressors
-            # in this case, we skip this test
-            pred = estimator.predict(X)
-            assert pred.shape[0] == X.shape[0]
-            can_predict = True
-        except ValueError:
-            pass
-        if can_predict:
-            raise SkipTest(
-                "{} can predict without fitting, skipping "
-                "check_estimator_unfitted.".format(name))
-
-        assert_raise_message((AttributeError, ValueError), msg,
-                             estimator.predict, X)
-
-    if hasattr(estimator, 'decision_function'):
-        assert_raise_message((AttributeError, ValueError), msg,
-                             estimator.decision_function, X)
-
-    if hasattr(estimator, 'predict_proba'):
-        assert_raise_message((AttributeError, ValueError), msg,
-                             estimator.predict_proba, X)
-
-    if hasattr(estimator, 'predict_log_proba'):
-        assert_raise_message((AttributeError, ValueError), msg,
-                             estimator.predict_log_proba, X)
+    for method in ('decision_function', 'predict', 'predict_proba',
+                   'predict_log_proba'):
+        if hasattr(estimator, method):
+            assert_raises(NotFittedError, getattr(estimator, method), X)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_supervised_y_2d(name, estimator_orig):
-    if _safe_tags(estimator_orig, "multioutput_only"):
+    tags = _safe_tags(estimator_orig)
+    if tags['multioutput_only']:
         # These only work on 2d, so this test makes no sense
         return
     rnd = np.random.RandomState(0)
     X = pairwise_estimator_convert_X(rnd.uniform(size=(10, 3)), estimator_orig)
-    y = np.arange(10) % 3
+    if tags['binary_only']:
+        y = np.arange(10) % 2
+    else:
+        y = np.arange(10) % 3
     estimator = clone(estimator_orig)
     set_random_state(estimator)
     # fit
@@ -1707,7 +1722,7 @@ def check_supervised_y_2d(name, estimator_orig):
     y_pred_2d = estimator.predict(X)
     msg = "expected 1 DataConversionWarning, got: %s" % (
         ", ".join([str(w_x) for w_x in w]))
-    if not _safe_tags(estimator, "multioutput"):
+    if not tags['multioutput']:
         # check that we warned if we don't support multi-output
         assert_greater(len(w), 0, msg)
         assert "DataConversionWarning('A column-vector y" \
@@ -1785,8 +1800,11 @@ def check_classifiers_classes(name, classifier_orig):
     y_names_multiclass = np.take(labels_multiclass, y_multiclass)
     y_names_binary = np.take(labels_binary, y_binary)
 
-    for X, y, y_names in [(X_multiclass, y_multiclass, y_names_multiclass),
-                          (X_binary, y_binary, y_names_binary)]:
+    problems = [(X_binary, y_binary, y_names_binary)]
+    if not _safe_tags(classifier_orig, 'binary_only'):
+        problems.append((X_multiclass, y_multiclass, y_names_multiclass))
+
+    for X, y, y_names in problems:
         for y_names_i in [y_names, y_names.astype('O')]:
             y_ = choose_check_classifiers_labels(name, y, y_names_i)
             check_classifiers_predictions(X, y_, name, classifier_orig)
@@ -1904,7 +1922,12 @@ def check_class_weight_classifiers(name, classifier_orig):
         # FIXME SOON!
         raise SkipTest
 
-    for n_centers in [2, 3]:
+    if _safe_tags(classifier_orig, 'binary_only'):
+        problems = [2]
+    else:
+        problems = [2, 3]
+
+    for n_centers in problems:
         # create a very noisy dataset
         X, y = make_blobs(centers=n_centers, random_state=0, cluster_std=20)
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.5,
@@ -1977,6 +2000,8 @@ def check_class_weight_balanced_linear_classifier(name, Classifier):
         classifier.set_params(n_iter=1000)
     if hasattr(classifier, "max_iter"):
         classifier.set_params(max_iter=1000)
+    if hasattr(classifier, 'cv'):
+        classifier.set_params(cv=3)
     set_random_state(classifier)
 
     # Let the model compute the class frequencies
@@ -2000,7 +2025,11 @@ def check_class_weight_balanced_linear_classifier(name, Classifier):
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_estimators_overwrite_params(name, estimator_orig):
-    X, y = make_blobs(random_state=0, n_samples=9)
+    if _safe_tags(estimator_orig, 'binary_only'):
+        n_centers = 2
+    else:
+        n_centers = 3
+    X, y = make_blobs(random_state=0, n_samples=9, centers=n_centers)
     # some want non-negative input
     X -= X.min()
     X = pairwise_estimator_convert_X(X, estimator_orig, kernel=rbf_kernel)
@@ -2372,8 +2401,11 @@ def check_decision_proba_consistency(name, estimator_orig):
             hasattr(estimator, "predict_proba")):
 
         estimator.fit(X, y)
-        a = estimator.predict_proba(X_test)[:, 1]
-        b = estimator.decision_function(X_test)
+        # Since the link function from decision_function() to predict_proba()
+        # is sometimes not precise enough (typically expit), we round to the
+        # 10th decimal to avoid numerical issues.
+        a = estimator.predict_proba(X_test)[:, 1].round(decimals=10)
+        b = estimator.decision_function(X_test).round(decimals=10)
         assert_array_equal(rankdata(a), rankdata(b))
 
 
@@ -2462,6 +2494,7 @@ def check_fit_idempotent(name, estimator_orig):
               if hasattr(estimator, method)}
 
     # Fit again
+    set_random_state(estimator)
     estimator.fit(X_train, y_train)
 
     for method in check_methods:

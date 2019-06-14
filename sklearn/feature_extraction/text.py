@@ -110,7 +110,7 @@ def _check_stop_list(stop):
         raise ValueError("not a built-in stop list: %s" % stop)
     elif stop is None:
         return None
-    else:               # assume it's a collection
+    else:  # assume it's a collection
         return frozenset(stop)
 
 
@@ -844,7 +844,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     >>> X = vectorizer.fit_transform(corpus)
     >>> print(vectorizer.get_feature_names())
     ['and', 'document', 'first', 'is', 'one', 'second', 'the', 'third', 'this']
-    >>> print(X.toarray())  # doctest: +NORMALIZE_WHITESPACE
+    >>> print(X.toarray())
     [[0 1 1 1 0 0 1 0 1]
      [0 2 0 1 0 1 1 0 1]
      [1 0 0 1 1 0 1 1 1]
@@ -1496,7 +1496,7 @@ class TfidfVectorizer(CountVectorizer):
 
     idf_ : array, shape (n_features)
         The inverse document frequency (IDF) vector; only defined
-        if  ``use_idf`` is True.
+        if ``use_idf`` is True.
 
     stop_words_ : set
         Terms that were ignored because they either:

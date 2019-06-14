@@ -70,7 +70,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     ...      [ 0, 3, -2,  0.5],
     ...      [ 1, 4, -1,    2]]
     >>> est = KBinsDiscretizer(n_bins=3, encode='ordinal', strategy='uniform')
-    >>> est.fit(X)  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    >>> est.fit(X)
     KBinsDiscretizer(...)
     >>> Xt = est.transform(X)
     >>> Xt  # doctest: +SKIP
@@ -211,7 +211,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         """
         orig_bins = self.n_bins
         if isinstance(orig_bins, numbers.Number):
-            if not isinstance(orig_bins, (numbers.Integral, np.integer)):
+            if not isinstance(orig_bins, numbers.Integral):
                 raise ValueError("{} received an invalid n_bins type. "
                                  "Received {}, expected int."
                                  .format(KBinsDiscretizer.__name__,

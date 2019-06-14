@@ -11,23 +11,22 @@
 #          Thierry Guillemot
 # License: BSD 3 clause
 import os
+import os.path as op
 import inspect
 import pkgutil
 import warnings
 import sys
 import functools
+import tempfile
+from subprocess import check_output, STDOUT, CalledProcessError
+from subprocess import TimeoutExpired
 
 import scipy as sp
-import scipy.io
 from functools import wraps
 from operator import itemgetter
 from inspect import signature
-from urllib.request import urlopen
-from urllib.error import HTTPError
 
-import tempfile
 import shutil
-import os.path as op
 import atexit
 import unittest
 
@@ -52,38 +51,14 @@ from sklearn.utils import deprecated, IS_PYPY, _IS_32BIT
 from sklearn.utils._joblib import joblib
 from sklearn.utils._unittest_backport import TestCase
 
-additional_names_in_all = []
-try:
-    from nose.tools import raises as _nose_raises
-    deprecation_message = (
-        'sklearn.utils.testing.raises has been deprecated in version 0.20 '
-        'and will be removed in 0.22. Please use '
-        'sklearn.utils.testing.assert_raises instead.')
-    raises = deprecated(deprecation_message)(_nose_raises)
-    additional_names_in_all.append('raises')
-except ImportError:
-    pass
-
-try:
-    from nose.tools import with_setup as _with_setup
-    deprecation_message = (
-        'sklearn.utils.testing.with_setup has been deprecated in version 0.20 '
-        'and will be removed in 0.22.'
-        'If your code relies on with_setup, please use'
-        ' nose.tools.with_setup instead.')
-    with_setup = deprecated(deprecation_message)(_with_setup)
-    additional_names_in_all.append('with_setup')
-except ImportError:
-    pass
-
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_raises_regexp", "assert_true",
            "assert_false", "assert_almost_equal", "assert_array_equal",
            "assert_array_almost_equal", "assert_array_less",
            "assert_less", "assert_less_equal",
            "assert_greater", "assert_greater_equal",
-           "assert_approx_equal", "assert_allclose", "SkipTest"]
-__all__.extend(additional_names_in_all)
+           "assert_approx_equal", "assert_allclose",
+           "assert_run_python_script", "SkipTest"]
 
 _dummy = TestCase('__init__')
 assert_equal = _dummy.assertEqual
@@ -462,121 +437,6 @@ def assert_allclose_dense_sparse(x, y, rtol=1e-07, atol=1e-9, err_msg=''):
                          " not a sparse matrix and an array.")
 
 
-@deprecated('deprecated in version 0.20 to be removed in version 0.22')
-def fake_mldata(columns_dict, dataname, matfile, ordering=None):
-    """Create a fake mldata data set.
-
-    .. deprecated:: 0.20
-        Will be removed in version 0.22
-
-    Parameters
-    ----------
-    columns_dict : dict, keys=str, values=ndarray
-        Contains data as columns_dict[column_name] = array of data.
-
-    dataname : string
-        Name of data set.
-
-    matfile : string or file object
-        The file name string or the file-like object of the output file.
-
-    ordering : list, default None
-        List of column_names, determines the ordering in the data set.
-
-    Notes
-    -----
-    This function transposes all arrays, while fetch_mldata only transposes
-    'data', keep that into account in the tests.
-    """
-    datasets = dict(columns_dict)
-
-    # transpose all variables
-    for name in datasets:
-        datasets[name] = datasets[name].T
-
-    if ordering is None:
-        ordering = sorted(list(datasets.keys()))
-    # NOTE: setting up this array is tricky, because of the way Matlab
-    # re-packages 1D arrays
-    datasets['mldata_descr_ordering'] = sp.empty((1, len(ordering)),
-                                                 dtype='object')
-    for i, name in enumerate(ordering):
-        datasets['mldata_descr_ordering'][0, i] = name
-
-    scipy.io.savemat(matfile, datasets, oned_as='column')
-
-
-@deprecated('deprecated in version 0.20 to be removed in version 0.22')
-class mock_mldata_urlopen:
-    """Object that mocks the urlopen function to fake requests to mldata.
-
-    When requesting a dataset with a name that is in mock_datasets, this object
-    creates a fake dataset in a StringIO object and returns it. Otherwise, it
-    raises an HTTPError.
-
-    .. deprecated:: 0.20
-        Will be removed in version 0.22
-
-    Parameters
-    ----------
-    mock_datasets : dict
-        A dictionary of {dataset_name: data_dict}, or
-        {dataset_name: (data_dict, ordering). `data_dict` itself is a
-        dictionary of {column_name: data_array}, and `ordering` is a list of
-        column_names to determine the ordering in the data set (see
-        :func:`fake_mldata` for details).
-    """
-    def __init__(self, mock_datasets):
-        self.mock_datasets = mock_datasets
-
-    def __call__(self, urlname):
-        """
-        Parameters
-        ----------
-        urlname : string
-            The url
-        """
-        dataset_name = urlname.split('/')[-1]
-        if dataset_name in self.mock_datasets:
-            resource_name = '_' + dataset_name
-            from io import BytesIO
-            matfile = BytesIO()
-
-            dataset = self.mock_datasets[dataset_name]
-            ordering = None
-            if isinstance(dataset, tuple):
-                dataset, ordering = dataset
-            fake_mldata(dataset, resource_name, matfile, ordering)
-
-            matfile.seek(0)
-            return matfile
-        else:
-            raise HTTPError(urlname, 404, dataset_name + " is not available",
-                            [], None)
-
-
-def install_mldata_mock(mock_datasets):
-    """
-    Parameters
-    ----------
-    mock_datasets : dict
-        A dictionary of {dataset_name: data_dict}, or
-        {dataset_name: (data_dict, ordering). `data_dict` itself is a
-        dictionary of {column_name: data_array}, and `ordering` is a list of
-        column_names to determine the ordering in the data set (see
-        :func:`fake_mldata` for details).
-    """
-    # Lazy import to avoid mutually recursive imports
-    from sklearn import datasets
-    datasets.mldata.urlopen = mock_mldata_urlopen(mock_datasets)
-
-
-def uninstall_mldata_mock():
-    # Lazy import to avoid mutually recursive imports
-    from sklearn import datasets
-    datasets.mldata.urlopen = urlopen
-
-
 def all_estimators(include_meta_estimators=None,
                    include_other=None, type_filter=None,
                    include_dont_test=None):
@@ -707,28 +567,6 @@ def set_random_state(estimator, random_state=0):
     """
     if "random_state" in estimator.get_params():
         estimator.set_params(random_state=random_state)
-
-
-def if_matplotlib(func):
-    """Test decorator that skips test if matplotlib not installed.
-
-    Parameters
-    ----------
-    func
-    """
-    @wraps(func)
-    def run_test(*args, **kwargs):
-        try:
-            import matplotlib
-            matplotlib.use('Agg', warn=False)
-            # this fails if no $DISPLAY specified
-            import matplotlib.pyplot as plt
-            plt.figure()
-        except ImportError:
-            raise SkipTest('Matplotlib not available.')
-        else:
-            return func(*args, **kwargs)
-    return run_test
 
 
 try:
@@ -972,19 +810,50 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
     return incorrect
 
 
-def close_figure(fig=None):
-    """Close a matplotlibt figure.
+def assert_run_python_script(source_code, timeout=60):
+    """Utility to check assertions in an independent Python subprocess.
+
+    The script provided in the source code should return 0 and not print
+    anything on stderr or stdout.
+
+    This is a port from cloudpickle https://github.com/cloudpipe/cloudpickle
 
     Parameters
     ----------
-    fig : int or str or Figure, optional (default=None)
-        The figure, figure number or figure name to close. If ``None``, all
-        current figures are closed.
+    source_code : str
+        The Python source code to execute.
+    timeout : int
+        Time in seconds before timeout.
     """
-    from matplotlib.pyplot import get_fignums, close as _close  # noqa
+    fd, source_file = tempfile.mkstemp(suffix='_src_test_sklearn.py')
+    os.close(fd)
+    try:
+        with open(source_file, 'wb') as f:
+            f.write(source_code.encode('utf-8'))
+        cmd = [sys.executable, source_file]
+        cwd = op.normpath(op.join(op.dirname(sklearn.__file__), '..'))
+        env = os.environ.copy()
+        kwargs = {
+            'cwd': cwd,
+            'stderr': STDOUT,
+            'env': env,
+        }
+        # If coverage is running, pass the config file to the subprocess
+        coverage_rc = os.environ.get("COVERAGE_PROCESS_START")
+        if coverage_rc:
+            kwargs['env']['COVERAGE_PROCESS_START'] = coverage_rc
 
-    if fig is None:
-        for fig in get_fignums():
-            _close(fig)
-    else:
-        _close(fig)
+        kwargs['timeout'] = timeout
+        try:
+            try:
+                out = check_output(cmd, **kwargs)
+            except CalledProcessError as e:
+                raise RuntimeError(u"script errored with output:\n%s"
+                                   % e.output.decode('utf-8'))
+            if out != b"":
+                raise AssertionError(out.decode('utf-8'))
+        except TimeoutExpired as e:
+            raise RuntimeError(u"script timeout, output so far:\n%s"
+                               % e.output.decode('utf-8'))
+    finally:
+        os.unlink(source_file)

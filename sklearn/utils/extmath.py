@@ -392,7 +392,7 @@ def weighted_mode(a, w, axis=0):
     The value 4 appears three times: with uniform weights, the result is
     simply the mode of the distribution.
 
-    >>> weights = [1, 3, 0.5, 1.5, 1, 2] # deweight the 4's
+    >>> weights = [1, 3, 0.5, 1.5, 1, 2]  # deweight the 4's
     >>> weighted_mode(x, weights)
     (array([2.]), array([3.5]))
 

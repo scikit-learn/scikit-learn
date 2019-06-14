@@ -1156,7 +1156,7 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     .. versionadded:: 0.18
 
     Parameters
-    -----------
+    ----------
     length_scale : float or array with shape (n_features,), default: 1.0
         The length scale of the kernel. If a float, an isotropic kernel is
         used. If an array, an anisotropic kernel is used where each dimension
@@ -1269,7 +1269,7 @@ class Matern(RBF):
     .. versionadded:: 0.18
 
     Parameters
-    -----------
+    ----------
     length_scale : float or array with shape (n_features,), default: 1.0
         The length scale of the kernel. If a float, an isotropic kernel is
         used. If an array, an anisotropic kernel is used where each dimension

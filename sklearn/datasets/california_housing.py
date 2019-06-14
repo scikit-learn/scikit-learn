@@ -50,12 +50,12 @@ def fetch_california_housing(data_home=None, download_if_missing=True,
                              return_X_y=False):
     """Load the California housing dataset (regression).
 
-    ==============     ==============
-    Samples total               20640
-    Dimensionality                  8
-    Features                     real
-    Target             real 0.15 - 5.
-    ==============     ==============
+    ==============   ==============
+    Samples total             20640
+    Dimensionality                8
+    Features                   real
+    Target           real 0.15 - 5.
+    ==============   ==============
 
     Read more in the :ref:`User Guide <california_housing_dataset>`.
 
@@ -97,7 +97,7 @@ def fetch_california_housing(data_home=None, download_if_missing=True,
         .. versionadded:: 0.20
 
     Notes
-    ------
+    -----
 
     This dataset consists of 20,640 samples and 9 features.
     """
