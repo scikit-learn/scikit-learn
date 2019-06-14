@@ -182,13 +182,13 @@ def test_pipeline_init():
     repr(pipe)
 
     # Test with two objects
-    filter1 = SelectKBest(f_classif)
     clf = SVC()
+    filter1 = SelectKBest(f_classif)
     pipe = Pipeline([('anova', filter1), ('svc', clf)])
 
-    # Test that estimators are not cloned on pipeline construction
-    assert_is(pipe.named_steps['anova'], filter1)
-    assert_is(pipe.named_steps['svc'], clf)
+    # Check that estimators are not cloned on pipeline construction
+    assert pipe.named_steps['anova'] is filter1
+    assert pipe.named_steps['svc'] is clf
 
     # Check that we can't instantiate with non-transformers on the way
     # Note that NoTrans implements fit, but not transform

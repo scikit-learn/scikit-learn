@@ -34,8 +34,6 @@ class Pipeline(_BaseComposition):
     must implement fit and transform methods.
     The final estimator only needs to implement fit.
     The transformers in the pipeline can be cached using ``memory`` argument.
-    Transformers and the final estimator are cloned
-    during pipeline's construction if ``memory`` is not ``None``.
 
     The purpose of the pipeline is to assemble several steps that can be
     cross-validated together while setting different parameters.
