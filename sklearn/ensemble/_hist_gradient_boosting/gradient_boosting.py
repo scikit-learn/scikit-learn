@@ -132,7 +132,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             # Save the state of the RNG for the training and validation split.
             # This is needed in order to have the same split when using
             # warm starting.
-            if not (self._has_been_fitted() and self.warm_start):
+            if not (self._is_fitted() and self.warm_start):
                 self._train_val_split_seed = rng.randint(1024)
 
             X_train, X_val, y_train, y_val = train_test_split(
@@ -156,7 +156,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         n_samples = X_binned_train.shape[0]
 
         # First time calling fit, or no warm start
-        if not (self._has_been_fitted() and self.warm_start):
+        if not (self._is_fitted() and self.warm_start):
             # Clear random state and score attributes
             self._clear_state()
 
@@ -370,17 +370,14 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         del self._in_fit  # hard delete so we're sure it can't be used anymore
         return self
 
-    def _has_been_fitted(self):
+    def _is_fitted(self):
         return len(getattr(self, '_predictors', [])) > 0
 
     def _clear_state(self):
         """Clear the state of the gradient boosting model."""
-        if hasattr(self, 'train_score_'):
-            del self.train_score_
-        if hasattr(self, 'validation_score_'):
-            del self.validation_score_
-        if hasattr(self, '_rng'):
-            del self._rng
+        for var in ('train_score_', 'validation_score_', '_rng'):
+            if hasattr(self, var):
+                delattr(self, var)
 
     def _get_small_trainset(self, X_binned_train, y_train, seed):
         """Compute the indices of the subsample set and return this set.
