@@ -10,7 +10,6 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_true
 
 eigen_solvers = ['dense', 'arpack']
 
@@ -58,7 +57,7 @@ def test_lle_simple_grid():
     for solver in eigen_solvers:
         clf.set_params(eigen_solver=solver)
         clf.fit(X)
-        assert_true(clf.embedding_.shape[1] == n_components)
+        assert clf.embedding_.shape[1] == n_components
         reconstruction_error = linalg.norm(
             np.dot(N, clf.embedding_) - clf.embedding_, 'fro') ** 2
 
@@ -92,7 +91,7 @@ def test_lle_manifold():
         for solver in eigen_solvers:
             clf.set_params(eigen_solver=solver)
             clf.fit(X)
-            assert_true(clf.embedding_.shape[1] == n_components)
+            assert clf.embedding_.shape[1] == n_components
             reconstruction_error = linalg.norm(
                 np.dot(N, clf.embedding_) - clf.embedding_, 'fro') ** 2
             details = ("solver: %s, method: %s" % (solver, method))
@@ -134,3 +133,13 @@ def test_singular_matrix():
     f = ignore_warnings
     assert_raises(ValueError, f(manifold.locally_linear_embedding),
                   M, 2, 1, method='standard', eigen_solver='arpack')
+
+
+# regression test for #6033
+def test_integer_input():
+    rand = np.random.RandomState(0)
+    X = rand.randint(0, 100, size=(20, 3))
+
+    for method in ["standard", "hessian", "modified", "ltsa"]:
+        clf = manifold.LocallyLinearEmbedding(method=method, n_neighbors=10)
+        clf.fit(X)  # this previously raised a TypeError

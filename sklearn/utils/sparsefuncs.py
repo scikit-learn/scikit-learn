@@ -6,7 +6,6 @@
 import scipy.sparse as sp
 import numpy as np
 
-from .fixes import sparse_min_max, bincount
 from .sparsefuncs_fast import (
     csr_mean_variance_axis0 as _csr_mean_var_axis0,
     csc_mean_variance_axis0 as _csc_mean_var_axis0,
@@ -67,19 +66,19 @@ def mean_variance_axis(X, axis):
 
     Parameters
     ----------
-    X: CSR or CSC sparse matrix, shape (n_samples, n_features)
+    X : CSR or CSC sparse matrix, shape (n_samples, n_features)
         Input data.
 
-    axis: int (either 0 or 1)
+    axis : int (either 0 or 1)
         Axis along which the axis should be computed.
 
     Returns
     -------
 
-    means: float array with shape (n_features,)
+    means : float array with shape (n_features,)
         Feature-wise means
 
-    variances: float array with shape (n_features,)
+    variances : float array with shape (n_features,)
         Feature-wise variances
 
     """
@@ -104,38 +103,42 @@ def incr_mean_variance_axis(X, axis, last_mean, last_var, last_n):
     CSC matrix.
 
     last_mean, last_var are the statistics computed at the last step by this
-    function. Both must be initilized to 0-arrays of the proper size, i.e.
+    function. Both must be initialized to 0-arrays of the proper size, i.e.
     the number of features in X. last_n is the number of samples encountered
     until now.
 
     Parameters
     ----------
-    X: CSR or CSC sparse matrix, shape (n_samples, n_features)
+    X : CSR or CSC sparse matrix, shape (n_samples, n_features)
         Input data.
 
-    axis: int (either 0 or 1)
+    axis : int (either 0 or 1)
         Axis along which the axis should be computed.
 
-    last_mean: float array with shape (n_features,)
+    last_mean : float array with shape (n_features,)
         Array of feature-wise means to update with the new data X.
 
-    last_var: float array with shape (n_features,)
+    last_var : float array with shape (n_features,)
         Array of feature-wise var to update with the new data X.
 
-    last_n: int
+    last_n : int with shape (n_features,)
         Number of samples seen so far, excluded X.
 
     Returns
     -------
 
-    means: float array with shape (n_features,)
+    means : float array with shape (n_features,)
         Updated feature-wise means.
 
-    variances: float array with shape (n_features,)
+    variances : float array with shape (n_features,)
         Updated feature-wise variances.
 
-    n: int
+    n : int with shape (n_features,)
         Updated number of seen samples.
+
+    Notes
+    -----
+    NaNs are ignored in the algorithm.
 
     """
     _raise_error_wrong_axis(axis)
@@ -166,10 +169,10 @@ def inplace_column_scale(X, scale):
 
     Parameters
     ----------
-    X: CSC or CSR matrix with shape (n_samples, n_features)
+    X : CSC or CSR matrix with shape (n_samples, n_features)
         Matrix to normalize using the variance of the features.
 
-    scale: float array with shape (n_features,)
+    scale : float array with shape (n_features,)
         Array of precomputed feature-wise values to use for scaling.
     """
     if isinstance(X, sp.csc_matrix):
@@ -208,13 +211,13 @@ def inplace_swap_row_csc(X, m, n):
 
     Parameters
     ----------
-    X: scipy.sparse.csc_matrix, shape=(n_samples, n_features)
+    X : scipy.sparse.csc_matrix, shape=(n_samples, n_features)
         Matrix whose two rows are to be swapped.
 
-    m: int
+    m : int
         Index of the row of X to be swapped.
 
-    n: int
+    n : int
         Index of the row of X to be swapped.
     """
     for t in [m, n]:
@@ -237,13 +240,13 @@ def inplace_swap_row_csr(X, m, n):
 
     Parameters
     ----------
-    X: scipy.sparse.csr_matrix, shape=(n_samples, n_features)
+    X : scipy.sparse.csr_matrix, shape=(n_samples, n_features)
         Matrix whose two rows are to be swapped.
 
-    m: int
+    m : int
         Index of the row of X to be swapped.
 
-    n: int
+    n : int
         Index of the row of X to be swapped.
     """
     for t in [m, n]:
@@ -295,16 +298,16 @@ def inplace_swap_row(X, m, n):
     X : CSR or CSC sparse matrix, shape=(n_samples, n_features)
         Matrix whose two rows are to be swapped.
 
-    m: int
+    m : int
         Index of the row of X to be swapped.
 
-    n: int
+    n : int
         Index of the row of X to be swapped.
     """
     if isinstance(X, sp.csc_matrix):
-        return inplace_swap_row_csc(X, m, n)
+        inplace_swap_row_csc(X, m, n)
     elif isinstance(X, sp.csr_matrix):
-        return inplace_swap_row_csr(X, m, n)
+        inplace_swap_row_csr(X, m, n)
     else:
         _raise_typeerror(X)
 
@@ -318,7 +321,7 @@ def inplace_swap_column(X, m, n):
     X : CSR or CSC sparse matrix, shape=(n_samples, n_features)
         Matrix whose two columns are to be swapped.
 
-    m: int
+    m : int
         Index of the column of X to be swapped.
 
     n : int
@@ -329,35 +332,107 @@ def inplace_swap_column(X, m, n):
     if n < 0:
         n += X.shape[1]
     if isinstance(X, sp.csc_matrix):
-        return inplace_swap_row_csr(X, m, n)
+        inplace_swap_row_csr(X, m, n)
     elif isinstance(X, sp.csr_matrix):
-        return inplace_swap_row_csc(X, m, n)
+        inplace_swap_row_csc(X, m, n)
     else:
         _raise_typeerror(X)
 
 
-def min_max_axis(X, axis):
-    """Compute minimum and maximum along an axis on a CSR or CSC matrix
+def _minor_reduce(X, ufunc):
+    major_index = np.flatnonzero(np.diff(X.indptr))
+
+    # reduceat tries casts X.indptr to intp, which errors
+    # if it is int64 on a 32 bit system.
+    # Reinitializing prevents this where possible, see #13737
+    X = type(X)((X.data, X.indices, X.indptr), shape=X.shape)
+    value = ufunc.reduceat(X.data, X.indptr[major_index])
+    return major_index, value
+
+
+def _min_or_max_axis(X, axis, min_or_max):
+    N = X.shape[axis]
+    if N == 0:
+        raise ValueError("zero-size array to reduction operation")
+    M = X.shape[1 - axis]
+    mat = X.tocsc() if axis == 0 else X.tocsr()
+    mat.sum_duplicates()
+    major_index, value = _minor_reduce(mat, min_or_max)
+    not_full = np.diff(mat.indptr)[major_index] < N
+    value[not_full] = min_or_max(value[not_full], 0)
+    mask = value != 0
+    major_index = np.compress(mask, major_index)
+    value = np.compress(mask, value)
+
+    if axis == 0:
+        res = sp.coo_matrix((value, (np.zeros(len(value)), major_index)),
+                            dtype=X.dtype, shape=(1, M))
+    else:
+        res = sp.coo_matrix((value, (major_index, np.zeros(len(value)))),
+                            dtype=X.dtype, shape=(M, 1))
+    return res.A.ravel()
+
+
+def _sparse_min_or_max(X, axis, min_or_max):
+    if axis is None:
+        if 0 in X.shape:
+            raise ValueError("zero-size array to reduction operation")
+        zero = X.dtype.type(0)
+        if X.nnz == 0:
+            return zero
+        m = min_or_max.reduce(X.data.ravel())
+        if X.nnz != np.product(X.shape):
+            m = min_or_max(zero, m)
+        return m
+    if axis < 0:
+        axis += 2
+    if (axis == 0) or (axis == 1):
+        return _min_or_max_axis(X, axis, min_or_max)
+    else:
+        raise ValueError("invalid axis, use 0 for rows, or 1 for columns")
+
+
+def _sparse_min_max(X, axis):
+        return (_sparse_min_or_max(X, axis, np.minimum),
+                _sparse_min_or_max(X, axis, np.maximum))
+
+
+def _sparse_nan_min_max(X, axis):
+    return(_sparse_min_or_max(X, axis, np.fmin),
+           _sparse_min_or_max(X, axis, np.fmax))
+
+
+def min_max_axis(X, axis, ignore_nan=False):
+    """Compute minimum and maximum along an axis on a CSR or CSC matrix and
+    optionally ignore NaN values.
 
     Parameters
     ----------
     X : CSR or CSC sparse matrix, shape (n_samples, n_features)
         Input data.
 
-    axis: int (either 0 or 1)
+    axis : int (either 0 or 1)
         Axis along which the axis should be computed.
+
+    ignore_nan : bool, default is False
+        Ignore or passing through NaN values.
+
+        .. versionadded:: 0.20
 
     Returns
     -------
 
-    mins: float array with shape (n_features,)
+    mins : float array with shape (n_features,)
         Feature-wise minima
 
-    maxs: float array with shape (n_features,)
+    maxs : float array with shape (n_features,)
         Feature-wise maxima
     """
     if isinstance(X, sp.csr_matrix) or isinstance(X, sp.csc_matrix):
-        return sparse_min_max(X, axis=axis)
+        if ignore_nan:
+            return _sparse_nan_min_max(X, axis=axis)
+        else:
+            return _sparse_min_max(X, axis=axis)
     else:
         _raise_typeerror(X)
 
@@ -397,14 +472,15 @@ def count_nonzero(X, axis=None, sample_weight=None):
     elif axis == 1:
         out = np.diff(X.indptr)
         if sample_weight is None:
-            return out
+            # astype here is for consistency with axis=0 dtype
+            return out.astype('intp')
         return out * sample_weight
     elif axis == 0:
         if sample_weight is None:
-            return bincount(X.indices, minlength=X.shape[1])
+            return np.bincount(X.indices, minlength=X.shape[1])
         else:
             weights = np.repeat(sample_weight, np.diff(X.indptr))
-            return bincount(X.indices, minlength=X.shape[1],
+            return np.bincount(X.indices, minlength=X.shape[1],
                             weights=weights)
     else:
         raise ValueError('Unsupported axis: {0}'.format(axis))

@@ -11,6 +11,7 @@ __all__ = ['NotFittedError',
            'EfficiencyWarning',
            'FitFailedWarning',
            'NonBLASDotWarning',
+           'SkipTestWarning',
            'UndefinedMetricWarning']
 
 
@@ -28,8 +29,8 @@ class NotFittedError(ValueError, AttributeError):
     ...     LinearSVC().predict([[1, 2], [2, 3], [3, 4]])
     ... except NotFittedError as e:
     ...     print(repr(e))
-    ...                        # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    NotFittedError('This LinearSVC instance is not fitted yet',)
+    NotFittedError("This LinearSVC instance is not fitted yet. Call 'fit' with
+    appropriate arguments before using this method.")
 
     .. versionchanged:: 0.18
        Moved from sklearn.utils.validation.
@@ -109,18 +110,17 @@ class FitFailedWarning(RuntimeWarning):
     >>> from sklearn.exceptions import FitFailedWarning
     >>> import warnings
     >>> warnings.simplefilter('always', FitFailedWarning)
-    >>> gs = GridSearchCV(LinearSVC(), {'C': [-1, -2]}, error_score=0)
-    >>> X, y = [[1, 2], [3, 4], [5, 6], [7, 8], [8, 9]], [0, 0, 0, 1, 1]
+    >>> gs = GridSearchCV(LinearSVC(), {'C': [-1, -2]}, error_score=0, cv=2)
+    >>> X, y = [[1, 2], [3, 4], [5, 6], [7, 8]], [0, 0, 1, 1]
     >>> with warnings.catch_warnings(record=True) as w:
     ...     try:
-    ...         gs.fit(X, y)   # This will raise a ValueError since C is < 0
+    ...         gs.fit(X, y)  # This will raise a ValueError since C is < 0
     ...     except ValueError:
     ...         pass
     ...     print(repr(w[-1].message))
-    ... # doctest: +NORMALIZE_WHITESPACE
-    FitFailedWarning("Classifier fit failed. The score on this train-test
-    partition for these parameters will be set to 0.000000. Details:
-    \\nValueError('Penalty term must be positive; got (C=-2)',)",)
+    FitFailedWarning('Estimator fit failed. The score on this train-test
+    partition for these parameters will be set to 0.000000.
+    Details: \\nValueError: Penalty term must be positive; got (C=-2)\\n'...)
 
     .. versionchanged:: 0.18
        Moved from sklearn.cross_validation.
@@ -135,6 +135,15 @@ class NonBLASDotWarning(EfficiencyWarning):
 
     .. versionchanged:: 0.18
        Moved from sklearn.utils.validation, extends EfficiencyWarning.
+    """
+
+
+class SkipTestWarning(UserWarning):
+    """Warning class used to notify the user of a test that was skipped.
+
+    For example, one of the estimator checks requires a pandas import.
+    If the pandas package cannot be imported, the test will be skipped rather
+    than register as a failure.
     """
 
 

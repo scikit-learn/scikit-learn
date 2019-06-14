@@ -4,6 +4,7 @@ cimport numpy as np
 from scipy import sparse
 from ..exceptions import ConvergenceWarning
 
+
 cdef extern from *:
     ctypedef char* const_char_p "const char*"
 
@@ -89,9 +90,9 @@ def libsvm_sparse_train ( int n_features,
     n_features : number of features.
         XXX: can we retrieve this from any other parameter ?
 
-    X: array-like, dtype=float, size=[N, D]
+    X : array-like, dtype=float, size=[N, D]
 
-    Y: array, dtype=float, size=[N]
+    Y : array, dtype=float, size=[N]
         target vector
 
     ...
@@ -165,7 +166,7 @@ def libsvm_sparse_train ( int n_features,
     # copy model.rho into the intercept
     # the intercept is just model.rho but with sign changed
     cdef np.ndarray intercept
-    intercept = np.empty(n_class*(n_class-1)/2, dtype=np.float64)
+    intercept = np.empty(n_class*(n_class-1)//2, dtype=np.float64)
     copy_intercept (intercept.data, model, intercept.shape)
 
     # copy model.SV
@@ -193,8 +194,8 @@ def libsvm_sparse_train ( int n_features,
     cdef np.ndarray probA, probB
     if probability != 0:
         if svm_type < 2: # SVC and NuSVC
-            probA = np.empty(n_class*(n_class-1)/2, dtype=np.float64)
-            probB = np.empty(n_class*(n_class-1)/2, dtype=np.float64)
+            probA = np.empty(n_class*(n_class-1)//2, dtype=np.float64)
+            probB = np.empty(n_class*(n_class-1)//2, dtype=np.float64)
             copy_probB(probB.data, model, probB.shape)
         else:
             probA = np.empty(1, dtype=np.float64)
@@ -391,7 +392,7 @@ def libsvm_sparse_decision_function(
         n_class = 1
     else:
         n_class = get_nr(model)
-        n_class = n_class * (n_class - 1) / 2
+        n_class = n_class * (n_class - 1) // 2
 
     dec_values = np.empty((T_indptr.shape[0] - 1, n_class), dtype=np.float64)
     if csr_copy_predict_values(T_data.shape, T_data.data,

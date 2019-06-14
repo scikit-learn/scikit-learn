@@ -10,15 +10,16 @@ from operator import itemgetter
 import numpy as np
 from scipy.linalg import cholesky, cho_solve, solve
 from scipy.optimize import fmin_l_bfgs_b
-from scipy.special import erf
+from scipy.special import erf, expit
 
-from sklearn.base import BaseEstimator, ClassifierMixin, clone
-from sklearn.gaussian_process.kernels \
+from ..base import BaseEstimator, ClassifierMixin, clone
+from .kernels \
     import RBF, CompoundKernel, ConstantKernel as C
-from sklearn.utils.validation import check_X_y, check_is_fitted, check_array
-from sklearn.utils import check_random_state
-from sklearn.preprocessing import LabelEncoder
-from sklearn.multiclass import OneVsRestClassifier, OneVsOneClassifier
+from ..utils.validation import check_X_y, check_is_fitted, check_array
+from ..utils import check_random_state
+from ..preprocessing import LabelEncoder
+from ..multiclass import OneVsRestClassifier, OneVsOneClassifier
+from ..exceptions import ConvergenceWarning
 
 
 # Values required for approximating the logistic sigmoid by
@@ -98,7 +99,8 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         on the Laplace approximation of the posterior mode is used as
         initialization for the next call of _posterior_mode(). This can speed
         up convergence when _posterior_mode is called several times on similar
-        problems as in hyperparameter optimization.
+        problems as in hyperparameter optimization. See :term:`the Glossary
+        <warm_start>`.
 
     copy_X_train : bool, optional (default: True)
         If True, a persistent copy of the training data is stored in the
@@ -106,39 +108,40 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         which might cause predictions to change if the data is modified
         externally.
 
-    random_state : integer or numpy.RandomState, optional
-        The generator used to initialize the centers. If an integer is
-        given, it fixes the seed. Defaults to the global numpy random
-        number generator.
+    random_state : int, RandomState instance or None, optional (default: None)
+        The generator used to initialize the centers. If int, random_state is
+        the seed used by the random number generator; If RandomState instance,
+        random_state is the random number generator; If None, the random number
+        generator is the RandomState instance used by `np.random`.
 
     Attributes
     ----------
     X_train_ : array-like, shape = (n_samples, n_features)
         Feature values in training data (also required for prediction)
 
-    y_train_: array-like, shape = (n_samples,)
+    y_train_ : array-like, shape = (n_samples,)
         Target values in training data (also required for prediction)
 
     classes_ : array-like, shape = (n_classes,)
         Unique class labels.
 
-    kernel_: kernel object
+    kernel_ : kernel object
         The kernel used for prediction. The structure of the kernel is the
         same as the one passed as parameter but with optimized hyperparameters
 
-    L_: array-like, shape = (n_samples, n_samples)
+    L_ : array-like, shape = (n_samples, n_samples)
         Lower-triangular Cholesky decomposition of the kernel in X_train_
 
-    pi_: array-like, shape = (n_samples,)
+    pi_ : array-like, shape = (n_samples,)
         The probabilities of the positive class for the training points
         X_train_
 
-    W_sr_: array-like, shape = (n_samples,)
+    W_sr_ : array-like, shape = (n_samples,)
         Square root of W, the Hessian of log-likelihood of the latent function
         values for the observed labels. Since W is diagonal, only the diagonal
         of sqrt(W) is stored.
 
-    log_marginal_likelihood_value_: float
+    log_marginal_likelihood_value_ : float
         The log-marginal-likelihood of ``self.kernel_.theta``
 
     """
@@ -188,8 +191,9 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
                              "y contains classes %s"
                              % (self.__class__.__name__, self.classes_))
         elif self.classes_.size == 1:
-            raise ValueError("{0:s} requires 2 classes.".format(
-                self.__class__.__name__))
+            raise ValueError("{0:s} requires 2 classes; got {1:d} class"
+                             .format(self.__class__.__name__,
+                                     self.classes_.size))
 
         if self.optimizer is not None and self.kernel_.n_dims > 0:
             # Choose hyperparameters based on maximizing the log-marginal
@@ -388,7 +392,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         log_marginal_likelihood = -np.inf
         for _ in range(self.max_iter_predict):
             # Line 4
-            pi = 1 / (1 + np.exp(-f))
+            pi = expit(f)
             W = pi * (1 - pi)
             # Line 5
             W_sr = np.sqrt(W)
@@ -405,7 +409,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
             # Line 10: Compute log marginal likelihood in loop and use as
             #          convergence criterion
             lml = -0.5 * a.T.dot(f) \
-                - np.log(1 + np.exp(-(self.y_train_ * 2 - 1) * f)).sum() \
+                - np.log1p(np.exp(-(self.y_train_ * 2 - 1) * f)).sum() \
                 - np.log(np.diag(L)).sum()
             # Check if we have converged (log marginal likelihood does
             # not decrease)
@@ -426,7 +430,8 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
                 fmin_l_bfgs_b(obj_func, initial_theta, bounds=bounds)
             if convergence_dict["warnflag"] != 0:
                 warnings.warn("fmin_l_bfgs_b terminated abnormally with the "
-                              " state: %s" % convergence_dict)
+                              " state: %s" % convergence_dict,
+                              ConvergenceWarning)
         elif callable(self.optimizer):
             theta_opt, func_min = \
                 self.optimizer(obj_func, initial_theta, bounds=bounds)
@@ -502,7 +507,8 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         on the Laplace approximation of the posterior mode is used as
         initialization for the next call of _posterior_mode(). This can speed
         up convergence when _posterior_mode is called several times on similar
-        problems as in hyperparameter optimization.
+        problems as in hyperparameter optimization. See :term:`the Glossary
+        <warm_start>`.
 
     copy_X_train : bool, optional (default: True)
         If True, a persistent copy of the training data is stored in the
@@ -510,12 +516,14 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         which might cause predictions to change if the data is modified
         externally.
 
-    random_state : integer or numpy.RandomState, optional
-        The generator used to initialize the centers. If an integer is
-        given, it fixes the seed. Defaults to the global numpy random
-        number generator.
+    random_state : int, RandomState instance or None, optional (default: None)
+        The generator used to initialize the centers.
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
-    multi_class: string, default : "one_vs_rest"
+    multi_class : string, default : "one_vs_rest"
         Specifies how multi-class classification problems are handled.
         Supported are "one_vs_rest" and "one_vs_one". In "one_vs_rest",
         one binary Gaussian process classifier is fitted for each class, which
@@ -526,11 +534,11 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         Note that "one_vs_one" does not support predicting probability
         estimates.
 
-    n_jobs : int, optional, default: 1
-        The number of jobs to use for the computation. If -1 all CPUs are used.
-        If 1 is given, no parallel computing code is used at all, which is
-        useful for debugging. For n_jobs below -1, (n_cpus + 1 + n_jobs) are
-        used. Thus for n_jobs = -2, all CPUs but one are used.
+    n_jobs : int or None, optional (default=None)
+        The number of jobs to use for the computation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Attributes
     ----------
@@ -550,12 +558,27 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
     n_classes_ : int
         The number of classes in the training data
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.gaussian_process import GaussianProcessClassifier
+    >>> from sklearn.gaussian_process.kernels import RBF
+    >>> X, y = load_iris(return_X_y=True)
+    >>> kernel = 1.0 * RBF(1.0)
+    >>> gpc = GaussianProcessClassifier(kernel=kernel,
+    ...         random_state=0).fit(X, y)
+    >>> gpc.score(X, y)
+    0.9866...
+    >>> gpc.predict_proba(X[:2,:])
+    array([[0.83548752, 0.03228706, 0.13222543],
+           [0.79064206, 0.06525643, 0.14410151]])
+
     .. versionadded:: 0.18
     """
     def __init__(self, kernel=None, optimizer="fmin_l_bfgs_b",
                  n_restarts_optimizer=0, max_iter_predict=100,
                  warm_start=False, copy_X_train=True, random_state=None,
-                 multi_class="one_vs_rest", n_jobs=1):
+                 multi_class="one_vs_rest", n_jobs=None):
         self.kernel = kernel
         self.optimizer = optimizer
         self.n_restarts_optimizer = n_restarts_optimizer
@@ -592,8 +615,9 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         self.n_classes_ = self.classes_.size
         if self.n_classes_ == 1:
             raise ValueError("GaussianProcessClassifier requires 2 or more "
-                             "distinct classes. Only class %s present."
-                             % self.classes_[0])
+                             "distinct classes; got %d class (only class %s "
+                             "is present)"
+                             % (self.n_classes_, self.classes_[0]))
         if self.n_classes_ > 2:
             if self.multi_class == "one_vs_rest":
                 self.base_estimator_ = \

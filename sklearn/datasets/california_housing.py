@@ -2,7 +2,7 @@
 
 The original database is available from StatLib
 
-    http://lib.stat.cmu.edu/
+    http://lib.stat.cmu.edu/datasets/
 
 The data contains 20,640 observations on 9 variables.
 
@@ -21,47 +21,60 @@ Statistics and Probability Letters, 33 (1997) 291-297.
 # Authors: Peter Prettenhofer
 # License: BSD 3 clause
 
-from io import BytesIO
-from os.path import exists
-from os import makedirs
+from os.path import dirname, exists, join
+from os import makedirs, remove
 import tarfile
 
-try:
-    # Python 2
-    from urllib2 import urlopen
-except ImportError:
-    # Python 3+
-    from urllib.request import urlopen
-
 import numpy as np
+import logging
 
-from .base import get_data_home, Bunch
+from .base import get_data_home
+from .base import _fetch_remote
 from .base import _pkl_filepath
-from ..externals import joblib
+from .base import RemoteFileMetadata
+from ..utils import Bunch
+from ..utils import _joblib
+
+# The original data can be found at:
+# https://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.tgz
+ARCHIVE = RemoteFileMetadata(
+    filename='cal_housing.tgz',
+    url='https://ndownloader.figshare.com/files/5976036',
+    checksum=('aaa5c9a6afe2225cc2aed2723682ae40'
+              '3280c4a3695a2ddda4ffb5d8215ea681'))
+
+logger = logging.getLogger(__name__)
 
 
-DATA_URL = "http://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.tgz"
-TARGET_FILENAME = "cal_housing.pkz"
+def fetch_california_housing(data_home=None, download_if_missing=True,
+                             return_X_y=False):
+    """Load the California housing dataset (regression).
 
-# Grab the module-level docstring to use as a description of the
-# dataset
-MODULE_DOCS = __doc__
+    ==============   ==============
+    Samples total             20640
+    Dimensionality                8
+    Features                   real
+    Target           real 0.15 - 5.
+    ==============   ==============
 
-
-def fetch_california_housing(data_home=None, download_if_missing=True):
-    """Loader for the California housing dataset from StatLib.
-
-    Read more in the :ref:`User Guide <datasets>`.
+    Read more in the :ref:`User Guide <california_housing_dataset>`.
 
     Parameters
     ----------
     data_home : optional, default: None
         Specify another download and cache folder for the datasets. By default
-        all scikit learn data is stored in '~/scikit_learn_data' subfolders.
+        all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
-    download_if_missing: optional, True by default
+    download_if_missing : optional, default=True
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
+
+
+    return_X_y : boolean, default=False.
+        If True, returns ``(data.data, data.target)`` instead of a Bunch
+        object.
+
+        .. versionadded:: 0.20
 
     Returns
     -------
@@ -79,31 +92,43 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
     dataset.DESCR : string
         Description of the California housing dataset.
 
+    (data, target) : tuple if ``return_X_y`` is True
+
+        .. versionadded:: 0.20
+
     Notes
-    ------
+    -----
 
     This dataset consists of 20,640 samples and 9 features.
     """
     data_home = get_data_home(data_home=data_home)
     if not exists(data_home):
         makedirs(data_home)
-    filepath = _pkl_filepath(data_home, TARGET_FILENAME)
-    if not exists(filepath):
-        print('downloading Cal. housing from %s to %s' % (DATA_URL, data_home))
-        archive_fileobj = BytesIO(urlopen(DATA_URL).read())
-        fileobj = tarfile.open(
-            mode="r:gz",
-            fileobj=archive_fileobj).extractfile(
-                'CaliforniaHousing/cal_housing.data')
 
-        cal_housing = np.loadtxt(fileobj, delimiter=',')
-        # Columns are not in the same order compared to the previous
-        # URL resource on lib.stat.cmu.edu
-        columns_index = [8, 7, 2, 3, 4, 5, 6, 1, 0]
-        cal_housing = cal_housing[:, columns_index]
-        joblib.dump(cal_housing, filepath, compress=6)
+    filepath = _pkl_filepath(data_home, 'cal_housing.pkz')
+    if not exists(filepath):
+        if not download_if_missing:
+            raise IOError("Data not found and `download_if_missing` is False")
+
+        logger.info('Downloading Cal. housing from {} to {}'.format(
+            ARCHIVE.url, data_home))
+
+        archive_path = _fetch_remote(ARCHIVE, dirname=data_home)
+
+        with tarfile.open(mode="r:gz", name=archive_path) as f:
+            cal_housing = np.loadtxt(
+                f.extractfile('CaliforniaHousing/cal_housing.data'),
+                delimiter=',')
+            # Columns are not in the same order compared to the previous
+            # URL resource on lib.stat.cmu.edu
+            columns_index = [8, 7, 2, 3, 4, 5, 6, 1, 0]
+            cal_housing = cal_housing[:, columns_index]
+
+            _joblib.dump(cal_housing, filepath, compress=6)
+        remove(archive_path)
+
     else:
-        cal_housing = joblib.load(filepath)
+        cal_housing = _joblib.load(filepath)
 
     feature_names = ["MedInc", "HouseAge", "AveRooms", "AveBedrms",
                      "Population", "AveOccup", "Latitude", "Longitude"]
@@ -122,7 +147,14 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
     # target in units of 100,000
     target = target / 100000.0
 
+    module_path = dirname(__file__)
+    with open(join(module_path, 'descr', 'california_housing.rst')) as dfile:
+        descr = dfile.read()
+
+    if return_X_y:
+        return data, target
+
     return Bunch(data=data,
                  target=target,
                  feature_names=feature_names,
-                 DESCR=MODULE_DOCS)
+                 DESCR=descr)

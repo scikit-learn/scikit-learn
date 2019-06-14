@@ -1,6 +1,6 @@
 /*
  * John D. Cook's public domain version of lgamma, from
- * http://www.johndcook.com/stand_alone_code.html
+ * https://www.johndcook.com/stand_alone_code.html
  *
  * Replaces the C99 standard lgamma for stone-age C compilers like the one
  * from Redmond.

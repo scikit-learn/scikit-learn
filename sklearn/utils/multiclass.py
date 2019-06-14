@@ -1,4 +1,3 @@
-
 # Author: Arnaud Joly, Joel Nothman, Hamzeh Alsalhi
 #
 # License: BSD 3 clause
@@ -7,8 +6,7 @@ Multi-class / multi-label utility function
 ==========================================
 
 """
-from __future__ import division
-from collections import Sequence
+from collections.abc import Sequence
 from itertools import chain
 
 from scipy.sparse import issparse
@@ -18,10 +16,8 @@ from scipy.sparse import lil_matrix
 
 import numpy as np
 
-from ..externals.six import string_types
-from .validation import check_array
-from ..utils.fixes import bincount
-from ..utils.fixes import array_equal
+from .validation import check_array, _assert_all_finite
+
 
 def _unique_multiclass(y):
     if hasattr(y, '__array__'):
@@ -55,7 +51,7 @@ def unique_labels(*ys):
 
     Parameters
     ----------
-    *ys : array-likes,
+    *ys : array-likes
 
     Returns
     -------
@@ -77,8 +73,8 @@ def unique_labels(*ys):
     # Check that we don't mix label format
 
     ys_types = set(type_of_target(x) for x in ys)
-    if ys_types == set(["binary", "multiclass"]):
-        ys_types = set(["multiclass"])
+    if ys_types == {"binary", "multiclass"}:
+        ys_types = {"multiclass"}
 
     if len(ys_types) > 1:
         raise ValueError("Mix type of y not allowed, got types %s" % ys_types)
@@ -100,7 +96,7 @@ def unique_labels(*ys):
     ys_labels = set(chain.from_iterable(_unique_labels(y) for y in ys))
 
     # Check that we don't mix string type with number type
-    if (len(set(isinstance(label, string_types) for label in ys_labels)) > 1):
+    if (len(set(isinstance(label, str) for label in ys_labels)) > 1):
         raise ValueError("Mix of label input types (string and number)")
 
     return np.array(sorted(ys_labels))
@@ -155,6 +151,7 @@ def is_multilabel(y):
         return len(labels) < 3 and (y.dtype.kind in 'biu' or  # bool, int, uint
                                     _is_integral_float(labels))
 
+
 def check_classification_targets(y):
     """Ensure that target y is of a non-regression type.
 
@@ -168,13 +165,21 @@ def check_classification_targets(y):
     """
     y_type = type_of_target(y)
     if y_type not in ['binary', 'multiclass', 'multiclass-multioutput',
-            'multilabel-indicator', 'multilabel-sequences']:
+                      'multilabel-indicator', 'multilabel-sequences']:
         raise ValueError("Unknown label type: %r" % y_type)
 
 
-
 def type_of_target(y):
-    """Determine the type of data indicated by target `y`
+    """Determine the type of data indicated by the target.
+
+    Note that this type is the most specific type that can be inferred.
+    For example:
+
+        * ``binary`` is more specific but compatible with ``multiclass``.
+        * ``multiclass`` of integers is more specific but compatible with
+          ``continuous``.
+        * ``multilabel-indicator`` is more specific but compatible with
+          ``multiclass-multioutput``.
 
     Parameters
     ----------
@@ -184,6 +189,7 @@ def type_of_target(y):
     -------
     target_type : string
         One of:
+
         * 'continuous': `y` is an array-like of floats that are not all
           integers, and is 1d or a column vector.
         * 'continuous-multioutput': `y` is a 2d array of floats that are
@@ -228,11 +234,15 @@ def type_of_target(y):
     'multilabel-indicator'
     """
     valid = ((isinstance(y, (Sequence, spmatrix)) or hasattr(y, '__array__'))
-             and not isinstance(y, string_types))
+             and not isinstance(y, str))
 
     if not valid:
         raise ValueError('Expected array-like (array or non-string sequence), '
                          'got %r' % y)
+
+    sparseseries = (y.__class__.__name__ == 'SparseSeries')
+    if sparseseries:
+        raise ValueError("y cannot be class 'SparseSeries'.")
 
     if is_multilabel(y):
         return 'multilabel-indicator'
@@ -246,17 +256,18 @@ def type_of_target(y):
     # The old sequence of sequences format
     try:
         if (not hasattr(y[0], '__array__') and isinstance(y[0], Sequence)
-                and not isinstance(y[0], string_types)):
+                and not isinstance(y[0], str)):
             raise ValueError('You appear to be using a legacy multi-label data'
                              ' representation. Sequence of sequences are no'
                              ' longer supported; use a binary array or sparse'
-                             ' matrix instead.')
+                             ' matrix instead - the MultiLabelBinarizer'
+                             ' transformer can convert to this format.')
     except IndexError:
         pass
 
     # Invalid inputs
     if y.ndim > 2 or (y.dtype == object and len(y) and
-                      not isinstance(y.flat[0], string_types)):
+                      not isinstance(y.flat[0], str)):
         return 'unknown'  # [[[1, 2]]] or [obj_1] and not ["label_1"]
 
     if y.ndim == 2 and y.shape[1] == 0:
@@ -270,6 +281,7 @@ def type_of_target(y):
     # check float and contains non-integer float values
     if y.dtype.kind == 'f' and np.any(y != y.astype(int)):
         # [.1, .2, 3] or [[.1, .2, 3]] or [[1., .2]] and not [1., 2., 3.]
+        _assert_all_finite(y)
         return 'continuous' + suffix
 
     if (len(np.unique(y)) > 2) or (y.ndim >= 2 and len(y[0]) > 1):
@@ -298,7 +310,7 @@ def _check_partial_fit_first_call(clf, classes=None):
 
     elif classes is not None:
         if getattr(clf, 'classes_', None) is not None:
-            if not array_equal(clf.classes_, unique_labels(classes)):
+            if not np.array_equal(clf.classes_, unique_labels(classes)):
                 raise ValueError(
                     "`classes=%r` is not the same as on last call "
                     "to partial_fit, was: %r" % (classes, clf.classes_))
@@ -359,7 +371,7 @@ def class_distribution(y, sample_weight=None):
 
             classes_k, y_k = np.unique(y.data[y.indptr[k]:y.indptr[k + 1]],
                                        return_inverse=True)
-            class_prior_k = bincount(y_k, weights=nz_samp_weight)
+            class_prior_k = np.bincount(y_k, weights=nz_samp_weight)
 
             # An explicit zero was found, combine its weight with the weight
             # of the implicit zeros
@@ -381,14 +393,14 @@ def class_distribution(y, sample_weight=None):
             classes_k, y_k = np.unique(y[:, k], return_inverse=True)
             classes.append(classes_k)
             n_classes.append(classes_k.shape[0])
-            class_prior_k = bincount(y_k, weights=sample_weight)
+            class_prior_k = np.bincount(y_k, weights=sample_weight)
             class_prior.append(class_prior_k / class_prior_k.sum())
 
     return (classes, n_classes, class_prior)
 
 
 def _ovr_decision_function(predictions, confidences, n_classes):
-    """Compute a continuous, tie-breaking ovr decision function.
+    """Compute a continuous, tie-breaking OvR decision function from OvO.
 
     It is important to include a continuous value, not only votes,
     to make computing AUC or calibration meaningful.
@@ -419,17 +431,13 @@ def _ovr_decision_function(predictions, confidences, n_classes):
             votes[predictions[:, k] == 1, j] += 1
             k += 1
 
-    max_confidences = sum_of_confidences.max()
-    min_confidences = sum_of_confidences.min()
-
-    if max_confidences == min_confidences:
-        return votes
-
-    # Scale the sum_of_confidences to (-0.5, 0.5) and add it with votes.
+    # Monotonically transform the sum_of_confidences to (-1/3, 1/3)
+    # and add it with votes. The monotonic transformation  is
+    # f: x -> x / (3 * (|x| + 1)), it uses 1/3 instead of 1/2
+    # to ensure that we won't reach the limits and change vote order.
     # The motivation is to use confidence levels as a way to break ties in
     # the votes without switching any decision made based on a difference
     # of 1 vote.
-    eps = np.finfo(sum_of_confidences.dtype).eps
-    max_abs_confidence = max(abs(max_confidences), abs(min_confidences))
-    scale = (0.5 - eps) / max_abs_confidence
-    return votes + sum_of_confidences * scale
+    transformed_confidences = (sum_of_confidences /
+                               (3 * (np.abs(sum_of_confidences) + 1)))
+    return votes + transformed_confidences

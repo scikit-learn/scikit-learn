@@ -1,29 +1,30 @@
 # Authors: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 # License: BSD 3 clause
 
+import pytest
 import numpy as np
 from scipy import sparse
+
+from sklearn.base import BaseEstimator
+from sklearn.model_selection import LeaveOneOut
 
 from sklearn.utils.testing import (assert_array_almost_equal, assert_equal,
                                    assert_greater, assert_almost_equal,
                                    assert_greater_equal,
                                    assert_array_equal,
-                                   assert_raises,
-                                   ignore_warnings)
+                                   assert_raises, ignore_warnings)
 from sklearn.datasets import make_classification, make_blobs
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.svm import LinearSVC
-from sklearn.linear_model import Ridge
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import Imputer
+from sklearn.impute import SimpleImputer
 from sklearn.metrics import brier_score_loss, log_loss
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
 from sklearn.calibration import calibration_curve
 
 
-@ignore_warnings
 def test_calibration():
     """Test calibration objects with isotonic and sigmoid"""
     n_samples = 100
@@ -86,12 +87,6 @@ def test_calibration():
                 assert_greater(brier_score_loss(y_test, prob_pos_clf),
                                brier_score_loss((y_test + 1) % 2,
                                                 prob_pos_pc_clf_relabeled))
-
-        # check that calibration can also deal with regressors that have
-        # a decision_function
-        clf_base_regressor = CalibratedClassifierCV(Ridge())
-        clf_base_regressor.fit(X_train, y_train)
-        clf_base_regressor.predict(X_test)
 
         # Check failure cases:
         # only "isotonic" and "sigmoid" should be accepted as methods
@@ -159,6 +154,7 @@ def test_calibration_multiclass():
         def softmax(y_pred):
             e = np.exp(-y_pred)
             return e / e.sum(axis=1).reshape(-1, 1)
+
         uncalibrated_log_loss = \
             log_loss(y_test, softmax(clf.decision_function(X_test)))
         calibrated_log_loss = log_loss(y_test, probas)
@@ -262,6 +258,21 @@ def test_calibration_curve():
     assert_raises(ValueError, calibration_curve, [1.1], [-0.1],
                   normalize=False)
 
+    # test that quantiles work as expected
+    y_true2 = np.array([0, 0, 0, 0, 1, 1])
+    y_pred2 = np.array([0., 0.1, 0.2, 0.5, 0.9, 1.])
+    prob_true_quantile, prob_pred_quantile = calibration_curve(
+        y_true2, y_pred2, n_bins=2, strategy='quantile')
+
+    assert len(prob_true_quantile) == len(prob_pred_quantile)
+    assert len(prob_true_quantile) == 2
+    assert_almost_equal(prob_true_quantile, [0, 2 / 3])
+    assert_almost_equal(prob_pred_quantile, [0.1, 0.8])
+
+    # Check that error is raised when invalid strategy is selected
+    assert_raises(ValueError, calibration_curve, y_true2, y_pred2,
+                  strategy='percentile')
+
 
 def test_calibration_nan_imputer():
     """Test that calibration can accept nan"""
@@ -270,8 +281,64 @@ def test_calibration_nan_imputer():
                                random_state=42)
     X[0, 0] = np.nan
     clf = Pipeline(
-        [('imputer', Imputer()),
+        [('imputer', SimpleImputer()),
          ('rf', RandomForestClassifier(n_estimators=1))])
     clf_c = CalibratedClassifierCV(clf, cv=2, method='isotonic')
     clf_c.fit(X, y)
     clf_c.predict(X)
+
+
+def test_calibration_prob_sum():
+    # Test that sum of probabilities is 1. A non-regression test for
+    # issue #7796
+    num_classes = 2
+    X, y = make_classification(n_samples=10, n_features=5,
+                               n_classes=num_classes)
+    clf = LinearSVC(C=1.0)
+    clf_prob = CalibratedClassifierCV(clf, method="sigmoid", cv=LeaveOneOut())
+    clf_prob.fit(X, y)
+
+    probs = clf_prob.predict_proba(X)
+    assert_array_almost_equal(probs.sum(axis=1), np.ones(probs.shape[0]))
+
+
+def test_calibration_less_classes():
+    # Test to check calibration works fine when train set in a test-train
+    # split does not contain all classes
+    # Since this test uses LOO, at each iteration train set will not contain a
+    # class label
+    X = np.random.randn(10, 5)
+    y = np.arange(10)
+    clf = LinearSVC(C=1.0)
+    cal_clf = CalibratedClassifierCV(clf, method="sigmoid", cv=LeaveOneOut())
+    cal_clf.fit(X, y)
+
+    for i, calibrated_classifier in \
+            enumerate(cal_clf.calibrated_classifiers_):
+        proba = calibrated_classifier.predict_proba(X)
+        assert_array_equal(proba[:, i], np.zeros(len(y)))
+        assert_equal(np.all(np.hstack([proba[:, :i],
+                                       proba[:, i + 1:]])), True)
+
+
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
+@pytest.mark.parametrize('X', [np.random.RandomState(42).randn(15, 5, 2),
+                               np.random.RandomState(42).randn(15, 5, 2, 6)])
+def test_calibration_accepts_ndarray(X):
+    """Test that calibration accepts n-dimensional arrays as input"""
+    y = [1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0]
+
+    class MockTensorClassifier(BaseEstimator):
+        """A toy estimator that accepts tensor inputs"""
+
+        def fit(self, X, y):
+            self.classes_ = np.unique(y)
+            return self
+
+        def decision_function(self, X):
+            # toy decision function that just needs to have the right shape:
+            return X.reshape(X.shape[0], -1).sum(axis=1)
+
+    calibrated_clf = CalibratedClassifierCV(MockTensorClassifier())
+    # we should be able to fit this classifier with no error
+    calibrated_clf.fit(X, y)

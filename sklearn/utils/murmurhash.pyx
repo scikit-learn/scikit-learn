@@ -14,6 +14,7 @@ and can be found here:
 #
 # License: BSD 3 clause
 
+
 cimport cython
 cimport numpy as np
 import numpy as np
@@ -87,13 +88,13 @@ def murmurhash3_32(key, seed=0, positive=False):
 
     Parameters
     ----------
-    key: int32, bytes, unicode or ndarray with dtype int32
+    key : int32, bytes, unicode or ndarray with dtype int32
         the physical object to hash
 
-    seed: int, optional default is 0
+    seed : int, optional default is 0
         integer seed for the hashing algorithm.
 
-    positive: boolean, optional default is False
+    positive : boolean, optional default is False
         True: the results is casted to an unsigned int
           from 0 to 2 ** 32 - 1
         False: the results is casted to a signed int
