@@ -2,6 +2,104 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_0_21_3:
+
+Version 0.21.3
+==============
+
+**In development**
+
+Changelog
+---------
+
+:mod:`sklearn.linear_model`
+...........................
+- |Fix| Fixed a bug in :class:`linear_model.LogisticRegressionCV` where
+  ``refit=False`` would fail depending on the ``'multiclass'`` and
+  ``'penalty'`` parameters (regression introduced in 0.21). :pr:`14087` by
+  `Nicolas Hug`_.
+
+.. _changes_0_21_2:
+
+Version 0.21.2
+==============
+
+**24 May 2019**
+
+Changelog
+---------
+
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Fixed a bug in :class:`cross_decomposition.CCA` improving numerical 
+  stability when `Y` is close to zero. :pr:`13903` by `Thomas Fan`_.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Fixed a bug in :func:`metrics.pairwise.euclidean_distances` where a
+  part of the distance matrix was left un-instanciated for suffiently large
+  float32 datasets (regression introduced in 0.21). :pr:`13910` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| Fixed a bug in :class:`preprocessing.OneHotEncoder` where the new
+  `drop` parameter was not reflected in `get_feature_names`. :pr:`13894`
+  by :user:`James Myatt <jamesmyatt>`.
+
+:mod:`sklearn.tree`
+...................
+
+- |Fix| Fixed an issue with :func:`plot_tree` where it display
+  entropy calculations even for `gini` criterion in DecisionTreeClassifiers.
+  :pr:`13947` by :user:`Frank Hoang <fhoang7>`.
+
+:mod:`sklearn.utils.sparsefuncs`
+................................
+
+- |Fix| Fixed a bug where :func:`min_max_axis` would fail on 32-bit systems
+  for certain large inputs. This affects :class:`preprocessing.MaxAbsScaler`, 
+  :func:`preprocessing.normalize` and :class:`preprocessing.LabelBinarizer`.
+  :pr:`13741` by :user:`Roddy MacSween <rlms>`.
+
+.. _changes_0_21_1:
+
+Version 0.21.1
+==============
+
+**17 May 2019**
+
+This is a bug-fix release to primarily resolve some packaging issues in version
+0.21.0. It also includes minor documentation improvements and some bug fixes.
+
+Changelog
+---------
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Fixed a bug in :class:`metrics.pairwise_distances` where it would raise
+  ``AttributeError`` for boolean metrics when ``X`` had a boolean dtype and
+  ``Y == None``.
+  :issue:`13864` by :user:`Paresh Mathur <rick2047>`.
+
+- |Fix| Fixed two bugs in :class:`metrics.pairwise_distances` when
+  ``n_jobs > 1``. First it used to return a distance matrix with same dtype as
+  input, even for integer dtype. Then the diagonal was not zeros for euclidean
+  metric when ``Y`` is ``X``. :issue:`13877` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.neighbors`
+........................
+
+- |Fix| Fixed a bug in :class:`neighbors.KernelDensity` which could not be
+  restored from a pickle if ``sample_weight`` had been used.
+  :issue:`13772` by :user:`Aditya Vyas <aditya1702>`.
+
+
 .. _changes_0_21:
 
 Version 0.21.0
@@ -38,6 +136,8 @@ random sampling procedures.
   seed, including :class:`linear_model.LogisticRegression`,
   :class:`linear_model.LogisticRegressionCV`, :class:`linear_model.Ridge`,
   and :class:`linear_model.RidgeCV` with 'sag' solver. |Fix|
+- :class:`linear_model.RidgeCV` when using generalized cross-validation
+  with sparse inputs. |Fix|
 
 
 Details are listed in the changelog below.
@@ -118,6 +218,12 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`cluster.FeatureAgglomeration` now accept a ``distance_threshold``
   parameter which can be used to find the clusters instead of ``n_clusters``.
   :issue:`9069` by :user:`Vathsala Achar <VathsalaAchar>` and `Adrin Jalali`_.
+
+:mod:`sklearn.compose`
+......................
+
+- |API| :class:`compose.ColumnTransformer` is no longer an experimental
+  feature. :pr:`13835` by :user:`Hanmin Qin <qinhanmin2014>`.
 
 :mod:`sklearn.datasets`
 .......................
@@ -214,7 +320,7 @@ Support for Python 3.4 and below has been officially dropped.
 
     >>> # explicitly require this experimental feature
     >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
-    >>> # now you can import normally from ensemble
+    >>> # now you can import normally from sklearn.ensemble
     >>> from sklearn.ensemble import HistGradientBoostingClassifier
 
   :pr:`12807` by :user:`Nicolas Hug<NicolasHug>`.
@@ -266,6 +372,7 @@ Support for Python 3.4 and below has been officially dropped.
   - all the single node trees in feature importance calculation are ignored
   - in case all trees have only one single node (i.e. a root node),
     feature importances will be an array of all zeros.
+
   :pr:`13636` and :pr:`13620` by `Adrin Jalali`_.
 
 - |Fix| Fixed a bug in :class:`ensemble.GradientBoostingClassifier` and
@@ -319,6 +426,17 @@ Support for Python 3.4 and below has been officially dropped.
   :pr:`12599` by :user:`Trevor Stephens<trevorstephens>` and
   :user:`Nicolas Hug<NicolasHug>`.
 
+- |Fix| :class:`ensemble.VotingClassifier` and
+  :class:`ensemble.VotingRegressor` were failing during ``fit`` in one
+  of the estimators was set to ``None`` and ``sample_weight`` was not ``None``.
+  :pr:`13779` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |API| :class:`ensemble.VotingClassifier` and
+  :class:`ensemble.VotingRegressor` accept ``'drop'`` to disable an estimator
+  in addition to ``None`` to be consistent with other estimators (i.e.,
+  :class:`pipeline.FeatureUnion` and :class:`compose.ColumnTransformer`).
+  :pr:`13780` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.externals`
 ........................
 
@@ -344,6 +462,15 @@ Support for Python 3.4 and below has been officially dropped.
   function of other features in a round-robin fashion. :pr:`8478` and
   :pr:`12177` by :user:`Sergey Feldman <sergeyf>` and :user:`Ben Lawson
   <benlawson>`.
+
+  The API of IterativeImputer is experimental and subject to change without any
+  deprecation cycle. To use them, you need to explicitly import
+  ``enable_iterative_imputer``::
+
+    >>> from sklearn.experimental import enable_iterative_imputer  # noqa
+    >>> # now you can import normally from sklearn.impute
+    >>> from sklearn.impute import IterativeImputer
+
 
 - |Feature| The :class:`impute.SimpleImputer` and
   :class:`impute.IterativeImputer` have a new parameter ``'add_indicator'``,
@@ -383,6 +510,10 @@ Support for Python 3.4 and below has been officially dropped.
 
 :mod:`sklearn.linear_model`
 ...........................
+
+- |Enhancement| :class:`linear_model.Ridge` now preserves ``float32`` and
+  ``float64`` dtypes. :issue:`8769` and :issue:`11000` by
+  :user:`Guillaume Lemaitre <glemaitre>`, and :user:`Joan Massich <massich>`
 
 - |Feature| :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` now support Elastic-Net penalty,
@@ -478,6 +609,10 @@ Support for Python 3.4 and below has been officially dropped.
   in version 0.21 and will be removed in version 0.23.
   :pr:`12821` by :user:`Nicolas Hug <NicolasHug>`.
 
+- |Fix| :class:`linear_model.RidgeCV` with generalized cross-validation
+  now correctly fits an intercept when ``fit_intercept=True`` and the design
+  matrix is sparse. :issue:`13350` by :user:`Jérôme Dockès <jeromedockes>`
+
 :mod:`sklearn.manifold`
 .......................
 
@@ -551,11 +686,11 @@ Support for Python 3.4 and below has been officially dropped.
   in version 0.21 and will be removed in version 0.23. :pr:`10580` by
   :user:`Reshama Shaikh <reshamas>` and :user:`Sandra Mitrovic <SandraMNE>`.
 
-- |Fix| The function :func:`euclidean_distances`, and therefore
-  several estimators with ``metric='euclidean'``, suffered from numerical
-  precision issues with ``float32`` features. Precision has been increased at the
-  cost of a small drop of performance. :pr:`13554` by :user:`Celelibi` and
-  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+- |Fix| The function :func:`metrics.pairwise.euclidean_distances`, and 
+  therefore several estimators with ``metric='euclidean'``, suffered from 
+  numerical precision issues with ``float32`` features. Precision has been 
+  increased at the cost of a small drop of performance. :pr:`13554` by 
+  :user:`Celelibi` and :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |API| :func:`metrics.jaccard_similarity_score` is deprecated in favour of
   the more consistent :func:`metrics.jaccard_score`. The former behavior for
@@ -577,7 +712,7 @@ Support for Python 3.4 and below has been officially dropped.
 - |Feature| Classes :class:`~model_selection.GridSearchCV` and
   :class:`~model_selection.RandomizedSearchCV` now allow for refit=callable
   to add flexibility in identifying the best estimator.
-  See :doc:`/auto_examples/model_selection/plot_grid_search_refit_callable.py`.
+  See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py`.
   :pr:`11354` by :user:`Wenhao Zhang <wenhaoz@ucla.edu>`,
   `Joel Nothman`_ and :user:`Adrin Jalali <adrinjalali>`.
 
@@ -810,7 +945,7 @@ Miscellaneous
 
 - |Enhancement| Joblib is no longer vendored in scikit-learn, and becomes a
   dependency. Minimal supported version is joblib 0.11, however using
-  version >= 0.13 is strongly recommended. 
+  version >= 0.13 is strongly recommended.
   :pr:`13531` by :user:`Roman Yurchak <rth>`.
 
 
@@ -844,8 +979,8 @@ Baibak, daten-kieker, Denis Kataev, Didi Bar-Zev, Dillon Gardner, Dmitry Mottl,
 Dmitry Vukolov, Dougal J. Sutherland, Dowon, drewmjohnston, Dror Atariah,
 Edward J Brown, Ekaterina Krivich, Elizabeth Sander, Emmanuel Arias, Eric
 Chang, Eric Larson, Erich Schubert, esvhd, Falak, Feda Curic, Federico Caselli,
-Fibinse Xavier`, Finn O'Shea, Gabriel Marzinotto, Gabriel Vacaliuc, Gabriele
-Calvo, Gael Varoquaux, GauravAhlawat, Giuseppe Vettigli, Greg Gandenberger,
+Frank Hoang, Fibinse Xavier`, Finn O'Shea, Gabriel Marzinotto, Gabriel Vacaliuc, 
+Gabriele Calvo, Gael Varoquaux, GauravAhlawat, Giuseppe Vettigli, Greg Gandenberger,
 Guillaume Fournier, Guillaume Lemaitre, Gustavo De Mari Pereira, Hanmin Qin,
 haroldfox, hhu-luqi, Hunter McGushion, Ian Sanders, JackLangerman, Jacopo
 Notarstefano, jakirkham, James Bourbeau, Jan Koch, Jan S, janvanrijn, Jarrod

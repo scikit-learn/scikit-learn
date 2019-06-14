@@ -44,9 +44,7 @@ and will store the coefficients :math:`w` of the linear model in its
     >>> from sklearn import linear_model
     >>> reg = linear_model.LinearRegression()
     >>> reg.fit([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
-    ...                                       # doctest: +NORMALIZE_WHITESPACE
-    LinearRegression(copy_X=True, fit_intercept=True, n_jobs=None,
-                     normalize=False)
+    LinearRegression()
     >>> reg.coef_
     array([0.5, 0.5])
 
@@ -71,7 +69,7 @@ The least squares solution is computed using the singular value
 decomposition of X. If X is a matrix of shape `(n_samples, n_features)`
 this method has a cost of 
 :math:`O(n_{\text{samples}} n_{\text{features}}^2)`, assuming that
-:math:`n_{\text{samples} \geq n_{\text{features}}}`.
+:math:`n_{\text{samples}} \geq n_{\text{features}}`.
 
 .. _ridge_regression:
 
@@ -105,12 +103,11 @@ its ``coef_`` member::
 
     >>> from sklearn import linear_model
     >>> reg = linear_model.Ridge(alpha=.5)
-    >>> reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1]) # doctest: +NORMALIZE_WHITESPACE
-    Ridge(alpha=0.5, copy_X=True, fit_intercept=True, max_iter=None,
-          normalize=False, random_state=None, solver='auto', tol=0.001)
+    >>> reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])
+    Ridge(alpha=0.5)
     >>> reg.coef_
     array([0.34545455, 0.34545455])
-    >>> reg.intercept_ #doctest: +ELLIPSIS
+    >>> reg.intercept_
     0.13636...
 
 
@@ -136,17 +133,22 @@ Setting the regularization parameter: generalized Cross-Validation
 ------------------------------------------------------------------
 
 :class:`RidgeCV` implements ridge regression with built-in
-cross-validation of the alpha parameter.  The object works in the same way
+cross-validation of the alpha parameter. The object works in the same way
 as GridSearchCV except that it defaults to Generalized Cross-Validation
 (GCV), an efficient form of leave-one-out cross-validation::
 
+    >>> import numpy as np
     >>> from sklearn import linear_model
-    >>> reg = linear_model.RidgeCV(alphas=[0.1, 1.0, 10.0], cv=3)
-    >>> reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])       # doctest: +SKIP
-    RidgeCV(alphas=[0.1, 1.0, 10.0], cv=3, fit_intercept=True, scoring=None,
-        normalize=False)
-    >>> reg.alpha_                                      # doctest: +SKIP
-    0.1
+    >>> reg = linear_model.RidgeCV(alphas=np.logspace(-6, 6, 13))
+    >>> reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])
+    RidgeCV(alphas=array([1.e-06, 1.e-05, 1.e-04, 1.e-03, 1.e-02, 1.e-01, 1.e+00, 1.e+01,
+          1.e+02, 1.e+03, 1.e+04, 1.e+05, 1.e+06]))
+    >>> reg.alpha_
+    0.01
+
+Specifying the value of the `cv` attribute will trigger the use of
+cross-validation with `GridSearchCV`, for example `cv=10` for 10-fold
+cross-validation, rather than Generalized Cross-Validation.
 
 .. topic:: References
 
@@ -186,10 +188,8 @@ for another implementation::
 
     >>> from sklearn import linear_model
     >>> reg = linear_model.Lasso(alpha=0.1)
-    >>> reg.fit([[0, 0], [1, 1]], [0, 1])  # doctest: +NORMALIZE_WHITESPACE
-    Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
-       normalize=False, positive=False, precompute=False, random_state=None,
-       selection='cyclic', tol=0.0001, warm_start=False)
+    >>> reg.fit([[0, 0], [1, 1]], [0, 1])
+    Lasso(alpha=0.1)
     >>> reg.predict([[1, 1]])
     array([0.8])
 
@@ -476,11 +476,9 @@ function of the norm of its coefficients.
 
    >>> from sklearn import linear_model
    >>> reg = linear_model.LassoLars(alpha=.1)
-   >>> reg.fit([[0, 0], [1, 1]], [0, 1])  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-   LassoLars(alpha=0.1, copy_X=True, eps=..., fit_intercept=True,
-        fit_path=True, max_iter=500, normalize=True, positive=False,
-        precompute='auto', verbose=False)
-   >>> reg.coef_    # doctest: +ELLIPSIS
+   >>> reg.fit([[0, 0], [1, 1]], [0, 1])
+   LassoLars(alpha=0.1)
+   >>> reg.coef_
    array([0.717157..., 0.        ])
 
 .. topic:: Examples:
@@ -624,11 +622,12 @@ jointly during the fit of the model, the regularization parameters
 *log marginal likelihood*. The scikit-learn implementation
 is based on the algorithm described in Appendix A of (Tipping, 2001)
 where the update of the parameters :math:`\alpha` and :math:`\lambda` is done
-as suggested in (MacKay, 1992).
+as suggested in (MacKay, 1992). The initial value of the maximization procedure
+can be set with the hyperparameters ``alpha_init`` and ``lambda_init``.
 
-The remaining hyperparameters are the parameters :math:`\alpha_1`,
-:math:`\alpha_2`, :math:`\lambda_1` and :math:`\lambda_2` of the gamma priors
-over :math:`\alpha` and :math:`\lambda`. These are usually chosen to be
+There are four more hyperparameters, :math:`\alpha_1`, :math:`\alpha_2`,
+:math:`\lambda_1` and :math:`\lambda_2` of the gamma prior distributions over
+:math:`\alpha` and :math:`\lambda`. These are usually chosen to be
 *non-informative*. By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 10^{-6}`.
 
 
@@ -644,10 +643,8 @@ Bayesian Ridge Regression is used for regression::
     >>> X = [[0., 0.], [1., 1.], [2., 2.], [3., 3.]]
     >>> Y = [0., 1., 2., 3.]
     >>> reg = linear_model.BayesianRidge()
-    >>> reg.fit(X, Y)  # doctest: +NORMALIZE_WHITESPACE
-    BayesianRidge(alpha_1=1e-06, alpha_2=1e-06, compute_score=False, copy_X=True,
-           fit_intercept=True, lambda_1=1e-06, lambda_2=1e-06, n_iter=300,
-           normalize=False, tol=0.001, verbose=False)
+    >>> reg.fit(X, Y)
+    BayesianRidge()
 
 After being fitted, the model can then be used to predict new values::
 
@@ -666,6 +663,7 @@ is more robust to ill-posed problems.
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_linear_model_plot_bayesian_ridge.py`
+ * :ref:`sphx_glr_auto_examples_linear_model_plot_bayesian_ridge_curvefit.py`
 
 .. topic:: References:
 

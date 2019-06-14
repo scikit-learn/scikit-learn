@@ -44,7 +44,7 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
     """Init n_clusters seeds according to k-means++
 
     Parameters
-    -----------
+    ----------
     X : array or sparse matrix, shape (n_samples, n_features)
         The data to pick seeds for. To avoid memory copy, the input data
         should be double precision (dtype=np.float64).
@@ -887,7 +887,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         probably much faster than the default batch implementation.
 
     Notes
-    ------
+    -----
     The k-means problem is solved using either Lloyd's or Elkan's algorithm.
 
     The average complexity is given by O(k n T), were n is the number of

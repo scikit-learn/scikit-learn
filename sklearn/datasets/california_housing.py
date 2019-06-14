@@ -97,7 +97,7 @@ def fetch_california_housing(data_home=None, download_if_missing=True,
         .. versionadded:: 0.20
 
     Notes
-    ------
+    -----
 
     This dataset consists of 20,640 samples and 9 features.
     """

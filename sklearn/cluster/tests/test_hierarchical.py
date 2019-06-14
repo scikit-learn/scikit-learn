@@ -128,8 +128,6 @@ def test_agglomerative_clustering_wrong_arg_memory():
     assert_raises(ValueError, clustering.fit, X)
 
 
-@pytest.mark.filterwarnings("ignore:the behavior of nmi will "
-                            "change in version 0.22")
 def test_agglomerative_clustering():
     # Check that we obtain the correct number of clusters with
     # agglomerative clustering.
@@ -238,8 +236,6 @@ def test_ward_agglomeration():
     assert_raises(ValueError, agglo.fit, X[:0])
 
 
-@pytest.mark.filterwarnings("ignore:the behavior of nmi will "
-                            "change in version 0.22")
 def test_single_linkage_clustering():
     # Check that we get the correct result in two emblematic cases
     moons, moon_labels = make_moons(noise=0.05, random_state=42)
@@ -301,8 +297,6 @@ def test_scikit_vs_scipy():
     assert_raises(ValueError, _hc_cut, n_leaves + 1, children, n_leaves)
 
 
-@pytest.mark.filterwarnings("ignore:the behavior of nmi will "
-                            "change in version 0.22")
 def test_identical_points():
     # Ensure identical points are handled correctly when using mst with
     # a sparse connectivity matrix

@@ -17,7 +17,7 @@ from sklearn.metrics.cluster.supervised import _generalized_average
 from sklearn.utils import assert_all_finite
 from sklearn.utils.testing import (
         assert_equal, assert_almost_equal, assert_raise_message,
-        assert_warns_message, ignore_warnings
+        ignore_warnings
 )
 from numpy.testing import assert_array_almost_equal
 
@@ -30,17 +30,6 @@ score_funcs = [
     adjusted_mutual_info_score,
     normalized_mutual_info_score,
 ]
-
-
-def test_future_warning():
-    score_funcs_with_changing_means = [
-        normalized_mutual_info_score,
-        adjusted_mutual_info_score,
-    ]
-    warning_msg = "The behavior of "
-    args = [0, 0, 0], [0, 0, 0]
-    for score_func in score_funcs_with_changing_means:
-        assert_warns_message(FutureWarning, warning_msg, score_func, *args)
 
 
 @ignore_warnings(category=FutureWarning)
@@ -201,7 +190,6 @@ def test_adjustment_for_chance():
     assert_array_almost_equal(max_abs_scores, [0.02, 0.03, 0.03, 0.02], 2)
 
 
-@ignore_warnings(category=FutureWarning)
 def test_adjusted_mutual_info_score():
     # Compute the Adjusted Mutual Information and test against known values
     labels_a = np.array([1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3])
@@ -223,15 +211,14 @@ def test_adjusted_mutual_info_score():
     assert_almost_equal(emi, 0.15042, 5)
     # Adjusted mutual information
     ami = adjusted_mutual_info_score(labels_a, labels_b)
-    assert_almost_equal(ami, 0.27502, 5)
+    assert_almost_equal(ami, 0.27821, 5)
     ami = adjusted_mutual_info_score([1, 1, 2, 2], [2, 2, 3, 3])
     assert_equal(ami, 1.0)
     # Test with a very large array
     a110 = np.array([list(labels_a) * 110]).flatten()
     b110 = np.array([list(labels_b) * 110]).flatten()
     ami = adjusted_mutual_info_score(a110, b110)
-    # This is not accurate to more than 2 places
-    assert_almost_equal(ami, 0.37, 2)
+    assert_almost_equal(ami, 0.38, 2)
 
 
 def test_expected_mutual_info_overflow():
