@@ -129,6 +129,7 @@ def test_params_validation():
     # TypeError
     assert_raises(TypeError, NCA(max_iter='21').fit, X, y)
     assert_raises(TypeError, NCA(verbose='true').fit, X, y)
+    assert_raises(TypeError, NCA(tol='1').fit, X, y)
     assert_raises(TypeError, NCA(n_components='invalid').fit, X, y)
     assert_raises(TypeError, NCA(warm_start=1).fit, X, y)
 
