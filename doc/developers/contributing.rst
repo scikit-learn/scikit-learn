@@ -1519,6 +1519,9 @@ non_deterministic
 requires_positive_data - unused for now
     whether the estimator requires positive X.
 
+requires_positive_y
+    whether the estimator requires a positive y (only applicable for regression).
+
 no_validation
     whether the estimator skips input-validation. This is only meant for stateless and dummy transformers!
 

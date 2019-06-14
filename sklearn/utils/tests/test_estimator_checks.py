@@ -6,6 +6,8 @@ import scipy.sparse as sp
 
 from io import StringIO
 
+import pytest
+
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils import deprecated
 from sklearn.utils import _joblib
@@ -22,12 +24,12 @@ from sklearn.utils.estimator_checks import check_fit_score_takes_y
 from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.estimator_checks import check_outlier_corruption
-from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, SGDClassifier
 from sklearn.mixture import GaussianMixture
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.decomposition import NMF
-from sklearn.linear_model import MultiTaskElasticNet
+from sklearn.linear_model import MultiTaskElasticNet, LogisticRegression
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.tree import DecisionTreeClassifier
@@ -292,6 +294,18 @@ class TaggedBinaryClassifier(UntaggedBinaryClassifier):
         return {'binary_only': True}
 
 
+class RequiresPositiveYRegressor(LinearRegression):
+
+    def fit(self, X, y):
+        X, y = check_X_y(X, y)
+        if (y <= 0).any():
+            raise ValueError('negative y values not supported!')
+        return super().fit(X, y)
+
+    def _more_tags(self):
+        return {"requires_positive_y": True}
+
+
 def test_check_fit_score_takes_y_works_on_deprecated_fit():
     # Tests that check_fit_score_takes_y works on a class with
     # a deprecated fit method
@@ -305,7 +319,7 @@ def test_check_fit_score_takes_y_works_on_deprecated_fit():
     check_fit_score_takes_y("test", TestEstimatorWithDeprecatedFitMethod())
 
 
-def test_check_estimator():
+def test_check_estimator_bad():
     # tests that the estimator actually fails on "bad" estimators.
     # not a complete test of all checks, which are very extensive.
 
@@ -392,22 +406,33 @@ def test_check_estimator():
     assert_raises_regex(AssertionError, msg, check_estimator,
                         LargeSparseNotSupportedClassifier)
 
-    # non-regression test for estimators transforming to sparse data
-    check_estimator(SparseTransformer())
-
-    # doesn't error on actual estimator
-    check_estimator(AdaBoostClassifier)
-    check_estimator(AdaBoostClassifier())
-    check_estimator(MultiTaskElasticNet)
-    check_estimator(MultiTaskElasticNet())
-
-    # doesn't error on binary_only tagged estimator
-    check_estimator(TaggedBinaryClassifier)
-
     # does error on binary_only untagged estimator
     msg = 'Only 2 classes are supported'
     assert_raises_regex(ValueError, msg, check_estimator,
                         UntaggedBinaryClassifier)
+
+
+@pytest.mark.parametrize(
+    "estimator",
+    [
+        # non-regression test for estimators transforming to sparse data
+        SparseTransformer(),
+
+        # doesn't error on actual estimator
+        LogisticRegression,
+        LogisticRegression(),
+        MultiTaskElasticNet,
+        MultiTaskElasticNet(),
+
+        # doesn't error on binary_only tagged estimator
+        TaggedBinaryClassifier,
+
+        # Check regressor with requires_positive_y estimator tag
+        RequiresPositiveYRegressor,
+     ]
+)
+def test_check_estimator(estimator):
+    check_estimator(estimator)
 
 
 def test_check_outlier_corruption():
