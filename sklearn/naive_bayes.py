@@ -1199,30 +1199,35 @@ class CategoricalNB(BaseDiscreteNB):
         self.feature_log_prob_ = feature_log_prob
 
     def _joint_log_likelihood(self, X):
+        def _get_cat_index(mapping, cat, handle_unknown):
+            try:
+                return mapping[cat]
+            except KeyError:
+                if handle_unknown == 'warn':
+                    warnings.warn(
+                        "Category {} not expected for feature {} "
+                        "of features 0 - {}."
+                        .format(cat, i, self.n_features_-1)
+                    )
+                elif handle_unknown == 'error':
+                    raise KeyError(
+                        "Category {} not expected for feature {} "
+                        "of features 0 - {}."
+                        .format(cat, i, self.n_features_-1)
+                    )
+                else:
+                    return None
+
         if not X.shape[1] == self.n_features_:
             raise ValueError("Expected input with %d features, got %d instead"
                              .format(self.n_features_, X.shape[1]))
         jll = np.zeros((X.shape[0], self.class_count_.shape[0]))
         for i in range(self.n_features_):
-            X_feature = X[:, i]
-            indices = []
             mapping = self.feature_cat_index_mapping_[i]
-            for sample, cat in enumerate(X_feature):
-                try:
-                    indices.append(mapping[cat])
-                except KeyError:
-                    if self.handle_unknown == 'warn':
-                        warnings.warn(
-                            "Category {} not expected for feature {} "
-                            "of features 0 - {}."
-                            .format(cat, i, self.n_features_-1)
-                        )
-                    elif self.handle_unknown == 'error':
-                        raise KeyError(
-                            "Category {} not expected for feature {} "
-                            "of features 0 - {}."
-                            .format(cat, i, self.n_features_-1)
-                        )
+            # generator over all samples of feature i
+            indices = (_get_cat_index(mapping, cat, self.handle_unknown)
+                       for cat in X[:, i])
+            indices = [idx for idx in indices if idx is not None]
             # indices length is 0, if all categories have not been seen in the
             # training set
             if len(indices) > 0:
