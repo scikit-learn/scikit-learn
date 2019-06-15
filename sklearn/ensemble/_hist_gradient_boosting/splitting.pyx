@@ -351,7 +351,7 @@ cdef class Splitter:
 
     def find_node_split(
             Splitter self,
-            const unsigned int [::1] sample_indices,  # IN
+            unsigned int n_samples,
             hist_struct [:, ::1] histograms,  # IN
             const Y_DTYPE_C sum_gradients,
             const Y_DTYPE_C sum_hessians):
@@ -361,8 +361,8 @@ cdef class Splitter:
 
         Parameters
         ----------
-        sample_indices : ndarray of unsigned int, shape (n_samples_at_node,)
-            The indices of the samples at the node to split.
+        n_samples : int
+            The number of samples at the node.
         histograms : ndarray of HISTOGRAM_DTYPE of \
                 shape (n_features, max_bins)
             The histograms of the current node.
@@ -377,7 +377,6 @@ cdef class Splitter:
             The info about the best possible split among all features.
         """
         cdef:
-            int n_samples
             int feature_idx
             int best_feature_idx
             int n_features = self.n_features
@@ -386,7 +385,6 @@ cdef class Splitter:
             const unsigned char [:] has_missing_values = self.has_missing_values
 
         with nogil:
-            n_samples = sample_indices.shape[0]
 
             split_infos = <split_info_struct *> malloc(
                 self.n_features * sizeof(split_info_struct))

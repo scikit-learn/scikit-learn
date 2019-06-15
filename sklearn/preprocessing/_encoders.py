@@ -2,20 +2,14 @@
 #          Joris Van den Bossche <jorisvandenbossche@gmail.com>
 # License: BSD 3 clause
 
-import numbers
-import warnings
-
 import numpy as np
 from scipy import sparse
 
-from .. import get_config as _get_config
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
-from ..utils import deprecated
-from ..utils.fixes import _argmax, _object_dtype_isnan
+from ..utils.fixes import _argmax
 from ..utils.validation import check_is_fitted
 
-from .base import _transform_selected
 from .label import _encode, _encode_check_unknown
 
 

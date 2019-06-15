@@ -19,7 +19,6 @@ from .empirical_covariance_ import (empirical_covariance, EmpiricalCovariance,
 
 from ..exceptions import ConvergenceWarning
 from ..utils.validation import check_random_state, check_array
-from ..utils import deprecated
 from ..linear_model import cd_fast
 from ..linear_model import lars_path_gram
 from ..model_selection import check_cv, cross_val_score

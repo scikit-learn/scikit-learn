@@ -393,6 +393,41 @@ def _make_sparse_offset_regression(
     return X, y
 
 
+@pytest.mark.parametrize(
+    'solver, sparse_X',
+    ((solver, sparse_X) for
+     (solver, sparse_X) in product(
+         ['cholesky', 'sag', 'sparse_cg', 'lsqr', 'saga', 'ridgecv'],
+         [False, True])
+     if not (sparse_X and solver not in ['sparse_cg', 'ridgecv'])))
+@pytest.mark.parametrize(
+    'n_samples,dtype,proportion_nonzero',
+    [(20, 'float32', .1), (40, 'float32', 1.), (20, 'float64', .2)])
+@pytest.mark.parametrize('seed', np.arange(3))
+def test_solver_consistency(
+        solver, proportion_nonzero, n_samples, dtype, sparse_X, seed):
+    alpha = 1.
+    noise = 50. if proportion_nonzero > .9 else 500.
+    X, y = _make_sparse_offset_regression(
+        bias=10, n_features=30, proportion_nonzero=proportion_nonzero,
+        noise=noise, random_state=seed, n_samples=n_samples)
+    svd_ridge = Ridge(
+        solver='svd', normalize=True, alpha=alpha).fit(X, y)
+    X = X.astype(dtype, copy=False)
+    y = y.astype(dtype, copy=False)
+    if sparse_X:
+        X = sp.csr_matrix(X)
+    if solver == 'ridgecv':
+        ridge = RidgeCV(alphas=[alpha], normalize=True)
+    else:
+        ridge = Ridge(solver=solver, tol=1e-10, normalize=True, alpha=alpha)
+    ridge.fit(X, y)
+    assert_allclose(
+        ridge.coef_, svd_ridge.coef_, atol=1e-3, rtol=1e-3)
+    assert_allclose(
+        ridge.intercept_, svd_ridge.intercept_, atol=1e-3, rtol=1e-3)
+
+
 @pytest.mark.parametrize('gcv_mode', ['svd', 'eigen'])
 @pytest.mark.parametrize('X_constructor', [np.asarray, sp.csr_matrix])
 @pytest.mark.parametrize('X_shape', [(11, 8), (11, 20)])

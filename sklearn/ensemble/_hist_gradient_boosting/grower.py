@@ -16,6 +16,10 @@ from .histogram import HistogramBuilder
 from .predictor import TreePredictor
 from .utils import sum_parallel
 from .types import PREDICTOR_RECORD_DTYPE
+from .types import Y_DTYPE
+
+
+EPS = np.finfo(Y_DTYPE).eps  # to avoid zero division errors
 
 
 class TreeNode:
@@ -298,7 +302,7 @@ class TreeGrower:
         """
 
         node.split_info = self.splitter.find_node_split(
-            node.sample_indices, node.histograms, node.sum_gradients,
+            node.n_samples, node.histograms, node.sum_gradients,
             node.sum_hessians)
 
         if node.split_info.gain <= 0:  # no valid split
@@ -427,7 +431,7 @@ class TreeGrower:
         https://arxiv.org/abs/1603.02754
         """
         node.value = -self.shrinkage * node.sum_gradients / (
-            node.sum_hessians + self.splitter.l2_regularization)
+            node.sum_hessians + self.splitter.l2_regularization + EPS)
         self.finalized_leaves.append(node)
 
     def _finalize_splittable_nodes(self):
