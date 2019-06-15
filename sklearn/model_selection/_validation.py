@@ -381,7 +381,7 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
 
 def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
-                   parameters, fit_params, return_train_score=False,
+                   parameters, fit_params,imbalanced_model=None, return_train_score=False,
                    return_parameters=False, return_n_test_samples=False,
                    return_times=False, return_estimator=False,
                    error_score=np.nan):
@@ -490,6 +490,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, y_test = _safe_split(estimator, X, y, test, train)
+    if imbalanced_model is not None:
+        X_train, y_train = imbalanced_model.fit_resample(X_train, y_train)
 
     is_multimetric = not callable(scorer)
     n_scorers = len(scorer.keys()) if is_multimetric else 1
