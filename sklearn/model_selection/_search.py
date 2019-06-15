@@ -441,14 +441,6 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         else:
             check_is_fitted(self, 'best_estimator_')
 
-    def _check_is_imblearn(self, m_imb):
-        if self.imbalanced is not None:
-            if 'imblearn' not in str(type(m_imb)):
-                raise TypeError('Imbalanced_model is not an imblearn class')
-            else:
-                return clone(self.imbalanced)
-        return None
-
     @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
     def predict(self, X):
         """Call predict on the estimator with the best found parameters.
@@ -640,7 +632,14 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         n_splits = cv.get_n_splits(X, y, groups)
 
         base_estimator = clone(self.estimator)
-        m_imb = _check_is_imblearn(self.imbalanced)
+
+        if self.imbalanced is not None:
+            if 'imblearn' not in str(type(m_imb)):
+                raise TypeError('Imbalanced_model is not an imblearn class')
+            else:
+                m_imb = clone(self.imbalanced)
+        else:
+            m_imb = None
 
         parallel = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                             pre_dispatch=self.pre_dispatch)
