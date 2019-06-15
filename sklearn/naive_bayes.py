@@ -1147,44 +1147,47 @@ class CategoricalNB(BaseDiscreteNB):
         self.feature_cat_index_mapping_ = [{} for _ in range(n_features)]
 
     def _count(self, X, Y):
+        def _update_cat_mapping(cat_mapping, cats):
+            for cat in cats:
+                cat_mapping.setdefault(cat, len(cat_mapping))
+
+        def _update_cat_count_dims(cat_count, cat_mapping):
+            diff = len(cat_mapping) - cat_count.shape[1]
+            if diff > 0:
+                # we append a column full of zeros for each new category
+                return np.pad(cat_count, [(0, 0), (0, diff)], 'constant')
+            return cat_count
+
+        def _update_cat_count(X_feature, Y, cat_count, cat_mapping, n_classes):
+            for j in range(n_classes):
+                mask = Y[:, j].astype(bool)
+                X_feature_class = X_feature[mask]
+                Y_class = Y[mask, j]
+                class_cats, n_feature_class = _unique_sums(X_feature_class,
+                                                                Y_class)
+                indices = [cat_mapping[cat] for cat in class_cats]
+                cat_count[j, indices] += n_feature_class
+
+        def _unique_sums(X_feature_class, Y_class):
+            # Sum for each category in x the corresponding values in y
+            class_cats, inv = np.unique(X_feature_class, return_inverse=True)
+            n_feature_class = np.zeros(len(class_cats), dtype=Y_class.dtype)
+            np.add.at(n_feature_class, inv, Y_class)
+            return class_cats, n_feature_class
+
         self.class_count_ += Y.sum(axis=0)
         for i in range(self.n_features_):
             X_feature = X[:, i]
             cats = np.unique(X_feature)
-            self._update_cat_mapping(self.feature_cat_index_mapping_[i], cats)
+            _update_cat_mapping(self.feature_cat_index_mapping_[i], cats)
             # update category_count_dimensions in case partial_fit is used, to
             # to account for unseen categories
-            self.category_count_[i] = self._update_cat_count_dims(
+            self.category_count_[i] = _update_cat_count_dims(
                 self.category_count_[i], self.feature_cat_index_mapping_[i])
-            self._update_cat_count(X_feature, Y,
-                                   self.category_count_[i],
-                                   self.feature_cat_index_mapping_[i])
-
-    def _update_cat_mapping(self, cat_mapping, cats):
-        for cat in cats:
-            cat_mapping.setdefault(cat, len(cat_mapping))
-
-    def _update_cat_count_dims(self, cat_count, cat_mapping):
-        diff = len(cat_mapping) - cat_count.shape[1]
-        if diff > 0:
-            return np.pad(cat_count, [(0, 0), (0, diff)], 'constant')
-        return cat_count
-
-    def _update_cat_count(self, X_feature, Y, cat_count, cat_mapping):
-        for j in range(self.class_count_.shape[0]):
-            X_feature_class = X_feature[Y[:, j] > 0]
-            Y_class = Y[Y[:, j] > 0, j]
-            class_cats, n_feature_class = self._unique_sums(X_feature_class,
-                                                            Y_class)
-            indices = [cat_mapping[cat] for cat in class_cats]
-            cat_count[j, indices] += n_feature_class
-
-    def _unique_sums(self, X_feature_class, Y_class):
-        # Sum for each category in x the corresponding values in y
-        class_cats, inv = np.unique(X_feature_class, return_inverse=True)
-        n_feature_class = np.zeros(len(class_cats), dtype=Y_class.dtype)
-        np.add.at(n_feature_class, inv, Y_class)
-        return class_cats, n_feature_class
+            _update_cat_count(X_feature, Y,
+                              self.category_count_[i],
+                              self.feature_cat_index_mapping_[i],
+                              self.class_count_.shape[0])
 
     def _update_feature_log_prob(self, alpha):
         feature_log_prob = {}
