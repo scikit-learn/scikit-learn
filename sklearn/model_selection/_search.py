@@ -1330,10 +1330,10 @@ class RandomizedSearchCV(BaseSearchCV):
                                  shrinking=True, tol=0.001, verbose=False),
                    iid='deprecated', imbalanced_model=None, n_iter=20,
                    n_jobs=None,
-                   param_distributions={'C': <scipy.stats._distn_infrastructure\
+                   param_distributions={'C': <scipy.stats._distn_infrastructure
                                            .rv_frozen object at 0x7f6467a4feb8>,
-                                        'degree': <scipy.stats.\
-                                         _distn_infrastructure.\
+                                        'degree': <scipy.stats.
+                                         _distn_infrastructure.
                                          rv_frozen object at 0x7f64673b75f8>,
                                         'kernel': ['poly', 'rbf']},
                    pre_dispatch='2*n_jobs', random_state=None, refit=True,
