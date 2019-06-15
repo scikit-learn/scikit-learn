@@ -347,14 +347,14 @@ cdef class Splitter:
         cdef:
             int feature_idx
             int best_feature_idx
-            unsigned int n_features = self.n_features
+            int n_features = self.n_features
             split_info_struct split_info
             split_info_struct * split_infos
 
         with nogil:
 
             split_infos = <split_info_struct *> malloc(
-                n_features * sizeof(split_info_struct))
+                self.n_features * sizeof(split_info_struct))
 
             for feature_idx in prange(n_features, schedule='static'):
                 # For each feature, find best bin to split on
@@ -387,7 +387,7 @@ cdef class Splitter:
             split_info_struct * split_infos) nogil:  # IN
         """Returns the best feature among those in splits_infos."""
         cdef:
-            unsigned int feature_idx
+            int feature_idx
             int best_feature_idx = 0
 
         for feature_idx in range(1, self.n_features):
