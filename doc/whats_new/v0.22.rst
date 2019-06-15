@@ -113,3 +113,7 @@ These changes mostly affect library developers.
   ``transform`` is called before ``fit``; previously an ``AttributeError`` or
   ``ValueError`` was acceptable.
   :pr:`13013` by by :user:`Agamemnon Krasoulis <agamemnonc>`.
+
+- |Enhancement| Binary only classifiers are now supported in estimator checks.
+  Such classifiers need to have the `binary_only=True` estimator tag.
+  :pr:`13875` by `Trevor Stephens`_.
