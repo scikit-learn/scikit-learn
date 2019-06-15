@@ -447,8 +447,8 @@ cdef class SEuclideanDistance(DistanceMetric):
         self.size = self.vec.shape[0]
         self.p = 2
 
-    cdef inline DTYPE_t _rdist(self, DTYPE_t* x1, DTYPE_t* x2,
-                               ITYPE_t size) nogil except -1:
+    cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
+                              ITYPE_t size) nogil except -1:
         if size != self.size:
             with gil:
                 raise ValueError('SEuclidean dist: size of V does not match')
@@ -459,13 +459,9 @@ cdef class SEuclideanDistance(DistanceMetric):
             d += tmp * tmp / self.vec_ptr[j]
         return d
 
-    cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
-                              ITYPE_t size) nogil except -1:
-        return self._rdist(x1, x2, size)
-
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) nogil except -1:
-        return sqrt(self._rdist(x1, x2, size))
+        return sqrt(self.rdist(x1, x2, size))
 
     cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) nogil except -1:
         return sqrt(rdist)
@@ -544,7 +540,7 @@ cdef class MinkowskiDistance(DistanceMetric):
                              "For p=inf, use ChebyshevDistance.")
         self.p = p
 
-    cdef inline DTYPE_t _rdist(self, DTYPE_t* x1, DTYPE_t* x2,
+    cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
                               ITYPE_t size) nogil except -1:
         cdef DTYPE_t d=0
         cdef np.intp_t j
@@ -552,13 +548,9 @@ cdef class MinkowskiDistance(DistanceMetric):
             d += pow(fabs(x1[j] - x2[j]), self.p)
         return d
 
-    cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
-                              ITYPE_t size) nogil except -1:
-        return self._rdist(x1, x2, size)
-
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) nogil except -1:
-        return pow(self._rdist(x1, x2, size), 1. / self.p)
+        return pow(self.rdist(x1, x2, size), 1. / self.p)
 
     cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) nogil except -1:
         return pow(rdist, 1. / self.p)
@@ -603,7 +595,7 @@ cdef class WMinkowskiDistance(DistanceMetric):
         self.vec_ptr = get_vec_ptr(self.vec)
         self.size = self.vec.shape[0]
 
-    cdef inline DTYPE_t _rdist(self, DTYPE_t* x1, DTYPE_t* x2,
+    cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
                               ITYPE_t size) nogil except -1:
         if size != self.size:
             with gil:
@@ -615,13 +607,9 @@ cdef class WMinkowskiDistance(DistanceMetric):
             d += pow(self.vec_ptr[j] * fabs(x1[j] - x2[j]), self.p)
         return d
 
-    cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
-                              ITYPE_t size) nogil except -1:
-        return self._rdist(x1, x2, size)
-
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) nogil except -1:
-        return pow(self._rdist(x1, x2, size), 1. / self.p)
+        return pow(self.rdist(x1, x2, size), 1. / self.p)
 
     cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) nogil except -1:
         return pow(rdist, 1. / self.p)
@@ -672,7 +660,7 @@ cdef class MahalanobisDistance(DistanceMetric):
         self.vec = np.zeros(self.size, dtype=DTYPE)
         self.vec_ptr = get_vec_ptr(self.vec)
 
-    cdef inline DTYPE_t _rdist(self, DTYPE_t* x1, DTYPE_t* x2,
+    cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
                               ITYPE_t size) nogil except -1:
         if size != self.size:
             with gil:
@@ -692,13 +680,9 @@ cdef class MahalanobisDistance(DistanceMetric):
             d += tmp * self.vec_ptr[i]
         return d
 
-    cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
-                              ITYPE_t size) nogil except -1:
-        return self._rdist(x1, x2, size)
-
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) nogil except -1:
-        return sqrt(self._rdist(x1, x2, size))
+        return sqrt(self.rdist(x1, x2, size))
 
     cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) nogil except -1:
         return sqrt(rdist)
