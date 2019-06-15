@@ -1164,7 +1164,7 @@ class CategoricalNB(BaseDiscreteNB):
                 X_feature_class = X_feature[mask]
                 Y_class = Y[mask, j]
                 class_cats, n_feature_class = _unique_sums(X_feature_class,
-                                                                Y_class)
+                                                           Y_class)
                 indices = [cat_mapping[cat] for cat in class_cats]
                 cat_count[j, indices] += n_feature_class
 
