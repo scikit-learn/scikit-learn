@@ -2,7 +2,6 @@
 # Author: Nicolas Hug
 
 from abc import ABC, abstractmethod
-from functools import partial
 
 import numpy as np
 from timeit import default_timer as time
@@ -103,12 +102,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self._validate_parameters()
         self.n_features_ = X.shape[1]  # used for validation in predict()
 
-        # support_missing_values_ indicates whether the first bin should be
-        # reserved for missing values. In order for the training and
-        # validation data to be treated equally, we need to determine this
-        # before the train/val split.
-        self.support_missing_values_ = np.isnan(X).any(axis=0).astype(np.uint8)
-
         # we need this stateful variable to tell raw_predict() that it was
         # called from fit() (this current method), and that the data it has
         # received is pre-binned.
@@ -134,11 +127,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             X_train, X_val, y_train, y_val = train_test_split(
                 X, y, test_size=self.validation_fraction, stratify=stratify,
                 random_state=rng)
-            has_missing_values = np.isnan(X_train).any(axis=0).astype(np.uint8)
         else:
             X_train, y_train = X, y
             X_val, y_val = None, None
-            has_missing_values = self.support_missing_values_
+
+        has_missing_values = np.isnan(X_train).any(axis=0).astype(np.uint8)
 
         # Bin the data
         self.bin_mapper_ = _BinMapper(max_bins=self.max_bins, random_state=rng)
@@ -252,7 +245,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     max_bins=self.max_bins,
                     actual_n_bins=self.bin_mapper_.actual_n_bins_,
                     has_missing_values=has_missing_values,
-                    support_missing_values=self.support_missing_values_,
                     max_leaf_nodes=self.max_leaf_nodes,
                     max_depth=self.max_depth,
                     min_samples_leaf=self.min_samples_leaf,
@@ -282,11 +274,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     # Update raw_predictions_val with the newest tree(s)
                     if self._use_validation_data:
                         for k, pred in enumerate(self._predictors[-1]):
-                            raw_predictions_val[k, :] += (
-                                pred.predict_binned(
-                                    X_binned_val,
-                                    self.support_missing_values_)
-                            )
+                            raw_predictions_val[k, :] += \
+                                pred.predict_binned(X_binned_val)
 
                     should_early_stop = self._check_early_stopping_loss(
                         raw_predictions, y_train,
@@ -410,8 +399,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             # Fit X. If missing values were found in the original data (before
             # any train/val split), the first bin is reserved for missing
             # values, even if there aren't missing value in the training data.
-            self.bin_mapper_.fit(
-                X, support_missing_values=self.support_missing_values_)
+            self.bin_mapper_.fit(X)
 
         X_binned = self.bin_mapper_.transform(X)  # F-aligned array
 
@@ -497,13 +485,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         raw_predictions += self._baseline_prediction
         for predictors_of_ith_iteration in self._predictors:
             for k, predictor in enumerate(predictors_of_ith_iteration):
-                if is_binned:
-                    predict = partial(
-                        predictor.predict_binned,
-                        support_missing_values=self.support_missing_values_
-                    )
-                else:
-                    predict = predictor.predict
+                predict = (predictor.predict_binned if is_binned
+                           else predictor.predict)
                 raw_predictions[k, :] += predict(X)
 
         return raw_predictions
@@ -592,9 +575,10 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
         The maximum number of bins to use. Before training, each feature of
         the input array ``X`` is binned into at most ``max_bins`` bins, which
         allows for a much faster training stage. Features with a small
-        number of unique values may use less than ``max_bins`` bins. One bin is
-        specifically allocated for missing values, if any. Must be no larger
-        than 256.
+        number of unique values may use less than ``max_bins`` bins. The
+        first bin is specifically allocated for missing values, whether they
+        exist or not. As a result, the number of bins used for non-missing
+        values is at most ``max_bins - 1``. Must be no larger than 256.
     scoring : str or callable or None, optional (default=None)
         Scoring parameter to use for early stopping. It can be a single
         string (see :ref:`scoring_parameter`) or a callable (see
@@ -769,9 +753,10 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         The maximum number of bins to use. Before training, each feature of
         the input array ``X`` is binned into at most ``max_bins`` bins, which
         allows for a much faster training stage. Features with a small
-        number of unique values may use less than ``max_bins`` bins. One bin is
-        specifically allocated for missing values, if any. Must be no larger
-        than 256.
+        number of unique values may use less than ``max_bins`` bins. The
+        first bin is specifically allocated for missing values, whether they
+        exist or not. As a result, the number of bins used for non-missing
+        values is at most ``max_bins - 1``. Must be no larger than 256.
     scoring : str or callable or None, optional (default=None)
         Scoring parameter to use for early stopping. It can be a single
         string (see :ref:`scoring_parameter`) or a callable (see

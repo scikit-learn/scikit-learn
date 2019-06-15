@@ -15,7 +15,7 @@ def _make_training_data(n_bins=256, constant_hessian=True):
 
     # Generate some test data directly binned so as to test the grower code
     # independently of the binning logic.
-    X_binned = rng.randint(0, n_bins - 1, size=(n_samples, 2),
+    X_binned = rng.randint(1, n_bins - 1, size=(n_samples, 2),
                            dtype=X_BINNED_DTYPE)
     X_binned = np.asfortranarray(X_binned)
 
@@ -161,11 +161,11 @@ def test_predictor_from_grower():
     # Probe some predictions for each leaf of the tree
     # each group of 3 samples corresponds to a condition in _make_training_data
     input_data = np.array([
-        [0, 0],
+        [1, 1],
         [42, 99],
         [128, 255],
 
-        [129, 0],
+        [129, 1],
         [129, 85],
         [255, 85],
 
@@ -173,13 +173,12 @@ def test_predictor_from_grower():
         [129, 255],
         [242, 100],
     ], dtype=np.uint8)
-    has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
-    predictions = predictor.predict_binned(input_data, has_missing_values)
+    predictions = predictor.predict_binned(input_data)
     expected_targets = [1, 1, 1, 1, 1, 1, -1, -1, -1]
     assert np.allclose(predictions, expected_targets)
 
     # Check that training set can be recovered exactly:
-    predictions = predictor.predict_binned(X_binned, has_missing_values)
+    predictions = predictor.predict_binned(X_binned)
     assert np.allclose(predictions, -all_gradients)
 
 
@@ -310,15 +309,10 @@ def test_init_parameters_validation():
                    min_hessian_to_split=-1)
 
 
-@pytest.mark.parametrize('support_missing_values', [True, False])
-def test_missing_value_predict_only(support_missing_values):
+def test_missing_value_predict_only():
     # Make sure that missing values are supported at predict time even if they
     # were not encountered in the training data: the missing values are
     # assigned to whichever child has the most samples.
-
-    # Passing support_missing_values=True tests the case where missing values
-    # were in the original data (train + val), but not present anymore in the
-    # training data after the train/val split.
 
     rng = np.random.RandomState(0)
     n_samples = 100
@@ -329,8 +323,7 @@ def test_missing_value_predict_only(support_missing_values):
     hessians = np.ones(shape=1, dtype=G_H_DTYPE)
 
     grower = TreeGrower(X_binned, gradients, hessians, min_samples_leaf=5,
-                        has_missing_values=False,
-                        support_missing_values=support_missing_values)
+                        has_missing_values=False)
     grower.grow()
 
     predictor = grower.make_predictor()

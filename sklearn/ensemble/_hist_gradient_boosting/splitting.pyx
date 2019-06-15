@@ -100,13 +100,6 @@ cdef class Splitter:
         equal to max_bins.
     has_missing_values : ndarray, shape (n_features,)
         Whether each feature contains missing values (in the training data).
-    support_missing_values : ndarray, shape (n_features,)
-        Whether the first bin is reserved for missing values, for each
-        feature. Naturally, has_missing_values implies
-        support_missing_values. However, support_missing_values might True
-        while has_missing_values is False, in the case where there are
-        missing values in the training data before the train/val split, but
-        not after.
     l2_regularization : float
         The L2 regularization parameter.
     min_hessian_to_split : float, default=1e-3
@@ -126,7 +119,6 @@ cdef class Splitter:
         unsigned int n_features
         const unsigned int [::1] actual_n_bins
         const unsigned char [::1] has_missing_values
-        const unsigned char [::1] support_missing_values
         unsigned char hessians_are_constant
         Y_DTYPE_C l2_regularization
         Y_DTYPE_C min_hessian_to_split
@@ -141,7 +133,6 @@ cdef class Splitter:
                  const X_BINNED_DTYPE_C [::1, :] X_binned,
                  const unsigned int [::1] actual_n_bins,
                  const unsigned char [::1] has_missing_values,
-                 const unsigned char [::1] support_missing_values,
                  Y_DTYPE_C l2_regularization,
                  Y_DTYPE_C min_hessian_to_split=1e-3,
                  unsigned int min_samples_leaf=20,
@@ -152,7 +143,6 @@ cdef class Splitter:
         self.n_features = X_binned.shape[1]
         self.actual_n_bins = actual_n_bins
         self.has_missing_values = has_missing_values
-        self.support_missing_values = support_missing_values
         self.l2_regularization = l2_regularization
         self.min_hessian_to_split = min_hessian_to_split
         self.min_samples_leaf = min_samples_leaf
@@ -251,8 +241,6 @@ cdef class Splitter:
             X_BINNED_DTYPE_C bin_idx = split_info.bin_idx
             unsigned char missing_go_to_left = split_info.missing_go_to_left
             int feature_idx = split_info.feature_idx
-            unsigned char support_missing_values = \
-                self.support_missing_values[feature_idx]
             const X_BINNED_DTYPE_C [::1] X_binned = \
                 self.X_binned[:, feature_idx]
             unsigned int [::1] left_indices_buffer = self.left_indices_buffer
@@ -297,7 +285,7 @@ cdef class Splitter:
                 stop = start + sizes[thread_idx]
                 for i in range(start, stop):
                     sample_idx = sample_indices[i]
-                    if (support_missing_values and X_binned[sample_idx] == 0):
+                    if X_binned[sample_idx] == 0:  # missing value
                         if missing_go_to_left:
                             left_indices_buffer[start + left_count] = sample_idx
                             left_count = left_count + 1
@@ -470,8 +458,6 @@ cdef class Splitter:
             unsigned int n_samples_left
             unsigned int n_samples_right
             unsigned int n_samples_ = n_samples
-            # if first bin is reserved for missing values, skip it
-            unsigned int start = self.support_missing_values[feature_idx]
             # Note that considering splitting on the last bin is useless since
             # it would result in having 0 samples in the right node (forbidden)
             unsigned int end = self.actual_n_bins[feature_idx] - 1
@@ -489,7 +475,8 @@ cdef class Splitter:
                                                    self.l2_regularization)
 
 
-        for bin_idx in range(start, end):
+        for bin_idx in range(1, end):
+            # we skip the first bin which is reserved for missing values
             n_samples_left += histograms[feature_idx, bin_idx].count
             n_samples_right = n_samples_ - n_samples_left
 

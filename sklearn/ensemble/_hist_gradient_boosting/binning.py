@@ -16,8 +16,7 @@ from ._binning import _map_to_bins
 from .types import X_DTYPE, X_BINNED_DTYPE
 
 
-def _find_binning_thresholds(data, max_bins, support_missing_values,
-                             subsample, random_state):
+def _find_binning_thresholds(data, max_bins, subsample, random_state):
     """Extract feature-wise quantiles from numerical data.
 
     Missing values are ignored for finding the thresholds.
@@ -30,9 +29,6 @@ def _find_binning_thresholds(data, max_bins, support_missing_values,
         The maximum number of bins to use. If for a given feature the number of
         unique values is less than ``max_bins``, then those unique values
         will be used to compute the bin thresholds, instead of the quantiles.
-    support_missing_values : ndarray, shape (n_features,)
-        For each feature, indicates whether the first bin should be reserved
-        for missing values.
     subsample : int or None
         If ``n_samples > subsample``, then ``sub_samples`` samples will be
         randomly choosen to compute the quantiles. If ``None``, the whole data
@@ -46,8 +42,7 @@ def _find_binning_thresholds(data, max_bins, support_missing_values,
     binning_thresholds: list of arrays
         For each feature, stores the increasing numeric values that can
         be used to separate the bins. Thus ``len(binning_thresholds) ==
-        n_features``. If support_missing_values is True for a given feature,
-        the first threshold is set to NaN.
+        n_features``. The first threshold (for missing values) is always NaN.
     """
     if not (2 <= max_bins <= 256):
         raise ValueError('max_bins={} should be no smaller than 2 '
@@ -66,7 +61,7 @@ def _find_binning_thresholds(data, max_bins, support_missing_values,
             col_data = col_data[~missing_mask]
         col_data = np.ascontiguousarray(col_data, dtype=X_DTYPE)
         distinct_values = np.unique(col_data)
-        if len(distinct_values) + support_missing_values[f_idx] <= max_bins:
+        if len(distinct_values) <= max_bins - 1:  # - 1 for missing values bin
             midpoints = distinct_values[:-1] + distinct_values[1:]
             midpoints *= .5
         else:
@@ -75,20 +70,19 @@ def _find_binning_thresholds(data, max_bins, support_missing_values,
             # np.unique(col_data, return_counts) instead but this is more
             # work and the performance benefit will be limited because we
             # work on a fixed-size subsample of the full data.
-            n_percentiles = max_bins + 1 - support_missing_values[f_idx]
-            percentiles = np.linspace(0, 100, num=n_percentiles)
+            percentiles = np.linspace(0, 100, num=max_bins)
             percentiles = percentiles[1:-1]
             midpoints = np.percentile(col_data, percentiles,
                                       interpolation='midpoint').astype(X_DTYPE)
 
-        # If the first bin is reserved for missing vaules, we prepend a fake
-        # threshold (nan) for the first bin. This threshold is never used in
-        # practice, but we use it to keep the indexes of the bins synchronized
-        # with the bin_thresholds_ attribute: bin k must be at index k.
-        if support_missing_values[f_idx]:
-            midpoints = np.insert(midpoints, 0, np.nan)
+        # We prepend a fake threshold (nan) for the first bin (reserved for
+        # missing values). This threshold is never used in practice, but we
+        # use it to keep the indexes of the bins synchronized with the
+        # bin_thresholds_ attribute: bin k must be at index k.
+        midpoints = np.insert(midpoints, 0, np.nan)
 
         binning_thresholds.append(midpoints)
+
     return binning_thresholds
 
 
@@ -110,8 +104,10 @@ class _BinMapper(BaseEstimator, TransformerMixin):
     max_bins : int, optional (default=256)
         The maximum number of bins to use (including the bin for missing
         values, if any). If for a given feature the number of unique values
-        is less than ``max_bins``, then those unique values will be used to
-        compute the bin thresholds, instead of the quantiles.
+        is less than ``max_bins - 1``, then those unique values will be used
+        to compute the bin thresholds, instead of the quantiles. The first bin
+        is always reserved for missing values, so the number of bins used
+        for non-missing values is actually ``max_bins - 1``.
     subsample : int or None, optional (default=2e5)
         If ``n_samples > subsample``, then ``sub_samples`` samples will be
         randomly choosen to compute the quantiles. If ``None``, the whole data
@@ -126,24 +122,16 @@ class _BinMapper(BaseEstimator, TransformerMixin):
         self.subsample = subsample
         self.random_state = random_state
 
-    def fit(self, X, support_missing_values=False):
+    def fit(self, X):
         """Fit data X by computing the binning thresholds.
 
-        The first bin is reserved for missing values, if any.
+        The first bin is reserved for missing values, whether there are
+        missing values or not.
 
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
             The data to bin.
-        support_missing_values : bool or ndarray of bool, shape (n_features,)
-            For each feature, indicates whether the first bin should be
-            reserved for missing values. Note that inferring this from X would
-            be incorrect here, in general. The X that is passed here is the
-            training data (after the train/val split).
-            support_missing_values must be computed on the whole data
-            (before the split) so that the first bin is allocated if there are
-            missing values in the training data OR in the validation data.
-            If it's a bool, the same values is used for all features.
 
         Returns
         -------
@@ -151,14 +139,9 @@ class _BinMapper(BaseEstimator, TransformerMixin):
         """
         X = check_array(X, dtype=[X_DTYPE], force_all_finite='allow-nan')
 
-        if isinstance(support_missing_values, bool):
-            support_missing_values = \
-                np.array([support_missing_values] * X.shape[1], dtype=np.uint8)
-        self.support_missing_values_ = support_missing_values
-
         all_bin_thresholds = _find_binning_thresholds(
-            X, self.max_bins, self.support_missing_values_,
-            subsample=self.subsample, random_state=self.random_state)
+            X, self.max_bins, subsample=self.subsample,
+            random_state=self.random_state)
 
         self.bin_thresholds_ = all_bin_thresholds
 
@@ -171,8 +154,7 @@ class _BinMapper(BaseEstimator, TransformerMixin):
     def transform(self, X):
         """Bin data X.
 
-        Missing values will be mapped to the first bin, provided that the
-        support_missing_values parameter was correctly set when calling fit().
+        Missing values will be mapped to the first bin.
 
         Parameters
         ----------
@@ -193,6 +175,5 @@ class _BinMapper(BaseEstimator, TransformerMixin):
                                         X.shape[1])
             )
         binned = np.zeros_like(X, dtype=X_BINNED_DTYPE, order='F')
-        _map_to_bins(X, self.bin_thresholds_, self.support_missing_values_,
-                     binned)
+        _map_to_bins(X, self.bin_thresholds_, binned)
         return binned

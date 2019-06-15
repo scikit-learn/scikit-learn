@@ -169,7 +169,7 @@ def test_binning_train_validation_are_separated():
 
     n_samples = X_classification.shape[0]
     assert np.all(mapper_training_data.actual_n_bins_ ==
-                  int((1 - validation_fraction) * n_samples))
+                  int((1 - validation_fraction) * n_samples) + 1)
     assert np.all(mapper_training_data.actual_n_bins_ !=
                   mapper_whole_data.actual_n_bins_)
 
