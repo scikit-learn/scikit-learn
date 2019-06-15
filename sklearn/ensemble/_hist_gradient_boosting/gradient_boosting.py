@@ -696,7 +696,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         generalizes to 'categorical_crossentropy' for multiclass
         classification. 'auto' will automatically choose either loss depending
         on the nature of the problem.
-    learning_rate : float, optional (default=1)
+    learning_rate : float, optional (default=0.1)
         The learning rate, also known as *shrinkage*. This is used as a
         multiplicative factor for the leaves values. Use ``1`` for no
         shrinkage.

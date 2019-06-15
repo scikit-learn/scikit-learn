@@ -168,13 +168,13 @@ in bias::
     >>> clf = DecisionTreeClassifier(max_depth=None, min_samples_split=2,
     ...     random_state=0)
     >>> scores = cross_val_score(clf, X, y, cv=5)
-    >>> scores.mean()                               # doctest: +ELLIPSIS
+    >>> scores.mean()
     0.98...
 
     >>> clf = RandomForestClassifier(n_estimators=10, max_depth=None,
     ...     min_samples_split=2, random_state=0)
     >>> scores = cross_val_score(clf, X, y, cv=5)
-    >>> scores.mean()                               # doctest: +ELLIPSIS
+    >>> scores.mean()
     0.999...
 
     >>> clf = ExtraTreesClassifier(n_estimators=10, max_depth=None,
@@ -385,7 +385,7 @@ learners::
     >>> iris = load_iris()
     >>> clf = AdaBoostClassifier(n_estimators=100)
     >>> scores = cross_val_score(clf, iris.data, iris.target, cv=5)
-    >>> scores.mean()                             # doctest: +ELLIPSIS
+    >>> scores.mean()
     0.9...
 
 The number of weak learners is controlled by the parameter ``n_estimators``. The
@@ -506,7 +506,7 @@ with 100 decision stumps as weak learners::
 
     >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
     ...     max_depth=1, random_state=0).fit(X_train, y_train)
-    >>> clf.score(X_test, y_test)                 # doctest: +ELLIPSIS
+    >>> clf.score(X_test, y_test)
     0.913...
 
 The number of weak learners (i.e. regression trees) is controlled by the parameter ``n_estimators``; :ref:`The size of each tree <gradient_boosting_tree_size>` can be controlled either by setting the tree depth via ``max_depth`` or by setting the number of leaf nodes via ``max_leaf_nodes``. The ``learning_rate`` is a hyper-parameter in the range (0.0, 1.0] that controls overfitting via :ref:`shrinkage <gradient_boosting_shrinkage>` .
@@ -540,7 +540,7 @@ for regression which can be specified via the argument
     >>> y_train, y_test = y[:200], y[200:]
     >>> est = GradientBoostingRegressor(n_estimators=100, learning_rate=0.1,
     ...     max_depth=1, random_state=0, loss='ls').fit(X_train, y_train)
-    >>> mean_squared_error(y_test, est.predict(X_test))    # doctest: +ELLIPSIS
+    >>> mean_squared_error(y_test, est.predict(X_test))
     5.00...
 
 The figure below shows the results of applying :class:`GradientBoostingRegressor`
@@ -579,7 +579,7 @@ fitted model.
 
   >>> _ = est.set_params(n_estimators=200, warm_start=True)  # set warm_start and new nr of trees
   >>> _ = est.fit(X_train, y_train) # fit additional 100 trees to est
-  >>> mean_squared_error(y_test, est.predict(X_test))    # doctest: +ELLIPSIS
+  >>> mean_squared_error(y_test, est.predict(X_test))
   3.84...
 
 .. _gradient_boosting_tree_size:
@@ -823,7 +823,7 @@ accessed via the ``feature_importances_`` property::
     >>> X, y = make_hastie_10_2(random_state=0)
     >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
     ...     max_depth=1, random_state=0).fit(X, y)
-    >>> clf.feature_importances_  # doctest: +ELLIPSIS
+    >>> clf.feature_importances_
     array([0.10..., 0.10..., 0.11..., ...
 
 .. topic:: Examples:

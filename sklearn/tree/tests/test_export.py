@@ -1,8 +1,6 @@
 """
 Testing for export functions of decision trees (sklearn.tree.export).
 """
-import pytest
-
 from re import finditer, search
 from textwrap import dedent
 

@@ -179,9 +179,9 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     Single metric evaluation using ``cross_validate``
 
     >>> cv_results = cross_validate(lasso, X, y, cv=3)
-    >>> sorted(cv_results.keys())                         # doctest: +ELLIPSIS
+    >>> sorted(cv_results.keys())
     ['fit_time', 'score_time', 'test_score']
-    >>> cv_results['test_score']    # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+    >>> cv_results['test_score']
     array([0.33150734, 0.08022311, 0.03531764])
 
     Multiple metric evaluation using ``cross_validate``
@@ -190,9 +190,9 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     >>> scores = cross_validate(lasso, X, y, cv=3,
     ...                         scoring=('r2', 'neg_mean_squared_error'),
     ...                         return_train_score=True)
-    >>> print(scores['test_neg_mean_squared_error'])      # doctest: +ELLIPSIS
+    >>> print(scores['test_neg_mean_squared_error'])
     [-3635.5... -3573.3... -6114.7...]
-    >>> print(scores['train_r2'])                         # doctest: +ELLIPSIS
+    >>> print(scores['train_r2'])
     [0.28010158 0.39088426 0.22784852]
 
     See Also
@@ -351,7 +351,7 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
     >>> X = diabetes.data[:150]
     >>> y = diabetes.target[:150]
     >>> lasso = linear_model.Lasso()
-    >>> print(cross_val_score(lasso, X, y, cv=3))  # doctest: +ELLIPSIS
+    >>> print(cross_val_score(lasso, X, y, cv=3))
     [0.33150734 0.08022311 0.03531764]
 
     See Also

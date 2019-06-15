@@ -101,7 +101,7 @@ Usage examples:
     >>> iris = datasets.load_iris()
     >>> X, y = iris.data, iris.target
     >>> clf = svm.SVC(random_state=0)
-    >>> cross_val_score(clf, X, y, cv=5, scoring='recall_macro')  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    >>> cross_val_score(clf, X, y, cv=5, scoring='recall_macro')
     array([0.96..., 0.96..., 0.96..., 0.93..., 1.        ])
     >>> model = svm.SVC()
     >>> cross_val_score(model, X, y, cv=5, scoring='wrong_choice')
@@ -190,9 +190,9 @@ Here is an example of building custom scorers, and of using the
     >>> from sklearn.dummy import DummyClassifier
     >>> clf = DummyClassifier(strategy='most_frequent', random_state=0)
     >>> clf = clf.fit(X, y)
-    >>> my_custom_loss_func(clf.predict(X), y) # doctest: +ELLIPSIS
+    >>> my_custom_loss_func(clf.predict(X), y)
     0.69...
-    >>> score(clf, X, y) # doctest: +ELLIPSIS
+    >>> score(clf, X, y)
     -0.69...
 
 
@@ -274,10 +274,10 @@ permitted and will require a wrapper to return a single metric::
     ...            'fp': make_scorer(fp), 'fn': make_scorer(fn)}
     >>> cv_results = cross_validate(svm.fit(X, y), X, y, cv=5, scoring=scoring)
     >>> # Getting the test set true positive scores
-    >>> print(cv_results['test_tp'])  # doctest: +NORMALIZE_WHITESPACE
+    >>> print(cv_results['test_tp'])
     [10  9  8  7  8]
     >>> # Getting the test set false negative scores
-    >>> print(cv_results['test_fn'])  # doctest: +NORMALIZE_WHITESPACE
+    >>> print(cv_results['test_fn'])
     [0 1 2 3 2]
 
 .. _classification_metrics:
@@ -815,15 +815,15 @@ Here are some small examples in binary classification::
   1.0
   >>> metrics.recall_score(y_true, y_pred)
   0.5
-  >>> metrics.f1_score(y_true, y_pred)  # doctest: +ELLIPSIS
+  >>> metrics.f1_score(y_true, y_pred)
   0.66...
-  >>> metrics.fbeta_score(y_true, y_pred, beta=0.5)  # doctest: +ELLIPSIS
+  >>> metrics.fbeta_score(y_true, y_pred, beta=0.5)
   0.83...
-  >>> metrics.fbeta_score(y_true, y_pred, beta=1)  # doctest: +ELLIPSIS
+  >>> metrics.fbeta_score(y_true, y_pred, beta=1)
   0.66...
-  >>> metrics.fbeta_score(y_true, y_pred, beta=2) # doctest: +ELLIPSIS
+  >>> metrics.fbeta_score(y_true, y_pred, beta=2)
   0.55...
-  >>> metrics.precision_recall_fscore_support(y_true, y_pred, beta=0.5)  # doctest: +ELLIPSIS
+  >>> metrics.precision_recall_fscore_support(y_true, y_pred, beta=0.5)
   (array([0.66..., 1.        ]), array([1. , 0.5]), array([0.71..., 0.83...]), array([2, 2]))
 
 
@@ -833,13 +833,13 @@ Here are some small examples in binary classification::
   >>> y_true = np.array([0, 0, 1, 1])
   >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
   >>> precision, recall, threshold = precision_recall_curve(y_true, y_scores)
-  >>> precision  # doctest: +ELLIPSIS
+  >>> precision
   array([0.66..., 0.5       , 1.        , 1.        ])
   >>> recall
   array([1. , 0.5, 0.5, 0. ])
   >>> threshold
   array([0.35, 0.4 , 0.8 ])
-  >>> average_precision_score(y_true, y_scores)  # doctest: +ELLIPSIS
+  >>> average_precision_score(y_true, y_scores)
   0.83...
 
 
@@ -895,17 +895,15 @@ Then the metrics are defined as:
   >>> from sklearn import metrics
   >>> y_true = [0, 1, 2, 0, 1, 2]
   >>> y_pred = [0, 2, 1, 0, 0, 1]
-  >>> metrics.precision_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
+  >>> metrics.precision_score(y_true, y_pred, average='macro')
   0.22...
   >>> metrics.recall_score(y_true, y_pred, average='micro')
-  ... # doctest: +ELLIPSIS
   0.33...
-  >>> metrics.f1_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
+  >>> metrics.f1_score(y_true, y_pred, average='weighted')
   0.26...
-  >>> metrics.fbeta_score(y_true, y_pred, average='macro', beta=0.5)  # doctest: +ELLIPSIS
+  >>> metrics.fbeta_score(y_true, y_pred, average='macro', beta=0.5)
   0.23...
   >>> metrics.precision_recall_fscore_support(y_true, y_pred, beta=0.5, average=None)
-  ... # doctest: +ELLIPSIS
   (array([0.66..., 0.        , 0.        ]), array([1., 0., 0.]), array([0.71..., 0.        , 0.        ]), array([2, 2, 2]...))
 
 For multiclass classification with a "negative class", it is possible to exclude some labels:
@@ -917,7 +915,6 @@ For multiclass classification with a "negative class", it is possible to exclude
 Similarly, labels not present in the data sample may be accounted for in macro-averaging.
 
   >>> metrics.precision_score(y_true, y_pred, labels=[0, 1, 2, 3], average='macro')
-  ... # doctest: +ELLIPSIS
   0.166...
 
 .. _jaccard_similarity_score:
@@ -950,14 +947,14 @@ In the binary case: ::
   ...                    [1, 1, 0]])
   >>> y_pred = np.array([[1, 1, 1],
   ...                    [1, 0, 0]])
-  >>> jaccard_score(y_true[0], y_pred[0])  # doctest: +ELLIPSIS
+  >>> jaccard_score(y_true[0], y_pred[0])
   0.6666...
 
 In the multilabel case with binary label indicators: ::
 
-  >>> jaccard_score(y_true, y_pred, average='samples')  # doctest: +ELLIPSIS
+  >>> jaccard_score(y_true, y_pred, average='samples')
   0.5833...
-  >>> jaccard_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
+  >>> jaccard_score(y_true, y_pred, average='macro')
   0.6666...
   >>> jaccard_score(y_true, y_pred, average=None)
   array([0.5, 0.5, 1. ])
@@ -968,7 +965,6 @@ multilabel problem: ::
   >>> y_pred = [0, 2, 1, 2]
   >>> y_true = [0, 1, 2, 2]
   >>> jaccard_score(y_true, y_pred, average=None)
-  ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   array([1. , 0. , 0.33...])
   >>> jaccard_score(y_true, y_pred, average='macro')
   0.44...
@@ -1016,15 +1012,12 @@ with a svm classifier in a binary class problem::
   >>> X = [[0], [1]]
   >>> y = [-1, 1]
   >>> est = svm.LinearSVC(random_state=0)
-  >>> est.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-  LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
-       intercept_scaling=1, loss='squared_hinge', max_iter=1000,
-       multi_class='ovr', penalty='l2', random_state=0, tol=0.0001,
-       verbose=0)
+  >>> est.fit(X, y)
+  LinearSVC(random_state=0)
   >>> pred_decision = est.decision_function([[-2], [3], [0.5]])
-  >>> pred_decision  # doctest: +ELLIPSIS
+  >>> pred_decision
   array([-2.18...,  2.36...,  0.09...])
-  >>> hinge_loss([-1, 1, 1], pred_decision)  # doctest: +ELLIPSIS
+  >>> hinge_loss([-1, 1, 1], pred_decision)
   0.3...
 
 Here is an example demonstrating the use of the :func:`hinge_loss` function
@@ -1034,14 +1027,11 @@ with a svm classifier in a multiclass problem::
   >>> Y = np.array([0, 1, 2, 3])
   >>> labels = np.array([0, 1, 2, 3])
   >>> est = svm.LinearSVC()
-  >>> est.fit(X, Y)  # doctest: +NORMALIZE_WHITESPACE
-  LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
-       intercept_scaling=1, loss='squared_hinge', max_iter=1000,
-       multi_class='ovr', penalty='l2', random_state=None, tol=0.0001,
-       verbose=0)
+  >>> est.fit(X, Y)
+  LinearSVC()
   >>> pred_decision = est.decision_function([[-1], [2], [3]])
   >>> y_true = [0, 2, 3]
-  >>> hinge_loss(y_true, pred_decision, labels)  #doctest: +ELLIPSIS
+  >>> hinge_loss(y_true, pred_decision, labels)
   0.56...
 
 .. _log_loss:
@@ -1091,7 +1081,7 @@ method.
     >>> from sklearn.metrics import log_loss
     >>> y_true = [0, 0, 1, 1]
     >>> y_pred = [[.9, .1], [.8, .2], [.3, .7], [.01, .99]]
-    >>> log_loss(y_true, y_pred)    # doctest: +ELLIPSIS
+    >>> log_loss(y_true, y_pred)
     0.1738...
 
 The first ``[.9, .1]`` in ``y_pred`` denotes 90% probability that the first
@@ -1156,7 +1146,7 @@ function:
     >>> from sklearn.metrics import matthews_corrcoef
     >>> y_true = [+1, +1, +1, -1]
     >>> y_pred = [+1, -1, +1, +1]
-    >>> matthews_corrcoef(y_true, y_pred)  # doctest: +ELLIPSIS
+    >>> matthews_corrcoef(y_true, y_pred)
     -0.33...
 
 .. _multilabel_confusion_matrix:
@@ -1613,7 +1603,7 @@ Here is a small example of usage of this function::
     >>> from sklearn.metrics import label_ranking_average_precision_score
     >>> y_true = np.array([[1, 0, 0], [0, 0, 1]])
     >>> y_score = np.array([[0.75, 0.5, 1], [1, 0.2, 0.1]])
-    >>> label_ranking_average_precision_score(y_true, y_score) # doctest: +ELLIPSIS
+    >>> label_ranking_average_precision_score(y_true, y_score)
     0.416...
 
 .. _label_ranking_loss:
@@ -1648,7 +1638,7 @@ Here is a small example of usage of this function::
     >>> from sklearn.metrics import label_ranking_loss
     >>> y_true = np.array([[1, 0, 0], [0, 0, 1]])
     >>> y_score = np.array([[0.75, 0.5, 1], [1, 0.2, 0.1]])
-    >>> label_ranking_loss(y_true, y_score) # doctest: +ELLIPSIS
+    >>> label_ranking_loss(y_true, y_score)
     0.75...
     >>> # With the following prediction, we have perfect and minimal loss
     >>> y_score = np.array([[1.0, 0.1, 0.2], [0.1, 0.2, 0.9]])
@@ -1720,15 +1710,13 @@ function::
     >>> from sklearn.metrics import explained_variance_score
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
-    >>> explained_variance_score(y_true, y_pred)  # doctest: +ELLIPSIS
+    >>> explained_variance_score(y_true, y_pred)
     0.957...
     >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> explained_variance_score(y_true, y_pred, multioutput='raw_values')
-    ... # doctest: +ELLIPSIS
     array([0.967..., 1.        ])
     >>> explained_variance_score(y_true, y_pred, multioutput=[0.3, 0.7])
-    ... # doctest: +ELLIPSIS
     0.990...
 
 .. _max_error:
@@ -1795,7 +1783,6 @@ Here is a small example of usage of the :func:`mean_absolute_error` function::
   >>> mean_absolute_error(y_true, y_pred, multioutput='raw_values')
   array([0.5, 1. ])
   >>> mean_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
-  ... # doctest: +ELLIPSIS
   0.85...
 
 .. _mean_squared_error:
@@ -1826,7 +1813,7 @@ function::
   0.375
   >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
   >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
-  >>> mean_squared_error(y_true, y_pred)  # doctest: +ELLIPSIS
+  >>> mean_squared_error(y_true, y_pred)
   0.7083...
 
 .. topic:: Examples:
@@ -1865,11 +1852,11 @@ function::
   >>> from sklearn.metrics import mean_squared_log_error
   >>> y_true = [3, 5, 2.5, 7]
   >>> y_pred = [2.5, 5, 4, 8]
-  >>> mean_squared_log_error(y_true, y_pred)  # doctest: +ELLIPSIS
+  >>> mean_squared_log_error(y_true, y_pred)
   0.039...
   >>> y_true = [[0.5, 1], [1, 2], [7, 6]]
   >>> y_pred = [[0.5, 2], [1, 2.5], [8, 8]]
-  >>> mean_squared_log_error(y_true, y_pred)  # doctest: +ELLIPSIS
+  >>> mean_squared_log_error(y_true, y_pred)
   0.044...
 
 .. _median_absolute_error:
@@ -1938,23 +1925,19 @@ Here is a small example of usage of the :func:`r2_score` function::
   >>> from sklearn.metrics import r2_score
   >>> y_true = [3, -0.5, 2, 7]
   >>> y_pred = [2.5, 0.0, 2, 8]
-  >>> r2_score(y_true, y_pred)  # doctest: +ELLIPSIS
+  >>> r2_score(y_true, y_pred)
   0.948...
   >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
   >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
   >>> r2_score(y_true, y_pred, multioutput='variance_weighted')
-  ... # doctest: +ELLIPSIS
   0.938...
   >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
   >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
   >>> r2_score(y_true, y_pred, multioutput='uniform_average')
-  ... # doctest: +ELLIPSIS
   0.936...
   >>> r2_score(y_true, y_pred, multioutput='raw_values')
-  ... # doctest: +ELLIPSIS
   array([0.965..., 0.908...])
   >>> r2_score(y_true, y_pred, multioutput=[0.3, 0.7])
-  ... # doctest: +ELLIPSIS
   0.925...
 
 
@@ -2017,19 +2000,19 @@ Next, let's compare the accuracy of ``SVC`` and ``most_frequent``::
   >>> from sklearn.dummy import DummyClassifier
   >>> from sklearn.svm import SVC
   >>> clf = SVC(kernel='linear', C=1).fit(X_train, y_train)
-  >>> clf.score(X_test, y_test) # doctest: +ELLIPSIS
+  >>> clf.score(X_test, y_test)
   0.63...
   >>> clf = DummyClassifier(strategy='most_frequent', random_state=0)
   >>> clf.fit(X_train, y_train)
-  DummyClassifier(constant=None, random_state=0, strategy='most_frequent')
-  >>> clf.score(X_test, y_test)  # doctest: +ELLIPSIS
+  DummyClassifier(random_state=0, strategy='most_frequent')
+  >>> clf.score(X_test, y_test)
   0.57...
 
 We see that ``SVC`` doesn't do much better than a dummy classifier. Now, let's
 change the kernel::
 
   >>> clf = SVC(kernel='rbf', C=1).fit(X_train, y_train)
-  >>> clf.score(X_test, y_test)  # doctest: +ELLIPSIS
+  >>> clf.score(X_test, y_test)
   0.94...
 
 We see that the accuracy was boosted to almost 100%.  A cross validation

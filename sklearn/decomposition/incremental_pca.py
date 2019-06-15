@@ -108,7 +108,7 @@ class IncrementalPCA(_BasePCA):
     >>> transformer = IncrementalPCA(n_components=7, batch_size=200)
     >>> # either partially fit on smaller batches of data
     >>> transformer.partial_fit(X[:100, :])
-    IncrementalPCA(batch_size=200, copy=True, n_components=7, whiten=False)
+    IncrementalPCA(batch_size=200, n_components=7)
     >>> # or let the fit function itself divide the data into batches
     >>> X_transformed = transformer.fit_transform(X)
     >>> X_transformed.shape
