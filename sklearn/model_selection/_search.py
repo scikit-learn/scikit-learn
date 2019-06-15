@@ -1307,11 +1307,10 @@ class RandomizedSearchCV(BaseSearchCV):
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
 
-     Examples
+    Examples
     --------
     >>> from sklearn import svm, datasets
     >>> from sklearn.model_selection import RandomizedSearchCV
-    >>> from imblearn.combine import SMOTETomek
     >>> from scipy.stats import uniform
     >>> from scipy.stats import randint as sp_randint
     >>> iris = datasets.load_iris()
@@ -1320,7 +1319,7 @@ class RandomizedSearchCV(BaseSearchCV):
     >>> n_iters = 20
     >>> svc = svm.SVC()
     >>> clf = RandomizedSearchCV(svc,
-                                 imbalanced_model=SMOTETomek(random_state=42),
+                                 imbalanced_model=None,
                                  param_distributions=parameters,
                                  n_iter=n_iters)
     >>> clf.fit(iris.data, iris.target)
