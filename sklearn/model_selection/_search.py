@@ -382,7 +382,8 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
     @abstractmethod
     def __init__(self, estimator, scoring=None, n_jobs=None, iid='deprecated',
                  refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs',
-                 error_score=np.nan, return_train_score=True,imbalanced_model=None):
+                 error_score=np.nan, return_train_score=True,
+                 imbalanced_model=None):
 
         self.scoring = scoring
         self.estimator = estimator
@@ -633,7 +634,9 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         base_estimator = clone(self.estimator)
 
         if self.imbalanced is not None:
-            m_imbalanced = clone(self.imbalanced)
+            m_imb = clone(self.imbalanced)
+        else:
+            m_imb = None
 
         parallel = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                             pre_dispatch=self.pre_dispatch)
@@ -662,7 +665,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
 
                 out = parallel(delayed(_fit_and_score)(clone(base_estimator),
                                                        X, y,
-                                                       imbalanced_model=m_imbalanced,
+                                                       imbalanced_model=m_imb,
                                                        train=train, test=test,
                                                        parameters=parameters,
                                                        **fit_and_score_kwargs)
@@ -716,7 +719,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
                 **self.best_params_)
             refit_start_time = time.time()
             if self.imbalanced is not None:
-                X, y = m_imbalanced.fit_resample(X, y)
+                X, y = m_imb.fit_resample(X, y)
             if y is not None:
                 self.best_estimator_.fit(X, y, **fit_params)
             else:
@@ -1309,10 +1312,13 @@ class RandomizedSearchCV(BaseSearchCV):
     >>> from scipy.stats import uniform
     >>> from scipy.stats import randint as sp_randint
     >>> iris = datasets.load_iris()
-    >>> parameters = {'kernel': ['poly', 'rbf'], 'C': uniform(0, 50), 'degree': sp_randint(2, 4)}
+    >>> parameters = {'kernel': ['poly', 'rbf'], 'C': uniform(0, 50),
+                      'degree': sp_randint(2, 4)}
     >>> n_iters = 20
     >>> svc = svm.SVC()
-    >>> clf = RandomizedSearchCV(svc, imbalanced_model=SMOTETomek(random_state=42), param_distributions=parameters,
+    >>> clf = RandomizedSearchCV(svc,
+                                 imbalanced_model=SMOTETomek(random_state=42),
+                                 param_distributions=parameters,
                                  n_iter=n_iters)
     >>> clf.fit(iris.data, iris.target)
     RandomizedSearchCV(cv=None, error_score=nan,
@@ -1324,8 +1330,11 @@ class RandomizedSearchCV(BaseSearchCV):
                                  shrinking=True, tol=0.001, verbose=False),
                    iid='deprecated', imbalanced_model=None, n_iter=20,
                    n_jobs=None,
-                   param_distributions={'C': <scipy.stats._distn_infrastructure.rv_frozen object at 0x7f6467a4feb8>,
-                                        'degree': <scipy.stats._distn_infrastructure.rv_frozen object at 0x7f64673b75f8>,
+                   param_distributions={'C': <scipy.stats._distn_infrastructure\
+                                           .rv_frozen object at 0x7f6467a4feb8>,
+                                        'degree': <scipy.stats.\
+                                         _distn_infrastructure.\
+                                         rv_frozen object at 0x7f64673b75f8>,
                                         'kernel': ['poly', 'rbf']},
                    pre_dispatch='2*n_jobs', random_state=None, refit=True,
                    return_train_score=False, scoring=None, verbose=0)
@@ -1479,7 +1488,7 @@ class RandomizedSearchCV(BaseSearchCV):
                  n_jobs=None, iid='deprecated', refit=True,
                  cv=None, verbose=0, pre_dispatch='2*n_jobs',
                  random_state=None, error_score=np.nan,
-                 return_train_score=False,imbalanced_model=None):
+                 return_train_score=False, imbalanced_model=None):
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.random_state = random_state
@@ -1487,7 +1496,8 @@ class RandomizedSearchCV(BaseSearchCV):
             estimator=estimator, scoring=scoring,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
             pre_dispatch=pre_dispatch, error_score=error_score,
-            return_train_score=return_train_score,imbalanced_model=imbalanced_model)
+            return_train_score=return_train_score,
+            imbalanced_model=imbalanced_model)
 
     def _run_search(self, evaluate_candidates):
         """Search n_iter candidates from param_distributions"""

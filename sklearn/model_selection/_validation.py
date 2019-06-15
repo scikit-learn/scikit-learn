@@ -381,7 +381,8 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
 
 def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
-                   parameters, fit_params,imbalanced_model=None, return_train_score=False,
+                   parameters, fit_params, imbalanced_model=None,
+                   return_train_score=False,
                    return_parameters=False, return_n_test_samples=False,
                    return_times=False, return_estimator=False,
                    error_score=np.nan):
