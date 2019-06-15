@@ -441,6 +441,14 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         else:
             check_is_fitted(self, 'best_estimator_')
 
+    def _check_is_imblearn(self, m_imb):
+        if self.imbalanced is not None:
+            if 'imblearn' not in str(type(m_imb)):
+                raise TypeError('Imbalanced_model is not an imblearn class')
+            else:
+                return clone(self.imbalanced)
+        return None
+
     @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
     def predict(self, X):
         """Call predict on the estimator with the best found parameters.
@@ -632,16 +640,13 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         n_splits = cv.get_n_splits(X, y, groups)
 
         base_estimator = clone(self.estimator)
-
-        if self.imbalanced is not None:
-            m_imb = clone(self.imbalanced)
-        else:
-            m_imb = None
+        m_imb = _check_is_imblearn(self.imbalanced)
 
         parallel = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                             pre_dispatch=self.pre_dispatch)
 
-        fit_and_score_kwargs = dict(scorer=scorers,
+        fit_and_score_kwargs = dict(imbalanced_model=m_imb,
+                                    scorer=scorers,
                                     fit_params=fit_params,
                                     return_train_score=self.return_train_score,
                                     return_n_test_samples=True,
@@ -665,7 +670,6 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
 
                 out = parallel(delayed(_fit_and_score)(clone(base_estimator),
                                                        X, y,
-                                                       imbalanced_model=m_imb,
                                                        train=train, test=test,
                                                        parameters=parameters,
                                                        **fit_and_score_kwargs)
@@ -719,7 +723,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
                 **self.best_params_)
             refit_start_time = time.time()
             if self.imbalanced is not None:
-                X, y = m_imb.fit_resample(X, y)
+                X, y = clone(m_imb).fit_resample(X, y)
             if y is not None:
                 self.best_estimator_.fit(X, y, **fit_params)
             else:
@@ -1226,7 +1230,7 @@ class RandomizedSearchCV(BaseSearchCV):
         .. deprecated:: 0.22
             Parameter ``iid`` is deprecated in 0.22 and will be removed in 0.24
 
-    imbalanced_model: instance of a imblearn class, default=None
+    imbalanced_model: instance of a imblearn class, optional (default=None)
         For unbalanced data.
         On cv, apply the imbalanced equalization only on train data,
         which prevents a sub-optimal parameter obtention caused by
@@ -1303,6 +1307,25 @@ class RandomizedSearchCV(BaseSearchCV):
         However computing the scores on the training set can be computationally
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
+
+     Examples
+    --------
+    >>> from sklearn import svm, datasets
+    >>> from sklearn.model_selection import RandomizedSearchCV
+    >>> from imblearn.combine import SMOTETomek
+    >>> from scipy.stats import uniform
+    >>> from scipy.stats import randint as sp_randint
+    >>> iris = datasets.load_iris()
+    >>> parameters = {'kernel': ['poly', 'rbf'], 'C': uniform(0, 50),
+                      'degree': sp_randint(2, 4)}
+    >>> n_iters = 20
+    >>> svc = svm.SVC()
+    >>> clf = RandomizedSearchCV(svc,
+                                 imbalanced_model=SMOTETomek(random_state=42),
+                                 param_distributions=parameters,
+                                 n_iter=n_iters)
+    >>> clf.fit(iris.data, iris.target)
+    >>> sorted(clf.cv_results_.keys())
 
     Attributes
     ----------
