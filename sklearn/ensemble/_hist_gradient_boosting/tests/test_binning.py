@@ -20,9 +20,8 @@ def _find_binning_thresholds(data, max_bins=256, subsample=int(2e5),
                              random_state=None):
     # Just a redef to avoid having to pass arguments all the time (as the
     # function is private we don't use default values for parameters)
-    binning_thresholds = _find_binning_thresholds_orig(
-        data, max_bins, subsample, random_state)
-    return binning_thresholds
+    return _find_binning_thresholds_orig(data, max_bins, subsample,
+                                         random_state)
 
 
 def test_find_binning_thresholds_regular_data():

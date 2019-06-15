@@ -274,8 +274,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     # Update raw_predictions_val with the newest tree(s)
                     if self._use_validation_data:
                         for k, pred in enumerate(self._predictors[-1]):
-                            raw_predictions_val[k, :] += \
-                                pred.predict_binned(X_binned_val)
+                            raw_predictions_val[k, :] += (
+                                pred.predict_binned(X_binned_val))
 
                     should_early_stop = self._check_early_stopping_loss(
                         raw_predictions, y_train,
@@ -394,20 +394,13 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             print("Binning {:.3f} GB of {} data: ".format(
                 X.nbytes / 1e9, description), end="", flush=True)
         tic = time()
-
         if is_training_data:
-            # Fit X. If missing values were found in the original data (before
-            # any train/val split), the first bin is reserved for missing
-            # values, even if there aren't missing value in the training data.
-            self.bin_mapper_.fit(X)
-
-        X_binned = self.bin_mapper_.transform(X)  # F-aligned array
-
-        if not is_training_data:
+            X_binned = self.bin_mapper_.fit_transform(X)  # F-aligned array
+        else:
+            X_binned = self.bin_mapper_.transform(X)  # F-aligned array
             # We convert the array to C-contiguous since predicting is faster
             # with this layout (training is faster on F-arrays though)
             X_binned = np.ascontiguousarray(X_binned)
-
         toc = time()
         if self.verbose:
             duration = toc - tic

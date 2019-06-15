@@ -103,9 +103,9 @@ class _BinMapper(BaseEstimator, TransformerMixin):
     ----------
     max_bins : int, optional (default=256)
         The maximum number of bins to use (including the bin for missing
-        values, if any). If for a given feature the number of unique values
-        is less than ``max_bins - 1``, then those unique values will be used
-        to compute the bin thresholds, instead of the quantiles. The first bin
+        values). If for a given feature the number of unique values is less
+        than ``max_bins - 1``, then those unique values will be used to
+        compute the bin thresholds, instead of the quantiles. The first bin
         is always reserved for missing values, so the number of bins used
         for non-missing values is actually ``max_bins - 1``.
     subsample : int or None, optional (default=2e5)
@@ -122,7 +122,7 @@ class _BinMapper(BaseEstimator, TransformerMixin):
         self.subsample = subsample
         self.random_state = random_state
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Fit data X by computing the binning thresholds.
 
         The first bin is reserved for missing values, whether there are
@@ -132,18 +132,17 @@ class _BinMapper(BaseEstimator, TransformerMixin):
         ----------
         X : array-like, shape (n_samples, n_features)
             The data to bin.
+        y: None
+            Ignored.
 
         Returns
         -------
         self : object
         """
         X = check_array(X, dtype=[X_DTYPE], force_all_finite='allow-nan')
-
-        all_bin_thresholds = _find_binning_thresholds(
+        self.bin_thresholds_ = _find_binning_thresholds(
             X, self.max_bins, subsample=self.subsample,
             random_state=self.random_state)
-
-        self.bin_thresholds_ = all_bin_thresholds
 
         self.actual_n_bins_ = np.array(
             [thresholds.shape[0] + 1 for thresholds in self.bin_thresholds_],
@@ -159,7 +158,7 @@ class _BinMapper(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            The data to bin. Must be the fitting data.
+            The data to bin.
 
         Returns
         -------
