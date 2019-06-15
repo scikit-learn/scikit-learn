@@ -634,7 +634,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         base_estimator = clone(self.estimator)
 
         if self.imbalanced is not None:
-            if 'imblearn' not in str(type(m_imb)):
+            if 'imblearn' not in str(type(self.imbalanced)):
                 raise TypeError('Imbalanced_model is not an imblearn class')
             else:
                 m_imb = clone(self.imbalanced)
