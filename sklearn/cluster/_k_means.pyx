@@ -45,7 +45,7 @@ cpdef DOUBLE _assign_labels_array(np.ndarray[floating, ndim=2] X,
         unsigned int center_stride
         unsigned int sample_idx, center_idx, feature_idx
         unsigned int store_distances = 0
-        unsigned int k
+        INT k
         np.ndarray[floating, ndim=1] center_squared_norms
         # the following variables are always double cause make them floating
         # does not save any memory, but makes the code much bigger
@@ -111,7 +111,7 @@ cpdef DOUBLE _assign_labels_csr(X, np.ndarray[floating, ndim=1] sample_weight,
         unsigned int n_samples = X.shape[0]
         unsigned int store_distances = 0
         unsigned int sample_idx, center_idx, feature_idx
-        unsigned int k
+        INT k
         np.ndarray[floating, ndim=1] center_squared_norms
         # the following variables are always double cause make them floating
         # does not save any memory, but makes the code much bigger
@@ -200,7 +200,7 @@ def _mini_batch_update_csr(X, np.ndarray[floating, ndim=1] sample_weight,
         unsigned int n_features = centers.shape[1]
 
         unsigned int sample_idx, center_idx, feature_idx
-        unsigned int k
+        INT k
         DOUBLE old_weight_sum, new_weight_sum
         DOUBLE center_diff
         DOUBLE squared_diff = 0.0
