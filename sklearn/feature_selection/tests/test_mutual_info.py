@@ -1,12 +1,10 @@
-from __future__ import division
 
 import numpy as np
-from numpy.testing import run_module_suite
 from scipy.sparse import csr_matrix
 
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import (assert_array_equal, assert_almost_equal,
-                                   assert_false, assert_raises, assert_equal,
+                                   assert_raises, assert_equal,
                                    assert_greater)
 from sklearn.feature_selection.mutual_info_ import (
     mutual_info_regression, mutual_info_classif, _compute_mi)
@@ -185,22 +183,26 @@ def test_mutual_info_options():
     X_csr = csr_matrix(X)
 
     for mutual_info in (mutual_info_regression, mutual_info_classif):
-        assert_raises(ValueError, mutual_info_regression, X_csr, y,
+        assert_raises(ValueError, mutual_info, X_csr, y,
                       discrete_features=False)
+        assert_raises(ValueError, mutual_info, X, y,
+                      discrete_features='manual')
+        assert_raises(ValueError, mutual_info, X_csr, y,
+                      discrete_features=[True, False, True])
+        assert_raises(IndexError, mutual_info, X, y,
+                      discrete_features=[True, False, True, False])
+        assert_raises(IndexError, mutual_info, X, y, discrete_features=[1, 4])
 
         mi_1 = mutual_info(X, y, discrete_features='auto', random_state=0)
         mi_2 = mutual_info(X, y, discrete_features=False, random_state=0)
-
-        mi_3 = mutual_info(X_csr, y, discrete_features='auto',
+        mi_3 = mutual_info(X_csr, y, discrete_features='auto', random_state=0)
+        mi_4 = mutual_info(X_csr, y, discrete_features=True, random_state=0)
+        mi_5 = mutual_info(X, y, discrete_features=[True, False, True],
                            random_state=0)
-        mi_4 = mutual_info(X_csr, y, discrete_features=True,
-                           random_state=0)
+        mi_6 = mutual_info(X, y, discrete_features=[0, 2], random_state=0)
 
         assert_array_equal(mi_1, mi_2)
         assert_array_equal(mi_3, mi_4)
+        assert_array_equal(mi_5, mi_6)
 
-    assert_false(np.allclose(mi_1, mi_3))
-
-
-if __name__ == '__main__':
-    run_module_suite()
+    assert not np.allclose(mi_1, mi_3)

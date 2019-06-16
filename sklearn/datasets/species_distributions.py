@@ -38,31 +38,40 @@ For an example of using this dataset, see
 # License: BSD 3 clause
 
 from io import BytesIO
-from os import makedirs
+from os import makedirs, remove
 from os.path import exists
 
-try:
-    # Python 2
-    from urllib2 import urlopen
-    PY2 = True
-except ImportError:
-    # Python 3
-    from urllib.request import urlopen
-    PY2 = False
 
+import logging
 import numpy as np
 
-from sklearn.datasets.base import get_data_home
+from .base import get_data_home
+from .base import _fetch_remote
+from .base import RemoteFileMetadata
 from ..utils import Bunch
-from sklearn.datasets.base import _pkl_filepath
-from sklearn.externals import joblib
+from .base import _pkl_filepath
+from ..utils import _joblib
 
-DIRECTORY_URL = "http://biodiversityinformatics.amnh.org/open_source/maxent/"
+# The original data can be found at:
+# https://biodiversityinformatics.amnh.org/open_source/maxent/samples.zip
+SAMPLES = RemoteFileMetadata(
+    filename='samples.zip',
+    url='https://ndownloader.figshare.com/files/5976075',
+    checksum=('abb07ad284ac50d9e6d20f1c4211e0fd'
+              '3c098f7f85955e89d321ee8efe37ac28'))
 
-SAMPLES_URL = DIRECTORY_URL + "samples.zip"
-COVERAGES_URL = DIRECTORY_URL + "coverages.zip"
+# The original data can be found at:
+# https://biodiversityinformatics.amnh.org/open_source/maxent/coverages.zip
+COVERAGES = RemoteFileMetadata(
+    filename='coverages.zip',
+    url='https://ndownloader.figshare.com/files/5976078',
+    checksum=('4d862674d72e79d6cee77e63b98651ec'
+              '7926043ba7d39dcb31329cf3f6073807'))
 
 DATA_ARCHIVE_NAME = "species_coverage.pkz"
+
+
+logger = logging.getLogger(__name__)
 
 
 def _load_coverage(F, header_length=6, dtype=np.int16):
@@ -70,7 +79,7 @@ def _load_coverage(F, header_length=6, dtype=np.int16):
 
     This will return a numpy array of the given dtype
     """
-    header = [F.readline() for i in range(header_length)]
+    header = [F.readline() for _ in range(header_length)]
     make_tuple = lambda t: (t.split()[0], float(t.split()[1]))
     header = dict([make_tuple(line) for line in header])
 
@@ -94,12 +103,8 @@ def _load_csv(F):
     rec : np.ndarray
         record array representing the data
     """
-    if PY2:
-        # Numpy recarray wants Python 2 str but not unicode
-        names = F.readline().strip().split(',')
-    else:
-        # Numpy recarray wants Python 3 str but not bytes...
-        names = F.readline().decode('ascii').strip().split(',')
+    names = F.readline().decode('ascii').strip().split(',')
+
     rec = np.loadtxt(F, skiprows=0, delimiter=',', dtype='a22,f4,f4')
     rec.dtype.names = names
     return rec
@@ -149,7 +154,7 @@ def fetch_species_distributions(data_home=None,
         instead of trying to download the data from the source site.
 
     Returns
-    --------
+    -------
     The data is returned as a Bunch object with the following attributes:
 
     coverages : array, shape = [14, 1592, 1212]
@@ -157,14 +162,14 @@ def fetch_species_distributions(data_home=None,
         The latitude/longitude values for the grid are discussed below.
         Missing data is represented by the value -9999.
 
-    train : record array, shape = (1623,)
+    train : record array, shape = (1624,)
         The training points for the data.  Each point has three fields:
 
         - train['species'] is the species name
         - train['dd long'] is the longitude, in degrees
         - train['dd lat'] is the latitude, in degrees
 
-    test : record array, shape = (619,)
+    test : record array, shape = (620,)
         The test points for the data.  Same format as the training data.
 
     Nx, Ny : integers
@@ -224,36 +229,36 @@ def fetch_species_distributions(data_home=None,
     if not exists(archive_path):
         if not download_if_missing:
             raise IOError("Data not found and `download_if_missing` is False")
+        logger.info('Downloading species data from %s to %s' % (
+            SAMPLES.url, data_home))
+        samples_path = _fetch_remote(SAMPLES, dirname=data_home)
+        with np.load(samples_path) as X:  # samples.zip is a valid npz
+            for f in X.files:
+                fhandle = BytesIO(X[f])
+                if 'train' in f:
+                    train = _load_csv(fhandle)
+                if 'test' in f:
+                    test = _load_csv(fhandle)
+        remove(samples_path)
 
-        print('Downloading species data from %s to %s' % (SAMPLES_URL,
-                                                          data_home))
-        X = np.load(BytesIO(urlopen(SAMPLES_URL).read()))
-
-        for f in X.files:
-            fhandle = BytesIO(X[f])
-            if 'train' in f:
-                train = _load_csv(fhandle)
-            if 'test' in f:
-                test = _load_csv(fhandle)
-
-        print('Downloading coverage data from %s to %s' % (COVERAGES_URL,
-                                                           data_home))
-
-        X = np.load(BytesIO(urlopen(COVERAGES_URL).read()))
-
-        coverages = []
-        for f in X.files:
-            fhandle = BytesIO(X[f])
-            print(' - converting', f)
-            coverages.append(_load_coverage(fhandle))
-        coverages = np.asarray(coverages, dtype=dtype)
+        logger.info('Downloading coverage data from %s to %s' % (
+            COVERAGES.url, data_home))
+        coverages_path = _fetch_remote(COVERAGES, dirname=data_home)
+        with np.load(coverages_path) as X:  # coverages.zip is a valid npz
+            coverages = []
+            for f in X.files:
+                fhandle = BytesIO(X[f])
+                logger.debug(' - converting {}'.format(f))
+                coverages.append(_load_coverage(fhandle))
+            coverages = np.asarray(coverages, dtype=dtype)
+        remove(coverages_path)
 
         bunch = Bunch(coverages=coverages,
                       test=test,
                       train=train,
                       **extra_params)
-        joblib.dump(bunch, archive_path, compress=9)
+        _joblib.dump(bunch, archive_path, compress=9)
     else:
-        bunch = joblib.load(archive_path)
+        bunch = _joblib.load(archive_path)
 
     return bunch

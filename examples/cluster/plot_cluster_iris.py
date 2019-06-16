@@ -34,7 +34,6 @@ from sklearn import datasets
 
 np.random.seed(5)
 
-centers = [[1, 1], [-1, -1], [1, -1]]
 iris = datasets.load_iris()
 X = iris.data
 y = iris.target

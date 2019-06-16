@@ -88,6 +88,12 @@ evaluated and the best combination is retained.
       for an example of :class:`GridSearchCV` being used to evaluate multiple
       metrics simultaneously.
 
+    - See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py`
+      for an example of using ``refit=callable`` interface in
+      :class:`GridSearchCV`. The example shows how this interface adds certain
+      amount of flexibility in identifying the "best" estimator. This interface
+      can also be used in multiple metrics evaluation.
+
 .. _randomized_parameter_search:
 
 Randomized Parameter Optimization
@@ -270,7 +276,7 @@ Some models can offer an information-theoretic closed-form formula of the
 optimal estimate of the regularization parameter by computing a single
 regularization path (instead of several when using cross-validation).
 
-Here is the list of models benefitting from the Akaike Information
+Here is the list of models benefiting from the Akaike Information
 Criterion (AIC) or the Bayesian Information Criterion (BIC) for automated
 model selection:
 

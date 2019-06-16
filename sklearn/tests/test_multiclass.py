@@ -1,3 +1,5 @@
+import pytest
+
 import numpy as np
 import scipy.sparse as sp
 
@@ -6,8 +8,6 @@ from re import escape
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_greater
@@ -33,7 +33,6 @@ from sklearn.model_selection import GridSearchCV, cross_val_score
 from sklearn.pipeline import Pipeline
 from sklearn import svm
 from sklearn import datasets
-from sklearn.externals.six.moves import zip
 
 iris = datasets.load_iris()
 rng = np.random.RandomState(0)
@@ -79,8 +78,10 @@ def test_ovr_fit_predict():
     assert_greater(np.mean(iris.target == pred), 0.65)
 
 
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_ovr_partial_fit():
-    # Test if partial_fit is working as intented
+    # Test if partial_fit is working as intended
     X, y = shuffle(iris.data, iris.target, random_state=0)
     ovr = OneVsRestClassifier(MultinomialNB())
     ovr.partial_fit(X[:100], y[:100], np.unique(y))
@@ -110,7 +111,7 @@ def test_ovr_partial_fit():
 
     # test partial_fit only exists if estimator has it:
     ovr = OneVsRestClassifier(SVC())
-    assert_false(hasattr(ovr, "partial_fit"))
+    assert not hasattr(ovr, "partial_fit")
 
 
 def test_ovr_partial_fit_exceptions():
@@ -121,8 +122,8 @@ def test_ovr_partial_fit_exceptions():
     # A new class value which was not in the first call of partial_fit
     # It should raise ValueError
     y1 = [5] + y[7:-1]
-    assert_raises_regexp(ValueError, "Mini-batch contains \[.+\] while classes"
-                                     " must be subset of \[.+\]",
+    assert_raises_regexp(ValueError, r"Mini-batch contains \[.+\] while "
+                                     r"classes must be subset of \[.+\]",
                          ovr.partial_fit, X=X[7:], y=y1)
 
 
@@ -166,8 +167,8 @@ def test_ovr_fit_predict_sparse():
         clf_sprs = OneVsRestClassifier(base_clf).fit(X_train, sparse(Y_train))
         Y_pred_sprs = clf_sprs.predict(X_test)
 
-        assert_true(clf.multilabel_)
-        assert_true(sp.issparse(Y_pred_sprs))
+        assert clf.multilabel_
+        assert sp.issparse(Y_pred_sprs)
         assert_array_equal(Y_pred_sprs.toarray(), Y_pred)
 
         # Test predict_proba
@@ -179,7 +180,8 @@ def test_ovr_fit_predict_sparse():
         assert_array_equal(pred, Y_pred_sprs.toarray())
 
         # Test decision_function
-        clf_sprs = OneVsRestClassifier(svm.SVC()).fit(X_train, sparse(Y_train))
+        clf = svm.SVC()
+        clf_sprs = OneVsRestClassifier(clf).fit(X_train, sparse(Y_train))
         dec_pred = (clf_sprs.decision_function(X_test) > 0).astype(int)
         assert_array_equal(dec_pred, clf_sprs.predict(X_test).toarray())
 
@@ -233,7 +235,7 @@ def test_ovr_multiclass():
         clf = OneVsRestClassifier(base_clf).fit(X, y)
         assert_equal(set(clf.classes_), classes)
         y_pred = clf.predict(np.array([[0, 0, 4]]))[0]
-        assert_equal(set(y_pred), set("eggs"))
+        assert_array_equal(y_pred, ["eggs"])
 
         # test input as label indicator matrix
         clf = OneVsRestClassifier(base_clf).fit(X, Y)
@@ -253,7 +255,7 @@ def test_ovr_binary():
         clf = OneVsRestClassifier(base_clf).fit(X, y)
         assert_equal(set(clf.classes_), classes)
         y_pred = clf.predict(np.array([[0, 0, 4]]))[0]
-        assert_equal(set(y_pred), set("eggs"))
+        assert_array_equal(y_pred, ["eggs"])
         if hasattr(base_clf, 'decision_function'):
             dec = clf.decision_function(X)
             assert_equal(dec.shape, (5,))
@@ -294,7 +296,7 @@ def test_ovr_multilabel():
         clf = OneVsRestClassifier(base_clf).fit(X, y)
         y_pred = clf.predict([[0, 4, 4]])[0]
         assert_array_equal(y_pred, [0, 1, 1])
-        assert_true(clf.multilabel_)
+        assert clf.multilabel_
 
 
 def test_ovr_fit_predict_svc():
@@ -319,7 +321,7 @@ def test_ovr_multilabel_dataset():
         clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
         Y_pred = clf.predict(X_test)
 
-        assert_true(clf.multilabel_)
+        assert clf.multilabel_
         assert_almost_equal(precision_score(Y_test, Y_pred, average="micro"),
                             prec,
                             decimal=2)
@@ -344,22 +346,22 @@ def test_ovr_multilabel_predict_proba():
 
         # Decision function only estimator.
         decision_only = OneVsRestClassifier(svm.SVR()).fit(X_train, Y_train)
-        assert_false(hasattr(decision_only, 'predict_proba'))
+        assert not hasattr(decision_only, 'predict_proba')
 
         # Estimator with predict_proba disabled, depending on parameters.
         decision_only = OneVsRestClassifier(svm.SVC(probability=False))
-        assert_false(hasattr(decision_only, 'predict_proba'))
+        assert not hasattr(decision_only, 'predict_proba')
         decision_only.fit(X_train, Y_train)
-        assert_false(hasattr(decision_only, 'predict_proba'))
-        assert_true(hasattr(decision_only, 'decision_function'))
+        assert not hasattr(decision_only, 'predict_proba')
+        assert hasattr(decision_only, 'decision_function')
 
         # Estimator which can get predict_proba enabled after fitting
         gs = GridSearchCV(svm.SVC(probability=False),
                           param_grid={'probability': [True]})
         proba_after_fit = OneVsRestClassifier(gs)
-        assert_false(hasattr(proba_after_fit, 'predict_proba'))
+        assert not hasattr(proba_after_fit, 'predict_proba')
         proba_after_fit.fit(X_train, Y_train)
-        assert_true(hasattr(proba_after_fit, 'predict_proba'))
+        assert hasattr(proba_after_fit, 'predict_proba')
 
         Y_pred = clf.predict(X_test)
         Y_proba = clf.predict_proba(X_test)
@@ -379,7 +381,7 @@ def test_ovr_single_label_predict_proba():
 
     # Decision function only estimator.
     decision_only = OneVsRestClassifier(svm.SVR()).fit(X_train, Y_train)
-    assert_false(hasattr(decision_only, 'predict_proba'))
+    assert not hasattr(decision_only, 'predict_proba')
 
     Y_pred = clf.predict(X_test)
     Y_proba = clf.predict_proba(X_test)
@@ -388,7 +390,7 @@ def test_ovr_single_label_predict_proba():
     # predict assigns a label if the probability that the
     # sample has the label is greater than 0.5.
     pred = np.array([l.argmax() for l in Y_proba])
-    assert_false((pred - Y_pred).any())
+    assert not (pred - Y_pred).any()
 
 
 def test_ovr_multilabel_decision_function():
@@ -423,7 +425,7 @@ def test_ovr_gridsearch():
     cv = GridSearchCV(ovr, {'estimator__C': Cs})
     cv.fit(iris.data, iris.target)
     best_C = cv.best_estimator_.estimators_[0].C
-    assert_true(best_C in Cs)
+    assert best_C in Cs
 
 
 def test_ovr_pipeline():
@@ -543,7 +545,7 @@ def test_ovo_partial_fit_predict():
 
     # test partial_fit only exists if estimator has it:
     ovr = OneVsOneClassifier(SVC())
-    assert_false(hasattr(ovr, "partial_fit"))
+    assert not hasattr(ovr, "partial_fit")
 
 
 def test_ovo_decision_function():
@@ -582,7 +584,7 @@ def test_ovo_decision_function():
         # binary classifiers.
         # Therefore, sorting predictions based on votes would yield
         # mostly tied predictions:
-        assert_true(set(votes[:, class_idx]).issubset(set([0., 1., 2.])))
+        assert set(votes[:, class_idx]).issubset(set([0., 1., 2.]))
 
         # The OVO decision function on the other hand is able to resolve
         # most of the ties on this data as it combines both the vote counts
@@ -599,9 +601,11 @@ def test_ovo_gridsearch():
     cv = GridSearchCV(ovo, {'estimator__C': Cs})
     cv.fit(iris.data, iris.target)
     best_C = cv.best_estimator_.estimators_[0].C
-    assert_true(best_C in Cs)
+    assert best_C in Cs
 
 
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_ovo_ties():
     # Test that ties are broken using the decision function,
     # not defaulting to the smallest label
@@ -627,6 +631,8 @@ def test_ovo_ties():
     assert_equal(ovo_prediction[0], normalized_confidences[0].argmax())
 
 
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_ovo_ties2():
     # test that ties can not only be won by the first two labels
     X = np.array([[1, 2], [2, 1], [-2, 1], [-2, -1]])
@@ -694,7 +700,7 @@ def test_ecoc_gridsearch():
     cv = GridSearchCV(ecoc, {'estimator__C': Cs})
     cv.fit(iris.data, iris.target)
     best_C = cv.best_estimator_.estimators_[0].C
-    assert_true(best_C in Cs)
+    assert best_C in Cs
 
 
 def test_ecoc_float_y():
@@ -731,10 +737,10 @@ def test_pairwise_attribute():
 
     for MultiClassClassifier in [OneVsRestClassifier, OneVsOneClassifier]:
         ovr_false = MultiClassClassifier(clf_notprecomputed)
-        assert_false(ovr_false._pairwise)
+        assert not ovr_false._pairwise
 
         ovr_true = MultiClassClassifier(clf_precomputed)
-        assert_true(ovr_true._pairwise)
+        assert ovr_true._pairwise
 
 
 def test_pairwise_cross_val_score():

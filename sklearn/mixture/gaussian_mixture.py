@@ -9,7 +9,6 @@ import numpy as np
 from scipy import linalg
 
 from .base import BaseMixture, _check_shape
-from ..externals.six.moves import zip
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
 from ..utils.extmath import row_norms
@@ -100,7 +99,7 @@ def _check_precisions(precisions, covariance_type, n_components, n_features):
 
     Parameters
     ----------
-    precisions : array-like,
+    precisions : array-like
         'full' : shape of (n_components, n_features, n_features)
         'tied' : shape of (n_features, n_features)
         'diag' : shape of (n_components, n_features)
@@ -343,7 +342,7 @@ def _compute_log_det_cholesky(matrix_chol, covariance_type, n_features):
 
     Parameters
     ----------
-    matrix_chol : array-like,
+    matrix_chol : array-like
         Cholesky decompositions of the matrices.
         'full' : shape of (n_components, n_features, n_features)
         'tied' : shape of (n_features, n_features)
@@ -387,7 +386,7 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
 
     means : array-like, shape (n_components, n_features)
 
-    precisions_chol : array-like,
+    precisions_chol : array-like
         Cholesky decompositions of the precision matrices.
         'full' : shape of (n_components, n_features, n_features)
         'tied' : shape of (n_features, n_features)
@@ -448,15 +447,18 @@ class GaussianMixture(BaseMixture):
     n_components : int, defaults to 1.
         The number of mixture components.
 
-    covariance_type : {'full', 'tied', 'diag', 'spherical'},
-            defaults to 'full'.
+    covariance_type : {'full' (default), 'tied', 'diag', 'spherical'}
         String describing the type of covariance parameters to use.
-        Must be one of::
+        Must be one of:
 
-            'full' (each component has its own general covariance matrix),
-            'tied' (all components share the same general covariance matrix),
-            'diag' (each component has its own diagonal covariance matrix),
-            'spherical' (each component has its own single variance).
+        'full'
+            each component has its own general covariance matrix
+        'tied'
+            all components share the same general covariance matrix
+        'diag'
+            each component has its own diagonal covariance matrix
+        'spherical'
+            each component has its own single variance
 
     tol : float, defaults to 1e-3.
         The convergence threshold. EM iterations will stop when the
@@ -508,7 +510,10 @@ class GaussianMixture(BaseMixture):
     warm_start : bool, default to False.
         If 'warm_start' is True, the solution of the last fitting is used as
         initialization for the next call of fit(). This can speed up
-        convergence when fit is called several time on similar problems.
+        convergence when fit is called several times on similar problems.
+        In that case, 'n_init' is ignored and only a single initialization
+        occurs upon the first call.
+        See :term:`the Glossary <warm_start>`.
 
     verbose : int, default to 0.
         Enable verbose output. If 1 then it prints the current
@@ -571,7 +576,8 @@ class GaussianMixture(BaseMixture):
         Number of step used by the best fit of EM to reach the convergence.
 
     lower_bound_ : float
-        Log-likelihood of the best fit of EM.
+        Lower bound value on the log-likelihood (of the training data with
+        respect to the model) of the best fit of EM.
 
     See Also
     --------
@@ -584,7 +590,7 @@ class GaussianMixture(BaseMixture):
                  weights_init=None, means_init=None, precisions_init=None,
                  random_state=None, warm_start=False,
                  verbose=0, verbose_interval=10):
-        super(GaussianMixture, self).__init__(
+        super().__init__(
             n_components=n_components, tol=tol, reg_covar=reg_covar,
             max_iter=max_iter, n_init=n_init, init_params=init_params,
             random_state=random_state, warm_start=warm_start,

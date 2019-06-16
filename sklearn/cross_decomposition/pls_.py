@@ -13,10 +13,11 @@ from scipy.linalg import pinv2, svd
 from scipy.sparse.linalg import svds
 
 from ..base import BaseEstimator, RegressorMixin, TransformerMixin
+from ..base import MultiOutputMixin
 from ..utils import check_array, check_consistent_length
 from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
-from ..externals import six
+from ..exceptions import ConvergenceWarning
 
 __all__ = ['PLSCanonical', 'PLSRegression', 'PLSSVD']
 
@@ -74,7 +75,8 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
         if np.dot(x_weights_diff.T, x_weights_diff) < tol or Y.shape[1] == 1:
             break
         if ite == max_iter:
-            warnings.warn('Maximum number of iterations reached')
+            warnings.warn('Maximum number of iterations reached',
+                          ConvergenceWarning)
             break
         x_weights_old = x_weights
         ite += 1
@@ -115,8 +117,8 @@ def _center_scale_xy(X, Y, scale=True):
     return X, Y, x_mean, y_mean, x_std, y_std
 
 
-class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
-           RegressorMixin):
+class _PLS(BaseEstimator, TransformerMixin, RegressorMixin, MultiOutputMixin,
+           metaclass=ABCMeta):
     """Partial Least Squares (PLS)
 
     This class implements the generic PLS algorithm, constructors' parameters
@@ -153,7 +155,8 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         The algorithm used to estimate the weights. It will be called
         n_components times, i.e. once for each iteration of the outer loop.
 
-    max_iter : an integer, the maximum number of iterations (default 500)
+    max_iter : int (default 500)
+        The maximum number of iterations
         of the NIPALS inner loop (used only if algorithm="nipals")
 
     tol : non-negative real, default 1e-06
@@ -245,7 +248,8 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
 
         # copy since this will contains the residuals (deflated) matrices
         check_consistent_length(X, Y)
-        X = check_array(X, dtype=np.float64, copy=self.copy)
+        X = check_array(X, dtype=np.float64, copy=self.copy,
+                        ensure_min_samples=2)
         Y = check_array(Y, dtype=np.float64, copy=self.copy, ensure_2d=False)
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)
@@ -281,6 +285,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         self.n_iter_ = []
 
         # NIPALS algo: outer loop, over components
+        Y_eps = np.finfo(Yk.dtype).eps
         for k in range(self.n_components):
             if np.all(np.dot(Yk.T, Yk) < np.finfo(np.double).eps):
                 # Yk constant
@@ -289,6 +294,10 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             # 1) weights estimation (inner loop)
             # -----------------------------------
             if self.algorithm == "nipals":
+                # Replace columns that are all close to zero with zeros
+                Yk_mask = np.all(np.abs(Yk) < 10 * Y_eps, axis=0)
+                Yk[:, Yk_mask] = 0.0
+
                 x_weights, y_weights, n_iter_ = \
                     _nipals_twoblocks_inner_loop(
                         X=Xk, Y=Yk, mode=self.mode, max_iter=self.max_iter,
@@ -451,6 +460,9 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         """
         return self.fit(X, y).transform(X, y)
 
+    def _more_tags(self):
+        return {'poor_score': True}
+
 
 class PLSRegression(_PLS):
     """PLS regression
@@ -523,7 +535,7 @@ class PLSRegression(_PLS):
         W: x_weights_
         C: y_weights_
         P: x_loadings_
-        Q: y_loadings__
+        Q: y_loadings_
 
     Are computed such that::
 
@@ -566,9 +578,7 @@ class PLSRegression(_PLS):
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
     >>> pls2 = PLSRegression(n_components=2)
     >>> pls2.fit(X, Y)
-    ... # doctest: +NORMALIZE_WHITESPACE
-    PLSRegression(copy=True, max_iter=500, n_components=2, scale=True,
-            tol=1e-06)
+    PLSRegression()
     >>> Y_pred = pls2.predict(X)
 
     References
@@ -585,7 +595,7 @@ class PLSRegression(_PLS):
 
     def __init__(self, n_components=2, scale=True,
                  max_iter=500, tol=1e-06, copy=True):
-        super(PLSRegression, self).__init__(
+        super().__init__(
             n_components=n_components, scale=scale,
             deflation_mode="regression", mode="A",
             norm_y_weights=False, max_iter=max_iter, tol=tol,
@@ -708,9 +718,7 @@ class PLSCanonical(_PLS):
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
     >>> plsca = PLSCanonical(n_components=2)
     >>> plsca.fit(X, Y)
-    ... # doctest: +NORMALIZE_WHITESPACE
-    PLSCanonical(algorithm='nipals', copy=True, max_iter=500, n_components=2,
-                 scale=True, tol=1e-06)
+    PLSCanonical()
     >>> X_c, Y_c = plsca.transform(X, Y)
 
     References
@@ -731,7 +739,7 @@ class PLSCanonical(_PLS):
 
     def __init__(self, n_components=2, scale=True, algorithm="nipals",
                  max_iter=500, tol=1e-06, copy=True):
-        super(PLSCanonical, self).__init__(
+        super().__init__(
             n_components=n_components, scale=scale,
             deflation_mode="canonical", mode="A",
             norm_y_weights=True, algorithm=algorithm,
@@ -771,6 +779,25 @@ class PLSSVD(BaseEstimator, TransformerMixin):
     y_scores_ : array, [n_samples, n_components]
         Y scores.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.cross_decomposition import PLSSVD
+    >>> X = np.array([[0., 0., 1.],
+    ...     [1.,0.,0.],
+    ...     [2.,2.,2.],
+    ...     [2.,5.,4.]])
+    >>> Y = np.array([[0.1, -0.2],
+    ...     [0.9, 1.1],
+    ...     [6.2, 5.9],
+    ...     [11.9, 12.3]])
+    >>> plsca = PLSSVD(n_components=2)
+    >>> plsca.fit(X, Y)
+    PLSSVD()
+    >>> X_c, Y_c = plsca.transform(X, Y)
+    >>> X_c.shape, Y_c.shape
+    ((4, 2), (4, 2))
+
     See also
     --------
     PLSCanonical
@@ -797,7 +824,8 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         """
         # copy since this will contains the centered data
         check_consistent_length(X, Y)
-        X = check_array(X, dtype=np.float64, copy=self.copy)
+        X = check_array(X, dtype=np.float64, copy=self.copy,
+                        ensure_min_samples=2)
         Y = check_array(Y, dtype=np.float64, copy=self.copy, ensure_2d=False)
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)

@@ -82,7 +82,7 @@ lc = LineCollection(segments,
                     zorder=0, cmap=plt.cm.Blues,
                     norm=plt.Normalize(0, values.max()))
 lc.set_array(similarities.flatten())
-lc.set_linewidths(0.5 * np.ones(len(segments)))
+lc.set_linewidths(np.full(len(segments), 0.5))
 ax.add_collection(lc)
 
 plt.show()
