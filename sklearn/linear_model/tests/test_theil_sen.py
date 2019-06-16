@@ -4,9 +4,6 @@ Testing for Theil-Sen module (sklearn.linear_model.theil_sen)
 
 # Author: Florian Wilhelm <florian.wilhelm@gmail.com>
 # License: BSD 3 clause
-
-from __future__ import division, print_function, absolute_import
-
 import os
 import sys
 from contextlib import contextmanager
@@ -262,7 +259,7 @@ def test_theil_sen_parallel():
     lstq = LinearRegression().fit(X, y)
     assert_greater(norm(lstq.coef_ - w), 1.0)
     # Check that Theil-Sen works
-    theil_sen = TheilSenRegressor(n_jobs=-1,
+    theil_sen = TheilSenRegressor(n_jobs=4,
                                   random_state=0,
                                   max_subpopulation=2e3).fit(X, y)
     assert_array_almost_equal(theil_sen.coef_, w, 1)

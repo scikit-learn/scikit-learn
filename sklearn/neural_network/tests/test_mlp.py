@@ -5,6 +5,7 @@ Testing for Multi-layer Perceptron module (sklearn.neural_network)
 # Author: Issam H. Laradji
 # License: BSD 3 clause
 
+import pytest
 import sys
 import warnings
 
@@ -15,19 +16,17 @@ from numpy.testing import assert_almost_equal, assert_array_equal
 from sklearn.datasets import load_digits, load_boston, load_iris
 from sklearn.datasets import make_regression, make_multilabel_classification
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.externals.six.moves import cStringIO as StringIO
+from io import StringIO
 from sklearn.metrics import roc_auc_score
 from sklearn.neural_network import MLPClassifier
 from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from scipy.sparse import csr_matrix
-from sklearn.utils.testing import (assert_raises, assert_greater, assert_equal,
-                                   assert_false, ignore_warnings)
+from sklearn.utils.testing import (assert_raises, assert_greater,
+                                   assert_equal, ignore_warnings)
 from sklearn.utils.testing import assert_raise_message
 
-
-np.seterr(all='warn')
 
 ACTIVATION_TYPES = ["identity", "logistic", "tanh", "relu"]
 
@@ -176,7 +175,8 @@ def test_gradient():
     for n_labels in [2, 3]:
         n_samples = 5
         n_features = 10
-        X = np.random.random((n_samples, n_features))
+        random_state = np.random.RandomState(seed=42)
+        X = random_state.rand(n_samples, n_features)
         y = 1 + np.mod(np.arange(n_samples) + 1, n_labels)
         Y = LabelBinarizer().fit_transform(y)
 
@@ -297,7 +297,7 @@ def test_multilabel_classification():
                         max_iter=150, random_state=0, activation='logistic',
                         learning_rate_init=0.2)
     mlp.fit(X, y)
-    assert_equal(mlp.score(X, y), 1)
+    assert_greater(mlp.score(X, y), 0.97)
 
     # test partial fit method
     mlp = MLPClassifier(solver='sgd', hidden_layer_sizes=50, max_iter=150,
@@ -307,7 +307,13 @@ def test_multilabel_classification():
         mlp.partial_fit(X, y, classes=[0, 1, 2, 3, 4])
     assert_greater(mlp.score(X, y), 0.9)
 
+    # Make sure early stopping still work now that spliting is stratified by
+    # default (it is disabled for multilabel classification)
+    mlp = MLPClassifier(early_stopping=True)
+    mlp.fit(X, y).predict(X)
 
+
+@pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
 def test_multioutput_regression():
     # Test that multi-output regression works as expected
     X, y = make_regression(n_samples=200, n_targets=5)
@@ -395,7 +401,7 @@ def test_partial_fit_errors():
                   MLPClassifier(solver='sgd').partial_fit, X, y, classes=[2])
 
     # lbfgs doesn't support partial_fit
-    assert_false(hasattr(MLPClassifier(solver='lbfgs'), 'partial_fit'))
+    assert not hasattr(MLPClassifier(solver='lbfgs'), 'partial_fit')
 
 
 def test_params_errors():
@@ -420,6 +426,7 @@ def test_params_errors():
     assert_raises(ValueError, clf(beta_2=1).fit, X, y)
     assert_raises(ValueError, clf(beta_2=-0.5).fit, X, y)
     assert_raises(ValueError, clf(epsilon=-0.5).fit, X, y)
+    assert_raises(ValueError, clf(n_iter_no_change=-1).fit, X, y)
 
     assert_raises(ValueError, clf(solver='hadoken').fit, X, y)
     assert_raises(ValueError, clf(learning_rate='converge').fit, X, y)
@@ -431,7 +438,8 @@ def test_predict_proba_binary():
     X = X_digits_binary[:50]
     y = y_digits_binary[:50]
 
-    clf = MLPClassifier(hidden_layer_sizes=5)
+    clf = MLPClassifier(hidden_layer_sizes=5, activation='logistic',
+                        random_state=1)
     with ignore_warnings(category=ConvergenceWarning):
         clf.fit(X, y)
     y_proba = clf.predict_proba(X)
@@ -492,6 +500,33 @@ def test_predict_proba_multilabel():
     assert_greater((y_proba.sum(1) - 1).dot(y_proba.sum(1) - 1), 1e-10)
     assert_array_equal(proba_max, proba_log_max)
     assert_array_equal(y_log_proba, np.log(y_proba))
+
+
+def test_shuffle():
+    # Test that the shuffle parameter affects the training process (it should)
+    X, y = make_regression(n_samples=50, n_features=5, n_targets=1,
+                           random_state=0)
+
+    # The coefficients will be identical if both do or do not shuffle
+    for shuffle in [True, False]:
+        mlp1 = MLPRegressor(hidden_layer_sizes=1, max_iter=1, batch_size=1,
+                            random_state=0, shuffle=shuffle)
+        mlp2 = MLPRegressor(hidden_layer_sizes=1, max_iter=1, batch_size=1,
+                            random_state=0, shuffle=shuffle)
+        mlp1.fit(X, y)
+        mlp2.fit(X, y)
+
+        assert np.array_equal(mlp1.coefs_[0], mlp2.coefs_[0])
+
+    # The coefficients will be slightly different if shuffle=True
+    mlp1 = MLPRegressor(hidden_layer_sizes=1, max_iter=1, batch_size=1,
+                        random_state=0, shuffle=True)
+    mlp2 = MLPRegressor(hidden_layer_sizes=1, max_iter=1, batch_size=1,
+                        random_state=0, shuffle=False)
+    mlp1.fit(X, y)
+    mlp2.fit(X, y)
+
+    assert not np.array_equal(mlp1.coefs_[0], mlp2.coefs_[0])
 
 
 def test_sparse_matrices():
@@ -588,3 +623,59 @@ def test_warm_start():
                    'classes as in the previous call to fit.'
                    ' Previously got [0 1 2], `y` has %s' % np.unique(y_i))
         assert_raise_message(ValueError, message, clf.fit, X, y_i)
+
+
+def test_n_iter_no_change():
+    # test n_iter_no_change using binary data set
+    # the classifying fitting process is not prone to loss curve fluctuations
+    X = X_digits_binary[:100]
+    y = y_digits_binary[:100]
+    tol = 0.01
+    max_iter = 3000
+
+    # test multiple n_iter_no_change
+    for n_iter_no_change in [2, 5, 10, 50, 100]:
+        clf = MLPClassifier(tol=tol, max_iter=max_iter, solver='sgd',
+                            n_iter_no_change=n_iter_no_change)
+        clf.fit(X, y)
+
+        # validate n_iter_no_change
+        assert_equal(clf._no_improvement_count, n_iter_no_change + 1)
+        assert_greater(max_iter, clf.n_iter_)
+
+
+@ignore_warnings(category=ConvergenceWarning)
+def test_n_iter_no_change_inf():
+    # test n_iter_no_change using binary data set
+    # the fitting process should go to max_iter iterations
+    X = X_digits_binary[:100]
+    y = y_digits_binary[:100]
+
+    # set a ridiculous tolerance
+    # this should always trigger _update_no_improvement_count()
+    tol = 1e9
+
+    # fit
+    n_iter_no_change = np.inf
+    max_iter = 3000
+    clf = MLPClassifier(tol=tol, max_iter=max_iter, solver='sgd',
+                        n_iter_no_change=n_iter_no_change)
+    clf.fit(X, y)
+
+    # validate n_iter_no_change doesn't cause early stopping
+    assert_equal(clf.n_iter_, max_iter)
+
+    # validate _update_no_improvement_count() was always triggered
+    assert_equal(clf._no_improvement_count, clf.n_iter_ - 1)
+
+
+def test_early_stopping_stratified():
+    # Make sure data splitting for early stopping is stratified
+    X = [[1, 2], [2, 3], [3, 4], [4, 5]]
+    y = [0, 0, 0, 1]
+
+    mlp = MLPClassifier(early_stopping=True)
+    with pytest.raises(
+            ValueError,
+            match='The least populated class in y has only 1 member'):
+        mlp.fit(X, y)

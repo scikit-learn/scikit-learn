@@ -1,13 +1,18 @@
 import warnings
 import unittest
 import sys
+import os
+import atexit
+
 import numpy as np
+
 from scipy import sparse
+
+import pytest
 
 from sklearn.utils.deprecation import deprecated
 from sklearn.utils.metaestimators import if_delegate_has_method
 from sklearn.utils.testing import (
-    assert_true,
     assert_raises,
     assert_less,
     assert_greater,
@@ -21,7 +26,10 @@ from sklearn.utils.testing import (
     ignore_warnings,
     check_docstring_parameters,
     assert_allclose_dense_sparse,
-    assert_raises_regex)
+    assert_raises_regex,
+    TempMemmap,
+    create_memmap_backed_data,
+    _delete_folder)
 
 from sklearn.utils.testing import SkipTest
 from sklearn.tree import DecisionTreeClassifier
@@ -204,27 +212,34 @@ def test_ignore_warning():
     assert_warns(UserWarning, context_manager_no_deprecation_multiple_warning)
     assert_warns(DeprecationWarning, context_manager_no_user_multiple_warning)
 
+    # Check that passing warning class as first positional argument
+    warning_class = UserWarning
+    match = "'obj' should be a callable.+you should use 'category=UserWarning'"
 
-# This class is inspired from numpy 1.7 with an alteration to check
-# the reset warning filters after calls to assert_warns.
-# This assert_warns behavior is specific to scikit-learn because
-# `clean_warning_registry()` is called internally by assert_warns
-# and clears all previous filters.
+    with pytest.raises(ValueError, match=match):
+        silence_warnings_func = ignore_warnings(warning_class)(
+            _warning_function)
+        silence_warnings_func()
+
+    with pytest.raises(ValueError, match=match):
+        @ignore_warnings(warning_class)
+        def test():
+            pass
+
+
 class TestWarns(unittest.TestCase):
     def test_warn(self):
         def f():
             warnings.warn("yo")
             return 3
 
-        # Test that assert_warns is not impacted by externally set
-        # filters and is reset internally.
-        # This is because `clean_warning_registry()` is called internally by
-        # assert_warns and clears all previous filters.
-        warnings.simplefilter("ignore", UserWarning)
-        assert_equal(assert_warns(UserWarning, f), 3)
-
-        # Test that the warning registry is empty after assert_warns
-        assert_equal(sys.modules['warnings'].filters, [])
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            filters_orig = warnings.filters[:]
+            assert_equal(assert_warns(UserWarning, f), 3)
+            # test that assert_warns doesn't have side effects on warnings
+            # filters
+            assert_equal(warnings.filters, filters_orig)
 
         assert_raises(AssertionError, assert_no_warnings, f)
         assert_equal(assert_no_warnings(lambda x: x, 1), 1)
@@ -325,7 +340,7 @@ def f_missing(a, b):
     return c
 
 
-def f_check_param_definition(a, b, c, d):
+def f_check_param_definition(a, b, c, d, e):
     """Function f
 
     Parameters
@@ -338,11 +353,13 @@ def f_check_param_definition(a, b, c, d):
         Parameter c
     d:int
         Parameter d
+    e
+        No typespec is allowed without colon
     """
     return a + b + c + d
 
 
-class Klass(object):
+class Klass:
     def f_missing(self, X, y):
         pass
 
@@ -364,7 +381,7 @@ class Klass(object):
         pass
 
 
-class MockEst(object):
+class MockEst:
     def __init__(self):
         """MockEstimator"""
     def fit(self, X, y):
@@ -380,7 +397,7 @@ class MockEst(object):
         return 1.
 
 
-class MockMetaEstimator(object):
+class MockMetaEstimator:
     def __init__(self, delegate):
         """MetaEstimator to check if doctest on delegated methods work.
 
@@ -402,8 +419,8 @@ class MockMetaEstimator(object):
         """
         return self.delegate.predict(X)
 
-    @deprecated("Testing a deprecated delegated method")
     @if_delegate_has_method(delegate=('delegate'))
+    @deprecated("Testing a deprecated delegated method")
     def score(self, X):
         """This is available only if delegate has score.
 
@@ -424,20 +441,7 @@ class MockMetaEstimator(object):
         """
         return X
 
-    @deprecated('Testing deprecated function with incorrect params')
-    @if_delegate_has_method(delegate=('delegate'))
-    def predict_log_proba(self, X):
-        """This is available only if delegate has predict_proba.
-
-        Parameters
-        ---------
-        y : ndarray
-            Parameter X
-        """
-        return X
-
     @deprecated('Testing deprecated function with wrong params')
-    @if_delegate_has_method(delegate=('delegate'))
     def fit(self, X, y):
         """Incorrect docstring but should not be tested"""
 
@@ -445,26 +449,37 @@ class MockMetaEstimator(object):
 def test_check_docstring_parameters():
     try:
         import numpydoc  # noqa
-        assert sys.version_info >= (3, 5)
-    except (ImportError, AssertionError):
+    except ImportError:
         raise SkipTest(
             "numpydoc is required to test the docstrings")
 
     incorrect = check_docstring_parameters(f_ok)
-    assert_equal(incorrect, [])
+    assert incorrect == []
     incorrect = check_docstring_parameters(f_ok, ignore=['b'])
-    assert_equal(incorrect, [])
+    assert incorrect == []
     incorrect = check_docstring_parameters(f_missing, ignore=['b'])
-    assert_equal(incorrect, [])
+    assert incorrect == []
     assert_raise_message(RuntimeError, 'Unknown section Results',
                          check_docstring_parameters, f_bad_sections)
     assert_raise_message(RuntimeError, 'Unknown section Parameter',
                          check_docstring_parameters, Klass.f_bad_sections)
 
+    incorrect = check_docstring_parameters(f_check_param_definition)
+    assert (
+        incorrect == [
+            "sklearn.utils.tests.test_testing.f_check_param_definition There "
+            "was no space between the param name and colon ('a: int')",
+            "sklearn.utils.tests.test_testing.f_check_param_definition There "
+            "was no space between the param name and colon ('b:')",
+            "sklearn.utils.tests.test_testing.f_check_param_definition "
+            "Parameter 'c :' has an empty type spec. Remove the colon",
+            "sklearn.utils.tests.test_testing.f_check_param_definition There "
+            "was no space between the param name and colon ('d:int')",
+        ])
+
     messages = ["a != b", "arg mismatch: ['b']", "arg mismatch: ['X', 'y']",
                 "predict y != X",
                 "predict_proba arg mismatch: ['X']",
-                "predict_log_proba arg mismatch: ['X']",
                 "score arg mismatch: ['X']",
                 ".fit arg mismatch: ['X', 'y']"]
 
@@ -473,21 +488,71 @@ def test_check_docstring_parameters():
     for mess, f in zip(messages,
                        [f_bad_order, f_missing, Klass.f_missing,
                         mock_meta.predict, mock_meta.predict_proba,
-                        mock_meta.predict_log_proba,
                         mock_meta.score, mock_meta.fit]):
         incorrect = check_docstring_parameters(f)
-        assert_true(len(incorrect) >= 1)
-        assert_true(mess in incorrect[0],
-                    '"%s" not in "%s"' % (mess, incorrect[0]))
+        assert len(incorrect) >= 1
+        assert mess in incorrect[0], '"%s" not in "%s"' % (mess, incorrect[0])
 
-    incorrect = check_docstring_parameters(f_check_param_definition)
-    assert_equal(
-        incorrect,
-        ['sklearn.utils.tests.test_testing.f_check_param_definition There was '
-         'no space between the param name and colon ("a: int")',
-         'sklearn.utils.tests.test_testing.f_check_param_definition There was '
-         'no space between the param name and colon ("b:")',
-         'sklearn.utils.tests.test_testing.f_check_param_definition Incorrect '
-         'type definition for param: "c " (type definition was "")',
-         'sklearn.utils.tests.test_testing.f_check_param_definition There was '
-         'no space between the param name and colon ("d:int")'])
+
+class RegistrationCounter:
+    def __init__(self):
+        self.nb_calls = 0
+
+    def __call__(self, to_register_func):
+        self.nb_calls += 1
+        assert to_register_func.func is _delete_folder
+
+
+def check_memmap(input_array, mmap_data, mmap_mode='r'):
+    assert isinstance(mmap_data, np.memmap)
+    writeable = mmap_mode != 'r'
+    assert mmap_data.flags.writeable is writeable
+    np.testing.assert_array_equal(input_array, mmap_data)
+
+
+def test_tempmemmap(monkeypatch):
+    registration_counter = RegistrationCounter()
+    monkeypatch.setattr(atexit, 'register', registration_counter)
+
+    input_array = np.ones(3)
+    with TempMemmap(input_array) as data:
+        check_memmap(input_array, data)
+        temp_folder = os.path.dirname(data.filename)
+    if os.name != 'nt':
+        assert not os.path.exists(temp_folder)
+    assert registration_counter.nb_calls == 1
+
+    mmap_mode = 'r+'
+    with TempMemmap(input_array, mmap_mode=mmap_mode) as data:
+        check_memmap(input_array, data, mmap_mode=mmap_mode)
+        temp_folder = os.path.dirname(data.filename)
+    if os.name != 'nt':
+        assert not os.path.exists(temp_folder)
+    assert registration_counter.nb_calls == 2
+
+
+def test_create_memmap_backed_data(monkeypatch):
+    registration_counter = RegistrationCounter()
+    monkeypatch.setattr(atexit, 'register', registration_counter)
+
+    input_array = np.ones(3)
+    data = create_memmap_backed_data(input_array)
+    check_memmap(input_array, data)
+    assert registration_counter.nb_calls == 1
+
+    data, folder = create_memmap_backed_data(input_array,
+                                             return_folder=True)
+    check_memmap(input_array, data)
+    assert folder == os.path.dirname(data.filename)
+    assert registration_counter.nb_calls == 2
+
+    mmap_mode = 'r+'
+    data = create_memmap_backed_data(input_array, mmap_mode=mmap_mode)
+    check_memmap(input_array, data, mmap_mode)
+    assert registration_counter.nb_calls == 3
+
+    input_list = [input_array, input_array + 1, input_array + 2]
+    mmap_data_list = create_memmap_backed_data(input_list)
+    for input_array, data in zip(input_list, mmap_data_list):
+        check_memmap(input_array, data)
+    assert registration_counter.nb_calls == 4

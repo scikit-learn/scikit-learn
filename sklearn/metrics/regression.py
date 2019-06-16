@@ -21,16 +21,18 @@ the lower the better
 #          Konstantin Shmelkov <konstantin.shmelkov@polytechnique.edu>
 # License: BSD 3 clause
 
-from __future__ import division
 
 import numpy as np
+import warnings
 
-from ..utils.validation import check_array, check_consistent_length
+from ..utils.validation import (check_array, check_consistent_length,
+                                _num_samples)
 from ..utils.validation import column_or_1d
-from ..externals.six import string_types
+from ..exceptions import UndefinedMetricWarning
 
 
 __ALL__ = [
+    "max_error",
     "mean_absolute_error",
     "mean_squared_error",
     "mean_squared_log_error",
@@ -45,9 +47,9 @@ def _check_reg_targets(y_true, y_pred, multioutput):
 
     Parameters
     ----------
-    y_true : array-like,
+    y_true : array-like
 
-    y_pred : array-like,
+    y_pred : array-like
 
     multioutput : array-like or string in ['raw_values', uniform_average',
         'variance_weighted'] or None
@@ -89,7 +91,7 @@ def _check_reg_targets(y_true, y_pred, multioutput):
     n_outputs = y_true.shape[1]
     allowed_multioutput_str = ('raw_values', 'uniform_average',
                                'variance_weighted')
-    if isinstance(multioutput, string_types):
+    if isinstance(multioutput, str):
         if multioutput not in allowed_multioutput_str:
             raise ValueError("Allowed 'multioutput' string values are {}. "
                              "You provided multioutput={!r}".format(
@@ -161,16 +163,16 @@ def mean_absolute_error(y_true, y_pred,
     >>> mean_absolute_error(y_true, y_pred)
     0.75
     >>> mean_absolute_error(y_true, y_pred, multioutput='raw_values')
-    array([ 0.5,  1. ])
+    array([0.5, 1. ])
     >>> mean_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
-    ... # doctest: +ELLIPSIS
-    0.849...
+    0.85...
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
+    check_consistent_length(y_true, y_pred, sample_weight)
     output_errors = np.average(np.abs(y_pred - y_true),
                                weights=sample_weight, axis=0)
-    if isinstance(multioutput, string_types):
+    if isinstance(multioutput, str):
         if multioutput == 'raw_values':
             return output_errors
         elif multioutput == 'uniform_average':
@@ -224,21 +226,20 @@ def mean_squared_error(y_true, y_pred,
     0.375
     >>> y_true = [[0.5, 1],[-1, 1],[7, -6]]
     >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
-    >>> mean_squared_error(y_true, y_pred)  # doctest: +ELLIPSIS
+    >>> mean_squared_error(y_true, y_pred)
     0.708...
     >>> mean_squared_error(y_true, y_pred, multioutput='raw_values')
-    ... # doctest: +ELLIPSIS
-    array([ 0.416...,  1.        ])
+    array([0.41666667, 1.        ])
     >>> mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7])
-    ... # doctest: +ELLIPSIS
-    0.824...
+    0.825...
 
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
+    check_consistent_length(y_true, y_pred, sample_weight)
     output_errors = np.average((y_true - y_pred) ** 2, axis=0,
                                weights=sample_weight)
-    if isinstance(multioutput, string_types):
+    if isinstance(multioutput, str):
         if multioutput == 'raw_values':
             return output_errors
         elif multioutput == 'uniform_average':
@@ -290,28 +291,27 @@ def mean_squared_log_error(y_true, y_pred,
     >>> from sklearn.metrics import mean_squared_log_error
     >>> y_true = [3, 5, 2.5, 7]
     >>> y_pred = [2.5, 5, 4, 8]
-    >>> mean_squared_log_error(y_true, y_pred)  # doctest: +ELLIPSIS
+    >>> mean_squared_log_error(y_true, y_pred)
     0.039...
     >>> y_true = [[0.5, 1], [1, 2], [7, 6]]
     >>> y_pred = [[0.5, 2], [1, 2.5], [8, 8]]
-    >>> mean_squared_log_error(y_true, y_pred)  # doctest: +ELLIPSIS
+    >>> mean_squared_log_error(y_true, y_pred)
     0.044...
     >>> mean_squared_log_error(y_true, y_pred, multioutput='raw_values')
-    ... # doctest: +ELLIPSIS
-    array([ 0.004...,  0.083...])
+    array([0.00462428, 0.08377444])
     >>> mean_squared_log_error(y_true, y_pred, multioutput=[0.3, 0.7])
-    ... # doctest: +ELLIPSIS
     0.060...
 
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
+    check_consistent_length(y_true, y_pred, sample_weight)
 
-    if not (y_true >= 0).all() and not (y_pred >= 0).all():
+    if (y_true < 0).any() or (y_pred < 0).any():
         raise ValueError("Mean Squared Logarithmic Error cannot be used when "
                          "targets contain negative values.")
 
-    return mean_squared_error(np.log(y_true + 1), np.log(y_pred + 1),
+    return mean_squared_error(np.log1p(y_true), np.log1p(y_pred),
                               sample_weight, multioutput)
 
 
@@ -342,8 +342,7 @@ def median_absolute_error(y_true, y_pred):
     0.5
 
     """
-    y_type, y_true, y_pred, _ = _check_reg_targets(y_true, y_pred,
-                                                   'uniform_average')
+    y_type, y_true, y_pred, _ = _check_reg_targets(y_true, y_pred, None)
     if y_type == 'continuous-multioutput':
         raise ValueError("Multioutput not supported in median_absolute_error")
     return np.median(np.abs(y_pred - y_true))
@@ -398,17 +397,17 @@ def explained_variance_score(y_true, y_pred,
     >>> from sklearn.metrics import explained_variance_score
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
-    >>> explained_variance_score(y_true, y_pred)  # doctest: +ELLIPSIS
+    >>> explained_variance_score(y_true, y_pred)
     0.957...
     >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> explained_variance_score(y_true, y_pred, multioutput='uniform_average')
-    ... # doctest: +ELLIPSIS
     0.983...
 
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
+    check_consistent_length(y_true, y_pred, sample_weight)
 
     y_diff_avg = np.average(y_true - y_pred, weights=sample_weight, axis=0)
     numerator = np.average((y_true - y_pred - y_diff_avg) ** 2,
@@ -426,7 +425,7 @@ def explained_variance_score(y_true, y_pred,
     output_scores[valid_score] = 1 - (numerator[valid_score] /
                                       denominator[valid_score])
     output_scores[nonzero_numerator & ~nonzero_denominator] = 0.
-    if isinstance(multioutput, string_types):
+    if isinstance(multioutput, str):
         if multioutput == 'raw_values':
             # return scores individually
             return output_scores
@@ -496,6 +495,9 @@ def r2_score(y_true, y_pred, sample_weight=None,
     Unlike most other scores, R^2 score may be negative (it need not actually
     be the square of a quantity R).
 
+    This metric is not well-defined for single samples and will return a NaN
+    value if n_samples is less than two.
+
     References
     ----------
     .. [1] `Wikipedia entry on the Coefficient of determination
@@ -506,28 +508,34 @@ def r2_score(y_true, y_pred, sample_weight=None,
     >>> from sklearn.metrics import r2_score
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
-    >>> r2_score(y_true, y_pred)  # doctest: +ELLIPSIS
+    >>> r2_score(y_true, y_pred)
     0.948...
     >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
-    >>> r2_score(y_true, y_pred, multioutput='variance_weighted')
-    ... # doctest: +ELLIPSIS
+    >>> r2_score(y_true, y_pred,
+    ...          multioutput='variance_weighted')
     0.938...
-    >>> y_true = [1,2,3]
-    >>> y_pred = [1,2,3]
+    >>> y_true = [1, 2, 3]
+    >>> y_pred = [1, 2, 3]
     >>> r2_score(y_true, y_pred)
     1.0
-    >>> y_true = [1,2,3]
-    >>> y_pred = [2,2,2]
+    >>> y_true = [1, 2, 3]
+    >>> y_pred = [2, 2, 2]
     >>> r2_score(y_true, y_pred)
     0.0
-    >>> y_true = [1,2,3]
-    >>> y_pred = [3,2,1]
+    >>> y_true = [1, 2, 3]
+    >>> y_pred = [3, 2, 1]
     >>> r2_score(y_true, y_pred)
     -3.0
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
+    check_consistent_length(y_true, y_pred, sample_weight)
+
+    if _num_samples(y_pred) < 2:
+        msg = "R^2 score is not well-defined with less than two samples."
+        warnings.warn(msg, UndefinedMetricWarning)
+        return float('nan')
 
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight)
@@ -549,7 +557,7 @@ def r2_score(y_true, y_pred, sample_weight=None,
     # arbitrary set to zero to avoid -inf scores, having a constant
     # y_true is not interesting for scoring a regression anyway
     output_scores[nonzero_numerator & ~nonzero_denominator] = 0.
-    if isinstance(multioutput, string_types):
+    if isinstance(multioutput, str):
         if multioutput == 'raw_values':
             # return scores individually
             return output_scores
@@ -568,3 +576,36 @@ def r2_score(y_true, y_pred, sample_weight=None,
         avg_weights = multioutput
 
     return np.average(output_scores, weights=avg_weights)
+
+
+def max_error(y_true, y_pred):
+    """
+    max_error metric calculates the maximum residual error.
+
+    Read more in the :ref:`User Guide <max_error>`.
+
+    Parameters
+    ----------
+    y_true : array-like of shape = (n_samples)
+        Ground truth (correct) target values.
+
+    y_pred : array-like of shape = (n_samples)
+        Estimated target values.
+
+    Returns
+    -------
+    max_error : float
+        A positive floating point value (the best value is 0.0).
+
+    Examples
+    --------
+    >>> from sklearn.metrics import max_error
+    >>> y_true = [3, 2, 7, 1]
+    >>> y_pred = [4, 2, 7, 1]
+    >>> max_error(y_true, y_pred)
+    1
+    """
+    y_type, y_true, y_pred, _ = _check_reg_targets(y_true, y_pred, None)
+    if y_type == 'continuous-multioutput':
+        raise ValueError("Multioutput not supported in max_error")
+    return np.max(np.abs(y_true - y_pred))

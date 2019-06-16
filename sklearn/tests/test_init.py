@@ -1,10 +1,10 @@
 # Basic unittests to test functioning of module's top-level
 
+from sklearn.utils.testing import assert_equal
+
 __author__ = 'Yaroslav Halchenko'
 __license__ = 'BSD'
 
-
-from sklearn.utils.testing import assert_equal
 
 try:
     from sklearn import *  # noqa

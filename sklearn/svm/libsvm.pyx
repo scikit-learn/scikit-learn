@@ -14,7 +14,7 @@ to run out of memory a MemoryError will be raised. In practice this is
 not very helpful since hight changes are malloc fails inside svm.cpp,
 where no sort of memory checks are done.
 
-[1] http://www.csie.ntu.edu.tw/~cjlin/libsvm/
+[1] https://www.csie.ntu.edu.tw/~cjlin/libsvm/
 
 Notes
 -----
@@ -33,7 +33,6 @@ Authors
 import warnings
 import  numpy as np
 cimport numpy as np
-cimport libsvm
 from libc.stdlib cimport free
 
 cdef extern from *:
@@ -54,7 +53,7 @@ LIBSVM_KERNEL_TYPES = ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed']
 def fit(
     np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
-    int svm_type=0, str kernel='rbf', int degree=3,
+    int svm_type=0, kernel='rbf', int degree=3,
     double gamma=0.1, double coef0=0., double tol=1e-3,
     double C=1., double nu=0.5, double epsilon=0.1,
     np.ndarray[np.float64_t, ndim=1, mode='c']
@@ -342,7 +341,7 @@ def predict_proba(
     np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
     np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
     np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
-    int svm_type=0, str kernel='rbf', int degree=3,
+    int svm_type=0, kernel='rbf', int degree=3,
     double gamma=0.1, double coef0=0.,
     np.ndarray[np.float64_t, ndim=1, mode='c']
         class_weight=np.empty(0),
@@ -445,7 +444,7 @@ def decision_function(
         n_class = 1
     else:
         n_class = get_nr(model)
-        n_class = n_class * (n_class - 1) / 2
+        n_class = n_class * (n_class - 1) // 2
 
     try:
         dec_values = np.empty((X.shape[0], n_class), dtype=np.float64)
@@ -462,7 +461,7 @@ def decision_function(
 def cross_validation(
     np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
-    int n_fold, svm_type=0, str kernel='rbf', int degree=3,
+    int n_fold, svm_type=0, kernel='rbf', int degree=3,
     double gamma=0.1, double coef0=0., double tol=1e-3,
     double C=1., double nu=0.5, double epsilon=0.1,
     np.ndarray[np.float64_t, ndim=1, mode='c']
