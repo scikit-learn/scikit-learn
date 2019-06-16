@@ -29,8 +29,7 @@ label.
 .. note::
 
     See also :func:`sklearn.metrics.roc_auc_score`,
-             :ref:`sphx_glr_auto_examples_model_selection_plot_roc_crossval.py`,
-             :ref:`sphx_glr_auto_examples_model_selection_plot_roc_multiclass.py`.
+             :ref:`sphx_glr_auto_examples_model_selection_plot_roc_crossval.py`
 
 """
 print(__doc__)
@@ -45,6 +44,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import label_binarize
 from sklearn.multiclass import OneVsRestClassifier
 from scipy import interp
+from sklearn.metrics import roc_auc_score
 
 # Import some data to play with
 iris = datasets.load_iris()
@@ -144,3 +144,29 @@ plt.ylabel('True Positive Rate')
 plt.title('Some extension of Receiver operating characteristic to multi-class')
 plt.legend(loc="lower right")
 plt.show()
+
+
+##############################################################################
+# Area under ROC for the multiclass problem
+# .........................................
+# The :func:`sklearn.metrics.roc_auc_score` function can be used for
+# multi-class classification. The mutliclass One-vs-One scheme compares every
+# unique pairwise combination of classes. In this section, we calcuate the AUC
+# using the OvR and OvO schemes. We report a macro average, and a
+# prevalence-weighted average.
+y_prob = classifier.predict_proba(X_test)
+
+macro_roc_auc_ovo = roc_auc_score(y_test, y_prob, multiclass="ovo",
+                                  average="macro")
+weighted_roc_auc_ovo = roc_auc_score(y_test, y_prob, multiclass="ovo",
+                                     average="weighted")
+macro_roc_auc_ovr = roc_auc_score(y_test, y_prob, multiclass="ovr",
+                                  average="macro")
+weighted_roc_auc_ovr = roc_auc_score(y_test, y_prob, multiclass="ovr",
+                                     average="weighted")
+print("One-vs-One ROC AUC scores:\n{:.6f} (macro),\n{:.6f} "
+      "(weighted by prevalence)"
+      .format(macro_roc_auc_ovo, weighted_roc_auc_ovo))
+print("One-vs-Rest ROC AUC scores:\n{:.6f} (macro),\n{:.6f} "
+      "(weighted by prevalence)"
+      .format(macro_roc_auc_ovr, weighted_roc_auc_ovr))

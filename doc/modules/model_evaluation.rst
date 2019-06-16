@@ -1385,9 +1385,6 @@ to the given limit.
     for an example of using ROC to
     model species distribution.
 
-  * See :ref:`sphx_glr_auto_examples_model_selection_plot_roc.py`
-    for an example of using multiclass one-vs-one ROC.
-
 .. topic:: References:
 
     .. [HT2001] Hand, D.J. and Till, R.J., (2001). `A simple generalisation
