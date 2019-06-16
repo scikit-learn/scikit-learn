@@ -2401,8 +2401,11 @@ def check_decision_proba_consistency(name, estimator_orig):
             hasattr(estimator, "predict_proba")):
 
         estimator.fit(X, y)
-        a = estimator.predict_proba(X_test)[:, 1]
-        b = estimator.decision_function(X_test)
+        # Since the link function from decision_function() to predict_proba()
+        # is sometimes not precise enough (typically expit), we round to the
+        # 10th decimal to avoid numerical issues.
+        a = estimator.predict_proba(X_test)[:, 1].round(decimals=10)
+        b = estimator.decision_function(X_test).round(decimals=10)
         assert_array_equal(rankdata(a), rankdata(b))
 
 
