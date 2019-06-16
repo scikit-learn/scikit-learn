@@ -1356,7 +1356,9 @@ as described in [FC2009]_.
 
 **One-vs-rest Algorithm**: Computes the AUC of each class against the rest.
 The algorithm is functionally the same as the multilabel case. To enable this
-algorithm set the keyword argument ``multiclass`` to ``'ovr'``.
+algorithm set the keyword argument ``multiclass`` to ``'ovr'``. Similar to
+OvO, OvR supports two types of averaging: ``'macro'`` [F2006]_ and
+``'weighted'`` [F2001]_.
 
 In applications where a high false positive rate is not tolerable the parameter
 ``max_fpr`` of :func:`roc_auc_score` can be used to summarize the ROC curve up
@@ -1387,15 +1389,25 @@ to the given limit.
 
 .. topic:: References:
 
-    .. [HT2001] Hand, D.J. and Till, R.J., 2001. `A simple generalisation
+    .. [HT2001] Hand, D.J. and Till, R.J., (2001). `A simple generalisation
        of the area under the ROC curve for multiple class classification problems.
        <http://link.springer.com/article/10.1023/A:1010920819831>`_
        Machine learning, 45(2), pp.171-186.
 
     .. [FC2009] Ferri, Cèsar & Hernandez-Orallo, Jose & Modroiu, R. (2009). 
-       An Experimental Comparison of Performance Measures for Classification. 
+       `An Experimental Comparison of Performance Measures for Classification. 
        <https://www.math.ucdavis.edu/~saito/data/roc/ferri-class-perf-metrics.pdf>`_
        Pattern Recognition Letters. 30. 27-38. 
+
+    .. [F2006] Fawcett, T., 2006. `An introduction to ROC analysis.
+       <http://www.sciencedirect.com/science/article/pii/S016786550500303X>`_
+       Pattern Recognition Letters, 27(8), pp. 861-874.
+
+    .. [F2001] Fawcett, T., 2001. `Using rule sets to maximize 
+       ROC performance <http://ieeexplore.ieee.org/document/989510/>`_
+       In Data Mining, 2001.
+       Proceedings IEEE International Conference, pp. 131-138.
+
 
 .. _zero_one_loss:
 
