@@ -649,7 +649,7 @@ def is_sampler(estimator):
     out : bool
         True if estimator is a sampler and False otherwise.
     """
-    return getattr(estimator, "_estimator_type", None) == "classifier"
+    return getattr(estimator, "_estimator_type", None) == "sampler"
 
 
 def is_regressor(estimator):
