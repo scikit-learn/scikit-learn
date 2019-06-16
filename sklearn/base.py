@@ -636,6 +636,22 @@ def is_classifier(estimator):
     return getattr(estimator, "_estimator_type", None) == "classifier"
 
 
+def is_sampler(estimator):
+    """Returns True if the given estimator is (probably) a sampler.
+
+    Parameters
+    ----------
+    estimator : object
+        Estimator object to test.
+
+    Returns
+    -------
+    out : bool
+        True if estimator is a sampler and False otherwise.
+    """
+    return getattr(estimator, "_estimator_type", None) == "classifier"
+
+
 def is_regressor(estimator):
     """Returns True if the given estimator is (probably) a regressor.
 

@@ -23,7 +23,7 @@ import warnings
 import numpy as np
 from scipy.stats import rankdata
 
-from ..base import BaseEstimator, is_classifier, clone
+from ..base import BaseEstimator, is_classifier, is_sampler, clone
 from ..base import MetaEstimatorMixin
 from ._split import check_cv
 from ._validation import _fit_and_score
@@ -634,10 +634,10 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         base_estimator = clone(self.estimator)
 
         if self.imbalanced is not None:
-            if 'imblearn' not in str(type(self.imbalanced)):
-                raise TypeError('Imbalanced_model is not an imblearn class')
-            else:
+            if is_sampler(self.imbalanced):
                 m_imb = clone(self.imbalanced)
+            else:
+                raise TypeError('Imbalanced_model is not an imblearn class')
         else:
             m_imb = None
 
@@ -1306,24 +1306,6 @@ class RandomizedSearchCV(BaseSearchCV):
         However computing the scores on the training set can be computationally
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
-
-    Examples
-    --------
-    >>> from sklearn import svm, datasets
-    >>> from sklearn.model_selection import RandomizedSearchCV
-    >>> from scipy.stats import uniform
-    >>> from scipy.stats import randint as sp_randint
-    >>> iris = datasets.load_iris()
-    >>> parameters = {'kernel': ['poly', 'rbf'], 'C': uniform(0, 50),
-                      'degree': sp_randint(2, 4)}
-    >>> n_iters = 20
-    >>> svc = svm.SVC()
-    >>> clf = RandomizedSearchCV(svc,
-                                 imbalanced_model=None,
-                                 param_distributions=parameters,
-                                 n_iter=n_iters)
-    >>> clf.fit(iris.data, iris.target)
-    >>> sorted(clf.cv_results_.keys())
 
     Attributes
     ----------

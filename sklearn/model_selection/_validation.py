@@ -18,7 +18,7 @@ from traceback import format_exception_only
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import is_classifier, clone
+from ..base import is_classifier, is_sampler, clone
 from ..utils import (indexable, check_random_state, safe_indexing,
                      _message_with_time)
 from ..utils.validation import _is_arraylike, _num_samples
@@ -498,7 +498,10 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, y_test = _safe_split(estimator, X, y, test, train)
     if imbalanced_model is not None:
-        X_train, y_train = imbalanced_model.fit_resample(X_train, y_train)
+        if is_sampler(imbalanced_model):
+            X_train, y_train = imbalanced_model.fit_resample(X_train, y_train)
+        else:
+            raise TypeError('Imbalanced_model is not an imblearn class')
 
     is_multimetric = not callable(scorer)
     n_scorers = len(scorer.keys()) if is_multimetric else 1
