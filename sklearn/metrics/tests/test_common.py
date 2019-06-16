@@ -1188,7 +1188,9 @@ def test_multiclass_sample_weight_invariance(name):
     y_score = random_state.random_sample(size=(n_samples, 5))
     metric = ALL_METRICS[name]
     if name in THRESHOLDED_METRICS:
-        y_score_norm = y_score / y_score.sum(1, keepdims=True)
+        # softmax
+        temp = np.exp(-y_score)
+        y_score_norm = temp / temp.sum(axis=-1).reshape(-1, 1)
         check_sample_weight_invariance(name, metric, y_true, y_score_norm)
     else:
         check_sample_weight_invariance(name, metric, y_true, y_pred)
