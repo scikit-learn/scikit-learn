@@ -246,8 +246,8 @@ boolean mask array or callable
                 # skip in case of 'drop'
                 if trans == 'passthrough':
                     trans = FunctionTransformer(
-                        validate=False, accept_sparse=True,
-                        check_inverse=False)
+                        accept_sparse=True, check_inverse=False
+                    )
                 elif trans == 'drop':
                     continue
                 elif _is_empty_column_selection(column):

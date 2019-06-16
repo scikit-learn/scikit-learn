@@ -39,6 +39,14 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.decomposition`
+..................
+
+- |Enhancement| :class:`decomposition.IncrementalPCA` now accepts sparse
+  matrices as input, converting them to dense in batches thereby avoiding the
+  need to store the entire dense matrix at once.
+  :pr:`13960` by :user:`Scott Gigante <scottgigante>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
@@ -54,6 +62,14 @@ Changelog
   ``alpha_init`` and ``lambda_init`` which can be used to set the initial value
   of the maximization procedure in :term:`fit`.
   :pr:`13618` by :user:`Yoshihiro Uchida <c56pony>`.
+
+:mod:`sklearn.model_selection`
+..................
+
+- |Enhancement| :class:`model_selection.learning_curve` now accepts parameter
+  ``return_times`` which can be used to retrieve computation times in order to
+  plot model scalability (see learning_curve example).
+  :pr:`13938` by :user:`Hadrien Reboul <H4dr1en>`.
 
 :mod:`sklearn.pipeline`
 .......................
@@ -113,3 +129,7 @@ These changes mostly affect library developers.
   ``transform`` is called before ``fit``; previously an ``AttributeError`` or
   ``ValueError`` was acceptable.
   :pr:`13013` by by :user:`Agamemnon Krasoulis <agamemnonc>`.
+
+- |Enhancement| Binary only classifiers are now supported in estimator checks.
+  Such classifiers need to have the `binary_only=True` estimator tag.
+  :pr:`13875` by `Trevor Stephens`_.

@@ -18,7 +18,6 @@ from sklearn.datasets import (make_classification, fetch_california_housing,
                               make_regression)
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.ensemble.gradient_boosting import ZeroEstimator
 from sklearn.ensemble._gradient_boosting import predict_stages
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.svm import LinearSVC

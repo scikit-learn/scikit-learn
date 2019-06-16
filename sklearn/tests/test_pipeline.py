@@ -187,6 +187,10 @@ def test_pipeline_init():
     filter1 = SelectKBest(f_classif)
     pipe = Pipeline([('anova', filter1), ('svc', clf)])
 
+    # Check that estimators are not cloned on pipeline construction
+    assert pipe.named_steps['anova'] is filter1
+    assert pipe.named_steps['svc'] is clf
+
     # Check that we can't instantiate with non-transformers on the way
     # Note that NoTrans implements fit, but not transform
     assert_raises_regex(TypeError,

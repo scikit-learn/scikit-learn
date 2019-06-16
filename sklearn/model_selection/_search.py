@@ -15,6 +15,7 @@ from collections import defaultdict
 from collections.abc import Mapping, Sequence, Iterable
 from functools import partial, reduce
 from itertools import product
+import numbers
 import operator
 import time
 import warnings
@@ -693,7 +694,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
             # parameter set.
             if callable(self.refit):
                 self.best_index_ = self.refit(results)
-                if not isinstance(self.best_index_, (int, np.integer)):
+                if not isinstance(self.best_index_, numbers.Integral):
                     raise TypeError('best_index_ returned is not an integer')
                 if (self.best_index_ < 0 or
                    self.best_index_ >= len(results["params"])):
