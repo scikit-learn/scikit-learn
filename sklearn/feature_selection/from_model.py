@@ -295,10 +295,9 @@ class SelectFromModelCV(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
             in v0.22.
     Attributes
     ----------
-    estimator_ : an estimator
-        The base estimator from which the transformer is built.
-        This is stored only when a non-fitted estimator is passed to the
-        ``SelectFromModel``, i.e when prefit is False.
+    feature_importances_ : array of size [n_fold, n_features]
+        This is stored only after fit is called.
+        ``SelectFromModelCV``, i.e when prefit is False.
     threshold_ : float
         The threshold value used for feature selection.
     """
@@ -312,9 +311,9 @@ class SelectFromModelCV(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
         self.cv = cv
 
     def _get_support_mask(self):
-        # SelectFromModel can directly call on transform.
-        if hasattr(self, 'feature_importances_cv'):
-            scores = np.mean(self.feature_importances_cv, axis=0)
+        # SelectFromModelCV can directly call on transform.
+        if hasattr(self, '_feature_importances_cv'):
+            scores = np.mean(self._feature_importances_cv, axis=0)
         else:
             raise ValueError('Fit the model before transform.')
         threshold = _calculate_threshold(self.estimator, scores,
@@ -330,7 +329,7 @@ class SelectFromModelCV(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
         return mask
 
     def fit(self, X, y=None, groups=None, **fit_params):
-        """Fit the SelectFromModel meta-transformer.
+        """Fit the SelectFromModelCV meta-transformer.
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
@@ -368,7 +367,7 @@ class SelectFromModelCV(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
             parallel = Parallel(n_jobs=self.n_jobs)
             func = delayed(_sfm_single_fit)
 
-        self.feature_importances_cv = parallel(
+        self._feature_importances_cv = parallel(
             func(sfm, self.estimator, X, y, train, test)
             for train, test in cv.split(X, y, groups))
 
@@ -376,5 +375,5 @@ class SelectFromModelCV(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
 
     @property
     def threshold_(self):
-        scores = np.mean(self.feature_importances_cv, axis=0)
+        scores = np.mean(self._feature_importances_cv, axis=0)
         return _calculate_threshold(self.estimator, scores, self.threshold)
