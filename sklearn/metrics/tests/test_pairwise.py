@@ -787,19 +787,6 @@ def test_gower_distances():
     #
     # The calculation formula for Gower similarity is available in the
     # user guide.
-
-    from sklearn.metrics.pairwise import pairwise_distances
-    X = np.random.randn(1000).reshape(200, -1)*1000
-    X = np.append(X, np.random.randn(1000).reshape(200, -1)*-10000, axis=1)
-
-    D_expected = pairwise_distances(X, metric='gower')
-    D = pairwise_distances(X, metric='gower', n_jobs=2)
-    assert_array_almost_equal(D_expected, D)
-
-    X = [[np.nan, np.nan], [np.nan, np.nan]]
-    D = gower_distances(X)
-    assert_array_almost_equal(X, D)
-
     with pytest.raises(TypeError):
         gower_distances(csr_matrix((2, 2)))
     with pytest.raises(ValueError):
@@ -809,6 +796,12 @@ def test_gower_distances():
          ['F', True, 333.22, 2],
          ['M', True, 1934.0, 4],
          [None, None, np.nan, np.nan]]
+
+    with pytest.raises(TypeError):
+        gower_distances(X, scale=1)
+
+    with pytest.raises(ValueError):
+        gower_distances(X, scale=[1])
 
     D = gower_distances(X)
 
@@ -1100,6 +1093,17 @@ def test_gower_distances():
     D = gower_distances(X[1:], Y[1:], scale=[2999, 2999])
     assert_array_almost_equal(D_expected[1:3, 1:3], D)
 
+    # Test gower under pairwise_distances
+    X = np.random.randn(1000).reshape(200, -1)*1000
+    X = np.append(X, np.random.randn(1000).reshape(200, -1)*-10000, axis=1)
+
+    D_expected = pairwise_distances(X, metric='gower')
+    D = pairwise_distances(X, metric='gower', n_jobs=2)
+    assert_array_almost_equal(D_expected, D)
+
+    X = [[np.nan, np.nan], [np.nan, np.nan]]
+    D = gower_distances(X)
+    assert_array_almost_equal(X, D)
 
 def test_haversine_distances():
     # Check haversine distance with distances computation

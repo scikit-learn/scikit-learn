@@ -804,7 +804,8 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True,
     n_col_cat_num_present = X_cat_num.shape[1] > 0
 
     # Calculates the min and max values, and if requested, scale the
-    # input values as proposed by the Gower's paper.
+    # input values in order to obtain the distances between 0 and 1,
+    # as proposed by the Gower's paper.
     if n_col_num_present:
         process_scale = False
         if isinstance(scale, bool):
@@ -813,10 +814,11 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True,
             if (isinstance(scale, list) and len(scale) != X_num.shape[1]) or\
                (isinstance(scale, np.ndarray) and
                     len(scale.flat) != X_num.shape[1]):
-                raise ValueError("Length of scale parameter must be equal " +
+                raise ValueError("Length of scale parameter must be equal "
                                  "to the number of numerical columns.")
             process_scale = True
-
+        # This needs to be called here to obtain the min and max,
+        # scale won't be changed if it already exists.
         params = _precompute_metric_params(X_num, Y_num, metric='gower',
                                            scale=scale, **kwargs)
         kwargs.update(**params)
@@ -1548,7 +1550,7 @@ def _precompute_metric_params(X, Y, metric=None, **kwds):
             min = np.nanmin([np.nanmin(Y, axis=0), min], axis=0)
 
         max = None
-        if type(scale) is bool and scale:
+        if type(scale) is bool:
             max = np.nanmax(X, axis=0)
             if X is not Y:
                 max = np.nanmax([np.nanmax(Y, axis=0), max], axis=0)
