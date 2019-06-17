@@ -43,22 +43,13 @@ def test_knn_imputer_errors():
     with pytest.raises(ValueError, match=msg):
         imputer.fit(X)
 
-    # Test with % zeros in samples > sample_max_missing
-    X = np.array([
-        [1, 0, 0, 0, 5],
-        [2, 1, 0, 2, 3],
-        [3, 2, 0, 0, 0],
-        [4, 6, 0, 5, 13],
-    ])
-    msg = "Some columns have more than {}% missing values".format(
-        imputer.sample_max_missing * 100)
-    with pytest.raises(ValueError, match=msg):
-        imputer.fit(X)
-
 
 def _missing_mean(X, missing_value):
     masked_X = np.ma.array(X, mask=_get_missing_mask(X, missing_value))
-    return np.ma.average(masked_X, axis=0).data
+    masked_X_mean = masked_X.mean(axis=0)
+    output = masked_X_mean.data
+    output[masked_X_mean.mask] = np.nan
+    return output
 
 
 @pytest.mark.parametrize("na", [np.nan, -1])
@@ -130,33 +121,33 @@ def test_knn_imputer_verify(na):
     assert_array_almost_equal(imputer.statistics_, statistics_mean)
 
     # Test with % missing in features > feature_max_missing
-    X = np.array([
-        [1, 0, 0, 1],
-        [2, 1, 2, na],
-        [3, 2, 3, na],
-        [na, 4, 5, 5],
-        [6, na, 6, 7],
-        [8, 8, 8, 8],
-        [19, 19, 19, 19],
-        [na, na, na, 19],
-    ])
-    statistics_mean = _missing_mean(X, na)
-    r7c0, r7c1, r7c2, _ = statistics_mean
+    # X = np.array([
+    #     [1, 0, 0, 1],
+    #     [2, 1, 2, na],
+    #     [3, 2, 3, na],
+    #     [na, 4, 5, 5],
+    #     [6, na, 6, 7],
+    #     [8, 8, 8, 8],
+    #     [19, 19, 19, 19],
+    #     [na, na, na, 19],
+    # ])
+    # statistics_mean = _missing_mean(X, na)
+    # r7c0, r7c1, r7c2, _ = statistics_mean
 
-    X_imputed = np.array([
-        [1, 0, 0, 1],
-        [2, 1, 2, 8],
-        [3, 2, 3, 8],
-        [4, 4, 5, 5],
-        [6, 3, 6, 7],
-        [8, 8, 8, 8],
-        [19, 19, 19, 19],
-        [r7c0, r7c1, r7c2, 19],
-    ])
+    # X_imputed = np.array([
+    #     [1, 0, 0, 1],
+    #     [2, 1, 2, 8],
+    #     [3, 2, 3, 8],
+    #     [4, 4, 5, 5],
+    #     [6, 3, 6, 7],
+    #     [8, 8, 8, 8],
+    #     [19, 19, 19, 19],
+    #     [r7c0, r7c1, r7c2, 19],
+    # ])
 
-    imputer = KNNImputer(missing_values=na)
-    assert_array_almost_equal(imputer.fit_transform(X), X_imputed, decimal=6)
-    assert_array_almost_equal(imputer.statistics_, statistics_mean, decimal=6)
+    # imputer = KNNImputer(missing_values=na)
+    # assert_array_almost_equal(imputer.fit_transform(X), X_imputed, decimal=6)
+    # assert_array_almost_equal(imputer.statistics_, statistics_mean, decimal=6)
 
     # Test with all neighboring donors also having missing feature values
     X = np.array([
@@ -218,32 +209,6 @@ def test_knn_imputer_verify(na):
 @pytest.mark.parametrize("na", [np.nan, -1])
 def test_knn_imputer_default_with_invalid_input(na):
     # Test imputation with default values and invalid input
-    # Test with % missing in a samples > sample_max_missing
-    X = np.array([
-        [na, 0, 0, 0, 5],
-        [na, 1, 0, na, 3],
-        [na, 2, 0, 0, 0],
-        [na, 6, 0, 5, 13],
-        [na, 7, 0, 7, 8],
-        [na, 8, 0, 8, 9],
-    ])
-    imputer = KNNImputer(missing_values=na)
-    msg = "Some columns have more than {}% missing values".format(
-        imputer.sample_max_missing * 100)
-    with pytest.raises(ValueError, match=msg):
-        imputer.fit(X)
-
-    # Test with insufficient number of neighbors
-    X = np.array([
-        [1, 1, 1, 2, na],
-        [2, 1, 2, 2, 3],
-        [3, 2, 3, 3, 8],
-        [6, 6, 2, 5, 13],
-    ])
-    msg = "There are only %d samples, but n_neighbors=%d" % \
-          (X.shape[0], imputer.n_neighbors)
-    with pytest.raises(ValueError, match=msg):
-        imputer.fit(X)
 
     # Test with inf present
     X = np.array([

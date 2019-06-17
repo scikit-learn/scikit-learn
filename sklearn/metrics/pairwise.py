@@ -409,9 +409,9 @@ def nan_euclidean_distances(X, Y=None, squared=False,
         else:
             missing_YT = _get_missing_mask(YT, missing_values)
 
-    # Convert to uint8 to be used for calculate distances
-    not_missing_X_int = (~missing_X).astype(np.uint8)
-    not_missing_YT_int = (~missing_YT).astype(np.uint8)
+    # Convert to float32 to be used for calculate distances
+    not_missing_X_int = (~missing_X).astype(np.float32)
+    not_missing_YT_int = (~missing_YT).astype(np.float32)
 
     # set missing values to zero
     X[missing_X] = 0
@@ -428,7 +428,7 @@ def nan_euclidean_distances(X, Y=None, squared=False,
     distances += safe_sparse_dot(not_missing_X_int, YTYT, dense_output=False)
 
     non_missing_cnt = np.dot(not_missing_X_int, not_missing_YT_int)
-    non_missing_mask = (non_missing_cnt != 0)
+    non_missing_mask = (non_missing_cnt != 0.0)
 
     distances[non_missing_mask] *= (
         X.shape[1] / non_missing_cnt[non_missing_mask])

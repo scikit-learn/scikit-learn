@@ -31,7 +31,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         The placeholder for the missing values. All occurrences of
         `missing_values` will be imputed.
 
-    n_neighbors : int, optional (default = 5)
+    n_neighbors : int, optional (default=5)
         Number of neighboring samples to use for imputation.
 
     weights : str or callable, optional (default="uniform")
@@ -54,22 +54,9 @@ class KNNImputer(BaseEstimator, TransformerMixin):
           accepts two arrays, X and Y, and a ``missing_values`` keyword in
           ``kwds`` and returns a scalar distance value.
 
-    feature_max_missing : float, optional (default=0.5)
-        The maximum fraction of features that can be missing
-        before the sample is excluded from nearest neighbor imputation. These
-        samples will not be considered a potential donor in ``fit``, and in
-        ``transform`` their missing feature values will be imputed to be the
-        feature mean for the entire dataset.
-
-    sample_max_missing : float, optional (default=0.8)
-        The maximum fraction of samples that can be missing for any feature
-        beyond which an error is raised.
-
     copy : boolean, optional(default=True)
         If True, a copy of X will be created. If False, imputation will
-        be done in-place whenever possible. Note that, if metric is
-        "nan_euclidean" and copy=False then missing_values in the
-        input matrix X will be overwritten with zeros.
+        be done in-place whenever possible.
 
     Attributes
     ----------
@@ -102,20 +89,18 @@ class KNNImputer(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, missing_values=np.nan, n_neighbors=5,
-                 weights="uniform", metric="nan_euclidean",
-                 feature_max_missing=0.5, sample_max_missing=0.8, copy=True):
+                 weights="uniform", metric="nan_euclidean", copy=True):
 
         self.missing_values = missing_values
         self.n_neighbors = n_neighbors
         self.weights = weights
         self.metric = metric
-        self.feature_max_missing = feature_max_missing
-        self.sample_max_missing = sample_max_missing
         self.copy = copy
 
-    def _impute(self, dist, receivers_idx,
-                X_col, fit_X_col, mask_fit_X_col, statistic):
-        """Helper function to impute the missing values of a single column.
+    def _calc_impute(self, dist, receivers_idx, X_col, fit_X_col,
+                     mask_fit_X_col, statistic):
+        """Helper function to calculate the imputation value of a single
+        column.
 
         Parameters
         ----------
@@ -137,16 +122,12 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         statistic : float
             statistic for column generated from fitting ``fit_X_col``
         """
-        if receivers_idx.shape[0] == 0:
-            return
-
         # Row index for receivers and potential donors (pdonors)
         potential_donors_idx = np.where(~mask_fit_X_col)[0]
 
-        # Impute using column mean if n_neighbors are not available
+        # Use statistics if not enough donors are available
         if len(potential_donors_idx) < self.n_neighbors:
-            X_col[receivers_idx] = statistic
-            return
+            return statistic
 
         # Get distance from potential donors
         dist_potential_donors = dist[:, potential_donors_idx]
@@ -156,7 +137,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
                                      self.n_neighbors - 1,
                                      axis=1)[:, :self.n_neighbors]
 
-        # Get weights or None
+        # Get weight matrix from from distance matrix
         donors_dist = dist_potential_donors[
             np.arange(donors_idx.shape[0])[:, None], donors_idx]
         weight_matrix = _get_weights(donors_dist, self.weights)
@@ -167,16 +148,14 @@ class KNNImputer(BaseEstimator, TransformerMixin):
                              mask=_get_missing_mask(donors,
                                                     self.missing_values))
 
-        # Final imputation
-        imputed = np.ma.average(donors, axis=1, weights=weight_matrix)
-        X_col[receivers_idx] = imputed.data
+        return np.ma.average(donors, axis=1, weights=weight_matrix).data
 
     def fit(self, X, y=None):
         """Fit the imputer on X.
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features, )
+        X : array-like, shape = (n_samples, n_features)
             Input data, where ``n_samples`` is the number of samples and
             ``n_features`` is the number of features.
 
@@ -194,23 +173,16 @@ class KNNImputer(BaseEstimator, TransformerMixin):
                 raise ValueError(
                     "The selected metric does not support NaN values")
         X = check_array(X, accept_sparse=False, dtype=FLOAT_DTYPES,
-                        force_all_finite=force_all_finite, copy=self.copy)
+                        force_all_finite=force_all_finite, copy=True)
 
-        # Check if sufficient neighboring samples available
-        if X.shape[0] < self.n_neighbors:
-            raise ValueError("There are only {} samples, but n_neighbors={}"
-                             .format(X.shape[0], self.n_neighbors))
-
-        # Check if % missing in any samples > sample_max_missing
         mask = _get_missing_mask(X, self.missing_values)
-        if np.any(mask.sum(axis=0) > (X.shape[0] * self.sample_max_missing)):
-            raise ValueError("Some columns have more than {}% missing values"
-                             .format(self.sample_max_missing * 100))
-
         self.weights = _check_weights(self.weights)
-        self.fit_X_ = X[
-            mask.sum(axis=1) <= (mask.shape[1] * self.feature_max_missing)]
-        self.statistics_ = np.ma.array(X, mask=mask).mean(axis=0).data
+        self.fit_X = X
+
+        masked_X = np.ma.masked_array(X, mask=mask)
+        mean_masked = np.ma.mean(masked_X, axis=0)
+        self.statistics_ = mean_masked.data
+        self.statistics_[mean_masked.mask] = np.nan
 
         return self
 
@@ -219,16 +191,16 @@ class KNNImputer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like, shape = (n_samples, n_features)
             The input data to complete.
 
         Returns
         -------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like, shape = (n_samples, n_features)
             The imputed dataset.
         """
 
-        check_is_fitted(self, ["fit_X_", "statistics_"])
+        check_is_fitted(self, ["statistics_"])
         if not is_scalar_nan(self.missing_values):
             force_all_finite = True
         else:
@@ -236,59 +208,41 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         X = check_array(X, accept_sparse=False, dtype=FLOAT_DTYPES,
                         force_all_finite=force_all_finite, copy=self.copy)
 
-        if X.shape[1] != self.fit_X_.shape[1]:
+        if X.shape[1] != self.fit_X.shape[1]:
             raise ValueError("Incompatible dimension between the fitted "
                              "dataset and the one to be transformed")
 
         mask = _get_missing_mask(X, self.missing_values)
-        orig_X_shape = X.shape
         if not np.any(mask):
             return X
 
         # Check for excessive missingness in rows
         row_total_missing = mask.sum(axis=1)
-        bad_rows = row_total_missing > (mask.shape[1] *
-                                        self.feature_max_missing)
-        if np.any(bad_rows):
-            X_bad = X[bad_rows]
-            X = X[~bad_rows]
-            mask = mask[~bad_rows]
-            row_total_missing = mask.sum(axis=1)
 
         row_misses = row_total_missing.astype(np.bool)
-        if np.any(row_misses):
-            # Pairwise distances between receivers and fitted samples
-            dist = pairwise_distances(X[row_misses], self.fit_X_,
-                                      metric=self.metric,
-                                      squared=False,
-                                      missing_values=self.missing_values)
+        # Pairwise distances between receivers and fitted samples
+        dist = pairwise_distances(X[row_misses], self.fit_X,
+                                  metric=self.metric,
+                                  squared=False,
+                                  missing_values=self.missing_values)
 
-            # Maps from indices from X to indices in dist matrix
-            dist_idx_map = np.zeros(X.shape[0], dtype=np.int)
-            dist_idx_map[row_misses] = np.arange(0, row_misses.sum(0))
+        # Maps from indices from X to indices in dist matrix
+        dist_idx_map = np.zeros(X.shape[0], dtype=np.int)
+        dist_idx_map[row_misses] = np.arange(0, row_misses.sum(0))
 
-            # Find and impute missing
-            mask_fit_X = _get_missing_mask(self.fit_X_, self.missing_values)
-            for col in range(X.shape[1]):
+        # Find and impute missing
+        mask_fit_X = _get_missing_mask(self.fit_X, self.missing_values)
+        for col in range(X.shape[1]):
 
-                if not np.any(mask[:, col]):
-                    continue
+            if not np.any(mask[:, col]):
+                continue
 
-                receivers_idx = np.where(mask[:, col])[0]
-                dist_subset = dist[dist_idx_map[receivers_idx]]
-                self._impute(dist_subset, receivers_idx, X[:, col],
-                             self.fit_X_[:, col], mask_fit_X[:, col],
-                             self.statistics_[col])
-
-        # Merge deficient rows and mean impute their missing values
-        if np.any(bad_rows):
-            missing_mask = _get_missing_mask(X_bad, self.missing_values)
-            bad_missing_index = np.where(missing_mask)
-            X_bad[bad_missing_index] = self.statistics_[bad_missing_index[1]]
-            X_merged = np.empty(orig_X_shape)
-            X_merged[bad_rows] = X_bad
-            X_merged[~bad_rows] = X
-            X = X_merged
+            receivers_idx = np.where(mask[:, col])[0]
+            dist_subset = dist[dist_idx_map[receivers_idx]]
+            value = self._calc_impute(dist_subset, receivers_idx, X[:, col],
+                                      self.fit_X[:, col], mask_fit_X[:, col],
+                                      self.statistics_[col])
+            X[receivers_idx, col] = value
         return X
 
     def _more_tags(self):
