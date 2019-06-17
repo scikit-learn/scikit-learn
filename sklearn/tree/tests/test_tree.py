@@ -1858,3 +1858,45 @@ def test_decision_tree_memmap():
 
     with TempMemmap((X, y)) as (X_read_only, y_read_only):
         DecisionTreeClassifier().fit(X_read_only, y_read_only)
+
+def test_montonic_constraints():
+    X, y = datasets.make_hastie_10_2(n_samples=1000, random_state=123)
+    X0 = np.copy(X)
+    for name, TreeRegressor in REG_TREES.items():
+        est = TreeRegressor(max_depth=None, decreasing=[0], increasing=[1]).fit(X, y)
+
+        y0 = est.predict(X0)
+
+        # decreasing constraint
+        X1 = np.copy(X)
+        X1[:,0] += 10
+        y1 = est.predict(X1)
+        # y1 should always be lower than y0
+        assert_less_equal(np.max(y1 - y0), 0)
+
+        # increasing constraint
+        X1 = np.copy(X)
+        X1[:, 1] += 10
+        y1 = est.predict(X1)
+        # y1 should always be greater than y0
+        assert_greater_equal(np.min(y1 - y0), 0)
+
+    for name, TreeClassifier in CLF_TREES.items():
+        est = TreeClassifier(max_depth=None, decreasing=[0], increasing=[1]).fit(X, y)
+
+        X0 = np.copy(X)
+        y0 = est.predict_proba(X0)
+
+        # decreasing constraint
+        X1 = np.copy(X)
+        X1[:,0] += 10
+        y1 = est.predict_proba(X1)
+        # y1 should always be lower than y0
+        assert_less_equal(np.max(y1 - y0), 0)
+
+        # increasing constraint
+        X1 = np.copy(X)
+        X1[:, 1] += 10
+        y1 = est.predict_proba(X1)
+        # y1 should always be greater than y0
+        assert_greater_equal(np.min(y1 - y0), 0)
