@@ -1869,7 +1869,7 @@ def test_montonic_constraints():
 
         # decreasing constraint
         X1 = np.copy(X)
-        X1[:,0] += 10
+        X1[:, 0] += 10
         y1 = est.predict(X1)
         # y1 should always be lower than y0
         assert_less_equal(np.max(y1 - y0), 0)
@@ -1889,7 +1889,7 @@ def test_montonic_constraints():
 
         # decreasing constraint
         X1 = np.copy(X)
-        X1[:,0] += 10
+        X1[:, 0] += 10
         y1 = est.predict_proba(X1)
         # y1 should always be lower than y0
         assert_less_equal(np.max(y1 - y0), 0)
