@@ -3,6 +3,7 @@ import warnings
 import sys
 import traceback
 import pickle
+import pytest
 from copy import deepcopy
 from functools import partial
 from inspect import signature
@@ -270,7 +271,7 @@ def _yield_all_checks(name, estimator):
     yield check_fit_idempotent
 
 
-def check_estimator(Estimator, verbose=False):
+def check_estimator(Estimator):
     """Check if estimator adheres to scikit-learn conventions.
 
     This estimator will run an extensive test-suite for input validation,
@@ -287,18 +288,12 @@ def check_estimator(Estimator, verbose=False):
     ----------
     estimator : estimator object or class
         Estimator to check. Estimator is a class object or instance.
-
-    verbose : boolean
-        Flag to specify in order to see a progress bar.
-
     """
-    if verbose == True:
-        raise NotImplementedError
-
     if isinstance(Estimator, type):
         # got a class
         name = Estimator.__name__
         estimator = Estimator()
+        # Generate tests for pytest hooks collector
         check_parameters_default_constructible(name, Estimator)
         check_no_attributes_set_in_init(name, estimator)
     else:
@@ -313,6 +308,8 @@ def check_estimator(Estimator, verbose=False):
             # the only SkipTest thrown currently results from not
             # being able to import pandas.
             warnings.warn(str(exception), SkipTestWarning)
+    # Run tests using pytest
+    pytest.main(['-vvv', 'tests'])
 
 
 def _boston_subset(n_samples=200):
