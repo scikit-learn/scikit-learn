@@ -32,9 +32,8 @@ missing values (e.g. :class:`impute.IterativeImputer`).
 Univariate feature imputation
 =============================
 
-Imputer transformers can be used in a Pipeline as a way to build a composite
-estimator that supports imputation.  See
-:ref:`sphx_glr_auto_examples_plot_missing_values.py`.
+Imputer transformers can be used to create pipelines that support data with
+missing values. See :ref:`sphx_glr_auto_examples_plot_missing_values.py`.
 
 
 Simple univariate imputation
@@ -191,7 +190,7 @@ References
 Nearest neighbors imputation
 ============================
 
-The :class:`KNNImputer` class provides imputation for completing missing
+The :class:`KNNImputer` class provides imputation for filling in missing
 values using the k-Nearest Neighbors approach. Each sample's missing values
 are imputed using values from ``n_neighbors`` nearest neighbors found in the
 training set. In this context, a donor is defined to be a neighbor that
