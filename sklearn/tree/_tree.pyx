@@ -1363,7 +1363,7 @@ cdef _cost_complexity_prune(Tree orig_tree,
         rc = stack.push(0, 0, 0, -1, 0, 0, 0)
         if rc == -1:
             with gil:
-                raise MemoryError()
+                raise MemoryError("pruning tree")
 
         while not stack.is_empty():
             stack.pop(&stack_record)
@@ -1376,12 +1376,12 @@ cdef _cost_complexity_prune(Tree orig_tree,
                 rc = stack.push(child_l[node_idx], 0, 0, node_idx, 0, 0, 0)
                 if rc == -1:
                     with gil:
-                        raise MemoryError()
+                        raise MemoryError("pruning tree")
 
                 rc = stack.push(child_r[node_idx], 0, 0, node_idx, 0, 0, 0)
                 if rc == -1:
                     with gil:
-                        raise MemoryError()
+                        raise MemoryError("pruning tree")
 
         # computes number of leaves in all branches and the overall impurity of
         # the branch. The overall impurity is the sum of r_node in its leaves.
@@ -1424,7 +1424,7 @@ cdef _cost_complexity_prune(Tree orig_tree,
             rc = stack.push(pruned_branch_node_idx, 0, 0, 0, 0, 0, 0)
             if rc == -1:
                 with gil:
-                    raise MemoryError()
+                    raise MemoryError("pruning tree")
 
             # descendants of branch are not in subtree
             while not stack.is_empty():
@@ -1442,11 +1442,11 @@ cdef _cost_complexity_prune(Tree orig_tree,
                     rc = stack.push(child_l[node_idx], 0, 0, 0, 0, 0, 0)
                     if rc == -1:
                         with gil:
-                            raise MemoryError()
+                            raise MemoryError("pruning tree")
                     rc = stack.push(child_r[node_idx], 0, 0, 0, 0, 0, 0)
                     if rc == -1:
                         with gil:
-                            raise MemoryError()
+                            raise MemoryError("pruning tree")
             leaves_in_subtree[pruned_branch_node_idx] = 1
             in_subtree[pruned_branch_node_idx] = 1
 
@@ -1581,7 +1581,7 @@ cdef _build_pruned_tree(
         rc = stack.push(0, 0, 0, _TREE_UNDEFINED, 0, 0.0, 0)
         if rc == -1:
             with gil:
-                raise MemoryError()
+                raise MemoryError("pruning tree")
 
         while not stack.is_empty():
             stack.pop(&stack_record)
@@ -1627,4 +1627,4 @@ cdef _build_pruned_tree(
         if rc >= 0:
             tree.max_depth = max_depth_seen
     if rc == -1:
-        raise MemoryError()
+        raise MemoryError("pruning tree")
