@@ -32,7 +32,7 @@ static struct feature_node **dense_to_sparse(double *x, npy_intp *dims,
         /* allocate stack for nonzero elements */
         T = sparse[i] = malloc((dims[1]+2) * sizeof(struct feature_node));
         if (T == NULL) {
-            for (j=0; j<i-1; j++)
+            for (j=0; j<i; j++)
                 free(sparse[j]);
             free(sparse);
             return NULL;
