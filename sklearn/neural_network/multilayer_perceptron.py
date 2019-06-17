@@ -21,6 +21,7 @@ from ..preprocessing import LabelBinarizer
 from ..utils import gen_batches, check_random_state
 from ..utils import shuffle
 from ..utils import check_array, check_X_y, column_or_1d
+from ..utils import safe_indexing
 from ..exceptions import ConvergenceWarning
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted
@@ -511,9 +512,10 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                     idx = shuffle(idx, random_state=self._random_state)
                 accumulated_loss = 0.0
                 for batch_slice in gen_batches(n_samples, batch_size):
-                    activations[0] = X[idx[batch_slice]]
+                    activations[0] = safe_indexing(X, idx[batch_slice])
                     batch_loss, coef_grads, intercept_grads = self._backprop(
-                        X[idx[batch_slice]], y[idx[batch_slice]],
+                        safe_indexing(X, idx[batch_slice]),
+                        y[idx[batch_slice]],
                         activations, deltas,
                         coef_grads, intercept_grads)
                     accumulated_loss += batch_loss * (batch_slice.stop -
@@ -661,7 +663,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         y_pred : array-like, shape (n_samples,) or (n_samples, n_outputs)
             The decision function of the samples for each class in the model.
         """
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+        X = check_array(X, accept_sparse=['csr', 'csc'])
 
         # Make sure self.hidden_layer_sizes is a list
         hidden_layer_sizes = self.hidden_layer_sizes
@@ -917,7 +919,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
             n_iter_no_change=n_iter_no_change)
 
     def _validate_input(self, X, y, incremental):
-        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
+        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc'],
                          multi_output=True)
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
@@ -1317,7 +1319,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         return y_pred
 
     def _validate_input(self, X, y, incremental):
-        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
+        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc'],
                          multi_output=True, y_numeric=True)
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
