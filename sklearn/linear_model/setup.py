@@ -2,8 +2,6 @@ import os
 
 import numpy
 
-from Cython import Tempita
-
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
 
@@ -32,6 +30,7 @@ def configuration(parent_package='', top_path=None):
 
         with open(sag_cython_file, "r") as f:
             tmpl = f.read()
+        from Cython import Tempita # noqa
         tmpl_ = Tempita.sub(tmpl)
 
         with open(sag_file, "w") as f:

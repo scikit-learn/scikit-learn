@@ -120,6 +120,7 @@ cdef class DistanceMetric:
            [ 5.19615242,  0.        ]])
 
     Available Metrics
+
     The following lists the string metric identifiers and the associated
     distance metric classes:
 

@@ -14,6 +14,9 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.mask import _get_missing_mask
 
+# make IterativeImputer available
+from sklearn.experimental import enable_iterative_imputer  # noqa
+
 from sklearn.impute import MissingIndicator
 from sklearn.impute import SimpleImputer, IterativeImputer, KNNImputer
 from sklearn.dummy import DummyRegressor
@@ -446,8 +449,6 @@ def test_imputation_constant_pandas(dtype):
     assert_array_equal(X_trans, X_true)
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_imputation_pipeline_grid_search():
     # Test imputation within a pipeline + gridsearch.
     X = sparse_random_matrix(100, 100, density=0.10)
