@@ -10,9 +10,9 @@ The :class:`DecisionTreeClassifier` provides parameters such as
 complexity pruning provides another option to control the size of a tree. In
 :class:`DecisionTreeClassifier`, this pruning technique is parameterized by the
 cost complexity parameter, ``ccp_alpha``. Greater values of ``ccp_alpha``
-increases the number of nodes pruned. In this example, we will explore the
-effects of ``ccp_alpha`` on building trees and choose a ``ccp_alpha`` based on
-validation scores.
+increases the number of nodes pruned. Here we only show the effect of
+``ccp_alpha`` on regularizing the trees and how to choose a ``ccp_alpha``
+based on validation scores.
 """
 
 print(__doc__)
@@ -84,7 +84,8 @@ plt.show()
 ###############################################################################
 # Accuracy vs alpha for training and testing sets
 # ----------------------------------------------------
-# When ``ccp_alpha`` is set to zero, the decision tree overfits, leading to
+# When ``ccp_alpha`` is set to zero and keeping the other default parameters
+# of :class:`DecisionTreeClassifier`, the tree overfits, leading to
 # a 100% training accuracy and 88% testing accuracy. As alpha increases, more
 # of the tree is pruned, thus creating a decision tree that generalizes better.
 # In this example, setting ``ccp_alpha=0.015`` maximizes the testing accuracy.
