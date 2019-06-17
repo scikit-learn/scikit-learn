@@ -252,12 +252,11 @@ def test_check_scoring_and_check_multimetric_scoring():
                              scoring=scoring)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_check_scoring_gridsearchcv():
     # test that check_scoring works on GridSearchCV and pipeline.
     # slightly redundant non-regression test.
 
-    grid = GridSearchCV(LinearSVC(), param_grid={'C': [.1, 1]})
+    grid = GridSearchCV(LinearSVC(), param_grid={'C': [.1, 1]}, cv=3)
     scorer = check_scoring(grid, "f1")
     assert isinstance(scorer, _PredictScorer)
 
@@ -269,7 +268,7 @@ def test_check_scoring_gridsearchcv():
     # and doesn't make any assumptions about the estimator apart from having a
     # fit.
     scores = cross_val_score(EstimatorWithFit(), [[1], [2], [3]], [1, 0, 1],
-                             scoring=DummyScorer())
+                             scoring=DummyScorer(), cv=3)
     assert_array_equal(scores, 1)
 
 
@@ -337,7 +336,6 @@ def test_regression_scorers():
     assert_almost_equal(score1, score2)
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_thresholded_scorers():
     # Test scorers that take thresholds.
     X, y = make_blobs(random_state=0, centers=2)
@@ -520,7 +518,6 @@ def test_scorer_memmap_input(name):
     check_scorer_memmap(name)
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_scoring_is_not_metric():
     assert_raises_regexp(ValueError, 'make_scorer', check_scoring,
                          LogisticRegression(), f1_score)

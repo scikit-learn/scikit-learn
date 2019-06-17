@@ -254,7 +254,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
     >>> X, _ = make_multilabel_classification(random_state=0)
     >>> lda = LatentDirichletAllocation(n_components=5,
     ...     random_state=0)
-    >>> lda.fit(X) # doctest: +ELLIPSIS
+    >>> lda.fit(X)
     LatentDirichletAllocation(...)
     >>> # get topics for some given samples:
     >>> lda.transform(X[-2:])

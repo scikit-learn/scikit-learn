@@ -1,6 +1,6 @@
 """Enables IterativeImputer
 
-The API and results of this estimators might change without any deprecation
+The API and results of this estimator might change without any deprecation
 cycle.
 
 Importing this file dynamically sets :class:`sklearn.impute.IterativeImputer`
