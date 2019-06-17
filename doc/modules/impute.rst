@@ -193,22 +193,12 @@ Nearest neighbors imputation
 ============================
 
 The :class:`KNNImputer` class provides imputation for filling in missing
-values using the k-Nearest Neighbors approach. Each sample's missing values
-are imputed using values from ``n_neighbors`` nearest neighbors found in the
-training set. In this context, a donor is defined to be a neighbor that
-contributes to the imputation of a given sample. For each missing feature in a
-sample, the donors are selected such that they have the feature present and 
-they are one of the ``n_neighbors`` nearest neighbors.
-
-Each sample can potentially have multiple sets of ``n_neighbors`` donors 
-depending on the particular feature being imputed.
-
-Each missing feature is then imputed as the average, either weighted or
-unweighted, of these neighbors. When the number of donor neighbors is less
-than ``n_neighbors``, the training set average for that feature is
-used for imputation. When a sample has more than a ``feature_max_missing`` 
-fraction of its features missing, then it is excluded from being a donor for 
-imputation. For more information on the methodology, see ref. [OLGA]_.
+values using the k-Nearest Neighbors approach. Each missing feature are 
+imputed using values from ``n_neighbors`` nearest neighbors that have a value
+for the feature. The feature of the neighbors are averaged uniformly or
+weighted by distance. When the number of neighbors is less than 
+``n_neighbors``, the training set average for that feature is used for
+imputation. For more information on the methodology, see ref. [OL2001]_.
 
 The following snippet demonstrates how to replace missing values,
 encoded as ``np.nan``, using the mean feature value of the two nearest
@@ -225,10 +215,10 @@ neighbors of samples with missing values::
            [5.5, 6. , 5. ],
            [8. , 8. , 7. ]])
 
-.. [OLGA] Olga Troyanskaya, Michael Cantor, Gavin Sherlock, Pat Brown, Trevor
-    Hastie, Robert Tibshirani, David Botstein and Russ B. Altman, Missing value
-    estimation methods for DNA microarrays, BIOINFORMATICS Vol. 17 no. 6, 2001
-    Pages 520-525.
+.. [OL2001] Olga Troyanskaya, Michael Cantor, Gavin Sherlock, Pat Brown, 
+    Trevor Hastie, Robert Tibshirani, David Botstein and Russ B. Altman, 
+    Missing value estimation methods for DNA microarrays, BIOINFORMATICS 
+    Vol. 17 no. 6, 2001 Pages 520-525.
 
 .. _missing_indicator:
 
