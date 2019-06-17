@@ -1210,10 +1210,12 @@ def learning_curve(estimator, X, y, groups=None,
         Scores on test set.
 
     fit_times : array, shape (n_ticks, n_cv_folds)
-        Times spent for fitting in seconds.
+        Times spent for fitting in seconds. Only present if ``return_times``
+        is True.
 
     score_times : array, shape (n_ticks, n_cv_folds)
-        Times spent for scoring in seconds.
+        Times spent for scoring in seconds. Only present if ``return_times``
+        is True.
 
     Notes
     -----
