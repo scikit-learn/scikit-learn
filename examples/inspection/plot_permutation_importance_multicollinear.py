@@ -51,9 +51,9 @@ print("Accuracy on test data: {:.2f}".format(clf.score(X_test, y_test)))
 # computed above: some feature must be important. The permutation importance
 # is calculated on the training set to show how much the model relies on each
 # feature during training.
-perm_importance = permutation_importance(clf, X_train, y_train, n_repeats=10,
-                                         random_state=42)
-perm_sorted_idx = np.mean(perm_importance, axis=-1).argsort()
+result = permutation_importance(clf, X_train, y_train, n_repeats=10,
+                                random_state=42)
+perm_sorted_idx = result.mean.argsort()
 
 tree_importance_sorted_idx = np.argsort(clf.feature_importances_)
 tree_indicies = np.arange(1, len(clf.feature_importances_) + 1)
@@ -62,7 +62,7 @@ fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 8))
 ax1.barh(tree_indicies, clf.feature_importances_[tree_importance_sorted_idx])
 ax1.set_yticklabels(data.feature_names)
 ax1.set_yticks(tree_indicies)
-ax2.boxplot(perm_importance[perm_sorted_idx].T, vert=False,
+ax2.boxplot(result.importances[perm_sorted_idx].T, vert=False,
             labels=data.feature_names)
 fig.tight_layout()
 plt.show()

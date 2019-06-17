@@ -148,14 +148,13 @@ ax.set_title("Random Forest Feature Importances (MDI)")
 #
 # Also note that both random features have very low importances (close to 0) as
 # expected.
-permute_importance = permutation_importance(rf, X_test, y_test, n_repeats=10,
-                                            random_state=42)
-permute_importance_mean = np.mean(permute_importance, axis=-1)
-sorted_idx = permute_importance_mean.argsort()
+result = permutation_importance(rf, X_test, y_test, n_repeats=10,
+                                random_state=42)
+sorted_idx = result.mean.argsort()
 
 # sphinx_gallery_thumbnail_number = 2
 _, ax = plt.subplots()
-ax.boxplot(permute_importance[sorted_idx].T,
+ax.boxplot(result.importances[sorted_idx].T,
            vert=False, labels=X_test.columns[sorted_idx])
 ax.set_title("Permutation Importances (test set)")
 
@@ -166,14 +165,13 @@ ax.set_title("Permutation Importances (test set)")
 # plots is a confirmation that the RF model has enough capacity to use that
 # random numerical feature to overfit. You can further confirm this by
 # re-running this example with constrained RF with min_samples_leaf=10.
-permute_importance = permutation_importance(rf, X_train, y_train, n_repeats=10,
-                                            random_state=42)
-permute_importance_mean = np.mean(permute_importance, axis=-1)
-sorted_idx = permute_importance_mean.argsort()
+result = permutation_importance(rf, X_train, y_train, n_repeats=10,
+                                random_state=42)
+sorted_idx = result.mean.argsort()
 
 # sphinx_gallery_thumbnail_number = 3
 _, ax = plt.subplots()
-ax.boxplot(permute_importance[sorted_idx].T,
+ax.boxplot(result.importances[sorted_idx].T,
            vert=False, labels=X_train.columns[sorted_idx])
 ax.set_title("Permutation Importances (train set)")
 plt.show()

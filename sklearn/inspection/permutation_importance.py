@@ -1,11 +1,12 @@
 """Permutation importance for estimators"""
 import numpy as np
+from joblib import Parallel
+from joblib import delayed
 
-from ..utils import check_random_state
-from ..utils._joblib import Parallel
-from ..utils._joblib import delayed
-from ..utils import check_array
 from ..metrics import check_scoring
+from ..utils import check_random_state
+from ..utils import check_array
+from ..utils import Bunch
 
 
 def _safe_column_setting(X, col_idx, values):
@@ -88,8 +89,15 @@ def permutation_importance(estimator, X, y, scoring=None, n_repeats=5,
 
     Returns
     -------
-    importances : array, shape (n_features, n_repeats)
-        Permutation importance scores.
+    result : Bunch
+        Dictionary-like object, with attributes:
+
+        mean : array, shape (n_features)
+            Mean of feature importance over ``n_repeats``
+        std : array, shape (n_features)
+            Standard deviation over ``n_repeats``
+        importances : array, shape (n_features, n_repeats)
+            Raw permutation importance scores.
 
     References
     ----------
@@ -113,5 +121,7 @@ def permutation_importance(estimator, X, y, scoring=None, n_repeats=5,
         estimator, X, y, col_idx, random_state, n_repeats, scorer
     ) for col_idx in range(X.shape[1]))
 
-    scores = baseline_score - np.array(scores)
-    return scores
+    importances = baseline_score - np.array(scores)
+    return Bunch(mean=np.mean(importances, axis=1),
+                 std=np.std(importances, axis=1),
+                 importances=importances)
