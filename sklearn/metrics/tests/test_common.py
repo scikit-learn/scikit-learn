@@ -1291,13 +1291,14 @@ def test_thresholded_multilabel_multioutput_permutations_invariance(name):
 
 @pytest.mark.parametrize(
     'name',
-    set(THRESHOLDED_METRICS) - METRIC_UNDEFINED_BINARY_MULTICLASS)
-def test_thresdhold_metric_permutation_invariance(name):
+    sorted(set(THRESHOLDED_METRICS) - METRIC_UNDEFINED_BINARY_MULTICLASS))
+def test_thresholded_metric_permutation_invariance(name):
     n_samples, n_classes = 100, 3
     random_state = check_random_state(0)
 
     y_score = random_state.rand(n_samples, n_classes)
-    y_score = np.exp(y_score)/np.exp(y_score).sum(axis=-1, keepdims=True)
+    temp = np.exp(-y_score)
+    y_score = temp / temp.sum(axis=-1).reshape(-1, 1)
     y_true = random_state.randint(0, n_classes, size=n_samples)
 
     metric = ALL_METRICS[name]
