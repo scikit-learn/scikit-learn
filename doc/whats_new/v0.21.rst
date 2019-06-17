@@ -706,11 +706,6 @@ Support for Python 3.4 and below has been officially dropped.
   ``fit.predict`` were not equivalent. :pr:`13142` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-- |Feature| Added the :func:`metrics.nan_euclidean_distances` metirc, which
-  calculates euclidean distances in the presence of missing values.
-  :issue:`12852` by :user:`Ashim Bhattarai <ashimb9>` and 
-  :user:`Thomas Fan <thomasjpfan>`.
-
 :mod:`sklearn.model_selection`
 ..............................
 

@@ -1069,7 +1069,6 @@ def test_missing_indicator_sparse_param(arr_type, missing_values,
             assert isinstance(X_trans_mask, np.ndarray)
 
 
-
 def test_missing_indicator_string():
     X = np.array([['a', 'b', 'c'], ['b', 'c', 'a']], dtype=object)
     indicator = MissingIndicator(missing_values='a', features='all')
