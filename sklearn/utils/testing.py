@@ -604,8 +604,9 @@ except ImportError:
 def clean_warning_registry():
     """Clean Python warning registry for easier testing of warning messages.
 
-    We may not need to do this any more when getting rid of Python 2, not
-    entirely sure. See https://bugs.python.org/issue4180 and
+    When changing warning filters this function is not necessary with
+    Python3.5+, as __warningregistry__ will be re-set internally.
+    See https://bugs.python.org/issue4180 and
     https://bugs.python.org/issue21724 for more details.
 
     """
