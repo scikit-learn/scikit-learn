@@ -6,8 +6,9 @@ Permutation Importance vs Random Forest Feature Importance (MDI)
 In this example, we will compare the
 :class:`~sklearn.ensemble.RandomForestClassifier` feature importance with the
 permutation importance on the titanic dataset using
-:func:`~sklearn.inspection.permutation_importance`. We will show that the random
-forest feature importance can inflate the importance of numerical features.
+:func:`~sklearn.inspection.permutation_importance`. We will show that the
+random forest feature importance can inflate the importance of numerical
+features.
 
 Furthermore, the built-in feature importance of random forests suffers from
 being computed on statistics derived from the training dataset: the
