@@ -27,7 +27,7 @@ scikit-learn
 ============
 
 scikit-learn is a Python module for machine learning built on top of
-SciPy and distributed under the 3-Clause BSD license.
+SciPy and is distributed under the 3-Clause BSD license.
 
 The project was started in 2007 by David Cournapeau as a Google Summer
 of Code project, and since then many volunteers have contributed. See
@@ -69,7 +69,7 @@ User installation
 ~~~~~~~~~~~~~~~~~
 
 If you already have a working installation of numpy and scipy,
-the easiest way to install scikit-learn is using ``pip`` ::
+the easiest way to install scikit-learn is using ``pip``  ::
 
     pip install -U scikit-learn
 
