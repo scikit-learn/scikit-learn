@@ -1,13 +1,11 @@
 """
-===================================================
-Permutation Importance with Multicollinear Features
-===================================================
-
-.. currentmodule:: sklearn.inspection
+=================================================================
+Permutation Importance with Multicollinear or Correlated Features
+=================================================================
 
 In this example, we compute the permutation importance on the Wisconsin
-breast cancer dataset using :func:`permutation_importance`.
-The :class:`sklearn.ensemble.RandomForestClassifier` can easily get about 97%
+breast cancer dataset using :func:`~sklearn.inspection.permutation_importance`.
+The :class:`~sklearn.ensemble.RandomForestClassifier` can easily get about 97%
 accuracy on a test dataset with a unsurprising tree based feature importance
 graph. Because this dataset contains multicollinear features, the permutation
 importance will show that none of the features are important.

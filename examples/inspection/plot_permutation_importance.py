@@ -1,14 +1,12 @@
 """
-==========================================================
-Permutation Importance vs Random Forest Feature Importance
-==========================================================
-
-.. currentmodule:: sklearn.inspection
+================================================================
+Permutation Importance vs Random Forest Feature Importance (MDI)
+================================================================
 
 In this example, we will compare the
-:class:`sklearn.ensemble.RandomForestClassifier` feature importance with the
+:class:`~sklearn.ensemble.RandomForestClassifier` feature importance with the
 permutation importance on the titanic dataset using
-:func:`permutation_importance`. We will show that the random
+:func:`~sklearn.inspection.permutation_importance`. We will show that the random
 forest feature importance can inflate the importance of numerical features.
 
 Furthermore, the built-in feature importance of random forests suffers from
@@ -21,8 +19,8 @@ can mitigate those limitations.
 
 .. topic:: References:
 
-   .. [1] Strobl, C., Boulesteix, AL., Zeileis, A. et al. BMC Bioinformatics
-        (2007) 8: 25. https://doi.org/10.1186/1471-2105-8-25
+   .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
+       2001. https://doi.org/10.1023/A:1010933404324
 """
 print(__doc__)
 import pandas as pd
@@ -48,7 +46,7 @@ from sklearn.preprocessing import OneHotEncoder
 # with the target variable (``survived``):
 #
 # - ``random_num`` is a high cardinality numerical variable (as many unique
-# values as records);
+#   values as records).
 # - ``random_cat`` is a low cardinality categorical variable (3 possible
 #   values).
 titanic_url = ('https://raw.githubusercontent.com/amueller/'
@@ -80,8 +78,7 @@ preprocessing = ColumnTransformer(
 
 rf = Pipeline([
     ('preprocess', preprocessing),
-    ('classifier', RandomForestClassifier(n_estimators=100, min_samples_leaf=1,
-                                          random_state=42))
+    ('classifier', RandomForestClassifier(random_state=42))
 ])
 rf.fit(X_train, y_train)
 
@@ -121,8 +118,8 @@ print("RF test accuracy: %0.3f" % rf.score(X_test, y_test))
 #
 # - RF importances are biased towards high cardinality features;
 # - RF importances are computed on training set statistics and therefore do not
-# reflect the ability of feature to be useful to make predictions that
-# generalize to the test set (when the model has enough capacity).
+#   reflect the ability of feature to be useful to make predictions that
+#   generalize to the test set (when the model has enough capacity).
 ohe = (rf.named_steps['preprocess']
          .named_transformers_['cat']
          .named_steps['onehot'])
