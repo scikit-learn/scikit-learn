@@ -6,12 +6,12 @@ Permutation Importance with Multicollinear or Correlated Features
 In this example, we compute the permutation importance on the Wisconsin
 breast cancer dataset using :func:`~sklearn.inspection.permutation_importance`.
 The :class:`~sklearn.ensemble.RandomForestClassifier` can easily get about 97%
-accuracy on a test dataset with a unsurprising tree based feature importance
-graph. Because this dataset contains multicollinear features, the permutation
-importance will show that none of the features are important.
-We handle the multicollinearity by performing hierarchical clustering on the
-features' Spearman rank-order correlations, picking a threshold, and keeping a
-single feature from each cluster.
+accuracy on a test dataset with a unsurprising tree impurity based feature
+importance graph. Because this dataset contains multicollinear features, the
+permutation importance will show that none of the features are important.
+One approach to handling multicollinearity is by performing hierarchical
+clustering on the features' Spearman rank-order correlations, picking a
+threshold, and keeping a single feature from each cluster.
 
 .. note::
     See also
@@ -51,7 +51,7 @@ print("Accuracy on test data: {:.2f}".format(clf.score(X_test, y_test)))
 # computed above: some feature must be important. The permutation importance
 # is calculated on the training set to show how much the model relies on each
 # feature during training.
-perm_importance = permutation_importance(clf, X_train, y_train, n_rounds=10,
+perm_importance = permutation_importance(clf, X_train, y_train, n_repeats=10,
                                          random_state=42)
 perm_sorted_idx = np.mean(perm_importance, axis=-1).argsort()
 
@@ -76,18 +76,19 @@ plt.show()
 # performing hierarchical clustering on the Spearman rank-order correlations,
 # picking a threshold, and keeping a single feature from each cluster. First,
 # we plot a heatmap of the correlated features:
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 8))
 corr = spearmanr(X).correlation
 corr_linkage = hierarchy.ward(corr)
-dendro = hierarchy.dendrogram(corr_linkage, no_plot=True)
-dendro_order = np.array(dendro['ivl'], dtype='int')
-dendro_idx = np.arange(0, len(dendro_order))
+dendro = hierarchy.dendrogram(corr_linkage, labels=data.feature_names, ax=ax1,
+                              leaf_rotation=90)
+dendro_idx = np.arange(0, len(dendro['ivl']))
 
-fig, ax = plt.subplots(figsize=(12, 8))
-ax.imshow(corr[dendro_order, :][:, dendro_order])
-ax.set_xticks(dendro_idx)
-ax.set_yticks(dendro_idx)
-ax.set_xticklabels(data.feature_names[dendro_order], rotation='vertical')
-ax.set_yticklabels(data.feature_names[dendro_order])
+ax2.imshow(corr[dendro['leaves'], :][:, dendro['leaves']])
+ax2.set_xticks(dendro_idx)
+ax2.set_yticks(dendro_idx)
+ax2.set_xticklabels(dendro['ivl'], rotation='vertical')
+ax2.set_yticklabels(dendro['ivl'])
+fig.tight_layout()
 plt.show()
 
 ##############################################################################
@@ -109,15 +110,3 @@ clf_sel = RandomForestClassifier(n_estimators=100, random_state=42)
 clf_sel.fit(X_train_sel, y_train)
 print("Accuracy on test data with features removed: {:.2f}".format(
       clf_sel.score(X_test_sel, y_test)))
-
-##############################################################################
-# Lastly, we plot the permutation importance with new random forest on the
-# test dataset.
-perm_importance_sel = permutation_importance(clf_sel, X_train_sel,
-                                             y_train, n_rounds=10,
-                                             random_state=42)
-perm_sorted_sel_idx = np.mean(perm_importance_sel, axis=-1).argsort()
-_, ax = plt.subplots()
-ax.boxplot(perm_importance_sel[perm_sorted_sel_idx].T, vert=False,
-           labels=data.feature_names[selected_features])
-plt.show()

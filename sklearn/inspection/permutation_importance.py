@@ -25,13 +25,13 @@ def _safe_column_indexing(X, col_idx):
 
 
 def _calculate_permutation_scores(estimator, X, y, col_idx, random_state,
-                                  n_rounds, scorer):
+                                  n_repeats, scorer):
     """Calculate score when ``col_idx`` is permuted."""
     original_feature = _safe_column_indexing(X, col_idx).copy()
     temp = original_feature.copy()
 
-    scores = np.zeros(n_rounds)
-    for n_round in range(n_rounds):
+    scores = np.zeros(n_repeats)
+    for n_round in range(n_repeats):
         random_state.shuffle(temp)
         _safe_column_setting(X, col_idx, temp)
         feature_score = scorer(estimator, X, y)
@@ -41,14 +41,15 @@ def _calculate_permutation_scores(estimator, X, y, col_idx, random_state,
     return scores
 
 
-def permutation_importance(estimator, X, y, scoring=None, n_rounds=5,
+def permutation_importance(estimator, X, y, scoring=None, n_repeats=5,
                            n_jobs=None, random_state=None):
     """Permutation importance for feature evaluation. [BRE]_
 
-    The permutation importance of a feature is calculated as follows. First,
-    the estimator is trained on a training set. Then a baseline metric, defined
-    by ``scoring``, is evaluated on a (potentially different) dataset defined
-    by the ``X`` parameter. Next, a feature column from the validation set is
+    The ``estimator`` is required to be a fitted estimator. ``X`` can be the
+    data set used to train the estimator or a hold-out set. The permutation
+    importance of a feature is calculated as follows. First, a baseline metric,
+    defined by ``scoring``, is evaluated on a (potentially different) dataset
+    defined by the ``X``. Next, a feature column from the validation set is
     permuted and the metric is evaluated again. The permutation importance is
     defined to be the difference between the baseline metric and metric from
     permutating the feature column.
@@ -64,15 +65,15 @@ def permutation_importance(estimator, X, y, scoring=None, n_rounds=5,
     X : numpy array or DataFrame, shape = (n_samples, n_features)
         Data on which permutation importance will be computed.
 
-    y : array-like, shape = (n_samples, ...)
-        Targets for supervised learning.
+    y : array-like or None, shape = (n_samples, ...)
+        Targets for supervised or ``None`` for unsupervised.
 
     scoring : string, callable or None, optional (default=None)
         Scorer to use. It can be a single
         string (see :ref:`scoring_parameter`) or a callable (see
         :ref:`scoring`). If None, the estimator's default scorer is used.
 
-    n_rounds : int, optional (default=5)
+    n_repeats : int, optional (default=5)
         Number of times to permute a feature.
 
     n_jobs : int or None, optional (default=None)
@@ -87,7 +88,7 @@ def permutation_importance(estimator, X, y, scoring=None, n_rounds=5,
 
     Returns
     -------
-    importances : array, shape (n_features, n_rounds)
+    importances : array, shape (n_features, n_repeats)
         Permutation importance scores.
 
     References
@@ -106,10 +107,11 @@ def permutation_importance(estimator, X, y, scoring=None, n_rounds=5,
     scorer = check_scoring(estimator, scoring=scoring)
 
     baseline_score = scorer(estimator, X, y)
-    scores = np.zeros((X.shape[1], n_rounds))
+    scores = np.zeros((X.shape[1], n_repeats))
 
     scores = Parallel(n_jobs=n_jobs)(delayed(_calculate_permutation_scores)(
-        estimator, X, y, col_idx, random_state, n_rounds, scorer
+        estimator, X, y, col_idx, random_state, n_repeats, scorer
     ) for col_idx in range(X.shape[1]))
 
-    return baseline_score - np.array(scores)
+    scores = baseline_score - np.array(scores)
+    return scores

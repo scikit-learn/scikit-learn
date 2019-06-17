@@ -96,8 +96,8 @@ rf.fit(X_train, y_train)
 #
 # It might be possible to trade some accuracy on the training set for a
 # slightly better accuracy on the test set by limiting the capacity of the
-# trees (for instance by setting ``max_samples_leaf=5`` or
-# ``max_samples_leaf=10``) so as to limit overfitting while not introducing too
+# trees (for instance by setting ``min_samples_leaf=5`` or
+# ``min_samples_leaf=10``) so as to limit overfitting while not introducing too
 # much underfitting.
 #
 # However let's keep our high capacity random forest model for now so as to
@@ -108,8 +108,8 @@ print("RF test accuracy: %0.3f" % rf.score(X_test, y_test))
 
 
 ##############################################################################
-# Tree Based Feature Importance
-# -----------------------------
+# Tree's Feature Importance from Mean Decrease in Impurity (MDI)
+# --------------------------------------------------------------
 # The tree based feature importance ranks the numerical features to be the
 # most important features. As a result, the non-predictive ``random_num``
 # variable is ranked the most important!
@@ -138,7 +138,7 @@ _, ax = plt.subplots(figsize=(10, 8))
 ax.barh(y_ticks, tree_feature_importances[sorted_idx])
 ax.set_yticklabels(feature_names[sorted_idx])
 ax.set_yticks(y_ticks)
-ax.set_title("Random Forest Feature Importances")
+ax.set_title("Random Forest Feature Importances (MDI)")
 
 
 ##############################################################################
@@ -148,7 +148,7 @@ ax.set_title("Random Forest Feature Importances")
 #
 # Also note that both random features have very low importances (close to 0) as
 # expected.
-permute_importance = permutation_importance(rf, X_test, y_test, n_rounds=10,
+permute_importance = permutation_importance(rf, X_test, y_test, n_repeats=10,
                                             random_state=42)
 permute_importance_mean = np.mean(permute_importance, axis=-1)
 sorted_idx = permute_importance_mean.argsort()
@@ -166,7 +166,7 @@ ax.set_title("Permutation Importances (test set)")
 # plots is a confirmation that the RF model has enough capacity to use that
 # random numerical feature to overfit. You can further confirm this by
 # re-running this example with constrained RF with min_samples_leaf=10.
-permute_importance = permutation_importance(rf, X_train, y_train, n_rounds=10,
+permute_importance = permutation_importance(rf, X_train, y_train, n_repeats=10,
                                             random_state=42)
 permute_importance_mean = np.mean(permute_importance, axis=-1)
 sorted_idx = permute_importance_mean.argsort()

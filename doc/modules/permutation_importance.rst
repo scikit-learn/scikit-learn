@@ -17,7 +17,7 @@ model agnostic and can be calculated many times with different permutations of
 the feature.
 
 The :func:`permutation_importance` function calculates the feature importance
-of `estimators` for a given dataset. The ``n_rounds`` parameter sets the number
+of `estimators` for a given dataset. The ``n_repeats`` parameter sets the number
 of times a feature is randomly shuffled and returns a sample of feature
 importances. Note that :func:`permutation_importance` can be computed on any
 dataset, though it is common practice to use a hold-out set since estimates
