@@ -20,7 +20,7 @@ from .variance_threshold import VarianceThreshold
 from .rfe import RFE
 from .rfe import RFECV
 
-from .from_model import SelectFromModel
+from .from_model import SelectFromModel, SelectFromModelCV
 
 from .mutual_info_ import mutual_info_regression, mutual_info_classif
 
@@ -33,6 +33,7 @@ __all__ = ['GenericUnivariateSelect',
            'SelectFwe',
            'SelectKBest',
            'SelectFromModel',
+           'SelectFromModelCV',
            'SelectPercentile',
            'VarianceThreshold',
            'chi2',
