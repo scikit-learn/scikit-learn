@@ -60,7 +60,7 @@ Changelog
 
 - |MajorFeature| Added :class:`impute.KNNImputer`, to impute missing values using 
   k-Nearest Neighbors. :issue:`12852` by :user:`Ashim Bhattarai <ashimb9>` and 
-  :user:`Thomas Fan <thomasjpfan>`.
+  `Thomas Fan`_.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -69,6 +69,14 @@ Changelog
   ``alpha_init`` and ``lambda_init`` which can be used to set the initial value
   of the maximization procedure in :term:`fit`.
   :pr:`13618` by :user:`Yoshihiro Uchida <c56pony>`.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Feature| Added the :func:`metrics.nan_euclidean_distances` metirc, which
+  calculates euclidean distances in the presence of missing values.
+  :issue:`12852` by :user:`Ashim Bhattarai <ashimb9>` and 
+  `Thomas Fan`_.
 
 :mod:`sklearn.model_selection`
 ..................
