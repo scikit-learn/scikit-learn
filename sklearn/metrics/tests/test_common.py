@@ -1197,11 +1197,11 @@ def test_multiclass_sample_weight_invariance(name):
 def test_multilabel_sample_weight_invariance(name):
     # multilabel indicator
     random_state = check_random_state(0)
-    _, ya = make_multilabel_classification(n_features=1, n_classes=20,
-                                           random_state=0, n_samples=100,
+    _, ya = make_multilabel_classification(n_features=1, n_classes=10,
+                                           random_state=0, n_samples=50,
                                            allow_unlabeled=False)
-    _, yb = make_multilabel_classification(n_features=1, n_classes=20,
-                                           random_state=1, n_samples=100,
+    _, yb = make_multilabel_classification(n_features=1, n_classes=10,
+                                           random_state=1, n_samples=50,
                                            allow_unlabeled=False)
     y_true = np.vstack([ya, yb])
     y_pred = np.vstack([ya, ya])
