@@ -287,7 +287,7 @@ def test_min_gain_to_split():
         # Also, the bins of the previous non-nan samples have bin shiffted by
         # one
         ([0, 1, 2, 0, 3, 4, 5, 6, 7, 8],  # missing values are the zeros
-         [1, 1, 1, 1, 2, 2, 2, 2, 2, 2],
+         [1, 1, 1, 1, 5, 5, 5, 5, 5, 5],
          True,  # missing values (bin_idx=0)
          2,  # cut on bin_idx=2
          True),  # missing values go to left
