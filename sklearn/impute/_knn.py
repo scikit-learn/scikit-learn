@@ -12,7 +12,7 @@ from ..utils.mask import _get_missing_mask
 from ..utils.validation import check_is_fitted
 
 
-class KNNImputer(BaseEstimator, TransformerMixin):
+class KNNImputer(TransformerMixin, BaseEstimator):
     """Imputation for completing missing values using k-Nearest Neighbors.
 
     Each sample's missing values are imputed using values from ``n_neighbors``
@@ -80,7 +80,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
     >>> from sklearn.impute import KNNImputer
     >>> nan = float("NaN")
     >>> X = [[1, 2, nan], [3, 4, 3], [nan, 6, 5], [8, 8, 7]]
-    >>> imputer = KNNImputer(n_neighbors=2, weights="uniform")
+    >>> imputer = KNNImputer(n_neighbors=2)
     >>> imputer.fit_transform(X)
     array([[1. , 2. , 4. ],
            [3. , 4. , 3. ],
@@ -98,7 +98,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         self.copy = copy
 
     def _calc_impute(self, dist, receivers_idx, X_col, fit_X_col,
-                     mask_fit_X_col, statistic):
+                     non_missing_fix_X_col, statistic):
         """Helper function to calculate the imputation value of a single
         column.
 
@@ -116,14 +116,14 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         fit_X_col : array-like, shape = (n_train_samples, )
             column from training
 
-        mask_fit_X_col : array-like, shape = (n_train_samples, )
+        non_missing_fix_X_col : array-like, shape = (n_train_samples, )
             mask for missing values corresponding to ``fit_X_col``
 
         statistic : float
             statistic for column generated from fitting ``fit_X_col``
         """
         # Row index for receivers and potential donors (pdonors)
-        potential_donors_idx = np.where(~mask_fit_X_col)[0]
+        potential_donors_idx = np.flatnonzero(non_missing_fix_X_col)
 
         # Use statistics if not enough donors are available
         if len(potential_donors_idx) < self.n_neighbors:
@@ -172,15 +172,19 @@ class KNNImputer(BaseEstimator, TransformerMixin):
             if self.metric not in _NAN_METRICS and not callable(self.metric):
                 raise ValueError(
                     "The selected metric does not support NaN values")
+        if self.n_neighbors <= 0:
+            raise ValueError(
+                "Expected n_neighbors > 0. Got {}".format(self.n_neighbors))
+
         X = check_array(X, accept_sparse=False, dtype=FLOAT_DTYPES,
-                        force_all_finite=force_all_finite, copy=True)
+                        force_all_finite=force_all_finite, copy=self.copy)
 
         mask = _get_missing_mask(X, self.missing_values)
         self.weights = _check_weights(self.weights)
         self.fit_X = X
 
         masked_X = np.ma.masked_array(X, mask=mask)
-        mean_masked = np.ma.mean(masked_X, axis=0)
+        mean_masked = masked_X.mean(axis=0)
         self.statistics_ = mean_masked.data
         self.statistics_[mean_masked.mask] = np.nan
 
@@ -216,33 +220,44 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         if not np.any(mask):
             return X
 
-        # Check for excessive missingness in rows
-        row_total_missing = mask.sum(axis=1)
+        row_missing_idx = np.flatnonzero(mask.any(axis=1))
 
-        row_misses = row_total_missing.astype(np.bool)
         # Pairwise distances between receivers and fitted samples
-        dist = pairwise_distances(X[row_misses], self.fit_X,
+        dist = pairwise_distances(X[row_missing_idx, :], self.fit_X,
                                   metric=self.metric,
                                   squared=False,
                                   missing_values=self.missing_values)
 
         # Maps from indices from X to indices in dist matrix
         dist_idx_map = np.zeros(X.shape[0], dtype=np.int)
-        dist_idx_map[row_misses] = np.arange(0, row_misses.sum(0))
+        dist_idx_map[row_missing_idx] = np.arange(0, row_missing_idx.shape[0])
 
-        # Find and impute missing
+        invalid_mask = _get_missing_mask(self.statistics_, np.nan)
+        valid_mask = np.logical_not(invalid_mask)
+        valid_statistics_indexes = np.flatnonzero(valid_mask)
+
         mask_fit_X = _get_missing_mask(self.fit_X, self.missing_values)
+        non_missing_fix_X = np.logical_not(mask_fit_X)
+        # Find and impute missing
         for col in range(X.shape[1]):
 
+            # column has no missing values
             if not np.any(mask[:, col]):
+                continue
+
+            # column was all missing during training
+            if col not in valid_statistics_indexes:
                 continue
 
             receivers_idx = np.where(mask[:, col])[0]
             dist_subset = dist[dist_idx_map[receivers_idx]]
             value = self._calc_impute(dist_subset, receivers_idx, X[:, col],
-                                      self.fit_X[:, col], mask_fit_X[:, col],
+                                      self.fit_X[:, col],
+                                      non_missing_fix_X[:, col],
                                       self.statistics_[col])
             X[receivers_idx, col] = value
+
+        X = X[:, valid_statistics_indexes]
         return X
 
     def _more_tags(self):

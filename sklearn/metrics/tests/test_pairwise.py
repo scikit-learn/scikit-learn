@@ -769,7 +769,7 @@ def test_nan_euclidean_distances_equal_to_euclidean_distance(squared):
 
     normal_distance = euclidean_distances(X, Y=Y, squared=squared)
     nan_distance = nan_euclidean_distances(X, Y=Y, squared=squared)
-    assert_array_almost_equal(normal_distance, nan_distance)
+    assert_allclose(normal_distance, nan_distance)
 
 
 @pytest.mark.parametrize(
@@ -807,18 +807,18 @@ def test_nan_euclidean_distances_2x2(X, X_diag, missing_value, to_matrix):
     exp_dist = np.array([[0., X_diag], [X_diag, 0]])
 
     dist = nan_euclidean_distances(X, missing_values=missing_value)
-    assert_array_almost_equal(exp_dist, dist)
+    assert_allclose(exp_dist, dist)
 
     dist_sq = nan_euclidean_distances(
         X, squared=True, missing_values=missing_value)
-    assert_array_almost_equal(exp_dist**2, dist_sq)
+    assert_allclose(exp_dist**2, dist_sq)
 
     dist_two = nan_euclidean_distances(X, X, missing_values=missing_value)
-    assert_array_almost_equal(exp_dist, dist_two)
+    assert_allclose(exp_dist, dist_two)
 
     dist_two_copy = nan_euclidean_distances(
         X, X.copy(), missing_values=missing_value)
-    assert_array_almost_equal(exp_dist, dist_two_copy)
+    assert_allclose(exp_dist, dist_two_copy)
 
 
 @pytest.mark.parametrize("missing_value", [np.nan, -1])
@@ -830,11 +830,11 @@ def test_nan_euclidean_distances_complete_nan(missing_value, to_matrix):
     exp_dist = np.array([[np.nan, np.nan], [np.nan, 0]])
 
     dist = nan_euclidean_distances(X, missing_values=missing_value)
-    assert_almost_equal(exp_dist, dist)
+    assert_allclose(exp_dist, dist)
 
     dist = nan_euclidean_distances(
             X, X.copy(), missing_values=missing_value)
-    assert_almost_equal(exp_dist, dist)
+    assert_allclose(exp_dist, dist)
 
 
 @pytest.mark.parametrize("missing_value", [np.nan, -1])
@@ -858,13 +858,13 @@ def test_nan_euclidean_distances(missing_value, to_matrix):
     assert_almost_equal(D1, D2.T)
 
     # Check with explicit formula and squared=True
-    assert_array_almost_equal(
+    assert_allclose(
         nan_euclidean_distances(
             X[:1], Y[:1], squared=True, missing_values=missing_value),
         [[5.0 / 2.0 * ((7 - 3)**2 + (2 - 2)**2)]])
 
     # Check with explicit formula and squared=False
-    assert_array_almost_equal(
+    assert_allclose(
         nan_euclidean_distances(
             X[1:2], Y[1:2], squared=False, missing_values=missing_value),
         [[np.sqrt(5.0 / 2.0 * ((6 - 5)**2 + (1 - 4)**2))]])
@@ -873,13 +873,13 @@ def test_nan_euclidean_distances(missing_value, to_matrix):
     D3 = nan_euclidean_distances(X, missing_values=missing_value)
     D4 = nan_euclidean_distances(X, X, missing_values=missing_value)
     D5 = nan_euclidean_distances(X, X.copy(), missing_values=missing_value)
-    assert_array_almost_equal(D3, D4)
-    assert_array_almost_equal(D4, D5)
+    assert_allclose(D3, D4)
+    assert_allclose(D4, D5)
 
     # Check copy = True against copy = False
     D6 = nan_euclidean_distances(X, Y, copy=True)
     D7 = nan_euclidean_distances(X, Y, copy=False)
-    assert_array_almost_equal(D6, D7)
+    assert_allclose(D6, D7)
 
 
 def test_cosine_distances():

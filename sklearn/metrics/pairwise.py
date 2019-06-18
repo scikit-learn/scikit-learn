@@ -438,10 +438,13 @@ def nan_euclidean_distances(X, Y=None, squared=False,
         # This may not be the case due to floating point rounding errors.
         np.fill_diagonal(distances, 0.0)
 
+    if not squared:
+        np.sqrt(distances, out=distances)
+
     # coordinates with no common coordinates have a nan distance
     distances[~non_missing_mask] = np.nan
 
-    return distances if squared else np.sqrt(distances, out=distances)
+    return distances
 
 
 def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None, batch_size=None):

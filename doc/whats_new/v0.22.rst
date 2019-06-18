@@ -73,7 +73,7 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
-- |Feature| Added the :func:`metrics.nan_euclidean_distances` metirc, which
+- |Feature| Added the :func:`metrics.nan_euclidean_distances` metric, which
   calculates euclidean distances in the presence of missing values.
   :issue:`12852` by :user:`Ashim Bhattarai <ashimb9>` and 
   `Thomas Fan`_.

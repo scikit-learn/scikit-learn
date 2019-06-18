@@ -193,7 +193,10 @@ Nearest neighbors imputation
 ============================
 
 The :class:`KNNImputer` class provides imputation for filling in missing
-values using the k-Nearest Neighbors approach. Each missing feature are 
+values using the k-Nearest Neighbors approach. By default, a eucliean distance
+metric that supports missing values,
+:func:`~sklearn.metrics.nan_euclidean_distances`, is used to find the
+nearest neighbors. Each missing feature are 
 imputed using values from ``n_neighbors`` nearest neighbors that have a value
 for the feature. The feature of the neighbors are averaged uniformly or
 weighted by distance. When the number of neighbors is less than 

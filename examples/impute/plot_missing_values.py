@@ -86,11 +86,8 @@ def get_results(dataset):
     mean_impute_scores = get_scores_for_imputer(imputer, X_missing, y_missing)
 
     # Estimate the score after kNN-imputation of the missing values
-    knn_rf_estimator = make_pipeline(
-        KNNImputer(missing_values=0, sample_max_missing=0.99),
-        RandomForestRegressor(random_state=0, n_estimators=100))
-    knn_impute_scores = cross_val_score(knn_rf_estimator, X_missing, y_missing,
-                                        scoring='neg_mean_squared_error')
+    imputer = KNNImputer(missing_values=0)
+    knn_impute_scores = get_scores_for_imputer(imputer, X_missing, y_missing)
 
     # Estimate the score after iterative imputation of the missing values
     imputer = IterativeImputer(missing_values=0,
