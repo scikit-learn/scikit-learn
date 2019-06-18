@@ -63,6 +63,10 @@ Changelog
   of the maximization procedure in :term:`fit`.
   :pr:`13618` by :user:`Yoshihiro Uchida <c56pony>`.
 
+- |Efficiency| The 'liblinear' logistic regression solver now consumes less
+  memory if ``fit_intercept=False`` and ``X`` is a CSR sparse matrix.
+  :pr:`14108` by :user:`Alex Henrie <alexhenrie>`.
+
 :mod:`sklearn.model_selection`
 ..................
 

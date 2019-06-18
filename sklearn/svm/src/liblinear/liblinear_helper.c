@@ -76,6 +76,7 @@ static struct feature_node **csr_to_sparse(double *values,
 {
     struct feature_node **sparse, *temp;
     int i, j=0, k=0, n;
+    int have_bias = (bias > 0);
 
     sparse = malloc ((shape_indptr[0]-1)* sizeof(struct feature_node *));
     if (sparse == NULL)
@@ -84,7 +85,7 @@ static struct feature_node **csr_to_sparse(double *values,
     for (i=0; i<shape_indptr[0]-1; ++i) {
         n = indptr[i+1] - indptr[i]; /* count elements in row i */
 
-        sparse[i] = malloc ((n+2) * sizeof(struct feature_node));
+        sparse[i] = malloc ((n+have_bias+1) * sizeof(struct feature_node));
         if (sparse[i] == NULL) {
             int l;
             for (l=0; l<i; l++)
@@ -99,7 +100,7 @@ static struct feature_node **csr_to_sparse(double *values,
             ++k;
         }
 
-        if (bias > 0) {
+        if (have_bias) {
             temp[j].value = bias;
             temp[j].index = n_features + 1;
             ++j;
