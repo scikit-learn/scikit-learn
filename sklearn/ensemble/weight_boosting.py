@@ -34,6 +34,7 @@ from ..base import ClassifierMixin, RegressorMixin, is_classifier, is_regressor
 
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_array, check_random_state, check_X_y, safe_indexing
+from ..utils.extmath import softmax
 from ..utils.extmath import stable_cumsum
 from ..metrics import accuracy_score, r2_score
 from ..utils.validation import check_is_fitted
@@ -748,6 +749,12 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             else:
                 yield pred / norm
 
+    @staticmethod
+    def _format_proba(proba, n_classes):
+        if n_classes == 2:
+            proba = np.concatenate([proba, 1 - proba], axis=1)
+        return proba
+
     def predict_proba(self, X):
         """Predict class probabilities for X.
 
@@ -775,22 +782,13 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         if n_classes == 1:
             return np.ones((_num_samples(X), 1))
 
-        if self.algorithm == 'SAMME.R':
-            # The weights are all 1. for SAMME.R
-            proba = sum(_samme_proba(estimator, n_classes, X)
-                        for estimator in self.estimators_)
-        else:  # self.algorithm == "SAMME"
-            proba = sum(estimator.predict_proba(X) * w
-                        for estimator, w in zip(self.estimators_,
-                                                self.estimator_weights_))
-
-        proba /= self.estimator_weights_.sum()
-        proba = np.exp((1. / (n_classes - 1)) * proba)
-        normalizer = proba.sum(axis=1)[:, np.newaxis]
-        normalizer[normalizer == 0.0] = 1.0
-        proba /= normalizer
-
-        return proba
+        proba = self.decision_function(X)
+        if proba.ndim == 1:
+            proba = (proba[:, np.newaxis] if n_classes == 2
+                     else proba[np.newaxis, :])
+        proba *= 1 / (n_classes - 1)
+        proba = softmax(proba, copy=False)
+        return self._format_proba(proba, n_classes)
 
     def staged_predict_proba(self, X):
         """Predict class probabilities for X.
@@ -819,30 +817,14 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         X = self._validate_data(X)
 
         n_classes = self.n_classes_
-        proba = None
-        norm = 0.
 
-        for weight, estimator in zip(self.estimator_weights_,
-                                     self.estimators_):
-            norm += weight
-
-            if self.algorithm == 'SAMME.R':
-                # The weights are all 1. for SAMME.R
-                current_proba = _samme_proba(estimator, n_classes, X)
-            else:  # elif self.algorithm == "SAMME":
-                current_proba = estimator.predict_proba(X) * weight
-
-            if proba is None:
-                proba = current_proba
-            else:
-                proba += current_proba
-
-            real_proba = np.exp((1. / (n_classes - 1)) * (proba / norm))
-            normalizer = real_proba.sum(axis=1)[:, np.newaxis]
-            normalizer[normalizer == 0.0] = 1.0
-            real_proba /= normalizer
-
-            yield real_proba
+        for proba in self.staged_decision_function(X):
+            if proba.ndim == 1:
+                proba = (proba[:, np.newaxis] if n_classes == 2
+                         else proba[np.newaxis, :])
+            proba *= 1 / (n_classes - 1)
+            proba = softmax(proba, copy=False)
+            yield self._format_proba(proba, n_classes)
 
     def predict_log_proba(self, X):
         """Predict class log-probabilities for X.
