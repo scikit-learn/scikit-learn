@@ -18,7 +18,7 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: Simplified BSD
 
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 from collections.abc import Iterable
 import warnings
 
@@ -50,6 +50,17 @@ class _BaseScorer(metaclass=ABCMeta):
         self._kwargs = kwargs
         self._score_func = score_func
         self._sign = sign
+        # XXX After removing the deprecated scorers (v0.22) remove the
+        # XXX deprecation_msg property again and remove __call__'s body again
+        self._deprecation_msg = None
+
+    @abstractmethod
+    def __call__(self, estimator, X, y, sample_weight=None):
+        pass
+        if self._deprecation_msg is not None:
+            warnings.warn(self._deprecation_msg,
+                          category=DeprecationWarning,
+                          stacklevel=2)
 
     def __repr__(self):
         kwargs_string = "".join([", %s=%s" % (str(k), str(v))
@@ -89,6 +100,9 @@ class _PredictScorer(_BaseScorer):
             Score function applied to prediction of estimator on X.
         """
 
+        super(_PredictScorer, self).__call__(estimator, X, y_true,
+                                             sample_weight=sample_weight)
+
         y_pred = estimator.predict(X)
         if sample_weight is not None:
             return self._sign * self._score_func(y_true, y_pred,
@@ -124,6 +138,10 @@ class _ProbaScorer(_BaseScorer):
         score : float
             Score function applied to prediction of estimator on X.
         """
+
+        super(_ProbaScorer, self).__call__(clf, X, y,
+                                           sample_weight=sample_weight)
+
         y_type = type_of_target(y)
         y_pred = clf.predict_proba(X)
         if y_type == "binary":
@@ -172,6 +190,10 @@ class _ThresholdScorer(_BaseScorer):
         score : float
             Score function applied to prediction of estimator on X.
         """
+
+        super(_ThresholdScorer, self).__call__(clf, X, y,
+                                               sample_weight=sample_weight)
+
         y_type = type_of_target(y)
         if y_type not in ("binary", "multilabel-indicator"):
             raise ValueError("{0} format is not supported".format(y_type))
@@ -227,15 +249,13 @@ def get_scorer(scoring):
     """
     if isinstance(scoring, str):
         try:
-            if scoring == 'brier_score_loss':
-                warnings.warn("Function 'brier_score_loss' was renamed to"
-                              "'neg_brier_score_loss' in version 0.22 and will"
-                              "be removed in version 0.24", DeprecationWarning)
             scorer = SCORERS[scoring]
         except KeyError:
+            scorers = [scorer for scorer in SCORERS
+                       if SCORERS[scorer]._deprecation_msg is None]
             raise ValueError('%r is not a valid scoring value. '
                              'Use sorted(sklearn.metrics.SCORERS.keys()) '
-                             'to get valid options.' % (scoring))
+                             'to get valid options.' % scorers)
     else:
         scorer = scoring
     return scorer
@@ -537,6 +557,13 @@ neg_log_loss_scorer = make_scorer(log_loss, greater_is_better=False,
 neg_brier_score_loss_scorer = make_scorer(brier_score_loss,
                                       greater_is_better=False,
                                       needs_proba=True)
+brier_score_loss_scorer = make_scorer(brier_score_loss,
+                                      greater_is_better=False,
+                                      needs_proba=True)
+deprecation_msg = ('Scoring method brier_score_loss_scorer was renamed to '
+                   'neg_brier_score_loss_scorer in version 0.22 and will '
+                   'be removed in 0.24.')
+brier_score_loss_scorer._deprecation_msg = deprecation_msg
 
 
 # Clustering scores
@@ -568,7 +595,7 @@ SCORERS = dict(explained_variance=explained_variance_scorer,
                balanced_accuracy=balanced_accuracy_scorer,
                average_precision=average_precision_scorer,
                neg_log_loss=neg_log_loss_scorer,
-               brier_score_loss=neg_brier_score_loss_scorer,
+               brier_score_loss=brier_score_loss_scorer,
                neg_brier_score_loss=neg_brier_score_loss_scorer,
                # Cluster metrics that use supervised evaluation
                adjusted_rand_score=adjusted_rand_scorer,
