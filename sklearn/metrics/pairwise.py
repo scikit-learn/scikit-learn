@@ -821,7 +821,7 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
         params = _precompute_metric_params(X_num, Y_num, metric='gower',
                                            scale=scale, min=min)
         max = min + params['scale']
-        
+
         # Scales the numeric values between 0 and 1.
         if process_scale:
             scaler = MinMaxScaler().fit([min, max])
