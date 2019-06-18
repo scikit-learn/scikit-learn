@@ -750,10 +750,22 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
                 yield pred / norm
 
     @staticmethod
-    def _format_proba(proba, n_classes):
+    def _compute_proba_from_decision(decision, n_classes):
+        """Compute probabilities from the decision function.
+
+        This is based eq. (4) of [1] where:
+            p(y=c|X) = exp((1 / K-1) f_c(X)) / sum_k(exp((1 / K-1) f_k(X)))
+                     = softmax((1 / K-1) * f(X))
+
+        References
+        ----------
+        .. [1] J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost",
+               2009.
+        """
         if n_classes == 2:
-            proba = np.concatenate([proba, 1 - proba], axis=1)
-        return proba
+            decision = np.vstack([-decision, decision]).T
+        decision *= 1 / (n_classes - 1)
+        return softmax(decision, copy=False)
 
     def predict_proba(self, X):
         """Predict class probabilities for X.
@@ -782,13 +794,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         if n_classes == 1:
             return np.ones((_num_samples(X), 1))
 
-        proba = self.decision_function(X)
-        if proba.ndim == 1:
-            proba = (proba[:, np.newaxis] if n_classes == 2
-                     else proba[np.newaxis, :])
-        proba *= 1 / (n_classes - 1)
-        proba = softmax(proba, copy=False)
-        return self._format_proba(proba, n_classes)
+        decision = self.decision_function(X)
+        return self._compute_proba_from_decision(decision, n_classes)
 
     def staged_predict_proba(self, X):
         """Predict class probabilities for X.
@@ -818,13 +825,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         n_classes = self.n_classes_
 
-        for proba in self.staged_decision_function(X):
-            if proba.ndim == 1:
-                proba = (proba[:, np.newaxis] if n_classes == 2
-                         else proba[np.newaxis, :])
-            proba *= 1 / (n_classes - 1)
-            proba = softmax(proba, copy=False)
-            yield self._format_proba(proba, n_classes)
+        for decision in self.staged_decision_function(X):
+            yield self._compute_proba_from_decision(decision, n_classes)
 
     def predict_log_proba(self, X):
         """Predict class log-probabilities for X.
