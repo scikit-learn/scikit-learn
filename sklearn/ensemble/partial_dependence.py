@@ -12,9 +12,9 @@ import numbers
 
 import numpy as np
 from scipy.stats.mstats import mquantiles
+from joblib import Parallel, delayed
 
 from ..utils.extmath import cartesian
-from ..utils._joblib import Parallel, delayed
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
 from ..tree._tree import DTYPE

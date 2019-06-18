@@ -23,10 +23,7 @@ from scipy.sparse import coo_matrix
 
 import pytest
 
-from sklearn.utils._joblib import joblib
-from sklearn.utils._joblib import parallel_backend
-from sklearn.utils._joblib import register_parallel_backend
-from sklearn.utils._joblib import __version__ as __joblib_version__
+import joblib
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -1282,22 +1279,22 @@ class MyBackend(DEFAULT_JOBLIB_BACKEND):
         return super().start_call()
 
 
-register_parallel_backend('testing', MyBackend)
+joblib.register_parallel_backend('testing', MyBackend)
 
 
-@pytest.mark.skipif(__joblib_version__ < LooseVersion('0.12'),
+@pytest.mark.skipif(joblib.__version__ < LooseVersion('0.12'),
                     reason='tests not yet supported in joblib <0.12')
 @skip_if_no_parallel
 def test_backend_respected():
     clf = RandomForestClassifier(n_estimators=10, n_jobs=2)
 
-    with parallel_backend("testing") as (ba, n_jobs):
+    with joblib.parallel_backend("testing") as (ba, n_jobs):
         clf.fit(X, y)
 
     assert ba.count > 0
 
     # predict_proba requires shared memory. Ensure that's honored.
-    with parallel_backend("testing") as (ba, _):
+    with joblib.parallel_backend("testing") as (ba, _):
         clf.predict_proba(X)
 
     assert ba.count == 0

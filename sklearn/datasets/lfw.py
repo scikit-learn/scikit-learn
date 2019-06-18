@@ -15,11 +15,11 @@ import logging
 from distutils.version import LooseVersion
 
 import numpy as np
+import joblib
+from joblib import Memory
 
 from .base import get_data_home, _fetch_remote, RemoteFileMetadata
 from ..utils import Bunch
-from ..utils._joblib import Memory
-from ..utils import _joblib
 
 logger = logging.getLogger(__name__)
 
@@ -303,7 +303,7 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
 
     # wrap the loader in a memoizing function that will return memmaped data
     # arrays for optimal memory usage
-    if LooseVersion(_joblib.__version__) < LooseVersion('0.12'):
+    if LooseVersion(joblib.__version__) < LooseVersion('0.12'):
         # Deal with change of API in joblib
         m = Memory(cachedir=lfw_home, compress=6, verbose=0)
     else:
@@ -474,7 +474,7 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
 
     # wrap the loader in a memoizing function that will return memmaped data
     # arrays for optimal memory usage
-    if LooseVersion(_joblib.__version__) < LooseVersion('0.12'):
+    if LooseVersion(joblib.__version__) < LooseVersion('0.12'):
         # Deal with change of API in joblib
         m = Memory(cachedir=lfw_home, compress=6, verbose=0)
     else:
