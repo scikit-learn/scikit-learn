@@ -264,9 +264,11 @@ Subsequently, you might need to solve the conflicts. You can refer to the
 line
 <https://help.github.com/articles/resolving-a-merge-conflict-using-the-command-line/>`_.
 
-The `Git documentation <https://git-scm.com/documentation>`_ is an excellent
-resource to get started with git, and understanding all of the commands shown
-here.
+.. topic:: Learning git:
+
+    The `Git documentation <https://git-scm.com/documentation>`_ and
+    http://try.github.io are excellent resources to get started with git,
+    and understanding all of the commands shown here.
 
 Pull request checklist
 ----------------------
@@ -287,8 +289,13 @@ In order to ease the reviewing process, we recommend that your contribution
 complies with the following rules before marking a PR as ``[MRG]``. The
 **bolded** ones are especially important:
 
+1. **Give your pull request a helpful title** that summarises what your
+   contribution does. This title will often become the commit message once
+   merged so it should summarise your contribution for posterity. In some
+   cases "Fix <ISSUE TITLE>" is enough. "Fix #<ISSUE NUMBER>" is never a
+   good title.
 
-1. **Make sure your code passes the tests**. The whole test suite can be run
+2. **Make sure your code passes the tests**. The whole test suite can be run
    with `pytest`, but it is usually not recommended since it takes a long
    time. It is often enough to only run the test related to your changes:
    for example, if you changed something in
@@ -310,12 +317,12 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    you don't need to run the whole test suite locally. You can read more in
    :ref:`testing_coverage`.
 
-2. **Make sure your code is properly commented and documented**, and **make
+3. **Make sure your code is properly commented and documented**, and **make
    sure the documentation renders properly**. To build the documentation, please
    refer to our :ref:`contribute_documentation` guidelines. The CI will also
    build the docs: please refer to :ref:`generated_doc_CI`.
 
-3. **Tests are necessary for enhancements to be
+4. **Tests are necessary for enhancements to be
    accepted**. Bug-fixes or new features should be provided with
    `non-regression tests
    <https://en.wikipedia.org/wiki/Non-regression_testing>`_. These tests
@@ -325,22 +332,16 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    non-regression tests should fail for the code base in the master branch
    and pass for the PR code.
 
-4. **Make sure that your PR does not add PEP8 violations**. On a Unix-like
+5. **Make sure that your PR does not add PEP8 violations**. On a Unix-like
    system, you can run `make flake8-diff`. `flake8 path_to_file`, would work
    for any system, but please avoid reformatting parts of the file that your
    pull request doesn't change, as it distracts from code review.
 
-5. Follow the `coding-guidelines`_ (see below).
+6. Follow the `coding-guidelines`_ (see below).
 
-6. When applicable, use the validation tools and scripts in the
+7. When applicable, use the validation tools and scripts in the
    ``sklearn.utils`` submodule.  A list of utility routines available
    for developers can be found in the :ref:`developers-utils` page.
-
-7. Give your pull request a helpful title that summarises what your
-   contribution does. This title will often become the commit message once
-   merged so it should summarise your contribution for posterity. In some
-   cases "Fix <ISSUE TITLE>" is enough. "Fix #<ISSUE NUMBER>" is never a
-   good title.
 
 8. Often pull requests resolve one or more other issues (or pull requests).
    If merging your pull request means that some other issues/PRs should
