@@ -11,6 +11,7 @@ from distutils.version import LooseVersion
 
 import warnings
 from abc import ABCMeta, abstractmethod
+import numbers
 
 import numpy as np
 from scipy.sparse import csr_matrix, issparse
@@ -268,7 +269,7 @@ class NeighborsBase(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
                     self.n_neighbors
                 )
             else:
-                if not np.issubdtype(type(self.n_neighbors), np.integer):
+                if not isinstance(self.n_neighbors, numbers.Integral):
                     raise TypeError(
                         "n_neighbors does not take %s value, "
                         "enter integer value" %
@@ -391,7 +392,7 @@ class KNeighborsMixin:
                 n_neighbors
             )
         else:
-            if not np.issubdtype(type(n_neighbors), np.integer):
+            if not isinstance(n_neighbors, numbers.Integral):
                 raise TypeError(
                     "n_neighbors does not take %s value, "
                     "enter integer value" %

@@ -1549,6 +1549,10 @@ poor_score
 multioutput_only
     whether estimator supports only multi-output classification or regression.
 
+binary_only
+    whether estimator supports binary classification but lacks multi-class
+    classification support.
+
 _skip_test
     whether to skip common tests entirely. Don't use this unless you have a *very good* reason.
 
