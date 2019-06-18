@@ -305,7 +305,7 @@ def test_splitting_missing_values(X_binned, all_gradients,
                                   expected_go_to_left):
     # Make sure missing values are properly supported.
     # we build an artificial example with gradients such that the best split
-    # is on bin_idx=3, when there are no missing values.
+    # is on bin_idx=4, when there are no missing values.
     # Then we introduce missing values and:
     #   - make sure the chosen bin is correct (find_best_bin()): it's
     #     still the same split, even though the index of the bin changes
