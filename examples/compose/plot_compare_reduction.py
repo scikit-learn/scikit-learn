@@ -105,7 +105,7 @@ plt.show()
 from joblib import Memory
 
 # Create a temporary folder to store the transformers of the pipeline
-location = './cachedir'
+location = 'cachedir'
 memory = Memory(location=location, verbose=10)
 cached_pipe = Pipeline([('reduce_dim', PCA()),
                         ('classify', LinearSVC(dual=False, max_iter=10000))],
@@ -118,6 +118,7 @@ grid.fit(digits.data, digits.target)
 
 # Delete the temporary cache before exiting
 memory.clear(warn=False)
+memory.store_backend.clear_location(location)
 
 ###############################################################################
 # The ``PCA`` fitting is only computed at the evaluation of the first
