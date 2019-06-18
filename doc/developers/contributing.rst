@@ -365,12 +365,15 @@ complies with the following rules before marking a PR as ``[MRG]``. The
     the user guide, with small code snipets. If relevant, please also add
     references in the literature, with PDF links when possible.
 
-11. The documentation should also include expected time and space complexity
+11. The user guide should also include expected time and space complexity
     of the algorithm and scalability, e.g. "this algorithm can scale to a
     large number of samples > 100000, but does not scale in dimensionality:
     n_features is expected to be lower than 100".
 
-You can also check for common programming errors with the following tools:
+You can also check our :ref:`code_review` to get an idea of what reviewers
+will expect.
+
+You can check for common programming errors with the following tools:
 
 * Code with a good unittest coverage (at least 80%, better 100%), check
   with::
@@ -1449,13 +1452,6 @@ Inheriting from ``ClassifierMixin``, ``RegressorMixin`` or ``ClusterMixin``
 will set the attribute automatically.  When a meta-estimator needs to distinguish
 among estimator types, instead of checking ``_estimator_type`` directly, helpers
 like :func:`base.is_classifier` should be used.
-
-Working notes
--------------
-
-For unresolved issues, TODOs, and remarks on ongoing work, developers are
-advised to maintain notes on the `GitHub wiki
-<https://github.com/scikit-learn/scikit-learn/wiki>`__.
 
 Specific models
 ---------------

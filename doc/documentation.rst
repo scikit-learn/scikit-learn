@@ -109,8 +109,8 @@ Documentation of scikit-learn |version|
             </div>
             <div class="row-fluid">
                 <div class="span4 box">
-                    <h2><a href="governance.html">Governance</a></h2>
-                    <blockquote>Governance of the project.
+                    <h2><a href="about.html">About us</a></h2>
+                    <blockquote>About the scikit-learn project.
                     </blockquote>
                 </div>
 
