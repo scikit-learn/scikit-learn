@@ -2,8 +2,6 @@
 
 .. currentmodule:: sklearn
 
-<<<<<<< HEAD
-=======
 .. _changes_0_21_3:
 
 Version 0.21.3
@@ -21,7 +19,12 @@ Changelog
   ``'penalty'`` parameters (regression introduced in 0.21). :pr:`14087` by
   `Nicolas Hug`_.
 
->>>>>>> 36b688eb04... [MRG] fix refit=False error in LogisticRegressionCV (#14087)
+:mod:`sklearn.tree`
+...................
+
+- |Fix| Fixed bug in :func:`tree.export_text` when the tree has one feature and 
+  a single feature name is passed in. :pr:`14053` by `Thomas Fan`
+
 .. _changes_0_21_2:
 
 Version 0.21.2
