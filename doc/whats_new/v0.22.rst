@@ -55,6 +55,11 @@ Changelog
   validation data separately to avoid any data leak. :pr:`13933` by
   `Nicolas Hug`_.
 
+- |Fix| :class:`ensemble.AdaBoostClassifier` computes probabilities based on
+  the decision function as in the literature. Thus, `predict` and
+  `predict_proba` give consistent results.
+  :pr:`14114` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
