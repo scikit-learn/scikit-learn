@@ -21,16 +21,11 @@ import tempfile
 from subprocess import check_output, STDOUT, CalledProcessError
 from subprocess import TimeoutExpired
 
-
 import scipy as sp
-import scipy.io
 from functools import wraps
 from operator import itemgetter
 from inspect import signature
-from urllib.request import urlopen
-from urllib.error import HTTPError
 
-import tempfile
 import shutil
 import atexit
 import unittest
@@ -48,12 +43,12 @@ from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_less
 import numpy as np
+import joblib
 
 import sklearn
 from sklearn.base import (BaseEstimator, ClassifierMixin, ClusterMixin,
                           RegressorMixin, TransformerMixin)
 from sklearn.utils import deprecated, IS_PYPY, _IS_32BIT
-from sklearn.utils._joblib import joblib
 from sklearn.utils._unittest_backport import TestCase
 
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
@@ -116,7 +111,6 @@ def assert_warns(warning_class, func, *args, **kw):
     result : the return value of `func`
 
     """
-    clean_warning_registry()
     with warnings.catch_warnings(record=True) as w:
         # Cause all warnings to always be triggered.
         warnings.simplefilter("always")
@@ -165,7 +159,6 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
     result : the return value of `func`
 
     """
-    clean_warning_registry()
     with warnings.catch_warnings(record=True) as w:
         # Cause all warnings to always be triggered.
         warnings.simplefilter("always")
@@ -241,7 +234,6 @@ def assert_no_warnings(func, *args, **kw):
     **kw
     """
     # very important to avoid uncontrolled state propagation
-    clean_warning_registry()
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter('always')
 
@@ -324,7 +316,6 @@ class _IgnoreWarnings:
         """Decorator to catch and hide warnings without visual nesting."""
         @wraps(fn)
         def wrapper(*args, **kwargs):
-            clean_warning_registry()
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", self.category)
                 return fn(*args, **kwargs)
@@ -347,7 +338,6 @@ class _IgnoreWarnings:
         self._filters = self._module.filters
         self._module.filters = self._filters[:]
         self._showwarning = self._module.showwarning
-        clean_warning_registry()
         warnings.simplefilter("ignore", self.category)
 
     def __exit__(self, *exc_info):
@@ -356,7 +346,6 @@ class _IgnoreWarnings:
         self._module.filters = self._filters
         self._module.showwarning = self._showwarning
         self.log[:] = []
-        clean_warning_registry()
 
 
 def assert_raise_message(exceptions, message, function, *args, **kwargs):
@@ -440,121 +429,6 @@ def assert_allclose_dense_sparse(x, y, rtol=1e-07, atol=1e-9, err_msg=''):
     else:
         raise ValueError("Can only compare two sparse matrices,"
                          " not a sparse matrix and an array.")
-
-
-@deprecated('deprecated in version 0.20 to be removed in version 0.22')
-def fake_mldata(columns_dict, dataname, matfile, ordering=None):
-    """Create a fake mldata data set.
-
-    .. deprecated:: 0.20
-        Will be removed in version 0.22
-
-    Parameters
-    ----------
-    columns_dict : dict, keys=str, values=ndarray
-        Contains data as columns_dict[column_name] = array of data.
-
-    dataname : string
-        Name of data set.
-
-    matfile : string or file object
-        The file name string or the file-like object of the output file.
-
-    ordering : list, default None
-        List of column_names, determines the ordering in the data set.
-
-    Notes
-    -----
-    This function transposes all arrays, while fetch_mldata only transposes
-    'data', keep that into account in the tests.
-    """
-    datasets = dict(columns_dict)
-
-    # transpose all variables
-    for name in datasets:
-        datasets[name] = datasets[name].T
-
-    if ordering is None:
-        ordering = sorted(list(datasets.keys()))
-    # NOTE: setting up this array is tricky, because of the way Matlab
-    # re-packages 1D arrays
-    datasets['mldata_descr_ordering'] = sp.empty((1, len(ordering)),
-                                                 dtype='object')
-    for i, name in enumerate(ordering):
-        datasets['mldata_descr_ordering'][0, i] = name
-
-    scipy.io.savemat(matfile, datasets, oned_as='column')
-
-
-@deprecated('deprecated in version 0.20 to be removed in version 0.22')
-class mock_mldata_urlopen:
-    """Object that mocks the urlopen function to fake requests to mldata.
-
-    When requesting a dataset with a name that is in mock_datasets, this object
-    creates a fake dataset in a StringIO object and returns it. Otherwise, it
-    raises an HTTPError.
-
-    .. deprecated:: 0.20
-        Will be removed in version 0.22
-
-    Parameters
-    ----------
-    mock_datasets : dict
-        A dictionary of {dataset_name: data_dict}, or
-        {dataset_name: (data_dict, ordering). `data_dict` itself is a
-        dictionary of {column_name: data_array}, and `ordering` is a list of
-        column_names to determine the ordering in the data set (see
-        :func:`fake_mldata` for details).
-    """
-    def __init__(self, mock_datasets):
-        self.mock_datasets = mock_datasets
-
-    def __call__(self, urlname):
-        """
-        Parameters
-        ----------
-        urlname : string
-            The url
-        """
-        dataset_name = urlname.split('/')[-1]
-        if dataset_name in self.mock_datasets:
-            resource_name = '_' + dataset_name
-            from io import BytesIO
-            matfile = BytesIO()
-
-            dataset = self.mock_datasets[dataset_name]
-            ordering = None
-            if isinstance(dataset, tuple):
-                dataset, ordering = dataset
-            fake_mldata(dataset, resource_name, matfile, ordering)
-
-            matfile.seek(0)
-            return matfile
-        else:
-            raise HTTPError(urlname, 404, dataset_name + " is not available",
-                            [], None)
-
-
-def install_mldata_mock(mock_datasets):
-    """
-    Parameters
-    ----------
-    mock_datasets : dict
-        A dictionary of {dataset_name: data_dict}, or
-        {dataset_name: (data_dict, ordering). `data_dict` itself is a
-        dictionary of {column_name: data_array}, and `ordering` is a list of
-        column_names to determine the ordering in the data set (see
-        :func:`fake_mldata` for details).
-    """
-    # Lazy import to avoid mutually recursive imports
-    from sklearn import datasets
-    datasets.mldata.urlopen = mock_mldata_urlopen(mock_datasets)
-
-
-def uninstall_mldata_mock():
-    # Lazy import to avoid mutually recursive imports
-    from sklearn import datasets
-    datasets.mldata.urlopen = urlopen
 
 
 def all_estimators(include_meta_estimators=None,
@@ -730,15 +604,16 @@ except ImportError:
 def clean_warning_registry():
     """Clean Python warning registry for easier testing of warning messages.
 
-    We may not need to do this any more when getting rid of Python 2, not
-    entirely sure. See https://bugs.python.org/issue4180 and
+    When changing warning filters this function is not necessary with
+    Python3.5+, as __warningregistry__ will be re-set internally.
+    See https://bugs.python.org/issue4180 and
     https://bugs.python.org/issue21724 for more details.
 
     """
-    reg = "__warningregistry__"
-    for mod_name, mod in list(sys.modules.items()):
-        if hasattr(mod, reg):
-            getattr(mod, reg).clear()
+    for mod in sys.modules.values():
+        registry = getattr(mod, "__warningregistry__", None)
+        if registry is not None:
+            registry.clear()
 
 
 def check_skip_network():

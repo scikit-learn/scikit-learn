@@ -152,12 +152,9 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
     >>> from sklearn.impute import SimpleImputer
     >>> imp_mean = SimpleImputer(missing_values=np.nan, strategy='mean')
     >>> imp_mean.fit([[7, 2, 3], [4, np.nan, 6], [10, 5, 9]])
-    ... # doctest: +NORMALIZE_WHITESPACE
-    SimpleImputer(add_indicator=False, copy=True, fill_value=None,
-            missing_values=nan, strategy='mean', verbose=0)
+    SimpleImputer()
     >>> X = [[np.nan, 2, 3], [4, np.nan, 6], [10, np.nan, 9]]
     >>> print(imp_mean.transform(X))
-    ... # doctest: +NORMALIZE_WHITESPACE
     [[ 7.   2.   3. ]
      [ 4.   3.5  6. ]
      [10.   3.5  9. ]]
@@ -489,9 +486,8 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
     ...                [np.nan, 2, 3],
     ...                [2, 4, 0]])
     >>> indicator = MissingIndicator()
-    >>> indicator.fit(X1)  # doctest: +NORMALIZE_WHITESPACE
-    MissingIndicator(error_on_new=True, features='missing-only',
-             missing_values=nan, sparse='auto')
+    >>> indicator.fit(X1)
+    MissingIndicator()
     >>> X2_tr = indicator.transform(X2)
     >>> X2_tr
     array([[False,  True],
@@ -672,4 +668,4 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
     def _more_tags(self):
         return {'allow_nan': True,
-                'X_types': ['2darray', 'str']}
+                'X_types': ['2darray', 'string']}

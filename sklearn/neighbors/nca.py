@@ -13,6 +13,7 @@ from warnings import warn
 import numpy as np
 import sys
 import time
+import numbers
 from scipy.optimize import minimize
 from ..utils.extmath import softmax
 from ..metrics import pairwise_distances
@@ -131,16 +132,16 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
     ... stratify=y, test_size=0.7, random_state=42)
     >>> nca = NeighborhoodComponentsAnalysis(random_state=42)
-    >>> nca.fit(X_train, y_train) # doctest: +ELLIPSIS
+    >>> nca.fit(X_train, y_train)
     NeighborhoodComponentsAnalysis(...)
     >>> knn = KNeighborsClassifier(n_neighbors=3)
-    >>> knn.fit(X_train, y_train) # doctest: +ELLIPSIS
+    >>> knn.fit(X_train, y_train)
     KNeighborsClassifier(...)
-    >>> print(knn.score(X_test, y_test)) # doctest: +ELLIPSIS
+    >>> print(knn.score(X_test, y_test))
     0.933333...
-    >>> knn.fit(nca.transform(X_train), y_train) # doctest: +ELLIPSIS
+    >>> knn.fit(nca.transform(X_train), y_train)
     KNeighborsClassifier(...)
-    >>> print(knn.score(nca.transform(X_test), y_test)) # doctest: +ELLIPSIS
+    >>> print(knn.score(nca.transform(X_test), y_test))
     0.961904...
 
     References
@@ -299,7 +300,8 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
 
         # Check the preferred dimensionality of the projected space
         if self.n_components is not None:
-            check_scalar(self.n_components, 'n_components', int, 1)
+            check_scalar(
+                self.n_components, 'n_components', numbers.Integral, 1)
 
             if self.n_components > X.shape[1]:
                 raise ValueError('The preferred dimensionality of the '
@@ -318,9 +320,9 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
                                  .format(X.shape[1],
                                          self.components_.shape[1]))
 
-        check_scalar(self.max_iter, 'max_iter', int, 1)
-        check_scalar(self.tol, 'tol', float, 0.)
-        check_scalar(self.verbose, 'verbose', int, 0)
+        check_scalar(self.max_iter, 'max_iter', numbers.Integral, 1)
+        check_scalar(self.tol, 'tol', numbers.Real, 0.)
+        check_scalar(self.verbose, 'verbose', numbers.Integral, 0)
 
         if self.callback is not None:
             if not callable(self.callback):

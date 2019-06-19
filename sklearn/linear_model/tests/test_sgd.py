@@ -4,6 +4,7 @@ import pytest
 
 import numpy as np
 import scipy.sparse as sp
+import joblib
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -14,8 +15,6 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn import linear_model, datasets, metrics
@@ -26,9 +25,6 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
 from sklearn.linear_model import sgd_fast
 from sklearn.model_selection import RandomizedSearchCV
-
-from sklearn.utils import _joblib
-from sklearn.utils._joblib import parallel_backend
 
 
 # 0.23. warning about tol not having its correct default value.
@@ -1568,7 +1564,7 @@ def test_multi_core_gridsearch_and_early_stopping():
     }
     clf = SGDClassifier(tol=1e-3, max_iter=1000, early_stopping=True,
                         random_state=0)
-    search = RandomizedSearchCV(clf, param_grid, n_iter=10, cv=5, n_jobs=2,
+    search = RandomizedSearchCV(clf, param_grid, n_iter=10, n_jobs=2,
                                 random_state=0)
     search.fit(iris.data, iris.target)
     assert search.best_score_ > 0.8
@@ -1596,7 +1592,7 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     # a segmentation fault when trying to write in a readonly memory mapped
     # buffer.
 
-    if _joblib.__version__ < LooseVersion('0.12') and backend == 'loky':
+    if joblib.__version__ < LooseVersion('0.12') and backend == 'loky':
         pytest.skip('loky backend does not exist in joblib <0.12')
 
     random_state = np.random.RandomState(42)
@@ -1617,6 +1613,6 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     # coefficients are equal to those obtained using a sequential fit
     clf_parallel = SGDClassifier(tol=1e-3, max_iter=1000, n_jobs=4,
                                  random_state=42)
-    with parallel_backend(backend=backend):
+    with joblib.parallel_backend(backend=backend):
         clf_parallel.fit(X, y)
     assert_array_almost_equal(clf_sequential.coef_, clf_parallel.coef_)

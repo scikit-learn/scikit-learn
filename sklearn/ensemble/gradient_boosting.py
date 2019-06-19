@@ -50,7 +50,6 @@ from . import _gb_losses
 
 from ..utils import check_random_state
 from ..utils import check_array
-from ..utils import check_X_y
 from ..utils import column_or_1d
 from ..utils import check_consistent_length
 from ..utils import deprecated
@@ -1315,7 +1314,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                                  "or 'log2'." % self.max_features)
         elif self.max_features is None:
             max_features = self.n_features_
-        elif isinstance(self.max_features, (numbers.Integral, np.integer)):
+        elif isinstance(self.max_features, numbers.Integral):
             max_features = self.max_features
         else:  # float
             if 0. < self.max_features <= 1.:
@@ -1327,7 +1326,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self.max_features_ = max_features
 
         if not isinstance(self.n_iter_no_change,
-                          (numbers.Integral, np.integer, type(None))):
+                          (numbers.Integral, type(None))):
             raise ValueError("n_iter_no_change should either be None or an "
                              "integer. %r was passed"
                              % self.n_iter_no_change)
