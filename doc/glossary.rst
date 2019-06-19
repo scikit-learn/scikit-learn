@@ -1416,8 +1416,8 @@ functions or non-estimator constructors.
         used differently depending on the algorithm: for linear models (such
         as linear SVM or logistic regression), the class weights will alter the
         loss function by weighting the loss of each sample by its class weight.
-        For tree-based algorithms, the class weights will be used when
-        calculating the splitting criteria.
+        For tree-based algorithms, the class weights will be used for
+        reweighting the splitting criterion.
         **Note** however that this rebalancing does not take the weight of
         samples in each class into account.
 
