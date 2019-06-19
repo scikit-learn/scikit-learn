@@ -374,6 +374,7 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
     >>> from sklearn.svm import LinearSVC
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> from sklearn.ensemble import StackingClassifier
+    >>> X, y = load_iris(return_X_y=True)
     >>> estimators = [
     ...     ('lr', LogisticRegression(solver='lbfgs', multi_class='auto',
     ...                               tol=1e-1)),
@@ -387,7 +388,7 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
     ... )
     >>> from sklearn.model_selection import train_test_split
     >>> X_train, X_test, y_train, y_test = train_test_split(
-    ... *load_iris(return_X_y=True), random_state=42
+    ... X, y, stratify=y, random_state=42
     ... )
     >>> clf.fit(X_train, y_train).score(X_test, y_test)
     0...
