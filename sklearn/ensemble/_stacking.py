@@ -94,8 +94,8 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
         ----------
         params : keyword arguments
             Specific parameters using e.g. set_params(parameter_name=new_value)
-            In addition, to setting the parameters of the ``VotingClassifier``,
-            the individual classifiers of the ``VotingClassifier`` can also be
+            In addition, to setting the parameters of the stacking estimator,
+            the individual estimator of the stacking estimator can also be
             set or replaced by setting them to None.
 
         Examples
@@ -260,10 +260,9 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
             n_features is the number of features.
 
         **predict_params : dict of string -> object
-            Parameters to the ``predict`` called by the ``final_estimator``.
-            Note that while this may be
-            used to return uncertainties from some models with ``return_std``
-            or ``return_cov``.
+            Parameters to the `predict` called by the `final_estimator`. Note
+            that while this may be used to return uncertainties from some
+            models with `return_std` or `return_cov`.
 
         Returns
         -------
@@ -272,7 +271,9 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
         """
 
         check_is_fitted(self, ['estimators_', 'final_estimator_'])
-        return self.final_estimator_.predict(self.transform(X))
+        return self.final_estimator_.predict(
+            self.transform(X), **predict_params
+        )
 
 
 class StackingClassifier(_BaseStacking, ClassifierMixin):
@@ -283,7 +284,7 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
     allows to combine the strength of each individual estimator. It should be
     noted that the final estimator is trained through cross-validation.
 
-    .. versionadded:: 0.20
+    .. versionadded:: 0.22
 
     Read more in the :ref:`User Guide <stacking>`.
 
@@ -291,7 +292,7 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
     ----------
     estimators : list of (string, estimator) tuples
         Base estimators which will be stacked together. An estimator can be set
-        to None or 'drop' using ``set_params``.
+        to None or 'drop' using `set_params`.
 
     final_estimator : estimator object
         A classifier which will be used to combine the base estimators.
@@ -316,24 +317,24 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
         Methods called for each base estimator. It can be:
 
         * if a list of string in which each string is associated to the
-          ``estimators``,
-        * if ``auto``, it will try to invoke, for each estimator,
-        ``predict_proba``, ``decision_function`` or ``predict`` in that order.
+          `estimators`,
+        * if 'auto', it will try to invoke, for each estimator,
+          `predict_proba`, `decision_function` or `predict` in that order.
 
     passthrough : bool, optional
-        Whether or not to concatenate the original data ``X`` with the output
-        of ``estimators`` to feed the ``final_estimator``. The default is
+        Whether or not to concatenate the original data `X` with the output
+        of `estimators` to feed the `final_estimator`. The default is
         False.
 
     n_jobs : int, optional (default=1)
-        The number of jobs to ``fit`` the ``estimators`` in parallel. If
+        The number of jobs to `fit` the `estimators` in parallel. If
         -1, then the number of jobs is set to the number of cores.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`. Used to set the ``cv``.
+        by `np.random`. Used to set the `cv`.
 
     Attributes
     ----------
@@ -393,14 +394,8 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
         )
 
     def _validate_meta_estimator(self):
-        # FIXME: remove the parameters in 0.23
         super()._validate_final_estimator(
-            default=LogisticRegression(
-                solver='lbfgs',
-                max_iter=1000,
-                multi_class='auto',
-                random_state=self.random_state
-            )
+            default=LogisticRegression(random_state=self.random_state)
         )
         if not is_classifier(self.final_estimator_):
             raise AttributeError(
@@ -436,7 +431,7 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
     allows to combine the strength of each individual estimator. It should be
     noted that the final estimator is trained through cross-validation.
 
-    .. versionadded:: 0.20
+    .. versionadded:: 0.22
 
     Read more in the :ref:`User Guide <stacking>`.
 
@@ -444,7 +439,7 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
     ----------
     estimators : list of (string, estimator) tuples
         Base estimators which will be stacked together. An estimator can be set
-        to None or 'drop using ``set_params``.
+        to None or 'drop' using `set_params`.
 
     final_estimator : estimator object
         A regressor which will be used to combine the base estimators.
@@ -469,24 +464,24 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
         Methods called for each base estimator. It can be:
 
         * if a list of string in which each string is associated to the
-          ``estimators``,
-        * if ``auto``, it will try to invoke, for each estimator,
-        ``predict_proba``, ``decision_function`` or ``predict`` in that order.
+          `estimators`,
+        * if 'auto', it will try to invoke, for each estimator,
+          `predict_proba`, `decision_function` or `predict` in that order.
 
     passthrough : bool, optional
-        Whether or not to concatenate the original data ``X`` with the output
-        of ``estimators`` to feed the ``final_estimator``. The default is
+        Whether or not to concatenate the original data `X` with the output
+        of `estimators` to feed the `final_estimator`. The default is
         False.
 
     n_jobs : int, optional (default=1)
-        The number of jobs to ``fit`` the ``estimators`` in parallel. If
+        The number of jobs to `fit` the `estimators` in parallel. If
         -1, then the number of jobs is set to the number of cores.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`. Used to set the ``cv``.
+        by `np.random`. Used to set the `cv`.
 
     Attributes
     ----------

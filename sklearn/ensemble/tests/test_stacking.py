@@ -36,13 +36,10 @@ X_diabetes, y_diabetes = load_diabetes(return_X_y=True)
 X_iris, y_iris = load_iris(return_X_y=True)
 
 
-@pytest.mark.filterwarnings("ignore:Liblinear failed to converge")
-@pytest.mark.filterwarnings("ignore:The default value of n_estimators")
-@pytest.mark.filterwarnings("ignore:Default solver will be changed to 'lbfgs'")
-@pytest.mark.filterwarnings("ignore:Default multi_class will be changed")
 @pytest.mark.parametrize(
     "cv",
-    [3, StratifiedKFold(n_splits=3, shuffle=True, random_state=42),
+    [3,
+     StratifiedKFold(n_splits=3, shuffle=True, random_state=42),
      LeaveOneOut()]
 )
 @pytest.mark.parametrize(
@@ -76,7 +73,6 @@ def test_stacking_classifier_iris(cv, final_estimator, passthrough,
     clf.predict_proba(X_test)
 
 
-@pytest.mark.filterwarnings("ignore:Liblinear failed to converge")
 @pytest.mark.parametrize(
     "estimators",
     [[('lr', None), ('svc', LinearSVC(random_state=0))],
@@ -101,7 +97,6 @@ def test_stacking_classifier_drop_estimator(estimators):
     assert_allclose(clf.predict_proba(X_test), clf_drop.predict_proba(X_test))
 
 
-@pytest.mark.filterwarnings("ignore:Liblinear failed to converge")
 @pytest.mark.parametrize(
     "estimators",
     [[('lr', None), ('svr', LinearSVR(random_state=0))],
@@ -125,13 +120,10 @@ def test_stacking_regressor_drop_estimator(estimators):
     assert_allclose(reg.predict(X_test), reg_drop.predict(X_test))
 
 
-@pytest.mark.filterwarnings("ignore:Liblinear failed to converge")
-@pytest.mark.filterwarnings("ignore:The default value of n_estimators")
-@pytest.mark.filterwarnings("ignore:Default solver will be changed to 'lbfgs'")
-@pytest.mark.filterwarnings("ignore:Default multi_class will be changed")
 @pytest.mark.parametrize(
     "cv",
-    [3, KFold(n_splits=3, shuffle=True, random_state=42),
+    [3,
+     KFold(n_splits=3, shuffle=True, random_state=42),
      LeaveOneOut()]
 )
 @pytest.mark.parametrize(
@@ -185,15 +177,11 @@ class NoWeightClassifier(BaseEstimator, ClassifierMixin):
         return self.clf.fit(X, y)
 
 
-@pytest.mark.filterwarnings("ignore:Liblinear failed to converge")
-@pytest.mark.filterwarnings("ignore:The default value of n_estimators")
-@pytest.mark.filterwarnings("ignore:Default solver will be changed to 'lbfgs'")
-@pytest.mark.filterwarnings("ignore:Default multi_class will be changed")
 @pytest.mark.parametrize(
     "X, y, params, type_err, msg_err",
     [(X_iris, y_iris,
-     {'estimators': None, 'final_estimator': RandomForestClassifier(),
-      'predict_method': 'auto'},
+      {'estimators': None, 'final_estimator': RandomForestClassifier(),
+       'predict_method': 'auto'},
       AttributeError, "Invalid 'estimators' attribute,"),
      (X_iris, y_iris,
       {'estimators': [('lr', LogisticRegression()), ('svm', LinearSVC())],
@@ -242,10 +230,6 @@ def test_stacking_classifier_error(X, y, params, type_err, msg_err):
         clf.fit(X, y, sample_weight=np.ones(X.shape[0]))
 
 
-@pytest.mark.filterwarnings("ignore:Liblinear failed to converge")
-@pytest.mark.filterwarnings("ignore:The default value of n_estimators")
-@pytest.mark.filterwarnings("ignore:Default solver will be changed to 'lbfgs'")
-@pytest.mark.filterwarnings("ignore:Default multi_class will be changed")
 @pytest.mark.parametrize(
     "X, y, params, type_err, msg_err",
     [(X_diabetes, y_diabetes,
@@ -299,9 +283,6 @@ def test_stacking_regressor_error(X, y, params, type_err, msg_err):
         reg.fit(X, y, sample_weight=np.ones(X.shape[0]))
 
 
-@pytest.mark.filterwarnings("ignore:Liblinear failed to converge")
-@pytest.mark.filterwarnings("ignore:Default solver will be changed to 'lbfgs'")
-@pytest.mark.filterwarnings("ignore:Default multi_class will be changed")
 @pytest.mark.parametrize(
     "stacking_estimator",
     [StackingClassifier(estimators=[('lr', LogisticRegression()),
@@ -315,9 +296,6 @@ def test_stacking_named_estimators(stacking_estimator):
     assert sorted(list(estimators.keys())) == sorted(['lr', 'svm'])
 
 
-@pytest.mark.filterwarnings("ignore:Liblinear failed to converge")
-@pytest.mark.filterwarnings("ignore:Default solver will be changed to 'lbfgs'")
-@pytest.mark.filterwarnings("ignore:Default multi_class will be changed")
 @pytest.mark.parametrize(
     "stacking_estimator",
     [StackingClassifier(estimators=[('lr', LogisticRegression()),

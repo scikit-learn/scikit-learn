@@ -10,7 +10,8 @@ estimator is trained using the stacked predictions of these base estimators.
 In this example, we illustrate the use case in which different regressors
 (linear and non-linear) are stacked together and a final non-linear regressor
 is used to output the prediction. We compare the performance of each individual
-regressor with the stacking strategy. Stacking improve the overall performance.
+regressor with the stacking strategy. Stacking improves the overall
+performance.
 
 """
 

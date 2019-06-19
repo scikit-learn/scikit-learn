@@ -1036,17 +1036,17 @@ The following example shows how to fit the VotingRegressor::
 .. _stacking:
 
 Stacked generalization
-----------------------
+======================
 
 Stacked generalization is a method for combining estimators to reduce their
 biases [W1992]. More precisely, the predictions of each individual estimator
-are stacked together and used by another estimator to compute the final
-prediction. This final estimator is trained through cross-validation.
+are stacked together and used as input to a final estimator to compute the
+final prediction. This final estimator is trained through cross-validation.
 
 The :class:`StackingClassifier` and :class:`StackingRegressor` provide such
 strategies which can be applied to classification and regression problems.
 
-The ``estimators`` parameter corresponds to the list of the estimators which
+The `estimators` parameter corresponds to the list of the estimators which
 are stacked together. It should be given as a list of name and estimator::
 
   >>> from sklearn.linear_model import RidgeCV, LassoCV
@@ -1055,7 +1055,7 @@ are stacked together. It should be given as a list of name and estimator::
   ...               ('lasso', LassoCV(random_state=42)),
   ...               ('svr', SVR(C=1, gamma=1e-6, kernel='rbf'))]
 
-The ``final_estimator`` will combine the predictions of the ``estimators``. It
+The `final_estimator` will use the predictions of the `estimators` as input. It
 needs to be a classifier or a regressor when using :class:`StackingClassifier`
 or :class:`StackingRegressor`, respectively::
 
@@ -1065,7 +1065,7 @@ or :class:`StackingRegressor`, respectively::
   ...     estimators=estimators,
   ...     final_estimator=GradientBoostingRegressor(random_state=42))
 
-To train the ``estimators`` and ``final_estimator``, the ``fit`` method needs
+To train the `estimators` and `final_estimator`, the `fit` method needs
 to be called on the training data::
 
   >>> from sklearn.datasets import load_boston
@@ -1076,21 +1076,20 @@ to be called on the training data::
   >>> reg.fit(X_train, y_train)  # doctest: +ELLIPSIS
   StackingRegressor(...)
 
-During training, the ``estimators`` are fitted on the whole training data
-``X_train``. They will be used when calling ``predict``, ``predict``, or
-``predict_proba``. To generalize and avoid over-fitting, the
-``final_estimator`` is trained on out-samples using internally
+During training, the `estimators` are fitted on the whole training data
+`X_train`. They will be used when calling `predict`, `predict`, or
+`predict_proba`. To generalize and avoid over-fitting, the
+`final_estimator` is trained on out-samples using internally
 :func:`sklearn.model_selection.cross_val_predict`.
 
-Note that the output of the ``estimators`` is controlled by the parameter
-``method_estimators``. It corresponds to the method called by each
+Note that the output of the `estimators` is controlled by the parameter
+`predict_method`. It corresponds to the method called by each
 estimator. This parameter is either a list of string of the methods name or
-``'auto'`` which will automatically called the method depending of the
+`'auto'` which will automatically call the method depending on the
 availability and a pre-determined order of preference.
 
-It is possible to get the final predictions using the ``predict`` or
-``predict_proba`` depending if you are using :class:`StackingClassifier` or
-:class:`StackingRegressor`::
+The fitted stacking estimators have a `predict` method, and classifier also
+have a `predict_proba` method. They can be used as any other estimator, e.g.::
 
    >>> y_pred = reg.predict(X_test)
    >>> from sklearn.metrics import r2_score
@@ -1098,7 +1097,7 @@ It is possible to get the final predictions using the ``predict`` or
    R2 score: 0.81
 
 Note that it is also possible to get the output of the stacked outputs of the
-``estimators`` using the ``transform`` method::
+`estimators` using the `transform` method::
 
   >>> reg.transform(X_test[:5])  # doctest: +ELLIPSIS
   array([[28.78..., 28.43...  , 22.62...],
@@ -1108,14 +1107,10 @@ Note that it is also possible to get the output of the stacked outputs of the
          [18.93..., 19.26..., 17.03... ]])
 
 .. note::
-   Multiple layers stacking can be achieved by assigning ``final_estimator`` to
+   Multiple stacking layers can be achieved by assigning `final_estimator` to
    a :class:`StackingClassifier` or :class:`StackingRegressor`.
 
 .. topic:: References
 
    .. [W1992] Wolpert, David H. "Stacked generalization." Neural networks 5.2
       (1992): 241-259.
-   >>> eclf = VotingClassifier(
-   ...     estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)],
-   ...     voting='soft', weights=[2, 5, 1]
-   ... )
