@@ -249,14 +249,6 @@ def test_column_transformer_dataframe():
     assert ct.transformers_[-1][1] == 'drop'
     assert_array_equal(ct.transformers_[-1][2], [1])
 
-    assert_array_equal(ct.fit_transform(X_df2), X_res_first)
-    assert_array_equal(ct.fit(X_df2).transform(X_df2), X_res_first)
-
-    assert len(ct.transformers_) == 2
-    assert ct.transformers_[-1][0] == 'remainder'
-    assert ct.transformers_[-1][1] == 'drop'
-    assert_array_equal(ct.transformers_[-1][2], [1])
-
 
 @pytest.mark.parametrize("pandas", [True, False], ids=['pandas', 'numpy'])
 @pytest.mark.parametrize("column", [[], np.array([False, False])],
