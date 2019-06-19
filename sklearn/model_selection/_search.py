@@ -29,7 +29,7 @@ from ._split import check_cv
 from ._validation import _fit_and_score
 from ._validation import _aggregate_score_dicts
 from ..exceptions import NotFittedError
-from ..utils._joblib import Parallel, delayed
+from joblib import Parallel, delayed
 from ..utils import check_random_state
 from ..utils.fixes import MaskedArray
 from ..utils.random import sample_without_replacement

@@ -10,9 +10,9 @@ from inspect import signature
 import numpy as np
 from scipy import sparse
 from scipy.stats import rankdata
+import joblib
 
 from . import IS_PYPY
-from . import _joblib
 from .testing import assert_raises, _get_args
 from .testing import assert_raises_regex
 from .testing import assert_raise_message
@@ -185,11 +185,11 @@ def _yield_regressor_checks(name, regressor):
 def _yield_transformer_checks(name, transformer):
     # All transformers should either deal with sparse data or raise an
     # exception with type TypeError and an intelligible error message
-    yield check_transformer_data_not_an_array
+    if not _safe_tags(transformer, "no_validation"):
+        yield check_transformer_data_not_an_array
     # these don't actually fit the data, so don't raise errors
     yield check_transformer_general
     yield partial(check_transformer_general, readonly_memmap=True)
-
     if not _safe_tags(transformer, "stateless"):
         yield check_transformers_unfitted
     # Dependent on external solvers and hence accessing the iter
@@ -972,7 +972,6 @@ def check_transformer_general(name, transformer, readonly_memmap=False):
         X, y = create_memmap_backed_data([X, y])
 
     _check_transformer(name, transformer, X, y)
-    _check_transformer(name, transformer, X.tolist(), y.tolist())
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
@@ -986,6 +985,8 @@ def check_transformer_data_not_an_array(name, transformer):
     this_X = NotAnArray(X)
     this_y = NotAnArray(np.asarray(y))
     _check_transformer(name, transformer, this_X, this_y)
+    # try the same with some list
+    _check_transformer(name, transformer, X.tolist(), y.tolist())
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
@@ -2055,7 +2056,7 @@ def check_estimators_overwrite_params(name, estimator_orig):
         # The only exception to this rule of immutable constructor parameters
         # is possible RandomState instance but in this check we explicitly
         # fixed the random_state params recursively to be integer seeds.
-        assert_equal(_joblib.hash(new_value), _joblib.hash(original_value),
+        assert_equal(joblib.hash(new_value), joblib.hash(original_value),
                      "Estimator %s should not change or mutate "
                      " the parameter %s from %s to %s during fit."
                      % (name, param_name, original_value, new_value))
@@ -2219,7 +2220,7 @@ def check_parameters_default_constructible(name, Estimator):
             else:
                 assert_in(type(init_param.default),
                           [str, int, float, bool, tuple, type(None),
-                           np.float64, types.FunctionType, _joblib.Memory])
+                           np.float64, types.FunctionType, joblib.Memory])
             if init_param.name not in params.keys():
                 # deprecated parameter, not in get_params
                 assert init_param.default is None
@@ -2400,8 +2401,11 @@ def check_decision_proba_consistency(name, estimator_orig):
             hasattr(estimator, "predict_proba")):
 
         estimator.fit(X, y)
-        a = estimator.predict_proba(X_test)[:, 1]
-        b = estimator.decision_function(X_test)
+        # Since the link function from decision_function() to predict_proba()
+        # is sometimes not precise enough (typically expit), we round to the
+        # 10th decimal to avoid numerical issues.
+        a = estimator.predict_proba(X_test)[:, 1].round(decimals=10)
+        b = estimator.decision_function(X_test).round(decimals=10)
         assert_array_equal(rankdata(a), rankdata(b))
 
 

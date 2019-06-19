@@ -8,11 +8,12 @@ Base class for ensemble-based estimators.
 import numpy as np
 import numbers
 
+from joblib import effective_n_jobs
+
 from ..base import clone
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..utils import check_random_state
-from ..utils._joblib import effective_n_jobs
 from abc import ABCMeta, abstractmethod
 
 MAX_RAND_SEED = np.iinfo(np.int32).max

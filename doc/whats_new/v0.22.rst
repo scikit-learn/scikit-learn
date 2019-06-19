@@ -39,6 +39,14 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.decomposition`
+..................
+
+- |Enhancement| :class:`decomposition.IncrementalPCA` now accepts sparse
+  matrices as input, converting them to dense in batches thereby avoiding the
+  need to store the entire dense matrix at once.
+  :pr:`13960` by :user:`Scott Gigante <scottgigante>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
@@ -60,6 +68,18 @@ Changelog
   ``alpha_init`` and ``lambda_init`` which can be used to set the initial value
   of the maximization procedure in :term:`fit`.
   :pr:`13618` by :user:`Yoshihiro Uchida <c56pony>`.
+
+- |Efficiency| The 'liblinear' logistic regression solver now consumes less
+  memory if ``fit_intercept=False`` and ``X`` is a CSR sparse matrix.
+  :pr:`14108` by :user:`Alex Henrie <alexhenrie>`.
+
+:mod:`sklearn.model_selection`
+..................
+
+- |Enhancement| :class:`model_selection.learning_curve` now accepts parameter
+  ``return_times`` which can be used to retrieve computation times in order to
+  plot model scalability (see learning_curve example).
+  :pr:`13938` by :user:`Hadrien Reboul <H4dr1en>`.
 
 :mod:`sklearn.pipeline`
 .......................

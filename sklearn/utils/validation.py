@@ -17,14 +17,13 @@ from distutils.version import LooseVersion
 from inspect import signature
 
 from numpy.core.numeric import ComplexWarning
+import joblib
 
 from .fixes import _object_dtype_isnan
 from .. import get_config as _get_config
 from ..exceptions import NonBLASDotWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
-from ._joblib import Memory
-from ._joblib import __version__ as joblib_version
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
@@ -176,10 +175,10 @@ def check_memory(memory):
     """
 
     if memory is None or isinstance(memory, str):
-        if LooseVersion(joblib_version) < '0.12':
-            memory = Memory(cachedir=memory, verbose=0)
+        if LooseVersion(joblib.__version__) < '0.12':
+            memory = joblib.Memory(cachedir=memory, verbose=0)
         else:
-            memory = Memory(location=memory, verbose=0)
+            memory = joblib.Memory(location=memory, verbose=0)
     elif not hasattr(memory, 'cache'):
         raise ValueError("'memory' should be None, a string or have the same"
                          " interface as joblib.Memory."
