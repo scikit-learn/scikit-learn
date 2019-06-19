@@ -158,7 +158,7 @@ def test_baseline_least_absolute_deviation():
     assert baseline_prediction.shape == tuple()  # scalar
     assert baseline_prediction.dtype == y_train.dtype
     # Make sure baseline prediction is the median of all targets
-    assert_almost_equal(baseline_prediction, np.median(y_train))
+    assert baseline_prediction == pytest.approx(np.median(y_train))
 
 
 def test_baseline_binary_crossentropy():
