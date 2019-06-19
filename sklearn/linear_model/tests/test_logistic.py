@@ -1660,7 +1660,7 @@ def test_logistic_regression_path_coefs_multinomial():
                          [LogisticRegression(random_state=0),
                           LogisticRegressionCV(random_state=0, cv=3,
                                                Cs=3, tol=1e-3)],
-                         ids=lambda x: x.__class__)
+                         ids=lambda x: x.__class__.__name__)
 @pytest.mark.parametrize('solver', ['liblinear', 'lbfgs', 'newton-cg', 'sag',
                                     'saga'])
 def test_logistic_regression_multi_class_auto(est, solver):
