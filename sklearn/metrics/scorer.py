@@ -253,8 +253,7 @@ def get_scorer(scoring):
             scorers = [scorer for scorer in SCORERS
                        if SCORERS[scorer]._deprecation_msg is None]
             raise ValueError('%r is not a valid scoring value. '
-                             'Use sorted(sklearn.metrics.SCORERS.keys()) '
-                             'to get valid options.' % scorers)
+                             'Valid options are %s ' % (scoring, scorers))
     else:
         scorer = scoring
     return scorer
