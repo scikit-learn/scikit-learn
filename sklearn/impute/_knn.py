@@ -181,7 +181,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
 
         mask = _get_missing_mask(X, self.missing_values)
         self.weights = _check_weights(self.weights)
-        self.fit_X = X
+        self._fit_X = X
 
         masked_X = np.ma.masked_array(X, mask=mask)
         mean_masked = masked_X.mean(axis=0)
@@ -212,7 +212,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
         X = check_array(X, accept_sparse=False, dtype=FLOAT_DTYPES,
                         force_all_finite=force_all_finite, copy=self.copy)
 
-        if X.shape[1] != self.fit_X.shape[1]:
+        if X.shape[1] != self._fit_X.shape[1]:
             raise ValueError("Incompatible dimension between the fitted "
                              "dataset and the one to be transformed")
 
@@ -223,7 +223,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
         row_missing_idx = np.flatnonzero(mask.any(axis=1))
 
         # Pairwise distances between receivers and fitted samples
-        dist = pairwise_distances(X[row_missing_idx, :], self.fit_X,
+        dist = pairwise_distances(X[row_missing_idx, :], self._fit_X,
                                   metric=self.metric,
                                   squared=False,
                                   missing_values=self.missing_values)
@@ -236,7 +236,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
         valid_mask = np.logical_not(invalid_mask)
         valid_statistics_indexes = np.flatnonzero(valid_mask)
 
-        mask_fit_X = _get_missing_mask(self.fit_X, self.missing_values)
+        mask_fit_X = _get_missing_mask(self._fit_X, self.missing_values)
         non_missing_fix_X = np.logical_not(mask_fit_X)
         # Find and impute missing
         for col in range(X.shape[1]):
@@ -252,7 +252,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
             receivers_idx = np.where(mask[:, col])[0]
             dist_subset = dist[dist_idx_map[receivers_idx]]
             value = self._calc_impute(dist_subset, receivers_idx, X[:, col],
-                                      self.fit_X[:, col],
+                                      self._fit_X[:, col],
                                       non_missing_fix_X[:, col],
                                       self.statistics_[col])
             X[receivers_idx, col] = value
