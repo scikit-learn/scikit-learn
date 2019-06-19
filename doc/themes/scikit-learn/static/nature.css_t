@@ -548,9 +548,9 @@ div.body h3 {
     padding: 5px;
     border-radius: 10px;
 }
-div.body h4 { 
-    font-size: 110%; 
-    background-color: #F4F4F4; 
+div.body h4 {
+    font-size: 110%;
+    background-color: #F4F4F4;
     padding: 5px;
     border-radius: 10px;
 }
@@ -1115,12 +1115,23 @@ p.citing {
     background-color: #fff;
 }
 
-dl.field-list > dt { 
+dl.field-list > dt {
     flex-basis: 12%;
 }
 
 dl.field-list > dd {
     flex-basis: 88%;
+}
+
+@media screen and (max-width: 780px) {
+
+    dl.field-list > dt {
+        flex-basis: 100%;
+    }
+
+    dl.field-list > dd {
+        flex-basis: 100%;
+    }
 }
 
 .field-odd, .field-even {
