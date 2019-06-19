@@ -250,10 +250,9 @@ def get_scorer(scoring):
         try:
             scorer = SCORERS[scoring]
         except KeyError:
-            scorers = [scorer for scorer in SCORERS
-                       if SCORERS[scorer]._deprecation_msg is None]
             raise ValueError('%r is not a valid scoring value. '
-                             'Valid options are %s ' % (scoring, scorers))
+                             'Use sorted(sklearn.metrics.valid_scorers()) '
+                             'to get valid options.' % scoring)
     else:
         scorer = scoring
     return scorer
@@ -485,6 +484,18 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
     else:
         cls = _PredictScorer
     return cls(score_func, sign, kwargs)
+
+
+def valid_scorers():
+    """Creates a list of non-deprecated scorers
+
+        Returns
+        -------
+        valid_scorers : list
+            List of scorers that are not deprecated
+    """
+    return [scorer for scorer in SCORERS
+            if SCORERS[scorer]._deprecation_msg is None]
 
 
 # Standard regression scores
