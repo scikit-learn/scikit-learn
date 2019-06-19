@@ -15,8 +15,8 @@ from ..base import MetaEstimatorMixin
 
 from .base import _parallel_fit_estimator
 
-from sklearn.linear_model import LogisticRegression
-from sklearn.linear_model import LinearRegression
+from ..linear_model import LogisticRegression
+from ..linear_model import LinearRegression
 
 from ..model_selection import cross_val_predict
 from ..model_selection import check_cv
@@ -77,13 +77,14 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
                                  'the method {}.'.format(name, method))
             return method
 
-    def _concatenate_predictions(self, X, y_pred):
+    def _concatenate_predictions(self, X, predictions):
         if self.passthrough:
             return np.concatenate([X] + [pred.reshape(-1, 1) if pred.ndim == 1
-                                         else pred for pred in y_pred], axis=1)
+                                         else pred for pred in predictions],
+                                  axis=1)
         else:
             return np.concatenate([pred.reshape(-1, 1) if pred.ndim == 1
-                                   else pred for pred in y_pred], axis=1)
+                                   else pred for pred in predictions], axis=1)
 
     def set_params(self, **params):
         """ Setting the parameters for the stacking estimator.
@@ -160,10 +161,12 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
         names, estimators_ = zip(*self.estimators)
         self._validate_names(names)
 
-        n_isnone = np.sum(
-            [est in (None, 'drop') for est in estimators_]
-        )
-        if n_isnone == len(self.estimators):
+        has_estimator = False
+        for est in estimators_:
+            if est not in (None, 'drop'):
+                has_estimator = True
+
+        if not has_estimator:
             raise ValueError(
                 "All estimators are None or 'drop'. At least one is required "
                 "to be an estimator."
@@ -220,8 +223,10 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
 
         # Only not None or not 'drop' estimators will be used in transform.
         # Remove the None from the method as well.
-        self.predict_method_ = [meth for meth in self.predict_method_
-                                if meth is not None]
+        self.predict_method_ = [
+            meth for (meth, est) in zip(self.predict_method_, estimators_)
+            if est not in (None, 'drop')
+        ]
 
         X_meta = self._concatenate_predictions(X, X_meta)
         self.final_estimator_.fit(X_meta, y)
@@ -261,8 +266,8 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
 
         **predict_params : dict of string -> object
             Parameters to the `predict` called by the `final_estimator`. Note
-            that while this may be used to return uncertainties from some
-            models with `return_std` or `return_cov`.
+            that this may be used to return uncertainties from some estimators
+            with `return_std` or `return_cov`.
 
         Returns
         -------
@@ -281,8 +286,12 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
 
     Stacked generalization consists in stacking the output of individual
     estimator and use a classifier to compute the final prediction. Stacking
-    allows to combine the strength of each individual estimator. It should be
-    noted that the final estimator is trained through cross-validation.
+    allows to use the strength of each individual estimator by using their
+    output as input of a final estimator.
+
+    Note that `estimators` are fitted on the full `X` while `final_estimator`
+    is trained using cross-validated predictions of the base estimators using
+    `cross_val_predict`).
 
     .. versionadded:: 0.22
 
@@ -294,26 +303,27 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
         Base estimators which will be stacked together. An estimator can be set
         to None or 'drop' using `set_params`.
 
-    final_estimator : estimator object
+    final_estimator : estimator object, default=None
         A classifier which will be used to combine the base estimators.
+        The default classifier is a `LogisticRegression`.
 
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy. Possible inputs for
         cv are:
 
-        * None, to use the default 3-fold cross validation,
+        * None, to use the default 5-fold cross validation,
         * integer, to specify the number of folds in a (Stratified) KFold,
         * An object to be used as a cross-validation generator,
         * An iterable yielding train, test splits.
 
         For integer/None inputs, if the estimator is a classifier and y is
-        either binary or multiclass, StratifiedKFold is used. In all other
-        cases, KFold is used.
+        either binary or multiclass, `StratifiedKFold` is used. In all other
+        cases, `KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-    predict_method : list of string or 'auto', optional
+    predict_method : list of string or 'auto', default='auto'
         Methods called for each base estimator. It can be:
 
         * if a list of string in which each string is associated to the
@@ -321,14 +331,15 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
         * if 'auto', it will try to invoke, for each estimator,
           `predict_proba`, `decision_function` or `predict` in that order.
 
-    passthrough : bool, optional
+    passthrough : bool, default=False
         Whether or not to concatenate the original data `X` with the output
         of `estimators` to feed the `final_estimator`. The default is
         False.
 
-    n_jobs : int, optional (default=1)
-        The number of jobs to `fit` the `estimators` in parallel. If
-        -1, then the number of jobs is set to the number of cores.
+    n_jobs : int, default=None
+        The number of jobs to run in parallel for both `fit` the `estimators`.
+        `None` means 1 unless in a `joblib.parallel_backend` context. -1 means
+        using all processors. See Glossary for more details.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -355,7 +366,6 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
     Examples
     --------
     >>> from sklearn.datasets import load_iris
-    >>> X, y = load_iris(return_X_y=True)
     >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.svm import LinearSVC
     >>> from sklearn.ensemble import RandomForestClassifier
@@ -373,14 +383,14 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
     ... )
     >>> from sklearn.model_selection import train_test_split
     >>> X_train, X_test, y_train, y_test = train_test_split(
-    ... X, y, stratify=y, random_state=42
+    ... *load_iris(return_X_y=True), stratify=y, random_state=42
     ... )
-    >>> clf.fit(X_train, y_train).score(X_test, y_test) # doctest: +ELLIPSIS
+    >>> clf.fit(X_train, y_train).score(X_test, y_test)
     0...
 
     """
     def __init__(self, estimators, final_estimator=None, cv=None,
-                 predict_method='auto', passthrough=False, n_jobs=1,
+                 predict_method='auto', passthrough=False, n_jobs=None,
                  random_state=None, verbose=0):
         super().__init__(
             estimators=estimators,
@@ -399,7 +409,7 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
         )
         if not is_classifier(self.final_estimator_):
             raise AttributeError(
-                "'final_estimator' attribute should be a classifier. Got {!r}"
+                "'final_estimator' parameter should be a classifier. Got {}"
                 .format(self.final_estimator_)
             )
 
@@ -416,7 +426,7 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
         Returns
         -------
         probabilities : ndarray, shape (n_samples, n_classes) or \
-list of arrays n_output
+            list of arrays n_output
             The class probabilities of the input samples.
         """
         check_is_fitted(self, ['estimators_', 'final_estimator_'])
@@ -428,8 +438,12 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
 
     Stacked generalization consists in stacking the output of individual
     estimator and use a regressor to compute the final prediction. Stacking
-    allows to combine the strength of each individual estimator. It should be
-    noted that the final estimator is trained through cross-validation.
+    allows to use the strength of each individual estimator by using their
+    output as input of a final estimator.
+
+    Note that `estimators` are fitted on the full `X` while `final_estimator`
+    is trained using cross-validated predictions of the base estimators using
+    `cross_val_predict`).
 
     .. versionadded:: 0.22
 
@@ -441,26 +455,30 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
         Base estimators which will be stacked together. An estimator can be set
         to None or 'drop' using `set_params`.
 
-    final_estimator : estimator object
+    final_estimator : estimator object, default=None
         A regressor which will be used to combine the base estimators.
+        The default regressor is a `LinearRegressor`.
 
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy. Possible inputs for
         cv are:
 
-        * None, to use the default 3-fold cross validation,
+        * None, to use the default 5-fold cross validation,
         * integer, to specify the number of folds in a (Stratified) KFold,
         * An object to be used as a cross-validation generator,
         * An iterable yielding train, test splits.
 
         For integer/None inputs, if the estimator is a classifier and y is
-        either binary or multiclass, StratifiedKFold is used. In all other
-        cases, KFold is used.
+        either binary or multiclass, `StratifiedKFold` is used. In all other
+        cases, `KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-    predict_method : list of string or 'auto', optional
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
+
+    predict_method : list of string or 'auto', default='auto'
         Methods called for each base estimator. It can be:
 
         * if a list of string in which each string is associated to the
@@ -468,14 +486,15 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
         * if 'auto', it will try to invoke, for each estimator,
           `predict_proba`, `decision_function` or `predict` in that order.
 
-    passthrough : bool, optional
+    passthrough : bool, default=False
         Whether or not to concatenate the original data `X` with the output
         of `estimators` to feed the `final_estimator`. The default is
         False.
 
-    n_jobs : int, optional (default=1)
-        The number of jobs to `fit` the `estimators` in parallel. If
-        -1, then the number of jobs is set to the number of cores.
+    n_jobs : int, default=None
+        The number of jobs to run in parallel for both `fit` the `estimators`.
+        `None` means 1 unless in a `joblib.parallel_backend` context. -1 means
+        using all processors. See Glossary for more details.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -502,7 +521,6 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
     Examples
     --------
     >>> from sklearn.datasets import load_diabetes
-    >>> X, y = load_diabetes(return_X_y=True)
     >>> from sklearn.linear_model import LinearRegression
     >>> from sklearn.svm import LinearSVR
     >>> from sklearn.ensemble import RandomForestRegressor
@@ -519,14 +537,14 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
     ... )
     >>> from sklearn.model_selection import train_test_split
     >>> X_train, X_test, y_train, y_test = train_test_split(
-    ... X, y, random_state=42
+    ... *load_diabetes(return_X_y=True), random_state=42
     ... )
-    >>> reg.fit(X_train, y_train).score(X_test, y_test) # doctest: +ELLIPSIS
+    >>> reg.fit(X_train, y_train).score(X_test, y_test)
     0...
 
     """
     def __init__(self, estimators, final_estimator=None, cv=None,
-                 predict_method='auto', passthrough=False, n_jobs=1,
+                 predict_method='auto', passthrough=False, n_jobs=None,
                  random_state=None, verbose=0):
         super().__init__(
             estimators=estimators,
@@ -545,6 +563,6 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
         )
         if not is_regressor(self.final_estimator_):
             raise AttributeError(
-                "'final_estimator' attribute should be a regressor. Got {!r}"
+                "'final_estimator' parameter should be a regressor. Got {}"
                 .format(self.final_estimator_)
             )

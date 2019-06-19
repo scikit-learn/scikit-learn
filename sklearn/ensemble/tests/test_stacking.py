@@ -28,7 +28,6 @@ from sklearn.ensemble import StackingRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import KFold
-from sklearn.model_selection import LeaveOneOut
 
 from sklearn.utils.testing import assert_allclose
 
@@ -37,21 +36,18 @@ X_iris, y_iris = load_iris(return_X_y=True)
 
 
 @pytest.mark.parametrize(
-    "cv",
-    [3,
-     StratifiedKFold(n_splits=3, shuffle=True, random_state=42),
-     LeaveOneOut()]
+    "cv", [3, StratifiedKFold(n_splits=3, shuffle=True, random_state=42)]
 )
 @pytest.mark.parametrize(
     "final_estimator", [None, RandomForestClassifier(random_state=42)]
 )
 @pytest.mark.parametrize(
-    "passthrough, X_trans_shape",
-    [(False, 6),
-     (True, 10)]
+    "passthrough, X_trans_shape, X_trans_lr_out_shape",
+    [(False, 6, 3),  # 2/1 estimators * 3 classes
+     (True, 10, 7)]  # + 4 original features from iris
 )
 def test_stacking_classifier_iris(cv, final_estimator, passthrough,
-                                  X_trans_shape):
+                                  X_trans_shape, X_trans_lr_out_shape):
     X_train, X_test, y_train, y_test = train_test_split(
         X_iris, y_iris, stratify=y_iris, random_state=42
     )
@@ -71,6 +67,9 @@ def test_stacking_classifier_iris(cv, final_estimator, passthrough,
     clf.fit(X_train, y_train)
     clf.predict(X_test)
     clf.predict_proba(X_test)
+
+    X_trans = clf.transform(X_test)
+    assert X_trans.shape[1] == X_trans_lr_out_shape
 
 
 @pytest.mark.parametrize(
@@ -95,6 +94,7 @@ def test_stacking_classifier_drop_estimator(estimators):
     clf_drop.fit(X_train, y_train)
     assert_allclose(clf.predict(X_test), clf_drop.predict(X_test))
     assert_allclose(clf.predict_proba(X_test), clf_drop.predict_proba(X_test))
+    assert_allclose(clf.transform(X_test), clf_drop.transform(X_test))
 
 
 @pytest.mark.parametrize(
@@ -118,13 +118,11 @@ def test_stacking_regressor_drop_estimator(estimators):
     reg.fit(X_train, y_train)
     reg_drop.fit(X_train, y_train)
     assert_allclose(reg.predict(X_test), reg_drop.predict(X_test))
+    assert_allclose(reg.transform(X_test), reg_drop.transform(X_test))
 
 
 @pytest.mark.parametrize(
-    "cv",
-    [3,
-     KFold(n_splits=3, shuffle=True, random_state=42),
-     LeaveOneOut()]
+    "cv", [3, KFold(n_splits=3, shuffle=True, random_state=42)]
 )
 @pytest.mark.parametrize(
     "final_estimator, predict_params",
@@ -133,12 +131,13 @@ def test_stacking_regressor_drop_estimator(estimators):
      (DummyRegressor(), {'return_std': True})]
 )
 @pytest.mark.parametrize(
-    "passthrough, X_trans_shape",
-    [(False, 2),
-     (True, 12)]
+    "passthrough, X_trans_shape, X_trans_lr_out_shape",
+    [(False, 2, 1),
+     (True, 12, 11)]
 )
 def test_stacking_regressor_diabetes(cv, final_estimator, predict_params,
-                                     passthrough, X_trans_shape):
+                                     passthrough, X_trans_shape,
+                                     X_trans_lr_out_shape):
     X_train, X_test, y_train, y_test = train_test_split(
         X_diabetes, y_diabetes, random_state=42
     )
@@ -147,8 +146,10 @@ def test_stacking_regressor_diabetes(cv, final_estimator, predict_params,
                             final_estimator=final_estimator,
                             cv=cv, passthrough=passthrough, random_state=42)
     reg.fit(X_train, y_train)
-    reg.predict(X_test, **predict_params)
-    assert reg.score(X_test, y_test) < 0.6
+    result = reg.predict(X_test, **predict_params)
+    expected_result_length = 2 if predict_params else 1
+    if predict_params:
+        assert len(result) == expected_result_length
 
     X_trans = reg.transform(X_test)
     assert X_trans.shape[1] == X_trans_shape
@@ -156,6 +157,9 @@ def test_stacking_regressor_diabetes(cv, final_estimator, predict_params,
     reg.set_params(lr=None)
     reg.fit(X_train, y_train)
     reg.predict(X_test)
+
+    X_trans = reg.transform(X_test)
+    assert X_trans.shape[1] == X_trans_lr_out_shape
 
 
 class NoWeightRegressor(BaseEstimator, RegressorMixin):
@@ -178,109 +182,99 @@ class NoWeightClassifier(BaseEstimator, ClassifierMixin):
 
 
 @pytest.mark.parametrize(
-    "X, y, params, type_err, msg_err",
-    [(X_iris, y_iris,
-      {'estimators': None, 'final_estimator': RandomForestClassifier(),
-       'predict_method': 'auto'},
+    "y, params, type_err, msg_err",
+    [(y_iris,
+      {'estimators': None},
       AttributeError, "Invalid 'estimators' attribute,"),
-     (X_iris, y_iris,
+     (y_iris,
+      {'estimators': []},
+      AttributeError, "Invalid 'estimators' attribute,"),
+     (y_iris,
       {'estimators': [('lr', LogisticRegression()), ('svm', LinearSVC())],
-       'final_estimator': RandomForestClassifier(), 'passthrough': 'random'},
+       'passthrough': 'random'},
       AttributeError, "Invalid 'passthrough' attribute,"),
-     (X_iris, y_iris,
+     (y_iris,
       {'estimators': [('lr', LogisticRegression()), ('svm', LinearSVC())],
-       'final_estimator': RandomForestClassifier(),
        'predict_method': 'random'},
       AttributeError, "When 'predict_method' is a string"),
-     (X_iris, y_iris,
+     (y_iris,
       {'estimators': [('lr', LogisticRegression()), ('svm', LinearSVC())],
-       'final_estimator': RandomForestClassifier(),
        'predict_method': ['predict']},
       AttributeError, "When 'predict_method' is a list"),
-     (X_iris, y_iris,
+     (y_iris,
       {'estimators': [('lr', LinearRegression()), ('svm', LinearSVR())],
-       'final_estimator': None,
        'predict_method': ['predict', 'predict_proba']},
       ValueError, 'does not implement the method'),
-     (X_iris, y_iris,
+     (y_iris,
       {'estimators': [('lr', LogisticRegression()),
-                      ('cor', NoWeightClassifier())],
-       'final_estimator': None, 'predict_method': 'auto'},
+                      ('cor', NoWeightClassifier())]},
       ValueError, 'does not support sample weight'),
-     (X_iris, y_iris,
-      {'estimators': [('lr', None), ('svm', None)],
-       'final_estimator': None, 'predict_method': 'auto'},
+     (y_iris,
+      {'estimators': [('lr', None), ('svm', None)]},
       ValueError, 'All estimators are None'),
-     (X_iris, y_iris,
-      {'estimators': [('lr', 'drop'), ('svm', None)],
-       'final_estimator': None, 'predict_method': 'auto'},
+     (y_iris,
+      {'estimators': [('lr', 'drop'), ('svm', None)]},
       ValueError, 'All estimators are None'),
-     (X_iris, y_iris,
-      {'estimators': [('lr', 'drop'), ('svm', 'drop')],
-       'final_estimator': None, 'predict_method': 'auto'},
+     (y_iris,
+      {'estimators': [('lr', 'drop'), ('svm', 'drop')]},
       ValueError, 'All estimators are None'),
-     (X_iris, y_iris,
+     (y_iris,
       {'estimators': [('lr', LogisticRegression()), ('svm', LinearSVC())],
-       'final_estimator': RandomForestRegressor(), 'predict_method': 'auto'},
-      AttributeError, 'attribute should be a classifier.')]
+       'final_estimator': RandomForestRegressor()},
+      AttributeError, 'parameter should be a classifier.')]
 )
-def test_stacking_classifier_error(X, y, params, type_err, msg_err):
+def test_stacking_classifier_error(y, params, type_err, msg_err):
     with pytest.raises(type_err, match=msg_err):
         clf = StackingClassifier(**params, cv=3)
-        clf.fit(X, y, sample_weight=np.ones(X.shape[0]))
+        clf.fit(X_iris, y, sample_weight=np.ones(X_iris.shape[0]))
 
 
 @pytest.mark.parametrize(
-    "X, y, params, type_err, msg_err",
-    [(X_diabetes, y_diabetes,
-      {'estimators': None, 'final_estimator': RandomForestRegressor(),
-       'predict_method': 'auto'},
+    "y, params, type_err, msg_err",
+    [(y_diabetes,
+      {'estimators': None},
       AttributeError, "Invalid 'estimators' attribute,"),
-     (X_diabetes, y_diabetes,
+     (y_diabetes,
+      {'estimators': []},
+      AttributeError, "Invalid 'estimators' attribute,"),
+     (y_diabetes,
       {'estimators': [('lr', LogisticRegression()), ('svm', LinearSVR())],
-       'final_estimator': RandomForestRegressor(), 'passthrough': 'random'},
+       'passthrough': 'random'},
       AttributeError, "Invalid 'passthrough' attribute,"),
-     (X_diabetes, y_diabetes,
+     (y_diabetes,
       {'estimators': [('lr', LinearRegression()), ('svm', LinearSVR())],
-       'final_estimator': RandomForestRegressor(),
        'predict_method': 'random'},
       AttributeError, "When 'predict_method' is a string"),
-     (X_diabetes, y_diabetes,
+     (y_diabetes,
       {'estimators': [('lr', LogisticRegression()), ('svm', LinearSVR())],
-       'final_estimator': RandomForestRegressor(),
        'predict_method': ['predict']},
       AttributeError, "When 'predict_method' is a list"),
-     (X_diabetes, y_diabetes,
+     (y_diabetes,
       {'estimators': [('lr', LogisticRegression()), ('svm', LinearSVR())],
-       'final_estimator': None,
        'predict_method': ['predict', 'predict_proba']},
       ValueError, 'does not implement the method'),
-     (X_diabetes, y_diabetes,
+     (y_diabetes,
       {'estimators': [('lr', LinearRegression()),
-                      ('cor', NoWeightRegressor())],
-       'final_estimator': None, 'predict_method': 'auto'},
+                      ('cor', NoWeightRegressor())]},
       ValueError, 'does not support sample weight'),
-     (X_diabetes, y_diabetes,
-      {'estimators': [('lr', None), ('svm', None)],
-       'final_estimator': None, 'predict_method': 'auto'},
+     (y_diabetes,
+      {'estimators': [('lr', None), ('svm', None)]},
       ValueError, 'All estimators are None'),
-     (X_diabetes, y_diabetes,
-      {'estimators': [('lr', 'drop'), ('svm', None)],
-       'final_estimator': None, 'predict_method': 'auto'},
+     (y_diabetes,
+      {'estimators': [('lr', 'drop'), ('svm', None)]},
       ValueError, 'All estimators are None'),
-     (X_diabetes, y_diabetes,
-      {'estimators': [('lr', 'drop'), ('svm', 'drop')],
-       'final_estimator': None, 'predict_method': 'auto'},
+     (y_diabetes,
+      {'estimators': [('lr', 'drop'), ('svm', 'drop')]},
       ValueError, 'All estimators are None'),
-     (X_diabetes, y_diabetes,
+     (y_diabetes,
       {'estimators': [('lr', LinearRegression()), ('svm', LinearSVR())],
-       'final_estimator': RandomForestClassifier(), 'predict_method': 'auto'},
-      AttributeError, 'attribute should be a regressor.')]
+       'final_estimator': RandomForestClassifier()},
+      AttributeError, 'parameter should be a regressor.')]
 )
-def test_stacking_regressor_error(X, y, params, type_err, msg_err):
+def test_stacking_regressor_error(y, params, type_err, msg_err):
     with pytest.raises(type_err, match=msg_err):
         reg = StackingRegressor(**params, cv=3)
-        reg.fit(X, y, sample_weight=np.ones(X.shape[0]))
+        reg.fit(X_diabetes, y, sample_weight=np.ones(X_diabetes.shape[0]))
 
 
 @pytest.mark.parametrize(

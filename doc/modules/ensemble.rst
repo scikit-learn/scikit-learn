@@ -1073,7 +1073,7 @@ to be called on the training data::
   >>> from sklearn.model_selection import train_test_split
   >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
   ...                                                     random_state=42)
-  >>> reg.fit(X_train, y_train)  # doctest: +ELLIPSIS
+  >>> reg.fit(X_train, y_train)
   StackingRegressor(...)
 
 During training, the `estimators` are fitted on the whole training data
@@ -1099,7 +1099,7 @@ have a `predict_proba` method. They can be used as any other estimator, e.g.::
 Note that it is also possible to get the output of the stacked outputs of the
 `estimators` using the `transform` method::
 
-  >>> reg.transform(X_test[:5])  # doctest: +ELLIPSIS
+  >>> reg.transform(X_test[:5])
   array([[28.78..., 28.43...  , 22.62...],
          [35.96..., 32.58..., 23.68...],
          [14.97..., 14.05..., 16.45...],
