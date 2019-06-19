@@ -839,7 +839,7 @@ def test_nan_euclidean_distances_complete_nan(missing_value, to_matrix):
 
 @pytest.mark.parametrize("missing_value", [np.nan, -1])
 @pytest.mark.parametrize('to_matrix', [np.asarray, csr_matrix, csc_matrix])
-def test_nan_euclidean_distances(missing_value, to_matrix):
+def test_nan_euclidean_distances_not_trival(missing_value, to_matrix):
     X = np.array([[1., missing_value, 3., 4., 2.],
                   [missing_value, 4., 6., 1., missing_value],
                   [3., missing_value, missing_value, missing_value, 1.]])

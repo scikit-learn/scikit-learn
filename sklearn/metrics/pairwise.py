@@ -16,7 +16,6 @@ import warnings
 import numpy as np
 from scipy.spatial import distance
 from scipy.sparse import csr_matrix
-from scipy.sparse import csc_matrix
 from scipy.sparse import issparse
 
 from ..utils.validation import _num_samples
@@ -385,7 +384,7 @@ def nan_euclidean_distances(X, Y=None, squared=False,
     """
 
     force_all_finite = 'allow-nan' if is_scalar_nan(missing_values) else True
-    X, Y = check_pairwise_arrays(X, Y, accept_sparse='csr',
+    X, Y = check_pairwise_arrays(X, Y,
                                  force_all_finite=force_all_finite, copy=copy)
     # Get missing mask for X
     if issparse(X):
@@ -395,43 +394,33 @@ def nan_euclidean_distances(X, Y=None, squared=False,
     else:
         missing_X = _get_missing_mask(X, missing_values)
 
-    # Get missing mask for Y.T
-    YT = Y.T
+    # Get missing mask for Y
     if Y is X:
-        missing_YT = missing_X.T
+        missing_Y = missing_X
     else:
-        # YT is always csc
-        if issparse(YT):
-            missing_YT = csc_matrix((
-                _get_missing_mask(YT.data, missing_values),
-                YT.indices, YT.indptr),
-                shape=YT.shape, dtype=np.bool).toarray()
+        if issparse(Y):
+            missing_Y = csr_matrix((
+                _get_missing_mask(Y.data, missing_values),
+                Y.indices, Y.indptr),
+                shape=Y.shape, dtype=np.bool).toarray()
         else:
-            missing_YT = _get_missing_mask(YT, missing_values)
-
-    # Convert to float32 to be used for calculate distances
-    not_missing_X = (~missing_X).astype(np.float32)
-    not_missing_YT = (~missing_YT).astype(np.float32)
+            missing_Y = _get_missing_mask(Y, missing_values)
 
     # set missing values to zero
     X[missing_X] = 0
-    YT[missing_YT] = 0
+    Y[missing_Y] = 0
 
     # elementwise multiplication
     XX = X.multiply(X) if issparse(X) else X * X
-    YTYT = YT.multiply(YT) if issparse(YT) else YT * YT
+    YY = Y.multiply(Y) if issparse(Y) else Y * Y
 
-    # Calculate distances
-    distances = safe_sparse_dot(X, YT, dense_output=True)
-    distances *= -2
-    distances += safe_sparse_dot(XX, not_missing_YT, dense_output=False)
-    distances += safe_sparse_dot(not_missing_X, YTYT, dense_output=False)
+    distances = euclidean_distances(X, Y, squared=True)
+    distances -= safe_sparse_dot(XX, missing_Y.T, dense_output=False)
+    distances -= safe_sparse_dot(missing_X, YY.T, dense_output=False)
 
-    non_missing_cnt = np.dot(not_missing_X, not_missing_YT)
-    non_missing_mask = (non_missing_cnt != 0.0)
-
-    distances[non_missing_mask] *= (
-        X.shape[1] / non_missing_cnt[non_missing_mask])
+    present_coords_cnt = np.dot(1 - missing_X, 1 - missing_Y.T)
+    present_mask = (present_coords_cnt != 0)
+    distances[present_mask] *= (X.shape[1] / present_coords_cnt[present_mask])
 
     if X is Y:
         # Ensure that distances between vectors and themselves are set to 0.0.
@@ -442,8 +431,7 @@ def nan_euclidean_distances(X, Y=None, squared=False,
         np.sqrt(distances, out=distances)
 
     # coordinates with no common coordinates have a nan distance
-    distances[~non_missing_mask] = np.nan
-
+    distances[~present_mask] = np.nan
     return distances
 
 
