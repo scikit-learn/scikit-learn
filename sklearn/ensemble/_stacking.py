@@ -7,6 +7,7 @@ from abc import ABCMeta, abstractmethod
 from copy import deepcopy
 
 import numpy as np
+from joblib import Parallel, delayed
 
 from ..base import clone
 from ..base import ClassifierMixin, RegressorMixin, TransformerMixin
@@ -22,7 +23,7 @@ from ..model_selection import cross_val_predict
 from ..model_selection import check_cv
 
 from ..utils import check_random_state
-from ..utils._joblib import Parallel, delayed
+from ..utils import Bunch
 from ..utils.metaestimators import _BaseComposition
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.validation import check_is_fitted
@@ -55,10 +56,6 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
             self.final_estimator_ = clone(self.final_estimator)
         else:
             self.final_estimator_ = clone(default)
-
-    @property
-    def named_estimators(self):
-        return dict(self.estimators)
 
     @staticmethod
     def _method_name(name, estimator, method):
@@ -201,6 +198,10 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
             delayed(_parallel_fit_estimator)(clone(est), X, y, sample_weight)
             for est in estimators_ if est not in (None, 'drop')
         )
+
+        self.named_estimators_ = Bunch()
+        for k, e in zip(self.estimators, self.estimators_):
+            self.named_estimators_[k[0]] = e
 
         # To train the meta-classifier using the most data as possible, we use
         # a cross-validation to obtain the output of the stacked estimators.
@@ -352,6 +353,9 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
     estimators_ : list of estimator object
         The base estimators fitted.
 
+    named_estimators_ : Bunch object, a dictionary with attribute access
+        Attribute to access any fitted sub-estimators by name.
+
     final_estimator_ : estimator object
         The classifier to stacked the base estimators fitted.
 
@@ -383,7 +387,7 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
     ... )
     >>> from sklearn.model_selection import train_test_split
     >>> X_train, X_test, y_train, y_test = train_test_split(
-    ... *load_iris(return_X_y=True), stratify=y, random_state=42
+    ... *load_iris(return_X_y=True), random_state=42
     ... )
     >>> clf.fit(X_train, y_train).score(X_test, y_test)
     0...
@@ -506,6 +510,9 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
     ----------
     estimators_ : list of estimator object
         The base estimators fitted.
+
+    named_estimators_ : Bunch object, a dictionary with attribute access
+        Attribute to access any fitted sub-estimators by name.
 
     final_estimator_ : estimator object
         The regressor to stacked the base estimators fitted.

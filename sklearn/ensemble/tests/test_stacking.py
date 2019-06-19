@@ -285,7 +285,8 @@ def test_stacking_regressor_error(y, params, type_err, msg_err):
                                    ('svm', LinearSVR())])]
 )
 def test_stacking_named_estimators(stacking_estimator):
-    estimators = stacking_estimator.named_estimators
+    stacking_estimator.fit(X_iris, y_iris)
+    estimators = stacking_estimator.named_estimators_
     assert len(estimators) == 2
     assert sorted(list(estimators.keys())) == sorted(['lr', 'svm'])
 
