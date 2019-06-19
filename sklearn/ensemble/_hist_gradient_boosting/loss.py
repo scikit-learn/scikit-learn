@@ -162,7 +162,15 @@ class LeastAbsoluteDeviation(BaseLoss):
     """
 
     hessians_are_constant = True
-    need_update_leaves_values = True  # see note in BaseLoss
+    # This variable indicates whether the loss requires the leaves values to
+    # be updated once the tree has been trained. The trees are trained to
+    # predict a Newton-Raphson step (see grower._finalize_leaf()). But for
+    # some losses (e.g. least absolute deviation) we need to adjust the tree
+    # values to account for the "line search" of the gradient descent
+    # procedure. See the original paper Greedy Function Approximation: A
+    # Gradient Boosting Machine by Friedman
+    # (https://statweb.stanford.edu/~jhf/ftp/trebst.pdf) for the theory.
+    need_update_leaves_values = True
 
     def __call__(self, y_true, raw_predictions, average=True):
         # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to

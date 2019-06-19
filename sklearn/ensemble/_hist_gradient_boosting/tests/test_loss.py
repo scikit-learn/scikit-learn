@@ -147,6 +147,8 @@ def test_baseline_least_squares():
     assert baseline_prediction.dtype == y_train.dtype
     # Make sure baseline prediction is the mean of all targets
     assert_almost_equal(baseline_prediction, y_train.mean())
+    assert np.allclose(loss.inverse_link_function(baseline_prediction),
+                       baseline_prediction)
 
 
 def test_baseline_least_absolute_deviation():
@@ -159,6 +161,8 @@ def test_baseline_least_absolute_deviation():
     assert baseline_prediction.dtype == y_train.dtype
     # Make sure baseline prediction is the median of all targets
     assert_almost_equal(baseline_prediction, np.median(y_train))
+    assert np.allclose(loss.inverse_link_function(baseline_prediction),
+                       baseline_prediction)
 
 
 def test_baseline_binary_crossentropy():
