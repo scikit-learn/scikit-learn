@@ -851,20 +851,22 @@ def test_logistic_regression_sample_weights():
     # Test the above for l1 penalty and l2 penalty with dual=True.
     # since the patched liblinear code is different.
     clf_cw = LogisticRegression(
-        solver="liblinear", class_weight={0: 1, 1: 2},
-        penalty="l1", tol=1e-5, **kw)
+        solver="liblinear", fit_intercept=False, class_weight={0: 1, 1: 2},
+        penalty="l1", tol=1e-5, random_state=42, multi_class='ovr')
     clf_cw.fit(X, y)
     clf_sw = LogisticRegression(
-        solver="liblinear", penalty="l1", tol=1e-5, **kw)
+        solver="liblinear", fit_intercept=False, penalty="l1", tol=1e-5,
+        random_state=42, multi_class='ovr')
     clf_sw.fit(X, y, sample_weight)
     assert_array_almost_equal(clf_cw.coef_, clf_sw.coef_, decimal=4)
 
     clf_cw = LogisticRegression(
-        solver="liblinear", class_weight={0: 1, 1: 2},
-        penalty="l2", dual=True, **kw)
+        solver="liblinear", fit_intercept=False, class_weight={0: 1, 1: 2},
+        penalty="l2", dual=True, random_state=42, multi_class='ovr')
     clf_cw.fit(X, y)
     clf_sw = LogisticRegression(
-        solver="liblinear", penalty="l2", dual=True, **kw)
+        solver="liblinear", fit_intercept=False, penalty="l2", dual=True,
+        random_state=42, multi_class='ovr')
     clf_sw.fit(X, y, sample_weight)
     assert_array_almost_equal(clf_cw.coef_, clf_sw.coef_, decimal=4)
 
