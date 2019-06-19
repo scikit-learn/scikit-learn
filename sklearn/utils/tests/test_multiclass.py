@@ -2,7 +2,7 @@
 import numpy as np
 import scipy.sparse as sp
 from itertools import product
-
+import pytest
 
 from scipy.sparse import issparse
 from scipy.sparse import csc_matrix
@@ -294,14 +294,15 @@ def test_type_of_target():
                ' use a binary array or sparse matrix instead.')
         assert_raises_regex(ValueError, msg, type_of_target, example)
 
-    try:
-        from pandas import SparseSeries
-    except ImportError:
-        raise SkipTest("Pandas not found")
 
-    y = SparseSeries([1, 0, 0, 1, 0])
-    msg = "y cannot be class 'SparseSeries'."
-    assert_raises_regex(ValueError, msg, type_of_target, y)
+def test_type_of_target_pandas_sparse(monkeypatch):
+    pd = pytest.importorskip("pandas")
+    monkeypatch.setattr(pd, "__version__", "0.23")
+
+    y = pd.SparseArray([1, 0, 0, 1, 0])
+    msg = "y cannot be class 'SparseSeries' or 'SparseArray'"
+    with pytest.raises(ValueError, match=msg):
+        type_of_target(y)
 
 
 def test_class_distribution():

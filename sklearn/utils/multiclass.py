@@ -8,6 +8,8 @@ Multi-class / multi-label utility function
 """
 from collections.abc import Sequence
 from itertools import chain
+from contextlib import suppress
+from distutils.version import LooseVersion
 
 from scipy.sparse import issparse
 from scipy.sparse.base import spmatrix
@@ -240,9 +242,15 @@ def type_of_target(y):
         raise ValueError('Expected array-like (array or non-string sequence), '
                          'got %r' % y)
 
-    sparseseries = (y.__class__.__name__ == 'SparseSeries')
-    if sparseseries:
-        raise ValueError("y cannot be class 'SparseSeries'.")
+    sparse_pandas = (y.__class__.__name__ in ['SparseSeries', 'SparseArray'])
+    if sparse_pandas:
+        with suppress(ImportError):
+            import pandas as pd
+            if LooseVersion(pd.__version__) < LooseVersion("0.24"):
+                raise ValueError("y cannot be class 'SparseSeries' or "
+                                 "'SparseArray', please update to "
+                                 "pandas >= 0.24 to use sparse pandas "
+                                 "arrays")
 
     if is_multilabel(y):
         return 'multilabel-indicator'
