@@ -3,12 +3,12 @@ import sys
 
 import numpy as np
 import scipy.sparse as sp
+import joblib
 
 from io import StringIO
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils import deprecated
-from sklearn.utils import _joblib
 from sklearn.utils.testing import (assert_raises_regex,
                                    assert_equal, ignore_warnings,
                                    assert_warns, assert_raises)
@@ -439,9 +439,9 @@ def test_check_estimator_clones():
             set_checking_parameters(est)
             set_random_state(est)
             # without fitting
-            old_hash = _joblib.hash(est)
+            old_hash = joblib.hash(est)
             check_estimator(est)
-        assert_equal(old_hash, _joblib.hash(est))
+        assert_equal(old_hash, joblib.hash(est))
 
         with ignore_warnings(category=(FutureWarning, DeprecationWarning)):
             # when 'est = SGDClassifier()'
@@ -450,9 +450,9 @@ def test_check_estimator_clones():
             set_random_state(est)
             # with fitting
             est.fit(iris.data + 10, iris.target)
-            old_hash = _joblib.hash(est)
+            old_hash = joblib.hash(est)
             check_estimator(est)
-        assert_equal(old_hash, _joblib.hash(est))
+        assert_equal(old_hash, joblib.hash(est))
 
 
 def test_check_estimators_unfitted():

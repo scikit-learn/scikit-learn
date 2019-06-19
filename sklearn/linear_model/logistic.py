@@ -16,6 +16,7 @@ import warnings
 import numpy as np
 from scipy import optimize, sparse
 from scipy.special import expit
+from joblib import Parallel, delayed, effective_n_jobs
 
 from .base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from .sag import sag_solver
@@ -33,7 +34,6 @@ from ..utils.validation import check_is_fitted
 from ..utils import deprecated
 from ..exceptions import (ConvergenceWarning, ChangedBehaviorWarning)
 from ..utils.multiclass import check_classification_targets
-from ..utils._joblib import Parallel, delayed, effective_n_jobs
 from ..utils.fixes import _joblib_parallel_args
 from ..model_selection import check_cv
 from ..metrics import get_scorer
