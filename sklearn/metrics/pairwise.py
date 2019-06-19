@@ -410,11 +410,11 @@ def nan_euclidean_distances(X, Y=None, squared=False,
     X[missing_X] = 0
     Y[missing_Y] = 0
 
-    # elementwise multiplication
+    distances = euclidean_distances(X, Y, squared=True)
+
+    # Adjust distances for missing values
     XX = X.multiply(X) if issparse(X) else X * X
     YY = Y.multiply(Y) if issparse(Y) else Y * Y
-
-    distances = euclidean_distances(X, Y, squared=True)
     distances -= safe_sparse_dot(XX, missing_Y.T, dense_output=False)
     distances -= safe_sparse_dot(missing_X, YY.T, dense_output=False)
 
