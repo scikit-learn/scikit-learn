@@ -118,7 +118,7 @@ export PATH="$MINICONDA_PATH/bin:$PATH"
 # provided versions
 conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
   numpy="${NUMPY_VERSION:-*}" scipy="${SCIPY_VERSION:-*}" cython \
-  pytest coverage matplotlib="${MATPLOTLIB_VERSION:-*}" sphinx=2.1.1 pillow \
+  pytest coverage matplotlib="${MATPLOTLIB_VERSION:-*}" sphinx=2.0.1 pillow \
   scikit-image="${SCIKIT_IMAGE_VERSION:-*}" pandas="${PANDAS_VERSION:-*}" \
   joblib
 
