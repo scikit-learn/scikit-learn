@@ -55,6 +55,9 @@ Changelog
   validation data separately to avoid any data leak. :pr:`13933` by
   `Nicolas Hug`_.
 
+- |Enhancement| :class:`ensemble.HistGradientBoostingRegressor` now supports
+  the 'least_absolute_deviation' loss. :pr:`13896` by `Nicolas Hug`_.
+
 :mod:`sklearn.linear_model`
 ...........................
 
