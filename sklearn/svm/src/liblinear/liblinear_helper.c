@@ -87,10 +87,10 @@ static struct feature_node **csr_to_sparse(double *values,
 
         sparse[i] = malloc ((n+have_bias+1) * sizeof(struct feature_node));
         if (sparse[i] == NULL) {
-            int l;
-            for (l=0; l<i; l++)
-                free(sparse[l]);
-            break;
+            for (j=0; j<i; ++j)
+                free(sparse[j]);
+            free(sparse);
+            return NULL;
         }
 
         temp = sparse[i];
