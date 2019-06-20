@@ -244,7 +244,7 @@ cdef class Splitter:
             delta =  (self.criterion.sum_left[0] * self.criterion.weighted_n_right \
                     - self.criterion.sum_right[0] * self.criterion.weighted_n_left) \
                     * monotonic_constraint
-            return delta >= 0
+            return delta <= 0
 
 cdef class BaseDenseSplitter(Splitter):
     cdef const DTYPE_t[:, :] X
