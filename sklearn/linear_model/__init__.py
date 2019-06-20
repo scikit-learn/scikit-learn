@@ -10,6 +10,7 @@ implements Stochastic Gradient Descent related algorithms.
 # complete documentation.
 
 from .base import LinearRegression
+from .ellipse import LsqEllipse
 
 from .bayes import BayesianRidge, ARDRegression
 from .least_angle import (Lars, LassoLars, lars_path, lars_path_gram, LarsCV,
@@ -41,6 +42,7 @@ __all__ = ['ARDRegression',
            'Hinge',
            'Huber',
            'HuberRegressor',
+           'LsqEllipse',
            'Lars',
            'LarsCV',
            'Lasso',
