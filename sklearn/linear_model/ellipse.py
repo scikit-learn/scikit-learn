@@ -1,43 +1,62 @@
 import numpy
 
 from ..base import BaseEstimator, RegressorMixin
+from ..utils import check_X_y
 
 # Author: Ben Hammel <bdhammel@gmail.com>
-# Nick Sullivan-Molina
-# References
-# ----------
-# (*) Halir, R., Flusser, J.: 'Numerically Stable Direct Least Squares
-#     Fitting of Ellipses'
-# (**) http://mathworld.wolfram.com/Ellipse.html
-# (***) White, A. McHale, B. 'Faraday rotation data analysis with least-squares
-#     elliptical fitting'
+#         Nick Sullivan-Molina
 
 
-class LsqEllipse:
+class LsqEllipse(BaseEstimator, RegressorMixin):
+    """Lest Squares fitting algorithm for Elliptical data
 
-    def fit(self, data):
-        """Lest Squares fitting algorithm
+    References
+    ----------
+    (*) Halir, R., Flusser, J.: 'Numerically Stable Direct Least Squares Fitting of
+    Ellipses'
+    (**) http://mathworld.wolfram.com/Ellipse.html
 
-        Theory taken from (*)
-        Solving equation Sa=lCa. with a = |a b c d f g> and a1 = |a b c>
-            a2 = |d f g>
+    Attributes
+    ----------
+    coef_ : array, shape (n_features, ) or (n_targets, n_features)
+        Estimated coefficients for the linear regression problem.
+        If multiple targets are passed during the fit (y 2D), this
+        is a 2D array of shape (n_targets, n_features), while if only
+        one target is passed, this is a 1D array of length n_features.
 
-        Args
-        ----
-        data (list:list:float): list of two lists containing the x and y data of the
-            ellipse. of the form [[x1, x2, ..., xi],[y1, y2, ..., yi]]
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.linear_model import LsqEllipse
+    >>> X = np.array([])
+    >>> y = np.array([])
+    >>> reg = LsqEllipse().fit(X, y)
+    # >>> reg.score(X, y)
+    # 1.0
+    >>> reg.get_parameters()
+    """
 
-        Returns
-        ------
-        coef (list): list of the coefficients describing an ellipse
-           [a,b,c,d,f,g] corresponding to ax**2+2bxy+cy**2+2dx+2fy+g
+    def __init__(self):
+        self._coef = None
+
+    def fit(self, X, y):
+        """Fit the data
+
+        Parameters
+        ----------
+        X : numpy.ndarray
+            X data values for the x-y data pairs to fit
+        y : numpu.ndarry
+            y data values for the x-y data pairs to fit
         """
-        x, y = numpy.asarray(data, dtype=float)
+        X, y = check_X_y(
+            X, y, y_numeric=True, ensure_2d=False, ensure_min_samples=5
+        )
 
         # Quadratic part of design matrix [eqn. 15] from (*)
-        D1 = numpy.mat(numpy.vstack([x**2, x * y, y**2])).T
+        D1 = numpy.mat(numpy.vstack([X**2, X * y, y**2])).T
         # Linear part of design matrix [eqn. 16] from (*)
-        D2 = numpy.mat(numpy.vstack([x, y, numpy.ones(len(x))])).T
+        D2 = numpy.mat(numpy.vstack([X, y, numpy.ones(len(X))])).T
 
         # forming scatter matrix [eqn. 17] from (*)
         S1 = D1.T * D1
@@ -50,21 +69,23 @@ class LsqEllipse:
         # Reduced scatter matrix [eqn. 29]
         M = C1.I * (S1 - S2 * S3.I * S2.T)
 
-        # M*|a b c >=l|a b c >. Find eigenvalues and eigenvectors from this equation [eqn. 28]
-        eval, evec = numpy.linalg.eig(M)
+        # M*|a b c >=l|a b c >. Find eigenvalues and eigenvectors from this
+        # equation [eqn. 28]
+        eigval, eigvec = numpy.linalg.eig(M)
 
         # eigenvector must meet constraint 4ac - b^2 to be valid.
-        cond = 4 * numpy.multiply(evec[0, :], evec[2, :]) - numpy.power(evec[1, :], 2)
-        a1 = evec[:, numpy.nonzero(cond.A > 0)[1]]
+        cond = 4 * numpy.multiply(eigvec[0, :], eigvec[2, :]) - numpy.power(eigvec[1, :], 2)
+        a1 = eigvec[:, numpy.nonzero(cond.A > 0)[1]]
 
         # |d f g> = -S3^(-1) * S2^(T)*|a b c> [eqn. 24]
         a2 = -S3.I * S2.T * a1
 
         # eigenvectors |a b c d f g>
-        self.coef = numpy.vstack([a1, a2])
-        self._save_parameters()
+        # list of the coefficients describing an ellipse [a,b,c,d,f,g]
+        # corresponding to ax**2+2bxy+cy**2+2dx+2fy+g
+        self._coef = numpy.vstack([a1, a2])
 
-    def _save_parameters(self):
+    def get_parameters(self):
         """finds the important parameters of the fitted ellipse
 
         Theory taken form http://mathworld.wolfram
@@ -83,13 +104,14 @@ class LsqEllipse:
         """
 
         # eigenvectors are the coefficients of an ellipse in general form
-        # a*x^2 + 2*b*x*y + c*y^2 + 2*d*x + 2*f*y + g = 0 [eqn. 15) from (**) or (***)
-        a = self.coef[0, 0]
-        b = self.coef[1, 0] / 2.
-        c = self.coef[2, 0]
-        d = self.coef[3, 0] / 2.
-        f = self.coef[4, 0] / 2.
-        g = self.coef[5, 0]
+        # a*x^2 + 2*b*x*y + c*y^2 + 2*d*x + 2*f*y + g = 0
+        # [eqn. 15) from (**) or (***)
+        a = self._coef[0, 0]
+        b = self._coef[1, 0] / 2.
+        c = self._coef[2, 0]
+        d = self._coef[3, 0] / 2.
+        f = self._coef[4, 0] / 2.
+        g = self._coef[5, 0]
 
         # finding center of ellipse [eqn.19 and 20] from (**)
         x0 = (c * d - b * f) / (b**2. - a * c)
@@ -102,33 +124,15 @@ class LsqEllipse:
         width = numpy.sqrt(numerator / denominator1)
         height = numpy.sqrt(numerator / denominator2)
 
-        # angle of counterclockwise rotation of major-axis of ellipse to x-axis [eqn. 23] from (**)
-        # or [eqn. 26] from (***).
+        # angle of counterclockwise rotation of major-axis of ellipse to x-axis
+        # [eqn. 23] from (**) or [eqn. 26] from (***).
         phi = .5 * numpy.arctan((2. * b) / (a - c))
 
         self._center = [x0, y0]
         self._width = width
         self._height = height
+        # angle of counterclockwise rotation of major-axis of ellipse to
+        # x-axis [eqn. 23] from (**)
         self._phi = phi
 
-    @property
-    def center(self):
-        return self._center
-
-    @property
-    def width(self):
-        return self._width
-
-    @property
-    def height(self):
-        return self._height
-
-    @property
-    def phi(self):
-        """angle of counterclockwise rotation of major-axis of ellipse to x-axis
-        [eqn. 23] from (**)
-        """
-        return self._phi
-
-    def parameters(self):
-        return self.center, self.width, self.height, self.phi
+        return self._center, self._width, self._height, self._phi
