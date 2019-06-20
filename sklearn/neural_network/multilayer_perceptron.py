@@ -512,7 +512,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                     idx = shuffle(idx, random_state=self._random_state)
                 accumulated_loss = 0.0
                 for batch_slice in gen_batches(n_samples, batch_size):
-                    # only use integer indexing when it is needed, otherwise use fast-path
+                    # only use integer indexing when it is needed
                     if self.shuffle:
                         X_batch = X[idx[batch_slice]]
                         y_batch = y[idx[batch_size]]
