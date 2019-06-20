@@ -241,8 +241,8 @@ def test_column_transformer_dataframe():
     X_df2 = X_df.copy()
     X_df2.columns = [1, 0]
     ct = ColumnTransformer([('trans', Trans(), 0)], remainder='drop')
-    assert_array_equal(ct.fit_transform(X_df), X_res_first)
-    assert_array_equal(ct.fit(X_df).transform(X_df), X_res_first)
+    assert_array_equal(ct.fit_transform(X_df2), X_res_first)
+    assert_array_equal(ct.fit(X_df2).transform(X_df2), X_res_first)
 
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] == 'remainder'
@@ -1057,7 +1057,7 @@ def test_column_transformer_negative_column_indexes():
     X_categories = np.array([[1], [2]])
     X = np.concatenate([X, X_categories], axis=1)
 
-    ohe = OneHotEncoder(categories='auto')
+    ohe = OneHotEncoder()
 
     tf_1 = ColumnTransformer([('ohe', ohe, [-1])], remainder='passthrough')
     tf_2 = ColumnTransformer([('ohe', ohe,  [2])], remainder='passthrough')

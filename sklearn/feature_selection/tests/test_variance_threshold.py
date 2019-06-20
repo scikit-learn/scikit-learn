@@ -1,3 +1,6 @@
+import numpy as np
+import pytest
+
 from sklearn.utils.testing import (assert_array_equal, assert_equal,
                                    assert_raises)
 
@@ -26,3 +29,17 @@ def test_variance_threshold():
     for X in [data, csr_matrix(data)]:
         X = VarianceThreshold(threshold=.4).fit_transform(X)
         assert_equal((len(data), 1), X.shape)
+
+
+def test_zero_variance_floating_point_error():
+    # Test that VarianceThreshold(0.0).fit eliminates features that have
+    # the same value in every sample, even when floating point errors
+    # cause np.var not to be 0 for the feature.
+    # See #13691
+
+    data = [[-0.13725701]] * 10
+    assert np.var(data) != 0
+    for X in [data, csr_matrix(data), csc_matrix(data), bsr_matrix(data)]:
+        msg = "No feature in X meets the variance threshold 0.00000"
+        with pytest.raises(ValueError, match=msg):
+            VarianceThreshold().fit(X)

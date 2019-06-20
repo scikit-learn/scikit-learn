@@ -19,7 +19,6 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_message
 
 from sklearn.metrics import auc
 from sklearn.metrics import average_precision_score
@@ -462,7 +461,6 @@ def test_auc_score_non_binary_class():
     assert_raise_message(ValueError, "multiclass format is not supported",
                          roc_auc_score, y_true, y_pred)
 
-    clean_warning_registry()
     with warnings.catch_warnings(record=True):
         rng = check_random_state(404)
         y_pred = rng.rand(10)

@@ -744,10 +744,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     >>> X = np.array([[1, 2], [1, 4], [1, 0],
     ...               [4, 2], [4, 4], [4, 0]])
     >>> clustering = AgglomerativeClustering().fit(X)
-    >>> clustering # doctest: +NORMALIZE_WHITESPACE
-    AgglomerativeClustering(affinity='euclidean', compute_full_tree='auto',
-                            connectivity=None, distance_threshold=None,
-                            linkage='ward', memory=None, n_clusters=2)
+    >>> clustering
+    AgglomerativeClustering()
     >>> clustering.labels_
     array([1, 1, 1, 0, 0, 0])
 
@@ -773,15 +771,16 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         return self.n_connected_components_
 
     def fit(self, X, y=None):
-        """Fit the hierarchical clustering on the data
+        """Fit the hierarchical clustering from features, or distance matrix.
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training data. Shape [n_samples, n_features], or [n_samples,
-            n_samples] if affinity=='precomputed'.
+        X : array-like, shape (n_samples, n_features) or (n_samples, n_samples)
+            Training instances to cluster, or distances between instances if
+            ``affinity='precomputed'``.
 
         y : Ignored
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
@@ -874,6 +873,26 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
             # Reassign cluster numbers
             self.labels_ = np.searchsorted(np.unique(labels), labels)
         return self
+
+    def fit_predict(self, X, y=None):
+        """Fit the hierarchical clustering from features or distance matrix,
+        and return cluster labels.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features) or (n_samples, n_samples)
+            Training instances to cluster, or distances between instances if
+            ``affinity='precomputed'``.
+
+        y : Ignored
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        labels : ndarray, shape (n_samples,)
+            Cluster labels.
+        """
+        return super().fit_predict(X, y)
 
 
 class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
@@ -975,11 +994,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     >>> images = digits.images
     >>> X = np.reshape(images, (len(images), -1))
     >>> agglo = cluster.FeatureAgglomeration(n_clusters=32)
-    >>> agglo.fit(X) # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    FeatureAgglomeration(affinity='euclidean', compute_full_tree='auto',
-                 connectivity=None, distance_threshold=None, linkage='ward',
-                 memory=None, n_clusters=32,
-                 pooling_func=...)
+    >>> agglo.fit(X)
+    FeatureAgglomeration(n_clusters=32)
     >>> X_reduced = agglo.transform(X)
     >>> X_reduced.shape
     (1797, 32)
