@@ -137,8 +137,8 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
     ----------
     statistics_ : array of shape (n_features,)
         The imputation fill value for each feature.
-        It is possible some values resolved as `np.nan`.
-        Features correspond to `np.nan` will be discarded by `transform` call.
+        Computing statistics can result in `np.nan` values.
+        During `transform`, features corresponding to `np.nan` statistics will be discarded.
 
     indicator_ : :class:`sklearn.impute.MissingIndicator`
         Indicator used to add binary indicators for missing values.
