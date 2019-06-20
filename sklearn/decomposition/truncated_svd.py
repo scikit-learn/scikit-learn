@@ -13,7 +13,7 @@ from scipy.sparse.linalg import svds
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, check_random_state
-from ..utils.extmath import randomized_svd, lobpcg_svd
+from ..utils.extmath import randomized_svd
 from ..utils.extmath import safe_sparse_dot, svd_flip
 from ..utils.sparsefuncs import mean_variance_axis
 
@@ -179,10 +179,11 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
             if k >= n_features:
                 raise ValueError("n_components must be < n_features;"
                                  " got %d >= %d" % (k, n_features))
-            U, Sigma, VT = lobpcg_svd(X, self.n_components,
-                                      tol=self.tol,
-                                      n_iter=self.n_iter,
-                                      random_state=random_state)
+            U, Sigma, VT = randomized_svd(
+                X, self.n_components, n_iter=self.n_iter,
+                random_state=random_state,
+                preconditioner='lobpcg', tol=self.tol
+            )
         elif self.algorithm == "randomized":
             k = self.n_components
             n_features = X.shape[1]

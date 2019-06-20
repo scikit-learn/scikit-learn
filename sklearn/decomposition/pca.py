@@ -22,7 +22,7 @@ from scipy.sparse.linalg import svds
 from .base import _BasePCA
 from ..utils import check_random_state
 from ..utils import check_array
-from ..utils.extmath import fast_logdet, randomized_svd, svd_flip, lobpcg_svd
+from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 
@@ -540,10 +540,11 @@ class PCA(_BasePCA):
 
         elif svd_solver == 'lobpcg':
             # sign flipping is done inside
-            U, S, V = lobpcg_svd(X, n_components=n_components,
-                                 n_iter=self.iterated_power,
-                                 flip_sign=True, tol=self.tol,
-                                 random_state=random_state)
+            U, S, V = randomized_svd(
+                X, n_components=n_components, n_iter=self.iterated_power,
+                flip_sign=True, random_state=random_state,
+                preconditioner='lobpcg', tol=self.tol
+            )
 
         self.n_samples_, self.n_features_ = n_samples, n_features
         self.components_ = V
