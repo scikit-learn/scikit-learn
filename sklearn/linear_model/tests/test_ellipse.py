@@ -7,10 +7,10 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 
 
-def make_dataset(center, width, height, phi, epsilon, num_points):
+def make_dataset(center, width, height, phi, epsilon, n_points):
     """Generate Elliptical data with noise"""
 
-    t = np.linspace(0, 2 * np.pi, num_points)
+    t = np.linspace(0, 2 * np.pi, n_points)
     x_noise, y_noise = epsilon * np.random.rand(2, len(t))
 
     X = (center[0]
@@ -37,7 +37,7 @@ def test_ellipse_fit(center, width, height, phi):
         height=height,
         phi=phi,
         epsilon=0,
-        num_points=10
+        n_points=10
     )
     elp = LsqEllipse()
     elp.fit(x, y)
@@ -56,7 +56,7 @@ def test_minimum_data_points():
         height=.5,
         phi=0,
         epsilon=0,
-        num_points=5
+        n_points=5
     )
     elp = LsqEllipse()
     elp.fit(x, y)
@@ -75,8 +75,26 @@ def test_less_than_minimum_data_points_raises_err():
         height=.5,
         phi=0,
         epsilon=0,
-        num_points=4
+        n_points=4
     )
     elp = LsqEllipse()
     with pytest.raises(ValueError):
         elp.fit(x, y)
+
+
+@pytest.mark.parametrize('n_points', [5, 100])
+def test_perdict_returns_correct_ellipse(n_points):
+    X, Y = make_dataset(
+        center=[0, 0],
+        width=1,
+        height=.5,
+        phi=0,
+        epsilon=0,
+        n_points=n_points
+    )
+
+    elp = LsqEllipse().fit(X, Y)
+    x, y = elp.predict(n_points)
+
+    assert_array_almost_equal(x, X)
+    assert_array_almost_equal(y, Y)

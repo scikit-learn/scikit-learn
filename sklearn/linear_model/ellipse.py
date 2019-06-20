@@ -13,7 +13,7 @@ class LsqEllipse(BaseEstimator):
 
     References
     ----------
-    (*) Halir, R., Flusser, J.: 'Numerically Stable Direct Least Squares
+    (*) Halir R., Flusser J. 'Numerically Stable Direct Least Squares
     Fitting of Ellipses'
     (**) Weisstein, Eric W. "Ellipse." From MathWorld--A Wolfram Web Resource.
     http://mathworld.wolfram.com/Ellipse.html
@@ -113,11 +113,12 @@ class LsqEllipse(BaseEstimator):
         center : list
             [x0, y0]
         width : float
-            Major axis
+            Semimajor axis
         height : float
-            Minor axis
-        phi: float
-            Rotation of major axis form the x-axis in radians
+            Semiminor axis
+        phi : float
+            The counterclockwise angle of rotation from the x-axis to the major
+            axis of the ellipse
         """
 
         # Eigenvectors are the coefficients of an ellipse in general form
@@ -151,3 +152,42 @@ class LsqEllipse(BaseEstimator):
         phi = .5 * np.arctan((2.*b) / (a - c))
 
         return center, width, height, phi
+
+    def predict(self, n_points=None, t=None):
+        """
+        Return the X, Y values of the predicted ellipse
+        Points are returned along the parametric curve of the ellipse as evenly
+        spaced points starting at t=0 to t=2pi
+
+        Parameters
+        ---------
+        n_points : int
+            Number of points to return
+        t : array
+            Parametric points used to generate x-y pairs, If provided,
+            `n_points` will be ignored
+
+        Returns
+        -------
+        X : array, shape (n_points, )
+            X data values for the x-y data pairs
+        y : array, shape (n_point, )
+            y data values for the x-y data pairs
+        """
+        if n_points is None and t is None:
+            raise AttributeError("A value for `n_points` or `t` must be",
+                                 "provided")
+
+        if t is None:
+            t = np.linspace(0, 2 * np.pi, n_points)
+
+        center, width, height, phi = self.as_parameters()
+
+        X = (center[0]
+             + width * np.cos(t) * np.cos(phi)
+             - height * np.sin(t) * np.sin(phi))
+        y = (center[1]
+             + width * np.cos(t) * np.sin(phi)
+             + height * np.sin(t) * np.cos(phi))
+
+        return X, y
