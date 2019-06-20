@@ -191,7 +191,6 @@ def safe_indexing(X, indices, axis=0):
             - Supported key types (key):
                 - scalar: output is 1D
                 - lists, slices, boolean masks: output is 2D
-                - callable that returns any of the above
             - Supported key data types:
                 - integer or boolean mask (positional): supported for
                   arrays, sparse matrices and dataframes
@@ -308,8 +307,7 @@ def _safe_indexing_column(X, key):
 
     Supported key types (key):
     - scalar: output is 1D;
-    - lists, slices, boolean masks: output is 2D;
-    - callable that returns any of the above.
+    - lists, slices, boolean masks: output is 2D.
 
     Supported key data types:
     - integer or boolean mask (positional):
