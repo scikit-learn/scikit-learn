@@ -62,7 +62,8 @@ Scikit-learn requires:
 
 - Python (>= 3.5),
 - NumPy (>= 1.11),
-- SciPy (>= 0.17).
+- SciPy (>= 0.17),
+- Joblib (>= 0.11).
 
 .. note::
 
