@@ -738,9 +738,9 @@ regression with optional :math:`\ell_1`, :math:`\ell_2` or Elastic-Net
 regularization.
 
 **Note that regularization is applied by default**, which is common in machine
-learning but not in statistics. No regularization amounts to setting C to a
-very high value. Another advantage of regularization is that it improves
-numerical stability.
+learning but not in statistics. Another advantage of regularization is that
+it improves numerical stability. No regularization amounts to setting C to a
+very high value.
 
 As an optimization problem, binary class :math:`\ell_2` penalized logistic
 regression minimizes the following cost function:
