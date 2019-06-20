@@ -332,7 +332,7 @@ def test_safe_indexing_1d_array_error(X_constructor):
 @pytest.mark.parametrize(
     "key, err_msg",
     [(10, r"all features must be in \[0, 2\]"),
-     ('whatever', 'A given feature is not a column of the dataframe')]
+     ('whatever', 'A given column is not a column of the dataframe')]
 )
 def test_get_column_indices_error(key, err_msg):
     pd = pytest.importorskip("pandas")
