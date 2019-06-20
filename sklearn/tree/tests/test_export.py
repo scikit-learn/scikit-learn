@@ -1,8 +1,6 @@
 """
 Testing for export functions of decision trees (sklearn.tree.export).
 """
-import pytest
-
 from re import finditer, search
 from textwrap import dedent
 
@@ -398,11 +396,44 @@ def test_export_text():
     assert export_text(reg, decimals=1) == expected_report
     assert export_text(reg, decimals=1, show_weights=True) == expected_report
 
+    X_single = [[-2], [-1], [-1], [1], [1], [2]]
+    reg = DecisionTreeRegressor(max_depth=2, random_state=0)
+    reg.fit(X_single, y_mo)
 
-def test_plot_tree():
+    expected_report = dedent("""
+    |--- first <= 0.0
+    |   |--- value: [-1.0, -1.0]
+    |--- first >  0.0
+    |   |--- value: [1.0, 1.0]
+    """).lstrip()
+    assert export_text(reg, decimals=1,
+                       feature_names=['first']) == expected_report
+    assert export_text(reg, decimals=1, show_weights=True,
+                       feature_names=['first']) == expected_report
+
+
+def test_plot_tree_entropy(pyplot):
     # mostly smoke tests
-    pytest.importorskip("matplotlib.pyplot")
-    # Check correctness of export_graphviz
+    # Check correctness of export_graphviz for criterion = entropy
+    clf = DecisionTreeClassifier(max_depth=3,
+                                 min_samples_split=2,
+                                 criterion="entropy",
+                                 random_state=2)
+    clf.fit(X, y)
+
+    # Test export code
+    feature_names = ['first feat', 'sepal_width']
+    nodes = plot_tree(clf, feature_names=feature_names)
+    assert len(nodes) == 3
+    assert nodes[0].get_text() == ("first feat <= 0.0\nentropy = 1.0\n"
+                                   "samples = 6\nvalue = [3, 3]")
+    assert nodes[1].get_text() == "entropy = 0.0\nsamples = 3\nvalue = [3, 0]"
+    assert nodes[2].get_text() == "entropy = 0.0\nsamples = 3\nvalue = [0, 3]"
+
+
+def test_plot_tree_gini(pyplot):
+    # mostly smoke tests
+    # Check correctness of export_graphviz for criterion = gini
     clf = DecisionTreeClassifier(max_depth=3,
                                  min_samples_split=2,
                                  criterion="gini",
@@ -413,7 +444,7 @@ def test_plot_tree():
     feature_names = ['first feat', 'sepal_width']
     nodes = plot_tree(clf, feature_names=feature_names)
     assert len(nodes) == 3
-    assert nodes[0].get_text() == ("first feat <= 0.0\nentropy = 0.5\n"
+    assert nodes[0].get_text() == ("first feat <= 0.0\ngini = 0.5\n"
                                    "samples = 6\nvalue = [3, 3]")
-    assert nodes[1].get_text() == "entropy = 0.0\nsamples = 3\nvalue = [3, 0]"
-    assert nodes[2].get_text() == "entropy = 0.0\nsamples = 3\nvalue = [0, 3]"
+    assert nodes[1].get_text() == "gini = 0.0\nsamples = 3\nvalue = [3, 0]"
+    assert nodes[2].get_text() == "gini = 0.0\nsamples = 3\nvalue = [0, 3]"

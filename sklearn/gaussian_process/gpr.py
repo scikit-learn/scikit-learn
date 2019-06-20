@@ -142,9 +142,9 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
     >>> kernel = DotProduct() + WhiteKernel()
     >>> gpr = GaussianProcessRegressor(kernel=kernel,
     ...         random_state=0).fit(X, y)
-    >>> gpr.score(X, y) # doctest: +ELLIPSIS
+    >>> gpr.score(X, y)
     0.3680...
-    >>> gpr.predict(X[:2,:], return_std=True) # doctest: +ELLIPSIS
+    >>> gpr.predict(X[:2,:], return_std=True)
     (array([653.0..., 592.1...]), array([316.6..., 316.6...]))
 
     """
@@ -474,3 +474,6 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
             raise ValueError("Unknown optimizer %s." % self.optimizer)
 
         return theta_opt, func_min
+
+    def _more_tags(self):
+        return {'requires_fit': False}

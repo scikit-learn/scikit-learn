@@ -219,7 +219,7 @@ PR-MRG: Patience
 PR-MRG: Add to what's new
     ::
 
-        Please add an entry to the change log at `doc/whats_new/v*.rst`. Like the other entries there, please reference this pull request with `:issue:` and credit yourself (and other contributors if applicable) with `:user:`.
+        Please add an entry to the change log at `doc/whats_new/v*.rst`. Like the other entries there, please reference this pull request with `:pr:` and credit yourself (and other contributors if applicable) with `:user:`.
 
 PR: Don't change unrelated
     ::

@@ -15,13 +15,13 @@ import warnings
 import numpy as np
 from scipy import linalg, interpolate
 from scipy.linalg.lapack import get_lapack_funcs
+from joblib import Parallel, delayed
 
 from .base import LinearModel
 from ..base import RegressorMixin, MultiOutputMixin
 from ..utils import arrayfuncs, as_float_array, check_X_y
 from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
-from ..utils._joblib import Parallel, delayed
 
 SOLVE_TRIANGULAR_ARGS = {'check_finite': False}
 
@@ -42,7 +42,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
     Read more in the :ref:`User Guide <least_angle_regression>`.
 
     Parameters
-    -----------
+    ----------
     X : None or array, shape (n_samples, n_features)
         Input data. Note that if X is None then the Gram matrix must be
         specified, i.e., cannot be None or False.
@@ -112,7 +112,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
         solution of the coordinate descent lasso_path function.
 
     Returns
-    --------
+    -------
     alphas : array, shape (n_alphas + 1,)
         Maximum of covariances (in absolute value) at each iteration.
         ``n_alphas`` is either ``max_iter``, ``n_features`` or the
@@ -179,7 +179,7 @@ def lars_path_gram(Xy, Gram, n_samples, max_iter=500, alpha_min=0,
     Read more in the :ref:`User Guide <least_angle_regression>`.
 
     Parameters
-    -----------
+    ----------
     Xy : array-like, shape (n_samples,) or (n_samples, n_targets)
         Xy = np.dot(X.T, y).
 
@@ -231,7 +231,7 @@ def lars_path_gram(Xy, Gram, n_samples, max_iter=500, alpha_min=0,
         solution of the coordinate descent lasso_path function.
 
     Returns
-    --------
+    -------
     alphas : array, shape (n_alphas + 1,)
         Maximum of covariances (in absolute value) at each iteration.
         ``n_alphas`` is either ``max_iter``, ``n_features`` or the
@@ -295,7 +295,7 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
     Read more in the :ref:`User Guide <least_angle_regression>`.
 
     Parameters
-    -----------
+    ----------
     X : None or ndarray, shape (n_samples, n_features)
         Input data. Note that if X is None then Gram must be specified,
         i.e., cannot be None or False.
@@ -358,7 +358,7 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
         solution of the coordinate descent lasso_path function.
 
     Returns
-    --------
+    -------
     alphas : array, shape (n_alphas + 1,)
         Maximum of covariances (in absolute value) at each iteration.
         ``n_alphas`` is either ``max_iter``, ``n_features`` or the
@@ -397,10 +397,11 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
 
     """
     if method == 'lar' and positive:
-        warnings.warn('positive option is broken for Least'
-                      ' Angle Regression (LAR). Use method="lasso".'
-                      ' This option will be removed in version 0.22.',
-                      DeprecationWarning)
+        raise ValueError(
+                "Positive constraint not supported for 'lar' "
+                "coding method."
+            )
+
     n_samples = n_samples if n_samples is not None else y.size
 
     if Xy is None:
@@ -804,14 +805,6 @@ class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
         setting ``fit_path`` to ``False`` will lead to a speedup, especially
         with a small alpha.
 
-    positive : boolean (default=False)
-        Restrict coefficients to be >= 0. Be aware that you might want to
-        remove fit_intercept which is set True by default.
-
-        .. deprecated:: 0.20
-
-            The option is broken and deprecated. It will be removed in v0.22.
-
     Attributes
     ----------
     alphas_ : array, shape (n_alphas + 1,) | list of n_targets such arrays
@@ -842,11 +835,8 @@ class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
     >>> from sklearn import linear_model
     >>> reg = linear_model.Lars(n_nonzero_coefs=1)
     >>> reg.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111])
-    ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    Lars(copy_X=True, eps=..., fit_intercept=True, fit_path=True,
-       n_nonzero_coefs=1, normalize=True, positive=False, precompute='auto',
-       verbose=False)
-    >>> print(reg.coef_) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    Lars(n_nonzero_coefs=1)
+    >>> print(reg.coef_)
     [ 0. -1.11...]
 
     See also
@@ -856,17 +846,16 @@ class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
 
     """
     method = 'lar'
+    positive = False
 
     def __init__(self, fit_intercept=True, verbose=False, normalize=True,
                  precompute='auto', n_nonzero_coefs=500,
-                 eps=np.finfo(np.float).eps, copy_X=True, fit_path=True,
-                 positive=False):
+                 eps=np.finfo(np.float).eps, copy_X=True, fit_path=True):
         self.fit_intercept = fit_intercept
         self.verbose = verbose
         self.normalize = normalize
         self.precompute = precompute
         self.n_nonzero_coefs = n_nonzero_coefs
-        self.positive = positive
         self.eps = eps
         self.copy_X = copy_X
         self.fit_path = fit_path
@@ -1076,11 +1065,8 @@ class LassoLars(Lars):
     >>> from sklearn import linear_model
     >>> reg = linear_model.LassoLars(alpha=0.01)
     >>> reg.fit([[-1, 1], [0, 0], [1, 1]], [-1, 0, -1])
-    ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    LassoLars(alpha=0.01, copy_X=True, eps=..., fit_intercept=True,
-         fit_path=True, max_iter=500, normalize=True, positive=False,
-         precompute='auto', verbose=False)
-    >>> print(reg.coef_) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    LassoLars(alpha=0.01)
+    >>> print(reg.coef_)
     [ 0.         -0.963257...]
 
     See also
@@ -1128,7 +1114,7 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
     """Compute the residues on left-out data for a full LARS path
 
     Parameters
-    -----------
+    ----------
     X_train : array, shape (n_samples, n_features)
         The data to fit the LARS on
 
@@ -1189,7 +1175,7 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
 
 
     Returns
-    --------
+    -------
     alphas : array, shape (n_alphas,)
         Maximum of covariances (in absolute value) at each iteration.
         ``n_alphas`` is either ``max_iter`` or ``n_features``, whichever
@@ -1271,7 +1257,7 @@ class LarsCV(Lars):
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 3-fold cross-validation,
+        - None, to use the default 5-fold cross-validation,
         - integer, to specify the number of folds.
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -1281,9 +1267,8 @@ class LarsCV(Lars):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.20
-            ``cv`` default value if None will change from 3-fold to 5-fold
-            in v0.22.
+        .. versionchanged:: 0.22
+            ``cv`` default value if None changed from 3-fold to 5-fold.
 
     max_n_alphas : integer, optional
         The maximum number of points on the path used to compute the
@@ -1302,13 +1287,6 @@ class LarsCV(Lars):
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
-
-    positive : boolean (default=False)
-        Restrict coefficients to be >= 0. Be aware that you might want to
-        remove fit_intercept which is set True by default.
-
-        .. deprecated:: 0.20
-            The option is broken and deprecated. It will be removed in v0.22.
 
     Attributes
     ----------
@@ -1343,7 +1321,7 @@ class LarsCV(Lars):
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(n_samples=200, noise=4.0, random_state=0)
     >>> reg = LarsCV(cv=5).fit(X, y)
-    >>> reg.score(X, y) # doctest: +ELLIPSIS
+    >>> reg.score(X, y)
     0.9996...
     >>> reg.alpha_
     0.0254...
@@ -1358,9 +1336,9 @@ class LarsCV(Lars):
     method = 'lar'
 
     def __init__(self, fit_intercept=True, verbose=False, max_iter=500,
-                 normalize=True, precompute='auto', cv='warn',
+                 normalize=True, precompute='auto', cv=None,
                  max_n_alphas=1000, n_jobs=None, eps=np.finfo(np.float).eps,
-                 copy_X=True, positive=False):
+                 copy_X=True):
         self.max_iter = max_iter
         self.cv = cv
         self.max_n_alphas = max_n_alphas
@@ -1369,8 +1347,7 @@ class LarsCV(Lars):
                          verbose=verbose, normalize=normalize,
                          precompute=precompute,
                          n_nonzero_coefs=500,
-                         eps=eps, copy_X=copy_X, fit_path=True,
-                         positive=positive)
+                         eps=eps, copy_X=copy_X, fit_path=True)
 
     def fit(self, X, y):
         """Fit the model using X, y as training data.
@@ -1494,7 +1471,7 @@ class LassoLarsCV(LarsCV):
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 3-fold cross-validation,
+        - None, to use the default 5-fold cross-validation,
         - integer, to specify the number of folds.
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -1504,9 +1481,8 @@ class LassoLarsCV(LarsCV):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.20
-            ``cv`` default value if None will change from 3-fold to 5-fold
-            in v0.22.
+        .. versionchanged:: 0.22
+            ``cv`` default value if None changed from 3-fold to 5-fold.
 
     max_n_alphas : integer, optional
         The maximum number of points on the path used to compute the
@@ -1571,7 +1547,7 @@ class LassoLarsCV(LarsCV):
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(noise=4.0, random_state=0)
     >>> reg = LassoLarsCV(cv=5).fit(X, y)
-    >>> reg.score(X, y) # doctest: +ELLIPSIS
+    >>> reg.score(X, y)
     0.9992...
     >>> reg.alpha_
     0.0484...
@@ -1598,7 +1574,7 @@ class LassoLarsCV(LarsCV):
     method = 'lasso'
 
     def __init__(self, fit_intercept=True, verbose=False, max_iter=500,
-                 normalize=True, precompute='auto', cv='warn',
+                 normalize=True, precompute='auto', cv=None,
                  max_n_alphas=1000, n_jobs=None, eps=np.finfo(np.float).eps,
                  copy_X=True, positive=False):
         self.fit_intercept = fit_intercept
@@ -1683,7 +1659,6 @@ class LassoLarsIC(LassoLars):
         As a consequence using LassoLarsIC only makes sense for problems where
         a sparse solution is expected and/or reached.
 
-
     Attributes
     ----------
     coef_ : array, shape (n_features,)
@@ -1711,11 +1686,8 @@ class LassoLarsIC(LassoLars):
     >>> from sklearn import linear_model
     >>> reg = linear_model.LassoLarsIC(criterion='bic')
     >>> reg.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111])
-    ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    LassoLarsIC(copy_X=True, criterion='bic', eps=..., fit_intercept=True,
-          max_iter=500, normalize=True, positive=False, precompute='auto',
-          verbose=False)
-    >>> print(reg.coef_) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    LassoLarsIC(criterion='bic')
+    >>> print(reg.coef_)
     [ 0.  -1.11...]
 
     Notes

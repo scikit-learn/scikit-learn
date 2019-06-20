@@ -19,7 +19,6 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_message
 
 from sklearn.metrics import auc
 from sklearn.metrics import average_precision_score
@@ -427,25 +426,6 @@ def test_auc():
     assert_array_almost_equal(auc(x, y), 0.5)
 
 
-@pytest.mark.filterwarnings("ignore: The 'reorder' parameter")  # 0.22
-def test_auc_duplicate_values():
-    # Test Area Under Curve (AUC) computation with duplicate values
-
-    # auc() was previously sorting the x and y arrays according to the indices
-    # from numpy.argsort(x), which was reordering the tied 0's in this example
-    # and resulting in an incorrect area computation. This test detects the
-    # error.
-
-    # This will not work again in the future! so regression?
-    x = [-2.0, 0.0, 0.0, 0.0, 1.0]
-    y1 = [2.0, 0.0, 0.5, 1.0, 1.0]
-    y2 = [2.0, 1.0, 0.0, 0.5, 1.0]
-    y3 = [2.0, 1.0, 0.5, 0.0, 1.0]
-
-    for y in (y1, y2, y3):
-        assert_array_almost_equal(auc(x, y, reorder=True), 3.0)
-
-
 def test_auc_errors():
     # Incompatible shapes
     assert_raises(ValueError, auc, [0.0, 0.5, 1.0], [0.1, 0.2])
@@ -459,15 +439,6 @@ def test_auc_errors():
     error_message = ("x is neither increasing nor decreasing : "
                      "{}".format(np.array(x)))
     assert_raise_message(ValueError, error_message, auc, x, y)
-
-
-def test_deprecated_auc_reorder():
-    depr_message = ("The 'reorder' parameter has been deprecated in version "
-                    "0.20 and will be removed in 0.22. It is recommended not "
-                    "to set 'reorder' and ensure that x is monotonic "
-                    "increasing or monotonic decreasing.")
-    assert_warns_message(DeprecationWarning, depr_message, auc,
-                         [1, 2], [2, 3], reorder=True)
 
 
 def test_auc_score_non_binary_class():
@@ -490,7 +461,6 @@ def test_auc_score_non_binary_class():
     assert_raise_message(ValueError, "multiclass format is not supported",
                          roc_auc_score, y_true, y_pred)
 
-    clean_warning_registry()
     with warnings.catch_warnings(record=True):
         rng = check_random_state(404)
         y_pred = rng.rand(10)

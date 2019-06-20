@@ -1,0 +1,139 @@
+.. include:: _contributors.rst
+
+.. currentmodule:: sklearn
+
+.. _changes_0_22:
+
+Version 0.22.0
+==============
+
+**In Development**
+
+Changed models
+--------------
+
+The following estimators and functions, when fit with the same data and
+parameters, may produce different models from the previous version. This often
+occurs due to changes in the modelling logic (bug fixes or enhancements), or in
+random sampling procedures.
+
+..
+    TO FILL IN AS WE GO
+
+Details are listed in the changelog below.
+
+(While we are trying to better inform users by providing this information, we
+cannot assure that this list is complete.)
+
+Changelog
+---------
+
+..
+    Entries should be grouped by module (in alphabetic order) and prefixed with
+    one of the labels: |MajorFeature|, |Feature|, |Efficiency|, |Enhancement|,
+    |Fix| or |API| (see whats_new.rst for descriptions).
+    Entries should be ordered by those labels (e.g. |Fix| after |Efficiency|).
+    Changes not specific to a module should be listed under *Multiple Modules*
+    or *Miscellaneous*.
+    Entries should end with:
+    :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
+    where 123456 is the *pull request* number, not the issue number.
+
+:mod:`sklearn.decomposition`
+..................
+
+- |Enhancement| :class:`decomposition.IncrementalPCA` now accepts sparse
+  matrices as input, converting them to dense in batches thereby avoiding the
+  need to store the entire dense matrix at once.
+  :pr:`13960` by :user:`Scott Gigante <scottgigante>`.
+
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` now bin the training and
+  validation data separately to avoid any data leak. :pr:`13933` by
+  `Nicolas Hug`_.
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |Enhancement| :class:`linearmodel.BayesianRidge` now accepts hyperparameters
+  ``alpha_init`` and ``lambda_init`` which can be used to set the initial value
+  of the maximization procedure in :term:`fit`.
+  :pr:`13618` by :user:`Yoshihiro Uchida <c56pony>`.
+
+- |Efficiency| The 'liblinear' logistic regression solver now consumes less
+  memory if ``fit_intercept=False`` and ``X`` is a CSR sparse matrix.
+  :pr:`14108` by :user:`Alex Henrie <alexhenrie>`.
+
+:mod:`sklearn.model_selection`
+..................
+
+- |Enhancement| :class:`model_selection.learning_curve` now accepts parameter
+  ``return_times`` which can be used to retrieve computation times in order to
+  plot model scalability (see learning_curve example).
+  :pr:`13938` by :user:`Hadrien Reboul <H4dr1en>`.
+
+:mod:`sklearn.pipeline`
+.......................
+
+- |Enhancement| :class:`pipeline.Pipeline` now supports :term:`score_samples` if
+  the final estimator does.
+  :pr:`13806` by :user:`Anaël Beaugnon <ab-anssi>`.
+
+:mod:`sklearn.svm`
+..................
+
+- |Enhancement| :class:`svm.SVC` and :class:`svm.NuSVC` now accept a
+  ``break_ties`` parameter. This parameter results in :term:`predict` breaking
+  the ties according to the confidence values of :term:`decision_function`, if
+  ``decision_function_shape='ovr'``, and the number of target classes > 2.
+  :pr:`12557` by `Adrin Jalali`_.
+
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Enhancement| Avoid unnecessary data copy when fitting preprocessors
+  :class:`preprocessing.StandardScaler`, :class:`preprocessing.MinMaxScaler`,
+  :class:`preprocessing.MaxAbsScaler`, :class:`preprocessing.RobustScaler`
+  and :class:`preprocessing.QuantileTransformer` which results in a slight
+  performance improvement. :pr:`13987` by `Roman Yurchak`_.
+
+
+:mod:`sklearn.cluster`
+......................
+
+- |Enhancement| :class:`cluster.SpectralClustering` now accepts a ``n_components`` 
+  parameter. This parameter extends `SpectralClustering` class functionality to
+  match `spectral_clustering`.
+  :pr:`13726` by :user:`Shuzhe Xiao <fdas3213>`.
+
+:mod:`sklearn.feature_selection`
+................................
+- |Fix| Fixed a bug where :class:`VarianceThreshold` with `threshold=0` did not
+  remove constant features due to numerical instability, by using range
+  rather than variance in this case.
+  :pr:`13704` by `Roddy MacSween <rlms>`.
+  
+Miscellaneous
+.............
+
+- |API| Replace manual checks with ``check_is_fitted``. Errors thrown when
+  using a non-fitted estimators are now more uniform.
+  :pr:`13013` by :user:`Agamemnon Krasoulis <agamemnonc>`.
+
+Changes to estimator checks
+---------------------------
+
+These changes mostly affect library developers.
+
+- Estimators are now expected to raise a ``NotFittedError`` if ``predict`` or
+  ``transform`` is called before ``fit``; previously an ``AttributeError`` or
+  ``ValueError`` was acceptable.
+  :pr:`13013` by by :user:`Agamemnon Krasoulis <agamemnonc>`.
+
+- |Enhancement| Binary only classifiers are now supported in estimator checks.
+  Such classifiers need to have the `binary_only=True` estimator tag.
+  :pr:`13875` by `Trevor Stephens`_.

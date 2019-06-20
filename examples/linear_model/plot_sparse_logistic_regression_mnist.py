@@ -52,9 +52,9 @@ X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
 # Turn up tolerance for faster convergence
-clf = LogisticRegression(C=50. / train_samples,
-                         multi_class='multinomial',
-                         penalty='l1', solver='saga', tol=0.1)
+clf = LogisticRegression(
+    C=50. / train_samples, penalty='l1', solver='saga', tol=0.1
+)
 clf.fit(X_train, y_train)
 sparsity = np.mean(clf.coef_ == 0) * 100
 score = clf.score(X_test, y_test)

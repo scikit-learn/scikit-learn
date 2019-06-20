@@ -4,7 +4,6 @@
 
 from math import sqrt
 
-import pytest
 import numpy as np
 from sklearn import neighbors
 
@@ -35,9 +34,6 @@ iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 
 
-@pytest.mark.filterwarnings(
-    'ignore:default contamination parameter 0.1:FutureWarning')
-# XXX: Remove in 0.22
 def test_lof():
     # Toy sample (the last two samples are outliers):
     X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [5, 3], [-4, 2]]
@@ -57,9 +53,6 @@ def test_lof():
     assert_array_equal(clf.fit_predict(X), 6 * [1] + 2 * [-1])
 
 
-@pytest.mark.filterwarnings(
-    'ignore:default contamination parameter 0.1:FutureWarning')
-# XXX: Remove in 0.22
 def test_lof_performance():
     # Generate train/test data
     rng = check_random_state(2)
@@ -81,9 +74,6 @@ def test_lof_performance():
     assert_greater(roc_auc_score(y_test, y_pred), .99)
 
 
-@pytest.mark.filterwarnings(
-    'ignore:default contamination parameter 0.1:FutureWarning')
-# XXX: Remove in 0.22
 def test_lof_values():
     # toy samples:
     X_train = [[1, 1], [1, 2], [2, 1]]
@@ -105,9 +95,6 @@ def test_lof_values():
     assert_array_almost_equal(-clf2.score_samples([[1., 1.]]), [s_1])
 
 
-@pytest.mark.filterwarnings(
-    'ignore:default contamination parameter 0.1:FutureWarning')
-# XXX: Remove in 0.22
 def test_lof_precomputed(random_state=42):
     """Tests LOF with a distance matrix."""
     # Note: smaller samples may result in spurious test success
@@ -133,9 +120,6 @@ def test_lof_precomputed(random_state=42):
     assert_array_almost_equal(pred_X_Y, pred_D_Y)
 
 
-@pytest.mark.filterwarnings(
-    'ignore:default contamination parameter 0.1:FutureWarning')
-# XXX: Remove in 0.22
 def test_n_neighbors_attribute():
     X = iris.data
     clf = neighbors.LocalOutlierFactor(n_neighbors=500).fit(X)
@@ -148,9 +132,6 @@ def test_n_neighbors_attribute():
     assert_equal(clf.n_neighbors_, X.shape[0] - 1)
 
 
-@pytest.mark.filterwarnings(
-    'ignore:default contamination parameter 0.1:FutureWarning')
-# XXX: Remove in 0.22
 def test_score_samples():
     X_train = [[1, 1], [1, 2], [2, 1]]
     clf1 = neighbors.LocalOutlierFactor(n_neighbors=2,
@@ -172,9 +153,6 @@ def test_contamination():
     assert_raises(ValueError, clf.fit, X)
 
 
-@pytest.mark.filterwarnings(
-    'ignore:default contamination parameter 0.1:FutureWarning')
-# XXX: Remove in 0.22
 def test_novelty_errors():
     X = iris.data
 
@@ -192,9 +170,6 @@ def test_novelty_errors():
     assert_raises_regex(AttributeError, msg, getattr, clf, 'fit_predict')
 
 
-@pytest.mark.filterwarnings(
-    'ignore:default contamination parameter 0.1:FutureWarning')
-# XXX: Remove in 0.22
 def test_novelty_training_scores():
     # check that the scores of the training samples are still accessible
     # when novelty=True through the negative_outlier_factor_ attribute
@@ -213,9 +188,6 @@ def test_novelty_training_scores():
     assert_array_almost_equal(scores_1, scores_2)
 
 
-@pytest.mark.filterwarnings(
-    'ignore:default contamination parameter 0.1:FutureWarning')
-# XXX: Remove in 0.22
 def test_hasattr_prediction():
     # check availability of prediction methods depending on novelty value.
     X = [[1, 1], [1, 2], [2, 1]]
@@ -237,22 +209,11 @@ def test_hasattr_prediction():
     assert not hasattr(clf, 'score_samples')
 
 
-@pytest.mark.filterwarnings(
-    'ignore:default contamination parameter 0.1:FutureWarning')
-# XXX: Remove in 0.22
 def test_novelty_true_common_tests():
 
     # the common tests are run for the default LOF (novelty=False).
     # here we run these common tests for LOF when novelty=True
     check_estimator(neighbors.LocalOutlierFactor(novelty=True))
-
-
-def test_contamination_future_warning():
-    X = [[1, 1], [1, 2], [2, 1]]
-    assert_warns_message(FutureWarning,
-                         'default contamination parameter 0.1 will change '
-                         'in version 0.22 to "auto"',
-                         neighbors.LocalOutlierFactor().fit, X)
 
 
 def test_predicted_outlier_number():

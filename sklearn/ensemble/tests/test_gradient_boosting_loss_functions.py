@@ -6,6 +6,7 @@ import numpy as np
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_allclose
 from numpy.testing import assert_equal
+import pytest
 
 from sklearn.utils import check_random_state
 from sklearn.utils.stats import _weighted_percentile
@@ -273,3 +274,24 @@ def test_init_raw_predictions_values():
         for k in range(n_classes):
             p = (y == k).mean()
         assert_almost_equal(raw_predictions[:, k], np.log(p))
+
+
+@pytest.mark.parametrize('seed', range(5))
+def test_lad_equals_quantile_50(seed):
+    # Make sure quantile loss with alpha = .5 is equivalent to LAD
+    lad = LeastAbsoluteError(n_classes=1)
+    ql = QuantileLossFunction(n_classes=1, alpha=0.5)
+
+    n_samples = 50
+    rng = np.random.RandomState(seed)
+    raw_predictions = rng.normal(size=(n_samples))
+    y_true = rng.normal(size=(n_samples))
+
+    lad_loss = lad(y_true, raw_predictions)
+    ql_loss = ql(y_true, raw_predictions)
+    assert_almost_equal(lad_loss, 2 * ql_loss)
+
+    weights = np.linspace(0, 1, n_samples) ** 2
+    lad_weighted_loss = lad(y_true, raw_predictions, sample_weight=weights)
+    ql_weighted_loss = ql(y_true, raw_predictions, sample_weight=weights)
+    assert_almost_equal(lad_weighted_loss, 2 * ql_weighted_loss)

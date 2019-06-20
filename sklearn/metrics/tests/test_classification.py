@@ -13,7 +13,7 @@ from sklearn import svm
 from sklearn.datasets import make_multilabel_classification
 from sklearn.preprocessing import label_binarize, LabelBinarizer
 from sklearn.utils.validation import check_random_state
-from sklearn.utils.testing import assert_raises, clean_warning_registry
+from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -1598,7 +1598,6 @@ def test_prf_warnings():
            'being set to 0.0 due to no true samples.')
     my_assert(w, msg, f, [-1, -1], [1, 1], average='binary')
 
-    clean_warning_registry()
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter('always')
         precision_recall_fscore_support([0, 0], [0, 0], average="binary")
@@ -1615,7 +1614,6 @@ def test_recall_warnings():
                        np.array([[1, 1], [1, 1]]),
                        np.array([[0, 0], [0, 0]]),
                        average='micro')
-    clean_warning_registry()
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter('always')
         recall_score(np.array([[0, 0], [0, 0]]),
@@ -1631,7 +1629,6 @@ def test_recall_warnings():
 
 
 def test_precision_warnings():
-    clean_warning_registry()
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter('always')
         precision_score(np.array([[1, 1], [1, 1]]),
@@ -1652,7 +1649,6 @@ def test_precision_warnings():
 
 
 def test_fscore_warnings():
-    clean_warning_registry()
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter('always')
 
@@ -1997,9 +1993,23 @@ def test_brier_score_loss():
     assert_raises(ValueError, brier_score_loss, y_true, y_pred[1:])
     assert_raises(ValueError, brier_score_loss, y_true, y_pred + 1.)
     assert_raises(ValueError, brier_score_loss, y_true, y_pred - 1.)
-    # calculate even if only single class in y_true (#6980)
-    assert_almost_equal(brier_score_loss([0], [0.5]), 0.25)
-    assert_almost_equal(brier_score_loss([1], [0.5]), 0.25)
+
+    # ensure to raise an error for multiclass y_true
+    y_true = np.array([0, 1, 2, 0])
+    y_pred = np.array([0.8, 0.6, 0.4, 0.2])
+    error_message = ("Only binary classification is supported. Labels "
+                     "in y_true: {}".format(np.array([0, 1, 2])))
+    assert_raise_message(ValueError, error_message, brier_score_loss,
+                         y_true, y_pred)
+
+    # calculate correctly when there's only one class in y_true
+    assert_almost_equal(brier_score_loss([-1], [0.4]), 0.16)
+    assert_almost_equal(brier_score_loss([0], [0.4]), 0.16)
+    assert_almost_equal(brier_score_loss([1], [0.4]), 0.36)
+    assert_almost_equal(
+        brier_score_loss(['foo'], [0.4], pos_label='bar'), 0.16)
+    assert_almost_equal(
+        brier_score_loss(['foo'], [0.4], pos_label='foo'), 0.36)
 
 
 def test_balanced_accuracy_score_unseen():

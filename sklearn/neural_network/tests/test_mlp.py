@@ -28,8 +28,6 @@ from sklearn.utils.testing import (assert_raises, assert_greater,
 from sklearn.utils.testing import assert_raise_message
 
 
-np.seterr(all='warn')
-
 ACTIVATION_TYPES = ["identity", "logistic", "tanh", "relu"]
 
 digits_dataset_multi = load_digits(n_class=3)

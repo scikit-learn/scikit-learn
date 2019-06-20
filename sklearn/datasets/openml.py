@@ -449,9 +449,8 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     .. note:: EXPERIMENTAL
 
-        The API is experimental in version 0.20 (particularly the return value
-        structure), and might have small backward-incompatible changes in
-        future releases.
+        The API is experimental (particularly the return value structure),
+        and might have small backward-incompatible changes in future releases.
 
     Parameters
     ----------
@@ -515,10 +514,9 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
         .. note:: EXPERIMENTAL
 
-            This interface is **experimental** as at version 0.20 and
-            subsequent releases may change attributes without notice
-            (although there should only be minor changes to ``data``
-            and ``target``).
+            This interface is **experimental** and subsequent releases may
+            change attributes without notice (although there should only be
+            minor changes to ``data`` and ``target``).
 
         Missing values in the 'data' are represented as NaN's. Missing values
         in 'target' are represented as NaN's (numerical target) or None

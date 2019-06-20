@@ -15,7 +15,6 @@ import functools
 
 import pytest
 
-from sklearn.utils.testing import clean_warning_registry
 from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_in
@@ -155,7 +154,6 @@ def test_configure():
         old_env = os.getenv('SKLEARN_NO_OPENMP')
         os.environ['SKLEARN_NO_OPENMP'] = "True"
 
-        clean_warning_registry()
         with warnings.catch_warnings():
             # The configuration spits out warnings when not finding
             # Blas/Atlas development headers
@@ -174,7 +172,6 @@ def test_configure():
 def _tested_linear_classifiers():
     classifiers = all_estimators(type_filter='classifier')
 
-    clean_warning_registry()
     with warnings.catch_warnings(record=True):
         for name, clazz in classifiers:
             required_parameters = getattr(clazz, "_required_parameters", [])
@@ -215,7 +212,7 @@ def test_import_all_consistency():
 
 
 def test_root_import_all_completeness():
-    EXCEPTIONS = ('utils', 'tests', 'base', 'setup')
+    EXCEPTIONS = ('utils', 'tests', 'base', 'setup', 'conftest')
     for _, modname, _ in pkgutil.walk_packages(path=sklearn.__path__,
                                                onerror=lambda _: None):
         if '.' in modname or modname.startswith('_') or modname in EXCEPTIONS:
