@@ -185,7 +185,7 @@ def safe_indexing(X, indices, axis=0):
     ----------
     X : array-like, sparse-matrix, list, pandas.DataFrame, pandas.Series
         Data from which to sample rows, items or columns.
-    indices : see below
+    indices : array-like
         - When ``axis=0``, indices need to be an array of integer.
         - When ``axis=1``, indices can be one of:
             - Supported key types (key):
