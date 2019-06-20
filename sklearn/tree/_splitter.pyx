@@ -241,18 +241,10 @@ cdef class Splitter:
         if monotonic_constraint == 0: # No constraint
             return 1
         else:
-            left = self.criterion.sum_left[0]/self.criterion.weighted_n_left
-            right = self.criterion.sum_right[0]/self.criterion.weighted_n_right
-            if monotonic_constraint == -1: # Monotonically decreasing constraint
-                if left < right: # Fails
-                    return 0
-                else: # Passes
-                    return 1
-            else: # Monotonically increasing constraint
-                if left > right: # Fails
-                    return 0
-                else: # Passes
-                    return 1
+            delta =  (self.criterion.sum_left[0] * self.criterion.weighted_n_right \
+                    - self.criterion.sum_right[0] * self.criterion.weighted_n_left) \
+                    * monotonic_constraint
+            return delta >= 0
 
 cdef class BaseDenseSplitter(Splitter):
     cdef const DTYPE_t[:, :] X
