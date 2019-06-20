@@ -244,7 +244,7 @@ def _compute_orthonormal_lobpcg(M, Q, n_iter, tol, explicit_normal_matrix):
     """Computes an orthonormal matrix using LOBPCG."""
     # Determine the normal matrix
     if explicit_normal_matrix:
-        A = safe_sparse_dot(M, M.T.conj())
+        A = safe_sparse_dot(M, M.T)
     else:
         MLO = aslinearoperator(M)
 
@@ -260,15 +260,14 @@ def _compute_orthonormal_lobpcg(M, Q, n_iter, tol, explicit_normal_matrix):
                 return MLO(MTLO(V))
 
         Ms0 = M.shape[0]
-        A = LinearOperator(dtype=M.dtype, shape=(Ms0, Ms0),
-                           matvec=_matvec, matmat=_matvec)
+        A = LinearOperator(
+            dtype=M.dtype, shape=(Ms0, Ms0), matvec=_matvec, matmat=_matvec
+        )
 
-    # For lobpcg debugging, use verbosityLevel = 1
-    lobpcgVerbosityLevel = 0
     # lobpcg computes largest, be default, eigenvalues of the normal matrix
     # A, given implicitly via LinearOperator or explicitly as dense or sparse
     _, Q = lobpcg(
-        A, Q, maxiter=n_iter, verbosityLevel=lobpcgVerbosityLevel, tol=tol
+        A, Q, maxiter=n_iter, verbosityLevel=0, tol=tol
     )
     del A
     return Q
@@ -401,7 +400,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
     if preconditioner == 'lobpcg' and explicit_normal_matrix == 'auto':
         if sparse.issparse(M):
             explicit_normal_matrix = False
-        elif min(M.shape) > 4000 or min(M.shape)/max(M.shape) > 0.5:
+        elif min(M.shape) > 4000 or min(M.shape) / max(M.shape) > 0.5:
             explicit_normal_matrix = False
         else:
             # Rectangular and small-size data matrix M
