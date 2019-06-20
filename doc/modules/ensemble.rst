@@ -133,10 +133,9 @@ from a sample drawn with replacement (i.e., a bootstrap sample) from the
 training set.
 
 Furthermore, when splitting each node during the construction of a tree, the
-best feature to split on can be computed by considering either all input
-features or only a random subset of size ``max_features``. (See the
-:ref:`parameter tuning guidelines <random_forest_parameters>` for more
-details).
+best split is found either from all input features or a random subset of size
+``max_features``. (See the :ref:`parameter tuning guidelines
+<random_forest_parameters>` for more details).
 
 The purpose of these two sources of randomness is to decrease the variance of
 the forest estimator. Indeed, individual decision trees typically exhibit high
