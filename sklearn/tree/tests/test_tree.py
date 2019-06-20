@@ -1861,45 +1861,49 @@ def test_decision_tree_memmap():
 
 
 def test_montonic_constraints():
-    X, y = datasets.make_hastie_10_2(n_samples=1000, random_state=123)
-    X0 = np.copy(X)
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=0)
+    train = np.arange(90)
+    test = np.arange(90, 100)
+    X_train = X[train]
+    y_train = y[train]
+    X_test_0 = np.copy(X[test])
+    X_test_1 = np.copy(X_test_0)
+    X_test_1[:, 1] += 10
+    X_test_2 = np.copy(X_test_0)
+    X_test_2[:, 2] += 10
     for name, TreeRegressor in REG_TREES.items():
         est = TreeRegressor(max_depth=None,
-                            decreasing=[0], increasing=[1]).fit(X, y)
+                            decreasing=[1], increasing=[2])
+        if hasattr(est, "random_state"):
+            est.set_params(**{"random_state": 0})
+        est.fit(X_train, y_train)
 
-        y0 = est.predict(X0)
-
+        y0 = est.predict(X_test_0)
         # decreasing constraint
-        X1 = np.copy(X)
-        X1[:, 0] += 10
-        y1 = est.predict(X1)
+        y1 = est.predict(X_test_1)
         # y1 should always be lower than y0
         assert_less_equal(np.max(y1 - y0), 0)
 
         # increasing constraint
-        X1 = np.copy(X)
-        X1[:, 1] += 10
-        y1 = est.predict(X1)
-        # y1 should always be greater than y0
-        assert_greater_equal(np.min(y1 - y0), 0)
+        y2 = est.predict(X_test_2)
+        # y2 should always be greater than y0
+        assert_greater_equal(np.min(y2 - y0), 0)
 
     for name, TreeClassifier in CLF_TREES.items():
         est = TreeClassifier(max_depth=None,
-                             decreasing=[0], increasing=[1]).fit(X, y)
+                             decreasing=[1], increasing=[2])
+        if hasattr(est, "random_state"):
+            est.set_params(**{"random_state": 0})
+        est.fit(X_train, y_train)
 
-        X0 = np.copy(X)
-        y0 = est.predict_proba(X0)
+        y0 = est.predict_proba(X_test_0)[:, 0]
 
         # decreasing constraint
-        X1 = np.copy(X)
-        X1[:, 0] += 10
-        y1 = est.predict_proba(X1)
+        y1 = est.predict_proba(X_test_1)[:, 0]
         # y1 should always be lower than y0
         assert_less_equal(np.max(y1 - y0), 0)
 
         # increasing constraint
-        X1 = np.copy(X)
-        X1[:, 1] += 10
-        y1 = est.predict_proba(X1)
-        # y1 should always be greater than y0
-        assert_greater_equal(np.min(y1 - y0), 0)
+        y2 = est.predict_proba(X_test_2)[:, 0]
+        # y2 should always be greater than y0
+        assert_greater_equal(np.min(y2 - y0), 0)
