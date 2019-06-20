@@ -512,10 +512,18 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                     idx = shuffle(idx, random_state=self._random_state)
                 accumulated_loss = 0.0
                 for batch_slice in gen_batches(n_samples, batch_size):
-                    activations[0] = safe_indexing(X, idx[batch_slice])
+                    # only use integer indexing when it is needed, otherwise use fast-path
+                    if self.shuffle:
+                        X_batch = X[idx[batch_slice]]
+                        y_batch = y[idx[batch_size]]
+                    else:
+                        X_batch = X[batch_slice]
+                        y_batch = y[batch_slice]
+
+                    activations[0] = X_batch
                     batch_loss, coef_grads, intercept_grads = self._backprop(
-                        safe_indexing(X, idx[batch_slice]),
-                        y[idx[batch_slice]],
+                        X_batch,
+                        y_batch,
                         activations, deltas,
                         coef_grads, intercept_grads)
                     accumulated_loss += batch_loss * (batch_slice.stop -
