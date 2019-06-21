@@ -345,7 +345,7 @@ def test_get_column_indices_error(key, err_msg):
 @pytest.mark.parametrize(
     "idx",
     [[0, 1],
-     [True, True, False, False]]
+     [True, True, False]]
 )
 @pytest.mark.parametrize("asarray", [True, False], ids=["array-like", "array"])
 def test_safe_indexing_pandas_series(idx, asarray):
