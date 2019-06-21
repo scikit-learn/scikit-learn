@@ -7,8 +7,9 @@ import pytest
 
 from sklearn.decomposition import TruncatedSVD, PCA
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import (assert_raises,
-                                   assert_array_less, assert_allclose)
+from sklearn.utils.testing import assert_array_less, assert_allclose
+
+SVD_SOLVERS = ['arpack', 'randomized']
 
 
 @pytest.fixture(scope='module')
@@ -53,7 +54,8 @@ def test_too_many_components(algorithm, X_sparse):
     n_features = X_sparse.shape[1]
     for n_components in (n_features, n_features + 1):
         tsvd = TruncatedSVD(n_components=n_components, algorithm=algorithm)
-        assert_raises(ValueError, tsvd.fit, X_sparse)
+        with pytest.raises(ValueError):
+            tsvd.fit(X_sparse)
 
 
 @pytest.mark.parametrize('fmt', ("array", "csr", "csc", "coo", "lil"))
@@ -175,37 +177,41 @@ def test_explained_variance(X_sparse):
 
 
 @pytest.mark.parametrize('solver', ['randomized'])
-def test_singular_values_solvers(solver):
+def test_singular_values_solvers_old(solver):
     # Check that the TruncatedSVD output has the correct singular values
 
     rng = np.random.RandomState(0)
-    n_samples = 100
-    n_features = 80
-
+    n_samples, n_features = 100, 80
     X = rng.randn(n_samples, n_features)
 
     apca = TruncatedSVD(n_components=2, algorithm='arpack',
                         random_state=rng).fit(X)
-    pca = TruncatedSVD(n_components=2, algorithm='randomized',
+    pca = TruncatedSVD(n_components=2, algorithm=solver,
                        random_state=rng).fit(X)
     assert_allclose(apca.singular_values_, pca.singular_values_, rtol=1e-2)
 
+
+@pytest.mark.parametrize('solver', ['arpack', 'randomized'])
+def test_singular_values_solvers(solver):
+    # Check that the TruncatedSVD output has the correct singular values
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 100, 80
+    X = rng.randn(n_samples, n_features)
+
+    pca = TruncatedSVD(n_components=2, algorithm=solver,
+                       random_state=rng).fit(X)
+
     # Compare to the Frobenius norm
-    X_apca = apca.transform(X)
     X_pca = pca.transform(X)
-    assert_allclose(np.sum(apca.singular_values_**2.0),
-                    np.linalg.norm(X_apca, "fro")**2.0, rtol=1e-2)
     assert_allclose(np.sum(pca.singular_values_**2.0),
                     np.linalg.norm(X_pca, "fro")**2.0, rtol=1e-2)
 
     # Compare to the 2-norms of the score vectors
-    assert_allclose(apca.singular_values_,
-                    np.sqrt(np.sum(X_apca**2.0, axis=0)), rtol=1e-2)
     assert_allclose(pca.singular_values_,
                     np.sqrt(np.sum(X_pca**2.0, axis=0)), rtol=1e-2)
 
 
-@pytest.mark.parametrize('solver', ['randomized'])
+@pytest.mark.parametrize('solver', ['arpack', 'randomized'])
 def test_singular_values_expected(solver):
     # Set the singular values and see what we get back
     rng = np.random.RandomState(0)
@@ -214,25 +220,16 @@ def test_singular_values_expected(solver):
 
     X = rng.randn(n_samples, n_features)
 
-    apca = TruncatedSVD(n_components=3, algorithm='arpack',
-                        random_state=rng)
     pca = TruncatedSVD(n_components=3, algorithm=solver,
                        random_state=rng)
-    X_apca = apca.fit_transform(X)
     X_pca = pca.fit_transform(X)
 
-    X_apca /= np.sqrt(np.sum(X_apca**2.0, axis=0))
     X_pca /= np.sqrt(np.sum(X_pca**2.0, axis=0))
-    X_apca[:, 0] *= 3.142
-    X_apca[:, 1] *= 2.718
     X_pca[:, 0] *= 3.142
     X_pca[:, 1] *= 2.718
 
-    X_hat_apca = np.dot(X_apca, apca.components_)
-    X_hat_rpca = np.dot(X_pca, pca.components_)
-    apca.fit(X_hat_apca)
-    pca.fit(X_hat_rpca)
-    assert_allclose(apca.singular_values_, [3.142, 2.718, 1.0], rtol=1e-14)
+    X_hat_pca = np.dot(X_pca, pca.components_)
+    pca.fit(X_hat_pca)
     assert_allclose(pca.singular_values_, [3.142, 2.718, 1.0], rtol=1e-14)
 
 
