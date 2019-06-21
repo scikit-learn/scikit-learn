@@ -16,7 +16,7 @@ SVD_SOLVERS = ['arpack', 'randomized']
 def X_sparse():
     # Make an X that looks somewhat like a small tf-idf matrix.
     # XXX newer versions of SciPy >0.16 have scipy.sparse.rand for this.
-    shape = 60, 55
+    shape = (60, 55)
     n_samples, n_features = shape
     rng = check_random_state(42)
     X = rng.randint(-100, 20, np.product(shape)).reshape(shape)
@@ -25,12 +25,12 @@ def X_sparse():
     return X
 
 
-@pytest.mark.parametrize("algorithm", ['randomized'])
+@pytest.mark.parametrize("solver", ['randomized'])
 @pytest.mark.parametrize('kind', ('dense', 'sparse'))
-def test_solvers(X_sparse, algorithm, kind):
+def test_solvers(X_sparse, solver, kind):
     X = X_sparse if kind == 'sparse' else X_sparse.toarray()
     svd_a = TruncatedSVD(30, algorithm="arpack")
-    svd = TruncatedSVD(30, algorithm=algorithm, random_state=42)
+    svd = TruncatedSVD(30, algorithm=solver, random_state=42)
 
     Xa = svd_a.fit_transform(X)[:, :6]
     Xr = svd.fit_transform(X)[:, :6]
@@ -118,8 +118,8 @@ def test_explained_variance(X_sparse, kind, n_components, solver):
 @pytest.mark.parametrize('solver', SVD_SOLVERS)
 def test_explained_variance_components_10_20(X_sparse, kind, solver):
     X = X_sparse if kind == 'sparse' else X_sparse.toarray()
-    svd_10 = TruncatedSVD(10, algorithm="arpack").fit(X)
-    svd_20 = TruncatedSVD(20, algorithm="arpack").fit(X)
+    svd_10 = TruncatedSVD(10, algorithm=solver).fit(X)
+    svd_20 = TruncatedSVD(20, algorithm=solver).fit(X)
 
     # Assert the 1st component is equal
     assert_allclose(
