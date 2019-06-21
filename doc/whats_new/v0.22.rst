@@ -58,6 +58,11 @@ Changelog
 - |Enhancement| :class:`ensemble.HistGradientBoostingRegressor` now supports
   the 'least_absolute_deviation' loss. :pr:`13896` by `Nicolas Hug`_.
 
+- |Feature| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` have an additional
+  parameter called `warm_start` that enables warm starting. :pr:`14012` by
+  :user:`Johann Faouzi <johannfaouzi>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
