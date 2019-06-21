@@ -722,7 +722,8 @@ class Projection(Kernel):
             r.append(Hyperparameter(name,
                                     hyperparameter.value_type,
                                     hyperparameter.bounds,
-                                    hyperparameter.n_elements)
+                                    hyperparameter.n_elements,
+                                    ))
         return r
 
     @property
