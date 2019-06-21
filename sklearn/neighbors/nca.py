@@ -13,6 +13,7 @@ from warnings import warn
 import numpy as np
 import sys
 import time
+import numbers
 from scipy.optimize import minimize
 from ..utils.extmath import softmax
 from ..metrics import pairwise_distances
@@ -299,7 +300,8 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
 
         # Check the preferred dimensionality of the projected space
         if self.n_components is not None:
-            check_scalar(self.n_components, 'n_components', int, 1)
+            check_scalar(
+                self.n_components, 'n_components', numbers.Integral, 1)
 
             if self.n_components > X.shape[1]:
                 raise ValueError('The preferred dimensionality of the '
@@ -318,9 +320,9 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
                                  .format(X.shape[1],
                                          self.components_.shape[1]))
 
-        check_scalar(self.max_iter, 'max_iter', int, 1)
-        check_scalar(self.tol, 'tol', float, 0.)
-        check_scalar(self.verbose, 'verbose', int, 0)
+        check_scalar(self.max_iter, 'max_iter', numbers.Integral, 1)
+        check_scalar(self.tol, 'tol', numbers.Real, 0.)
+        check_scalar(self.verbose, 'verbose', numbers.Integral, 0)
 
         if self.callback is not None:
             if not callable(self.callback):

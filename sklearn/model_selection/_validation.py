@@ -17,13 +17,13 @@ from traceback import format_exception_only
 
 import numpy as np
 import scipy.sparse as sp
+from joblib import Parallel, delayed
 
 from ..base import is_classifier, clone
 from ..utils import (indexable, check_random_state, safe_indexing,
                      _message_with_time)
 from ..utils.validation import _is_arraylike, _num_samples
 from ..utils.metaestimators import _safe_split
-from ..utils._joblib import Parallel, delayed
 from ..metrics.scorer import check_scoring, _check_multimetric_scoring
 from ..exceptions import FitFailedWarning
 from ._split import check_cv
@@ -1210,10 +1210,12 @@ def learning_curve(estimator, X, y, groups=None,
         Scores on test set.
 
     fit_times : array, shape (n_ticks, n_cv_folds)
-        Times spent for fitting in seconds.
+        Times spent for fitting in seconds. Only present if ``return_times``
+        is True.
 
     score_times : array, shape (n_ticks, n_cv_folds)
-        Times spent for scoring in seconds.
+        Times spent for scoring in seconds. Only present if ``return_times``
+        is True.
 
     Notes
     -----

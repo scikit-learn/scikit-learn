@@ -4,6 +4,7 @@ import pytest
 
 import numpy as np
 import scipy.sparse as sp
+import joblib
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -24,9 +25,6 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
 from sklearn.linear_model import sgd_fast
 from sklearn.model_selection import RandomizedSearchCV
-
-from sklearn.utils import _joblib
-from sklearn.utils._joblib import parallel_backend
 
 
 # 0.23. warning about tol not having its correct default value.
@@ -1564,9 +1562,10 @@ def test_multi_core_gridsearch_and_early_stopping():
         'alpha': np.logspace(-4, 4, 9),
         'n_iter_no_change': [5, 10, 50],
     }
-    clf = SGDClassifier(tol=1e-3, max_iter=1000, early_stopping=True,
+
+    clf = SGDClassifier(tol=1e-2, max_iter=1000, early_stopping=True,
                         random_state=0)
-    search = RandomizedSearchCV(clf, param_grid, n_iter=10, n_jobs=2,
+    search = RandomizedSearchCV(clf, param_grid, n_iter=3, n_jobs=2,
                                 random_state=0)
     search.fit(iris.data, iris.target)
     assert search.best_score_ > 0.8
@@ -1594,7 +1593,7 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     # a segmentation fault when trying to write in a readonly memory mapped
     # buffer.
 
-    if _joblib.__version__ < LooseVersion('0.12') and backend == 'loky':
+    if joblib.__version__ < LooseVersion('0.12') and backend == 'loky':
         pytest.skip('loky backend does not exist in joblib <0.12')
 
     random_state = np.random.RandomState(42)
@@ -1602,9 +1601,9 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     # Create a classification problem with 50000 features and 20 classes. Using
     # loky or multiprocessing this make the clf.coef_ exceed the threshold
     # above which memmaping is used in joblib and loky (1MB as of 2018/11/1).
-    X = sp.random(1000, 50000, density=0.01, format='csr',
+    X = sp.random(500, 2000, density=0.02, format='csr',
                   random_state=random_state)
-    y = random_state.choice(20, 1000)
+    y = random_state.choice(20, 500)
 
     # Begin by fitting a SGD classifier sequentially
     clf_sequential = SGDClassifier(tol=1e-3, max_iter=1000, n_jobs=1,
@@ -1615,6 +1614,6 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     # coefficients are equal to those obtained using a sequential fit
     clf_parallel = SGDClassifier(tol=1e-3, max_iter=1000, n_jobs=4,
                                  random_state=42)
-    with parallel_backend(backend=backend):
+    with joblib.parallel_backend(backend=backend):
         clf_parallel.fit(X, y)
     assert_array_almost_equal(clf_sequential.coef_, clf_parallel.coef_)
