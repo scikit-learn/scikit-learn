@@ -225,7 +225,7 @@ def test_pca_check_projection(svd_solver):
 
 
 @pytest.mark.parametrize("svd_solver", solver_list)
-def test_pca_check_projection(svd_solver):
+def test_pca_check_projection_list(svd_solver):
     # Test that the projection of data is correct
     X = [[1.0, 0.0], [0.0, 1.0]]
     pca = PCA(n_components=1, svd_solver=svd_solver, random_state=0)
@@ -381,8 +381,8 @@ def test_infer_dim_3():
 
 @pytest.mark.parametrize(
     "X, n_components, n_components_",
-    [(iris.data, 0.95, 2), # row > col
-     (iris.data, 0.01, 1), # row > col
+    [(iris.data, 0.95, 2),  # row > col
+     (iris.data, 0.01, 1),  # row > col
      (np.random.RandomState(0).rand(5, 20), 0.5, 2)]  # row < col
 )
 def test_infer_dim_by_explained_variance(X, n_components, n_components_):
