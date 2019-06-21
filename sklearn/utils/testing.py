@@ -902,14 +902,9 @@ def _get_func_name(func):
     if module:
         parts.append(module.__name__)
 
-    try:
-        # Python 3
-        qualname = func.__qualname__
-        if qualname != func.__name__:
-            parts.append(qualname[:qualname.find('.')])
-    except AttributeError:
-        # Python 2
-        parts.append(func.im_class.__name__)
+    qualname = func.__qualname__
+    if qualname != func.__name__:
+        parts.append(qualname[:qualname.find('.')])
 
     parts.append(func.__name__)
     return '.'.join(parts)
