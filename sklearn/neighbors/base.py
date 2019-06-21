@@ -45,7 +45,7 @@ VALID_METRICS = dict(ball_tree=BallTree.valid_metrics,
 VALID_METRICS_SPARSE = dict(ball_tree=[],
                             kd_tree=[],
                             brute=(PAIRWISE_DISTANCE_FUNCTIONS.keys() -
-                                   {'haversine','gower'}))
+                                   {'haversine', 'gower'}))
 
 
 def _check_weights(weights):
