@@ -242,9 +242,10 @@ def randomized_range_finder(A, size, n_iter,
 
 def _compute_orthonormal_lobpcg(M, Q, n_iter, tol, explicit_normal_matrix):
     """Computes an orthonormal matrix using LOBPCG."""
+    print(M)
     # Determine the normal matrix
     if explicit_normal_matrix:
-        A = safe_sparse_dot(M, M.T)
+        A = safe_sparse_dot(M, M.T.conj())
     else:
         MLO = aslinearoperator(M)
 
@@ -266,10 +267,6 @@ def _compute_orthonormal_lobpcg(M, Q, n_iter, tol, explicit_normal_matrix):
 
     # lobpcg computes largest, be default, eigenvalues of the normal matrix
     # A, given implicitly via LinearOperator or explicitly as dense or sparse
-    print(tol)
-    print(n_iter)
-    print(A)
-    print(Q)
     _, Q = lobpcg(
         A, Q, maxiter=n_iter, verbosityLevel=0, tol=tol
     )
@@ -423,7 +420,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
         transpose = n_samples < n_features
     if transpose:
         # this implementation is a bit faster with smaller shape[1]
-        M = M.T
+        M = M.T.conj()
 
     if preconditioner is None:
         Q = randomized_range_finder(M, n_random, n_iter,
