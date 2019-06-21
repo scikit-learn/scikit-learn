@@ -247,7 +247,7 @@ def test_preserve_trustworthiness_approximately(method, init):
     n_components = 2
     X = random_state.randn(50, n_components).astype(np.float32)
     tsne = TSNE(n_components=n_components, init=init, random_state=0,
-		method=method, n_iter=700)
+                method=method, n_iter=700)
     X_embedded = tsne.fit_transform(X)
     t = trustworthiness(X, X_embedded, n_neighbors=1)
     assert t > 0.85
