@@ -26,12 +26,14 @@ def X_sparse():
 
 
 @pytest.mark.parametrize("algorithm", ['randomized'])
-def test_solvers(X_sparse, algorithm):
+@pytest.mark.parametrize('kind', ('dense', 'sparse'))
+def test_solvers(X_sparse, algorithm, kind):
+    X = X_sparse if kind == 'sparse' else X_sparse.toarray()
     svd_a = TruncatedSVD(30, algorithm="arpack")
     svd = TruncatedSVD(30, algorithm=algorithm, random_state=42)
 
-    Xa = svd_a.fit_transform(X_sparse)[:, :6]
-    Xr = svd.fit_transform(X_sparse)[:, :6]
+    Xa = svd_a.fit_transform(X)[:, :6]
+    Xr = svd.fit_transform(X)[:, :6]
     assert_allclose(Xa, Xr, rtol=2e-3)
 
     comp_a = np.abs(svd_a.components_)
@@ -49,7 +51,7 @@ def test_attributes(n_components, X_sparse):
     assert tsvd.components_.shape == (n_components, n_features)
 
 
-@pytest.mark.parametrize('algorithm', ("arpack", "randomized"))
+@pytest.mark.parametrize('algorithm', SVD_SOLVERS)
 def test_too_many_components(algorithm, X_sparse):
     n_features = X_sparse.shape[1]
     for n_components in (n_features, n_features + 1):
@@ -70,7 +72,7 @@ def test_sparse_formats(fmt, X_sparse):
     assert Xtrans.shape == (n_samples, 11)
 
 
-@pytest.mark.parametrize('algo', ("arpack", "randomized"))
+@pytest.mark.parametrize('algo', SVD_SOLVERS)
 def test_inverse_transform(algo, X_sparse):
     # We need a lot of components for the reconstruction to be "almost
     # equal" in all positions. XXX Test means or sums instead?
@@ -88,111 +90,53 @@ def test_integers(X_sparse):
     assert Xtrans.shape == (n_samples, tsvd.n_components)
 
 
-def test_explained_variance(X_sparse):
-    # Test sparse data
-    svd_a_10_sp = TruncatedSVD(10, algorithm="arpack")
-    svd_r_10_sp = TruncatedSVD(10, algorithm="randomized", random_state=42)
-    svd_a_20_sp = TruncatedSVD(20, algorithm="arpack")
-    svd_r_20_sp = TruncatedSVD(20, algorithm="randomized", random_state=42)
-    X_trans_a_10_sp = svd_a_10_sp.fit_transform(X_sparse)
-    X_trans_r_10_sp = svd_r_10_sp.fit_transform(X_sparse)
-    X_trans_a_20_sp = svd_a_20_sp.fit_transform(X_sparse)
-    X_trans_r_20_sp = svd_r_20_sp.fit_transform(X_sparse)
-
-    # Test dense data
-    X_dense = X_sparse.toarray()
-    svd_a_10_de = TruncatedSVD(10, algorithm="arpack")
-    svd_r_10_de = TruncatedSVD(10, algorithm="randomized", random_state=42)
-    svd_a_20_de = TruncatedSVD(20, algorithm="arpack")
-    svd_r_20_de = TruncatedSVD(20, algorithm="randomized", random_state=42)
-    X_trans_a_10_de = svd_a_10_de.fit_transform(X_dense)
-    X_trans_r_10_de = svd_r_10_de.fit_transform(X_dense)
-    X_trans_a_20_de = svd_a_20_de.fit_transform(X_dense)
-    X_trans_r_20_de = svd_r_20_de.fit_transform(X_dense)
-
-    # helper arrays for tests below
-    svds = (svd_a_10_sp, svd_r_10_sp, svd_a_20_sp, svd_r_20_sp, svd_a_10_de,
-            svd_r_10_de, svd_a_20_de, svd_r_20_de)
-    svds_trans = (
-        (svd_a_10_sp, X_trans_a_10_sp),
-        (svd_r_10_sp, X_trans_r_10_sp),
-        (svd_a_20_sp, X_trans_a_20_sp),
-        (svd_r_20_sp, X_trans_r_20_sp),
-        (svd_a_10_de, X_trans_a_10_de),
-        (svd_r_10_de, X_trans_r_10_de),
-        (svd_a_20_de, X_trans_a_20_de),
-        (svd_r_20_de, X_trans_r_20_de),
-    )
-    svds_10_v_20 = (
-        (svd_a_10_sp, svd_a_20_sp),
-        (svd_r_10_sp, svd_r_20_sp),
-        (svd_a_10_de, svd_a_20_de),
-        (svd_r_10_de, svd_r_20_de),
-    )
-    svds_sparse_v_dense = (
-        (svd_a_10_sp, svd_a_10_de),
-        (svd_a_20_sp, svd_a_20_de),
-        (svd_r_10_sp, svd_r_10_de),
-        (svd_r_20_sp, svd_r_20_de),
-    )
-
-    # Assert the 1st component is equal
-    for svd_10, svd_20 in svds_10_v_20:
-        assert_allclose(
-            svd_10.explained_variance_ratio_,
-            svd_20.explained_variance_ratio_[:10],
-            rtol=1e-3,
-        )
-
-    # Assert that 20 components has higher explained variance than 10
-    for svd_10, svd_20 in svds_10_v_20:
-        assert (
-            svd_20.explained_variance_ratio_.sum() >
-            svd_10.explained_variance_ratio_.sum()
-        )
-
+@pytest.mark.parametrize('kind', ('dense', 'sparse'))
+@pytest.mark.parametrize('n_components', [10, 20])
+@pytest.mark.parametrize('solver', SVD_SOLVERS)
+def test_explained_variance(X_sparse, kind, n_components, solver):
+    X = X_sparse if kind == 'sparse' else X_sparse.toarray()
+    svd = TruncatedSVD(n_components, algorithm=solver)
+    X_tr = svd.fit_transform(X)
     # Assert that all the values are greater than 0
-    for svd in svds:
-        assert_array_less(0.0, svd.explained_variance_ratio_)
+    assert_array_less(0.0, svd.explained_variance_ratio_)
 
     # Assert that total explained variance is less than 1
-    for svd in svds:
-        assert_array_less(svd.explained_variance_ratio_.sum(), 1.0)
-
-    # Compare sparse vs. dense
-    for svd_sparse, svd_dense in svds_sparse_v_dense:
-        assert_allclose(svd_sparse.explained_variance_ratio_,
-                        svd_dense.explained_variance_ratio_)
+    assert_array_less(svd.explained_variance_ratio_.sum(), 1.0)
 
     # Test that explained_variance is correct
-    for svd, transformed in svds_trans:
-        total_variance = np.var(X_dense, axis=0).sum()
-        variances = np.var(transformed, axis=0)
-        true_explained_variance_ratio = variances / total_variance
+    total_variance = np.var(X_sparse.toarray(), axis=0).sum()
+    variances = np.var(X_tr, axis=0)
+    true_explained_variance_ratio = variances / total_variance
 
-        assert_allclose(
-            svd.explained_variance_ratio_,
-            true_explained_variance_ratio,
-        )
-
-
-@pytest.mark.parametrize('solver', ['randomized'])
-def test_singular_values_solvers_old(solver):
-    # Check that the TruncatedSVD output has the correct singular values
-
-    rng = np.random.RandomState(0)
-    n_samples, n_features = 100, 80
-    X = rng.randn(n_samples, n_features)
-
-    apca = TruncatedSVD(n_components=2, algorithm='arpack',
-                        random_state=rng).fit(X)
-    pca = TruncatedSVD(n_components=2, algorithm=solver,
-                       random_state=rng).fit(X)
-    assert_allclose(apca.singular_values_, pca.singular_values_, rtol=1e-2)
+    assert_allclose(
+        svd.explained_variance_ratio_,
+        true_explained_variance_ratio,
+    )
 
 
-@pytest.mark.parametrize('solver', ['arpack', 'randomized'])
-def test_singular_values_solvers(solver):
+@pytest.mark.parametrize('kind', ('dense', 'sparse'))
+@pytest.mark.parametrize('solver', SVD_SOLVERS)
+def test_explained_variance_components_10_20(X_sparse, kind, solver):
+    X = X_sparse if kind == 'sparse' else X_sparse.toarray()
+    svd_10 = TruncatedSVD(10, algorithm="arpack").fit(X)
+    svd_20 = TruncatedSVD(20, algorithm="arpack").fit(X)
+
+    # Assert the 1st component is equal
+    assert_allclose(
+        svd_10.explained_variance_ratio_,
+        svd_20.explained_variance_ratio_[:10],
+        rtol=1e-3,
+    )
+
+    # Assert that 20 components has higher explained variance than 10
+    assert (
+        svd_20.explained_variance_ratio_.sum() >
+        svd_10.explained_variance_ratio_.sum()
+    )
+
+
+@pytest.mark.parametrize('solver', SVD_SOLVERS)
+def test_singular_values_consistency(solver):
     # Check that the TruncatedSVD output has the correct singular values
     rng = np.random.RandomState(0)
     n_samples, n_features = 100, 80
@@ -211,7 +155,7 @@ def test_singular_values_solvers(solver):
                     np.sqrt(np.sum(X_pca**2.0, axis=0)), rtol=1e-2)
 
 
-@pytest.mark.parametrize('solver', ['arpack', 'randomized'])
+@pytest.mark.parametrize('solver', SVD_SOLVERS)
 def test_singular_values_expected(solver):
     # Set the singular values and see what we get back
     rng = np.random.RandomState(0)
