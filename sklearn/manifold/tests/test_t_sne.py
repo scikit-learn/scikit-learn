@@ -239,21 +239,18 @@ def test_trustworthiness():
     assert_almost_equal(trustworthiness(X, X_embedded, n_neighbors=1), 0.2)
 
 
-def test_preserve_trustworthiness_approximately():
+@pytest.mark.parametrize("method", ['exact', 'barnes_hut'])
+@pytest.mark.parametrize("init", ('random', 'pca'))
+def test_preserve_trustworthiness_approximately(method, init):
     # Nearest neighbors should be preserved approximately.
     random_state = check_random_state(0)
     n_components = 2
-    methods = ['exact', 'barnes_hut']
     X = random_state.randn(50, n_components).astype(np.float32)
-    for init in ('random', 'pca'):
-        for method in methods:
-            tsne = TSNE(n_components=n_components, init=init, random_state=0,
-                        method=method, n_iter=500)
-            X_embedded = tsne.fit_transform(X)
-            t = trustworthiness(X, X_embedded, n_neighbors=1)
-            assert_greater(t, 0.85, msg='Trustworthiness={:0.3f} < 0.85 '
-                                        'for method={} and '
-                                        'init={}'.format(t, method, init))
+    tsne = TSNE(n_components=n_components, init=init, random_state=0,
+		method=method, n_iter=700)
+    X_embedded = tsne.fit_transform(X)
+    t = trustworthiness(X, X_embedded, n_neighbors=1)
+    assert t > 0.85
 
 
 def test_optimization_minimizes_kl_divergence():
