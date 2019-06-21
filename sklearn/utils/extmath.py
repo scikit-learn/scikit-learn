@@ -242,10 +242,9 @@ def randomized_range_finder(A, size, n_iter,
 
 def _compute_orthonormal_lobpcg(M, Q, n_iter, tol, explicit_normal_matrix):
     """Computes an orthonormal matrix using LOBPCG."""
-    print(M)
     # Determine the normal matrix
     if explicit_normal_matrix:
-        A = safe_sparse_dot(M, M.T.conj())
+        A = safe_sparse_dot(M, M.T)
     else:
         MLO = aslinearoperator(M)
 
@@ -255,7 +254,7 @@ def _compute_orthonormal_lobpcg(M, Q, n_iter, tol, explicit_normal_matrix):
                 return MLO(MLO.H(V))
 
         else:  # Old SciPy versions.
-            MTLO = aslinearoperator(M.T.conj())
+            MTLO = aslinearoperator(M.T)
 
             def _matvec(V):
                 return MLO(MTLO(V))
@@ -278,12 +277,15 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
                    power_iteration_normalizer='auto', transpose='auto',
                    flip_sign=True, random_state=0, preconditioner=None,
                    tol=None, explicit_normal_matrix='auto'):
-    """Computes a truncated randomized SVD, i.e. finds an approximate
-    truncated singular value decomposition using randomization to speed up
-    computations. It is particularly fast on large matrices to extract only
-    a small number of components. It can be quite accurate using even a small
-    number of iterations, if the seeking singular vectors are well
-    approximated by random vectors used to initialize the power iterations.
+    """Computes a truncated randomized SVD.
+
+    It finds an approximate truncated singular value decomposition using
+    randomization to speed up computations. It is particularly fast on large
+    matrices to extract only a small number of components. It can be quite
+    accurate using even a small number of iterations, if the seeking singular
+    vectors are well approximated by random vectors used to initialize the
+    power iterations. Using LOBPCG preconditioner can accelerate the
+    convergence.
 
     Parameters
     ----------
@@ -293,14 +295,14 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
     n_components : int
         Number of singular values and vectors to extract.
 
-    n_oversamples : int (default is 10)
+    n_oversamples : int, default=10
         Additional number of random vectors to sample the range of M so as
         to ensure proper conditioning. The total number of random vectors
         used to find the range of M is n_components + n_oversamples. Smaller
         number can improve speed but can negatively impact the quality of
         approximation of singular vectors and singular values.
 
-    n_iter : int or 'auto' (default is 'auto')
+    n_iter : 'auto' or int, default='auto'
         Number of power iterations. It can be used to deal with very noisy
         problems. When 'auto', it is set to 4, unless `n_components` is small
         (< .1 * min(X.shape)) `n_iter` in which case is set to 7.
@@ -308,7 +310,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
 
         .. versionchanged:: 0.18
 
-    power_iteration_normalizer : 'auto' (default), 'QR', 'LU', 'none'
+    power_iteration_normalizer : {'auto', 'QR', 'LU', 'none'}, default='auto'
         Whether the power iterations are normalized with step-by-step
         QR factorization (the slowest but most accurate), 'none'
         (the fastest but numerically unstable when `n_iter` is large, e.g.
@@ -319,7 +321,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
 
         .. versionadded:: 0.18
 
-    transpose : True, False or 'auto' (default)
+    transpose : 'auto' or boolean, optional (default=auto)
         Whether the algorithm should be applied to M.T instead of M. The
         result should approximately be the same. The 'auto' mode will
         trigger the transposition if M.shape[1] > M.shape[0] since this
@@ -328,13 +330,13 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
 
         .. versionchanged:: 0.18
 
-    flip_sign : boolean, (True by default)
+    flip_sign : boolean, default=True
         The output of a singular value decomposition is only unique up to a
         permutation of the signs of the singular vectors. If `flip_sign` is
         set to `True`, the sign ambiguity is resolved by making the largest
         loadings for each component in the left singular vectors positive.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         The seed of the pseudo random number generator to use when shuffling
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
@@ -417,10 +419,13 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
         n_iter = 7 if n_components < .1 * min(M.shape) else 4
 
     if transpose == 'auto':
-        transpose = n_samples < n_features
+        if preconditioner == 'lobpcg':
+            transpose = n_samples > n_features
+        else:
+            transpose = n_samples < n_features
     if transpose:
         # this implementation is a bit faster with smaller shape[1]
-        M = M.T.conj()
+        M = M.T
 
     if preconditioner is None:
         Q = randomized_range_finder(M, n_random, n_iter,
