@@ -1,5 +1,9 @@
 import numpy as np
+from numpy.testing import assert_array_equal
+from numpy.testing import assert_allclose
+
 import pytest
+
 from sklearn.base import clone
 from sklearn.datasets import make_classification, make_regression
 
@@ -18,13 +22,10 @@ def _assert_predictor_equal(gb_1, gb_2, X):
     # Check identical nodes for each tree
     for (pred_ith_1, pred_ith_2) in zip(gb_1._predictors, gb_2._predictors):
         for (predictor_1, predictor_2) in zip(pred_ith_1, pred_ith_2):
-            np.testing.assert_array_equal(
-                predictor_1.nodes,
-                predictor_2.nodes
-            )
+            assert_array_equal(predictor_1.nodes, predictor_2.nodes)
 
     # Check identical predictions
-    np.testing.assert_allclose(gb_1.predict(X), gb_2.predict(X))
+    assert_allclose(gb_1.predict(X), gb_2.predict(X))
 
 
 @pytest.mark.parametrize('GradientBoosting, X, y', [
@@ -142,8 +143,8 @@ def test_warm_start_clear(GradientBoosting, X, y):
 
     # Check that both predictors have the same train_score_ and
     # validation_score_ attributes
-    np.testing.assert_allclose(gb_1.train_score_, gb_2.train_score_)
-    np.testing.assert_allclose(gb_1.validation_score_, gb_2.validation_score_)
+    assert_allclose(gb_1.train_score_, gb_2.train_score_)
+    assert_allclose(gb_1.validation_score_, gb_2.validation_score_)
 
     # Check that both predictors are equal
     _assert_predictor_equal(gb_1, gb_2, X)
