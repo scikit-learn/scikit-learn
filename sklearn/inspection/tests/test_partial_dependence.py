@@ -25,7 +25,9 @@ from sklearn.datasets import load_boston, load_iris
 from sklearn.datasets import make_classification, make_regression
 from sklearn.cluster import KMeans
 from sklearn.metrics import r2_score
+from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures
+from sklearn.preprocessing import StandardScaler
 from sklearn.dummy import DummyClassifier
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.testing import assert_allclose
@@ -405,6 +407,31 @@ def test_partial_dependence_sample_weight():
     pdp, values = partial_dependence(clf, X, features=[1])
 
     assert np.corrcoef(pdp, values)[0, 1] > 0.99
+
+
+def test_partial_dependence_pipeline():
+    # check that the partial dependence support pipeline
+    iris = load_iris()
+
+    scaler = StandardScaler()
+    clf = DummyClassifier(random_state=42)
+    pipe = make_pipeline(scaler, clf)
+
+    clf.fit(scaler.fit_transform(iris.data), iris.target)
+    pipe.fit(iris.data, iris.target)
+
+    features = 0
+    pdp_pipe, values_pipe = partial_dependence(
+        pipe, iris.data, features=[features]
+    )
+    pdp_clf, values_clf = partial_dependence(
+        clf, scaler.transform(iris.data), features=[features]
+    )
+    assert_allclose(pdp_pipe, pdp_clf)
+    assert_allclose(
+        values_pipe[0],
+        values_clf[0] * scaler.scale_[features] + scaler.mean_[features]
+    )
 
 
 def test_plot_partial_dependence(pyplot):

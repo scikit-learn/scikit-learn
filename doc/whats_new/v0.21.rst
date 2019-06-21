@@ -2,6 +2,37 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_0_21_3:
+
+Version 0.21.3
+==============
+
+**In development**
+
+Changelog
+---------
+
+:mod:`sklearn.linear_model`
+...........................
+- |Fix| Fixed a bug in :class:`linear_model.LogisticRegressionCV` where
+  ``refit=False`` would fail depending on the ``'multiclass'`` and
+  ``'penalty'`` parameters (regression introduced in 0.21). :pr:`14087` by
+  `Nicolas Hug`_.
+
+:mod:`sklearn.tree`
+...................
+
+- |Fix| Fixed bug in :func:`tree.export_text` when the tree has one feature and 
+  a single feature name is passed in. :pr:`14053` by `Thomas Fan`
+
+:mod:`sklearn.neighbors`
+........................
+
+- |Fix| Fixed a bug in :class:`neighbors.NeighborhoodComponentsAnalysis` where
+  the validation of initial parameters ``n_components``, ``max_iter`` and
+  ``tol`` required too strict types. :pr:`14092` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 .. _changes_0_21_2:
 
 Version 0.21.2
@@ -32,6 +63,13 @@ Changelog
 - |Fix| Fixed a bug in :class:`preprocessing.OneHotEncoder` where the new
   `drop` parameter was not reflected in `get_feature_names`. :pr:`13894`
   by :user:`James Myatt <jamesmyatt>`.
+
+:mod:`sklearn.tree`
+...................
+
+- |Fix| Fixed an issue with :func:`plot_tree` where it display
+  entropy calculations even for `gini` criterion in DecisionTreeClassifiers.
+  :pr:`13947` by :user:`Frank Hoang <fhoang7>`.
 
 :mod:`sklearn.utils.sparsefuncs`
 ................................
@@ -69,7 +107,7 @@ Changelog
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.neighbors`
-......................
+........................
 
 - |Fix| Fixed a bug in :class:`neighbors.KernelDensity` which could not be
   restored from a pickle if ``sample_weight`` had been used.
@@ -348,6 +386,7 @@ Support for Python 3.4 and below has been officially dropped.
   - all the single node trees in feature importance calculation are ignored
   - in case all trees have only one single node (i.e. a root node),
     feature importances will be an array of all zeros.
+
   :pr:`13636` and :pr:`13620` by `Adrin Jalali`_.
 
 - |Fix| Fixed a bug in :class:`ensemble.GradientBoostingClassifier` and
@@ -487,7 +526,7 @@ Support for Python 3.4 and below has been officially dropped.
 ...........................
 
 - |Enhancement| :class:`linear_model.Ridge` now preserves ``float32`` and
-  ``float64`` dtypes. :issues:`8769` and :issues:`11000` by
+  ``float64`` dtypes. :issue:`8769` and :issue:`11000` by
   :user:`Guillaume Lemaitre <glemaitre>`, and :user:`Joan Massich <massich>`
 
 - |Feature| :class:`linear_model.LogisticRegression` and
@@ -954,8 +993,8 @@ Baibak, daten-kieker, Denis Kataev, Didi Bar-Zev, Dillon Gardner, Dmitry Mottl,
 Dmitry Vukolov, Dougal J. Sutherland, Dowon, drewmjohnston, Dror Atariah,
 Edward J Brown, Ekaterina Krivich, Elizabeth Sander, Emmanuel Arias, Eric
 Chang, Eric Larson, Erich Schubert, esvhd, Falak, Feda Curic, Federico Caselli,
-Fibinse Xavier`, Finn O'Shea, Gabriel Marzinotto, Gabriel Vacaliuc, Gabriele
-Calvo, Gael Varoquaux, GauravAhlawat, Giuseppe Vettigli, Greg Gandenberger,
+Frank Hoang, Fibinse Xavier`, Finn O'Shea, Gabriel Marzinotto, Gabriel Vacaliuc, 
+Gabriele Calvo, Gael Varoquaux, GauravAhlawat, Giuseppe Vettigli, Greg Gandenberger,
 Guillaume Fournier, Guillaume Lemaitre, Gustavo De Mari Pereira, Hanmin Qin,
 haroldfox, hhu-luqi, Hunter McGushion, Ian Sanders, JackLangerman, Jacopo
 Notarstefano, jakirkham, James Bourbeau, Jan Koch, Jan S, janvanrijn, Jarrod

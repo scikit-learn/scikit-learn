@@ -3,12 +3,12 @@ import sys
 
 import numpy as np
 import scipy.sparse as sp
+import joblib
 
 from io import StringIO
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils import deprecated
-from sklearn.utils import _joblib
 from sklearn.utils.testing import (assert_raises_regex,
                                    assert_equal, ignore_warnings,
                                    assert_warns, assert_raises)
@@ -30,6 +30,7 @@ from sklearn.decomposition import NMF
 from sklearn.linear_model import MultiTaskElasticNet
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsRegressor
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.validation import check_X_y, check_array
 
 
@@ -276,6 +277,21 @@ class SparseTransformer(BaseEstimator):
         return sp.csr_matrix(X)
 
 
+class UntaggedBinaryClassifier(DecisionTreeClassifier):
+    # Toy classifier that only supports binary classification, will fail tests.
+    def fit(self, X, y, sample_weight=None):
+        super().fit(X, y, sample_weight)
+        if self.n_classes_ > 2:
+            raise ValueError('Only 2 classes are supported')
+        return self
+
+
+class TaggedBinaryClassifier(UntaggedBinaryClassifier):
+    # Toy classifier that only supports binary classification.
+    def _more_tags(self):
+        return {'binary_only': True}
+
+
 def test_check_fit_score_takes_y_works_on_deprecated_fit():
     # Tests that check_fit_score_takes_y works on a class with
     # a deprecated fit method
@@ -385,6 +401,14 @@ def test_check_estimator():
     check_estimator(MultiTaskElasticNet)
     check_estimator(MultiTaskElasticNet())
 
+    # doesn't error on binary_only tagged estimator
+    check_estimator(TaggedBinaryClassifier)
+
+    # does error on binary_only untagged estimator
+    msg = 'Only 2 classes are supported'
+    assert_raises_regex(ValueError, msg, check_estimator,
+                        UntaggedBinaryClassifier)
+
 
 def test_check_outlier_corruption():
     # should raise AssertionError
@@ -415,9 +439,9 @@ def test_check_estimator_clones():
             set_checking_parameters(est)
             set_random_state(est)
             # without fitting
-            old_hash = _joblib.hash(est)
+            old_hash = joblib.hash(est)
             check_estimator(est)
-        assert_equal(old_hash, _joblib.hash(est))
+        assert_equal(old_hash, joblib.hash(est))
 
         with ignore_warnings(category=(FutureWarning, DeprecationWarning)):
             # when 'est = SGDClassifier()'
@@ -426,9 +450,9 @@ def test_check_estimator_clones():
             set_random_state(est)
             # with fitting
             est.fit(iris.data + 10, iris.target)
-            old_hash = _joblib.hash(est)
+            old_hash = joblib.hash(est)
             check_estimator(est)
-        assert_equal(old_hash, _joblib.hash(est))
+        assert_equal(old_hash, joblib.hash(est))
 
 
 def test_check_estimators_unfitted():

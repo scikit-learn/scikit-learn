@@ -8,6 +8,7 @@
 import platform
 from distutils.version import LooseVersion
 
+from sklearn import set_config
 import pytest
 from _pytest.doctest import DoctestItem
 
@@ -71,3 +72,13 @@ def pytest_configure(config):
 def pytest_unconfigure(config):
     import sys
     del sys._is_pytest_session
+
+
+def pytest_runtest_setup(item):
+    if isinstance(item, DoctestItem):
+        set_config(print_changed_only=True)
+
+
+def pytest_runtest_teardown(item, nextitem):
+    if isinstance(item, DoctestItem):
+        set_config(print_changed_only=False)
