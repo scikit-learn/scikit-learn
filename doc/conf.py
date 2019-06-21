@@ -303,7 +303,6 @@ linkcode_resolve = make_linkcode_resolve('sklearn',
                                          '{package}/{path}#L{lineno}')
 
 warnings.filterwarnings("ignore", category=UserWarning,
-                        module="matplotlib",
                         message='Matplotlib is currently using agg, which is a'
                                 ' non-GUI backend, so cannot show the figure.')
 

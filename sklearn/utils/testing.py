@@ -43,12 +43,12 @@ from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_less
 import numpy as np
+import joblib
 
 import sklearn
 from sklearn.base import (BaseEstimator, ClassifierMixin, ClusterMixin,
                           RegressorMixin, TransformerMixin)
 from sklearn.utils import deprecated, IS_PYPY, _IS_32BIT
-from sklearn.utils._joblib import joblib
 from sklearn.utils._unittest_backport import TestCase
 
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",

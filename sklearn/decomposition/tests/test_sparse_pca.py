@@ -142,15 +142,15 @@ def test_mini_batch_fit_transform():
     U1 = spca_lars.transform(Y)
     # Test multiple CPUs
     if sys.platform == 'win32':  # fake parallelism for win32
-        import sklearn.utils._joblib.parallel as joblib_par
-        _mp = joblib_par.multiprocessing
-        joblib_par.multiprocessing = None
+        import joblib
+        _mp = joblib.parallel.multiprocessing
+        joblib.parallel.multiprocessing = None
         try:
             spca = MiniBatchSparsePCA(n_components=3, n_jobs=2, alpha=alpha,
                                       random_state=0)
             U2 = spca.fit(Y).transform(Y)
         finally:
-            joblib_par.multiprocessing = _mp
+            joblib.parallel.multiprocessing = _mp
     else:  # we can efficiently use parallelism
         spca = MiniBatchSparsePCA(n_components=3, n_jobs=2, alpha=alpha,
                                   random_state=0)

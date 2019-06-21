@@ -55,6 +55,11 @@ Changelog
   validation data separately to avoid any data leak. :pr:`13933` by
   `Nicolas Hug`_.
 
+- |Feature| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` have an additional
+  parameter called `warm_start` that enables warm starting. :pr:`14012` by
+  :user:`Johann Faouzi <johannfaouzi>`.
+
 - |Fix| :class:`ensemble.AdaBoostClassifier` computes probabilities based on
   the decision function as in the literature. Thus, `predict` and
   `predict_proba` give consistent results.
@@ -67,6 +72,10 @@ Changelog
   ``alpha_init`` and ``lambda_init`` which can be used to set the initial value
   of the maximization procedure in :term:`fit`.
   :pr:`13618` by :user:`Yoshihiro Uchida <c56pony>`.
+
+- |Efficiency| The 'liblinear' logistic regression solver now consumes less
+  memory if ``fit_intercept=False`` and ``X`` is a CSR sparse matrix.
+  :pr:`14108` by :user:`Alex Henrie <alexhenrie>`.
 
 :mod:`sklearn.model_selection`
 ..................
