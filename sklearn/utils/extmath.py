@@ -266,6 +266,10 @@ def _compute_orthonormal_lobpcg(M, Q, n_iter, tol, explicit_normal_matrix):
 
     # lobpcg computes largest, be default, eigenvalues of the normal matrix
     # A, given implicitly via LinearOperator or explicitly as dense or sparse
+    print(tol)
+    print(n_iter)
+    print(A)
+    print(Q)
     _, Q = lobpcg(
         A, Q, maxiter=n_iter, verbosityLevel=0, tol=tol
     )
