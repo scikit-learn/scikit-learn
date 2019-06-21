@@ -232,8 +232,8 @@ def test_singular_values_expected(solver):
     X_hat_rpca = np.dot(X_pca, pca.components_)
     apca.fit(X_hat_apca)
     pca.fit(X_hat_rpca)
-    assert_allclose(apca.singular_values_, [3.142, 2.718, 1.0], 14)
-    assert_allclose(pca.singular_values_, [3.142, 2.718, 1.0], 14)
+    assert_allclose(apca.singular_values_, [3.142, 2.718, 1.0], rtol=1e-14)
+    assert_allclose(pca.singular_values_, [3.142, 2.718, 1.0], rtol=1e-14)
 
 
 def test_truncated_svd_eq_pca(X_sparse):
