@@ -48,7 +48,8 @@ regr_multirf = MultiOutputRegressor(RandomForestRegressor(n_estimators=100,
                                                           random_state=0))
 regr_multirf.fit(X_train, y_train)
 
-regr_rf = RandomForestRegressor(n_estimators=100, max_depth=max_depth, random_state=2)
+regr_rf = RandomForestRegressor(n_estimators=100, max_depth=max_depth,
+                                random_state=2)
 regr_rf.fit(X_train, y_train)
 
 # Predict on new data
