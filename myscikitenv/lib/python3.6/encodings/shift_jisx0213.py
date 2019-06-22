@@ -1,1 +1,0 @@
-/usr/lib/python3.6/encodings/shift_jisx0213.py
