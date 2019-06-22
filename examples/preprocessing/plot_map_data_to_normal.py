@@ -136,4 +136,3 @@ for distribution, color, axes in zip(distributions, colors, axes_list):
 
 plt.tight_layout()
 plt.show()
-
