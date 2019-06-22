@@ -31,7 +31,8 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.pipeline import make_pipeline, make_union
 from sklearn.impute import SimpleImputer, IterativeImputer, MissingIndicator
 from sklearn.model_selection import cross_val_score
-#Importing warnings library
+
+# Importing warnings library
 import warnings
 from sklearn.exceptions import ConvergenceWarning
 
@@ -39,13 +40,13 @@ warnings.filterwarnings("ignore",
                         category=ConvergenceWarning,
                         module="sklearn")
 
-#Filtering runtime warnings invalid value encountered in true_divide
+# Filtering runtime warnings invalid value encountered in true_divide
 np.seterr(invalid='ignore')
 
 rng = np.random.RandomState(0)
 
 N_SPLITS = 5
-#Initialising with estimators using a default 100
+# Initialising with estimators using a default 100
 REGRESSOR = RandomForestRegressor(random_state=0, n_estimators=100)
 
 
