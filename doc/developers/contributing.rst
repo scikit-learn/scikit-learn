@@ -224,8 +224,10 @@ then submit a "pull request" (PR):
 
     $ git remote add upstream https://github.com/scikit-learn/scikit-learn.git
 
-7. Create a branch to hold your development changes::
+7. Fetch the ``upstream`` and then create a branch to hold your development
+   changes::
 
+       $ git fetch upstream
        $ git checkout -b my-feature upstream/master
 
    and start making changes. Always use a ``feature`` branch. It's good
