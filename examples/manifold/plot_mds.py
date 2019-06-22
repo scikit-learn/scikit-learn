@@ -22,6 +22,7 @@ from sklearn import manifold
 from sklearn.metrics import euclidean_distances
 from sklearn.decomposition import PCA
 
+EPSILON = np.finfo(np.float32).eps
 n_samples = 20
 seed = np.random.RandomState(seed=3)
 X_true = seed.randint(0, 20, 2 * n_samples).astype(np.float)
@@ -68,8 +69,8 @@ plt.scatter(pos[:, 0], pos[:, 1], color='turquoise', s=s, lw=0, label='MDS')
 plt.scatter(npos[:, 0], npos[:, 1], color='darkorange', s=s, lw=0, label='NMDS')
 plt.legend(scatterpoints=1, loc='best', shadow=False)
 
-np.seterr(divide='ignore', invalid='ignore')
-similarities = similarities.max() / similarities * 100
+similarities = similarities.max() / (similarities + EPSILON) * 100
+import pdb; pdb.set_trace()
 similarities[np.isinf(similarities)] = 0
 
 # Plot the edges
