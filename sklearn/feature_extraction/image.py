@@ -323,7 +323,8 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
 
     random_state : int, RandomState instance or None, optional (default=None)
         The random number generator is used for random sampling when 
-        `max_patches` is not None. Use an int to make the randomness deterministic.
+        `max_patches` is not None. Use an int to make the randomness 
+        deterministic.
         See :term:`Glossary <random_state>`.
 
     Returns
@@ -454,10 +455,11 @@ class PatchExtractor(BaseEstimator):
 
     random_state : int, RandomState instance or None, optional (default=None)
         The random number generator is used for random sampling when 
-        `max_patches` is not None. Use an int to make the randomness deterministic.
+        `max_patches` is not None. Use an int to make the randomness 
+        deterministic.
         See :term:`Glossary <random_state>`.
 
-        
+
     Examples
     --------
     >>> from sklearn.datasets import load_sample_images
