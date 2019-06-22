@@ -1415,7 +1415,7 @@ class RandomizedSearchCV(BaseSearchCV):
     Examples
     --------
     >>> from sklearn import linear_model, datasets
-    >>> from sklearn.model_selection import RandomizeSearchCV
+    >>> from sklearn.model_selection import RandomizedSearchCV
     >>> from scipy.stats import  uniform
     >>> iris = datasets.load_iris()
     >>> logistic = linear_model.LogisticRegression()
