@@ -29,6 +29,8 @@ than the parametric ones (Box-Cox and Yeo-Johnson).
 
 On "small" datasets (less than a few hundred points), the quantile transformer
 is prone to overfitting. The use of the power transform is then recommended.
+
+Runs with scikit-learn-0.21.2 with no issues.
 """
 
 # Author: Eric Chang <ericchang2017@u.northwestern.edu>
