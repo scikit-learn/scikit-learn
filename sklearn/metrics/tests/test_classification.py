@@ -678,7 +678,7 @@ def test_matthews_corrcoef_multiclass():
     assert_almost_equal(mcc, 0.)
 
 
-@pytest.mark.parametrize('n_points', [100, 10000, 1000000])
+@pytest.mark.parametrize('n_points', [100, 10000])
 def test_matthews_corrcoef_overflow(n_points):
     # https://github.com/scikit-learn/scikit-learn/issues/9622
     rng = np.random.RandomState(20170906)

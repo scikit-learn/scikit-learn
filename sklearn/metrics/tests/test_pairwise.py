@@ -558,7 +558,7 @@ def test_pairwise_distances_chunked():
     # Test the pairwise_distance helper function.
     rng = np.random.RandomState(0)
     # Euclidean distance should be equivalent to calling the function.
-    X = rng.random_sample((400, 4))
+    X = rng.random_sample((200, 4))
     check_pairwise_distances_chunked(X, None, working_memory=1,
                                      metric='euclidean')
     # Test small amounts of memory
@@ -569,7 +569,7 @@ def test_pairwise_distances_chunked():
     check_pairwise_distances_chunked(X.tolist(), None, working_memory=1,
                                      metric='euclidean')
     # Euclidean distance, with Y != X.
-    Y = rng.random_sample((200, 4))
+    Y = rng.random_sample((100, 4))
     check_pairwise_distances_chunked(X, Y, working_memory=1,
                                      metric='euclidean')
     check_pairwise_distances_chunked(X.tolist(), Y.tolist(), working_memory=1,
@@ -1103,9 +1103,9 @@ def test_pairwise_distances_data_derived_params(n_jobs, metric, dist_function,
                                                 y_is_x):
     # check that pairwise_distances give the same result in sequential and
     # parallel, when metric has data-derived parameters.
-    with config_context(working_memory=1):  # to have more than 1 chunk
+    with config_context(working_memory=0.1):  # to have more than 1 chunk
         rng = np.random.RandomState(0)
-        X = rng.random_sample((1000, 10))
+        X = rng.random_sample((100, 10))
 
         if y_is_x:
             Y = X
@@ -1115,7 +1115,7 @@ def test_pairwise_distances_data_derived_params(n_jobs, metric, dist_function,
             else:
                 params = {'VI': np.linalg.inv(np.cov(X.T)).T}
         else:
-            Y = rng.random_sample((1000, 10))
+            Y = rng.random_sample((100, 10))
             expected_dist_default_params = cdist(X, Y, metric=metric)
             if metric == "seuclidean":
                 params = {'V': np.var(np.vstack([X, Y]), axis=0, ddof=1)}
