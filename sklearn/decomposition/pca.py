@@ -353,6 +353,15 @@ class PCA(_BasePCA):
         -------
         X_new : array-like, shape (n_samples, n_components)
 
+
+        ..note:: This method changes a c-order array to an f-order array.
+        To get the output matrix in the original order,
+        do a transpose of the result i.e
+
+        y = PCA().fit_transform(x)
+        y = y.transpose()
+
+
         """
         U, S, V = self._fit(X)
         U = U[:, :self.n_components_]
