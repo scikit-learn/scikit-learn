@@ -213,7 +213,7 @@ def safe_indexing(X, indices):
                           DataConversionWarning)
             return X.copy().iloc[indices]
     elif hasattr(X, "shape"):
-        # just use fancy indexing, which is faster than numpy take (see PR 14075)
+        # just use fancy indexing, which is faster than numpy take (PR 14075)
         return X[indices]
     else:
         return [X[idx] for idx in indices]
