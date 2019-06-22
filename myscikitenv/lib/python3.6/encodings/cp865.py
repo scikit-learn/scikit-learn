@@ -1,0 +1,1 @@
+/usr/lib/python3.6/encodings/cp865.py
