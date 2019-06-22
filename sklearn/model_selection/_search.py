@@ -1423,7 +1423,7 @@ class RandomizedSearchCV(BaseSearchCV):
     >>> hyperparameters = dict(C=uniform(loc=0, scale=4),
     ...                          solver=['newton-cg', 'lbfgs'])
     >>> clf = RandomizedSearchCV(logistic, hyperparameters,
-    ...                            random_state=0, iid=False, cv=5)
+    ...                            random_state=0, cv=5)
     >>> search = clf.fit(iris.data, iris.target)
     >>> search.best_params_
     {'C': 2.195254015709299, 'solver': 'lbfgs'}
