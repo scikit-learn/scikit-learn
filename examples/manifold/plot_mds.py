@@ -68,6 +68,7 @@ plt.scatter(pos[:, 0], pos[:, 1], color='turquoise', s=s, lw=0, label='MDS')
 plt.scatter(npos[:, 0], npos[:, 1], color='darkorange', s=s, lw=0, label='NMDS')
 plt.legend(scatterpoints=1, loc='best', shadow=False)
 
+np.seterr(divide='ignore', invalid='ignore')
 similarities = similarities.max() / similarities * 100
 similarities[np.isinf(similarities)] = 0
 
