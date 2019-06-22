@@ -85,7 +85,8 @@ relate_point(X_embedded, i, ax2)
 for i in range(len(X)):
     ax2.text(X_embedded[i, 0], X_embedded[i, 1], str(i),
              va='center', ha='center')
-    ax2.scatter(X_embedded[i, 0], X_embedded[i, 1], s=300, c=np.array([cm.Set1(y[i])]), alpha=0.4)
+    ax2.scatter(X_embedded[i, 0], X_embedded[i, 1], s=300, 
+                c=np.array([cm.Set1(y[i])]), alpha=0.4)
 
 # Make axes equal so that boundaries are displayed correctly as circles
 ax2.set_title("NCA embedding")
