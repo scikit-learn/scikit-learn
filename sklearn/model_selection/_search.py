@@ -1415,20 +1415,18 @@ class RandomizedSearchCV(BaseSearchCV):
     Examples
     --------
     >>> from sklearn import linear_model, datasets
-    >>> from sklearn.model_selection import RandomizeSearchCV
+    >>> from sklearn.model_selection import RandomizedSearchCV
     >>> from scipy.stats import  uniform
     >>> iris = datasets.load_iris()
-    >>> logistic = linear_model.LogisticRegression()
+    >>> logistic = linear_model.LogisticRegression(multi_class='auto',
+    ...                                             penalty='l2', max_iter=200)
     >>> hyperparameters = dict(C=uniform(loc=0, scale=4),
-    ...                        penalty=['l1', 'l2'])
-    >>> clf = RandomizedSearchCV(logistic, hyperparameters)
-    >>> best_model = clf.fit(iris.data, iris.target)
-    >>> best_model.best_estimator_.get_params()
-    {'C': 1.668088018810296, 'class_weight': None, 'dual': False,
-    'fit_intercept': True, 'intercept_scaling': 1, 'l1_ratio': None,
-    'max_iter': 100, 'multi_class': 'warn', 'n_jobs': None, 'penalty': 'l1',
-    'random_state': None, 'solver': 'warn', 'tol': 0.0001, 'verbose': 0,
-    'warm_start': False}
+    ...                          solver=['newton-cg', 'lbfgs'])
+    >>> clf = RandomizedSearchCV(logistic, hyperparameters,
+    ...                            random_state=0, iid=False, cv=5)
+    >>> search = clf.fit(iris.data, iris.target)
+    >>> search.best_params_
+    {'C': 2.195254015709299, 'solver': 'lbfgs'}
     """
 
     _required_parameters = ["estimator", "param_distributions"]
