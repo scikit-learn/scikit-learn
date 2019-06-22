@@ -70,7 +70,6 @@ plt.scatter(npos[:, 0], npos[:, 1], color='darkorange', s=s, lw=0, label='NMDS')
 plt.legend(scatterpoints=1, loc='best', shadow=False)
 
 similarities = similarities.max() / (similarities + EPSILON) * 100
-import pdb; pdb.set_trace()
 similarities[np.isinf(similarities)] = 0
 
 # Plot the edges
