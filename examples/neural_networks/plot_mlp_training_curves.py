@@ -14,18 +14,10 @@ Note that those results can be highly dependent on the value of
 """
 
 print(__doc__)
-
-import warnings
-
 import matplotlib.pyplot as plt
-
 from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import MinMaxScaler
 from sklearn import datasets
-from sklearn.exceptions import ConvergenceWarning
-
-warnings.filterwarnings("ignore", category=ConvergenceWarning,
-                        module="sklearn")
 
 # different learning rate schedules and momentum parameters
 params = [{'solver': 'sgd', 'learning_rate': 'constant', 'momentum': 0,
