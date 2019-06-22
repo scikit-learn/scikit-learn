@@ -25,7 +25,7 @@ from sklearn import datasets
 from sklearn.exceptions import ConvergenceWarning
 
 warnings.filterwarnings("ignore", category=ConvergenceWarning,
-			module="sklearn")
+                        module="sklearn")
 
 # different learning rate schedules and momentum parameters
 params = [{'solver': 'sgd', 'learning_rate': 'constant', 'momentum': 0,
