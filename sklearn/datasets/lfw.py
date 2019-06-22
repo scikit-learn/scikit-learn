@@ -16,7 +16,7 @@ from distutils.version import LooseVersion
 
 import numpy as np
 import joblib
-from joblib import Memory
+
 
 from .base import get_data_home, _fetch_remote, RemoteFileMetadata
 from ..utils import Bunch
@@ -305,9 +305,9 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
     # arrays for optimal memory usage
     if LooseVersion(joblib.__version__) < LooseVersion('0.12'):
         # Deal with change of API in joblib
-        m = Memory(cachedir=lfw_home, compress=6, verbose=0)
+        m = joblib.Memory(cachedir=lfw_home, compress=6, verbose=0)
     else:
-        m = Memory(location=lfw_home, compress=6, verbose=0)
+        m = joblib.Memory(location=lfw_home, compress=6, verbose=0)
     load_func = m.cache(_fetch_lfw_people)
 
     # load and memoize the pairs as np arrays
@@ -476,9 +476,9 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
     # arrays for optimal memory usage
     if LooseVersion(joblib.__version__) < LooseVersion('0.12'):
         # Deal with change of API in joblib
-        m = Memory(cachedir=lfw_home, compress=6, verbose=0)
+        m = joblib.Memory(cachedir=lfw_home, compress=6, verbose=0)
     else:
-        m = Memory(location=lfw_home, compress=6, verbose=0)
+        m = joblib.Memory(location=lfw_home, compress=6, verbose=0)
     load_func = m.cache(_fetch_lfw_pairs)
 
     # select the right metadata file according to the requested subset
