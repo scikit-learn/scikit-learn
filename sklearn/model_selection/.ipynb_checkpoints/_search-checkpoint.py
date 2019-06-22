@@ -1411,26 +1411,7 @@ class RandomizedSearchCV(BaseSearchCV):
         A generator over parameter settings, constructed from
         param_distributions.
 
-
-    Examples
-    --------
-    >>> from sklearn import linear_model, datasets
-    >>> from sklearn.model_selection import RandomizeSearchCV
-    >>> from scipy.stats import  uniform
-    >>> iris = datasets.load_iris()
-    >>> logistic = linear_model.LogisticRegression()
-    >>> hyperparameters = dict(C=uniform(loc=0, scale=4),
-    ...                        penalty=['l1', 'l2'])
-    >>> clf = RandomizedSearchCV(logistic, hyperparameters)
-    >>> best_model = clf.fit(iris.data, iris.target)
-    >>> best_model.best_estimator_.get_params()
-    {'C': 1.668088018810296, 'class_weight': None, 'dual': False,
-    'fit_intercept': True, 'intercept_scaling': 1, 'l1_ratio': None,
-    'max_iter': 100, 'multi_class': 'warn', 'n_jobs': None, 'penalty': 'l1',
-    'random_state': None, 'solver': 'warn', 'tol': 0.0001, 'verbose': 0,
-    'warm_start': False}
     """
-
     _required_parameters = ["estimator", "param_distributions"]
 
     def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,

@@ -76,3 +76,4 @@ _configtest.o.d
 sklearn/utils/seq_dataset.pyx
 sklearn/utils/seq_dataset.pxd
 sklearn/linear_model/sag_fast.pyx
+venv/
