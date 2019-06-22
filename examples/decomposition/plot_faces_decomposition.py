@@ -80,6 +80,7 @@ estimators = [
     ('Sparse comp. - MiniBatchSparsePCA',
      decomposition.MiniBatchSparsePCA(n_components=n_components, alpha=0.8,
                                       n_iter=100, batch_size=3,
+                                      normalize_components=True,
                                       random_state=rng),
      True),
 
