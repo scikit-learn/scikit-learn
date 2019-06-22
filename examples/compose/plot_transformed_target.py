@@ -137,8 +137,8 @@ dataset = load_boston()
 target = np.array(dataset.feature_names) == "DIS"
 X = dataset.data[:, np.logical_not(target)]
 y = dataset.data[:, target].squeeze()
-y_trans = quantile_transform(dataset.data[:, target], 
-                             n_quantiles=300, 
+y_trans = quantile_transform(dataset.data[:, target],
+                             n_quantiles=300,
                              output_distribution='normal',
                              copy=True).squeeze()
 
@@ -186,8 +186,8 @@ ax0.set_ylim([0, 10])
 
 regr_trans = TransformedTargetRegressor(
     regressor=RidgeCV(),
-    transformer=QuantileTransformer(n_quantiles=300, 
-    output_distribution='normal'))
+    transformer=QuantileTransformer(n_quantiles=300,
+                                    output_distribution='normal'))
 regr_trans.fit(X_train, y_train)
 y_pred = regr_trans.predict(X_test)
 
