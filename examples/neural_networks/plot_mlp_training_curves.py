@@ -15,7 +15,6 @@ Note that those results can be highly dependent on the value of
 
 print(__doc__)
 
-import timeit
 import warnings
 
 import matplotlib.pyplot as plt
