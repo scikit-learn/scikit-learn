@@ -796,7 +796,7 @@ def test_iterative_imputer_no_missing():
 
 def test_iterative_imputer_rank_one():
     rng = np.random.RandomState(0)
-    d = 100
+    d = 50
     A = rng.rand(d, 1)
     B = rng.rand(1, d)
     X = np.dot(A, B)
@@ -808,7 +808,7 @@ def test_iterative_imputer_rank_one():
                                verbose=1,
                                random_state=rng)
     X_filled = imputer.fit_transform(X_missing)
-    assert_allclose(X_filled, X, atol=0.01)
+    assert_allclose(X_filled, X, atol=0.02)
 
 
 @pytest.mark.parametrize(
@@ -817,8 +817,8 @@ def test_iterative_imputer_rank_one():
 )
 def test_iterative_imputer_transform_recovery(rank):
     rng = np.random.RandomState(0)
-    n = 100
-    d = 100
+    n = 70
+    d = 70
     A = rng.rand(n, rank)
     B = rng.rand(rank, d)
     X_filled = np.dot(A, B)
@@ -832,7 +832,7 @@ def test_iterative_imputer_transform_recovery(rank):
     X_test_filled = X_filled[n:]
     X_test = X_missing[n:]
 
-    imputer = IterativeImputer(max_iter=10,
+    imputer = IterativeImputer(max_iter=5,
                                verbose=1,
                                random_state=rng).fit(X_train)
     X_test_est = imputer.transform(X_test)
@@ -890,7 +890,7 @@ def test_iterative_imputer_early_stopping():
     X_missing[nan_mask] = np.nan
 
     imputer = IterativeImputer(max_iter=100,
-                               tol=1e-3,
+                               tol=1e-2,
                                sample_posterior=False,
                                verbose=1,
                                random_state=rng)
