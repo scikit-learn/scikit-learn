@@ -20,6 +20,7 @@ from ..model_selection import train_test_split
 from ..preprocessing import LabelBinarizer
 from ..utils import gen_batches, check_random_state
 from ..utils import shuffle
+from ..utils import safe_indexing
 from ..utils import check_array, check_X_y, column_or_1d
 from ..exceptions import ConvergenceWarning
 from ..utils.extmath import safe_sparse_dot
@@ -513,17 +514,15 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                 for batch_slice in gen_batches(n_samples, batch_size):
                     # only use integer indexing when it is needed
                     if self.shuffle:
-                        X_batch = X[idx[batch_slice]]
-                        y_batch = y[idx[batch_size]]
+                        X_batch = safe_indexing(X, idx[batch_slice])
+                        y_batch = y[idx[batch_slice]]
                     else:
                         X_batch = X[batch_slice]
                         y_batch = y[batch_slice]
 
                     activations[0] = X_batch
                     batch_loss, coef_grads, intercept_grads = self._backprop(
-                        X_batch,
-                        y_batch,
-                        activations, deltas,
+                        X_batch, y_batch, activations, deltas,
                         coef_grads, intercept_grads)
                     accumulated_loss += batch_loss * (batch_slice.stop -
                                                       batch_slice.start)
