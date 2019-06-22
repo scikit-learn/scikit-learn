@@ -751,7 +751,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         if self.with_std:
             if self.with_std not in (1, 2, True):
                 raise ValueError("Invalid value for 'with_std': %s" %
-                                 str(self.with_std))
+                                 self.with_std)
             self.scale_ = _handle_zeros_in_scale(
                                 self.with_std * np.sqrt(self.var_))
         else:
