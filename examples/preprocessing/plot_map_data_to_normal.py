@@ -53,7 +53,8 @@ BINS = 30
 rng = np.random.RandomState(304)
 bc = PowerTransformer(method='box-cox')
 yj = PowerTransformer(method='yeo-johnson')
-qt = QuantileTransformer(n_quantiles=500, output_distribution='normal', random_state=rng)
+qt = QuantileTransformer(n_quantiles=500, output_distribution='normal',
+                         random_state=rng)
 size = (N_SAMPLES, 1)
 
 
@@ -135,3 +136,4 @@ for distribution, color, axes in zip(distributions, colors, axes_list):
 
 plt.tight_layout()
 plt.show()
+
