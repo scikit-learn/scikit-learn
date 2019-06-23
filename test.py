@@ -2,7 +2,9 @@ import os
 from os.path import exists
 from os.path import join
 import warnings
+
 import numpy as np
+
 from sklearn.utils import IS_PYPY
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import check_skip_network
@@ -60,12 +62,13 @@ def setup_unsupervised_learning():
     warnings.filterwarnings('ignore', 'The binary mode of fromstring',
                             DeprecationWarning)
 
-
-def default_numpy():
+def default_thirtytwo_bit():
     if np.iinfo(np.int).dtype != np.int64:
         warn(UserWarning, "Your default numpy int is a 32 bit one, it may be because you are "
                       "running a 32 bit Python (or more complicated if you're on Windows "
                       "or Mac. This causes some docstring tests to fail on your machine....")
+
+
 
 
 def pytest_runtest_setup(item):
