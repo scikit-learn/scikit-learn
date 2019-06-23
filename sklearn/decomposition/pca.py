@@ -353,9 +353,10 @@ class PCA(_BasePCA):
         -------
         X_new : array-like, shape (n_samples, n_components)
 
-
-        ..note:: This method changes a c-order array to an f-order array.
-        To get the output matrix in the original order,
+        Notes
+        -----
+        This method returns an f-ordered array.
+        To get the output array in c-order,
         do a transpose of the result i.e
 
         y = PCA().fit_transform(x)
