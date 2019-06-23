@@ -2316,8 +2316,7 @@ def test_standard_scaler_with_std():
     assert np.isclose(X_scaled.std(), 1.0)
 
 
-@pytest.mark.parametrize('with_std', [-10, -1, 3, 10])
-def test_scale_with_std(with_std):
+def test_scale_with_std():
     rng = np.random.RandomState(0)
     X = rng.randint(0, 2, (100, 2))
     X_scaled = scale(X, copy=True, with_mean=True, with_std=2)
@@ -2326,6 +2325,13 @@ def test_scale_with_std(with_std):
     X_scaled = scale(X, copy=True, with_mean=True, with_std=True)
     assert np.isclose(X_scaled.mean(), 0.0)
     assert np.isclose(X_scaled.std(), 1.0)
+
+
+@pytest.mark.parametrize('with_std', [-10, -1, 3, 10])
+def test_scale_with_std_error(with_std):
+    rng = np.random.RandomState(0)
+    X = rng.randint(0, 2, (100, 2))
+
     # Test for invalid cases
     with pytest.raises(ValueError) as excinfo:
         scale(X, with_std=with_std)
