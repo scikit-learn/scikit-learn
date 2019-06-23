@@ -67,10 +67,7 @@ def default_numpy_int _32 _bit_one():
         warn(UserWarning, "Your default numpy int is a 32 bit one, it may be because you are "
                       "running a 32 bit Python (or more complicated if you're on Windows "
                       "or Mac. This causes some docstring tests to fail on your machine....")
-
-
-
-
+        
 def pytest_runtest_setup(item):
     fname = item.fspath.strpath
     is_index = fname.endswith('datasets/index.rst')
