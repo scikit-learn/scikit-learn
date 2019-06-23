@@ -62,6 +62,14 @@ def setup_unsupervised_learning():
     warnings.filterwarnings('ignore', 'The binary mode of fromstring',
                             DeprecationWarning)
 
+def default_numpy_int _32 _bit_one():
+    if np.iinfo(np.int).dtype != np.int64:
+        warn(UserWarning, "Your default numpy int is a 32 bit one, it may be because you are "
+                      "running a 32 bit Python (or more complicated if you're on Windows "
+                      "or Mac. This causes some docstring tests to fail on your machine....")
+
+
+
 
 def pytest_runtest_setup(item):
     fname = item.fspath.strpath
