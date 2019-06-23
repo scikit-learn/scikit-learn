@@ -1,6 +1,7 @@
 import sys
 from io import StringIO
 import numpy as np
+from numpy.testing import assert_allclose
 import scipy.sparse as sp
 
 import pytest
@@ -274,10 +275,10 @@ def test_fit_csr_matrix():
     X[(np.random.randint(0, 50, 25), np.random.randint(0, 2, 25))] = 0.0
     X_csr = sp.csr_matrix(X)
     tsne = TSNE(n_components=2, perplexity=10, learning_rate=100.0,
-                random_state=0, method='exact', n_iter=500)
+                random_state=0, method='exact', n_iter=750)
     X_embedded = tsne.fit_transform(X_csr)
-    assert_almost_equal(trustworthiness(X_csr, X_embedded, n_neighbors=1), 1.0,
-                        decimal=1)
+    assert_allclose(trustworthiness(X_csr, X_embedded, n_neighbors=1),
+                    1.0, rtol=1.1e-1)
 
 
 def test_preserve_trustworthiness_approximately_with_precomputed_distances():
