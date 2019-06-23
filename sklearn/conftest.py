@@ -23,8 +23,8 @@ def pyplot():
     yield pyplot
     pyplot.close('all')
 if np.iinfo(np.int).dtype != np.int64:
-    warnings.warn("Your default numpy int is a 32 bit one, it may be because you are "
+    warnings.warn(UserWarning("Your default numpy int is a 32 bit one, it may be because you are "
                       "running a 32 bit Python (or more complicated if you're on Windows "
-                      "or Mac. This causes some docstring tests to fail on your machine....")
+                      "or Mac. This causes some docstring tests to fail on your machine...."))
 
 
