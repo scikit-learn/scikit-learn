@@ -22,15 +22,16 @@ optimization.
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
 import math
-from inspect import signature
 import warnings
 
 import numpy as np
 from scipy.special import kv, gamma
 from scipy.spatial.distance import pdist, cdist, squareform
 
-from ..metrics.pairwise import pairwise_kernels
 from ..base import clone
+from ..exceptions import SignatureError
+from ..metrics.pairwise import pairwise_kernels
+from ..utils import get_param_names_from_constructor
 
 
 def _check_length_scale(X, length_scale):
@@ -140,26 +141,18 @@ class Kernel(metaclass=ABCMeta):
 
         # introspect the constructor arguments to find the model parameters
         # to represent
-        cls = self.__class__
-        init = getattr(cls.__init__, 'deprecated_original', cls.__init__)
-        init_sign = signature(init)
-        args, varargs = [], []
-        for parameter in init_sign.parameters.values():
-            if (parameter.kind != parameter.VAR_KEYWORD and
-                    parameter.name != 'self'):
-                args.append(parameter.name)
-            if parameter.kind == parameter.VAR_POSITIONAL:
-                varargs.append(parameter.name)
-
-        if len(varargs) != 0:
-            raise RuntimeError("scikit-learn kernels should always "
-                               "specify their parameters in the signature"
-                               " of their __init__ (no varargs)."
-                               " %s doesn't follow this convention."
-                               % (cls, ))
-        for arg in args:
+        try:
+            param_names = get_param_names_from_constructor(self.__class__)
+        except SignatureError as e:
+            raise SignatureError("scikit-learn kernels should always "
+                                 "specify their parameters in the signature"
+                                 " of their __init__ (no varargs)."
+                                 " %s with constructor %s doesn't "
+                                 " follow this convention."
+                                 % (self.__class__, e.signature))
+        for key in param_names:
             try:
-                value = getattr(self, arg)
+                value = getattr(self, key)
             except AttributeError:
                 warnings.warn('From version 0.24, get_params will raise an '
                               'AttributeError if a parameter cannot be '
@@ -167,7 +160,7 @@ class Kernel(metaclass=ABCMeta):
                               'it would return None.',
                               FutureWarning)
                 value = None
-            params[arg] = value
+            params[key] = value
         return params
 
     def set_params(self, **params):
