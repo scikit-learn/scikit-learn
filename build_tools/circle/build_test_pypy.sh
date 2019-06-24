@@ -34,6 +34,6 @@ export PYPY_GC_MAX="4GB"
 
 pip install -vv -e .
 
-python -m pytest sklearn/
+python -m pytest -v sklearn/
 python -m pytest doc/sphinxext/
 python -m pytest $(find doc -name '*.rst' | sort)
