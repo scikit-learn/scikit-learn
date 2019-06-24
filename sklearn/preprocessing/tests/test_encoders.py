@@ -673,6 +673,6 @@ def test_categories(density, drop):
     assert ohe_test.drop_idx_.dtype == np.int_
 
 
-@pytest.mark.parametrize('encoder', [OneHotEncoder, OrdinalEncoder])
-def test_encoders_has_categorical_tags(encoder):
-    assert 'categorical' in encoder()._get_tags()['X_types']
+@pytest.mark.parametrize('Encoder', [OneHotEncoder, OrdinalEncoder])
+def test_encoders_has_categorical_tags(Encoder):
+    assert 'categorical' in Encoder()._get_tags()['X_types']
