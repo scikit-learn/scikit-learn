@@ -1,5 +1,4 @@
-# cython: profile=True, boundscheck=False, wraparound=False, cdivision=True, initializedcheck=False
-# cython: language_level=3
+# cython: profile=True, boundscheck=False, wraparound=False, cdivision=True
 #
 # Licence: BSD 3 clause
 
