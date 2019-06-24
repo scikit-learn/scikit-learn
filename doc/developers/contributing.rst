@@ -1516,7 +1516,7 @@ The current set of estimator tags are:
 non_deterministic
     whether the estimator is not deterministic given a fixed ``random_state``
 
-requires_positive_data - unused for now
+requires_positive_X - unused for now
     whether the estimator requires positive X.
 
 requires_positive_y
