@@ -12,12 +12,33 @@ Version 0.21.3
 Changelog
 ---------
 
+:mod:`sklearn.impute`
+.....................
+
+- |Fix| Fixed a bug in :class:`SimpleImputer` and :class:`IterativeImputer`
+  so that no errors are thrown when there are missing values in training data.
+  :pr:`13974` by `Frank Hoang <fhoang7>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 - |Fix| Fixed a bug in :class:`linear_model.LogisticRegressionCV` where
   ``refit=False`` would fail depending on the ``'multiclass'`` and
   ``'penalty'`` parameters (regression introduced in 0.21). :pr:`14087` by
   `Nicolas Hug`_.
+
+:mod:`sklearn.tree`
+...................
+
+- |Fix| Fixed bug in :func:`tree.export_text` when the tree has one feature and 
+  a single feature name is passed in. :pr:`14053` by `Thomas Fan`
+
+:mod:`sklearn.neighbors`
+........................
+
+- |Fix| Fixed a bug in :class:`neighbors.NeighborhoodComponentsAnalysis` where
+  the validation of initial parameters ``n_components``, ``max_iter`` and
+  ``tol`` required too strict types. :pr:`14092` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 .. _changes_0_21_2:
 

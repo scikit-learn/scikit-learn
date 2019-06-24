@@ -16,6 +16,7 @@ Seeding is performed using a binning technique for scalability.
 
 import numpy as np
 import warnings
+from joblib import Parallel, delayed
 
 from collections import defaultdict
 from ..utils.validation import check_is_fitted
@@ -23,8 +24,6 @@ from ..utils import check_random_state, gen_batches, check_array
 from ..base import BaseEstimator, ClusterMixin
 from ..neighbors import NearestNeighbors
 from ..metrics.pairwise import pairwise_distances_argmin
-from ..utils._joblib import Parallel
-from ..utils._joblib import delayed
 
 
 def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0,
