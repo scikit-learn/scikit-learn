@@ -368,6 +368,9 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
 
     # limit number of threads in second level of nested parallelism (i.e. BLAS)
     # to avoid oversubsciption
+    if n_jobs is None:
+        n_jobs = 1
+
     with thread_limits_context(limits=1, subset="blas"):
         for seed in seeds:
             # run a k-means once
@@ -686,6 +689,9 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers, n_jobs=1):
     inertia : float
         Sum of squared distances of samples to their closest cluster center.
     """
+    if n_jobs is None:
+        n_jobs = 1
+
     n_samples = X.shape[0]
     sample_weight = _check_sample_weight(X, sample_weight)
     labels = np.full(n_samples, -1, dtype=np.int32)

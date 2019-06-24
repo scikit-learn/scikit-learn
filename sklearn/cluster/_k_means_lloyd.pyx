@@ -9,7 +9,7 @@ cimport openmp
 from cython cimport floating
 from cython.parallel import prange, parallel
 from libc.math cimport sqrt
-from libc.stdlib cimport malloc, free
+from libc.stdlib cimport malloc, calloc, free
 from libc.string cimport memset, memcpy
 from libc.float cimport DBL_MAX, FLT_MAX
 
@@ -97,43 +97,61 @@ cpdef void _lloyd_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
 
         int j, k
 
-    # If n_samples < 256 there's still one chunk of size n_samples_rem
-    if n_chunks == 0:
-        n_chunks = 1
-        n_samples_chunk = 0
+        floating *centers_new_chunk
+        floating *weight_in_clusters_chunk
+        floating *pairwise_distances_chunk
+
+    # count remainder chunk in total number of chunks
+    n_chunks += n_samples != n_chunks * n_samples_chunk
 
     # re-initialize all arrays at each iteration
     centers_squared_norms = row_norms(centers_new, squared=True)
-
     if update_centers:
         memcpy(&centers_old[0, 0], &centers_new[0, 0], n_clusters * n_features * sizeof(floating))
         memset(&centers_new[0, 0], 0, n_clusters * n_features * sizeof(floating))
         memset(&weight_in_clusters[0], 0, n_clusters * sizeof(floating))
 
-    for chunk_idx in prange(n_chunks, nogil=True, num_threads=n_jobs):
-        # remaining samples added to last chunk
-        if chunk_idx == n_chunks - 1:
-            n_samples_chunk_eff = n_samples_chunk + n_samples_rem
-        else:
-            n_samples_chunk_eff = n_samples_chunk
+    with nogil, parallel(num_threads=n_jobs):
+        # thread local buffers
+        centers_new_chunk = <floating*> calloc(n_clusters * n_features, sizeof(floating))
+        weight_in_clusters_chunk = <floating*> calloc(n_clusters, sizeof(floating))
+        pairwise_distances_chunk = <floating*> malloc(n_samples_chunk * n_clusters * sizeof(floating))
 
-        start = chunk_idx * n_samples_chunk
-        end = start + n_samples_chunk_eff
+        for chunk_idx in prange(n_chunks):
+            start = chunk_idx * n_samples_chunk
+            if chunk_idx == n_chunks - 1 and n_samples_rem > 0:
+                end = start + n_samples_rem
+            else:
+                end = start + n_samples_chunk
 
-        _update_chunk_dense(
-            &X[start, 0],
-            sample_weight[start: end],
-            x_squared_norms[start: end],
-            centers_old,
-            centers_new,
-            centers_squared_norms,
-            weight_in_clusters,
-            labels[start: end],
-            update_centers)
+            _update_chunk_dense(
+                &X[start, 0],
+                sample_weight[start: end],
+                x_squared_norms[start: end],
+                centers_old,
+                centers_squared_norms,
+                labels[start: end],
+                centers_new_chunk,
+                weight_in_clusters_chunk,
+                pairwise_distances_chunk,
+                update_centers)
+
+        # reduction from local buffers. The gil is necessary for that to avoid
+        # race conditions.
+        if update_centers:
+            with gil:
+                for j in range(n_clusters):
+                    weight_in_clusters[j] += weight_in_clusters_chunk[j]
+                    for k in range(n_features):
+                        centers_new[j, k] += centers_new_chunk[j * n_features + k]
+
+        free(centers_new_chunk)
+        free(weight_in_clusters_chunk)
+        free(pairwise_distances_chunk)
 
     if update_centers:
         _relocate_empty_clusters_dense(X, sample_weight, centers_old,
-                                       centers_new, weight_in_clusters, labels)
+                                    centers_new, weight_in_clusters, labels)
 
         _average_centers(centers_new, weight_in_clusters)
         _center_shift(centers_old, centers_new, center_shift)
@@ -143,10 +161,11 @@ cdef void _update_chunk_dense(floating *X,
                               floating[::1] sample_weight,
                               floating[::1] x_squared_norms,
                               floating[:, ::1] centers_old,
-                              floating[:, ::1] centers_new,
                               floating[::1] centers_squared_norms,
-                              floating[::1] weight_in_clusters,
                               int[::1] labels,
+                              floating *centers_new,
+                              floating *weight_in_clusters,
+                              floating *pairwise_distances,
                               bint update_centers) nogil:
     """K-means combined EM step for one dense data chunk.
 
@@ -161,43 +180,34 @@ cdef void _update_chunk_dense(floating *X,
         floating sq_dist, min_sq_dist
         int i, j, k, label
 
-        floating *pairwise_distances_ptr = <floating*> malloc(n_samples * n_clusters * sizeof(floating))
-        floating[:, ::1] pairwise_distances
-
-    with gil:
-        pairwise_distances = <floating[:n_samples, :n_clusters:1]> pairwise_distances_ptr
-
     # Instead of computing the full pairwise squared distances matrix,
     # ||X - C||² = ||X||² - 2 X.C^T + ||C||², we only need to store
     # the - 2 X.C^T + ||C||² term since the argmin for a given sample only
     # depends on the centers.
     for i in range(n_samples):
         for j in range(n_clusters):
-            pairwise_distances[i, j] = centers_squared_norms[j]
+            pairwise_distances[i * n_clusters + j] = centers_squared_norms[j]
 
     _gemm(RowMajor, NoTrans, Trans, n_samples, n_clusters, n_features,
           -2.0, X, n_features, &centers_old[0, 0], n_features,
-          1.0, pairwise_distances_ptr, n_clusters)
+          1.0, pairwise_distances, n_clusters)
 
     for i in range(n_samples):
-        min_sq_dist = pairwise_distances[i, 0]
+        min_sq_dist = pairwise_distances[i * n_clusters]
         label = 0
         for j in range(1, n_clusters):
-            sq_dist = pairwise_distances[i, j]
+            sq_dist = pairwise_distances[i * n_clusters + j]
             if sq_dist < min_sq_dist:
                 min_sq_dist = sq_dist
                 label = j
         labels[i] = label
 
-    free(pairwise_distances_ptr)
-
+    # XXX try inside prev loop
     if update_centers:
-        # The gil is necessary for that to avoid race conditions.
-        with gil:
-            for i in range(n_samples):
-                weight_in_clusters[labels[i]] += sample_weight[i]
-                for k in range(n_features):
-                    centers_new[labels[i], k] += X[i * n_features + k] * sample_weight[i]
+        for i in range(n_samples):
+            weight_in_clusters[labels[i]] += sample_weight[i]
+            for k in range(n_features):
+                centers_new[labels[i] * n_features + k] += X[i * n_features + k] * sample_weight[i]
 
 
 cpdef void _lloyd_iter_chunked_sparse(X,
@@ -271,48 +281,58 @@ cpdef void _lloyd_iter_chunked_sparse(X,
         int start = 0, end = 0
 
         int j, k
-        floating alpha
 
         floating[::1] X_data = X.data
         int[::1] X_indices = X.indices
         int[::1] X_indptr = X.indptr
 
-    # If n_samples < 256 there's still one chunk of size n_samples_rem
-    if n_chunks == 0:
-        n_chunks = 1
-        n_samples_chunk = 0
+    # count remainder chunk in total number of chunks
+    n_chunks += n_samples != n_chunks * n_samples_chunk
 
     # re-initialize all arrays at each iteration
     centers_squared_norms = row_norms(centers_new, squared=True)
-
     if update_centers:
         memcpy(&centers_old[0, 0], &centers_new[0, 0], n_clusters * n_features * sizeof(floating))
         memset(&centers_new[0, 0], 0, n_clusters * n_features * sizeof(floating))
         memset(&weight_in_clusters[0], 0, n_clusters * sizeof(floating))
 
-    for chunk_idx in prange(n_chunks, nogil=True, num_threads=n_jobs):
-        # remaining samples added to last chunk
-        if chunk_idx == n_chunks - 1:
-            n_samples_chunk_eff = n_samples_chunk + n_samples_rem
-        else:
-            n_samples_chunk_eff = n_samples_chunk
+    with nogil, parallel(num_threads=n_jobs):
+        # thread local buffers
+        centers_new_chunk = <floating*> calloc(n_clusters * n_features, sizeof(floating))
+        weight_in_clusters_chunk = <floating*> calloc(n_clusters, sizeof(floating))
 
-        start = chunk_idx * n_samples_chunk
-        end = start + n_samples_chunk_eff
+        for chunk_idx in prange(n_chunks):
+            start = chunk_idx * n_samples_chunk
+            if chunk_idx == n_chunks - 1 and n_samples_rem > 0:
+                end = start + n_samples_rem
+            else:
+                end = start + n_samples_chunk
 
-        _update_chunk_sparse(
-            X_data[X_indptr[start]: X_indptr[end]],
-            X_indices[X_indptr[start]: X_indptr[end]],
-            X_indptr[start: end],
-            sample_weight[start: end],
-            x_squared_norms[start: end],
-            centers_old,
-            centers_new,
-            centers_squared_norms,
-            weight_in_clusters,
-            labels[start: end],
-            update_centers)
+            _update_chunk_sparse(
+                X_data[X_indptr[start]: X_indptr[end]],
+                X_indices[X_indptr[start]: X_indptr[end]],
+                X_indptr[start: end],
+                sample_weight[start: end],
+                x_squared_norms[start: end],
+                centers_old,
+                centers_squared_norms,
+                labels[start: end],
+                centers_new_chunk,
+                weight_in_clusters_chunk,
+                update_centers)
 
+        # reduction from local buffers. The gil is necessary for that to avoid
+        # race conditions.
+        if update_centers:
+            with gil:
+                for j in range(n_clusters):
+                    weight_in_clusters[j] += weight_in_clusters_chunk[j]
+                    for k in range(n_features):
+                        centers_new[j, k] += centers_new_chunk[j * n_features + k]
+
+        free(centers_new_chunk)
+        free(weight_in_clusters_chunk)
+    
     if update_centers:
         _relocate_empty_clusters_sparse(
             X_data, X_indices, X_indptr, sample_weight,
@@ -328,10 +348,10 @@ cdef void _update_chunk_sparse(floating[::1] X_data,
                                floating[::1] sample_weight,
                                floating[::1] x_squared_norms,
                                floating[:, ::1] centers_old,
-                               floating[:, ::1] centers_new,
                                floating[::1] centers_squared_norms,
-                               floating[::1] weight_in_clusters,
                                int[::1] labels,
+                               floating *centers_new,
+                               floating *weight_in_clusters,
                                bint update_centers) nogil:
     """K-means combined EM step for one sparse data chunk.
 
@@ -371,10 +391,7 @@ cdef void _update_chunk_sparse(floating[::1] X_data,
 
         labels[i] = label
 
-    if update_centers:
-        # The gil is necessary for that to avoid race conditions.
-        with gil:
-            for i in range(n_samples):
-                weight_in_clusters[labels[i]] += sample_weight[i]
-                for k in range(X_indptr[i] - s, X_indptr[i + 1] - s):
-                    centers_new[labels[i], X_indices[k]] += X_data[k] * sample_weight[i]
+    for i in range(n_samples):
+        weight_in_clusters[labels[i]] += sample_weight[i]
+        for k in range(X_indptr[i] - s, X_indptr[i + 1] - s):
+            centers_new[labels[i] * n_features + X_indices[k]] += X_data[k] * sample_weight[i]
