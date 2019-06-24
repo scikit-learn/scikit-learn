@@ -81,8 +81,8 @@ def plot_on_dataset(X, y, ax, name):
         mlps.append(mlp)
         print("Training set score: %f" % mlp.score(X, y))
         print("Training set loss: %f" % mlp.loss_)
-        for mlp, label, args in zip(mlps, labels, plot_args):
-            ax.plot(mlp.loss_curve_, label=label, **args)
+    for mlp, label, args in zip(mlps, labels, plot_args):
+        ax.plot(mlp.loss_curve_, label=label, **args)
 
 
 fig, axes = plt.subplots(2, 2, figsize=(15, 10))
