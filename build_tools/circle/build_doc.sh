@@ -132,6 +132,8 @@ pip install numpydoc==0.9
 # Build and install scikit-learn in dev mode
 python setup.py develop
 
+export OMP_NUM_THREADS=1
+
 if [[ "$CIRCLE_BRANCH" =~ ^master$ && -z "$CI_PULL_REQUEST" ]]
 then
     # List available documentation versions if on master
