@@ -13,6 +13,7 @@ import time
 
 import numpy as np
 from scipy import linalg
+from joblib import Parallel, delayed
 
 from .empirical_covariance_ import (empirical_covariance, EmpiricalCovariance,
                                     log_likelihood)
@@ -22,7 +23,6 @@ from ..utils.validation import check_random_state, check_array
 from ..linear_model import cd_fast
 from ..linear_model import lars_path_gram
 from ..model_selection import check_cv, cross_val_score
-from ..utils._joblib import Parallel, delayed
 
 
 # Helper functions to compute the objective and dual objective functions

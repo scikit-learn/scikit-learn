@@ -37,12 +37,15 @@ y = [-1, -1, -1, 1, 1, 1]
 
 
 # (X, y), n_targets  <-- as expected in the output of partial_dep()
-binary_classification_data = (make_classification(random_state=0), 1)
-multiclass_classification_data = (make_classification(n_classes=3,
+binary_classification_data = (make_classification(n_samples=50,
+                                                  random_state=0), 1)
+multiclass_classification_data = (make_classification(n_samples=50,
+                                                      n_classes=3,
                                                       n_clusters_per_class=1,
                                                       random_state=0), 3)
-regression_data = (make_regression(random_state=0), 1)
-multioutput_regression_data = (make_regression(n_targets=2, random_state=0), 2)
+regression_data = (make_regression(n_samples=50, random_state=0), 1)
+multioutput_regression_data = (make_regression(n_samples=50, n_targets=2,
+                                               random_state=0), 2)
 
 
 @pytest.mark.parametrize('Estimator, method, data', [

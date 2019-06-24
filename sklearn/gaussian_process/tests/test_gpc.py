@@ -113,12 +113,12 @@ def test_random_starts():
 @pytest.mark.parametrize('kernel', non_fixed_kernels)
 def test_custom_optimizer(kernel):
     # Test that GPC can use externally defined optimizers.
-    # Define a dummy optimizer that simply tests 50 random hyperparameters
+    # Define a dummy optimizer that simply tests 10 random hyperparameters
     def optimizer(obj_func, initial_theta, bounds):
         rng = np.random.RandomState(0)
         theta_opt, func_min = \
             initial_theta, obj_func(initial_theta, eval_gradient=False)
-        for _ in range(50):
+        for _ in range(10):
             theta = np.atleast_1d(rng.uniform(np.maximum(-2, bounds[:, 0]),
                                               np.minimum(1, bounds[:, 1])))
             f = obj_func(theta, eval_gradient=False)

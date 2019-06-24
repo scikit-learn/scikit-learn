@@ -14,9 +14,9 @@ from itertools import islice
 
 import numpy as np
 from scipy import sparse
+from joblib import Parallel, delayed
 
 from .base import clone, TransformerMixin
-from .utils._joblib import Parallel, delayed
 from .utils.metaestimators import if_delegate_has_method
 from .utils import Bunch, _print_elapsed_time
 from .utils.validation import check_memory
