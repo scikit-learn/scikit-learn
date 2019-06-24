@@ -795,9 +795,11 @@ class GenericUnivariateSelect(_BaseFilter):
 
         # Now perform some acrobatics to set the right named parameter in
         # the selector
-        possible_params = selector._get_param_names()
-        possible_params.remove('score_func')
-        selector.set_params(**{possible_params[0]: self.param})
+        possible_params = selector.get_params(deep=False)
+        possible_params.pop('score_func')
+        param_name = list(possible_params.keys())[0]
+        params = {param_name: self.param}
+        selector.set_params(**params)
 
         return selector
 
