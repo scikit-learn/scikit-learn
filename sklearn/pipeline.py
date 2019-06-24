@@ -14,9 +14,9 @@ from itertools import islice
 
 import numpy as np
 from scipy import sparse
+from joblib import Parallel, delayed
 
 from .base import clone, TransformerMixin
-from .utils._joblib import Parallel, delayed
 from .utils.metaestimators import if_delegate_has_method
 from .utils import Bunch, _print_elapsed_time
 from .utils.validation import check_memory
@@ -485,6 +485,25 @@ class Pipeline(_BaseComposition):
         for _, name, transform in self._iter(with_final=False):
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].decision_function(Xt)
+
+    @if_delegate_has_method(delegate='_final_estimator')
+    def score_samples(self, X):
+        """Apply transforms, and score_samples of the final estimator.
+
+        Parameters
+        ----------
+        X : iterable
+            Data to predict on. Must fulfill input requirements of first step
+            of the pipeline.
+
+        Returns
+        -------
+        y_score : ndarray, shape (n_samples,)
+        """
+        Xt = X
+        for _, _, transformer in self._iter(with_final=False):
+            Xt = transformer.transform(Xt)
+        return self.steps[-1][-1].score_samples(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def predict_log_proba(self, X):

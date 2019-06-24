@@ -11,9 +11,9 @@ from itertools import chain
 
 import numpy as np
 from scipy import sparse
+from joblib import Parallel, delayed
 
 from ..base import clone, TransformerMixin
-from ..utils._joblib import Parallel, delayed
 from ..pipeline import _fit_transform_one, _transform_one, _name_estimators
 from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
@@ -246,8 +246,8 @@ boolean mask array or callable
                 # skip in case of 'drop'
                 if trans == 'passthrough':
                     trans = FunctionTransformer(
-                        validate=False, accept_sparse=True,
-                        check_inverse=False)
+                        accept_sparse=True, check_inverse=False
+                    )
                 elif trans == 'drop':
                     continue
                 elif _is_empty_column_selection(column):
