@@ -4,7 +4,7 @@
 # enhancement of searching for the longest decreasing subsequence to
 # pool at each step.
 #
-# cython: language_level=3, boundscheck=False, wraparound=False, cdivision=True
+# cython: boundscheck=False, wraparound=False, cdivision=True
 
 import numpy as np
 cimport numpy as np

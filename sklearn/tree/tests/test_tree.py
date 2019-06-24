@@ -33,6 +33,7 @@ from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import TempMemmap
 
 from sklearn.utils.validation import check_random_state
 
@@ -1374,7 +1375,7 @@ def test_sparse_input(tree_type, dataset):
 
 
 @pytest.mark.parametrize("tree_type",
-                         set(SPARSE_TREES).intersection(REG_TREES))
+                         sorted(set(SPARSE_TREES).intersection(REG_TREES)))
 @pytest.mark.parametrize("dataset", ["boston", "reg_small"])
 def test_sparse_input_reg_trees(tree_type, dataset):
     # Due to numerical instability of MSE and too strict test, we limit the
@@ -1848,3 +1849,12 @@ def test_multi_target(name):
     # Try to fit and predict.
     clf.fit(X, y)
     clf.predict(X)
+
+
+def test_decision_tree_memmap():
+    # check that decision trees supports read-only buffer (#13626)
+    X = np.random.RandomState(0).random_sample((10, 2)).astype(np.float32)
+    y = np.zeros(10)
+
+    with TempMemmap((X, y)) as (X_read_only, y_read_only):
+        DecisionTreeClassifier().fit(X_read_only, y_read_only)

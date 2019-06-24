@@ -23,11 +23,11 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
 
-from sklearn.utils._joblib import joblib
-from sklearn.utils._joblib import parallel_backend
+import joblib
 
 rng = np.random.RandomState(0)
 # load and shuffle iris dataset
@@ -191,7 +191,6 @@ def test_precomputed(random_state=42):
         assert_array_almost_equal(pred_X, pred_D)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_precomputed_cross_validation():
     # Ensure array is split correctly
     rng = np.random.RandomState(0)
@@ -934,6 +933,7 @@ def test_neighbors_badargs():
 
     X = rng.random_sample((10, 2))
     Xsparse = csr_matrix(X)
+    X3 = rng.random_sample((10, 3))
     y = np.ones(10)
 
     for cls in (neighbors.KNeighborsClassifier,
@@ -947,6 +947,7 @@ def test_neighbors_badargs():
                       cls, p=-1)
         assert_raises(ValueError,
                       cls, algorithm='blah')
+
         nbrs = cls(algorithm='ball_tree', metric='haversine')
         assert_raises(ValueError,
                       nbrs.predict,
@@ -954,6 +955,14 @@ def test_neighbors_badargs():
         assert_raises(ValueError,
                       ignore_warnings(nbrs.fit),
                       Xsparse, y)
+
+        nbrs = cls(metric='haversine', algorithm='brute')
+        nbrs.fit(X3, y)
+        assert_raise_message(ValueError,
+                             "Haversine distance only valid in 2 dimensions",
+                             nbrs.predict,
+                             X3)
+
         nbrs = cls()
         assert_raises(ValueError,
                       nbrs.fit,
@@ -992,7 +1001,8 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
                ('chebyshev', {}),
                ('seuclidean', dict(V=rng.rand(n_features))),
                ('wminkowski', dict(p=3, w=rng.rand(n_features))),
-               ('mahalanobis', dict(VI=VI))]
+               ('mahalanobis', dict(VI=VI)),
+               ('haversine', {})]
     algorithms = ['brute', 'ball_tree', 'kd_tree']
     X = rng.rand(n_samples, n_features)
 
@@ -1014,8 +1024,15 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
                                                algorithm=algorithm,
                                                metric=metric, p=p,
                                                metric_params=metric_params)
-            neigh.fit(X)
-            results[algorithm] = neigh.kneighbors(test, return_distance=True)
+
+            # Haversine distance only accepts 2D data
+            feature_sl = (slice(None, 2)
+                          if metric == 'haversine' else slice(None))
+
+            neigh.fit(X[:, feature_sl])
+            results[algorithm] = neigh.kneighbors(test[:, feature_sl],
+                                                  return_distance=True)
+
         assert_array_almost_equal(results['brute'][0], results['ball_tree'][0])
         assert_array_almost_equal(results['brute'][1], results['ball_tree'][1])
         if 'kd_tree' in results:
@@ -1058,9 +1075,15 @@ def test_valid_brute_metric_for_auto_algorithm():
     require_params = ['mahalanobis', 'wminkowski', 'seuclidean']
     for metric in VALID_METRICS['brute']:
         if metric != 'precomputed' and metric not in require_params:
-            nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
-                                            metric=metric).fit(X)
-            nn.kneighbors(X)
+            nn = neighbors.NearestNeighbors(n_neighbors=3,
+                                            algorithm='auto',
+                                            metric=metric)
+            if metric != 'haversine':
+                nn.fit(X)
+                nn.kneighbors(X)
+            else:
+                nn.fit(X[:, :2])
+                nn.kneighbors(X[:, :2])
         elif metric == 'precomputed':
             X_precomputed = rng.random_sample((10, 4))
             Y_precomputed = rng.random_sample((3, 4))
@@ -1327,7 +1350,7 @@ def test_same_radius_neighbors_parallel(algorithm):
 def test_knn_forcing_backend(backend, algorithm):
     # Non-regression test which ensure the knn methods are properly working
     # even when forcing the global joblib backend.
-    with parallel_backend(backend):
+    with joblib.parallel_backend(backend):
         X, y = datasets.make_classification(n_samples=30, n_features=5,
                                             n_redundant=0, random_state=0)
         X_train, X_test, y_train, y_test = train_test_split(X, y)

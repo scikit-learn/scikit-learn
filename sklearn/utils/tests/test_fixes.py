@@ -9,7 +9,6 @@ import numpy as np
 import pytest
 
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_allclose
 
 from sklearn.utils.fixes import MaskedArray
 from sklearn.utils.fixes import _joblib_parallel_args
@@ -28,8 +27,8 @@ def test_masked_array_obj_dtype_pickleable():
 
 @pytest.mark.parametrize('joblib_version', ('0.11', '0.12.0'))
 def test_joblib_parallel_args(monkeypatch, joblib_version):
-    import sklearn.utils._joblib
-    monkeypatch.setattr(sklearn.utils._joblib, '__version__', joblib_version)
+    import joblib
+    monkeypatch.setattr(joblib, '__version__', joblib_version)
 
     if joblib_version == '0.12.0':
         # arguments are simply passed through

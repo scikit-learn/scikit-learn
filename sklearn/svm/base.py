@@ -126,7 +126,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         self : object
 
         Notes
-        ------
+        -----
         If X and y are not C-ordered and contiguous arrays of np.float64 and
         X is not a scipy.sparse.csr_matrix, X and/or y may be copied.
 
@@ -167,33 +167,19 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                              "boolean masks (use `indices=True` in CV)."
                              % (sample_weight.shape, X.shape))
 
-        if self.gamma in ('scale', 'auto_deprecated'):
-            if sparse:
-                # var = E[X^2] - E[X]^2
-                X_var = (X.multiply(X)).mean() - (X.mean()) ** 2
-            else:
-                X_var = X.var()
+        if isinstance(self.gamma, str):
             if self.gamma == 'scale':
-                if X_var != 0:
-                    self._gamma = 1.0 / (X.shape[1] * X_var)
-                else:
-                    self._gamma = 1.0
-            else:
-                kernel_uses_gamma = (not callable(self.kernel) and self.kernel
-                                     not in ('linear', 'precomputed'))
-                if kernel_uses_gamma and not np.isclose(X_var, 1.0):
-                    # NOTE: when deprecation ends we need to remove explicitly
-                    # setting `gamma` in examples (also in tests). See
-                    # https://github.com/scikit-learn/scikit-learn/pull/10331
-                    # for the examples/tests that need to be reverted.
-                    warnings.warn("The default value of gamma will change "
-                                  "from 'auto' to 'scale' in version 0.22 to "
-                                  "account better for unscaled features. Set "
-                                  "gamma explicitly to 'auto' or 'scale' to "
-                                  "avoid this warning.", FutureWarning)
+                # var = E[X^2] - E[X]^2 if sparse
+                X_var = ((X.multiply(X)).mean() - (X.mean()) ** 2
+                         if sparse else X.var())
+                self._gamma = 1.0 / (X.shape[1] * X_var) if X_var != 0 else 1.0
+            elif self.gamma == 'auto':
                 self._gamma = 1.0 / X.shape[1]
-        elif self.gamma == 'auto':
-            self._gamma = 1.0 / X.shape[1]
+            else:
+                raise ValueError(
+                    "When 'gamma' is a string, it should be either 'scale' or "
+                    "'auto'. Got '{}' instead.".format(self.gamma)
+                )
         else:
             self._gamma = self.gamma
 
@@ -293,7 +279,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         if hasattr(self, "classes_"):
             n_class = len(self.classes_) - 1
-        else:   # regression
+        else:  # regression
             n_class = 1
         n_SV = self.support_vectors_.shape[0]
 
@@ -501,8 +487,10 @@ class BaseSVC(BaseLibSVM, ClassifierMixin, metaclass=ABCMeta):
     @abstractmethod
     def __init__(self, kernel, degree, gamma, coef0, tol, C, nu,
                  shrinking, probability, cache_size, class_weight, verbose,
-                 max_iter, decision_function_shape, random_state):
+                 max_iter, decision_function_shape, random_state,
+                 break_ties):
         self.decision_function_shape = decision_function_shape
+        self.break_ties = break_ties
         super().__init__(
             kernel=kernel, degree=degree, gamma=gamma,
             coef0=coef0, tol=tol, C=C, nu=nu, epsilon=0., shrinking=shrinking,
@@ -540,7 +528,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin, metaclass=ABCMeta):
             n_classes).
 
         Notes
-        ------
+        -----
         If decision_function_shape='ovo', the function values are proportional
         to the distance of the samples X to the separating hyperplane. If the
         exact distances are required, divide the function values by the norm of
@@ -571,7 +559,17 @@ class BaseSVC(BaseLibSVM, ClassifierMixin, metaclass=ABCMeta):
         y_pred : array, shape (n_samples,)
             Class labels for samples in X.
         """
-        y = super().predict(X)
+        check_is_fitted(self, "classes_")
+        if self.break_ties and self.decision_function_shape == 'ovo':
+            raise ValueError("break_ties must be False when "
+                             "decision_function_shape is 'ovo'")
+
+        if (self.break_ties
+                and self.decision_function_shape == 'ovr'
+                and len(self.classes_) > 2):
+            y = np.argmax(self.decision_function(X), axis=1)
+        else:
+            y = super().predict(X)
         return self.classes_.take(np.asarray(y, dtype=np.intp))
 
     # Hacky way of getting predict_proba to raise an AttributeError when

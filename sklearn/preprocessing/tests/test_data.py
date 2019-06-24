@@ -18,7 +18,6 @@ from sklearn.utils import gen_batches
 
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import clean_warning_registry
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_less
@@ -941,26 +940,22 @@ def test_scaler_int():
     X_csc = sparse.csc_matrix(X)
 
     null_transform = StandardScaler(with_mean=False, with_std=False, copy=True)
-    clean_warning_registry()
     with warnings.catch_warnings(record=True):
         X_null = null_transform.fit_transform(X_csr)
     assert_array_equal(X_null.data, X_csr.data)
     X_orig = null_transform.inverse_transform(X_null)
     assert_array_equal(X_orig.data, X_csr.data)
 
-    clean_warning_registry()
     with warnings.catch_warnings(record=True):
         scaler = StandardScaler(with_mean=False).fit(X)
         X_scaled = scaler.transform(X, copy=True)
     assert not np.any(np.isnan(X_scaled))
 
-    clean_warning_registry()
     with warnings.catch_warnings(record=True):
         scaler_csr = StandardScaler(with_mean=False).fit(X_csr)
         X_csr_scaled = scaler_csr.transform(X_csr, copy=True)
     assert not np.any(np.isnan(X_csr_scaled.data))
 
-    clean_warning_registry()
     with warnings.catch_warnings(record=True):
         scaler_csc = StandardScaler(with_mean=False).fit(X_csc)
         X_csc_scaled = scaler_csc.transform(X_csc, copy=True)
@@ -1447,6 +1442,7 @@ def test_quantile_transform_sparse_toy():
     assert_array_almost_equal(X.toarray(), X_trans_inv.toarray())
 
 
+@pytest.mark.filterwarnings("ignore: The default value of `copy`")  # 0.23
 def test_quantile_transform_axis1():
     X = np.array([[0, 25, 50, 75, 100],
                   [2, 4, 6, 8, 10],
@@ -1524,6 +1520,18 @@ def test_quantile_transform_nan():
     assert np.isnan(transformer.quantiles_[:, 0]).all()
     # all other column should not contain NaN
     assert not np.isnan(transformer.quantiles_[:, 1:]).any()
+
+
+def test_deprecated_quantile_transform_copy():
+    future_message = ("The default value of `copy` will change from False to "
+                      "True in 0.23 in order to make it more consistent with "
+                      "the default `copy` values of other functions in "
+                      ":mod:`sklearn.preprocessing.data` and prevent "
+                      "unexpected side effects by modifying the value of `X` "
+                      "inplace. To avoid inplace modifications of `X`, it is "
+                      "recommended to explicitly set `copy=True`")
+    assert_warns_message(FutureWarning, future_message, quantile_transform,
+                         np.array([[0, 1], [0, 0.5], [1, 0]]))
 
 
 def test_robust_scaler_invalid_range():
@@ -2076,8 +2084,7 @@ def test_cv_pipeline_precomputed():
     y_true = np.ones((4,))
     K = X.dot(X.T)
     kcent = KernelCenterer()
-    pipeline = Pipeline([("kernel_centerer", kcent), ("svr",
-                        SVR(gamma='scale'))])
+    pipeline = Pipeline([("kernel_centerer", kcent), ("svr", SVR())])
 
     # did the pipeline set the _pairwise attribute?
     assert pipeline._pairwise
@@ -2141,6 +2148,7 @@ def test_fit_cold_start():
         scaler.fit_transform(X_2d)
 
 
+@pytest.mark.filterwarnings("ignore: The default value of `copy`")  # 0.23
 def test_quantile_transform_valid_axis():
     X = np.array([[0, 25, 50, 75, 100],
                   [2, 4, 6, 8, 10],

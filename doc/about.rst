@@ -1,3 +1,5 @@
+.. _about:
+
 About us
 ========
 
@@ -14,10 +16,15 @@ release, February the 1st 2010. Since then, several releases have appeared
 following a ~3 month cycle, and a thriving international community has
 been leading the development.
 
+Governance
+----------
+The decision making process and governance structure of scikit-learn is laid
+out in the :ref:`governance document <governance>`.
+
 Authors
 -------
 
-The following people have been core contributors to scikit-learn's development
+The following people are currently core contributors to scikit-learn's development
 and maintenance:
 
 .. include:: authors.rst
@@ -31,12 +38,45 @@ in the FAQ.
 
    :ref:`How you can contribute to the project <contributing>`
 
-.. _citing-scikit-learn:
+Emeritus Core Developers
+------------------------
+The following people have been active contributors in the past, but are no longer active in the project
 
-Governance
-----------
-The decision making process and governance structure of scikit-learn is laid
-out in the `governance document <governance>`_.
+
+- Alexander Fabisch
+- Alexandre Passos
+- Angel Soler Gollonet
+- Arnaud Joly
+- Chris Gorgolewski
+- David Cournapeau
+- David Warde-Farley
+- Eduard Duchesnay
+- Fabian Pedragosa
+- Gilles Louppe
+- Jacob Schreiber
+- Jake Vanderplas
+- Jaques Grobler
+- Jarrod Millman
+- Kyle Kastner
+- Lars Buitinck
+- Manoj Kumar
+- Mathieu Blondel
+- Matthieu Brucher
+- Noel Dawe
+- Paolo Losi
+- Peter Prettenhofer
+- Raghav Rajagopalan
+- Robert Layton
+- Ron Weiss
+- Satrajit Ghosh
+- Shiqiao Du
+- Thouis (Ray) Jones
+- Vincent Dubourg
+- Vincent Michel
+- Virgile Fritsch
+- Wei Li
+
+.. _citing-scikit-learn:
 
 Citing scikit-learn
 -------------------

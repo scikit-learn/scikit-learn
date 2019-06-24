@@ -17,14 +17,13 @@ from distutils.version import LooseVersion
 from inspect import signature
 
 from numpy.core.numeric import ComplexWarning
+import joblib
 
 from .fixes import _object_dtype_isnan
 from .. import get_config as _get_config
 from ..exceptions import NonBLASDotWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
-from ._joblib import Memory
-from ._joblib import __version__ as joblib_version
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
@@ -176,10 +175,10 @@ def check_memory(memory):
     """
 
     if memory is None or isinstance(memory, str):
-        if LooseVersion(joblib_version) < '0.12':
-            memory = Memory(cachedir=memory, verbose=0)
+        if LooseVersion(joblib.__version__) < '0.12':
+            memory = joblib.Memory(cachedir=memory, verbose=0)
         else:
-            memory = Memory(location=memory, verbose=0)
+            memory = joblib.Memory(location=memory, verbose=0)
     elif not hasattr(memory, 'cache'):
         raise ValueError("'memory' should be None, a string or have the same"
                          " interface as joblib.Memory."
@@ -332,7 +331,7 @@ def _ensure_no_complex_data(array):
 def check_array(array, accept_sparse=False, accept_large_sparse=True,
                 dtype="numeric", order=None, copy=False, force_all_finite=True,
                 ensure_2d=True, allow_nd=False, ensure_min_samples=1,
-                ensure_min_features=1, warn_on_dtype=False, estimator=None):
+                ensure_min_features=1, warn_on_dtype=None, estimator=None):
 
     """Input validation on an array, list, sparse matrix or similar.
 
@@ -351,11 +350,6 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         it will be converted to the first listed format. True allows the input
         to be any format. False means that a sparse matrix input will
         raise an error.
-
-        .. deprecated:: 0.19
-           Passing 'None' to parameter ``accept_sparse`` in methods is
-           deprecated in version 0.19 "and will be removed in 0.21. Use
-           ``accept_sparse=False`` instead.
 
     accept_large_sparse : bool (default=True)
         If a CSR, CSC, COO or BSR sparse matrix is supplied and accepted by
@@ -412,9 +406,13 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         dimensions or is originally 1D and ``ensure_2d`` is True. Setting to 0
         disables this check.
 
-    warn_on_dtype : boolean (default=False)
+    warn_on_dtype : boolean or None, optional (default=None)
         Raise DataConversionWarning if the dtype of the input data structure
         does not match the requested dtype, causing a memory copy.
+
+        .. deprecated:: 0.21
+            ``warn_on_dtype`` is deprecated in version 0.21 and will be
+            removed in 0.23.
 
     estimator : str or estimator instance (default=None)
         If passed, include the name of the estimator in warning messages.
@@ -423,16 +421,14 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     -------
     array_converted : object
         The converted and validated array.
-
     """
-    # accept_sparse 'None' deprecation check
-    if accept_sparse is None:
+    # warn_on_dtype deprecation
+    if warn_on_dtype is not None:
         warnings.warn(
-            "Passing 'None' to parameter 'accept_sparse' in methods "
-            "check_array and check_X_y is deprecated in version 0.19 "
-            "and will be removed in 0.21. Use 'accept_sparse=False' "
-            " instead.", DeprecationWarning)
-        accept_sparse = False
+            "'warn_on_dtype' is deprecated in version 0.21 and will be "
+            "removed in 0.23. Don't set `warn_on_dtype` to remove this "
+            "warning.",
+            DeprecationWarning)
 
     # store reference to original array to check if copy is needed when
     # function returns
@@ -604,7 +600,7 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
               dtype="numeric", order=None, copy=False, force_all_finite=True,
               ensure_2d=True, allow_nd=False, multi_output=False,
               ensure_min_samples=1, ensure_min_features=1, y_numeric=False,
-              warn_on_dtype=False, estimator=None):
+              warn_on_dtype=None, estimator=None):
     """Input validation for standard estimators.
 
     Checks X and y for consistent length, enforces X to be 2D and y 1D. By
@@ -628,11 +624,6 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
         it will be converted to the first listed format. True allows the input
         to be any format. False means that a sparse matrix input will
         raise an error.
-
-        .. deprecated:: 0.19
-           Passing 'None' to parameter ``accept_sparse`` in methods is
-           deprecated in version 0.19 "and will be removed in 0.21. Use
-           ``accept_sparse=False`` instead.
 
     accept_large_sparse : bool (default=True)
         If a CSR, CSC, COO or BSR sparse matrix is supplied and accepted by
@@ -694,9 +685,13 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
         it is converted to float64. Should only be used for regression
         algorithms.
 
-    warn_on_dtype : boolean (default=False)
+    warn_on_dtype : boolean or None, optional (default=None)
         Raise DataConversionWarning if the dtype of the input data structure
         does not match the requested dtype, causing a memory copy.
+
+        .. deprecated:: 0.21
+            ``warn_on_dtype`` is deprecated in version 0.21 and will be
+             removed in 0.23.
 
     estimator : str or estimator instance (default=None)
         If passed, include the name of the estimator in warning messages.
@@ -777,7 +772,7 @@ def check_random_state(seed):
     """
     if seed is None or seed is np.random:
         return np.random.mtrand._rand
-    if isinstance(seed, (numbers.Integral, np.integer)):
+    if isinstance(seed, numbers.Integral):
         return np.random.RandomState(seed)
     if isinstance(seed, np.random.RandomState):
         return seed

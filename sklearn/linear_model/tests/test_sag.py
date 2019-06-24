@@ -316,8 +316,7 @@ def test_sag_pobj_matches_logistic_regression():
     clf2 = clone(clf1)
     clf3 = LogisticRegression(fit_intercept=False, tol=.0000001,
                               C=1. / alpha / n_samples, max_iter=max_iter,
-                              random_state=10, multi_class='ovr',
-                              solver='lbfgs')
+                              random_state=10, multi_class='ovr')
 
     clf1.fit(X, y)
     clf2.fit(sp.csr_matrix(X), y)
@@ -452,13 +451,12 @@ def test_get_auto_step_size():
                          max_squared_sum_, alpha, "wrong", fit_intercept)
 
 
-@pytest.mark.filterwarnings('ignore:The max_iter was reached')
 def test_sag_regressor():
     """tests if the sag regressor performs well"""
     xmin, xmax = -5, 5
     n_samples = 20
     tol = .001
-    max_iter = 20
+    max_iter = 50
     alpha = 0.1
     rng = np.random.RandomState(0)
     X = np.linspace(xmin, xmax, n_samples).reshape(n_samples, 1)
@@ -467,7 +465,7 @@ def test_sag_regressor():
     y = 0.5 * X.ravel()
 
     clf1 = Ridge(tol=tol, solver='sag', max_iter=max_iter,
-                 alpha=alpha * n_samples)
+                 alpha=alpha * n_samples, random_state=rng)
     clf2 = clone(clf1)
     clf1.fit(X, y)
     clf2.fit(sp.csr_matrix(X), y)
@@ -593,7 +591,6 @@ def test_sag_multiclass_computed_correctly():
         assert_almost_equal(clf2.intercept_[i], intercept2[i], decimal=1)
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_classifier_results():
     """tests if classifier results match target"""
     alpha = .1
@@ -731,7 +728,6 @@ def test_multiclass_classifier_class_weight():
         assert_almost_equal(clf2.intercept_[i], intercept2[i], decimal=1)
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_classifier_single_class():
     """tests if ValueError is thrown with only one class"""
     X = [[1, 2], [3, 4]]
@@ -744,7 +740,6 @@ def test_classifier_single_class():
                          X, y)
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_step_size_alpha_error():
     X = [[0, 0], [0, 0]]
     y = [1, -1]

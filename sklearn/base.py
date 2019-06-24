@@ -8,11 +8,12 @@ import warnings
 from collections import defaultdict
 import platform
 import inspect
+import re
 
 import numpy as np
 
 from . import __version__
-from sklearn.utils import _IS_32BIT
+from .utils import _IS_32BIT
 
 _DEFAULT_TAGS = {
     'non_deterministic': False,
@@ -25,7 +26,9 @@ _DEFAULT_TAGS = {
     'stateless': False,
     'multilabel': False,
     '_skip_test': False,
-    'multioutput_only': False}
+    'multioutput_only': False,
+    'binary_only': False,
+    'requires_fit': True}
 
 
 def clone(estimator, safe=True):
@@ -233,10 +236,13 @@ class BaseEstimator:
 
         return self
 
-    def __repr__(self):
+    def __repr__(self, N_CHAR_MAX=700):
+        # N_CHAR_MAX is the (approximate) maximum number of non-blank
+        # characters to render. We pass it as an optional parameter to ease
+        # the tests.
+
         from .utils._pprint import _EstimatorPrettyPrinter
 
-        N_CHAR_MAX = 700  # number of non-whitespace or newline chars
         N_MAX_ELEMENTS_TO_SHOW = 30  # number of elements to show in sequences
 
         # use ellipsis for sequences with a lot of elements
@@ -246,10 +252,37 @@ class BaseEstimator:
 
         repr_ = pp.pformat(self)
 
-        # Use bruteforce ellipsis if string is very long
-        if len(''.join(repr_.split())) > N_CHAR_MAX:  # check non-blank chars
-            lim = N_CHAR_MAX // 2
-            repr_ = repr_[:lim] + '...' + repr_[-lim:]
+        # Use bruteforce ellipsis when there are a lot of non-blank characters
+        n_nonblank = len(''.join(repr_.split()))
+        if n_nonblank > N_CHAR_MAX:
+            lim = N_CHAR_MAX // 2  # apprx number of chars to keep on both ends
+            regex = r'^(\s*\S){%d}' % lim
+            # The regex '^(\s*\S){%d}' % n
+            # matches from the start of the string until the nth non-blank
+            # character:
+            # - ^ matches the start of string
+            # - (pattern){n} matches n repetitions of pattern
+            # - \s*\S matches a non-blank char following zero or more blanks
+            left_lim = re.match(regex, repr_).end()
+            right_lim = re.match(regex, repr_[::-1]).end()
+
+            if '\n' in repr_[left_lim:-right_lim]:
+                # The left side and right side aren't on the same line.
+                # To avoid weird cuts, e.g.:
+                # categoric...ore',
+                # we need to start the right side with an appropriate newline
+                # character so that it renders properly as:
+                # categoric...
+                # handle_unknown='ignore',
+                # so we add [^\n]*\n which matches until the next \n
+                regex += r'[^\n]*\n'
+                right_lim = re.match(regex, repr_[::-1]).end()
+
+            ellipsis = '...'
+            if left_lim + len(ellipsis) < len(repr_) - right_lim:
+                # Only add ellipsis if it results in a shorter repr
+                repr_ = repr_[:left_lim] + '...' + repr_[-right_lim:]
+
         return repr_
 
     def __getstate__(self):
@@ -359,10 +392,35 @@ class RegressorMixin:
         -------
         score : float
             R^2 of self.predict(X) wrt. y.
+
+        Notes
+        -----
+        The R2 score used when calling ``score`` on a regressor will use
+        ``multioutput='uniform_average'`` from version 0.23 to keep consistent
+        with `metrics.r2_score`. This will influence the ``score`` method of
+        all the multioutput regressors (except for
+        `multioutput.MultiOutputRegressor`). To specify the default value
+        manually and avoid the warning, please either call `metrics.r2_score`
+        directly or make a custom scorer with `metrics.make_scorer` (the
+        built-in scorer ``'r2'`` uses ``multioutput='uniform_average'``).
         """
 
         from .metrics import r2_score
-        return r2_score(y, self.predict(X), sample_weight=sample_weight,
+        from .metrics.regression import _check_reg_targets
+        y_pred = self.predict(X)
+        # XXX: Remove the check in 0.23
+        y_type, _, _, _ = _check_reg_targets(y, y_pred, None)
+        if y_type == 'continuous-multioutput':
+            warnings.warn("The default value of multioutput (not exposed in "
+                          "score method) will change from 'variance_weighted' "
+                          "to 'uniform_average' in 0.23 to keep consistent "
+                          "with 'metrics.r2_score'. To specify the default "
+                          "value manually and avoid the warning, please "
+                          "either call 'metrics.r2_score' directly or make a "
+                          "custom scorer with 'metrics.make_scorer' (the "
+                          "built-in scorer 'r2' uses "
+                          "multioutput='uniform_average').", FutureWarning)
+        return r2_score(y, y_pred, sample_weight=sample_weight,
                         multioutput='variance_weighted')
 
 

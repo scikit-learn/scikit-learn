@@ -11,8 +11,8 @@ jobs:
       py35_np_atlas:
         DISTRIB: 'ubuntu'
         PYTHON_VERSION: '3.5'
-        SKLEARN_SITE_JOBLIB: '1'
         JOBLIB_VERSION: '0.11'
+        SKLEARN_NO_OPENMP: 'True'
       # Linux + Python 3.5 build with OpenBLAS and without SITE_JOBLIB
       py35_conda_openblas:
         DISTRIB: 'conda'
@@ -22,10 +22,12 @@ jobs:
         SCIPY_VERSION: '0.17.0'
         CYTHON_VERSION: '*'
         PILLOW_VERSION: '4.0.0'
+        MATPLOTLIB_VERSION: '1.5.1'
+        # later version of joblib are not packaged in conda for Python 3.5
+        JOBLIB_VERSION: '0.12.3'
         COVERAGE: 'true'
       # Linux environment to test the latest available dependencies and MKL.
       # It runs tests requiring pandas and PyAMG.
-      # It also runs with the site joblib instead of the vendored copy of joblib.
       pylatest_conda:
         DISTRIB: 'conda'
         PYTHON_VERSION: '*'
@@ -37,10 +39,10 @@ jobs:
         PYAMG_VERSION: '*'
         PILLOW_VERSION: '*'
         JOBLIB_VERSION: '*'
+        MATPLOTLIB_VERSION: '*'
         COVERAGE: 'true'
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
         TEST_DOCSTRINGS: 'true'
-        SKLEARN_SITE_JOBLIB: '1'
         CHECK_WARNINGS: 'true'
 
 - template: build_tools/azure/posix.yml
