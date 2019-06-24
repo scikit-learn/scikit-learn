@@ -449,10 +449,6 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     if hasattr(array, "dtypes") and hasattr(array.dtypes, '__array__'):
         dtypes_orig = np.array(array.dtypes)
 
-    # extract the underlying numpy ndarray from a Pandas DataFrame
-    if hasattr(array, "iloc"):
-        array = array.values
-
     if dtype_numeric:
         if dtype_orig is not None and dtype_orig.kind == "O":
             # if input is object, convert to float.
