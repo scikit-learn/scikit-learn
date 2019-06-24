@@ -15,12 +15,8 @@ SVD_SOLVERS = ['arpack', 'randomized']
 @pytest.fixture(scope='module')
 def X_sparse():
     # Make an X that looks somewhat like a small tf-idf matrix.
-    # XXX newer versions of SciPy >0.16 have scipy.sparse.rand for this.
-    shape = (60, 55)
-    n_samples, n_features = shape
     rng = check_random_state(42)
-    X = rng.randint(-100, 20, np.product(shape)).reshape(shape)
-    X = sp.csr_matrix(np.maximum(X, 0), dtype=np.float64)
+    X = sp.random(60, 55, density=0.2, format="csr", random_state=rng)
     X.data[:] = 1 + np.log(X.data)
     return X
 
@@ -125,7 +121,7 @@ def test_explained_variance_components_10_20(X_sparse, kind, solver):
     assert_allclose(
         svd_10.explained_variance_ratio_,
         svd_20.explained_variance_ratio_[:10],
-        rtol=1e-3,
+        rtol=2e-3,
     )
 
     # Assert that 20 components has higher explained variance than 10
