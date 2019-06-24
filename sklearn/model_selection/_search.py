@@ -1414,16 +1414,16 @@ class RandomizedSearchCV(BaseSearchCV):
 
     Examples
     --------
-    >>> from sklearn import linear_model, datasets
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> from sklearn.datasets import load_iris
     >>> from sklearn.model_selection import RandomizedSearchCV
-    >>> from scipy.stats import  uniform
-    >>> iris = datasets.load_iris()
-    >>> logistic = linear_model.LogisticRegression(multi_class='auto',
-    ...                                             penalty='l2', max_iter=200)
+    >>> from scipy.stats import uniform
+    >>> iris = load_iris()
+    >>> logistic = LogisticRegression(max_iter=200)
     >>> hyperparameters = dict(C=uniform(loc=0, scale=4),
     ...                          solver=['newton-cg', 'lbfgs'])
     >>> clf = RandomizedSearchCV(logistic, hyperparameters,
-    ...                            random_state=0, cv=5)
+    ...                            random_state=0)
     >>> search = clf.fit(iris.data, iris.target)
     >>> search.best_params_
     {'C': 2.195254015709299, 'solver': 'lbfgs'}
