@@ -36,7 +36,7 @@ def test_solvers(X_sparse, solver, kind):
     comp = np.abs(svd.components_)
     # All elements are equal, but some elements are more equal than others.
     assert_allclose(comp_a[:9], comp[:9], rtol=1e-3)
-    assert_allclose(comp_a[9:], comp[9:], rtol=2e-1, atol=1e-2)
+    assert_allclose(comp_a[9:], comp[9:], atol=1e-2)
 
 
 @pytest.mark.parametrize("n_components", (10, 25, 41))
@@ -121,7 +121,7 @@ def test_explained_variance_components_10_20(X_sparse, kind, solver):
     assert_allclose(
         svd_10.explained_variance_ratio_,
         svd_20.explained_variance_ratio_[:10],
-        rtol=2e-3,
+        rtol=3e-3,
     )
 
     # Assert that 20 components has higher explained variance than 10
