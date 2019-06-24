@@ -269,7 +269,7 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
         should be either equal to ``None`` or ``1.0`` as AUC ROC partial
         computation currently is not supported for multiclass.
 
-    multiclass : string, 'ovr' or 'ovo', optional(default='ovr')
+    multiclass : string, 'ovr' or 'ovo', optional (default='ovr')
         Determines the type of multiclass configuration to use.
         ``'ovr'``:
             Calculate metrics for the multiclass case using the one-vs-rest
