@@ -246,6 +246,11 @@ Support for Python 3.4 and below has been officially dropped.
 - |API| :class:`compose.ColumnTransformer` is no longer an experimental
   feature. :pr:`13835` by :user:`Hanmin Qin <qinhanmin2014>`.
 
+- |Fix| Fixed a bug in :class:`cluster.BaseCluster`, the implementation of
+  function  ``_svd`` incorrectly assumed that the scipy based arpack call 
+  returns singular values in descending order. :issue:`12898` by 
+  :user:`Gyorgy Kovacs <gykovacs>`.
+
 :mod:`sklearn.datasets`
 .......................
 
