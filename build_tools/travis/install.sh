@@ -13,6 +13,9 @@
 
 set -e
 
+# Fail fast
+build_tools/travis/travis_fastfail.sh
+
 echo 'List files from cached directories'
 echo 'pip:'
 ls $HOME/.cache/pip
@@ -27,9 +30,6 @@ then
 	ccache --max-size 100M --show-stats
 elif [ $TRAVIS_OS_NAME = "osx" ]
 then
-    # install OpenMP not present by default on osx
-    brew install libomp
-
     # enable OpenMP support for Apple-clang
     export CC=/usr/bin/clang
     export CXX=/usr/bin/clang++
@@ -38,9 +38,6 @@ then
     export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
     export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
     export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
-
-    # avoid error due to multiple OpenMP libraries loaded simultaneously
-    export KMP_DUPLICATE_LIB_OK=TRUE
 fi
 
 make_conda() {
@@ -116,7 +113,6 @@ elif [[ "$DISTRIB" == "scipy-dev" ]]; then
     pip install --pre --upgrade --timeout=60 -f $dev_url numpy scipy pandas cython
     echo "Installing joblib master"
     pip install https://github.com/joblib/joblib/archive/master.zip
-    export SKLEARN_SITE_JOBLIB=1
     echo "Installing pillow master"
     pip install https://github.com/python-pillow/Pillow/archive/master.zip
     pip install pytest pytest-cov
@@ -149,3 +145,6 @@ then
 fi
 # Useful for debugging how ccache is used
 # cat $CCACHE_LOGFILE
+
+# fast fail
+build_tools/travis/travis_fastfail.sh

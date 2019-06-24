@@ -3,7 +3,7 @@ version: 2
 jobs:
   doc-min-dependencies:
     docker:
-      - image: circleci/python:3.6.1
+      - image: circleci/python:3.7.3-stretch
     environment:
       - MINICONDA_PATH: ~/miniconda
       - CONDA_ENV_NAME: testenv
@@ -32,7 +32,7 @@ jobs:
 
   doc:
     docker:
-      - image: circleci/python:3.6.1
+      - image: circleci/python:3.7.3-stretch
     environment:
       - MINICONDA_PATH: ~/miniconda
       - CONDA_ENV_NAME: testenv
@@ -61,7 +61,7 @@ jobs:
 
   lint:
     docker:
-      - image: circleci/python:3.6.1
+      - image: circleci/python:3.6
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
@@ -71,10 +71,13 @@ jobs:
       - run:
           name: flake8
           command: ./build_tools/circle/flake8_diff.sh
+      - run:
+          name: deprecated_properties_checks
+          command: ./build_tools/circle/check_deprecated_properties.sh
 
   pypy3:
     docker:
-      - image: pypy:3-6.0.0
+      - image: pypy:3-7.0.0
     steps:
       - restore_cache:
           keys:
@@ -90,7 +93,7 @@ jobs:
 
   deploy:
     docker:
-      - image: circleci/python:3.6.1
+      - image: circleci/python:3.6
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
@@ -109,9 +112,13 @@ workflows:
   version: 2
   build-doc-and-deploy:
     jobs:
-      - doc
-      - doc-min-dependencies
       - lint
+      - doc:
+          requires:
+            - lint
+      - doc-min-dependencies:
+          requires:
+            - lint
       - pypy3:
           filters:
             branches:

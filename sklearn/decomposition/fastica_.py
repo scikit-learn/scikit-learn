@@ -406,7 +406,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         point. Example:
 
         def my_g(x):
-            return x ** 3, 3 * x ** 2
+            return x ** 3, (3 * x ** 2).mean(axis=-1)
 
     fun_args : dictionary, optional
         Arguments to send to the functional form.

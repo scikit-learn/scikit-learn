@@ -18,7 +18,6 @@ from sklearn.utils import gen_batches
 
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import clean_warning_registry
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_less
@@ -53,7 +52,8 @@ from sklearn.preprocessing.data import add_dummy_feature
 from sklearn.preprocessing.data import PolynomialFeatures
 from sklearn.preprocessing.data import PowerTransformer
 from sklearn.preprocessing.data import power_transform
-from sklearn.exceptions import DataConversionWarning, NotFittedError
+from sklearn.preprocessing.data import BOUNDS_THRESHOLD
+from sklearn.exceptions import NotFittedError
 
 from sklearn.base import clone
 from sklearn.pipeline import Pipeline
@@ -149,8 +149,8 @@ def test_polynomial_feature_names():
     # test some unicode
     poly = PolynomialFeatures(degree=1, include_bias=True).fit(X)
     feature_names = poly.get_feature_names(
-        [u"\u0001F40D", u"\u262E", u"\u05D0"])
-    assert_array_equal([u"1", u"\u0001F40D", u"\u262E", u"\u05D0"],
+        ["\u0001F40D", "\u262E", "\u05D0"])
+    assert_array_equal(["1", "\u0001F40D", "\u262E", "\u05D0"],
                        feature_names)
 
 
@@ -204,7 +204,7 @@ def test_polynomial_features_csr_X(deg, include_bias, interaction_only, dtype):
     est = PolynomialFeatures(deg, include_bias=include_bias,
                              interaction_only=interaction_only)
     Xt_csr = est.fit_transform(X_csr.astype(dtype))
-    Xt_dense = est.fit_transform(X.astype(dtype))
+    Xt_dense = est.fit_transform(X.astype(dtype, copy=False))
 
     assert isinstance(Xt_csr, sparse.csr_matrix)
     assert Xt_csr.dtype == Xt_dense.dtype
@@ -940,26 +940,22 @@ def test_scaler_int():
     X_csc = sparse.csc_matrix(X)
 
     null_transform = StandardScaler(with_mean=False, with_std=False, copy=True)
-    clean_warning_registry()
     with warnings.catch_warnings(record=True):
         X_null = null_transform.fit_transform(X_csr)
     assert_array_equal(X_null.data, X_csr.data)
     X_orig = null_transform.inverse_transform(X_null)
     assert_array_equal(X_orig.data, X_csr.data)
 
-    clean_warning_registry()
     with warnings.catch_warnings(record=True):
         scaler = StandardScaler(with_mean=False).fit(X)
         X_scaled = scaler.transform(X, copy=True)
     assert not np.any(np.isnan(X_scaled))
 
-    clean_warning_registry()
     with warnings.catch_warnings(record=True):
         scaler_csr = StandardScaler(with_mean=False).fit(X_csr)
         X_csr_scaled = scaler_csr.transform(X_csr, copy=True)
     assert not np.any(np.isnan(X_csr_scaled.data))
 
-    clean_warning_registry()
     with warnings.catch_warnings(record=True):
         scaler_csc = StandardScaler(with_mean=False).fit(X_csc)
         X_csc_scaled = scaler_csc.transform(X_csc, copy=True)
@@ -1259,6 +1255,13 @@ def test_quantile_transform_check_error():
     assert_raise_message(ValueError,
                          'Expected 2D array, got scalar array instead',
                          transformer.transform, 10)
+    # check that a warning is raised is n_quantiles > n_samples
+    transformer = QuantileTransformer(n_quantiles=100)
+    warn_msg = "n_quantiles is set to n_samples"
+    with pytest.warns(UserWarning, match=warn_msg) as record:
+        transformer.fit(X)
+    assert len(record) == 1
+    assert transformer.n_quantiles_ == X.shape[0]
 
 
 def test_quantile_transform_sparse_ignore_zeros():
@@ -1439,6 +1442,7 @@ def test_quantile_transform_sparse_toy():
     assert_array_almost_equal(X.toarray(), X_trans_inv.toarray())
 
 
+@pytest.mark.filterwarnings("ignore: The default value of `copy`")  # 0.23
 def test_quantile_transform_axis1():
     X = np.array([[0, 25, 50, 75, 100],
                   [2, 4, 6, 8, 10],
@@ -1495,12 +1499,13 @@ def test_quantile_transform_bounds():
 
 
 def test_quantile_transform_and_inverse():
-    # iris dataset
-    X = iris.data
-    transformer = QuantileTransformer(n_quantiles=1000, random_state=0)
-    X_trans = transformer.fit_transform(X)
-    X_trans_inv = transformer.inverse_transform(X_trans)
-    assert_array_almost_equal(X, X_trans_inv)
+    X_1 = iris.data
+    X_2 = np.array([[0.], [BOUNDS_THRESHOLD / 10], [1.5], [2], [3], [3], [4]])
+    for X in [X_1, X_2]:
+        transformer = QuantileTransformer(n_quantiles=1000, random_state=0)
+        X_trans = transformer.fit_transform(X)
+        X_trans_inv = transformer.inverse_transform(X_trans)
+        assert_array_almost_equal(X, X_trans_inv, decimal=9)
 
 
 def test_quantile_transform_nan():
@@ -1515,6 +1520,18 @@ def test_quantile_transform_nan():
     assert np.isnan(transformer.quantiles_[:, 0]).all()
     # all other column should not contain NaN
     assert not np.isnan(transformer.quantiles_[:, 1:]).any()
+
+
+def test_deprecated_quantile_transform_copy():
+    future_message = ("The default value of `copy` will change from False to "
+                      "True in 0.23 in order to make it more consistent with "
+                      "the default `copy` values of other functions in "
+                      ":mod:`sklearn.preprocessing.data` and prevent "
+                      "unexpected side effects by modifying the value of `X` "
+                      "inplace. To avoid inplace modifications of `X`, it is "
+                      "recommended to explicitly set `copy=True`")
+    assert_warns_message(FutureWarning, future_message, quantile_transform,
+                         np.array([[0, 1], [0, 0.5], [1, 0]]))
 
 
 def test_robust_scaler_invalid_range():
@@ -1691,19 +1708,6 @@ def test_maxabs_scaler_transform_one_row_csr():
     assert_array_almost_equal(X_trans.toarray(), X_expected.toarray())
     X_scaled_back = scaler.inverse_transform(X_trans)
     assert_array_almost_equal(X.toarray(), X_scaled_back.toarray())
-
-
-def test_warning_scaling_integers():
-    # Check warning when scaling integer data
-    X = np.array([[1, 2, 0],
-                  [0, 0, 0]], dtype=np.uint8)
-
-    w = "Data with input dtype uint8 was converted to float64"
-
-    clean_warning_registry()
-    assert_warns_message(DataConversionWarning, w, scale, X)
-    assert_warns_message(DataConversionWarning, w, StandardScaler().fit, X)
-    assert_warns_message(DataConversionWarning, w, MinMaxScaler().fit, X)
 
 
 def test_maxabs_scaler_1d():
@@ -2080,8 +2084,7 @@ def test_cv_pipeline_precomputed():
     y_true = np.ones((4,))
     K = X.dot(X.T)
     kcent = KernelCenterer()
-    pipeline = Pipeline([("kernel_centerer", kcent), ("svr",
-                        SVR(gamma='scale'))])
+    pipeline = Pipeline([("kernel_centerer", kcent), ("svr", SVR())])
 
     # did the pipeline set the _pairwise attribute?
     assert pipeline._pairwise
@@ -2145,6 +2148,7 @@ def test_fit_cold_start():
         scaler.fit_transform(X_2d)
 
 
+@pytest.mark.filterwarnings("ignore: The default value of `copy`")  # 0.23
 def test_quantile_transform_valid_axis():
     X = np.array([[0, 25, 50, 75, 100],
                   [2, 4, 6, 8, 10],

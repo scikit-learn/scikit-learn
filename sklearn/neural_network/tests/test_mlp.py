@@ -5,6 +5,7 @@ Testing for Multi-layer Perceptron module (sklearn.neural_network)
 # Author: Issam H. Laradji
 # License: BSD 3 clause
 
+import pytest
 import sys
 import warnings
 
@@ -26,8 +27,6 @@ from sklearn.utils.testing import (assert_raises, assert_greater,
                                    assert_equal, ignore_warnings)
 from sklearn.utils.testing import assert_raise_message
 
-
-np.seterr(all='warn')
 
 ACTIVATION_TYPES = ["identity", "logistic", "tanh", "relu"]
 
@@ -176,7 +175,8 @@ def test_gradient():
     for n_labels in [2, 3]:
         n_samples = 5
         n_features = 10
-        X = np.random.random((n_samples, n_features))
+        random_state = np.random.RandomState(seed=42)
+        X = random_state.rand(n_samples, n_features)
         y = 1 + np.mod(np.arange(n_samples) + 1, n_labels)
         Y = LabelBinarizer().fit_transform(y)
 
@@ -307,7 +307,13 @@ def test_multilabel_classification():
         mlp.partial_fit(X, y, classes=[0, 1, 2, 3, 4])
     assert_greater(mlp.score(X, y), 0.9)
 
+    # Make sure early stopping still work now that spliting is stratified by
+    # default (it is disabled for multilabel classification)
+    mlp = MLPClassifier(early_stopping=True)
+    mlp.fit(X, y).predict(X)
 
+
+@pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
 def test_multioutput_regression():
     # Test that multi-output regression works as expected
     X, y = make_regression(n_samples=200, n_targets=5)
@@ -661,3 +667,15 @@ def test_n_iter_no_change_inf():
 
     # validate _update_no_improvement_count() was always triggered
     assert_equal(clf._no_improvement_count, clf.n_iter_ - 1)
+
+
+def test_early_stopping_stratified():
+    # Make sure data splitting for early stopping is stratified
+    X = [[1, 2], [2, 3], [3, 4], [4, 5]]
+    y = [0, 0, 0, 1]
+
+    mlp = MLPClassifier(early_stopping=True)
+    with pytest.raises(
+            ValueError,
+            match='The least populated class in y has only 1 member'):
+        mlp.fit(X, y)

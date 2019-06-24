@@ -1,5 +1,7 @@
 from itertools import chain, product
 import warnings
+import string
+import timeit
 
 import pytest
 import numpy as np
@@ -17,6 +19,7 @@ from sklearn.utils import column_or_1d
 from sklearn.utils import safe_indexing
 from sklearn.utils import shuffle
 from sklearn.utils import gen_even_slices
+from sklearn.utils import _message_with_time, _print_elapsed_time
 from sklearn.utils import get_chunk_n_rows
 from sklearn.utils import is_scalar_nan
 from sklearn.utils.mocking import MockDataFrame
@@ -65,7 +68,7 @@ def test_deprecated():
         warnings.simplefilter("always")
 
         @deprecated("don't use this")
-        class Ham(object):
+        class Ham:
             SPAM = 1
 
         ham = Ham()
@@ -88,6 +91,67 @@ def test_resample():
     assert_raises(ValueError, resample, [0, 1], [0, 1], meaning_of_life=42)
     # Issue:6581, n_samples can be more when replace is True (default).
     assert_equal(len(resample([1, 2], n_samples=5)), 5)
+
+
+def test_resample_stratified():
+    # Make sure resample can stratify
+    rng = np.random.RandomState(0)
+    n_samples = 100
+    p = .9
+    X = rng.normal(size=(n_samples, 1))
+    y = rng.binomial(1, p, size=n_samples)
+
+    _, y_not_stratified = resample(X, y, n_samples=10, random_state=0,
+                                   stratify=None)
+    assert np.all(y_not_stratified == 1)
+
+    _, y_stratified = resample(X, y, n_samples=10, random_state=0, stratify=y)
+    assert not np.all(y_stratified == 1)
+    assert np.sum(y_stratified) == 9  # all 1s, one 0
+
+
+def test_resample_stratified_replace():
+    # Make sure stratified resampling supports the replace parameter
+    rng = np.random.RandomState(0)
+    n_samples = 100
+    X = rng.normal(size=(n_samples, 1))
+    y = rng.randint(0, 2, size=n_samples)
+
+    X_replace, _ = resample(X, y, replace=True, n_samples=50,
+                            random_state=rng, stratify=y)
+    X_no_replace, _ = resample(X, y, replace=False, n_samples=50,
+                               random_state=rng, stratify=y)
+    assert np.unique(X_replace).shape[0] < 50
+    assert np.unique(X_no_replace).shape[0] == 50
+
+    # make sure n_samples can be greater than X.shape[0] if we sample with
+    # replacement
+    X_replace, _ = resample(X, y, replace=True, n_samples=1000,
+                            random_state=rng, stratify=y)
+    assert X_replace.shape[0] == 1000
+    assert np.unique(X_replace).shape[0] == 100
+
+
+def test_resample_stratify_2dy():
+    # Make sure y can be 2d when stratifying
+    rng = np.random.RandomState(0)
+    n_samples = 100
+    X = rng.normal(size=(n_samples, 1))
+    y = rng.randint(0, 2, size=(n_samples, 2))
+    X, y = resample(X, y, n_samples=50, random_state=rng, stratify=y)
+    assert y.ndim == 2
+
+
+def test_resample_stratify_sparse_error():
+    # resample must be ndarray
+    rng = np.random.RandomState(0)
+    n_samples = 100
+    X = rng.normal(size=(n_samples, 2))
+    y = rng.randint(0, 2, size=n_samples)
+    stratify = sp.csr_matrix(y)
+    with pytest.raises(TypeError, match='A sparse matrix was passed'):
+        X, y = resample(X, y, n_samples=50, random_state=rng,
+                        stratify=stratify)
 
 
 def test_safe_mask():
@@ -260,6 +324,62 @@ def test_get_chunk_n_rows(row_bytes, max_n_rows, working_memory,
                                max_n_rows=max_n_rows)
         assert actual == expected
         assert type(actual) is type(expected)
+
+
+@pytest.mark.parametrize(
+    ['source', 'message', 'is_long'],
+    [
+        ('ABC', string.ascii_lowercase, False),
+        ('ABCDEF', string.ascii_lowercase, False),
+        ('ABC', string.ascii_lowercase * 3, True),
+        ('ABC' * 10, string.ascii_lowercase, True),
+        ('ABC', string.ascii_lowercase + u'\u1048', False),
+    ])
+@pytest.mark.parametrize(
+    ['time', 'time_str'],
+    [
+        (0.2, '   0.2s'),
+        (20, '  20.0s'),
+        (2000, '33.3min'),
+        (20000, '333.3min'),
+    ])
+def test_message_with_time(source, message, is_long, time, time_str):
+    out = _message_with_time(source, message, time)
+    if is_long:
+        assert len(out) > 70
+    else:
+        assert len(out) == 70
+
+    assert out.startswith('[' + source + '] ')
+    out = out[len(source) + 3:]
+
+    assert out.endswith(time_str)
+    out = out[:-len(time_str)]
+    assert out.endswith(', total=')
+    out = out[:-len(', total=')]
+    assert out.endswith(message)
+    out = out[:-len(message)]
+    assert out.endswith(' ')
+    out = out[:-1]
+
+    if is_long:
+        assert not out
+    else:
+        assert list(set(out)) == ['.']
+
+
+@pytest.mark.parametrize(
+    ['message', 'expected'],
+    [
+        ('hello', _message_with_time('ABC', 'hello', 0.1) + '\n'),
+        ('', _message_with_time('ABC', '', 0.1) + '\n'),
+        (None, ''),
+    ])
+def test_print_elapsed_time(message, expected, capsys, monkeypatch):
+    monkeypatch.setattr(timeit, 'default_timer', lambda: 0)
+    with _print_elapsed_time('ABC', message):
+        monkeypatch.setattr(timeit, 'default_timer', lambda: 0.1)
+    assert capsys.readouterr().out == expected
 
 
 @pytest.mark.parametrize("value, result", [(float("nan"), True),

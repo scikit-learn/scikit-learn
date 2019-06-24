@@ -6,13 +6,15 @@ from os.path import join
 from warnings import warn
 from contextlib import closing
 from functools import wraps
+import itertools
+from collections.abc import Generator
 
 from urllib.request import urlopen, Request
 
 import numpy as np
 import scipy.sparse
 
-from sklearn.externals import _arff
+from ..externals import _arff
 from .base import get_data_home
 from urllib.error import HTTPError
 from ..utils import Bunch
@@ -23,6 +25,7 @@ _OPENML_PREFIX = "https://openml.org/"
 _SEARCH_NAME = "api/v1/json/data/list/data_name/{}/limit/2"
 _DATA_INFO = "api/v1/json/data/{}"
 _DATA_FEATURES = "api/v1/json/data/features/{}"
+_DATA_QUALITIES = "api/v1/json/data/qualities/{}"
 _DATA_FILE = "data/v1/download/{}"
 
 
@@ -210,7 +213,7 @@ def _sparse_data_to_array(arff_data, include_columns):
     return y
 
 
-def _convert_arff_data(arff_data, col_slice_x, col_slice_y):
+def _convert_arff_data(arff_data, col_slice_x, col_slice_y, shape=None):
     """
     converts the arff object into the appropriate matrix type (np.array or
     scipy.sparse.csr_matrix) based on the 'data part' (i.e., in the
@@ -234,10 +237,16 @@ def _convert_arff_data(arff_data, col_slice_x, col_slice_y):
     X : np.array or scipy.sparse.csr_matrix
     y : np.array
     """
-    if isinstance(arff_data, list):
-        data = np.array(arff_data, dtype=np.float64)
-        X = np.array(data[:, col_slice_x], dtype=np.float64)
-        y = np.array(data[:, col_slice_y], dtype=np.float64)
+    if isinstance(arff_data, Generator):
+        if shape[0] == -1:
+            count = -1
+        else:
+            count = shape[0] * shape[1]
+        data = np.fromiter(itertools.chain.from_iterable(arff_data),
+                           dtype='float64', count=count)
+        data = data.reshape(*shape)
+        X = data[:, col_slice_x]
+        y = data[:, col_slice_y]
         return X, y
     elif isinstance(arff_data, tuple):
         arff_data_X = _split_sparse_columns(arff_data, col_slice_x)
@@ -333,6 +342,34 @@ def _get_data_features(data_id, data_home):
     return json_data['data_features']['feature']
 
 
+def _get_data_qualities(data_id, data_home):
+    # OpenML API function:
+    # https://www.openml.org/api_docs#!/data/get_data_qualities_id
+    url = _DATA_QUALITIES.format(data_id)
+    error_message = "Dataset with data_id {} not found.".format(data_id)
+    json_data = _get_json_content_from_openml_api(url, error_message, True,
+                                                  data_home)
+    try:
+        return json_data['data_qualities']['quality']
+    except KeyError:
+        # the qualities might not be available, but we still try to process
+        # the data
+        return None
+
+
+def _get_data_shape(data_qualities):
+    # Using the data_info dictionary from _get_data_info_by_name to extract
+    # the number of samples / features
+    if data_qualities is None:
+        return None
+    qualities = {d['name']: d['value'] for d in data_qualities}
+    try:
+        return (int(float(qualities['NumberOfInstances'])),
+                int(float(qualities['NumberOfFeatures'])))
+    except AttributeError:
+        return None
+
+
 def _download_data_arff(file_id, sparse, data_home, encode_nominal=True):
     # Accesses an ARFF file on the OpenML server. Documentation:
     # https://www.openml.org/api_data_docs#!/data/get_download_id
@@ -346,7 +383,7 @@ def _download_data_arff(file_id, sparse, data_home, encode_nominal=True):
             if sparse is True:
                 return_type = _arff.COO
             else:
-                return_type = _arff.DENSE
+                return_type = _arff.DENSE_GEN
 
             arff_file = _arff.loads(response.read().decode('utf-8'),
                                     encode_nominal=encode_nominal,
@@ -412,9 +449,8 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     .. note:: EXPERIMENTAL
 
-        The API is experimental in version 0.20 (particularly the return value
-        structure), and might have small backward-incompatible changes in
-        future releases.
+        The API is experimental (particularly the return value structure),
+        and might have small backward-incompatible changes in future releases.
 
     Parameters
     ----------
@@ -478,10 +514,9 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
         .. note:: EXPERIMENTAL
 
-            This interface is **experimental** as at version 0.20 and
-            subsequent releases may change attributes without notice
-            (although there should only be minor changes to ``data``
-            and ``target``).
+            This interface is **experimental** and subsequent releases may
+            change attributes without notice (although there should only be
+            minor changes to ``data`` and ``target``).
 
         Missing values in the 'data' are represented as NaN's. Missing values
         in 'target' are represented as NaN's (numerical target) or None
@@ -508,7 +543,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         data_id = data_info['did']
     elif data_id is not None:
         # from the previous if statement, it is given that name is None
-        if version is not "active":
+        if version != "active":
             raise ValueError(
                 "Dataset data_id={} and version={} passed, but you can only "
                 "specify a numeric data_id or a version, not "
@@ -584,10 +619,20 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     if data_description['format'].lower() == 'sparse_arff':
         return_sparse = True
 
+    if not return_sparse:
+        data_qualities = _get_data_qualities(data_id, data_home)
+        shape = _get_data_shape(data_qualities)
+        # if the data qualities were not available, we can still get the
+        # n_features from the feature list, with the n_samples unknown
+        if shape is None:
+            shape = (-1, len(features_list))
+    else:
+        shape = None
+
     # obtain the data
     arff = _download_data_arff(data_description['file_id'], return_sparse,
                                data_home)
-    arff_data = arff['data']
+
     # nominal attributes is a dict mapping from the attribute name to the
     # possible values. Includes also the target column (which will be popped
     # off below, before it will be packed in the Bunch object)
@@ -595,7 +640,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
                           if isinstance(v, list) and
                           k in data_columns + target_column}
 
-    X, y = _convert_arff_data(arff_data, col_slice_x, col_slice_y)
+    X, y = _convert_arff_data(arff['data'], col_slice_x, col_slice_y, shape)
 
     is_classification = {col_name in nominal_attributes
                          for col_name in target_column}
@@ -605,13 +650,13 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     elif all(is_classification):
         y = np.hstack([np.take(np.asarray(nominal_attributes.pop(col_name),
                                           dtype='O'),
-                               y[:, i:i+1].astype(int))
+                               y[:, i:i+1].astype(int, copy=False))
                        for i, col_name in enumerate(target_column)])
     elif any(is_classification):
         raise ValueError('Mix of nominal and non-nominal targets is not '
                          'currently supported')
 
-    description = u"{}\n\nDownloaded from openml.org.".format(
+    description = "{}\n\nDownloaded from openml.org.".format(
         data_description.pop('description'))
 
     # reshape y back to 1-D array, if there is only 1 target column; back

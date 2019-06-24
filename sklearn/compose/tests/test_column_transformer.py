@@ -1,6 +1,7 @@
 """
 Test the ColumnTransformer.
 """
+import re
 
 import numpy as np
 from scipy import sparse
@@ -16,7 +17,7 @@ from sklearn.utils.testing import assert_almost_equal
 
 from sklearn.base import BaseEstimator
 from sklearn.compose import ColumnTransformer, make_column_transformer
-from sklearn.exceptions import NotFittedError, DataConversionWarning
+from sklearn.exceptions import NotFittedError
 from sklearn.preprocessing import StandardScaler, Normalizer, OneHotEncoder
 from sklearn.feature_extraction import DictVectorizer
 
@@ -240,8 +241,8 @@ def test_column_transformer_dataframe():
     X_df2 = X_df.copy()
     X_df2.columns = [1, 0]
     ct = ColumnTransformer([('trans', Trans(), 0)], remainder='drop')
-    assert_array_equal(ct.fit_transform(X_df), X_res_first)
-    assert_array_equal(ct.fit(X_df).transform(X_df), X_res_first)
+    assert_array_equal(ct.fit_transform(X_df2), X_res_first)
+    assert_array_equal(ct.fit(X_df2).transform(X_df2), X_res_first)
 
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] == 'remainder'
@@ -336,11 +337,8 @@ def test_column_transformer_list():
         ('categorical', OneHotEncoder(), [2]),
     ])
 
-    with pytest.warns(DataConversionWarning):
-        # TODO: this warning is not very useful in this case, would be good
-        # to get rid of it
-        assert_array_equal(ct.fit_transform(X_list), expected_result)
-        assert_array_equal(ct.fit(X_list).transform(X_list), expected_result)
+    assert_array_equal(ct.fit_transform(X_list), expected_result)
+    assert_array_equal(ct.fit(X_list).transform(X_list), expected_result)
 
 
 def test_column_transformer_sparse_stacking():
@@ -521,34 +519,13 @@ def test_make_column_transformer():
     assert_equal(transformers, (scaler, norm))
     assert_equal(columns, ('first', ['second']))
 
-    # XXX remove in v0.22
-    with pytest.warns(DeprecationWarning,
-                      match='`make_column_transformer` now expects'):
-        ct1 = make_column_transformer(([0], norm))
-    ct2 = make_column_transformer((norm, [0]))
-    X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
-    assert_almost_equal(ct1.fit_transform(X_array),
-                        ct2.fit_transform(X_array))
-
-    with pytest.warns(DeprecationWarning,
-                      match='`make_column_transformer` now expects'):
-        make_column_transformer(('first', 'drop'))
-
-    with pytest.warns(DeprecationWarning,
-                      match='`make_column_transformer` now expects'):
-        make_column_transformer(('passthrough', 'passthrough'),
-                                ('first', 'drop'))
-
 
 def test_make_column_transformer_pandas():
     pd = pytest.importorskip('pandas')
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     X_df = pd.DataFrame(X_array, columns=['first', 'second'])
     norm = Normalizer()
-    # XXX remove in v0.22
-    with pytest.warns(DeprecationWarning,
-                      match='`make_column_transformer` now expects'):
-        ct1 = make_column_transformer((X_df.columns, norm))
+    ct1 = ColumnTransformer([('norm', Normalizer(), X_df.columns)])
     ct2 = make_column_transformer((norm, X_df.columns))
     assert_almost_equal(ct1.fit_transform(X_df),
                         ct2.fit_transform(X_df))
@@ -599,7 +576,8 @@ def test_column_transformer_get_set_params():
            'trans2__with_mean': True,
            'trans2__with_std': True,
            'transformers': ct.transformers,
-           'transformer_weights': None}
+           'transformer_weights': None,
+           'verbose': False}
 
     assert_dict_equal(ct.get_params(), exp)
 
@@ -616,7 +594,8 @@ def test_column_transformer_get_set_params():
            'trans2__with_mean': True,
            'trans2__with_std': True,
            'transformers': ct.transformers,
-           'transformer_weights': None}
+           'transformer_weights': None,
+           'verbose': False}
 
     assert_dict_equal(ct.get_params(), exp)
 
@@ -947,7 +926,8 @@ def test_column_transformer_get_set_params_with_remainder():
            'trans1__with_mean': True,
            'trans1__with_std': True,
            'transformers': ct.transformers,
-           'transformer_weights': None}
+           'transformer_weights': None,
+           'verbose': False}
 
     assert ct.get_params() == exp
 
@@ -963,7 +943,8 @@ def test_column_transformer_get_set_params_with_remainder():
            'sparse_threshold': 0.3,
            'trans1': 'passthrough',
            'transformers': ct.transformers,
-           'transformer_weights': None}
+           'transformer_weights': None,
+           'verbose': False}
 
     assert ct.get_params() == exp
 
@@ -982,6 +963,56 @@ def test_column_transformer_no_estimators():
     assert len(ct.transformers_) == 1
     assert ct.transformers_[-1][0] == 'remainder'
     assert ct.transformers_[-1][2] == [0, 1, 2]
+
+
+@pytest.mark.parametrize(
+    ['est', 'pattern'],
+    [(ColumnTransformer([('trans1', Trans(), [0]), ('trans2', Trans(), [1])],
+                        remainder=DoubleTrans()),
+      (r'\[ColumnTransformer\].*\(1 of 3\) Processing trans1.* total=.*\n'
+       r'\[ColumnTransformer\].*\(2 of 3\) Processing trans2.* total=.*\n'
+       r'\[ColumnTransformer\].*\(3 of 3\) Processing remainder.* total=.*\n$'
+       )),
+     (ColumnTransformer([('trans1', Trans(), [0]), ('trans2', Trans(), [1])],
+                        remainder='passthrough'),
+      (r'\[ColumnTransformer\].*\(1 of 3\) Processing trans1.* total=.*\n'
+       r'\[ColumnTransformer\].*\(2 of 3\) Processing trans2.* total=.*\n'
+       r'\[ColumnTransformer\].*\(3 of 3\) Processing remainder.* total=.*\n$'
+       )),
+     (ColumnTransformer([('trans1', Trans(), [0]), ('trans2', 'drop', [1])],
+                        remainder='passthrough'),
+      (r'\[ColumnTransformer\].*\(1 of 2\) Processing trans1.* total=.*\n'
+       r'\[ColumnTransformer\].*\(2 of 2\) Processing remainder.* total=.*\n$'
+       )),
+     (ColumnTransformer([('trans1', Trans(), [0]),
+                         ('trans2', 'passthrough', [1])],
+                        remainder='passthrough'),
+      (r'\[ColumnTransformer\].*\(1 of 3\) Processing trans1.* total=.*\n'
+       r'\[ColumnTransformer\].*\(2 of 3\) Processing trans2.* total=.*\n'
+       r'\[ColumnTransformer\].*\(3 of 3\) Processing remainder.* total=.*\n$'
+       )),
+     (ColumnTransformer([('trans1', Trans(), [0])], remainder='passthrough'),
+      (r'\[ColumnTransformer\].*\(1 of 2\) Processing trans1.* total=.*\n'
+       r'\[ColumnTransformer\].*\(2 of 2\) Processing remainder.* total=.*\n$'
+       )),
+     (ColumnTransformer([('trans1', Trans(), [0]), ('trans2', Trans(), [1])],
+                        remainder='drop'),
+      (r'\[ColumnTransformer\].*\(1 of 2\) Processing trans1.* total=.*\n'
+       r'\[ColumnTransformer\].*\(2 of 2\) Processing trans2.* total=.*\n$')),
+     (ColumnTransformer([('trans1', Trans(), [0])], remainder='drop'),
+      (r'\[ColumnTransformer\].*\(1 of 1\) Processing trans1.* total=.*\n$'))])
+@pytest.mark.parametrize('method', ['fit', 'fit_transform'])
+def test_column_transformer_verbose(est, pattern, method, capsys):
+    X_array = np.array([[0, 1, 2], [2, 4, 6], [8, 6, 4]]).T
+
+    func = getattr(est, method)
+    est.set_params(verbose=False)
+    func(X_array)
+    assert not capsys.readouterr().out, 'Got output for verbose=False'
+
+    est.set_params(verbose=True)
+    func(X_array)
+    assert re.match(pattern, capsys.readouterr()[0])
 
 
 def test_column_transformer_no_estimators_set_params():
@@ -1026,7 +1057,7 @@ def test_column_transformer_negative_column_indexes():
     X_categories = np.array([[1], [2]])
     X = np.concatenate([X, X_categories], axis=1)
 
-    ohe = OneHotEncoder(categories='auto')
+    ohe = OneHotEncoder()
 
     tf_1 = ColumnTransformer([('ohe', ohe, [-1])], remainder='passthrough')
     tf_2 = ColumnTransformer([('ohe', ohe,  [2])], remainder='passthrough')

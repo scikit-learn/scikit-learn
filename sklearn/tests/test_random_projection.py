@@ -26,7 +26,7 @@ from sklearn.exceptions import DataDimensionalityWarning
 
 all_sparse_random_matrix = [sparse_random_matrix]
 all_dense_random_matrix = [gaussian_random_matrix]
-all_random_matrix = set(all_sparse_random_matrix + all_dense_random_matrix)
+all_random_matrix = all_sparse_random_matrix + all_dense_random_matrix
 
 all_SparseRandomProjection = [SparseRandomProjection]
 all_DenseRandomProjection = [GaussianRandomProjection]

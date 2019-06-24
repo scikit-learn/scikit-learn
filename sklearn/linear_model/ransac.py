@@ -8,6 +8,7 @@ import numpy as np
 import warnings
 
 from ..base import BaseEstimator, MetaEstimatorMixin, RegressorMixin, clone
+from ..base import MultiOutputMixin
 from ..utils import check_random_state, check_array, check_consistent_length
 from ..utils.random import sample_without_replacement
 from ..utils.validation import check_is_fitted
@@ -52,7 +53,8 @@ def _dynamic_max_trials(n_inliers, n_samples, min_samples, probability):
     return abs(float(np.ceil(np.log(nom) / np.log(denom))))
 
 
-class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
+class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
+                      MultiOutputMixin):
     """RANSAC (RANdom SAmple Consensus) algorithm.
 
     RANSAC is an iterative algorithm for the robust estimation of parameters
@@ -193,7 +195,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
     >>> X, y = make_regression(
     ...     n_samples=200, n_features=2, noise=4.0, random_state=0)
     >>> reg = RANSACRegressor(random_state=0).fit(X, y)
-    >>> reg.score(X, y) # doctest: +ELLIPSIS
+    >>> reg.score(X, y)
     0.9885...
     >>> reg.predict(X[:1,])
     array([-31.9417...])

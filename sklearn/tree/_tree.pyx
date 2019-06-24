@@ -187,7 +187,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef SplitRecord split
         cdef SIZE_t node_id
 
-        cdef double threshold
         cdef double impurity = INFINITY
         cdef SIZE_t n_constant_features
         cdef bint is_leaf
@@ -794,10 +793,7 @@ cdef class Tree:
             raise ValueError("X.dtype should be np.float32, got %s" % X.dtype)
 
         # Extract input
-        cdef np.ndarray X_ndarray = X
-        cdef DTYPE_t* X_ptr = <DTYPE_t*> X_ndarray.data
-        cdef SIZE_t X_sample_stride = <SIZE_t> X.strides[0] / <SIZE_t> X.itemsize
-        cdef SIZE_t X_fx_stride = <SIZE_t> X.strides[1] / <SIZE_t> X.itemsize
+        cdef DTYPE_t[:, :] X_ndarray = X
         cdef SIZE_t n_samples = X.shape[0]
 
         # Initialize output
@@ -814,8 +810,7 @@ cdef class Tree:
                 # While node not a leaf
                 while node.left_child != _TREE_LEAF:
                     # ... and node.right_child != _TREE_LEAF:
-                    if X_ptr[X_sample_stride * i +
-                             X_fx_stride * node.feature] <= node.threshold:
+                    if X_ndarray[i, node.feature] <= node.threshold:
                         node = &self.nodes[node.left_child]
                     else:
                         node = &self.nodes[node.right_child]
@@ -918,10 +913,7 @@ cdef class Tree:
             raise ValueError("X.dtype should be np.float32, got %s" % X.dtype)
 
         # Extract input
-        cdef np.ndarray X_ndarray = X
-        cdef DTYPE_t* X_ptr = <DTYPE_t*> X_ndarray.data
-        cdef SIZE_t X_sample_stride = <SIZE_t> X.strides[0] / <SIZE_t> X.itemsize
-        cdef SIZE_t X_fx_stride = <SIZE_t> X.strides[1] / <SIZE_t> X.itemsize
+        cdef DTYPE_t[:, :] X_ndarray = X
         cdef SIZE_t n_samples = X.shape[0]
 
         # Initialize output
@@ -948,8 +940,7 @@ cdef class Tree:
                     indices_ptr[indptr_ptr[i + 1]] = <SIZE_t>(node - self.nodes)
                     indptr_ptr[i + 1] += 1
 
-                    if X_ptr[X_sample_stride * i +
-                             X_fx_stride * node.feature] <= node.threshold:
+                    if X_ndarray[i, node.feature] <= node.threshold:
                         node = &self.nodes[node.left_child]
                     else:
                         node = &self.nodes[node.right_child]
@@ -1132,3 +1123,110 @@ cdef class Tree:
         Py_INCREF(self)
         arr.base = <PyObject*> self
         return arr
+
+
+    def compute_partial_dependence(self, DTYPE_t[:, ::1] X,
+                                   int[::1] target_feature,
+                                   double[::1] out):
+        """Partial dependence of the response on the ``target_feature`` set.
+
+        For each sample in ``X`` a tree traversal is performed.
+        Each traversal starts from the root with weight 1.0.
+
+        At each non-leaf node that splits on a target feature, either
+        the left child or the right child is visited based on the feature
+        value of the current sample, and the weight is not modified.
+        At each non-leaf node that splits on a complementary feature,
+        both children are visited and the weight is multiplied by the fraction
+        of training samples which went to each child.
+
+        At each leaf, the value of the node is multiplied by the current
+        weight (weights sum to 1 for all visited terminal nodes).
+
+        Parameters
+        ----------
+        X : view on 2d ndarray, shape (n_samples, n_target_features)
+            The grid points on which the partial dependence should be
+            evaluated.
+        target_feature : view on 1d ndarray, shape (n_target_features)
+            The set of target features for which the partial dependence
+            should be evaluated.
+        out : view on 1d ndarray, shape (n_samples)
+            The value of the partial dependence function on each grid
+            point.
+        """
+        cdef:
+            double[::1] weight_stack = np.zeros(self.node_count,
+                                                dtype=np.float64)
+            SIZE_t[::1] node_idx_stack = np.zeros(self.node_count,
+                                                  dtype=np.intp)
+            SIZE_t sample_idx
+            SIZE_t feature_idx
+            int stack_size
+            double left_sample_frac
+            double current_weight
+            double total_weight  # used for sanity check only
+            Node *current_node  # use a pointer to avoid copying attributes
+            SIZE_t current_node_idx
+            bint is_target_feature
+            SIZE_t _TREE_LEAF = TREE_LEAF  # to avoid python interactions
+
+        for sample_idx in range(X.shape[0]):
+            # init stacks for current sample
+            stack_size = 1
+            node_idx_stack[0] = 0  # root node
+            weight_stack[0] = 1  # all the samples are in the root node
+            total_weight = 0
+
+            while stack_size > 0:
+                # pop the stack
+                stack_size -= 1
+                current_node_idx = node_idx_stack[stack_size]
+                current_node = &self.nodes[current_node_idx]
+
+                if current_node.left_child == _TREE_LEAF:
+                    # leaf node
+                    out[sample_idx] += (weight_stack[stack_size] *
+                                        self.value[current_node_idx])
+                    total_weight += weight_stack[stack_size]
+                else:
+                    # non-leaf node
+
+                    # determine if the split feature is a target feature
+                    is_target_feature = False
+                    for feature_idx in range(target_feature.shape[0]):
+                        if target_feature[feature_idx] == current_node.feature:
+                            is_target_feature = True
+                            break
+
+                    if is_target_feature:
+                        # In this case, we push left or right child on stack
+                        if X[sample_idx, feature_idx] <= current_node.threshold:
+                            node_idx_stack[stack_size] = current_node.left_child
+                        else:
+                            node_idx_stack[stack_size] = current_node.right_child
+                        stack_size += 1
+                    else:
+                        # In this case, we push both children onto the stack,
+                        # and give a weight proportional to the number of
+                        # samples going through each branch.
+
+                        # push left child
+                        node_idx_stack[stack_size] = current_node.left_child
+                        left_sample_frac = (
+                            self.nodes[current_node.left_child].weighted_n_node_samples /
+                            current_node.weighted_n_node_samples)
+                        current_weight = weight_stack[stack_size]
+                        weight_stack[stack_size] = current_weight * left_sample_frac
+                        stack_size += 1
+
+                        # push right child
+                        node_idx_stack[stack_size] = current_node.right_child
+                        weight_stack[stack_size] = (
+                            current_weight * (1 - left_sample_frac))
+                        stack_size += 1
+
+            # Sanity check. Should never happen.
+            if not (0.999 < total_weight < 1.001):
+                raise ValueError("Total weight should be 1.0 but was %.9f" %
+                                 total_weight)

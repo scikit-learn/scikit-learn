@@ -87,7 +87,7 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
     ...                                 func=np.log, inverse_func=np.exp)
     >>> X = np.arange(4).reshape(-1, 1)
     >>> y = np.exp(2 * X).ravel()
-    >>> tt.fit(X, y) # doctest: +ELLIPSIS
+    >>> tt.fit(X, y)
     TransformedTargetRegressor(...)
     >>> tt.score(X, y)
     1.0
@@ -233,3 +233,6 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
             pred_trans = pred_trans.squeeze(axis=1)
 
         return pred_trans
+
+    def _more_tags(self):
+        return {'poor_score': True, 'no_validation': True}

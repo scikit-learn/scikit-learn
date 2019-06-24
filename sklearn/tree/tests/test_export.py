@@ -1,16 +1,15 @@
 """
 Testing for export functions of decision trees (sklearn.tree.export).
 """
-import pytest
-
 from re import finditer, search
+from textwrap import dedent
 
 from numpy.random import RandomState
 
 from sklearn.base import is_classifier
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.tree import export_graphviz, plot_tree
+from sklearn.tree import export_graphviz, plot_tree, export_text
 from io import StringIO
 from sklearn.utils.testing import (assert_in, assert_equal, assert_raises,
                                    assert_less_equal, assert_raises_regex,
@@ -311,10 +310,130 @@ def test_precision():
                              precision + 1)
 
 
-def test_plot_tree():
+def test_export_text_errors():
+    clf = DecisionTreeClassifier(max_depth=2, random_state=0)
+    clf.fit(X, y)
+
+    assert_raise_message(ValueError,
+                         "max_depth bust be >= 0, given -1",
+                         export_text, clf, max_depth=-1)
+    assert_raise_message(ValueError,
+                         "feature_names must contain 2 elements, got 1",
+                         export_text, clf, feature_names=['a'])
+    assert_raise_message(ValueError,
+                         "decimals must be >= 0, given -1",
+                         export_text, clf, decimals=-1)
+    assert_raise_message(ValueError,
+                         "spacing must be > 0, given 0",
+                         export_text, clf, spacing=0)
+
+
+def test_export_text():
+    clf = DecisionTreeClassifier(max_depth=2, random_state=0)
+    clf.fit(X, y)
+
+    expected_report = dedent("""
+    |--- feature_1 <= 0.00
+    |   |--- class: -1
+    |--- feature_1 >  0.00
+    |   |--- class: 1
+    """).lstrip()
+
+    assert export_text(clf) == expected_report
+    # testing that leaves at level 1 are not truncated
+    assert export_text(clf, max_depth=0) == expected_report
+    # testing that the rest of the tree is truncated
+    assert export_text(clf, max_depth=10) == expected_report
+
+    expected_report = dedent("""
+    |--- b <= 0.00
+    |   |--- class: -1
+    |--- b >  0.00
+    |   |--- class: 1
+    """).lstrip()
+    assert export_text(clf, feature_names=['a', 'b']) == expected_report
+
+    expected_report = dedent("""
+    |--- feature_1 <= 0.00
+    |   |--- weights: [3.00, 0.00] class: -1
+    |--- feature_1 >  0.00
+    |   |--- weights: [0.00, 3.00] class: 1
+    """).lstrip()
+    assert export_text(clf, show_weights=True) == expected_report
+
+    expected_report = dedent("""
+    |- feature_1 <= 0.00
+    | |- class: -1
+    |- feature_1 >  0.00
+    | |- class: 1
+    """).lstrip()
+    assert export_text(clf, spacing=1) == expected_report
+
+    X_l = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [-1, 1]]
+    y_l = [-1, -1, -1, 1, 1, 1, 2]
+    clf = DecisionTreeClassifier(max_depth=4, random_state=0)
+    clf.fit(X_l, y_l)
+    expected_report = dedent("""
+    |--- feature_1 <= 0.00
+    |   |--- class: -1
+    |--- feature_1 >  0.00
+    |   |--- truncated branch of depth 2
+    """).lstrip()
+    assert export_text(clf, max_depth=0) == expected_report
+
+    X_mo = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
+    y_mo = [[-1, -1], [-1, -1], [-1, -1], [1, 1], [1, 1], [1, 1]]
+
+    reg = DecisionTreeRegressor(max_depth=2, random_state=0)
+    reg.fit(X_mo, y_mo)
+
+    expected_report = dedent("""
+    |--- feature_1 <= 0.0
+    |   |--- value: [-1.0, -1.0]
+    |--- feature_1 >  0.0
+    |   |--- value: [1.0, 1.0]
+    """).lstrip()
+    assert export_text(reg, decimals=1) == expected_report
+    assert export_text(reg, decimals=1, show_weights=True) == expected_report
+
+    X_single = [[-2], [-1], [-1], [1], [1], [2]]
+    reg = DecisionTreeRegressor(max_depth=2, random_state=0)
+    reg.fit(X_single, y_mo)
+
+    expected_report = dedent("""
+    |--- first <= 0.0
+    |   |--- value: [-1.0, -1.0]
+    |--- first >  0.0
+    |   |--- value: [1.0, 1.0]
+    """).lstrip()
+    assert export_text(reg, decimals=1,
+                       feature_names=['first']) == expected_report
+    assert export_text(reg, decimals=1, show_weights=True,
+                       feature_names=['first']) == expected_report
+
+
+def test_plot_tree_entropy(pyplot):
     # mostly smoke tests
-    pytest.importorskip("matplotlib.pyplot")
-    # Check correctness of export_graphviz
+    # Check correctness of export_graphviz for criterion = entropy
+    clf = DecisionTreeClassifier(max_depth=3,
+                                 min_samples_split=2,
+                                 criterion="entropy",
+                                 random_state=2)
+    clf.fit(X, y)
+
+    # Test export code
+    feature_names = ['first feat', 'sepal_width']
+    nodes = plot_tree(clf, feature_names=feature_names)
+    assert len(nodes) == 3
+    assert nodes[0].get_text() == ("first feat <= 0.0\nentropy = 1.0\n"
+                                   "samples = 6\nvalue = [3, 3]")
+    assert nodes[1].get_text() == "entropy = 0.0\nsamples = 3\nvalue = [3, 0]"
+    assert nodes[2].get_text() == "entropy = 0.0\nsamples = 3\nvalue = [0, 3]"
+
+
+def test_plot_tree_gini(pyplot):
+    # mostly smoke tests
+    # Check correctness of export_graphviz for criterion = gini
     clf = DecisionTreeClassifier(max_depth=3,
                                  min_samples_split=2,
                                  criterion="gini",
@@ -325,7 +444,7 @@ def test_plot_tree():
     feature_names = ['first feat', 'sepal_width']
     nodes = plot_tree(clf, feature_names=feature_names)
     assert len(nodes) == 3
-    assert nodes[0].get_text() == ("first feat <= 0.0\nentropy = 0.5\n"
+    assert nodes[0].get_text() == ("first feat <= 0.0\ngini = 0.5\n"
                                    "samples = 6\nvalue = [3, 3]")
-    assert nodes[1].get_text() == "entropy = 0.0\nsamples = 3\nvalue = [3, 0]"
-    assert nodes[2].get_text() == "entropy = 0.0\nsamples = 3\nvalue = [0, 3]"
+    assert nodes[1].get_text() == "gini = 0.0\nsamples = 3\nvalue = [3, 0]"
+    assert nodes[2].get_text() == "gini = 0.0\nsamples = 3\nvalue = [0, 3]"

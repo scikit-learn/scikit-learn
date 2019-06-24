@@ -24,8 +24,6 @@ from .cdnmf_fast import _update_cdnmf_fast
 
 EPSILON = np.finfo(np.float32).eps
 
-INTEGER_TYPES = (numbers.Integral, np.integer)
-
 
 def norm(x):
     """Dot product-based Euclidean norm implementation
@@ -261,7 +259,8 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
         Default: None.
         Valid options:
 
-        - None: 'nndsvd' if n_components < n_features, otherwise 'random'.
+        - None: 'nndsvd' if n_components <= min(n_samples, n_features),
+            otherwise 'random'.
 
         - 'random': non-negative random matrices, scaled with:
             sqrt(X.mean() / n_components)
@@ -304,8 +303,14 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
     check_non_negative(X, "NMF initialization")
     n_samples, n_features = X.shape
 
+    if (init is not None and init != 'random'
+            and n_components > min(n_samples, n_features)):
+        raise ValueError("init = '{}' can only be used when "
+                         "n_components <= min(n_samples, n_features)"
+                         .format(init))
+
     if init is None:
-        if n_components < n_features:
+        if n_components <= min(n_samples, n_features):
             init = 'nndsvd'
         else:
             init = 'random'
@@ -1004,10 +1009,10 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     if n_components is None:
         n_components = n_features
 
-    if not isinstance(n_components, INTEGER_TYPES) or n_components <= 0:
+    if not isinstance(n_components, numbers.Integral) or n_components <= 0:
         raise ValueError("Number of components must be a positive integer;"
                          " got (n_components=%r)" % n_components)
-    if not isinstance(max_iter, INTEGER_TYPES) or max_iter < 0:
+    if not isinstance(max_iter, numbers.Integral) or max_iter < 0:
         raise ValueError("Maximum number of iterations must be a positive "
                          "integer; got (max_iter=%r)" % max_iter)
     if not isinstance(tol, numbers.Number) or tol < 0:
@@ -1104,7 +1109,8 @@ class NMF(BaseEstimator, TransformerMixin):
         Default: None.
         Valid options:
 
-        - None: 'nndsvd' if n_components < n_features, otherwise random.
+        - None: 'nndsvd' if n_components <= min(n_samples, n_features),
+            otherwise random.
 
         - 'random': non-negative random matrices, scaled with:
             sqrt(X.mean() / n_components)

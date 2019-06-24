@@ -29,11 +29,12 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from sklearn.utils import IS_PYPY
+from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.utils.testing import (assert_equal, assert_not_equal,
                                    assert_almost_equal, assert_in,
                                    assert_less, assert_greater,
                                    assert_warns_message, assert_raise_message,
-                                   clean_warning_registry, ignore_warnings,
+                                   clean_warning_registry,
                                    SkipTest, assert_raises, assert_no_warnings,
                                    fails_if_pypy, assert_allclose_dense_sparse,
                                    skip_if_32bit)
@@ -67,7 +68,7 @@ def uppercase(s):
 
 
 def strip_eacute(s):
-    return s.replace(u'é', 'e')
+    return s.replace('é', 'e')
 
 
 def split_tokenize(s):
@@ -80,11 +81,11 @@ def lazy_analyze(s):
 
 def test_strip_accents():
     # check some classical latin accentuated symbols
-    a = u'àáâãäåçèéêë'
+    a = 'àáâãäåçèéêë'
     expected = 'aaaaaaceeee'
     assert_equal(strip_accents_unicode(a), expected)
 
-    a = u'ìíîïñòóôõöùúûüý'
+    a = 'ìíîïñòóôõöùúûüý'
     expected = 'iiiinooooouuuuy'
     assert_equal(strip_accents_unicode(a), expected)
 
@@ -94,18 +95,18 @@ def test_strip_accents():
     assert_equal(strip_accents_unicode(a), expected)
 
     # mix letters accentuated and not
-    a = u"this is à test"
+    a = "this is à test"
     expected = 'this is a test'
     assert_equal(strip_accents_unicode(a), expected)
 
 
 def test_to_ascii():
     # check some classical latin accentuated symbols
-    a = u'àáâãäåçèéêë'
+    a = 'àáâãäåçèéêë'
     expected = 'aaaaaaceeee'
     assert_equal(strip_accents_ascii(a), expected)
 
-    a = u"ìíîïñòóôõöùúûüý"
+    a = "ìíîïñòóôõöùúûüý"
     expected = 'iiiinooooouuuuy'
     assert_equal(strip_accents_ascii(a), expected)
 
@@ -115,7 +116,7 @@ def test_to_ascii():
     assert_equal(strip_accents_ascii(a), expected)
 
     # mix letters accentuated and not
-    a = u"this is à test"
+    a = "this is à test"
     expected = 'this is a test'
     assert_equal(strip_accents_ascii(a), expected)
 
@@ -123,8 +124,8 @@ def test_to_ascii():
 @pytest.mark.parametrize('Vectorizer', (CountVectorizer, HashingVectorizer))
 def test_word_analyzer_unigrams(Vectorizer):
     wa = Vectorizer(strip_accents='ascii').build_analyzer()
-    text = (u"J'ai mangé du kangourou  ce midi, "
-            u"c'était pas très bon.")
+    text = ("J'ai mangé du kangourou  ce midi, "
+            "c'était pas très bon.")
     expected = ['ai', 'mange', 'du', 'kangourou', 'ce', 'midi',
                 'etait', 'pas', 'tres', 'bon']
     assert_equal(wa(text), expected)
@@ -142,8 +143,8 @@ def test_word_analyzer_unigrams(Vectorizer):
 
     # with custom preprocessor
     wa = Vectorizer(preprocessor=uppercase).build_analyzer()
-    text = (u"J'ai mangé du kangourou  ce midi, "
-            u" c'était pas très bon.")
+    text = ("J'ai mangé du kangourou  ce midi, "
+            " c'était pas très bon.")
     expected = ['AI', 'MANGE', 'DU', 'KANGOUROU', 'CE', 'MIDI',
                 'ETAIT', 'PAS', 'TRES', 'BON']
     assert_equal(wa(text), expected)
@@ -151,8 +152,8 @@ def test_word_analyzer_unigrams(Vectorizer):
     # with custom tokenizer
     wa = Vectorizer(tokenizer=split_tokenize,
                     strip_accents='ascii').build_analyzer()
-    text = (u"J'ai mangé du kangourou  ce midi, "
-            u"c'était pas très bon.")
+    text = ("J'ai mangé du kangourou  ce midi, "
+            "c'était pas très bon.")
     expected = ["j'ai", 'mange', 'du', 'kangourou', 'ce', 'midi,',
                 "c'etait", 'pas', 'tres', 'bon.']
     assert_equal(wa(text), expected)
@@ -162,7 +163,7 @@ def test_word_analyzer_unigrams_and_bigrams():
     wa = CountVectorizer(analyzer="word", strip_accents='unicode',
                          ngram_range=(1, 2)).build_analyzer()
 
-    text = u"J'ai mangé du kangourou  ce midi, c'était pas très bon."
+    text = "J'ai mangé du kangourou  ce midi, c'était pas très bon."
     expected = ['ai', 'mange', 'du', 'kangourou', 'ce', 'midi',
                 'etait', 'pas', 'tres', 'bon', 'ai mange', 'mange du',
                 'du kangourou', 'kangourou ce', 'ce midi', 'midi etait',
@@ -173,7 +174,7 @@ def test_word_analyzer_unigrams_and_bigrams():
 def test_unicode_decode_error():
     # decode_error default to strict, so this should fail
     # First, encode (as bytes) a unicode string.
-    text = u"J'ai mangé du kangourou  ce midi, c'était pas très bon."
+    text = "J'ai mangé du kangourou  ce midi, c'était pas très bon."
     text_bytes = text.encode('utf-8')
 
     # Then let the Analyzer try to decode it as ascii. It should fail,
@@ -190,7 +191,7 @@ def test_char_ngram_analyzer():
     cnga = CountVectorizer(analyzer='char', strip_accents='unicode',
                            ngram_range=(3, 6)).build_analyzer()
 
-    text = u"J'ai mangé du kangourou  ce midi, c'était pas très bon"
+    text = "J'ai mangé du kangourou  ce midi, c'était pas très bon"
     expected = ["j'a", "'ai", 'ai ', 'i m', ' ma']
     assert_equal(cnga(text)[:5], expected)
     expected = ['s tres', ' tres ', 'tres b', 'res bo', 'es bon']
@@ -506,7 +507,6 @@ def test_tfidf_vectorizer_setters():
 
 
 @fails_if_pypy
-@ignore_warnings(category=DeprecationWarning)
 def test_hashing_vectorizer():
     v = HashingVectorizer()
     X = v.transform(ALL_FOOD_DOCS)
@@ -526,7 +526,7 @@ def test_hashing_vectorizer():
         assert_almost_equal(np.linalg.norm(X[0].data, 2), 1.0)
 
     # Check vectorization with some non-default parameters
-    v = HashingVectorizer(ngram_range=(1, 2), non_negative=True, norm='l1')
+    v = HashingVectorizer(ngram_range=(1, 2), norm='l1')
     X = v.transform(ALL_FOOD_DOCS)
     assert_equal(X.shape, (len(ALL_FOOD_DOCS), v.n_features))
     assert_equal(X.dtype, v.dtype)
@@ -537,7 +537,7 @@ def test_hashing_vectorizer():
     assert ngrams_nnz < 2 * token_nnz
 
     # makes the feature values bounded
-    assert np.min(X.data) > 0
+    assert np.min(X.data) > -1
     assert np.max(X.data) < 1
 
     # Check that the rows are normalized
@@ -583,8 +583,8 @@ def test_feature_names():
 @pytest.mark.parametrize('Vectorizer', (CountVectorizer, TfidfVectorizer))
 def test_vectorizer_max_features(Vectorizer):
     expected_vocabulary = {'burger', 'beer', 'salad', 'pizza'}
-    expected_stop_words = {u'celeri', u'tomato', u'copyright', u'coke',
-                           u'sparkling', u'water', u'the'}
+    expected_stop_words = {'celeri', 'tomato', 'copyright', 'coke',
+                           'sparkling', 'water', 'the'}
 
     # test bounded number of extracted features
     vectorizer = Vectorizer(max_df=0.6, max_features=4)
@@ -689,12 +689,10 @@ def test_count_binary_occurrences():
 
 
 @fails_if_pypy
-@ignore_warnings(category=DeprecationWarning)
 def test_hashed_binary_occurrences():
     # by default multiple occurrences are counted as longs
     test_data = ['aaabc', 'abbde']
-    vect = HashingVectorizer(analyzer='char', non_negative=True,
-                             norm=None)
+    vect = HashingVectorizer(alternate_sign=False, analyzer='char', norm=None)
     X = vect.transform(test_data)
     assert_equal(np.max(X[0:1].data), 3)
     assert_equal(np.max(X[1:2].data), 2)
@@ -702,15 +700,15 @@ def test_hashed_binary_occurrences():
 
     # using boolean features, we can fetch the binary occurrence info
     # instead.
-    vect = HashingVectorizer(analyzer='char', non_negative=True, binary=True,
-                             norm=None)
+    vect = HashingVectorizer(analyzer='char', alternate_sign=False,
+                             binary=True, norm=None)
     X = vect.transform(test_data)
     assert_equal(np.max(X.data), 1)
     assert_equal(X.dtype, np.float64)
 
     # check the ability to change the dtype
-    vect = HashingVectorizer(analyzer='char', non_negative=True, binary=True,
-                             norm=None, dtype=np.float64)
+    vect = HashingVectorizer(analyzer='char', alternate_sign=False,
+                             binary=True, norm=None, dtype=np.float64)
     X = vect.transform(test_data)
     assert_equal(X.dtype, np.float64)
 
@@ -735,8 +733,6 @@ def test_vectorizer_inverse_transform(Vectorizer):
         assert_array_equal(np.sort(terms), np.sort(terms2))
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_count_vectorizer_pipeline_grid_selection():
     # raw documents
     data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
@@ -758,7 +754,7 @@ def test_count_vectorizer_pipeline_grid_selection():
 
     # find the best parameters for both the feature extraction and the
     # classifier
-    grid_search = GridSearchCV(pipeline, parameters, n_jobs=1)
+    grid_search = GridSearchCV(pipeline, parameters, n_jobs=1, cv=3)
 
     # Check that the best model found by grid search is 100% correct on the
     # held out evaluation set.
@@ -773,8 +769,6 @@ def test_count_vectorizer_pipeline_grid_selection():
     assert_equal(best_vectorizer.ngram_range, (1, 1))
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_vectorizer_pipeline_grid_selection():
     # raw documents
     data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
@@ -829,27 +823,26 @@ def test_vectorizer_pipeline_cross_validation():
 
 
 @fails_if_pypy
-@ignore_warnings(category=DeprecationWarning)
 def test_vectorizer_unicode():
     # tests that the count vectorizer works with cyrillic.
     document = (
-        u"Машинное обучение — обширный подраздел искусственного "
-        u"интеллекта, изучающий методы построения алгоритмов, "
-        u"способных обучаться."
+        "Машинное обучение — обширный подраздел искусственного "
+        "интеллекта, изучающий методы построения алгоритмов, "
+        "способных обучаться."
         )
 
     vect = CountVectorizer()
     X_counted = vect.fit_transform([document])
     assert_equal(X_counted.shape, (1, 12))
 
-    vect = HashingVectorizer(norm=None, non_negative=True)
+    vect = HashingVectorizer(norm=None, alternate_sign=False)
     X_hashed = vect.transform([document])
     assert_equal(X_hashed.shape, (1, 2 ** 20))
 
     # No collisions on such a small dataset
     assert_equal(X_counted.nnz, X_hashed.nnz)
 
-    # When norm is None and non_negative, the tokens are counted up to
+    # When norm is None and not alternate_sign, the tokens are counted up to
     # collisions
     assert_array_equal(np.sort(X_counted.data), np.sort(X_hashed.data))
 
@@ -1200,3 +1193,59 @@ def test_stop_word_validation_custom_preprocessor(Estimator):
                                             .findall(doc),
                     stop_words=['and'])
     assert _check_stop_words_consistency(vec) is True
+
+
+@pytest.mark.parametrize(
+    'Estimator',
+    [CountVectorizer,
+     TfidfVectorizer,
+     pytest.param(HashingVectorizer, marks=fails_if_pypy)]
+)
+@pytest.mark.parametrize(
+    'input_type, err_type, err_msg',
+    [('filename', FileNotFoundError, ''),
+     ('file', AttributeError, "'str' object has no attribute 'read'")]
+)
+def test_callable_analyzer_error(Estimator, input_type, err_type, err_msg):
+    data = ['this is text, not file or filename']
+    with pytest.raises(err_type, match=err_msg):
+        Estimator(analyzer=lambda x: x.split(),
+                  input=input_type).fit_transform(data)
+
+
+@pytest.mark.parametrize(
+    'Estimator',
+    [CountVectorizer,
+     TfidfVectorizer,
+     pytest.param(HashingVectorizer, marks=fails_if_pypy)]
+)
+@pytest.mark.parametrize(
+    'analyzer', [lambda doc: open(doc, 'r'), lambda doc: doc.read()]
+)
+@pytest.mark.parametrize('input_type', ['file', 'filename'])
+def test_callable_analyzer_change_behavior(Estimator, analyzer, input_type):
+    data = ['this is text, not file or filename']
+    warn_msg = 'Since v0.21, vectorizer'
+    with pytest.raises((FileNotFoundError, AttributeError)):
+        with pytest.warns(ChangedBehaviorWarning, match=warn_msg) as records:
+            Estimator(analyzer=analyzer, input=input_type).fit_transform(data)
+    assert len(records) == 1
+    assert warn_msg in str(records[0])
+
+
+@pytest.mark.parametrize(
+    'Estimator',
+    [CountVectorizer,
+     TfidfVectorizer,
+     pytest.param(HashingVectorizer, marks=fails_if_pypy)]
+)
+def test_callable_analyzer_reraise_error(tmpdir, Estimator):
+    # check if a custom exception from the analyzer is shown to the user
+    def analyzer(doc):
+        raise Exception("testing")
+
+    f = tmpdir.join("file.txt")
+    f.write("sample content\n")
+
+    with pytest.raises(Exception, match="testing"):
+        Estimator(analyzer=analyzer, input='file').fit_transform([f])
