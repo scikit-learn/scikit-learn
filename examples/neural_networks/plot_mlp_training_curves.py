@@ -24,45 +24,45 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn import datasets
 from sklearn.exceptions import ConvergenceWarning
 
-# some parameter combinations will not converge as can be seen on the
-# plots so they are ignored here
-with warnings.catch_warnings():
-    warnings.filterwarnings("ignore", category=ConvergenceWarning, 
-                            module="sklearn")
-	
-    # different learning rate schedules and momentum parameters
-    params = [{'solver': 'sgd', 'learning_rate': 'constant', 'momentum': 0,
-               'learning_rate_init': 0.2},
-              {'solver': 'sgd', 'learning_rate': 'constant', 'momentum': .9,
-               'nesterovs_momentum': False, 'learning_rate_init': 0.2},
-              {'solver': 'sgd', 'learning_rate': 'constant', 'momentum': .9,
-               'nesterovs_momentum': True, 'learning_rate_init': 0.2},
-             {'solver': 'sgd', 'learning_rate': 'invscaling', 'momentum': 0,
-               'learning_rate_init': 0.2},
-              {'solver': 'sgd', 'learning_rate': 'invscaling', 'momentum': .9,
-               'nesterovs_momentum': True, 'learning_rate_init': 0.2},
-              {'solver': 'sgd', 'learning_rate': 'invscaling', 'momentum': .9,
-               'nesterovs_momentum': False, 'learning_rate_init': 0.2},
-              {'solver': 'adam', 'learning_rate_init': 0.01}]
+# different learning rate schedules and momentum parameters
+params = [{'solver': 'sgd', 'learning_rate': 'constant', 'momentum': 0,
+           'learning_rate_init': 0.2},
+          {'solver': 'sgd', 'learning_rate': 'constant', 'momentum': .9,
+           'nesterovs_momentum': False, 'learning_rate_init': 0.2},
+          {'solver': 'sgd', 'learning_rate': 'constant', 'momentum': .9,
+           'nesterovs_momentum': True, 'learning_rate_init': 0.2},
+          {'solver': 'sgd', 'learning_rate': 'invscaling', 'momentum': 0,
+           'learning_rate_init': 0.2},
+          {'solver': 'sgd', 'learning_rate': 'invscaling', 'momentum': .9,
+           'nesterovs_momentum': True, 'learning_rate_init': 0.2},
+          {'solver': 'sgd', 'learning_rate': 'invscaling', 'momentum': .9,
+           'nesterovs_momentum': False, 'learning_rate_init': 0.2},
+          {'solver': 'adam', 'learning_rate_init': 0.01}]
 
-    labels = ["constant learning-rate", "constant with momentum",
-              "constant with Nesterov's momentum",
-              "inv-scaling learning-rate", "inv-scaling with momentum",
-              "inv-scaling with Nesterov's momentum", "adam"]
+labels = ["constant learning-rate", "constant with momentum",
+          "constant with Nesterov's momentum",
+          "inv-scaling learning-rate", "inv-scaling with momentum",
+          "inv-scaling with Nesterov's momentum", "adam"]
 
-    plot_args = [{'c': 'red', 'linestyle': '-'},
-                 {'c': 'green', 'linestyle': '-'},
-                 {'c': 'blue', 'linestyle': '-'},
-                 {'c': 'red', 'linestyle': '--'},
-                 {'c': 'green', 'linestyle': '--'},
-                 {'c': 'blue', 'linestyle': '--'},
-                 {'c': 'black', 'linestyle': '-'}]
+plot_args = [{'c': 'red', 'linestyle': '-'},
+             {'c': 'green', 'linestyle': '-'},
+             {'c': 'blue', 'linestyle': '-'},
+             {'c': 'red', 'linestyle': '--'},
+             {'c': 'green', 'linestyle': '--'},
+             {'c': 'blue', 'linestyle': '--'},
+             {'c': 'black', 'linestyle': '-'}]
 
 
-    def plot_on_dataset(X, y, ax, name):
-        # for each dataset, plot learning for each learning strategy
-        print("\nlearning on dataset %s" % name)
-        ax.set_title(name)
+def plot_on_dataset(X, y, ax, name):
+    # for each dataset, plot learning for each learning strategy
+    print("\nlearning on dataset %s" % name)
+    ax.set_title(name)
+
+    # some parameter combinations will not converge as can be seen on the
+    # plots so they are ignored here
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=ConvergenceWarning,
+                                module="sklearn")
         X = MinMaxScaler().fit_transform(X)
         mlps = []
         if name == "digits":
@@ -80,21 +80,21 @@ with warnings.catch_warnings():
             print("Training set score: %f" % mlp.score(X, y))
             print("Training set loss: %f" % mlp.loss_)
         for mlp, label, args in zip(mlps, labels, plot_args):
-                ax.plot(mlp.loss_curve_, label=label, **args)
+            ax.plot(mlp.loss_curve_, label=label, **args)
 
 
-    fig, axes = plt.subplots(2, 2, figsize=(15, 10))
-    # load / generate some toy datasets
-    iris = datasets.load_iris()
-    digits = datasets.load_digits()
-    data_sets = [(iris.data, iris.target),
-                 (digits.data, digits.target),
-                 datasets.make_circles(noise=0.2, factor=0.5, random_state=1),
-                 datasets.make_moons(noise=0.3, random_state=0)]
+fig, axes = plt.subplots(2, 2, figsize=(15, 10))
+# load / generate some toy datasets
+iris = datasets.load_iris()
+digits = datasets.load_digits()
+data_sets = [(iris.data, iris.target),
+             (digits.data, digits.target),
+             datasets.make_circles(noise=0.2, factor=0.5, random_state=1),
+             datasets.make_moons(noise=0.3, random_state=0)]
 
-    for ax, data, name in zip(axes.ravel(), data_sets, ['iris', 'digits',
+for ax, data, name in zip(axes.ravel(), data_sets, ['iris', 'digits',
                                                     'circles', 'moons']):
-        plot_on_dataset(*data, ax=ax, name=name)
+    plot_on_dataset(*data, ax=ax, name=name)
 
-    fig.legend(ax.get_lines(), labels, ncol=3, loc="upper center")
-    plt.show()
+fig.legend(ax.get_lines(), labels, ncol=3, loc="upper center")
+plt.show()
