@@ -91,8 +91,8 @@ distributions = [
     ('Bimodal', X_bimodal)
 ]
 
-colors = ['firebrick', 'darkorange', 'goldenrod',
-          'seagreen', 'royalblue', 'darkorchid']
+colors = ['#D81B60', '#0188FF', '#FFC107',
+          '#B7A2FF', '#000000', '#2EC5AC']
 
 fig, axes = plt.subplots(nrows=8, ncols=3, figsize=plt.figaspect(2))
 axes = axes.flatten()
