@@ -8,8 +8,6 @@ from sklearn.ensemble._hist_gradient_boosting.types import X_BINNED_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.types import Y_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.types import G_H_DTYPE
 
-from sklearn.utils import IS_PYPY
-
 
 def _make_training_data(n_bins=256, constant_hessian=True):
     rng = np.random.RandomState(42)
@@ -76,7 +74,6 @@ def _check_children_consistency(parent, left, right):
         (256, True, "max_leaf_nodes", 0.1),
     ]
 )
-@pytest.mark.skipif(IS_PYPY, reason='test segfaults on PyPy')
 def test_grow_tree(n_bins, constant_hessian, stopping_param, shrinkage):
     X_binned, all_gradients, all_hessians = _make_training_data(
         n_bins=n_bins, constant_hessian=constant_hessian)

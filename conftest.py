@@ -36,10 +36,6 @@ def pytest_collection_modifyitems(config, items):
                     'sklearn.feature_extraction.hashing.FeatureHasher',
                     'sklearn.feature_extraction.text.HashingVectorizer'):
                 item.add_marker(skip_marker)
-        xfail_marker = pytest.mark.xfail(reason='TODO: failure on PyPy')
-        for item in items:
-            if item.name in ('sklearn.exceptions.NotFittedError',):
-                item.add_marker(xfail_marker)
 
     # Skip tests which require internet if the flag is provided
     if config.getoption("--skip-network"):

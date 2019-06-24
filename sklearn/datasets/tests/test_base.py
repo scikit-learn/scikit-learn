@@ -29,6 +29,7 @@ from sklearn.externals._pilutil import pillow_installed
 
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import fails_if_pypy
 
 
 def _remove_dir(path):
@@ -90,6 +91,7 @@ def test_default_empty_load_files(load_files_root):
     assert_equal(res.DESCR, None)
 
 
+@fails_if_pypy
 def test_default_load_files(test_category_dir_1, test_category_dir_2,
                             load_files_root):
     res = load_files(load_files_root)
@@ -98,7 +100,7 @@ def test_default_load_files(test_category_dir_1, test_category_dir_2,
     assert_equal(res.DESCR, None)
     assert_equal(res.data, [b"Hello World!\n"])
 
-
+@fails_if_pypy
 def test_load_files_w_categories_desc_and_encoding(
         test_category_dir_1, test_category_dir_2, load_files_root):
     category = os.path.abspath(test_category_dir_1).split('/').pop()
