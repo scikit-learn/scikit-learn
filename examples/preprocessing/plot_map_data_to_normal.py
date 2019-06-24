@@ -53,6 +53,9 @@ BINS = 30
 rng = np.random.RandomState(304)
 bc = PowerTransformer(method='box-cox')
 yj = PowerTransformer(method='yeo-johnson')
+# n_quantiles is set to the training set size.
+# A larger number of n_quantiles does not give a better approximation of the
+# cumulative distribution function estimator
 qt = QuantileTransformer(n_quantiles=500, output_distribution='normal',
                          random_state=rng)
 size = (N_SAMPLES, 1)
