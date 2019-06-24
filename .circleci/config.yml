@@ -119,7 +119,7 @@ workflows:
       - doc-min-dependencies:
           requires:
             - lint
-      - pypy3
+      - pypy3:
           filters:
             branches:
               only:
