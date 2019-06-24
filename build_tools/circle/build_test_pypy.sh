@@ -22,7 +22,7 @@ which python
 #      compatibility is resolved for numpy v1.6.x. For instance,
 #      when PyPy3 >6.0 is released (see numpy/numpy#12740)
 pip install --extra-index https://antocuni.github.io/pypy-wheels/ubuntu numpy Cython pytest
-pip install scipy sphinx numpydoc docutils joblib pillow
+pip install scipy sphinx numpydoc docutils joblib pillow pytest-xdist
 
 ccache -M 512M
 export CCACHE_COMPRESS=1
@@ -34,6 +34,6 @@ export PYPY_GC_MAX="4GB"
 
 pip install -vv -e .
 
-python -m pytest -v sklearn/
+python -m pytest -v -n 2 sklearn/
 python -m pytest doc/sphinxext/
 python -m pytest $(find doc -name '*.rst' | sort)

@@ -1199,7 +1199,7 @@ def test_stop_word_validation_custom_preprocessor(Estimator):
     'Estimator',
     [CountVectorizer,
      TfidfVectorizer,
-     pytest.param(HashingVectorizer, marks=fails_if_pypy)]
+     HashingVectorizer]
 )
 @pytest.mark.parametrize(
     'input_type, err_type, err_msg',
@@ -1207,6 +1207,8 @@ def test_stop_word_validation_custom_preprocessor(Estimator):
      ('file', AttributeError, "'str' object has no attribute 'read'")]
 )
 def test_callable_analyzer_error(Estimator, input_type, err_type, err_msg):
+    if isinstance(Estimator, HashingVectorizer):
+        pytest.xfail('FeatureHasher is not supported on PyPy')
     data = ['this is text, not file or filename']
     with pytest.raises(err_type, match=err_msg):
         Estimator(analyzer=lambda x: x.split(),
