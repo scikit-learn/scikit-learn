@@ -1425,7 +1425,7 @@ class RandomizedSearchCV(BaseSearchCV):
     >>> clf = RandomizedSearchCV(logistic, hyperparameters, random_state=0)
     >>> search = clf.fit(iris.data, iris.target)
     >>> search.best_params_
-    {'C': 2.195254015709299, 'solver': 'lbfgs'}
+    {'C': 2.1..., 'solver': 'lbfgs'}
     """
 
     _required_parameters = ["estimator", "param_distributions"]
