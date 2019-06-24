@@ -78,4 +78,4 @@ sklearn/utils/seq_dataset.pxd
 sklearn/linear_model/sag_fast.pyx
 venv/
 sklearn/model_selection/.ipynb_checkpoints/
-*.ipynb_checkpoints/
+examples/compose/.ipynb_checkpoints/
