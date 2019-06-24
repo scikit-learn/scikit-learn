@@ -622,7 +622,6 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
         print("Initialization complete")
 
     centers_old = np.zeros_like(centers)
-    centers_squared_norms = np.zeros(n_clusters, dtype=X.dtype)
     labels = np.full(X.shape[0], -1, dtype=np.int32)
     weight_in_clusters = np.zeros(n_clusters, dtype=X.dtype)
     center_shift = np.zeros(n_clusters, dtype=X.dtype)
@@ -636,8 +635,7 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
 
     for i in range(max_iter):
         lloyd_iter(X, sample_weight, x_squared_norms, centers_old, centers,
-                   centers_squared_norms, weight_in_clusters, labels,
-                   center_shift, n_jobs)
+                   weight_in_clusters, labels, center_shift, n_jobs)
 
         if verbose:
             inertia = _inertia(X, sample_weight, centers_old, labels)
@@ -653,8 +651,8 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
 
     # rerun E-step so that predicted labels match cluster centers
     lloyd_iter(X, sample_weight, x_squared_norms, centers, centers,
-               centers_squared_norms, weight_in_clusters, labels,
-               center_shift, n_jobs, update_centers=False)
+               weight_in_clusters, labels, center_shift, n_jobs,
+               update_centers=False)
 
     inertia = _inertia(X, sample_weight, centers, labels)
 
@@ -693,11 +691,12 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers, n_jobs=1):
         n_jobs = 1
 
     n_samples = X.shape[0]
+    n_clusters = centers.shape[0]
+
     sample_weight = _check_sample_weight(X, sample_weight)
     labels = np.full(n_samples, -1, dtype=np.int32)
-    centers_squared_norms = np.zeros(centers.shape[0], dtype=centers.dtype)
-    weight_in_clusters = np.zeros_like(centers_squared_norms)
-    center_shift = np.zeros_like(centers_squared_norms)
+    weight_in_clusters = np.zeros(n_clusters, dtype=centers.dtype)
+    center_shift = np.zeros_like(weight_in_clusters)
 
     if sp.issparse(X):
         _labels = _lloyd_iter_chunked_sparse
@@ -706,9 +705,9 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers, n_jobs=1):
         _labels = _lloyd_iter_chunked_dense
         _inertia = _inertia_dense
 
-    _labels(X, sample_weight, x_squared_norms, centers,
-            centers, centers_squared_norms, weight_in_clusters,
-            labels, center_shift, n_jobs, update_centers=False)
+    _labels(X, sample_weight, x_squared_norms, centers, centers,
+            weight_in_clusters, labels, center_shift, n_jobs,
+            update_centers=False)
 
     inertia = _inertia(X, sample_weight, centers, labels)
 

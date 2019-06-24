@@ -8,7 +8,6 @@ cimport numpy as np
 cimport openmp
 from cython cimport floating
 from cython.parallel import prange, parallel
-from libc.math cimport sqrt
 from libc.stdlib cimport malloc, calloc, free
 from libc.string cimport memset, memcpy
 from libc.float cimport DBL_MAX, FLT_MAX
@@ -29,7 +28,6 @@ cpdef void _lloyd_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
                                      floating[::1] x_squared_norms,
                                      floating[:, ::1] centers_old,
                                      floating[:, ::1] centers_new,
-                                     floating[::1] centers_squared_norms,
                                      floating[::1] weight_in_clusters,
                                      int[::1] labels,
                                      floating[::1] center_shift,
@@ -97,6 +95,8 @@ cpdef void _lloyd_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
 
         int j, k
 
+        floating[::1] centers_squared_norms = row_norms(centers_new, squared=True)
+
         floating *centers_new_chunk
         floating *weight_in_clusters_chunk
         floating *pairwise_distances_chunk
@@ -104,8 +104,6 @@ cpdef void _lloyd_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
     # count remainder chunk in total number of chunks
     n_chunks += n_samples != n_chunks * n_samples_chunk
 
-    # re-initialize all arrays at each iteration
-    centers_squared_norms = row_norms(centers_new, squared=True)
     if update_centers:
         memcpy(&centers_old[0, 0], &centers_new[0, 0], n_clusters * n_features * sizeof(floating))
         memset(&centers_new[0, 0], 0, n_clusters * n_features * sizeof(floating))
@@ -202,12 +200,10 @@ cdef void _update_chunk_dense(floating *X,
                 label = j
         labels[i] = label
 
-    # XXX try inside prev loop
-    if update_centers:
-        for i in range(n_samples):
-            weight_in_clusters[labels[i]] += sample_weight[i]
+        if update_centers:
+            weight_in_clusters[label] += sample_weight[i]
             for k in range(n_features):
-                centers_new[labels[i] * n_features + k] += X[i * n_features + k] * sample_weight[i]
+                centers_new[label * n_features + k] += X[i * n_features + k] * sample_weight[i]
 
 
 cpdef void _lloyd_iter_chunked_sparse(X,
@@ -215,7 +211,6 @@ cpdef void _lloyd_iter_chunked_sparse(X,
                                       floating[::1] x_squared_norms,
                                       floating[:, ::1] centers_old,
                                       floating[:, ::1] centers_new,
-                                      floating[::1] centers_squared_norms,
                                       floating[::1] weight_in_clusters,
                                       int[::1] labels,
                                       floating[::1] center_shift,
@@ -286,11 +281,14 @@ cpdef void _lloyd_iter_chunked_sparse(X,
         int[::1] X_indices = X.indices
         int[::1] X_indptr = X.indptr
 
+        floating[::1] centers_squared_norms = row_norms(centers_new, squared=True)
+
+        floating *centers_new_chunk
+        floating *weight_in_clusters_chunk
+
     # count remainder chunk in total number of chunks
     n_chunks += n_samples != n_chunks * n_samples_chunk
 
-    # re-initialize all arrays at each iteration
-    centers_squared_norms = row_norms(centers_new, squared=True)
     if update_centers:
         memcpy(&centers_old[0, 0], &centers_new[0, 0], n_clusters * n_features * sizeof(floating))
         memset(&centers_new[0, 0], 0, n_clusters * n_features * sizeof(floating))
@@ -391,7 +389,7 @@ cdef void _update_chunk_sparse(floating[::1] X_data,
 
         labels[i] = label
 
-    for i in range(n_samples):
-        weight_in_clusters[labels[i]] += sample_weight[i]
-        for k in range(X_indptr[i] - s, X_indptr[i + 1] - s):
-            centers_new[labels[i] * n_features + X_indices[k]] += X_data[k] * sample_weight[i]
+        if update_centers:
+            weight_in_clusters[label] += sample_weight[i]
+            for k in range(X_indptr[i] - s, X_indptr[i + 1] - s):
+                centers_new[label * n_features + X_indices[k]] += X_data[k] * sample_weight[i]
