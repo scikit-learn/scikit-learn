@@ -153,20 +153,22 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
         if axis != 0:
             raise ValueError("Can only scale sparse matrix on axis=0, "
                              " got axis=%d" % axis)
-        if with_std not in (1, 2, True):
-            raise ValueError("Invalid value for `with_std`: {}".format(
-                             str(with_std)))
-        _, var = mean_variance_axis(X, axis=0)
-        var = _handle_zeros_in_scale(var, copy=False)
-        inplace_column_scale(X, 1 / (with_std * np.sqrt(var)))
+        if with_std:
+            if with_std not in (1, 2, True):
+                raise ValueError("Invalid value for `with_std`: {}".format(
+                                 str(with_std)))
+            _, var = mean_variance_axis(X, axis=0)
+            var = _handle_zeros_in_scale(var, copy=False)
+            inplace_column_scale(X, 1 / (with_std * np.sqrt(var)))
     else:
         X = np.asarray(X)
         if with_mean:
             mean_ = np.nanmean(X, axis)
-        if with_std not in (1, 2, True):
-            raise ValueError("Invalid value for `with_std`: {}".format(
-                             str(with_std)))
-        scale_ = with_std * np.nanstd(X, axis)
+        if with_std:
+            if with_std not in (1, 2, True):
+                raise ValueError("Invalid value for `with_std`: {}".format(
+                                 str(with_std)))
+            scale_ = with_std * np.nanstd(X, axis)
         # Xr is a view on the original array that enables easy use of
         # broadcasting on the axis in which we are interested in
         Xr = np.rollaxis(X, axis)
@@ -677,11 +679,14 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                 _incremental_mean_and_var(X, self.mean_, self.var_,
                                           self.n_samples_seen_)
 
-        if self.with_std not in (1, 2, True):
-            raise ValueError("Invalid value for 'with_std': %s" %
-                             self.with_std)
-        self.scale_ = _handle_zeros_in_scale(
-                            self.with_std * np.sqrt(self.var_))
+        if self.with_std:
+            if self.with_std not in (1, 2, True):
+                raise ValueError("Invalid value for 'with_std': %s" %
+                                 self.with_std)
+            self.scale_ = _handle_zeros_in_scale(
+                                self.with_std * np.sqrt(self.var_))
+        else:
+            self.scale_ = None
 
         return self
 
