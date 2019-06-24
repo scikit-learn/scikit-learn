@@ -115,8 +115,8 @@ print("Computing Linear Discriminant Analysis projection")
 X2 = X.copy()
 X2.flat[::X.shape[1] + 1] += 0.01  # Make X invertible
 t0 = time()
-X_lda = discriminant_analysis.LinearDiscriminantAnalysis(n_components=2)\
-    .fit_transform(X2, y)
+X_lda = discriminant_analysis.LinearDiscriminantAnalysis(n_components=2
+                                                         ).fit_transform(X2, y)
 plot_embedding(X_lda,
                "Linear Discriminant projection of the digits (time %.2fs)" %
                (time() - t0))
@@ -238,8 +238,6 @@ print("Computing NCA projection")
 nca = neighbors.NeighborhoodComponentsAnalysis(init='random',
                                                n_components=2, random_state=0)
 t0 = time()
-# X3 = X.copy()
-# X3.flat[::X.shape[1] + 1] += 0.01  # Make X invertible
 X_nca = nca.fit_transform(X, y)
 
 plot_embedding(X_nca,
