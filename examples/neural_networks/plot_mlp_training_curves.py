@@ -70,7 +70,7 @@ def plot_on_dataset(X, y, ax, name):
         print("training: %s" % label)
         mlp = MLPClassifier(verbose=0, random_state=0,
                             max_iter=max_iter, **param)
-      
+
         # some parameter combinations will not converge as can be seen on the
         # plots so they are ignored here
         with warnings.catch_warnings():
