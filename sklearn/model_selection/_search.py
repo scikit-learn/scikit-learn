@@ -1417,17 +1417,16 @@ class RandomizedSearchCV(BaseSearchCV):
     >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.model_selection import RandomizedSearchCV
-    >>> from scipy.stats import uniform
+    >>> rng = np.random.RandomState(0)
     >>> iris = load_iris()
     >>> logistic = LogisticRegression(max_iter=200)
-    >>> hyperparameters = dict(C=uniform(loc=0, scale=4),
+    >>> hyperparameters = dict(C=rng.uniform(low=0, high=4, size=5),
     ...                          solver=['newton-cg', 'lbfgs'])
     >>> clf = RandomizedSearchCV(logistic, hyperparameters, random_state=0)
     >>> search = clf.fit(iris.data, iris.target)
     >>> search.best_params_
-    {'C': 2.1..., 'solver': 'lbfgs'}
+    {'solver': 'newton-cg', 'C': 2.195254015709299}
     """
-
     _required_parameters = ["estimator", "param_distributions"]
 
     def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
