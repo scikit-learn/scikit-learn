@@ -4,6 +4,7 @@ classes used across scikit-learn.
 """
 
 __all__ = ['NotFittedError',
+           'SignatureError',
            'ChangedBehaviorWarning',
            'ConvergenceWarning',
            'DataConversionWarning',
@@ -35,6 +36,13 @@ class NotFittedError(ValueError, AttributeError):
     .. versionchanged:: 0.18
        Moved from sklearn.utils.validation.
     """
+
+
+class SignatureError(RuntimeError):
+    """ TODO
+    """
+    def __init__(self, signature):
+        self.signature = signature
 
 
 class ChangedBehaviorWarning(UserWarning):

@@ -13,7 +13,8 @@ import re
 import numpy as np
 
 from . import __version__
-from .utils import _IS_32BIT
+from .exceptions import SignatureError
+from .utils import _IS_32BIT, get_param_names_from_constructor
 
 _DEFAULT_TAGS = {
     'non_deterministic': False,
@@ -139,32 +140,24 @@ class BaseEstimator:
     arguments (no ``*args`` or ``**kwargs``).
     """
 
-    @classmethod
-    def _get_param_names(cls):
-        """Get parameter names for the estimator"""
-        # fetch the constructor or the original constructor before
-        # deprecation wrapping if any
-        init = getattr(cls.__init__, 'deprecated_original', cls.__init__)
-        if init is object.__init__:
-            # No explicit constructor to introspect
-            return []
-
-        # introspect the constructor arguments to find the model parameters
-        # to represent
-        init_signature = inspect.signature(init)
-        # Consider the constructor parameters excluding 'self'
-        parameters = [p for p in init_signature.parameters.values()
-                      if p.name != 'self' and p.kind != p.VAR_KEYWORD]
-        for p in parameters:
-            if p.kind == p.VAR_POSITIONAL:
-                raise RuntimeError("scikit-learn estimators should always "
-                                   "specify their parameters in the signature"
-                                   " of their __init__ (no varargs)."
-                                   " %s with constructor %s doesn't "
-                                   " follow this convention."
-                                   % (cls, init_signature))
-        # Extract and sort argument names excluding 'self'
-        return sorted([p.name for p in parameters])
+    def _get_params_from(self, param_names, deep=True):
+        """Get parameters for this estimator from the given names"""
+        out = dict()
+        for key in param_names:
+            try:
+                value = getattr(self, key)
+            except AttributeError:
+                warnings.warn('From version 0.24, get_params will raise an '
+                              'AttributeError if a parameter cannot be '
+                              'retrieved as an instance attribute. Previously '
+                              'it would return None.',
+                              FutureWarning)
+                value = None
+            if deep and hasattr(value, 'get_params'):
+                deep_items = value.get_params().items()
+                out.update((key + '__' + k, val) for k, val in deep_items)
+            out[key] = value
+        return out
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -180,22 +173,17 @@ class BaseEstimator:
         params : mapping of string to any
             Parameter names mapped to their values.
         """
-        out = dict()
-        for key in self._get_param_names():
-            try:
-                value = getattr(self, key)
-            except AttributeError:
-                warnings.warn('From version 0.24, get_params will raise an '
-                              'AttributeError if a parameter cannot be '
-                              'retrieved as an instance attribute. Previously '
-                              'it would return None.',
-                              FutureWarning)
-                value = None
-            if deep and hasattr(value, 'get_params'):
-                deep_items = value.get_params().items()
-                out.update((key + '__' + k, val) for k, val in deep_items)
-            out[key] = value
-        return out
+        try:
+            param_names = get_param_names_from_constructor(self.__class__)
+        except SignatureError as e:
+            raise SignatureError("scikit-learn estimators should always "
+                                 "specify their parameters in the signature"
+                                 " of their __init__ (no varargs)."
+                                 " %s with constructor %s doesn't "
+                                 " follow this convention."
+                                 % (self.__class__, e.signature))
+
+        return self._get_params_from(param_names, deep=deep)
 
     def set_params(self, **params):
         """Set the parameters of this estimator.
