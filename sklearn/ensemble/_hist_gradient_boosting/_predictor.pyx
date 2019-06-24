@@ -16,15 +16,7 @@ from .types cimport X_BINNED_DTYPE_C
 from .types cimport node_struct
 
 
-def _predict_from_numeric_data(nodes, numeric_data, out):
-    _predict_from_numeric_data_parallel(nodes, numeric_data, out)
-
-
-def _predict_from_binned_data(nodes, binned_data, out):
-    _predict_from_binned_data_parallel(nodes, binned_data, out)
-
-
-cdef void _predict_from_numeric_data_parallel(
+def _predict_from_numeric_data(
         node_struct [:] nodes,
         const X_DTYPE_C [:, :] numeric_data,
         Y_DTYPE_C [:] out):
@@ -55,7 +47,7 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
             node = nodes[node.right]
 
 
-cdef void _predict_from_binned_data_parallel(
+def _predict_from_binned_data(
         node_struct [:] nodes,
         const X_BINNED_DTYPE_C [:, :] binned_data,
         Y_DTYPE_C [:] out):

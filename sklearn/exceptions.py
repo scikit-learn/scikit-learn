@@ -29,7 +29,6 @@ class NotFittedError(ValueError, AttributeError):
     ...     LinearSVC().predict([[1, 2], [2, 3], [3, 4]])
     ... except NotFittedError as e:
     ...     print(repr(e))
-    ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     NotFittedError("This LinearSVC instance is not fitted yet. Call 'fit' with
     appropriate arguments before using this method.")
 
@@ -119,7 +118,6 @@ class FitFailedWarning(RuntimeWarning):
     ...     except ValueError:
     ...         pass
     ...     print(repr(w[-1].message))
-    ... # doctest: +NORMALIZE_WHITESPACE
     FitFailedWarning('Estimator fit failed. The score on this train-test
     partition for these parameters will be set to 0.000000.
     Details: \\nValueError: Penalty term must be positive; got (C=-2)\\n'...)

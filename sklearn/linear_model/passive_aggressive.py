@@ -132,12 +132,8 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     >>> X, y = make_classification(n_features=4, random_state=0)
     >>> clf = PassiveAggressiveClassifier(max_iter=1000, random_state=0,
     ... tol=1e-3)
-    >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-    PassiveAggressiveClassifier(C=1.0, average=False, class_weight=None,
-                  early_stopping=False, fit_intercept=True, loss='hinge',
-                  max_iter=1000, n_iter_no_change=5, n_jobs=None,
-                  random_state=0, shuffle=True, tol=0.001,
-                  validation_fraction=0.1, verbose=0, warm_start=False)
+    >>> clf.fit(X, y)
+    PassiveAggressiveClassifier(random_state=0)
     >>> print(clf.coef_)
     [[0.26642044 0.45070924 0.67251877 0.64185414]]
     >>> print(clf.intercept_)
@@ -361,12 +357,8 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     >>> X, y = make_regression(n_features=4, random_state=0)
     >>> regr = PassiveAggressiveRegressor(max_iter=100, random_state=0,
     ... tol=1e-3)
-    >>> regr.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-    PassiveAggressiveRegressor(C=1.0, average=False, early_stopping=False,
-                  epsilon=0.1, fit_intercept=True, loss='epsilon_insensitive',
-                  max_iter=100, n_iter_no_change=5, random_state=0,
-                  shuffle=True, tol=0.001, validation_fraction=0.1,
-                  verbose=0, warm_start=False)
+    >>> regr.fit(X, y)
+    PassiveAggressiveRegressor(max_iter=100, random_state=0)
     >>> print(regr.coef_)
     [20.48736655 34.18818427 67.59122734 87.94731329]
     >>> print(regr.intercept_)

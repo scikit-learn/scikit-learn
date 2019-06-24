@@ -390,11 +390,9 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
     --------
     >>> from sklearn.cluster import Birch
     >>> X = [[0, 1], [0.3, 1], [-0.3, 1], [0, -1], [0.3, -1], [-0.3, -1]]
-    >>> brc = Birch(branching_factor=50, n_clusters=None, threshold=0.5,
-    ... compute_labels=True)
-    >>> brc.fit(X) # doctest: +NORMALIZE_WHITESPACE
-    Birch(branching_factor=50, compute_labels=True, copy=True, n_clusters=None,
-       threshold=0.5)
+    >>> brc = Birch(n_clusters=None)
+    >>> brc.fit(X)
+    Birch(n_clusters=None)
     >>> brc.predict(X)
     array([0, 0, 0, 1, 1, 1])
 

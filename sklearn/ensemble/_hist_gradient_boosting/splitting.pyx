@@ -319,7 +319,7 @@ cdef class Splitter:
 
     def find_node_split(
             Splitter self,
-            const unsigned int [::1] sample_indices,  # IN
+            unsigned int n_samples,
             hist_struct [:, ::1] histograms,  # IN
             const Y_DTYPE_C sum_gradients,
             const Y_DTYPE_C sum_hessians):
@@ -329,8 +329,8 @@ cdef class Splitter:
 
         Parameters
         ----------
-        sample_indices : ndarray of unsigned int, shape (n_samples_at_node,)
-            The indices of the samples at the node to split.
+        n_samples : int
+            The number of samples at the node.
         histograms : ndarray of HISTOGRAM_DTYPE of \
                 shape (n_features, max_bins)
             The histograms of the current node.
@@ -345,7 +345,6 @@ cdef class Splitter:
             The info about the best possible split among all features.
         """
         cdef:
-            int n_samples
             int feature_idx
             int best_feature_idx
             int n_features = self.n_features
@@ -353,7 +352,6 @@ cdef class Splitter:
             split_info_struct * split_infos
 
         with nogil:
-            n_samples = sample_indices.shape[0]
 
             split_infos = <split_info_struct *> malloc(
                 self.n_features * sizeof(split_info_struct))
@@ -432,7 +430,9 @@ cdef class Splitter:
         negative_loss_current_node = negative_loss(sum_gradients,
             sum_hessians, self.l2_regularization)
 
-        for bin_idx in range(self.actual_n_bins[feature_idx]):
+        for bin_idx in range(self.actual_n_bins[feature_idx] - 1):
+            # Note that considering splitting on the last bin is useless since
+            # it would result in having 0 samples in the right node (forbidden)
             n_samples_left += histograms[feature_idx, bin_idx].count
             n_samples_right = n_samples_ - n_samples_left
 

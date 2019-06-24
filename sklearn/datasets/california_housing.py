@@ -28,12 +28,13 @@ import tarfile
 import numpy as np
 import logging
 
+import joblib
+
 from .base import get_data_home
 from .base import _fetch_remote
 from .base import _pkl_filepath
 from .base import RemoteFileMetadata
 from ..utils import Bunch
-from ..utils import _joblib
 
 # The original data can be found at:
 # https://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.tgz
@@ -124,11 +125,11 @@ def fetch_california_housing(data_home=None, download_if_missing=True,
             columns_index = [8, 7, 2, 3, 4, 5, 6, 1, 0]
             cal_housing = cal_housing[:, columns_index]
 
-            _joblib.dump(cal_housing, filepath, compress=6)
+            joblib.dump(cal_housing, filepath, compress=6)
         remove(archive_path)
 
     else:
-        cal_housing = _joblib.load(filepath)
+        cal_housing = joblib.load(filepath)
 
     feature_names = ["MedInc", "HouseAge", "AveRooms", "AveBedrms",
                      "Population", "AveOccup", "Latitude", "Longitude"]

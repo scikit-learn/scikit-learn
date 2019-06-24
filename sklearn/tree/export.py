@@ -750,7 +750,7 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
     >>> iris = load_iris()
 
     >>> clf = clf.fit(iris.data, iris.target)
-    >>> tree.export_graphviz(clf) # doctest: +ELLIPSIS
+    >>> tree.export_graphviz(clf)
     'digraph Tree {...
     """
 
@@ -859,7 +859,6 @@ def export_text(decision_tree, feature_names=None, max_depth=10,
     |   |   |--- class: 1
     |   |--- petal width (cm) >  1.75
     |   |   |--- class: 2
-    ...
     """
     check_is_fitted(decision_tree, 'tree_')
     tree_ = decision_tree.tree_
@@ -891,7 +890,8 @@ def export_text(decision_tree, feature_names=None, max_depth=10,
         value_fmt = "{}{} value: {}\n"
 
     if feature_names:
-        feature_names_ = [feature_names[i] for i in tree_.feature]
+        feature_names_ = [feature_names[i] if i != _tree.TREE_UNDEFINED
+                          else None for i in tree_.feature]
     else:
         feature_names_ = ["feature_{}".format(i) for i in tree_.feature]
 
