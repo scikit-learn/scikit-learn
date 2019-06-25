@@ -262,10 +262,6 @@ def test_pca_validation(svd_solver, data, n_components, err_msg):
     with pytest.raises(ValueError, match=err_msg):
         pca_fitted.fit(data)
 
-    pca = PCA(n_components=n_components, svd_solver=svd_solver)
-    assert pca_fitted.n_components == pca.n_components
-    assert pca_fitted.svd_solver == pca.svd_solver
-
     # Additional case for arpack
     if svd_solver == 'arpack':
         n_components = smallest_d
