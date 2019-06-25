@@ -141,7 +141,7 @@ def test_not_fitted_error_gets_raised():
 
 
 @ignore_warnings(category=EfficiencyWarning)
-def check_precomputed(make_train_test):
+def check_precomputed(make_train_test, estimators):
     """Tests unsupervised NearestNeighbors with a distance matrix."""
     # Note: smaller samples may result in spurious test success
     rng = np.random.RandomState(42)
@@ -182,7 +182,7 @@ def check_precomputed(make_train_test):
         assert_raises(ValueError, getattr(nbrs_D, method), X)
 
     target = np.arange(X.shape[0])
-    for Est in (neighbors.KNeighborsClassifier, neighbors.KNeighborsRegressor):
+    for Est in estimators:
         est = Est(metric='euclidean')
         est.radius = est.n_neighbors = 1
         pred_X = est.fit(X, target).predict(Y)
@@ -196,17 +196,45 @@ def test_precomputed_dense():
         return (metrics.pairwise_distances(X_train),
                 metrics.pairwise_distances(X_test, X_train))
 
-    check_precomputed(make_train_test)
+    estimators = [
+        neighbors.KNeighborsClassifier, neighbors.KNeighborsRegressor,
+        neighbors.RadiusNeighborsClassifier, neighbors.RadiusNeighborsRegressor
+    ]
+    check_precomputed(make_train_test, estimators)
 
 
 @pytest.mark.parametrize('fmt', ['csr', 'lil'])
-def test_precomputed_sparse(fmt):
+def test_precomputed_sparse_knn(fmt):
     def make_train_test(X_train, X_test):
         nn = neighbors.NearestNeighbors(n_neighbors=3 + 1).fit(X_train)
         return (nn.kneighbors_graph(X_train, mode='distance').asformat(fmt),
                 nn.kneighbors_graph(X_test, mode='distance').asformat(fmt))
 
-    check_precomputed(make_train_test)
+    # We do not test RadiusNeighborsClassifier and RadiusNeighborsRegressor
+    # since the precomputed neighbors graph is built with k neighbors only.
+    estimators = [
+        neighbors.KNeighborsClassifier,
+        neighbors.KNeighborsRegressor,
+    ]
+    check_precomputed(make_train_test, estimators)
+
+
+@pytest.mark.parametrize('fmt', ['csr', 'lil'])
+def test_precomputed_sparse_radius(fmt):
+    def make_train_test(X_train, X_test):
+        nn = neighbors.NearestNeighbors(radius=1).fit(X_train)
+        return (nn.radius_neighbors_graph(X_train,
+                                          mode='distance').asformat(fmt),
+                nn.radius_neighbors_graph(X_test,
+                                          mode='distance').asformat(fmt))
+
+    # We do not test KNeighborsClassifier and KNeighborsRegressor
+    # since the precomputed neighbors graph is built with a radius.
+    estimators = [
+        neighbors.RadiusNeighborsClassifier,
+        neighbors.RadiusNeighborsRegressor,
+    ]
+    check_precomputed(make_train_test, estimators)
 
 
 def test_is_sorted_by_data():
