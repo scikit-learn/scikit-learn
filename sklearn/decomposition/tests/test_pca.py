@@ -18,10 +18,10 @@ from sklearn.decomposition.pca import _assess_dimension_
 from sklearn.decomposition.pca import _infer_dimension_
 
 iris = datasets.load_iris()
-solver_list = ['full', 'arpack', 'randomized', 'auto']
+PCA_SOLVERS = ['full', 'arpack', 'randomized', 'auto']
 
 
-@pytest.mark.parametrize('svd_solver', solver_list)
+@pytest.mark.parametrize('svd_solver', PCA_SOLVERS)
 @pytest.mark.parametrize('n_components', range(1, iris.data.shape[1]))
 def test_pca(svd_solver, n_components):
     X = iris.data
@@ -73,7 +73,7 @@ def test_whitening():
     # the component-wise variance is thus highly varying:
     assert_greater(X.std(axis=0).std(), 43.8)
 
-    for solver, copy in product(solver_list, (True, False)):
+    for solver, copy in product(PCA_SOLVERS, (True, False)):
         # whiten the data while projecting to the lower dim subspace
         X_ = X.copy()  # make sure we keep an original across iterations.
         pca = PCA(n_components=n_components, whiten=True, copy=copy,
@@ -131,7 +131,7 @@ def test_pca_explained_variance_equivalence_solver(svd_solver):
                                   random_state=0)[0]],
     ids=['random-data', 'correlated-data']
 )
-@pytest.mark.parametrize('svd_solver', solver_list)
+@pytest.mark.parametrize('svd_solver', PCA_SOLVERS)
 def test_pca_explained_variance_empirical(X, svd_solver):
     pca = PCA(n_components=2, svd_solver=svd_solver, random_state=0)
     X_pca = pca.fit_transform(X)
@@ -159,7 +159,7 @@ def test_pca_singular_values_consistency(svd_solver):
     )
 
 
-@pytest.mark.parametrize("svd_solver", solver_list)
+@pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
 def test_pca_singular_values(svd_solver):
     rng = np.random.RandomState(0)
     n_samples, n_features = 100, 80
@@ -191,7 +191,7 @@ def test_pca_singular_values(svd_solver):
     assert_allclose(pca.singular_values_, [3.142, 2.718, 1.0])
 
 
-@pytest.mark.parametrize("svd_solver", solver_list)
+@pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
 def test_pca_check_projection(svd_solver):
     # Test that the projection of data is correct
     rng = np.random.RandomState(0)
@@ -206,7 +206,7 @@ def test_pca_check_projection(svd_solver):
     assert_allclose(np.abs(Yt[0][0]), 1., rtol=5e-3)
 
 
-@pytest.mark.parametrize("svd_solver", solver_list)
+@pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
 def test_pca_check_projection_list(svd_solver):
     # Test that the projection of data is correct
     X = [[1.0, 0.0], [0.0, 1.0]]
@@ -372,19 +372,20 @@ def test_infer_dim_3():
 
 
 @pytest.mark.parametrize(
-    "X, n_components, n_components_",
+    "X, n_components, n_components_validated",
     [(iris.data, 0.95, 2),  # row > col
      (iris.data, 0.01, 1),  # row > col
      (np.random.RandomState(0).rand(5, 20), 0.5, 2)]  # row < col
 )
-def test_infer_dim_by_explained_variance(X, n_components, n_components_):
+def test_infer_dim_by_explained_variance(X, n_components,
+                                         n_components_validated):
     pca = PCA(n_components=n_components, svd_solver='full')
     pca.fit(X)
     assert pca.n_components == pytest.approx(n_components)
-    assert pca.n_components_ == n_components_
+    assert pca.n_components_ == n_components_validated
 
 
-@pytest.mark.parametrize("svd_solver", solver_list)
+@pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
 def test_pca_score(svd_solver):
     # Test that probabilistic PCA scoring yields a reasonable score
     n, p = 1000, 3
@@ -423,7 +424,7 @@ def test_pca_score3():
     assert ll.argmax() == 1
 
 
-@pytest.mark.parametrize("svd_solver", solver_list)
+@pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
 def test_pca_sanity_noise_variance(svd_solver):
     # Sanity check for the noise_variance_. For more details see
     # https://github.com/scikit-learn/scikit-learn/issues/7568
@@ -485,7 +486,7 @@ def test_pca_svd_solver_auto(data, n_components, expected_solver):
     assert_allclose(pca_auto.components_, pca_test.components_)
 
 
-@pytest.mark.parametrize('svd_solver', solver_list)
+@pytest.mark.parametrize('svd_solver', PCA_SOLVERS)
 def test_pca_sparse_input(svd_solver):
     X = np.random.RandomState(0).rand(5, 4)
     X = sp.sparse.csr_matrix(X)
@@ -503,7 +504,7 @@ def test_pca_bad_solver():
         pca.fit(X)
 
 
-@pytest.mark.parametrize("svd_solver", solver_list)
+@pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
 def test_pca_deterministic_output(svd_solver):
     rng = np.random.RandomState(0)
     X = rng.rand(10, 10)
@@ -517,7 +518,7 @@ def test_pca_deterministic_output(svd_solver):
     )
 
 
-@pytest.mark.parametrize('svd_solver', solver_list)
+@pytest.mark.parametrize('svd_solver', PCA_SOLVERS)
 def test_pca_dtype_preservation(svd_solver):
     check_pca_float_dtype_preservation(svd_solver)
     check_pca_int_dtype_upcast_to_double(svd_solver)
