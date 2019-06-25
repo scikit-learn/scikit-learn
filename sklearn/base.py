@@ -17,7 +17,8 @@ from .utils import _IS_32BIT
 
 _DEFAULT_TAGS = {
     'non_deterministic': False,
-    'requires_positive_data': False,
+    'requires_positive_X': False,
+    'requires_positive_y': False,
     'X_types': ['2darray'],
     'poor_score': False,
     'no_validation': False,

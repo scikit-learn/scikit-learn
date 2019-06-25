@@ -48,6 +48,7 @@ def _get_deps_info():
         "Cython",
         "pandas",
         "matplotlib",
+        "joblib",
     ]
 
     def get_version(module):

@@ -812,20 +812,21 @@ def test_cross_val_predict():
                        'not match total number of classes (3). '
                        'Results may not be appropriate for your use case.')
     assert_warns_message(RuntimeWarning, warning_message,
-                         cross_val_predict, LogisticRegression(),
+                         cross_val_predict,
+                         LogisticRegression(solver="liblinear"),
                          X, y, method='predict_proba', cv=KFold(2))
 
 
 def test_cross_val_predict_decision_function_shape():
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
-    preds = cross_val_predict(LogisticRegression(), X, y,
+    preds = cross_val_predict(LogisticRegression(solver="liblinear"), X, y,
                               method='decision_function')
     assert_equal(preds.shape, (50,))
 
     X, y = load_iris(return_X_y=True)
 
-    preds = cross_val_predict(LogisticRegression(), X, y,
+    preds = cross_val_predict(LogisticRegression(solver="liblinear"), X, y,
                               method='decision_function')
     assert_equal(preds.shape, (150, 3))
 
@@ -866,13 +867,13 @@ def test_cross_val_predict_decision_function_shape():
 def test_cross_val_predict_predict_proba_shape():
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
-    preds = cross_val_predict(LogisticRegression(), X, y,
+    preds = cross_val_predict(LogisticRegression(solver="liblinear"), X, y,
                               method='predict_proba')
     assert_equal(preds.shape, (50, 2))
 
     X, y = load_iris(return_X_y=True)
 
-    preds = cross_val_predict(LogisticRegression(), X, y,
+    preds = cross_val_predict(LogisticRegression(solver="liblinear"), X, y,
                               method='predict_proba')
     assert_equal(preds.shape, (150, 3))
 
@@ -880,13 +881,13 @@ def test_cross_val_predict_predict_proba_shape():
 def test_cross_val_predict_predict_log_proba_shape():
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
-    preds = cross_val_predict(LogisticRegression(), X, y,
+    preds = cross_val_predict(LogisticRegression(solver="liblinear"), X, y,
                               method='predict_log_proba')
     assert_equal(preds.shape, (50, 2))
 
     X, y = load_iris(return_X_y=True)
 
-    preds = cross_val_predict(LogisticRegression(), X, y,
+    preds = cross_val_predict(LogisticRegression(solver="liblinear"), X, y,
                               method='predict_log_proba')
     assert_equal(preds.shape, (150, 3))
 
@@ -923,9 +924,11 @@ def test_cross_val_predict_input_types():
     predictions = cross_val_predict(clf, X, y.tolist())
 
     # test with X and y as list and non empty method
-    predictions = cross_val_predict(LogisticRegression(), X.tolist(),
+    predictions = cross_val_predict(LogisticRegression(solver="liblinear"),
+                                    X.tolist(),
                                     y.tolist(), method='decision_function')
-    predictions = cross_val_predict(LogisticRegression(), X,
+    predictions = cross_val_predict(LogisticRegression(solver="liblinear"),
+                                    X,
                                     y.tolist(), method='decision_function')
 
     # test with 3d X and
@@ -961,7 +964,7 @@ def test_cross_val_predict_unbalanced():
                                random_state=1)
     # Change the first sample to a new class
     y[0] = 2
-    clf = LogisticRegression(random_state=1)
+    clf = LogisticRegression(random_state=1, solver="liblinear")
     cv = StratifiedKFold(n_splits=2, random_state=1)
     train, test = list(cv.split(X, y))
     yhat_proba = cross_val_predict(clf, X, y, cv=cv, method="predict_proba")
@@ -1392,7 +1395,7 @@ def check_cross_val_predict_multilabel(est, X, y, method):
 def check_cross_val_predict_with_method_binary(est):
     # This test includes the decision_function with two classes.
     # This is a special case: it has only one column of output.
-    X, y = make_classification(n_classes=2, random_state=0)
+    X, y = make_classification(n_classes=2,  random_state=0)
     for method in ['decision_function', 'predict_proba', 'predict_log_proba']:
         check_cross_val_predict_binary(est, X, y, method)
 
@@ -1406,8 +1409,10 @@ def check_cross_val_predict_with_method_multiclass(est):
 
 
 def test_cross_val_predict_with_method():
-    check_cross_val_predict_with_method_binary(LogisticRegression())
-    check_cross_val_predict_with_method_multiclass(LogisticRegression())
+    check_cross_val_predict_with_method_binary(
+            LogisticRegression(solver="liblinear"))
+    check_cross_val_predict_with_method_multiclass(
+            LogisticRegression(solver="liblinear"))
 
 
 @pytest.mark.filterwarnings('ignore: max_iter and tol parameters')
@@ -1426,7 +1431,7 @@ def test_gridsearchcv_cross_val_predict_with_method():
     iris = load_iris()
     X, y = iris.data, iris.target
     X, y = shuffle(X, y, random_state=0)
-    est = GridSearchCV(LogisticRegression(random_state=42),
+    est = GridSearchCV(LogisticRegression(random_state=42, solver="liblinear"),
                        {'C': [0.1, 1]},
                        cv=2)
     for method in ['decision_function', 'predict_proba', 'predict_log_proba']:
@@ -1442,7 +1447,8 @@ def test_cross_val_predict_with_method_multilabel_ovr():
     X, y = make_multilabel_classification(n_samples=n_samp, n_labels=3,
                                           n_classes=n_classes, n_features=5,
                                           random_state=42)
-    est = OneVsRestClassifier(LogisticRegression(random_state=0))
+    est = OneVsRestClassifier(LogisticRegression(solver="liblinear",
+                                                 random_state=0))
     for method in ['predict_proba', 'decision_function']:
         check_cross_val_predict_binary(est, X, y, method=method)
 
@@ -1482,7 +1488,7 @@ def test_cross_val_predict_with_method_rare_class():
     rng = np.random.RandomState(0)
     X = rng.normal(0, 1, size=(14, 10))
     y = np.array([0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 3])
-    est = LogisticRegression()
+    est = LogisticRegression(solver="liblinear")
     for method in ['predict_proba', 'predict_log_proba', 'decision_function']:
         with warnings.catch_warnings():
             # Suppress warning about too few examples of a class
@@ -1540,7 +1546,7 @@ def test_cross_val_predict_class_subset():
 
     methods = ['decision_function', 'predict_proba', 'predict_log_proba']
     for method in methods:
-        est = LogisticRegression()
+        est = LogisticRegression(solver="liblinear")
 
         # Test with n_splits=3
         predictions = cross_val_predict(est, X, y, method=method,
