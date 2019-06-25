@@ -322,11 +322,10 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
         of patches.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        Pseudo number generator state used for random sampling to use if
-        `max_patches` is not None.  If int, random_state is the seed used by
-        the random number generator; If RandomState instance, random_state is
-        the random number generator; If None, the random number generator is
-        the RandomState instance used by `np.random`.
+        Determines the random number generator used for random sampling when
+        `max_patches` is not None. Use an int to make the randomness
+        deterministic.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -455,10 +454,11 @@ class PatchExtractor(BaseEstimator):
         of patches.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Determines the random number generator used for random sampling when
+        `max_patches` is not None. Use an int to make the randomness
+        deterministic.
+        See :term:`Glossary <random_state>`.
+
 
     Examples
     --------
