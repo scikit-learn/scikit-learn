@@ -259,7 +259,7 @@ def test_theil_sen_parallel():
     lstq = LinearRegression().fit(X, y)
     assert_greater(norm(lstq.coef_ - w), 1.0)
     # Check that Theil-Sen works
-    theil_sen = TheilSenRegressor(n_jobs=4,
+    theil_sen = TheilSenRegressor(n_jobs=2,
                                   random_state=0,
                                   max_subpopulation=2e3).fit(X, y)
     assert_array_almost_equal(theil_sen.coef_, w, 1)

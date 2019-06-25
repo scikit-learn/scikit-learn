@@ -1562,9 +1562,10 @@ def test_multi_core_gridsearch_and_early_stopping():
         'alpha': np.logspace(-4, 4, 9),
         'n_iter_no_change': [5, 10, 50],
     }
-    clf = SGDClassifier(tol=1e-3, max_iter=1000, early_stopping=True,
+
+    clf = SGDClassifier(tol=1e-2, max_iter=1000, early_stopping=True,
                         random_state=0)
-    search = RandomizedSearchCV(clf, param_grid, n_iter=10, n_jobs=2,
+    search = RandomizedSearchCV(clf, param_grid, n_iter=3, n_jobs=2,
                                 random_state=0)
     search.fit(iris.data, iris.target)
     assert search.best_score_ > 0.8
@@ -1600,9 +1601,9 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     # Create a classification problem with 50000 features and 20 classes. Using
     # loky or multiprocessing this make the clf.coef_ exceed the threshold
     # above which memmaping is used in joblib and loky (1MB as of 2018/11/1).
-    X = sp.random(1000, 50000, density=0.01, format='csr',
+    X = sp.random(500, 2000, density=0.02, format='csr',
                   random_state=random_state)
-    y = random_state.choice(20, 1000)
+    y = random_state.choice(20, 500)
 
     # Begin by fitting a SGD classifier sequentially
     clf_sequential = SGDClassifier(tol=1e-3, max_iter=1000, n_jobs=1,
