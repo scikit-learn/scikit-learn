@@ -335,7 +335,4 @@ def test_export_html():
     ])
     html_output = export_html(pipe)
 
-    # IPython HTML
-    if hasattr(html_output, 'data'):
-        html_output = html_output.data
     assert expected_export_html == html_output.replace(' ', '')

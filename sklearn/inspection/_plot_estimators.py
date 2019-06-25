@@ -211,7 +211,7 @@ _STYLE = """
 
 
 def export_html(estimator, print_changed_only=True):
-    """Build a html representation of an estimator
+    """Build a HTML representation of an estimator
 
     Parameters
     ----------
@@ -221,6 +221,12 @@ def export_html(estimator, print_changed_only=True):
     print_changed_only : bool, optional (default=True)
         If True, only the parameters that were set to non-default
         values will be printed when printing an estimator.
+
+    Returns
+    -------
+    html: str or iPython HTML object
+        HTML representation of estimator. When called in jupyter notebook or
+        lab, a iPython HTML object is returned.
     """
 
     with config_context(print_changed_only=print_changed_only), \
@@ -245,8 +251,13 @@ def export_html(estimator, print_changed_only=True):
 
         html_output = out.getvalue()
 
+        # wrap in iPython HTML if in a notebook context
         try:
+            cls_name = get_ipython().__class__.__name__
+            if cls_name != 'ZMQInteractiveShell':
+                return html_output
+
             from IPython.display import HTML
             return HTML(html_output)
-        except ImportError:
+        except (ImportError, NameError):
             return html_output
