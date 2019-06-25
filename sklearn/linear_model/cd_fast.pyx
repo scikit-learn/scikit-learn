@@ -19,7 +19,7 @@ from cython cimport floating
 import warnings
 from ..exceptions import ConvergenceWarning
 
-from ..utils._cython_blas cimport (_axpy, _dot, _asum, _ger, _gemv, _nrm2,
+from ..utils._cython_blas cimport (_axpy, _dot, _asum, _ger, _gemv, _nrm2, 
                                    _copy, _scal)
 from ..utils._cython_blas cimport RowMajor, ColMajor, Trans, NoTrans
 
@@ -154,7 +154,7 @@ def enet_coordinate_descent(floating[::1] w,
     with nogil:
         # R = y - np.dot(X, w)
         _copy(n_samples, &y[0], 1, &R[0], 1)
-        _gemv(ColMajor, NoTrans, n_samples, n_features, -1.0, &X[0, 0],
+        _gemv(ColMajor, NoTrans, n_samples, n_features, -1.0, &X[0, 0], 
               n_samples, &w[0], 1, 1.0, &R[0], 1)
 
         # tol *= np.dot(y, y)
