@@ -217,6 +217,8 @@ def safe_indexing(X, indices):
                                    indices.dtype.kind == 'i'):
             # This is often substantially faster than X[indices]
             return X.take(indices, axis=0)
+        elif getattr(X, 'format', None) in {'dia', 'bsr', 'coo'}:
+            return X.tocsr()[indices]
         else:
             return X[indices]
     else:

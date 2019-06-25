@@ -14,7 +14,7 @@ import numpy as np
 
 from . import __version__
 from sklearn.utils import _IS_32BIT
-from sklearn.utils import safe_mask
+from sklearn.utils import safe_indexing
 
 _DEFAULT_TAGS = {
     'non_deterministic': False,
@@ -630,9 +630,9 @@ class OutlierRejectionMixin:
             The original y with outlier samples removed.
         """
 
-        inliers = safe_mask(X, self.fit_predict(X) == 1)
+        inliers = self.fit_predict(X) == 1
 
-        return X[inliers], y[inliers]
+        return safe_indexing(X, inliers), safe_indexing(y, inliers)
 
 
 class MetaEstimatorMixin:

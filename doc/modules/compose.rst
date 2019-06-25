@@ -162,63 +162,6 @@ i.e. if the last estimator is a classifier, the :class:`Pipeline` can be used
 as a classifier. If the last estimator is a transformer, again, so is the
 pipeline.
 
-.. _pipeline_resamplers:
-
-Resamplers in pipelines
------------------------
-In addition to transformers, pipelines also support :ref:`resamplers` as
-intermediate steps. However, unlike for transformers, pipelines do not always
-call resamplers when data flows through the pipeline. In summary:
-
-===================== ================================
-Method                Resamplers applied               
-===================== ================================
-``fit``               Yes
-``fit_transform``     Yes
-``transform``         Yes
-``predict``           No
-``score``             No
-``fit_predict``       not supported (see note)
-===================== ================================
-  Note)
-
-To understand why, consider the example of :ref:`outlier rejectors`. These
-resamplers will remove samples from the dataset if they classified as outliers.
-Consider the following pipeline::
-
-    >>> from sklearn.pipeline import make_pipeline
-    >>> from sklearn.covariance import EllipticEnvelope
-    >>> from sklearn.linear_model import LogisticRegression
-    >>> pipe = make_pipeline(EllipticEnvelope(), LogisticRegression()) # doctest: +NORMALIZE_WHITESPACE
-    >>> pipe.fit(X_train, y_train)
-
-In ``pipe``, we would remove outliers before fitting our `LogisticRegression`
-model, so that the samples passed to fit come from the same distribution. We do
-this to improve the quality of the fit (see :ref:`_outlier_detection`).
-Therefore, during ``fit``, we want our resampler to be applied.
-
-Now assume that we would like to make predictions on some new data ``X_test``::
-
-    >>> predictions = pipe.predict(X_test)
-
-If we applied our resampler, it would remove outliers from ``X_test``. This is
-nonsensical for two reasons:
-1. We would not get predictions for samples that were classified as outliers.
-2. Since resamplers are always fitted on the data they will predict on, the
-   notion of an outlier in the ``X_test`` is not consistent with the notion of
-   an outlier in ``X_train``. A sample could be an outlier in ``X_train``, but
-   an inlier in ``X_test``, depending on the other samples passed.
-
-Therefore, all methods in which predictions are made will skip resamplers in
-the pipeline.
-
-.. note::
-
-   If a pipeline contains resamplers, you may not call :term:`fit_predict` on
-   it. For reasons described above, it is not practical to apply resamplers
-   when predictions are being made. Therefore, we would not be able to apply
-   the resamplers in such a call.
-
 .. _pipeline_cache:
 
 Caching transformers: avoid repeated computation
@@ -294,6 +237,41 @@ object::
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_compose_plot_compare_reduction.py`
+
+.. _pipeline_resamplers:
+
+Resampling or modifying samples in training
+===========================================
+
+All transformers in a Pipeline must output a dataset with samples corresponding
+to their input.  Sometimes you want a process to modify the set of samples
+used in training, such as balanced resampling, outlier remover, or data
+augmentation/perturbation.  Such processes are called Resamplers, rather than
+Transformers, in Scikit-learn, and should be composed with a predictor using
+a :class:`compose.ResampledTrainer` rather than a Pipeline. Resamplers provide
+a `fit_resample` method which is called by the ``ResampledTrainer`` when
+fitting, so that the resampled data is used to train the subsequent predictor.
+
+:ref:`outlier rejectors` provide `fit_resample` methods that remove samples
+from the dataset if they classified as outliers.  Consider the following::
+
+    >>> from sklearn.compose import ResampledTrainer
+    >>> from sklearn.covariance import EllipticEnvelope
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> pipe = ResampledTrainer(EllipticEnvelope(), LogisticRegression())
+    >>> pipe.fit(X_train, y_train)
+
+In ``pipe``, we remove outliers before fitting our `LogisticRegression`
+model, so that the samples passed to fit come from the same distribution. We do
+this to improve the quality of the fit (see :ref:`_outlier_detection`).
+Therefore, during ``fit``, we want our resampler to be applied.
+
+Now assume that we would like to make predictions on some new data ``X_test``::
+
+    >>> predictions = pipe.predict(X_test)
+
+This does not apply resampling, but provides predictions for all samples in
+``X_test``.
 
 .. _transformed_target_regressor:
 

@@ -166,6 +166,7 @@ details.
     :template: class.rst
 
     compose.ColumnTransformer
+    compose.ResampledTrainer
     compose.TransformedTargetRegressor
 
 .. autosummary::
