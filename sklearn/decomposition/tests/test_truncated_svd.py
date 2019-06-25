@@ -121,7 +121,7 @@ def test_explained_variance_components_10_20(X_sparse, kind, solver):
     assert_allclose(
         svd_10.explained_variance_ratio_,
         svd_20.explained_variance_ratio_[:10],
-        rtol=3e-3,
+        rtol=5e-3,
     )
 
     # Assert that 20 components has higher explained variance than 10
