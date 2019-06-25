@@ -133,12 +133,12 @@ def test_pca_explained_variance_equivalence_solver(svd_solver):
     assert_allclose(
         pca_full.explained_variance_,
         pca_other.explained_variance_,
-        atol=1e-2
+        rtol=5e-2
     )
     assert_allclose(
         pca_full.explained_variance_ratio_,
         pca_other.explained_variance_ratio_,
-        atol=1e-4
+        rtol=5e-2
     )
 
 
@@ -157,7 +157,7 @@ def test_pca_explained_variance_empirical(X, svd_solver):
 
     expected_result = np.linalg.eig(np.cov(X, rowvar=False))[0]
     expected_result = sorted(expected_result, reverse=True)[:2]
-    assert_allclose(pca.explained_variance_, expected_result, atol=1e-2)
+    assert_allclose(pca.explained_variance_, expected_result, rtol=5e-3)
 
 
 @pytest.mark.parametrize("svd_solver", ['arpack', 'randomized'])
@@ -173,7 +173,7 @@ def test_pca_singular_values_consistency(svd_solver):
     pca_other.fit(X)
 
     assert_allclose(
-        pca_full.singular_values_, pca_other.singular_values_, atol=1e-1
+        pca_full.singular_values_, pca_other.singular_values_, rtol=5e-3
     )
 
 
@@ -221,7 +221,7 @@ def test_pca_check_projection(svd_solver):
     Yt = PCA(n_components=2, svd_solver=svd_solver).fit(X).transform(Xt)
     Yt /= np.sqrt((Yt ** 2).sum())
 
-    assert_allclose(np.abs(Yt[0][0]), 1., atol=1e-3)
+    assert_allclose(np.abs(Yt[0][0]), 1., rtol=5e-3)
 
 
 @pytest.mark.parametrize("svd_solver", solver_list)
@@ -231,8 +231,8 @@ def test_pca_check_projection_list(svd_solver):
     pca = PCA(n_components=1, svd_solver=svd_solver, random_state=0)
     X_trans = pca.fit_transform(X)
     assert X_trans.shape, (2, 1)
-    assert_allclose(X_trans.mean(), 0.00, atol=1e-2)
-    assert_allclose(X_trans.std(), 0.71, atol=1e-2)
+    assert_allclose(X_trans.mean(), 0.00, atol=1e-12)
+    assert_allclose(X_trans.std(), 0.71, rtol=5e-3)
 
 
 @pytest.mark.parametrize("svd_solver", ['full', 'arpack', 'randomized'])
@@ -250,7 +250,7 @@ def test_pca_inverse(svd_solver, whiten):
     pca = PCA(n_components=2, svd_solver=svd_solver, whiten=whiten).fit(X)
     Y = pca.transform(X)
     Y_inverse = pca.inverse_transform(Y)
-    assert_allclose(X, Y_inverse, atol=1e-4)
+    assert_allclose(X, Y_inverse, rtol=5e-6)
 
 
 @pytest.mark.parametrize('solver', solver_list)
@@ -403,7 +403,7 @@ def test_pca_score(svd_solver):
 
     ll1 = pca.score(X)
     h = -0.5 * np.log(2 * np.pi * np.exp(1) * 0.1 ** 2) * p
-    assert_allclose(ll1 / h, 1, atol=1e-1)
+    assert_allclose(ll1 / h, 1, rtol=5e-2)
 
     ll2 = pca.score(rng.randn(n, p) * .2 + np.array([3, 4, 5]))
     assert ll1 > ll2
@@ -451,7 +451,7 @@ def test_pca_score_consistency_solvers(svd_solver):
     pca_other = PCA(n_components=30, svd_solver=svd_solver, random_state=0)
     pca_full.fit(X)
     pca_other.fit(X)
-    assert_allclose(pca_full.score(X), pca_other.score(X), atol=1e-3)
+    assert_allclose(pca_full.score(X), pca_other.score(X), rtol=5e-6)
 
 
 # arpack raises ValueError for n_components == min(n_samples,  n_features)
@@ -547,7 +547,7 @@ def check_pca_float_dtype_preservation(svd_solver):
     assert pca_64.transform(X_64).dtype == np.float64
     assert pca_32.transform(X_32).dtype == np.float32
 
-    assert_allclose(pca_64.components_, pca_32.components_, atol=1e-4)
+    assert_allclose(pca_64.components_, pca_32.components_, rtol=1e-4)
 
 
 def check_pca_int_dtype_upcast_to_double(svd_solver):
@@ -566,4 +566,4 @@ def check_pca_int_dtype_upcast_to_double(svd_solver):
     assert pca_64.transform(X_i64).dtype == np.float64
     assert pca_32.transform(X_i32).dtype == np.float64
 
-    assert_allclose(pca_64.components_, pca_32.components_, atol=1e-4)
+    assert_allclose(pca_64.components_, pca_32.components_, rtol=1e-4)
