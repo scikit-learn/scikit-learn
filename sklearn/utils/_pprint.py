@@ -95,7 +95,7 @@ def _changed_params(estimator):
     init_params = signature(init_func).parameters
     init_params = {name: param.default for name, param in init_params.items()}
     for k, v in params.items():
-        if (v != init_params[k] and
+        if (repr(v) != repr(init_params[k]) and
                 not (is_scalar_nan(init_params[k]) and is_scalar_nan(v))):
             filtered_params[k] = v
     return filtered_params

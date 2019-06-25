@@ -15,12 +15,12 @@ import numpy as np
 from scipy import linalg
 from scipy.special import binom
 from scipy.linalg.lapack import get_lapack_funcs
+from joblib import Parallel, delayed, effective_n_jobs
 
 from .base import LinearModel
 from ..base import RegressorMixin
 from ..utils import check_random_state
 from ..utils import check_X_y
-from ..utils._joblib import Parallel, delayed, effective_n_jobs
 from ..exceptions import ConvergenceWarning
 
 _EPSILON = np.finfo(np.double).eps
@@ -281,7 +281,7 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
     >>> X, y = make_regression(
     ...     n_samples=200, n_features=2, noise=4.0, random_state=0)
     >>> reg = TheilSenRegressor(random_state=0).fit(X, y)
-    >>> reg.score(X, y) # doctest: +ELLIPSIS
+    >>> reg.score(X, y)
     0.9884...
     >>> reg.predict(X[:1,])
     array([-31.5871...])

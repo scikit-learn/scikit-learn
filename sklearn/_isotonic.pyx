@@ -3,6 +3,8 @@
 # Uses the pool adjacent violators algorithm (PAVA), with the
 # enhancement of searching for the longest decreasing subsequence to
 # pool at each step.
+#
+# cython: boundscheck=False, wraparound=False, cdivision=True
 
 import numpy as np
 cimport numpy as np
@@ -10,9 +12,6 @@ cimport cython
 from cython cimport floating
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def _inplace_contiguous_isotonic_regression(floating[::1] y, floating[::1] w):
     cdef:
         Py_ssize_t n = y.shape[0], i, k
@@ -64,9 +63,6 @@ def _inplace_contiguous_isotonic_regression(floating[::1] y, floating[::1] w):
             i = k
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def _make_unique(np.ndarray[dtype=floating] X,
                  np.ndarray[dtype=floating] y,
                  np.ndarray[dtype=floating] sample_weights):

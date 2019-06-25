@@ -17,10 +17,8 @@ from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.validation import _num_samples
 from sklearn.utils.mocking import MockDataFrame
 
@@ -47,8 +45,6 @@ from sklearn.linear_model import Ridge
 
 from sklearn.model_selection._split import _validate_shuffle_split
 from sklearn.model_selection._split import _build_repr
-from sklearn.model_selection._split import CV_WARNING
-from sklearn.model_selection._split import NSPLIT_WARNING
 
 from sklearn.datasets import load_digits
 from sklearn.datasets import make_classification
@@ -161,7 +157,7 @@ def test_cross_validator_with_default_params():
     lolo_repr = "LeaveOneGroupOut()"
     lopo_repr = "LeavePGroupsOut(n_groups=2)"
     ss_repr = ("ShuffleSplit(n_splits=10, random_state=0, "
-               "test_size='default',\n       train_size=None)")
+               "test_size=None, train_size=None)")
     ps_repr = "PredefinedSplit(test_fold=array([1, 1, 2, 2]))"
 
     n_splits_expected = [n_samples, comb(n_samples, p), n_splits, n_splits,
@@ -195,7 +191,6 @@ def test_cross_validator_with_default_params():
                          lpo.get_n_splits, None, y, groups)
 
 
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_2d_y():
     # smoke test for 2d y and multi-label
     n_samples = 30
@@ -209,8 +204,8 @@ def test_2d_y():
                  RepeatedKFold(), RepeatedStratifiedKFold(),
                  ShuffleSplit(), StratifiedShuffleSplit(test_size=.5),
                  GroupShuffleSplit(), LeaveOneGroupOut(),
-                 LeavePGroupsOut(n_groups=2), GroupKFold(), TimeSeriesSplit(),
-                 PredefinedSplit(test_fold=groups)]
+                 LeavePGroupsOut(n_groups=2), GroupKFold(n_splits=3),
+                 TimeSeriesSplit(), PredefinedSplit(test_fold=groups)]
     for splitter in splitters:
         list(splitter.split(X, y, groups))
         list(splitter.split(X, y_2d, groups))
@@ -563,6 +558,44 @@ def test_shuffle_split():
         assert_array_equal(t3[1], t4[1])
 
 
+@pytest.mark.parametrize("split_class", [ShuffleSplit,
+                                         StratifiedShuffleSplit])
+@pytest.mark.parametrize("train_size, exp_train, exp_test",
+                         [(None, 9, 1),
+                          (8, 8, 2),
+                          (0.8, 8, 2)])
+def test_shuffle_split_default_test_size(split_class, train_size, exp_train,
+                                         exp_test):
+    # Check that the default value has the expected behavior, i.e. 0.1 if both
+    # unspecified or complement train_size unless both are specified.
+    X = np.ones(10)
+    y = np.ones(10)
+
+    X_train, X_test = next(split_class(train_size=train_size).split(X, y))
+
+    assert len(X_train) == exp_train
+    assert len(X_test) == exp_test
+
+
+@pytest.mark.parametrize("train_size, exp_train, exp_test",
+                         [(None, 8, 2),
+                          (7, 7, 3),
+                          (0.7, 7, 3)])
+def test_group_shuffle_split_default_test_size(train_size, exp_train,
+                                               exp_test):
+    # Check that the default value has the expected behavior, i.e. 0.2 if both
+    # unspecified or complement train_size unless both are specified.
+    X = np.ones(10)
+    y = np.ones(10)
+    groups = range(10)
+
+    X_train, X_test = next(GroupShuffleSplit(train_size=train_size)
+                           .split(X, y, groups))
+
+    assert len(X_train) == exp_train
+    assert len(X_test) == exp_test
+
+
 @ignore_warnings
 def test_stratified_shuffle_split_init():
     X = np.arange(7)
@@ -580,12 +613,6 @@ def test_stratified_shuffle_split_init():
 
     X = np.arange(9)
     y = np.asarray([0, 0, 0, 1, 1, 1, 2, 2, 2])
-    # Check that errors are raised if there is not enough samples
-    assert_raises(ValueError, StratifiedShuffleSplit, 3, 0.5, 0.6)
-    assert_raises(ValueError, next,
-                  StratifiedShuffleSplit(3, 8, 0.6).split(X, y))
-    assert_raises(ValueError, next,
-                  StratifiedShuffleSplit(3, 0.6, 8).split(X, y))
 
     # Train size or test size too small
     assert_raises(ValueError, next,
@@ -1005,11 +1032,8 @@ def test_repeated_stratified_kfold_determinstic_split():
 
 def test_train_test_split_errors():
     pytest.raises(ValueError, train_test_split)
-    with warnings.catch_warnings():
-        # JvR: Currently, a future warning is raised if test_size is not
-        # given. As that is the point of this test, ignore the future warning
-        warnings.filterwarnings("ignore", category=FutureWarning)
-        pytest.raises(ValueError, train_test_split, range(3), train_size=1.1)
+
+    pytest.raises(ValueError, train_test_split, range(3), train_size=1.1)
 
     pytest.raises(ValueError, train_test_split, range(3), test_size=0.6,
                   train_size=0.6)
@@ -1028,7 +1052,7 @@ def test_train_test_split_errors():
     with pytest.raises(ValueError,
                        match=r'train_size=11 should be either positive and '
                              r'smaller than the number of samples 10 or a '
-                             r'float in the \(0,1\) range'):
+                             r'float in the \(0, 1\) range'):
         train_test_split(range(10), train_size=11, test_size=1)
 
 
@@ -1042,7 +1066,8 @@ def test_train_test_split_errors():
     (0.8, 0.),
     (0.8, -.2)])
 def test_train_test_split_invalid_sizes1(train_size, test_size):
-    with pytest.raises(ValueError, match=r'should be in the \(0, 1\) range'):
+    with pytest.raises(ValueError,
+                       match=r'should be .* in the \(0, 1\) range'):
         train_test_split(range(10), train_size=train_size, test_size=test_size)
 
 
@@ -1057,6 +1082,19 @@ def test_train_test_split_invalid_sizes2(train_size, test_size):
     with pytest.raises(ValueError,
                        match=r'should be either positive and smaller'):
         train_test_split(range(10), train_size=train_size, test_size=test_size)
+
+
+@pytest.mark.parametrize("train_size, exp_train, exp_test",
+                         [(None, 7, 3),
+                          (8, 8, 2),
+                          (0.8, 8, 2)])
+def test_train_test_split_default_test_size(train_size, exp_train, exp_test):
+    # Check that the default value has the expected behavior, i.e. complement
+    # train_size unless both are specified.
+    X_train, X_test = train_test_split(X, train_size=train_size)
+
+    assert len(X_train) == exp_train
+    assert len(X_test) == exp_test
 
 
 def test_train_test_split():
@@ -1166,21 +1204,17 @@ def test_train_test_split_list_input():
         np.testing.assert_equal(y_test3, y_test2)
 
 
-@ignore_warnings
-def test_shufflesplit_errors():
-    # When the {test|train}_size is a float/invalid, error is raised at init
-    assert_raises(ValueError, ShuffleSplit, test_size=None, train_size=None)
-    assert_raises(ValueError, ShuffleSplit, test_size=2.0)
-    assert_raises(ValueError, ShuffleSplit, test_size=1.0)
-    assert_raises(ValueError, ShuffleSplit, test_size=0.1, train_size=0.95)
-    assert_raises(ValueError, ShuffleSplit, train_size=1j)
-
-    # When the {test|train}_size is an int, validation is based on the input X
-    # and happens at split(...)
-    assert_raises(ValueError, next, ShuffleSplit(test_size=11).split(X))
-    assert_raises(ValueError, next, ShuffleSplit(test_size=10).split(X))
-    assert_raises(ValueError, next, ShuffleSplit(test_size=8,
-                                                 train_size=3).split(X))
+@pytest.mark.parametrize("test_size, train_size",
+                         [(2.0, None),
+                          (1.0, None),
+                          (0.1, 0.95),
+                          (None, 1j),
+                          (11, None),
+                          (10, None),
+                          (8, 3)])
+def test_shufflesplit_errors(test_size, train_size):
+    with pytest.raises(ValueError):
+        next(ShuffleSplit(test_size=test_size, train_size=train_size).split(X))
 
 
 def test_shufflesplit_reproducible():
@@ -1253,7 +1287,7 @@ def test_check_cv():
 
 
 def test_cv_iterable_wrapper():
-    kf_iter = KFold(n_splits=5).split(X, y)
+    kf_iter = KFold().split(X, y)
     kf_iter_wrapped = check_cv(kf_iter)
     # Since the wrapped iterable is enlisted and stored,
     # split can be called any number of times to produce
@@ -1262,7 +1296,7 @@ def test_cv_iterable_wrapper():
                             list(kf_iter_wrapped.split(X, y)))
     # If the splits are randomized, successive calls to split yields different
     # results
-    kf_randomized_iter = KFold(n_splits=5, shuffle=True).split(X, y)
+    kf_randomized_iter = KFold(shuffle=True).split(X, y)
     kf_randomized_iter_wrapped = check_cv(kf_randomized_iter)
     # numpy's assert_array_equal properly compares nested lists
     np.testing.assert_equal(list(kf_randomized_iter_wrapped.split(X, y)),
@@ -1431,7 +1465,6 @@ def test_time_series_max_train_size():
     _check_time_series_max_train_size(splits, check_splits, max_train_size=2)
 
 
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_nested_cv():
     # Test if nested cross validation works with different combinations of cv
     rng = np.random.RandomState(0)
@@ -1439,42 +1472,15 @@ def test_nested_cv():
     X, y = make_classification(n_samples=15, n_classes=2, random_state=0)
     groups = rng.randint(0, 5, 15)
 
-    cvs = [LeaveOneGroupOut(), LeaveOneOut(), GroupKFold(), StratifiedKFold(),
+    cvs = [LeaveOneGroupOut(), LeaveOneOut(), GroupKFold(n_splits=3),
+           StratifiedKFold(),
            StratifiedShuffleSplit(n_splits=3, random_state=0)]
 
     for inner_cv, outer_cv in combinations_with_replacement(cvs, 2):
-        gs = GridSearchCV(Ridge(), param_grid={'alpha': [1, .1]},
-                          cv=inner_cv, error_score='raise', iid=False)
+        gs = GridSearchCV(Ridge(solver="eigen"), param_grid={'alpha': [1, .1]},
+                          cv=inner_cv, error_score='raise')
         cross_val_score(gs, X=X, y=y, groups=groups, cv=outer_cv,
                         fit_params={'groups': groups})
-
-
-def test_train_test_default_warning():
-    assert_warns(FutureWarning, ShuffleSplit, train_size=0.75)
-    assert_warns(FutureWarning, GroupShuffleSplit, train_size=0.75)
-    assert_warns(FutureWarning, StratifiedShuffleSplit, train_size=0.75)
-    assert_warns(FutureWarning, train_test_split, range(3),
-                 train_size=0.75)
-
-
-def test_nsplit_default_warn():
-    # Test that warnings are raised. Will be removed in 0.22
-    assert_warns_message(FutureWarning, NSPLIT_WARNING, KFold)
-    assert_warns_message(FutureWarning, NSPLIT_WARNING, GroupKFold)
-    assert_warns_message(FutureWarning, NSPLIT_WARNING, StratifiedKFold)
-    assert_warns_message(FutureWarning, NSPLIT_WARNING, TimeSeriesSplit)
-
-    assert_no_warnings(KFold, n_splits=5)
-    assert_no_warnings(GroupKFold, n_splits=5)
-    assert_no_warnings(StratifiedKFold, n_splits=5)
-    assert_no_warnings(TimeSeriesSplit, n_splits=5)
-
-
-def test_check_cv_default_warn():
-    # Test that warnings are raised. Will be removed in 0.22
-    assert_warns_message(FutureWarning, CV_WARNING, check_cv)
-    assert_warns_message(FutureWarning, CV_WARNING, check_cv, None)
-    assert_no_warnings(check_cv, cv=5)
 
 
 def test_build_repr():
@@ -1488,3 +1494,51 @@ def test_build_repr():
             return _build_repr(self)
 
     assert_equal(repr(MockSplitter(5, 6)), "MockSplitter(a=5, b=6, c=None)")
+
+
+@pytest.mark.parametrize('CVSplitter', (ShuffleSplit, GroupShuffleSplit,
+                                        StratifiedShuffleSplit))
+def test_shuffle_split_empty_trainset(CVSplitter):
+    cv = CVSplitter(test_size=.99)
+    X, y = [[1]], [0]  # 1 sample
+    with pytest.raises(
+            ValueError,
+            match='With n_samples=1, test_size=0.99 and train_size=None, '
+            'the resulting train set will be empty'):
+        next(cv.split(X, y, groups=[1]))
+
+
+def test_train_test_split_empty_trainset():
+    X, = [[1]]  # 1 sample
+    with pytest.raises(
+            ValueError,
+            match='With n_samples=1, test_size=0.99 and train_size=None, '
+            'the resulting train set will be empty'):
+        train_test_split(X, test_size=.99)
+
+    X = [[1], [1], [1]]  # 3 samples, ask for more than 2 thirds
+    with pytest.raises(
+            ValueError,
+            match='With n_samples=3, test_size=0.67 and train_size=None, '
+            'the resulting train set will be empty'):
+        train_test_split(X, test_size=.67)
+
+
+def test_leave_one_out_empty_trainset():
+    # LeaveOneGroup out expect at least 2 groups so no need to check
+    cv = LeaveOneOut()
+    X, y = [[1]], [0]  # 1 sample
+    with pytest.raises(
+            ValueError,
+            match='Cannot perform LeaveOneOut with n_samples=1'):
+        next(cv.split(X, y))
+
+
+def test_leave_p_out_empty_trainset():
+    # No need to check LeavePGroupsOut
+    cv = LeavePOut(p=2)
+    X, y = [[1], [2]], [0, 3]  # 2 samples
+    with pytest.raises(
+            ValueError,
+            match='p=2 must be strictly less than the number of samples=2'):
+        next(cv.split(X, y, groups=[1, 2]))

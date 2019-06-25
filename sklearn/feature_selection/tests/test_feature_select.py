@@ -6,6 +6,8 @@ import warnings
 import numpy as np
 from scipy import stats, sparse
 
+import pytest
+
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
@@ -16,8 +18,6 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils import safe_mask
 
 from sklearn.datasets.samples_generator import (make_classification,
@@ -408,7 +408,9 @@ def test_boundary_case_ch2():
     assert_array_equal(support_fwe, np.array([True, False]))
 
 
-def test_select_fdr_regression():
+@pytest.mark.parametrize("alpha", [0.001, 0.01, 0.1])
+@pytest.mark.parametrize("n_informative", [1, 5, 10])
+def test_select_fdr_regression(alpha, n_informative):
     # Test that fdr heuristic actually has low FDR.
     def single_fdr(alpha, n_informative, random_state):
         X, y = make_regression(n_samples=150, n_features=20,
@@ -434,20 +436,18 @@ def test_select_fdr_regression():
                                 (num_true_positives + num_false_positives))
         return false_discovery_rate
 
-    for alpha in [0.001, 0.01, 0.1]:
-        for n_informative in [1, 5, 10]:
-            # As per Benjamini-Hochberg, the expected false discovery rate
-            # should be lower than alpha:
-            # FDR = E(FP / (TP + FP)) <= alpha
-            false_discovery_rate = np.mean([single_fdr(alpha, n_informative,
-                                                       random_state) for
-                                            random_state in range(100)])
-            assert_greater_equal(alpha, false_discovery_rate)
+    # As per Benjamini-Hochberg, the expected false discovery rate
+    # should be lower than alpha:
+    # FDR = E(FP / (TP + FP)) <= alpha
+    false_discovery_rate = np.mean([single_fdr(alpha, n_informative,
+                                               random_state) for
+                                    random_state in range(100)])
+    assert alpha >= false_discovery_rate
 
-            # Make sure that the empirical false discovery rate increases
-            # with alpha:
-            if false_discovery_rate != 0:
-                assert_greater(false_discovery_rate, alpha / 10)
+    # Make sure that the empirical false discovery rate increases
+    # with alpha:
+    if false_discovery_rate != 0:
+        assert false_discovery_rate > alpha / 10
 
 
 def test_select_fwe_regression():

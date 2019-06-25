@@ -6,14 +6,20 @@ set PIP_INSTALL=pip install -q
 
 @echo on
 
-@rem Deactivate any environment
-call deactivate
-@rem Clean up any left-over from a previous build
-conda remove --all -q -y -n %VIRTUALENV%
-conda create -n %VIRTUALENV% -q -y python=%CONDA_PY% numpy scipy cython pytest wheel pillow
+IF "%PYTHON_ARCH%"=="64" (
+    @rem Deactivate any environment
+    call deactivate
+    @rem Clean up any left-over from a previous build
+    conda remove --all -q -y -n %VIRTUALENV%
+    conda create -n %VIRTUALENV% -q -y python=%PYTHON_VERSION% numpy scipy cython matplotlib pytest wheel pillow joblib pytest-xdist
 
-call activate %VIRTUALENV%
-python -m pip install -U pip
+    call activate %VIRTUALENV%
+) else (
+    pip install numpy scipy cython pytest wheel pillow joblib
+)
+if "%COVERAGE%" == "true" (
+    pip install coverage codecov pytest-cov
+)
 python --version
 pip --version
 

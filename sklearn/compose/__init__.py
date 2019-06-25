@@ -7,10 +7,12 @@ refurbished versions of Pipeline and FeatureUnion.
 
 from ._column_transformer import ColumnTransformer, make_column_transformer
 from ._target import TransformedTargetRegressor
+from ._resampled import ResampledTrainer
 
 
 __all__ = [
     'ColumnTransformer',
     'make_column_transformer',
     'TransformedTargetRegressor',
+    'ResampledTrainer',
 ]

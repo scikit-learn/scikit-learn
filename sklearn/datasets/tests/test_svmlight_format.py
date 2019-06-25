@@ -273,13 +273,13 @@ def test_dump():
                         assert_array_almost_equal(
                             X_input_dense, X2_dense, 4)
                         assert_array_almost_equal(
-                            y_dense.astype(dtype), y2, 4)
+                            y_dense.astype(dtype, copy=False), y2, 4)
                     else:
                         # allow a rounding error at the last decimal place
                         assert_array_almost_equal(
                             X_input_dense, X2_dense, 15)
                         assert_array_almost_equal(
-                            y_dense.astype(dtype), y2, 15)
+                            y_dense.astype(dtype, copy=False), y2, 15)
 
 
 def test_dump_multilabel():

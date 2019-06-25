@@ -47,6 +47,9 @@ The last estimator may be any type (transformer, classifier, etc.).
 Usage
 -----
 
+Construction
+............
+
 The :class:`Pipeline` is built using a list of ``(key, value)`` pairs, where
 the ``key`` is a string containing the name you want to give this step and ``value``
 is an estimator object::
@@ -56,10 +59,8 @@ is an estimator object::
     >>> from sklearn.decomposition import PCA
     >>> estimators = [('reduce_dim', PCA()), ('clf', SVC())]
     >>> pipe = Pipeline(estimators)
-    >>> pipe # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-    Pipeline(memory=None,
-             steps=[('reduce_dim', PCA(copy=True,...)),
-                    ('clf', SVC(C=1.0,...))])
+    >>> pipe
+    Pipeline(steps=[('reduce_dim', PCA()), ('clf', SVC())])
 
 The utility function :func:`make_pipeline` is a shorthand
 for constructing pipelines;
@@ -69,37 +70,47 @@ filling in the names automatically::
     >>> from sklearn.pipeline import make_pipeline
     >>> from sklearn.naive_bayes import MultinomialNB
     >>> from sklearn.preprocessing import Binarizer
-    >>> make_pipeline(Binarizer(), MultinomialNB()) # doctest: +NORMALIZE_WHITESPACE
-    Pipeline(memory=None,
-             steps=[('binarizer', Binarizer(copy=True, threshold=0.0)),
-                    ('multinomialnb', MultinomialNB(alpha=1.0,
-                                                    class_prior=None,
-                                                    fit_prior=True))])
+    >>> make_pipeline(Binarizer(), MultinomialNB())
+    Pipeline(steps=[('binarizer', Binarizer()), ('multinomialnb', MultinomialNB())])
 
-The estimators of a pipeline are stored as a list in the ``steps`` attribute::
+Accessing steps
+...............
 
-    >>> pipe.steps[0]  # doctest: +NORMALIZE_WHITESPACE
-    ('reduce_dim', PCA(copy=True, iterated_power='auto', n_components=None, random_state=None,
-      svd_solver='auto', tol=0.0, whiten=False))
+The estimators of a pipeline are stored as a list in the ``steps`` attribute,
+but can be accessed by index or name by indexing (with ``[idx]``) the
+Pipeline::
 
-and as a ``dict`` in ``named_steps``::
+    >>> pipe.steps[0]
+    ('reduce_dim', PCA())
+    >>> pipe[0]
+    PCA()
+    >>> pipe['reduce_dim']
+    PCA()
 
-    >>> pipe.named_steps['reduce_dim']  # doctest: +NORMALIZE_WHITESPACE
-    PCA(copy=True, iterated_power='auto', n_components=None, random_state=None,
-      svd_solver='auto', tol=0.0, whiten=False)
+Pipeline's `named_steps` attribute allows accessing steps by name with tab
+completion in interactive environments::
+
+    >>> pipe.named_steps.reduce_dim is pipe['reduce_dim']
+    True
+
+A sub-pipeline can also be extracted using the slicing notation commonly used
+for Python Sequences such as lists or strings (although only a step of 1 is
+permitted). This is convenient for performing only some of the transformations
+(or their inverse):
+
+    >>> pipe[:1]
+    Pipeline(steps=[('reduce_dim', PCA())])
+    >>> pipe[-1:]
+    Pipeline(steps=[('clf', SVC())])
+
+Nested parameters
+.................
 
 Parameters of the estimators in the pipeline can be accessed using the
 ``<estimator>__<parameter>`` syntax::
 
-    >>> pipe.set_params(clf__C=10) # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-    Pipeline(memory=None,
-             steps=[('reduce_dim', PCA(copy=True, iterated_power='auto',...)),
-                    ('clf', SVC(C=10, cache_size=200, class_weight=None,...))])
-
-Attributes of named_steps map to keys, enabling tab completion in interactive environments::
-
-    >>> pipe.named_steps.reduce_dim is pipe.named_steps['reduce_dim']
-    True
+    >>> pipe.set_params(clf__C=10)
+    Pipeline(steps=[('reduce_dim', PCA()), ('clf', SVC(C=10))])
 
 This is particularly important for doing grid searches::
 
@@ -116,6 +127,16 @@ ignored by setting them to ``'passthrough'``::
     ...                   clf=[SVC(), LogisticRegression()],
     ...                   clf__C=[0.1, 10, 100])
     >>> grid_search = GridSearchCV(pipe, param_grid=param_grid)
+
+The estimators of the pipeline can be retrieved by index:
+
+    >>> pipe[0] 
+    PCA()
+
+or by name::
+
+    >>> pipe['reduce_dim']
+    PCA()
 
 .. topic:: Examples:
 
@@ -140,63 +161,6 @@ The pipeline has all the methods that the last estimator in the pipeline has,
 i.e. if the last estimator is a classifier, the :class:`Pipeline` can be used
 as a classifier. If the last estimator is a transformer, again, so is the
 pipeline.
-
-.. _pipeline_resamplers:
-
-Resamplers in pipelines
------------------------
-In addition to transformers, pipelines also support :ref:`resamplers` as
-intermediate steps. However, unlike for transformers, pipelines do not always
-call resamplers when data flows through the pipeline. In summary:
-
-===================== ================================
-Method                Resamplers applied               
-===================== ================================
-``fit``               Yes
-``fit_transform``     Yes
-``transform``         Yes
-``predict``           No
-``score``             No
-``fit_predict``       not supported (see note)
-===================== ================================
-  Note)
-
-To understand why, consider the example of :ref:`outlier rejectors`. These
-resamplers will remove samples from the dataset if they classified as outliers.
-Consider the following pipeline::
-
-    >>> from sklearn.pipeline import make_pipeline
-    >>> from sklearn.covariance import EllipticEnvelope
-    >>> from sklearn.linear_model import LogisticRegression
-    >>> pipe = make_pipeline(EllipticEnvelope(), LogisticRegression()) # doctest: +NORMALIZE_WHITESPACE
-    >>> pipe.fit(X_train, y_train)
-
-In ``pipe``, we would remove outliers before fitting our `LogisticRegression`
-model, so that the samples passed to fit come from the same distribution. We do
-this to improve the quality of the fit (see :ref:`_outlier_detection`).
-Therefore, during ``fit``, we want our resampler to be applied.
-
-Now assume that we would like to make predictions on some new data ``X_test``::
-
-    >>> predictions = pipe.predict(X_test)
-
-If we applied our resampler, it would remove outliers from ``X_test``. This is
-nonsensical for two reasons:
-1. We would not get predictions for samples that were classified as outliers.
-2. Since resamplers are always fitted on the data they will predict on, the
-   notion of an outlier in the ``X_test`` is not consistent with the notion of
-   an outlier in ``X_train``. A sample could be an outlier in ``X_train``, but
-   an inlier in ``X_test``, depending on the other samples passed.
-
-Therefore, all methods in which predictions are made will skip resamplers in
-the pipeline.
-
-.. note::
-
-   If a pipeline contains resamplers, you may not call :term:`fit_predict` on
-   it. For reasons described above, it is not practical to apply resamplers
-   when predictions are being made. Therefore, we would not be able to apply
-   the resamplers in such a call.
 
 .. _pipeline_cache:
 
@@ -226,10 +190,9 @@ object::
     >>> estimators = [('reduce_dim', PCA()), ('clf', SVC())]
     >>> cachedir = mkdtemp()
     >>> pipe = Pipeline(estimators, memory=cachedir)
-    >>> pipe # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-    Pipeline(...,
-             steps=[('reduce_dim', PCA(copy=True,...)),
-                    ('clf', SVC(C=1.0,...))])
+    >>> pipe
+    Pipeline(memory=...,
+             steps=[('reduce_dim', PCA()), ('clf', SVC())])
     >>> # Clear the cache directory when you don't need it anymore
     >>> rmtree(cachedir)
 
@@ -241,14 +204,12 @@ object::
      >>> from sklearn.datasets import load_digits
      >>> digits = load_digits()
      >>> pca1 = PCA()
-     >>> svm1 = SVC(gamma='scale')
+     >>> svm1 = SVC()
      >>> pipe = Pipeline([('reduce_dim', pca1), ('clf', svm1)])
      >>> pipe.fit(digits.data, digits.target)
-     ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-     Pipeline(memory=None,
-              steps=[('reduce_dim', PCA(...)), ('clf', SVC(...))])
+     Pipeline(steps=[('reduce_dim', PCA()), ('clf', SVC())])
      >>> # The pca instance can be inspected directly
-     >>> print(pca1.components_) # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
+     >>> print(pca1.components_)
          [[-1.77484909e-19  ... 4.07058917e-18]]
 
    Enabling caching triggers a clone of the transformers before fitting.
@@ -262,15 +223,13 @@ object::
 
      >>> cachedir = mkdtemp()
      >>> pca2 = PCA()
-     >>> svm2 = SVC(gamma='scale')
+     >>> svm2 = SVC()
      >>> cached_pipe = Pipeline([('reduce_dim', pca2), ('clf', svm2)],
      ...                        memory=cachedir)
      >>> cached_pipe.fit(digits.data, digits.target)
-     ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-      Pipeline(memory=...,
-               steps=[('reduce_dim', PCA(...)), ('clf', SVC(...))])
+     Pipeline(memory=...,
+             steps=[('reduce_dim', PCA()), ('clf', SVC())])
      >>> print(cached_pipe.named_steps['reduce_dim'].components_)
-     ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
          [[-1.77484909e-19  ... 4.07058917e-18]]
      >>> # Remove the cache directory
      >>> rmtree(cachedir)
@@ -278,6 +237,41 @@ object::
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_compose_plot_compare_reduction.py`
+
+.. _pipeline_resamplers:
+
+Resampling or modifying samples in training
+===========================================
+
+All transformers in a Pipeline must output a dataset with samples corresponding
+to their input.  Sometimes you want a process to modify the set of samples
+used in training, such as balanced resampling, outlier remover, or data
+augmentation/perturbation.  Such processes are called Resamplers, rather than
+Transformers, in Scikit-learn, and should be composed with a predictor using
+a :class:`compose.ResampledTrainer` rather than a Pipeline. Resamplers provide
+a `fit_resample` method which is called by the ``ResampledTrainer`` when
+fitting, so that the resampled data is used to train the subsequent predictor.
+
+:ref:`outlier rejectors` provide `fit_resample` methods that remove samples
+from the dataset if they classified as outliers.  Consider the following::
+
+    >>> from sklearn.compose import ResampledTrainer
+    >>> from sklearn.covariance import EllipticEnvelope
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> pipe = ResampledTrainer(EllipticEnvelope(), LogisticRegression())
+    >>> pipe.fit(X_train, y_train)
+
+In ``pipe``, we remove outliers before fitting our `LogisticRegression`
+model, so that the samples passed to fit come from the same distribution. We do
+this to improve the quality of the fit (see :ref:`_outlier_detection`).
+Therefore, during ``fit``, we want our resampler to be applied.
+
+Now assume that we would like to make predictions on some new data ``X_test``::
+
+    >>> predictions = pipe.predict(X_test)
+
+This does not apply resampling, but provides predictions for all samples in
+``X_test``.
 
 .. _transformed_target_regressor:
 
@@ -304,7 +298,7 @@ variable::
   >>> regr = TransformedTargetRegressor(regressor=regressor,
   ...                                   transformer=transformer)
   >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-  >>> regr.fit(X_train, y_train) # doctest: +ELLIPSIS
+  >>> regr.fit(X_train, y_train)
   TransformedTargetRegressor(...)
   >>> print('R2 score: {0:.2f}'.format(regr.score(X_test, y_test)))
   R2 score: 0.67
@@ -325,7 +319,7 @@ Subsequently, the object is created as::
   >>> regr = TransformedTargetRegressor(regressor=regressor,
   ...                                   func=func,
   ...                                   inverse_func=inverse_func)
-  >>> regr.fit(X_train, y_train) # doctest: +ELLIPSIS
+  >>> regr.fit(X_train, y_train)
   TransformedTargetRegressor(...)
   >>> print('R2 score: {0:.2f}'.format(regr.score(X_test, y_test)))
   R2 score: 0.65
@@ -340,7 +334,7 @@ each other. However, it is possible to bypass this checking by setting
   ...                                   func=func,
   ...                                   inverse_func=inverse_func,
   ...                                   check_inverse=False)
-  >>> regr.fit(X_train, y_train) # doctest: +ELLIPSIS
+  >>> regr.fit(X_train, y_train)
   TransformedTargetRegressor(...)
   >>> print('R2 score: {0:.2f}'.format(regr.score(X_test, y_test)))
   R2 score: -4.50
@@ -398,11 +392,9 @@ and ``value`` is an estimator object::
     >>> from sklearn.decomposition import KernelPCA
     >>> estimators = [('linear_pca', PCA()), ('kernel_pca', KernelPCA())]
     >>> combined = FeatureUnion(estimators)
-    >>> combined # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-    FeatureUnion(n_jobs=None,
-                 transformer_list=[('linear_pca', PCA(copy=True,...)),
-                                   ('kernel_pca', KernelPCA(alpha=1.0,...))],
-                 transformer_weights=None)
+    >>> combined
+    FeatureUnion(transformer_list=[('linear_pca', PCA()),
+                                   ('kernel_pca', KernelPCA())])
 
 
 Like pipelines, feature unions have a shorthand constructor called
@@ -413,11 +405,8 @@ Like ``Pipeline``, individual steps may be replaced using ``set_params``,
 and ignored by setting to ``'drop'``::
 
     >>> combined.set_params(kernel_pca='drop')
-    ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-    FeatureUnion(n_jobs=None,
-                 transformer_list=[('linear_pca', PCA(copy=True,...)),
-                                   ('kernel_pca', 'drop')],
-                 transformer_weights=None)
+    FeatureUnion(transformer_list=[('linear_pca', PCA()), 
+                                   ('kernel_pca', 'drop')])
 
 .. topic:: Examples:
 
@@ -482,13 +471,12 @@ By default, the remaining rating columns are ignored (``remainder='drop'``)::
   ...      ('title_bow', CountVectorizer(), 'title')],
   ...     remainder='drop')
 
-  >>> column_trans.fit(X) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-  ColumnTransformer(n_jobs=None, remainder='drop', sparse_threshold=0.3,
-      transformer_weights=None,
-      transformers=...)
+  >>> column_trans.fit(X)
+  ColumnTransformer(transformers=[('city_category', OneHotEncoder(dtype='int'),
+                                   ['city']),
+                                  ('title_bow', CountVectorizer(), 'title')])
 
   >>> column_trans.get_feature_names()
-  ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   ['city_category__x0_London', 'city_category__x0_Paris', 'city_category__x0_Sallisaw',
   'title_bow__bow', 'title_bow__feast', 'title_bow__grapes', 'title_bow__his',
   'title_bow__how', 'title_bow__last', 'title_bow__learned', 'title_bow__moveable',
@@ -496,7 +484,6 @@ By default, the remaining rating columns are ignored (``remainder='drop'``)::
   'title_bow__wrath']
 
   >>> column_trans.transform(X).toarray()
-  ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   array([[1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0],
          [1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0],
          [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
@@ -524,7 +511,6 @@ transformation::
   ...     remainder='passthrough')
 
   >>> column_trans.fit_transform(X)
-  ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   array([[1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 5, 4],
          [1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 3, 5],
          [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 4, 4],
@@ -541,7 +527,6 @@ the transformation::
   ...     remainder=MinMaxScaler())
 
   >>> column_trans.fit_transform(X)[:, -2:]
-  ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   array([[1. , 0.5],
          [0. , 1. ],
          [0.5, 0.5],
@@ -557,11 +542,11 @@ above example would be::
   ...     (OneHotEncoder(), ['city']),
   ...     (CountVectorizer(), 'title'),
   ...     remainder=MinMaxScaler())
-  >>> column_trans # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-  ColumnTransformer(n_jobs=None, remainder=MinMaxScaler(copy=True, ...),
-           sparse_threshold=0.3,
-           transformer_weights=None,
-           transformers=[('onehotencoder', ...)
+  >>> column_trans
+  ColumnTransformer(remainder=MinMaxScaler(),
+                    transformers=[('onehotencoder', OneHotEncoder(), ['city']),
+                                  ('countvectorizer', CountVectorizer(),
+                                   'title')])
 
 .. topic:: Examples:
 

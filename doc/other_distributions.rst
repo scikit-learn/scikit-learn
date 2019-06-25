@@ -1,4 +1,3 @@
-
 .. _install_by_distribution:
 
 Third party distributions of scikit-learn

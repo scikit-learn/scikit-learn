@@ -3,7 +3,6 @@
 # License: BSD 3 clause
 
 import numpy as np
-import warnings
 from . import MinCovDet
 from ..utils.validation import check_is_fitted, check_array
 from ..metrics import accuracy_score
@@ -69,6 +68,26 @@ class EllipticEnvelope(MinCovDet, OutlierMixin, OutlierRejectionMixin):
         such a way we obtain the expected number of outliers (samples with
         decision function < 0) in training.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.covariance import EllipticEnvelope
+    >>> true_cov = np.array([[.8, .3],
+    ...                      [.3, .4]])
+    >>> X = np.random.RandomState(0).multivariate_normal(mean=[0, 0],
+    ...                                                  cov=true_cov,
+    ...                                                  size=500)
+    >>> cov = EllipticEnvelope(random_state=0).fit(X)
+    >>> # predict returns 1 for an inlier and -1 for an outlier
+    >>> cov.predict([[0, 0],
+    ...              [3, 3]])
+    array([ 1, -1])
+    >>> cov.covariance_
+    array([[0.7411..., 0.2535...],
+           [0.2535..., 0.3053...]])
+    >>> cov.location_
+    array([0.0813... , 0.0427...])
+
     See Also
     --------
     EmpiricalCovariance, MinCovDet
@@ -112,21 +131,12 @@ class EllipticEnvelope(MinCovDet, OutlierMixin, OutlierRejectionMixin):
         self.offset_ = np.percentile(-self.dist_, 100. * self.contamination)
         return self
 
-    def decision_function(self, X, raw_values=None):
+    def decision_function(self, X):
         """Compute the decision function of the given observations.
 
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-
-        raw_values : bool, optional
-            Whether or not to consider raw Mahalanobis distances as the
-            decision function. Must be False (default) for compatibility
-            with the others outlier detection tools.
-
-            .. deprecated:: 0.20
-                ``raw_values`` has been deprecated in 0.20 and will be removed
-                in 0.22.
 
         Returns
         -------
@@ -140,15 +150,6 @@ class EllipticEnvelope(MinCovDet, OutlierMixin, OutlierRejectionMixin):
         """
         check_is_fitted(self, 'offset_')
         negative_mahal_dist = self.score_samples(X)
-
-        # raw_values deprecation:
-        if raw_values is not None:
-            warnings.warn("raw_values parameter is deprecated in 0.20 and will"
-                          " be removed in 0.22.", DeprecationWarning)
-
-            if not raw_values:
-                return (-self.offset_) ** 0.33 - (-negative_mahal_dist) ** 0.33
-
         return negative_mahal_dist - self.offset_
 
     def score_samples(self, X):
@@ -212,9 +213,3 @@ class EllipticEnvelope(MinCovDet, OutlierMixin, OutlierRejectionMixin):
 
         """
         return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
-
-    @property
-    def threshold_(self):
-        warnings.warn("threshold_ attribute is deprecated in 0.20 and will"
-                      " be removed in 0.22.", DeprecationWarning)
-        return self.offset_

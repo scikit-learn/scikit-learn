@@ -323,6 +323,27 @@ def f_bad_order(b, a):
     return c
 
 
+def f_too_many_param_docstring(a, b):
+    """Function f
+
+    Parameters
+    ----------
+    a : int
+        Parameter a
+    b : int
+        Parameter b
+    c : int
+        Parameter c
+
+    Returns
+    -------
+    d : list
+        Parameter c
+    """
+    d = a + b
+    return d
+
+
 def f_missing(a, b):
     """Function f
 
@@ -469,29 +490,98 @@ def test_check_docstring_parameters():
         incorrect == [
             "sklearn.utils.tests.test_testing.f_check_param_definition There "
             "was no space between the param name and colon ('a: int')",
+
             "sklearn.utils.tests.test_testing.f_check_param_definition There "
             "was no space between the param name and colon ('b:')",
+
             "sklearn.utils.tests.test_testing.f_check_param_definition "
             "Parameter 'c :' has an empty type spec. Remove the colon",
+
             "sklearn.utils.tests.test_testing.f_check_param_definition There "
             "was no space between the param name and colon ('d:int')",
         ])
 
-    messages = ["a != b", "arg mismatch: ['b']", "arg mismatch: ['X', 'y']",
-                "predict y != X",
-                "predict_proba arg mismatch: ['X']",
-                "score arg mismatch: ['X']",
-                ".fit arg mismatch: ['X', 'y']"]
+    messages = [
+            ["In function: sklearn.utils.tests.test_testing.f_bad_order",
+             "There's a parameter name mismatch in function docstring w.r.t."
+             " function signature, at index 0 diff: 'b' != 'a'",
+             "Full diff:",
+             "- ['b', 'a']",
+             "+ ['a', 'b']"],
+
+            ["In function: " +
+                "sklearn.utils.tests.test_testing.f_too_many_param_docstring",
+             "Parameters in function docstring have more items w.r.t. function"
+             " signature, first extra item: c",
+             "Full diff:",
+             "- ['a', 'b']",
+             "+ ['a', 'b', 'c']",
+             "?          +++++"],
+
+            ["In function: sklearn.utils.tests.test_testing.f_missing",
+             "Parameters in function docstring have less items w.r.t. function"
+             " signature, first missing item: b",
+             "Full diff:",
+             "- ['a', 'b']",
+             "+ ['a']"],
+
+            ["In function: sklearn.utils.tests.test_testing.Klass.f_missing",
+             "Parameters in function docstring have less items w.r.t. function"
+             " signature, first missing item: X",
+             "Full diff:",
+             "- ['X', 'y']",
+             "+ []"],
+
+            ["In function: " +
+             "sklearn.utils.tests.test_testing.MockMetaEstimator.predict",
+             "There's a parameter name mismatch in function docstring w.r.t."
+             " function signature, at index 0 diff: 'X' != 'y'",
+             "Full diff:",
+             "- ['X']",
+             "?   ^",
+             "+ ['y']",
+             "?   ^"],
+
+            ["In function: " +
+             "sklearn.utils.tests.test_testing.MockMetaEstimator."
+             + "predict_proba",
+             "Parameters in function docstring have less items w.r.t. function"
+             " signature, first missing item: X",
+             "Full diff:",
+             "- ['X']",
+             "+ []"],
+
+            ["In function: " +
+                "sklearn.utils.tests.test_testing.MockMetaEstimator.score",
+             "Parameters in function docstring have less items w.r.t. function"
+             " signature, first missing item: X",
+             "Full diff:",
+             "- ['X']",
+             "+ []"],
+
+            ["In function: " +
+                "sklearn.utils.tests.test_testing.MockMetaEstimator.fit",
+             "Parameters in function docstring have less items w.r.t. function"
+             " signature, first missing item: X",
+             "Full diff:",
+             "- ['X', 'y']",
+             "+ []"],
+
+            ]
 
     mock_meta = MockMetaEstimator(delegate=MockEst())
 
-    for mess, f in zip(messages,
-                       [f_bad_order, f_missing, Klass.f_missing,
-                        mock_meta.predict, mock_meta.predict_proba,
-                        mock_meta.score, mock_meta.fit]):
+    for msg, f in zip(messages,
+                      [f_bad_order,
+                       f_too_many_param_docstring,
+                       f_missing,
+                       Klass.f_missing,
+                       mock_meta.predict,
+                       mock_meta.predict_proba,
+                       mock_meta.score,
+                       mock_meta.fit]):
         incorrect = check_docstring_parameters(f)
-        assert len(incorrect) >= 1
-        assert mess in incorrect[0], '"%s" not in "%s"' % (mess, incorrect[0])
+        assert msg == incorrect, ('\n"%s"\n not in \n"%s"' % (msg, incorrect))
 
 
 class RegistrationCounter:

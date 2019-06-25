@@ -29,11 +29,12 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from sklearn.utils import IS_PYPY
+from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.utils.testing import (assert_equal, assert_not_equal,
                                    assert_almost_equal, assert_in,
                                    assert_less, assert_greater,
                                    assert_warns_message, assert_raise_message,
-                                   clean_warning_registry, ignore_warnings,
+                                   clean_warning_registry,
                                    SkipTest, assert_raises, assert_no_warnings,
                                    fails_if_pypy, assert_allclose_dense_sparse,
                                    skip_if_32bit)
@@ -506,7 +507,6 @@ def test_tfidf_vectorizer_setters():
 
 
 @fails_if_pypy
-@ignore_warnings(category=DeprecationWarning)
 def test_hashing_vectorizer():
     v = HashingVectorizer()
     X = v.transform(ALL_FOOD_DOCS)
@@ -526,7 +526,7 @@ def test_hashing_vectorizer():
         assert_almost_equal(np.linalg.norm(X[0].data, 2), 1.0)
 
     # Check vectorization with some non-default parameters
-    v = HashingVectorizer(ngram_range=(1, 2), non_negative=True, norm='l1')
+    v = HashingVectorizer(ngram_range=(1, 2), norm='l1')
     X = v.transform(ALL_FOOD_DOCS)
     assert_equal(X.shape, (len(ALL_FOOD_DOCS), v.n_features))
     assert_equal(X.dtype, v.dtype)
@@ -537,7 +537,7 @@ def test_hashing_vectorizer():
     assert ngrams_nnz < 2 * token_nnz
 
     # makes the feature values bounded
-    assert np.min(X.data) > 0
+    assert np.min(X.data) > -1
     assert np.max(X.data) < 1
 
     # Check that the rows are normalized
@@ -689,12 +689,10 @@ def test_count_binary_occurrences():
 
 
 @fails_if_pypy
-@ignore_warnings(category=DeprecationWarning)
 def test_hashed_binary_occurrences():
     # by default multiple occurrences are counted as longs
     test_data = ['aaabc', 'abbde']
-    vect = HashingVectorizer(analyzer='char', non_negative=True,
-                             norm=None)
+    vect = HashingVectorizer(alternate_sign=False, analyzer='char', norm=None)
     X = vect.transform(test_data)
     assert_equal(np.max(X[0:1].data), 3)
     assert_equal(np.max(X[1:2].data), 2)
@@ -702,15 +700,15 @@ def test_hashed_binary_occurrences():
 
     # using boolean features, we can fetch the binary occurrence info
     # instead.
-    vect = HashingVectorizer(analyzer='char', non_negative=True, binary=True,
-                             norm=None)
+    vect = HashingVectorizer(analyzer='char', alternate_sign=False,
+                             binary=True, norm=None)
     X = vect.transform(test_data)
     assert_equal(np.max(X.data), 1)
     assert_equal(X.dtype, np.float64)
 
     # check the ability to change the dtype
-    vect = HashingVectorizer(analyzer='char', non_negative=True, binary=True,
-                             norm=None, dtype=np.float64)
+    vect = HashingVectorizer(analyzer='char', alternate_sign=False,
+                             binary=True, norm=None, dtype=np.float64)
     X = vect.transform(test_data)
     assert_equal(X.dtype, np.float64)
 
@@ -735,8 +733,6 @@ def test_vectorizer_inverse_transform(Vectorizer):
         assert_array_equal(np.sort(terms), np.sort(terms2))
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_count_vectorizer_pipeline_grid_selection():
     # raw documents
     data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
@@ -758,7 +754,7 @@ def test_count_vectorizer_pipeline_grid_selection():
 
     # find the best parameters for both the feature extraction and the
     # classifier
-    grid_search = GridSearchCV(pipeline, parameters, n_jobs=1)
+    grid_search = GridSearchCV(pipeline, parameters, n_jobs=1, cv=3)
 
     # Check that the best model found by grid search is 100% correct on the
     # held out evaluation set.
@@ -773,8 +769,6 @@ def test_count_vectorizer_pipeline_grid_selection():
     assert_equal(best_vectorizer.ngram_range, (1, 1))
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_vectorizer_pipeline_grid_selection():
     # raw documents
     data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
@@ -829,7 +823,6 @@ def test_vectorizer_pipeline_cross_validation():
 
 
 @fails_if_pypy
-@ignore_warnings(category=DeprecationWarning)
 def test_vectorizer_unicode():
     # tests that the count vectorizer works with cyrillic.
     document = (
@@ -842,14 +835,14 @@ def test_vectorizer_unicode():
     X_counted = vect.fit_transform([document])
     assert_equal(X_counted.shape, (1, 12))
 
-    vect = HashingVectorizer(norm=None, non_negative=True)
+    vect = HashingVectorizer(norm=None, alternate_sign=False)
     X_hashed = vect.transform([document])
     assert_equal(X_hashed.shape, (1, 2 ** 20))
 
     # No collisions on such a small dataset
     assert_equal(X_counted.nnz, X_hashed.nnz)
 
-    # When norm is None and non_negative, the tokens are counted up to
+    # When norm is None and not alternate_sign, the tokens are counted up to
     # collisions
     assert_array_equal(np.sort(X_counted.data), np.sort(X_hashed.data))
 
@@ -1200,3 +1193,59 @@ def test_stop_word_validation_custom_preprocessor(Estimator):
                                             .findall(doc),
                     stop_words=['and'])
     assert _check_stop_words_consistency(vec) is True
+
+
+@pytest.mark.parametrize(
+    'Estimator',
+    [CountVectorizer,
+     TfidfVectorizer,
+     pytest.param(HashingVectorizer, marks=fails_if_pypy)]
+)
+@pytest.mark.parametrize(
+    'input_type, err_type, err_msg',
+    [('filename', FileNotFoundError, ''),
+     ('file', AttributeError, "'str' object has no attribute 'read'")]
+)
+def test_callable_analyzer_error(Estimator, input_type, err_type, err_msg):
+    data = ['this is text, not file or filename']
+    with pytest.raises(err_type, match=err_msg):
+        Estimator(analyzer=lambda x: x.split(),
+                  input=input_type).fit_transform(data)
+
+
+@pytest.mark.parametrize(
+    'Estimator',
+    [CountVectorizer,
+     TfidfVectorizer,
+     pytest.param(HashingVectorizer, marks=fails_if_pypy)]
+)
+@pytest.mark.parametrize(
+    'analyzer', [lambda doc: open(doc, 'r'), lambda doc: doc.read()]
+)
+@pytest.mark.parametrize('input_type', ['file', 'filename'])
+def test_callable_analyzer_change_behavior(Estimator, analyzer, input_type):
+    data = ['this is text, not file or filename']
+    warn_msg = 'Since v0.21, vectorizer'
+    with pytest.raises((FileNotFoundError, AttributeError)):
+        with pytest.warns(ChangedBehaviorWarning, match=warn_msg) as records:
+            Estimator(analyzer=analyzer, input=input_type).fit_transform(data)
+    assert len(records) == 1
+    assert warn_msg in str(records[0])
+
+
+@pytest.mark.parametrize(
+    'Estimator',
+    [CountVectorizer,
+     TfidfVectorizer,
+     pytest.param(HashingVectorizer, marks=fails_if_pypy)]
+)
+def test_callable_analyzer_reraise_error(tmpdir, Estimator):
+    # check if a custom exception from the analyzer is shown to the user
+    def analyzer(doc):
+        raise Exception("testing")
+
+    f = tmpdir.join("file.txt")
+    f.write("sample content\n")
+
+    with pytest.raises(Exception, match="testing"):
+        Estimator(analyzer=analyzer, input='file').fit_transform([f])
