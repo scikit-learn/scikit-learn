@@ -1,12 +1,7 @@
 """
 =====================================
-Pipelining nearest neighbors and TSNE
+Approximate nearest neighbors in TSNE
 =====================================
-
-This examples demonstrates how to precompute the k nearest neighbors before
-using them in TSNE. TSNE can compute the nearest neighbors internally, but
-precomputing them can have several benefits, such as finer control, caching for
-multiple use, or custom implementations.
 
 This example presents how to chain KNeighborsTransformer and TSNE in a
 pipeline, and how to wrap the packages `annoy` and `nmslib` to replace

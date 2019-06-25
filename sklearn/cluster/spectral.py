@@ -475,7 +475,9 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         """
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
                         dtype=np.float64, ensure_min_samples=2)
-        if X.shape[0] == X.shape[1] and self.affinity != "precomputed":
+        allow_squared = self.affinity in ["precomputed",
+                                          "precomputed_nearest_neighbors"]
+        if X.shape[0] == X.shape[1] and not allow_squared:
             warnings.warn("The spectral clustering API has changed. ``fit``"
                           "now constructs an affinity matrix from data. To use"
                           " a custom affinity matrix, "
