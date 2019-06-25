@@ -151,7 +151,7 @@ ax.set_title("Random Forest Feature Importances (MDI)")
 # expected.
 result = permutation_importance(rf, X_test, y_test, n_repeats=10,
                                 random_state=42)
-sorted_idx = result.mean.argsort()
+sorted_idx = result.importances_mean.argsort()
 
 # sphinx_gallery_thumbnail_number = 2
 _, ax = plt.subplots()
@@ -168,7 +168,7 @@ ax.set_title("Permutation Importances (test set)")
 # re-running this example with constrained RF with min_samples_leaf=10.
 result = permutation_importance(rf, X_train, y_train, n_repeats=10,
                                 random_state=42)
-sorted_idx = result.mean.argsort()
+sorted_idx = result.importances_mean.argsort()
 
 # sphinx_gallery_thumbnail_number = 3
 _, ax = plt.subplots()
