@@ -11,9 +11,9 @@ from math import ceil
 
 import numpy as np
 from scipy import linalg
+from joblib import Parallel, delayed, effective_n_jobs
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils._joblib import Parallel, delayed, effective_n_jobs
 from ..utils import (check_array, check_random_state, gen_even_slices,
                      gen_batches)
 from ..utils.extmath import randomized_svd, row_norms
