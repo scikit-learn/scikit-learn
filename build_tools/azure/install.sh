@@ -51,6 +51,10 @@ if [[ "$DISTRIB" == "conda" ]]; then
         TO_INSTALL="$TO_INSTALL matplotlib=$MATPLOTLIB_VERSION"
     fi
 
+    if [[ "$PYTHON_VERSION" == "*" ]]; then
+        TO_INSTALL="$TO_INSTALL pytest-xdist"
+    fi
+
 	make_conda $TO_INSTALL
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then

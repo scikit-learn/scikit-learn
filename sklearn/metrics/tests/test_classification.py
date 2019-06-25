@@ -13,7 +13,7 @@ from sklearn import svm
 from sklearn.datasets import make_multilabel_classification
 from sklearn.preprocessing import label_binarize, LabelBinarizer
 from sklearn.utils.validation import check_random_state
-from sklearn.utils.testing import assert_raises, clean_warning_registry
+from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -678,7 +678,7 @@ def test_matthews_corrcoef_multiclass():
     assert_almost_equal(mcc, 0.)
 
 
-@pytest.mark.parametrize('n_points', [100, 10000, 1000000])
+@pytest.mark.parametrize('n_points', [100, 10000])
 def test_matthews_corrcoef_overflow(n_points):
     # https://github.com/scikit-learn/scikit-learn/issues/9622
     rng = np.random.RandomState(20170906)
@@ -1598,7 +1598,6 @@ def test_prf_warnings():
            'being set to 0.0 due to no true samples.')
     my_assert(w, msg, f, [-1, -1], [1, 1], average='binary')
 
-    clean_warning_registry()
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter('always')
         precision_recall_fscore_support([0, 0], [0, 0], average="binary")
@@ -1615,7 +1614,6 @@ def test_recall_warnings():
                        np.array([[1, 1], [1, 1]]),
                        np.array([[0, 0], [0, 0]]),
                        average='micro')
-    clean_warning_registry()
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter('always')
         recall_score(np.array([[0, 0], [0, 0]]),
@@ -1631,7 +1629,6 @@ def test_recall_warnings():
 
 
 def test_precision_warnings():
-    clean_warning_registry()
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter('always')
         precision_score(np.array([[1, 1], [1, 1]]),
@@ -1652,7 +1649,6 @@ def test_precision_warnings():
 
 
 def test_fscore_warnings():
-    clean_warning_registry()
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter('always')
 

@@ -44,11 +44,26 @@ basis to help users test bleeding edge features or bug fixes::
 Building from source
 =====================
 
+In the vast majority of cases, building scikit-learn for development purposes
+can be done with::
+
+    pip install cython pytest flake8
+
+Then, in the main repository::
+
+    pip install --editable .
+
+Please read below for details and more advanced instructions.
+
+Dependencies
+------------
+
 Scikit-learn requires:
 
 - Python (>= 3.5),
 - NumPy (>= 1.11),
-- SciPy (>= 0.17).
+- SciPy (>= 0.17),
+- Joblib (>= 0.11).
 
 .. note::
 
@@ -93,12 +108,12 @@ If you want to build a stable version, you can ``git checkout <VERSION>``
 to get the code for that particular version, or download an zip archive of
 the version from github.
 
-If you have all the build requirements installed (see below for details), you
-can build and install the package in the following way.
+Once you have all the build requirements installed (see below for details),
+you can build and install the package in the following way.
 
 If you run the development version, it is cumbersome to reinstall the
 package each time you update the sources. Therefore it's recommended that you
-install in editable, which allows you to edit the code in-place. This
+install in editable mode, which allows you to edit the code in-place. This
 builds the extension in place and creates a link to the development directory
 (see `the pip docs <https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`_)::
 
@@ -112,16 +127,16 @@ builds the extension in place and creates a link to the development directory
 
 .. note::
 
-    If you decide to do an editable install you have to rerun::
+    You will have to re-run::
 
         pip install --editable .
 
-    every time the source code of a compiled extension is
-    changed (for instance when switching branches or pulling changes from upstream).
+    every time the source code of a compiled extension is changed (for
+    instance when switching branches or pulling changes from upstream).
+    Compiled extensions are Cython files (ending in `.pyx` or `.pxd`).
 
-On Unix-like systems, you can simply type ``make`` in the top-level folder to
-build in-place and launch all the tests. Have a look at the ``Makefile`` for
-additional utilities.
+On Unix-like systems, you can equivalently type ``make in`` from the
+top-level folder. Have a look at the ``Makefile`` for additional utilities.
 
 Mac OSX
 -------
@@ -284,58 +299,3 @@ build step::
     python setup.py build --compiler=my_compiler install
 
 where ``my_compiler`` should be one of ``mingw32`` or ``msvc``.
-
-
-.. _testing:
-
-Testing
-=======
-
-Testing scikit-learn once installed
------------------------------------
-
-Testing requires having `pytest <https://docs.pytest.org>`_ >=\ |PytestMinVersion|\ .
-Some tests also require having `pandas <https://pandas.pydata.org/>` installed.
-After installation, the package can be tested by executing *from outside* the
-source directory::
-
-    $ pytest sklearn
-
-This should give you a lot of output (and some warnings) but
-eventually should finish with a message similar to::
-
-    =========== 8304 passed, 26 skipped, 4659 warnings in 557.76 seconds ===========
-
-Otherwise, please consider posting an issue into the `GitHub issue tracker
-<https://github.com/scikit-learn/scikit-learn/issues>`_ or to the
-:ref:`mailing_lists` including the traceback of the individual failures
-and errors. Please include your operating system, your version of NumPy, SciPy
-and scikit-learn, and how you installed scikit-learn.
-
-
-Testing scikit-learn from within the source folder
---------------------------------------------------
-
-Scikit-learn can also be tested without having the package
-installed. For this you must compile the sources inplace from the
-source directory::
-
-    python setup.py build_ext --inplace
-
-Test can now be run using pytest::
-
-    pytest sklearn
-
-This is automated by the commands::
-
-    make in
-
-and::
-
-    make test
-
-
-You can also install a symlink named ``site-packages/scikit-learn.egg-link``
-to the development folder of scikit-learn with::
-
-    pip install --editable .

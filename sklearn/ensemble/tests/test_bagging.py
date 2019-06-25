@@ -5,8 +5,8 @@ Testing for the bagging ensemble module (sklearn.ensemble.bagging).
 # Author: Gilles Louppe
 # License: BSD 3 clause
 
-import pytest
 import numpy as np
+import joblib
 
 from sklearn.base import BaseEstimator
 
@@ -33,7 +33,6 @@ from sklearn.feature_selection import SelectKBest
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_boston, load_iris, make_hastie_10_2
 from sklearn.utils import check_random_state
-from sklearn.utils import _joblib
 from sklearn.preprocessing import FunctionTransformer
 
 from scipy.sparse import csc_matrix, csr_matrix
@@ -224,7 +223,7 @@ class DummySizeEstimator(BaseEstimator):
 
     def fit(self, X, y):
         self.training_size_ = X.shape[0]
-        self.training_hash_ = _joblib.hash(X)
+        self.training_hash_ = joblib.hash(X)
 
 
 def test_bootstrap_samples():
@@ -825,8 +824,7 @@ def test_bagging_regressor_with_missing_inputs():
     for y in y_values:
         regressor = DecisionTreeRegressor()
         pipeline = make_pipeline(
-            FunctionTransformer(replace, validate=False),
-            regressor
+            FunctionTransformer(replace), regressor
         )
         pipeline.fit(X, y).predict(X)
         bagging_regressor = BaggingRegressor(pipeline)
@@ -853,8 +851,7 @@ def test_bagging_classifier_with_missing_inputs():
     y = np.array([3, 6, 6, 6, 6])
     classifier = DecisionTreeClassifier()
     pipeline = make_pipeline(
-        FunctionTransformer(replace, validate=False),
-        classifier
+        FunctionTransformer(replace), classifier
     )
     pipeline.fit(X, y).predict(X)
     bagging_classifier = BaggingClassifier(pipeline)

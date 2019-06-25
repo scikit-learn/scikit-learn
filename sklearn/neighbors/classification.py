@@ -91,7 +91,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
     >>> y = [0, 0, 1, 1]
     >>> from sklearn.neighbors import KNeighborsClassifier
     >>> neigh = KNeighborsClassifier(n_neighbors=3)
-    >>> neigh.fit(X, y) # doctest: +ELLIPSIS
+    >>> neigh.fit(X, y)
     KNeighborsClassifier(...)
     >>> print(neigh.predict([[1.1]]))
     [0]
@@ -308,7 +308,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     >>> y = [0, 0, 1, 1]
     >>> from sklearn.neighbors import RadiusNeighborsClassifier
     >>> neigh = RadiusNeighborsClassifier(radius=1.0)
-    >>> neigh.fit(X, y) # doctest: +ELLIPSIS
+    >>> neigh.fit(X, y)
     RadiusNeighborsClassifier(...)
     >>> print(neigh.predict([[1.5]]))
     [0]

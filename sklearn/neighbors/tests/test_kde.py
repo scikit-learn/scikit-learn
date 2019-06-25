@@ -10,7 +10,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.datasets import make_blobs
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import StandardScaler
-from sklearn.utils import _joblib
+import joblib
 
 
 def compute_kernel_slow(Y, X, kernel, h):
@@ -219,8 +219,8 @@ def test_pickling(tmpdir, sample_weight):
     scores = kde.score_samples(X)
 
     file_path = str(tmpdir.join('dump.pkl'))
-    _joblib.dump(kde, file_path)
-    kde = _joblib.load(file_path)
+    joblib.dump(kde, file_path)
+    kde = joblib.load(file_path)
     scores_pickled = kde.score_samples(X)
 
     assert_allclose(scores, scores_pickled)

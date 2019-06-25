@@ -432,6 +432,10 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
             'Unknown linkage option, linkage should be one '
             'of %s, but %s was given' % (linkage_choices.keys(), linkage))
 
+    if affinity == 'cosine' and np.any(~np.any(X, axis=1)):
+        raise ValueError(
+            'Cosine affinity cannot be used when X contains zero vectors')
+
     if connectivity is None:
         from scipy.cluster import hierarchy  # imports PIL
 
@@ -744,10 +748,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     >>> X = np.array([[1, 2], [1, 4], [1, 0],
     ...               [4, 2], [4, 4], [4, 0]])
     >>> clustering = AgglomerativeClustering().fit(X)
-    >>> clustering # doctest: +NORMALIZE_WHITESPACE
-    AgglomerativeClustering(affinity='euclidean', compute_full_tree='auto',
-                            connectivity=None, distance_threshold=None,
-                            linkage='ward', memory=None, n_clusters=2)
+    >>> clustering
+    AgglomerativeClustering()
     >>> clustering.labels_
     array([1, 1, 1, 0, 0, 0])
 
@@ -996,11 +998,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     >>> images = digits.images
     >>> X = np.reshape(images, (len(images), -1))
     >>> agglo = cluster.FeatureAgglomeration(n_clusters=32)
-    >>> agglo.fit(X) # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    FeatureAgglomeration(affinity='euclidean', compute_full_tree='auto',
-                 connectivity=None, distance_threshold=None, linkage='ward',
-                 memory=None, n_clusters=32,
-                 pooling_func=...)
+    >>> agglo.fit(X)
+    FeatureAgglomeration(n_clusters=32)
     >>> X_reduced = agglo.transform(X)
     >>> X_reduced.shape
     (1797, 32)

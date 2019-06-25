@@ -14,6 +14,7 @@ Link: https://github.com/blei-lab/onlineldavb
 import numpy as np
 import scipy.sparse as sp
 from scipy.special import gammaln
+from joblib import Parallel, delayed, effective_n_jobs
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import (check_random_state, check_array,
@@ -21,7 +22,6 @@ from ..utils import (check_random_state, check_array,
 from ..utils.fixes import logsumexp
 from ..utils.validation import check_non_negative
 from ..utils.validation import check_is_fitted
-from ..utils._joblib import Parallel, delayed, effective_n_jobs
 
 from ._online_lda import (mean_change, _dirichlet_expectation_1d,
                           _dirichlet_expectation_2d)
@@ -254,7 +254,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
     >>> X, _ = make_multilabel_classification(random_state=0)
     >>> lda = LatentDirichletAllocation(n_components=5,
     ...     random_state=0)
-    >>> lda.fit(X) # doctest: +ELLIPSIS
+    >>> lda.fit(X)
     LatentDirichletAllocation(...)
     >>> # get topics for some given samples:
     >>> lda.transform(X[-2:])
