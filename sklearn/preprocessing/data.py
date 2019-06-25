@@ -146,10 +146,9 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     X = check_array(X, accept_sparse='csc', copy=copy, ensure_2d=False,
                     estimator='the scale function', dtype=FLOAT_DTYPES,
                     force_all_finite='allow-nan')
-    if with_std:
-        if with_std not in (1, 2, True):
-            raise ValueError("Invalid value for `with_std`: {}".format(
-                            str(with_std)))
+    if with_std not in (1, 2, True, False):
+        raise ValueError("Invalid value for `with_std`: {}".format(
+                        str(with_std)))
     if sparse.issparse(X):
         if with_mean:
             raise ValueError(
@@ -686,10 +685,9 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         # if n_samples_seen_ is an integer (i.e. no missing values), we need to
         # transform it to a NumPy array of shape (n_features,) required by
         # incr_mean_variance_axis and _incremental_variance_axis
-        if self.with_std:
-            if self.with_std not in (1, 2, True):
-                raise ValueError("Invalid value for `with_std`: {}".format(
-                                str(self.with_std)))
+        if self.with_std not in (1, 2, True, False):
+            raise ValueError("Invalid value for `with_std`: {}".format(
+                            str(self.with_std)))
         if (hasattr(self, 'n_samples_seen_') and
                 isinstance(self.n_samples_seen_, numbers.Integral)):
             self.n_samples_seen_ = np.repeat(
