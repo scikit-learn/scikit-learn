@@ -5,12 +5,7 @@ import scipy as sp
 
 import pytest
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_no_warnings
 
 from sklearn import datasets
 from sklearn.decomposition import PCA
@@ -49,10 +44,14 @@ def test_no_empty_slice_warning():
     n_features = n_components + 2  # anything > n_comps triggered it in 0.16
     X = np.random.uniform(-1, 1, size=(n_components, n_features))
     pca = PCA(n_components=n_components)
-    assert_no_warnings(pca.fit, X)
+    with pytest.warns(None) as record:
+        pca.fit(X)
+    assert not record.list
 
 
-def test_whitening():
+@pytest.mark.parametrize('copy', [True, False])
+@pytest.mark.parametrize('solver', PCA_SOLVERS)
+def test_whitening(solver, copy):
     # Check that PCA output has unit-variance
     rng = np.random.RandomState(0)
     n_samples = 100
@@ -68,36 +67,35 @@ def test_whitening():
     # mean component-wise variance of the remaining 30 features
     X[:, :50] *= 3
 
-    assert_equal(X.shape, (n_samples, n_features))
+    assert X.shape == (n_samples, n_features)
 
     # the component-wise variance is thus highly varying:
-    assert_greater(X.std(axis=0).std(), 43.8)
+    assert X.std(axis=0).std() > 43.8
 
-    for solver, copy in product(PCA_SOLVERS, (True, False)):
-        # whiten the data while projecting to the lower dim subspace
-        X_ = X.copy()  # make sure we keep an original across iterations.
-        pca = PCA(n_components=n_components, whiten=True, copy=copy,
-                  svd_solver=solver, random_state=0, iterated_power=7)
-        # test fit_transform
-        X_whitened = pca.fit_transform(X_.copy())
-        assert_equal(X_whitened.shape, (n_samples, n_components))
-        X_whitened2 = pca.transform(X_)
-        assert_array_almost_equal(X_whitened, X_whitened2)
+    # whiten the data while projecting to the lower dim subspace
+    X_ = X.copy()  # make sure we keep an original across iterations.
+    pca = PCA(n_components=n_components, whiten=True, copy=copy,
+              svd_solver=solver, random_state=0, iterated_power=7)
+    # test fit_transform
+    X_whitened = pca.fit_transform(X_.copy())
+    assert X_whitened.shape == (n_samples, n_components)
+    X_whitened2 = pca.transform(X_)
+    assert_allclose(X_whitened, X_whitened2, rtol=5e-4)
 
-        assert_almost_equal(X_whitened.std(ddof=1, axis=0),
-                            np.ones(n_components),
-                            decimal=6)
-        assert_almost_equal(X_whitened.mean(axis=0), np.zeros(n_components))
+    assert_allclose(X_whitened.std(ddof=1, axis=0), np.ones(n_components))
+    assert_allclose(
+        X_whitened.mean(axis=0), np.zeros(n_components), atol=1e-12
+    )
 
-        X_ = X.copy()
-        pca = PCA(n_components=n_components, whiten=False, copy=copy,
-                  svd_solver=solver).fit(X_)
-        X_unwhitened = pca.transform(X_)
-        assert_equal(X_unwhitened.shape, (n_samples, n_components))
+    X_ = X.copy()
+    pca = PCA(n_components=n_components, whiten=False, copy=copy,
+              svd_solver=solver).fit(X_)
+    X_unwhitened = pca.transform(X_)
+    assert X_unwhitened.shape == (n_samples, n_components)
 
-        # in that case the output components still have varying variances
-        assert_almost_equal(X_unwhitened.std(axis=0).std(), 74.1, 1)
-        # we always center, so no test for non-centering.
+    # in that case the output components still have varying variances
+    assert X_unwhitened.std(axis=0).std() == pytest.approx(74.1, rel=1e-1)
+    # we always center, so no test for non-centering.
 
 
 @pytest.mark.parametrize('svd_solver', ['arpack', 'randomized'])
@@ -244,9 +242,9 @@ def test_pca_inverse(svd_solver, whiten):
     [('arpack', 0, r'must be between 1 and min\(n_samples, n_features\)'),
      ('randomized', 0, r'must be between 1 and min\(n_samples, n_features\)'),
      ('arpack', 2, r'must be strictly less than min'),
-     ('auto', -1,(r"n_components={}L? must be between {}L? and "
-                  r"min\(n_samples, n_features\)={}L? with "
-                  r"svd_solver=\'{}\'")),
+     ('auto', -1, (r"n_components={}L? must be between {}L? and "
+                   r"min\(n_samples, n_features\)={}L? with "
+                   r"svd_solver=\'{}\'")),
      ('auto', 3, (r"n_components={}L? must be between {}L? and "
                   r"min\(n_samples, n_features\)={}L? with "
                   r"svd_solver=\'{}\'")),
