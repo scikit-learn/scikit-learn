@@ -146,6 +146,10 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     X = check_array(X, accept_sparse='csc', copy=copy, ensure_2d=False,
                     estimator='the scale function', dtype=FLOAT_DTYPES,
                     force_all_finite='allow-nan')
+    if with_std:
+        if with_std not in (1, 2, True):
+                raise ValueError("Invalid value for `with_std`: {}".format(
+                                str(with_std)))
     if sparse.issparse(X):
         if with_mean:
             raise ValueError(
@@ -155,9 +159,6 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
             raise ValueError("Can only scale sparse matrix on axis=0, "
                              " got axis=%d" % axis)
         if with_std:
-            if with_std not in (1, 2, True):
-                raise ValueError("Invalid value for `with_std`: {}".format(
-                                 str(with_std)))
             _, var = mean_variance_axis(X, axis=0)
             var = _handle_zeros_in_scale(var, copy=False)
             inplace_column_scale(X, 1 / (with_std * np.sqrt(var)))
@@ -166,9 +167,6 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
         if with_mean:
             mean_ = np.nanmean(X, axis)
         if with_std:
-            if with_std not in (1, 2, True):
-                raise ValueError("Invalid value for `with_std`: {}".format(
-                                 str(with_std)))
             scale_ = with_std * np.nanstd(X, axis)
         # Xr is a view on the original array that enables easy use of
         # broadcasting on the axis in which we are interested in
@@ -688,6 +686,10 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         # if n_samples_seen_ is an integer (i.e. no missing values), we need to
         # transform it to a NumPy array of shape (n_features,) required by
         # incr_mean_variance_axis and _incremental_variance_axis
+        if self.with_std:
+            if self.with_std not in (1, 2, True):
+                raise ValueError("Invalid value for `with_std`: {}".format(
+                                str(self.with_std)))
         if (hasattr(self, 'n_samples_seen_') and
                 isinstance(self.n_samples_seen_, numbers.Integral)):
             self.n_samples_seen_ = np.repeat(
@@ -753,9 +755,6 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             self.n_samples_seen_ = self.n_samples_seen_[0]
 
         if self.with_std:
-            if self.with_std not in (1, 2, True):
-                raise ValueError("Invalid value for 'with_std': %s" %
-                                 self.with_std)
             self.scale_ = _handle_zeros_in_scale(
                                 self.with_std * np.sqrt(self.var_))
         else:
