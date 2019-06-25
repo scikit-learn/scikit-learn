@@ -53,7 +53,7 @@ print("Accuracy on test data: {:.2f}".format(clf.score(X_test, y_test)))
 # feature during training.
 result = permutation_importance(clf, X_train, y_train, n_repeats=10,
                                 random_state=42)
-perm_sorted_idx = result.mean.argsort()
+perm_sorted_idx = result.importances_mean.argsort()
 
 tree_importance_sorted_idx = np.argsort(clf.feature_importances_)
 tree_indicies = np.arange(1, len(clf.feature_importances_) + 1)
