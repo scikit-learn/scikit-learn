@@ -148,8 +148,8 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
                     force_all_finite='allow-nan')
     if with_std:
         if with_std not in (1, 2, True):
-                raise ValueError("Invalid value for `with_std`: {}".format(
-                                str(with_std)))
+            raise ValueError("Invalid value for `with_std`: {}".format(
+                            str(with_std)))
     if sparse.issparse(X):
         if with_mean:
             raise ValueError(
