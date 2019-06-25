@@ -21,24 +21,6 @@ iris = datasets.load_iris()
 solver_list = ['full', 'arpack', 'randomized', 'auto']
 
 
-@pytest.mark.parametrize(
-    'svd_solver, n_components, err_msg',
-    [('arpack', 0, r'must be between 1 and min\(n_samples, n_features\)'),
-     ('randomized', 0, r'must be between 1 and min\(n_samples, n_features\)'),
-     ('arpack', iris.data.shape[1], r'must be strictly less than min')]
-)
-def test_pca_internal_state(svd_solver, n_components, err_msg):
-    X = iris.data
-    pca_fitted = PCA(n_components=n_components, svd_solver=svd_solver)
-
-    with pytest.raises(ValueError, match=err_msg):
-        pca_fitted.fit(X)
-
-    pca = PCA(n_components=n_components, svd_solver=svd_solver)
-    assert pca_fitted.n_components == pca.n_components
-    assert pca_fitted.svd_solver == pca.svd_solver
-
-
 @pytest.mark.parametrize('svd_solver', solver_list)
 @pytest.mark.parametrize('n_components', range(1, iris.data.shape[1]))
 def test_pca(svd_solver, n_components):
@@ -253,40 +235,50 @@ def test_pca_inverse(svd_solver, whiten):
     assert_allclose(X, Y_inverse, rtol=5e-6)
 
 
-@pytest.mark.parametrize('solver', solver_list)
 @pytest.mark.parametrize(
     'data',
     [np.array([[0, 1, 0], [1, 0, 0]]), np.array([[0, 1, 0], [1, 0, 0]]).T]
 )
 @pytest.mark.parametrize(
-    "n_components, err_msg",
-    [(-1, (r"n_components={}L? must be between {}L? and "
-           r"min\(n_samples, n_features\)={}L? with svd_solver=\'{}\'")),
-     (3, (r"n_components={}L? must be between {}L? and "
-          r"min\(n_samples, n_features\)={}L? with svd_solver=\'{}\'")),
-     (1.0, "must be of type int")]
+    "svd_solver, n_components, err_msg",
+    [('arpack', 0, r'must be between 1 and min\(n_samples, n_features\)'),
+     ('randomized', 0, r'must be between 1 and min\(n_samples, n_features\)'),
+     ('arpack', 2, r'must be strictly less than min'),
+     ('auto', -1,(r"n_components={}L? must be between {}L? and "
+                  r"min\(n_samples, n_features\)={}L? with "
+                  r"svd_solver=\'{}\'")),
+     ('auto', 3, (r"n_components={}L? must be between {}L? and "
+                  r"min\(n_samples, n_features\)={}L? with "
+                  r"svd_solver=\'{}\'")),
+     ('auto', 1.0, "must be of type int")]
 )
-def test_pca_validation(solver, data, n_components, err_msg):
+def test_pca_validation(svd_solver, data, n_components, err_msg):
     # Ensures that solver-specific extreme inputs for the n_components
     # parameter raise errors
     smallest_d = 2  # The smallest dimension
     lower_limit = {'randomized': 1, 'arpack': 1, 'full': 0, 'auto': 0}
+    pca_fitted = PCA(n_components, svd_solver=svd_solver)
 
-    solver_reported = 'full' if solver == 'auto' else solver
-    err_msg = (err_msg.format(n_components, lower_limit[solver], smallest_d,
-                              solver_reported))
+    solver_reported = 'full' if svd_solver == 'auto' else svd_solver
+    err_msg = err_msg.format(
+        n_components, lower_limit[svd_solver], smallest_d, solver_reported
+    )
     with pytest.raises(ValueError, match=err_msg):
-        PCA(n_components, svd_solver=solver).fit(data)
+        pca_fitted.fit(data)
+
+    pca = PCA(n_components=n_components, svd_solver=svd_solver)
+    assert pca_fitted.n_components == pca.n_components
+    assert pca_fitted.svd_solver == pca.svd_solver
 
     # Additional case for arpack
-    if solver == 'arpack':
+    if svd_solver == 'arpack':
         n_components = smallest_d
 
         err_msg = ("n_components={}L? must be strictly less than "
                    r"min\(n_samples, n_features\)={}L? with "
                    "svd_solver=\'arpack\'".format(n_components, smallest_d))
         with pytest.raises(ValueError, match=err_msg):
-            PCA(n_components, svd_solver=solver).fit(data)
+            PCA(n_components, svd_solver=svd_solver).fit(data)
 
 
 @pytest.mark.parametrize(
