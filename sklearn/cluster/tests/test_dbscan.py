@@ -100,7 +100,7 @@ def test_dbscan_sparse_precomputed(include_self):
 
 
 def test_dbscan_sparse_precomputed_different_eps():
-    # test that precomputed neighbors graph are filtered if computed with
+    # test that precomputed neighbors graph is filtered if computed with
     # a radius larger than DBSCAN's eps.
     eps = 0.2
     results = []
