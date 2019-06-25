@@ -92,9 +92,9 @@ def permutation_importance(estimator, X, y, scoring=None, n_repeats=5,
     result : Bunch
         Dictionary-like object, with attributes:
 
-        mean : array, shape (n_features)
+        importances_mean : array, shape (n_features)
             Mean of feature importance over ``n_repeats``
-        std : array, shape (n_features)
+        importances_std : array, shape (n_features)
             Standard deviation over ``n_repeats``
         importances : array, shape (n_features, n_repeats)
             Raw permutation importance scores.
@@ -122,6 +122,6 @@ def permutation_importance(estimator, X, y, scoring=None, n_repeats=5,
     ) for col_idx in range(X.shape[1]))
 
     importances = baseline_score - np.array(scores)
-    return Bunch(mean=np.mean(importances, axis=1),
-                 std=np.std(importances, axis=1),
+    return Bunch(importances_mean=np.mean(importances, axis=1),
+                 importances_std=np.std(importances, axis=1),
                  importances=importances)

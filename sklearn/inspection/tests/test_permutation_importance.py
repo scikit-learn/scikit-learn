@@ -37,7 +37,8 @@ def test_permutation_importance_correlated_feature_regression():
 
     # the correlated feature with y was added as the last column and should
     # have the highest importance
-    assert np.all(result.mean[-1] > result.mean[:-1])
+    assert np.all(result.importances_mean[-1] >
+                  result.importances_mean[:-1])
 
 
 def test_permutation_importance_correlated_feature_regression_pandas():
@@ -67,7 +68,7 @@ def test_permutation_importance_correlated_feature_regression_pandas():
 
     # the correlated feature with y was added as the last column and should
     # have the highest importance
-    assert np.all(result.mean[-1] > result.mean[:-1])
+    assert np.all(result.importances_mean[-1] > result.importances_mean[:-1])
 
 
 def test_permutation_importance_mixed_types():
@@ -87,7 +88,7 @@ def test_permutation_importance_mixed_types():
 
     # the correlated feature with y is the last column and should
     # have the highest importance
-    assert np.all(result.mean[-1] > result.mean[:-1])
+    assert np.all(result.importances_mean[-1] > result.importances_mean[:-1])
 
 
 def test_permutation_importance_mixed_types_pandas():
@@ -114,4 +115,4 @@ def test_permutation_importance_mixed_types_pandas():
     assert result.importances.shape == (X.shape[1], n_repeats)
     # the correlated feature with y is the last column and should
     # have the highest importance
-    assert np.all(result.mean[-1] > result.mean[:-1])
+    assert np.all(result.importances_mean[-1] > result.importances_mean[:-1])
