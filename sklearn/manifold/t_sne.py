@@ -638,28 +638,8 @@ class TSNE(BaseEstimator):
         self.angle = angle
 
     def _fit(self, X, skip_num_points=0):
-        """Fit the model using X as training data.
+        """Private function to fit the model using X as training data."""
 
-        Note that sparse arrays can only be handled by method='exact'.
-        It is recommended that you convert your sparse array to dense
-        (e.g. `X.toarray()`) if it fits in memory, or otherwise using a
-        dimensionality reduction technique (e.g. TruncatedSVD).
-
-        Parameters
-        ----------
-        X : array, shape (n_samples, n_features) or (n_samples, n_samples)
-            If the metric is 'precomputed' X must be a square distance
-            matrix. Otherwise it contains a sample per row. Note that
-            when the method is 'barnes_hut', X can be either a sparse graph or
-            a dense feature array. In the latter case, X will be converted to
-            a 32 bit float array if need be. Method='exact' allows sparse
-            arrays and 64 bit floating point inputs.
-
-        skip_num_points : int (optional, default:0)
-            This does not compute the gradient for points with indices below
-            `skip_num_points`. This is useful when computing transforms of new
-            data where you'd like to keep the old data fixed.
-        """
         if self.method not in ['barnes_hut', 'exact']:
             raise ValueError("'method' must be 'barnes_hut' or 'exact'")
         if self.angle < 0.0 or self.angle > 1.0:
@@ -869,7 +849,10 @@ class TSNE(BaseEstimator):
         ----------
         X : array, shape (n_samples, n_features) or (n_samples, n_samples)
             If the metric is 'precomputed' X must be a square distance
-            matrix. Otherwise it contains a sample per row.
+            matrix. Otherwise it contains a sample per row. If the method
+            is 'exact', X may be a sparse matrix of type 'csr', 'csc'
+            or 'coo'. If the method is 'barnes_hut' and the metric is
+            'precomputed', X may be a precomputed sparse graph.
 
         y : Ignored
 
