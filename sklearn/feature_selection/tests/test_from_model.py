@@ -34,7 +34,6 @@ def test_invalid_input():
         assert_raises(ValueError, model.transform, data)
 
 
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_input_estimator_unchanged():
     # Test that SelectFromModel fits on a clone of the estimator.
     est = RandomForestClassifier()
@@ -177,8 +176,6 @@ def test_feature_importances():
         assert_array_almost_equal(X_new, X[:, feature_mask])
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_sample_weight():
     # Ensure sample weights are passed to underlying estimator
     X, y = datasets.make_classification(
@@ -215,8 +212,6 @@ def test_coef_default_threshold():
     assert_array_almost_equal(X_new, X[:, mask])
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @skip_if_32bit
 def test_2d_coef():
     X, y = datasets.make_classification(
@@ -242,7 +237,6 @@ def test_2d_coef():
             assert_array_almost_equal(X_new, X[:, feature_mask])
 
 
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 # 0.23. warning about tol not having its correct default value.
 @pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_partial_fit():

@@ -63,7 +63,7 @@ param_grid = [
 ]
 reducer_labels = ['PCA', 'NMF', 'KBest(chi2)']
 
-grid = GridSearchCV(pipe, cv=5, n_jobs=1, param_grid=param_grid, iid=False)
+grid = GridSearchCV(pipe, cv=5, n_jobs=1, param_grid=param_grid)
 digits = load_digits()
 grid.fit(digits.data, digits.target)
 
@@ -114,8 +114,7 @@ cached_pipe = Pipeline([('reduce_dim', PCA()),
                        memory=memory)
 
 # This time, a cached pipeline will be used within the grid search
-grid = GridSearchCV(cached_pipe, cv=5, n_jobs=1, param_grid=param_grid,
-                    iid=False)
+grid = GridSearchCV(cached_pipe, cv=5, n_jobs=1, param_grid=param_grid)
 digits = load_digits()
 grid.fit(digits.data, digits.target)
 

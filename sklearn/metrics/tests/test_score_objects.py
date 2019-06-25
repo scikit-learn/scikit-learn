@@ -5,8 +5,8 @@ import os
 import numbers
 
 import numpy as np
-
 import pytest
+import joblib
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -18,7 +18,8 @@ from sklearn.utils.testing import assert_not_equal
 
 from sklearn.base import BaseEstimator
 from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
-                             log_loss, precision_score, recall_score)
+                             log_loss, precision_score, recall_score,
+                             jaccard_score)
 from sklearn.metrics import cluster as cluster_module
 from sklearn.metrics.scorer import (check_scoring, _PredictScorer,
                                     _passthrough_scorer)
@@ -37,7 +38,6 @@ from sklearn.datasets import load_diabetes
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.model_selection import GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
-from sklearn.utils import _joblib
 
 
 REGRESSION_SCORERS = ['explained_variance', 'r2',
@@ -52,7 +52,9 @@ CLF_SCORERS = ['accuracy', 'balanced_accuracy',
                'roc_auc', 'average_precision', 'precision',
                'precision_weighted', 'precision_macro', 'precision_micro',
                'recall', 'recall_weighted', 'recall_macro', 'recall_micro',
-               'neg_log_loss', 'log_loss', 'brier_score_loss']
+               'neg_log_loss', 'log_loss', 'brier_score_loss',
+               'jaccard', 'jaccard_weighted', 'jaccard_macro',
+               'jaccard_micro']
 
 # All supervised cluster scorers (They behave like classification metric)
 CLUSTER_SCORERS = ["adjusted_rand_score",
@@ -64,7 +66,8 @@ CLUSTER_SCORERS = ["adjusted_rand_score",
                    "normalized_mutual_info_score",
                    "fowlkes_mallows_score"]
 
-MULTILABEL_ONLY_SCORERS = ['precision_samples', 'recall_samples', 'f1_samples']
+MULTILABEL_ONLY_SCORERS = ['precision_samples', 'recall_samples', 'f1_samples',
+                           'jaccard_samples']
 
 
 def _make_estimators(X_train, y_train, y_ml_train):
@@ -96,8 +99,8 @@ def setup_module():
     _, y_ml = make_multilabel_classification(n_samples=X.shape[0],
                                              random_state=0)
     filename = os.path.join(TEMP_FOLDER, 'test_data.pkl')
-    _joblib.dump((X, y, y_ml), filename)
-    X_mm, y_mm, y_ml_mm = _joblib.load(filename, mmap_mode='r')
+    joblib.dump((X, y, y_ml), filename)
+    X_mm, y_mm, y_ml_mm = joblib.load(filename, mmap_mode='r')
     ESTIMATORS = _make_estimators(X_mm, y_mm, y_ml_mm)
 
 
@@ -249,12 +252,11 @@ def test_check_scoring_and_check_multimetric_scoring():
                              scoring=scoring)
 
 
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_check_scoring_gridsearchcv():
     # test that check_scoring works on GridSearchCV and pipeline.
     # slightly redundant non-regression test.
 
-    grid = GridSearchCV(LinearSVC(), param_grid={'C': [.1, 1]})
+    grid = GridSearchCV(LinearSVC(), param_grid={'C': [.1, 1]}, cv=3)
     scorer = check_scoring(grid, "f1")
     assert isinstance(scorer, _PredictScorer)
 
@@ -266,7 +268,7 @@ def test_check_scoring_gridsearchcv():
     # and doesn't make any assumptions about the estimator apart from having a
     # fit.
     scores = cross_val_score(EstimatorWithFit(), [[1], [2], [3]], [1, 0, 1],
-                             scoring=DummyScorer())
+                             scoring=DummyScorer(), cv=3)
     assert_array_equal(scores, 1)
 
 
@@ -285,7 +287,8 @@ def test_classification_scores():
     clf.fit(X_train, y_train)
 
     for prefix, metric in [('f1', f1_score), ('precision', precision_score),
-                           ('recall', recall_score)]:
+                           ('recall', recall_score),
+                           ('jaccard', jaccard_score)]:
 
         score1 = get_scorer('%s_weighted' % prefix)(clf, X_test, y_test)
         score2 = metric(y_test, clf.predict(X_test), pos_label=None,
@@ -333,8 +336,6 @@ def test_regression_scorers():
     assert_almost_equal(score1, score2)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_thresholded_scorers():
     # Test scorers that take thresholds.
     X, y = make_blobs(random_state=0, centers=2)
@@ -429,8 +430,6 @@ def test_thresholded_scorers_multilabel_indicator_data():
     assert_almost_equal(score1, score2)
 
 
-@pytest.mark.filterwarnings("ignore:the behavior of ")
-# AMI and NMI changes for 0.22
 def test_supervised_cluster_scorers():
     # Test clustering scorers against gold standard labeling.
     X, y = make_blobs(random_state=0, centers=2)
@@ -519,8 +518,6 @@ def test_scorer_memmap_input(name):
     check_scorer_memmap(name)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_scoring_is_not_metric():
     assert_raises_regexp(ValueError, 'make_scorer', check_scoring,
                          LogisticRegression(), f1_score)

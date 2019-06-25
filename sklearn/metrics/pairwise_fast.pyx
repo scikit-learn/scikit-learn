@@ -1,16 +1,16 @@
 #cython: boundscheck=False
 #cython: cdivision=True
 #cython: wraparound=False
-
+#
 # Author: Andreas Mueller <amueller@ais.uni-bonn.de>
 #         Lars Buitinck
 #
 # License: BSD 3 clause
 
-from libc.string cimport memset
 import numpy as np
 cimport numpy as np
 from cython cimport floating
+from libc.string cimport memset
 
 from ..utils._cython_blas cimport _asum
 

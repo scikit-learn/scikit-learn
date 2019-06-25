@@ -74,7 +74,8 @@ out-of-core Principal Component Analysis either by:
  * Using its ``partial_fit`` method on chunks of data fetched sequentially
    from the local hard drive or a network database.
 
- * Calling its fit method on a memory mapped file using ``numpy.memmap``.
+ * Calling its fit method on a sparse matrix or a memory mapped file using
+   ``numpy.memmap``.
 
 :class:`IncrementalPCA` only stores estimates of component and noise variances,
 in order update ``explained_variance_ratio_`` incrementally. This is why
@@ -957,3 +958,7 @@ when data can be fetched sequentially.
     * `"Stochastic Variational Inference"
       <http://www.columbia.edu/~jwp2128/Papers/HoffmanBleiWangPaisley2013.pdf>`_
       M. Hoffman, D. Blei, C. Wang, J. Paisley, 2013
+
+
+See also :ref:`nca_dim_reduction` for dimensionality reduction with
+Neighborhood Components Analysis.

@@ -69,7 +69,7 @@ def generate_data(n_samples, n_features, weights, means, precisions,
 
 
 class RandomData:
-    def __init__(self, rng, n_samples=500, n_components=2, n_features=2,
+    def __init__(self, rng, n_samples=200, n_components=2, n_features=2,
                  scale=50):
         self.n_samples = n_samples
         self.n_components = n_components
@@ -652,7 +652,7 @@ def test_gaussian_mixture_fit():
             ecov = EmpiricalCovariance()
             ecov.covariance_ = prec_test[h]
             # the accuracy depends on the number of data and randomness, rng
-            assert_allclose(ecov.error_norm(prec_pred[k]), 0, atol=0.1)
+            assert_allclose(ecov.error_norm(prec_pred[k]), 0, atol=0.15)
 
 
 def test_gaussian_mixture_fit_best_params():
@@ -1031,8 +1031,9 @@ def test_sample():
 @ignore_warnings(category=ConvergenceWarning)
 def test_init():
     # We check that by increasing the n_init number we have a better solution
-    for random_state in range(25):
-        rand_data = RandomData(np.random.RandomState(random_state), scale=1)
+    for random_state in range(15):
+        rand_data = RandomData(np.random.RandomState(random_state),
+                               n_samples=50, scale=1)
         n_components = rand_data.n_components
         X = rand_data.X['full']
 

@@ -7,6 +7,8 @@
 #         Lars Buitinck
 #
 # License: BSD 3 clause
+#
+# cython: boundscheck=False, wraparound=False, cdivision=True
 
 from libc.math cimport sqrt
 import numpy as np
@@ -15,7 +17,7 @@ cimport numpy as np
 cimport cython
 from cython cimport floating
 
-from sklearn.utils.sparsefuncs_fast import assign_rows_csr
+from ..utils.sparsefuncs_fast import assign_rows_csr
 from ..utils._cython_blas cimport _dot
 
 ctypedef np.float64_t DOUBLE
@@ -25,9 +27,6 @@ ctypedef np.int32_t INT
 np.import_array()
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 cpdef DOUBLE _assign_labels_array(np.ndarray[floating, ndim=2] X,
                                   np.ndarray[floating, ndim=1] sample_weight,
                                   np.ndarray[floating, ndim=1] x_squared_norms,
@@ -94,9 +93,6 @@ cpdef DOUBLE _assign_labels_array(np.ndarray[floating, ndim=2] X,
     return inertia
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 cpdef DOUBLE _assign_labels_csr(X, np.ndarray[floating, ndim=1] sample_weight,
                                 np.ndarray[DOUBLE, ndim=1] x_squared_norms,
                                 np.ndarray[floating, ndim=2] centers,
@@ -158,9 +154,6 @@ cpdef DOUBLE _assign_labels_csr(X, np.ndarray[floating, ndim=1] sample_weight,
     return inertia
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def _mini_batch_update_csr(X, np.ndarray[floating, ndim=1] sample_weight,
                            np.ndarray[DOUBLE, ndim=1] x_squared_norms,
                            np.ndarray[floating, ndim=2] centers,
@@ -262,9 +255,6 @@ def _mini_batch_update_csr(X, np.ndarray[floating, ndim=1] sample_weight,
     return squared_diff
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def _centers_dense(np.ndarray[floating, ndim=2] X,
         np.ndarray[floating, ndim=1] sample_weight,
         np.ndarray[INT, ndim=1] labels, int n_clusters,
@@ -319,7 +309,7 @@ def _centers_dense(np.ndarray[floating, ndim=2] X,
         for i, cluster_id in enumerate(empty_clusters):
             # XXX two relocated clusters could be close to each other
             far_index = far_from_centers[i]
-            new_center = X[far_index]
+            new_center = X[far_index] * sample_weight[far_index]
             centers[cluster_id] = new_center
             weight_in_cluster[cluster_id] = sample_weight[far_index]
 
@@ -332,9 +322,6 @@ def _centers_dense(np.ndarray[floating, ndim=2] X,
     return centers
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def _centers_sparse(X, np.ndarray[floating, ndim=1] sample_weight,
         np.ndarray[INT, ndim=1] labels, n_clusters,
         np.ndarray[floating, ndim=1] distances):

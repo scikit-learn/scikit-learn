@@ -7,6 +7,8 @@
 """Recursive feature elimination for feature ranking"""
 
 import numpy as np
+from joblib import Parallel, delayed, effective_n_jobs
+
 from ..utils import check_X_y, safe_sqr
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.metaestimators import _safe_split
@@ -15,7 +17,6 @@ from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
 from ..base import is_classifier
-from ..utils._joblib import Parallel, delayed, effective_n_jobs
 from ..model_selection import check_cv
 from ..model_selection._validation import _score
 from ..metrics.scorer import check_scoring
@@ -96,7 +97,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     >>> estimator = SVR(kernel="linear")
     >>> selector = RFE(estimator, 5, step=1)
     >>> selector = selector.fit(X, y)
-    >>> selector.support_ # doctest: +NORMALIZE_WHITESPACE
+    >>> selector.support_
     array([ True,  True,  True,  True,  True, False, False, False, False,
            False])
     >>> selector.ranking_
@@ -361,7 +362,7 @@ class RFECV(RFE, MetaEstimatorMixin):
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 3-fold cross-validation,
+        - None, to use the default 5-fold cross-validation,
         - integer, to specify the number of folds.
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -374,9 +375,8 @@ class RFECV(RFE, MetaEstimatorMixin):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.20
-            ``cv`` default value of None will change from 3-fold to 5-fold
-            in v0.22.
+        .. versionchanged:: 0.22
+            ``cv`` default value of None changed from 3-fold to 5-fold.
 
     scoring : string, callable or None, optional, (default=None)
         A string (see model evaluation documentation) or
@@ -433,7 +433,7 @@ class RFECV(RFE, MetaEstimatorMixin):
     >>> estimator = SVR(kernel="linear")
     >>> selector = RFECV(estimator, step=1, cv=5)
     >>> selector = selector.fit(X, y)
-    >>> selector.support_ # doctest: +NORMALIZE_WHITESPACE
+    >>> selector.support_
     array([ True,  True,  True,  True,  True, False, False, False, False,
            False])
     >>> selector.ranking_
@@ -450,7 +450,7 @@ class RFECV(RFE, MetaEstimatorMixin):
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
-    def __init__(self, estimator, step=1, min_features_to_select=1, cv='warn',
+    def __init__(self, estimator, step=1, min_features_to_select=1, cv=None,
                  scoring=None, verbose=0, n_jobs=None):
         self.estimator = estimator
         self.step = step

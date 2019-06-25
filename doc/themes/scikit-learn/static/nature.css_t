@@ -779,6 +779,14 @@ th.field-name {
     white-space: nowrap;
 }
 
+@media screen and (max-width: 780px) {
+    /* field lists aren't shown as a table in small screens */
+
+    th.field-name, td.field-body {
+        display: block;
+    }
+}
+
 
 /* -------- warning header for old versions --------------------------------*/
 
@@ -1135,6 +1143,13 @@ table.docutils.citation tr td.label, table.docutils.footnote tr td.label {
     border-radius: 0px;
     color: #1D1F22;
     text-shadow: none;
+}
+
+table.longtable {
+    -moz-hyphens: none;
+    -ms-hyphens: none;
+    -webkit-hyphens: none;
+    hyphens: none;
 }
 
 /*----- testimonials ----------*/
