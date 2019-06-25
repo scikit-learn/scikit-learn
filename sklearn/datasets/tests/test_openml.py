@@ -20,6 +20,7 @@ from sklearn.datasets.openml import (_open_openml_url,
 from sklearn.utils.testing import (assert_warns_message,
                                    assert_raise_message)
 from sklearn.utils import is_scalar_nan
+from sklearn.utils.testing import assert_allclose, assert_array_equal
 from urllib.error import HTTPError
 from sklearn.datasets.tests.test_common import check_return_X_y
 from functools import partial
@@ -318,6 +319,25 @@ def test_fetch_openml_iris_pandas(monkeypatch):
     assert isinstance(frame, pd.DataFrame)
     assert frame.shape == frame_shape
     assert np.all(frame.dtypes == data_dtypes + [target_dtype])
+
+
+def test_fetch_openml_iris_pandas_equal_to_no_frame(monkeypatch):
+    # as_frame = True returns the same underlying data as as_frame = False
+    pytest.importorskip('pandas')
+    data_id = 61
+
+    _monkey_patch_webbased_functions(monkeypatch, data_id, True)
+
+    frame_bunch = fetch_openml(data_id=data_id, as_frame=True, cache=False)
+    frame_data = frame_bunch.data
+    frame_target = frame_bunch.target
+
+    norm_bunch = fetch_openml(data_id=data_id, as_frame=False, cache=False)
+    norm_data = norm_bunch.data
+    norm_target = norm_bunch.target
+
+    assert_allclose(norm_data, frame_data)
+    assert_array_equal(norm_target, frame_target)
 
 
 def test_fetch_openml_iris_multitarget_pandas(monkeypatch):
