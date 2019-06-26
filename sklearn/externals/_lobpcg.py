@@ -1,8 +1,7 @@
 """
-sk-learn copy of scipy/sparse/linalg/eigen/lobpcg/lobpcg.py ver. 1.3.0
-to be deleted after scipy 1.3.0 becomes a dependency in sk-learn
+scikit-learn copy of scipy/sparse/linalg/eigen/lobpcg/lobpcg.py v1.3.0
+to be deleted after scipy 1.3.0 becomes a dependency in scikit-lean
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
 Locally Optimal Block Preconditioned Conjugate Gradient Method (LOBPCG).
 
 References
@@ -26,6 +25,7 @@ import numpy as np
 from scipy.linalg import (inv, eigh, cho_factor, cho_solve, cholesky,
                           LinAlgError)
 from scipy.sparse.linalg import aslinearoperator
+from scipy.sparse.sputils import bmat
 
 __all__ = ['lobpcg']
 
@@ -496,18 +496,18 @@ def lobpcg(A, X,
                 xbp = np.dot(blockVectorX.T.conj(), activeBlockVectorBP)
                 wbp = np.dot(activeBlockVectorR.T.conj(), activeBlockVectorBP)
 
-                gramA = np.bmat([[np.diag(_lambda), xaw, xap],
-                                [xaw.T.conj(), waw, wap],
-                                [xap.T.conj(), wap.T.conj(), pap]])
+                gramA = bmat([[np.diag(_lambda), xaw, xap],
+                              [xaw.T.conj(), waw, wap],
+                              [xap.T.conj(), wap.T.conj(), pap]])
 
-                gramB = np.bmat([[ident0, xbw, xbp],
-                                [xbw.T.conj(), ident, wbp],
-                                [xbp.T.conj(), wbp.T.conj(), ident]])
+                gramB = bmat([[ident0, xbw, xbp],
+                              [xbw.T.conj(), ident, wbp],
+                              [xbp.T.conj(), wbp.T.conj(), ident]])
             else:
-                gramA = np.bmat([[np.diag(_lambda), xaw],
-                                [xaw.T.conj(), waw]])
-                gramB = np.bmat([[ident0, xbw],
-                                [xbw.T.conj(), ident]])
+                gramA = bmat([[np.diag(_lambda), xaw],
+                              [xaw.T.conj(), waw]])
+                gramB = bmat([[ident0, xbw],
+                              [xbw.T.conj(), ident]])
 
         else:
             xaw = np.dot(blockVectorX.T.conj(), activeBlockVectorAR)
@@ -521,18 +521,18 @@ def lobpcg(A, X,
                 xbp = np.dot(blockVectorX.T.conj(), activeBlockVectorP)
                 wbp = np.dot(activeBlockVectorR.T.conj(), activeBlockVectorP)
 
-                gramA = np.bmat([[np.diag(_lambda), xaw, xap],
-                                 [xaw.T.conj(), waw, wap],
-                                 [xap.T.conj(), wap.T.conj(), pap]])
+                gramA = bmat([[np.diag(_lambda), xaw, xap],
+                              [xaw.T.conj(), waw, wap],
+                              [xap.T.conj(), wap.T.conj(), pap]])
 
-                gramB = np.bmat([[ident0, xbw, xbp],
-                                 [xbw.T.conj(), ident, wbp],
-                                 [xbp.T.conj(), wbp.T.conj(), ident]])
+                gramB = bmat([[ident0, xbw, xbp],
+                              [xbw.T.conj(), ident, wbp],
+                              [xbp.T.conj(), wbp.T.conj(), ident]])
             else:
-                gramA = np.bmat([[np.diag(_lambda), xaw],
-                                 [xaw.T.conj(), waw]])
-                gramB = np.bmat([[ident0, xbw],
-                                 [xbw.T.conj(), ident]])
+                gramA = bmat([[np.diag(_lambda), xaw],
+                              [xaw.T.conj(), waw]])
+                gramB = bmat([[ident0, xbw],
+                              [xbw.T.conj(), ident]])
 
         if verbosityLevel > 0:
             _report_nonhermitian(gramA, 3, -1, 'gramA')
