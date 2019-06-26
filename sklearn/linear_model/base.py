@@ -22,8 +22,8 @@ import scipy.sparse as sp
 from scipy import linalg
 from scipy import sparse
 from scipy.special import expit
+from joblib import Parallel, delayed
 
-from ..utils._joblib import Parallel, delayed
 from ..base import (BaseEstimator, ClassifierMixin, RegressorMixin,
                     MultiOutputMixin)
 from ..utils import check_array, check_X_y
@@ -413,7 +413,7 @@ class LinearRegression(LinearModel, RegressorMixin, MultiOutputMixin):
     1.0
     >>> reg.coef_
     array([1., 2.])
-    >>> reg.intercept_ # doctest: +ELLIPSIS
+    >>> reg.intercept_
     3.0000...
     >>> reg.predict(np.array([[3, 5]]))
     array([16.])

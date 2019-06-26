@@ -11,9 +11,9 @@ from itertools import chain
 
 import numpy as np
 from scipy import sparse
+from joblib import Parallel, delayed
 
 from ..base import clone, TransformerMixin
-from ..utils._joblib import Parallel, delayed
 from ..pipeline import _fit_transform_one, _transform_one, _name_estimators
 from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
@@ -153,7 +153,7 @@ boolean mask array or callable
     >>> # Normalizer scales each row of X to unit norm. A separate scaling
     >>> # is applied for the two first and two last elements of each
     >>> # row independently.
-    >>> ct.fit_transform(X)    # doctest: +NORMALIZE_WHITESPACE
+    >>> ct.fit_transform(X)
     array([[0. , 1. , 0.5, 0.5],
            [0.5, 0.5, 0. , 1. ]])
 
@@ -246,8 +246,8 @@ boolean mask array or callable
                 # skip in case of 'drop'
                 if trans == 'passthrough':
                     trans = FunctionTransformer(
-                        validate=False, accept_sparse=True,
-                        check_inverse=False)
+                        accept_sparse=True, check_inverse=False
+                    )
                 elif trans == 'drop':
                     continue
                 elif _is_empty_column_selection(column):
@@ -764,15 +764,10 @@ def make_column_transformer(*transformers, **kwargs):
     >>> make_column_transformer(
     ...     (StandardScaler(), ['numerical_column']),
     ...     (OneHotEncoder(), ['categorical_column']))
-    ...     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    ColumnTransformer(n_jobs=None, remainder='drop', sparse_threshold=0.3,
-             transformer_weights=None,
-             transformers=[('standardscaler',
-                            StandardScaler(...),
-                            ['numerical_column']),
-                           ('onehotencoder',
-                            OneHotEncoder(...),
-                            ['categorical_column'])], verbose=False)
+    ColumnTransformer(transformers=[('standardscaler', StandardScaler(...),
+                                     ['numerical_column']),
+                                    ('onehotencoder', OneHotEncoder(...),
+                                     ['categorical_column'])])
 
     """
     # transformer_weights keyword is not passed through because the user

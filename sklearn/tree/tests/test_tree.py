@@ -1375,7 +1375,7 @@ def test_sparse_input(tree_type, dataset):
 
 
 @pytest.mark.parametrize("tree_type",
-                         set(SPARSE_TREES).intersection(REG_TREES))
+                         sorted(set(SPARSE_TREES).intersection(REG_TREES)))
 @pytest.mark.parametrize("dataset", ["boston", "reg_small"])
 def test_sparse_input_reg_trees(tree_type, dataset):
     # Due to numerical instability of MSE and too strict test, we limit the
