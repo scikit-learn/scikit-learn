@@ -5,15 +5,14 @@ from sklearn.decomposition import PCA
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ResampledTrainer
 from sklearn.utils.estimator_checks import check_estimator
-from sklearn.utils.validation import _num_samples
+from sklearn.utils.validation import _num_samples, check_X_y
 
 
 class HalfSampler(BaseEstimator):
-    "Train with every odd sample"
+    "Train with every second sample"
     def fit_resample(self, X, y, **kw):
-        if _num_samples(X) > 1 and getattr(X, 'format', None) not in ['dia',
-                                                                      'coo',
-                                                                      'bsr']:
+        X, y = check_X_y(X, y, accept_sparse='csr')
+        if _num_samples(X) > 1:
             return X[::2], y[::2]
         return X, y
 

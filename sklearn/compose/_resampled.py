@@ -3,22 +3,22 @@ from ..utils.metaestimators import if_delegate_has_method
 
 
 class ResampledTrainer(MetaEstimatorMixin, BaseEstimator):
-    """Composition of a resampler and a predictor/transfomer
+    """Composition of a resampler and a estimator
 
     Read more in the :ref:`User Guide <pipeline_resamplers>`.
 
     Parameters
     ----------
     resampler : Estimator supporting fit_resample
-    predictor : Estimator
+    estimator : Estimator
 
     Attributes
     ----------
     resampler_ : Estimator
         Fitted clone of `resampler`.
 
-    predictor_ : Estimator
-        Fitted clone of `predictor`.
+    estimator_ : Estimator
+        Fitted clone of `estimator`.
 
     Examples
     --------
@@ -37,9 +37,11 @@ class ResampledTrainer(MetaEstimatorMixin, BaseEstimator):
     >>> est.predict(X[:2])
     """
 
-    def __init__(self, resampler, predictor):
+    def __init__(self, resampler, estimator):
         self.resampler = resampler
-        self.predictor = predictor
+        self.estimator = estimator
+
+    _required_parameters = ['resampler', 'estimator']
 
     # TODO: tags?
 
@@ -51,32 +53,32 @@ class ResampledTrainer(MetaEstimatorMixin, BaseEstimator):
             X, y = ret
         else:
             X, y, kw = ret
-        self.predictor_ = clone(self.predictor).fit(X, y, **kw)
+        self.estimator_ = clone(self.estimator).fit(X, y, **kw)
         return self
 
-    @if_delegate_has_method(delegate='predictor_')
+    @if_delegate_has_method(delegate='estimator_')
     def predict(self, X, **predict_params):
-        return self.predictor_.predict(X, **predict_params)
+        return self.estimator_.predict(X, **predict_params)
 
-    @if_delegate_has_method(delegate='predictor_')
+    @if_delegate_has_method(delegate='estimator_')
     def predict_proba(self, X):
-        return self.predictor_.predict_proba(X)
+        return self.estimator_.predict_proba(X)
 
-    @if_delegate_has_method(delegate='predictor_')
+    @if_delegate_has_method(delegate='estimator_')
     def predict_log_proba(self, X):
-        return self.predictor_.predict_log_proba(X)
+        return self.estimator_.predict_log_proba(X)
 
-    @if_delegate_has_method(delegate='predictor_')
+    @if_delegate_has_method(delegate='estimator_')
     def decision_function(self, X):
-        return self.predictor_.decision_function(X)
+        return self.estimator_.decision_function(X)
 
-    @if_delegate_has_method(delegate='predictor_')
+    @if_delegate_has_method(delegate='estimator_')
     def score(self, X, y, **kw):
-        return self.predictor_.score(X, y, **kw)
+        return self.estimator_.score(X, y, **kw)
 
     @property
     def fit_transform(self):
-        transform = self.predictor_.transform
+        transform = self.estimator_.transform
 
         def fit_transform(X, y, **kwargs):
             self.fit(X, y, **kwargs)
@@ -84,7 +86,7 @@ class ResampledTrainer(MetaEstimatorMixin, BaseEstimator):
 
     @property
     def fit_predict(self):
-        predict = self.predictor_.predict
+        predict = self.estimator_.predict
 
         def fit_predict(X, y, **kwargs):
             self.fit(X, y, **kwargs)
@@ -92,8 +94,8 @@ class ResampledTrainer(MetaEstimatorMixin, BaseEstimator):
 
     @property
     def _estimator_type(self):
-        return self.predictor._estimator_type
+        return self.estimator._estimator_type
 
     @property
     def classes_(self):
-        return self.predictor_.classes_
+        return self.estimator_.classes_
