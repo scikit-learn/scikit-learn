@@ -530,7 +530,7 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None):
         ``y1`` or ``y2`` are used.
 
     weights : str, optional
-        List of weighting type to calculate the score. None means no weighted;
+        Weighting type to calculate the score. None means no weighted;
         "linear" means linear weighted; "quadratic" means quadratic weighted.
 
     sample_weight : array-like of shape = [n_samples], optional
