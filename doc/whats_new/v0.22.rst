@@ -72,8 +72,15 @@ Changelog
   memory if ``fit_intercept=False`` and ``X`` is a CSR sparse matrix.
   :pr:`14108` by :user:`Alex Henrie <alexhenrie>`.
 
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Raise a ValueError in :func:`metrics.silhouette_score` when a
+  precomputed distance matrix contains non-zero diagonal entries.
+  :issue:`12258` by :user:`Stephen Tierney <sjtrny>`.
+
 :mod:`sklearn.model_selection`
-..................
+..............................
 
 - |Enhancement| :class:`model_selection.learning_curve` now accepts parameter
   ``return_times`` which can be used to retrieve computation times in order to
