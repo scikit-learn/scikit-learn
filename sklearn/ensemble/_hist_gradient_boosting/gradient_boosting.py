@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 from timeit import default_timer as time
 from sklearn.base import BaseEstimator, RegressorMixin, ClassifierMixin
-from sklearn.utils import check_X_y, check_random_state, check_array
+from sklearn.utils import check_X_y, check_random_state, check_array, resample
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.metrics import check_scoring
@@ -386,15 +386,16 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         with scorers.
         """
         subsample_size = 10000
-        rng = check_random_state(seed)
-        indices = np.arange(X_binned_train.shape[0])
         if X_binned_train.shape[0] > subsample_size:
-            # TODO: not critical but stratify using resample()
-            indices = rng.choice(indices, subsample_size, replace=False)
-        X_binned_small_train = X_binned_train[indices]
-        y_small_train = y_train[indices]
-        X_binned_small_train = np.ascontiguousarray(X_binned_small_train)
-        return X_binned_small_train, y_small_train
+            indices = np.arange(X_binned_train.shape[0])
+            indices = resample(indices, n_samples=subsample_size,
+                               replace=False, random_state=seed)
+            X_binned_small_train = X_binned_train[indices]
+            y_small_train = y_train[indices]
+            X_binned_small_train = np.ascontiguousarray(X_binned_small_train)
+            return X_binned_small_train, y_small_train
+        else:
+            return X_binned_train, y_train
 
     def _check_early_stopping_scorer(self, X_binned_small_train, y_small_train,
                                      X_binned_val, y_val):
