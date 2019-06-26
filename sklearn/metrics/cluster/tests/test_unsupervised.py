@@ -170,27 +170,6 @@ def test_non_numpy_labels():
         silhouette_score(list(X), list(y)), silhouette_score(X, y))
 
 
-def test_silhouette_modifies_dist():
-    # Construct a zero-diagonal matrix
-    dists = pairwise_distances(
-        np.array([[0.2, 0.1, 0.12, 1.34, 1.11, 1.6]]).transpose())
-
-    # Construct a nonzero-diagonal distance matrix
-    diag_dists = dists.copy()
-    np.fill_diagonal(diag_dists, 1)
-
-    labels = [0, 0, 0, 1, 1, 1]
-
-    # Test that original data is unchanged
-    dists_truth = dists.copy()
-    silhouette_samples(dists, labels, metric='precomputed')
-    assert_array_equal(dists, dists_truth)
-
-    diag_dists_truth = diag_dists.copy()
-    silhouette_samples(diag_dists, labels, metric='precomputed')
-    assert_array_equal(diag_dists, diag_dists_truth)
-
-
 def test_silhouette_nonzero_diag():
     # Construct a zero-diagonal matrix
     dists = pairwise_distances(
@@ -202,16 +181,9 @@ def test_silhouette_nonzero_diag():
 
     labels = [0, 0, 0, 1, 1, 1]
 
-    # Test silhouette samples
-    sample_scores = silhouette_samples(dists, labels, metric='precomputed')
-    diag_sample_scores = silhouette_samples(
-        diag_dists, labels, metric='precomputed')
-    assert_array_equal(sample_scores, diag_sample_scores)
-
-    # Test silhoutte score
-    score = silhouette_score(dists, labels, metric='precomputed')
-    diag_score = silhouette_score(diag_dists, labels, metric='precomputed')
-    assert_equal(score, diag_score)
+    assert_raise_message(ValueError, "distance matrix contains non-zero",
+                         silhouette_samples,
+                         diag_dists, labels, metric='precomputed')
 
 
 def assert_raises_on_only_one_label(func):

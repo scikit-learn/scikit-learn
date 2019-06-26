@@ -131,11 +131,6 @@ def _silhouette_reduce(D_chunk, start, labels, label_freqs):
     label_freqs : array
         distribution of cluster labels in ``labels``
     """
-    # Copy the data so that we don't change the original
-    D_chunk = D_chunk.copy()
-    # set diagonal distances to zero in case they are not zero
-    diag_indices = np.diag_indices(D_chunk.shape[1])
-    D_chunk[diag_indices] = 0
     # accumulate distances from each sample to each cluster
     clust_dists = np.zeros((len(D_chunk), len(label_freqs)),
                            dtype=D_chunk.dtype)
@@ -215,6 +210,16 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
 
     """
     X, labels = check_X_y(X, labels, accept_sparse=['csc', 'csr'])
+
+    # Check for diagonal entries in precomputed distance matrix
+    if metric == 'precomputed':
+        diag_indices = np.diag_indices(X.shape[0])
+        if np.any(X[diag_indices]):
+            raise ValueError(
+                'The precomputed distance matrix contains non-zero '
+                'elements on the diagonal.'
+            )
+
     le = LabelEncoder()
     labels = le.fit_transform(labels)
     n_samples = len(labels)
