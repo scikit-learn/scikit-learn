@@ -8,6 +8,7 @@ import numpy as np
 from scipy import sparse
 from scipy import linalg
 from scipy import stats
+from scipy.special import expit
 
 import pytest
 
@@ -16,14 +17,10 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import skip_if_32bit
-from sklearn.utils.testing import SkipTest
-from sklearn.utils.fixes import np_version
 
 from sklearn.utils.extmath import density
 from sklearn.utils.extmath import randomized_svd
@@ -172,7 +169,7 @@ def test_row_norms(dtype):
     else:
         precision = 5
 
-    X = X.astype(dtype)
+    X = X.astype(dtype, copy=False)
     sq_norm = (X ** 2).sum(axis=1)
 
     assert_array_almost_equal(sq_norm, row_norms(X, squared=True),
@@ -184,8 +181,8 @@ def test_row_norms(dtype):
         # csr_matrix will use int32 indices by default,
         # up-casting those to int64 when necessary
         if csr_index_dtype is np.int64:
-            Xcsr.indptr = Xcsr.indptr.astype(csr_index_dtype)
-            Xcsr.indices = Xcsr.indices.astype(csr_index_dtype)
+            Xcsr.indptr = Xcsr.indptr.astype(csr_index_dtype, copy=False)
+            Xcsr.indices = Xcsr.indices.astype(csr_index_dtype, copy=False)
         assert Xcsr.indices.dtype == csr_index_dtype
         assert Xcsr.indptr.dtype == csr_index_dtype
         assert_array_almost_equal(sq_norm, row_norms(Xcsr, squared=True),
@@ -405,16 +402,16 @@ def test_randomized_svd_sign_flip_with_transpose():
     # Without transpose
     u_flipped, _, v_flipped = randomized_svd(mat, 3, flip_sign=True)
     u_based, v_based = max_loading_is_positive(u_flipped, v_flipped)
-    assert_true(u_based)
-    assert_false(v_based)
+    assert u_based
+    assert not v_based
 
     # With transpose
     u_flipped_with_transpose, _, v_flipped_with_transpose = randomized_svd(
         mat, 3, flip_sign=True, transpose=True)
     u_based, v_based = max_loading_is_positive(
         u_flipped_with_transpose, v_flipped_with_transpose)
-    assert_true(u_based)
-    assert_false(v_based)
+    assert u_based
+    assert not v_based
 
 
 def test_cartesian():
@@ -446,7 +443,7 @@ def test_cartesian():
 def test_logistic_sigmoid():
     # Check correctness and robustness of logistic sigmoid implementation
     def naive_log_logistic(x):
-        return np.log(1 / (1 + np.exp(-x)))
+        return np.log(expit(x))
 
     x = np.linspace(-2, 2, 50)
     assert_array_almost_equal(log_logistic(x), naive_log_logistic(x))
@@ -636,8 +633,6 @@ def test_softmax():
 
 
 def test_stable_cumsum():
-    if np_version < (1, 9):
-        raise SkipTest("Sum is as unstable as cumsum for numpy < 1.9")
     assert_array_equal(stable_cumsum([1, 2, 3]), np.cumsum([1, 2, 3]))
     r = np.random.RandomState(0).rand(100000)
     assert_warns(RuntimeWarning, stable_cumsum, r, rtol=0, atol=0)

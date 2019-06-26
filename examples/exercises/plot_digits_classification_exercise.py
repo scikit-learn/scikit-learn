@@ -26,8 +26,7 @@ X_test = X_digits[int(.9 * n_samples):]
 y_test = y_digits[int(.9 * n_samples):]
 
 knn = neighbors.KNeighborsClassifier()
-logistic = linear_model.LogisticRegression(solver='lbfgs', max_iter=1000,
-                                           multi_class='multinomial')
+logistic = linear_model.LogisticRegression(max_iter=1000)
 
 print('KNN score: %f' % knn.fit(X_train, y_train).score(X_test, y_test))
 print('LogisticRegression score: %f'

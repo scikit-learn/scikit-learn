@@ -22,10 +22,9 @@ environment:
       PYTHON_ARCH: "64"
       CHECK_WARNINGS: "true"
 
-    - PYTHON: "C:\\Python27"
-      PYTHON_VERSION: "2.7.8"
+    - PYTHON: "C:\\Python35"
+      PYTHON_VERSION: "3.5.6"
       PYTHON_ARCH: "32"
-
 
 # Because we only have a single worker, we don't want to waste precious
 # appveyor CI time and make other PRs wait for repeated failures in a failing
@@ -64,6 +63,13 @@ install:
 
   # Install the generated wheel package to test it
   - "pip install --pre --no-index --find-links dist/ scikit-learn"
+
+  # If there is a newer build queued for the same PR, cancel this one.
+  # credits: JuliaLang developers.
+  - ps: if ($env:APPVEYOR_PULL_REQUEST_NUMBER -and $env:APPVEYOR_BUILD_NUMBER -ne ((Invoke-RestMethod `
+        https://ci.appveyor.com/api/projects/$env:APPVEYOR_ACCOUNT_NAME/$env:APPVEYOR_PROJECT_SLUG/history?recordsNumber=500).builds | `
+        Where-Object pullRequestId -eq $env:APPVEYOR_PULL_REQUEST_NUMBER)[0].buildNumber) { `
+        throw "There are newer queued builds for this pull request, failing early." }
 
 # Not a .NET project, we build scikit-learn in the install step instead
 build: false

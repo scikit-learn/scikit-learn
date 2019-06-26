@@ -18,13 +18,13 @@ from os import makedirs, remove
 
 import numpy as np
 from scipy.io.matlab import loadmat
+import joblib
 
 from .base import get_data_home
 from .base import _fetch_remote
 from .base import RemoteFileMetadata
 from .base import _pkl_filepath
 from ..utils import check_random_state, Bunch
-from ..externals import joblib
 
 # The original data can be found at:
 # https://cs.nyu.edu/~roweis/data/olivettifaces.mat
@@ -124,7 +124,7 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         target = target[order]
 
     module_path = dirname(__file__)
-    with open(join(module_path, 'descr', 'covtype.rst')) as rst_file:
+    with open(join(module_path, 'descr', 'olivetti_faces.rst')) as rst_file:
         fdescr = rst_file.read()
 
     return Bunch(data=faces.reshape(len(faces), -1),

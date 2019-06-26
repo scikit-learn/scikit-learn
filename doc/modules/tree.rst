@@ -129,8 +129,8 @@ Once trained, you can plot the tree with the plot_tree function::
 
     >>> tree.plot_tree(clf.fit(iris.data, iris.target)) # doctest: +SKIP
 
-.. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_002.png
-   :target: ../auto_examples/tree/plot_iris.html
+.. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_dtc_002.png
+   :target: ../auto_examples/tree/plot_iris_dtc.html
    :scale: 75
    :align: center
 
@@ -177,15 +177,38 @@ render these plots inline automatically::
     .. figure:: ../images/iris.pdf
        :align: center
 
-.. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_001.png
-   :target: ../auto_examples/tree/plot_iris.html
+.. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_dtc_001.png
+   :target: ../auto_examples/tree/plot_iris_dtc.html
    :align: center
    :scale: 75
 
+Alternatively, the tree can also be exported in textual format with the
+function :func:`export_text`. This method doesn't require the installation
+of external libraries and is more compact:
+
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.tree import DecisionTreeClassifier
+    >>> from sklearn.tree.export import export_text
+    >>> iris = load_iris()
+    >>> X = iris['data']
+    >>> y = iris['target']
+    >>> decision_tree = DecisionTreeClassifier(random_state=0, max_depth=2)
+    >>> decision_tree = decision_tree.fit(X, y)
+    >>> r = export_text(decision_tree, feature_names=iris['feature_names'])
+    >>> print(r)
+    |--- petal width (cm) <= 0.80
+    |   |--- class: 0
+    |--- petal width (cm) >  0.80
+    |   |--- petal width (cm) <= 1.75
+    |   |   |--- class: 1
+    |   |--- petal width (cm) >  1.75
+    |   |   |--- class: 2
+    <BLANKLINE>
+
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_tree_plot_iris.py`
-
+ * :ref:`sphx_glr_auto_examples_tree_plot_iris_dtc.py`
+ * :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
 
 .. _tree_regression:
 
@@ -322,6 +345,10 @@ Tips on practical use
     :ref:`ICA <ICA>`, or :ref:`feature_selection`) beforehand to
     give your tree a better chance of finding features that are discriminative.
 
+  * :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py` will help
+    in gaining more insights about how the decision tree makes predictions, which is
+    important for understanding the important features in the data.
+
   * Visualise your tree as you are training by using the ``export``
     function.  Use ``max_depth=3`` as an initial tree depth to get a feel for
     how the tree is fitting to your data, and then increase the depth.
@@ -400,7 +427,8 @@ it differs in that it supports numerical target variables (regression) and
 does not compute rule sets. CART constructs binary trees using the feature
 and threshold that yield the largest information gain at each node.
 
-scikit-learn uses an optimised version of the CART algorithm.
+scikit-learn uses an optimised version of the CART algorithm; however, scikit-learn 
+implementation does not support categorical variables for now.
 
 .. _ID3: https://en.wikipedia.org/wiki/ID3_algorithm
 .. _CART: https://en.wikipedia.org/wiki/Predictive_analytics#Classification_and_regression_trees_.28CART.29

@@ -1,9 +1,7 @@
 """
 Testing Recursive feature elimination
 """
-from __future__ import division
 
-import pytest
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 from scipy import sparse
@@ -18,13 +16,13 @@ from sklearn.model_selection import GroupKFold
 
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_greater, assert_equal, assert_true
+from sklearn.utils.testing import assert_greater, assert_equal
 
 from sklearn.metrics import make_scorer
 from sklearn.metrics import get_scorer
 
 
-class MockClassifier(object):
+class MockClassifier:
     """
     Dummy classifier to test recursive feature elimination
     """
@@ -33,7 +31,7 @@ class MockClassifier(object):
         self.foo_param = foo_param
 
     def fit(self, X, Y):
-        assert_true(len(X) == len(Y))
+        assert len(X) == len(Y)
         self.coef_ = np.ones(X.shape[1], dtype=np.float64)
         return self
 
@@ -130,7 +128,7 @@ def test_rfecv():
     y = list(iris.target)   # regression test: list should be supported
 
     # Test using the score function
-    rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, cv=5)
+    rfecv = RFECV(estimator=SVC(kernel="linear"), step=1)
     rfecv.fit(X, y)
     # non-regression test for missing worst feature:
     assert_equal(len(rfecv.grid_scores_), X.shape[1])
@@ -141,7 +139,7 @@ def test_rfecv():
     assert_array_equal(X_r, iris.data)
 
     # same in sparse
-    rfecv_sparse = RFECV(estimator=SVC(kernel="linear"), step=1, cv=5)
+    rfecv_sparse = RFECV(estimator=SVC(kernel="linear"), step=1)
     X_sparse = sparse.csr_matrix(X)
     rfecv_sparse.fit(X_sparse, y)
     X_r_sparse = rfecv_sparse.transform(X_sparse)
@@ -149,16 +147,14 @@ def test_rfecv():
 
     # Test using a customized loss function
     scoring = make_scorer(zero_one_loss, greater_is_better=False)
-    rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, cv=5,
-                  scoring=scoring)
+    rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, scoring=scoring)
     ignore_warnings(rfecv.fit)(X, y)
     X_r = rfecv.transform(X)
     assert_array_equal(X_r, iris.data)
 
     # Test using a scorer
     scorer = get_scorer('accuracy')
-    rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, cv=5,
-                  scoring=scorer)
+    rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, scoring=scorer)
     rfecv.fit(X, y)
     X_r = rfecv.transform(X)
     assert_array_equal(X_r, iris.data)
@@ -166,8 +162,7 @@ def test_rfecv():
     # Test fix on grid_scores
     def test_scorer(estimator, X, y):
         return 1.0
-    rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, cv=5,
-                  scoring=test_scorer)
+    rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, scoring=test_scorer)
     rfecv.fit(X, y)
     assert_array_equal(rfecv.grid_scores_, np.ones(len(rfecv.grid_scores_)))
     # In the event of cross validation score ties, the expected behavior of
@@ -177,21 +172,21 @@ def test_rfecv():
     assert_equal(rfecv.n_features_, 1)
 
     # Same as the first two tests, but with step=2
-    rfecv = RFECV(estimator=SVC(kernel="linear"), step=2, cv=5)
+    rfecv = RFECV(estimator=SVC(kernel="linear"), step=2)
     rfecv.fit(X, y)
     assert_equal(len(rfecv.grid_scores_), 6)
     assert_equal(len(rfecv.ranking_), X.shape[1])
     X_r = rfecv.transform(X)
     assert_array_equal(X_r, iris.data)
 
-    rfecv_sparse = RFECV(estimator=SVC(kernel="linear"), step=2, cv=5)
+    rfecv_sparse = RFECV(estimator=SVC(kernel="linear"), step=2)
     X_sparse = sparse.csr_matrix(X)
     rfecv_sparse.fit(X_sparse, y)
     X_r_sparse = rfecv_sparse.transform(X_sparse)
     assert_array_equal(X_r_sparse.toarray(), iris.data)
 
     # Verifying that steps < 1 don't blow up.
-    rfecv_sparse = RFECV(estimator=SVC(kernel="linear"), step=.2, cv=5)
+    rfecv_sparse = RFECV(estimator=SVC(kernel="linear"), step=.2)
     X_sparse = sparse.csr_matrix(X)
     rfecv_sparse.fit(X_sparse, y)
     X_r_sparse = rfecv_sparse.transform(X_sparse)
@@ -205,7 +200,7 @@ def test_rfecv_mockclassifier():
     y = list(iris.target)   # regression test: list should be supported
 
     # Test using the score function
-    rfecv = RFECV(estimator=MockClassifier(), step=1, cv=5)
+    rfecv = RFECV(estimator=MockClassifier(), step=1)
     rfecv.fit(X, y)
     # non-regression test for missing worst feature:
     assert_equal(len(rfecv.grid_scores_), X.shape[1])
@@ -214,7 +209,7 @@ def test_rfecv_mockclassifier():
 
 def test_rfecv_verbose_output():
     # Check verbose=1 is producing an output.
-    from sklearn.externals.six.moves import cStringIO as StringIO
+    from io import StringIO
     import sys
     sys.stdout = StringIO()
 
@@ -223,7 +218,7 @@ def test_rfecv_verbose_output():
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
     y = list(iris.target)
 
-    rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, cv=5, verbose=1)
+    rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, verbose=1)
     rfecv.fit(X, y)
 
     verbose_output = sys.stdout
@@ -241,7 +236,7 @@ def test_rfecv_grid_scores_size():
     # min_features_to_select.
     for step, min_features_to_select in [[2, 1], [2, 2], [3, 3]]:
         rfecv = RFECV(estimator=MockClassifier(), step=step,
-                      min_features_to_select=min_features_to_select, cv=5)
+                      min_features_to_select=min_features_to_select)
         rfecv.fit(X, y)
 
         score_len = np.ceil(
@@ -251,7 +246,6 @@ def test_rfecv_grid_scores_size():
         assert rfecv.n_features_ >= min_features_to_select
 
 
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_rfe_estimator_tags():
     rfe = RFE(SVC(kernel='linear'))
     assert_equal(rfe._estimator_type, "classifier")
@@ -334,7 +328,7 @@ def test_number_of_subsets_of_features():
         generator = check_random_state(43)
         X = generator.normal(size=(100, n_features))
         y = generator.rand(100).round()
-        rfecv = RFECV(estimator=SVC(kernel="linear"), step=step, cv=5)
+        rfecv = RFECV(estimator=SVC(kernel="linear"), step=step)
         rfecv.fit(X, y)
 
         assert_equal(rfecv.grid_scores_.shape[0],
@@ -343,7 +337,6 @@ def test_number_of_subsets_of_features():
                      formula2(n_features, n_features_to_select, step))
 
 
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_rfe_cv_n_jobs():
     generator = check_random_state(0)
     iris = load_iris()
@@ -361,7 +354,6 @@ def test_rfe_cv_n_jobs():
     assert_array_almost_equal(rfecv.grid_scores_, rfecv_grid_scores)
 
 
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_rfe_cv_groups():
     generator = check_random_state(0)
     iris = load_iris()

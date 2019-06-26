@@ -9,20 +9,24 @@ import numpy as np
 from scipy import sparse
 from scipy import linalg
 
-
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_allclose
 
 from sklearn.linear_model.base import LinearRegression
 from sklearn.linear_model.base import _preprocess_data
 from sklearn.linear_model.base import _rescale_data
+from sklearn.linear_model.base import make_dataset
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_greater
 from sklearn.datasets.samples_generator import make_sparse_uncorrelated
 from sklearn.datasets.samples_generator import make_regression
+from sklearn.datasets import load_iris
 
 rng = np.random.RandomState(0)
+rtol = 1e-6
 
 
 def test_linear_regression():
@@ -148,6 +152,26 @@ def test_linear_regression_sparse(random_state=0):
         assert_array_almost_equal(beta, ols.coef_ + ols.intercept_)
 
         assert_array_almost_equal(ols.predict(X) - y.ravel(), 0)
+
+
+@pytest.mark.parametrize('normalize', [True, False])
+@pytest.mark.parametrize('fit_intercept', [True, False])
+def test_linear_regression_sparse_equal_dense(normalize, fit_intercept):
+    # Test that linear regression agrees between sparse and dense
+    rng = check_random_state(0)
+    n_samples = 200
+    n_features = 2
+    X = rng.randn(n_samples, n_features)
+    X[X < 0.1] = 0.
+    Xcsr = sparse.csr_matrix(X)
+    y = rng.rand(n_samples)
+    params = dict(normalize=normalize, fit_intercept=fit_intercept)
+    clf_dense = LinearRegression(**params)
+    clf_sparse = LinearRegression(**params)
+    clf_dense.fit(X, y)
+    clf_sparse.fit(Xcsr, y)
+    assert clf_dense.intercept_ == pytest.approx(clf_sparse.intercept_)
+    assert_allclose(clf_dense.coef_, clf_sparse.coef_)
 
 
 def test_linear_regression_multiple_outcome(random_state=0):
@@ -423,3 +447,48 @@ def test_rescale_data():
     rescaled_y2 = y * np.sqrt(sample_weight)
     assert_array_almost_equal(rescaled_X, rescaled_X2)
     assert_array_almost_equal(rescaled_y, rescaled_y2)
+
+
+def test_fused_types_make_dataset():
+    iris = load_iris()
+
+    X_32 = iris.data.astype(np.float32)
+    y_32 = iris.target.astype(np.float32)
+    X_csr_32 = sparse.csr_matrix(X_32)
+    sample_weight_32 = np.arange(y_32.size, dtype=np.float32)
+
+    X_64 = iris.data.astype(np.float64)
+    y_64 = iris.target.astype(np.float64)
+    X_csr_64 = sparse.csr_matrix(X_64)
+    sample_weight_64 = np.arange(y_64.size, dtype=np.float64)
+
+    # array
+    dataset_32, _ = make_dataset(X_32, y_32, sample_weight_32)
+    dataset_64, _ = make_dataset(X_64, y_64, sample_weight_64)
+    xi_32, yi_32, _, _ = dataset_32._next_py()
+    xi_64, yi_64, _, _ = dataset_64._next_py()
+    xi_data_32, _, _ = xi_32
+    xi_data_64, _, _ = xi_64
+
+    assert xi_data_32.dtype == np.float32
+    assert xi_data_64.dtype == np.float64
+    assert_allclose(yi_64, yi_32, rtol=rtol)
+
+    # csr
+    datasetcsr_32, _ = make_dataset(X_csr_32, y_32, sample_weight_32)
+    datasetcsr_64, _ = make_dataset(X_csr_64, y_64, sample_weight_64)
+    xicsr_32, yicsr_32, _, _ = datasetcsr_32._next_py()
+    xicsr_64, yicsr_64, _, _ = datasetcsr_64._next_py()
+    xicsr_data_32, _, _ = xicsr_32
+    xicsr_data_64, _, _ = xicsr_64
+
+    assert xicsr_data_32.dtype == np.float32
+    assert xicsr_data_64.dtype == np.float64
+
+    assert_allclose(xicsr_data_64, xicsr_data_32, rtol=rtol)
+    assert_allclose(yicsr_64, yicsr_32, rtol=rtol)
+
+    assert_array_equal(xi_data_32, xicsr_data_32)
+    assert_array_equal(xi_data_64, xicsr_data_64)
+    assert_array_equal(yi_32, yicsr_32)
+    assert_array_equal(yi_64, yicsr_64)

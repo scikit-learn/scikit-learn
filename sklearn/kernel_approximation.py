@@ -52,15 +52,9 @@ class RBFSampler(BaseEstimator, TransformerMixin):
     >>> y = [0, 0, 1, 1]
     >>> rbf_feature = RBFSampler(gamma=1, random_state=1)
     >>> X_features = rbf_feature.fit_transform(X)
-    >>> clf = SGDClassifier(max_iter=5)
+    >>> clf = SGDClassifier(max_iter=5, tol=1e-3)
     >>> clf.fit(X_features, y)
-    ... # doctest: +NORMALIZE_WHITESPACE
-    SGDClassifier(alpha=0.0001, average=False, class_weight=None,
-           early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
-           l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=5,
-           n_iter=None, n_iter_no_change=5, n_jobs=None, penalty='l2',
-           power_t=0.5, random_state=None, shuffle=True, tol=None,
-           validation_fraction=0.1, verbose=0, warm_start=False)
+    SGDClassifier(max_iter=5)
     >>> clf.score(X_features, y)
     1.0
 
@@ -162,14 +156,9 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
     ...                                  n_components=10,
     ...                                  random_state=0)
     >>> X_features = chi2_feature.fit_transform(X, y)
-    >>> clf = SGDClassifier(max_iter=10)
+    >>> clf = SGDClassifier(max_iter=10, tol=1e-3)
     >>> clf.fit(X_features, y)
-    SGDClassifier(alpha=0.0001, average=False, class_weight=None,
-           early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
-           l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=10,
-           n_iter=None, n_iter_no_change=5, n_jobs=None, penalty='l2',
-           power_t=0.5, random_state=None, shuffle=True, tol=None,
-           validation_fraction=0.1, verbose=0, warm_start=False)
+    SGDClassifier(max_iter=10)
     >>> clf.score(X_features, y)
     1.0
 
@@ -282,16 +271,11 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
     >>> X, y = load_digits(return_X_y=True)
     >>> chi2sampler = AdditiveChi2Sampler(sample_steps=2)
     >>> X_transformed = chi2sampler.fit_transform(X, y)
-    >>> clf = SGDClassifier(max_iter=5, random_state=0)
+    >>> clf = SGDClassifier(max_iter=5, random_state=0, tol=1e-3)
     >>> clf.fit(X_transformed, y)
-    SGDClassifier(alpha=0.0001, average=False, class_weight=None,
-           early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
-           l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=5,
-           n_iter=None, n_iter_no_change=5, n_jobs=None, penalty='l2',
-           power_t=0.5, random_state=0, shuffle=True, tol=None,
-           validation_fraction=0.1, verbose=0, warm_start=False)
-    >>> clf.score(X_transformed, y) # doctest: +ELLIPSIS
-    0.9543...
+    SGDClassifier(max_iter=5, random_state=0)
+    >>> clf.score(X_transformed, y)
+    0.9499...
 
     Notes
     -----
@@ -334,7 +318,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         self : object
             Returns the transformer.
         """
-        X = check_array(X, accept_sparse='csr')
+        check_array(X, accept_sparse='csr')
         if self.sample_interval is None:
             # See reference, figure 2 c)
             if self.sample_steps == 1:
@@ -435,6 +419,9 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
 
         return sp.hstack(X_new)
 
+    def _more_tags(self):
+        return {'stateless': True}
+
 
 class Nystroem(BaseEstimator, TransformerMixin):
     """Approximate a kernel map using a subset of the training data.
@@ -502,12 +489,8 @@ class Nystroem(BaseEstimator, TransformerMixin):
     ...                                 n_components=300)
     >>> data_transformed = feature_map_nystroem.fit_transform(data)
     >>> clf.fit(data_transformed, digits.target)
-    ... # doctest: +NORMALIZE_WHITESPACE
-    LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
-         intercept_scaling=1, loss='squared_hinge', max_iter=1000,
-         multi_class='ovr', penalty='l2', random_state=None, tol=0.0001,
-         verbose=0)
-    >>> clf.score(data_transformed, digits.target) # doctest: +ELLIPSIS
+    LinearSVC()
+    >>> clf.score(data_transformed, digits.target)
     0.9987...
 
     References

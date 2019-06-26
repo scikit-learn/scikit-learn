@@ -393,14 +393,18 @@ def test_inplace_swap_column():
     [(0, np.min, np.max, False),
      (np.nan, np.nanmin, np.nanmax, True)]
 )
+@pytest.mark.parametrize("large_indices", [True, False])
 def test_min_max(dtype, axis, sparse_format, missing_values, min_func,
-                 max_func, ignore_nan):
+                 max_func, ignore_nan, large_indices):
     X = np.array([[0, 3, 0],
                   [2, -1, missing_values],
                   [0, 0, 0],
                   [9, missing_values, 7],
                   [4, 0, 5]], dtype=dtype)
     X_sparse = sparse_format(X)
+    if large_indices:
+        X_sparse.indices = X_sparse.indices.astype('int64')
+        X_sparse.indptr = X_sparse.indptr.astype('int64')
 
     mins_sparse, maxs_sparse = min_max_axis(X_sparse, axis=axis,
                                             ignore_nan=ignore_nan)
@@ -442,6 +446,29 @@ def test_count_nonzero():
 
     assert_raises(TypeError, count_nonzero, X_csc)
     assert_raises(ValueError, count_nonzero, X_csr, axis=2)
+
+    assert (count_nonzero(X_csr, axis=0).dtype ==
+            count_nonzero(X_csr, axis=1).dtype)
+    assert (count_nonzero(X_csr, axis=0, sample_weight=sample_weight).dtype ==
+            count_nonzero(X_csr, axis=1, sample_weight=sample_weight).dtype)
+
+    # Check dtypes with large sparse matrices too
+    # XXX: test fails on Appveyor (python3.5 32bit)
+    try:
+        X_csr.indices = X_csr.indices.astype(np.int64)
+        X_csr.indptr = X_csr.indptr.astype(np.int64)
+        assert (count_nonzero(X_csr, axis=0).dtype ==
+                count_nonzero(X_csr, axis=1).dtype)
+        assert (count_nonzero(X_csr, axis=0,
+                              sample_weight=sample_weight).dtype ==
+                count_nonzero(X_csr, axis=1,
+                              sample_weight=sample_weight).dtype)
+    except TypeError as e:
+        if ("according to the rule 'safe'" in e.args[0] and
+                np.intp().nbytes < 8):
+            pass
+        else:
+            raise
 
 
 def test_csc_row_median():

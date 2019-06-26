@@ -64,7 +64,7 @@ plt.scatter(X_kpca[reds, 0], X_kpca[reds, 1], c="red",
 plt.scatter(X_kpca[blues, 0], X_kpca[blues, 1], c="blue",
             s=20, edgecolor='k')
 plt.title("Projection by KPCA")
-plt.xlabel("1st principal component in space induced by $\phi$")
+plt.xlabel(r"1st principal component in space induced by $\phi$")
 plt.ylabel("2nd component")
 
 plt.subplot(2, 2, 4, aspect='equal')
@@ -76,6 +76,5 @@ plt.title("Original space after inverse transform")
 plt.xlabel("$x_1$")
 plt.ylabel("$x_2$")
 
-plt.subplots_adjust(0.02, 0.10, 0.98, 0.94, 0.04, 0.35)
-
+plt.tight_layout()
 plt.show()

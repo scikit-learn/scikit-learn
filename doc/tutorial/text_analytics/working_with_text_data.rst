@@ -156,8 +156,8 @@ It is possible to get back the category names as follows::
   sci.med
 
 You might have noticed that the samples were shuffled randomly when we called
-``fetch_20newsgroups(..., shuffle=True, random_state=42)``: this is useful if 
-you wish to select only a subset of samples to quickly train a model and get a 
+``fetch_20newsgroups(..., shuffle=True, random_state=42)``: this is useful if
+you wish to select only a subset of samples to quickly train a model and get a
 first idea of the results before re-training on the complete dataset later.
 
 
@@ -205,7 +205,7 @@ Tokenizing text with ``scikit-learn``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Text preprocessing, tokenizing and filtering of stopwords are all included
-in :class:`CountVectorizer`, which builds a dictionary of features and 
+in :class:`CountVectorizer`, which builds a dictionary of features and
 transforms documents to feature vectors::
 
   >>> from sklearn.feature_extraction.text import CountVectorizer
@@ -214,8 +214,8 @@ transforms documents to feature vectors::
   >>> X_train_counts.shape
   (2257, 35788)
 
-:class:`CountVectorizer` supports counts of N-grams of words or consecutive 
-characters. Once fitted, the vectorizer has built a dictionary of feature 
+:class:`CountVectorizer` supports counts of N-grams of words or consecutive
+characters. Once fitted, the vectorizer has built a dictionary of feature
 indices::
 
   >>> count_vect.vocabulary_.get(u'algorithm')
@@ -327,10 +327,10 @@ like a compound classifier::
 
 
 The names ``vect``, ``tfidf`` and ``clf`` (classifier) are arbitrary.
-We will use them to perform grid search for suitable hyperparameters below. 
+We will use them to perform grid search for suitable hyperparameters below.
 We can now train the model with a single command::
 
-  >>> text_clf.fit(twenty_train.data, twenty_train.target)  # doctest: +ELLIPSIS
+  >>> text_clf.fit(twenty_train.data, twenty_train.target)
   Pipeline(...)
 
 
@@ -344,7 +344,7 @@ Evaluating the predictive accuracy of the model is equally easy::
   ...     categories=categories, shuffle=True, random_state=42)
   >>> docs_test = twenty_test.data
   >>> predicted = text_clf.predict(docs_test)
-  >>> np.mean(predicted == twenty_test.target)            # doctest: +ELLIPSIS
+  >>> np.mean(predicted == twenty_test.target)
   0.8348...
 
 We achieved 83.5% accuracy. Let's see if we can do better with a
@@ -363,37 +363,35 @@ classifier object into our pipeline::
   ...                           max_iter=5, tol=None)),
   ... ])
 
-  >>> text_clf.fit(twenty_train.data, twenty_train.target)  # doctest: +ELLIPSIS
+  >>> text_clf.fit(twenty_train.data, twenty_train.target)
   Pipeline(...)
   >>> predicted = text_clf.predict(docs_test)
-  >>> np.mean(predicted == twenty_test.target)            # doctest: +ELLIPSIS
-  0.9127...
+  >>> np.mean(predicted == twenty_test.target)
+  0.9101...
 
-We achieved 91.3% accuracy using the SVM. ``scikit-learn`` provides further 
+We achieved 91.3% accuracy using the SVM. ``scikit-learn`` provides further
 utilities for more detailed performance analysis of the results::
 
   >>> from sklearn import metrics
   >>> print(metrics.classification_report(twenty_test.target, predicted,
   ...     target_names=twenty_test.target_names))
-  ...                                         # doctest: +NORMALIZE_WHITESPACE
                           precision    recall  f1-score   support
   <BLANKLINE>
-             alt.atheism       0.95      0.81      0.87       319
-           comp.graphics       0.88      0.97      0.92       389
-                 sci.med       0.94      0.90      0.92       396
+             alt.atheism       0.95      0.80      0.87       319
+           comp.graphics       0.87      0.98      0.92       389
+                 sci.med       0.94      0.89      0.91       396
   soc.religion.christian       0.90      0.95      0.93       398
   <BLANKLINE>
-               micro avg       0.91      0.91      0.91      1502
-               macro avg       0.92      0.91      0.91      1502
-            weighted avg       0.92      0.91      0.91      1502
+                accuracy                           0.91      1502
+               macro avg       0.91      0.91      0.91      1502
+            weighted avg       0.91      0.91      0.91      1502
   <BLANKLINE>
 
   >>> metrics.confusion_matrix(twenty_test.target, predicted)
-  array([[258,  11,  15,  35],
-         [  4, 379,   3,   3],
-         [  5,  33, 355,   3],
-         [  5,  10,   4, 379]])
-
+  array([[256,  11,  16,  36],
+         [  4, 380,   3,   2],
+         [  5,  35, 353,   3],
+         [  5,  11,   4, 378]])
 
 As expected the confusion matrix shows that posts from the newsgroups
 on atheism and Christianity are more often confused for one another than
@@ -447,7 +445,7 @@ parameter combinations in parallel with the ``n_jobs`` parameter. If we give
 this parameter a value of ``-1``, grid search will detect how many cores
 are installed and use them all::
 
-  >>> gs_clf = GridSearchCV(text_clf, parameters, cv=5, iid=False, n_jobs=-1)
+  >>> gs_clf = GridSearchCV(text_clf, parameters, cv=5, n_jobs=-1)
 
 The grid search instance behaves like a normal ``scikit-learn``
 model. Let's perform the search on a smaller subset of the training data
@@ -464,14 +462,14 @@ that we can use to ``predict``::
 The object's ``best_score_`` and ``best_params_`` attributes store the best
 mean score and the parameters setting corresponding to that score::
 
-  >>> gs_clf.best_score_                                  # doctest: +ELLIPSIS
+  >>> gs_clf.best_score_
   0.9...
   >>> for param_name in sorted(parameters.keys()):
   ...     print("%s: %r" % (param_name, gs_clf.best_params_[param_name]))
   ...
   clf__alpha: 0.001
   tfidf__use_idf: True
-  vect__ngram_range: (1, 2)
+  vect__ngram_range: (1, 1)
 
 A more detailed summary of the search is available at ``gs_clf.cv_results_``.
 

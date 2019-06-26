@@ -1,6 +1,7 @@
 import sys
-from sklearn.externals.six.moves import cStringIO as StringIO
+from io import StringIO
 import numpy as np
+from numpy.testing import assert_allclose
 import scipy.sparse as sp
 
 import pytest
@@ -16,8 +17,6 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_in
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import skip_if_32bit
 from sklearn.utils import check_random_state
 from sklearn.manifold.t_sne import _joint_probabilities
@@ -128,7 +127,7 @@ def test_binary_search_neighbors():
     # Binary perplexity search approximation.
     # Should be approximately equal to the slow method when we use
     # all points as neighbors.
-    n_samples = 500
+    n_samples = 200
     desired_perplexity = 25.0
     random_state = check_random_state(0)
     distances = random_state.randn(n_samples, 2).astype(np.float32)
@@ -140,7 +139,8 @@ def test_binary_search_neighbors():
 
     # Test that when we use all the neighbors the results are identical
     k = n_samples
-    neighbors_nn = np.argsort(distances, axis=1)[:, 1:k].astype(np.int64)
+    neighbors_nn = np.argsort(distances, axis=1)[:, 1:k].astype(np.int64,
+                                                                copy=False)
     distances_nn = np.array([distances[k, neighbors_nn[k]]
                             for k in range(n_samples)])
     P2 = _binary_search_perplexity(distances_nn, neighbors_nn,
@@ -152,7 +152,8 @@ def test_binary_search_neighbors():
     for k in np.linspace(80, n_samples, 5):
         k = int(k)
         topn = k * 10  # check the top 10 *k entries out of k * k entries
-        neighbors_nn = np.argsort(distances, axis=1)[:, :k].astype(np.int64)
+        neighbors_nn = np.argsort(distances, axis=1)[:, :k].astype(np.int64,
+                                                                   copy=False)
         distances_nn = np.array([distances[k, neighbors_nn[k]]
                                 for k in range(n_samples)])
         P2k = _binary_search_perplexity(distances_nn, neighbors_nn,
@@ -176,7 +177,8 @@ def test_binary_perplexity_stability():
     distances = np.abs(distances.dot(distances.T))
     np.fill_diagonal(distances, 0.0)
     last_P = None
-    neighbors_nn = np.argsort(distances, axis=1)[:, :k].astype(np.int64)
+    neighbors_nn = np.argsort(distances, axis=1)[:, :k].astype(np.int64,
+                                                               copy=False)
     for _ in range(100):
         P = _binary_search_perplexity(distances.copy(), neighbors_nn.copy(),
                                       3, verbose=0)
@@ -238,21 +240,18 @@ def test_trustworthiness():
     assert_almost_equal(trustworthiness(X, X_embedded, n_neighbors=1), 0.2)
 
 
-def test_preserve_trustworthiness_approximately():
+@pytest.mark.parametrize("method", ['exact', 'barnes_hut'])
+@pytest.mark.parametrize("init", ('random', 'pca'))
+def test_preserve_trustworthiness_approximately(method, init):
     # Nearest neighbors should be preserved approximately.
     random_state = check_random_state(0)
     n_components = 2
-    methods = ['exact', 'barnes_hut']
     X = random_state.randn(50, n_components).astype(np.float32)
-    for init in ('random', 'pca'):
-        for method in methods:
-            tsne = TSNE(n_components=n_components, init=init, random_state=0,
-                        method=method)
-            X_embedded = tsne.fit_transform(X)
-            t = trustworthiness(X, X_embedded, n_neighbors=1)
-            assert_greater(t, 0.85, msg='Trustworthiness={:0.3f} < 0.85 '
-                                        'for method={} and '
-                                        'init={}'.format(t, method, init))
+    tsne = TSNE(n_components=n_components, init=init, random_state=0,
+                method=method, n_iter=700)
+    X_embedded = tsne.fit_transform(X)
+    t = trustworthiness(X, X_embedded, n_neighbors=1)
+    assert t > 0.85
 
 
 def test_optimization_minimizes_kl_divergence():
@@ -272,47 +271,28 @@ def test_optimization_minimizes_kl_divergence():
 def test_fit_csr_matrix():
     # X can be a sparse matrix.
     random_state = check_random_state(0)
-    X = random_state.randn(100, 2)
-    X[(np.random.randint(0, 100, 50), np.random.randint(0, 2, 50))] = 0.0
+    X = random_state.randn(50, 2)
+    X[(np.random.randint(0, 50, 25), np.random.randint(0, 2, 25))] = 0.0
     X_csr = sp.csr_matrix(X)
     tsne = TSNE(n_components=2, perplexity=10, learning_rate=100.0,
-                random_state=0, method='exact')
+                random_state=0, method='exact', n_iter=750)
     X_embedded = tsne.fit_transform(X_csr)
-    assert_almost_equal(trustworthiness(X_csr, X_embedded, n_neighbors=1), 1.0,
-                        decimal=1)
+    assert_allclose(trustworthiness(X_csr, X_embedded, n_neighbors=1),
+                    1.0, rtol=1.1e-1)
 
 
 def test_preserve_trustworthiness_approximately_with_precomputed_distances():
     # Nearest neighbors should be preserved approximately.
     random_state = check_random_state(0)
     for i in range(3):
-        X = random_state.randn(100, 2)
+        X = random_state.randn(80, 2)
         D = squareform(pdist(X), "sqeuclidean")
         tsne = TSNE(n_components=2, perplexity=2, learning_rate=100.0,
                     early_exaggeration=2.0, metric="precomputed",
-                    random_state=i, verbose=0)
+                    random_state=i, verbose=0, n_iter=500)
         X_embedded = tsne.fit_transform(D)
         t = trustworthiness(D, X_embedded, n_neighbors=1, metric="precomputed")
         assert t > .95
-
-
-def test_trustworthiness_precomputed_deprecation():
-    # FIXME: Remove this test in v0.23
-
-    # Use of the flag `precomputed` in trustworthiness parameters has been
-    # deprecated, but will still work until v0.23.
-    random_state = check_random_state(0)
-    X = random_state.randn(100, 2)
-    assert_equal(assert_warns(DeprecationWarning, trustworthiness,
-                              pairwise_distances(X), X, precomputed=True), 1.)
-    assert_equal(assert_warns(DeprecationWarning, trustworthiness,
-                              pairwise_distances(X), X, metric='precomputed',
-                              precomputed=True), 1.)
-    assert_raises(ValueError, assert_warns, DeprecationWarning,
-                  trustworthiness, X, X, metric='euclidean', precomputed=True)
-    assert_equal(assert_warns(DeprecationWarning, trustworthiness,
-                              pairwise_distances(X), X, metric='euclidean',
-                              precomputed=True), 1.)
 
 
 def test_trustworthiness_not_euclidean_metric():
@@ -438,11 +418,11 @@ def test_early_exaggeration_used():
     for method in methods:
         tsne = TSNE(n_components=n_components, perplexity=1,
                     learning_rate=100.0, init="pca", random_state=0,
-                    method=method, early_exaggeration=1.0)
+                    method=method, early_exaggeration=1.0, n_iter=250)
         X_embedded1 = tsne.fit_transform(X)
         tsne = TSNE(n_components=n_components, perplexity=1,
                     learning_rate=100.0, init="pca", random_state=0,
-                    method=method, early_exaggeration=10.0)
+                    method=method, early_exaggeration=10.0, n_iter=250)
         X_embedded2 = tsne.fit_transform(X)
 
         assert not np.allclose(X_embedded1, X_embedded2)
@@ -532,7 +512,7 @@ def _run_answer_test(pos_input, pos_output, neighbors, grad_output,
     distances = pairwise_distances(pos_input).astype(np.float32)
     args = distances, perplexity, verbose
     pos_output = pos_output.astype(np.float32)
-    neighbors = neighbors.astype(np.int64)
+    neighbors = neighbors.astype(np.int64, copy=False)
     pij_input = _joint_probabilities(*args)
     pij_input = squareform(pij_input).astype(np.float32)
     grad_bh = np.zeros(pos_output.shape, dtype=np.float32)
@@ -604,9 +584,10 @@ def test_64bit(method, dt):
     # Ensure 64bit arrays are handled correctly.
     random_state = check_random_state(0)
 
-    X = random_state.randn(50, 2).astype(dt)
+    X = random_state.randn(10, 2).astype(dt, copy=False)
     tsne = TSNE(n_components=2, perplexity=2, learning_rate=100.0,
-                random_state=0, method=method, verbose=0)
+                random_state=0, method=method, verbose=0,
+                n_iter=300)
     X_embedded = tsne.fit_transform(X)
     effective_type = X_embedded.dtype
 
@@ -623,7 +604,7 @@ def test_kl_divergence_not_nan(method):
 
     X = random_state.randn(50, 2)
     tsne = TSNE(n_components=2, perplexity=2, learning_rate=100.0,
-                random_state=0, method=method, verbose=0, n_iter=1003)
+                random_state=0, method=method, verbose=0, n_iter=503)
     tsne.fit_transform(X)
 
     assert not np.isnan(tsne.kl_divergence_)
@@ -740,9 +721,10 @@ def test_min_grad_norm():
 def test_accessible_kl_divergence():
     # Ensures that the accessible kl_divergence matches the computed value
     random_state = check_random_state(0)
-    X = random_state.randn(100, 2)
+    X = random_state.randn(50, 2)
     tsne = TSNE(n_iter_without_progress=2, verbose=2,
-                random_state=0, method='exact')
+                random_state=0, method='exact',
+                n_iter=500)
 
     old_stdout = sys.stdout
     sys.stdout = StringIO()
@@ -764,7 +746,8 @@ def test_accessible_kl_divergence():
     assert_almost_equal(tsne.kl_divergence_, float(error), decimal=5)
 
 
-def check_uniform_grid(method, seeds=[0, 1, 2], n_iter=1000):
+@pytest.mark.parametrize('method', ['barnes_hut', 'exact'])
+def test_uniform_grid(method):
     """Make sure that TSNE can approximately recover a uniform 2D grid
 
     Due to ties in distances between point in X_2d_grid, this test is platform
@@ -776,6 +759,8 @@ def check_uniform_grid(method, seeds=[0, 1, 2], n_iter=1000):
     we re-run t-SNE from the final point when the convergence is not good
     enough.
     """
+    seeds = [0, 1, 2]
+    n_iter = 500
     for seed in seeds:
         tsne = TSNE(n_components=2, init='random', random_state=seed,
                     perplexity=20, n_iter=n_iter, method=method)
@@ -807,11 +792,6 @@ def assert_uniform_grid(Y, try_name=None):
 
     assert_greater(smallest_to_mean, .5, msg=try_name)
     assert_less(largest_to_mean, 2, msg=try_name)
-
-
-@pytest.mark.parametrize('method', ['barnes_hut', 'exact'])
-def test_uniform_grid(method):
-    check_uniform_grid(method)
 
 
 def test_bh_match_exact():
@@ -847,8 +827,8 @@ def test_tsne_with_different_distance_metrics():
     for metric, dist_func in zip(metrics, dist_funcs):
         X_transformed_tsne = TSNE(
             metric=metric, n_components=n_components_embedding,
-            random_state=0).fit_transform(X)
+            random_state=0, n_iter=300).fit_transform(X)
         X_transformed_tsne_precomputed = TSNE(
             metric='precomputed', n_components=n_components_embedding,
-            random_state=0).fit_transform(dist_func(X))
+            random_state=0, n_iter=300).fit_transform(dist_func(X))
         assert_array_equal(X_transformed_tsne, X_transformed_tsne_precomputed)

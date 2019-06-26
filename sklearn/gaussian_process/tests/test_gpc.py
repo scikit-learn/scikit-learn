@@ -12,8 +12,8 @@ import pytest
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
 
-from sklearn.utils.testing import (assert_true, assert_greater,
-                                   assert_almost_equal, assert_array_equal)
+from sklearn.utils.testing import (assert_greater, assert_almost_equal,
+                                   assert_array_equal)
 
 
 def f(x):
@@ -69,9 +69,9 @@ def test_converged_to_local_maximum(kernel):
     lml, lml_gradient = \
         gpc.log_marginal_likelihood(gpc.kernel_.theta, True)
 
-    assert_true(np.all((np.abs(lml_gradient) < 1e-4) |
-                       (gpc.kernel_.theta == gpc.kernel_.bounds[:, 0]) |
-                       (gpc.kernel_.theta == gpc.kernel_.bounds[:, 1])))
+    assert np.all((np.abs(lml_gradient) < 1e-4) |
+                  (gpc.kernel_.theta == gpc.kernel_.bounds[:, 0]) |
+                  (gpc.kernel_.theta == gpc.kernel_.bounds[:, 1]))
 
 
 @pytest.mark.parametrize('kernel', kernels)
@@ -113,12 +113,12 @@ def test_random_starts():
 @pytest.mark.parametrize('kernel', non_fixed_kernels)
 def test_custom_optimizer(kernel):
     # Test that GPC can use externally defined optimizers.
-    # Define a dummy optimizer that simply tests 50 random hyperparameters
+    # Define a dummy optimizer that simply tests 10 random hyperparameters
     def optimizer(obj_func, initial_theta, bounds):
         rng = np.random.RandomState(0)
         theta_opt, func_min = \
             initial_theta, obj_func(initial_theta, eval_gradient=False)
-        for _ in range(50):
+        for _ in range(10):
             theta = np.atleast_1d(rng.uniform(np.maximum(-2, bounds[:, 0]),
                                               np.minimum(1, bounds[:, 1])))
             f = obj_func(theta, eval_gradient=False)

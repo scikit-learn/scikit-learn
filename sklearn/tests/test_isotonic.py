@@ -4,13 +4,16 @@ import pickle
 import copy
 
 from sklearn.isotonic import (check_increasing, isotonic_regression,
-                              IsotonicRegression)
+                              IsotonicRegression, _make_unique)
 
+from sklearn.utils.validation import check_array
 from sklearn.utils.testing import (assert_raises, assert_array_equal,
-                                   assert_true, assert_false, assert_equal,
+                                   assert_equal,
                                    assert_array_almost_equal,
                                    assert_warns_message, assert_no_warnings)
 from sklearn.utils import shuffle
+
+from scipy.special import expit
 
 
 def test_permutation_invariance():
@@ -22,7 +25,8 @@ def test_permutation_invariance():
     sample_weight = [1, 2, 3, 4, 5, 6, 7]
     x_s, y_s, sample_weight_s = shuffle(x, y, sample_weight, random_state=0)
     y_transformed = ir.fit_transform(x, y, sample_weight=sample_weight)
-    y_transformed_s = ir.fit(x_s, y_s, sample_weight=sample_weight_s).transform(x)
+    y_transformed_s = \
+        ir.fit(x_s, y_s, sample_weight=sample_weight_s).transform(x)
 
     assert_array_equal(y_transformed, y_transformed_s)
 
@@ -32,7 +36,7 @@ def test_check_increasing_small_number_of_samples():
     y = [1, 1.1, 1.05]
 
     is_increasing = assert_no_warnings(check_increasing, x, y)
-    assert_true(is_increasing)
+    assert is_increasing
 
 
 def test_check_increasing_up():
@@ -41,7 +45,7 @@ def test_check_increasing_up():
 
     # Check that we got increasing=True and no warnings
     is_increasing = assert_no_warnings(check_increasing, x, y)
-    assert_true(is_increasing)
+    assert is_increasing
 
 
 def test_check_increasing_up_extreme():
@@ -50,7 +54,7 @@ def test_check_increasing_up_extreme():
 
     # Check that we got increasing=True and no warnings
     is_increasing = assert_no_warnings(check_increasing, x, y)
-    assert_true(is_increasing)
+    assert is_increasing
 
 
 def test_check_increasing_down():
@@ -59,7 +63,7 @@ def test_check_increasing_down():
 
     # Check that we got increasing=False and no warnings
     is_increasing = assert_no_warnings(check_increasing, x, y)
-    assert_false(is_increasing)
+    assert not is_increasing
 
 
 def test_check_increasing_down_extreme():
@@ -68,7 +72,7 @@ def test_check_increasing_down_extreme():
 
     # Check that we got increasing=False and no warnings
     is_increasing = assert_no_warnings(check_increasing, x, y)
-    assert_false(is_increasing)
+    assert not is_increasing
 
 
 def test_check_ci_warn():
@@ -80,7 +84,7 @@ def test_check_ci_warn():
                                          check_increasing,
                                          x, y)
 
-    assert_false(is_increasing)
+    assert not is_increasing
 
 
 def test_isotonic_regression():
@@ -208,12 +212,12 @@ def test_isotonic_regression_auto_decreasing():
         warnings.simplefilter("always")
         y_ = ir.fit_transform(x, y)
         # work-around for pearson divide warnings in scipy <= 0.17.0
-        assert_true(all(["invalid value encountered in "
-                         in str(warn.message) for warn in w]))
+        assert all(["invalid value encountered in "
+                    in str(warn.message) for warn in w])
 
     # Check that relationship decreases
     is_increasing = y_[0] < y_[-1]
-    assert_false(is_increasing)
+    assert not is_increasing
 
 
 def test_isotonic_regression_auto_increasing():
@@ -227,12 +231,12 @@ def test_isotonic_regression_auto_increasing():
         warnings.simplefilter("always")
         y_ = ir.fit_transform(x, y)
         # work-around for pearson divide warnings in scipy <= 0.17.0
-        assert_true(all(["invalid value encountered in "
-                         in str(warn.message) for warn in w]))
+        assert all(["invalid value encountered in "
+                    in str(warn.message) for warn in w])
 
     # Check that relationship increases
     is_increasing = y_[0] < y_[-1]
-    assert_true(is_increasing)
+    assert is_increasing
 
 
 def test_assert_raises_exceptions():
@@ -371,7 +375,7 @@ def test_isotonic_duplicate_min_entry():
     ir = IsotonicRegression(increasing=True, out_of_bounds="clip")
     ir.fit(x, y)
     all_predictions_finite = np.all(np.isfinite(ir.predict(x)))
-    assert_true(all_predictions_finite)
+    assert all_predictions_finite
 
 
 def test_isotonic_ymin_ymax():
@@ -427,10 +431,8 @@ def test_fast_predict():
     n_samples = 10 ** 3
     # X values over the -10,10 range
     X_train = 20.0 * rng.rand(n_samples) - 10
-    y_train = np.less(
-        rng.rand(n_samples),
-        1.0 / (1.0 + np.exp(-X_train))
-    ).astype('int64')
+    y_train = np.less(rng.rand(n_samples),
+                      expit(X_train)).astype('int64').astype('float64')
 
     weights = rng.rand(n_samples)
     # we also want to test that everything still works when some weights are 0
@@ -461,3 +463,34 @@ def test_isotonic_copy_before_fit():
     # https://github.com/scikit-learn/scikit-learn/issues/6628
     ir = IsotonicRegression()
     copy.copy(ir)
+
+
+def test_isotonic_dtype():
+    y = [2, 1, 4, 3, 5]
+    weights = np.array([.9, .9, .9, .9, .9], dtype=np.float64)
+    reg = IsotonicRegression()
+
+    for dtype in (np.int32, np.int64, np.float32, np.float64):
+        for sample_weight in (None, weights.astype(np.float32), weights):
+            y_np = np.array(y, dtype=dtype)
+            expected_dtype = \
+                check_array(y_np, dtype=[np.float64, np.float32],
+                            ensure_2d=False).dtype
+
+            res = isotonic_regression(y_np, sample_weight=sample_weight)
+            assert_equal(res.dtype, expected_dtype)
+
+            X = np.arange(len(y)).astype(dtype)
+            reg.fit(X, y_np, sample_weight=sample_weight)
+            res = reg.predict(X)
+            assert_equal(res.dtype, expected_dtype)
+
+
+def test_make_unique_dtype():
+    x_list = [2, 2, 2, 3, 5]
+    for dtype in (np.float32, np.float64):
+        x = np.array(x_list, dtype=dtype)
+        y = x.copy()
+        w = np.ones_like(x)
+        x, y, w = _make_unique(x, y, w)
+        assert_array_equal(x, [2, 3, 5])

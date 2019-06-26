@@ -1,9 +1,10 @@
+import pytest
 import numpy as np
 from numpy.testing import assert_approx_equal
 
 from sklearn.utils.testing import (assert_equal, assert_array_almost_equal,
-                                   assert_array_equal, assert_true,
-                                   assert_raise_message, assert_warns)
+                                   assert_array_equal, assert_raise_message,
+                                   assert_warns)
 from sklearn.datasets import load_linnerud
 from sklearn.cross_decomposition import pls_, CCA
 from sklearn.preprocessing import StandardScaler
@@ -317,7 +318,7 @@ def test_predict_transform_copy():
     assert_array_equal(X_copy, X)
     assert_array_equal(Y_copy, Y)
     # also check that mean wasn't zero before (to make sure we didn't touch it)
-    assert_true(np.all(X.mean(axis=0) != 0))
+    assert np.all(X.mean(axis=0) != 0)
 
 
 def test_scale_and_stability():
@@ -377,6 +378,7 @@ def test_pls_errors():
                              clf.fit, X, Y)
 
 
+@pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
 def test_pls_scaling():
     # sanity check for scale=True
     n_samples = 1000

@@ -1,11 +1,13 @@
 from itertools import chain, product
 import warnings
+import string
+import timeit
 
 import pytest
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils.testing import (assert_equal, assert_raises, assert_true,
+from sklearn.utils.testing import (assert_equal, assert_raises,
                                    assert_array_equal,
                                    SkipTest, assert_raises_regex,
                                    assert_warns_message, assert_no_warnings)
@@ -17,6 +19,7 @@ from sklearn.utils import column_or_1d
 from sklearn.utils import safe_indexing
 from sklearn.utils import shuffle
 from sklearn.utils import gen_even_slices
+from sklearn.utils import _message_with_time, _print_elapsed_time
 from sklearn.utils import get_chunk_n_rows
 from sklearn.utils import is_scalar_nan
 from sklearn.utils.mocking import MockDataFrame
@@ -25,17 +28,17 @@ from sklearn import config_context
 
 def test_make_rng():
     # Check the check_random_state utility function behavior
-    assert_true(check_random_state(None) is np.random.mtrand._rand)
-    assert_true(check_random_state(np.random) is np.random.mtrand._rand)
+    assert check_random_state(None) is np.random.mtrand._rand
+    assert check_random_state(np.random) is np.random.mtrand._rand
 
     rng_42 = np.random.RandomState(42)
-    assert_true(check_random_state(42).randint(100) == rng_42.randint(100))
+    assert check_random_state(42).randint(100) == rng_42.randint(100)
 
     rng_42 = np.random.RandomState(42)
-    assert_true(check_random_state(rng_42) is rng_42)
+    assert check_random_state(rng_42) is rng_42
 
     rng_42 = np.random.RandomState(42)
-    assert_true(check_random_state(43).randint(100) != rng_42.randint(100))
+    assert check_random_state(43).randint(100) != rng_42.randint(100)
 
     assert_raises(ValueError, check_random_state, "some invalid seed")
 
@@ -57,29 +60,29 @@ def test_deprecated():
         assert_equal(spam, "spam")     # function must remain usable
 
         assert_equal(len(w), 1)
-        assert_true(issubclass(w[0].category, DeprecationWarning))
-        assert_true("deprecated" in str(w[0].message).lower())
+        assert issubclass(w[0].category, DeprecationWarning)
+        assert "deprecated" in str(w[0].message).lower()
 
     # ... then a class.
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
 
         @deprecated("don't use this")
-        class Ham(object):
+        class Ham:
             SPAM = 1
 
         ham = Ham()
 
-        assert_true(hasattr(ham, "SPAM"))
+        assert hasattr(ham, "SPAM")
 
         assert_equal(len(w), 1)
-        assert_true(issubclass(w[0].category, DeprecationWarning))
-        assert_true("deprecated" in str(w[0].message).lower())
+        assert issubclass(w[0].category, DeprecationWarning)
+        assert "deprecated" in str(w[0].message).lower()
 
 
 def test_resample():
     # Border case not worth mentioning in doctests
-    assert_true(resample() is None)
+    assert resample() is None
 
     # Check that invalid arguments yield ValueError
     assert_raises(ValueError, resample, [0], [0, 1])
@@ -88,6 +91,67 @@ def test_resample():
     assert_raises(ValueError, resample, [0, 1], [0, 1], meaning_of_life=42)
     # Issue:6581, n_samples can be more when replace is True (default).
     assert_equal(len(resample([1, 2], n_samples=5)), 5)
+
+
+def test_resample_stratified():
+    # Make sure resample can stratify
+    rng = np.random.RandomState(0)
+    n_samples = 100
+    p = .9
+    X = rng.normal(size=(n_samples, 1))
+    y = rng.binomial(1, p, size=n_samples)
+
+    _, y_not_stratified = resample(X, y, n_samples=10, random_state=0,
+                                   stratify=None)
+    assert np.all(y_not_stratified == 1)
+
+    _, y_stratified = resample(X, y, n_samples=10, random_state=0, stratify=y)
+    assert not np.all(y_stratified == 1)
+    assert np.sum(y_stratified) == 9  # all 1s, one 0
+
+
+def test_resample_stratified_replace():
+    # Make sure stratified resampling supports the replace parameter
+    rng = np.random.RandomState(0)
+    n_samples = 100
+    X = rng.normal(size=(n_samples, 1))
+    y = rng.randint(0, 2, size=n_samples)
+
+    X_replace, _ = resample(X, y, replace=True, n_samples=50,
+                            random_state=rng, stratify=y)
+    X_no_replace, _ = resample(X, y, replace=False, n_samples=50,
+                               random_state=rng, stratify=y)
+    assert np.unique(X_replace).shape[0] < 50
+    assert np.unique(X_no_replace).shape[0] == 50
+
+    # make sure n_samples can be greater than X.shape[0] if we sample with
+    # replacement
+    X_replace, _ = resample(X, y, replace=True, n_samples=1000,
+                            random_state=rng, stratify=y)
+    assert X_replace.shape[0] == 1000
+    assert np.unique(X_replace).shape[0] == 100
+
+
+def test_resample_stratify_2dy():
+    # Make sure y can be 2d when stratifying
+    rng = np.random.RandomState(0)
+    n_samples = 100
+    X = rng.normal(size=(n_samples, 1))
+    y = rng.randint(0, 2, size=(n_samples, 2))
+    X, y = resample(X, y, n_samples=50, random_state=rng, stratify=y)
+    assert y.ndim == 2
+
+
+def test_resample_stratify_sparse_error():
+    # resample must be ndarray
+    rng = np.random.RandomState(0)
+    n_samples = 100
+    X = rng.normal(size=(n_samples, 2))
+    y = rng.randint(0, 2, size=n_samples)
+    stratify = sp.csr_matrix(y)
+    with pytest.raises(TypeError, match='A sparse matrix was passed'):
+        X, y = resample(X, y, n_samples=50, random_state=rng,
+                        stratify=stratify)
 
 
 def test_safe_mask():
@@ -262,6 +326,62 @@ def test_get_chunk_n_rows(row_bytes, max_n_rows, working_memory,
         assert type(actual) is type(expected)
 
 
+@pytest.mark.parametrize(
+    ['source', 'message', 'is_long'],
+    [
+        ('ABC', string.ascii_lowercase, False),
+        ('ABCDEF', string.ascii_lowercase, False),
+        ('ABC', string.ascii_lowercase * 3, True),
+        ('ABC' * 10, string.ascii_lowercase, True),
+        ('ABC', string.ascii_lowercase + u'\u1048', False),
+    ])
+@pytest.mark.parametrize(
+    ['time', 'time_str'],
+    [
+        (0.2, '   0.2s'),
+        (20, '  20.0s'),
+        (2000, '33.3min'),
+        (20000, '333.3min'),
+    ])
+def test_message_with_time(source, message, is_long, time, time_str):
+    out = _message_with_time(source, message, time)
+    if is_long:
+        assert len(out) > 70
+    else:
+        assert len(out) == 70
+
+    assert out.startswith('[' + source + '] ')
+    out = out[len(source) + 3:]
+
+    assert out.endswith(time_str)
+    out = out[:-len(time_str)]
+    assert out.endswith(', total=')
+    out = out[:-len(', total=')]
+    assert out.endswith(message)
+    out = out[:-len(message)]
+    assert out.endswith(' ')
+    out = out[:-1]
+
+    if is_long:
+        assert not out
+    else:
+        assert list(set(out)) == ['.']
+
+
+@pytest.mark.parametrize(
+    ['message', 'expected'],
+    [
+        ('hello', _message_with_time('ABC', 'hello', 0.1) + '\n'),
+        ('', _message_with_time('ABC', '', 0.1) + '\n'),
+        (None, ''),
+    ])
+def test_print_elapsed_time(message, expected, capsys, monkeypatch):
+    monkeypatch.setattr(timeit, 'default_timer', lambda: 0)
+    with _print_elapsed_time('ABC', message):
+        monkeypatch.setattr(timeit, 'default_timer', lambda: 0.1)
+    assert capsys.readouterr().out == expected
+
+
 @pytest.mark.parametrize("value, result", [(float("nan"), True),
                                            (np.nan, True),
                                            (np.float("nan"), True),
@@ -275,3 +395,46 @@ def test_get_chunk_n_rows(row_bytes, max_n_rows, working_memory,
                                            ([np.nan], False)])
 def test_is_scalar_nan(value, result):
     assert is_scalar_nan(value) is result
+
+
+def dummy_func():
+    pass
+
+
+def test_deprecation_joblib_api(tmpdir):
+    def check_warning(*args, **kw):
+        return assert_warns_message(
+            DeprecationWarning, "deprecated in version 0.20.1", *args, **kw)
+
+    # Ensure that the joblib API is deprecated in sklearn.util
+    from sklearn.utils import Parallel, Memory, delayed
+    from sklearn.utils import cpu_count, hash, effective_n_jobs
+    check_warning(Memory, str(tmpdir))
+    check_warning(hash, 1)
+    check_warning(Parallel)
+    check_warning(cpu_count)
+    check_warning(effective_n_jobs, 1)
+    check_warning(delayed, dummy_func)
+
+    # Only parallel_backend and register_parallel_backend are not deprecated in
+    # sklearn.utils
+    from sklearn.utils import parallel_backend, register_parallel_backend
+    assert_no_warnings(parallel_backend, 'loky', None)
+    assert_no_warnings(register_parallel_backend, 'failing', None)
+
+    # Ensure that the deprecation have no side effect in sklearn.utils._joblib
+    from sklearn.utils._joblib import Parallel, Memory, delayed
+    from sklearn.utils._joblib import cpu_count, hash, effective_n_jobs
+    from sklearn.utils._joblib import parallel_backend
+    from sklearn.utils._joblib import register_parallel_backend
+    assert_no_warnings(Memory, str(tmpdir))
+    assert_no_warnings(hash, 1)
+    assert_no_warnings(Parallel)
+    assert_no_warnings(cpu_count)
+    assert_no_warnings(effective_n_jobs, 1)
+    assert_no_warnings(delayed, dummy_func)
+    assert_no_warnings(parallel_backend, 'loky', None)
+    assert_no_warnings(register_parallel_backend, 'failing', None)
+
+    from sklearn.utils._joblib import joblib
+    del joblib.parallel.BACKENDS['failing']

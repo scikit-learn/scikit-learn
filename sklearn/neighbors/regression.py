@@ -95,7 +95,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
     >>> y = [0, 0, 1, 1]
     >>> from sklearn.neighbors import KNeighborsRegressor
     >>> neigh = KNeighborsRegressor(n_neighbors=2)
-    >>> neigh.fit(X, y) # doctest: +ELLIPSIS
+    >>> neigh.fit(X, y)
     KNeighborsRegressor(...)
     >>> print(neigh.predict([[1.5]]))
     [0.5]
@@ -126,7 +126,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
                  algorithm='auto', leaf_size=30,
                  p=2, metric='minkowski', metric_params=None, n_jobs=None,
                  **kwargs):
-        super(KNeighborsRegressor, self).__init__(
+        super().__init__(
               n_neighbors=n_neighbors,
               algorithm=algorithm,
               leaf_size=leaf_size, metric=metric, p=p,
@@ -252,7 +252,7 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
     >>> y = [0, 0, 1, 1]
     >>> from sklearn.neighbors import RadiusNeighborsRegressor
     >>> neigh = RadiusNeighborsRegressor(radius=1.0)
-    >>> neigh.fit(X, y) # doctest: +ELLIPSIS
+    >>> neigh.fit(X, y)
     RadiusNeighborsRegressor(...)
     >>> print(neigh.predict([[1.5]]))
     [0.5]
@@ -276,7 +276,7 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
                  algorithm='auto', leaf_size=30,
                  p=2, metric='minkowski', metric_params=None, n_jobs=None,
                  **kwargs):
-        super(RadiusNeighborsRegressor, self).__init__(
+        super().__init__(
               radius=radius,
               algorithm=algorithm,
               leaf_size=leaf_size,

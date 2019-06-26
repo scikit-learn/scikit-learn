@@ -1,5 +1,4 @@
 import numpy as np
-import pytest
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.datasets import make_blobs
@@ -11,7 +10,6 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
 
 
@@ -24,7 +22,7 @@ def test_compute_class_weight():
     # total effect of samples is preserved
     class_counts = np.bincount(y)[2:]
     assert_almost_equal(np.dot(cw, class_counts), y.shape[0])
-    assert_true(cw[0] < cw[1] < cw[2])
+    assert cw[0] < cw[1] < cw[2]
 
 
 def test_compute_class_weight_not_present():
@@ -66,8 +64,6 @@ def test_compute_class_weight_dict():
                          classes, y)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_compute_class_weight_invariance():
     # Test that results with class_weight="balanced" is invariant wrt
     # class imbalance if the number of samples is identical.

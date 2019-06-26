@@ -13,11 +13,12 @@ from sklearn.datasets import fetch_openml
 from sklearn.datasets.openml import (_open_openml_url,
                                      _get_data_description_by_id,
                                      _download_data_arff,
-                                     _get_local_path)
+                                     _get_local_path,
+                                     _retry_with_clean_cache)
 from sklearn.utils.testing import (assert_warns_message,
                                    assert_raise_message)
-from sklearn.externals.six import string_types
-from sklearn.externals.six.moves.urllib.error import HTTPError
+from sklearn.utils import is_scalar_nan
+from urllib.error import HTTPError
 from sklearn.datasets.tests.test_common import check_return_X_y
 from functools import partial
 
@@ -37,8 +38,8 @@ def _test_features_list(data_id):
             # XXX: This would be faster with np.take, although it does not
             # handle missing values fast (also not with mode='wrap')
             cat = data_bunch.categories[col_name]
-            result = [cat[idx] if 0 <= idx < len(cat) else None for idx in
-                      data_bunch.data[:, col_idx].astype(int)]
+            result = [None if is_scalar_nan(idx) else cat[int(idx)]
+                      for idx in data_bunch.data[:, col_idx]]
             return np.array(result, dtype='O')
         else:
             # non-nominal attribute
@@ -54,7 +55,7 @@ def _test_features_list(data_id):
                          'code relatively simple')
     data_arff = _download_data_arff(data_description['file_id'],
                                     sparse, None, False)
-    data_downloaded = np.array(data_arff['data'], dtype='O')
+    data_downloaded = np.array(list(data_arff['data']), dtype='O')
 
     for i in range(len(data_bunch.feature_names)):
         # XXX: Test per column, as this makes it easier to avoid problems with
@@ -100,7 +101,7 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
     assert data_by_id.target.dtype == expected_target_dtype
     assert len(data_by_id.feature_names) == expected_features
     for feature in data_by_id.feature_names:
-        assert isinstance(feature, string_types)
+        assert isinstance(feature, str)
 
     # TODO: pass in a list of expected nominal features
     for feature, categories in data_by_id.categories.items():
@@ -152,7 +153,7 @@ def _monkey_patch_webbased_functions(context,
     path_suffix = '.gz'
     read_fn = gzip.open
 
-    class MockHTTPResponse(object):
+    class MockHTTPResponse:
         def __init__(self, data, is_gzip):
             self.data = data
             self.is_gzip = is_gzip
@@ -496,6 +497,68 @@ def test_open_openml_url_cache(monkeypatch, gzip_response, tmpdir):
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
+@pytest.mark.parametrize('write_to_disk', [True, False])
+def test_open_openml_url_unlinks_local_path(
+        monkeypatch, gzip_response, tmpdir, write_to_disk):
+    data_id = 61
+    openml_path = sklearn.datasets.openml._DATA_FILE.format(data_id)
+    cache_directory = str(tmpdir.mkdir('scikit_learn_data'))
+    location = _get_local_path(openml_path, cache_directory)
+
+    def _mock_urlopen(request):
+        if write_to_disk:
+            with open(location, "w") as f:
+                f.write("")
+        raise ValueError("Invalid request")
+
+    monkeypatch.setattr(sklearn.datasets.openml, 'urlopen', _mock_urlopen)
+
+    with pytest.raises(ValueError, match="Invalid request"):
+        _open_openml_url(openml_path, cache_directory)
+
+    assert not os.path.exists(location)
+
+
+def test_retry_with_clean_cache(tmpdir):
+    data_id = 61
+    openml_path = sklearn.datasets.openml._DATA_FILE.format(data_id)
+    cache_directory = str(tmpdir.mkdir('scikit_learn_data'))
+    location = _get_local_path(openml_path, cache_directory)
+    os.makedirs(os.path.dirname(location))
+
+    with open(location, 'w') as f:
+        f.write("")
+
+    @_retry_with_clean_cache(openml_path, cache_directory)
+    def _load_data():
+        # The first call will raise an error since location exists
+        if os.path.exists(location):
+            raise Exception("File exist!")
+        return 1
+
+    warn_msg = "Invalid cache, redownloading file"
+    with pytest.warns(RuntimeWarning, match=warn_msg):
+        result = _load_data()
+    assert result == 1
+
+
+def test_retry_with_clean_cache_http_error(tmpdir):
+    data_id = 61
+    openml_path = sklearn.datasets.openml._DATA_FILE.format(data_id)
+    cache_directory = str(tmpdir.mkdir('scikit_learn_data'))
+
+    @_retry_with_clean_cache(openml_path, cache_directory)
+    def _load_data():
+        raise HTTPError(url=None, code=412,
+                        msg='Simulated mock error',
+                        hdrs=None, fp=None)
+
+    error_msg = "Simulated mock error"
+    with pytest.raises(HTTPError, match=error_msg):
+        _load_data()
+
+
+@pytest.mark.parametrize('gzip_response', [True, False])
 def test_fetch_openml_cache(monkeypatch, gzip_response, tmpdir):
     def _mock_urlopen_raise(request):
         raise ValueError('This mechanism intends to test correct cache'
@@ -605,6 +668,30 @@ def test_string_attribute(monkeypatch, gzip_response):
     assert_raise_message(ValueError,
                          'STRING attributes are not yet supported',
                          fetch_openml, data_id=data_id, cache=False)
+
+
+@pytest.mark.parametrize('gzip_response', [True, False])
+def test_dataset_with_openml_error(monkeypatch, gzip_response):
+    data_id = 1
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
+    assert_warns_message(
+        UserWarning,
+        "OpenML registered a problem with the dataset. It might be unusable. "
+        "Error:",
+        fetch_openml, data_id=data_id, cache=False
+    )
+
+
+@pytest.mark.parametrize('gzip_response', [True, False])
+def test_dataset_with_openml_warning(monkeypatch, gzip_response):
+    data_id = 3
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
+    assert_warns_message(
+        UserWarning,
+        "OpenML raised a warning on the dataset. It might be unusable. "
+        "Warning:",
+        fetch_openml, data_id=data_id, cache=False
+    )
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])

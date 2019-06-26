@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from scipy import optimize, sparse
+from scipy import optimize
 
 from ..base import BaseEstimator, RegressorMixin
 from .base import LinearModel
@@ -48,7 +48,6 @@ def _huber_loss_and_gradient(w, X, y, epsilon, alpha, sample_weight=None):
         Returns the derivative of the Huber loss with respect to each
         coefficient, intercept and the scale as a vector.
     """
-    X_is_sparse = sparse.issparse(X)
     _, n_features = X.shape
     fit_intercept = (n_features + 2 == w.shape[0])
     if fit_intercept:
@@ -197,13 +196,13 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     >>> import numpy as np
     >>> from sklearn.linear_model import HuberRegressor, LinearRegression
     >>> from sklearn.datasets import make_regression
-    >>> np.random.seed(0)
+    >>> rng = np.random.RandomState(0)
     >>> X, y, coef = make_regression(
     ...     n_samples=200, n_features=2, noise=4.0, coef=True, random_state=0)
-    >>> X[:4] = np.random.uniform(10, 20, (4, 2))
-    >>> y[:4] = np.random.uniform(10, 20, 4)
+    >>> X[:4] = rng.uniform(10, 20, (4, 2))
+    >>> y[:4] = rng.uniform(10, 20, 4)
     >>> huber = HuberRegressor().fit(X, y)
-    >>> huber.score(X, y) # doctest: +ELLIPSIS
+    >>> huber.score(X, y)
     -7.284608623514573
     >>> huber.predict(X[:1,])
     array([806.7200...])
@@ -252,7 +251,8 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         self : object
         """
         X, y = check_X_y(
-            X, y, copy=False, accept_sparse=['csr'], y_numeric=True)
+            X, y, copy=False, accept_sparse=['csr'], y_numeric=True,
+            dtype=[np.float64, np.float32])
         if sample_weight is not None:
             sample_weight = np.array(sample_weight)
             check_consistent_length(y, sample_weight)
