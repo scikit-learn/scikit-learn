@@ -21,12 +21,14 @@ cpdef _openmp_effective_n_threads(n_threads=None):
         raise ValueError("n_threads = 0 is invalid")
 
     IF SKLEARN_OPENMP_SUPPORTED:
-        max_threads = min(openmp.omp_get_max_threads(), effective_n_jobs(-1))
+        # omp_get_max_threads can be influenced by environement variable
+        # OMP_NUM_THREADS or at runtime by omp_set_num_threads
+        max_n_threads = min(openmp.omp_get_max_threads(), effective_n_jobs(-1))
 
         if n_threads is None:
-            return max_threads
+            return max_n_threads
         elif n_threads < 0:
-            return max(1, max_threads + n_threads + 1)
+            return max(1, max_n_threads + n_threads + 1)
 
         return n_threads
     ELSE:
