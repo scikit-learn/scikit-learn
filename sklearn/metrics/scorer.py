@@ -525,9 +525,9 @@ average_precision_scorer = make_scorer(average_precision_score,
 # Score function for probabilistic classification
 neg_log_loss_scorer = make_scorer(log_loss, greater_is_better=False,
                                   needs_proba=True)
-neg_brier_score_loss_scorer = make_scorer(brier_score_loss,
-                                          greater_is_better=False,
-                                          needs_proba=True)
+neg_brier_score_scorer = make_scorer(brier_score_loss,
+                                     greater_is_better=False,
+                                     needs_proba=True)
 brier_score_loss_scorer = make_scorer(brier_score_loss,
                                       greater_is_better=False,
                                       needs_proba=True)
@@ -560,7 +560,7 @@ SCORERS = dict(explained_variance=explained_variance_scorer,
                average_precision=average_precision_scorer,
                neg_log_loss=neg_log_loss_scorer,
                brier_score_loss=brier_score_loss_scorer,
-               neg_brier_score_loss=neg_brier_score_loss_scorer,
+               neg_brier_score=neg_brier_score_scorer,
                # Cluster metrics that use supervised evaluation
                adjusted_rand_score=adjusted_rand_scorer,
                homogeneity_score=homogeneity_scorer,
