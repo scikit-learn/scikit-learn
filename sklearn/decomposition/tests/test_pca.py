@@ -96,7 +96,7 @@ def test_whitening(solver, copy):
     # we always center, so no test for non-centering.
 
 
-@pytest.mark.parametrize('svd_solver', ['arpack', 'randomized'])
+@pytest.mark.parametrize('svd_solver', ['arpack', 'randomized', 'lobpcg'])
 def test_pca_explained_variance_equivalence_solver(svd_solver):
     rng = np.random.RandomState(0)
     n_samples, n_features = 100, 80
@@ -213,7 +213,9 @@ def test_pca_check_projection_list(svd_solver):
     assert_allclose(X_trans.std(), 0.71, rtol=5e-3)
 
 
-@pytest.mark.parametrize("svd_solver", ['full', 'arpack', 'randomized'])
+@pytest.mark.parametrize(
+    "svd_solver", ['full', 'arpack', 'randomized', 'lobpcg']
+)
 @pytest.mark.parametrize("whiten", [False, True])
 def test_pca_inverse(svd_solver, whiten):
     # Test that the projection of data can be inverted
@@ -239,6 +241,7 @@ def test_pca_inverse(svd_solver, whiten):
     "svd_solver, n_components, err_msg",
     [('arpack', 0, r'must be between 1 and min\(n_samples, n_features\)'),
      ('randomized', 0, r'must be between 1 and min\(n_samples, n_features\)'),
+     ('lobpcg', 0, r'must be between 1 and min\(n_samples, n_features\)'),
      ('arpack', 2, r'must be strictly less than min'),
      ('auto', -1, (r"n_components={}L? must be between {}L? and "
                    r"min\(n_samples, n_features\)={}L? with "
@@ -252,7 +255,9 @@ def test_pca_validation(svd_solver, data, n_components, err_msg):
     # Ensures that solver-specific extreme inputs for the n_components
     # parameter raise errors
     smallest_d = 2  # The smallest dimension
-    lower_limit = {'randomized': 1, 'arpack': 1, 'full': 0, 'auto': 0}
+    lower_limit = {
+        'randomized': 1, 'lobpcg': 1, 'arpack': 1, 'full': 0, 'auto': 0
+    }
     pca_fitted = PCA(n_components, svd_solver=svd_solver)
 
     solver_reported = 'full' if svd_solver == 'auto' else svd_solver
@@ -277,7 +282,8 @@ def test_pca_validation(svd_solver, data, n_components, err_msg):
     'solver, n_components_',
     [('full', min(iris.data.shape)),
      ('arpack', min(iris.data.shape) - 1),
-     ('randomized', min(iris.data.shape))]
+     ('randomized', min(iris.data.shape)),
+     ('lobpcg', min(iris.data.shape))]
 )
 @pytest.mark.parametrize("data", [iris.data, iris.data.T])
 def test_n_components_none(data, solver, n_components_):
@@ -440,7 +446,7 @@ def test_pca_score_consistency_solvers(svd_solver):
 
 
 # arpack raises ValueError for n_components == min(n_samples,  n_features)
-@pytest.mark.parametrize("svd_solver", ["full", "randomized"])
+@pytest.mark.parametrize("svd_solver", ["full", "randomized", "lobpcg"])
 def test_pca_zero_noise_variance_edge_cases(svd_solver):
     # ensure that noise_variance_ is 0 in edge cases
     # when n_components == min(n_samples, n_features)
