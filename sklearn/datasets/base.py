@@ -926,7 +926,7 @@ def _refresh_cache(path, refresh_cache):
     if not refresh_cache:
         return
 
-    if refresh_cache == True:
+    if refresh_cache is True:
         shutil.rmtree(path)
         return
 

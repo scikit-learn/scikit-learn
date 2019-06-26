@@ -86,7 +86,7 @@ def fetch_covtype(data_home=None, download_if_missing=True,
         - ``'joblib'``: only re-fetch the data if the previously downloaded
           data has been persisted using the previously vendored `joblib`.
         - ``False``: do not re-fetch the data.
-        
+
         From version 0.23, ``'joblib'`` as an input value will be ignored and
         assumed ``False``.
 
