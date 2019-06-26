@@ -1092,7 +1092,7 @@ def test_vectorizers_invalid_ngram_range(vec):
                "lower boundary larger than the upper boundary."
                % str(invalid_range))
     if isinstance(vec, HashingVectorizer):
-        pytest.xfail(reason='HashingVectorizer not supported on PyPy')
+        pytest.xfail(reason='HashingVectorizer is not supported on PyPy')
 
     assert_raise_message(
         ValueError, message, vec.fit, ["good news everyone"])
@@ -1199,7 +1199,7 @@ def test_stop_word_validation_custom_preprocessor(Estimator):
     'Estimator',
     [CountVectorizer,
      TfidfVectorizer,
-     pytest.param(HashingVectorizer, marks=fails_if_pypy)]
+     HashingVectorizer]
 )
 @pytest.mark.parametrize(
     'input_type, err_type, err_msg',
@@ -1207,6 +1207,8 @@ def test_stop_word_validation_custom_preprocessor(Estimator):
      ('file', AttributeError, "'str' object has no attribute 'read'")]
 )
 def test_callable_analyzer_error(Estimator, input_type, err_type, err_msg):
+    if issubclass(Estimator, HashingVectorizer):
+        pytest.xfail('HashingVectorizer is not supported on PyPy')
     data = ['this is text, not file or filename']
     with pytest.raises(err_type, match=err_msg):
         Estimator(analyzer=lambda x: x.split(),
@@ -1237,12 +1239,15 @@ def test_callable_analyzer_change_behavior(Estimator, analyzer, input_type):
     'Estimator',
     [CountVectorizer,
      TfidfVectorizer,
-     pytest.param(HashingVectorizer, marks=fails_if_pypy)]
+     HashingVectorizer]
 )
 def test_callable_analyzer_reraise_error(tmpdir, Estimator):
     # check if a custom exception from the analyzer is shown to the user
     def analyzer(doc):
         raise Exception("testing")
+
+    if issubclass(Estimator, HashingVectorizer):
+        pytest.xfail('HashingVectorizer is not supported on PyPy')
 
     f = tmpdir.join("file.txt")
     f.write("sample content\n")

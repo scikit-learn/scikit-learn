@@ -15,6 +15,7 @@ from collections import defaultdict
 from collections.abc import Mapping, Sequence, Iterable
 from functools import partial, reduce
 from itertools import product
+import numbers
 import operator
 import time
 import warnings
@@ -28,7 +29,7 @@ from ._split import check_cv
 from ._validation import _fit_and_score
 from ._validation import _aggregate_score_dicts
 from ..exceptions import NotFittedError
-from ..utils._joblib import Parallel, delayed
+from joblib import Parallel, delayed
 from ..utils import check_random_state
 from ..utils.fixes import MaskedArray
 from ..utils.random import sample_without_replacement
@@ -693,7 +694,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
             # parameter set.
             if callable(self.refit):
                 self.best_index_ = self.refit(results)
-                if not isinstance(self.best_index_, (int, np.integer)):
+                if not isinstance(self.best_index_, numbers.Integral):
                     raise TypeError('best_index_ returned is not an integer')
                 if (self.best_index_ < 0 or
                    self.best_index_ >= len(results["params"])):

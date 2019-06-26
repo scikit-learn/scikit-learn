@@ -27,8 +27,7 @@ from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
 
-from sklearn.utils._joblib import joblib
-from sklearn.utils._joblib import parallel_backend
+import joblib
 
 rng = np.random.RandomState(0)
 # load and shuffle iris dataset
@@ -1351,7 +1350,7 @@ def test_same_radius_neighbors_parallel(algorithm):
 def test_knn_forcing_backend(backend, algorithm):
     # Non-regression test which ensure the knn methods are properly working
     # even when forcing the global joblib backend.
-    with parallel_backend(backend):
+    with joblib.parallel_backend(backend):
         X, y = datasets.make_classification(n_samples=30, n_features=5,
                                             n_redundant=0, random_state=0)
         X_train, X_test, y_train, y_test = train_test_split(X, y)

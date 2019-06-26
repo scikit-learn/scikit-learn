@@ -737,8 +737,8 @@ def test_pandas_input():
 
 def test_unsupervised_grid_search():
     # test grid-search with unsupervised estimator
-    X, y = make_blobs(random_state=0)
-    km = KMeans(random_state=0)
+    X, y = make_blobs(n_samples=50, random_state=0)
+    km = KMeans(random_state=0, init="random", n_init=1)
 
     # Multi-metric evaluation unsupervised
     scoring = ['adjusted_rand_score', 'fowlkes_mallows_score']
@@ -1099,15 +1099,19 @@ def test_random_search_cv_results_multimetric():
     scoring = ('accuracy', 'recall')
 
     # Scipy 0.12's stats dists do not accept seed, hence we use param grid
-    params = dict(C=np.logspace(-10, 1), gamma=np.logspace(-5, 0, base=0.1))
+    params = dict(C=np.logspace(-4, 1, 3),
+                  gamma=np.logspace(-5, 0, 3, base=0.1))
     for iid in (True, False):
         for refit in (True, False):
             random_searches = []
             for scoring in (('accuracy', 'recall'), 'accuracy', 'recall'):
                 # If True, for multi-metric pass refit='accuracy'
                 if refit:
+                    probability = True
                     refit = 'accuracy' if isinstance(scoring, tuple) else refit
-                clf = SVC(probability=True, random_state=42)
+                else:
+                    probability = False
+                clf = SVC(probability=probability, random_state=42)
                 random_search = RandomizedSearchCV(clf, n_iter=n_search_iter,
                                                    cv=n_splits, iid=iid,
                                                    param_distributions=params,

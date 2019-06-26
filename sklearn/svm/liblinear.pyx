@@ -26,12 +26,10 @@ def train_wrap(X, np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
     if is_sparse:
         problem = csr_set_problem(
                 (<np.ndarray[np.float64_t, ndim=1, mode='c']>X.data).data,
-                (<np.ndarray[np.int32_t,   ndim=1, mode='c']>X.indices).shape,
                 (<np.ndarray[np.int32_t,   ndim=1, mode='c']>X.indices).data,
-                (<np.ndarray[np.int32_t,   ndim=1, mode='c']>X.indptr).shape,
                 (<np.ndarray[np.int32_t,   ndim=1, mode='c']>X.indptr).data,
-                Y.data, (<np.int32_t>X.shape[1]), bias,
-                sample_weight.data)
+                Y.data, (<np.int32_t>X.shape[0]), (<np.int32_t>X.shape[1]),
+                bias, sample_weight.data)
     else:
         problem = set_problem(
                 (<np.ndarray[np.float64_t, ndim=2, mode='c']>X).data,

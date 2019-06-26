@@ -128,6 +128,15 @@ def test_agglomerative_clustering_wrong_arg_memory():
     assert_raises(ValueError, clustering.fit, X)
 
 
+def test_zero_cosine_linkage_tree():
+    # Check that zero vectors in X produce an error when
+    # 'cosine' affinity is used
+    X = np.array([[0, 1],
+                  [0, 0]])
+    msg = 'Cosine affinity cannot be used when X contains zero vectors'
+    assert_raise_message(ValueError, msg, linkage_tree, X, affinity='cosine')
+
+
 def test_agglomerative_clustering():
     # Check that we obtain the correct number of clusters with
     # agglomerative clustering.
