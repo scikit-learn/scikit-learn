@@ -40,7 +40,20 @@ def build_from_c_and_cpp_files(extensions):
 
 def maybe_cythonize_extensions(top_path, config):
     """Tweaks for building extensions between release and development mode."""
-    with_openmp = check_openmp_support()
+    openmp_status = check_openmp_support()
+    if openmp_status == "explicit_disabled":
+        # SKLEARN_NO_OPENMP is set
+        with_openmp = False
+        explicit_disabled = True
+    elif openmp_status in ("unrelated fail", "unsupported"):
+        # either build fails even without OpenMP
+        # or build fails with openmp and SKLEARN_NO_OPENMP is not set
+        with_openmp = False
+        explicit_disabled = False
+        os.environ["SKLEARN_NO_OPENMP"] = "True"
+    else:
+        with_openmp = True
+        explicit_disabled = False
 
     is_release = os.path.exists(os.path.join(top_path, 'PKG-INFO'))
 
@@ -73,5 +86,6 @@ def maybe_cythonize_extensions(top_path, config):
         config.ext_modules = cythonize(
             config.ext_modules,
             nthreads=n_jobs,
-            compile_time_env={'SKLEARN_OPENMP_SUPPORTED': with_openmp},
+            compile_time_env={'SKLEARN_OPENMP_SUPPORTED': with_openmp,
+                              'OPENMP_EXPLICIT_DISABLED': explicit_disabled},
             compiler_directives={'language_level': 3})

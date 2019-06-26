@@ -78,6 +78,7 @@ else:
     from . import __check_build
     from .base import clone
     from .utils._show_versions import show_versions
+    from .utils.openmp_helpers import openmp_status
 
     __check_build  # avoid flakes unused variable error
 
@@ -94,6 +95,19 @@ else:
                # Non-modules:
                'clone', 'get_config', 'set_config', 'config_context',
                'show_versions']
+
+    if openmp_status() == "unsupported":
+        import textwrap
+        message = textwrap.dedent(
+            """
+            Scikit-learn has been built without OpenMP support. Some estimators
+            will run in sequential mode and their `n_jobs` parameter will have
+            no effect. You can find instructions to build scikit-learn with
+            OpenMP support at this adress:
+
+                https://scikit-learn.org/dev/developers/advanced_installation.html
+            """)
+        warnings.warn(message)
 
 
 def setup_module(module):

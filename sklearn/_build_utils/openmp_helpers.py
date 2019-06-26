@@ -9,6 +9,7 @@ import sys
 import glob
 import tempfile
 import textwrap
+import warnings
 import subprocess
 
 from numpy.distutils.ccompiler import new_compiler
@@ -128,12 +129,12 @@ def check_openmp_support():
     """Check whether OpenMP test code can be compiled and run"""
     if os.getenv('SKLEARN_NO_OPENMP'):
         # Build explicitly without OpenMP support
-        return False
+        return "explicit disabled"
 
     if not basic_check_build():
         # simple build without OpenMP fails. No need to check OpenMP (avoids
         # possible wrong interpretation of error message)
-        return False
+        return "unrelated fail"
 
     extra_preargs = os.getenv('LDFLAGS', None)
     if extra_preargs is not None:
@@ -157,7 +158,7 @@ def check_openmp_support():
     except (CompileError, LinkError, subprocess.CalledProcessError):
         openmp_supported = False
 
-    err_message = textwrap.dedent(
+    message = textwrap.dedent(
         """
                             ***
 
@@ -181,6 +182,7 @@ def check_openmp_support():
         """)
 
     if not openmp_supported:
-        raise CompileError(err_message)
+        warnings.warns(message)
+        return "unsupported"
 
-    return True
+    return "supported"
