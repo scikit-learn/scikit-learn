@@ -168,17 +168,17 @@ class PCA(_BasePCA):
             optionally truncated afterwards.
         full :
             run exact full SVD calling the standard LAPACK solver via
-            `scipy.linalg.svd` and select the components by postprocessing
+            `scipy.linalg.svd` and select the components by postprocessing.
         arpack :
             run SVD truncated to n_components calling ARPACK solver via
             `scipy.sparse.linalg.svds`. It requires strictly
-            0 < n_components < min(X.shape)
+            0 < n_components < min(X.shape).
         randomized :
-            run randomized SVD by the method of Halko et al.
+            run randomized SVD as in [2].
         lobpcg :
-            run Locally Optimal Block Preconditioned Conjugate Gradient
-            (LOBPCG) by Knyazev 2001 for a normal matrix X'*X or X*X',
-            whichever of the two is of the smallest size.
+            run Locally Optimal Block Preconditioned Conjugate Gradient [5]
+            for a normal matrix X'*X or X*X', whichever of the two is of
+            the smallest size.
 
         .. versionadded:: 0.18.0
 
@@ -199,8 +199,8 @@ class PCA(_BasePCA):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random` in
-        ``svd_solver`` == 'arpack', 'randomized', or 'lobpcg'.
+        by `np.random` in ``svd_solver`` == 'arpack', 'randomized',
+        or 'lobpcg'.
 
         .. versionadded:: 0.18.0
 
@@ -245,43 +245,56 @@ class PCA(_BasePCA):
         if n_components is None.
 
     noise_variance_ : float
-        The estimated noise covariance following the Probabilistic PCA model
-        from Tipping and Bishop 1999. See "Pattern Recognition and
-        Machine Learning" by C. Bishop, 12.2.1 p. 574 or
-        http://www.miketipping.com/papers/met-mppca.pdf. It is required to
+        The estimated noise covariance following the implementation [2].
+        See Sect. 12.2.1, pp. 574 of [6] or [5]. It is required to
         compute the estimated data covariance and score samples.
 
         Equal to the average of (min(n_features, n_samples) - n_components)
         smallest eigenvalues of the covariance matrix of X.
 
+    Notes
+    -----
+    For n_components == 'mle', this class uses the method of implemented
+    in [1].
+
+    `score` and `score_samples` implements the probabilistic PCA model from
+    [2].
+
+    For the different solvers:
+        * svd_solver == 'arpack', refer to `scipy.sparse.linalg.svds`.
+        * svd_solver == 'randomized', refer to the implementation in
+          [3] and [4].
+        * svd_solver == 'lobpcg', refer to the implementation in [5].
+
     References
     ----------
-    For n_components == 'mle', this class uses the method of *Minka, T. P.
-    "Automatic choice of dimensionality for PCA". In NIPS, pp. 598-604*
+    .. [1] Minka, Thomas P. "Automatic choice of dimensionality for PCA."
+           In Advances in neural information processing systems,
+           pp. 598-604. 2001.
 
-    Implements the probabilistic PCA model from:
-    Tipping, M. E., and Bishop, C. M. (1999). "Probabilistic principal
-    component analysis". Journal of the Royal Statistical Society:
-    Series B (Statistical Methodology), 61(3), 611-622.
-    via the score and score_samples methods.
-    See http://www.miketipping.com/papers/met-mppca.pdf
+    .. [2] Tipping, Michael E., and Christopher M. Bishop.
+           "Probabilistic principal component analysis."
+           Journal of the Royal Statistical Society:
+           Series B (Statistical Methodology) 61, no. 3 (1999): 611-622.
+           http://www.miketipping.com/papers/met-mppca.pdf
 
-    For svd_solver == 'arpack', refer to `scipy.sparse.linalg.svds`.
+    .. [3] Halko, Nathan, Per-Gunnar Martinsson, and Joel A. Tropp.
+           "Finding structure with randomness: Probabilistic algorithms for
+           constructing approximate matrix decompositions."
+           SIAM review 53, no. 2 (2011): 217-288.
 
-    For svd_solver == 'randomized', see:
-    *Halko, N., Martinsson, P. G., and Tropp, J. A. (2011).
-    "Finding structure with randomness: Probabilistic algorithms for
-    constructing approximate matrix decompositions".
-    SIAM review, 53(2), 217-288.* and also
-    *Martinsson, P. G., Rokhlin, V., and Tygert, M. (2011).
-    "A randomized algorithm for the decomposition of matrices".
-    Applied and Computational Harmonic Analysis, 30(1), 47-68.*
+    .. [4] Martinsson, Per-Gunnar, Vladimir Rokhlin, and Mark Tygert.
+           "A randomized algorithm for the decomposition of matrices."
+           Applied and Computational Harmonic Analysis 30, no. 1 (2011): 47-68.
 
-    For svd_solver == 'lobpcg', see: :func:`utils.extmath.lobpcg_svd`
-    `Andrew V. Knyazev (2001). "Toward the Optimal Preconditioned Eigensolver:
-    Locally Optimal Block Preconditioned Conjugate Gradient Method". SINUM.`
-    See https://doi.org/10.1137%2FS1064827500366124
+    .. [5] Knyazev, Andrew V.
+           "Toward the optimal preconditioned eigensolver:
+           Locally optimal block preconditioned conjugate gradient method."
+           SIAM journal on scientific computing 23, no. 2 (2001): 517-541.
+           https://doi.org/10.1137%2FS1064827500366124
 
+    .. [6] Bishop, Christopher M.
+           "Pattern recognition and machine learning." Springer, 2006.
 
     Examples
     --------
