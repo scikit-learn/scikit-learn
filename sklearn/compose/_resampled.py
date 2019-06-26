@@ -1,3 +1,5 @@
+# Author: Joel Nothman
+
 from ..base import BaseEstimator, MetaEstimatorMixin, clone
 from ..utils.metaestimators import if_delegate_has_method
 
