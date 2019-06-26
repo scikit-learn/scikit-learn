@@ -779,6 +779,14 @@ th.field-name {
     white-space: nowrap;
 }
 
+@media screen and (max-width: 780px) {
+    /* field lists aren't shown as a table in small screens */
+
+    th.field-name, td.field-body {
+        display: block;
+    }
+}
+
 
 /* -------- warning header for old versions --------------------------------*/
 
