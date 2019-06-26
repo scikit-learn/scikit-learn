@@ -21,13 +21,20 @@ References
 """
 
 from __future__ import division, print_function, absolute_import
+import warnings
 import numpy as np
 from scipy.linalg import (inv, eigh, cho_factor, cho_solve, cholesky,
                           LinAlgError)
 from scipy.sparse.linalg import aslinearoperator
-from scipy.sparse.sputils import bmat
 
 __all__ = ['lobpcg']
+
+
+def bmat(*args, **kwargs):
+    with warnings.catch_warnings(record=True):
+        warnings.filterwarnings(
+            'ignore', '.*the matrix subclass is not the recommended way.*')
+        return np.bmat(*args, **kwargs)
 
 
 def _save(ar, fileName):
