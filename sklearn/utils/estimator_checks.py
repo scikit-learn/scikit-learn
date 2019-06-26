@@ -46,6 +46,7 @@ from sklearn.feature_selection import SelectKBest
 from sklearn.pipeline import make_pipeline
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import SkipTestWarning
+from sklearn.exceptions import NotFittedError
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import ShuffleSplit
 from sklearn.model_selection._validation import _safe_split
