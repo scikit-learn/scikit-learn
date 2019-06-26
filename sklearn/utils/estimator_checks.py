@@ -2449,11 +2449,11 @@ def check_fit_idempotent(name, estimator_orig):
         if hasattr(estimator, method):
             new_result = getattr(estimator, method)(X_test)
             if np.issubdtype(new_result.dtype, np.floating):
-                tol = np.finfo(new_result.dtype).eps
+                tol = 2*np.finfo(new_result.dtype).eps
             else:
-                tol = np.finfo(np.float64).eps
+                tol = 2*np.finfo(np.float64).eps
             assert_allclose_dense_sparse(
                 result[method], new_result,
-                atol=tol, rtol=tol,
+                atol=max(tol, 1e-9), rtol=max(tol, 1e-7),
                 err_msg="Idempotency check failed for method {}".format(method)
             )
