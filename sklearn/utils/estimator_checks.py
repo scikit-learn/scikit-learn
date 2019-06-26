@@ -2518,9 +2518,17 @@ def check_fit_idempotent(name, estimator_orig):
     for method in check_methods:
         if hasattr(estimator, method):
             new_result = getattr(estimator, method)(X_test)
-            assert_allclose_dense_sparse(result[method], new_result)
 
-
+            if np.issubdtype(new_result.dtype, np.floating):
+                tol = 2*np.finfo(new_result.dtype).eps
+            else:
+                tol = 2*np.finfo(np.float64).eps
+            assert_allclose_dense_sparse(
+                result[method], new_result,
+                atol=max(tol, 1e-9), rtol=max(tol, 1e-7),
+                err_msg="Idempotency check failed for method {}".format(method)
+            )
+            
 def check_outlier_rejectors(name, estimator_orig):
     X, y = make_blobs(random_state=0)
     outliers = estimator_orig.fit_predict(X, y) == -1
