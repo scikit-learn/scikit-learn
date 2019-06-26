@@ -40,12 +40,18 @@ Changelog
     where 123456 is the *pull request* number, not the issue number.
 
 :mod:`sklearn.decomposition`
-..................
+............................
 
 - |Enhancement| :class:`decomposition.IncrementalPCA` now accepts sparse
   matrices as input, converting them to dense in batches thereby avoiding the
   need to store the entire dense matrix at once.
   :pr:`13960` by :user:`Scott Gigante <scottgigante>`.
+
+- |Enhancement| :class:`decomposition.PCA` and
+  :class:`decomposition.TruncatedSVD` has a new solver `lobpcg` which
+  accelerate computation.
+  :pr:`12319` by :user:`Andrew Knyazev <lobpcg>` and
+  :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.ensemble`
 .......................
