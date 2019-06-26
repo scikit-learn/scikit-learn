@@ -242,6 +242,9 @@ def randomized_range_finder(A, size, n_iter,
 
 def _compute_orthonormal_lobpcg(M, Q, n_iter, tol, explicit_normal_matrix):
     """Computes an orthonormal matrix using LOBPCG."""
+    if M.dtype.kind == 'f':
+        # Ensure f32 is preserved as f32
+        Q = Q.astype(M.dtype, copy=False)
     # Determine the normal matrix
     if explicit_normal_matrix:
         A = safe_sparse_dot(M, M.T)
@@ -432,9 +435,6 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
                                     power_iteration_normalizer, random_state)
     else:  # using lobpcg preconditioner
         Q = random_state.normal(size=(M.shape[0], n_random))
-        if M.dtype.kind == 'f':
-            # Ensure f32 is preserved as f32
-            Q = Q.astype(M.dtype, copy=False)
         Q = _compute_orthonormal_lobpcg(
             M, Q, n_iter, tol, explicit_normal_matrix
         )
