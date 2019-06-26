@@ -2,6 +2,7 @@
 
 from ..base import BaseEstimator, MetaEstimatorMixin, clone
 from ..utils.metaestimators import if_delegate_has_method
+from ..utils.validation import check_is_fitted
 
 
 class ResampledTrainer(MetaEstimatorMixin, BaseEstimator):
@@ -12,6 +13,7 @@ class ResampledTrainer(MetaEstimatorMixin, BaseEstimator):
     Parameters
     ----------
     resampler : Estimator supporting fit_resample
+
     estimator : Estimator
 
     Attributes
@@ -46,7 +48,7 @@ class ResampledTrainer(MetaEstimatorMixin, BaseEstimator):
         self.resampler = resampler
         self.estimator = estimator
 
-    _required_parameters = ['resampler', 'estimator']
+    _required_parameters = ["resampler", "estimator"]
 
     # TODO: tags?
 
@@ -61,41 +63,57 @@ class ResampledTrainer(MetaEstimatorMixin, BaseEstimator):
         self.estimator_ = clone(self.estimator).fit(X, y, **kw)
         return self
 
-    @if_delegate_has_method(delegate='estimator_')
+    @if_delegate_has_method(delegate="estimator")
     def predict(self, X, **predict_params):
+        check_is_fitted(self, "estimator_")
         return self.estimator_.predict(X, **predict_params)
 
-    @if_delegate_has_method(delegate='estimator_')
+    @if_delegate_has_method(delegate="estimator")
+    def transform(self, X):
+        check_is_fitted(self, "estimator_")
+        return self.estimator_.transform(X)
+
+    @if_delegate_has_method(delegate="estimator")
     def predict_proba(self, X):
+        check_is_fitted(self, "estimator_")
         return self.estimator_.predict_proba(X)
 
-    @if_delegate_has_method(delegate='estimator_')
+    @if_delegate_has_method(delegate="estimator")
     def predict_log_proba(self, X):
+        check_is_fitted(self, "estimator_")
         return self.estimator_.predict_log_proba(X)
 
-    @if_delegate_has_method(delegate='estimator_')
+    @if_delegate_has_method(delegate="estimator")
     def decision_function(self, X):
+        check_is_fitted(self, "estimator_")
         return self.estimator_.decision_function(X)
 
-    @if_delegate_has_method(delegate='estimator_')
+    @if_delegate_has_method(delegate="estimator")
     def score(self, X, y, **kw):
+        check_is_fitted(self, "estimator_")
         return self.estimator_.score(X, y, **kw)
 
     @property
     def fit_transform(self):
-        transform = self.estimator_.transform
+        # check if the estimator has a transform function
+        transform = self.estimator.transform
 
         def fit_transform(X, y, **kwargs):
             self.fit(X, y, **kwargs)
-            return transform(X)
+            # since estimator_ exists now, we can return transform
+            return self.estimator_.transform(X)
+
+        return fit_transform
 
     @property
     def fit_predict(self):
-        predict = self.estimator_.predict
+        predict = self.estimator.predict
 
         def fit_predict(X, y, **kwargs):
             self.fit(X, y, **kwargs)
-            return predict(X)
+            return self.estimator_.predict(X)
+
+        return fit_predict
 
     @property
     def _estimator_type(self):
