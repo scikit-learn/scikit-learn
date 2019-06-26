@@ -146,7 +146,7 @@ def check_supervised_y_no_nan(name, estimator_orig):
     rng = np.random.RandomState(888)
     X = rng.randn(10, 5)
     y = np.full(10, np.inf)
-    y = multioutput_estimator_convert_y_2d(estimator, y)
+    y = enforce_estimator_tags_y(estimator, y)
 
     errmsg = "Input contains NaN, infinity or a value too large for " \
              "dtype('float64')."
@@ -522,7 +522,7 @@ def check_estimator_sparse_data(name, estimator_orig):
     # catch deprecation warnings
     with ignore_warnings(category=DeprecationWarning):
         estimator = clone(estimator_orig)
-    y = multioutput_estimator_convert_y_2d(estimator, y)
+    y = enforce_estimator_tags_y(estimator, y)
     for matrix_format, X in _generate_sparse_matrix(X_csr):
         # catch deprecation warnings
         with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
@@ -605,7 +605,7 @@ def check_sample_weights_list(name, estimator_orig):
             y = np.arange(10) % 2
         else:
             y = np.arange(10) % 3
-        y = multioutput_estimator_convert_y_2d(estimator, y)
+        y = enforce_estimator_tags_y(estimator, y)
         sample_weight = [3] * 10
         # Test that estimators don't raise any exception
         estimator.fit(X, y, sample_weight=sample_weight)
@@ -631,7 +631,7 @@ def check_sample_weights_invariance(name, estimator_orig):
                       [4, 1], [4, 1], [4, 1], [4, 1]], dtype=np.dtype('float'))
         y = np.array([1, 1, 1, 1, 2, 2, 2, 2,
                       1, 1, 1, 1, 2, 2, 2, 2], dtype=np.dtype('int'))
-        y = multioutput_estimator_convert_y_2d(estimator1, y)
+        y = enforce_estimator_tags_y(estimator1, y)
 
         estimator1.fit(X, y=y, sample_weight=np.ones(shape=len(y)))
         estimator2.fit(X, y=y, sample_weight=None)
@@ -661,7 +661,7 @@ def check_dtype_object(name, estimator_orig):
     else:
         y = (X[:, 0] * 4).astype(np.int)
     estimator = clone(estimator_orig)
-    y = multioutput_estimator_convert_y_2d(estimator, y)
+    y = enforce_estimator_tags_y(estimator, y)
 
     estimator.fit(X, y)
     if hasattr(estimator, "predict"):
@@ -716,7 +716,7 @@ def check_dict_unchanged(name, estimator_orig):
 
     y = X[:, 0].astype(np.int)
     estimator = clone(estimator_orig)
-    y = multioutput_estimator_convert_y_2d(estimator, y)
+    y = enforce_estimator_tags_y(estimator, y)
     if hasattr(estimator, "n_components"):
         estimator.n_components = 1
 
@@ -755,7 +755,7 @@ def check_dont_overwrite_parameters(name, estimator_orig):
     y = X[:, 0].astype(np.int)
     if _safe_tags(estimator, 'binary_only'):
         y[y == 2] = 1
-    y = multioutput_estimator_convert_y_2d(estimator, y)
+    y = enforce_estimator_tags_y(estimator, y)
 
     if hasattr(estimator, "n_components"):
         estimator.n_components = 1
@@ -808,7 +808,7 @@ def check_fit2d_predict1d(name, estimator_orig):
     if tags['binary_only']:
         y[y == 2] = 1
     estimator = clone(estimator_orig)
-    y = multioutput_estimator_convert_y_2d(estimator, y)
+    y = enforce_estimator_tags_y(estimator, y)
 
     if hasattr(estimator, "n_components"):
         estimator.n_components = 1
@@ -856,7 +856,7 @@ def check_methods_subset_invariance(name, estimator_orig):
     if _safe_tags(estimator_orig, 'binary_only'):
         y[y == 2] = 1
     estimator = clone(estimator_orig)
-    y = multioutput_estimator_convert_y_2d(estimator, y)
+    y = enforce_estimator_tags_y(estimator, y)
 
     if hasattr(estimator, "n_components"):
         estimator.n_components = 1
@@ -895,7 +895,7 @@ def check_fit2d_1sample(name, estimator_orig):
     X = 3 * rnd.uniform(size=(1, 10))
     y = X[:, 0].astype(np.int)
     estimator = clone(estimator_orig)
-    y = multioutput_estimator_convert_y_2d(estimator, y)
+    y = enforce_estimator_tags_y(estimator, y)
 
     if hasattr(estimator, "n_components"):
         estimator.n_components = 1
@@ -927,7 +927,7 @@ def check_fit2d_1feature(name, estimator_orig):
     X = pairwise_estimator_convert_X(X, estimator_orig)
     y = X[:, 0].astype(np.int)
     estimator = clone(estimator_orig)
-    y = multioutput_estimator_convert_y_2d(estimator, y)
+    y = enforce_estimator_tags_y(estimator, y)
 
     if hasattr(estimator, "n_components"):
         estimator.n_components = 1
@@ -940,7 +940,7 @@ def check_fit2d_1feature(name, estimator_orig):
     if name == 'RANSACRegressor':
         estimator.residual_threshold = 0.5
 
-    y = multioutput_estimator_convert_y_2d(estimator, y)
+    y = enforce_estimator_tags_y(estimator, y)
     set_random_state(estimator, 1)
 
     msgs = ["1 feature(s)", "n_features = 1", "n_features=1"]
@@ -963,7 +963,7 @@ def check_fit1d(name, estimator_orig):
     if tags["no_validation"]:
         # FIXME this is a bit loose
         return
-    y = multioutput_estimator_convert_y_2d(estimator, y)
+    y = enforce_estimator_tags_y(estimator, y)
 
     if hasattr(estimator, "n_components"):
         estimator.n_components = 1
@@ -1099,7 +1099,7 @@ def check_pipeline_consistency(name, estimator_orig):
     X -= X.min()
     X = pairwise_estimator_convert_X(X, estimator_orig, kernel=rbf_kernel)
     estimator = clone(estimator_orig)
-    y = multioutput_estimator_convert_y_2d(estimator, y)
+    y = enforce_estimator_tags_y(estimator, y)
     set_random_state(estimator)
     pipeline = make_pipeline(estimator)
     estimator.fit(X, y)
@@ -1128,7 +1128,7 @@ def check_fit_score_takes_y(name, estimator_orig):
     else:
         y = np.arange(10) % 3
     estimator = clone(estimator_orig)
-    y = multioutput_estimator_convert_y_2d(estimator, y)
+    y = enforce_estimator_tags_y(estimator, y)
     set_random_state(estimator)
 
     funcs = ["fit", "score", "partial_fit", "fit_predict", "fit_transform"]
@@ -1158,7 +1158,7 @@ def check_estimators_dtypes(name, estimator_orig):
     y = X_train_int_64[:, 0]
     if _safe_tags(estimator_orig, 'binary_only'):
         y[y == 2] = 1
-    y = multioutput_estimator_convert_y_2d(estimator_orig, y)
+    y = enforce_estimator_tags_y(estimator_orig, y)
 
     methods = ["predict", "transform", "decision_function", "predict_proba"]
 
@@ -1189,7 +1189,7 @@ def check_estimators_empty_data_messages(name, estimator_orig):
     X_zero_features = np.empty(0).reshape(3, 0)
     # the following y should be accepted by both classifiers and regressors
     # and ignored by unsupervised models
-    y = multioutput_estimator_convert_y_2d(e, np.array([1, 0, 1]))
+    y = enforce_estimator_tags_y(e, np.array([1, 0, 1]))
     msg = (r"0 feature\(s\) \(shape=\(\d*, 0\)\) while a minimum of \d* "
            "is required.")
     assert_raises_regex(ValueError, msg, e.fit, X_zero_features, y)
@@ -1207,7 +1207,7 @@ def check_estimators_nan_inf(name, estimator_orig):
     X_train_inf[0, 0] = np.inf
     y = np.ones(10)
     y[:5] = 0
-    y = multioutput_estimator_convert_y_2d(estimator_orig, y)
+    y = enforce_estimator_tags_y(estimator_orig, y)
     error_string_fit = "Estimator doesn't check for NaN and inf in fit."
     error_string_predict = ("Estimator doesn't check for NaN and inf in"
                             " predict.")
@@ -1289,8 +1289,7 @@ def check_estimators_pickle(name, estimator_orig):
 
     estimator = clone(estimator_orig)
 
-    # some estimators only take multioutputs
-    y = multioutput_estimator_convert_y_2d(estimator, y)
+    y = enforce_estimator_tags_y(estimator, y)
 
     set_random_state(estimator)
     estimator.fit(X, y)
@@ -1477,7 +1476,7 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False):
         n_samples, n_features = X.shape
         classifier = clone(classifier_orig)
         X = pairwise_estimator_convert_X(X, classifier)
-        y = multioutput_estimator_convert_y_2d(classifier, y)
+        y = enforce_estimator_tags_y(classifier, y)
 
         set_random_state(classifier)
         # raises error on malformed input for fit
@@ -1682,7 +1681,7 @@ def check_estimators_fit_returns_self(name, estimator_orig,
     X = pairwise_estimator_convert_X(X, estimator_orig)
 
     estimator = clone(estimator_orig)
-    y = multioutput_estimator_convert_y_2d(estimator, y)
+    y = enforce_estimator_tags_y(estimator, y)
 
     if readonly_memmap:
         X, y = create_memmap_backed_data([X, y])
@@ -1719,6 +1718,7 @@ def check_supervised_y_2d(name, estimator_orig):
         y = np.arange(10) % 2
     else:
         y = np.arange(10) % 3
+    y = enforce_estimator_tags_y(estimator_orig, y)
     estimator = clone(estimator_orig)
     set_random_state(estimator)
     # fit
@@ -1834,7 +1834,7 @@ def check_regressors_int(name, regressor_orig):
     X = pairwise_estimator_convert_X(X[:50], regressor_orig)
     rnd = np.random.RandomState(0)
     y = rnd.randint(3, size=X.shape[0])
-    y = multioutput_estimator_convert_y_2d(regressor_orig, y)
+    y = enforce_estimator_tags_y(regressor_orig, y)
     rnd = np.random.RandomState(0)
     # separate estimators to control random seeds
     regressor_1 = clone(regressor_orig)
@@ -1863,7 +1863,7 @@ def check_regressors_train(name, regressor_orig, readonly_memmap=False):
     y = StandardScaler().fit_transform(y.reshape(-1, 1))  # X is already scaled
     y = y.ravel()
     regressor = clone(regressor_orig)
-    y = multioutput_estimator_convert_y_2d(regressor, y)
+    y = enforce_estimator_tags_y(regressor, y)
     if name in CROSS_DECOMPOSITION:
         rnd = np.random.RandomState(0)
         y_ = np.vstack([y, 2 * y + rnd.randint(2, size=len(y))])
@@ -1907,7 +1907,7 @@ def check_regressors_no_decision_function(name, regressor_orig):
     rng = np.random.RandomState(0)
     X = rng.normal(size=(10, 4))
     regressor = clone(regressor_orig)
-    y = multioutput_estimator_convert_y_2d(regressor, X[:, 0])
+    y = enforce_estimator_tags_y(regressor, X[:, 0])
 
     if hasattr(regressor, "n_components"):
         # FIXME CCA, PLS is not robust to rank 1 effects
@@ -2047,7 +2047,7 @@ def check_estimators_overwrite_params(name, estimator_orig):
     X -= X.min()
     X = pairwise_estimator_convert_X(X, estimator_orig, kernel=rbf_kernel)
     estimator = clone(estimator_orig)
-    y = multioutput_estimator_convert_y_2d(estimator, y)
+    y = enforce_estimator_tags_y(estimator, y)
 
     set_random_state(estimator)
 
@@ -2136,7 +2136,7 @@ def check_classifier_data_not_an_array(name, estimator_orig):
     X = np.array([[3, 0], [0, 1], [0, 2], [1, 1], [1, 2], [2, 1]])
     X = pairwise_estimator_convert_X(X, estimator_orig)
     y = [1, 1, 1, 2, 2, 2]
-    y = multioutput_estimator_convert_y_2d(estimator_orig, y)
+    y = enforce_estimator_tags_y(estimator_orig, y)
     check_estimators_data_not_an_array(name, estimator_orig, X, y)
 
 
@@ -2144,7 +2144,7 @@ def check_classifier_data_not_an_array(name, estimator_orig):
 def check_regressor_data_not_an_array(name, estimator_orig):
     X, y = _boston_subset(n_samples=50)
     X = pairwise_estimator_convert_X(X, estimator_orig)
-    y = multioutput_estimator_convert_y_2d(estimator_orig, y)
+    y = enforce_estimator_tags_y(estimator_orig, y)
     check_estimators_data_not_an_array(name, estimator_orig, X, y)
 
 
@@ -2250,7 +2250,13 @@ def check_parameters_default_constructible(name, Estimator):
                     assert param_value == init_param.default, init_param.name
 
 
-def multioutput_estimator_convert_y_2d(estimator, y):
+def enforce_estimator_tags_y(estimator, y):
+    # Estimators with a `requires_positive_y` tag only accept strictly positive
+    # data
+    if _safe_tags(estimator, "requires_positive_y"):
+        # Create strictly positive y. The minimal increment above 0 is 1, as
+        # y could be of integer dtype.
+        y += 1 + abs(y.min())
     # Estimators in mono_output_task_error raise ValueError if y is of 1-D
     # Convert into a 2-D y for those estimators.
     if _safe_tags(estimator, "multioutput_only"):
@@ -2283,7 +2289,7 @@ def check_non_transformer_estimators_n_iter(name, estimator_orig):
     if hasattr(estimator, 'max_iter'):
         iris = load_iris()
         X, y_ = iris.data, iris.target
-        y_ = multioutput_estimator_convert_y_2d(estimator, y_)
+        y_ = enforce_estimator_tags_y(estimator, y_)
 
         set_random_state(estimator, 0)
         if name == 'AffinityPropagation':
@@ -2493,7 +2499,7 @@ def check_fit_idempotent(name, estimator_orig):
         y = rng.normal(size=n_samples)
     else:
         y = rng.randint(low=0, high=2, size=n_samples)
-    y = multioutput_estimator_convert_y_2d(estimator, y)
+    y = enforce_estimator_tags_y(estimator, y)
 
     train, test = next(ShuffleSplit(test_size=.2, random_state=rng).split(X))
     X_train, y_train = _safe_split(estimator, X, y, train)

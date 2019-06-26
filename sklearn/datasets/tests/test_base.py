@@ -29,6 +29,7 @@ from sklearn.externals._pilutil import pillow_installed
 
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils import IS_PYPY
 
 
 def _remove_dir(path):
@@ -92,6 +93,8 @@ def test_default_empty_load_files(load_files_root):
 
 def test_default_load_files(test_category_dir_1, test_category_dir_2,
                             load_files_root):
+    if IS_PYPY:
+        pytest.xfail('[PyPy] fails due to string containing NUL characters')
     res = load_files(load_files_root)
     assert_equal(len(res.filenames), 1)
     assert_equal(len(res.target_names), 2)
@@ -101,6 +104,8 @@ def test_default_load_files(test_category_dir_1, test_category_dir_2,
 
 def test_load_files_w_categories_desc_and_encoding(
         test_category_dir_1, test_category_dir_2, load_files_root):
+    if IS_PYPY:
+        pytest.xfail('[PyPy] fails due to string containing NUL characters')
     category = os.path.abspath(test_category_dir_1).split('/').pop()
     res = load_files(load_files_root, description="test",
                      categories=category, encoding="utf-8")
