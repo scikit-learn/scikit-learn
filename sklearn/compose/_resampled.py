@@ -37,7 +37,9 @@ class ResampledTrainer(MetaEstimatorMixin, BaseEstimator):
     >>> est = ResampledTrainer(HalfSampler(), LogisticRegression())
     >>> X, y = load_iris(return_X_y=True)
     >>> est.fit(X, y)
+    ResampledTrainer(estimator=LogisticRegression(), resampler=HalfSampler())
     >>> est.predict(X[:2])
+    array([0, 0])
     """
 
     def __init__(self, resampler, estimator):
