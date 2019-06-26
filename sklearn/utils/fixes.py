@@ -43,7 +43,7 @@ if sp_version >= (1, 3):
 else:
     # Backport of lobpcg functionality from scipy 1.3.0, can be removed
     # once support for sp_version < (1, 3) is dropped
-    from ..externals._lobpcg import lobpcg
+    from ..externals._lobpcg import lobpcg  # noqa
 
 if sp_version >= (0, 19):
     def _argmax(arr_or_spmatrix, axis=None):
