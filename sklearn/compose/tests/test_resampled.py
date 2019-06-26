@@ -49,7 +49,9 @@ def test_correct_halfsampler():
     for method in [rt.fit, rt.fit_transform, rt.fit_predict]:
         method(X, y)
 
-        np.testing.assert_array_equal(rt.estimator_.y, np.array([0, 2, 4, 6, 8]))
+        np.testing.assert_array_equal(
+            rt.estimator_.y, np.array([0, 2, 4, 6, 8])
+        )
 
 
 def test_pca_outlier_svm():

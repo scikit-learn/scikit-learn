@@ -2528,7 +2528,8 @@ def check_fit_idempotent(name, estimator_orig):
                 atol=max(tol, 1e-9), rtol=max(tol, 1e-7),
                 err_msg="Idempotency check failed for method {}".format(method)
             )
-            
+
+
 def check_outlier_rejectors(name, estimator_orig):
     X, y = make_blobs(random_state=0)
     outliers = estimator_orig.fit_predict(X, y) == -1
