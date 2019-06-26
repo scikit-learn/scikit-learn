@@ -85,6 +85,64 @@ def test_mean_variance_axis1():
             assert_array_almost_equal(X_vars, np.var(X_test, axis=0))
 
 
+@pytest.mark.parametrize('axis', (0, 1))
+def test_mean_variance_with_ddof(axis):
+    X, _ = make_classification(5, 4, random_state=0)
+    # Sparsify the array a little bit
+    X[[0, 2, 4], [0, 1, 3]] = 0
+
+    # Test on csr matrices
+    X_csr = sp.csr_matrix(X)
+    mean, variance = mean_variance_axis(X_csr, axis=axis, ddof=1)
+    assert_allclose(mean, np.mean(X, axis=axis))
+    assert_allclose(variance, np.var(X, axis=axis, ddof=1))
+
+    # Test on csc matrices
+    X_csc = sp.csc_matrix(X)
+    mean, variance = mean_variance_axis(X_csc, axis=axis, ddof=1)
+    assert_allclose(mean, np.mean(X, axis=axis))
+    assert_allclose(variance, np.var(X, axis=axis, ddof=1))
+
+
+def test_mean_variance_negative_ddof():
+    X, _ = make_classification(5, 4, random_state=0)
+    X = sp.csr_matrix(X)
+
+    with pytest.raises(ValueError, match='ddof cannot be <0'):
+        mean_variance_axis(X, axis=0, ddof=-5)
+
+
+def test_mean_variance_too_large_ddof():
+    X, _ = make_classification(5, 4, random_state=0)
+    X = sp.csr_matrix(X)
+
+    with pytest.raises(ValueError, match='ddof=10 must be smaller than the '
+                                         'number of samples=5'):
+        mean_variance_axis(X, axis=0, ddof=10)
+
+
+@pytest.mark.parametrize("axis", (0, 1))
+@pytest.mark.parametrize("sparse_constructor", [sp.csc_matrix, sp.csr_matrix])
+def test_mean_variance_with_ddof_and_nan_values(axis, sparse_constructor):
+    """Test that data with larger ddofs and many nans are properly converted to
+    NaNs. When we compute the variance, we compute 1 / (N - ddof). When ddof is
+    large, and the data contain NaNs, we could potentially divide by a negative
+    number. We have to avoid this."""
+    x = np.full((5, 5), fill_value=0, dtype=np.float64)
+    x = sparse_constructor(x)
+
+    # Fill in the (almost) entire first row and column with nans
+    x[:-1, 0] = np.nan
+    x[0, :-1] = np.nan
+
+    assert_array_equal(mean_variance_axis(x, axis=axis, ddof=0)[1],
+                       [0] * 5)
+    assert_array_equal(mean_variance_axis(x, axis=axis, ddof=2)[1],
+                       [np.nan] + [0] * 4)
+    assert_array_equal(mean_variance_axis(x, axis=axis, ddof=4)[1],
+                       [np.nan] * 4 + [0])
+
+
 def test_incr_mean_variance_axis():
     for axis in [0, 1]:
         rng = np.random.RandomState(0)

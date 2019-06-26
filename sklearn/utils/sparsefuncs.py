@@ -61,8 +61,8 @@ def inplace_csr_row_scale(X, scale):
     X.data *= np.repeat(scale, np.diff(X.indptr))
 
 
-def mean_variance_axis(X, axis):
-    """Compute mean and variance along an axix on a CSR or CSC matrix
+def mean_variance_axis(X, axis, ddof=0):
+    """Compute mean and variance along an axis on a CSR or CSC matrix
 
     Parameters
     ----------
@@ -71,6 +71,12 @@ def mean_variance_axis(X, axis):
 
     axis : int (either 0 or 1)
         Axis along which the axis should be computed.
+
+    ddof : int, optional (default=0)
+        “Delta Degrees of Freedom”: the divisor used in the calculation is
+        ``N - ddof``, where ``N`` represents the number of elements.
+
+        .. versionadded:: 0.21
 
     Returns
     -------
@@ -84,16 +90,25 @@ def mean_variance_axis(X, axis):
     """
     _raise_error_wrong_axis(axis)
 
+    if ddof < 0:
+        raise ValueError('ddof cannot be <0')
+
+    if ddof >= X.shape[axis]:
+        raise ValueError(
+            'ddof=%r must be smaller than the number of samples=%r' % (
+                ddof, X.shape[axis])
+        )
+
     if isinstance(X, sp.csr_matrix):
         if axis == 0:
-            return _csr_mean_var_axis0(X)
+            return _csr_mean_var_axis0(X, ddof=ddof)
         else:
-            return _csc_mean_var_axis0(X.T)
+            return _csc_mean_var_axis0(X.T, ddof=ddof)
     elif isinstance(X, sp.csc_matrix):
         if axis == 0:
-            return _csc_mean_var_axis0(X)
+            return _csc_mean_var_axis0(X, ddof=ddof)
         else:
-            return _csr_mean_var_axis0(X.T)
+            return _csr_mean_var_axis0(X.T, ddof=ddof)
     else:
         _raise_typeerror(X)
 
