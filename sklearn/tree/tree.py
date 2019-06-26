@@ -125,7 +125,7 @@ class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
 
         random_state = check_random_state(self.random_state)
         if check_input:
-            X = check_array(X, dtype=DTYPE, accept_sparse="csc")
+            X = self._validate_X(X, dtype=DTYPE, accept_sparse="csc")
             y = check_array(y, ensure_2d=False, dtype=None)
             if issparse(X):
                 X.sort_indices()
