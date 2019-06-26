@@ -12,52 +12,50 @@ from scipy import sparse
 from scipy.stats import rankdata
 import joblib
 
-from sklearn.utils import IS_PYPY
-from sklearn.utils.testing import assert_raises, _get_args
-from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_not_equal
-from sklearn.utils.testing import assert_in
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_allclose_dense_sparse
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import set_random_state
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_greater_equal
-from sklearn.utils.testing import SkipTest
-from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_dict_equal
-from sklearn.utils.testing import create_memmap_backed_data
-from sklearn.utils import is_scalar_nan
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.linear_model import Ridge
+from . import IS_PYPY
+from .testing import assert_raises, _get_args
+from .testing import assert_raises_regex
+from .testing import assert_raise_message
+from .testing import assert_equal
+from .testing import assert_not_equal
+from .testing import assert_in
+from .testing import assert_array_equal
+from .testing import assert_array_almost_equal
+from .testing import assert_allclose
+from .testing import assert_allclose_dense_sparse
+from .testing import assert_warns_message
+from .testing import set_random_state
+from .testing import assert_greater
+from .testing import assert_greater_equal
+from .testing import SkipTest
+from .testing import ignore_warnings
+from .testing import assert_dict_equal
+from .testing import create_memmap_backed_data
+from . import is_scalar_nan
+from ..discriminant_analysis import LinearDiscriminantAnalysis
+from ..linear_model import Ridge
 
 
-from sklearn.base import (clone, ClusterMixin, is_classifier, is_regressor,
-                          _DEFAULT_TAGS, RegressorMixin, is_outlier_detector)
+from ..base import (clone, ClusterMixin, is_classifier, is_regressor,
+                    _DEFAULT_TAGS, RegressorMixin, is_outlier_detector)
 
-from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
+from ..metrics import accuracy_score, adjusted_rand_score, f1_score
 
-from sklearn.random_projection import BaseRandomProjection
-from sklearn.feature_selection import SelectKBest
-from sklearn.pipeline import make_pipeline
-from sklearn.exceptions import DataConversionWarning
-from sklearn.exceptions import SkipTestWarning
-from sklearn.exceptions import NotFittedError
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import ShuffleSplit
-from sklearn.model_selection._validation import _safe_split
-from sklearn.metrics.pairwise import (rbf_kernel, linear_kernel,
-                                      pairwise_distances)
+from ..random_projection import BaseRandomProjection
+from ..feature_selection import SelectKBest
+from ..pipeline import make_pipeline
+from ..exceptions import DataConversionWarning
+from ..exceptions import NotFittedError
+from ..exceptions import SkipTestWarning
+from ..model_selection import train_test_split
+from ..model_selection import ShuffleSplit
+from ..model_selection._validation import _safe_split
+from ..metrics.pairwise import (rbf_kernel, linear_kernel, pairwise_distances)
 
-from sklearn.utils import shuffle
-from sklearn.utils.validation import has_fit_parameter, _num_samples
-from sklearn.preprocessing import StandardScaler
-from sklearn.datasets import load_iris, load_boston
-from sklearn.datasets import make_blobs, make_classification
+from .import shuffle
+from .validation import has_fit_parameter, _num_samples
+from ..preprocessing import StandardScaler
+from ..datasets import load_iris, load_boston, make_blobs, make_classification
 
 
 BOSTON = None

@@ -258,8 +258,10 @@ from the dataset if they classified as outliers.  Consider the following::
     >>> from sklearn.compose import ResampledTrainer
     >>> from sklearn.covariance import EllipticEnvelope
     >>> from sklearn.linear_model import LogisticRegression
-    >>> pipe = ResampledTrainer(EllipticEnvelope(), LogisticRegression())
-    >>> pipe.fit(X_train, y_train)
+    >>> resampled = ResampledTrainer(EllipticEnvelope(), LogisticRegression())
+    >>> from sklearn.datasets import load_iris
+    >>> X, y = load_iris(return_X_y=True)
+    >>> resampled.fit(X, y)
 
 In ``pipe``, we remove outliers before fitting our `LogisticRegression`
 model, so that the samples passed to fit come from the same distribution. We do

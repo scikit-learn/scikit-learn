@@ -24,10 +24,12 @@ class DelegatorData:
         self.fit_args = fit_args
         self.skip_methods = skip_methods
 
+
 class DummyResampler(BaseEstimator):
     "does nothing"
     def fit_resample(self, X, y):
         return X, y
+
 
 DELEGATING_METAESTIMATORS = [
     DelegatorData('Pipeline', lambda est: Pipeline([('est', est)])),

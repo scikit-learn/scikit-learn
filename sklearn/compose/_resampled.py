@@ -96,7 +96,7 @@ class ResampledTrainer(MetaEstimatorMixin, BaseEstimator):
     @property
     def fit_transform(self):
         # check if the estimator has a transform function
-        transform = self.estimator.transform
+        self.estimator.transform
 
         def fit_transform(X, y, **kwargs):
             self.fit(X, y, **kwargs)
@@ -107,7 +107,7 @@ class ResampledTrainer(MetaEstimatorMixin, BaseEstimator):
 
     @property
     def fit_predict(self):
-        predict = self.estimator.predict
+        self.estimator.predict
 
         def fit_predict(X, y, **kwargs):
             self.fit(X, y, **kwargs)
