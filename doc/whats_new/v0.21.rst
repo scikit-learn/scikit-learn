@@ -32,6 +32,10 @@ Changelog
 - |Fix| Fixed bug in :func:`tree.export_text` when the tree has one feature and 
   a single feature name is passed in. :pr:`14053` by `Thomas Fan`
 
+- |Fix| Fixed an issue with :func:`plot_tree` where it display
+  entropy calculations even for `gini` criterion in DecisionTreeClassifiers.
+  :pr:`13947` by :user:`Frank Hoang <fhoang7>`.
+
 :mod:`sklearn.neighbors`
 ........................
 
@@ -70,13 +74,6 @@ Changelog
 - |Fix| Fixed a bug in :class:`preprocessing.OneHotEncoder` where the new
   `drop` parameter was not reflected in `get_feature_names`. :pr:`13894`
   by :user:`James Myatt <jamesmyatt>`.
-
-:mod:`sklearn.tree`
-...................
-
-- |Fix| Fixed an issue with :func:`plot_tree` where it display
-  entropy calculations even for `gini` criterion in DecisionTreeClassifiers.
-  :pr:`13947` by :user:`Frank Hoang <fhoang7>`.
 
 :mod:`sklearn.utils.sparsefuncs`
 ................................
