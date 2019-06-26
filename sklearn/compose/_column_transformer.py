@@ -305,13 +305,13 @@ boolean mask array or callable
         cols = []
         for columns in self._columns:
             cols.extend(_get_column_indices(X, columns))
-        remaining_idx = sorted(list(set(range(n_columns)) - set(cols))) or None
-        if hasattr(X, 'columns') and remaining_idx is not None:
+        remaining_idx = sorted(list(set(range(n_columns)) - set(cols)))
+        if hasattr(X, 'columns'):
             columns = X.columns
             self._remainder_names = [columns[idx] for idx in remaining_idx]
         else:
-            self._remainder_names = remaining_idx
-        self._remainder = ('remainder', self.remainder, remaining_idx)
+            self._remainder_names = ['x%d' % i for i in remaining_idx]
+        self._remainder = ('remainder', self.remainder, remaining_idx or None)
 
     @property
     def named_transformers_(self):
@@ -336,22 +336,22 @@ boolean mask array or callable
         """
         check_is_fitted(self, 'transformers_')
         feature_names = []
-        for dim, (name, trans, column, _) in \
-                zip(self._output_dims, self._iter(fitted=True)):
+        for name, trans, column, _ in self._iter(fitted=True):
             if trans == 'drop':
-                pass
+                continue
             elif trans == 'passthrough':
                 if name == 'remainder':
                     feature_names.extend(self._remainder_names)
                 else:
                     feature_names.extend([name + "__" + str(c)
                                           for c in column])
+                continue
             elif not hasattr(trans, 'get_feature_names'):
-                feature_names.extend([name + "__x" + str(i)
-                                      for i in range(dim)])
-            else:
-                feature_names.extend([name + "__" + f for f in
-                                      trans.get_feature_names()])
+                raise AttributeError("Transformer %s (type %s) does not "
+                                     "provide get_feature_names."
+                                     % (str(name), type(trans).__name__))
+            feature_names.extend([name + "__" + f for f in
+                                  trans.get_feature_names()])
         return feature_names
 
     def _update_fitted_transformers(self, transformers):
