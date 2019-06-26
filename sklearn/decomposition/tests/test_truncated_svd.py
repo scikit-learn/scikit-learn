@@ -9,7 +9,7 @@ from sklearn.decomposition import TruncatedSVD, PCA
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_array_less, assert_allclose
 
-SVD_SOLVERS = ['arpack', 'randomized']
+SVD_SOLVERS = ['arpack', 'randomized', 'lobpcg']
 
 
 @pytest.fixture(scope='module')
@@ -21,7 +21,7 @@ def X_sparse():
     return X
 
 
-@pytest.mark.parametrize("solver", ['randomized'])
+@pytest.mark.parametrize("solver", ['randomized', 'lobpcg'])
 @pytest.mark.parametrize('kind', ('dense', 'sparse'))
 def test_solvers(X_sparse, solver, kind):
     X = X_sparse if kind == 'sparse' else X_sparse.toarray()
