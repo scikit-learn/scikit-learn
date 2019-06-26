@@ -54,7 +54,7 @@ axes[0].errorbar(x=n_neighbors_list,
                  yerr=grid_model.cv_results_['std_test_score'])
 axes[0].set(xlabel='n_neighbors', title='Classification accuracy')
 axes[1].errorbar(x=n_neighbors_list, y=grid_model.cv_results_['mean_fit_time'],
-                 yerr=grid_model.cv_results_['std_fit_time'], color='C1')
+                 yerr=grid_model.cv_results_['std_fit_time'], color='r')
 axes[1].set(xlabel='n_neighbors', title='Fit time (with caching)')
 plt.tight_layout()
 plt.show()
