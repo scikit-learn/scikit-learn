@@ -10,6 +10,7 @@ import os
 import csv
 import sys
 import shutil
+import warnings
 from collections import namedtuple
 from os import environ, listdir, makedirs
 from os.path import dirname, exists, expanduser, isdir, join, splitext
@@ -919,3 +920,25 @@ def _fetch_remote(remote, dirname=None):
                       "file may be corrupted.".format(file_path, checksum,
                                                       remote.checksum))
     return file_path
+
+
+def _refresh_cache(path, refresh_cache):
+    if not refresh_cache:
+        return
+
+    if refresh_cache == True:
+        shutil.rmtree(path)
+        return
+
+    import joblib
+    samples_path = _pkl_filepath(path, "samples")
+    targets_path = _pkl_filepath(path, "targets")
+    msg = "sklearn.externals.joblib is deprecated in 0.21"
+    with warnings.catch_warnings(record=True) as warns:
+        _ = joblib.load(samples_path)
+        _ = joblib.load(targets_path)
+
+        refresh_needed = any([str(x.message).startswith(msg) for x in warns])
+
+    if refresh_needed:
+        shutil.rmtree(path)
