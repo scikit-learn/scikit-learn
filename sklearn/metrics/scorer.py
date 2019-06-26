@@ -55,7 +55,6 @@ class _BaseScorer(metaclass=ABCMeta):
 
     @abstractmethod
     def __call__(self, estimator, X, y, sample_weight=None):
-        pass
         if self._deprecation_msg is not None:
             warnings.warn(self._deprecation_msg,
                           category=DeprecationWarning,
