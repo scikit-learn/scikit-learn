@@ -103,6 +103,7 @@ plt.show()
 #     of a transformer is costly.
 
 from joblib import Memory
+from shutil import rmtree
 
 # Create a temporary folder to store the transformers of the pipeline
 location = 'cachedir'
@@ -118,7 +119,7 @@ grid.fit(digits.data, digits.target)
 
 # Delete the temporary cache before exiting
 memory.clear(warn=False)
-memory.store_backend.clear_location(location)
+rmtree(location)
 
 ###############################################################################
 # The ``PCA`` fitting is only computed at the evaluation of the first
