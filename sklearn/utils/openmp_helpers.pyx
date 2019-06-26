@@ -1,4 +1,6 @@
-cimport openmp
+IF SKLEARN_OPENMP_SUPPORTED:
+    cimport openmp
+
 from joblib import effective_n_jobs
 
 
@@ -12,15 +14,23 @@ cpdef _openmp_effective_n_threads(n_threads=None):
     - For ``n_threads < 0``, use the maximal number of threads minus
       ``|n_threads + 1|``.
     - Raise a ValueError for ``n_threads = 0``.
+
+    If scikit-learn is built without OpenMP support, always return 1.
     """
     if n_threads == 0:
         raise ValueError("n_threads = 0 is invalid")
 
-    max_threads = min(openmp.omp_get_max_threads(), effective_n_jobs(-1))
+    IF SKLEARN_OPENMP_SUPPORTED:
+        max_threads = min(openmp.omp_get_max_threads(), effective_n_jobs(-1))
 
-    if n_threads is None:
-        return max_threads
-    elif n_threads < 0:
-        return max(1, max_threads + n_threads + 1)
+        if n_threads is None:
+            return max_threads
+        elif n_threads < 0:
+            return max(1, max_threads + n_threads + 1)
 
-    return n_threads
+        return n_threads
+    ELSE:
+        # OpenMP not supported => sequential mode
+        return 1
+
+    
