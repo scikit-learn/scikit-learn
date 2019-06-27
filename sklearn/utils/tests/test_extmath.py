@@ -414,6 +414,13 @@ def test_randomized_svd_sign_flip_with_transpose():
     assert not v_based
 
 
+def test_randomized_svd_wrong_preconditioner():
+    mat = np.arange(10 * 8).reshape(10, -1)
+    err_msg = "'preconditioner' can be either None or 'lobpcg'. Got 'xxx'"
+    with pytest.raises(ValueError, match=err_msg):
+        randomized_svd(mat, n_components=3, preconditioner='xxx')
+
+
 def test_cartesian():
     # Check if cartesian product delivers the right results
 

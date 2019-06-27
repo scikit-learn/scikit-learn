@@ -380,8 +380,8 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
 
     if preconditioner not in (None, 'lobpcg'):
         raise ValueError(
-            "'preconditioner' can be either None or 'lobpcg'. Got {} instead."
-            .format(preconditioner)
+            "'preconditioner' can be either None or 'lobpcg'. Got '{}' "
+            "instead.".format(preconditioner)
         )
 
     if preconditioner == 'lobpcg' and explicit_normal_matrix == 'auto':
