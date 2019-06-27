@@ -922,23 +922,23 @@ def _fetch_remote(remote, dirname=None):
     return file_path
 
 
-def _refresh_cache(path, refresh_cache):
-    if not refresh_cache:
-        return
-
-    if refresh_cache is True:
-        shutil.rmtree(path)
-        return
-
+def _refresh_cache(path):
+    # REMOVE in v0.23
     import joblib
     samples_path = _pkl_filepath(path, "samples")
     targets_path = _pkl_filepath(path, "targets")
     msg = "sklearn.externals.joblib is deprecated in 0.21"
     with warnings.catch_warnings(record=True) as warns:
-        _ = joblib.load(samples_path)
-        _ = joblib.load(targets_path)
+        X = joblib.load(samples_path)
+        y = joblib.load(targets_path)
 
         refresh_needed = any([str(x.message).startswith(msg) for x in warns])
 
     if refresh_needed:
-        shutil.rmtree(path)
+        try:
+            joblib.dump(X, samples_path, compress=9)
+            joblib.dump(y, samples_path, compress=9)
+        except IOError:
+            pass
+
+    return X, y

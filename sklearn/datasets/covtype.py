@@ -81,17 +81,6 @@ def fetch_covtype(data_home=None, download_if_missing=True,
 
         .. versionadded:: 0.20
 
-    refresh_cache : str or bool, optional (default='joblib')
-        - ``True``: remove the previously downloaded data, and fetche it again.
-        - ``'joblib'``: only re-fetch the data if the previously downloaded
-          data has been persisted using the previously vendored `joblib`.
-        - ``False``: do not re-fetch the data.
-
-        From version 0.23, ``'joblib'`` as an input value will be ignored and
-        assumed ``False``.
-
-        .. versionadded:: 0.21.3
-
     Returns
     -------
     dataset : dict-like object with the following attributes:
@@ -115,9 +104,6 @@ def fetch_covtype(data_home=None, download_if_missing=True,
     covtype_dir = join(data_home, "covertype")
     samples_path = _pkl_filepath(covtype_dir, "samples")
     targets_path = _pkl_filepath(covtype_dir, "targets")
-
-    _refresh_cache(covtype_dir, refresh_cache)
-
     available = exists(samples_path)
 
     if download_if_missing and not available:
@@ -141,8 +127,10 @@ def fetch_covtype(data_home=None, download_if_missing=True,
     try:
         X, y
     except NameError:
-        X = joblib.load(samples_path)
-        y = joblib.load(targets_path)
+        X, y = _refresh_cache(covtype_dir)
+        # Revert to the following two lines in v0.23
+        # X = joblib.load(samples_path)
+        # y = joblib.load(targets_path)
 
     if shuffle:
         ind = np.arange(X.shape[0])
