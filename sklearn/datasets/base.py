@@ -935,21 +935,22 @@ def _refresh_cache(path):
         refresh_needed = any([str(x.message).startswith(msg) for x in warns])
 
     if refresh_needed:
+        raise_joblib = False
         try:
             joblib.dump(X, samples_path, compress=9)
             joblib.dump(y, samples_path, compress=9)
         except IOError:
-            pass
+            raise_joblib = True
 
         other_warns = [w for w in warns if not str(w.message).startswith(msg)]
-        joblib_warning = [w for w in warns
-                          if str(w.message).startswith(msg)][0]
-
         for w in other_warns:
             warnings.warn(message=w.message, category=w.category)
 
-        message = str(joblib_warning.message) + (
-            " The persisted files are located under: %s" % path)
-        warnings.warn(message=message, category=joblib_warning.category)
+        if raise_joblib:
+            joblib_warning = [w for w in warns
+                              if str(w.message).startswith(msg)][0]
+            message = str(joblib_warning.message) + (
+                " The persisted files are located under: %s" % path)
+            warnings.warn(message=message, category=joblib_warning.category)
 
     return X, y
