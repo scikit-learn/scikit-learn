@@ -13,7 +13,6 @@ from sklearn.metrics.cluster import contingency_matrix
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.cluster.dbscan_ import DBSCAN
 from sklearn.utils import shuffle
-from sklearn.utils import _IS_32BIT
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raise_message
@@ -97,9 +96,6 @@ def test_extract_xi():
     expected_labels = np.r_[[2] * 5, [0] * 5, [1] * 5, [3] * 5, [1] * 5,
                             -1, [4] * 5]
     X, expected_labels = shuffle(X, expected_labels, random_state=rng)
-
-    if _IS_32BIT:
-        X = X.astype(np.float32)
 
     clust = OPTICS(min_samples=3, min_cluster_size=2,
                    max_eps=20, cluster_method='xi',
