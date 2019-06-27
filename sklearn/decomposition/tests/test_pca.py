@@ -526,7 +526,8 @@ def test_pca_tolerance(svd_solver):
         n_components=n_components, tol=1, svd_solver=svd_solver, random_state=0
     )
     pca_finer = PCA(
-        n_components=n_components, tol=0.5, svd_solver=svd_solver, random_state=0
+        n_components=n_components, tol=0.5, svd_solver=svd_solver,
+        random_state=0
     )
     pca_machine_precision = PCA(
         n_components=n_components, svd_solver=svd_solver, random_state=0
