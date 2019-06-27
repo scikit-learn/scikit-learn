@@ -95,7 +95,7 @@ cdef class Splitter:
     ----------
     X_binned : ndarray of int, shape (n_samples, n_features)
         The binned input samples. Must be Fortran-aligned.
-    actual_n_bins : ndarray, shape (n_features,)
+    n_bins_non_missing : ndarray, shape (n_features,)
         The actual number of bins needed for each feature, which is lower or
         equal to max_bins.
     has_missing_values : ndarray, shape (n_features,)
@@ -117,7 +117,8 @@ cdef class Splitter:
     cdef public:
         const X_BINNED_DTYPE_C [::1, :] X_binned
         unsigned int n_features
-        const unsigned int [::1] actual_n_bins
+        const unsigned int [::1] n_bins_non_missing
+        unsigned char missing_values_bin_idx
         const unsigned char [::1] has_missing_values
         unsigned char hessians_are_constant
         Y_DTYPE_C l2_regularization
@@ -131,7 +132,8 @@ cdef class Splitter:
 
     def __init__(self,
                  const X_BINNED_DTYPE_C [::1, :] X_binned,
-                 const unsigned int [::1] actual_n_bins,
+                 const unsigned int [::1] n_bins_non_missing,
+                 const unsigned char missing_values_bin_idx,
                  const unsigned char [::1] has_missing_values,
                  Y_DTYPE_C l2_regularization,
                  Y_DTYPE_C min_hessian_to_split=1e-3,
@@ -141,7 +143,8 @@ cdef class Splitter:
 
         self.X_binned = X_binned
         self.n_features = X_binned.shape[1]
-        self.actual_n_bins = actual_n_bins
+        self.n_bins_non_missing = n_bins_non_missing
+        self.missing_values_bin_idx = missing_values_bin_idx
         self.has_missing_values = has_missing_values
         self.l2_regularization = l2_regularization
         self.min_hessian_to_split = min_hessian_to_split
@@ -240,6 +243,7 @@ cdef class Splitter:
             int n_samples = sample_indices.shape[0]
             X_BINNED_DTYPE_C bin_idx = split_info.bin_idx
             unsigned char missing_go_to_left = split_info.missing_go_to_left
+            unsigned char missing_values_bin_idx = self.missing_values_bin_idx
             int feature_idx = split_info.feature_idx
             const X_BINNED_DTYPE_C [::1] X_binned = \
                 self.X_binned[:, feature_idx]
@@ -285,7 +289,7 @@ cdef class Splitter:
                 stop = start + sizes[thread_idx]
                 for i in range(start, stop):
                     sample_idx = sample_indices[i]
-                    if X_binned[sample_idx] == 0:  # missing value
+                    if X_binned[sample_idx] == missing_values_bin_idx:
                         if missing_go_to_left:
                             left_indices_buffer[start + left_count] = sample_idx
                             left_count = left_count + 1
@@ -458,9 +462,7 @@ cdef class Splitter:
             unsigned int n_samples_left
             unsigned int n_samples_right
             unsigned int n_samples_ = n_samples
-            # Note that considering splitting on the last bin is useless since
-            # it would result in having 0 samples in the right node (forbidden)
-            unsigned int end = self.actual_n_bins[feature_idx] - 1
+            unsigned int end = self.n_bins_non_missing[feature_idx] - 1
             Y_DTYPE_C sum_hessian_left
             Y_DTYPE_C sum_hessian_right
             Y_DTYPE_C sum_gradient_left
@@ -475,8 +477,7 @@ cdef class Splitter:
                                                    self.l2_regularization)
 
 
-        for bin_idx in range(1, end):
-            # we skip the first bin which is reserved for missing values
+        for bin_idx in range(end):
             n_samples_left += histograms[feature_idx, bin_idx].count
             n_samples_right = n_samples_ - n_samples_left
 
@@ -550,20 +551,15 @@ cdef class Splitter:
             Y_DTYPE_C sum_gradient_right
             Y_DTYPE_C negative_loss_current_node
             Y_DTYPE_C gain
-            unsigned int start = self.actual_n_bins[feature_idx] - 2
+            unsigned int start = self.n_bins_non_missing[feature_idx] - 2
 
-        # n_bins - 2 is the index of the second to last bin
         sum_gradient_right, sum_hessian_right = 0., 0.
         n_samples_right = 0
         negative_loss_current_node = negative_loss(sum_gradients,
                                                    sum_hessians,
                                                    self.l2_regularization)
 
-        for bin_idx in range(start, 0, -1):
-            # We start at the second to last bin (we don't need to consider
-            # splitting on the last bin since it would result in having zero
-            # samples on the right node).
-            # We also skip the first bin (where the missing values are)
+        for bin_idx in range(start, -1, -1):
             n_samples_right += histograms[feature_idx, bin_idx + 1].count
             n_samples_left = n_samples_ - n_samples_right
 

@@ -58,19 +58,22 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
 def _predict_from_binned_data(
         node_struct [:] nodes,
         const X_BINNED_DTYPE_C [:, :] binned_data,
+        const unsigned char missing_values_bin_idx,
         Y_DTYPE_C [:] out):
 
     cdef:
         int i
 
     for i in prange(binned_data.shape[0], schedule='static', nogil=True):
-        out[i] = _predict_one_from_binned_data(nodes, binned_data, i)
+        out[i] = _predict_one_from_binned_data(nodes, binned_data, i,
+                                               missing_values_bin_idx)
 
 
 cdef inline Y_DTYPE_C _predict_one_from_binned_data(
         node_struct [:] nodes,
         const X_BINNED_DTYPE_C [:, :] binned_data,
-        const int row) nogil:
+        const int row,
+        const unsigned char missing_values_bin_idx) nogil:
     # Need to pass the whole array and the row index, else prange won't work.
     # See issue Cython #2798
 
@@ -80,7 +83,7 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
     while True:
         if node.is_leaf:
             return node.value
-        if binned_data[row, node.feature_idx] == 0:  # missing value
+        if binned_data[row, node.feature_idx] ==  missing_values_bin_idx:
             if node.missing_go_to_left:
                 node = nodes[node.left]
             else:

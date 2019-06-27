@@ -2,6 +2,7 @@
 # Author: Nicolas Hug
 
 from abc import ABC, abstractmethod
+from functools import partial
 
 import numpy as np
 from timeit import default_timer as time
@@ -74,6 +75,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             raise ValueError('tol={} '
                              'must not be smaller than 0.'.format(self.tol))
 
+        if not (2 <= self.max_bins <= 255):
+            raise ValueError('max_bins={} should be no smaller than 2 '
+                             'and no larger than 255.'.format(self.max_bins))
+
     def fit(self, X, y):
         """Fit the gradient boosting model.
 
@@ -145,7 +150,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         has_missing_values = np.isnan(X_train).any(axis=0).astype(np.uint8)
 
         # Bin the data
-        self.bin_mapper_ = _BinMapper(max_bins=self.max_bins, random_state=rng)
+        n_bins = self.max_bins + 1  # + 1 for missing values
+        self.bin_mapper_ = _BinMapper(n_bins=n_bins, random_state=rng)
         X_binned_train = self._bin_data(X_train, rng, is_training_data=True)
         if X_val is not None:
             X_binned_val = self._bin_data(X_val, rng, is_training_data=False)
@@ -294,8 +300,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
                 grower = TreeGrower(
                     X_binned_train, gradients[k, :], hessians[k, :],
-                    max_bins=self.max_bins,
-                    actual_n_bins=self.bin_mapper_.actual_n_bins_,
+                    n_bins=n_bins,
+                    n_bins_non_missing=self.bin_mapper_.n_bins_non_missing_,
                     has_missing_values=has_missing_values,
                     max_leaf_nodes=self.max_leaf_nodes,
                     max_depth=self.max_depth,
@@ -327,7 +333,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     if self._use_validation_data:
                         for k, pred in enumerate(self._predictors[-1]):
                             raw_predictions_val[k, :] += (
-                                pred.predict_binned(X_binned_val))
+                                pred.predict_binned(
+                                    X_binned_val,
+                                    self.bin_mapper_.missing_values_bin_idx_
+                                )
+                            )
 
                     should_early_stop = self._check_early_stopping_loss(
                         raw_predictions, y_train,
@@ -555,8 +565,13 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         raw_predictions += self._baseline_prediction
         for predictors_of_ith_iteration in self._predictors:
             for k, predictor in enumerate(predictors_of_ith_iteration):
-                predict = (predictor.predict_binned if is_binned
-                           else predictor.predict)
+                if is_binned:
+                    predict = partial(
+                        predictor.predict_binned,
+                        missing_values_bin_idx=self.bin_mapper_.missing_values_bin_idx_  # noqa
+                    )
+                else:
+                    predict = predictor.predict
                 raw_predictions[k, :] += predict(X)
 
         return raw_predictions
@@ -641,14 +656,13 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
     l2_regularization : float, optional (default=0)
         The L2 regularization parameter. Use ``0`` for no regularization
         (default).
-    max_bins : int, optional (default=256)
-        The maximum number of bins to use. Before training, each feature of
-        the input array ``X`` is binned into at most ``max_bins`` bins, which
-        allows for a much faster training stage. Features with a small
-        number of unique values may use less than ``max_bins`` bins. The
-        first bin is specifically allocated for missing values, whether they
-        exist or not. As a result, the number of bins used for non-missing
-        values is at most ``max_bins - 1``. Must be no larger than 256.
+    max_bins : int, optional (default=255)
+        The maximum number of bins to use for non-missing values. Before
+        training, each feature of the input array ``X`` is binned into
+        integer-valued bins, which allows for a much faster training stage.
+        Features with a small number of unique values may use less than
+        ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
+        is reserved for missing values. Must be no larger than 255.
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble. For results to be valid, the
@@ -719,7 +733,7 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
 
     def __init__(self, loss='least_squares', learning_rate=0.1,
                  max_iter=100, max_leaf_nodes=31, max_depth=None,
-                 min_samples_leaf=20, l2_regularization=0., max_bins=256,
+                 min_samples_leaf=20, l2_regularization=0., max_bins=255,
                  warm_start=False, scoring=None, validation_fraction=0.1,
                  n_iter_no_change=None, tol=1e-7, verbose=0,
                  random_state=None):
@@ -826,14 +840,13 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         since only very shallow trees would be built.
     l2_regularization : float, optional (default=0)
         The L2 regularization parameter. Use 0 for no regularization.
-    max_bins : int, optional (default=256)
-        The maximum number of bins to use. Before training, each feature of
-        the input array ``X`` is binned into at most ``max_bins`` bins, which
-        allows for a much faster training stage. Features with a small
-        number of unique values may use less than ``max_bins`` bins. The
-        first bin is specifically allocated for missing values, whether they
-        exist or not. As a result, the number of bins used for non-missing
-        values is at most ``max_bins - 1``. Must be no larger than 256.
+    max_bins : int, optional (default=255)
+        The maximum number of bins to use for non-missing values. Before
+        training, each feature of the input array ``X`` is binned into
+        integer-valued bins, which allows for a much faster training stage.
+        Features with a small number of unique values may use less than
+        ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
+        is reserved for missing values. Must be no larger than 255.
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble. For results to be valid, the
@@ -906,7 +919,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
 
     def __init__(self, loss='auto', learning_rate=0.1, max_iter=100,
                  max_leaf_nodes=31, max_depth=None, min_samples_leaf=20,
-                 l2_regularization=0., max_bins=256, warm_start=False,
+                 l2_regularization=0., max_bins=255, warm_start=False,
                  scoring=None, validation_fraction=0.1, n_iter_no_change=None,
                  tol=1e-7, verbose=0, random_state=None):
         super(HistGradientBoostingClassifier, self).__init__(

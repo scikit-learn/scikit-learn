@@ -15,8 +15,10 @@ from libc.math cimport isnan
 
 from .types cimport X_DTYPE_C, X_BINNED_DTYPE_C
 
-cpdef _map_to_bins(const X_DTYPE_C [:, :] data, list binning_thresholds,
-                   X_BINNED_DTYPE_C [::1, :] binned):
+def _map_to_bins(const X_DTYPE_C [:, :] data,
+                 list binning_thresholds,
+                 const unsigned char missing_values_bin_idx,
+                 X_BINNED_DTYPE_C [::1, :] binned):
     """Bin numerical values to discrete integer-coded levels.
 
     Parameters
@@ -35,11 +37,13 @@ cpdef _map_to_bins(const X_DTYPE_C [:, :] data, list binning_thresholds,
     for feature_idx in range(data.shape[1]):
         _map_num_col_to_bins(data[:, feature_idx],
                              binning_thresholds[feature_idx],
+                             missing_values_bin_idx,
                              binned[:, feature_idx])
 
 
 cdef void _map_num_col_to_bins(const X_DTYPE_C [:] data,
                                const X_DTYPE_C [:] binning_thresholds,
+                               const unsigned char missing_values_bin_idx,
                                X_BINNED_DTYPE_C [:] binned):
     """Binary search to find the bin index for each value in the data."""
     cdef:
@@ -51,11 +55,10 @@ cdef void _map_num_col_to_bins(const X_DTYPE_C [:] data,
     for i in prange(data.shape[0], schedule='static', nogil=True):
 
         if isnan(data[i]):
-            # unkown values are mapped to first bin.
-            binned[i] = 0
+            binned[i] = missing_values_bin_idx
         else:
             # for known values, use binary search
-            left, right = 1, binning_thresholds.shape[0]
+            left, right = 0, binning_thresholds.shape[0]
             while left < right:
                 middle = (right + left - 1) // 2
                 if data[i] <= binning_thresholds[middle]:

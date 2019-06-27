@@ -15,7 +15,7 @@ def _make_training_data(n_bins=256, constant_hessian=True):
 
     # Generate some test data directly binned so as to test the grower code
     # independently of the binning logic.
-    X_binned = rng.randint(1, n_bins - 1, size=(n_samples, 2),
+    X_binned = rng.randint(0, n_bins - 1, size=(n_samples, 2),
                            dtype=X_BINNED_DTYPE)
     X_binned = np.asfortranarray(X_binned)
 
@@ -85,7 +85,7 @@ def test_grow_tree(n_bins, constant_hessian, stopping_param, shrinkage):
         stopping_param = {"min_gain_to_split": 0.01}
 
     grower = TreeGrower(X_binned, all_gradients, all_hessians,
-                        max_bins=n_bins, shrinkage=shrinkage,
+                        n_bins=n_bins, shrinkage=shrinkage,
                         min_samples_leaf=1, **stopping_param)
 
     # The root node is not yet splitted, but the best possible split has
@@ -147,7 +147,7 @@ def test_predictor_from_grower():
     X_binned, all_gradients, all_hessians = _make_training_data(
         n_bins=n_bins)
     grower = TreeGrower(X_binned, all_gradients, all_hessians,
-                        max_bins=n_bins, shrinkage=1.,
+                        n_bins=n_bins, shrinkage=1.,
                         max_leaf_nodes=3, min_samples_leaf=5)
     grower.grow()
     assert grower.n_nodes == 5  # (2 decision nodes + 3 leaves)
@@ -161,24 +161,27 @@ def test_predictor_from_grower():
     # Probe some predictions for each leaf of the tree
     # each group of 3 samples corresponds to a condition in _make_training_data
     input_data = np.array([
-        [1, 1],
+        [0, 0],
         [42, 99],
-        [128, 255],
+        [128, 254],
 
-        [129, 1],
+        [129, 0],
         [129, 85],
-        [255, 85],
+        [254, 85],
 
         [129, 86],
-        [129, 255],
+        [129, 254],
         [242, 100],
     ], dtype=np.uint8)
-    predictions = predictor.predict_binned(input_data)
+    missing_values_bin_idx = n_bins - 1
+    predictions = predictor.predict_binned(input_data, missing_values_bin_idx)
     expected_targets = [1, 1, 1, 1, 1, 1, -1, -1, -1]
     assert np.allclose(predictions, expected_targets)
 
     # Check that training set can be recovered exactly:
-    predictions = predictor.predict_binned(X_binned)
+    predictions = predictor.predict_binned(X_binned, missing_values_bin_idx)
+    print()
+    print(np.sum(predictions != -all_gradients))
     assert np.allclose(predictions, -all_gradients)
 
 
@@ -203,14 +206,14 @@ def test_min_samples_leaf(n_samples, min_samples_leaf, n_bins,
     if noise:
         y_scale = y.std()
         y += rng.normal(scale=noise, size=n_samples) * y_scale
-    mapper = _BinMapper(max_bins=n_bins)
+    mapper = _BinMapper(n_bins=n_bins)
     X = mapper.fit_transform(X)
 
     all_gradients = y.astype(G_H_DTYPE)
     shape_hessian = 1 if constant_hessian else all_gradients.shape
     all_hessians = np.ones(shape=shape_hessian, dtype=G_H_DTYPE)
     grower = TreeGrower(X, all_gradients, all_hessians,
-                        max_bins=n_bins, shrinkage=1.,
+                        n_bins=n_bins, shrinkage=1.,
                         min_samples_leaf=min_samples_leaf,
                         max_leaf_nodes=n_samples)
     grower.grow()
@@ -235,18 +238,18 @@ def test_min_samples_leaf_root(n_samples, min_samples_leaf):
     # min_samples_leaf
     rng = np.random.RandomState(seed=0)
 
-    max_bins = 255
+    n_bins = 256
 
     # data = linear target, 3 features, 1 irrelevant.
     X = rng.normal(size=(n_samples, 3))
     y = X[:, 0] - X[:, 1]
-    mapper = _BinMapper(max_bins=max_bins)
+    mapper = _BinMapper(n_bins=n_bins)
     X = mapper.fit_transform(X)
 
     all_gradients = y.astype(G_H_DTYPE)
     all_hessians = np.ones(shape=1, dtype=G_H_DTYPE)
     grower = TreeGrower(X, all_gradients, all_hessians,
-                        max_bins=max_bins, shrinkage=1.,
+                        n_bins=n_bins, shrinkage=1.,
                         min_samples_leaf=min_samples_leaf,
                         max_leaf_nodes=n_samples)
     grower.grow()
@@ -261,13 +264,13 @@ def test_max_depth(max_depth):
     # Make sure max_depth parameter works as expected
     rng = np.random.RandomState(seed=0)
 
-    max_bins = 255
+    n_bins = 256
     n_samples = 1000
 
     # data = linear target, 3 features, 1 irrelevant.
     X = rng.normal(size=(n_samples, 3))
     y = X[:, 0] - X[:, 1]
-    mapper = _BinMapper(max_bins=max_bins)
+    mapper = _BinMapper(n_bins=n_bins)
     X = mapper.fit_transform(X)
 
     all_gradients = y.astype(G_H_DTYPE)

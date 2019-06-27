@@ -16,48 +16,45 @@ DATA = np.random.RandomState(42).normal(
 ).astype(X_DTYPE)
 
 
-def _find_binning_thresholds(data, max_bins=256, subsample=int(2e5),
+def _find_binning_thresholds(data, max_bins=255, subsample=int(2e5),
                              random_state=None):
-    # Just a redef to avoid having to pass arguments all the time (as the
-    # function is private we don't use default values for parameters)
-    return _find_binning_thresholds_orig(data, max_bins, subsample,
-                                         random_state)
+    n_bins = max_bins + 1
+    return _find_binning_thresholds_orig(data, n_bins, subsample, random_state)
 
 
 def test_find_binning_thresholds_regular_data():
     data = np.linspace(0, 10, 1001).reshape(-1, 1)
-    bin_thresholds = _find_binning_thresholds(data, max_bins=11)
-    assert_allclose(bin_thresholds[0], [np.nan, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    bin_thresholds = _find_binning_thresholds(data, max_bins=10)
+    assert_allclose(bin_thresholds[0], [1, 2, 3, 4, 5, 6, 7, 8, 9])
     assert len(bin_thresholds) == 1
 
-    bin_thresholds = _find_binning_thresholds(data, max_bins=6)
-    assert_allclose(bin_thresholds[0], [np.nan, 2, 4, 6, 8])
+    bin_thresholds = _find_binning_thresholds(data, max_bins=5)
+    assert_allclose(bin_thresholds[0], [2, 4, 6, 8])
     assert len(bin_thresholds) == 1
 
 
 def test_find_binning_thresholds_small_regular_data():
     data = np.linspace(0, 10, 11).reshape(-1, 1)
 
-    bin_thresholds = _find_binning_thresholds(data, max_bins=6)
-    assert_allclose(bin_thresholds[0], [np.nan, 2, 4, 6, 8])
+    bin_thresholds = _find_binning_thresholds(data, max_bins=5)
+    assert_allclose(bin_thresholds[0], [2, 4, 6, 8])
+
+    bin_thresholds = _find_binning_thresholds(data, max_bins=10)
+    assert_allclose(bin_thresholds[0], [1, 2, 3, 4, 5, 6, 7, 8, 9])
 
     bin_thresholds = _find_binning_thresholds(data, max_bins=11)
-    assert_allclose(bin_thresholds[0], [np.nan, 1, 2, 3, 4, 5, 6, 7, 8, 9])
-
-    bin_thresholds = _find_binning_thresholds(data, max_bins=12)
-    expected = np.arange(10) + .5
-    expected = np.insert(expected, 0, np.nan)
-    assert_allclose(bin_thresholds[0], expected)
+    assert_allclose(bin_thresholds[0], np.arange(10) + .5)
 
     bin_thresholds = _find_binning_thresholds(data, max_bins=255)
-    assert_allclose(bin_thresholds[0], expected)
+    assert_allclose(bin_thresholds[0], np.arange(10) + .5)
 
 
 def test_find_binning_thresholds_random_data():
-    bin_thresholds = _find_binning_thresholds(DATA, random_state=0)
+    bin_thresholds = _find_binning_thresholds(DATA, max_bins=255,
+                                              random_state=0)
     assert len(bin_thresholds) == 2
     for i in range(len(bin_thresholds)):
-        assert bin_thresholds[i].shape == (255,)  # 256 - 1
+        assert bin_thresholds[i].shape == (254,)  # 255 - 1
         assert bin_thresholds[i].dtype == DATA.dtype
 
     assert_allclose(bin_thresholds[0][[64, 128, 192]],
@@ -77,24 +74,26 @@ def test_find_binning_thresholds_low_n_bins():
 
 
 def test_find_binning_thresholds_invalid_n_bins():
-    err_msg = 'no smaller than 2 and no larger than 256'
+    err_msg = 'n_bins=1024 should be no smaller than 3 and no larger than 256'
     with pytest.raises(ValueError, match=err_msg):
-        _find_binning_thresholds(DATA, max_bins=1024)
+        _find_binning_thresholds_orig(DATA, n_bins=1024, subsample=10,
+                                      random_state=None)
 
 
 def test_bin_mapper_n_features_transform():
-    mapper = _BinMapper(max_bins=42, random_state=42).fit(DATA)
+    mapper = _BinMapper(n_bins=42, random_state=42).fit(DATA)
     err_msg = 'This estimator was fitted with 2 features but 4 got passed'
     with pytest.raises(ValueError, match=err_msg):
         mapper.transform(np.repeat(DATA, 2, axis=1))
 
 
-@pytest.mark.parametrize('n_bins', [16, 128, 256])
-def test_map_to_bins(n_bins):
-    bin_thresholds = _find_binning_thresholds(DATA, max_bins=n_bins,
+@pytest.mark.parametrize('max_bins', [16, 128, 255])
+def test_map_to_bins(max_bins):
+    bin_thresholds = _find_binning_thresholds(DATA, max_bins=max_bins,
                                               random_state=0)
     binned = np.zeros_like(DATA, dtype=X_BINNED_DTYPE, order='F')
-    _map_to_bins(DATA, bin_thresholds, binned)
+    last_bin_idx = max_bins
+    _map_to_bins(DATA, bin_thresholds, last_bin_idx, binned)
     assert binned.shape == DATA.shape
     assert binned.dtype == np.uint8
     assert binned.flags.f_contiguous
@@ -103,69 +102,73 @@ def test_map_to_bins(n_bins):
     max_indices = DATA.argmax(axis=0)
 
     for feature_idx, min_idx in enumerate(min_indices):
-        assert binned[min_idx, feature_idx] == 1
+        assert binned[min_idx, feature_idx] == 0
     for feature_idx, max_idx in enumerate(max_indices):
-        assert binned[max_idx, feature_idx] == n_bins - 1
+        assert binned[max_idx, feature_idx] == max_bins - 1
 
 
-@pytest.mark.parametrize("n_bins", [5, 10, 42])
-def test_bin_mapper_random_data(n_bins):
+@pytest.mark.parametrize("max_bins", [5, 10, 42])
+def test_bin_mapper_random_data(max_bins):
     n_samples, n_features = DATA.shape
 
-    mapper = _BinMapper(max_bins=n_bins, random_state=42).fit(DATA)
+    expected_count_per_bin = n_samples // max_bins
+    tol = int(0.05 * expected_count_per_bin)
+
+    # max_bins is the number of bins for non-missing values
+    n_bins = max_bins + 1
+    mapper = _BinMapper(n_bins=n_bins, random_state=42).fit(DATA)
     binned = mapper.transform(DATA)
 
     assert binned.shape == (n_samples, n_features)
     assert binned.dtype == np.uint8
-    assert_array_equal(binned.min(axis=0), np.array([1, 1]))
-    assert_array_equal(binned.max(axis=0), np.array([n_bins - 1, n_bins - 1]))
+    assert_array_equal(binned.min(axis=0), np.array([0, 0]))
+    assert_array_equal(binned.max(axis=0),
+                       np.array([max_bins - 1, max_bins - 1]))
     assert len(mapper.bin_thresholds_) == n_features
     for bin_thresholds_feature in mapper.bin_thresholds_:
-        assert bin_thresholds_feature.shape == (n_bins - 1,)
+        assert bin_thresholds_feature.shape == (max_bins - 1,)
         assert bin_thresholds_feature.dtype == DATA.dtype
-    assert np.all(mapper.actual_n_bins_ == n_bins)
+    assert np.all(mapper.n_bins_non_missing_ == max_bins)
 
-    # Check that the binned data is approximately balanced across bins
-    # (ignoring first bin since there are no missing values)
-    expected_count_per_bin = n_samples // (n_bins - 1)
-    tol = int(0.05 * expected_count_per_bin)
+    # Check that the binned data is approximately balanced across bins.
     for feature_idx in range(n_features):
-        for bin_idx in range(1, n_bins):
+        for bin_idx in range(max_bins):
             count = (binned[:, feature_idx] == bin_idx).sum()
             assert abs(count - expected_count_per_bin) < tol
 
 
-@pytest.mark.parametrize("n_samples, n_bins_for_non_missing", [
+@pytest.mark.parametrize("n_samples, max_bins", [
     (5, 5),
     (5, 10),
     (5, 11),
     (42, 255)
 ])
-def test_bin_mapper_small_random_data(n_samples, n_bins_for_non_missing):
+def test_bin_mapper_small_random_data(n_samples, max_bins):
     data = np.random.RandomState(42).normal(size=n_samples).reshape(-1, 1)
     assert len(np.unique(data)) == n_samples
 
-    max_bins = n_bins_for_non_missing + 1  # first bin reserved
-    mapper = _BinMapper(max_bins=max_bins, random_state=42)
+    # max_bins is the number of bins for non-missing values
+    n_bins = max_bins + 1
+    mapper = _BinMapper(n_bins=n_bins, random_state=42)
     binned = mapper.fit_transform(data)
 
     assert binned.shape == data.shape
     assert binned.dtype == np.uint8
     assert_array_equal(binned.ravel()[np.argsort(data.ravel())],
-                       np.arange(n_samples) + 1)
+                       np.arange(n_samples))
 
 
-@pytest.mark.parametrize("n_bins_for_non_missing, n_distinct, multiplier", [
+@pytest.mark.parametrize("max_bins, n_distinct, multiplier", [
     (5, 5, 1),
     (5, 5, 3),
     (255, 12, 42),
 ])
-def test_bin_mapper_identity_repeated_values(n_bins_for_non_missing,
-                                             n_distinct, multiplier):
+def test_bin_mapper_identity_repeated_values(max_bins, n_distinct, multiplier):
     data = np.array(list(range(n_distinct)) * multiplier).reshape(-1, 1)
-    max_bins = n_bins_for_non_missing + 1  # first bin reserved
-    binned = _BinMapper(max_bins=max_bins).fit_transform(data)
-    assert_array_equal(data, binned - 1)
+    # max_bins is the number of bins for non-missing values
+    n_bins = max_bins + 1
+    binned = _BinMapper(n_bins=n_bins).fit_transform(data)
+    assert_array_equal(data, binned)
 
 
 @pytest.mark.parametrize('n_distinct', [2, 7, 42])
@@ -181,61 +184,62 @@ def test_bin_mapper_repeated_values_invariance(n_distinct):
 
     data = data.reshape(-1, 1)
 
-    mapper_1 = _BinMapper(max_bins=n_distinct + 1)
+    mapper_1 = _BinMapper(n_bins=n_distinct + 1)
     binned_1 = mapper_1.fit_transform(data)
-    assert_array_equal(np.unique(binned_1[:, 0]), np.arange(n_distinct) + 1)
+    assert_array_equal(np.unique(binned_1[:, 0]), np.arange(n_distinct))
 
     # Adding more bins to the mapper yields the same results (same thresholds)
-    mapper_2 = _BinMapper(max_bins=min(256, n_distinct * 3))
+    mapper_2 = _BinMapper(n_bins=min(256, n_distinct * 3) + 1)
     binned_2 = mapper_2.fit_transform(data)
 
     assert_allclose(mapper_1.bin_thresholds_[0], mapper_2.bin_thresholds_[0])
     assert_array_equal(binned_1, binned_2)
 
 
-@pytest.mark.parametrize("n_bins_for_non_missing, scale, offset", [
+@pytest.mark.parametrize("max_bins, scale, offset", [
     (3, 2, -1),
     (42, 1, 0),
     (255, 0.3, 42),
 ])
-def test_bin_mapper_identity_small(n_bins_for_non_missing, scale, offset):
-    data = np.arange(n_bins_for_non_missing).reshape(-1, 1) * scale + offset
-    max_bins = n_bins_for_non_missing + 1  # first bin reserved
-    binned = _BinMapper(max_bins=max_bins).fit_transform(data)
-    assert_array_equal(binned,
-                       np.arange(n_bins_for_non_missing).reshape(-1, 1) + 1)
+def test_bin_mapper_identity_small(max_bins, scale, offset):
+    data = np.arange(max_bins).reshape(-1, 1) * scale + offset
+    # max_bins is the number of bins for non-missing values
+    n_bins = max_bins + 1
+    binned = _BinMapper(n_bins=n_bins).fit_transform(data)
+    assert_array_equal(binned, np.arange(max_bins).reshape(-1, 1))
 
 
-@pytest.mark.parametrize('n_bins_small, n_bins_large', [
+@pytest.mark.parametrize('max_bins_small, max_bins_large', [
     (2, 2),
     (3, 3),
     (4, 4),
     (42, 42),
-    (256, 256),
+    (255, 255),
     (5, 17),
-    (42, 256),
+    (42, 255),
 ])
-def test_bin_mapper_idempotence(n_bins_small, n_bins_large):
-    assert n_bins_large >= n_bins_small
+def test_bin_mapper_idempotence(max_bins_small, max_bins_large):
+    assert max_bins_large >= max_bins_small
     data = np.random.RandomState(42).normal(size=30000).reshape(-1, 1)
-    mapper_small = _BinMapper(max_bins=n_bins_small)
-    mapper_large = _BinMapper(max_bins=n_bins_large)
+    mapper_small = _BinMapper(n_bins=max_bins_small + 1)
+    mapper_large = _BinMapper(n_bins=max_bins_small + 1)
     binned_small = mapper_small.fit_transform(data)
     binned_large = mapper_large.fit_transform(binned_small)
     assert_array_equal(binned_small, binned_large)
 
 
-@pytest.mark.parametrize('max_bins', [10, 100, 256])
+@pytest.mark.parametrize('n_bins', [10, 100, 256])
 @pytest.mark.parametrize('diff', [-5, 0, 5])
-def test_actual_n_bins(max_bins, diff):
-    # Check that actual_n_bins is n_unique_values  + 1 when
-    # n_unique_values <= max_bins - 1, else max_bins.
+def test_n_bins_non_missing(n_bins, diff):
+    # Check that n_bins_non_missing is n_unique_values when
+    # there are not a lot of unique values, else n_bins - 1.
 
-    n_unique_values = max_bins + diff
+    n_unique_values = n_bins + diff
     X = list(range(n_unique_values)) * 2
     X = np.array(X).reshape(-1, 1)
-    mapper = _BinMapper(max_bins=max_bins).fit(X)
-    assert np.all(mapper.actual_n_bins_ == min(max_bins, n_unique_values + 1))
+    mapper = _BinMapper(n_bins=n_bins).fit(X)
+    assert np.all(mapper.n_bins_non_missing_ == min(
+        n_bins - 1, n_unique_values))
 
 
 def test_subsample():
@@ -248,32 +252,22 @@ def test_subsample():
                                mapper_subsample.bin_thresholds_[feature],
                                rtol=1e-4)
 
-
 @pytest.mark.parametrize(
-    'max_bins, actual_n_bins, X_trans_expected', [
-        (256, [5, 3, 3], [[1, 1, 1],
-                          [0, 0, 1],
-                          [2, 1, 1],
-                          [0, 2, 2],
-                          [3, 2, 2],
-                          [4, 1, 1]]),
-        # With max_bins=2, we expect all nan values to be mapped to bin 0
-        # and all non-nans to be mapped to bin 1
-        (2, [2, 2, 2], [[1, 1, 1],
-                        [0, 0, 1],
+    'n_bins, n_bins_non_missing, X_trans_expected', [
+        (256, [4, 2, 2], [[0,   0,   0],  # 255 <=> missing value
+                          [255, 255, 0],
+                          [1,   0,   0],
+                          [255, 1,   1],
+                          [2,   1,   1],
+                          [3,   0,   0]]),
+        (3, [2, 2, 2], [[0, 0, 0],  # 2 <=> missing value
+                        [2, 2, 0],
+                        [0, 0, 0],
+                        [2, 1, 1],
                         [1, 1, 1],
-                        [0, 1, 1],
-                        [1, 1, 1],
-                        [1, 1, 1]]),
-
-        (3, [3, 3, 3], [[1, 1, 1],
-                        [0, 0, 1],
-                        [1, 1, 1],
-                        [0, 2, 2],
-                        [2, 2, 2],
-                        [2, 1, 1]])])
-def test_missing_values_support(max_bins, actual_n_bins, X_trans_expected):
-    # check for missing values: make sure nans are mapped to the first bin
+                        [1, 0, 0]])])
+def test_missing_values_support(n_bins, n_bins_non_missing, X_trans_expected):
+    # check for missing values: make sure nans are mapped to the last bin
     # and that attributes are correct
 
     X = [[1,      1,      0],
@@ -285,15 +279,14 @@ def test_missing_values_support(max_bins, actual_n_bins, X_trans_expected):
 
     X = np.array(X)
 
-    mapper = _BinMapper(max_bins=max_bins)
+    mapper = _BinMapper(n_bins=n_bins)
     mapper.fit(X)
 
-    assert_array_equal(mapper.actual_n_bins_, actual_n_bins)
+    assert_array_equal(mapper.n_bins_non_missing_, n_bins_non_missing)
 
     for feature_idx in range(X.shape[1]):
         assert len(mapper.bin_thresholds_[feature_idx]) == \
-            actual_n_bins[feature_idx] - 1
-        assert np.isnan(mapper.bin_thresholds_[feature_idx][0])
+            n_bins_non_missing[feature_idx] - 1
 
     X_trans = mapper.transform(X)
     assert_array_equal(X_trans, X_trans_expected)

@@ -46,7 +46,7 @@ class TreePredictor:
         _predict_from_numeric_data(self.nodes, X, out)
         return out
 
-    def predict_binned(self, X):
+    def predict_binned(self, X, missing_values_bin_idx):
         """Predict raw values for binned data.
 
         Parameters
@@ -60,5 +60,5 @@ class TreePredictor:
             The raw predicted values.
         """
         out = np.empty(X.shape[0], dtype=Y_DTYPE)
-        _predict_from_binned_data(self.nodes, X, out)
+        _predict_from_binned_data(self.nodes, X, missing_values_bin_idx, out)
         return out

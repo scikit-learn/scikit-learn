@@ -30,7 +30,7 @@ X_regression, y_regression = make_regression(random_state=0)
      ({'min_samples_leaf': 0}, 'min_samples_leaf=0 should not be smaller'),
      ({'l2_regularization': -1}, 'l2_regularization=-1 must be positive'),
      ({'max_bins': 1}, 'max_bins=1 should be no smaller than 2 and no larger'),
-     ({'max_bins': 257}, 'max_bins=257 should be no smaller than 2 and no'),
+     ({'max_bins': 256}, 'max_bins=256 should be no smaller than 2 and no'),
      ({'n_iter_no_change': -1}, 'n_iter_no_change=-1 must be positive'),
      ({'validation_fraction': -1}, 'validation_fraction=-1 must be strictly'),
      ({'validation_fraction': 0}, 'validation_fraction=0 must be strictly'),
@@ -169,10 +169,10 @@ def test_binning_train_validation_are_separated():
     mapper_whole_data.fit(X_classification)
 
     n_samples = X_classification.shape[0]
-    assert np.all(mapper_training_data.actual_n_bins_ ==
-                  int((1 - validation_fraction) * n_samples) + 1)
-    assert np.all(mapper_training_data.actual_n_bins_ !=
-                  mapper_whole_data.actual_n_bins_)
+    assert np.all(mapper_training_data.n_bins_non_missing_ ==
+                  int((1 - validation_fraction) * n_samples))
+    assert np.all(mapper_training_data.n_bins_non_missing_ !=
+                  mapper_whole_data.n_bins_non_missing_)
 
 
 def test_missing_values_trivial():

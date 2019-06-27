@@ -9,13 +9,13 @@ from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.ensemble._hist_gradient_boosting.types import G_H_DTYPE
 
 
-@pytest.mark.parametrize('max_bins', [200, 256])
-def test_boston_dataset(max_bins):
+@pytest.mark.parametrize('n_bins', [200, 256])
+def test_boston_dataset(n_bins):
     boston = load_boston()
     X_train, X_test, y_train, y_test = train_test_split(
         boston.data, boston.target, random_state=42)
 
-    mapper = _BinMapper(max_bins=max_bins, random_state=42)
+    mapper = _BinMapper(n_bins=n_bins, random_state=42)
     X_train_binned = mapper.fit_transform(X_train)
 
     # Init gradients and hessians to that of least squares loss
@@ -26,8 +26,8 @@ def test_boston_dataset(max_bins):
     max_leaf_nodes = 31
     grower = TreeGrower(X_train_binned, gradients, hessians,
                         min_samples_leaf=min_samples_leaf,
-                        max_leaf_nodes=max_leaf_nodes, max_bins=max_bins,
-                        actual_n_bins=mapper.actual_n_bins_)
+                        max_leaf_nodes=max_leaf_nodes, n_bins=n_bins,
+                        n_bins_non_missing=mapper.n_bins_non_missing_)
     grower.grow()
 
     predictor = grower.make_predictor(bin_thresholds=mapper.bin_thresholds_)

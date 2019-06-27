@@ -164,7 +164,7 @@ class TreeGrower:
     """
     def __init__(self, X_binned, gradients, hessians, max_leaf_nodes=None,
                  max_depth=None, min_samples_leaf=20, min_gain_to_split=0.,
-                 max_bins=256, actual_n_bins=None, has_missing_values=False,
+                 n_bins=256, n_bins_non_missing=None, has_missing_values=False,
                  l2_regularization=0., min_hessian_to_split=1e-3,
                  shrinkage=1.):
 
@@ -172,29 +172,30 @@ class TreeGrower:
                                   min_samples_leaf, min_gain_to_split,
                                   l2_regularization, min_hessian_to_split)
 
-        if actual_n_bins is None:
-            actual_n_bins = max_bins
+        if n_bins_non_missing is None:
+            n_bins_non_missing = n_bins - 1
 
-        if isinstance(actual_n_bins, numbers.Integral):
-            actual_n_bins = np.array(
-                [actual_n_bins] * X_binned.shape[1],
+        if isinstance(n_bins_non_missing, numbers.Integral):
+            n_bins_non_missing = np.array(
+                [n_bins_non_missing] * X_binned.shape[1],
                 dtype=np.uint32)
         else:
-            actual_n_bins = np.asarray(actual_n_bins, dtype=np.uint32)
+            n_bins_non_missing = np.asarray(n_bins_non_missing,
+                                            dtype=np.uint32)
 
         if isinstance(has_missing_values, bool):
-            has_missing_values = [has_missing_values] * actual_n_bins.shape[0]
+            has_missing_values = [has_missing_values] * X_binned.shape[1]
         has_missing_values = np.asarray(has_missing_values, dtype=np.uint8)
 
         hessians_are_constant = hessians.shape[0] == 1
         self.histogram_builder = HistogramBuilder(
-            X_binned, max_bins, gradients, hessians, hessians_are_constant)
+            X_binned, n_bins, gradients, hessians, hessians_are_constant)
+        missing_values_bin_idx = n_bins - 1
         self.splitter = Splitter(
-            X_binned, actual_n_bins, has_missing_values, l2_regularization,
-            min_hessian_to_split, min_samples_leaf, min_gain_to_split,
-            hessians_are_constant)
+            X_binned, n_bins_non_missing, missing_values_bin_idx,
+            has_missing_values, l2_regularization, min_hessian_to_split,
+            min_samples_leaf, min_gain_to_split, hessians_are_constant)
         self.max_leaf_nodes = max_leaf_nodes
-        self.max_bins = max_bins
         self.has_missing_values = has_missing_values
         self.n_features = X_binned.shape[1]
         self.max_depth = max_depth
