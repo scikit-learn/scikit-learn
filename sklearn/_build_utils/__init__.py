@@ -86,10 +86,14 @@ def maybe_cythonize_extensions(top_path, config):
             exc.args += (message,)
             raise
 
+        n_jobs = 1
         try:
             import joblib
-            n_jobs = getattr(joblib, "effective_n_jobs")()
-        except (ImportError, AttributeError):
+            if LooseVersion(joblib.__version__) > LooseVersion("0.13.0"):
+                # earlier joblib versions can over-estimate the number of
+                # available CPU in some cases
+                n_jobs = joblib.effective_n_jobs()
+        except ImportError:
             n_jobs = 1
 
         config.ext_modules = cythonize(
