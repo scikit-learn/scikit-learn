@@ -19,7 +19,6 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.validation import _num_samples
 from sklearn.utils.mocking import MockDataFrame
 
@@ -46,8 +45,6 @@ from sklearn.linear_model import Ridge
 
 from sklearn.model_selection._split import _validate_shuffle_split
 from sklearn.model_selection._split import _build_repr
-from sklearn.model_selection._split import CV_WARNING
-from sklearn.model_selection._split import NSPLIT_WARNING
 
 from sklearn.datasets import load_digits
 from sklearn.datasets import make_classification
@@ -194,7 +191,6 @@ def test_cross_validator_with_default_params():
                          lpo.get_n_splits, None, y, groups)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of n_split')  # 0.22
 def test_2d_y():
     # smoke test for 2d y and multi-label
     n_samples = 30
@@ -208,8 +204,8 @@ def test_2d_y():
                  RepeatedKFold(), RepeatedStratifiedKFold(),
                  ShuffleSplit(), StratifiedShuffleSplit(test_size=.5),
                  GroupShuffleSplit(), LeaveOneGroupOut(),
-                 LeavePGroupsOut(n_groups=2), GroupKFold(), TimeSeriesSplit(),
-                 PredefinedSplit(test_fold=groups)]
+                 LeavePGroupsOut(n_groups=2), GroupKFold(n_splits=3),
+                 TimeSeriesSplit(), PredefinedSplit(test_fold=groups)]
     for splitter in splitters:
         list(splitter.split(X, y, groups))
         list(splitter.split(X, y_2d, groups))
@@ -1291,7 +1287,7 @@ def test_check_cv():
 
 
 def test_cv_iterable_wrapper():
-    kf_iter = KFold(n_splits=5).split(X, y)
+    kf_iter = KFold().split(X, y)
     kf_iter_wrapped = check_cv(kf_iter)
     # Since the wrapped iterable is enlisted and stored,
     # split can be called any number of times to produce
@@ -1300,7 +1296,7 @@ def test_cv_iterable_wrapper():
                             list(kf_iter_wrapped.split(X, y)))
     # If the splits are randomized, successive calls to split yields different
     # results
-    kf_randomized_iter = KFold(n_splits=5, shuffle=True).split(X, y)
+    kf_randomized_iter = KFold(shuffle=True).split(X, y)
     kf_randomized_iter_wrapped = check_cv(kf_randomized_iter)
     # numpy's assert_array_equal properly compares nested lists
     np.testing.assert_equal(list(kf_randomized_iter_wrapped.split(X, y)),
@@ -1469,7 +1465,6 @@ def test_time_series_max_train_size():
     _check_time_series_max_train_size(splits, check_splits, max_train_size=2)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of n_split')  # 0.22
 def test_nested_cv():
     # Test if nested cross validation works with different combinations of cv
     rng = np.random.RandomState(0)
@@ -1477,34 +1472,15 @@ def test_nested_cv():
     X, y = make_classification(n_samples=15, n_classes=2, random_state=0)
     groups = rng.randint(0, 5, 15)
 
-    cvs = [LeaveOneGroupOut(), LeaveOneOut(), GroupKFold(), StratifiedKFold(),
+    cvs = [LeaveOneGroupOut(), LeaveOneOut(), GroupKFold(n_splits=3),
+           StratifiedKFold(),
            StratifiedShuffleSplit(n_splits=3, random_state=0)]
 
     for inner_cv, outer_cv in combinations_with_replacement(cvs, 2):
-        gs = GridSearchCV(Ridge(), param_grid={'alpha': [1, .1]},
-                          cv=inner_cv, error_score='raise', iid=False)
+        gs = GridSearchCV(Ridge(solver="eigen"), param_grid={'alpha': [1, .1]},
+                          cv=inner_cv, error_score='raise')
         cross_val_score(gs, X=X, y=y, groups=groups, cv=outer_cv,
                         fit_params={'groups': groups})
-
-
-def test_nsplit_default_warn():
-    # Test that warnings are raised. Will be removed in 0.22
-    assert_warns_message(FutureWarning, NSPLIT_WARNING, KFold)
-    assert_warns_message(FutureWarning, NSPLIT_WARNING, GroupKFold)
-    assert_warns_message(FutureWarning, NSPLIT_WARNING, StratifiedKFold)
-    assert_warns_message(FutureWarning, NSPLIT_WARNING, TimeSeriesSplit)
-
-    assert_no_warnings(KFold, n_splits=5)
-    assert_no_warnings(GroupKFold, n_splits=5)
-    assert_no_warnings(StratifiedKFold, n_splits=5)
-    assert_no_warnings(TimeSeriesSplit, n_splits=5)
-
-
-def test_check_cv_default_warn():
-    # Test that warnings are raised. Will be removed in 0.22
-    assert_warns_message(FutureWarning, CV_WARNING, check_cv)
-    assert_warns_message(FutureWarning, CV_WARNING, check_cv, None)
-    assert_no_warnings(check_cv, cv=5)
 
 
 def test_build_repr():

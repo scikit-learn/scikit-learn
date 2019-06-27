@@ -2,6 +2,7 @@
 import pytest
 import numpy as np
 import scipy.sparse as sp
+from joblib import cpu_count
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
@@ -17,7 +18,6 @@ from sklearn.base import clone
 from sklearn.datasets import make_classification
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
 from sklearn.exceptions import NotFittedError
-from sklearn.utils._joblib import cpu_count
 from sklearn.linear_model import Lasso
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import Ridge
@@ -189,7 +189,7 @@ def test_multi_output_predict_proba():
         else:
             return 0.0
     grid_clf = GridSearchCV(sgd_linear_clf, param_grid=param,
-                            scoring=custom_scorer, cv=3, error_score=np.nan)
+                            scoring=custom_scorer, cv=3)
     multi_target_linear = MultiOutputClassifier(grid_clf)
     multi_target_linear.fit(X, y)
 
@@ -314,7 +314,7 @@ def test_multiclass_multioutput_estimator_predict_proba():
     Y = np.concatenate([y1, y2], axis=1)
 
     clf = MultiOutputClassifier(LogisticRegression(
-        multi_class='ovr', solver='liblinear', random_state=seed))
+        solver='liblinear', random_state=seed))
 
     clf.fit(X, Y)
 
@@ -422,8 +422,6 @@ def test_classifier_chain_fit_and_predict_with_linear_svc():
     assert not hasattr(classifier_chain, 'predict_proba')
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_classifier_chain_fit_and_predict_with_sparse_data():
     # Fit classifier chain with sparse data
     X, Y = generate_multilabel_dataset_with_correlations()
@@ -440,8 +438,6 @@ def test_classifier_chain_fit_and_predict_with_sparse_data():
     assert_array_equal(Y_pred_sparse, Y_pred_dense)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_classifier_chain_vs_independent_models():
     # Verify that an ensemble of classifier chains (each of length
     # N) can achieve a higher Jaccard similarity score than N independent
@@ -464,8 +460,6 @@ def test_classifier_chain_vs_independent_models():
                    jaccard_score(Y_test, Y_pred_ovr, average='samples'))
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_base_chain_fit_and_predict():
     # Fit base chain and verify predict performance
     X, Y = generate_multilabel_dataset_with_correlations()
@@ -485,8 +479,6 @@ def test_base_chain_fit_and_predict():
     assert isinstance(chains[1], ClassifierMixin)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_base_chain_fit_and_predict_with_sparse_data_and_cv():
     # Fit base chain with sparse data cross_val_predict
     X, Y = generate_multilabel_dataset_with_correlations()
@@ -499,8 +491,6 @@ def test_base_chain_fit_and_predict_with_sparse_data_and_cv():
         assert_equal(Y_pred.shape, Y.shape)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_base_chain_random_order():
     # Fit base chain with random order
     X, Y = generate_multilabel_dataset_with_correlations()
@@ -521,8 +511,6 @@ def test_base_chain_random_order():
             assert_array_almost_equal(est1.coef_, est2.coef_)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_base_chain_crossval_fit_and_predict():
     # Fit chain with cross_val_predict and verify predict
     # performance

@@ -22,7 +22,6 @@ from ..utils.validation import check_is_fitted
 from ..tree._tree import DTYPE
 from ..exceptions import NotFittedError
 from ..ensemble.gradient_boosting import BaseGradientBoosting
-from ..ensemble._gradient_boosting import _partial_dependence_tree
 
 
 __all__ = ['partial_dependence', 'plot_partial_dependence']
@@ -105,14 +104,14 @@ def _partial_dependence_recursion(est, grid, features):
     grid = np.asarray(grid, dtype=DTYPE, order='C')
 
     n_estimators, n_trees_per_stage = est.estimators_.shape
-    learning_rate = est.learning_rate
     averaged_predictions = np.zeros((n_trees_per_stage, grid.shape[0]),
                                     dtype=np.float64, order='C')
     for stage in range(n_estimators):
         for k in range(n_trees_per_stage):
             tree = est.estimators_[stage, k].tree_
-            _partial_dependence_tree(tree, grid, features,
-                                     learning_rate, averaged_predictions[k])
+            tree.compute_partial_dependence(grid, features,
+                                            averaged_predictions[k])
+    averaged_predictions *= est.learning_rate
 
     return averaged_predictions
 
@@ -356,7 +355,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
                                                              features)
 
     # reshape averaged_predictions to
-    # (n_outputs, n_values_feature_0, # n_values_feature_1, ...)
+    # (n_outputs, n_values_feature_0, n_values_feature_1, ...)
     averaged_predictions = averaged_predictions.reshape(
         -1, *[val.shape[0] for val in values])
 

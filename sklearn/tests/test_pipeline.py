@@ -11,11 +11,13 @@ import itertools
 import pytest
 import numpy as np
 from scipy import sparse
+import joblib
 
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_dict_equal
@@ -24,6 +26,7 @@ from sklearn.utils.testing import assert_no_warnings
 from sklearn.base import clone, BaseEstimator
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
 from sklearn.svm import SVC
+from sklearn.neighbors import LocalOutlierFactor
 from sklearn.linear_model import LogisticRegression, Lasso
 from sklearn.linear_model import LinearRegression
 from sklearn.cluster import KMeans
@@ -33,8 +36,6 @@ from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.utils._joblib import Memory
-from sklearn.utils._joblib import __version__ as joblib_version
 
 
 JUNK_FOOD_DOCS = (
@@ -185,6 +186,10 @@ def test_pipeline_init():
     filter1 = SelectKBest(f_classif)
     pipe = Pipeline([('anova', filter1), ('svc', clf)])
 
+    # Check that estimators are not cloned on pipeline construction
+    assert pipe.named_steps['anova'] is filter1
+    assert pipe.named_steps['svc'] is clf
+
     # Check that we can't instantiate with non-transformers on the way
     # Note that NoTrans implements fit, but not transform
     assert_raises_regex(TypeError,
@@ -235,8 +240,6 @@ def test_pipeline_init_tuple():
     pipe.score(X)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_pipeline_methods_anova():
     # Test the various methods of the pipeline (anova).
     iris = load_iris()
@@ -322,7 +325,7 @@ def test_pipeline_methods_pca_svm():
     X = iris.data
     y = iris.target
     # Test with PCA + SVC
-    clf = SVC(gamma='scale', probability=True, random_state=0)
+    clf = SVC(probability=True, random_state=0)
     pca = PCA(svd_solver='full', n_components='mle', whiten=True)
     pipe = Pipeline([('pca', pca), ('svc', clf)])
     pipe.fit(X, y)
@@ -330,6 +333,36 @@ def test_pipeline_methods_pca_svm():
     pipe.predict_proba(X)
     pipe.predict_log_proba(X)
     pipe.score(X, y)
+
+
+def test_pipeline_score_samples_pca_lof():
+    iris = load_iris()
+    X = iris.data
+    # Test that the score_samples method is implemented on a pipeline.
+    # Test that the score_samples method on pipeline yields same results as
+    # applying transform and score_samples steps separately.
+    pca = PCA(svd_solver='full', n_components='mle', whiten=True)
+    lof = LocalOutlierFactor(novelty=True)
+    pipe = Pipeline([('pca', pca), ('lof', lof)])
+    pipe.fit(X)
+    # Check the shapes
+    assert pipe.score_samples(X).shape == (X.shape[0],)
+    # Check the values
+    lof.fit(pca.fit_transform(X))
+    assert_allclose(pipe.score_samples(X), lof.score_samples(pca.transform(X)))
+
+
+def test_score_samples_on_pipeline_without_score_samples():
+    X = np.array([[1], [2]])
+    y = np.array([1, 2])
+    # Test that a pipeline does not have score_samples method when the final
+    # step of the pipeline does not have score_samples defined.
+    pipe = make_pipeline(LogisticRegression())
+    pipe.fit(X, y)
+    with pytest.raises(AttributeError,
+                       match="'LogisticRegression' object has no attribute "
+                             "'score_samples'"):
+        pipe.score_samples(X)
 
 
 def test_pipeline_methods_preprocessing_svm():
@@ -341,8 +374,7 @@ def test_pipeline_methods_preprocessing_svm():
     n_classes = len(np.unique(y))
     scaler = StandardScaler()
     pca = PCA(n_components=2, svd_solver='randomized', whiten=True)
-    clf = SVC(gamma='scale', probability=True, random_state=0,
-              decision_function_shape='ovr')
+    clf = SVC(probability=True, random_state=0, decision_function_shape='ovr')
 
     for preprocessing in [scaler, pca]:
         pipe = Pipeline([('preprocess', preprocessing), ('svc', clf)])
@@ -834,8 +866,6 @@ def test_feature_union_feature_names():
                          'get_feature_names', ft.get_feature_names)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_classes_property():
     iris = load_iris()
     X = iris.data
@@ -946,8 +976,6 @@ def test_step_name_validation():
                                  [[1]], [1])
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_set_params_nested_pipeline():
     estimator = Pipeline([
         ('a', Pipeline([
@@ -1001,13 +1029,13 @@ def test_pipeline_memory():
     y = iris.target
     cachedir = mkdtemp()
     try:
-        if LooseVersion(joblib_version) < LooseVersion('0.12'):
+        if LooseVersion(joblib.__version__) < LooseVersion('0.12'):
             # Deal with change of API in joblib
-            memory = Memory(cachedir=cachedir, verbose=10)
+            memory = joblib.Memory(cachedir=cachedir, verbose=10)
         else:
-            memory = Memory(location=cachedir, verbose=10)
+            memory = joblib.Memory(location=cachedir, verbose=10)
         # Test with Transformer + SVC
-        clf = SVC(gamma='scale', probability=True, random_state=0)
+        clf = SVC(probability=True, random_state=0)
         transf = DummyTransf()
         pipe = Pipeline([('transf', clone(transf)), ('svc', clf)])
         cached_pipe = Pipeline([('transf', transf), ('svc', clf)],
@@ -1041,7 +1069,7 @@ def test_pipeline_memory():
         assert_equal(ts, cached_pipe.named_steps['transf'].timestamp_)
         # Create a new pipeline with cloned estimators
         # Check that even changing the name step does not affect the cache hit
-        clf_2 = SVC(gamma='scale', probability=True, random_state=0)
+        clf_2 = SVC(probability=True, random_state=0)
         transf_2 = DummyTransf()
         cached_pipe_2 = Pipeline([('transf_2', transf_2), ('svc', clf_2)],
                                  memory=memory)
@@ -1063,11 +1091,11 @@ def test_pipeline_memory():
 
 def test_make_pipeline_memory():
     cachedir = mkdtemp()
-    if LooseVersion(joblib_version) < LooseVersion('0.12'):
+    if LooseVersion(joblib.__version__) < LooseVersion('0.12'):
         # Deal with change of API in joblib
-        memory = Memory(cachedir=cachedir, verbose=10)
+        memory = joblib.Memory(cachedir=cachedir, verbose=10)
     else:
-        memory = Memory(location=cachedir, verbose=10)
+        memory = joblib.Memory(location=cachedir, verbose=10)
     pipeline = make_pipeline(DummyTransf(), SVC(), memory=memory)
     assert pipeline.memory is memory
     pipeline = make_pipeline(DummyTransf(), SVC())

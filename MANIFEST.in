@@ -1,7 +1,7 @@
 include *.rst
 recursive-include doc *
 recursive-include examples *
-recursive-include sklearn *.c *.h *.pyx *.pxd *.pxi
+recursive-include sklearn *.c *.h *.pyx *.pxd *.pxi *.tp
 recursive-include sklearn/datasets *.csv *.csv.gz *.rst *.jpg *.txt *.arff.gz *.json.gz
 include COPYING
 include README.rst

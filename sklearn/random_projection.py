@@ -596,7 +596,7 @@ class SparseRandomProjection(BaseRandomProjection):
     >>> X_new.shape
     (100, 3947)
     >>> # very few components are non-zero
-    >>> np.mean(transformer.components_ != 0) # doctest: +ELLIPSIS
+    >>> np.mean(transformer.components_ != 0)
     0.0100...
 
     See Also

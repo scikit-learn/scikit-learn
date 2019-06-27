@@ -21,16 +21,11 @@ import tempfile
 from subprocess import check_output, STDOUT, CalledProcessError
 from subprocess import TimeoutExpired
 
-
 import scipy as sp
-import scipy.io
 from functools import wraps
 from operator import itemgetter
 from inspect import signature
-from urllib.request import urlopen
-from urllib.error import HTTPError
 
-import tempfile
 import shutil
 import atexit
 import unittest
@@ -48,37 +43,13 @@ from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_less
 import numpy as np
+import joblib
 
 import sklearn
 from sklearn.base import (BaseEstimator, ClassifierMixin, ClusterMixin,
                           RegressorMixin, TransformerMixin)
 from sklearn.utils import deprecated, IS_PYPY, _IS_32BIT
-from sklearn.utils._joblib import joblib
 from sklearn.utils._unittest_backport import TestCase
-
-additional_names_in_all = []
-try:
-    from nose.tools import raises as _nose_raises
-    deprecation_message = (
-        'sklearn.utils.testing.raises has been deprecated in version 0.20 '
-        'and will be removed in 0.22. Please use '
-        'sklearn.utils.testing.assert_raises instead.')
-    raises = deprecated(deprecation_message)(_nose_raises)
-    additional_names_in_all.append('raises')
-except ImportError:
-    pass
-
-try:
-    from nose.tools import with_setup as _with_setup
-    deprecation_message = (
-        'sklearn.utils.testing.with_setup has been deprecated in version 0.20 '
-        'and will be removed in 0.22.'
-        'If your code relies on with_setup, please use'
-        ' nose.tools.with_setup instead.')
-    with_setup = deprecated(deprecation_message)(_with_setup)
-    additional_names_in_all.append('with_setup')
-except ImportError:
-    pass
 
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_raises_regexp", "assert_true",
@@ -88,7 +59,6 @@ __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_greater", "assert_greater_equal",
            "assert_approx_equal", "assert_allclose",
            "assert_run_python_script", "SkipTest"]
-__all__.extend(additional_names_in_all)
 
 _dummy = TestCase('__init__')
 assert_equal = _dummy.assertEqual
@@ -141,7 +111,6 @@ def assert_warns(warning_class, func, *args, **kw):
     result : the return value of `func`
 
     """
-    clean_warning_registry()
     with warnings.catch_warnings(record=True) as w:
         # Cause all warnings to always be triggered.
         warnings.simplefilter("always")
@@ -190,7 +159,6 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
     result : the return value of `func`
 
     """
-    clean_warning_registry()
     with warnings.catch_warnings(record=True) as w:
         # Cause all warnings to always be triggered.
         warnings.simplefilter("always")
@@ -266,7 +234,6 @@ def assert_no_warnings(func, *args, **kw):
     **kw
     """
     # very important to avoid uncontrolled state propagation
-    clean_warning_registry()
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter('always')
 
@@ -349,7 +316,6 @@ class _IgnoreWarnings:
         """Decorator to catch and hide warnings without visual nesting."""
         @wraps(fn)
         def wrapper(*args, **kwargs):
-            clean_warning_registry()
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", self.category)
                 return fn(*args, **kwargs)
@@ -372,7 +338,6 @@ class _IgnoreWarnings:
         self._filters = self._module.filters
         self._module.filters = self._filters[:]
         self._showwarning = self._module.showwarning
-        clean_warning_registry()
         warnings.simplefilter("ignore", self.category)
 
     def __exit__(self, *exc_info):
@@ -381,7 +346,6 @@ class _IgnoreWarnings:
         self._module.filters = self._filters
         self._module.showwarning = self._showwarning
         self.log[:] = []
-        clean_warning_registry()
 
 
 def assert_raise_message(exceptions, message, function, *args, **kwargs):
@@ -465,121 +429,6 @@ def assert_allclose_dense_sparse(x, y, rtol=1e-07, atol=1e-9, err_msg=''):
     else:
         raise ValueError("Can only compare two sparse matrices,"
                          " not a sparse matrix and an array.")
-
-
-@deprecated('deprecated in version 0.20 to be removed in version 0.22')
-def fake_mldata(columns_dict, dataname, matfile, ordering=None):
-    """Create a fake mldata data set.
-
-    .. deprecated:: 0.20
-        Will be removed in version 0.22
-
-    Parameters
-    ----------
-    columns_dict : dict, keys=str, values=ndarray
-        Contains data as columns_dict[column_name] = array of data.
-
-    dataname : string
-        Name of data set.
-
-    matfile : string or file object
-        The file name string or the file-like object of the output file.
-
-    ordering : list, default None
-        List of column_names, determines the ordering in the data set.
-
-    Notes
-    -----
-    This function transposes all arrays, while fetch_mldata only transposes
-    'data', keep that into account in the tests.
-    """
-    datasets = dict(columns_dict)
-
-    # transpose all variables
-    for name in datasets:
-        datasets[name] = datasets[name].T
-
-    if ordering is None:
-        ordering = sorted(list(datasets.keys()))
-    # NOTE: setting up this array is tricky, because of the way Matlab
-    # re-packages 1D arrays
-    datasets['mldata_descr_ordering'] = sp.empty((1, len(ordering)),
-                                                 dtype='object')
-    for i, name in enumerate(ordering):
-        datasets['mldata_descr_ordering'][0, i] = name
-
-    scipy.io.savemat(matfile, datasets, oned_as='column')
-
-
-@deprecated('deprecated in version 0.20 to be removed in version 0.22')
-class mock_mldata_urlopen:
-    """Object that mocks the urlopen function to fake requests to mldata.
-
-    When requesting a dataset with a name that is in mock_datasets, this object
-    creates a fake dataset in a StringIO object and returns it. Otherwise, it
-    raises an HTTPError.
-
-    .. deprecated:: 0.20
-        Will be removed in version 0.22
-
-    Parameters
-    ----------
-    mock_datasets : dict
-        A dictionary of {dataset_name: data_dict}, or
-        {dataset_name: (data_dict, ordering). `data_dict` itself is a
-        dictionary of {column_name: data_array}, and `ordering` is a list of
-        column_names to determine the ordering in the data set (see
-        :func:`fake_mldata` for details).
-    """
-    def __init__(self, mock_datasets):
-        self.mock_datasets = mock_datasets
-
-    def __call__(self, urlname):
-        """
-        Parameters
-        ----------
-        urlname : string
-            The url
-        """
-        dataset_name = urlname.split('/')[-1]
-        if dataset_name in self.mock_datasets:
-            resource_name = '_' + dataset_name
-            from io import BytesIO
-            matfile = BytesIO()
-
-            dataset = self.mock_datasets[dataset_name]
-            ordering = None
-            if isinstance(dataset, tuple):
-                dataset, ordering = dataset
-            fake_mldata(dataset, resource_name, matfile, ordering)
-
-            matfile.seek(0)
-            return matfile
-        else:
-            raise HTTPError(urlname, 404, dataset_name + " is not available",
-                            [], None)
-
-
-def install_mldata_mock(mock_datasets):
-    """
-    Parameters
-    ----------
-    mock_datasets : dict
-        A dictionary of {dataset_name: data_dict}, or
-        {dataset_name: (data_dict, ordering). `data_dict` itself is a
-        dictionary of {column_name: data_array}, and `ordering` is a list of
-        column_names to determine the ordering in the data set (see
-        :func:`fake_mldata` for details).
-    """
-    # Lazy import to avoid mutually recursive imports
-    from sklearn import datasets
-    datasets.mldata.urlopen = mock_mldata_urlopen(mock_datasets)
-
-
-def uninstall_mldata_mock():
-    # Lazy import to avoid mutually recursive imports
-    from sklearn import datasets
-    datasets.mldata.urlopen = urlopen
 
 
 def all_estimators(include_meta_estimators=None,
@@ -714,28 +563,6 @@ def set_random_state(estimator, random_state=0):
         estimator.set_params(random_state=random_state)
 
 
-def if_matplotlib(func):
-    """Test decorator that skips test if matplotlib not installed.
-
-    Parameters
-    ----------
-    func
-    """
-    @wraps(func)
-    def run_test(*args, **kwargs):
-        try:
-            import matplotlib
-            matplotlib.use('Agg', warn=False)
-            # this fails if no $DISPLAY specified
-            import matplotlib.pyplot as plt
-            plt.figure()
-        except ImportError:
-            raise SkipTest('Matplotlib not available.')
-        else:
-            return func(*args, **kwargs)
-    return run_test
-
-
 try:
     import pytest
 
@@ -777,15 +604,16 @@ except ImportError:
 def clean_warning_registry():
     """Clean Python warning registry for easier testing of warning messages.
 
-    We may not need to do this any more when getting rid of Python 2, not
-    entirely sure. See https://bugs.python.org/issue4180 and
+    When changing warning filters this function is not necessary with
+    Python3.5+, as __warningregistry__ will be re-set internally.
+    See https://bugs.python.org/issue4180 and
     https://bugs.python.org/issue21724 for more details.
 
     """
-    reg = "__warningregistry__"
-    for mod_name, mod in list(sys.modules.items()):
-        if hasattr(mod, reg):
-            getattr(mod, reg).clear()
+    for mod in sys.modules.values():
+        registry = getattr(mod, "__warningregistry__", None)
+        if registry is not None:
+            registry.clear()
 
 
 def check_skip_network():
@@ -869,16 +697,13 @@ def _get_args(function, varargs=False):
         return args
 
 
-def _get_func_name(func, class_name=None):
+def _get_func_name(func):
     """Get function full name
 
     Parameters
     ----------
     func : callable
         The function object.
-    class_name : string, optional (default: None)
-       If ``func`` is a class method and the class name is known specify
-       class_name for the error message.
 
     Returns
     -------
@@ -889,16 +714,16 @@ def _get_func_name(func, class_name=None):
     module = inspect.getmodule(func)
     if module:
         parts.append(module.__name__)
-    if class_name is not None:
-        parts.append(class_name)
-    elif hasattr(func, 'im_class'):
-        parts.append(func.im_class.__name__)
+
+    qualname = func.__qualname__
+    if qualname != func.__name__:
+        parts.append(qualname[:qualname.find('.')])
 
     parts.append(func.__name__)
     return '.'.join(parts)
 
 
-def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
+def check_docstring_parameters(func, doc=None, ignore=None):
     """Helper to check docstring
 
     Parameters
@@ -909,9 +734,6 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
         Docstring if it is passed manually to the test.
     ignore : None | list
         Parameters to ignore.
-    class_name : string, optional (default: None)
-       If ``func`` is a class method and the class name is known specify
-       class_name for the error message.
 
     Returns
     -------
@@ -922,7 +744,7 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
     incorrect = []
     ignore = [] if ignore is None else ignore
 
-    func_name = _get_func_name(func, class_name=class_name)
+    func_name = _get_func_name(func)
     if (not func_name.startswith('sklearn.') or
             func_name.startswith('sklearn.externals')):
         return incorrect
@@ -935,11 +757,13 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
     # Dont check estimator_checks module
     if func_name.split('.')[2] == 'estimator_checks':
         return incorrect
-    args = list(filter(lambda x: x not in ignore, _get_args(func)))
+    # Get the arguments from the function signature
+    param_signature = list(filter(lambda x: x not in ignore, _get_args(func)))
     # drop self
-    if len(args) > 0 and args[0] == 'self':
-        args.remove('self')
+    if len(param_signature) > 0 and param_signature[0] == 'self':
+        param_signature.remove('self')
 
+    # Analyze function's docstring
     if doc is None:
         with warnings.catch_warnings(record=True) as w:
             try:
@@ -950,8 +774,9 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
         if len(w):
             raise RuntimeError('Error for %s:\n%s' % (func_name, w[0]))
 
-    param_names = []
+    param_docs = []
     for name, type_definition, param_doc in doc['Parameters']:
+        # Type hints are empty only if parameter name ended with :
         if not type_definition.strip():
             if ':' in name and name[:name.index(':')][-1:].strip():
                 incorrect += [func_name +
@@ -962,18 +787,65 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
                               ' Parameter %r has an empty type spec. '
                               'Remove the colon' % (name.lstrip())]
 
+        # Create a list of parameters to compare with the parameters gotten
+        # from the func signature
         if '*' not in name:
-            param_names.append(name.split(':')[0].strip('` '))
+            param_docs.append(name.split(':')[0].strip('` '))
 
-    param_names = list(filter(lambda x: x not in ignore, param_names))
+    # If one of the docstring's parameters had an error then return that
+    # incorrect message
+    if len(incorrect) > 0:
+        return incorrect
 
-    if len(param_names) != len(args):
-        bad = str(sorted(list(set(param_names) ^ set(args))))
-        incorrect += [func_name + ' arg mismatch: ' + bad]
-    else:
-        for n1, n2 in zip(param_names, args):
-            if n1 != n2:
-                incorrect += [func_name + ' ' + n1 + ' != ' + n2]
+    # Remove the parameters that should be ignored from list
+    param_docs = list(filter(lambda x: x not in ignore, param_docs))
+
+    # The following is derived from pytest, Copyright (c) 2004-2017 Holger
+    # Krekel and others, Licensed under MIT License. See
+    # https://github.com/pytest-dev/pytest
+
+    message = []
+    for i in range(min(len(param_docs), len(param_signature))):
+        if param_signature[i] != param_docs[i]:
+            message += ["There's a parameter name mismatch in function"
+                        " docstring w.r.t. function signature, at index %s"
+                        " diff: %r != %r" %
+                        (i, param_signature[i], param_docs[i])]
+            break
+    if len(param_signature) > len(param_docs):
+        message += ["Parameters in function docstring have less items w.r.t."
+                    " function signature, first missing item: %s" %
+                    param_signature[len(param_docs)]]
+
+    elif len(param_signature) < len(param_docs):
+        message += ["Parameters in function docstring have more items w.r.t."
+                    " function signature, first extra item: %s" %
+                    param_docs[len(param_signature)]]
+
+    # If there wasn't any difference in the parameters themselves between
+    # docstring and signature including having the same length then return
+    # empty list
+    if len(message) == 0:
+        return []
+
+    import difflib
+    import pprint
+
+    param_docs_formatted = pprint.pformat(param_docs).splitlines()
+    param_signature_formatted = pprint.pformat(param_signature).splitlines()
+
+    message += ["Full diff:"]
+
+    message.extend(
+        line.strip() for line in difflib.ndiff(param_signature_formatted,
+                                               param_docs_formatted)
+    )
+
+    incorrect.extend(message)
+
+    # Prepend function name
+    incorrect = ['In function: ' + func_name] + incorrect
+
     return incorrect
 
 
@@ -1024,21 +896,3 @@ def assert_run_python_script(source_code, timeout=60):
                                % e.output.decode('utf-8'))
     finally:
         os.unlink(source_file)
-
-
-def close_figure(fig=None):
-    """Close a matplotlibt figure.
-
-    Parameters
-    ----------
-    fig : int or str or Figure, optional (default=None)
-        The figure, figure number or figure name to close. If ``None``, all
-        current figures are closed.
-    """
-    from matplotlib.pyplot import get_fignums, close as _close  # noqa
-
-    if fig is None:
-        for fig in get_fignums():
-            _close(fig)
-    else:
-        _close(fig)

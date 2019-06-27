@@ -214,7 +214,6 @@ def test_kernel_pca_invalid_kernel():
     assert_raises(ValueError, kpca.fit, X_fit)
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 # 0.23. warning about tol not having its correct default value.
 @pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_gridsearch_pipeline():
@@ -231,7 +230,6 @@ def test_gridsearch_pipeline():
     assert_equal(grid_search.best_score_, 1)
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 # 0.23. warning about tol not having its correct default value.
 @pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_gridsearch_pipeline_precomputed():

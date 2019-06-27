@@ -13,6 +13,9 @@ from sklearn.utils.testing import assert_allclose_dense_sparse
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 
+# make IterativeImputer available
+from sklearn.experimental import enable_iterative_imputer  # noqa
+
 from sklearn.impute import MissingIndicator
 from sklearn.impute import SimpleImputer, IterativeImputer
 from sklearn.dummy import DummyRegressor
@@ -442,8 +445,16 @@ def test_imputation_constant_pandas(dtype):
     assert_array_equal(X_trans, X_true)
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
+@pytest.mark.parametrize('Imputer', (SimpleImputer, IterativeImputer))
+def test_imputation_missing_value_in_test_array(Imputer):
+    # [Non Regression Test for issue #13968] Missing value in test set should
+    # not throw an error and return a finite dataset
+    train = [[1], [2]]
+    test = [[3], [np.nan]]
+    imputer = Imputer(add_indicator=True)
+    imputer.fit(train).transform(test)
+
+
 def test_imputation_pipeline_grid_search():
     # Test imputation within a pipeline + gridsearch.
     X = sparse_random_matrix(100, 100, density=0.10)
@@ -795,7 +806,7 @@ def test_iterative_imputer_no_missing():
 
 def test_iterative_imputer_rank_one():
     rng = np.random.RandomState(0)
-    d = 100
+    d = 50
     A = rng.rand(d, 1)
     B = rng.rand(1, d)
     X = np.dot(A, B)
@@ -807,7 +818,7 @@ def test_iterative_imputer_rank_one():
                                verbose=1,
                                random_state=rng)
     X_filled = imputer.fit_transform(X_missing)
-    assert_allclose(X_filled, X, atol=0.01)
+    assert_allclose(X_filled, X, atol=0.02)
 
 
 @pytest.mark.parametrize(
@@ -816,8 +827,8 @@ def test_iterative_imputer_rank_one():
 )
 def test_iterative_imputer_transform_recovery(rank):
     rng = np.random.RandomState(0)
-    n = 100
-    d = 100
+    n = 70
+    d = 70
     A = rng.rand(n, rank)
     B = rng.rand(rank, d)
     X_filled = np.dot(A, B)
@@ -831,7 +842,7 @@ def test_iterative_imputer_transform_recovery(rank):
     X_test_filled = X_filled[n:]
     X_test = X_missing[n:]
 
-    imputer = IterativeImputer(max_iter=10,
+    imputer = IterativeImputer(max_iter=5,
                                verbose=1,
                                random_state=rng).fit(X_train)
     X_test_est = imputer.transform(X_test)
@@ -889,7 +900,7 @@ def test_iterative_imputer_early_stopping():
     X_missing[nan_mask] = np.nan
 
     imputer = IterativeImputer(max_iter=100,
-                               tol=1e-3,
+                               tol=1e-2,
                                sample_posterior=False,
                                verbose=1,
                                random_state=rng)
