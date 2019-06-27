@@ -351,8 +351,7 @@ def test_compare_to_ELKI():
 
     assert_array_equal(clust1.ordering_, np.array(o1))
     assert_array_equal(clust1.predecessor_[clust1.ordering_], np.array(p1))
-    assert_allclose(clust1.reachability_[clust1.ordering_], np.array(r1),
-                    rtol=2e-6)
+    assert_allclose(clust1.reachability_[clust1.ordering_], np.array(r1))
     # ELKI currently does not print the core distances (which are not used much
     # in literature, but we can at least ensure to have this consistency:
     for i in clust1.ordering_[1:]:
@@ -386,8 +385,7 @@ def test_compare_to_ELKI():
 
     assert_array_equal(clust2.ordering_, np.array(o2))
     assert_array_equal(clust2.predecessor_[clust2.ordering_], np.array(p2))
-    assert_allclose(clust2.reachability_[clust2.ordering_], np.array(r2),
-                    rtol=2e-6)
+    assert_allclose(clust2.reachability_[clust2.ordering_], np.array(r2))
 
     index = np.where(clust1.core_distances_ <= 0.5)[0]
     assert_allclose(clust1.core_distances_[index],
@@ -423,5 +421,5 @@ def test_precomputed_dists():
     clust2 = OPTICS(min_samples=10, algorithm='brute',
                     metric='euclidean').fit(redX)
 
-    assert_allclose(clust1.reachability_, clust2.reachability_, rtol=2e-7)
+    assert_allclose(clust1.reachability_, clust2.reachability_)
     assert_array_equal(clust1.labels_, clust2.labels_)
