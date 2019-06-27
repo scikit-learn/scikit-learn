@@ -94,7 +94,7 @@ def maybe_cythonize_extensions(top_path, config):
                 # available CPU in some cases
                 n_jobs = joblib.effective_n_jobs()
         except ImportError:
-            n_jobs = 1
+            pass
 
         config.ext_modules = cythonize(
             config.ext_modules,
