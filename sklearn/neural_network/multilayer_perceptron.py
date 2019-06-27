@@ -844,7 +844,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         Note that number of loss function calls will be greater than or equal
         to the number of iterations for the `MLPClassifier`.
 
-        .. versionadded:: 0.21
+        .. versionadded:: 0.22
 
     Attributes
     ----------
