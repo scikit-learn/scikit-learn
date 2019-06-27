@@ -941,4 +941,15 @@ def _refresh_cache(path):
         except IOError:
             pass
 
+        other_warns = [w for w in warns if not str(w.message).startswith(msg)]
+        joblib_warning = [w for w in warns
+                          if str(w.message).startswith(msg)][0]
+
+        for w in other_warns:
+            warnings.warn(message=w.message, category=w.category)
+
+        message = str(joblib_warning.message) + (
+            " The persisted files are located under: %s" % path)
+        warnings.warn(message=message, category=joblib_warning.category)
+
     return X, y
