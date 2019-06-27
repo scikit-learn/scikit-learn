@@ -126,7 +126,7 @@ def fetch_covtype(data_home=None, download_if_missing=True,
     try:
         X, y
     except NameError:
-        X, y = _refresh_cache(covtype_dir)
+        X, y = _refresh_cache([samples_path, targets_path], 9)
         # Revert to the following two lines in v0.23
         # X = joblib.load(samples_path)
         # y = joblib.load(targets_path)

@@ -922,23 +922,20 @@ def _fetch_remote(remote, dirname=None):
     return file_path
 
 
-def _refresh_cache(path):
+def _refresh_cache(files, compress):
     # REMOVE in v0.23
     import joblib
-    samples_path = _pkl_filepath(path, "samples")
-    targets_path = _pkl_filepath(path, "targets")
     msg = "sklearn.externals.joblib is deprecated in 0.21"
     with warnings.catch_warnings(record=True) as warns:
-        X = joblib.load(samples_path)
-        y = joblib.load(targets_path)
+        data = tuple([joblib.load(f) for f in files])
 
-        refresh_needed = any([str(x.message).startswith(msg) for x in warns])
+    refresh_needed = any([str(x.message).startswith(msg) for x in warns])
 
     if refresh_needed:
         raise_joblib = False
         try:
-            joblib.dump(X, samples_path, compress=9)
-            joblib.dump(y, samples_path, compress=9)
+            for value, path in zip(data, files):
+                joblib.dump(value, path, compress=compress)
         except IOError:
             raise_joblib = True
 
@@ -953,4 +950,7 @@ def _refresh_cache(path):
                 " The persisted files are located under: %s" % path)
             warnings.warn(message=message, category=joblib_warning.category)
 
-    return X, y
+    if len(data) == 1:
+        return data[0]
+    else:
+        return data
