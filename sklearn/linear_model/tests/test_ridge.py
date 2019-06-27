@@ -1099,13 +1099,14 @@ def test_dtype_match(solver):
     X_32 = X_64.astype(np.float32)
     y_32 = y_64.astype(np.float32)
 
+    tol = 2 * np.finfo(np.float32).resolution
     # Check type consistency 32bits
-    ridge_32 = Ridge(alpha=alpha, solver=solver, max_iter=500, tol=1e-10,)
+    ridge_32 = Ridge(alpha=alpha, solver=solver, max_iter=500, tol=tol)
     ridge_32.fit(X_32, y_32)
     coef_32 = ridge_32.coef_
 
     # Check type consistency 64 bits
-    ridge_64 = Ridge(alpha=alpha, solver=solver, max_iter=500, tol=1e-10,)
+    ridge_64 = Ridge(alpha=alpha, solver=solver, max_iter=500, tol=tol)
     ridge_64.fit(X_64, y_64)
     coef_64 = ridge_64.coef_
 
