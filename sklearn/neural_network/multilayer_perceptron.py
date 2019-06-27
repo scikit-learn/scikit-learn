@@ -1235,7 +1235,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         Note that number of function calls will be greater than or equal to
         the number of iterations for the MLPRegressor.
 
-        .. versionadded:: 0.21
+        .. versionadded:: 0.22
 
     Attributes
     ----------
