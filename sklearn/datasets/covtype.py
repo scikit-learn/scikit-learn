@@ -42,8 +42,7 @@ logger = logging.getLogger(__name__)
 
 
 def fetch_covtype(data_home=None, download_if_missing=True,
-                  random_state=None, shuffle=False, return_X_y=False,
-                  refresh_cache='joblib'):
+                  random_state=None, shuffle=False, return_X_y=False):
     """Load the covertype dataset (classification).
 
     Download it if necessary.
