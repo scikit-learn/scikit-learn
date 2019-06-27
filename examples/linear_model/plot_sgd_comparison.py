@@ -32,8 +32,7 @@ classifiers = [
                                                          C=1.0, tol=1e-4)),
     ("Passive-Aggressive II", PassiveAggressiveClassifier(loss='squared_hinge',
                                                           C=1.0, tol=1e-4)),
-    ("SAG", LogisticRegression(solver='sag', tol=1e-1, C=1.e4 / X.shape[0],
-                               multi_class='auto'))
+    ("SAG", LogisticRegression(solver='sag', tol=1e-1, C=1.e4 / X.shape[0]))
 ]
 
 xx = 1. - np.array(heldout)

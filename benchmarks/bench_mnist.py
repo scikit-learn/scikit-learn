@@ -36,7 +36,7 @@ import argparse
 import numpy as np
 from joblib import Memory
 
-from sklearn.datasets import fetch_mldata
+from sklearn.datasets import fetch_openml
 from sklearn.datasets import get_data_home
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.ensemble import RandomForestClassifier
@@ -63,7 +63,7 @@ def load_data(dtype=np.float32, order='F'):
     ######################################################################
     # Load dataset
     print("Loading dataset...")
-    data = fetch_mldata('MNIST original')
+    data = fetch_openml('mnist_784')
     X = check_array(data['data'], dtype=dtype, order=order)
     y = data["target"]
 

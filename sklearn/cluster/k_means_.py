@@ -15,6 +15,7 @@ import warnings
 
 import numpy as np
 import scipy.sparse as sp
+from joblib import Parallel, delayed, effective_n_jobs
 
 from ..base import BaseEstimator, ClusterMixin, TransformerMixin
 from ..metrics.pairwise import euclidean_distances
@@ -28,9 +29,6 @@ from ..utils import gen_batches
 from ..utils import check_random_state
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
-from ..utils._joblib import Parallel
-from ..utils._joblib import delayed
-from ..utils._joblib import effective_n_jobs
 from ..exceptions import ConvergenceWarning
 from . import _k_means
 from ._k_means_elkan import k_means_elkan

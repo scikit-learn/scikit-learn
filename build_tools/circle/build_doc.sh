@@ -101,7 +101,7 @@ sudo -E apt-get -yq remove texlive-binaries --purge
 sudo -E apt-get -yq --no-install-suggests --no-install-recommends \
     install dvipng texlive-latex-base texlive-latex-extra \
     texlive-latex-recommended texlive-fonts-recommended \
-    latexmk gsfonts
+    latexmk gsfonts ccache
 
 # deactivate circleci virtualenv and setup a miniconda env instead
 if [[ `type -t deactivate` ]]; then
@@ -112,7 +112,10 @@ fi
 wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
    -O miniconda.sh
 chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
-export PATH="$MINICONDA_PATH/bin:$PATH"
+export PATH="/usr/lib/ccache:$MINICONDA_PATH/bin:$PATH"
+
+ccache -M 512M
+export CCACHE_COMPRESS=1
 
 # Configure the conda environment and put it in the path using the
 # provided versions
@@ -128,6 +131,8 @@ pip install numpydoc==0.9
 
 # Build and install scikit-learn in dev mode
 python setup.py develop
+
+export OMP_NUM_THREADS=1
 
 if [[ "$CIRCLE_BRANCH" =~ ^master$ && -z "$CI_PULL_REQUEST" ]]
 then
@@ -159,7 +164,7 @@ then
     echo "$affected"
     (
     echo '<html><body><ul>'
-    echo "$affected" | sed 's|.*|<li><a href="&">&</a></li>|'
+    echo "$affected" | sed 's|.*|<li><a href="&">&</a> [<a href="https://scikit-learn.org/dev/&">dev</a>, <a href="https://scikit-learn.org/stable/&">stable</a>]</li>|'
     echo '</ul><p>General: <a href="index.html">Home</a> | <a href="modules/classes.html">API Reference</a> | <a href="auto_examples/index.html">Examples</a></p></body></html>'
     ) > 'doc/_build/html/stable/_changed.html'
 fi

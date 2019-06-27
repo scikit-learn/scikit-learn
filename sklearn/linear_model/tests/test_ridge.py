@@ -34,7 +34,7 @@ from sklearn.linear_model.ridge import RidgeClassifierCV
 from sklearn.linear_model.ridge import _solve_cholesky
 from sklearn.linear_model.ridge import _solve_cholesky_kernel
 from sklearn.linear_model.ridge import _check_gcv_mode
-from sklearn.linear_model.ridge import _X_operator
+from sklearn.linear_model.ridge import _X_CenterStackOp
 from sklearn.datasets import make_regression
 
 from sklearn.model_selection import GridSearchCV
@@ -314,14 +314,14 @@ def test_ridge_individual_penalties():
 
 
 @pytest.mark.parametrize('n_col', [(), (1,), (3,)])
-def test_x_operator(n_col):
+def test_X_CenterStackOp(n_col):
     rng = np.random.RandomState(0)
     X = rng.randn(11, 8)
     X_m = rng.randn(8)
     sqrt_sw = rng.randn(len(X))
     Y = rng.randn(11, *n_col)
     A = rng.randn(9, *n_col)
-    operator = _X_operator(sp.csr_matrix(X), X_m, sqrt_sw)
+    operator = _X_CenterStackOp(sp.csr_matrix(X), X_m, sqrt_sw)
     reference_operator = np.hstack(
         [X - sqrt_sw[:, None] * X_m, sqrt_sw[:, None]])
     assert_allclose(reference_operator.dot(A), operator.dot(A))
@@ -391,6 +391,41 @@ def _make_sparse_offset_regression(
     if coef:
         return X, y, c
     return X, y
+
+
+@pytest.mark.parametrize(
+    'solver, sparse_X',
+    ((solver, sparse_X) for
+     (solver, sparse_X) in product(
+         ['cholesky', 'sag', 'sparse_cg', 'lsqr', 'saga', 'ridgecv'],
+         [False, True])
+     if not (sparse_X and solver not in ['sparse_cg', 'ridgecv'])))
+@pytest.mark.parametrize(
+    'n_samples,dtype,proportion_nonzero',
+    [(20, 'float32', .1), (40, 'float32', 1.), (20, 'float64', .2)])
+@pytest.mark.parametrize('seed', np.arange(3))
+def test_solver_consistency(
+        solver, proportion_nonzero, n_samples, dtype, sparse_X, seed):
+    alpha = 1.
+    noise = 50. if proportion_nonzero > .9 else 500.
+    X, y = _make_sparse_offset_regression(
+        bias=10, n_features=30, proportion_nonzero=proportion_nonzero,
+        noise=noise, random_state=seed, n_samples=n_samples)
+    svd_ridge = Ridge(
+        solver='svd', normalize=True, alpha=alpha).fit(X, y)
+    X = X.astype(dtype, copy=False)
+    y = y.astype(dtype, copy=False)
+    if sparse_X:
+        X = sp.csr_matrix(X)
+    if solver == 'ridgecv':
+        ridge = RidgeCV(alphas=[alpha], normalize=True)
+    else:
+        ridge = Ridge(solver=solver, tol=1e-10, normalize=True, alpha=alpha)
+    ridge.fit(X, y)
+    assert_allclose(
+        ridge.coef_, svd_ridge.coef_, atol=1e-3, rtol=1e-3)
+    assert_allclose(
+        ridge.intercept_, svd_ridge.intercept_, atol=1e-3, rtol=1e-3)
 
 
 @pytest.mark.parametrize('gcv_mode', ['svd', 'eigen'])
@@ -660,7 +695,6 @@ def check_dense_sparse(test_func):
         assert_array_almost_equal(ret_dense, ret_sparse, decimal=3)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
 @pytest.mark.parametrize(
         'test_func',
@@ -714,7 +748,6 @@ def test_class_weights():
     assert_array_almost_equal(reg.intercept_, rega.intercept_)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 @pytest.mark.parametrize('reg', (RidgeClassifier, RidgeClassifierCV))
 def test_class_weight_vs_sample_weight(reg):
     """Check class_weights resemble sample_weights behavior."""
@@ -744,7 +777,6 @@ def test_class_weight_vs_sample_weight(reg):
     assert_almost_equal(reg1.coef_, reg2.coef_)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_class_weights_cv():
     # Test class weights for cross validated ridge classifier.
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
@@ -761,7 +793,6 @@ def test_class_weights_cv():
     assert_array_equal(reg.predict([[-.2, 2]]), np.array([-1]))
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_ridgecv_store_cv_values():
     rng = np.random.RandomState(42)
 
@@ -789,7 +820,6 @@ def test_ridgecv_store_cv_values():
                         r.fit, x, y)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_ridge_classifier_cv_store_cv_values():
     x = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
                   [1.0, 1.0], [1.0, 0.0]])
@@ -909,7 +939,6 @@ def test_sparse_design_with_sample_weights():
                                       decimal=6)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_ridgecv_int_alphas():
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
                   [1.0, 1.0], [1.0, 0.0]])
@@ -920,7 +949,6 @@ def test_ridgecv_int_alphas():
     ridge.fit(X, y)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_ridgecv_negative_alphas():
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
                   [1.0, 1.0], [1.0, 0.0]])
@@ -1071,13 +1099,14 @@ def test_dtype_match(solver):
     X_32 = X_64.astype(np.float32)
     y_32 = y_64.astype(np.float32)
 
+    tol = 2 * np.finfo(np.float32).resolution
     # Check type consistency 32bits
-    ridge_32 = Ridge(alpha=alpha, solver=solver, max_iter=500, tol=1e-10,)
+    ridge_32 = Ridge(alpha=alpha, solver=solver, max_iter=500, tol=tol)
     ridge_32.fit(X_32, y_32)
     coef_32 = ridge_32.coef_
 
     # Check type consistency 64 bits
-    ridge_64 = Ridge(alpha=alpha, solver=solver, max_iter=500, tol=1e-10,)
+    ridge_64 = Ridge(alpha=alpha, solver=solver, max_iter=500, tol=tol)
     ridge_64.fit(X_64, y_64)
     coef_64 = ridge_64.coef_
 

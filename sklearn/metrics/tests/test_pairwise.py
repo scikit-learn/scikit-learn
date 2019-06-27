@@ -20,7 +20,6 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_raise_message
 
 from sklearn.metrics.pairwise import euclidean_distances
@@ -48,6 +47,7 @@ from sklearn.metrics.pairwise import check_paired_arrays
 from sklearn.metrics.pairwise import paired_distances
 from sklearn.metrics.pairwise import paired_euclidean_distances
 from sklearn.metrics.pairwise import paired_manhattan_distances
+from sklearn.metrics.pairwise import _euclidean_distances_upcast
 from sklearn.preprocessing import normalize
 from sklearn.exceptions import DataConversionWarning
 
@@ -558,7 +558,7 @@ def test_pairwise_distances_chunked():
     # Test the pairwise_distance helper function.
     rng = np.random.RandomState(0)
     # Euclidean distance should be equivalent to calling the function.
-    X = rng.random_sample((400, 4))
+    X = rng.random_sample((200, 4))
     check_pairwise_distances_chunked(X, None, working_memory=1,
                                      metric='euclidean')
     # Test small amounts of memory
@@ -569,7 +569,7 @@ def test_pairwise_distances_chunked():
     check_pairwise_distances_chunked(X.tolist(), None, working_memory=1,
                                      metric='euclidean')
     # Euclidean distance, with Y != X.
-    Y = rng.random_sample((200, 4))
+    Y = rng.random_sample((100, 4))
     check_pairwise_distances_chunked(X, Y, working_memory=1,
                                      metric='euclidean')
     check_pairwise_distances_chunked(X.tolist(), Y.tolist(), working_memory=1,
@@ -685,6 +685,52 @@ def test_euclidean_distances_sym(dtype, x_array_constr):
     # and fails due too rounding errors.
     assert_allclose(distances, expected, rtol=1e-6)
     assert distances.dtype == dtype
+
+
+@pytest.mark.parametrize("batch_size", [None, 5, 7, 101])
+@pytest.mark.parametrize("x_array_constr", [np.array, csr_matrix],
+                         ids=["dense", "sparse"])
+@pytest.mark.parametrize("y_array_constr", [np.array, csr_matrix],
+                         ids=["dense", "sparse"])
+def test_euclidean_distances_upcast(batch_size, x_array_constr,
+                                    y_array_constr):
+    # check batches handling when Y != X (#13910)
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((100, 10)).astype(np.float32)
+    X[X < 0.8] = 0
+    Y = rng.random_sample((10, 10)).astype(np.float32)
+    Y[Y < 0.8] = 0
+
+    expected = cdist(X, Y)
+
+    X = x_array_constr(X)
+    Y = y_array_constr(Y)
+    distances = _euclidean_distances_upcast(X, Y=Y, batch_size=batch_size)
+    distances = np.sqrt(np.maximum(distances, 0))
+
+    # the default rtol=1e-7 is too close to the float32 precision
+    # and fails due too rounding errors.
+    assert_allclose(distances, expected, rtol=1e-6)
+
+
+@pytest.mark.parametrize("batch_size", [None, 5, 7, 101])
+@pytest.mark.parametrize("x_array_constr", [np.array, csr_matrix],
+                         ids=["dense", "sparse"])
+def test_euclidean_distances_upcast_sym(batch_size, x_array_constr):
+    # check batches handling when X is Y (#13910)
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((100, 10)).astype(np.float32)
+    X[X < 0.8] = 0
+
+    expected = squareform(pdist(X))
+
+    X = x_array_constr(X)
+    distances = _euclidean_distances_upcast(X, Y=X, batch_size=batch_size)
+    distances = np.sqrt(np.maximum(distances, 0))
+
+    # the default rtol=1e-7 is too close to the float32 precision
+    # and fails due too rounding errors.
+    assert_allclose(distances, expected, rtol=1e-6)
 
 
 @pytest.mark.parametrize(
@@ -1057,9 +1103,9 @@ def test_pairwise_distances_data_derived_params(n_jobs, metric, dist_function,
                                                 y_is_x):
     # check that pairwise_distances give the same result in sequential and
     # parallel, when metric has data-derived parameters.
-    with config_context(working_memory=1):  # to have more than 1 chunk
+    with config_context(working_memory=0.1):  # to have more than 1 chunk
         rng = np.random.RandomState(0)
-        X = rng.random_sample((1000, 10))
+        X = rng.random_sample((100, 10))
 
         if y_is_x:
             Y = X
@@ -1069,7 +1115,7 @@ def test_pairwise_distances_data_derived_params(n_jobs, metric, dist_function,
             else:
                 params = {'VI': np.linalg.inv(np.cov(X.T)).T}
         else:
-            Y = rng.random_sample((1000, 10))
+            Y = rng.random_sample((100, 10))
             expected_dist_default_params = cdist(X, Y, metric=metric)
             if metric == "seuclidean":
                 params = {'V': np.var(np.vstack([X, Y]), axis=0, ddof=1)}

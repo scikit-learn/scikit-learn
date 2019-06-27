@@ -63,6 +63,8 @@ def test_connect_regions():
         # Newer versions of scipy have face in misc
         from scipy import misc
         face = misc.face(gray=True)
+    # subsample by 4 to reduce run time
+    face = face[::4, ::4]
     for thr in (50, 150):
         mask = face > thr
         graph = img_to_graph(face, mask)
@@ -77,6 +79,10 @@ def test_connect_regions_with_grid():
         # Newer versions of scipy have face in misc
         from scipy import misc
         face = misc.face(gray=True)
+
+    # subsample by 4 to reduce run time
+    face = face[::4, ::4]
+
     mask = face > 50
     graph = grid_to_graph(*face.shape, mask=mask)
     assert_equal(ndimage.label(mask)[1], connected_components(graph)[0])

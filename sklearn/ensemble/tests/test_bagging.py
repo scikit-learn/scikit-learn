@@ -5,8 +5,8 @@ Testing for the bagging ensemble module (sklearn.ensemble.bagging).
 # Author: Gilles Louppe
 # License: BSD 3 clause
 
-import pytest
 import numpy as np
+import joblib
 
 from sklearn.base import BaseEstimator
 
@@ -33,7 +33,6 @@ from sklearn.feature_selection import SelectKBest
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_boston, load_iris, make_hastie_10_2
 from sklearn.utils import check_random_state
-from sklearn.utils import _joblib
 from sklearn.preprocessing import FunctionTransformer
 
 from scipy.sparse import csc_matrix, csr_matrix
@@ -224,7 +223,7 @@ class DummySizeEstimator(BaseEstimator):
 
     def fit(self, X, y):
         self.training_size_ = X.shape[0]
-        self.training_hash_ = _joblib.hash(X)
+        self.training_hash_ = joblib.hash(X)
 
 
 def test_bootstrap_samples():
@@ -290,7 +289,6 @@ def test_bootstrap_features():
         assert_greater(boston.data.shape[1], np.unique(features).shape[0])
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_probability():
     # Predict probabilities.
     rng = check_random_state(0)
@@ -512,7 +510,6 @@ def test_parallel_regression():
     assert_array_almost_equal(y1, y3)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_gridsearch():
     # Check that bagging ensembles can be grid-searched.
     # Transform iris into a binary classification task
@@ -706,7 +703,6 @@ def test_oob_score_consistency():
     assert_equal(bagging.fit(X, y).oob_score_, bagging.fit(X, y).oob_score_)
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_estimators_samples():
     # Check that format of estimators_samples_ is correct and that results
     # generated at fit time can be identically reproduced at a later time
@@ -743,7 +739,6 @@ def test_estimators_samples():
     assert_array_almost_equal(orig_coefs, new_coefs)
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_estimators_samples_deterministic():
     # This test is a regression test to check that with a random step
     # (e.g. SparseRandomProjection) and a given random state, the results
@@ -829,8 +824,7 @@ def test_bagging_regressor_with_missing_inputs():
     for y in y_values:
         regressor = DecisionTreeRegressor()
         pipeline = make_pipeline(
-            FunctionTransformer(replace, validate=False),
-            regressor
+            FunctionTransformer(replace), regressor
         )
         pipeline.fit(X, y).predict(X)
         bagging_regressor = BaggingRegressor(pipeline)
@@ -857,8 +851,7 @@ def test_bagging_classifier_with_missing_inputs():
     y = np.array([3, 6, 6, 6, 6])
     classifier = DecisionTreeClassifier()
     pipeline = make_pipeline(
-        FunctionTransformer(replace, validate=False),
-        classifier
+        FunctionTransformer(replace), classifier
     )
     pipeline.fit(X, y).predict(X)
     bagging_classifier = BaggingClassifier(pipeline)
@@ -876,7 +869,6 @@ def test_bagging_classifier_with_missing_inputs():
     assert_raises(ValueError, bagging_classifier.fit, X, y)
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_bagging_small_max_features():
     # Check that Bagging estimator can accept low fractional max_features
 
