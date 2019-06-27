@@ -241,16 +241,8 @@ def _compute_orthonormal_lobpcg(M, Q, n_iter, tol, explicit_normal_matrix):
     else:
         MLO = aslinearoperator(M)
 
-        if hasattr(MLO, 'H'):
-
-            def _matvec(V):
-                return MLO(MLO.H(V))
-
-        else:  # Old SciPy versions.
-            MTLO = aslinearoperator(M.T)
-
-            def _matvec(V):
-                return MLO(MTLO(V))
+        def _matvec(V):
+            return MLO(MLO.H(V))
 
         Ms0 = M.shape[0]
         A = LinearOperator(
