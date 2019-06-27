@@ -26,6 +26,8 @@ from sklearn.exceptions import ConvergenceWarning
 
 from sklearn.utils.testing import assert_array_equal
 
+GLM_SOLVERS = ['irls', 'lbfgs', 'newton-cg', 'cd']
+
 
 @pytest.fixture(scope="module")
 def regression_data():
@@ -404,7 +406,7 @@ def test_glm_check_input_argument(check_input):
         glm.fit(X, y)
 
 
-@pytest.mark.parametrize('solver', ['irls', 'lbfgs', 'newton-cg', 'cd'])
+@pytest.mark.parametrize('solver', GLM_SOLVERS)
 def test_glm_identity_regression(solver):
     """Test GLM regression with identity link on a simple dataset."""
     coef = [1., 2.]
@@ -442,95 +444,43 @@ def test_glm_log_regression(family, solver, tol):
 # newton-cg may issue a LineSearchWarning, which we filter out
 @pytest.mark.filterwarnings('ignore:The line search algorithm')
 @pytest.mark.filterwarnings('ignore:Line Search failed')
-@pytest.mark.parametrize('solver, tol', [('irls', 1e-6),
-                                         ('lbfgs', 1e-6),
-                                         ('newton-cg', 1e-6),
-                                         ('cd', 1e-6)])
-def test_normal_ridge(solver, tol):
+@pytest.mark.parametrize('n_samples, n_features', [(100, 10), (10, 100)])
+@pytest.mark.parametrize('fit_intercept', [True, False])
+@pytest.mark.parametrize('solver', GLM_SOLVERS)
+def test_normal_ridge_comparison(n_samples, n_features, fit_intercept, solver):
     """Test ridge regression for Normal distributions.
+
+    Case n_samples >> n_features
 
     Compare to test_ridge in test_ridge.py.
     """
-    rng = np.random.RandomState(42)
     alpha = 1.0
-
-    # 1. With more samples than features
-    n_samples, n_features, n_predict = 100, 7, 10
+    n_predict = 10
     X, y, coef = make_regression(n_samples=n_samples+n_predict,
                                  n_features=n_features,
                                  n_informative=n_features-2, noise=0.5,
-                                 coef=True, random_state=rng)
+                                 coef=True, random_state=42)
     y = y[0:n_samples]
     X, T = X[0:n_samples], X[n_samples:]
 
-    # GLM has 1/(2*n) * Loss + 1/2*L2, Ridge has Loss + L2
-    ridge = Ridge(alpha=alpha*n_samples, fit_intercept=True, tol=1e-6,
-                  solver='svd', normalize=False)
-    ridge.fit(X, y)
-    glm = GeneralizedLinearRegressor(alpha=1.0, l1_ratio=0, family='normal',
-                                     link='identity', fit_intercept=True,
-                                     tol=tol, max_iter=100, solver=solver,
-                                     check_input=False, random_state=rng)
-    glm.fit(X, y)
-    assert glm.coef_.shape == (X.shape[1], )
-    assert_allclose(glm.coef_, ridge.coef_, rtol=1e-6)
-    assert_allclose(glm.intercept_, ridge.intercept_, rtol=1e-5)
-    assert_allclose(glm.predict(T), ridge.predict(T), rtol=1e-6)
-
-    ridge = Ridge(alpha=alpha*n_samples, fit_intercept=False, tol=1e-6,
-                  solver='svd', normalize=False)
-    ridge.fit(X, y)
-    glm = GeneralizedLinearRegressor(alpha=1.0, l1_ratio=0, family='normal',
-                                     link='identity', fit_intercept=False,
-                                     tol=tol, max_iter=100, solver=solver,
-                                     check_input=False, random_state=rng,
-                                     fit_dispersion='chisqr')
-    glm.fit(X, y)
-    assert glm.coef_.shape == (X.shape[1], )
-    assert_allclose(glm.coef_, ridge.coef_, rtol=1e-5)
-    assert_allclose(glm.intercept_, ridge.intercept_, rtol=1e-6)
-    assert_allclose(glm.predict(T), ridge.predict(T), rtol=1e-6)
-    mu = glm.predict(X)
-    assert_allclose(glm.dispersion_,
-                    np.sum((y-mu)**2/(n_samples-n_features)))
-
-    # 2. With more features than samples and sparse
-    n_samples, n_features, n_predict = 10, 100, 10
-    X, y, coef = make_regression(n_samples=n_samples+n_predict,
-                                 n_features=n_features,
-                                 n_informative=n_features-2, noise=0.5,
-                                 coef=True, random_state=rng)
-    y = y[0:n_samples]
-    X, T = X[0:n_samples], X[n_samples:]
+    if n_samples > n_features:
+        ridge_params = {"solver": "svd"}
+    else:
+        ridge_params = {"solver": "sag", "max_iter": 10000, "tol": 1e-9}
 
     # GLM has 1/(2*n) * Loss + 1/2*L2, Ridge has Loss + L2
-    ridge = Ridge(alpha=alpha*n_samples, fit_intercept=True, tol=1e-9,
-                  solver='sag', normalize=False, max_iter=100000,
-                  random_state=42)
+    ridge = Ridge(alpha=alpha*n_samples, normalize=False,
+                  random_state=42, **ridge_params)
     ridge.fit(X, y)
+
     glm = GeneralizedLinearRegressor(alpha=1.0, l1_ratio=0, family='normal',
                                      link='identity', fit_intercept=True,
-                                     tol=tol, max_iter=300, solver=solver,
-                                     check_input=False, random_state=rng)
+                                     max_iter=300, solver=solver, tol=1e-6,
+                                     check_input=False, random_state=42)
     glm.fit(X, y)
     assert glm.coef_.shape == (X.shape[1], )
     assert_allclose(glm.coef_, ridge.coef_, rtol=5e-6)
     assert_allclose(glm.intercept_, ridge.intercept_, rtol=1e-6)
-    assert_allclose(glm.predict(T), ridge.predict(T), rtol=1e-5)
-
-    ridge = Ridge(alpha=alpha*n_samples, fit_intercept=False, tol=1e-7,
-                  solver='sag', normalize=False, max_iter=1000,
-                  random_state=42)
-    ridge.fit(X, y)
-
-    glm = GeneralizedLinearRegressor(alpha=1.0, l1_ratio=0, family='normal',
-                                     link='identity', fit_intercept=False,
-                                     tol=tol*2, max_iter=300, solver=solver,
-                                     check_input=False, random_state=rng)
-    glm.fit(X, y)
-    assert glm.coef_.shape == (X.shape[1], )
-    assert_allclose(glm.coef_, ridge.coef_, rtol=1e-4)
-    assert_allclose(glm.intercept_, ridge.intercept_, rtol=1e-5)
     assert_allclose(glm.predict(T), ridge.predict(T), rtol=1e-5)
 
 
@@ -559,7 +509,7 @@ def test_poisson_ridge(solver, tol):
     rng = np.random.RandomState(42)
     glm = GeneralizedLinearRegressor(alpha=1, l1_ratio=0,
                                      fit_intercept=True, family='poisson',
-                                     link='log', tol=tol,
+                                     link='log', tol=1e-7,
                                      solver=solver, max_iter=300,
                                      random_state=rng)
     glm.fit(X, y)
@@ -750,7 +700,7 @@ def test_fit_dispersion(regression_data):
     assert_allclose(est2.dispersion_,  est3.dispersion_)
 
 
-@pytest.mark.parametrize("solver", ["irls", "lbfgs", "newton-cg", "cd"])
+@pytest.mark.parametrize("solver", GLM_SOLVERS)
 def test_convergence_warning(solver, regression_data):
     X, y = regression_data
 
