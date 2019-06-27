@@ -49,7 +49,7 @@ Changelog
 
 - |Enhancement| :class:`decomposition.PCA` and
   :class:`decomposition.TruncatedSVD` has a new solver `lobpcg` which
-  accelerate computation.
+  accelerate computation and add a better accuracy.
   :pr:`12319` by :user:`Andrew Knyazev <lobpcg>` and
   :user:`Guillaume Lemaitre <glemaitre>`.
 

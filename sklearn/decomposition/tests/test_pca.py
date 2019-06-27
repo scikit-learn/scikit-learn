@@ -516,6 +516,67 @@ def test_pca_deterministic_output(svd_solver):
     )
 
 
+def generate_matrix(N, complex=False, hermitian=False,
+                    pos_definite=False, sparse=False):
+    M = np.random.random((N,N))
+    if complex:
+        M = M + 1j * np.random.random((N,N))
+
+    if hermitian:
+        if pos_definite:
+            if sparse:
+                i = np.arange(N)
+                j = np.random.randint(N, size=N-2)
+                i, j = np.meshgrid(i, j)
+                M[i,j] = 0
+            M = np.dot(M.conj(), M.T)
+        else:
+            M = np.dot(M.conj(), M.T)
+            if sparse:
+                i = np.random.randint(N, size=N * N // 4)
+                j = np.random.randint(N, size=N * N // 4)
+                ind = np.nonzero(i == j)
+                j[ind] = (j[ind] + 1) % N
+                M[i,j] = 0
+                M[j,i] = 0
+    else:
+        if sparse:
+            i = np.random.randint(N, size=N * N // 2)
+            j = np.random.randint(N, size=N * N // 2)
+            M[i,j] = 0
+    return M
+
+
+@pytest.mark.parametrize("svd_solver", ["arpack", "lobpcg"])
+def test_pca_tolerance(svd_solver):
+    X = np.random.RandomState(0).randn(100, 1000)
+
+    n_components = 4
+    pca_full = PCA(n_components=n_components, svd_solver='full')
+    pca_coarse = PCA(
+        n_components=n_components, tol=1, svd_solver=svd_solver, random_state=0
+    )
+    pca_finer = PCA(
+        n_components=n_components, tol=0.5, svd_solver=svd_solver, random_state=0
+    )
+    pca_machine_precision = PCA(
+        n_components=n_components, svd_solver=svd_solver, random_state=0
+    )
+
+    for pca in (pca_full, pca_coarse, pca_finer, pca_machine_precision):
+        pca.fit(X)
+
+    sv_pca_full = pca_full.singular_values_
+    sv_pca_coarse = pca_coarse.singular_values_
+    sv_pca_finer = pca_finer.singular_values_
+    sv_pca_machine_precision = pca_machine_precision.singular_values_
+
+    assert (np.linalg.norm(sv_pca_full - sv_pca_coarse) >=
+            np.linalg.norm(sv_pca_full - sv_pca_finer))
+    assert (np.linalg.norm(sv_pca_full - sv_pca_finer) >=
+            np.linalg.norm(sv_pca_full - sv_pca_machine_precision))
+
+
 @pytest.mark.parametrize('svd_solver', PCA_SOLVERS)
 def test_pca_dtype_preservation(svd_solver):
     check_pca_float_dtype_preservation(svd_solver)

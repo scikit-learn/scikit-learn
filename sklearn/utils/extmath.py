@@ -262,7 +262,6 @@ def _compute_orthonormal_lobpcg(M, Q, n_iter, tol, explicit_normal_matrix):
     _, Q = lobpcg(
         A, Q, maxiter=n_iter, verbosityLevel=0, tol=tol
     )
-    del A
     return Q
 
 
@@ -417,7 +416,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
         else:
             transpose = n_samples < n_features
     if transpose:
-        # this implementation is a bit faster with smaller shape[1]
+        # this implementation is a bit faster with smaller shape [1]
         M = M.T
 
     if preconditioner is None:

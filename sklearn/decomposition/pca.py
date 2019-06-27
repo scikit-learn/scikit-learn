@@ -108,12 +108,14 @@ class PCA(_BasePCA):
     data to project it to a lower dimensional space. The input data is centered
     but not scaled for each feature before applying the SVD.
 
-    It uses the LAPACK implementation of the full SVD or a randomized truncated
-    SVD by the method of Halko et al. 2009, depending on the shape of the input
-    data and the number of components to extract.
+    By default, it uses the LAPACK implementation of the full SVD or a
+    randomized truncated SVD [3], depending on the shape of the input data and
+    the number of components to extract.
 
-    It can also use the scipy.sparse.linalg ARPACK implementation of the
-    truncated SVD.
+    In addition, one can also use the ARPACK implementation of the truncated
+    SVD (refer to :func:`scipy.sparse.linalg.svds`) or the randomized truncated
+    SVD with an additional preconditioning called LOBPCG [5] (refer to
+    :func:`scipy.sparse.linalg.lobpcg`).
 
     Notice that this class does not support sparse input. See
     :class:`TruncatedSVD` for an alternative with sparse data.
@@ -122,7 +124,7 @@ class PCA(_BasePCA):
 
     Parameters
     ----------
-    n_components : int, float, None or string
+    n_components : int, float, None or string, default=None
         Number of components to keep.
         if n_components is not set all components are kept::
 
@@ -143,12 +145,12 @@ class PCA(_BasePCA):
 
             n_components == min(n_samples, n_features) - 1
 
-    copy : bool (default True)
+    copy : bool, default=True
         If False, data passed to fit are overwritten and running
         fit(X).transform(X) will not yield the expected results,
         use fit_transform(X) instead.
 
-    whiten : bool, optional (default False)
+    whiten : bool, default=False
         When True (False by default) the `components_` vectors are multiplied
         by the square root of n_samples and then divided by the singular values
         to ensure uncorrelated outputs with unit component-wise variances.
@@ -159,7 +161,7 @@ class PCA(_BasePCA):
         making their data respect some hard-wired assumptions.
 
     svd_solver : string {'auto', 'full', 'arpack', 'randomized', 'lobpcg'}
-        auto :
+        auto (default) :
             the solver is selected by a default policy based on `X.shape` and
             `n_components`: if the input data is larger than 500x500 and the
             number of components to extract is lower than 80% of the smallest
@@ -168,10 +170,11 @@ class PCA(_BasePCA):
             optionally truncated afterwards.
         full :
             run exact full SVD calling the standard LAPACK solver via
-            `scipy.linalg.svd` and select the components by postprocessing.
+            :func:`scipy.linalg.svd` and select the components by
+            postprocessing.
         arpack :
             run SVD truncated to n_components calling ARPACK solver via
-            `scipy.sparse.linalg.svds`. It requires strictly
+            :func:`scipy.sparse.linalg.svds`. It requires strictly
             0 < n_components < min(X.shape).
         randomized :
             run randomized SVD as in [2].
@@ -182,14 +185,17 @@ class PCA(_BasePCA):
 
         .. versionadded:: 0.18.0
 
-    tol : float >= 0, optional (default .0)
-        Tolerance for singular values computed by svd_solver == 'arpack' or
-        svd_solver == 'lobpcg'. tol = .0 in svd_solver == 'lobpcg' is ignored
-        and substituted by a local default in LOBPCG.
+    tol : None or float, default=None
+        Tolerance for singular values computed by the 'randomized' and 'lobpcg'
+        SVD solver. If None, then:
+            * `tol = 2 * eps` for svd_solver = 'randomized'.
+              Refer to :func:`scipy.sparse.linalg.svds`.
+            * `tol = n * sqrt(eps)` where `n = min(n_samples, n_features)`.
+              Refer to :func:`scipy.sparse.linalg.lobpcg`.
 
         .. versionadded:: 0.18.0
 
-    iterated_power : int >= 0, or 'auto', (default 'auto')
+    iterated_power : int or 'auto', default='auto'
         Number of iterations of svd_solver = 'lobpcg' or for the power method
         computed by svd_solver == 'randomized'.
 
@@ -261,7 +267,7 @@ class PCA(_BasePCA):
     [2].
 
     For the different solvers:
-        * svd_solver == 'arpack', refer to `scipy.sparse.linalg.svds`.
+        * svd_solver == 'arpack', refer to :func:`scipy.sparse.linalg.svds`.
         * svd_solver == 'randomized', refer to the implementation in
           [3] and [4].
         * svd_solver == 'lobpcg', refer to the implementation in [5].
@@ -425,11 +431,16 @@ class PCA(_BasePCA):
             else:
                 self._fit_svd_solver = 'full'
 
+        # Set the default tolerance if necessary
+        tol = (0. if self.tol is None and self._fit_svd_solver == 'arpack'
+               else self.tol)
+
         # Call different fits for either full or truncated SVD
         if self._fit_svd_solver == 'full':
             return self._fit_full(X, n_components)
         elif self._fit_svd_solver in ['arpack', 'randomized', 'lobpcg']:
-            return self._fit_truncated(X, n_components, self._fit_svd_solver)
+            return self._fit_truncated(X, n_components, self._fit_svd_solver,
+                                       tol)
         else:
             raise ValueError("Unrecognized svd_solver='{0}'"
                              "".format(self._fit_svd_solver))
@@ -497,7 +508,7 @@ class PCA(_BasePCA):
 
         return U, S, V
 
-    def _fit_truncated(self, X, n_components, svd_solver):
+    def _fit_truncated(self, X, n_components, svd_solver, tol):
         """Fit the model by computing truncated SVD
         (by ARPACK, randomized, or LOBPCG) on X
         """
@@ -534,7 +545,7 @@ class PCA(_BasePCA):
         if svd_solver == 'arpack':
             # random init solution, as ARPACK does it internally
             v0 = random_state.uniform(-1, 1, size=min(X.shape))
-            U, S, V = svds(X, k=n_components, tol=self.tol, v0=v0)
+            U, S, V = svds(X, k=n_components, tol=tol, v0=v0)
             # svds doesn't abide by scipy.linalg.svd/randomized_svd
             # conventions, so reverse its outputs.
             S = S[::-1]
@@ -553,7 +564,7 @@ class PCA(_BasePCA):
             U, S, V = randomized_svd(
                 X, n_components=n_components, n_iter=self.iterated_power,
                 flip_sign=True, random_state=random_state,
-                preconditioner='lobpcg', tol=self.tol
+                preconditioner='lobpcg', tol=tol
             )
 
         self.n_samples_, self.n_features_ = n_samples, n_features
