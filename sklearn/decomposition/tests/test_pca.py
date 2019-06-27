@@ -518,6 +518,8 @@ def test_pca_deterministic_output(svd_solver):
 
 @pytest.mark.parametrize("svd_solver", ["arpack", "lobpcg"])
 def test_pca_tolerance(svd_solver):
+    # check that the tolerance has an influence on the precision of the
+    # singular values (or components).
     X = np.random.RandomState(0).randn(100, 1000)
 
     n_components = 4
@@ -544,6 +546,8 @@ def test_pca_tolerance(svd_solver):
     assert (np.linalg.norm(sv_pca_full - sv_pca_coarse) >=
             np.linalg.norm(sv_pca_full - sv_pca_finer))
     assert (np.linalg.norm(sv_pca_full - sv_pca_finer) >=
+            np.linalg.norm(sv_pca_full - sv_pca_machine_precision))
+    assert (np.linalg.norm(sv_pca_full - sv_pca_coarse) >
             np.linalg.norm(sv_pca_full - sv_pca_machine_precision))
 
 
