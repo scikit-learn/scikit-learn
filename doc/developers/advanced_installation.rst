@@ -193,19 +193,23 @@ Installing build dependencies
 Linux
 -----
 
-Installing from source without conda or pip requires you to have installed the
+Installing from source without conda requires you to have installed the
 scikit-learn runtime dependencies, Python development headers and a working
 C/C++ compiler. Under Debian-based operating systems, which include Ubuntu::
 
     sudo apt-get install build-essential python3-dev python3-setuptools \
-                     python3-numpy python3-scipy cython3
+                     python3-pip
+    
+and then::
+
+    pip3 install numpy scipy cython
 
 .. note::
 
     In order to build the documentation and run the example code contains in
     this documentation you will need matplotlib::
 
-        sudo apt-get install python-matplotlib
+        sudo apt-get install python3-matplotlib
 
 On Red Hat and clones (e.g. CentOS), install the dependencies using::
 
