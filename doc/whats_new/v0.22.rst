@@ -17,8 +17,8 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-..
-    TO FILL IN AS WE GO
+- :class:`decomposition.SparsePCA` where `normalize_components` has no effect
+  due to deprecation.
 
 Details are listed in the changelog below.
 
@@ -39,14 +39,53 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
-:mod:`sklearn.linear_model`
+:mod:`sklearn.decomposition`
 ..................
+
+- |Enhancement| :class:`decomposition.IncrementalPCA` now accepts sparse
+  matrices as input, converting them to dense in batches thereby avoiding the
+  need to store the entire dense matrix at once.
+  :pr:`13960` by :user:`Scott Gigante <scottgigante>`.
+
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` now bin the training and
+  validation data separately to avoid any data leak. :pr:`13933` by
+  `Nicolas Hug`_.
+
+- |Feature| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` have an additional
+  parameter called `warm_start` that enables warm starting. :pr:`14012` by
+  :user:`Johann Faouzi <johannfaouzi>`.
+
+:mod:`sklearn.linear_model`
+...........................
 
 - |Enhancement| :class:`linearmodel.BayesianRidge` now accepts hyperparameters
   ``alpha_init`` and ``lambda_init`` which can be used to set the initial value
   of the maximization procedure in :term:`fit`.
   :pr:`13618` by :user:`Yoshihiro Uchida <c56pony>`.
 
+- |Efficiency| The 'liblinear' logistic regression solver now consumes less
+  memory if ``fit_intercept=False`` and ``X`` is a CSR sparse matrix.
+  :pr:`14108` by :user:`Alex Henrie <alexhenrie>`.
+
+:mod:`sklearn.model_selection`
+..................
+
+- |Enhancement| :class:`model_selection.learning_curve` now accepts parameter
+  ``return_times`` which can be used to retrieve computation times in order to
+  plot model scalability (see learning_curve example).
+  :pr:`13938` by :user:`Hadrien Reboul <H4dr1en>`.
+
+:mod:`sklearn.pipeline`
+.......................
+
+- |Enhancement| :class:`pipeline.Pipeline` now supports :term:`score_samples` if
+  the final estimator does.
+  :pr:`13806` by :user:`Anaël Beaugnon <ab-anssi>`.
 
 :mod:`sklearn.svm`
 ..................
@@ -58,21 +97,41 @@ Changelog
   :pr:`12557` by `Adrin Jalali`_.
 
 
+:mod:`sklearn.preprocessing`
+............................
+
+- |Enhancement| Avoid unnecessary data copy when fitting preprocessors
+  :class:`preprocessing.StandardScaler`, :class:`preprocessing.MinMaxScaler`,
+  :class:`preprocessing.MaxAbsScaler`, :class:`preprocessing.RobustScaler`
+  and :class:`preprocessing.QuantileTransformer` which results in a slight
+  performance improvement. :pr:`13987` by `Roman Yurchak`_.
+
+
 :mod:`sklearn.cluster`
-..................
+......................
 
 - |Enhancement| :class:`cluster.SpectralClustering` now accepts a ``n_components`` 
   parameter. This parameter extends `SpectralClustering` class functionality to
   match `spectral_clustering`.
   :pr:`13726` by :user:`Shuzhe Xiao <fdas3213>`.
+
+:mod:`sklearn.feature_selection`
+................................
+- |Fix| Fixed a bug where :class:`VarianceThreshold` with `threshold=0` did not
+  remove constant features due to numerical instability, by using range
+  rather than variance in this case.
+  :pr:`13704` by `Roddy MacSween <rlms>`.
   
-	
 Miscellaneous
 .............
 
 - |API| Replace manual checks with ``check_is_fitted``. Errors thrown when
   using a non-fitted estimators are now more uniform.
   :pr:`13013` by :user:`Agamemnon Krasoulis <agamemnonc>`.
+
+- |Fix| Port `lobpcg` from SciPy which implement some bug fixes but only
+  available in 1.3+.
+  :pr:`14195` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 Changes to estimator checks
 ---------------------------
@@ -83,3 +142,7 @@ These changes mostly affect library developers.
   ``transform`` is called before ``fit``; previously an ``AttributeError`` or
   ``ValueError`` was acceptable.
   :pr:`13013` by by :user:`Agamemnon Krasoulis <agamemnonc>`.
+
+- |Enhancement| Binary only classifiers are now supported in estimator checks.
+  Such classifiers need to have the `binary_only=True` estimator tag.
+  :pr:`13875` by `Trevor Stephens`_.

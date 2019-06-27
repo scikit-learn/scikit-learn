@@ -296,7 +296,7 @@ def test_monotonic_likelihood():
             bgmm = BayesianGaussianMixture(
                 weight_concentration_prior_type=prior_type,
                 n_components=2 * n_components, covariance_type=covar_type,
-                warm_start=True, max_iter=1, random_state=rng, tol=1e-4)
+                warm_start=True, max_iter=1, random_state=rng, tol=1e-3)
             current_lower_bound = -np.infty
             # Do one training iteration at a time so we can make sure that the
             # training log likelihood increases after each iteration.
@@ -435,7 +435,7 @@ def test_invariant_translation():
 ])
 def test_bayesian_mixture_fit_predict(seed, max_iter, tol):
     rng = np.random.RandomState(seed)
-    rand_data = RandomData(rng, scale=7)
+    rand_data = RandomData(rng, n_samples=50, scale=7)
     n_components = 2 * rand_data.n_components
 
     for covar_type in COVARIANCE_TYPE:
@@ -453,7 +453,7 @@ def test_bayesian_mixture_fit_predict(seed, max_iter, tol):
 
 def test_bayesian_mixture_fit_predict_n_init():
     # Check that fit_predict is equivalent to fit.predict, when n_init > 1
-    X = np.random.RandomState(0).randn(1000, 5)
+    X = np.random.RandomState(0).randn(50, 5)
     gm = BayesianGaussianMixture(n_components=5, n_init=10, random_state=0)
     y_pred1 = gm.fit_predict(X)
     y_pred2 = gm.predict(X)

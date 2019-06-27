@@ -800,7 +800,8 @@ Kernels:
     manifold.locally_linear_embedding
     manifold.smacof
     manifold.spectral_embedding
-
+    manifold.t_sne.trustworthiness
+	
 
 .. _metrics_ref:
 

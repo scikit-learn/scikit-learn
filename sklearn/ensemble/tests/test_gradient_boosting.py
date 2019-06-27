@@ -18,7 +18,6 @@ from sklearn.datasets import (make_classification, fetch_california_housing,
                               make_regression)
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.ensemble.gradient_boosting import ZeroEstimator
 from sklearn.ensemble._gradient_boosting import predict_stages
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.svm import LinearSVC
@@ -1217,7 +1216,7 @@ def check_sparse_input(EstimatorClass, X, X_sparse, y):
     assert_array_almost_equal(sparse.predict(X_sparse), dense.predict(X))
     assert_array_almost_equal(dense.predict(X_sparse), sparse.predict(X))
 
-    if isinstance(EstimatorClass, GradientBoostingClassifier):
+    if issubclass(EstimatorClass, GradientBoostingClassifier):
         assert_array_almost_equal(sparse.predict_proba(X),
                                   dense.predict_proba(X))
         assert_array_almost_equal(sparse.predict_log_proba(X),
@@ -1232,10 +1231,9 @@ def check_sparse_input(EstimatorClass, X, X_sparse, y):
                                   sparse.decision_function(X))
         assert_array_almost_equal(dense.decision_function(X_sparse),
                                   sparse.decision_function(X))
-
-        assert_array_almost_equal(
-            np.array(sparse.staged_decision_function(X_sparse)),
-            np.array(sparse.staged_decision_function(X)))
+        for res_sparse, res in zip(sparse.staged_decision_function(X_sparse),
+                                   sparse.staged_decision_function(X)):
+            assert_array_almost_equal(res_sparse, res)
 
 
 @skip_if_32bit

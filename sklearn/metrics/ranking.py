@@ -180,7 +180,7 @@ def average_precision_score(y_true, y_score, average="macro", pos_label=1,
     >>> from sklearn.metrics import average_precision_score
     >>> y_true = np.array([0, 0, 1, 1])
     >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> average_precision_score(y_true, y_scores)  # doctest: +ELLIPSIS
+    >>> average_precision_score(y_true, y_scores)
     0.83...
 
     Notes
@@ -485,7 +485,7 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
     >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
     >>> precision, recall, thresholds = precision_recall_curve(
     ...     y_true, y_scores)
-    >>> precision  # doctest: +ELLIPSIS
+    >>> precision
     array([0.66666667, 0.5       , 1.        , 1.        ])
     >>> recall
     array([1. , 0.5, 0.5, 0. ])
@@ -676,8 +676,7 @@ def label_ranking_average_precision_score(y_true, y_score, sample_weight=None):
     >>> from sklearn.metrics import label_ranking_average_precision_score
     >>> y_true = np.array([[1, 0, 0], [0, 0, 1]])
     >>> y_score = np.array([[0.75, 0.5, 1], [1, 0.2, 0.1]])
-    >>> label_ranking_average_precision_score(y_true, y_score) \
-        # doctest: +ELLIPSIS
+    >>> label_ranking_average_precision_score(y_true, y_score)
     0.416...
 
     """
