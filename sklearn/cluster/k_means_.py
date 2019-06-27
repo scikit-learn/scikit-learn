@@ -621,7 +621,7 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
     if verbose:
         print("Initialization complete")
 
-    centers_old = np.zeros_like(centers)
+    centers_new = np.zeros_like(centers)
     labels = np.full(X.shape[0], -1, dtype=np.int32)
     weight_in_clusters = np.zeros(n_clusters, dtype=X.dtype)
     center_shift = np.zeros(n_clusters, dtype=X.dtype)
@@ -634,11 +634,11 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
         _inertia = _inertia_dense
 
     for i in range(max_iter):
-        lloyd_iter(X, sample_weight, x_squared_norms, centers_old, centers,
+        lloyd_iter(X, sample_weight, x_squared_norms, centers, centers_new,
                    weight_in_clusters, labels, center_shift, n_jobs)
 
         if verbose:
-            inertia = _inertia(X, sample_weight, centers_old, labels)
+            inertia = _inertia(X, sample_weight, centers, labels)
             print("Iteration {0}, inertia {1}" .format(i, inertia))
 
         center_shift_tot = (center_shift**2).sum()
@@ -648,6 +648,8 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
                       "center shift {1} within tolerance {2}"
                       .format(i, center_shift_tot, tol))
             break
+
+        centers, centers_new = centers_new, centers
 
     # rerun E-step so that predicted labels match cluster centers
     lloyd_iter(X, sample_weight, x_squared_norms, centers, centers,

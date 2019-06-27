@@ -94,7 +94,7 @@ cpdef void _lloyd_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
 
         int j, k
 
-        floating[::1] centers_squared_norms = row_norms(centers_new, squared=True)
+        floating[::1] centers_squared_norms = row_norms(centers_old, squared=True)
 
         floating *centers_new_chunk
         floating *weight_in_clusters_chunk
@@ -104,7 +104,6 @@ cpdef void _lloyd_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
     n_chunks += n_samples != n_chunks * n_samples_chunk
 
     if update_centers:
-        memcpy(&centers_old[0, 0], &centers_new[0, 0], n_clusters * n_features * sizeof(floating))
         memset(&centers_new[0, 0], 0, n_clusters * n_features * sizeof(floating))
         memset(&weight_in_clusters[0], 0, n_clusters * sizeof(floating))
 
@@ -280,7 +279,7 @@ cpdef void _lloyd_iter_chunked_sparse(X,
         int[::1] X_indices = X.indices
         int[::1] X_indptr = X.indptr
 
-        floating[::1] centers_squared_norms = row_norms(centers_new, squared=True)
+        floating[::1] centers_squared_norms = row_norms(centers_old, squared=True)
 
         floating *centers_new_chunk
         floating *weight_in_clusters_chunk
@@ -289,7 +288,6 @@ cpdef void _lloyd_iter_chunked_sparse(X,
     n_chunks += n_samples != n_chunks * n_samples_chunk
 
     if update_centers:
-        memcpy(&centers_old[0, 0], &centers_new[0, 0], n_clusters * n_features * sizeof(floating))
         memset(&centers_new[0, 0], 0, n_clusters * n_features * sizeof(floating))
         memset(&weight_in_clusters[0], 0, n_clusters * sizeof(floating))
 
