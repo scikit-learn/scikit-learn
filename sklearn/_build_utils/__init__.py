@@ -90,8 +90,9 @@ def maybe_cythonize_extensions(top_path, config):
         try:
             import joblib
             if LooseVersion(joblib.__version__) > LooseVersion("0.13.0"):
-                # earlier joblib versions can over-estimate the number of
-                # available CPU in some cases
+                # earlier joblib versions don't account for CPU affinity
+                # constraints, and may over-estimate the number of available
+                # CPU particularly in CI (cf loky#114)
                 n_jobs = joblib.effective_n_jobs()
         except ImportError:
             pass
