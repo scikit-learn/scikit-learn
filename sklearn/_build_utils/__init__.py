@@ -86,7 +86,14 @@ def maybe_cythonize_extensions(top_path, config):
             exc.args += (message,)
             raise
 
+        try:
+            import joblib
+            n_jobs = getattr(joblib, "effective_n_jobs")()
+        except (ImportError, AttributeError):
+            n_jobs = 1
+
         config.ext_modules = cythonize(
             config.ext_modules,
+            nthreads=n_jobs,
             compile_time_env={'SKLEARN_OPENMP_SUPPORTED': with_openmp},
             compiler_directives={'language_level': 3})
