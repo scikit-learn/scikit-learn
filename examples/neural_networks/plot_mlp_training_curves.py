@@ -8,28 +8,36 @@ learning strategies, including SGD and Adam. Because of time-constraints, we
 use several small datasets, for which L-BFGS might be more suitable. The
 general trend shown in these examples seems to carry over to larger datasets,
 however.
+
+Note that those results can be highly dependent on the value of
+``learning_rate_init``.
 """
 
 print(__doc__)
+
+import warnings
+
 import matplotlib.pyplot as plt
+
 from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import MinMaxScaler
 from sklearn import datasets
+from sklearn.exceptions import ConvergenceWarning
 
 # different learning rate schedules and momentum parameters
-params = [{'algorithm': 'sgd', 'learning_rate': 'constant', 'momentum': 0,
+params = [{'solver': 'sgd', 'learning_rate': 'constant', 'momentum': 0,
            'learning_rate_init': 0.2},
-          {'algorithm': 'sgd', 'learning_rate': 'constant', 'momentum': .9,
+          {'solver': 'sgd', 'learning_rate': 'constant', 'momentum': .9,
            'nesterovs_momentum': False, 'learning_rate_init': 0.2},
-          {'algorithm': 'sgd', 'learning_rate': 'constant', 'momentum': .9,
+          {'solver': 'sgd', 'learning_rate': 'constant', 'momentum': .9,
            'nesterovs_momentum': True, 'learning_rate_init': 0.2},
-          {'algorithm': 'sgd', 'learning_rate': 'invscaling', 'momentum': 0,
+          {'solver': 'sgd', 'learning_rate': 'invscaling', 'momentum': 0,
            'learning_rate_init': 0.2},
-          {'algorithm': 'sgd', 'learning_rate': 'invscaling', 'momentum': .9,
+          {'solver': 'sgd', 'learning_rate': 'invscaling', 'momentum': .9,
            'nesterovs_momentum': True, 'learning_rate_init': 0.2},
-          {'algorithm': 'sgd', 'learning_rate': 'invscaling', 'momentum': .9,
+          {'solver': 'sgd', 'learning_rate': 'invscaling', 'momentum': .9,
            'nesterovs_momentum': False, 'learning_rate_init': 0.2},
-          {'algorithm': 'adam'}]
+          {'solver': 'adam', 'learning_rate_init': 0.01}]
 
 labels = ["constant learning-rate", "constant with momentum",
           "constant with Nesterov's momentum",
@@ -49,6 +57,7 @@ def plot_on_dataset(X, y, ax, name):
     # for each dataset, plot learning for each learning strategy
     print("\nlearning on dataset %s" % name)
     ax.set_title(name)
+
     X = MinMaxScaler().fit_transform(X)
     mlps = []
     if name == "digits":
@@ -61,12 +70,19 @@ def plot_on_dataset(X, y, ax, name):
         print("training: %s" % label)
         mlp = MLPClassifier(verbose=0, random_state=0,
                             max_iter=max_iter, **param)
-        mlp.fit(X, y)
+
+        # some parameter combinations will not converge as can be seen on the
+        # plots so they are ignored here
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=ConvergenceWarning,
+                                    module="sklearn")
+            mlp.fit(X, y)
+
         mlps.append(mlp)
         print("Training set score: %f" % mlp.score(X, y))
         print("Training set loss: %f" % mlp.loss_)
     for mlp, label, args in zip(mlps, labels, plot_args):
-            ax.plot(mlp.loss_curve_, label=label, **args)
+        ax.plot(mlp.loss_curve_, label=label, **args)
 
 
 fig, axes = plt.subplots(2, 2, figsize=(15, 10))
@@ -82,5 +98,5 @@ for ax, data, name in zip(axes.ravel(), data_sets, ['iris', 'digits',
                                                     'circles', 'moons']):
     plot_on_dataset(*data, ax=ax, name=name)
 
-fig.legend(ax.get_lines(), labels=labels, ncol=3, loc="upper center")
+fig.legend(ax.get_lines(), labels, ncol=3, loc="upper center")
 plt.show()

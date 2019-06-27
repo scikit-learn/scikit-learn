@@ -1,17 +1,16 @@
 """
 Todo: cross-check the F-value with stats model
 """
-from __future__ import division
 import itertools
 import warnings
 import numpy as np
 from scipy import stats, sparse
 
-from numpy.testing import run_module_suite
+import pytest
+
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_not_in
@@ -19,8 +18,6 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils import safe_mask
 
 from sklearn.datasets.samples_generator import (make_classification,
@@ -41,8 +38,8 @@ def test_f_oneway_vs_scipy_stats():
     X2 = 1 + rng.randn(10, 3)
     f, pv = stats.f_oneway(X1, X2)
     f2, pv2 = f_oneway(X1, X2)
-    assert_true(np.allclose(f, f2))
-    assert_true(np.allclose(pv, pv2))
+    assert np.allclose(f, f2)
+    assert np.allclose(pv, pv2)
 
 
 def test_f_oneway_ints():
@@ -70,11 +67,11 @@ def test_f_classif():
 
     F, pv = f_classif(X, y)
     F_sparse, pv_sparse = f_classif(sparse.csr_matrix(X), y)
-    assert_true((F > 0).all())
-    assert_true((pv > 0).all())
-    assert_true((pv < 1).all())
-    assert_true((pv[:5] < 0.05).all())
-    assert_true((pv[5:] > 1.e-4).all())
+    assert (F > 0).all()
+    assert (pv > 0).all()
+    assert (pv < 1).all()
+    assert (pv[:5] < 0.05).all()
+    assert (pv[5:] > 1.e-4).all()
     assert_array_almost_equal(F_sparse, F)
     assert_array_almost_equal(pv_sparse, pv)
 
@@ -86,11 +83,17 @@ def test_f_regression():
                            shuffle=False, random_state=0)
 
     F, pv = f_regression(X, y)
-    assert_true((F > 0).all())
-    assert_true((pv > 0).all())
-    assert_true((pv < 1).all())
-    assert_true((pv[:5] < 0.05).all())
-    assert_true((pv[5:] > 1.e-4).all())
+    assert (F > 0).all()
+    assert (pv > 0).all()
+    assert (pv < 1).all()
+    assert (pv[:5] < 0.05).all()
+    assert (pv[5:] > 1.e-4).all()
+
+    # with centering, compare with sparse
+    F, pv = f_regression(X, y, center=True)
+    F_sparse, pv_sparse = f_regression(sparse.csr_matrix(X), y, center=True)
+    assert_array_almost_equal(F_sparse, F)
+    assert_array_almost_equal(pv_sparse, pv)
 
     # again without centering, compare with sparse
     F, pv = f_regression(X, y, center=False)
@@ -139,11 +142,11 @@ def test_f_classif_multi_class():
                                class_sep=10, shuffle=False, random_state=0)
 
     F, pv = f_classif(X, y)
-    assert_true((F > 0).all())
-    assert_true((pv > 0).all())
-    assert_true((pv < 1).all())
-    assert_true((pv[:5] < 0.05).all())
-    assert_true((pv[5:] > 1.e-4).all())
+    assert (F > 0).all()
+    assert (pv > 0).all()
+    assert (pv < 1).all()
+    assert (pv[:5] < 0.05).all()
+    assert (pv[5:] > 1.e-4).all()
 
 
 def test_select_percentile_classif():
@@ -188,7 +191,7 @@ def test_select_percentile_classif_sparse():
     assert_array_equal(support, gtruth)
 
     X_r2inv = univariate_filter.inverse_transform(X_r2)
-    assert_true(sparse.issparse(X_r2inv))
+    assert sparse.issparse(X_r2inv)
     support_mask = safe_mask(X_r2inv, support)
     assert_equal(X_r2inv.shape, X.shape)
     assert_array_equal(X_r2inv[:, support_mask].toarray(), X_r.toarray())
@@ -274,8 +277,8 @@ def test_select_heuristics_classif():
 def assert_best_scores_kept(score_filter):
     scores = score_filter.scores_
     support = score_filter.get_support()
-    assert_array_equal(np.sort(scores[support]),
-                       np.sort(scores)[-support.sum():])
+    assert_array_almost_equal(np.sort(scores[support]),
+                              np.sort(scores)[-support.sum():])
 
 
 def test_select_percentile_regression():
@@ -371,7 +374,43 @@ def test_select_heuristics_regression():
         assert_less(np.sum(support[5:] == 1), 3)
 
 
-def test_select_fdr_regression():
+def test_boundary_case_ch2():
+    # Test boundary case, and always aim to select 1 feature.
+    X = np.array([[10, 20], [20, 20], [20, 30]])
+    y = np.array([[1], [0], [0]])
+    scores, pvalues = chi2(X, y)
+    assert_array_almost_equal(scores, np.array([4., 0.71428571]))
+    assert_array_almost_equal(pvalues, np.array([0.04550026, 0.39802472]))
+
+    filter_fdr = SelectFdr(chi2, alpha=0.1)
+    filter_fdr.fit(X, y)
+    support_fdr = filter_fdr.get_support()
+    assert_array_equal(support_fdr, np.array([True, False]))
+
+    filter_kbest = SelectKBest(chi2, k=1)
+    filter_kbest.fit(X, y)
+    support_kbest = filter_kbest.get_support()
+    assert_array_equal(support_kbest, np.array([True, False]))
+
+    filter_percentile = SelectPercentile(chi2, percentile=50)
+    filter_percentile.fit(X, y)
+    support_percentile = filter_percentile.get_support()
+    assert_array_equal(support_percentile, np.array([True, False]))
+
+    filter_fpr = SelectFpr(chi2, alpha=0.1)
+    filter_fpr.fit(X, y)
+    support_fpr = filter_fpr.get_support()
+    assert_array_equal(support_fpr, np.array([True, False]))
+
+    filter_fwe = SelectFwe(chi2, alpha=0.1)
+    filter_fwe.fit(X, y)
+    support_fwe = filter_fwe.get_support()
+    assert_array_equal(support_fwe, np.array([True, False]))
+
+
+@pytest.mark.parametrize("alpha", [0.001, 0.01, 0.1])
+@pytest.mark.parametrize("n_informative", [1, 5, 10])
+def test_select_fdr_regression(alpha, n_informative):
     # Test that fdr heuristic actually has low FDR.
     def single_fdr(alpha, n_informative, random_state):
         X, y = make_regression(n_samples=150, n_features=20,
@@ -397,20 +436,18 @@ def test_select_fdr_regression():
                                 (num_true_positives + num_false_positives))
         return false_discovery_rate
 
-    for alpha in [0.001, 0.01, 0.1]:
-        for n_informative in [1, 5, 10]:
-            # As per Benjamini-Hochberg, the expected false discovery rate
-            # should be lower than alpha:
-            # FDR = E(FP / (TP + FP)) <= alpha
-            false_discovery_rate = np.mean([single_fdr(alpha, n_informative,
-                                                       random_state) for
-                                            random_state in range(30)])
-            assert_greater_equal(alpha, false_discovery_rate)
+    # As per Benjamini-Hochberg, the expected false discovery rate
+    # should be lower than alpha:
+    # FDR = E(FP / (TP + FP)) <= alpha
+    false_discovery_rate = np.mean([single_fdr(alpha, n_informative,
+                                               random_state) for
+                                    random_state in range(100)])
+    assert alpha >= false_discovery_rate
 
-            # Make sure that the empirical false discovery rate increases
-            # with alpha:
-            if false_discovery_rate != 0:
-                assert_greater(false_discovery_rate, alpha / 10)
+    # Make sure that the empirical false discovery rate increases
+    # with alpha:
+    if false_discovery_rate != 0:
+        assert false_discovery_rate > alpha / 10
 
 
 def test_select_fwe_regression():
@@ -483,6 +520,21 @@ def test_tied_pvalues():
         Xt = SelectPercentile(chi2, percentile=67).fit_transform(X, y)
         assert_equal(Xt.shape, (2, 2))
         assert_not_in(9998, Xt)
+
+
+def test_scorefunc_multilabel():
+    # Test whether k-best and percentiles works with multilabels with chi2.
+
+    X = np.array([[10000, 9999, 0], [100, 9999, 0], [1000, 99, 0]])
+    y = [[1, 1], [0, 1], [1, 0]]
+
+    Xt = SelectKBest(chi2, k=2).fit_transform(X, y)
+    assert_equal(Xt.shape, (3, 2))
+    assert_not_in(0, Xt)
+
+    Xt = SelectPercentile(chi2, percentile=67).fit_transform(X, y)
+    assert_equal(Xt.shape, (3, 2))
+    assert_not_in(0, Xt)
 
 
 def test_tied_scores():
@@ -615,7 +667,3 @@ def test_mutual_info_regression():
     gtruth = np.zeros(10)
     gtruth[:2] = 1
     assert_array_equal(support, gtruth)
-
-
-if __name__ == '__main__':
-    run_module_suite()

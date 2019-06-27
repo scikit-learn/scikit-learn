@@ -6,7 +6,7 @@ import time
 
 import numpy as np
 from scipy.cluster import hierarchy
-import pylab as pl
+import matplotlib.pyplot as plt
 
 from sklearn.cluster import AgglomerativeClustering
 
@@ -31,13 +31,13 @@ for i, n in enumerate(n_samples):
 
 ratio = scikits_time / scipy_time
 
-pl.figure("scikit-learn Ward's method benchmark results")
-pl.imshow(np.log(ratio), aspect='auto', origin="lower")
-pl.colorbar()
-pl.contour(ratio, levels=[1, ], colors='k')
-pl.yticks(range(len(n_features)), n_features.astype(np.int))
-pl.ylabel('N features')
-pl.xticks(range(len(n_samples)), n_samples.astype(np.int))
-pl.xlabel('N samples')
-pl.title("Scikit's time, in units of scipy time (log)")
-pl.show()
+plt.figure("scikit-learn Ward's method benchmark results")
+plt.imshow(np.log(ratio), aspect='auto', origin="lower")
+plt.colorbar()
+plt.contour(ratio, levels=[1, ], colors='k')
+plt.yticks(range(len(n_features)), n_features.astype(np.int))
+plt.ylabel('N features')
+plt.xticks(range(len(n_samples)), n_samples.astype(np.int))
+plt.xlabel('N samples')
+plt.title("Scikit's time, in units of scipy time (log)")
+plt.show()

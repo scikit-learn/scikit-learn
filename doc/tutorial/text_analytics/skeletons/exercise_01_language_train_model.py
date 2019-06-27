@@ -46,17 +46,17 @@ print(metrics.classification_report(y_test, y_predicted,
 cm = metrics.confusion_matrix(y_test, y_predicted)
 print(cm)
 
-#import pylab as pl
-#pl.matshow(cm, cmap=pl.cm.jet)
-#pl.show()
+#import matplotlib.pyplot as plt
+#plt.matshow(cm, cmap=plt.cm.jet)
+#plt.show()
 
 # Predict the result on some short new sentences:
 sentences = [
-    u'This is a language detection test.',
-    u'Ceci est un test de d\xe9tection de la langue.',
-    u'Dies ist ein Test, um die Sprache zu erkennen.',
+    'This is a language detection test.',
+    'Ceci est un test de d\xe9tection de la langue.',
+    'Dies ist ein Test, um die Sprache zu erkennen.',
 ]
 predicted = clf.predict(sentences)
 
 for s, p in zip(sentences, predicted):
-    print(u'The language of "%s" is "%s"' % (s, dataset.target_names[p]))
+    print('The language of "%s" is "%s"' % (s, dataset.target_names[p]))

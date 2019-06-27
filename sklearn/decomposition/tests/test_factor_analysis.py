@@ -1,6 +1,6 @@
 # Author: Christian Osendorfer <osendorf@gmail.com>
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# Licence: BSD3
+# License: BSD3
 
 import numpy as np
 

@@ -21,7 +21,7 @@ the second estimator approximates it almost perfectly and the last estimator
 approximates the training data perfectly but does not fit the true function
 very well, i.e. it is very sensitive to varying training data (high variance).
 
-.. figure:: ../auto_examples/model_selection/images/plot_underfitting_overfitting_001.png
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_underfitting_overfitting_001.png
    :target: ../auto_examples/model_selection/plot_underfitting_overfitting.html
    :align: center
    :scale: 50%
@@ -41,9 +41,9 @@ this reason, it is often helpful to use the tools described below.
 
 .. topic:: Examples:
 
-   * :ref:`example_model_selection_plot_underfitting_overfitting.py`
-   * :ref:`example_model_selection_plot_validation_curve.py`
-   * :ref:`example_model_selection_plot_learning_curve.py`
+   * :ref:`sphx_glr_auto_examples_model_selection_plot_underfitting_overfitting.py`
+   * :ref:`sphx_glr_auto_examples_model_selection_plot_validation_curve.py`
+   * :ref:`sphx_glr_auto_examples_model_selection_plot_learning_curve.py`
 
 
 .. _validation_curve:
@@ -81,15 +81,16 @@ The function :func:`validation_curve` can help in this case::
   >>> X, y = X[indices], y[indices]
 
   >>> train_scores, valid_scores = validation_curve(Ridge(), X, y, "alpha",
-  ...                                               np.logspace(-7, 3, 3))
-  >>> train_scores           # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-  array([[ 0.94...,  0.92...,  0.92...],
-         [ 0.94...,  0.92...,  0.92...],
-         [ 0.47...,  0.45...,  0.42...]])
-  >>> valid_scores           # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-  array([[ 0.90...,  0.92...,  0.94...],
-         [ 0.90...,  0.92...,  0.94...],
-         [ 0.44...,  0.39...,  0.45...]])
+  ...                                               np.logspace(-7, 3, 3),
+  ...                                               cv=5)
+  >>> train_scores
+  array([[0.93..., 0.94..., 0.92..., 0.91..., 0.92...],
+         [0.93..., 0.94..., 0.92..., 0.91..., 0.92...],
+         [0.51..., 0.52..., 0.49..., 0.47..., 0.49...]])
+  >>> valid_scores
+  array([[0.90..., 0.84..., 0.94..., 0.96..., 0.93...],
+         [0.90..., 0.84..., 0.94..., 0.96..., 0.93...],
+         [0.46..., 0.25..., 0.50..., 0.49..., 0.52...]])
 
 If the training score and the validation score are both low, the estimator will
 be underfitting. If the training score is high and the validation score is low,
@@ -98,7 +99,7 @@ training score and a high validation score is usually not possible. All three
 cases can be found in the plot below where we vary the parameter
 :math:`\gamma` of an SVM on the digits dataset.
 
-.. figure:: ../auto_examples/model_selection/images/plot_validation_curve_001.png
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_validation_curve_001.png
    :target: ../auto_examples/model_selection/plot_validation_curve.html
    :align: center
    :scale: 50%
@@ -112,25 +113,18 @@ Learning curve
 A learning curve shows the validation and training score of an estimator
 for varying numbers of training samples. It is a tool to find out how much
 we benefit from adding more training data and whether the estimator suffers
-more from a variance error or a bias error. If both the validation score and
-the training score converge to a value that is too low with increasing
-size of the training set, we will not benefit much from more training data.
-In the following plot you can see an example: naive Bayes roughly converges
-to a low score.
+more from a variance error or a bias error. Consider the following example
+where we plot the learning curve of a naive Bayes classifier and an SVM.
 
-.. figure:: ../auto_examples/model_selection/images/plot_learning_curve_001.png
-   :target: ../auto_examples/model_selection/plot_learning_curve.html
-   :align: center
-   :scale: 50%
+For the naive Bayes, both the validation score and the training score
+converge to a value that is quite low with increasing size of the training
+set. Thus, we will probably not benefit much from more training data.
 
-We will probably have to use an estimator or a parametrization of the
-current estimator that can learn more complex concepts (i.e. has a lower
-bias). If the training score is much greater than the validation score for
-the maximum number of training samples, adding more training samples will
-most likely increase generalization. In the following plot you can see that
-the SVM could benefit from more training examples.
+In contrast, for small amounts of data, the training score of the SVM is
+much greater than the validation score. Adding more training samples will
+most likely increase generalization.
 
-.. figure:: ../auto_examples/model_selection/images/plot_learning_curve_002.png
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_learning_curve_001.png
    :target: ../auto_examples/model_selection/plot_learning_curve.html
    :align: center
    :scale: 50%
@@ -145,14 +139,14 @@ average scores on the validation sets)::
 
   >>> train_sizes, train_scores, valid_scores = learning_curve(
   ...     SVC(kernel='linear'), X, y, train_sizes=[50, 80, 110], cv=5)
-  >>> train_sizes            # doctest: +NORMALIZE_WHITESPACE
+  >>> train_sizes
   array([ 50, 80, 110])
-  >>> train_scores           # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-  array([[ 0.98...,  0.98 ,  0.98...,  0.98...,  0.98...],
-         [ 0.98...,  1.   ,  0.98...,  0.98...,  0.98...],
-         [ 0.98...,  1.   ,  0.98...,  0.98...,  0.99...]])
-  >>> valid_scores           # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-  array([[ 1. ,  0.93...,  1. ,  1. ,  0.96...],
-         [ 1. ,  0.96...,  1. ,  1. ,  0.96...],
-         [ 1. ,  0.96...,  1. ,  1. ,  0.96...]])
+  >>> train_scores
+  array([[0.98..., 0.98 , 0.98..., 0.98..., 0.98...],
+         [0.98..., 1.   , 0.98..., 0.98..., 0.98...],
+         [0.98..., 1.   , 0.98..., 0.98..., 0.99...]])
+  >>> valid_scores
+  array([[1. ,  0.93...,  1. ,  1. ,  0.96...],
+         [1. ,  0.96...,  1. ,  1. ,  0.96...],
+         [1. ,  0.96...,  1. ,  1. ,  0.96...]])
 

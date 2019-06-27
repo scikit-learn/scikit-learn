@@ -32,13 +32,12 @@ from sklearn.neural_network import MLPClassifier
 h = .02  # step size in the mesh
 
 alphas = np.logspace(-5, 3, 5)
-names = []
-for i in alphas:
-    names.append('alpha ' + str(i))
+names = ['alpha ' + str(i) for i in alphas]
 
 classifiers = []
 for i in alphas:
-    classifiers.append(MLPClassifier(alpha=i, random_state=1))
+    classifiers.append(MLPClassifier(solver='lbfgs', alpha=i, random_state=1,
+                                     hidden_layer_sizes=[100, 100]))
 
 X, y = make_classification(n_features=2, n_redundant=0, n_informative=2,
                            random_state=0, n_clusters_per_class=1)
@@ -84,7 +83,7 @@ for X, y in datasets:
         score = clf.score(X_test, y_test)
 
         # Plot the decision boundary. For that, we will assign a color to each
-        # point in the mesh [x_min, m_max]x[y_min, y_max].
+        # point in the mesh [x_min, x_max]x[y_min, y_max].
         if hasattr(clf, "decision_function"):
             Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
         else:
@@ -95,10 +94,11 @@ for X, y in datasets:
         ax.contourf(xx, yy, Z, cmap=cm, alpha=.8)
 
         # Plot also the training points
-        ax.scatter(X_train[:, 0], X_train[:, 1], c=y_train, cmap=cm_bright)
+        ax.scatter(X_train[:, 0], X_train[:, 1], c=y_train, cmap=cm_bright,
+                   edgecolors='black', s=25)
         # and testing points
         ax.scatter(X_test[:, 0], X_test[:, 1], c=y_test, cmap=cm_bright,
-                   alpha=0.6)
+                   alpha=0.6, edgecolors='black', s=25)
 
         ax.set_xlim(xx.min(), xx.max())
         ax.set_ylim(yy.min(), yy.max())

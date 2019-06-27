@@ -1,4 +1,4 @@
-"""
+r"""
 ==============================================
 Scaling the regularization parameter for SVCs
 ==============================================
@@ -106,8 +106,8 @@ X_1, y_1 = datasets.make_classification(n_samples=n_samples,
 
 # l2 data: non sparse, but less features
 y_2 = np.sign(.5 - rnd.rand(n_samples))
-X_2 = rnd.randn(n_samples, n_features / 5) + y_2[:, np.newaxis]
-X_2 += 5 * rnd.randn(n_samples, n_features / 5)
+X_2 = rnd.randn(n_samples, n_features // 5) + y_2[:, np.newaxis]
+X_2 += 5 * rnd.randn(n_samples, n_features // 5)
 
 clf_sets = [(LinearSVC(penalty='l1', loss='squared_hinge', dual=False,
                        tol=1e-3),
@@ -119,33 +119,33 @@ clf_sets = [(LinearSVC(penalty='l1', loss='squared_hinge', dual=False,
 colors = ['navy', 'cyan', 'darkorange']
 lw = 2
 
-for fignum, (clf, cs, X, y) in enumerate(clf_sets):
+for clf, cs, X, y in clf_sets:
     # set up the plot for each regressor
-    plt.figure(fignum, figsize=(9, 10))
+    fig, axes = plt.subplots(nrows=2, sharey=True, figsize=(9, 10))
 
     for k, train_size in enumerate(np.linspace(0.3, 0.7, 3)[::-1]):
         param_grid = dict(C=cs)
         # To get nice curve, we need a large number of iterations to
         # reduce the variance
         grid = GridSearchCV(clf, refit=False, param_grid=param_grid,
-                            cv=ShuffleSplit(train_size=train_size, n_iter=250,
-                                            random_state=1))
+                            cv=ShuffleSplit(train_size=train_size,
+                                            test_size=.3,
+                                            n_splits=250, random_state=1))
         grid.fit(X, y)
-        scores = [x[1] for x in grid.grid_scores_]
+        scores = grid.cv_results_['mean_test_score']
 
         scales = [(1, 'No scaling'),
                   ((n_samples * train_size), '1/n_samples'),
                   ]
 
-        for subplotnum, (scaler, name) in enumerate(scales):
-            plt.subplot(2, 1, subplotnum + 1)
-            plt.xlabel('C')
-            plt.ylabel('CV Score')
+        for ax, (scaler, name) in zip(axes, scales):
+            ax.set_xlabel('C')
+            ax.set_ylabel('CV Score')
             grid_cs = cs * float(scaler)  # scale the C's
-            plt.semilogx(grid_cs, scores, label="fraction %.2f" %
-                         train_size, color=colors[k], lw=lw)
-            plt.title('scaling=%s, penalty=%s, loss=%s' %
-                      (name, clf.penalty, clf.loss))
+            ax.semilogx(grid_cs, scores, label="fraction %.2f" %
+                        train_size, color=colors[k], lw=lw)
+            ax.set_title('scaling=%s, penalty=%s, loss=%s' %
+                         (name, clf.penalty, clf.loss))
 
     plt.legend(loc="best")
 plt.show()

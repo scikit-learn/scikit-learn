@@ -7,7 +7,6 @@ A Theil-Sen Estimator for Multiple Linear Regression Model
 #
 # License: BSD 3 clause
 
-from __future__ import division, print_function, absolute_import
 
 import warnings
 from itertools import combinations
@@ -16,14 +15,12 @@ import numpy as np
 from scipy import linalg
 from scipy.special import binom
 from scipy.linalg.lapack import get_lapack_funcs
+from joblib import Parallel, delayed, effective_n_jobs
 
 from .base import LinearModel
 from ..base import RegressorMixin
 from ..utils import check_random_state
-from ..utils import check_X_y, _get_n_jobs
-from ..utils.random import choice
-from ..externals.joblib import Parallel, delayed
-from ..externals.six.moves import xrange as range
+from ..utils import check_X_y
 from ..exceptions import ConvergenceWarning
 
 _EPSILON = np.finfo(np.double).eps
@@ -102,7 +99,7 @@ def _spatial_median(X, max_iter=300, tol=1.e-3):
     spatial_median : array, shape = [n_features]
         Spatial median.
 
-    n_iter: int
+    n_iter : int
         Number of iterations needed.
 
     References
@@ -243,13 +240,18 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
     tol : float, optional, default 1.e-3
         Tolerance when calculating spatial median.
 
-    random_state : RandomState or an int seed, optional, default None
-        A random number generator instance to define the state of the
-        random permutations generator.
+    random_state : int, RandomState instance or None, optional, default None
+        A random number generator instance to define the state of the random
+        permutations generator.  If int, random_state is the seed used by the
+        random number generator; If RandomState instance, random_state is the
+        random number generator; If None, the random number generator is the
+        RandomState instance used by `np.random`.
 
-    n_jobs : integer, optional, default 1
-        Number of CPUs to use during the cross validation. If ``-1``, use
-        all the CPUs.
+    n_jobs : int or None, optional (default=None)
+        Number of CPUs to use during the cross validation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     verbose : boolean, optional, default False
         Verbose mode when fitting the model.
@@ -272,6 +274,18 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
         Number of combinations taken into account from 'n choose k', where n is
         the number of samples and k is the number of subsamples.
 
+    Examples
+    --------
+    >>> from sklearn.linear_model import TheilSenRegressor
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(
+    ...     n_samples=200, n_features=2, noise=4.0, random_state=0)
+    >>> reg = TheilSenRegressor(random_state=0).fit(X, y)
+    >>> reg.score(X, y)
+    0.9884...
+    >>> reg.predict(X[:1,])
+    array([-31.5871...])
+
     References
     ----------
     - Theil-Sen Estimators in a Multiple Linear Regression Model, 2009
@@ -281,7 +295,7 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
 
     def __init__(self, fit_intercept=True, copy_X=True,
                  max_subpopulation=1e4, n_subsamples=None, max_iter=300,
-                 tol=1.e-3, random_state=None, n_jobs=1, verbose=False):
+                 tol=1.e-3, random_state=None, n_jobs=None, verbose=False):
         self.fit_intercept = fit_intercept
         self.copy_X = copy_X
         self.max_subpopulation = int(max_subpopulation)
@@ -362,13 +376,11 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
         if np.rint(binom(n_samples, n_subsamples)) <= self.max_subpopulation:
             indices = list(combinations(range(n_samples), n_subsamples))
         else:
-            indices = [choice(n_samples,
-                              size=n_subsamples,
-                              replace=False,
-                              random_state=random_state)
+            indices = [random_state.choice(n_samples, size=n_subsamples,
+                                           replace=False)
                        for _ in range(self.n_subpopulation_)]
 
-        n_jobs = _get_n_jobs(self.n_jobs)
+        n_jobs = effective_n_jobs(self.n_jobs)
         index_list = np.array_split(indices, n_jobs)
         weights = Parallel(n_jobs=n_jobs,
                            verbose=self.verbose)(

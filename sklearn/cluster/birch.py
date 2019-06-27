@@ -2,7 +2,6 @@
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 #          Joel Nothman <joel.nothman@gmail.com>
 # License: BSD 3 clause
-from __future__ import division
 
 import warnings
 import numpy as np
@@ -11,11 +10,10 @@ from math import sqrt
 
 from ..metrics.pairwise import euclidean_distances
 from ..base import TransformerMixin, ClusterMixin, BaseEstimator
-from ..externals.six.moves import xrange
 from ..utils import check_array
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.validation import check_is_fitted
-from ..exceptions import NotFittedError
+from ..exceptions import ConvergenceWarning
 from .hierarchical import AgglomerativeClustering
 
 
@@ -29,7 +27,7 @@ def _iterate_sparse_X(X):
     X_data = X.data
     X_indptr = X.indptr
 
-    for i in xrange(n_samples):
+    for i in range(n_samples):
         row = np.zeros(X.shape[1])
         startptr, endptr = X_indptr[i], X_indptr[i + 1]
         nonzero_indices = X_indices[startptr:endptr]
@@ -74,7 +72,7 @@ def _split_node(node, threshold, branching_factor):
 
     farthest_idx = np.unravel_index(
         dist.argmax(), (n_clusters, n_clusters))
-    node1_dist, node2_dist = dist[[farthest_idx]]
+    node1_dist, node2_dist = dist[(farthest_idx,)]
 
     node1_closer = node1_dist < node2_dist
     for idx, subcluster in enumerate(node.subclusters_):
@@ -87,7 +85,7 @@ def _split_node(node, threshold, branching_factor):
     return new_subcluster1, new_subcluster2
 
 
-class _CFNode(object):
+class _CFNode:
     """Each node in a CFTree is called a CFNode.
 
     The CFNode can have a maximum of branching_factor
@@ -240,7 +238,7 @@ class _CFNode(object):
                 return True
 
 
-class _CFSubcluster(object):
+class _CFSubcluster:
     """Each subcluster in a CFNode is called a CFSubcluster.
 
     A CFSubcluster can have a CFNode has its child.
@@ -279,7 +277,7 @@ class _CFSubcluster(object):
         if linear_sum is None:
             self.n_samples_ = 0
             self.squared_sum_ = 0.0
-            self.linear_sum_ = 0
+            self.centroid_ = self.linear_sum_ = 0
         else:
             self.n_samples_ = 1
             self.centroid_ = self.linear_sum_ = linear_sum
@@ -324,10 +322,11 @@ class _CFSubcluster(object):
 class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
     """Implements the Birch clustering algorithm.
 
-    Every new sample is inserted into the root of the Clustering Feature
-    Tree. It is then clubbed together with the subcluster that has the
-    centroid closest to the new sample. This is done recursively till it
-    ends up at the subcluster of the leaf of the tree has the closest centroid.
+    It is a memory-efficient, online-learning algorithm provided as an
+    alternative to :class:`MiniBatchKMeans`. It constructs a tree
+    data structure with the cluster centroids being read off the leaf.
+    These can be either the final cluster centroids or can be provided as input
+    to another clustering algorithm such as :class:`AgglomerativeClustering`.
 
     Read more in the :ref:`User Guide <birch>`.
 
@@ -336,23 +335,29 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
     threshold : float, default 0.5
         The radius of the subcluster obtained by merging a new sample and the
         closest subcluster should be lesser than the threshold. Otherwise a new
-        subcluster is started.
+        subcluster is started. Setting this value to be very low promotes
+        splitting and vice-versa.
 
     branching_factor : int, default 50
         Maximum number of CF subclusters in each node. If a new samples enters
         such that the number of subclusters exceed the branching_factor then
-        the node has to be split. The corresponding parent also has to be
-        split and if the number of subclusters in the parent is greater than
-        the branching factor, then it has to be split recursively.
+        that node is split into two nodes with the subclusters redistributed
+        in each. The parent subcluster of that node is removed and two new
+        subclusters are added as parents of the 2 split nodes.
 
-    n_clusters : int, instance of sklearn.cluster model, default None
+    n_clusters : int, instance of sklearn.cluster model, default 3
         Number of clusters after the final clustering step, which treats the
-        subclusters from the leaves as new samples. By default, this final
-        clustering step is not performed and the subclusters are returned
-        as they are. If a model is provided, the model is fit treating
-        the subclusters as new samples and the initial data is mapped to the
-        label of the closest subcluster. If an int is provided, the model
-        fit is AgglomerativeClustering with n_clusters set to the int.
+        subclusters from the leaves as new samples.
+
+        - `None` : the final clustering step is not performed and the
+          subclusters are returned as they are.
+
+        - `sklearn.cluster` Estimator : If a model is provided, the model is
+          fit treating the subclusters as new samples and the initial data is
+          mapped to the label of the closest subcluster.
+
+        - `int` : the model fit is :class:`AgglomerativeClustering` with
+          `n_clusters` set to be equal to the int.
 
     compute_labels : bool, default True
         Whether or not to compute labels for each fit.
@@ -385,11 +390,9 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
     --------
     >>> from sklearn.cluster import Birch
     >>> X = [[0, 1], [0.3, 1], [-0.3, 1], [0, -1], [0.3, -1], [-0.3, -1]]
-    >>> brc = Birch(branching_factor=50, n_clusters=None, threshold=0.5,
-    ... compute_labels=True)
+    >>> brc = Birch(n_clusters=None)
     >>> brc.fit(X)
-    Birch(branching_factor=50, compute_labels=True, copy=True, n_clusters=None,
-       threshold=0.5)
+    Birch(n_clusters=None)
     >>> brc.predict(X)
     array([0, 0, 0, 1, 1, 1])
 
@@ -397,11 +400,25 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
     ----------
     * Tian Zhang, Raghu Ramakrishnan, Maron Livny
       BIRCH: An efficient data clustering method for large databases.
-      http://www.cs.sfu.ca/CourseCentral/459/han/papers/zhang96.pdf
+      https://www.cs.sfu.ca/CourseCentral/459/han/papers/zhang96.pdf
 
     * Roberto Perdisci
       JBirch - Java implementation of BIRCH clustering algorithm
-      https://code.google.com/p/jbirch/
+      https://code.google.com/archive/p/jbirch
+
+    Notes
+    -----
+    The tree data structure consists of nodes with each node consisting of
+    a number of subclusters. The maximum number of subclusters in a node
+    is determined by the branching factor. Each subcluster maintains a
+    linear sum, squared sum and the number of samples in that subcluster.
+    In addition, each subcluster can also have a node as its child, if the
+    subcluster is not a member of a leaf node.
+
+    For a new point entering the root, it is merged with the subcluster closest
+    to it and the linear sum, squared sum and the number of samples of that
+    subcluster are updated. This is done recursively till the properties of
+    the leaf node are updated.
     """
 
     def __init__(self, threshold=0.5, branching_factor=50, n_clusters=3,
@@ -420,6 +437,9 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Input data.
+
+        y : Ignored
+
         """
         self.fit_, self.partial_fit_ = True, False
         return self._fit(X)
@@ -481,7 +501,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
 
         Returns
         -------
-        leaves: array-like
+        leaves : array-like
             List of the leaf nodes.
         """
         leaf_ptr = self.dummy_leaf_.next_leaf_
@@ -500,6 +520,9 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         X : {array-like, sparse matrix}, shape (n_samples, n_features), None
             Input data. If X is not provided, only the global clustering
             step is done.
+
+        y : Ignored
+
         """
         self.partial_fit_, self.fit_ = True, False
         if X is None:
@@ -511,16 +534,11 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
             return self._fit(X)
 
     def _check_fit(self, X):
-        is_fitted = hasattr(self, 'subcluster_centers_')
+        check_is_fitted(self, ['subcluster_centers_', 'partial_fit_'],
+                        all_or_any=any)
 
-        # Called by partial_fit, before fitting.
-        has_partial_fit = hasattr(self, 'partial_fit_')
-
-        # Should raise an error if one does not fit before predicting.
-        if not (is_fitted or has_partial_fit):
-            raise NotFittedError("Fit training data before predicting")
-
-        if is_fitted and X.shape[1] != self.subcluster_centers_.shape[1]:
+        if (hasattr(self, 'subcluster_centers_') and
+                X.shape[1] != self.subcluster_centers_.shape[1]):
             raise ValueError(
                 "Training data and predicted data do "
                 "not have same number of features.")
@@ -538,7 +556,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
 
         Returns
         -------
-        labels: ndarray, shape(n_samples)
+        labels : ndarray, shape(n_samples)
             Labelled data.
         """
         X = check_array(X, accept_sparse='csr')
@@ -548,7 +566,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         reduced_distance += self._subcluster_norms
         return self.subcluster_labels_[np.argmin(reduced_distance, axis=1)]
 
-    def transform(self, X, y=None):
+    def transform(self, X):
         """
         Transform X into subcluster centroids dimension.
 
@@ -599,7 +617,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
                 warnings.warn(
                     "Number of subclusters found (%d) by Birch is less "
                     "than (%d). Decrease the threshold."
-                    % (len(centroids), self.n_clusters))
+                    % (len(centroids), self.n_clusters), ConvergenceWarning)
         else:
             # The global clustering step that clusters the subclusters of
             # the leaves. It assumes the centroids of the subclusters as

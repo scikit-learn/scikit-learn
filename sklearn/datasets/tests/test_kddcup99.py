@@ -5,17 +5,18 @@ The test is skipped if the data wasn't previously fetched and saved to
 scikit-learn data folder.
 """
 
-import errno
 from sklearn.datasets import fetch_kddcup99
+from sklearn.datasets.tests.test_common import check_return_X_y
 from sklearn.utils.testing import assert_equal, SkipTest
+from functools import partial
+
 
 
 def test_percent10():
     try:
         data = fetch_kddcup99(download_if_missing=False)
-    except IOError as e:
-        if e.errno == errno.ENOENT:
-            raise SkipTest("kddcup99 dataset can not be loaded.")
+    except IOError:
+        raise SkipTest("kddcup99 dataset can not be loaded.")
 
     assert_equal(data.data.shape, (494021, 41))
     assert_equal(data.target.shape, (494021,))
@@ -39,3 +40,16 @@ def test_percent10():
     data = fetch_kddcup99('smtp')
     assert_equal(data.data.shape, (9571, 3))
     assert_equal(data.target.shape, (9571,))
+
+    fetch_func = partial(fetch_kddcup99, 'smtp')
+    check_return_X_y(data, fetch_func)
+
+
+def test_shuffle():
+    try:
+        dataset = fetch_kddcup99(random_state=0, subset='SA', shuffle=True,
+                                 percent10=True, download_if_missing=False)
+    except IOError:
+        raise SkipTest("kddcup99 dataset can not be loaded.")
+
+    assert(any(dataset.target[-100:] == b'normal.'))

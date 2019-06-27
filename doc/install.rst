@@ -10,14 +10,26 @@ Installing scikit-learn
     :ref:`install the latest development version<install_bleeding_edge>`.
 
 
+.. _install_official_release:
+
 Installing the latest release
 =============================
 
 Scikit-learn requires:
 
-- Python (>= 2.6 or >= 3.3),
-- NumPy (>= 1.6.1),
-- SciPy (>= 0.9).
+- Python (>= 3.5)
+- NumPy (>= 1.11.0)
+- SciPy (>= 0.17.0)
+- joblib (>= 0.11)
+
+Scikit-learn plotting capabilities (i.e., functions start with "plot_") require
+Matplotlib (>= 1.5.1). Some of the scikit-learn examples might require one or
+more extra dependencies: scikit-image (>= 0.12.3), pandas (>= 0.18.0).
+
+.. warning::
+
+    Scikit-learn 0.20 was the last version to support Python 2.7 and Python 3.4.
+    Scikit-learn now requires Python 3.5 or newer.
 
 If you already have a working installation of numpy and scipy,
 the easiest way to install scikit-learn is using ``pip`` ::
@@ -28,15 +40,33 @@ or ``conda``::
 
     conda install scikit-learn
 
-**We don't recommend installing scipy or numpy using pip on linux**,
-as this will involve a lengthy build-process with many dependencies.
-Without careful configuration, building numpy yourself can lead to an installation
-that is much slower than it should be. 
-If you are using Linux, consider using your package manager to install
-scikit-learn. It is usually the easiest way, but might not provide the newest
-version.
-If you haven't already installed numpy and scipy and can't install them via
-your operation system, it is recommended to use a third party distribution.
+If you have not installed NumPy or SciPy yet, you can also install these using
+conda or pip. When using pip, please ensure that *binary wheels* are used,
+and NumPy and SciPy are not recompiled from source, which can happen when using
+particular configurations of operating system and hardware (such as Linux on
+a Raspberry Pi). 
+Building numpy and scipy from source can be complex (especially on Windows) and
+requires careful configuration to ensure that they link against an optimized
+implementation of linear algebra routines.
+Instead, use a third-party distribution as described below.
+
+If you must install scikit-learn and its dependencies with pip, you can install
+it as ``scikit-learn[alldeps]``. The most common use case for this is in a
+``requirements.txt`` file used as part of an automated build process for a PaaS
+application or a Docker image. This option is not intended for manual
+installation from the command line.
+
+.. note::
+
+   For installing on PyPy, PyPy3-v5.10+, Numpy 1.14.0+, and scipy 1.1.0+
+   are required.
+
+
+For installation instructions for more distributions see
+:ref:`other distributions <install_by_distribution>`.
+For compiling the development version from source, or building the package
+if no distribution is available for your architecture, see the
+:ref:`advanced-installation`.
 
 Third-party Distributions
 ==========================
@@ -52,7 +82,7 @@ Canopy and Anaconda for all supported platforms
 
 `Canopy
 <https://www.enthought.com/products/canopy>`_ and `Anaconda
-<https://www.continuum.io/downloads>`_ both ship a recent
+<https://www.anaconda.com/download>`_ both ship a recent
 version of scikit-learn, in addition to a large set of scientific python
 library for Windows, Mac OSX and Linux.
 
@@ -80,12 +110,9 @@ Anaconda offers scikit-learn as part of its free distribution.
     via ``pip install``.
 
 
-Python(x,y) for Windows
+WinPython for Windows
 -----------------------
 
-The `Python(x,y) <https://python-xy.github.io>`_ project distributes
+The `WinPython <https://winpython.github.io/>`_ project distributes
 scikit-learn as an additional plugin.
 
-
-For installation instructions for particular operating systems or for compiling
-the bleeding edge version, see the :ref:`advanced-installation`.
