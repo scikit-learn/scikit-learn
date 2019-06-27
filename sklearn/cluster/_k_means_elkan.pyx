@@ -266,7 +266,6 @@ shape (n_clusters, n_clusters)
     n_chunks += n_samples != n_chunks * n_samples_chunk
 
     if update_centers:
-        memcpy(&centers_old[0, 0], &centers_new[0, 0], n_clusters * n_features * sizeof(floating))
         memset(&centers_new[0, 0], 0, n_clusters * n_features * sizeof(floating))
         memset(&weight_in_clusters[0], 0, n_clusters * sizeof(floating))
 
@@ -481,7 +480,7 @@ shape (n_clusters, n_clusters)
 
         int i, j, k
 
-        floating[::1] centers_squared_norms = row_norms(centers_new, squared=True)
+        floating[::1] centers_squared_norms = row_norms(centers_old, squared=True)
 
         floating *centers_new_chunk
         floating *weight_in_clusters_chunk
@@ -490,7 +489,6 @@ shape (n_clusters, n_clusters)
     n_chunks += n_samples != n_chunks * n_samples_chunk
 
     if update_centers:
-        memcpy(&centers_old[0, 0], &centers_new[0, 0], n_clusters * n_features * sizeof(floating))
         memset(&centers_new[0, 0], 0, n_clusters * n_features * sizeof(floating))
         memset(&weight_in_clusters[0], 0, n_clusters * sizeof(floating))
 

@@ -485,7 +485,7 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
 
     n_samples = X.shape[0]
 
-    centers_old = np.zeros_like(centers)
+    centers_new = np.zeros_like(centers)
     weight_in_clusters = np.zeros(n_clusters, dtype=X.dtype)
     labels = np.full(n_samples, -1, dtype=np.int32)
     center_half_distances = euclidean_distances(centers) / 2
@@ -508,18 +508,18 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
                 labels, upper_bounds, lower_bounds)
 
     for i in range(max_iter):
-        elkan_iter(X, sample_weight, centers_old, centers, weight_in_clusters,
+        elkan_iter(X, sample_weight, centers, centers_new, weight_in_clusters,
                    center_half_distances, distance_next_center, upper_bounds,
                    lower_bounds, labels, center_shift, n_jobs)
 
         # compute new pairwise distances between centers and closest other
         # center of each center for next iterations
-        center_half_distances = euclidean_distances(centers) / 2
+        center_half_distances = euclidean_distances(centers_new) / 2
         distance_next_center = np.partition(np.asarray(center_half_distances),
                                             kth=1, axis=0)[1]
 
         if verbose:
-            inertia = _inertia(X, sample_weight, centers_old, labels)
+            inertia = _inertia(X, sample_weight, centers, labels)
             print("Iteration {0}, inertia {1}" .format(i, inertia))
 
         center_shift_tot = (center_shift**2).sum()
@@ -529,6 +529,8 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
                       "center shift {1} within tolerance {2}"
                       .format(i, center_shift_tot, tol))
             break
+
+        centers, centers_new = centers_new, centers
 
     # rerun E-step so that predicted labels match cluster centers
     elkan_iter(X, sample_weight, centers, centers, weight_in_clusters,
