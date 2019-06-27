@@ -8,6 +8,7 @@ Utilities useful during the build.
 import os
 
 from distutils.version import LooseVersion
+import contextlib
 
 from numpy.distutils.system_info import get_info
 
@@ -87,15 +88,13 @@ def maybe_cythonize_extensions(top_path, config):
             raise
 
         n_jobs = 1
-        try:
+        with contextlib.suppress(ImportError):
             import joblib
             if LooseVersion(joblib.__version__) > LooseVersion("0.13.0"):
                 # earlier joblib versions don't account for CPU affinity
                 # constraints, and may over-estimate the number of available
                 # CPU particularly in CI (cf loky#114)
                 n_jobs = joblib.effective_n_jobs()
-        except ImportError:
-            pass
 
         config.ext_modules = cythonize(
             config.ext_modules,
