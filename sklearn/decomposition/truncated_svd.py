@@ -42,22 +42,29 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    n_components : int, default = 2
+    n_components : int, default=2
         Desired dimensionality of output data.
         Must be strictly less than the number of features.
         The default value is useful for visualisation. For LSA, a value of
         100 is recommended.
 
-    algorithm : string, default = "randomized"
-        SVD solver to use. Either "arpack" for the ARPACK wrapper in SciPy
-        (scipy.sparse.linalg.svds), or
-        "lobpcg" for LOBPCG (scipy.sparse.linalg.lobpcg) Knyazev (2001), or
-        "randomized" for the randomized algorithm due to Halko (2009).
+    algorithm : string {'randomized', 'lobpcg', 'arpack'}, default="randomized"
+        SVD solver to use.
+        randomized :
+            run randomized SVD as in [1].
+        lobpcg :
+            run Locally Optimal Block Preconditioned Conjugate Gradient [2]
+            for a normal matrix X'*X or X*X', whichever of the two is of
+            the smallest size. See :func:`scipy.sparse.linalg.lobpcg`.
+        arpack :
+            run SVD truncated to n_components calling ARPACK solver via
+            :func:`scipy.sparse.linalg.svds`. It requires strictly
+            0 < n_components < min(X.shape).
 
-    n_iter : int, optional (default 5)
-        Number of iterations for randomized or LOBPCG SVD solver.
-        Not used by ARPACK.
-        The default is larger than the default in `randomized_svd` to handle
+    n_iter : int, default=5
+        Number of iterations for algorithm 'randomized' and 'lobpcg'.
+        The default is larger than the default in
+        :func:`sklearn.utils.extmath.randomized_svd` to handle
         sparse matrices that may have large slowly decaying spectrum.
 
     random_state : int, RandomState instance or None, optional, default = None
@@ -66,10 +73,13 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    tol : float, optional
-        Tolerance for ARPACK or LOBPCG SVD solver. Ignored by randomized SVD
-        solver. tol = 0 means machine precision in ARPACK, but ignored and
-        substituted by a default in LOBPCG.
+    tol : None or float, default=None
+        Tolerance for singular values computed by the 'randomized' and 'lobpcg'
+        SVD solver. If None, then:
+            * `tol = 2 * eps` for svd_solver = 'randomized'.
+              Refer to :func:`scipy.sparse.linalg.svds`.
+            * `tol = n * sqrt(eps)` where `n = min(n_samples, n_features)`.
+              Refer to :func:`scipy.sparse.linalg.lobpcg`.
 
     Attributes
     ----------
@@ -86,6 +96,19 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         The singular values corresponding to each of the selected components.
         The singular values are equal to the 2-norms of the ``n_components``
         variables in the lower-dimensional space.
+
+    References
+    ----------
+    .. [1] Halko, Nathan, Per-Gunnar Martinsson, and Joel A. Tropp.
+            "Finding structure with randomness: Probabilistic algorithms for
+            constructing approximate matrix decompositions."
+            SIAM review 53, no. 2 (2011): 217-288.
+
+    .. [2] Knyazev, Andrew V.
+            "Toward the optimal preconditioned eigensolver:
+            Locally optimal block preconditioned conjugate gradient method."
+            SIAM journal on scientific computing 23, no. 2 (2001): 517-541.
+            https://doi.org/10.1137%2FS1064827500366124
 
     Examples
     --------
@@ -106,12 +129,6 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     --------
     PCA
 
-    References
-    ----------
-    Finding structure with randomness: Stochastic algorithms for constructing
-    approximate matrix decompositions
-    Halko, et al., 2009 (arXiv:909) https://arxiv.org/pdf/0909.4061.pdf
-
     Notes
     -----
     SVD suffers from a problem called "sign indeterminacy", which means the
@@ -122,7 +139,7 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_components=2, algorithm="randomized", n_iter=5,
-                 random_state=None, tol=0.):
+                 random_state=None, tol=None):
         self.algorithm = algorithm
         self.n_components = n_components
         self.n_iter = n_iter
@@ -166,8 +183,11 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
                         ensure_min_features=2)
         random_state = check_random_state(self.random_state)
 
+        tol = (0. if self.tol is None and self.algorithm == 'arpack'
+               else self.tol)
+
         if self.algorithm == "arpack":
-            U, Sigma, VT = svds(X, k=self.n_components, tol=self.tol)
+            U, Sigma, VT = svds(X, k=self.n_components, tol=tol)
             # svds doesn't abide by scipy.linalg.svd/randomized_svd
             # conventions, so reverse its outputs.
             Sigma = Sigma[::-1]
@@ -181,7 +201,7 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
             U, Sigma, VT = randomized_svd(
                 X, self.n_components, n_iter=self.n_iter,
                 random_state=random_state,
-                preconditioner='lobpcg', tol=self.tol
+                preconditioner='lobpcg', tol=tol
             )
         elif self.algorithm == "randomized":
             k = self.n_components

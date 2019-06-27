@@ -191,3 +191,32 @@ def test_truncated_svd_eq_pca(X_sparse):
     assert_allclose(Xt_svd, Xt_pca, rtol=1e-9)
     assert_allclose(pca.mean_, 0, atol=1e-9)
     assert_allclose(svd.components_, pca.components_)
+
+
+@pytest.mark.parametrize("algorithm", ["arpack", "lobpcg"])
+def test_svd_tolerance(algorithm):
+    # check that the tolerance has an influence on the precision of the
+    # singular values (or components).
+    X = np.random.RandomState(0).randn(1000, 100)
+
+    n_components = 4
+    svd_coarse = TruncatedSVD(
+        n_components=n_components, tol=100, algorithm=algorithm, random_state=0
+    )
+    svd_finer = TruncatedSVD(
+        n_components=n_components, tol=1e-6, algorithm=algorithm,
+        random_state=0
+    )
+    svd_machine_precision = TruncatedSVD(
+        n_components=n_components, algorithm=algorithm, random_state=0
+    )
+
+    for svd in (svd_coarse, svd_finer, svd_machine_precision):
+        svd.fit(X)
+
+    sv_svd_coarse = svd_coarse.singular_values_
+    sv_svd_finer = svd_finer.singular_values_
+    sv_svd_machine_precision = svd_machine_precision.singular_values_
+
+    assert (np.linalg.norm(sv_svd_machine_precision - sv_svd_coarse) >=
+            np.linalg.norm(sv_svd_machine_precision - sv_svd_finer))

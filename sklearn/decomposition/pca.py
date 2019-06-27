@@ -181,7 +181,7 @@ class PCA(_BasePCA):
         lobpcg :
             run Locally Optimal Block Preconditioned Conjugate Gradient [5]
             for a normal matrix X'*X or X*X', whichever of the two is of
-            the smallest size.
+            the smallest size. See :func:`scipy.sparse.linalg.lobpcg`.
 
         .. versionadded:: 0.18.0
 
