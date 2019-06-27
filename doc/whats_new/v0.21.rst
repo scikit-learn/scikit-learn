@@ -727,13 +727,6 @@ Support for Python 3.4 and below has been officially dropped.
   the multilabel case however, splits are still not stratified.
   :pr:`13164` by :user:`Nicolas Hug<NicolasHug>`.
 
-- |Feature| Add `max_fun` parameter in
-  :class:`neural_network.BaseMultilayerPerceptron`,
-  :class:`neural_network.MLPRegressor`, and
-  :class:`neural_network.MLPClassifier` to give control over
-  maximum number of function evaluation to not meet ``tol`` improvement.
-  :issue:`9274` by :user:`Daniel Perry <daniel-perry>`.
-
 :mod:`sklearn.pipeline`
 .......................
 

@@ -48,6 +48,18 @@ Changelog
   ``decision_function_shape='ovr'``, and the number of target classes > 2.
   :pr:`12557` by `Adrin Jalali`_.
 
+
+:mod:`sklearn.neural_network`
+.............................
+
+- |Feature| Add `max_fun` parameter in
+  :class:`neural_network.BaseMultilayerPerceptron`,
+  :class:`neural_network.MLPRegressor`, and
+  :class:`neural_network.MLPClassifier` to give control over
+  maximum number of function evaluation to not meet ``tol`` improvement.
+  :issue:`9274` by :user:`Daniel Perry <daniel-perry>`.
+
+
 Miscellaneous
 .............
 
