@@ -932,23 +932,20 @@ def _refresh_cache(files, compress):
     refresh_needed = any([str(x.message).startswith(msg) for x in warns])
 
     if refresh_needed:
-        raise_joblib = False
         try:
             for value, path in zip(data, files):
                 joblib.dump(value, path, compress=compress)
         except IOError:
-            raise_joblib = True
+            message = ("This dataset will stop being loadable in scikit-learn "
+                       "version 0.23 because it references a deprecated "
+                       "import path. Consider removing the following files "
+                       "and allowing it to be cached anew:\n%s"
+                       % ("\n".join(files)))
+            warnings.warn(message=message, category=DeprecationWarning)
 
         other_warns = [w for w in warns if not str(w.message).startswith(msg)]
         for w in other_warns:
             warnings.warn(message=w.message, category=w.category)
-
-        if raise_joblib:
-            joblib_warning = [w for w in warns
-                              if str(w.message).startswith(msg)][0]
-            message = str(joblib_warning.message) + (
-                " The persisted files are located under: %s" % path)
-            warnings.warn(message=message, category=joblib_warning.category)
 
     if len(data) == 1:
         return data[0]
