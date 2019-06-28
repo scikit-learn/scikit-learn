@@ -467,6 +467,23 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             pgtol=self.tol,
             args=(X, y, activations, deltas, coef_grads, intercept_grads))
         self.n_iter_ = d['nit']
+        if d['warnflag'] == 1:
+            if d['nit'] >= self.max_iter:
+                warnings.warn(
+                    "LBFGS Optimizer: Maximum iterations (%d) "
+                    "reached and the optimization hasn't converged yet."
+                    % self.max_iter, ConvergenceWarning)
+            if d['funcalls'] >= self.max_fun:
+                warnings.warn(
+                    "LBFGS Optimizer: Maximum function evaluations (%d) "
+                    "reached and the optimization hasn't converged yet."
+                    % self.max_fun, ConvergenceWarning)
+        elif d['warnflag'] == 2:
+            warnings.warn(
+                "LBFGS Optimizer: Optimization hasn't converged yet, "
+                "cause of LBFGS stopping: %s."
+                % d['task'], ConvergenceWarning)
+
 
         self._unpack(optimal_parameters)
 

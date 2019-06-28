@@ -278,8 +278,9 @@ def test_lbfgs_classification_maxfun(X, y):
         mlp = MLPClassifier(solver='lbfgs', hidden_layer_sizes=50,
                             max_iter=150, max_fun=max_fun, shuffle=True,
                             random_state=1, activation=activation)
-        mlp.fit(X, y)
-        assert max_fun >= mlp.n_iter_
+        with pytest.warns(ConvergenceWarning):
+            mlp.fit(X, y)
+            assert max_fun >= mlp.n_iter_
 
 
 @pytest.mark.parametrize('X,y', regression_datasets)
@@ -292,8 +293,9 @@ def test_lbfgs_regression_maxfun(X, y):
         mlp = MLPRegressor(solver='lbfgs', hidden_layer_sizes=50,
                            max_iter=150, max_fun=max_fun, shuffle=True,
                            random_state=1, activation=activation)
-        mlp.fit(X, y)
-        assert max_fun >= mlp.n_iter_
+        with pytest.warns(ConvergenceWarning):
+            mlp.fit(X, y)
+            assert max_fun >= mlp.n_iter_
 
     mlp.max_fun = -1
     assert_raises(ValueError, mlp.fit, X, y)
