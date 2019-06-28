@@ -150,6 +150,13 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         has_missing_values = np.isnan(X_train).any(axis=0).astype(np.uint8)
 
         # Bin the data
+        # For ease of use of the API, the user-facing GBDT classes accept the
+        # parameter max_bins, which doesn't take into account the bin for
+        # missing values (which is always allocated). However, since max_bins
+        # isn't the true maximal number of bins, all other private classes
+        # (binmapper, histbuilder...) accept n_bins instead, which is the
+        # actual total number of bins. Everywhere in the code, the
+        # convention is that n_bins == max_bins + 1
         n_bins = self.max_bins + 1  # + 1 for missing values
         self.bin_mapper_ = _BinMapper(n_bins=n_bins, random_state=rng)
         X_binned_train = self._bin_data(X_train, rng, is_training_data=True)
@@ -662,7 +669,7 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
         integer-valued bins, which allows for a much faster training stage.
         Features with a small number of unique values may use less than
         ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
-        is reserved for missing values. Must be no larger than 255.
+        is always reserved for missing values. Must be no larger than 255.
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble. For results to be valid, the
@@ -846,7 +853,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         integer-valued bins, which allows for a much faster training stage.
         Features with a small number of unique values may use less than
         ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
-        is reserved for missing values. Must be no larger than 255.
+        is always reserved for missing values. Must be no larger than 255.
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble. For results to be valid, the

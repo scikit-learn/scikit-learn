@@ -47,6 +47,8 @@ def _find_binning_thresholds(data, n_bins, subsample, random_state):
         be used to separate the bins. Thus ``len(binning_thresholds) ==
         n_features``. The first threshold (for missing values) is always NaN.
     """
+    # n_bins must be >= 3: 1 bin is for missing values, and it woudn't make
+    # sense to bin non-missing values into only 1 bin.
     if not (3 <= n_bins <= 256):
         raise ValueError('n_bins={} should be no smaller than 3 '
                          'and no larger than 256.'.format(n_bins))
@@ -96,9 +98,9 @@ class _BinMapper(BaseEstimator, TransformerMixin):
     For large datasets, quantiles are computed on a subset of the data to
     speed-up the binning, but the quantiles should remain stable.
 
-    If the number of unique values for a given feature is less than
-    ``n_bins``, then the unique values of this feature are used instead of
-    the quantiles.
+    Features with a small number of values may be binned into less than
+    ``n_bins`` bins. The last bin (at index ``n_bins - 1``) is always reserved
+    for missing values.
 
     Parameters
     ----------
@@ -117,6 +119,23 @@ class _BinMapper(BaseEstimator, TransformerMixin):
         optional (default=None)
         Pseudo-random number generator to control the random sub-sampling.
         See :term:`random_state`.
+
+    Attributes
+    ----------
+    bin_thresholds_ : list of arrays
+        For each feature, gives the real-valued bin threhsolds. There are
+        ``max_bins - 1`` thresholds, where ``max_bins = n_bins - 1`` is the
+        number of bins used for non-missing values.
+    n_bins_non_missing_ : array of uint32
+        For each feature, gives the number of bins actually used for
+        non-missing values. For features with a lot of unique values, this is
+        equal to ``n_bins - 1``.
+    missing_values_bin_idx_ : uint8
+        The index of the bin where missing values are mapped. This is a
+        constant accross all features. This corresponds to the last bin, and
+        it is always equal to ``n_bins - 1``. Note that if ``n_bins_missing_``
+        is less than ``n_bins - 1`` for a given feature, then there are
+        empty (an unused) bins.
     """
     def __init__(self, n_bins=256, subsample=int(2e5), random_state=None):
         self.n_bins = n_bins
@@ -126,8 +145,8 @@ class _BinMapper(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         """Fit data X by computing the binning thresholds.
 
-        The first bin is reserved for missing values, whether there are
-        missing values or not.
+        The last bin is reserved for missing values, whether there are
+        missing values present in the data or not.
 
         Parameters
         ----------
@@ -156,7 +175,7 @@ class _BinMapper(BaseEstimator, TransformerMixin):
     def transform(self, X):
         """Bin data X.
 
-        Missing values will be mapped to the first bin.
+        Missing values will be mapped to the last bin.
 
         Parameters
         ----------

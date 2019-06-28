@@ -177,7 +177,8 @@ def test_binning_train_validation_are_separated():
 
 def test_missing_values_trivial():
     # sanity check for missing values support. With only one feature and
-    # y == isnan(X), the gbdt is supposed to reach perfect accuracy.
+    # y == isnan(X), the gbdt is supposed to reach perfect accuracy on the
+    # training set.
 
     n_samples = 100
     n_features = 1
@@ -190,7 +191,7 @@ def test_missing_values_trivial():
     gb = HistGradientBoostingClassifier()
     gb.fit(X, y)
 
-    assert gb.score(X, y) == 1
+    assert gb.score(X, y) == pytest.approx(1)
 
 
 @pytest.mark.parametrize('problem', ('classification', 'regression'))

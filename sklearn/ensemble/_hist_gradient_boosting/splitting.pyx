@@ -96,10 +96,15 @@ cdef class Splitter:
     X_binned : ndarray of int, shape (n_samples, n_features)
         The binned input samples. Must be Fortran-aligned.
     n_bins_non_missing : ndarray, shape (n_features,)
-        The actual number of bins needed for each feature, which is lower or
-        equal to max_bins.
+        For each feature, gives the number of bins actually used for
+        non-missing values.
+    missing_values_bin_idx : uint8
+        Index of the bin that is used for missing values. This is the index of
+        the last bin and is always equal to max_bins (as passed to the GBDT
+        classes), or equivalently to n_bins - 1.
     has_missing_values : ndarray, shape (n_features,)
-        Whether each feature contains missing values (in the training data).
+        Whether missing values were observed in the training data, for each
+        feature.
     l2_regularization : float
         The L2 regularization parameter.
     min_hessian_to_split : float, default=1e-3

@@ -288,5 +288,7 @@ def test_missing_values_support(n_bins, n_bins_non_missing, X_trans_expected):
         assert len(mapper.bin_thresholds_[feature_idx]) == \
             n_bins_non_missing[feature_idx] - 1
 
+    assert mapper.missing_values_bin_idx_ == n_bins - 1
+
     X_trans = mapper.transform(X)
     assert_array_equal(X_trans, X_trans_expected)

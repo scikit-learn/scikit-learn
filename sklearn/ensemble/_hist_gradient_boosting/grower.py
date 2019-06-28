@@ -141,17 +141,18 @@ class TreeGrower:
     min_gain_to_split : float, optional (default=0.)
         The minimum gain needed to split a node. Splits with lower gain will
         be ignored.
-    max_bins : int, optional (default=256)
-        The maximum number of bins. Used to define the shape of the
-        histograms.
-    actual_n_bins : ndarray of int or int, optional (default=None)
-        The actual number of bins needed for each feature, which is lower or
-        equal to ``max_bins``. If it's an int, all features are considered to
-        have the same number of bins. If None, all features are considered to
-        have ``max_bins`` bins.
+    n_bins : int, optional (default=256)
+        The total number of bins, including the bin for missing values. Used
+        to define the shape of the histograms.
+    n_bins_non_missing_ : array of uint32
+        For each feature, gives the number of bins actually used for
+        non-missing values. For features with a lot of unique values, this
+        is equal to ``n_bins - 1``. If it's an int, all features are
+        considered to have the same number of bins. If None, all features
+        are considered to have ``n_bins - 1`` bins.
     has_missing_values : ndarray of bool or bool, optional (default=False)
         Whether each feature contains missing values (in the training data).
-        If it's a bool, the same values is used for all features.
+        If it's a bool, the same value is used for all features.
     l2_regularization : float, optional (default=0)
         The L2 regularization parameter.
     min_hessian_to_split : float, optional (default=1e-3)
