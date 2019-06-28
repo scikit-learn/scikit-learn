@@ -19,8 +19,6 @@ random sampling procedures.
 
 - :class:`decomposition.SparsePCA` where `normalize_components` has no effect
   due to deprecation.
-..
-    TO FILL IN AS WE GO
 
 Details are listed in the changelog below.
 
