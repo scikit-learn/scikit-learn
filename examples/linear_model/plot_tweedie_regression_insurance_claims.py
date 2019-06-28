@@ -137,8 +137,8 @@ df = load_mtpl2(n_samples=100000)
 df.loc[(df.ClaimAmount == 0) & (df.ClaimNb >= 1), "ClaimNb"] = 0
 
 # correct for unreasonable observations (that might be data error)
-df["ClaimNb"].clip(upper=4, inplace=True)
-df["Exposure"].clip(upper=1, inplace=True)
+df["ClaimNb"] = df["ClaimNb"].clip(upper=4)
+df["Exposure"] = df["Exposure"].clip(upper=1)
 
 column_trans = ColumnTransformer(
     [
