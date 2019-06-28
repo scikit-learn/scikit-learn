@@ -59,8 +59,6 @@ def _find_binning_thresholds(data, max_bins, subsample, random_state):
             col_data = col_data[~missing_mask]
         col_data = np.ascontiguousarray(col_data, dtype=X_DTYPE)
         distinct_values = np.unique(col_data)
-
-        # maximum number of bins used for non missing values
         if len(distinct_values) <= max_bins:
             midpoints = distinct_values[:-1] + distinct_values[1:]
             midpoints *= .5
