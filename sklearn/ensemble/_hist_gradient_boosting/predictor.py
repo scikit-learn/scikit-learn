@@ -53,6 +53,10 @@ class TreePredictor:
         ----------
         X : ndarray, shape (n_samples, n_features)
             The input samples.
+        missing_values_bin_idx : uint8
+            Index of the bin that is used for missing values. This is the
+            index of the last bin and is always equal to max_bins (as passed
+            to the GBDT classes), or equivalently to n_bins - 1.
 
         Returns
         -------

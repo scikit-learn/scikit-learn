@@ -18,8 +18,10 @@ DATA = np.random.RandomState(42).normal(
 
 def _find_binning_thresholds(data, max_bins=255, subsample=int(2e5),
                              random_state=None):
-    n_bins = max_bins + 1
-    return _find_binning_thresholds_orig(data, n_bins, subsample, random_state)
+    # Just a redef to avoid having to pass arguments all the time (as the
+    # function is private we don't use default values for parameters)
+    return _find_binning_thresholds_orig(data, max_bins, subsample,
+                                         random_state)
 
 
 def test_find_binning_thresholds_regular_data():
@@ -73,11 +75,13 @@ def test_find_binning_thresholds_low_n_bins():
         assert bin_thresholds[i].dtype == DATA.dtype
 
 
-def test_find_binning_thresholds_invalid_n_bins():
-    err_msg = 'n_bins=1024 should be no smaller than 3 and no larger than 256'
+@pytest.mark.parametrize('n_bins', (2, 257))
+def test_invalid_n_bins(n_bins):
+    err_msg = (
+        'n_bins={} should be no smaller than 3 and no larger than 256'
+        .format(n_bins))
     with pytest.raises(ValueError, match=err_msg):
-        _find_binning_thresholds_orig(DATA, n_bins=1024, subsample=10,
-                                      random_state=None)
+        _BinMapper(n_bins=n_bins).fit(DATA)
 
 
 def test_bin_mapper_n_features_transform():

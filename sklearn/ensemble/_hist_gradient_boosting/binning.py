@@ -16,7 +16,7 @@ from ._binning import _map_to_bins
 from .types import X_DTYPE, X_BINNED_DTYPE
 
 
-def _find_binning_thresholds(data, n_bins, subsample, random_state):
+def _find_binning_thresholds(data, max_bins, subsample, random_state):
     """Extract feature-wise quantiles from numerical data.
 
     Missing values are ignored for finding the thresholds.
@@ -25,10 +25,8 @@ def _find_binning_thresholds(data, n_bins, subsample, random_state):
     ----------
     data : array-like, shape (n_samples, n_features)
         The data to bin.
-    n_bins : int, optional (default=256)
-        The maximum number of bins to use (including the bin for missing
-        values). Non-missing values are binned on ``max_bins = n_bins - 1``
-        bins. The last bin is always reserved for missing values. If for a
+    max_bins: int
+        The maximum number of bins to use for non-missing values. If for a
         given feature the number of unique values is less than ``max_bins``,
         then those unique values will be used to compute the bin thresholds,
         instead of the quantiles.
@@ -47,11 +45,6 @@ def _find_binning_thresholds(data, n_bins, subsample, random_state):
         be used to separate the bins. Thus ``len(binning_thresholds) ==
         n_features``. The first threshold (for missing values) is always NaN.
     """
-    # n_bins must be >= 3: 1 bin is for missing values, and it woudn't make
-    # sense to bin non-missing values into only 1 bin.
-    if not (3 <= n_bins <= 256):
-        raise ValueError('n_bins={} should be no smaller than 3 '
-                         'and no larger than 256.'.format(n_bins))
     rng = check_random_state(random_state)
     if subsample is not None and data.shape[0] > subsample:
         subset = rng.choice(np.arange(data.shape[0]), subsample, replace=False)
@@ -68,8 +61,7 @@ def _find_binning_thresholds(data, n_bins, subsample, random_state):
         distinct_values = np.unique(col_data)
 
         # maximum number of bins used for non missing values
-        max_n_bins_non_missing = n_bins - 1
-        if len(distinct_values) <= max_n_bins_non_missing:
+        if len(distinct_values) <= max_bins:
             midpoints = distinct_values[:-1] + distinct_values[1:]
             midpoints *= .5
         else:
@@ -78,11 +70,11 @@ def _find_binning_thresholds(data, n_bins, subsample, random_state):
             # np.unique(col_data, return_counts) instead but this is more
             # work and the performance benefit will be limited because we
             # work on a fixed-size subsample of the full data.
-            percentiles = np.linspace(0, 100, num=n_bins)
+            percentiles = np.linspace(0, 100, num=max_bins + 1)
             percentiles = percentiles[1:-1]
             midpoints = np.percentile(col_data, percentiles,
                                       interpolation='midpoint').astype(X_DTYPE)
-            assert midpoints.shape[0] == max_n_bins_non_missing - 1
+            assert midpoints.shape[0] == max_bins - 1
 
         binning_thresholds.append(midpoints)
 
@@ -159,9 +151,14 @@ class _BinMapper(BaseEstimator, TransformerMixin):
         -------
         self : object
         """
+        if not (3 <= self.n_bins <= 256):
+            raise ValueError('n_bins={} should be no smaller than 3 '
+                            'and no larger than 256.'.format(self.n_bins))
+
         X = check_array(X, dtype=[X_DTYPE], force_all_finite='allow-nan')
+        max_bins = self.n_bins - 1
         self.bin_thresholds_ = _find_binning_thresholds(
-            X, self.n_bins, subsample=self.subsample,
+            X, max_bins, subsample=self.subsample,
             random_state=self.random_state)
 
         self.n_bins_non_missing_ = np.array(
