@@ -153,7 +153,7 @@ class _BinMapper(BaseEstimator, TransformerMixin):
         """
         if not (3 <= self.n_bins <= 256):
             raise ValueError('n_bins={} should be no smaller than 3 '
-                            'and no larger than 256.'.format(self.n_bins))
+                             'and no larger than 256.'.format(self.n_bins))
 
         X = check_array(X, dtype=[X_DTYPE], force_all_finite='allow-nan')
         max_bins = self.n_bins - 1

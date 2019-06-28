@@ -256,6 +256,7 @@ def test_subsample():
                                mapper_subsample.bin_thresholds_[feature],
                                rtol=1e-4)
 
+
 @pytest.mark.parametrize(
     'n_bins, n_bins_non_missing, X_trans_expected', [
         (256, [4, 2, 2], [[0,   0,   0],  # 255 <=> missing value

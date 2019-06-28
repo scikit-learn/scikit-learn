@@ -102,7 +102,7 @@ def test_gradient_and_hessian_sanity(constant_hessian):
     builder = HistogramBuilder(X_binned, n_bins, all_gradients,
                                all_hessians, constant_hessian)
     n_bins_non_missing = np.array([n_bins - 1] * X_binned.shape[1],
-                             dtype=np.uint32)
+                                  dtype=np.uint32)
     has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
     missing_values_bin_idx = n_bins - 1
     splitter = Splitter(X_binned, n_bins_non_missing, missing_values_bin_idx,
@@ -259,7 +259,7 @@ def test_min_gain_to_split():
     builder = HistogramBuilder(X_binned, n_bins, all_gradients,
                                all_hessians, hessians_are_constant)
     n_bins_non_missing = np.array([n_bins - 1] * X_binned.shape[1],
-                             dtype=np.uint32)
+                                  dtype=np.uint32)
     has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
     missing_values_bin_idx = n_bins - 1
     splitter = Splitter(X_binned, n_bins_non_missing, missing_values_bin_idx,
