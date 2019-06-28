@@ -176,9 +176,8 @@ _STYLE = """
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-}
-.sk-container > .sk-serial::before {
-  border-left: 0;
+  position: relative;
+  float: left;
 }
 [sk-data-tooltip] {
   position: relative;
