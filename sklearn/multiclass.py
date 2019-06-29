@@ -343,6 +343,8 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
         Y = np.array([e.predict_proba(X)[:, 1] for e in self.estimators_]).T
 
         if len(self.estimators_) == 1:
+            # Converting Int Type to Float
+            Y = Y.astype(float)
             # Only one estimator, but we still want to return probabilities
             # for two classes.
             Y = np.concatenate(((1 - Y), Y), axis=1)
