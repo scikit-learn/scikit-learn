@@ -931,6 +931,10 @@ def _refresh_cache(files, compress):
 
     refresh_needed = any([str(x.message).startswith(msg) for x in warns])
 
+    other_warns = [w for w in warns if not str(w.message).startswith(msg)]
+    for w in other_warns:
+        warnings.warn(message=w.message, category=w.category)
+
     if refresh_needed:
         try:
             for value, path in zip(data, files):
@@ -942,10 +946,6 @@ def _refresh_cache(files, compress):
                        "and allowing it to be cached anew:\n%s"
                        % ("\n".join(files)))
             warnings.warn(message=message, category=DeprecationWarning)
-
-        other_warns = [w for w in warns if not str(w.message).startswith(msg)]
-        for w in other_warns:
-            warnings.warn(message=w.message, category=w.category)
 
     if len(data) == 1:
         return data[0]

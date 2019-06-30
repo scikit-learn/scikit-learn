@@ -8,6 +8,7 @@ from pickle import dumps
 from functools import partial
 
 import pytest
+import joblib
 
 import numpy as np
 from sklearn.datasets import get_data_home
@@ -23,6 +24,7 @@ from sklearn.datasets import load_breast_cancer
 from sklearn.datasets import load_boston
 from sklearn.datasets import load_wine
 from sklearn.datasets.base import Bunch
+from sklearn.datasets.base import _refresh_cache
 from sklearn.datasets.tests.test_common import check_return_X_y
 
 from sklearn.externals._pilutil import pillow_installed
@@ -277,3 +279,43 @@ def test_bunch_dir():
     # check that dir (important for autocomplete) shows attributes
     data = load_iris()
     assert "data" in dir(data)
+
+
+def test_refresh_cache(monkeypatch):
+    def _load_warn(*args, **kwargs):
+        msg = ("sklearn.externals.joblib is deprecated in 0.21 and will be "
+               "removed in 0.23. Please import this functionality directly "
+               "from joblib, which can be installed with: pip install joblib. "
+               "If this warning is raised when loading pickled models, you "
+               "may need to re-serialize those models with scikit-learn "
+               "0.21+.")
+        warnings.warn(msg, DeprecationWarning)
+        return 0
+
+    def _load_warn_unrelated(*args, **kwargs):
+        warnings.warn("unrelated warning", UserWarning)
+        return 0
+
+    def _dump_safe(*args, **kwargs):
+        pass
+
+    def _dump_raise(*args, **kwargs):
+        raise IOError()
+
+    monkeypatch.setattr(joblib, "load", _load_warn)
+    monkeypatch.setattr(joblib, "dump", _dump_raise)
+    msg = "This dataset will stop being loadable in scikit-learn"
+    with pytest.warns(DeprecationWarning, match=msg):
+        _refresh_cache('test', 0)
+
+    monkeypatch.setattr(joblib, "load", _load_warn)
+    monkeypatch.setattr(joblib, "dump", _dump_safe)
+    with warnings.catch_warnings(record=True) as warns:
+        _refresh_cache('test', 0)
+
+    assert len(warns) == 0
+
+    monkeypatch.setattr(joblib, "load", _load_warn_unrelated)
+    monkeypatch.setattr(joblib, "dump", _dump_safe)
+    with pytest.warns(UserWarning, match="unrelated warning"):
+        _refresh_cache('test', 0)
