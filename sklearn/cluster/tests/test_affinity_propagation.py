@@ -37,7 +37,7 @@ def test_affinity_propagation():
 
     n_clusters_ = len(cluster_centers_indices)
 
-    assert_equal(n_clusters, n_clusters_)
+    assert n_clusters == n_clusters_
 
     af = AffinityPropagation(preference=preference, affinity="precomputed")
     labels_precomputed = af.fit(S).labels_
@@ -50,8 +50,8 @@ def test_affinity_propagation():
     cluster_centers_indices = af.cluster_centers_indices_
 
     n_clusters_ = len(cluster_centers_indices)
-    assert_equal(np.unique(labels).size, n_clusters_)
-    assert_equal(n_clusters, n_clusters_)
+    assert np.unique(labels).size == n_clusters_
+    assert n_clusters == n_clusters_
 
     # Test also with no copy
     _, labels_no_copy = affinity_propagation(S, preference=preference,
