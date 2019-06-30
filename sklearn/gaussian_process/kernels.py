@@ -22,16 +22,14 @@ optimization.
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
 import math
-import warnings
 
 import numpy as np
 from scipy.special import kv, gamma
 from scipy.spatial.distance import pdist, cdist, squareform
 
-from ..base import clone
-from ..exceptions import SignatureError
+from ..base import clone, GetSetParamsMixin
+from ..exceptions import InvalidParameterError, SignatureError
 from ..metrics.pairwise import pairwise_kernels
-from ..utils import get_param_names_from_constructor
 
 
 def _check_length_scale(X, length_scale):
@@ -117,7 +115,7 @@ class Hyperparameter(namedtuple('Hyperparameter',
                 self.fixed == other.fixed)
 
 
-class Kernel(metaclass=ABCMeta):
+class Kernel(GetSetParamsMixin, metaclass=ABCMeta):
     """Base class for all kernels.
 
     .. versionadded:: 0.18
@@ -128,21 +126,16 @@ class Kernel(metaclass=ABCMeta):
 
         Parameters
         ----------
-        deep : boolean, optional
-            If True, will return the parameters for this estimator and
-            contained subobjects that are estimators.
+        deep : Ignored
 
         Returns
         -------
         params : mapping of string to any
             Parameter names mapped to their values.
         """
-        params = dict()
-
-        # introspect the constructor arguments to find the model parameters
-        # to represent
         try:
-            param_names = get_param_names_from_constructor(self.__class__)
+            # for Kernels, get_params is always shallow
+            return super().get_params(deep=False)
         except SignatureError as e:
             raise SignatureError("scikit-learn kernels should always "
                                  "specify their parameters in the signature"
@@ -150,18 +143,6 @@ class Kernel(metaclass=ABCMeta):
                                  " %s with constructor %s doesn't "
                                  " follow this convention."
                                  % (self.__class__, e.signature))
-        for key in param_names:
-            try:
-                value = getattr(self, key)
-            except AttributeError:
-                warnings.warn('From version 0.24, get_params will raise an '
-                              'AttributeError if a parameter cannot be '
-                              'retrieved as an instance attribute. Previously '
-                              'it would return None.',
-                              FutureWarning)
-                value = None
-            params[key] = value
-        return params
 
     def set_params(self, **params):
         """Set the parameters of this kernel.
@@ -174,31 +155,13 @@ class Kernel(metaclass=ABCMeta):
         -------
         self
         """
-        if not params:
-            # Simple optimisation to gain speed (inspect is slow)
-            return self
-        valid_params = self.get_params(deep=True)
-        for key, value in params.items():
-            split = key.split('__', 1)
-            if len(split) > 1:
-                # nested objects case
-                name, sub_name = split
-                if name not in valid_params:
-                    raise ValueError('Invalid parameter %s for kernel %s. '
-                                     'Check the list of available parameters '
-                                     'with `kernel.get_params().keys()`.' %
-                                     (name, self))
-                sub_object = valid_params[name]
-                sub_object.set_params(**{sub_name: value})
-            else:
-                # simple objects case
-                if key not in valid_params:
-                    raise ValueError('Invalid parameter %s for kernel %s. '
-                                     'Check the list of available parameters '
-                                     'with `kernel.get_params().keys()`.' %
-                                     (key, self.__class__.__name__))
-                setattr(self, key, value)
-        return self
+        try:
+            return super().set_params(**params)
+        except InvalidParameterError as e:
+            raise InvalidParameterError('Invalid parameter %s for kernel %s. '
+                                        'Check the list of available parameters '
+                                        'with `kernel.get_params().keys()`.' %
+                                        (e.param_name, self))
 
     def clone_with_theta(self, theta):
         """Returns a clone of self with given hyperparameters theta.
