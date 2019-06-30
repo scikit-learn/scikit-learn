@@ -27,7 +27,6 @@ from sklearn.datasets.tests.test_common import check_return_X_y
 
 from sklearn.externals._pilutil import pillow_installed
 
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils import IS_PYPY
 

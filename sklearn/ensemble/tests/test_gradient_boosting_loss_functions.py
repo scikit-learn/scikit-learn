@@ -5,7 +5,6 @@ Testing for the gradient boosting loss functions and initial estimators.
 import numpy as np
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_allclose
-from numpy.testing import assert_equal
 import pytest
 
 from sklearn.utils import check_random_state

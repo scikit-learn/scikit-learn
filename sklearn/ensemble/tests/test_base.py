@@ -6,10 +6,8 @@ Testing for the base module (sklearn.ensemble.base).
 # License: BSD 3 clause
 
 import numpy as np
-from numpy.testing import assert_equal
 
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_not_equal
 
 from sklearn.datasets import load_iris
 from sklearn.ensemble import BaggingClassifier

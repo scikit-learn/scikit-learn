@@ -11,11 +11,8 @@ from scipy import sparse
 
 import pytest
 
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_in
-from sklearn.utils.testing import assert_not_in
 from sklearn.neighbors import NearestNeighbors
 from sklearn.cluster.dbscan_ import DBSCAN
 from sklearn.cluster.dbscan_ import dbscan

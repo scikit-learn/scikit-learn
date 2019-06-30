@@ -19,7 +19,6 @@ from sklearn.datasets import fetch_lfw_pairs
 from sklearn.datasets import fetch_lfw_people
 
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import assert_raises
 from sklearn.datasets.tests.test_common import check_return_X_y

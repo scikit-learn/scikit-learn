@@ -16,7 +16,6 @@ from scipy.cluster import hierarchy
 
 from sklearn.metrics.cluster.supervised import adjusted_rand_score
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raise_message

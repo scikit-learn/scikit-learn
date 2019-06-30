@@ -2,8 +2,7 @@ import numpy as np
 import scipy.sparse as sp
 import pytest
 
-from sklearn.utils.testing import (assert_array_almost_equal, assert_less,
-                                   assert_equal, assert_not_equal,
+from sklearn.utils.testing import (assert_array_almost_equal,
                                    assert_raises, assert_allclose)
 
 from sklearn.decomposition import PCA, KernelPCA
@@ -108,7 +107,7 @@ def test_kernel_pca_sparse():
 
             # inverse transform
             # X_pred2 = kpca.inverse_transform(X_pred_transformed)
-            # assert_equal(X_pred2.shape, X_pred.shape)
+            # assert X_pred2.shape == X_pred.shape)
 
 
 def test_kernel_pca_linear_kernel():
