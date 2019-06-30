@@ -169,7 +169,7 @@ def test_feature_importances():
         assert hasattr(transformer.estimator_, 'feature_importances_')
 
         X_new = transformer.transform(X)
-        assert_less(X_new.shape[1], X.shape[1])
+        assert X_new.shape[1] < X.shape[1]
         importances = transformer.estimator_.feature_importances_
 
         feature_mask = np.abs(importances) > func(importances)
@@ -228,7 +228,7 @@ def test_2d_coef():
             transformer.fit(X, y)
             assert hasattr(transformer.estimator_, 'coef_')
             X_new = transformer.transform(X)
-            assert_less(X_new.shape[1], X.shape[1])
+            assert X_new.shape[1] < X.shape[1]
 
             # Manually check that the norm is correctly performed
             est.fit(X, y)
@@ -266,7 +266,7 @@ def test_calling_fit_reinitializes():
     transformer.fit(data, y)
     transformer.set_params(estimator__C=100)
     transformer.fit(data, y)
-    assert_equal(transformer.estimator_.C, 100)
+    assert transformer.estimator_.C == 100
 
 
 # 0.23. warning about tol not having its correct default value.
@@ -321,4 +321,4 @@ def test_threshold_without_refitting():
 
     # Set a higher threshold to filter out more features.
     model.threshold = "1.0 * mean"
-    assert_greater(X_transform.shape[1], model.transform(data).shape[1])
+    assert X_transform.shape[1] > model.transform(data).shape[1]
