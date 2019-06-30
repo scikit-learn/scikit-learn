@@ -103,16 +103,15 @@ def test_make_classification_informative_features():
             unique_signs, cluster_index = np.unique(signs,
                                                     return_inverse=True)
 
-            assert_message = ("Wrong number of clusters, or not in distinct "
-                              "quadrants")
-            assert len(unique_signs) == n_clusters, assert_message
+            assert len(unique_signs) == n_clusters, (
+                "Wrong number of clusters, or not in distinct quadrants")
 
             clusters_by_class = defaultdict(set)
             for cluster, cls in zip(cluster_index, y):
                 clusters_by_class[cls].add(cluster)
             for clusters in clusters_by_class.values():
-                assert_message = "Wrong number of clusters per class"
-                assert len(clusters) == n_clusters_per_class, assert_message
+                assert len(clusters) == n_clusters_per_class, (
+                    "Wrong number of clusters per class")
             assert (len(clusters_by_class) 
                     == n_classes), "Wrong number of classes"
 

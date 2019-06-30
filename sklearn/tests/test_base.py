@@ -287,11 +287,11 @@ def test_score_sample_weight():
         # generate random sample weights
         sample_weight = rng.randint(1, 10, size=len(ds.target))
         # check that the score with and without sample weights are different
-        assert_message = ("Unweighted and weighted scores "
-                          "are unexpectedly equal")
         assert (est.score(ds.data, ds.target) !=
                 est.score(ds.data, ds.target,
-                          sample_weight=sample_weight)), assert_message
+                          sample_weight=sample_weight)), (
+                              "Unweighted and weighted scores "
+                              "are unexpectedly equal")
 
 
 def test_clone_pandas_dataframe():
