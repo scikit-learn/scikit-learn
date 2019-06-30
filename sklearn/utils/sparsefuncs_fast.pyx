@@ -38,10 +38,10 @@ def _csr_row_norms(np.ndarray[floating, ndim=1, mode="c"] X_data,
                    np.ndarray[integral, ndim=1, mode="c"] X_indptr):
     cdef:
         unsigned long long n_samples = shape[0]
+        unsigned long long n_features = shape[1]
         np.ndarray[DOUBLE, ndim=1, mode="c"] norms
 
-        unsigned long long i
-        integral j
+        np.npy_intp i, j
         double sum_
 
     norms = np.zeros(n_samples, dtype=np.float64)
@@ -86,9 +86,9 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
     # Implement the function here since variables using fused types
     # cannot be declared directly and can only be passed as function arguments
     cdef:
-        unsigned long long i
+        np.npy_intp i
         unsigned long long non_zero = X_indices.shape[0]
-        integral col_ind
+        np.npy_intp col_ind
         floating diff
         # means[j] contains the mean of feature j
         np.ndarray[floating, ndim=1] means
@@ -168,10 +168,9 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
     # Implement the function here since variables using fused types
     # cannot be declared directly and can only be passed as function arguments
     cdef:
-        unsigned long long i
-        integral j
+        np.npy_intp i, j
         unsigned long long counts
-        integral startptr, endptr
+        unsigned long long startptr
         floating diff
         # means[j] contains the mean of feature j
         np.ndarray[floating, ndim=1] means
@@ -279,7 +278,7 @@ def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
     # Implement the function here since variables using fused types
     # cannot be declared directly and can only be passed as function arguments
     cdef:
-        unsigned long long i
+        np.npy_intp i
 
     # last = stats until now
     # new = the current increment
@@ -372,8 +371,7 @@ def _inplace_csr_row_normalize_l1(np.ndarray[floating, ndim=1] X_data,
     #    indices[indptr[i]:indices[i+1]]
     # and their corresponding values are stored in:
     #    data[indptr[i]:indptr[i+1]]
-    cdef unsigned long long i
-    cdef integral j
+    cdef np.npy_intp i, j
     cdef double sum_
 
     for i in range(n_samples):

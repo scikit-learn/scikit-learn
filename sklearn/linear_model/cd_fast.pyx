@@ -142,7 +142,7 @@ def enet_coordinate_descent(floating[::1] w,
     cdef floating A_norm2
     cdef unsigned int ii
     cdef unsigned int i
-    cdef int n_iter = 0
+    cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
@@ -311,7 +311,7 @@ def sparse_enet_coordinate_descent(floating [::1] w,
     cdef floating d_w_tol = tol
     cdef floating dual_norm_XtA
     cdef unsigned int jj
-    cdef int n_iter = 0
+    cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
@@ -510,7 +510,7 @@ def enet_coordinate_descent_gram(floating[::1] w,
     cdef floating d_w_tol = tol
     cdef floating dual_norm_XtA
     cdef unsigned int ii
-    cdef int n_iter = 0
+    cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
@@ -669,7 +669,7 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
     cdef floating l21_norm
     cdef unsigned int ii
     cdef unsigned int jj
-    cdef int n_iter = 0
+    cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
