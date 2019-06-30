@@ -49,7 +49,7 @@ def test_predict_consistent(kernel):
 def test_lml_improving(kernel):
     # Test that hyperparameter-tuning improves log-marginal likelihood.
     gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
-    assert_greater(gpc.log_marginal_likelihood(gpc.kernel_.theta),
+    assert (gpc.log_marginal_likelihood(gpc.kernel_.theta) >
                    gpc.log_marginal_likelihood(kernel.theta))
 
 
@@ -106,7 +106,7 @@ def test_random_starts():
             kernel=kernel, n_restarts_optimizer=n_restarts_optimizer,
             random_state=0).fit(X, y)
         lml = gp.log_marginal_likelihood(gp.kernel_.theta)
-        assert_greater(lml, last_lml - np.finfo(np.float32).eps)
+        assert lml > last_lml - np.finfo(np.float32).eps
         last_lml = lml
 
 
@@ -129,7 +129,7 @@ def test_custom_optimizer(kernel):
     gpc = GaussianProcessClassifier(kernel=kernel, optimizer=optimizer)
     gpc.fit(X, y_mc)
     # Checks that optimizer improved marginal likelihood
-    assert_greater(gpc.log_marginal_likelihood(gpc.kernel_.theta),
+    assert (gpc.log_marginal_likelihood(gpc.kernel_.theta) >
                    gpc.log_marginal_likelihood(kernel.theta))
 
 

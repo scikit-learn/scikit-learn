@@ -53,9 +53,9 @@ def test_kernel_gradient(kernel):
     # Compare analytic and numeric gradient of kernels.
     K, K_gradient = kernel(X, eval_gradient=True)
 
-    assert_equal(K_gradient.shape[0], X.shape[0])
-    assert_equal(K_gradient.shape[1], X.shape[0])
-    assert_equal(K_gradient.shape[2], kernel.theta.shape[0])
+    assert K_gradient.shape[0] == X.shape[0]
+    assert K_gradient.shape[1] == X.shape[0]
+    assert K_gradient.shape[2] == kernel.theta.shape[0]
 
     def eval_kernel_for_theta(theta):
         kernel_clone = kernel.clone_with_theta(theta)
@@ -84,15 +84,15 @@ def test_kernel_theta(kernel):
     args = [p.name for p in init_sign if p.name != 'self']
     theta_vars = map(lambda s: s[0:-len("_bounds")],
                      filter(lambda s: s.endswith("_bounds"), args))
-    assert_equal(
+    assert (
         set(hyperparameter.name
-            for hyperparameter in kernel.hyperparameters),
+            for hyperparameter in kernel.hyperparameters) ==
         set(theta_vars))
 
     # Check that values returned in theta are consistent with
     # hyperparameter values (being their logarithms)
     for i, hyperparameter in enumerate(kernel.hyperparameters):
-        assert_equal(theta[i],
+        assert (theta[i] ==
                      np.log(getattr(kernel, hyperparameter.name)))
 
     # Fixed kernel parameters must be excluded from theta and gradient.
@@ -105,14 +105,14 @@ def test_kernel_theta(kernel):
         # Check that theta and K_gradient are identical with the fixed
         # dimension left out
         _, K_gradient_new = new_kernel(X, eval_gradient=True)
-        assert_equal(theta.shape[0], new_kernel.theta.shape[0] + 1)
-        assert_equal(K_gradient.shape[2], K_gradient_new.shape[2] + 1)
+        assert theta.shape[0] == new_kernel.theta.shape[0] + 1
+        assert K_gradient.shape[2] == K_gradient_new.shape[2] + 1
         if i > 0:
-            assert_equal(theta[:i], new_kernel.theta[:i])
+            assert theta[:i] == new_kernel.theta[:i]
             assert_array_equal(K_gradient[..., :i],
                                K_gradient_new[..., :i])
         if i + 1 < len(kernel.hyperparameters):
-            assert_equal(theta[i + 1:], new_kernel.theta[i:])
+            assert theta[i + 1:] == new_kernel.theta[i:]
             assert_array_equal(K_gradient[..., i + 1:],
                                K_gradient_new[..., i:])
 
@@ -192,7 +192,7 @@ def check_hyperparameters_equal(kernel1, kernel2):
         if attr.startswith("hyperparameter_"):
             attr_value1 = getattr(kernel1, attr)
             attr_value2 = getattr(kernel2, attr)
-            assert_equal(attr_value1, attr_value2)
+            assert attr_value1 == attr_value2
 
 
 @pytest.mark.parametrize("kernel", kernels)
@@ -202,11 +202,11 @@ def test_kernel_clone(kernel):
 
     # XXX: Should this be fixed?
     # This differs from the sklearn's estimators equality check.
-    assert_equal(kernel, kernel_cloned)
-    assert_not_equal(id(kernel), id(kernel_cloned))
+    assert kernel == kernel_cloned
+    assert id(kernel) != id(kernel_cloned)
 
     # Check that all constructor parameters are equal.
-    assert_equal(kernel.get_params(), kernel_cloned.get_params())
+    assert kernel.get_params() == kernel_cloned.get_params()
 
     # Check that all hyperparameters are equal.
     check_hyperparameters_equal(kernel, kernel_cloned)
@@ -236,9 +236,9 @@ def test_kernel_clone_after_set_params(kernel):
             params['length_scale_bounds'] = bounds * 2
         kernel_cloned.set_params(**params)
         kernel_cloned_clone = clone(kernel_cloned)
-        assert_equal(kernel_cloned_clone.get_params(),
+        assert (kernel_cloned_clone.get_params() ==
                      kernel_cloned.get_params())
-        assert_not_equal(id(kernel_cloned_clone), id(kernel_cloned))
+        assert id(kernel_cloned_clone) != id(kernel_cloned)
         check_hyperparameters_equal(kernel_cloned, kernel_cloned_clone)
 
 
