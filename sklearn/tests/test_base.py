@@ -7,12 +7,9 @@ import pytest
 
 import sklearn
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_dict_equal
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.base import BaseEstimator, clone, is_classifier

@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from sklearn.utils.testing import assert_equal, assert_almost_equal
+from sklearn.utils.testing import assert_almost_equal
 
 from sklearn.metrics.cluster.bicluster import _jaccard
 from sklearn.metrics import consensus_score

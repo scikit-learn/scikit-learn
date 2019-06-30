@@ -8,15 +8,10 @@ import pytest
 
 from sklearn.neighbors import BallTree
 from sklearn.neighbors import NearestNeighbors
-from sklearn.utils.testing import assert_less_equal
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_less
-from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises_regexp
-from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import skip_if_32bit
 from sklearn.utils import check_random_state
 from sklearn.manifold.t_sne import _joint_probabilities

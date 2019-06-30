@@ -3,10 +3,7 @@ import scipy.sparse as sp
 
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_less
 
-from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns
 from sklearn.exceptions import ConvergenceWarning

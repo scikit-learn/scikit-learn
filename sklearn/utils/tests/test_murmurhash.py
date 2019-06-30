@@ -6,7 +6,6 @@ import numpy as np
 from sklearn.utils.murmurhash import murmurhash3_32
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal
 
 
 def test_mmhash3_int():

@@ -16,8 +16,6 @@ import functools
 import pytest
 
 from sklearn.utils.testing import all_estimators
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning, SkipTestWarning
 

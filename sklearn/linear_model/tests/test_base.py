@@ -12,7 +12,6 @@ from scipy import linalg
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_allclose
 
 from sklearn.linear_model.base import LinearRegression
@@ -20,7 +19,6 @@ from sklearn.linear_model.base import _preprocess_data
 from sklearn.linear_model.base import _rescale_data
 from sklearn.linear_model.base import make_dataset
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_greater
 from sklearn.datasets.samples_generator import make_sparse_uncorrelated
 from sklearn.datasets.samples_generator import make_regression
 from sklearn.datasets import load_iris

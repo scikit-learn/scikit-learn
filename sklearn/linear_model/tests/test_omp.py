@@ -4,7 +4,6 @@
 import numpy as np
 
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_warns

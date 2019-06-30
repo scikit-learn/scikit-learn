@@ -17,7 +17,7 @@ from sklearn.datasets.samples_generator import make_blobs
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal, assert_raises
+from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import SkipTest
 
 

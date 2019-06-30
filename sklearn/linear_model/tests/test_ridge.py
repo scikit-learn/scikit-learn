@@ -8,9 +8,7 @@ import pytest
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_raises_regex

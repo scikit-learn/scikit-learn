@@ -3,8 +3,6 @@ import scipy.sparse as sp
 
 import pytest
 
-from sklearn.utils.testing import assert_less
-from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_array_almost_equal, assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises

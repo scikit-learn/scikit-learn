@@ -20,7 +20,7 @@ from sklearn.mixture import BayesianGaussianMixture
 
 from sklearn.mixture.tests.test_gaussian_mixture import RandomData
 from sklearn.exceptions import ConvergenceWarning, NotFittedError
-from sklearn.utils.testing import assert_greater_equal, ignore_warnings
+from sklearn.utils.testing import ignore_warnings
 
 
 COVARIANCE_TYPE = ['full', 'tied', 'diag', 'spherical']

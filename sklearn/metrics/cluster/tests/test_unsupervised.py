@@ -5,10 +5,8 @@ from scipy.sparse import csr_matrix
 
 from sklearn import datasets
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_warns_message
 from sklearn.metrics.cluster import silhouette_score
 from sklearn.metrics.cluster import silhouette_samples

@@ -11,7 +11,6 @@ from scipy.linalg import pinvh
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_less
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils import check_random_state
 from sklearn.linear_model.bayes import BayesianRidge, ARDRegression

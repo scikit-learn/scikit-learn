@@ -11,7 +11,6 @@ from pytest import importorskip
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_no_warnings

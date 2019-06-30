@@ -8,7 +8,6 @@ from sklearn import manifold
 from sklearn import neighbors
 from sklearn import pipeline
 from sklearn import preprocessing
-from sklearn.utils.testing import assert_less
 
 from scipy.sparse import rand as sparse_rand
 
