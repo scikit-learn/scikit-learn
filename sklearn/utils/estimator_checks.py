@@ -721,7 +721,8 @@ def check_dict_unchanged(name, estimator_orig):
         if hasattr(estimator, method):
             dict_before = estimator.__dict__.copy()
             getattr(estimator, method)(X)
-            assert estimator.__dict__ == dict_before, 'Estimator changes __dict__ during %s' % method
+            assert estimator.__dict__ == dict_before, (
+                'Estimator changes __dict__ during %s' % method)
 
 
 def is_public_parameter(attr):
@@ -2372,7 +2373,7 @@ def check_set_params(name, estimator_orig):
             else:
                 curr_params = estimator.get_params(deep=False)
                 assert (set(test_params.keys()) ==
-                             set(curr_params.keys())), msg
+                        set(curr_params.keys())), msg
                 for k, v in curr_params.items():
                     assert test_params[k] is v, msg
         test_params[param_name] = default_value

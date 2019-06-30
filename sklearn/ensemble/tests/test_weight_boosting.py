@@ -259,8 +259,7 @@ def test_importances():
         importances = clf.feature_importances_
 
         assert importances.shape[0] == 10
-        assert ((importances[:3, np.newaxis] >= importances[3:]).all() ==
-                     True)
+        assert (importances[:3, np.newaxis] >= importances[3:]).all()
 
 
 def test_error():

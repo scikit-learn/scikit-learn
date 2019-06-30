@@ -86,7 +86,7 @@ def test_spectral_coclustering():
             assert_array_equal(model.rows_.sum(axis=0), np.ones(30))
             assert_array_equal(model.columns_.sum(axis=0), np.ones(30))
             assert consensus_score(model.biclusters_,
-                                         (rows, cols)) == 1
+                                   (rows, cols)) == 1
 
             _test_shape_indices(model)
 
@@ -127,7 +127,7 @@ def test_spectral_biclustering():
                 assert_array_equal(model.columns_.sum(axis=0),
                                    np.repeat(3, 30))
                 assert consensus_score(model.biclusters_,
-                                             (rows, cols)) == 1
+                                       (rows, cols)) == 1
 
                 _test_shape_indices(model)
 
@@ -217,19 +217,19 @@ def test_perfect_checkerboard():
                                       random_state=0)
     model.fit(S)
     assert consensus_score(model.biclusters_,
-                                 (rows, cols)) == 1
+                           (rows, cols)) == 1
 
     S, rows, cols = make_checkerboard((40, 30), 3, noise=0,
                                       random_state=0)
     model.fit(S)
     assert consensus_score(model.biclusters_,
-                                 (rows, cols)) == 1
+                           (rows, cols)) == 1
 
     S, rows, cols = make_checkerboard((30, 40), 3, noise=0,
                                       random_state=0)
     model.fit(S)
     assert consensus_score(model.biclusters_,
-                                 (rows, cols)) == 1
+                           (rows, cols)) == 1
 
 
 def test_errors():

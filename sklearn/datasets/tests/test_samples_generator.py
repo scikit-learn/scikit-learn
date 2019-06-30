@@ -60,7 +60,8 @@ def test_make_classification():
     assert X.shape == (2000, 31), "X shape mismatch"
     assert y.shape == (2000,), "y shape mismatch"
     assert (np.unique(X.view([('', X.dtype)]*X.shape[1])).view(X.dtype)
-                 .reshape(-1, X.shape[1]).shape[0] == 2000), "Unexpected number of unique rows"
+            .reshape(-1, X.shape[1]).shape[0] == 2000), (
+                "Unexpected number of unique rows")
 
 
 def test_make_classification_informative_features():
@@ -112,8 +113,8 @@ def test_make_classification_informative_features():
             for clusters in clusters_by_class.values():
                 assert len(clusters) == n_clusters_per_class, (
                     "Wrong number of clusters per class")
-            assert (len(clusters_by_class) 
-                    == n_classes), "Wrong number of classes"
+            assert (len(clusters_by_class) == n_classes), (
+                "Wrong number of classes")
 
             assert_array_almost_equal(np.bincount(y) / len(y) // weights,
                                       [1] * n_classes,
@@ -462,8 +463,10 @@ def test_make_circles():
             assert_almost_equal(dist_sqr, dist_exp,
                                 err_msg="Point is not on expected circle")
 
-        assert X[y == 0].shape == (n_outer, 2), "Samples not correctly distributed across circles."
-        assert X[y == 1].shape == (n_inner, 2), "Samples not correctly distributed across circles."
+        assert X[y == 0].shape == (n_outer, 2), (
+            "Samples not correctly distributed across circles.")
+        assert X[y == 1].shape == (n_inner, 2), (
+            "Samples not correctly distributed across circles.")
 
     assert_raises(ValueError, make_circles, factor=-0.01)
     assert_raises(ValueError, make_circles, factor=1.)

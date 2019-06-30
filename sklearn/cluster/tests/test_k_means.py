@@ -801,8 +801,8 @@ def test_k_means_init_centers():
         assert_array_equal(init_centers, init_centers_test)
         km = KMeans(init=init_centers_test, n_clusters=3, n_init=1)
         km.fit(X_test)
-        assert False == np.may_share_memory(km.cluster_centers_,
-                                                init_centers)
+        assert np.may_share_memory(km.cluster_centers_,
+                                   init_centers) is False
 
 
 @pytest.mark.parametrize("data", [X, X_csr], ids=["dense", "sparse"])

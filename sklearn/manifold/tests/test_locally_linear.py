@@ -97,8 +97,8 @@ def test_lle_manifold():
             details = ("solver: %s, method: %s" % (solver, method))
             assert reconstruction_error < tol, details
             assert (np.abs(clf.reconstruction_error_ -
-                               reconstruction_error) <
-                        tol * reconstruction_error), details
+                           reconstruction_error) <
+                    tol * reconstruction_error), details
 
 
 # Test the error raised when parameter passed to lle is invalid

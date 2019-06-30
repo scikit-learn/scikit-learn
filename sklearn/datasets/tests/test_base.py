@@ -88,7 +88,7 @@ def test_default_empty_load_files(load_files_root):
     res = load_files(load_files_root)
     assert len(res.filenames) == 0
     assert len(res.target_names) == 0
-    assert res.DESCR == None
+    assert res.DESCR is None
 
 
 def test_default_load_files(test_category_dir_1, test_category_dir_2,
@@ -98,7 +98,7 @@ def test_default_load_files(test_category_dir_1, test_category_dir_2,
     res = load_files(load_files_root)
     assert len(res.filenames) == 1
     assert len(res.target_names) == 2
-    assert res.DESCR == None
+    assert res.DESCR is None
     assert res.data == [b"Hello World!\n"]
 
 
@@ -120,8 +120,8 @@ def test_load_files_wo_load_content(
     res = load_files(load_files_root, load_content=False)
     assert len(res.filenames) == 1
     assert len(res.target_names) == 2
-    assert res.DESCR == None
-    assert res.get('data') == None
+    assert res.DESCR is None
+    assert res.get('data') is None
 
 
 def test_load_sample_images():

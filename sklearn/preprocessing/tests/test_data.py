@@ -129,7 +129,7 @@ def test_polynomial_features():
     assert_array_almost_equal(X_poly, P2[:, [0, 1, 2, 4]])
 
     assert interact.powers_.shape == (interact.n_output_features_,
-                 interact.n_input_features_)
+                                      interact.n_input_features_)
 
 
 def test_polynomial_feature_names():

@@ -658,8 +658,8 @@ def test_check_is_fitted():
     ard.fit(*make_blobs())
     svr.fit(*make_blobs())
 
-    assert None == check_is_fitted(ard, "coef_")
-    assert None == check_is_fitted(svr, "support_")
+    assert check_is_fitted(ard, "coef_") is None
+    assert check_is_fitted(svr, "support_") is None
 
 
 def test_check_consistent_length():
@@ -765,7 +765,7 @@ def test_check_memory():
     memory = check_memory("cache_directory")
     assert memory.cachedir == os.path.join('cache_directory', 'joblib')
     memory = check_memory(None)
-    assert memory.cachedir == None
+    assert memory.cachedir is None
     dummy = DummyMemory()
     memory = check_memory(dummy)
     assert memory is dummy

@@ -65,11 +65,11 @@ def test_additive_chi2_sampler():
 
         # test that the sample_interval is initialized correctly
         transform = AdditiveChi2Sampler(sample_steps=sample_steps)
-        assert transform.sample_interval == None
+        assert transform.sample_interval is None
 
         # test that the sample_interval is changed in the fit method
         transform.fit(X)
-        assert transform.sample_interval_ != None
+        assert transform.sample_interval_ is not None
 
     # test that the sample_interval is set correctly
     sample_interval = 0.3

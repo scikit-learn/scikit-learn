@@ -827,8 +827,8 @@ def test_min_impurity_split():
                         est.min_impurity_split))
                 assert est.tree_.impurity[node] <= min_impurity_split, (
                     "Failed with {0}, min_impurity_split={1}".format(
-                    est.tree_.impurity[node],
-                    est.min_impurity_split))
+                        est.tree_.impurity[node],
+                        est.min_impurity_split))
 
 
 def test_min_impurity_decrease():

@@ -40,7 +40,7 @@ def test_base():
     assert 3 == len(ensemble.estimators_)
 
     assert isinstance(ensemble[0], Perceptron)
-    assert ensemble[0].random_state == None
+    assert ensemble[0].random_state is None
     assert isinstance(ensemble[1].random_state, int)
     assert isinstance(ensemble[2].random_state, int)
     assert ensemble[1].random_state != ensemble[2].random_state
@@ -82,7 +82,7 @@ def test_set_random_states():
     _set_random_states(LinearDiscriminantAnalysis(), random_state=17)
 
     clf1 = Perceptron(tol=1e-3, random_state=None)
-    assert clf1.random_state == None
+    assert clf1.random_state is None
     # check random_state is None still sets
     _set_random_states(clf1, None)
     assert isinstance(clf1.random_state, int)

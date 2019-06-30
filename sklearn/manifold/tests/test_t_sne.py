@@ -672,7 +672,7 @@ def test_n_iter_without_progress():
 
         # The output needs to contain the value of n_iter_without_progress
         assert ("did not make any progress during the "
-                  "last -1 episodes. Finished." in out)
+                "last -1 episodes. Finished." in out)
 
 
 def test_min_grad_norm():

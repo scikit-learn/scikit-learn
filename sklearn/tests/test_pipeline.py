@@ -177,7 +177,7 @@ def test_pipeline_init():
     # Check that params are set
     pipe.set_params(svc__a=0.1)
     assert clf.a == 0.1
-    assert clf.b == None
+    assert clf.b is None
     # Smoke test the repr:
     repr(pipe)
 

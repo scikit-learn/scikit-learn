@@ -915,7 +915,7 @@ def test_leave_group_out_changing_groups():
                                                     groups=groups))
     # n_splits = no of unique groups (C(uniq_lbls, 1) = n_unique_groups)
     assert 3 == LeaveOneGroupOut().get_n_splits(X, y=X,
-                                                    groups=groups)
+                                                groups=groups)
 
 
 def test_leave_one_p_group_out_error_on_fewer_number_of_groups():

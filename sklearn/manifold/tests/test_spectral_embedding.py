@@ -220,17 +220,17 @@ def test_connectivity(seed=36):
                       [0, 1, 1, 1, 0],
                       [0, 0, 1, 1, 1],
                       [0, 0, 0, 1, 1]])
-    assert _graph_is_connected(graph) == False
-    assert _graph_is_connected(sparse.csr_matrix(graph)) == False
-    assert _graph_is_connected(sparse.csc_matrix(graph)) == False
+    assert not _graph_is_connected(graph)
+    assert not _graph_is_connected(sparse.csr_matrix(graph))
+    assert not _graph_is_connected(sparse.csc_matrix(graph))
     graph = np.array([[1, 1, 0, 0, 0],
                       [1, 1, 1, 0, 0],
                       [0, 1, 1, 1, 0],
                       [0, 0, 1, 1, 1],
                       [0, 0, 0, 1, 1]])
-    assert _graph_is_connected(graph) == True
-    assert _graph_is_connected(sparse.csr_matrix(graph)) == True
-    assert _graph_is_connected(sparse.csc_matrix(graph)) == True
+    assert _graph_is_connected(graph)
+    assert _graph_is_connected(sparse.csr_matrix(graph))
+    assert _graph_is_connected(sparse.csc_matrix(graph))
 
 
 def test_spectral_embedding_deterministic():

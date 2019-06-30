@@ -1335,7 +1335,7 @@ def test_precision_recall_f1_score_multilabel_1():
     assert_almost_equal(p, 1.5 / 4)
     assert_almost_equal(r, 0.5)
     assert_almost_equal(f, 2.5 / 1.5 * 0.25)
-    assert s == None
+    assert s is None
     assert_almost_equal(fbeta_score(y_true, y_pred, beta=2, average="macro"),
                         np.mean(f2))
 
@@ -1345,7 +1345,7 @@ def test_precision_recall_f1_score_multilabel_1():
     assert_almost_equal(p, 0.5)
     assert_almost_equal(r, 0.5)
     assert_almost_equal(f, 0.5)
-    assert s == None
+    assert s is None
     assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
                                     average="micro"),
                         (1 + 4) * p * r / (4 * p + r))
@@ -1356,7 +1356,7 @@ def test_precision_recall_f1_score_multilabel_1():
     assert_almost_equal(p, 1.5 / 4)
     assert_almost_equal(r, 0.5)
     assert_almost_equal(f, 2.5 / 1.5 * 0.25)
-    assert s == None
+    assert s is None
     assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
                                     average="weighted"),
                         np.average(f2, weights=support))
@@ -1369,7 +1369,7 @@ def test_precision_recall_f1_score_multilabel_1():
     assert_almost_equal(p, 0.5)
     assert_almost_equal(r, 0.5)
     assert_almost_equal(f, 0.5)
-    assert s == None
+    assert s is None
     assert_almost_equal(fbeta_score(y_true, y_pred, beta=2, average="samples"),
                         0.5)
 
@@ -1401,7 +1401,7 @@ def test_precision_recall_f1_score_multilabel_2():
     assert_almost_equal(p, 0.25)
     assert_almost_equal(r, 0.25)
     assert_almost_equal(f, 2 * 0.25 * 0.25 / 0.5)
-    assert s == None
+    assert s is None
     assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
                                     average="micro"),
                         (1 + 4) * p * r / (4 * p + r))
@@ -1411,7 +1411,7 @@ def test_precision_recall_f1_score_multilabel_2():
     assert_almost_equal(p, 0.25)
     assert_almost_equal(r, 0.125)
     assert_almost_equal(f, 2 / 12)
-    assert s == None
+    assert s is None
     assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
                                     average="macro"),
                         np.mean(f2))
@@ -1421,7 +1421,7 @@ def test_precision_recall_f1_score_multilabel_2():
     assert_almost_equal(p, 2 / 4)
     assert_almost_equal(r, 1 / 4)
     assert_almost_equal(f, 2 / 3 * 2 / 4)
-    assert s == None
+    assert s is None
     assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
                                     average="weighted"),
                         np.average(f2, weights=support))
@@ -1436,7 +1436,7 @@ def test_precision_recall_f1_score_multilabel_2():
     assert_almost_equal(p, 1 / 6)
     assert_almost_equal(r, 1 / 6)
     assert_almost_equal(f, 2 / 4 * 1 / 3)
-    assert s == None
+    assert s is None
     assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
                                     average="samples"),
                         0.1666, 2)
@@ -1466,7 +1466,7 @@ def test_precision_recall_f1_score_with_an_empty_prediction():
     assert_almost_equal(p, 0.5)
     assert_almost_equal(r, 1.5 / 4)
     assert_almost_equal(f, 2.5 / (4 * 1.5))
-    assert s == None
+    assert s is None
     assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
                                     average="macro"),
                         np.mean(f2))
@@ -1476,7 +1476,7 @@ def test_precision_recall_f1_score_with_an_empty_prediction():
     assert_almost_equal(p, 2 / 3)
     assert_almost_equal(r, 0.5)
     assert_almost_equal(f, 2 / 3 / (2 / 3 + 0.5))
-    assert s == None
+    assert s is None
     assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
                                     average="micro"),
                         (1 + 4) * p * r / (4 * p + r))
@@ -1486,7 +1486,7 @@ def test_precision_recall_f1_score_with_an_empty_prediction():
     assert_almost_equal(p, 3 / 4)
     assert_almost_equal(r, 0.5)
     assert_almost_equal(f, (2 / 1.5 + 1) / 4)
-    assert s == None
+    assert s is None
     assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
                                     average="weighted"),
                         np.average(f2, weights=support))
@@ -1499,7 +1499,7 @@ def test_precision_recall_f1_score_with_an_empty_prediction():
     assert_almost_equal(p, 1 / 3)
     assert_almost_equal(r, 1 / 3)
     assert_almost_equal(f, 1 / 3)
-    assert s == None
+    assert s is None
     assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
                                     average="samples"),
                         0.333, 2)
@@ -1518,7 +1518,7 @@ def test_precision_recall_f1_no_labels(beta, average):
     assert_almost_equal(p, 0)
     assert_almost_equal(r, 0)
     assert_almost_equal(f, 0)
-    assert s == None
+    assert s is None
 
     fbeta = assert_warns(UndefinedMetricWarning, fbeta_score,
                          y_true, y_pred,

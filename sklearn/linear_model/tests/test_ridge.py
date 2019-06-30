@@ -1007,7 +1007,7 @@ def test_n_iter():
     for solver in ('sparse_cg', 'svd', 'cholesky'):
         reg = Ridge(solver=solver, max_iter=1, tol=1e-1)
         reg.fit(X, y_n)
-        assert reg.n_iter_ == None
+        assert reg.n_iter_ is None
 
 
 def test_ridge_fit_intercept_sparse():

@@ -318,7 +318,7 @@ def test_calibration_less_classes():
         proba = calibrated_classifier.predict_proba(X)
         assert_array_equal(proba[:, i], np.zeros(len(y)))
         assert np.all(np.hstack([proba[:, :i],
-                                       proba[:, i + 1:]])) == True
+                                 proba[:, i + 1:]]))
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))

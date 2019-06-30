@@ -144,7 +144,7 @@ def test_regression_multioutput_array():
     r = r2_score([[0, -1], [0, 1]], [[2, 2], [1, 1]], multioutput='raw_values')
     assert_array_almost_equal(r, [0, -3.5], decimal=2)
     assert np.mean(r) == r2_score([[0, -1], [0, 1]], [[2, 2], [1, 1]],
-                 multioutput='uniform_average')
+                                  multioutput='uniform_average')
     evs = explained_variance_score([[0, -1], [0, 1]], [[2, 2], [1, 1]],
                                    multioutput='raw_values')
     assert_array_almost_equal(evs, [0, -1.25], decimal=2)
@@ -156,7 +156,7 @@ def test_regression_multioutput_array():
     r2 = r2_score(y_true, y_pred, multioutput='raw_values')
     assert_array_almost_equal(r2, [1., -3.], decimal=2)
     assert np.mean(r2) == r2_score(y_true, y_pred,
-                 multioutput='uniform_average')
+                                   multioutput='uniform_average')
     evs = explained_variance_score(y_true, y_pred, multioutput='raw_values')
     assert_array_almost_equal(evs, [1., -3.], decimal=2)
     assert np.mean(evs) == explained_variance_score(y_true, y_pred)

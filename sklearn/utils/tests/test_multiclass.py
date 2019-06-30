@@ -280,8 +280,9 @@ def test_check_classification_targets():
 def test_type_of_target():
     for group, group_examples in EXAMPLES.items():
         for example in group_examples:
-            assert type_of_target(example) == group, ('type_of_target(%r) should be %r, got %r'
-                              % (example, group, type_of_target(example)))
+            assert type_of_target(example) == group, (
+                'type_of_target(%r) should be %r, got %r'
+                % (example, group, type_of_target(example)))
 
     for example in NON_ARRAY_LIKE_EXAMPLES:
         msg_regex = r'Expected array-like \(array or non-string sequence\).*'

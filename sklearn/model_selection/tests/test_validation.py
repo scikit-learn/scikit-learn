@@ -471,8 +471,8 @@ def check_cross_validate_multi_metric(clf, X, y, scores):
                                             return_train_score=False)
             assert isinstance(cv_results, dict)
             assert (set(cv_results.keys()) ==
-                         (keys_with_train if return_train_score
-                         else keys_sans_train))
+                    (keys_with_train if return_train_score
+                     else keys_sans_train))
             assert_array_almost_equal(cv_results['test_r2'], test_r2_scores)
             assert_array_almost_equal(
                 cv_results['test_neg_mean_squared_error'], test_mse_scores)

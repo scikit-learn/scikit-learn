@@ -424,7 +424,7 @@ def test_pickling_when_getstate_is_overwritten_by_mixin():
     serialized = pickle.dumps(estimator)
     estimator_restored = pickle.loads(serialized)
     assert estimator_restored.attribute_pickled == 5
-    assert estimator_restored._attribute_not_pickled == None
+    assert estimator_restored._attribute_not_pickled is None
     assert estimator_restored._restored
 
 
@@ -438,7 +438,7 @@ def test_pickling_when_getstate_is_overwritten_by_mixin_outside_of_sklearn():
 
         serialized = estimator.__getstate__()
         assert serialized == {'_attribute_not_pickled': None,
-                                       'attribute_pickled': 5}
+                              'attribute_pickled': 5}
 
         serialized['attribute_pickled'] = 4
         estimator.__setstate__(serialized)
@@ -467,7 +467,7 @@ def test_pickling_works_when_getstate_is_overwritten_in_the_child_class():
     serialized = pickle.dumps(estimator)
     estimator_restored = pickle.loads(serialized)
     assert estimator_restored.attribute_pickled == 5
-    assert estimator_restored._attribute_not_pickled == None
+    assert estimator_restored._attribute_not_pickled is None
 
 
 def test_tag_inheritance():

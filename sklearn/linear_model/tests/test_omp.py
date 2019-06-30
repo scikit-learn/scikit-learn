@@ -175,8 +175,8 @@ def test_no_atoms():
     Xy_empty = np.dot(X.T, y_empty)
     gamma_empty = ignore_warnings(orthogonal_mp)(X, y_empty, 1)
     gamma_empty_gram = ignore_warnings(orthogonal_mp)(G, Xy_empty, 1)
-    assert np.all(gamma_empty == 0) == True
-    assert np.all(gamma_empty_gram == 0) == True
+    assert np.all(gamma_empty == 0)
+    assert np.all(gamma_empty_gram == 0)
 
 
 def test_omp_path():
