@@ -281,7 +281,7 @@ def test_PLSSVD():
     for clf in [pls_.PLSSVD, pls_.PLSRegression, pls_.PLSCanonical]:
         pls = clf(n_components=n_components)
         pls.fit(X, Y)
-        assert_equal(n_components, pls.y_scores_.shape[1])
+        assert n_components == pls.y_scores_.shape[1]
 
 
 def test_univariate_pls_regression():

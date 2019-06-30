@@ -43,7 +43,7 @@ def test_covariance():
                   cov.error_norm, emp_cov, norm='foo')
     # Mahalanobis distances computation test
     mahal_dist = cov.mahalanobis(X)
-    assert_greater(np.amin(mahal_dist), 0)
+    assert np.amin(mahal_dist) > 0
 
     # test with n_features = 1
     X_1d = X[:, 0].reshape((-1, 1))
