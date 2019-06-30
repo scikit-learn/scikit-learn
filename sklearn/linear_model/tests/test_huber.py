@@ -201,10 +201,10 @@ def test_huber_better_r2_score():
     ridge.fit(X, y)
     ridge_score = ridge.score(X[mask], y[mask])
     ridge_outlier_score = ridge.score(X[~mask], y[~mask])
-    assert_greater(huber_score, ridge_score)
+    assert huber_score > ridge_score
 
     # The huber model should also fit poorly on the outliers.
-    assert_greater(ridge_outlier_score, huber_outlier_score)
+    assert ridge_outlier_score > huber_outlier_score
 
 
 def test_huber_bool():

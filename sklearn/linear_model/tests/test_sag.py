@@ -471,8 +471,8 @@ def test_sag_regressor():
     clf2.fit(sp.csr_matrix(X), y)
     score1 = clf1.score(X, y)
     score2 = clf2.score(X, y)
-    assert_greater(score1, 0.99)
-    assert_greater(score2, 0.99)
+    assert score1 > 0.99
+    assert score2 > 0.99
 
     # simple linear function with noise
     y = 0.5 * X.ravel() + rng.randn(n_samples, 1).ravel()
@@ -485,8 +485,8 @@ def test_sag_regressor():
     score1 = clf1.score(X, y)
     score2 = clf2.score(X, y)
     score2 = clf2.score(X, y)
-    assert_greater(score1, 0.5)
-    assert_greater(score2, 0.5)
+    assert score1 > 0.5
+    assert score2 > 0.5
 
 
 @pytest.mark.filterwarnings('ignore:The max_iter was reached')

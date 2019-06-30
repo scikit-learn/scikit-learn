@@ -184,7 +184,7 @@ def test_update_of_sigma_in_ard():
     clf.fit(X, y)
     # With the inputs above, ARDRegression prunes one of the two coefficients
     # in the first iteration. Hence, the expected shape of `sigma_` is (1, 1).
-    assert_equal(clf.sigma_.shape, (1, 1))
+    assert clf.sigma_.shape == (1, 1)
     # Ensure that no error is thrown at prediction stage
     clf.predict(X, return_std=True)
 
