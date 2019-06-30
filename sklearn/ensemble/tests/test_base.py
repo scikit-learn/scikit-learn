@@ -36,14 +36,14 @@ def test_base():
     ensemble._make_estimator(random_state=random_state)
     ensemble._make_estimator(append=False)
 
-    assert_equal(3, len(ensemble))
-    assert_equal(3, len(ensemble.estimators_))
+    assert 3 == len(ensemble)
+    assert 3 == len(ensemble.estimators_)
 
     assert isinstance(ensemble[0], Perceptron)
-    assert_equal(ensemble[0].random_state, None)
+    assert ensemble[0].random_state == None
     assert isinstance(ensemble[1].random_state, int)
     assert isinstance(ensemble[2].random_state, int)
-    assert_not_equal(ensemble[1].random_state, ensemble[2].random_state)
+    assert ensemble[1].random_state != ensemble[2].random_state
 
     np_int_ensemble = BaggingClassifier(base_estimator=Perceptron(tol=1e-3),
                                         n_estimators=np.int32(3))
@@ -82,7 +82,7 @@ def test_set_random_states():
     _set_random_states(LinearDiscriminantAnalysis(), random_state=17)
 
     clf1 = Perceptron(tol=1e-3, random_state=None)
-    assert_equal(clf1.random_state, None)
+    assert clf1.random_state == None
     # check random_state is None still sets
     _set_random_states(clf1, None)
     assert isinstance(clf1.random_state, int)
@@ -92,7 +92,7 @@ def test_set_random_states():
     assert isinstance(clf1.random_state, int)
     clf2 = Perceptron(tol=1e-3, random_state=None)
     _set_random_states(clf2, 3)
-    assert_equal(clf1.random_state, clf2.random_state)
+    assert clf1.random_state == clf2.random_state
 
     # nested random_state
 
@@ -105,7 +105,7 @@ def test_set_random_states():
     _set_random_states(est1, 3)
     assert isinstance(est1.steps[0][1].estimator.random_state, int)
     assert isinstance(est1.steps[1][1].random_state, int)
-    assert_not_equal(est1.get_params()['sel__estimator__random_state'],
+    assert (est1.get_params()['sel__estimator__random_state'] !=
                      est1.get_params()['clf__random_state'])
 
     # ensure multiple random_state parameters are invariant to get_params()
@@ -124,7 +124,7 @@ def test_set_random_states():
     for cls in [AlphaParamPipeline, RevParamPipeline]:
         est2 = cls(make_steps())
         _set_random_states(est2, 3)
-        assert_equal(est1.get_params()['sel__estimator__random_state'],
+        assert (est1.get_params()['sel__estimator__random_state'] ==
                      est2.get_params()['sel__estimator__random_state'])
-        assert_equal(est1.get_params()['clf__random_state'],
+        assert (est1.get_params()['clf__random_state'] ==
                      est2.get_params()['clf__random_state'])
