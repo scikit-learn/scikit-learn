@@ -282,6 +282,9 @@ def test_bunch_dir():
 
 
 def test_refresh_cache(monkeypatch):
+    # uses pytests monkeypatch fixture
+    # https://docs.pytest.org/en/latest/monkeypatch.html
+
     def _load_warn(*args, **kwargs):
         # raise the warning from "externals.joblib.__init__.py"
         # this is raised when a file persisted by the old joblib is loaded now
