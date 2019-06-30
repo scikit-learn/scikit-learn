@@ -456,7 +456,7 @@ def test_check_estimator_clones():
             # without fitting
             old_hash = joblib.hash(est)
             check_estimator(est)
-        assert_equal(old_hash, joblib.hash(est))
+        assert old_hash == joblib.hash(est)
 
         with ignore_warnings(category=(FutureWarning, DeprecationWarning)):
             # when 'est = SGDClassifier()'
@@ -467,7 +467,7 @@ def test_check_estimator_clones():
             est.fit(iris.data + 10, iris.target)
             old_hash = joblib.hash(est)
             check_estimator(est)
-        assert_equal(old_hash, joblib.hash(est))
+        assert old_hash == joblib.hash(est)
 
 
 def test_check_estimators_unfitted():

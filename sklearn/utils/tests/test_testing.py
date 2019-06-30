@@ -37,24 +37,24 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 
 def test_assert_less():
-    assert_less(0, 1)
+    assert 0 < 1
     assert_raises(AssertionError, assert_less, 1, 0)
 
 
 def test_assert_greater():
-    assert_greater(1, 0)
+    assert 1 > 0
     assert_raises(AssertionError, assert_greater, 0, 1)
 
 
 def test_assert_less_equal():
-    assert_less_equal(0, 1)
-    assert_less_equal(1, 1)
+    assert 0 <= 1
+    assert 1 <= 1
     assert_raises(AssertionError, assert_less_equal, 1, 0)
 
 
 def test_assert_greater_equal():
-    assert_greater_equal(1, 0)
-    assert_greater_equal(1, 1)
+    assert 1 >= 0
+    assert 1 >= 1
     assert_raises(AssertionError, assert_greater_equal, 0, 1)
 
 
@@ -64,7 +64,7 @@ def test_set_random_state():
     # Linear Discriminant Analysis doesn't have random state: smoke test
     set_random_state(lda, 3)
     set_random_state(tree, 3)
-    assert_equal(tree.random_state, 3)
+    assert tree.random_state == 3
 
 
 def test_assert_allclose_dense_sparse():
@@ -236,13 +236,13 @@ class TestWarns(unittest.TestCase):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
             filters_orig = warnings.filters[:]
-            assert_equal(assert_warns(UserWarning, f), 3)
+            assert assert_warns(UserWarning, f) == 3
             # test that assert_warns doesn't have side effects on warnings
             # filters
-            assert_equal(warnings.filters, filters_orig)
+            assert warnings.filters == filters_orig
 
         assert_raises(AssertionError, assert_no_warnings, f)
-        assert_equal(assert_no_warnings(lambda x: x, 1), 1)
+        assert assert_no_warnings(lambda x: x, 1) == 1
 
     def test_warn_wrong_warning(self):
         def f():
