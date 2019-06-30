@@ -321,7 +321,7 @@ def test_refresh_cache(monkeypatch):
     # manages to dump the new data
     monkeypatch.setattr(joblib, "load", _load_warn)
     monkeypatch.setattr(joblib, "dump", _dump_safe)
-    with warnings.catch_warnings(record=True) as warns:
+    with pytest.warns(None) as warns:
         _refresh_cache('test', 0)
     assert len(warns) == 0
 
