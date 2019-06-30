@@ -298,7 +298,7 @@ def test_refresh_cache(monkeypatch):
         return 0
 
     def _load_warn_unrelated(*args, **kwargs):
-        warnings.warn("unrelated warning", UserWarning)
+        warnings.warn("unrelated warning", DeprecationWarning)
         return 0
 
     def _dump_safe(*args, **kwargs):
@@ -329,5 +329,5 @@ def test_refresh_cache(monkeypatch):
     # by _refresh_cache
     monkeypatch.setattr(joblib, "load", _load_warn_unrelated)
     monkeypatch.setattr(joblib, "dump", _dump_safe)
-    with pytest.warns(UserWarning, match="unrelated warning"):
+    with pytest.warns(DeprecationWarning, match="unrelated warning"):
         _refresh_cache('test', 0)
