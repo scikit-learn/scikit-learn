@@ -5,7 +5,8 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 from timeit import default_timer as time
-from sklearn.base import BaseEstimator, RegressorMixin, ClassifierMixin
+from sklearn.base import (BaseEstimator, RegressorMixin, ClassifierMixin,
+                          is_classifier)
 from sklearn.utils import check_X_y, check_random_state, check_array, resample
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.multiclass import check_classification_targets
@@ -388,8 +389,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         subsample_size = 10000
         if X_binned_train.shape[0] > subsample_size:
             indices = np.arange(X_binned_train.shape[0])
+            stratify = y_train if is_classifier(self) else None
             indices = resample(indices, n_samples=subsample_size,
-                               replace=False, random_state=seed)
+                               replace=False, random_state=seed,
+                               stratify=stratify)
             X_binned_small_train = X_binned_train[indices]
             y_small_train = y_train[indices]
             X_binned_small_train = np.ascontiguousarray(X_binned_small_train)
