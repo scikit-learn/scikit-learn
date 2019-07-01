@@ -20,15 +20,22 @@ jobs:
 
   steps:
     - script: >
-        docker run -it --rm
+        docker container run -it --rm
         -v $TEST_DIR:/temp_dir
-        -v $PWD:/io -d
+        -v $PWD:/io
         --name skcontainer
         -e DISTRIB='ubuntu-32'
         -w /io
         i386/ubuntu:16.04
-        build_tools/azure/test_script_32.sh
-      displayName: 'Install and Test'
+        sleep 1000000
+      displayName: 'Start up'
+    - script: >
+      docker exec -ti skcontainer ./build_tools/azure/install.sh
+      displayName: 'Install'
+    - script: >
+        docker container stop skcontainer
+      displayName: 'Stop container'
+      condition: always()
     # - script: |
     #     build_tools/azure/test_script.sh
     #   displayName: 'Test Library'
