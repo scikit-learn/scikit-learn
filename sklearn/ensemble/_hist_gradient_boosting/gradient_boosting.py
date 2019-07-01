@@ -5,14 +5,14 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 from timeit import default_timer as time
-from sklearn.base import (BaseEstimator, RegressorMixin, ClassifierMixin,
-                          is_classifier)
-from sklearn.utils import check_X_y, check_random_state, check_array, resample
-from sklearn.utils.validation import check_is_fitted
-from sklearn.utils.multiclass import check_classification_targets
-from sklearn.metrics import check_scoring
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
+from ...base import (BaseEstimator, RegressorMixin, ClassifierMixin,
+                     is_classifier)
+from ...utils import check_X_y, check_random_state, check_array
+from ...utils.validation import check_is_fitted
+from ...utils.multiclass import check_classification_targets
+from ...metrics import check_scoring
+from ...model_selection import train_test_split
+from ...preprocessing import LabelEncoder
 from ._gradient_boosting import _update_raw_predictions
 from .types import Y_DTYPE, X_DTYPE, X_BINNED_DTYPE
 
