@@ -16,9 +16,7 @@ from sklearn.metrics.cluster.supervised import _generalized_average
 
 from sklearn.utils import assert_all_finite
 from sklearn.utils.testing import (
-        assert_equal, assert_almost_equal, assert_raise_message,
-        ignore_warnings
-)
+        assert_almost_equal, assert_raise_message, ignore_warnings)
 from numpy.testing import assert_array_almost_equal
 
 

@@ -23,8 +23,7 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from scipy.sparse import csr_matrix
-from sklearn.utils.testing import (assert_raises, assert_greater,
-                                   assert_equal, ignore_warnings)
+from sklearn.utils.testing import assert_raises, ignore_warnings
 from sklearn.utils.testing import assert_raise_message
 
 

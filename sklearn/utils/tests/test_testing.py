@@ -20,7 +20,6 @@ from sklearn.utils.testing import (
     assert_greater_equal,
     assert_warns,
     assert_no_warnings,
-    assert_equal,
     set_random_state,
     assert_raise_message,
     ignore_warnings,

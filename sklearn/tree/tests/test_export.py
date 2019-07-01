@@ -11,8 +11,8 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.tree import export_graphviz, plot_tree, export_text
 from io import StringIO
-from sklearn.utils.testing import (assert_in, assert_equal, assert_raises,
-                                   assert_less_equal, assert_raises_regex,
+from sklearn.utils.testing import (assert_raises,
+                                   assert_raises_regex,
                                    assert_raise_message)
 from sklearn.exceptions import NotFittedError
 

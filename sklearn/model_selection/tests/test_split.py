@@ -1248,7 +1248,7 @@ def test_check_cv():
     cv = check_cv(3, classifier=False)
     # Use numpy.testing.assert_equal which recursively compares
     # lists of lists
-    np.testing.assert_equal(list(KFold(3).split(X)), list(cv.split(X)))
+    assert list(KFold(3).split(X)) ==  list(cv.split(X))
 
     y_binary = np.array([0, 1, 0, 1, 0, 0, 1, 1, 1])
     cv = check_cv(3, y_binary, classifier=True)
