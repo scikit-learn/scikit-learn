@@ -6,7 +6,6 @@ from sklearn.preprocessing import FunctionTransformer
 from sklearn.utils.testing import (assert_equal, assert_array_equal,
                                    assert_allclose_dense_sparse)
 from sklearn.utils.testing import assert_warns_message, assert_no_warnings
-from sklearn.utils.testing import ignore_warnings
 
 
 def _make_func(args_store, kwargs_store, func=lambda X, *a, **k: X):

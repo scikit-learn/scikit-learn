@@ -11,7 +11,7 @@ pytestmark = fails_if_pypy
 
 def test_feature_hasher_dicts():
     h = FeatureHasher(n_features=16)
-    assert_equal("dict", h.input_type)
+    assert "dict" == h.input_type
 
     raw_X = [{"foo": "bar", "dada": 42, "tzara": 37},
              {"foo": "baz", "gaga": "string1"}]
@@ -35,13 +35,13 @@ def test_feature_hasher_strings():
                           alternate_sign=False)
         X = h.transform(it)
 
-        assert_equal(X.shape[0], len(raw_X))
-        assert_equal(X.shape[1], n_features)
+        assert X.shape[0] == len(raw_X)
+        assert X.shape[1] == n_features
 
-        assert_equal(X[0].sum(), 4)
-        assert_equal(X[1].sum(), 3)
+        assert X[0].sum() == 4
+        assert X[1].sum() == 3
 
-        assert_equal(X.nnz, 6)
+        assert X.nnz == 6
 
 
 def test_feature_hasher_pairs():
@@ -51,8 +51,8 @@ def test_feature_hasher_pairs():
     x1, x2 = h.transform(raw_X).toarray()
     x1_nz = sorted(np.abs(x1[x1 != 0]))
     x2_nz = sorted(np.abs(x2[x2 != 0]))
-    assert_equal([1, 2], x1_nz)
-    assert_equal([1, 3, 4], x2_nz)
+    assert [1, 2] == x1_nz
+    assert [1, 3, 4] == x2_nz
 
 
 def test_feature_hasher_pairs_with_string_values():
@@ -62,16 +62,16 @@ def test_feature_hasher_pairs_with_string_values():
     x1, x2 = h.transform(raw_X).toarray()
     x1_nz = sorted(np.abs(x1[x1 != 0]))
     x2_nz = sorted(np.abs(x2[x2 != 0]))
-    assert_equal([1, 1], x1_nz)
-    assert_equal([1, 1, 4], x2_nz)
+    assert [1, 1] == x1_nz
+    assert [1, 1, 4] == x2_nz
 
     raw_X = (iter(d.items()) for d in [{"bax": "abc"},
                                        {"bax": "abc"}])
     x1, x2 = h.transform(raw_X).toarray()
     x1_nz = np.abs(x1[x1 != 0])
     x2_nz = np.abs(x2[x2 != 0])
-    assert_equal([1], x1_nz)
-    assert_equal([1], x2_nz)
+    assert [1] == x1_nz
+    assert [1] == x2_nz
     assert_array_equal(x1, x2)
 
 
@@ -107,7 +107,7 @@ def test_hasher_set_params():
 def test_hasher_zeros():
     # Assert that no zeros are materialized in the output.
     X = FeatureHasher().transform([{'foo': 0}])
-    assert_equal(X.data.shape, (0,))
+    assert X.data.shape == (0,)
 
 
 @ignore_warnings(category=DeprecationWarning)
