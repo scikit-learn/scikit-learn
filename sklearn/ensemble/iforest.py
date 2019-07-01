@@ -21,6 +21,7 @@ from ..utils.validation import check_is_fitted, _num_samples
 from ..base import OutlierMixin
 
 from .bagging import BaseBagging
+from .base import _partition_estimators
 
 __all__ = ["IsolationForest"]
 
@@ -429,27 +430,36 @@ class IsolationForest(BaseBagging, OutlierMixin):
         ndarray
             The anomaly scores for each sample
         """
-        def get_score(_X, _tree, _features, _subsample_features):
-            X_subset = _X[:, _features] if _subsample_features else _X
+        def get_depths(_X, trees, trees_features, _subsample_features):
+            n = _X.shape[0]
+            batch_depths = np.zeros(n, order="f")
 
-            leaves_index = _tree.apply(X_subset)
-            node_indicator = _tree.decision_path(X_subset)
-            n_samples_leaf = _tree.tree_.n_node_samples[leaves_index]
+            for tree, features in zip(trees, trees_features):
+                X_subset = _X[:, features] if _subsample_features else _X
 
-            return np.ravel(node_indicator.sum(axis=1)) + _average_path_length(
-                n_samples_leaf) - 1.0
+                leaves_index = tree.apply(X_subset)
+                node_indicator = tree.decision_path(X_subset)
+                n_samples_leaf = tree.tree_.n_node_samples[leaves_index]
+
+                batch_depths += np.ravel(node_indicator.sum(axis=1)) \
+                    + _average_path_length(n_samples_leaf) - 1.0
+
+            return batch_depths
+
+        n_jobs, n_estimators, starts = _partition_estimators(
+            self.n_estimators, self.n_jobs)
+
+        par_exec = Parallel(n_jobs=n_jobs, **self._parallel_args())
+        par_results = par_exec(
+            delayed(get_depths)(
+                _X=X, trees=self.estimators_[starts[i]: starts[i + 1]],
+                trees_features=self.estimators_features_[
+                               starts[i]: starts[i + 1]],
+                _subsample_features=subsample_features)
+            for i in range(n_jobs))
 
         n_samples = X.shape[0]
-
         depths = np.zeros(n_samples, order="f")
-
-        par_exec = Parallel(n_jobs=self.n_jobs, prefer="threads",
-                            require='sharedmem')
-        par_results = par_exec(
-            delayed(get_score)(_X=X, _tree=tree, _features=features,
-                               _subsample_features=subsample_features)
-            for tree, features in zip(self.estimators_,
-                                      self.estimators_features_))
 
         for result in par_results:
             depths += result
