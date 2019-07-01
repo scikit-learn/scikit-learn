@@ -22,6 +22,8 @@ jobs:
         docker container run --rm
         -v $TEST_DIR:/temp_dir
         -v $PWD:/io
+        -w /io
+        -d
         --name skcontainer
         -e DISTRIB=ubuntu-32
         -e TEST_DIR=/temp_dir
@@ -32,7 +34,6 @@ jobs:
         -e OMP_NUM_THREADS=$OMP_NUM_THREADS
         -e OPENBLAS_NUM_THREADS=$OPENBLAS_NUM_THREADS
         -e SKLEARN_SKIP_NETWORK_TESTS=$SKLEARN_SKIP_NETWORK_TESTS
-        -w /io
         i386/ubuntu:16.04
         sleep 1000000
       displayName: 'Start up'
