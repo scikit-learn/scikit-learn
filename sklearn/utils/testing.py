@@ -73,6 +73,13 @@ assert_greater = _dummy.assertGreater
 assert_less_equal = _dummy.assertLessEqual
 assert_greater_equal = _dummy.assertGreaterEqual
 
+for function_name in ('assert_equal', 'assert_not_equal', 'assert_greater',
+                      'assert_greater_equal', 'assert_less',
+                      'assert_less_equal', 'assert_in', 'assert_not_in'):
+    msg = ('{} is deprecated in version 0.22 ans will be removed in version '
+           '0.24. Please use "assert" instead'.format(function_name))
+    globals()[function_name] = deprecated(msg)(globals()[function_name])
+
 assert_raises_regex = _dummy.assertRaisesRegex
 # assert_raises_regexp is deprecated in Python 3.4 in favor of
 # assert_raises_regex but lets keep the backward compat in scikit-learn with

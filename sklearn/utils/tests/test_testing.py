@@ -645,3 +645,24 @@ def test_create_memmap_backed_data(monkeypatch):
     for input_array, data in zip(input_list, mmap_data_list):
         check_memmap(input_array, data)
     assert registration_counter.nb_calls == 4
+
+
+# 0.24
+from sklearn.utils.testing import (assert_equal, assert_not_equal,
+                                   assert_greater, assert_greater_equal,
+                                   assert_less, assert_less_equal,
+                                   assert_in, assert_not_in)
+@pytest.mark.parametrize('callable, args', [
+    (assert_equal, (0, 0)),
+    (assert_not_equal, (0, 1)),
+    (assert_greater, (1, 0)),
+    (assert_greater_equal, (1, 0)),
+    (assert_less, (0, 1)),
+    (assert_less_equal, (0, 1)),
+    (assert_in, (0, [0])),
+    (assert_not_in, (0, [1]))])
+def test_deprecated_helpers(callable, args):
+    msg = ('is deprecated in version 0.22 ans will be removed in version '
+           '0.24. Please use "assert" instead')
+    with pytest.warns(DeprecationWarning, match=msg):
+        callable(*args)
