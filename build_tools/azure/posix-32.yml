@@ -23,7 +23,7 @@ jobs:
         docker run -it --rm
         -v $TEST_DIR:/temp_dir
         -v $PWD:/io -d
-        -n skcontainer
+        --name skcontainer
         -e DISTRIB='ubuntu-32'
         -w /io
         i386/ubuntu:16.04
