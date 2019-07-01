@@ -509,7 +509,7 @@ def test_expected_transformation_shape():
     cb = transformation_storer.callback
     nca = NeighborhoodComponentsAnalysis(max_iter=5, callback=cb)
     nca.fit(X, y)
-    assert_equal(transformation_storer.transformation.size, X.shape[1]**2)
+    assert transformation_storer.transformation.size == X.shape[1]**2
 
 
 def test_convergence_warning():

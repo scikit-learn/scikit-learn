@@ -90,7 +90,7 @@ def test_pickle():
     s = pickle.dumps(obj)
 
     obj2 = pickle.loads(s)
-    assert_equal(type(obj2), obj.__class__)
+    assert type(obj2) == obj.__class__
     score2 = obj2.score(iris.data, iris.target)
     assert_array_equal(score, score2,
                        "Failed to generate same score"

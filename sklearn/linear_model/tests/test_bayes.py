@@ -11,7 +11,6 @@ from scipy.linalg import pinvh
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_less
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils import check_random_state
 from sklearn.linear_model.bayes import BayesianRidge, ARDRegression
@@ -184,7 +183,7 @@ def test_update_of_sigma_in_ard():
     clf.fit(X, y)
     # With the inputs above, ARDRegression prunes one of the two coefficients
     # in the first iteration. Hence, the expected shape of `sigma_` is (1, 1).
-    assert_equal(clf.sigma_.shape, (1, 1))
+    assert clf.sigma_.shape == (1, 1)
     # Ensure that no error is thrown at prediction stage
     clf.predict(X, return_std=True)
 

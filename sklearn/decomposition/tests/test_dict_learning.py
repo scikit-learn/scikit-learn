@@ -9,8 +9,6 @@ from sklearn.utils import check_array
 
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import TempMemmap
@@ -37,18 +35,18 @@ def test_sparse_encode_shapes_omp():
         for algorithm, n_jobs in itertools.product(algorithms, [1, 3]):
             code = sparse_encode(X_, dictionary, algorithm=algorithm,
                                  n_jobs=n_jobs)
-            assert_equal(code.shape, (n_samples, n_components))
+            assert code.shape == (n_samples, n_components)
 
 
 def test_dict_learning_shapes():
     n_components = 5
     dico = DictionaryLearning(n_components, random_state=0).fit(X)
-    assert_equal(dico.components_.shape, (n_components, n_features))
+    assert dico.components_.shape == (n_components, n_features)
 
     n_components = 1
     dico = DictionaryLearning(n_components, random_state=0).fit(X)
-    assert_equal(dico.components_.shape, (n_components, n_features))
-    assert_equal(dico.transform(X).shape, (X.shape[0], n_components))
+    assert dico.components_.shape == (n_components, n_features)
+    assert dico.transform(X).shape == (X.shape[0], n_components)
 
 
 def test_dict_learning_overcomplete():
@@ -166,7 +164,7 @@ def test_dict_learning_nonzero_coefs():
 
     dico.set_params(transform_algorithm='omp')
     code = dico.transform(X[np.newaxis, 1])
-    assert_equal(len(np.flatnonzero(code)), 3)
+    assert len(np.flatnonzero(code)) == 3
 
 
 def test_dict_learning_unknown_fit_algorithm():
@@ -192,9 +190,9 @@ def test_dict_learning_online_shapes():
     n_components = 8
     code, dictionary = dict_learning_online(X, n_components=n_components,
                                             alpha=1, random_state=rng)
-    assert_equal(code.shape, (n_samples, n_components))
-    assert_equal(dictionary.shape, (n_components, n_features))
-    assert_equal(np.dot(code, dictionary).shape, X.shape)
+    assert code.shape == (n_samples, n_components)
+    assert dictionary.shape == (n_components, n_features)
+    assert np.dot(code, dictionary).shape == X.shape
 
 
 def test_dict_learning_online_lars_positive_parameter():
@@ -352,7 +350,7 @@ def test_sparse_encode_shapes():
     V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
     for algo in ('lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'):
         code = sparse_encode(X, V, algorithm=algo)
-        assert_equal(code.shape, (n_samples, n_components))
+        assert code.shape == (n_samples, n_components)
 
 
 @pytest.mark.parametrize("algo", [
@@ -404,7 +402,7 @@ def test_sparse_encode_error():
     V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
     code = sparse_encode(X, V, alpha=0.001)
     assert not np.all(code == 0)
-    assert_less(np.sqrt(np.sum((np.dot(code, V) - X) ** 2)), 0.1)
+    assert np.sqrt(np.sum((np.dot(code, V) - X) ** 2)) < 0.1
 
 
 def test_sparse_encode_error_default_sparsity():
@@ -413,7 +411,7 @@ def test_sparse_encode_error_default_sparsity():
     D = rng.randn(2, 64)
     code = ignore_warnings(sparse_encode)(X, D, algorithm='omp',
                                           n_nonzero_coefs=None)
-    assert_equal(code.shape, (100, 2))
+    assert code.shape == (100, 2)
 
 
 def test_unknown_method():
@@ -431,7 +429,7 @@ def test_sparse_coder_estimator():
     code = SparseCoder(dictionary=V, transform_algorithm='lasso_lars',
                        transform_alpha=0.001).transform(X)
     assert not np.all(code == 0)
-    assert_less(np.sqrt(np.sum((np.dot(code, V) - X) ** 2)), 0.1)
+    assert np.sqrt(np.sum((np.dot(code, V) - X) ** 2)) < 0.1
 
 
 def test_sparse_coder_parallel_mmap():

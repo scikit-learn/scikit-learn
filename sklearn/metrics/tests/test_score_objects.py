@@ -10,11 +10,9 @@ import joblib
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_not_equal
 
 from sklearn.base import BaseEstimator
 from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
@@ -198,8 +196,8 @@ def check_multimetric_scoring_single_metric_wrapper(*args, **kwargs):
     if args[0] is not None:
         assert scorers is not None
         names, scorers = zip(*scorers.items())
-        assert_equal(len(scorers), 1)
-        assert_equal(names[0], 'score')
+        assert len(scorers) == 1
+        assert names[0] == 'score'
         scorers = scorers[0]
     return scorers
 
@@ -224,7 +222,7 @@ def test_check_scoring_and_check_multimetric_scoring():
         scorers, is_multi = _check_multimetric_scoring(estimator, scoring)
         assert is_multi
         assert isinstance(scorers, dict)
-        assert_equal(sorted(scorers.keys()), sorted(list(scoring)))
+        assert sorted(scorers.keys()) == sorted(list(scoring))
         assert all([isinstance(scorer, _PredictScorer)
                     for scorer in list(scorers.values())])
 
@@ -484,10 +482,10 @@ def test_scorer_sample_weight():
                               sample_weight=sample_weight)
             ignored = scorer(estimator[name], X_test[10:], target[10:])
             unweighted = scorer(estimator[name], X_test, target)
-            assert_not_equal(weighted, unweighted,
-                             msg="scorer {0} behaves identically when "
-                             "called with sample weights: {1} vs "
-                             "{2}".format(name, weighted, unweighted))
+            assert weighted != unweighted, (
+                "scorer {0} behaves identically when "
+                "called with sample weights: {1} vs "
+                "{2}".format(name, weighted, unweighted))
             assert_almost_equal(weighted, ignored,
                                 err_msg="scorer {0} behaves differently when "
                                 "ignoring samples and setting sample_weight to"

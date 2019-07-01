@@ -432,6 +432,10 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
             'Unknown linkage option, linkage should be one '
             'of %s, but %s was given' % (linkage_choices.keys(), linkage))
 
+    if affinity == 'cosine' and np.any(~np.any(X, axis=1)):
+        raise ValueError(
+            'Cosine affinity cannot be used when X contains zero vectors')
+
     if connectivity is None:
         from scipy.cluster import hierarchy  # imports PIL
 

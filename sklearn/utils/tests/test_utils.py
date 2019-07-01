@@ -57,9 +57,9 @@ def test_deprecated():
 
         spam = ham()
 
-        assert_equal(spam, "spam")     # function must remain usable
+        assert spam == "spam"     # function must remain usable
 
-        assert_equal(len(w), 1)
+        assert len(w) == 1
         assert issubclass(w[0].category, DeprecationWarning)
         assert "deprecated" in str(w[0].message).lower()
 
@@ -75,7 +75,7 @@ def test_deprecated():
 
         assert hasattr(ham, "SPAM")
 
-        assert_equal(len(w), 1)
+        assert len(w) == 1
         assert issubclass(w[0].category, DeprecationWarning)
         assert "deprecated" in str(w[0].message).lower()
 
@@ -90,7 +90,7 @@ def test_resample():
                   replace=False, n_samples=3)
     assert_raises(ValueError, resample, [0, 1], [0, 1], meaning_of_life=42)
     # Issue:6581, n_samples can be more when replace is True (default).
-    assert_equal(len(resample([1, 2], n_samples=5)), 5)
+    assert len(resample([1, 2], n_samples=5)) == 5
 
 
 def test_resample_stratified():
@@ -161,10 +161,10 @@ def test_safe_mask():
     mask = [False, False, True, True, True]
 
     mask = safe_mask(X, mask)
-    assert_equal(X[mask].shape[0], 3)
+    assert X[mask].shape[0] == 3
 
     mask = safe_mask(X_csr, mask)
-    assert_equal(X_csr[mask].shape[0], 3)
+    assert X_csr[mask].shape[0] == 3
 
 
 def test_column_or_1d():
@@ -241,7 +241,7 @@ def test_shuffle_on_ndim_equals_three():
     A = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])  # A.shape = (2,2,2)
     S = set(to_tuple(A))
     shuffle(A)  # shouldn't raise a ValueError for dim = 3
-    assert_equal(set(to_tuple(A)), S)
+    assert set(to_tuple(A)) == S
 
 
 def test_shuffle_dont_convert_to_array():
@@ -257,20 +257,20 @@ def test_shuffle_dont_convert_to_array():
     e = sp.csc_matrix(np.arange(6).reshape(3, 2))
     a_s, b_s, c_s, d_s, e_s = shuffle(a, b, c, d, e, random_state=0)
 
-    assert_equal(a_s, ['c', 'b', 'a'])
-    assert_equal(type(a_s), list)
+    assert a_s == ['c', 'b', 'a']
+    assert type(a_s) == list
 
     assert_array_equal(b_s, ['c', 'b', 'a'])
-    assert_equal(b_s.dtype, object)
+    assert b_s.dtype == object
 
-    assert_equal(c_s, [3, 2, 1])
-    assert_equal(type(c_s), list)
+    assert c_s == [3, 2, 1]
+    assert type(c_s) == list
 
     assert_array_equal(d_s, np.array([['c', 2],
                                       ['b', 1],
                                       ['a', 0]],
                                      dtype=object))
-    assert_equal(type(d_s), MockDataFrame)
+    assert type(d_s) == MockDataFrame
 
     assert_array_equal(e_s.toarray(), np.array([[4, 5],
                                                 [2, 3],
