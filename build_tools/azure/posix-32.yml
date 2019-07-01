@@ -18,12 +18,14 @@ jobs:
       ${{ insert }}: ${{ parameters.matrix }}
 
   steps:
+    # Container is detached and sleeping, allowing steps to run commmands
+    # in the container
     - script: >
         docker container run --rm
         -v $TEST_DIR:/temp_dir
         -v $PWD:/io
         -w /io
-        -d
+        --detach
         --name skcontainer
         -e DISTRIB=ubuntu-32
         -e TEST_DIR=/temp_dir
@@ -36,7 +38,7 @@ jobs:
         -e SKLEARN_SKIP_NETWORK_TESTS=$SKLEARN_SKIP_NETWORK_TESTS
         i386/ubuntu:16.04
         sleep 1000000
-      displayName: 'Start up'
+      displayName: 'Start container'
     - script: >
         docker exec skcontainer ./build_tools/azure/install.sh
       displayName: 'Install'
