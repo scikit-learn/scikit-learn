@@ -25,6 +25,7 @@ jobs:
         -v $PWD:/io
         --name skcontainer
         -e DISTRIB='ubuntu-32'
+        -d
         -w /io
         i386/ubuntu:16.04
         sleep 1000000
