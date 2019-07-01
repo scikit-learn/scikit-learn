@@ -58,7 +58,7 @@ def test_calibration():
             prob_pos_pc_clf = pc_clf.predict_proba(this_X_test)[:, 1]
 
             # Check that brier score has improved after calibration
-            assert_greater(brier_score_loss(y_test, prob_pos_clf),
+            assert (brier_score_loss(y_test, prob_pos_clf) >
                            brier_score_loss(y_test, prob_pos_pc_clf))
 
             # Check invariance against relabeling [0, 1] -> [1, 2]
@@ -84,7 +84,7 @@ def test_calibration():
             else:
                 # Isotonic calibration is not invariant against relabeling
                 # but should improve in both cases
-                assert_greater(brier_score_loss(y_test, prob_pos_clf),
+                assert (brier_score_loss(y_test, prob_pos_clf) >
                                brier_score_loss((y_test + 1) % 2,
                                                 prob_pos_pc_clf_relabeled))
 
@@ -122,7 +122,7 @@ def test_sample_weight():
         probs_without_sw = calibrated_clf.predict_proba(X_test)
 
         diff = np.linalg.norm(probs_with_sw - probs_without_sw)
-        assert_greater(diff, 0.1)
+        assert diff > 0.1
 
 
 def test_calibration_multiclass():
@@ -158,7 +158,7 @@ def test_calibration_multiclass():
         uncalibrated_log_loss = \
             log_loss(y_test, softmax(clf.decision_function(X_test)))
         calibrated_log_loss = log_loss(y_test, probas)
-        assert_greater_equal(uncalibrated_log_loss, calibrated_log_loss)
+        assert uncalibrated_log_loss >= calibrated_log_loss
 
     # Test that calibration of a multiclass classifier decreases log-loss
     # for RandomForestClassifier
@@ -177,7 +177,7 @@ def test_calibration_multiclass():
         cal_clf.fit(X_train, y_train)
         cal_clf_probs = cal_clf.predict_proba(X_test)
         cal_loss = log_loss(y_test, cal_clf_probs)
-        assert_greater(loss, cal_loss)
+        assert loss > cal_loss
 
 
 def test_calibration_prefit():
@@ -217,7 +217,7 @@ def test_calibration_prefit():
                 assert_array_equal(y_pred,
                                    np.array([0, 1])[np.argmax(y_prob, axis=1)])
 
-                assert_greater(brier_score_loss(y_test, prob_pos_clf),
+                assert (brier_score_loss(y_test, prob_pos_clf) >
                                brier_score_loss(y_test, prob_pos_pc_clf))
 
 
@@ -246,8 +246,8 @@ def test_calibration_curve():
     prob_true, prob_pred = calibration_curve(y_true, y_pred, n_bins=2)
     prob_true_unnormalized, prob_pred_unnormalized = \
         calibration_curve(y_true, y_pred * 2, n_bins=2, normalize=True)
-    assert_equal(len(prob_true), len(prob_pred))
-    assert_equal(len(prob_true), 2)
+    assert len(prob_true) == len(prob_pred)
+    assert len(prob_true) == 2
     assert_almost_equal(prob_true, [0, 1])
     assert_almost_equal(prob_pred, [0.1, 0.9])
     assert_almost_equal(prob_true, prob_true_unnormalized)
@@ -317,8 +317,8 @@ def test_calibration_less_classes():
             enumerate(cal_clf.calibrated_classifiers_):
         proba = calibrated_classifier.predict_proba(X)
         assert_array_equal(proba[:, i], np.zeros(len(y)))
-        assert_equal(np.all(np.hstack([proba[:, :i],
-                                       proba[:, i + 1:]])), True)
+        assert np.all(np.hstack([proba[:, :i],
+                                 proba[:, i + 1:]]))
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))

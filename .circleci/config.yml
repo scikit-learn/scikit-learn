@@ -18,7 +18,16 @@ jobs:
       - run: ./build_tools/circle/checkout_merge_commit.sh
       - restore_cache:
           key: v1-datasets-{{ .Branch }}
+      - restore_cache:
+          keys:
+            - doc-min-deps-ccache-{{ .Branch }}
+            - doc-min-deps-ccache
       - run: ./build_tools/circle/build_doc.sh
+      - save_cache:
+          key: doc-min-deps-ccache-{{ .Branch }}-{{ .BuildNum }}
+          paths:
+            - ~/.ccache
+            - ~/.cache/pip
       - save_cache:
           key: v1-datasets-{{ .Branch }}
           paths:
@@ -42,7 +51,16 @@ jobs:
       - run: ./build_tools/circle/checkout_merge_commit.sh
       - restore_cache:
           key: v1-datasets-{{ .Branch }}
+      - restore_cache:
+          keys:
+            - doc-ccache-{{ .Branch }}
+            - doc-ccache
       - run: ./build_tools/circle/build_doc.sh
+      - save_cache:
+          key: doc-ccache-{{ .Branch }}-{{ .BuildNum }}
+          paths:
+            - ~/.ccache
+            - ~/.cache/pip
       - save_cache:
           key: v1-datasets-{{ .Branch }}
           paths:
@@ -77,7 +95,7 @@ jobs:
 
   pypy3:
     docker:
-      - image: pypy:3-7.0.0
+      - image: pypy:3.6-7.1.1
     steps:
       - restore_cache:
           keys:

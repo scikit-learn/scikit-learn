@@ -27,10 +27,10 @@ def test_dictvectorizer(sparse, dtype, sort, iterable):
     v = DictVectorizer(sparse=sparse, dtype=dtype, sort=sort)
     X = v.fit_transform(iter(D) if iterable else D)
 
-    assert_equal(sp.issparse(X), sparse)
-    assert_equal(X.shape, (3, 5))
-    assert_equal(X.sum(), 14)
-    assert_equal(v.inverse_transform(X), D)
+    assert sp.issparse(X) == sparse
+    assert X.shape == (3, 5)
+    assert X.sum() == 14
+    assert v.inverse_transform(X) == D
 
     if sparse:
         # CSR matrices can't be compared for equality
@@ -41,7 +41,7 @@ def test_dictvectorizer(sparse, dtype, sort, iterable):
                                           else D))
 
     if sort:
-        assert_equal(v.feature_names_,
+        assert (v.feature_names_ ==
                      sorted(v.feature_names_))
 
 
@@ -59,7 +59,7 @@ def test_feature_selection():
         sel = SelectKBest(chi2, k=2).fit(X, [0, 1])
 
         v.restrict(sel.get_support(indices=indices), indices=indices)
-        assert_equal(v.get_feature_names(), ["useful1", "useful2"])
+        assert v.get_feature_names() == ["useful1", "useful2"]
 
 
 def test_one_of_k():
@@ -68,10 +68,10 @@ def test_one_of_k():
             {"version=3": True, "spam": -1}]
     v = DictVectorizer()
     X = v.fit_transform(D_in)
-    assert_equal(X.shape, (3, 5))
+    assert X.shape == (3, 5)
 
     D_out = v.inverse_transform(X)
-    assert_equal(D_out[0], {"version=1": 1, "ham": 2})
+    assert D_out[0] == {"version=1": 1, "ham": 2}
 
     names = v.get_feature_names()
     assert "version=2" in names
@@ -96,7 +96,7 @@ def test_unseen_or_no_features():
         try:
             v.transform([])
         except ValueError as e:
-            assert_in("empty", str(e))
+            assert "empty" in str(e)
 
 
 def test_deterministic_vocabulary():
@@ -111,4 +111,4 @@ def test_deterministic_vocabulary():
     v_1 = DictVectorizer().fit([d_sorted])
     v_2 = DictVectorizer().fit([d_shuffled])
 
-    assert_equal(v_1.vocabulary_, v_2.vocabulary_)
+    assert v_1.vocabulary_ == v_2.vocabulary_
