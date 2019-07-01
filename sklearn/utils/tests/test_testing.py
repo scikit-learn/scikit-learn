@@ -20,6 +20,10 @@ from sklearn.utils.testing import (
     assert_greater_equal,
     assert_warns,
     assert_no_warnings,
+    assert_equal,
+    assert_not_equal,
+    assert_in,
+    assert_not_in,
     set_random_state,
     assert_raise_message,
     ignore_warnings,
@@ -648,10 +652,6 @@ def test_create_memmap_backed_data(monkeypatch):
 
 
 # 0.24
-from sklearn.utils.testing import (assert_equal, assert_not_equal,
-                                   assert_greater, assert_greater_equal,
-                                   assert_less, assert_less_equal,
-                                   assert_in, assert_not_in)
 @pytest.mark.parametrize('callable, args', [
     (assert_equal, (0, 0)),
     (assert_not_equal, (0, 1)),
