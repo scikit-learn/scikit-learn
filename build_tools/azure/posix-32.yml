@@ -19,11 +19,12 @@ jobs:
 
   steps:
     # Container is detached and sleeping, allowing steps to run commmands
-    # in the container
+    # in the container. The TEST_DIR is mapped allowing the host to access
+    # the JUNITXML file
     - script: >
         docker container run --rm
-        -v $TEST_DIR:/temp_dir
-        -v $PWD:/io
+        --volume $TEST_DIR:/temp_dir
+        --volume $PWD:/io
         -w /io
         --detach
         --name skcontainer
