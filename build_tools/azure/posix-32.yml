@@ -30,7 +30,7 @@ jobs:
         sleep 1000000
       displayName: 'Start up'
     - script: >
-      docker exec -ti skcontainer ./build_tools/azure/install.sh
+        docker exec -ti skcontainer ./build_tools/azure/install.sh
       displayName: 'Install'
     - script: >
         docker container stop skcontainer
