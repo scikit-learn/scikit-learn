@@ -418,22 +418,24 @@ class IsolationForest(BaseBagging, OutlierMixin):
     def _compute_score_samples(self, X, subsample_features):
         """Compute the score of each samples in X going through the extra
         trees.
+
         Parameters
         ----------
         X : array-like or sparse matrix
         subsample_features : bool,
             whether features should be subsampled
+
         Returns
         -------
         ndarray
             The anomaly scores for each sample
         """
-        def get_depths(X, trees, trees_features, subsample_features):
-            n = X.shape[0]
+        def get_depths(_X, trees, trees_features, _subsample_features):
+            n = _X.shape[0]
             batch_depths = np.zeros(n, order="f")
 
             for tree, features in zip(trees, trees_features):
-                X_subset = X[:, features] if subsample_features else X
+                X_subset = _X[:, features] if _subsample_features else _X
 
                 leaves_index = tree.apply(X_subset)
                 node_indicator = tree.decision_path(X_subset)
@@ -450,10 +452,10 @@ class IsolationForest(BaseBagging, OutlierMixin):
         par_exec = Parallel(n_jobs=n_jobs, **self._parallel_args())
         par_results = par_exec(
             delayed(get_depths)(
-                X=X, trees=self.estimators_[starts[i]: starts[i + 1]],
+                _X=X, trees=self.estimators_[starts[i]: starts[i + 1]],
                 trees_features=self.estimators_features_[
                                starts[i]: starts[i + 1]],
-                subsample_features=subsample_features)
+                _subsample_features=subsample_features)
             for i in range(n_jobs))
 
         n_samples = X.shape[0]
