@@ -1420,9 +1420,9 @@ class RandomizedSearchCV(BaseSearchCV):
     >>> from scipy.stats import uniform
     >>> iris = load_iris()
     >>> logistic = LogisticRegression(solver='saga', tol=1e-2, max_iter=200)
-    >>> hyperparameters = dict(C=uniform(loc=0, scale=4),
-    ...                        penalty=['l2', 'l1'])
-    >>> clf = RandomizedSearchCV(logistic, hyperparameters, random_state=0)
+    >>> distributions = dict(C=uniform(loc=0, scale=4),
+    ...                      penalty=['l2', 'l1'])
+    >>> clf = RandomizedSearchCV(logistic, distributions, random_state=0)
     >>> search = clf.fit(iris.data, iris.target)
     >>> search.best_params_
     {'C': 2..., 'penalty': 'l1'}
