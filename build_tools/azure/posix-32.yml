@@ -25,7 +25,7 @@ jobs:
         -e DISTRIB='ubuntu-32'
         i386/ubuntu:16.04
         /io/build_tools/azure/test_script_32.sh
-      display: 'Install and Test'
+      displayName: 'Install and Test'
     # - script: |
     #     build_tools/azure/test_script.sh
     #   displayName: 'Test Library'
