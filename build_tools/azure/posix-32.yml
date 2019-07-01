@@ -24,7 +24,8 @@ jobs:
         -v $TEST_DIR:/temp_dir
         -v $PWD:/io
         --name skcontainer
-        -e DISTRIB='ubuntu-32'
+        -e DISTRIB=ubuntu-32
+        -e TEST_DIR=/temp_dir
         -d
         -w /io
         i386/ubuntu:16.04
