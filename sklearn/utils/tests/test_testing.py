@@ -666,7 +666,7 @@ def test_create_memmap_backed_data(monkeypatch):
     (assert_in, (0, [0])),
     (assert_not_in, (0, [1]))])
 def test_deprecated_helpers(callable, args):
-    msg = ('is deprecated in version 0.22 ans will be removed in version '
+    msg = ('is deprecated in version 0.22 and will be removed in version '
            '0.24. Please use "assert" instead')
     with pytest.warns(DeprecationWarning, match=msg):
         callable(*args)
