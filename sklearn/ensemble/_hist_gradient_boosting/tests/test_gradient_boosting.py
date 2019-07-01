@@ -211,8 +211,14 @@ def test_small_trainset(GradientBoosting, data):
 
 def test_stratification_small_trainset():
     # Make sure that the small trainset is stratified
-    X, y = make_classification(n_samples=20000, n_features=2,
-                               n_informative=2, n_redundant=0)
+    n_samples = 20000
+    class_one_prop = 0.1
+    rng = np.random.RandomState(42)
+    X = rng.randn(n_samples).reshape(n_samples, 1)
+    y = np.asarray(
+        [0] * int(n_samples * (1 - class_one_prop))
+        + [1] * int(n_samples * class_one_prop)
+    )
     gb = HistGradientBoostingClassifier(random_state=42)
     X_small_train, y_small_train = gb._get_small_trainset(X, y, seed=42)
-    np.testing.assert_almost_equal(y.mean(), y_small_train.mean(), decimal=3)
+    np.testing.assert_equal(y_small_train.mean(), class_one_prop)
