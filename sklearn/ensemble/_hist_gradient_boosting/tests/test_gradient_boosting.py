@@ -192,33 +192,16 @@ def test_zero_division_hessians(data):
     gb.fit(X, y)
 
 
-@pytest.mark.parametrize('GradientBoosting, data', [
-    (HistGradientBoostingClassifier,
-     make_classification(n_samples=10001, random_state=0, n_features=2,
-                         n_informative=2, n_redundant=0)),
-    (HistGradientBoostingRegressor,
-     make_regression(n_samples=10001, random_state=0, n_features=2,
-                     n_informative=2))]
-)
-def test_small_trainset(GradientBoosting, data):
-    # Make sure that a small trainset has the expected length (10k samples)
-    X, y = data
-    gb = GradientBoosting(random_state=42)
-    X_small, y_small = gb._get_small_trainset(X, y, seed=42)
-    assert X_small.shape[0] == 10000
-    assert y_small.shape[0] == 10000
-
-
-def test_stratification_small_trainset():
-    # Make sure that the small trainset is stratified
+def test_small_trainset():
+    # Make sure that the small trainset is stratified and has the expected
+    # length (10k samples)
     n_samples = 20000
     class_one_prop = 0.1
     rng = np.random.RandomState(42)
     X = rng.randn(n_samples).reshape(n_samples, 1)
-    y = np.asarray(
-        [0] * int(n_samples * (1 - class_one_prop))
-        + [1] * int(n_samples * class_one_prop)
-    )
-    gb = HistGradientBoostingClassifier(random_state=42)
-    X_small_train, y_small_train = gb._get_small_trainset(X, y, seed=42)
-    assert y_small_train.mean() == class_one_prop
+    y = rng.binomial(1, p=0.1, size=n_samples)
+    gb = HistGradientBoostingClassifier()
+    X_small, y_small = gb._get_small_trainset(X, y, seed=42)
+    assert X_small.shape[0] == 10000
+    assert y_small.shape[0] == 10000
+    assert y_small.mean() == pytest.approx(class_one_prop, rel=0, abs=1e-2)
