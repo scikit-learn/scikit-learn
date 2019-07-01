@@ -109,7 +109,7 @@ def test_extract_xi():
 
     clust = OPTICS(min_samples=3, min_cluster_size=3,
                    max_eps=20, cluster_method='xi',
-                   xi=0.1).fit(X)
+                   xi=0.3).fit(X)
     # this may fail if the predecessor correction is not at work!
     assert_array_equal(clust.labels_, expected_labels)
 
