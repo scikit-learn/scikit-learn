@@ -20,7 +20,7 @@ jobs:
 
   steps:
     - script: >
-        docker container run -it --rm
+        docker container run --rm
         -v $TEST_DIR:/temp_dir
         -v $PWD:/io
         --name skcontainer
@@ -30,7 +30,7 @@ jobs:
         sleep 1000000
       displayName: 'Start up'
     - script: >
-        docker exec -ti skcontainer ./build_tools/azure/install.sh
+        docker exec skcontainer ./build_tools/azure/install.sh
       displayName: 'Install'
     - script: >
         docker container stop skcontainer
