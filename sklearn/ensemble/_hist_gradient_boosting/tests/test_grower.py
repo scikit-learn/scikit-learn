@@ -180,8 +180,6 @@ def test_predictor_from_grower():
 
     # Check that training set can be recovered exactly:
     predictions = predictor.predict_binned(X_binned, missing_values_bin_idx)
-    print()
-    print(np.sum(predictions != -all_gradients))
     assert np.allclose(predictions, -all_gradients)
 
 

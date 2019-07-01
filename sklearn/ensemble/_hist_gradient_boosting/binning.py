@@ -43,7 +43,7 @@ def _find_binning_thresholds(data, max_bins, subsample, random_state):
     binning_thresholds: list of arrays
         For each feature, stores the increasing numeric values that can
         be used to separate the bins. Thus ``len(binning_thresholds) ==
-        n_features``. The first threshold (for missing values) is always NaN.
+        n_features``.
     """
     rng = check_random_state(random_state)
     if subsample is not None and data.shape[0] > subsample:
