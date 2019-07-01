@@ -28,7 +28,7 @@ def test_variance_threshold():
     # Test VarianceThreshold with custom variance.
     for X in [data, csr_matrix(data)]:
         X = VarianceThreshold(threshold=.4).fit_transform(X)
-        assert_equal((len(data), 1), X.shape)
+        assert (len(data), 1) == X.shape
 
 
 def test_zero_variance_floating_point_error():

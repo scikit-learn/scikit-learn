@@ -107,7 +107,7 @@ def test_compute_mi_cd_unique_label():
     y = np.hstack((y, 10))
     mi_2 = _compute_mi(x, y, True, False)
 
-    assert_equal(mi_1, mi_2)
+    assert mi_1 == mi_2
 
 
 # We are going test that feature ordering by MI matches our expectations.
@@ -166,11 +166,11 @@ def test_mutual_info_classif_mixed():
                                     n_neighbors=n_neighbors, random_state=0)
         # Check that the continuous values have an higher MI with greater
         # n_neighbors
-        assert_greater(mi_nn[0], mi[0])
-        assert_greater(mi_nn[1], mi[1])
+        assert mi_nn[0] > mi[0]
+        assert mi_nn[1] > mi[1]
         # The n_neighbors should not have any effect on the discrete value
         # The MI should be the same
-        assert_equal(mi_nn[2], mi[2])
+        assert mi_nn[2] == mi[2]
 
 
 def test_mutual_info_options():

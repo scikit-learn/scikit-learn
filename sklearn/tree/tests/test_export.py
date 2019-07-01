@@ -46,7 +46,7 @@ def test_graphviz_toy():
                 'headlabel="False"] ;\n' \
                 '}'
 
-    assert_equal(contents1, contents2)
+    assert contents1 == contents2
 
     # Test with feature_names
     contents1 = export_graphviz(clf, feature_names=["feature0", "feature1"],
@@ -63,7 +63,7 @@ def test_graphviz_toy():
                 'headlabel="False"] ;\n' \
                 '}'
 
-    assert_equal(contents1, contents2)
+    assert contents1 == contents2
 
     # Test with class_names
     contents1 = export_graphviz(clf, class_names=["yes", "no"], out_file=None)
@@ -81,7 +81,7 @@ def test_graphviz_toy():
                 'headlabel="False"] ;\n' \
                 '}'
 
-    assert_equal(contents1, contents2)
+    assert contents1 == contents2
 
     # Test plot_options
     contents1 = export_graphviz(clf, filled=True, impurity=False,
@@ -103,7 +103,7 @@ def test_graphviz_toy():
                 'headlabel="False"] ;\n' \
                 '}'
 
-    assert_equal(contents1, contents2)
+    assert contents1 == contents2
 
     # Test max_depth
     contents1 = export_graphviz(clf, max_depth=0,
@@ -118,7 +118,7 @@ def test_graphviz_toy():
                 '0 -> 2 ;\n' \
                 '}'
 
-    assert_equal(contents1, contents2)
+    assert contents1 == contents2
 
     # Test max_depth with plot_options
     contents1 = export_graphviz(clf, max_depth=0, filled=True,
@@ -133,7 +133,7 @@ def test_graphviz_toy():
                 '0 -> 2 ;\n' \
                 '}'
 
-    assert_equal(contents1, contents2)
+    assert contents1 == contents2
 
     # Test multi-output with weighted samples
     clf = DecisionTreeClassifier(max_depth=2,
@@ -166,7 +166,7 @@ def test_graphviz_toy():
                 '2 -> 4 ;\n' \
                 '}'
 
-    assert_equal(contents1, contents2)
+    assert contents1 == contents2
 
     # Test regression output with plot_options
     clf = DecisionTreeRegressor(max_depth=3,
@@ -197,7 +197,7 @@ def test_graphviz_toy():
                 '{rank=same ; 1; 2} ;\n' \
                 '}'
 
-    assert_equal(contents1, contents2)
+    assert contents1 == contents2
 
     # Test classifier with degraded learning set
     clf = DecisionTreeClassifier(max_depth=3)
@@ -262,7 +262,7 @@ def test_friedman_mse_in_graphviz():
         export_graphviz(estimator[0], out_file=dot_data)
 
     for finding in finditer(r"\[.*?samples.*?\]", dot_data.getvalue()):
-        assert_in("friedman_mse", finding.group())
+        assert "friedman_mse" in finding.group()
 
 
 def test_precision():
@@ -291,8 +291,8 @@ def test_precision():
 
             # check value
             for finding in finditer(r"value = \d+\.\d+", dot_data):
-                assert_less_equal(
-                    len(search(r"\.\d+", finding.group()).group()),
+                assert (
+                    len(search(r"\.\d+", finding.group()).group()) <=
                     precision + 1)
             # check impurity
             if is_classifier(clf):
@@ -302,11 +302,11 @@ def test_precision():
 
             # check impurity
             for finding in finditer(pattern, dot_data):
-                assert_equal(len(search(r"\.\d+", finding.group()).group()),
+                assert (len(search(r"\.\d+", finding.group()).group()) ==
                              precision + 1)
             # check threshold
             for finding in finditer(r"<= \d+\.\d+", dot_data):
-                assert_equal(len(search(r"\.\d+", finding.group()).group()),
+                assert (len(search(r"\.\d+", finding.group()).group()) ==
                              precision + 1)
 
 

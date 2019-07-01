@@ -8,13 +8,10 @@ from scipy import stats, sparse
 
 import pytest
 
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_not_in
-from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns_message
@@ -193,10 +190,10 @@ def test_select_percentile_classif_sparse():
     X_r2inv = univariate_filter.inverse_transform(X_r2)
     assert sparse.issparse(X_r2inv)
     support_mask = safe_mask(X_r2inv, support)
-    assert_equal(X_r2inv.shape, X.shape)
+    assert X_r2inv.shape == X.shape
     assert_array_equal(X_r2inv[:, support_mask].toarray(), X_r.toarray())
     # Check other columns are empty
-    assert_equal(X_r2inv.getnnz(), X_r.getnnz())
+    assert X_r2inv.getnnz() == X_r.getnnz()
 
 
 ##############################################################################
@@ -245,7 +242,7 @@ def test_select_kbest_zero():
     assert_array_equal(support, gtruth)
     X_selected = assert_warns_message(UserWarning, 'No features were selected',
                                       univariate_filter.transform, X)
-    assert_equal(X_selected.shape, (20, 0))
+    assert X_selected.shape == (20, 0)
 
 
 def test_select_heuristics_classif():
@@ -371,7 +368,7 @@ def test_select_heuristics_regression():
         assert_array_equal(X_r, X_r2)
         support = univariate_filter.get_support()
         assert_array_equal(support[:5], np.ones((5, ), dtype=np.bool))
-        assert_less(np.sum(support[5:] == 1), 3)
+        assert np.sum(support[5:] == 1) < 3
 
 
 def test_boundary_case_ch2():
@@ -466,7 +463,7 @@ def test_select_fwe_regression():
     gtruth = np.zeros(20)
     gtruth[:5] = 1
     assert_array_equal(support[:5], np.ones((5, ), dtype=np.bool))
-    assert_less(np.sum(support[5:] == 1), 2)
+    assert np.sum(support[5:] == 1) < 2
 
 
 def test_selectkbest_tiebreaking():
@@ -478,12 +475,12 @@ def test_selectkbest_tiebreaking():
     for X in Xs:
         sel = SelectKBest(dummy_score, k=1)
         X1 = ignore_warnings(sel.fit_transform)([X], y)
-        assert_equal(X1.shape[1], 1)
+        assert X1.shape[1] == 1
         assert_best_scores_kept(sel)
 
         sel = SelectKBest(dummy_score, k=2)
         X2 = ignore_warnings(sel.fit_transform)([X], y)
-        assert_equal(X2.shape[1], 2)
+        assert X2.shape[1] == 2
         assert_best_scores_kept(sel)
 
 
@@ -495,12 +492,12 @@ def test_selectpercentile_tiebreaking():
     for X in Xs:
         sel = SelectPercentile(dummy_score, percentile=34)
         X1 = ignore_warnings(sel.fit_transform)([X], y)
-        assert_equal(X1.shape[1], 1)
+        assert X1.shape[1] == 1
         assert_best_scores_kept(sel)
 
         sel = SelectPercentile(dummy_score, percentile=67)
         X2 = ignore_warnings(sel.fit_transform)([X], y)
-        assert_equal(X2.shape[1], 2)
+        assert X2.shape[1] == 2
         assert_best_scores_kept(sel)
 
 
@@ -514,12 +511,12 @@ def test_tied_pvalues():
     for perm in itertools.permutations((0, 1, 2)):
         X = X0[:, perm]
         Xt = SelectKBest(chi2, k=2).fit_transform(X, y)
-        assert_equal(Xt.shape, (2, 2))
-        assert_not_in(9998, Xt)
+        assert Xt.shape == (2, 2)
+        assert 9998 not in Xt
 
         Xt = SelectPercentile(chi2, percentile=67).fit_transform(X, y)
-        assert_equal(Xt.shape, (2, 2))
-        assert_not_in(9998, Xt)
+        assert Xt.shape == (2, 2)
+        assert 9998 not in Xt
 
 
 def test_scorefunc_multilabel():
@@ -529,12 +526,12 @@ def test_scorefunc_multilabel():
     y = [[1, 1], [0, 1], [1, 0]]
 
     Xt = SelectKBest(chi2, k=2).fit_transform(X, y)
-    assert_equal(Xt.shape, (3, 2))
-    assert_not_in(0, Xt)
+    assert Xt.shape == (3, 2)
+    assert 0 not in Xt
 
     Xt = SelectPercentile(chi2, percentile=67).fit_transform(X, y)
-    assert_equal(Xt.shape, (3, 2))
-    assert_not_in(0, Xt)
+    assert Xt.shape == (3, 2)
+    assert 0 not in Xt
 
 
 def test_tied_scores():
@@ -608,7 +605,7 @@ def test_no_feature_selected():
         assert_array_equal(selector.get_support(), np.zeros(10))
         X_selected = assert_warns_message(
             UserWarning, 'No features were selected', selector.transform, X)
-        assert_equal(X_selected.shape, (40, 0))
+        assert X_selected.shape == (40, 0)
 
 
 def test_mutual_info_classif():

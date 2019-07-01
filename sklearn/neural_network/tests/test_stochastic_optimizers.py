@@ -53,7 +53,7 @@ def test_sgd_optimizer_trigger_stopping():
     lr = 2e-6
     optimizer = SGDOptimizer(params, lr, lr_schedule='adaptive')
     assert not optimizer.trigger_stopping('', False)
-    assert_equal(lr / 5, optimizer.learning_rate)
+    assert lr / 5 == optimizer.learning_rate
     assert optimizer.trigger_stopping('', False)
 
 

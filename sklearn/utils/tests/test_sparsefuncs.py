@@ -48,8 +48,8 @@ def test_mean_variance_axis0():
         for X_sparse in (X_csr, X_csc):
             X_sparse = X_sparse.astype(input_dtype)
             X_means, X_vars = mean_variance_axis(X_sparse, axis=0)
-            assert_equal(X_means.dtype, output_dtype)
-            assert_equal(X_vars.dtype, output_dtype)
+            assert X_means.dtype == output_dtype
+            assert X_vars.dtype == output_dtype
             assert_array_almost_equal(X_means, np.mean(X_test, axis=0))
             assert_array_almost_equal(X_vars, np.var(X_test, axis=0))
 
@@ -79,8 +79,8 @@ def test_mean_variance_axis1():
         for X_sparse in (X_csr, X_csc):
             X_sparse = X_sparse.astype(input_dtype)
             X_means, X_vars = mean_variance_axis(X_sparse, axis=0)
-            assert_equal(X_means.dtype, output_dtype)
-            assert_equal(X_vars.dtype, output_dtype)
+            assert X_means.dtype == output_dtype
+            assert X_vars.dtype == output_dtype
             assert_array_almost_equal(X_means, np.mean(X_test, axis=0))
             assert_array_almost_equal(X_vars, np.var(X_test, axis=0))
 
@@ -116,13 +116,14 @@ def test_incr_mean_variance_axis():
             incr_mean_variance_axis(X_csr, axis, last_mean, last_var, last_n)
         assert_array_almost_equal(X_means, X_means_incr)
         assert_array_almost_equal(X_vars, X_vars_incr)
-        assert_equal(X.shape[axis], n_incr)  # X.shape[axis] picks # samples
+        # X.shape[axis] picks # samples
+        assert_array_equal(X.shape[axis], n_incr)
 
         X_csc = sp.csc_matrix(X_lil)
         X_means, X_vars = mean_variance_axis(X_csc, axis)
         assert_array_almost_equal(X_means, X_means_incr)
         assert_array_almost_equal(X_vars, X_vars_incr)
-        assert_equal(X.shape[axis], n_incr)
+        assert_array_equal(X.shape[axis], n_incr)
 
         # Test _incremental_mean_and_var with whole data
         X = np.vstack(data_chunks)
@@ -144,11 +145,11 @@ def test_incr_mean_variance_axis():
                 X_means_incr, X_vars_incr, n_incr = \
                     incr_mean_variance_axis(X_sparse, axis, last_mean,
                                             last_var, last_n)
-                assert_equal(X_means_incr.dtype, output_dtype)
-                assert_equal(X_vars_incr.dtype, output_dtype)
+                assert X_means_incr.dtype == output_dtype
+                assert X_vars_incr.dtype == output_dtype
                 assert_array_almost_equal(X_means, X_means_incr)
                 assert_array_almost_equal(X_vars, X_vars_incr)
-                assert_equal(X.shape[axis], n_incr)
+                assert_array_equal(X.shape[axis], n_incr)
 
 
 @pytest.mark.parametrize("axis", [0, 1])
@@ -522,7 +523,7 @@ def test_inplace_normalize():
                 assert X_csr.indices.dtype == index_dtype
                 assert X_csr.indptr.dtype == index_dtype
                 inplace_csr_row_normalize(X_csr)
-                assert_equal(X_csr.dtype, dtype)
+                assert X_csr.dtype == dtype
                 if inplace_csr_row_normalize is inplace_csr_row_normalize_l2:
                     X_csr.data **= 2
                 assert_array_almost_equal(np.abs(X_csr).sum(axis=1), ones)

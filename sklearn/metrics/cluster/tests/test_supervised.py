@@ -62,13 +62,13 @@ def test_generalized_average():
 @ignore_warnings(category=FutureWarning)
 def test_perfect_matches():
     for score_func in score_funcs:
-        assert_equal(score_func([], []), 1.0)
-        assert_equal(score_func([0], [1]), 1.0)
-        assert_equal(score_func([0, 0, 0], [0, 0, 0]), 1.0)
-        assert_equal(score_func([0, 1, 0], [42, 7, 42]), 1.0)
-        assert_equal(score_func([0., 1., 0.], [42., 7., 42.]), 1.0)
-        assert_equal(score_func([0., 1., 2.], [42., 7., 2.]), 1.0)
-        assert_equal(score_func([0, 1, 2], [42, 7, 2]), 1.0)
+        assert score_func([], []) == 1.0
+        assert score_func([0], [1]) == 1.0
+        assert score_func([0, 0, 0], [0, 0, 0]) == 1.0
+        assert score_func([0, 1, 0], [42, 7, 42]) == 1.0
+        assert score_func([0., 1., 0.], [42., 7., 42.]) == 1.0
+        assert score_func([0., 1., 2.], [42., 7., 2.]) == 1.0
+        assert score_func([0, 1, 2], [42, 7, 2]) == 1.0
     score_funcs_with_changing_means = [
         normalized_mutual_info_score,
         adjusted_mutual_info_score,
@@ -213,7 +213,7 @@ def test_adjusted_mutual_info_score():
     ami = adjusted_mutual_info_score(labels_a, labels_b)
     assert_almost_equal(ami, 0.27821, 5)
     ami = adjusted_mutual_info_score([1, 1, 2, 2], [2, 2, 3, 3])
-    assert_equal(ami, 1.0)
+    assert ami == 1.0
     # Test with a very large array
     a110 = np.array([list(labels_a) * 110]).flatten()
     b110 = np.array([list(labels_b) * 110]).flatten()
@@ -275,10 +275,10 @@ def test_exactly_zero_info_score():
     for i in np.logspace(1, 4, 4).astype(np.int):
         labels_a, labels_b = (np.ones(i, dtype=np.int),
                               np.arange(i, dtype=np.int))
-        assert_equal(normalized_mutual_info_score(labels_a, labels_b), 0.0)
-        assert_equal(v_measure_score(labels_a, labels_b), 0.0)
-        assert_equal(adjusted_mutual_info_score(labels_a, labels_b), 0.0)
-        assert_equal(normalized_mutual_info_score(labels_a, labels_b), 0.0)
+        assert normalized_mutual_info_score(labels_a, labels_b) == 0.0
+        assert v_measure_score(labels_a, labels_b) == 0.0
+        assert adjusted_mutual_info_score(labels_a, labels_b) == 0.0
+        assert normalized_mutual_info_score(labels_a, labels_b) == 0.0
         for method in ["min", "geometric", "arithmetic", "max"]:
             assert adjusted_mutual_info_score(labels_a, labels_b,
                                               method) == 0.0
