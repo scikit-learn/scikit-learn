@@ -57,7 +57,7 @@ def test_gpr_interpolation(kernel):
 def test_lml_improving(kernel):
     # Test that hyperparameter-tuning improves log-marginal likelihood.
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
-    assert_greater(gpr.log_marginal_likelihood(gpr.kernel_.theta),
+    assert (gpr.log_marginal_likelihood(gpr.kernel_.theta) >
                    gpr.log_marginal_likelihood(kernel.theta))
 
 
@@ -65,7 +65,7 @@ def test_lml_improving(kernel):
 def test_lml_precomputed(kernel):
     # Test that lml of optimized kernel is stored correctly.
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
-    assert_equal(gpr.log_marginal_likelihood(gpr.kernel_.theta),
+    assert (gpr.log_marginal_likelihood(gpr.kernel_.theta) ==
                  gpr.log_marginal_likelihood())
 
 
@@ -145,7 +145,7 @@ def test_no_optimizer():
     # Test that kernel parameters are unmodified when optimizer is None.
     kernel = RBF(1.0)
     gpr = GaussianProcessRegressor(kernel=kernel, optimizer=None).fit(X, y)
-    assert_equal(np.exp(gpr.kernel_.theta), 1.0)
+    assert np.exp(gpr.kernel_.theta) == 1.0
 
 
 @pytest.mark.parametrize('kernel', kernels)
@@ -168,7 +168,7 @@ def test_anisotropic_kernel():
 
     kernel = RBF([1.0, 1.0])
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
-    assert_greater(np.exp(gpr.kernel_.theta[1]),
+    assert (np.exp(gpr.kernel_.theta[1]) >
                    np.exp(gpr.kernel_.theta[0]) * 5)
 
 
@@ -191,7 +191,7 @@ def test_random_starts():
             kernel=kernel, n_restarts_optimizer=n_restarts_optimizer,
             random_state=0,).fit(X, y)
         lml = gp.log_marginal_likelihood(gp.kernel_.theta)
-        assert_greater(lml, last_lml - np.finfo(np.float32).eps)
+        assert lml > last_lml - np.finfo(np.float32).eps
         last_lml = lml
 
 
@@ -286,7 +286,7 @@ def test_custom_optimizer(kernel):
     gpr = GaussianProcessRegressor(kernel=kernel, optimizer=optimizer)
     gpr.fit(X, y)
     # Checks that optimizer improved marginal likelihood
-    assert_greater(gpr.log_marginal_likelihood(gpr.kernel_.theta),
+    assert (gpr.log_marginal_likelihood(gpr.kernel_.theta) >
                    gpr.log_marginal_likelihood(gpr.kernel.theta))
 
 

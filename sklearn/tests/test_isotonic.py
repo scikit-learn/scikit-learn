@@ -311,8 +311,8 @@ def test_isotonic_regression_oob_clip():
     # Predict from  training and test x and check that min/max match.
     y1 = ir.predict([min(x) - 10, max(x) + 10])
     y2 = ir.predict(x)
-    assert_equal(max(y1), max(y2))
-    assert_equal(min(y1), min(y2))
+    assert max(y1) == max(y2)
+    assert min(y1) == min(y2)
 
 
 def test_isotonic_regression_oob_nan():
@@ -326,7 +326,7 @@ def test_isotonic_regression_oob_nan():
 
     # Predict from  training and test x and check that we have two NaNs.
     y1 = ir.predict([min(x) - 10, max(x) + 10])
-    assert_equal(sum(np.isnan(y1)), 2)
+    assert sum(np.isnan(y1)) == 2
 
 
 def test_isotonic_regression_oob_bad():
@@ -478,12 +478,12 @@ def test_isotonic_dtype():
                             ensure_2d=False).dtype
 
             res = isotonic_regression(y_np, sample_weight=sample_weight)
-            assert_equal(res.dtype, expected_dtype)
+            assert res.dtype == expected_dtype
 
             X = np.arange(len(y)).astype(dtype)
             reg.fit(X, y_np, sample_weight=sample_weight)
             res = reg.predict(X)
-            assert_equal(res.dtype, expected_dtype)
+            assert res.dtype == expected_dtype
 
 
 def test_make_unique_dtype():

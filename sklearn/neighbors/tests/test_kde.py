@@ -75,7 +75,7 @@ def test_kernel_density_sampling(n_samples=100, n_features=3):
         # draw a tophat sample
         kde = KernelDensity(bandwidth, kernel=kernel).fit(X)
         samp = kde.sample(100)
-        assert_equal(X.shape, samp.shape)
+        assert X.shape == samp.shape
 
         # check that samples are in the right range
         nbrs = NearestNeighbors(n_neighbors=1).fit(X)
@@ -96,7 +96,7 @@ def test_kernel_density_sampling(n_samples=100, n_features=3):
     # non-regression test: used to return a scalar
     X = rng.randn(4, 1)
     kde = KernelDensity(kernel="gaussian").fit(X)
-    assert_equal(kde.sample().shape, (1, 1))
+    assert kde.sample().shape == (1, 1)
 
 
 @pytest.mark.parametrize('algorithm', ['auto', 'ball_tree', 'kd_tree'])
@@ -116,7 +116,7 @@ def test_kde_algorithm_metric_choice(algorithm, metric):
         kde = KernelDensity(algorithm=algorithm, metric=metric)
         kde.fit(X)
         y_dens = kde.score_samples(Y)
-        assert_equal(y_dens.shape, Y.shape[:1])
+        assert y_dens.shape == Y.shape[:1]
 
 
 def test_kde_score(n_samples=100, n_features=3):
@@ -154,7 +154,7 @@ def test_kde_pipeline_gridsearch():
     params = dict(kerneldensity__bandwidth=[0.001, 0.01, 0.1, 1, 10])
     search = GridSearchCV(pipe1, param_grid=params)
     search.fit(X)
-    assert_equal(search.best_params_['kerneldensity__bandwidth'], .1)
+    assert search.best_params_['kerneldensity__bandwidth'] == .1
 
 
 def test_kde_sample_weights():
