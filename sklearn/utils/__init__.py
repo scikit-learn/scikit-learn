@@ -188,17 +188,15 @@ def safe_indexing(X, indices, axis=0):
     indices : array-like
         - When ``axis=0``, indices need to be an array of integer.
         - When ``axis=1``, indices can be one of:
-            - Supported key types (key):
-                - scalar: output is 1D
-                - lists, slices, boolean masks: output is 2D
-            - Supported key data types:
-                - integer or boolean mask (positional): supported for
+            - integer: output is 1D, unless `X` is sparse.
+            - container: lists, slices, boolean masks: output is 2D.
+              Supported data types for containers:
+                - integer or boolean (positional): supported for
                   arrays, sparse matrices and dataframes
-                - string (key-based): only supported for dataframes. So no keys
-                  other than strings are allowed (while in principle you can
-                  use any hashable object as key).
+                - string (key-based): only supported for dataframes. No keys
+                  other than strings are allowed.
     axis : int, default=0
-        The axis along which the X will be subsampled. ``axis=0`` will select
+        The axis along which `X` will be subsampled. ``axis=0`` will select
         rows while ``axis=1`` will select columns.
 
     Returns
