@@ -9,7 +9,7 @@ import warnings
 
 from abc import ABCMeta, abstractmethod
 
-from ..utils._joblib import Parallel, delayed
+from joblib import Parallel, delayed
 
 from ..base import clone, is_classifier
 from .base import LinearClassifierMixin, SparseCoefMixin
@@ -916,13 +916,7 @@ class SGDClassifier(BaseSGDClassifier):
     >>> Y = np.array([1, 1, 2, 2])
     >>> clf = linear_model.SGDClassifier(max_iter=1000, tol=1e-3)
     >>> clf.fit(X, Y)
-    ... #doctest: +NORMALIZE_WHITESPACE
-    SGDClassifier(alpha=0.0001, average=False, class_weight=None,
-           early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
-           l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=1000,
-           n_iter_no_change=5, n_jobs=None, penalty='l2', power_t=0.5,
-           random_state=None, shuffle=True, tol=0.001, validation_fraction=0.1,
-           verbose=0, warm_start=False)
+    SGDClassifier()
 
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
@@ -1441,8 +1435,7 @@ class SGDRegressor(BaseSGDRegressor):
 
     eta0 : double
         The initial learning rate for the 'constant', 'invscaling' or
-        'adaptive' schedules. The default value is 0.0 as eta0 is not used by
-        the default schedule 'optimal'.
+        'adaptive' schedules. The default value is 0.01.
 
     power_t : double
         The exponent for inverse scaling learning rate [default 0.5].
@@ -1515,13 +1508,7 @@ class SGDRegressor(BaseSGDRegressor):
     >>> X = rng.randn(n_samples, n_features)
     >>> clf = linear_model.SGDRegressor(max_iter=1000, tol=1e-3)
     >>> clf.fit(X, y)
-    ... #doctest: +NORMALIZE_WHITESPACE
-    SGDRegressor(alpha=0.0001, average=False, early_stopping=False,
-           epsilon=0.1, eta0=0.01, fit_intercept=True, l1_ratio=0.15,
-           learning_rate='invscaling', loss='squared_loss', max_iter=1000,
-           n_iter_no_change=5, penalty='l2', power_t=0.25, random_state=None,
-           shuffle=True, tol=0.001, validation_fraction=0.1, verbose=0,
-           warm_start=False)
+    SGDRegressor()
 
     See also
     --------

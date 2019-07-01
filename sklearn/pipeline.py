@@ -14,9 +14,9 @@ from itertools import islice
 
 import numpy as np
 from scipy import sparse
+from joblib import Parallel, delayed
 
 from .base import clone, TransformerMixin
-from .utils._joblib import Parallel, delayed
 from .utils.metaestimators import if_delegate_has_method
 from .utils import Bunch, _print_elapsed_time
 from .utils.validation import check_memory
@@ -95,29 +95,24 @@ class Pipeline(_BaseComposition):
     >>> # For instance, fit using a k of 10 in the SelectKBest
     >>> # and a parameter 'C' of the svm
     >>> anova_svm.set_params(anova__k=10, svc__C=.1).fit(X, y)
-    ...                      # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    Pipeline(memory=None,
-             steps=[('anova', SelectKBest(...)),
-                    ('svc', SVC(...))], verbose=False)
+    Pipeline(steps=[('anova', SelectKBest(...)), ('svc', SVC(...))])
     >>> prediction = anova_svm.predict(X)
-    >>> anova_svm.score(X, y)                        # doctest: +ELLIPSIS
+    >>> anova_svm.score(X, y)
     0.83
     >>> # getting the selected features chosen by anova_filter
     >>> anova_svm['anova'].get_support()
-    ... # doctest: +NORMALIZE_WHITESPACE
     array([False, False,  True,  True, False, False,  True,  True, False,
            True, False,  True,  True, False,  True, False,  True,  True,
            False, False])
     >>> # Another way to get selected features chosen by anova_filter
     >>> anova_svm.named_steps.anova.get_support()
-    ... # doctest: +NORMALIZE_WHITESPACE
     array([False, False,  True,  True, False, False,  True,  True, False,
            True, False,  True,  True, False,  True, False,  True,  True,
            False, False])
     >>> # Indexing can also be used to extract a sub-pipeline.
     >>> sub_pipeline = anova_svm[:1]
-    >>> sub_pipeline  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    Pipeline(memory=None, steps=[('anova', ...)], verbose=False)
+    >>> sub_pipeline
+    Pipeline(steps=[('anova', SelectKBest(...))])
     >>> coef = anova_svm[-1].coef_
     >>> anova_svm['svc'] is anova_svm[-1]
     True
@@ -281,7 +276,6 @@ class Pipeline(_BaseComposition):
                     "=sample_weight)`.".format(pname))
             step, param = pname.split('__', 1)
             fit_params_steps[step][param] = pval
-        Xt = X
         for (step_idx,
              name,
              transformer) in self._iter(with_final=False,
@@ -310,8 +304,8 @@ class Pipeline(_BaseComposition):
             else:
                 cloned_transformer = clone(transformer)
             # Fit or load from cache the current transfomer
-            Xt, fitted_transformer = fit_transform_one_cached(
-                cloned_transformer, Xt, y, None,
+            X, fitted_transformer = fit_transform_one_cached(
+                cloned_transformer, X, y, None,
                 message_clsname='Pipeline',
                 message=self._log_message(step_idx),
                 **fit_params_steps[name])
@@ -320,8 +314,8 @@ class Pipeline(_BaseComposition):
             # from the cache.
             self.steps[step_idx] = (name, fitted_transformer)
         if self._final_estimator == 'passthrough':
-            return Xt, {}
-        return Xt, fit_params_steps[self.steps[-1][0]]
+            return X, {}
+        return X, fit_params_steps[self.steps[-1][0]]
 
     def fit(self, X, y=None, **fit_params):
         """Fit the model
@@ -491,6 +485,25 @@ class Pipeline(_BaseComposition):
         for _, name, transform in self._iter(with_final=False):
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].decision_function(Xt)
+
+    @if_delegate_has_method(delegate='_final_estimator')
+    def score_samples(self, X):
+        """Apply transforms, and score_samples of the final estimator.
+
+        Parameters
+        ----------
+        X : iterable
+            Data to predict on. Must fulfill input requirements of first step
+            of the pipeline.
+
+        Returns
+        -------
+        y_score : ndarray, shape (n_samples,)
+        """
+        Xt = X
+        for _, _, transformer in self._iter(with_final=False):
+            Xt = transformer.transform(Xt)
+        return self.steps[-1][-1].score_samples(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def predict_log_proba(self, X):
@@ -671,13 +684,8 @@ def make_pipeline(*steps, **kwargs):
     >>> from sklearn.naive_bayes import GaussianNB
     >>> from sklearn.preprocessing import StandardScaler
     >>> make_pipeline(StandardScaler(), GaussianNB(priors=None))
-    ...     # doctest: +NORMALIZE_WHITESPACE
-    Pipeline(memory=None,
-             steps=[('standardscaler',
-                     StandardScaler(copy=True, with_mean=True, with_std=True)),
-                    ('gaussiannb',
-                     GaussianNB(priors=None, var_smoothing=1e-09))],
-             verbose=False)
+    Pipeline(steps=[('standardscaler', StandardScaler()),
+                    ('gaussiannb', GaussianNB())])
 
     Returns
     -------
@@ -782,7 +790,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
     >>> union = FeatureUnion([("pca", PCA(n_components=1)),
     ...                       ("svd", TruncatedSVD(n_components=2))])
     >>> X = [[0., 1., 3], [2., 2., 5]]
-    >>> union.fit_transform(X)    # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    >>> union.fit_transform(X)
     array([[ 1.5       ,  3.0...,  0.8...],
            [-1.5       ,  5.7..., -0.4...]])
     """
@@ -1008,17 +1016,9 @@ def make_union(*transformers, **kwargs):
     --------
     >>> from sklearn.decomposition import PCA, TruncatedSVD
     >>> from sklearn.pipeline import make_union
-    >>> make_union(PCA(), TruncatedSVD())    # doctest: +NORMALIZE_WHITESPACE
-    FeatureUnion(n_jobs=None,
-           transformer_list=[('pca',
-                              PCA(copy=True, iterated_power='auto',
-                                  n_components=None, random_state=None,
-                                  svd_solver='auto', tol=0.0, whiten=False)),
-                             ('truncatedsvd',
-                              TruncatedSVD(algorithm='randomized',
-                              n_components=2, n_iter=5,
-                              random_state=None, tol=0.0))],
-           transformer_weights=None, verbose=False)
+    >>> make_union(PCA(), TruncatedSVD())
+     FeatureUnion(transformer_list=[('pca', PCA()),
+                                   ('truncatedsvd', TruncatedSVD())])
     """
     n_jobs = kwargs.pop('n_jobs', None)
     verbose = kwargs.pop('verbose', False)

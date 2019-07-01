@@ -435,7 +435,7 @@ def dump_svmlight_file(X, y, f,  zero_based=True, comment=None, query_id=None,
         # if a user wants to get fancy, they'll have to decode themselves.
         # Avoid mention of str and unicode types for Python 3.x compat.
         if isinstance(comment, bytes):
-            comment.decode("ascii")     # just for the exception
+            comment.decode("ascii")  # just for the exception
         else:
             comment = comment.encode("utf-8")
         if b"\0" in comment:

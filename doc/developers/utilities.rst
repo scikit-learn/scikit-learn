@@ -182,9 +182,6 @@ Testing Functions
 - :func:`testing.assert_raise_message`: Assertions for checking the
   error raise message.
 
-- :func:`testing.mock_mldata_urlopen`: Mocks the urlopen function to fake
-  requests to mldata.org. Used in tests of :mod:`sklearn.datasets`.
-
 - :func:`testing.all_estimators` : returns a list of all estimators in
   scikit-learn to test for consistent behavior and interfaces.
 
