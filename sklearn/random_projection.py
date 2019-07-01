@@ -381,7 +381,7 @@ class BaseRandomProjection(BaseEstimator, TransformerMixin, metaclass=ABCMeta):
                                                     n_features)
 
         # Check contract
-        assert (self.components_.shape == (self.n_components_, n_features),
+        assert self.components_.shape == (self.n_components_, n_features), (
                 'An error has occurred the self.components_ matrix has '
                 ' not the proper shape.')
 
