@@ -20,11 +20,14 @@ jobs:
 
   steps:
     - script: >
-        docker run -it --rm -v $PWD:/io -d
+        docker run -it --rm
+        -v $TEST_DIR:/temp_dir
+        -v $PWD:/io -d
         -n skcontainer
         -e DISTRIB='ubuntu-32'
+        -w /io
         i386/ubuntu:16.04
-        /io/build_tools/azure/test_script_32.sh
+        build_tools/azure/test_script_32.sh
       displayName: 'Install and Test'
     # - script: |
     #     build_tools/azure/test_script.sh

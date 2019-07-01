@@ -47,7 +47,7 @@ jobs:
 
 - template: build_tools/azure/posix-32.yml
   parameters:
-    name: Linux-32
+    name: Linux32
     vmImage: ubuntu-16.04
     matrix:
       py35_np_atlas_32bit:
