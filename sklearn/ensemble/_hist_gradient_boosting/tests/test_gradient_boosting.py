@@ -221,4 +221,4 @@ def test_stratification_small_trainset():
     )
     gb = HistGradientBoostingClassifier(random_state=42)
     X_small_train, y_small_train = gb._get_small_trainset(X, y, seed=42)
-    np.testing.assert_equal(y_small_train.mean(), class_one_prop)
+    assert y_small_train.mean() == class_one_prop
