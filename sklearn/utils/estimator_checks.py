@@ -795,10 +795,10 @@ def check_dont_overwrite_parameters(name, estimator_orig):
         dict_after_fit = estimator.__dict__
 
         public_keys_after_fit = [key for key in dict_after_fit.keys()
-                                if is_public_parameter(key)]
+                                 if is_public_parameter(key)]
 
         attrs_added_by_fit = [key for key in public_keys_after_fit
-                            if key not in dict_before_fit.keys()]
+                              if key not in dict_before_fit.keys()]
 
         # check that fit doesn't add any public attribute
         assert not attrs_added_by_fit, (
@@ -1243,9 +1243,9 @@ def check_estimators_empty_data_messages(name, estimator_orig):
         # The precise message can change depending on whether X or y is
         # validated first. Let us test the type of exception only:
         with assert_raises(ValueError, msg="The estimator {} does not"
-                        " raise an error when an empty data is used "
-                        "to train. Perhaps use "
-                        "check_array in train.".format(name)):
+                           " raise an error when an empty data is used "
+                           "to train. Perhaps use "
+                           "check_array in train.".format(name)):
             getattr(e, method)(X_zero_samples, [])
 
         X_zero_features = np.empty(0).reshape(3, 0)
@@ -1253,7 +1253,7 @@ def check_estimators_empty_data_messages(name, estimator_orig):
         # and ignored by unsupervised models
         y = enforce_estimator_tags_y(e, np.array([1, 0, 1]))
         msg = (r"0 feature\(s\) \(shape=\(\d*, 0\)\) while a minimum of \d* "
-            "is required.")
+               "is required.")
         assert_raises_regex(
             ValueError, msg, getattr(e, method), X_zero_features, y
         )
@@ -1264,7 +1264,7 @@ def check_estimators_nan_inf(name, estimator_orig):
     # Checks that Estimator X's do not contain NaN or inf.
     rnd = np.random.RandomState(0)
     X_train_finite = pairwise_estimator_convert_X(rnd.uniform(size=(10, 3)),
-                                                estimator_orig)
+                                                  estimator_orig)
     X_train_nan = rnd.uniform(size=(10, 3))
     X_train_nan[0, 0] = np.nan
     X_train_inf = rnd.uniform(size=(10, 3))
@@ -1274,11 +1274,11 @@ def check_estimators_nan_inf(name, estimator_orig):
     y = enforce_estimator_tags_y(estimator_orig, y)
     error_string_fit = "Estimator doesn't check for NaN and inf in fit."
     error_string_fit_resample = ("Estimator doesn't check for NaN and inf in"
-                                  " fit_resample.")
+                                 " fit_resample.")
     error_string_predict = ("Estimator doesn't check for NaN and inf in"
                             " predict.")
     error_string_transform = ("Estimator doesn't check for NaN and inf in"
-                            " transform.")
+                              " transform.")
     for X_train in [X_train_nan, X_train_inf]:
         # catch deprecation warnings
         with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
@@ -2158,10 +2158,10 @@ def check_estimators_overwrite_params(name, estimator_orig):
             # constructor parameters is possible RandomState instance but in
             # this check we explicitly fixed the random_state params
             # recursively to be integer seeds.
-            assert_equal(joblib.hash(new_value), joblib.hash(original_value),
-                        "Estimator %s should not change or mutate "
-                        " the parameter %s from %s to %s during fit."
-                        % (name, param_name, original_value, new_value))
+            assert joblib.hash(new_value) == joblib.hash(original_value), (
+                         "Estimator %s should not change or mutate "
+                         " the parameter %s from %s to %s during fit."
+                         % (name, param_name, original_value, new_value))
 
 
 def check_no_attributes_set_in_init(name, estimator):
