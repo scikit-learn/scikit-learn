@@ -197,11 +197,11 @@ def test_small_trainset():
     # Make sure that the small trainset is stratified and has the expected
     # length (10k samples)
     n_samples = 20000
-    original_prop = {0: 0.1, 1: 0.2, 2: 0.3, 3: 0.4}
+    original_distrib = {0: 0.1, 1: 0.2, 2: 0.3, 3: 0.4}
     rng = np.random.RandomState(42)
     X = rng.randn(n_samples).reshape(n_samples, 1)
     y = [[class_] * int(prop * n_samples) for (class_, prop)
-         in original_prop.items()]
+         in original_distrib.items()]
     y = shuffle(np.concatenate(y))
     gb = HistGradientBoostingClassifier()
 
@@ -210,8 +210,8 @@ def test_small_trainset():
 
     # Compute the class distribution in the small training set
     unique, counts = np.unique(y_small, return_counts=True)
-    small_prop = {class_: count / 10000 for (class_, count)
-                  in zip(unique, counts)}
+    small_distrib = {class_: count / 10000 for (class_, count)
+                     in zip(unique, counts)}
 
     # Test that the small training set has the expected length
     assert X_small.shape[0] == 10000
@@ -219,4 +219,4 @@ def test_small_trainset():
 
     # Test that the class distributions in the whole dataset and in the small
     # training set are identical
-    assert small_prop == original_prop
+    assert small_distrib == pytest.approx(original_distrib)
