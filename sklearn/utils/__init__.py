@@ -188,7 +188,11 @@ def safe_indexing(X, indices, axis=0):
     indices : array-like
         - When ``axis=0``, indices need to be an array of integer.
         - When ``axis=1``, indices can be one of:
-            - integer: output is 1D, unless `X` is sparse.
+            - scalar: output is 1D, unless `X` is sparse.
+              Supported data types for scalars:
+                - integer: supported for arrays, sparse matrices and
+                  dataframes.
+                - string (key-based): only supported for dataframes.
             - container: lists, slices, boolean masks: output is 2D.
               Supported data types for containers:
                 - integer or boolean (positional): supported for
