@@ -662,50 +662,9 @@ class OneToOneMixin(object):
         return self.feature_names_in_
 
 
-def _get_sub_estimators(est):
-    # Explicitly declare all fitted subestimators of existing meta-estimators
-    sub_ests = []
-    # OHE is not really needed
-    sub_names = ['estimator_', 'base_estimator_', 'one_hot_encoder_',
-                 'best_estimator_', 'init_']
-    for name in sub_names:
-        sub_est = getattr(est, name, None)
-        if sub_est is not None:
-            sub_ests.append(sub_est)
-    if hasattr(est, "estimators_"):
-        if hasattr(est.estimators_, 'shape'):
-            sub_ests.extend(est.estimators_.ravel())
-        else:
-            sub_ests.extend(est.estimators_)
-    return sub_ests
-
-
 class MetaEstimatorMixin:
     _required_parameters = ["estimator"]
     """Mixin class for all meta estimators in scikit-learn."""
-
-    def _get_feature_names(self, input_features=None):
-        """Ensure feature names are set on sub-estimators
-
-        Parameters
-        ----------
-        input_features : list of string or None
-            Input features to the meta-estimator.
-        """
-        sub_ests = _get_sub_estimators(self)
-        for est in sub_ests:
-            est.input_features_ = input_features
-            if hasattr(est, "get_feature_names"):
-                # doing hassattr instead of a try-except on everything
-                # b/c catching AttributeError makes recursive code
-                # impossible to debug
-                try:
-                    est.get_feature_names(input_features=input_features)
-                except TypeError:
-                    # do we need this?
-                    est.get_feature_names()
-                except NotFittedError:
-                    pass
 
 
 class MultiOutputMixin(object):
