@@ -1116,20 +1116,20 @@ def test_set_input_features():
     iris = load_iris()
     pipe.fit(iris.data, iris.target)
     xs = np.array(['x0', 'x1', 'x2', 'x3'])
-    assert_array_equal(pipe.input_features_, xs)
+    assert_array_equal(pipe.feature_names_in_, xs)
     mask = pipe.named_steps.select.get_support()
-    assert_array_equal(pipe.named_steps.clf.input_features_, xs[mask])
+    assert_array_equal(pipe.named_steps.clf.feature_names_in_, xs[mask])
     res = pipe.get_feature_names(iris.feature_names)
     # LogisticRegression doesn't have get_feature_names
     assert res is None
-    assert_array_equal(pipe.input_features_, iris.feature_names)
-    assert_array_equal(pipe.named_steps.clf.input_features_,
+    assert_array_equal(pipe.feature_names_in_, iris.feature_names)
+    assert_array_equal(pipe.named_steps.clf.feature_names_in_,
                        np.array(iris.feature_names)[mask])
     # check that empty get_feature_names() doesn't overwrite
     res = pipe.get_feature_names()
     assert res is None
-    assert_array_equal(pipe.input_features_, iris.feature_names)
-    assert_array_equal(pipe.named_steps.clf.input_features_,
+    assert_array_equal(pipe.feature_names_in_, iris.feature_names)
+    assert_array_equal(pipe.named_steps.clf.feature_names_in_,
                        np.array(iris.feature_names)[mask])
     pipe = Pipeline(steps=[
         ('scaler', StandardScaler()),
@@ -1137,10 +1137,10 @@ def test_set_input_features():
         ('select', SelectKBest(k=2)),
         ('clf', LogisticRegression())])
     pipe.fit(iris.data, iris.target)
-    assert_array_equal(pipe.named_steps.clf.input_features_, ['pca0', 'pca1'])
+    assert_array_equal(pipe.named_steps.clf.feature_names_in_, ['pca0', 'pca1'])
     # setting names doesn't change names after PCA
     pipe.get_feature_names(iris.feature_names)
-    assert_array_equal(pipe.named_steps.select.input_features_,
+    assert_array_equal(pipe.named_steps.select.feature_names_in_,
                        ['pca0', 'pca1', 'pca2'])
 
 
@@ -1155,11 +1155,11 @@ def test_input_feature_names_pandas():
     df = pd.DataFrame(iris.data, columns=iris.feature_names)
     pipe.fit(df, iris.target)
     mask = pipe.named_steps.select.get_support()
-    assert_array_equal(pipe.named_steps.clf.input_features_,
+    assert_array_equal(pipe.named_steps.clf.feature_names_in_,
                        np.array(iris.feature_names)[mask])
 
 
-def test_input_features_passthrough():
+def test_feature_names_in_passthrough():
     pipe = Pipeline(steps=[
         ('imputer', 'passthrough'),
         ('scaler', StandardScaler()),
@@ -1168,76 +1168,76 @@ def test_input_features_passthrough():
     iris = load_iris()
     pipe.fit(iris.data, iris.target)
     xs = ['x0', 'x1', 'x2', 'x3']
-    assert_array_equal(pipe.named_steps.clf.input_features_, xs)
+    assert_array_equal(pipe.named_steps.clf.feature_names_in_, xs)
     pipe.get_feature_names(iris.feature_names)
-    assert_array_equal(pipe.named_steps.clf.input_features_,
+    assert_array_equal(pipe.named_steps.clf.feature_names_in_,
                        iris.feature_names)
 
 
-def test_input_features_count_vectorizer():
+def test_feature_names_in_count_vectorizer():
     pipe = Pipeline(steps=[
         ('vect', CountVectorizer()),
         ('clf', LogisticRegression())])
     y = ["pizza" in x for x in JUNK_FOOD_DOCS]
     pipe.fit(JUNK_FOOD_DOCS, y)
-    assert_array_equal(pipe.named_steps.clf.input_features_,
+    assert_array_equal(pipe.named_steps.clf.feature_names_in_,
                        ['beer', 'burger', 'coke', 'copyright', 'pizza', 'the'])
     pipe.get_feature_names(["nonsense_is_ignored"])
-    assert_array_equal(pipe.named_steps.clf.input_features_,
+    assert_array_equal(pipe.named_steps.clf.feature_names_in_,
                        ['beer', 'burger', 'coke', 'copyright', 'pizza', 'the'])
 
 
-def test_input_features_nested():
+def test_feature_names_in_nested():
     pipe = Pipeline(steps=[
         ('inner_pipe', Pipeline(steps=[('select', SelectKBest(k=2)),
                                        ('clf', LogisticRegression())]))])
     iris = load_iris()
     pipe.fit(iris.data, iris.target)
     xs = np.array(['x0', 'x1', 'x2', 'x3'])
-    assert_array_equal(pipe.input_features_, xs)
+    assert_array_equal(pipe.feature_names_in_, xs)
     mask = pipe.named_steps.inner_pipe.named_steps.select.get_support()
     assert_array_equal(
-        pipe.named_steps.inner_pipe.named_steps.clf.input_features_, xs[mask])
+        pipe.named_steps.inner_pipe.named_steps.clf.feature_names_in_, xs[mask])
     pipe.get_feature_names(iris.feature_names)
-    assert_array_equal(pipe.input_features_, iris.feature_names)
+    assert_array_equal(pipe.feature_names_in_, iris.feature_names)
     assert_array_equal(
-        pipe.named_steps.inner_pipe.named_steps.clf.input_features_,
+        pipe.named_steps.inner_pipe.named_steps.clf.feature_names_in_,
         np.array(iris.feature_names)[mask])
 
 
-def test_input_features_meta_pipe():
+def test_feature_names_in_meta_pipe():
     ovr = OneVsRestClassifier(Pipeline(steps=[('select', SelectKBest(k=2)),
                                               ('clf', LogisticRegression())]))
     pipe = Pipeline(steps=[('ovr', ovr)])
     iris = load_iris()
     pipe.fit(iris.data, iris.target)
     xs = np.array(['x0', 'x1', 'x2', 'x3'])
-    assert_array_equal(pipe.input_features_, xs)
+    assert_array_equal(pipe.feature_names_in_, xs)
     # check 0ths estimator in OVR only
     inner_pipe = pipe.named_steps.ovr.estimators_[0]
     mask = inner_pipe.named_steps.select.get_support()
-    assert_array_equal(inner_pipe.named_steps.clf.input_features_, xs[mask])
+    assert_array_equal(inner_pipe.named_steps.clf.feature_names_in_, xs[mask])
     pipe.get_feature_names(iris.feature_names)
-    assert_array_equal(pipe.input_features_, iris.feature_names)
-    assert_array_equal(inner_pipe.input_features_, iris.feature_names)
-    assert_array_equal(inner_pipe.named_steps.clf.input_features_,
+    assert_array_equal(pipe.feature_names_in_, iris.feature_names)
+    assert_array_equal(inner_pipe.feature_names_in_, iris.feature_names)
+    assert_array_equal(inner_pipe.named_steps.clf.feature_names_in_,
                        np.array(iris.feature_names)[mask])
 
 
-def test_input_features_meta():
+def test_feature_names_in_meta():
     ovr = OneVsRestClassifier(LogisticRegression())
     pipe = Pipeline(steps=[('select', SelectKBest(k=2)), ('ovr', ovr)])
     iris = load_iris()
     pipe.fit(iris.data, iris.target)
     xs = np.array(['x0', 'x1', 'x2', 'x3'])
-    assert_array_equal(pipe.input_features_, xs)
+    assert_array_equal(pipe.feature_names_in_, xs)
     # check 0ths estimator in OVR only
     one_logreg = pipe.named_steps.ovr.estimators_[0]
     mask = pipe.named_steps.select.get_support()
-    assert_array_equal(one_logreg.input_features_, xs[mask])
+    assert_array_equal(one_logreg.feature_names_in_, xs[mask])
     pipe.get_feature_names(iris.feature_names)
-    assert_array_equal(pipe.input_features_, iris.feature_names)
-    assert_array_equal(one_logreg.input_features_,
+    assert_array_equal(pipe.feature_names_in_, iris.feature_names)
+    assert_array_equal(one_logreg.feature_names_in_,
                        np.array(iris.feature_names)[mask])
 
 

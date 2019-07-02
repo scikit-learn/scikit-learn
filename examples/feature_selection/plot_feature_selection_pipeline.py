@@ -39,5 +39,5 @@ print(classification_report(y_test, y_pred))
 
 # access and plot the coefficients of the fitted model
 plt.barh((0, 1, 2), anova_svm[-1].coef_.ravel())
-plt.yticks((0, 1, 2), anova_svm[-1].input_features_)
+plt.yticks((0, 1, 2), anova_svm[-1].feature_names_in_)
 plt.show()

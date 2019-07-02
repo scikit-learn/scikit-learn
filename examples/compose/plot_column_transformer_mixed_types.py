@@ -118,7 +118,7 @@ cv_results = cross_validate(pipeline, X_train, y_train, cv=cv,
 cv_coefs = np.concatenate([cv_pipeline.named_steps["classifier"].coef_
                            for cv_pipeline in cv_results["estimator"]])
 fig, ax = plt.subplots()
-ax.barh(pipeline.named_steps["classifier"].input_features_,
+ax.barh(pipeline.named_steps["classifier"].feature_names_in_,
         cv_coefs.mean(axis=0), xerr=cv_coefs.std(axis=0))
 plt.tight_layout()
 plt.show()
