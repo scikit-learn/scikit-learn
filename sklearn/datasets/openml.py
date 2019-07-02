@@ -558,10 +558,11 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         below for more information about the `data` and `target` objects.
 
     as_frame : boolean, default=False
-        If True, where the data is a pandas DataFrame including columns with
+        If True, the data is a pandas DataFrame including columns with
         appropriate dtypes (numeric, string or categorical). The target is
         a pandas DataFrame or Series depending on the number of target_columns.
-        If ``return_X_y`` is True, then ``(data, target)`` will be pandas
+        The Bunch will contain a ``frame`` attribute with the target and the
+        data. If ``return_X_y`` is True, then ``(data, target)`` will be pandas
         DataFrames or Series as describe above.
 
     Returns
@@ -587,8 +588,8 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         details : dict
             More metadata from OpenML
         frame : pandas DataFrame
-            DataFrame with ``data`` and ``target``. This is set when
-            ``as_frame`` is True.
+            Only present when `as_frame=True`. DataFrame with ``data`` and
+            ``target``.
 
     (data, target) : tuple if ``return_X_y`` is True
 

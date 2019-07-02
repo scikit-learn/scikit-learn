@@ -41,6 +41,10 @@ titantic = fetch_openml(data_id=40945, as_frame=True)
 X = titantic.data
 y = titantic.target
 
+# Alternatively X and y can be obtained directly from the frame attribute:
+# X = titantic.frame.drop('survived', axis=1)
+# y = titantic.frame['survived']
+
 # We will train our classifier with the following features:
 # Numeric Features:
 # - age: float.
