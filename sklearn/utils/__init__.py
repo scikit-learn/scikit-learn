@@ -3,6 +3,7 @@ The :mod:`sklearn.utils` module includes various utilities.
 """
 from collections.abc import Sequence
 from contextlib import contextmanager
+from itertools import islice
 import numbers
 import platform
 import struct
@@ -475,6 +476,17 @@ def safe_sqr(X, copy=True):
         else:
             X **= 2
     return X
+
+
+def _chunk_generator(gen, chunksize):
+    """Chunk generator, ``gen`` into lists of length ``chunksize``. The last
+    chunk may have a length less than ``chunksize``."""
+    while True:
+        chunk = list(islice(gen, chunksize))
+        if chunk:
+            yield chunk
+        else:
+            return
 
 
 def gen_batches(n, batch_size, min_batch_size=0):

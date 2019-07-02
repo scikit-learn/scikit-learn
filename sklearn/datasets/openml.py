@@ -8,7 +8,6 @@ from contextlib import closing
 from functools import wraps
 import itertools
 from collections.abc import Generator
-from itertools import islice
 from collections import OrderedDict
 
 from urllib.request import urlopen, Request
@@ -21,6 +20,7 @@ from .base import get_data_home
 from urllib.error import HTTPError
 from ..utils import Bunch
 from ..utils import get_chunk_n_rows
+from ..utils import _chunk_generator
 from ..utils import check_pandas_support  # noqa
 
 __all__ = ['fetch_openml']
@@ -282,17 +282,6 @@ def _feature_to_dtype(feature):
     elif feature['data_type'] == 'integer':
         return np.int64
     raise ValueError('Unsupported feature: {}'.format(feature))
-
-
-def _chunk_generator(gen, chunksize):
-    """Chunk generator, ``gen`` into lists of length ``chunksize``. The last
-    chunk may have a length less than ``chunksize``."""
-    while True:
-        chunk = list(islice(gen, chunksize))
-        if chunk:
-            yield chunk
-        else:
-            return
 
 
 def _convert_arff_data_dataframe(arrf, columns, features_dict):
