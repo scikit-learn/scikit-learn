@@ -7,6 +7,7 @@ from .isomap import Isomap
 from .mds import MDS, smacof
 from .spectral_embedding_ import SpectralEmbedding, spectral_embedding
 from .t_sne import TSNE
+from .pcs import PCS
 
 __all__ = ['locally_linear_embedding', 'LocallyLinearEmbedding', 'Isomap',
-           'MDS', 'smacof', 'SpectralEmbedding', 'spectral_embedding', "TSNE"]
+           'MDS', 'smacof', 'SpectralEmbedding', 'spectral_embedding', "TSNE", "PCS"]
