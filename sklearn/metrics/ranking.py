@@ -216,7 +216,7 @@ def average_precision_score(y_true, y_score, average="macro", pos_label=1,
 
 
 def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
-                  max_fpr=None, multi_class="raise", labels=None):
+                  max_fpr=None, multi_class="ovr", labels=None):
     """Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC)
     from prediction scores.
 
@@ -269,9 +269,8 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
         should be either equal to ``None`` or ``1.0`` as AUC ROC partial
         computation currently is not supported for multiclass.
 
-    multi_class : string, 'ovr' or 'ovo', optional (default='raise')
+    multi_class : string, 'ovr' or 'ovo', optional (default='ovr')
         Determines the type of multiclass configuration to use.
-        ``multi_class`` must be provided when ``y_true`` is multiclass.
         ``'ovr'``:
             Calculate metrics for the multiclass case using the one-vs-rest
             approach.
@@ -354,9 +353,6 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
                              "multiclass setting, 'max_fpr' must be"
                              " set to `None`, received `max_fpr={0}` "
                              "instead".format(max_fpr))
-        if multi_class == 'raise':
-            raise ValueError("Parameter multi_class must be one of "
-                             "('ovo' or 'ovr')")
         return _multiclass_roc_auc_score(_binary_roc_auc_score,
                                          y_true, y_score, labels,
                                          multi_class, average, sample_weight)
