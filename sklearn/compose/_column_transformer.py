@@ -78,6 +78,9 @@ boolean mask array or callable
         By setting ``remainder`` to be an estimator, the remaining
         non-specified columns will use the ``remainder`` estimator. The
         estimator must support :term:`fit` and :term:`transform`.
+        If columns in `transformers` are provided as strings, the ordering
+        of columns in X must be the same for the `fit` and `transform`
+        steps.
 
     sparse_threshold : float, default = 0.3
         If the output of the different transformers contains sparse matrices,
@@ -133,6 +136,10 @@ boolean mask array or callable
     dropped from the resulting transformed feature matrix, unless specified
     in the `passthrough` keyword. Those columns specified with `passthrough`
     are added at the right to the output of the transformers.
+    Although this, as well as the option to specify column names,
+    seemingly suggest that column order does not matter for named columns,
+    this is not the case and one should take care to avoid differing column
+    ordering between the input provided to `fit` and to `transform`.
 
     See also
     --------
@@ -300,6 +307,11 @@ boolean mask array or callable
                 "The remainder keyword needs to be one of 'drop', "
                 "'passthrough', or estimator. '%s' was passed instead" %
                 self.remainder)
+
+        # Make it possible to check for reordered named columns on transform
+        if hasattr(X, 'columns') \
+           and any(_check_key_type(cols, str) for cols in self._columns):
+            self._df_columns = X.columns
 
         n_columns = X.shape[1]
         cols = []
@@ -506,6 +518,12 @@ boolean mask array or callable
 
         """
         check_is_fitted(self, 'transformers_')
+
+        # No column reordering allowed for named cols combined with remainder
+        if self._remainder[2] is not None and hasattr(self, '_df_columns'):
+            if any(X.columns != self._df_columns):
+                raise ValueError('Column ordering must be equal for fit and for'
+                                 'transform when using the remainder keyword')
 
         X = _check_X(X)
         Xs = self._fit_transform(X, None, _transform_one, fitted=True)

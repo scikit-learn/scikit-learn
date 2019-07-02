@@ -1060,3 +1060,27 @@ def test_column_transformer_negative_column_indexes():
     tf_1 = ColumnTransformer([('ohe', ohe, [-1])], remainder='passthrough')
     tf_2 = ColumnTransformer([('ohe', ohe,  [2])], remainder='passthrough')
     assert_array_equal(tf_1.fit_transform(X), tf_2.fit_transform(X))
+
+
+@pytest.mark.parametrize("explicit_colname", ['first', 'second'])
+def test_column_transformer_reordered_column_names_remainder(explicit_colname):
+    """Regression test for issue #14223: 'Named col indexing fails with
+       ColumnTransformer remainder on changing DataFrame column ordering'
+
+       Should raise error on changed order combined with remainder.
+    """
+    pd = pytest.importorskip('pandas')
+
+    X_fit_array = np.array([[0, 1, 2], [2, 4, 6]]).T
+    X_fit_df = pd.DataFrame(X_fit_array, columns=['first', 'second'])
+
+    X_trans_array = np.array([[2, 4, 6], [0, 1, 2]]).T
+    X_trans_df = pd.DataFrame(X_trans_array, columns=['second', 'first'])
+
+    tf = ColumnTransformer([('bycol', Trans(), explicit_colname)],
+                           remainder=Trans())
+
+    tf.fit(X_fit_df)
+    assert_raise_message(ValueError,
+                         'Column ordering must be equal',
+                         tf.transform, X_trans_df)
