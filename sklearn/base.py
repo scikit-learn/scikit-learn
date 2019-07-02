@@ -558,6 +558,35 @@ class TransformerMixin:
             # fit method of arity 2 (supervised transformation)
             return self.fit(X, y, **fit_params).transform(X)
 
+    @property
+    def n_features_out_(self):
+        if hasattr(self, '_n_features_out'):
+            return self._n_features_out
+        # Ideally this would be done in each class.
+        if hasattr(self, 'n_clusters'):
+            # this is before n_components_
+            # because n_components_ means something else
+            # in agglomerative clustering
+            n_features = self.n_clusters
+        elif hasattr(self, '_max_components'):
+            # special case for LinearDiscriminantAnalysis
+            n_components = self.n_components or np.inf
+            n_features = min(self._max_components, n_components)
+        elif hasattr(self, 'n_components_'):
+            # n_components could be auto or None
+            # this is more likely to be an int
+            n_features = self.n_components_
+        elif hasattr(self, 'n_components') and self.n_components is not None:
+            n_features = self.n_components
+        elif hasattr(self, 'components_'):
+            n_features = self.components_.shape[0]
+        elif hasattr(self, 'get_support'):
+            # that should only be done in the OneToOneMixin really
+            n_features = self.get_support().sum()
+        elif hasattr(self, 'scale_'):
+            n_features = self.scale_.shape[0]
+        return n_features
+
 
 class DensityMixin:
     """Mixin class for all density estimators in scikit-learn."""

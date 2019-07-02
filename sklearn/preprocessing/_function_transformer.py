@@ -117,6 +117,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         if (self.check_inverse and not (self.func is None or
                                         self.inverse_func is None)):
             self._check_inverse_transform(X)
+            self.n_features_out_ = None
         return self
 
     def transform(self, X):
