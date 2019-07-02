@@ -759,7 +759,6 @@ def check_dict_unchanged(name, estimator_orig):
                               'Estimator changes __dict__ during %s' % method)
 
 
-
 def is_public_parameter(attr):
     return not (attr.startswith('_') or attr.endswith('_'))
 
@@ -854,6 +853,7 @@ def check_fit2d_predict1d(name, estimator_orig):
             assert_raise_message(ValueError, "Reshape your data",
                                  getattr(estimator, method), X[0])
 
+
 def check_fit_resample2d(name, estimator_orig):
     # check by fit resampling a 2d array
     rnd = np.random.RandomState(0)
@@ -873,6 +873,7 @@ def check_fit_resample2d(name, estimator_orig):
 
     set_random_state(estimator, 1)
     X, y, kw = estimator.fit_resample(X, y)
+
 
 def _apply_on_subsets(func, X):
     # apply function on the whole set and on mini batches
@@ -1228,7 +1229,6 @@ def check_estimators_dtypes(name, estimator_orig):
                 getattr(estimator, method)(X_train)
         if hasattr(estimator, "fit_resample"):
             getattr(estimator, "fit_resample")(X_train, y)
-
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
@@ -2137,24 +2137,27 @@ def check_estimators_overwrite_params(name, estimator_orig):
 
         set_random_state(estimator)
 
-        # Make a physical copy of the original estimator parameters before fitting.
+        # Make a physical copy of the original estimator parameters before
+        # fitting.
         params = estimator.get_params()
         original_params = deepcopy(params)
 
         # Fit the model
         getattr(estimator, method)(X, y)
 
-        # Compare the state of the model parameters with the original parameters
+        # Compare the state of the model parameters with the original
+        # parameters
         new_params = estimator.get_params()
         for param_name, original_value in original_params.items():
             new_value = new_params[param_name]
 
             # We should never change or mutate the internal state of input
-            # parameters by default. To check this we use the joblib.hash function
-            # that introspects recursively any subobjects to compute a checksum.
-            # The only exception to this rule of immutable constructor parameters
-            # is possible RandomState instance but in this check we explicitly
-            # fixed the random_state params recursively to be integer seeds.
+            # parameters by default. To check this we use the joblib.hash
+            # function that introspects recursively any subobjects to compute a
+            # checksum. The only exception to this rule of immutable
+            # constructor parameters is possible RandomState instance but in
+            # this check we explicitly fixed the random_state params
+            # recursively to be integer seeds.
             assert_equal(joblib.hash(new_value), joblib.hash(original_value),
                         "Estimator %s should not change or mutate "
                         " the parameter %s from %s to %s during fit."
