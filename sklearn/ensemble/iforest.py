@@ -23,8 +23,6 @@ from .bagging import BaseBagging
 
 __all__ = ["IsolationForest"]
 
-INTEGER_TYPES = (numbers.Integral, np.integer)
-
 
 class IsolationForest(BaseBagging, OutlierMixin):
     """Isolation Forest Algorithm
@@ -256,7 +254,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
                                  'Valid choices are: "auto", int or'
                                  'float' % self.max_samples)
 
-        elif isinstance(self.max_samples, INTEGER_TYPES):
+        elif isinstance(self.max_samples, numbers.Integral):
             if self.max_samples > n_samples:
                 warn("max_samples (%s) is greater than the "
                      "total number of samples (%s). max_samples "

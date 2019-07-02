@@ -4,7 +4,6 @@ from itertools import product
 import pytest
 
 from sklearn.utils.testing import assert_raises, assert_raises_regex
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -93,7 +92,7 @@ def test__check_reg_targets():
         if type1 == type2 and n_out1 == n_out2:
             y_type, y_check1, y_check2, multioutput = _check_reg_targets(
                 y1, y2, None)
-            assert_equal(type1, y_type)
+            assert type1 == y_type
             if type1 == 'continuous':
                 assert_array_equal(y_check1, np.reshape(y1, (-1, 1)))
                 assert_array_equal(y_check2, np.reshape(y2, (-1, 1)))
@@ -143,8 +142,8 @@ def test_regression_multioutput_array():
 
     r = r2_score([[0, -1], [0, 1]], [[2, 2], [1, 1]], multioutput='raw_values')
     assert_array_almost_equal(r, [0, -3.5], decimal=2)
-    assert_equal(np.mean(r), r2_score([[0, -1], [0, 1]], [[2, 2], [1, 1]],
-                 multioutput='uniform_average'))
+    assert np.mean(r) == r2_score([[0, -1], [0, 1]], [[2, 2], [1, 1]],
+                                  multioutput='uniform_average')
     evs = explained_variance_score([[0, -1], [0, 1]], [[2, 2], [1, 1]],
                                    multioutput='raw_values')
     assert_array_almost_equal(evs, [0, -1.25], decimal=2)
@@ -155,11 +154,11 @@ def test_regression_multioutput_array():
     y_pred = [[1, 4], [-1, 1]]
     r2 = r2_score(y_true, y_pred, multioutput='raw_values')
     assert_array_almost_equal(r2, [1., -3.], decimal=2)
-    assert_equal(np.mean(r2), r2_score(y_true, y_pred,
-                 multioutput='uniform_average'))
+    assert np.mean(r2) == r2_score(y_true, y_pred,
+                                   multioutput='uniform_average')
     evs = explained_variance_score(y_true, y_pred, multioutput='raw_values')
     assert_array_almost_equal(evs, [1., -3.], decimal=2)
-    assert_equal(np.mean(evs), explained_variance_score(y_true, y_pred))
+    assert np.mean(evs) == explained_variance_score(y_true, y_pred)
 
     # Handling msle separately as it does not accept negative inputs.
     y_true = np.array([[0.5, 1], [1, 2], [7, 6]])

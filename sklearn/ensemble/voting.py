@@ -16,12 +16,13 @@ This module contains:
 import numpy as np
 from abc import abstractmethod
 
+from joblib import Parallel, delayed
+
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import TransformerMixin
 from ..base import clone
 from ..preprocessing import LabelEncoder
-from ..utils._joblib import Parallel, delayed
 from ..utils.validation import check_is_fitted
 from ..utils.metaestimators import _BaseComposition
 from ..utils import Bunch

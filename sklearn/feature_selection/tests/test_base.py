@@ -6,7 +6,7 @@ from numpy.testing import assert_array_equal
 from sklearn.base import BaseEstimator
 from sklearn.feature_selection.base import SelectorMixin
 from sklearn.utils import check_array
-from sklearn.utils.testing import assert_raises, assert_equal
+from sklearn.utils.testing import assert_raises
 
 
 class StepSelector(SelectorMixin, BaseEstimator):
@@ -46,8 +46,8 @@ def test_transform_dense():
     assert_array_equal(Xt, Xt_actual2)
 
     # Check dtype matches
-    assert_equal(np.int32, sel.transform(X.astype(np.int32)).dtype)
-    assert_equal(np.float32, sel.transform(X.astype(np.float32)).dtype)
+    assert np.int32 == sel.transform(X.astype(np.int32)).dtype
+    assert np.float32 == sel.transform(X.astype(np.float32)).dtype
 
     # Check 1d list and other dtype:
     names_t_actual = sel.transform([feature_names])
@@ -66,8 +66,8 @@ def test_transform_sparse():
     assert_array_equal(Xt, Xt_actual2.toarray())
 
     # Check dtype matches
-    assert_equal(np.int32, sel.transform(sparse(X).astype(np.int32)).dtype)
-    assert_equal(np.float32, sel.transform(sparse(X).astype(np.float32)).dtype)
+    assert np.int32 == sel.transform(sparse(X).astype(np.int32)).dtype
+    assert np.float32 == sel.transform(sparse(X).astype(np.float32)).dtype
 
     # Check wrong shape raises error
     assert_raises(ValueError, sel.transform, np.array([[1], [2]]))
@@ -79,9 +79,9 @@ def test_inverse_transform_dense():
     assert_array_equal(Xinv, Xinv_actual)
 
     # Check dtype matches
-    assert_equal(np.int32,
+    assert (np.int32 ==
                  sel.inverse_transform(Xt.astype(np.int32)).dtype)
-    assert_equal(np.float32,
+    assert (np.float32 ==
                  sel.inverse_transform(Xt.astype(np.float32)).dtype)
 
     # Check 1d list and other dtype:
@@ -99,9 +99,9 @@ def test_inverse_transform_sparse():
     assert_array_equal(Xinv, Xinv_actual.toarray())
 
     # Check dtype matches
-    assert_equal(np.int32,
+    assert (np.int32 ==
                  sel.inverse_transform(sparse(Xt).astype(np.int32)).dtype)
-    assert_equal(np.float32,
+    assert (np.float32 ==
                  sel.inverse_transform(sparse(Xt).astype(np.float32)).dtype)
 
     # Check wrong shape raises error
