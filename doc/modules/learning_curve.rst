@@ -113,25 +113,18 @@ Learning curve
 A learning curve shows the validation and training score of an estimator
 for varying numbers of training samples. It is a tool to find out how much
 we benefit from adding more training data and whether the estimator suffers
-more from a variance error or a bias error. If both the validation score and
-the training score converge to a value that is too low with increasing
-size of the training set, we will not benefit much from more training data.
-In the following plot you can see an example: naive Bayes roughly converges
-to a low score.
+more from a variance error or a bias error. Consider the following example
+where we plot the learning curve of a naive Bayes classifier and an SVM.
+
+For the naive Bayes, both the validation score and the training score
+converge to a value that is quite low with increasing size of the training
+set. Thus, we will probably not benefit much from more training data.
+
+In contrast, for small amounts of data, the training score of the SVM is
+much greater than the validation score. Adding more training samples will
+most likely increase generalization.
 
 .. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_learning_curve_001.png
-   :target: ../auto_examples/model_selection/plot_learning_curve.html
-   :align: center
-   :scale: 50%
-
-We will probably have to use an estimator or a parametrization of the
-current estimator that can learn more complex concepts (i.e. has a lower
-bias). If the training score is much greater than the validation score for
-the maximum number of training samples, adding more training samples will
-most likely increase generalization. In the following plot you can see that
-the SVM could benefit from more training examples.
-
-.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_learning_curve_002.png
    :target: ../auto_examples/model_selection/plot_learning_curve.html
    :align: center
    :scale: 50%
