@@ -42,7 +42,7 @@ Changelog
 :mod:`sklearn.datasets`
 .......................
 
-- |Feature| :func:`fetch_openml` now supports heterogeneous data using pandas 
+- |Feature| :func:`datasets.fetch_openml` now supports heterogeneous data using pandas 
   by setting `as_frame=True`. :pr:`13902` by `Thomas Fan`_.
 
 :mod:`sklearn.decomposition`
