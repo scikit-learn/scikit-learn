@@ -2,7 +2,9 @@
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 # License: BSD 3 clause
 
+from distutils.version import LooseVersion
 
+import joblib
 from joblib import Parallel, delayed
 import numbers
 import numpy as np
@@ -449,9 +451,12 @@ class IsolationForest(BaseBagging, OutlierMixin):
         n_jobs, n_estimators, starts = _partition_estimators(
             self.n_estimators, self.n_jobs)
 
+        old_joblib = LooseVersion(joblib.__version__) < LooseVersion('0.12')
+        check_pickle = False if old_joblib else None
+
         par_exec = Parallel(n_jobs=n_jobs, **self._parallel_args())
         par_results = par_exec(
-            delayed(get_depths, check_pickle=False)(
+            delayed(get_depths, check_pickle=check_pickle)(
                 _X=X, trees=self.estimators_[starts[i]: starts[i + 1]],
                 trees_features=self.estimators_features_[
                                starts[i]: starts[i + 1]],
