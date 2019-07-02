@@ -35,7 +35,6 @@ from sklearn.model_selection import cross_val_score
 rng = np.random.RandomState(0)
 
 N_SPLITS = 5
-# Initialising with estimators using a default 100
 REGRESSOR = RandomForestRegressor(random_state=0)
 
 
