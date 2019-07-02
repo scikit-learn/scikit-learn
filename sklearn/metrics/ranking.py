@@ -427,13 +427,13 @@ def _multiclass_roc_auc_score(binary_metric, y_true, y_score, labels,
     # validation for multiclass parameter specifications
     average_options = ("macro", "weighted")
     if average not in average_options:
-        raise ValueError("Parameter 'average' must be one of {0} for"
-                         " multiclass problems".format(average_options))
+        raise ValueError("Parameter 'average' must be one of {0} for "
+                         "multiclass problems".format(average_options))
     multiclass_options = ("ovo", "ovr")
     if multi_class not in multiclass_options:
-        raise ValueError("Parameter multi_class='{0}' is not supported"
-                         " for multiclass ROC AUC, multi_class must be"
-                         " one of {1}".format(
+        raise ValueError("Parameter multi_class='{0}' is not supported "
+                         "for multiclass ROC AUC, multi_class must be "
+                         "one of {1}".format(
                                 multi_class, multiclass_options))
 
     if labels is not None:
