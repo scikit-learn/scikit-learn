@@ -246,9 +246,9 @@ def test_lbfgs_classification(X, y):
                             activation=activation)
         mlp.fit(X_train, y_train)
         y_predict = mlp.predict(X_test)
-        assert mlp.score(X_train, y_train) > 0.95)
+        assert mlp.score(X_train, y_train) > 0.95
         assert ((y_predict.shape[0], y_predict.dtype.kind) ==
-                     expected_shape_dtype)
+                expected_shape_dtype)
 
 
 @pytest.mark.parametrize('X,y', regression_datasets)
