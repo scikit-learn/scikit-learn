@@ -10,7 +10,7 @@ from io import StringIO
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils import deprecated
 from sklearn.utils.testing import (assert_raises_regex,
-                                   assert_equal, ignore_warnings,
+                                   ignore_warnings,
                                    assert_warns, assert_raises)
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks \
@@ -456,7 +456,7 @@ def test_check_estimator_clones():
             # without fitting
             old_hash = joblib.hash(est)
             check_estimator(est)
-        assert_equal(old_hash, joblib.hash(est))
+        assert old_hash == joblib.hash(est)
 
         with ignore_warnings(category=(FutureWarning, DeprecationWarning)):
             # when 'est = SGDClassifier()'
@@ -467,7 +467,7 @@ def test_check_estimator_clones():
             est.fit(iris.data + 10, iris.target)
             old_hash = joblib.hash(est)
             check_estimator(est)
-        assert_equal(old_hash, joblib.hash(est))
+        assert old_hash == joblib.hash(est)
 
 
 def test_check_estimators_unfitted():
