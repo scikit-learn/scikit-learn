@@ -1097,7 +1097,7 @@ def _check_psd_eigenvalues(lambdas, warn_on_zeros=False):
                 "There are significant imaginary parts in eigenvalues (%f "
                 "of the maximum real part). The matrix is maybe not PSD, or "
                 "something went wrong with the eigenvalues decomposition."
-                "" % (max_imag_abs / max_real_abs))
+                 % (max_imag_abs / max_real_abs))
 
     # Remove the insignificant imaginary parts
     lambdas = np.real(np.copy(lambdas))
