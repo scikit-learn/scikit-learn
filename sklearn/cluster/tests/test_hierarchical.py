@@ -16,7 +16,6 @@ from scipy.cluster import hierarchy
 
 from sklearn.metrics.cluster.supervised import adjusted_rand_score
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raise_message
@@ -93,7 +92,7 @@ def test_unstructured_linkage_tree():
             children, n_nodes, n_leaves, parent = assert_warns(
                 UserWarning, ward_tree, this_X.T, n_clusters=10)
         n_nodes = 2 * X.shape[1] - 1
-        assert_equal(len(children) + n_leaves, n_nodes)
+        assert len(children) + n_leaves == n_nodes
 
     for tree_builder in _TREE_BUILDERS.values():
         for this_X in (X, X[0]):
@@ -102,7 +101,7 @@ def test_unstructured_linkage_tree():
                     UserWarning, tree_builder, this_X.T, n_clusters=10)
 
             n_nodes = 2 * X.shape[1] - 1
-            assert_equal(len(children) + n_leaves, n_nodes)
+            assert len(children) + n_leaves == n_nodes
 
 
 def test_height_linkage_tree():
@@ -538,7 +537,7 @@ def test_compute_full_tree():
     agc.fit(X)
     n_samples = X.shape[0]
     n_nodes = agc.children_.shape[0]
-    assert_equal(n_nodes, n_samples - 1)
+    assert n_nodes == n_samples - 1
 
     # When n_clusters is large, greater than max of 100 and 0.02 * n_samples.
     # we should stop when there are n_clusters.
@@ -550,7 +549,7 @@ def test_compute_full_tree():
     agc.fit(X)
     n_samples = X.shape[0]
     n_nodes = agc.children_.shape[0]
-    assert_equal(n_nodes, n_samples - n_clusters)
+    assert n_nodes == n_samples - n_clusters
 
 
 def test_n_components():
@@ -562,7 +561,7 @@ def test_n_components():
     connectivity = np.eye(5)
 
     for linkage_func in _TREE_BUILDERS.values():
-        assert_equal(ignore_warnings(linkage_func)(X, connectivity)[1], 5)
+        assert ignore_warnings(linkage_func)(X, connectivity)[1] == 5
 
 
 def test_agg_n_clusters():
