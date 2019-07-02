@@ -16,6 +16,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 # make IterativeImputer available
 from sklearn.experimental import enable_iterative_imputer  # noqa
 
+from sklearn.datasets import load_boston
 from sklearn.impute import MissingIndicator
 from sklearn.impute import SimpleImputer, IterativeImputer
 from sklearn.dummy import DummyRegressor
@@ -923,6 +924,32 @@ def test_iterative_imputer_early_stopping():
                                random_state=rng)
     imputer.fit(X_missing)
     assert imputer.n_iter_ == imputer.max_iter
+
+
+def test_iterative_imputer_catch_warning():
+    # check that we catch a RuntimeWarning due to a division by zero when a
+    # feature is constant in the dataset
+    X, y = load_boston(return_X_y=True)
+    n_samples, n_features = X.shape
+
+    # simulate that a feature only contain one category during fit
+    X[:, 3] = 1
+
+    # add some missing values
+    rng = np.random.RandomState(0)
+    missing_rate = 0.15
+    for feat in range(n_features):
+        sample_idx = rng.choice(
+            np.arange(n_samples), size=int(n_samples * missing_rate),
+            replace=False
+        )
+        X[sample_idx, feat] = np.nan
+
+    imputer = IterativeImputer(n_nearest_features=5, sample_posterior=True)
+    with pytest.warns(None) as record:
+        X_fill = imputer.fit_transform(X, y)
+    assert not record.list
+    assert not np.any(np.isnan(X_fill))
 
 
 @pytest.mark.parametrize(
