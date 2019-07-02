@@ -16,17 +16,12 @@ from . import IS_PYPY
 from .testing import assert_raises, _get_args
 from .testing import assert_raises_regex
 from .testing import assert_raise_message
-from .testing import assert_equal
-from .testing import assert_not_equal
-from .testing import assert_in
 from .testing import assert_array_equal
 from .testing import assert_array_almost_equal
 from .testing import assert_allclose
 from .testing import assert_allclose_dense_sparse
 from .testing import assert_warns_message
 from .testing import set_random_state
-from .testing import assert_greater
-from .testing import assert_greater_equal
 from .testing import SkipTest
 from .testing import ignore_warnings
 from .testing import assert_dict_equal
