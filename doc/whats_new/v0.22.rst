@@ -121,7 +121,26 @@ Changelog
   remove constant features due to numerical instability, by using range
   rather than variance in this case.
   :pr:`13704` by `Roddy MacSween <rlms>`.
-  
+
+:mod:`sklearn.utils`
+....................
+
+- |Enhancement| :func:`utils.safe_indexing` accepts an ``axis`` parameter to
+  index array-like across rows and columns. The column indexing can be done on
+  NumPy array, SciPy sparse matrix, and Pandas DataFrame.
+  :pr:`14035` by `Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.neural_network`
+.............................
+
+- |Feature| Add `max_fun` parameter in
+  :class:`neural_network.BaseMultilayerPerceptron`,
+  :class:`neural_network.MLPRegressor`, and
+  :class:`neural_network.MLPClassifier` to give control over
+  maximum number of function evaluation to not meet ``tol`` improvement.
+  :issue:`9274` by :user:`Daniel Perry <daniel-perry>`.
+
+
 Miscellaneous
 .............
 

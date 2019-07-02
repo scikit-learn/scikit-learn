@@ -16,11 +16,9 @@ import joblib
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_dict_equal
 from sklearn.utils.testing import assert_no_warnings
 
 from sklearn.base import clone, BaseEstimator
@@ -170,14 +168,14 @@ def test_pipeline_init():
     # Smoke test with only an estimator
     clf = NoTrans()
     pipe = Pipeline([('svc', clf)])
-    assert_equal(pipe.get_params(deep=True),
+    assert (pipe.get_params(deep=True) ==
                  dict(svc__a=None, svc__b=None, svc=clf,
                       **pipe.get_params(deep=False)))
 
     # Check that params are set
     pipe.set_params(svc__a=0.1)
-    assert_equal(clf.a, 0.1)
-    assert_equal(clf.b, None)
+    assert clf.a == 0.1
+    assert clf.b is None
     # Smoke test the repr:
     repr(pipe)
 
@@ -199,7 +197,7 @@ def test_pipeline_init():
 
     # Check that params are set
     pipe.set_params(svc__C=0.1)
-    assert_equal(clf.C, 0.1)
+    assert clf.C == 0.1
     # Smoke test the repr:
     repr(pipe)
 
@@ -225,7 +223,7 @@ def test_pipeline_init():
     params.pop('anova')
     params2.pop('svc')
     params2.pop('anova')
-    assert_equal(params, params2)
+    assert params == params2
 
 
 def test_pipeline_init_tuple():
@@ -278,10 +276,10 @@ def test_pipeline_sample_weight_supported():
     X = np.array([[1, 2]])
     pipe = Pipeline([('transf', Transf()), ('clf', FitParamT())])
     pipe.fit(X, y=None)
-    assert_equal(pipe.score(X), 3)
-    assert_equal(pipe.score(X, y=None), 3)
-    assert_equal(pipe.score(X, y=None, sample_weight=None), 3)
-    assert_equal(pipe.score(X, sample_weight=np.array([2, 3])), 8)
+    assert pipe.score(X) == 3
+    assert pipe.score(X, y=None) == 3
+    assert pipe.score(X, y=None, sample_weight=None) == 3
+    assert pipe.score(X, sample_weight=np.array([2, 3])) == 8
 
 
 def test_pipeline_sample_weight_unsupported():
@@ -289,8 +287,8 @@ def test_pipeline_sample_weight_unsupported():
     X = np.array([[1, 2]])
     pipe = Pipeline([('transf', Transf()), ('clf', Mult())])
     pipe.fit(X, y=None)
-    assert_equal(pipe.score(X), 3)
-    assert_equal(pipe.score(X, sample_weight=None), 3)
+    assert pipe.score(X) == 3
+    assert pipe.score(X, sample_weight=None) == 3
     assert_raise_message(
         TypeError,
         "score() got an unexpected keyword argument 'sample_weight'",
@@ -382,16 +380,16 @@ def test_pipeline_methods_preprocessing_svm():
 
         # check shapes of various prediction functions
         predict = pipe.predict(X)
-        assert_equal(predict.shape, (n_samples,))
+        assert predict.shape == (n_samples,)
 
         proba = pipe.predict_proba(X)
-        assert_equal(proba.shape, (n_samples, n_classes))
+        assert proba.shape == (n_samples, n_classes)
 
         log_proba = pipe.predict_log_proba(X)
-        assert_equal(log_proba.shape, (n_samples, n_classes))
+        assert log_proba.shape == (n_samples, n_classes)
 
         decision_function = pipe.decision_function(X)
-        assert_equal(decision_function.shape, (n_samples, n_classes))
+        assert decision_function.shape == (n_samples, n_classes)
 
         pipe.score(X, y)
 
@@ -467,7 +465,7 @@ def test_feature_union():
     fs = FeatureUnion([("svd", svd), ("select", select)])
     fs.fit(X, y)
     X_transformed = fs.transform(X)
-    assert_equal(X_transformed.shape, (X.shape[0], 3))
+    assert X_transformed.shape == (X.shape[0], 3)
 
     # check if it does the expected thing
     assert_array_almost_equal(X_transformed[:, :-1], svd.fit_transform(X))
@@ -487,12 +485,12 @@ def test_feature_union():
 
     # test setting parameters
     fs.set_params(select__k=2)
-    assert_equal(fs.fit_transform(X, y).shape, (X.shape[0], 4))
+    assert fs.fit_transform(X, y).shape == (X.shape[0], 4)
 
     # test it works with transformers missing fit_transform
     fs = FeatureUnion([("mock", Transf()), ("svd", svd), ("select", select)])
     X_transformed = fs.fit_transform(X, y)
-    assert_equal(X_transformed.shape, (X.shape[0], 8))
+    assert X_transformed.shape == (X.shape[0], 8)
 
     # test error if some elements do not support transform
     assert_raises_regex(TypeError,
@@ -511,16 +509,16 @@ def test_make_union():
     mock = Transf()
     fu = make_union(pca, mock)
     names, transformers = zip(*fu.transformer_list)
-    assert_equal(names, ("pca", "transf"))
-    assert_equal(transformers, (pca, mock))
+    assert names == ("pca", "transf")
+    assert transformers == (pca, mock)
 
 
 def test_make_union_kwargs():
     pca = PCA(svd_solver='full')
     mock = Transf()
     fu = make_union(pca, mock, n_jobs=3)
-    assert_equal(fu.transformer_list, make_union(pca, mock).transformer_list)
-    assert_equal(3, fu.n_jobs)
+    assert fu.transformer_list == make_union(pca, mock).transformer_list
+    assert 3 == fu.n_jobs
     # invalid keyword parameters should raise an error message
     assert_raise_message(
         TypeError,
@@ -596,15 +594,15 @@ def test_set_pipeline_steps():
     pipeline.steps = [('mock2', transf2)]
     assert 'mock' not in pipeline.named_steps
     assert pipeline.named_steps['mock2'] is transf2
-    assert_equal([('mock2', transf2)], pipeline.steps)
+    assert [('mock2', transf2)] == pipeline.steps
 
     # Using set_params
     pipeline.set_params(steps=[('mock', transf1)])
-    assert_equal([('mock', transf1)], pipeline.steps)
+    assert [('mock', transf1)] == pipeline.steps
 
     # Using set_params to replace single step
     pipeline.set_params(mock=transf2)
-    assert_equal([('mock', transf2)], pipeline.steps)
+    assert [('mock', transf2)] == pipeline.steps
 
     # With invalid data
     pipeline.set_params(steps=[('junk', ())])
@@ -673,7 +671,7 @@ def test_set_pipeline_step_passthrough(passthrough):
     assert_array_equal([[exp]], pipeline.fit_transform(X, y))
     assert_array_equal([exp], pipeline.fit(X).predict(X))
     assert_array_equal(X, pipeline.inverse_transform([[exp]]))
-    assert_dict_equal(pipeline.get_params(deep=True),
+    assert (pipeline.get_params(deep=True) ==
                       {'steps': pipeline.steps,
                        'm2': mult2,
                        'm3': passthrough,
@@ -755,14 +753,14 @@ def test_make_pipeline():
     t2 = Transf()
     pipe = make_pipeline(t1, t2)
     assert isinstance(pipe, Pipeline)
-    assert_equal(pipe.steps[0][0], "transf-1")
-    assert_equal(pipe.steps[1][0], "transf-2")
+    assert pipe.steps[0][0] == "transf-1"
+    assert pipe.steps[1][0] == "transf-2"
 
     pipe = make_pipeline(t1, t2, FitParamT())
     assert isinstance(pipe, Pipeline)
-    assert_equal(pipe.steps[0][0], "transf-1")
-    assert_equal(pipe.steps[1][0], "transf-2")
-    assert_equal(pipe.steps[2][0], "fitparamt")
+    assert pipe.steps[0][0] == "transf-1"
+    assert pipe.steps[1][0] == "transf-2"
+    assert pipe.steps[2][0] == "fitparamt"
 
     assert_raise_message(
         TypeError,
@@ -801,7 +799,7 @@ def test_feature_union_weights():
                               10 * pca.fit_transform(X))
     assert_array_equal(X_fit_transformed[:, -1],
                        select.fit_transform(X, y).ravel())
-    assert_equal(X_fit_transformed_wo_method.shape, (X.shape[0], 7))
+    assert X_fit_transformed_wo_method.shape == (X.shape[0], 7)
 
 
 def test_feature_union_parallel():
@@ -825,11 +823,11 @@ def test_feature_union_parallel():
 
     fs.fit(X)
     X_transformed = fs.transform(X)
-    assert_equal(X_transformed.shape[0], len(X))
+    assert X_transformed.shape[0] == len(X)
 
     fs_parallel.fit(X)
     X_transformed_parallel = fs_parallel.transform(X)
-    assert_equal(X_transformed.shape, X_transformed_parallel.shape)
+    assert X_transformed.shape == X_transformed_parallel.shape
     assert_array_equal(
         X_transformed.toarray(),
         X_transformed_parallel.toarray()
@@ -858,7 +856,7 @@ def test_feature_union_feature_names():
     feature_names = ft.get_feature_names()
     for feat in feature_names:
         assert "chars__" in feat or "words__" in feat
-    assert_equal(len(feature_names), 35)
+    assert len(feature_names) == 35
 
     ft = FeatureUnion([("tr1", Transf())]).fit([[1]])
     assert_raise_message(AttributeError,
@@ -891,22 +889,22 @@ def test_set_feature_union_steps():
 
     ft = FeatureUnion([('m2', mult2), ('m3', mult3)])
     assert_array_equal([[2, 3]], ft.transform(np.asarray([[1]])))
-    assert_equal(['m2__x2', 'm3__x3'], ft.get_feature_names())
+    assert ['m2__x2', 'm3__x3'] == ft.get_feature_names()
 
     # Directly setting attr
     ft.transformer_list = [('m5', mult5)]
     assert_array_equal([[5]], ft.transform(np.asarray([[1]])))
-    assert_equal(['m5__x5'], ft.get_feature_names())
+    assert ['m5__x5'] == ft.get_feature_names()
 
     # Using set_params
     ft.set_params(transformer_list=[('mock', mult3)])
     assert_array_equal([[3]], ft.transform(np.asarray([[1]])))
-    assert_equal(['mock__x3'], ft.get_feature_names())
+    assert ['mock__x3'] == ft.get_feature_names()
 
     # Using set_params to replace single step
     ft.set_params(mock=mult5)
     assert_array_equal([[5]], ft.transform(np.asarray([[1]])))
-    assert_equal(['mock__x5'], ft.get_feature_names())
+    assert ['mock__x5'] == ft.get_feature_names()
 
 
 @pytest.mark.parametrize('drop', ['drop', None])
@@ -920,17 +918,17 @@ def test_set_feature_union_step_drop(drop):
     ft = FeatureUnion([('m2', mult2), ('m3', mult3)])
     assert_array_equal([[2, 3]], ft.fit(X).transform(X))
     assert_array_equal([[2, 3]], ft.fit_transform(X))
-    assert_equal(['m2__x2', 'm3__x3'], ft.get_feature_names())
+    assert ['m2__x2', 'm3__x3'] == ft.get_feature_names()
 
     ft.set_params(m2=drop)
     assert_array_equal([[3]], ft.fit(X).transform(X))
     assert_array_equal([[3]], ft.fit_transform(X))
-    assert_equal(['m3__x3'], ft.get_feature_names())
+    assert ['m3__x3'] == ft.get_feature_names()
 
     ft.set_params(m3=drop)
     assert_array_equal([[]], ft.fit(X).transform(X))
     assert_array_equal([[]], ft.fit_transform(X))
-    assert_equal([], ft.get_feature_names())
+    assert [] == ft.get_feature_names()
 
     # check we can change back
     ft.set_params(m3=mult3)
@@ -940,7 +938,7 @@ def test_set_feature_union_step_drop(drop):
     ft = FeatureUnion([('m2', drop), ('m3', mult3)])
     assert_array_equal([[3]], ft.fit(X).transform(X))
     assert_array_equal([[3]], ft.fit_transform(X))
-    assert_equal(['m3__x3'], ft.get_feature_names())
+    assert ['m3__x3'] == ft.get_feature_names()
 
 
 def test_step_name_validation():
@@ -1066,7 +1064,7 @@ def test_pipeline_memory():
         assert_array_equal(pipe.score(X, y), cached_pipe.score(X, y))
         assert_array_equal(pipe.named_steps['transf'].means_,
                            cached_pipe.named_steps['transf'].means_)
-        assert_equal(ts, cached_pipe.named_steps['transf'].timestamp_)
+        assert ts == cached_pipe.named_steps['transf'].timestamp_
         # Create a new pipeline with cloned estimators
         # Check that even changing the name step does not affect the cache hit
         clf_2 = SVC(probability=True, random_state=0)
@@ -1084,7 +1082,7 @@ def test_pipeline_memory():
         assert_array_equal(pipe.score(X, y), cached_pipe_2.score(X, y))
         assert_array_equal(pipe.named_steps['transf'].means_,
                            cached_pipe_2.named_steps['transf_2'].means_)
-        assert_equal(ts, cached_pipe_2.named_steps['transf_2'].timestamp_)
+        assert ts == cached_pipe_2.named_steps['transf_2'].timestamp_
     finally:
         shutil.rmtree(cachedir)
 
