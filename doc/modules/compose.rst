@@ -262,6 +262,9 @@ from the dataset if they classified as outliers.  Consider the following::
     >>> from sklearn.datasets import load_iris
     >>> X, y = load_iris(return_X_y=True)
     >>> resampled.fit(X, y)
+    ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    ResampledTrainer(...)
+
 
 In ``pipe``, we remove outliers before fitting our `LogisticRegression`
 model, so that the samples passed to fit come from the same distribution. We do

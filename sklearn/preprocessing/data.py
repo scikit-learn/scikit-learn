@@ -20,7 +20,7 @@ from scipy import optimize
 from scipy.special import boxcox
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import check_array
+from ..utils import check_array, check_X_y, safe_indexing
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
@@ -57,6 +57,7 @@ __all__ = [
     'minmax_scale',
     'quantile_transform',
     'power_transform',
+    'NaNFilter',
 ]
 
 
@@ -3009,3 +3010,67 @@ def power_transform(X, method='warn', standardize=True, copy=True):
         method = 'box-cox'
     pt = PowerTransformer(method=method, standardize=standardize, copy=copy)
     return pt.fit_transform(X)
+
+class NaNFilter(BaseEstimator):
+    """
+    A resampler that removes samples containing NaN in X.
+
+    Parameters
+    ----------
+    count : int, optional, default=1
+        The amount of NaNs a sample can contain before it gets filtered.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import NaNFilter
+    >>> nan = float('nan')
+    >>> data = [[1, 2], [1, nan], [nan, nan]]
+    >>> y = [0, 0, 0]
+    >>> Xr, yr, _ = NaNFilter().fit_resample(data))
+    >>> print(Xr)
+    [[1. 2.]]
+    >>> Xr, yr, _ = NaNFilter(count=2).fit_resample(data))
+    >>> print(Xr)
+    [[ 1.  2.]
+     [ 1. nan]]
+
+    See also
+    --------
+    :ref:`Imputation <impute>` : removing NaNs by replacing them with values.
+    """
+    def __init__(self, count=1):
+        self.count = count
+
+    def fit_resample(self, X, y, **kws):
+        """Removes samples containing NaN from X.
+
+        Parameters
+        ----------
+        X : ndarray, shape (n_samples, n_features)
+            Input data X.
+
+        y : ndarray, shape (n_samples,)
+            Input data y.
+
+        Returns
+        -------
+        X : ndarray, shape (n_samples, n_features)
+            The input X, with all samples containing more than `count` NaN
+            values removed.
+
+        y : ndarray, shape (n_samples,)
+            The input y, with all samples containing more than `count` NaN
+            values removed.
+
+        kws : dict of ndarray
+             dict of keyword arguments, with all samples containing more than
+             `count` NaN values removed.
+        """
+        X, y = check_X_y(X, y, force_all_finite='allow-nan')
+        mask = np.sum(np.isnan(X), axis=1) < self.count
+        kwsr = {
+            kw: safe_indexing(kws[kw], np.where(mask)[0])
+            for kw in kws
+        }
+        return safe_indexing(X, mask), safe_indexing(y, mask), kwsr
