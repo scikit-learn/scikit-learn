@@ -211,6 +211,9 @@ THRESHOLDED_METRICS = {
     "weighted_roc_auc": partial(roc_auc_score, average="weighted"),
     "samples_roc_auc": partial(roc_auc_score, average="samples"),
     "micro_roc_auc": partial(roc_auc_score, average="micro"),
+    "ovr_roc_auc": partial(roc_auc_score, average="macro", multi_class='ovr'),
+    "weighted_ovr_roc_auc": partial(roc_auc_score, average="weighted",
+                                    multi_class='ovr'),
     "ovo_roc_auc": partial(roc_auc_score, average="macro", multi_class='ovo'),
     "weighted_ovo_roc_auc": partial(roc_auc_score, average="weighted",
                                     multi_class='ovo'),
@@ -264,6 +267,8 @@ METRIC_UNDEFINED_MULTICLASS = {
     "micro_roc_auc",
     "samples_roc_auc",
     "partial_roc_auc",
+    "roc_auc_score",
+    "weighted_roc_auc",
 
     "average_precision_score",
     "weighted_average_precision_score",

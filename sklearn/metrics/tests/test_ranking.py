@@ -592,19 +592,20 @@ def test_roc_auc_score_multiclass_labels_error(
 
 
 @pytest.mark.parametrize("msg, kwargs", [
-    ((r"Parameter 'average' must be one of \('macro', 'weighted'\) for "
+    ((r"average must be one of \('macro', 'weighted'\) for "
       r"multiclass problems"), {"average": "samples", "multi_class": "ovo"}),
-    ((r"Parameter 'average' must be one of \('macro', 'weighted'\) for "
+    ((r"average must be one of \('macro', 'weighted'\) for "
       r"multiclass problems"), {"average": "micro", "multi_class": "ovr"}),
-    ((r"Parameter 'sample_weight' is not supported for multiclass one-vs-one "
-      r"ROC AUC. 'sample_weight' must be None in this case"),
+    ((r"sample_weight is not supported for multiclass one-vs-one "
+      r"ROC AUC, 'sample_weight' must be None in this case"),
      {"multi_class": "ovo", "sample_weight": []}),
     ((r"Partial AUC computation not available in multiclass setting, "
       r"'max_fpr' must be set to `None`, received `max_fpr=0.5` "
       r"instead"), {"multi_class": "ovo", "max_fpr": 0.5}),
-    ((r"Parameter multi_class='ovp' is not supported for multiclass ROC AUC, "
-      r"multi_class must be one of \('ovo', 'ovr'\)"),
-     {"multi_class": "ovp"})
+    ((r"multi_class='ovp' is not supported for multiclass ROC AUC, "
+      r"multi_class must be in \('ovo', 'ovr'\)"),
+     {"multi_class": "ovp"}),
+    (r"multi_class must be in \('ovo', 'ovr'\)", {})
 ])
 def test_roc_auc_score_multiclass_error(msg, kwargs):
     # Test that roc_auc_score function returns an error when trying

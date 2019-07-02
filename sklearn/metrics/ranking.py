@@ -216,7 +216,7 @@ def average_precision_score(y_true, y_score, average="macro", pos_label=1,
 
 
 def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
-                  max_fpr=None, multi_class="ovr", labels=None):
+                  max_fpr=None, multi_class="raise", labels=None):
     """Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC)
     from prediction scores.
 
@@ -269,8 +269,9 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
         should be either equal to ``None`` or ``1.0`` as AUC ROC partial
         computation currently is not supported for multiclass.
 
-    multi_class : string, 'ovr' or 'ovo', optional (default='ovr')
+    multi_class : string, 'ovr' or 'ovo', optional(default='raise')
         Determines the type of multiclass configuration to use.
+        ``multi_class`` must be provided when ``y_true`` is multiclass.
         ``'ovr'``:
             Calculate metrics for the multiclass case using the one-vs-rest
             approach.
@@ -353,6 +354,8 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
                              "multiclass setting, 'max_fpr' must be"
                              " set to `None`, received `max_fpr={0}` "
                              "instead".format(max_fpr))
+        if multi_class == 'raise':
+            raise ValueError("multi_class must be in ('ovo', 'ovr')")
         return _multiclass_roc_auc_score(_binary_roc_auc_score,
                                          y_true, y_score, labels,
                                          multi_class, average, sample_weight)
@@ -427,13 +430,14 @@ def _multiclass_roc_auc_score(binary_metric, y_true, y_score, labels,
     # validation for multiclass parameter specifications
     average_options = ("macro", "weighted")
     if average not in average_options:
-        raise ValueError("Parameter 'average' must be one of {0} for "
+        raise ValueError("average must be one of {0} for "
                          "multiclass problems".format(average_options))
+
     multiclass_options = ("ovo", "ovr")
     if multi_class not in multiclass_options:
-        raise ValueError("Parameter multi_class='{0}' is not supported "
+        raise ValueError("multi_class='{0}' is not supported "
                          "for multiclass ROC AUC, multi_class must be "
-                         "one of {1}".format(
+                         "in {1}".format(
                                 multi_class, multiclass_options))
 
     if labels is not None:
@@ -460,9 +464,9 @@ def _multiclass_roc_auc_score(binary_metric, y_true, y_score, labels,
 
     if multi_class == "ovo":
         if sample_weight is not None:
-            raise ValueError("Parameter 'sample_weight' is not supported"
-                             " for multiclass one-vs-one ROC AUC."
-                             " 'sample_weight' must be None in this case.")
+            raise ValueError("sample_weight is not supported "
+                             "for multiclass one-vs-one ROC AUC, "
+                             "'sample_weight' must be None in this case.")
         _, y_true_encoded = _encode(y_true, uniques=classes, encode=True)
         # Hand & Till (2001) implementation (ovo)
         return _average_multiclass_ovo_score(binary_metric, y_true_encoded,
