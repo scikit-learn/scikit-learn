@@ -81,7 +81,7 @@ pipe = Pipeline([
 ])
 
 param_grid = {
-    'reduce_dim__n_components': [2, 4, 6, 8]
+    'reduce_dim__n_components': [6, 8, 10, 12, 14]
 }
 
 grid = GridSearchCV(pipe, cv=10, n_jobs=1, param_grid=param_grid,
