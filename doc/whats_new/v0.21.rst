@@ -264,7 +264,7 @@ Support for Python 3.4 and below has been officially dropped.
   ensures consistency of results across solvers (different choices for
   ``eigen_solver``), including approximate solvers such as ``'randomized'`` and
   ``'lobpcg'`` (see :issue:`12068`).
-  :issue:`12145` by :user:`Sylvain Marié <smarie>`
+  :pr:`12145` by :user:`Sylvain Marié <smarie>`
 
 - |Enhancement| :class:`decomposition.KernelPCA` now has deterministic output
   (resolved sign ambiguity in eigenvalue decomposition of the kernel matrix).
