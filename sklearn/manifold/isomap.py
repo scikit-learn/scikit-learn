@@ -161,7 +161,7 @@ class Isomap(BaseEstimator, TransformerMixin):
         evals = self.kernel_pca_.lambdas_
         return np.sqrt(np.sum(G_center ** 2) - np.sum(evals ** 2)) / G.shape[0]
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Compute the embedding vectors for data X
 
         Parameters
@@ -180,7 +180,7 @@ class Isomap(BaseEstimator, TransformerMixin):
         self._fit_transform(X)
         return self
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X, y=None, feature_names_in=None):
         """Fit the model from data in X and transform X.
 
         Parameters

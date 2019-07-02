@@ -320,7 +320,7 @@ def test_sparse_classification():
     class CustomSVC(SVC):
         """SVC variant that records the nature of the training set."""
 
-        def fit(self, X, y, sample_weight=None):
+        def fit(self, X, y, sample_weight=None, feature_names_in=None):
             """Modification on fit caries data type for later verification."""
             super().fit(X, y, sample_weight=sample_weight)
             self.data_type_ = type(X)
@@ -417,7 +417,7 @@ def test_sparse_regression():
     class CustomSVR(SVR):
         """SVR variant that records the nature of the training set."""
 
-        def fit(self, X, y, sample_weight=None):
+        def fit(self, X, y, sample_weight=None, feature_names_in=None):
             """Modification on fit caries data type for later verification."""
             super().fit(X, y, sample_weight=sample_weight)
             self.data_type_ = type(X)

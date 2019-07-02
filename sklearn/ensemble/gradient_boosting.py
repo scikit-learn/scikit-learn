@@ -81,7 +81,7 @@ class QuantileEstimator:
             raise ValueError("`alpha` must be in (0, 1.0) but was %r" % alpha)
         self.alpha = alpha
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, feature_names_in=None):
         """Fit the estimator.
 
         Parameters
@@ -125,7 +125,7 @@ class QuantileEstimator:
             "0.21 and will be removed in version 0.23.")
 class MeanEstimator:
     """An estimator predicting the mean of the training targets."""
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, feature_names_in=None):
         """Fit the estimator.
 
         Parameters
@@ -170,7 +170,7 @@ class LogOddsEstimator:
     """An estimator predicting the log odds ratio."""
     scale = 1.0
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, feature_names_in=None):
         """Fit the estimator.
 
         Parameters
@@ -229,7 +229,7 @@ class PriorProbabilityEstimator:
     """An estimator predicting the probability of each
     class in the training data.
     """
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, feature_names_in=None):
         """Fit the estimator.
 
         Parameters
@@ -279,7 +279,7 @@ class ZeroEstimator:
 
     """
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, feature_names_in=None):
         """Fit the estimator.
 
         Parameters

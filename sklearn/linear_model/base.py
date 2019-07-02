@@ -432,7 +432,7 @@ class LinearRegression(LinearModel, RegressorMixin, MultiOutputMixin):
         self.copy_X = copy_X
         self.n_jobs = n_jobs
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, feature_names_in=None):
         """
         Fit linear model.
 

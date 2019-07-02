@@ -1115,7 +1115,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
         return self
 
-    def partial_fit(self, X, y, sample_weight=None):
+    def partial_fit(self, X, y, sample_weight=None, feature_names_in=None):
         """Perform one epoch of stochastic gradient descent on given samples.
 
         Internally, this method uses ``max_iter = 1``. Therefore, it is not

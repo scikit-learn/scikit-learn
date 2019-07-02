@@ -19,7 +19,7 @@ from scipy import stats
 from scipy import optimize
 from scipy.special import boxcox
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, OneToOneMixin
 from ..utils import check_array
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
@@ -196,7 +196,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     return X
 
 
-class MinMaxScaler(BaseEstimator, TransformerMixin):
+class MinMaxScaler(BaseEstimator, TransformerMixin, OneToOneMixin):
     """Transforms features by scaling each feature to a given range.
 
     This estimator scales and translates each feature individually such
@@ -311,7 +311,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
             del self.data_max_
             del self.data_range_
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Compute the minimum and maximum to be used for later scaling.
 
         Parameters
@@ -325,7 +325,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         self._reset()
         return self.partial_fit(X, y)
 
-    def partial_fit(self, X, y=None):
+    def partial_fit(self, X, y=None, feature_names_in=None):
         """Online computation of min and max on X for later scaling.
         All of X is processed as a single batch. This is intended for cases
         when `fit` is not feasible due to very large number of `n_samples`
@@ -488,7 +488,7 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
     return X
 
 
-class StandardScaler(BaseEstimator, TransformerMixin):
+class StandardScaler(BaseEstimator, TransformerMixin, OneToOneMixin):
     """Standardize features by removing the mean and scaling to unit variance
 
     The standard score of a sample `x` is calculated as:
@@ -622,7 +622,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             del self.mean_
             del self.var_
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Compute the mean and std to be used for later scaling.
 
         Parameters
@@ -634,12 +634,12 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         y
             Ignored
         """
-
+        self.feature_names_in_ = feature_names_in
         # Reset internal state before fitting
         self._reset()
         return self.partial_fit(X, y)
 
-    def partial_fit(self, X, y=None):
+    def partial_fit(self, X, y=None, feature_names_in=None):
         """Online computation of mean and std on X for later scaling.
         All of X is processed as a single batch. This is intended for cases
         when `fit` is not feasible due to very large number of `n_samples`
@@ -816,7 +816,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         return {'allow_nan': True}
 
 
-class MaxAbsScaler(BaseEstimator, TransformerMixin):
+class MaxAbsScaler(BaseEstimator, TransformerMixin, OneToOneMixin):
     """Scale each feature by its maximum absolute value.
 
     This estimator scales and translates each feature individually such
@@ -893,7 +893,7 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
             del self.n_samples_seen_
             del self.max_abs_
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Compute the maximum absolute value to be used for later scaling.
 
         Parameters
@@ -907,7 +907,7 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
         self._reset()
         return self.partial_fit(X, y)
 
-    def partial_fit(self, X, y=None):
+    def partial_fit(self, X, y=None, feature_names_in=None):
         """Online computation of max absolute value of X for later scaling.
         All of X is processed as a single batch. This is intended for cases
         when `fit` is not feasible due to very large number of `n_samples`
@@ -1045,7 +1045,7 @@ def maxabs_scale(X, axis=0, copy=True):
     return X
 
 
-class RobustScaler(BaseEstimator, TransformerMixin):
+class RobustScaler(BaseEstimator, TransformerMixin, OneToOneMixin):
     """Scale features using statistics that are robust to outliers.
 
     This Scaler removes the median and scales the data according to
@@ -1142,7 +1142,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         self.quantile_range = quantile_range
         self.copy = copy
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Compute the median and quantiles to be used for scaling.
 
         Parameters
@@ -1418,7 +1418,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         return np.vstack([np.bincount(c, minlength=self.n_input_features_)
                           for c in combinations])
 
-    def get_feature_names(self, input_features=None):
+    def _get_feature_names(self, input_features=None):
         """
         Return feature names for output features
 
@@ -1448,7 +1448,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
             feature_names.append(name)
         return feature_names
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """
         Compute number of output features.
 
@@ -1648,7 +1648,7 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
         return X
 
 
-class Normalizer(BaseEstimator, TransformerMixin):
+class Normalizer(BaseEstimator, TransformerMixin, OneToOneMixin):
     """Normalize samples individually to unit norm.
 
     Each sample (i.e. each row of the data matrix) with at least one
@@ -1710,7 +1710,7 @@ class Normalizer(BaseEstimator, TransformerMixin):
         self.norm = norm
         self.copy = copy
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Do nothing and return the estimator unchanged
 
         This method is just there to implement the usual API and hence
@@ -1786,7 +1786,7 @@ def binarize(X, threshold=0.0, copy=True):
     return X
 
 
-class Binarizer(BaseEstimator, TransformerMixin):
+class Binarizer(BaseEstimator, TransformerMixin, OneToOneMixin):
     """Binarize data (set feature values to 0 or 1) according to a threshold
 
     Values greater than the threshold map to 1, while values less than
@@ -1844,7 +1844,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
         self.threshold = threshold
         self.copy = copy
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Do nothing and return the estimator unchanged
 
         This method is just there to implement the usual API and hence
@@ -2023,7 +2023,7 @@ def add_dummy_feature(X, value=1.0):
         return np.hstack((np.full((n_samples, 1), value), X))
 
 
-class QuantileTransformer(BaseEstimator, TransformerMixin):
+class QuantileTransformer(BaseEstimator, TransformerMixin, OneToOneMixin):
     """Transform features using quantiles information.
 
     This method transforms the features to follow a uniform or a normal
@@ -2198,7 +2198,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                         np.nanpercentile(column_data, references))
         self.quantiles_ = np.transpose(self.quantiles_)
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Compute the quantiles used for transforming.
 
         Parameters
@@ -2567,7 +2567,7 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
                          " axis={}".format(axis))
 
 
-class PowerTransformer(BaseEstimator, TransformerMixin):
+class PowerTransformer(BaseEstimator, TransformerMixin, OneToOneMixin):
     """Apply a power transform featurewise to make data more Gaussian-like.
 
     Power transforms are a family of parametric, monotonic transformations
@@ -2653,7 +2653,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         self.standardize = standardize
         self.copy = copy
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Estimate the optimal parameter lambda for each feature.
 
         The optimal lambda parameter for minimizing skewness is estimated on
@@ -2673,7 +2673,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         self._fit(X, y=y, force_transform=False)
         return self
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X, y=None, feature_names_in=None):
         return self._fit(X, y, force_transform=True)
 
     def _fit(self, X, y=None, force_transform=False):

@@ -319,7 +319,7 @@ class PCA(_BasePCA):
         self.iterated_power = iterated_power
         self.random_state = random_state
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Fit the model with X.
 
         Parameters
@@ -338,7 +338,7 @@ class PCA(_BasePCA):
         self._fit(X)
         return self
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X, y=None, feature_names_in=None):
         """Fit the model with X and apply the dimensionality reduction on X.
 
         Parameters

@@ -97,6 +97,8 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                                " during fit".format(diff, i))
                         raise ValueError(msg)
             self.categories_.append(cats)
+        self.feature_names_out_ = self._get_feature_names(
+            self.feature_names_in_)
 
     def _transform(self, X, handle_unknown='error'):
         X_list, n_samples, n_features = self._check_X(X)
@@ -322,7 +324,7 @@ class OneHotEncoder(_BaseEncoder):
                    "'first', None or array of objects, got {}")
             raise ValueError(msg.format(type(self.drop)))
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Fit OneHotEncoder to X.
 
         Parameters
@@ -334,12 +336,13 @@ class OneHotEncoder(_BaseEncoder):
         -------
         self
         """
+        self.feature_names_in_ = feature_names_in
         self._validate_keywords()
         self._fit(X, handle_unknown=self.handle_unknown)
         self.drop_idx_ = self._compute_drop_idx()
         return self
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X, y=None, feature_names_in=None):
         """Fit OneHotEncoder to X, then transform X.
 
         Equivalent to fit(X).transform(X) but more convenient.
@@ -355,7 +358,8 @@ class OneHotEncoder(_BaseEncoder):
             Transformed input.
         """
         self._validate_keywords()
-        return super().fit_transform(X, y)
+        return super().fit_transform(X, y,
+                                     feature_names_in=feature_names_in)
 
     def transform(self, X):
         """Transform X using one-hot encoding.
@@ -491,7 +495,7 @@ class OneHotEncoder(_BaseEncoder):
 
         return X_tr
 
-    def get_feature_names(self, input_features=None):
+    def _get_feature_names(self, input_features=None):
         """Return feature names for output features.
 
         Parameters
@@ -590,7 +594,7 @@ class OrdinalEncoder(_BaseEncoder):
         self.categories = categories
         self.dtype = dtype
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Fit the OrdinalEncoder to X.
 
         Parameters

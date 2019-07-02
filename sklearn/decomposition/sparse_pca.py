@@ -149,7 +149,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         self.random_state = random_state
         self.normalize_components = normalize_components
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Fit the model from data in X.
 
         Parameters
@@ -347,7 +347,7 @@ class MiniBatchSparsePCA(SparsePCA):
         self.batch_size = batch_size
         self.shuffle = shuffle
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Fit the model from data in X.
 
         Parameters

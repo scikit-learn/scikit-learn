@@ -445,7 +445,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         self.kernel_params = kernel_params
         self.n_jobs = n_jobs
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Perform spectral clustering from features, or affinity matrix.
 
         Parameters

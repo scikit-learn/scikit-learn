@@ -586,7 +586,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         self.alternate_sign = alternate_sign
         self.dtype = dtype
 
-    def partial_fit(self, X, y=None):
+    def partial_fit(self, X, y=None, feature_names_in=None):
         """Does nothing: this transformer is stateless.
 
         This method is just there to mark the fact that this transformer
@@ -599,7 +599,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         """
         return self
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Does nothing: this transformer is stateless.
 
         Parameters
@@ -648,7 +648,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
             X = normalize(X, norm=self.norm, copy=False)
         return X
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X, y=None, feature_names_in=None):
         """Transform a sequence of documents to a document-term matrix.
 
         Parameters
@@ -1144,7 +1144,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         return [inverse_vocabulary[X[i, :].nonzero()[1]].ravel()
                 for i in range(n_samples)]
 
-    def get_feature_names(self):
+    def _get_feature_names(self):
         """Array mapping from feature integer indices to feature name"""
         if not hasattr(self, 'vocabulary_'):
             self._validate_vocabulary()
@@ -1251,7 +1251,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         self.smooth_idf = smooth_idf
         self.sublinear_tf = sublinear_tf
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Learn the idf vector (global term weights)
 
         Parameters

@@ -6,6 +6,7 @@
 import copy
 import warnings
 from collections import defaultdict
+
 import platform
 import inspect
 import re
@@ -13,7 +14,10 @@ import re
 import numpy as np
 
 from . import __version__
+from .exceptions import NotFittedError
+
 from .utils import _IS_32BIT
+
 
 _DEFAULT_TAGS = {
     'non_deterministic': False,
@@ -558,6 +562,49 @@ class TransformerMixin:
             # fit method of arity 2 (supervised transformation)
             return self.fit(X, y, **fit_params).transform(X)
 
+    def _get_feature_names(self, input_features=None):
+        """Get output feature names.
+
+        Parameters
+        ----------
+        input_features : list of string or None
+            String names of the input features.
+
+        Returns
+        -------
+        output_feature_names : list of string
+            Feature names for transformer output.
+        """
+        # OneToOneMixin is higher in the class hierarchy
+        # because we put mixins on the wrong side
+        if hasattr(super(), 'get_feature_names'):
+            return super().get_feature_names(input_features)
+        # generate feature names from class name by default
+        # would be much less guessing if we stored the number
+        # of output features.
+        # Ideally this would be done in each class.
+        if hasattr(self, 'n_clusters'):
+            # this is before n_components_
+            # because n_components_ means something else
+            # in agglomerative clustering
+            n_features = self.n_clusters
+        elif hasattr(self, '_max_components'):
+            # special case for LinearDiscriminantAnalysis
+            n_components = self.n_components or np.inf
+            n_features = min(self._max_components, n_components)
+        elif hasattr(self, 'n_components_'):
+            # n_components could be auto or None
+            # this is more likely to be an int
+            n_features = self.n_components_
+        elif hasattr(self, 'n_components') and self.n_components is not None:
+            n_features = self.n_components
+        elif hasattr(self, 'components_'):
+            n_features = self.components_.shape[0]
+        else:
+            return None
+        return ["{}{}".format(type(self).__name__.lower(), i)
+                for i in range(n_features)]
+
 
 class DensityMixin:
     """Mixin class for all density estimators in scikit-learn."""
@@ -603,9 +650,62 @@ class OutlierMixin:
         return self.fit(X).predict(X)
 
 
+class OneToOneMixin(object):
+    """Provides get_feature_names for simple transformers
+
+    Assumes there's a 1-to-1 correspondence between input features
+    and output features.
+    """
+
+    @property
+    def feature_names_out_(self):
+        return self.feature_names_in_
+
+
+def _get_sub_estimators(est):
+    # Explicitly declare all fitted subestimators of existing meta-estimators
+    sub_ests = []
+    # OHE is not really needed
+    sub_names = ['estimator_', 'base_estimator_', 'one_hot_encoder_',
+                 'best_estimator_', 'init_']
+    for name in sub_names:
+        sub_est = getattr(est, name, None)
+        if sub_est is not None:
+            sub_ests.append(sub_est)
+    if hasattr(est, "estimators_"):
+        if hasattr(est.estimators_, 'shape'):
+            sub_ests.extend(est.estimators_.ravel())
+        else:
+            sub_ests.extend(est.estimators_)
+    return sub_ests
+
+
 class MetaEstimatorMixin:
     _required_parameters = ["estimator"]
     """Mixin class for all meta estimators in scikit-learn."""
+
+    def _get_feature_names(self, input_features=None):
+        """Ensure feature names are set on sub-estimators
+
+        Parameters
+        ----------
+        input_features : list of string or None
+            Input features to the meta-estimator.
+        """
+        sub_ests = _get_sub_estimators(self)
+        for est in sub_ests:
+            est.input_features_ = input_features
+            if hasattr(est, "get_feature_names"):
+                # doing hassattr instead of a try-except on everything
+                # b/c catching AttributeError makes recursive code
+                # impossible to debug
+                try:
+                    est.get_feature_names(input_features=input_features)
+                except TypeError:
+                    # do we need this?
+                    est.get_feature_names()
+                except NotFittedError:
+                    pass
 
 
 class MultiOutputMixin(object):

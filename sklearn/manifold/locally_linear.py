@@ -666,7 +666,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin,
                 hessian_tol=self.hessian_tol, modified_tol=self.modified_tol,
                 random_state=random_state, reg=self.reg, n_jobs=self.n_jobs)
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Compute the embedding vectors for data X
 
         Parameters
@@ -683,7 +683,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin,
         self._fit_transform(X)
         return self
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X, y=None, feature_names_in=None):
         """Compute the embedding vectors for data X and transform X.
 
         Parameters

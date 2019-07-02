@@ -102,7 +102,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         # Used by cross_val_score.
         return self.kernel == "precomputed"
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, feature_names_in=None):
         """Fit the SVM model according to the given training data.
 
         Parameters

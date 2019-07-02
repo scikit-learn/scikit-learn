@@ -166,7 +166,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         """
         pass
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Estimate model parameters with the EM algorithm.
 
         The method fits the model ``n_init`` times and sets the parameters with

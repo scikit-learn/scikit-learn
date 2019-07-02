@@ -109,7 +109,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         self.method = method
         self.cv = cv
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, feature_names_in=None):
         """Fit the calibrated model
 
         Parameters
@@ -312,7 +312,7 @@ class _CalibratedClassifier:
 
         return df, idx_pos_class
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, feature_names_in=None):
         """Calibrate the fitted model
 
         Parameters
@@ -474,7 +474,7 @@ class _SigmoidCalibration(BaseEstimator, RegressorMixin):
     b_ : float
         The intercept.
     """
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, feature_names_in=None):
         """Fit the model using X, y as training data.
 
         Parameters

@@ -136,6 +136,32 @@ or by name::
     >>> pipe['reduce_dim']
     PCA()
 
+To enable model inspection, `Pipeline` sets an ``input_features_`` attribute on
+all pipeline steps during fitting. This allows the user to understand how
+features are transformed during a pipeline::
+
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.feature_selection import SelectKBest
+    >>> iris = load_iris()
+    >>> pipe = Pipeline(steps=[
+    ...    ('select', SelectKBest(k=2)),
+    ...    ('clf', LogisticRegression())])
+    >>> pipe.fit(iris.data, iris.target)
+    ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
+    Pipeline(memory=None,
+              steps=[('select', SelectKBest(...)), ('clf', LogisticRegression(...))])
+    >>> pipe.named_steps.clf.input_features_
+    array(['x2', 'x3'], dtype='<U2')
+
+You can also provide custom feature names for a more human readable format using
+``get_feature_names``::
+
+    >>> pipe.get_feature_names(iris.feature_names)
+    >>> pipe.named_steps.select.input_features_
+    ['sepal length (cm)', 'sepal width (cm)', 'petal length (cm)', 'petal width (cm)']
+    >>> pipe.named_steps.clf.input_features_
+    array(['petal length (cm)', 'petal width (cm)'], dtype='<U17')
+
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_feature_selection_plot_feature_selection_pipeline.py`
@@ -431,7 +457,7 @@ By default, the remaining rating columns are ignored (``remainder='drop'``)::
   >>> from sklearn.feature_extraction.text import CountVectorizer
   >>> from sklearn.preprocessing import OneHotEncoder
   >>> column_trans = ColumnTransformer(
-  ...     [('city_category', OneHotEncoder(dtype='int'),['city']),
+  ...     [('categories', OneHotEncoder(dtype='int'),['city']),
   ...      ('title_bow', CountVectorizer(), 'title')],
   ...     remainder='drop')
 
@@ -441,11 +467,11 @@ By default, the remaining rating columns are ignored (``remainder='drop'``)::
                                   ('title_bow', CountVectorizer(), 'title')])
 
   >>> column_trans.get_feature_names()
-  ['city_category__x0_London', 'city_category__x0_Paris', 'city_category__x0_Sallisaw',
-  'title_bow__bow', 'title_bow__feast', 'title_bow__grapes', 'title_bow__his',
-  'title_bow__how', 'title_bow__last', 'title_bow__learned', 'title_bow__moveable',
-  'title_bow__of', 'title_bow__the', 'title_bow__trick', 'title_bow__watson',
-  'title_bow__wrath']
+  ['categories__city_London', 'categories__city_Paris',
+   'categories__city_Sallisaw', 'title_bow__bow', 'title_bow__feast',
+   'title_bow__grapes', 'title_bow__his', 'title_bow__how', 'title_bow__last',
+   'title_bow__learned', 'title_bow__moveable', 'title_bow__of', 'title_bow__the',
+   'title_bow__trick', 'title_bow__watson', 'title_bow__wrath']
 
   >>> column_trans.transform(X).toarray()
   array([[1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0],

@@ -228,7 +228,7 @@ def test_transform_target_regressor_multi_to_single():
 
 class DummyCheckerArrayTransformer(BaseEstimator, TransformerMixin):
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         assert isinstance(X, np.ndarray)
         return self
 
@@ -243,7 +243,7 @@ class DummyCheckerArrayTransformer(BaseEstimator, TransformerMixin):
 
 class DummyCheckerListRegressor(DummyRegressor):
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, feature_names_in=None):
         assert isinstance(X, list)
         return super().fit(X, y, sample_weight)
 
@@ -271,7 +271,7 @@ class DummyTransformer(BaseEstimator, TransformerMixin):
     def __init__(self, fit_counter=0):
         self.fit_counter = fit_counter
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         self.fit_counter += 1
         return self
 

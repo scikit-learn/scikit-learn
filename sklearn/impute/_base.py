@@ -216,7 +216,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
         return X
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Fit the imputer on X.
 
         Parameters
@@ -230,6 +230,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         self : SimpleImputer
         """
         X = self._validate_input(X)
+        self.feature_names_in_ = feature_names_in
 
         # default fill_value is 0 for numerical input and "missing_value"
         # otherwise
@@ -273,7 +274,9 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
             self.indicator_.fit(X)
         else:
             self.indicator_ = None
-
+        invalid_mask = _get_mask(self.statistics_, np.nan)
+        self._valid_mask = np.logical_not(invalid_mask)
+        self.feature_names_out_ = self._get_feature_names(feature_names_in)
         return self
 
     def _sparse_fit(self, X, strategy, missing_values, fill_value):
@@ -433,6 +436,25 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
     def _more_tags(self):
         return {'allow_nan': True}
 
+    def _get_feature_names(self, input_features=None):
+        """Get feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of string
+            Input feature names.
+
+        Returns
+        -------
+        feature_names : array-like of string
+            Transformed feature names
+        """
+        check_is_fitted(self, 'statistics_')
+        if input_features is None:
+            input_features = ['x%d' % i
+                              for i in range(self.statistics_.shape[0])]
+        return np.array(input_features)[self._valid_mask]
+
 
 class MissingIndicator(BaseEstimator, TransformerMixin):
     """Binary indicators for missing values.
@@ -586,7 +608,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
         return X
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Fit the transformer on X.
 
         Parameters
@@ -652,7 +674,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
         return imputer_mask
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X, y=None, feature_names_in=None):
         """Generate missing values indicator for X.
 
         Parameters

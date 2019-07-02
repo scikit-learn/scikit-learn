@@ -104,7 +104,7 @@ class _BinMapper(BaseEstimator, TransformerMixin):
         self.subsample = subsample
         self.random_state = random_state
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Fit data X by computing the binning thresholds.
 
         Parameters

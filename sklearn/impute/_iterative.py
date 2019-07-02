@@ -492,7 +492,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
 
         return Xt, X_filled, mask_missing_values
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X, y=None, feature_names_in=None):
         """Fits the imputer on X and return the transformed X.
 
         Parameters
@@ -661,7 +661,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
             Xt = np.hstack((Xt, X_trans_indicator))
         return Xt
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Fits the imputer on X and return self.
 
         Parameters

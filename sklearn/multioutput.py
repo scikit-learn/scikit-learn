@@ -121,7 +121,7 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
                 sample_weight, first_time) for i in range(y.shape[1]))
         return self
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, feature_names_in=None):
         """ Fit the model to data.
         Fit a separate model for each output variable.
 
@@ -234,7 +234,7 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
         super().__init__(estimator, n_jobs)
 
     @if_delegate_has_method('estimator')
-    def partial_fit(self, X, y, sample_weight=None):
+    def partial_fit(self, X, y, sample_weight=None, feature_names_in=None):
         """Incrementally fit the model to data.
         Fit a separate model for each output variable.
 

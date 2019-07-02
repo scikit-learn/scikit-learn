@@ -164,7 +164,7 @@ class GaussianNB(BaseNB):
         self.priors = priors
         self.var_smoothing = var_smoothing
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, feature_names_in=None):
         """Fit Gaussian Naive Bayes according to X, y
 
         Parameters
@@ -566,7 +566,7 @@ class BaseDiscreteNB(BaseNB):
         self._update_class_log_prior(class_prior=class_prior)
         return self
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, feature_names_in=None):
         """Fit Naive Bayes classifier according to X, y
 
         Parameters

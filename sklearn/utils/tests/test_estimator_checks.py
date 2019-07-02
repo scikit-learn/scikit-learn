@@ -54,7 +54,7 @@ class ChangesDict(BaseEstimator):
     def __init__(self, key=0):
         self.key = key
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         X, y = check_X_y(X, y)
         return self
 
@@ -68,7 +68,7 @@ class SetsWrongAttribute(BaseEstimator):
     def __init__(self, acceptable_key=0):
         self.acceptable_key = acceptable_key
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         self.wrong_attribute = 0
         X, y = check_X_y(X, y)
         return self
@@ -78,14 +78,14 @@ class ChangesWrongAttribute(BaseEstimator):
     def __init__(self, wrong_attribute=0):
         self.wrong_attribute = wrong_attribute
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         self.wrong_attribute = 1
         X, y = check_X_y(X, y)
         return self
 
 
 class ChangesUnderscoreAttribute(BaseEstimator):
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         self._good_attribute = 1
         X, y = check_X_y(X, y)
         return self
@@ -103,7 +103,7 @@ class RaisesErrorInSetParams(BaseEstimator):
             self.p = p
         return super().set_params(**kwargs)
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         X, y = check_X_y(X, y)
         return self
 
@@ -120,7 +120,7 @@ class ModifiesValueInsteadOfRaisingError(BaseEstimator):
             self.p = p
         return super().set_params(**kwargs)
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         X, y = check_X_y(X, y)
         return self
 
@@ -139,7 +139,7 @@ class ModifiesAnotherValue(BaseEstimator):
                 self.b = 'method2'
         return super().set_params(**kwargs)
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         X, y = check_X_y(X, y)
         return self
 
@@ -175,7 +175,7 @@ class CorrectNotFittedErrorClassifier(BaseBadClassifier):
 
 
 class NoSampleWeightPandasSeriesType(BaseEstimator):
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, feature_names_in=None):
         # Convert data
         X, y = check_X_y(X, y,
                          accept_sparse=("csr", "csc"),
@@ -216,7 +216,7 @@ class BadBalancedWeightsClassifier(BaseBadClassifier):
 
 
 class BadTransformerWithoutMixin(BaseEstimator):
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         X = check_array(X)
         return self
 
@@ -263,11 +263,11 @@ class LargeSparseNotSupportedClassifier(BaseEstimator):
 
 
 class SparseTransformer(BaseEstimator):
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         self.X_shape_ = check_array(X).shape
         return self
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X, y=None, feature_names_in=None):
         return self.fit(X, y).transform(X)
 
     def transform(self, X):

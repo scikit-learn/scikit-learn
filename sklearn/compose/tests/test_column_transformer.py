@@ -18,10 +18,11 @@ from sklearn.compose import ColumnTransformer, make_column_transformer
 from sklearn.exceptions import NotFittedError
 from sklearn.preprocessing import StandardScaler, Normalizer, OneHotEncoder
 from sklearn.feature_extraction import DictVectorizer
+from sklearn.pipeline import make_pipeline
 
 
 class Trans(BaseEstimator):
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         return self
 
     def transform(self, X, y=None):
@@ -35,7 +36,7 @@ class Trans(BaseEstimator):
 
 
 class DoubleTrans(BaseEstimator):
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         return self
 
     def transform(self, X):
@@ -43,7 +44,7 @@ class DoubleTrans(BaseEstimator):
 
 
 class SparseMatrixTrans(BaseEstimator):
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         return self
 
     def transform(self, X, y=None):
@@ -52,7 +53,7 @@ class SparseMatrixTrans(BaseEstimator):
 
 
 class TransNo2D(BaseEstimator):
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         return self
 
     def transform(self, X, y=None):
@@ -61,7 +62,7 @@ class TransNo2D(BaseEstimator):
 
 class TransRaise(BaseEstimator):
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         raise ValueError("specific message")
 
     def transform(self, X, y=None):
@@ -220,7 +221,7 @@ def test_column_transformer_dataframe():
 
     class TransAssert(BaseEstimator):
 
-        def fit(self, X, y=None):
+        def fit(self, X, y=None, feature_names_in=None):
             return self
 
         def transform(self, X, y=None):
@@ -496,7 +497,7 @@ def test_column_transformer_invalid_columns(remainder):
 def test_column_transformer_invalid_transformer():
 
     class NoTrans(BaseEstimator):
-        def fit(self, X, y=None):
+        def fit(self, X, y=None, feature_names_in=None):
             return self
 
         def predict(self, X):
@@ -638,6 +639,18 @@ def test_column_transformer_get_feature_names():
     assert_raise_message(AttributeError,
                          "Transformer trans (type Trans) does not provide "
                          "get_feature_names", ct.get_feature_names)
+
+    # if some transformers support and some don't
+    ct = ColumnTransformer([('trans', Trans(), [0, 1]),
+                            ('scale', StandardScaler(), [0])])
+    ct.fit(X_array)
+    assert_raise_message(AttributeError,
+                         "Transformer trans (type Trans) does not provide "
+                         "get_feature_names", ct.get_feature_names)
+
+    # inside a pipeline
+    make_pipeline(ct).fit(X_array)
+
 
     # working example
     X = np.array([[{'a': 1, 'b': 2}, {'a': 3, 'b': 4}],

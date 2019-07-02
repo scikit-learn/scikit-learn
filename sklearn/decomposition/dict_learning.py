@@ -999,7 +999,7 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
                                        positive_code)
         self.components_ = dictionary
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Do nothing and return the estimator unchanged
 
         This method is just there to implement the usual API and hence
@@ -1168,7 +1168,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         self.random_state = random_state
         self.positive_dict = positive_dict
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Fit the model from data in X.
 
         Parameters
@@ -1358,7 +1358,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         self.random_state = random_state
         self.positive_dict = positive_dict
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Fit the model from data in X.
 
         Parameters

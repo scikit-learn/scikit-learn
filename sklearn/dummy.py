@@ -83,7 +83,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
         self.random_state = random_state
         self.constant = constant
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, feature_names_in=None):
         """Fit the random classifier.
 
         Parameters
@@ -399,7 +399,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
         self.constant = constant
         self.quantile = quantile
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, feature_names_in=None):
         """Fit the random regressor.
 
         Parameters

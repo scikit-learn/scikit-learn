@@ -257,7 +257,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         self.dual_coef_ = linalg.solve(K, X, sym_pos=True, overwrite_a=True)
         self.X_transformed_fit_ = X_transformed
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Fit the model from data in X.
 
         Parameters

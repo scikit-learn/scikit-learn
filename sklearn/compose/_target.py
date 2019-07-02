@@ -148,7 +148,7 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
                               " you are sure you want to proceed regardless"
                               ", set 'check_inverse=False'", UserWarning)
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, feature_names_in=None):
         """Fit the model according to the given training data.
 
         Parameters

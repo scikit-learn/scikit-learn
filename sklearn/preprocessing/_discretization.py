@@ -119,7 +119,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         self.encode = encode
         self.strategy = strategy
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Fits the estimator.
 
         Parameters

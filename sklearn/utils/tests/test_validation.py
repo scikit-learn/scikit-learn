@@ -591,7 +591,7 @@ def test_has_fit_parameter():
 
     class TestClassWithDeprecatedFitMethod:
         @deprecated("Deprecated for the purpose of testing has_fit_parameter")
-        def fit(self, X, y, sample_weight=None):
+        def fit(self, X, y, sample_weight=None, feature_names_in=None):
             pass
 
     assert has_fit_parameter(TestClassWithDeprecatedFitMethod,

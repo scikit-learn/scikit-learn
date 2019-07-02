@@ -168,7 +168,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
         self.copy_X = copy_X
         self.verbose = verbose
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, feature_names_in=None):
         """Fit the model
 
         Parameters

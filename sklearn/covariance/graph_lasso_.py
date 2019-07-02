@@ -368,7 +368,7 @@ class GraphicalLasso(EmpiricalCovariance):
         self.max_iter = max_iter
         self.verbose = verbose
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Fits the GraphicalLasso model to X.
 
         Parameters
@@ -635,7 +635,7 @@ class GraphicalLassoCV(GraphicalLasso):
         self.cv = cv
         self.n_jobs = n_jobs
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Fits the GraphicalLasso covariance model to X.
 
         Parameters

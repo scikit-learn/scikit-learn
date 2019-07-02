@@ -173,7 +173,7 @@ class EmpiricalCovariance(BaseEstimator):
             precision = linalg.pinvh(self.covariance_)
         return precision
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Fits the Maximum Likelihood Estimator covariance model
         according to the given training data and parameters.
 

@@ -861,7 +861,7 @@ class TSNE(BaseEstimator):
 
         return X_embedded
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X, y=None, feature_names_in=None):
         """Fit X into an embedded space and return that transformed
         output.
 
@@ -882,7 +882,7 @@ class TSNE(BaseEstimator):
         self.embedding_ = embedding
         return self.embedding_
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Fit X into an embedded space.
 
         Parameters

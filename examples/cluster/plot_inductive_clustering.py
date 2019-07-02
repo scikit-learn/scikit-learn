@@ -40,7 +40,7 @@ class InductiveClusterer(BaseEstimator):
         self.clusterer = clusterer
         self.classifier = classifier
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         self.clusterer_ = clone(self.clusterer)
         self.classifier_ = clone(self.classifier)
         y = self.clusterer_.fit_predict(X)

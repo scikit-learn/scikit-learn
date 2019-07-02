@@ -516,7 +516,7 @@ class FastICA(BaseEstimator, TransformerMixin):
 
         return sources
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X, y=None, feature_names_in=None):
         """Fit the model and recover the sources from X.
 
         Parameters
@@ -533,7 +533,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         """
         return self._fit(X, compute_sources=True)
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Fit the model to X.
 
         Parameters

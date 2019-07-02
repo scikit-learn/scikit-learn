@@ -1450,7 +1450,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         self.n_jobs = n_jobs
         self.l1_ratio = l1_ratio
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, feature_names_in=None):
         """Fit the model according to the given training data.
 
         Parameters
@@ -1477,6 +1477,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         -----
         The SAGA solver supports both float64 and float32 bit arrays.
         """
+        self.feature_names_in_ = feature_names_in
         solver = _check_solver(self.solver, self.penalty, self.dual)
 
         if not isinstance(self.C, numbers.Number) or self.C < 0:
@@ -1933,7 +1934,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         self.random_state = random_state
         self.l1_ratios = l1_ratios
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, feature_names_in=None):
         """Fit the model according to the given training data.
 
         Parameters

@@ -70,7 +70,7 @@ class FixedImportanceEstimator(BaseEstimator):
     def __init__(self, importances):
         self.importances = importances
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         self.feature_importances_ = np.array(self.importances)
 
 

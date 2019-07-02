@@ -1400,7 +1400,7 @@ class FailingClassifier(BaseEstimator):
     def __init__(self, parameter=None):
         self.parameter = parameter
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         if self.parameter == FailingClassifier.FAILING_PARAMETER:
             raise ValueError("Failing classifier failed as required")
 

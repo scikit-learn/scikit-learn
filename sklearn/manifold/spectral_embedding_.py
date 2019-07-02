@@ -486,7 +486,7 @@ class SpectralEmbedding(BaseEstimator):
         self.affinity_matrix_ = self.affinity(X)
         return self.affinity_matrix_
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Fit the model from data in X.
 
         Parameters
@@ -526,7 +526,7 @@ class SpectralEmbedding(BaseEstimator):
                                              random_state=random_state)
         return self
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X, y=None, feature_names_in=None):
         """Fit the model from data in X and transform X.
 
         Parameters

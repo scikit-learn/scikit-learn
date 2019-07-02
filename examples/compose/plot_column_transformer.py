@@ -45,7 +45,7 @@ from sklearn.svm import LinearSVC
 class TextStats(BaseEstimator, TransformerMixin):
     """Extract features from each document for DictVectorizer"""
 
-    def fit(self, x, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         return self
 
     def transform(self, posts):
@@ -60,7 +60,7 @@ class SubjectBodyExtractor(BaseEstimator, TransformerMixin):
     Takes a sequence of strings and produces a dict of sequences.  Keys are
     `subject` and `body`.
     """
-    def fit(self, x, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         return self
 
     def transform(self, posts):

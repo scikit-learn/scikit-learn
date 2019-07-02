@@ -99,7 +99,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
                           " want to proceed regardless, set"
                           " 'check_inverse=False'.", UserWarning)
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Fit transformer by checking X.
 
         If ``validate`` is ``True``, ``X`` will be checked.

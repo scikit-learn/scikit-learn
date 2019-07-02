@@ -114,7 +114,7 @@ class EllipticEnvelope(MinCovDet, OutlierMixin):
             random_state=random_state)
         self.contamination = contamination
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Fit the EllipticEnvelope model.
 
         Parameters

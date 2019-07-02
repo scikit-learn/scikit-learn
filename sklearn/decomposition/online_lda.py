@@ -469,7 +469,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         check_non_negative(X, whom)
         return X
 
-    def partial_fit(self, X, y=None):
+    def partial_fit(self, X, y=None, feature_names_in=None):
         """Online VB with Mini-Batch update.
 
         Parameters
@@ -510,7 +510,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         return self
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Learn model for the data X with variational Bayes method.
 
         When `learning_method` is 'online', use mini-batch update.

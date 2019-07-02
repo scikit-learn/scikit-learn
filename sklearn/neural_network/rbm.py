@@ -216,7 +216,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
 
         return v_
 
-    def partial_fit(self, X, y=None):
+    def partial_fit(self, X, y=None, feature_names_in=None):
         """Fit the model to the data X which should contain a partial
         segment of the data.
 
@@ -318,7 +318,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         fe_ = self._free_energy(v_)
         return v.shape[1] * log_logistic(fe_ - fe)
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Fit the model to the data X.
 
         Parameters

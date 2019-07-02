@@ -68,16 +68,60 @@ preprocessor = ColumnTransformer(
 
 # Append classifier to preprocessing pipeline.
 # Now we have a full prediction pipeline.
-clf = Pipeline(steps=[('preprocessor', preprocessor),
-                      ('classifier', LogisticRegression())])
+pipeline = Pipeline(steps=[('preprocessor', preprocessor),
+                    ('classifier', LogisticRegression())])
 
 X = data.drop('survived', axis=1)
 y = data['survived']
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
-clf.fit(X_train, y_train)
-print("model score: %.3f" % clf.score(X_test, y_test))
+pipeline.fit(X_train, y_train)
+print("model score: %.3f" % pipeline.score(X_test, y_test))
+
+
+###############################################################################
+# Inspecting the coefficients values of the classifier
+###############################################################################
+# The coefficients of the final classification step of the pipeline gives an
+# idea how each feature impacts the likelihood of survival assuming that the
+# usual linear model assumptions hold (uncorrelated features, linear
+# separability, homoschedastic errors...) which we do not verify in this
+# example.
+#
+# To get error bars we perform cross-validation and compute the mean and
+# standard deviation for each coefficient accross CV splits. Because we use a
+# standard scaler on the numerical features, the coefficient weights gives us
+# an idea on how much the log odds of surviving are impacted by a change in
+# this dimension contrasted to the mean. Note that the categorical features
+# here are overspecified which makes it slightly harder to interpret because of
+# the information redundancy.
+#
+# We can see that the linear model coefficients are in agreement with the
+# historical reports: people in higher classes and therefore in the upper decks
+# were the first to reach the lifeboats, and often, priority was given to women
+# and children.
+#
+# Note that conditionned on the "pclass_x" one-hot features, the "fare"
+# numerical feature does not seem to be significantly predictive. If we drop
+# the "pclass" feature, then higher "fare" values would appear significantly
+# correlated with a higher likelihood of survival as the "fare" and "pclass"
+# features have a strong statistical dependency.
+
+import matplotlib.pyplot as plt
+from sklearn.model_selection import cross_validate
+from sklearn.model_selection import StratifiedShuffleSplit
+
+cv = StratifiedShuffleSplit(n_splits=20, test_size=0.25, random_state=42)
+cv_results = cross_validate(pipeline, X_train, y_train, cv=cv,
+                            return_estimator=True)
+cv_coefs = np.concatenate([cv_pipeline.named_steps["classifier"].coef_
+                           for cv_pipeline in cv_results["estimator"]])
+fig, ax = plt.subplots()
+ax.barh(pipeline.named_steps["classifier"].input_features_,
+        cv_coefs.mean(axis=0), xerr=cv_coefs.std(axis=0))
+plt.tight_layout()
+plt.show()
 
 
 ###############################################################################
@@ -96,7 +140,7 @@ param_grid = {
     'classifier__C': [0.1, 1.0, 10, 100],
 }
 
-grid_search = GridSearchCV(clf, param_grid, cv=10)
+grid_search = GridSearchCV(pipeline, param_grid, cv=10)
 grid_search.fit(X_train, y_train)
 
 print(("best logistic regression from grid search: %.3f"

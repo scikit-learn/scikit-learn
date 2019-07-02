@@ -45,7 +45,7 @@ class VarianceThreshold(BaseEstimator, SelectorMixin):
     def __init__(self, threshold=0.):
         self.threshold = threshold
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Learn empirical variances from X.
 
         Parameters

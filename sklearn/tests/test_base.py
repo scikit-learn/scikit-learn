@@ -312,7 +312,7 @@ def test_clone_pandas_dataframe():
             self.df = df
             self.scalar_param = scalar_param
 
-        def fit(self, X, y=None):
+        def fit(self, X, y=None, feature_names_in=None):
             pass
 
         def transform(self, X):
@@ -482,6 +482,80 @@ def test_tag_inheritance():
     diamond_tag_est = DiamondOverwriteTag()
     with pytest.raises(TypeError, match="Inconsistent values for tag"):
         diamond_tag_est._get_tags()
+
+
+@ignore_warnings(category=(FutureWarning, DeprecationWarning))
+def test_sub_estimator_consistency():
+    # check that _get_sub_estimators finds all fitted sub estimators
+    # if this breaks, you probably introduced a sub-estimator that's
+    # non-standard (not estimator_, base_estimator_ or estimators_)
+    from sklearn.utils.testing import all_estimators
+    from sklearn.base import (MetaEstimatorMixin, _get_sub_estimators,
+                              ClassifierMixin, RegressorMixin)
+
+    from sklearn.model_selection._search import BaseSearchCV
+    from sklearn.feature_selection.base import SelectorMixin
+    from sklearn.datasets import make_blobs
+    from sklearn.linear_model import Ridge, LogisticRegression
+    from sklearn.utils.estimator_checks import \
+        multioutput_estimator_convert_y_2d
+    from collections.abc import Iterable
+
+    def has_fitted_attr(est):
+        attrs = [(x, getattr(est, x, None))
+                 for x in dir(est) if x.endswith("_")
+                 and not x.startswith("__")]
+        return len(attrs)
+
+    def get_sub_estimators_brute(est):
+        # recurse through all attributes to get sub-estimators
+        attrs = [(x, getattr(est, x, None))
+                 for x in dir(est) if not x.startswith("_")]
+
+        def _recurse_sub_ests(candidates):
+            sub_ests = []
+            for a in candidates:
+                if hasattr(a, "set_params") and hasattr(a, "fit"):
+                    sub_ests.append(a)
+                elif isinstance(a, Iterable) and not isinstance(a, str):
+                    sub_ests.extend(_recurse_sub_ests(a))
+            return sub_ests
+        ests = _recurse_sub_ests(attrs)
+        # we don't consider label processors child estimators
+        return set([e for e in ests if has_fitted_attr(e)
+                    and e.__module__ != "sklearn.preprocessing.label"])
+
+    al = all_estimators()
+    mets = [x for x in al if issubclass(x[1], MetaEstimatorMixin)]
+
+    X, y = make_blobs()
+    others = []
+
+    for name, Est in mets:
+        # instantiate and fit
+        try:
+            est = Est()
+        except TypeError:
+            if issubclass(Est, (ClassifierMixin, SelectorMixin)):
+                est = Est(LogisticRegression(solver='lbfgs',
+                                             multi_class='auto'))
+            elif issubclass(Est, RegressorMixin):
+                est = Est(Ridge())
+            else:
+                others.append((name, Est))
+        if est._get_tags()['_skip_test']:
+            continue
+
+        y = multioutput_estimator_convert_y_2d(est, y)
+        est.fit(X, y)
+        # test recursive sub estimators are the same as result of
+        # _get_sub_estimators which uses a hard-coded list
+        assert (set(_get_sub_estimators(est)) ==
+                get_sub_estimators_brute(est))
+
+    for name, Est in others:
+        # only things we couldn't instantiate are the search CV
+        assert issubclass(Est, BaseSearchCV)
 
 
 # XXX: Remove in 0.23

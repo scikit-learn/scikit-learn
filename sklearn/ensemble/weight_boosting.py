@@ -89,7 +89,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
                             y_numeric=is_regressor(self))
         return ret
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, feature_names_in=None):
         """Build a boosted classifier/regressor from the training set (X, y).
 
         Parameters
@@ -398,7 +398,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         self.algorithm = algorithm
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, feature_names_in=None):
         """Build a boosted classifier from the training set (X, y).
 
         Parameters
@@ -965,7 +965,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         self.loss = loss
         self.random_state = random_state
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, feature_names_in=None):
         """Build a boosted regressor from the training set (X, y).
 
         Parameters

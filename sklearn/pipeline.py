@@ -255,12 +255,20 @@ class Pipeline(_BaseComposition):
 
     # Estimator interface
 
-    def _fit(self, X, y=None, **fit_params):
+    def _fit(self, X, y=None, feature_names_in=None, **fit_params):
         # shallow copy of steps - this should really be steps_
         self.steps = list(self.steps)
         self._validate_steps()
         # Setup the memory
         memory = check_memory(self.memory)
+        if hasattr(X, 'columns'):
+            if feature_names_in is not None and feature_names_in != X.columns:
+                raise ValueError("feature_names_in inconsistent with "
+                                 " passed columns: {}, {}".format(
+                                     feature_names_in, X.columns))
+            feature_names_in = X.columns
+
+        self.feature_names_in_ = feature_names_in
 
         fit_transform_one_cached = memory.cache(_fit_transform_one)
 
@@ -308,11 +316,13 @@ class Pipeline(_BaseComposition):
                 cloned_transformer, X, y, None,
                 message_clsname='Pipeline',
                 message=self._log_message(step_idx),
+                feature_names_in=feature_names_in,
                 **fit_params_steps[name])
             # Replace the transformer of the step with the fitted
             # transformer. This is necessary when loading the transformer
             # from the cache.
             self.steps[step_idx] = (name, fitted_transformer)
+            feature_names_in = fitted_transformer.feature_names_out_
         if self._final_estimator == 'passthrough':
             return X, {}
         return X, fit_params_steps[self.steps[-1][0]]
@@ -344,10 +354,12 @@ class Pipeline(_BaseComposition):
             This estimator
         """
         Xt, fit_params = self._fit(X, y, **fit_params)
+        feature_names = self[-2].feature_names_out_
         with _print_elapsed_time('Pipeline',
                                  self._log_message(len(self.steps) - 1)):
             if self._final_estimator != 'passthrough':
-                self._final_estimator.fit(Xt, y, **fit_params)
+                self._final_estimator.fit(
+                    Xt, y, feature_names_in=feature_names, **fit_params)
         return self
 
     def fit_transform(self, X, y=None, **fit_params):
@@ -379,14 +391,18 @@ class Pipeline(_BaseComposition):
         """
         last_step = self._final_estimator
         Xt, fit_params = self._fit(X, y, **fit_params)
+        feature_names = self[-2].feature_names_out_
         with _print_elapsed_time('Pipeline',
                                  self._log_message(len(self.steps) - 1)):
             if last_step == 'passthrough':
                 return Xt
             if hasattr(last_step, 'fit_transform'):
-                return last_step.fit_transform(Xt, y, **fit_params)
+                return last_step.fit_transform(Xt, y,
+                                               feature_names_in=feature_names,
+                                               **fit_params)
             else:
-                return last_step.fit(Xt, y, **fit_params).transform(Xt)
+                return last_step.fit(Xt, y, feature_names_in=feature_names,
+                                     **fit_params).transform(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def predict(self, X, **predict_params):
@@ -619,6 +635,10 @@ class Pipeline(_BaseComposition):
         return self.steps[-1][-1].classes_
 
     @property
+    def feature_names_out_(self):
+        return self.steps[-1][-1].feature_names_out_
+
+    @property
     def _pairwise(self):
         # check if first estimator expects pairwise input
         return getattr(self.steps[0][1], '_pairwise', False)
@@ -713,6 +733,7 @@ def _fit_transform_one(transformer,
                        weight,
                        message_clsname='',
                        message=None,
+                       feature_names_in=None,
                        **fit_params):
     """
     Fits ``transformer`` to ``X`` and ``y``. The transformed result is returned
@@ -721,9 +742,11 @@ def _fit_transform_one(transformer,
     """
     with _print_elapsed_time(message_clsname, message):
         if hasattr(transformer, 'fit_transform'):
-            res = transformer.fit_transform(X, y, **fit_params)
+            res = transformer.fit_transform(
+                X, y, feature_names_in=feature_names_in, **fit_params)
         else:
-            res = transformer.fit(X, y, **fit_params).transform(X)
+            res = transformer.fit(
+                X, y, feature_names_in=feature_names_in, **fit_params).transform(X)
 
     if weight is None:
         return res, transformer
@@ -736,12 +759,14 @@ def _fit_one(transformer,
              weight,
              message_clsname='',
              message=None,
+             feature_names_in=None,
              **fit_params):
     """
     Fits ``transformer`` to ``X`` and ``y``.
     """
     with _print_elapsed_time(message_clsname, message):
-        return transformer.fit(X, y, **fit_params)
+        return transformer.fit(
+            X, y, feature_names_in=feature_names_in, **fit_params)
 
 
 class FeatureUnion(_BaseComposition, TransformerMixin):
@@ -858,7 +883,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
                 for name, trans in self.transformer_list
                 if trans is not None and trans != 'drop')
 
-    def get_feature_names(self):
+    def _get_feature_names(self):
         """Get feature names from all transformers.
 
         Returns
@@ -876,7 +901,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
                                   trans.get_feature_names()])
         return feature_names
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Fit all transformers using X.
 
         Parameters

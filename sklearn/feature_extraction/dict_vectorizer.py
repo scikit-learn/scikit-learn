@@ -98,7 +98,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         self.sparse = sparse
         self.sort = sort
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Learn a list of feature name -> indices mappings.
 
         Parameters
@@ -208,7 +208,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
         return result_matrix
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X, y=None, feature_names_in=None):
         """Learn a list of feature name -> indices mappings and transform X.
 
         Like fit(X) followed by transform(X), but does not require
@@ -307,7 +307,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
             return Xa
 
-    def get_feature_names(self):
+    def _get_feature_names(self):
         """Returns a list of feature names, ordered by their indices.
 
         If one-of-K coding is applied to categorical features, this will

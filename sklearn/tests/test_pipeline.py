@@ -22,17 +22,20 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_no_warnings
 
 from sklearn.base import clone, BaseEstimator
+from sklearn.exceptions import NotFittedError
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
 from sklearn.svm import SVC
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.linear_model import LogisticRegression, Lasso
 from sklearn.linear_model import LinearRegression
+from sklearn.multiclass import OneVsRestClassifier
 from sklearn.cluster import KMeans
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.dummy import DummyRegressor
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
+from sklearn.impute import SimpleImputer
 from sklearn.feature_extraction.text import CountVectorizer
 
 
@@ -1101,6 +1104,141 @@ def test_make_pipeline_memory():
     assert len(pipeline) == 2
 
     shutil.rmtree(cachedir)
+
+
+def test_set_input_features():
+    pipe = Pipeline(steps=[
+        ('imputer', SimpleImputer(strategy='median')),
+        ('scaler', StandardScaler()),
+        ('select', SelectKBest(k=2)),
+        ('clf', LogisticRegression())])
+    assert_raises(NotFittedError, pipe.get_feature_names)
+    iris = load_iris()
+    pipe.fit(iris.data, iris.target)
+    xs = np.array(['x0', 'x1', 'x2', 'x3'])
+    assert_array_equal(pipe.input_features_, xs)
+    mask = pipe.named_steps.select.get_support()
+    assert_array_equal(pipe.named_steps.clf.input_features_, xs[mask])
+    res = pipe.get_feature_names(iris.feature_names)
+    # LogisticRegression doesn't have get_feature_names
+    assert res is None
+    assert_array_equal(pipe.input_features_, iris.feature_names)
+    assert_array_equal(pipe.named_steps.clf.input_features_,
+                       np.array(iris.feature_names)[mask])
+    # check that empty get_feature_names() doesn't overwrite
+    res = pipe.get_feature_names()
+    assert res is None
+    assert_array_equal(pipe.input_features_, iris.feature_names)
+    assert_array_equal(pipe.named_steps.clf.input_features_,
+                       np.array(iris.feature_names)[mask])
+    pipe = Pipeline(steps=[
+        ('scaler', StandardScaler()),
+        ('pca', PCA(n_components=3)),
+        ('select', SelectKBest(k=2)),
+        ('clf', LogisticRegression())])
+    pipe.fit(iris.data, iris.target)
+    assert_array_equal(pipe.named_steps.clf.input_features_, ['pca0', 'pca1'])
+    # setting names doesn't change names after PCA
+    pipe.get_feature_names(iris.feature_names)
+    assert_array_equal(pipe.named_steps.select.input_features_,
+                       ['pca0', 'pca1', 'pca2'])
+
+
+def test_input_feature_names_pandas():
+    pd = pytest.importorskip("pandas")
+    pipe = Pipeline(steps=[
+        ('imputer', SimpleImputer(strategy='median')),
+        ('scaler', StandardScaler()),
+        ('select', SelectKBest(k=2)),
+        ('clf', LogisticRegression())])
+    iris = load_iris()
+    df = pd.DataFrame(iris.data, columns=iris.feature_names)
+    pipe.fit(df, iris.target)
+    mask = pipe.named_steps.select.get_support()
+    assert_array_equal(pipe.named_steps.clf.input_features_,
+                       np.array(iris.feature_names)[mask])
+
+
+def test_input_features_passthrough():
+    pipe = Pipeline(steps=[
+        ('imputer', 'passthrough'),
+        ('scaler', StandardScaler()),
+        ('select', 'passthrough'),
+        ('clf', LogisticRegression())])
+    iris = load_iris()
+    pipe.fit(iris.data, iris.target)
+    xs = ['x0', 'x1', 'x2', 'x3']
+    assert_array_equal(pipe.named_steps.clf.input_features_, xs)
+    pipe.get_feature_names(iris.feature_names)
+    assert_array_equal(pipe.named_steps.clf.input_features_,
+                       iris.feature_names)
+
+
+def test_input_features_count_vectorizer():
+    pipe = Pipeline(steps=[
+        ('vect', CountVectorizer()),
+        ('clf', LogisticRegression())])
+    y = ["pizza" in x for x in JUNK_FOOD_DOCS]
+    pipe.fit(JUNK_FOOD_DOCS, y)
+    assert_array_equal(pipe.named_steps.clf.input_features_,
+                       ['beer', 'burger', 'coke', 'copyright', 'pizza', 'the'])
+    pipe.get_feature_names(["nonsense_is_ignored"])
+    assert_array_equal(pipe.named_steps.clf.input_features_,
+                       ['beer', 'burger', 'coke', 'copyright', 'pizza', 'the'])
+
+
+def test_input_features_nested():
+    pipe = Pipeline(steps=[
+        ('inner_pipe', Pipeline(steps=[('select', SelectKBest(k=2)),
+                                       ('clf', LogisticRegression())]))])
+    iris = load_iris()
+    pipe.fit(iris.data, iris.target)
+    xs = np.array(['x0', 'x1', 'x2', 'x3'])
+    assert_array_equal(pipe.input_features_, xs)
+    mask = pipe.named_steps.inner_pipe.named_steps.select.get_support()
+    assert_array_equal(
+        pipe.named_steps.inner_pipe.named_steps.clf.input_features_, xs[mask])
+    pipe.get_feature_names(iris.feature_names)
+    assert_array_equal(pipe.input_features_, iris.feature_names)
+    assert_array_equal(
+        pipe.named_steps.inner_pipe.named_steps.clf.input_features_,
+        np.array(iris.feature_names)[mask])
+
+
+def test_input_features_meta_pipe():
+    ovr = OneVsRestClassifier(Pipeline(steps=[('select', SelectKBest(k=2)),
+                                              ('clf', LogisticRegression())]))
+    pipe = Pipeline(steps=[('ovr', ovr)])
+    iris = load_iris()
+    pipe.fit(iris.data, iris.target)
+    xs = np.array(['x0', 'x1', 'x2', 'x3'])
+    assert_array_equal(pipe.input_features_, xs)
+    # check 0ths estimator in OVR only
+    inner_pipe = pipe.named_steps.ovr.estimators_[0]
+    mask = inner_pipe.named_steps.select.get_support()
+    assert_array_equal(inner_pipe.named_steps.clf.input_features_, xs[mask])
+    pipe.get_feature_names(iris.feature_names)
+    assert_array_equal(pipe.input_features_, iris.feature_names)
+    assert_array_equal(inner_pipe.input_features_, iris.feature_names)
+    assert_array_equal(inner_pipe.named_steps.clf.input_features_,
+                       np.array(iris.feature_names)[mask])
+
+
+def test_input_features_meta():
+    ovr = OneVsRestClassifier(LogisticRegression())
+    pipe = Pipeline(steps=[('select', SelectKBest(k=2)), ('ovr', ovr)])
+    iris = load_iris()
+    pipe.fit(iris.data, iris.target)
+    xs = np.array(['x0', 'x1', 'x2', 'x3'])
+    assert_array_equal(pipe.input_features_, xs)
+    # check 0ths estimator in OVR only
+    one_logreg = pipe.named_steps.ovr.estimators_[0]
+    mask = pipe.named_steps.select.get_support()
+    assert_array_equal(one_logreg.input_features_, xs[mask])
+    pipe.get_feature_names(iris.feature_names)
+    assert_array_equal(pipe.input_features_, iris.feature_names)
+    assert_array_equal(one_logreg.input_features_,
+                       np.array(iris.feature_names)[mask])
 
 
 def test_pipeline_param_error():

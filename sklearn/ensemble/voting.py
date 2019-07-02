@@ -70,7 +70,7 @@ class _BaseVoting(_BaseComposition, TransformerMixin):
         return np.asarray([clf.predict(X) for clf in self.estimators_]).T
 
     @abstractmethod
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, feature_names_in=None):
         """
         common fit operations.
         """
@@ -243,7 +243,7 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
         self.n_jobs = n_jobs
         self.flatten_transform = flatten_transform
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, feature_names_in=None):
         """ Fit the estimators.
 
         Parameters
@@ -433,7 +433,7 @@ class VotingRegressor(_BaseVoting, RegressorMixin):
         self.weights = weights
         self.n_jobs = n_jobs
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, feature_names_in=None):
         """ Fit the estimators.
 
         Parameters

@@ -14,7 +14,7 @@ class StepSelector(SelectorMixin, BaseEstimator):
     def __init__(self, step=2):
         self.step = step
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         X = check_array(X, 'csc')
         self.n_input_feats = X.shape[1]
         return self

@@ -920,7 +920,7 @@ class SupervisedIntegerMixin:
 
 
 class UnsupervisedMixin:
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Fit the model using X as training data
 
         Parameters

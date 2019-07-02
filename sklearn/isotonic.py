@@ -299,7 +299,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
             # prediction speed).
             return X, y
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, feature_names_in=None):
         """Fit the model using X, y as training data.
 
         Parameters

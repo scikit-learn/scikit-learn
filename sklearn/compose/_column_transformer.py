@@ -322,7 +322,7 @@ boolean mask array or callable
         return Bunch(**{name: trans for name, trans, _
                         in self.transformers_})
 
-    def get_feature_names(self):
+    def _get_feature_names(self):
         """Get feature names from all transformers.
 
         Returns
@@ -332,19 +332,20 @@ boolean mask array or callable
         """
         check_is_fitted(self, 'transformers_')
         feature_names = []
-        for name, trans, _, _ in self._iter(fitted=True):
+        for name, trans, columns, _ in self._iter(fitted=True):
             if trans == 'drop':
                 continue
             elif trans == 'passthrough':
                 raise NotImplementedError(
                     "get_feature_names is not yet supported when using "
                     "a 'passthrough' transformer.")
-            elif not hasattr(trans, 'get_feature_names'):
+            elif not hasattr(trans, 'feature_names_out_'):
                 raise AttributeError("Transformer %s (type %s) does not "
-                                     "provide get_feature_names."
+                                     "provide feature_names_out_."
                                      % (str(name), type(trans).__name__))
+            more_names = trans.feature_names_out_
             feature_names.extend([name + "__" + f for f in
-                                  trans.get_feature_names()])
+                                 more_names])
         return feature_names
 
     def _update_fitted_transformers(self, transformers):
@@ -415,7 +416,7 @@ boolean mask array or callable
             else:
                 raise
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Fit all transformers using X.
 
         Parameters
@@ -438,7 +439,7 @@ boolean mask array or callable
         self.fit_transform(X, y=y)
         return self
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X, y=None, feature_names_in=None):
         """Fit all transformers, transform the data and concatenate results.
 
         Parameters
@@ -485,7 +486,7 @@ boolean mask array or callable
 
         self._update_fitted_transformers(transformers)
         self._validate_output(Xs)
-
+        self.feature_names_out_ = self._get_feature_names()
         return self._hstack(list(Xs))
 
     def transform(self, X):

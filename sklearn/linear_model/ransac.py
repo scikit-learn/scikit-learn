@@ -227,7 +227,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
         self.random_state = random_state
         self.loss = loss
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, feature_names_in=None):
         """Fit estimator using RANSAC algorithm.
 
         Parameters

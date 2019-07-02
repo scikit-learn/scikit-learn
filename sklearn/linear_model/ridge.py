@@ -535,7 +535,7 @@ class _BaseRidge(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
         self.solver = solver
         self.random_state = random_state
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, feature_names_in=None):
 
         # all other solvers work at both float precision levels
         _dtype = [np.float64, np.float32]
@@ -725,7 +725,7 @@ class Ridge(_BaseRidge, RegressorMixin):
             max_iter=max_iter, tol=tol, solver=solver,
             random_state=random_state)
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, feature_names_in=None):
         """Fit Ridge regression model
 
         Parameters
@@ -877,7 +877,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
             random_state=random_state)
         self.class_weight = class_weight
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, feature_names_in=None):
         """Fit Ridge regression model.
 
         Parameters
@@ -1379,7 +1379,7 @@ class _RidgeGCV(LinearModel):
             G_inverse_diag = G_inverse_diag[:, np.newaxis]
         return G_inverse_diag, c
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, feature_names_in=None):
         """Fit Ridge regression model
 
         Parameters
@@ -1498,7 +1498,7 @@ class _BaseRidgeCV(LinearModel, MultiOutputMixin):
         self.gcv_mode = gcv_mode
         self.store_cv_values = store_cv_values
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, feature_names_in=None):
         """Fit Ridge regression model
 
         Parameters
@@ -1785,7 +1785,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
             scoring=scoring, cv=cv, store_cv_values=store_cv_values)
         self.class_weight = class_weight
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, feature_names_in=None):
         """Fit the ridge classifier.
 
         Parameters

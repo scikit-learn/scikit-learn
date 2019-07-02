@@ -107,7 +107,7 @@ class BaseSpectral(BaseEstimator, BiclusterMixin, metaclass=ABCMeta):
                              " one of {1}.".format(self.svd_method,
                                                    legal_svd_methods))
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, feature_names_in=None):
         """Creates a biclustering for X.
 
         Parameters
