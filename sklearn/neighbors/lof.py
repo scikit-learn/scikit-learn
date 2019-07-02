@@ -12,7 +12,7 @@ from ..base import OutlierMixin
 from ..base import OutlierRejectionMixin
 
 from ..utils.validation import check_is_fitted
-from ..utils import check_array
+from ..utils import check_array, safe_indexing, check_X_y
 
 __all__ = ["LocalOutlierFactor"]
 
@@ -214,6 +214,9 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
         y : ndarray, shape (n_samples,)
             The input y with outlier samples removed.
+
+        kws : dict of ndarray
+             dict of keyword arguments, with all outlier samples removed.
         """
         # fit_resample requires fit_predict
         if self.novelty:
@@ -223,11 +226,18 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
         return self._fit_resample
 
-    def _fit_resample(self, X, y=None):
-        # XXX this is not very clean, is there a better way?
+    def _fit_resample(self, X, y, **kws):
+        check_X_y(X, y)
+        kws = {
+            kw: check_X_y(X, kws[kw], force_all_finite='allow-nan')[1]
+            for kw in kws
+        }
         inliers = self.fit_predict(X) == 1
-
-        return X[inliers], y[inliers]
+        kwsr = {
+            kw: safe_indexing(kws[kw], inliers)
+            for kw in kws
+        }
+        return safe_indexing(X, inliers), safe_indexing(y, inliers), kwsr
 
     def _fit_predict(self, X, y=None):
         """"Fits the model to the training set X and returns the labels.

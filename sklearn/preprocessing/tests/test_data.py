@@ -2468,6 +2468,7 @@ def test_power_transform_default_method():
     X_trans_boxcox = power_transform(X, method='box-cox')
     assert_array_equal(X_trans_boxcox, X_trans_default)
 
+
 def test_nanfilter():
     nan = float('nan')
     data = [[1, 2], [1, nan], [nan, nan]]

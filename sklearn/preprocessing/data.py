@@ -3011,6 +3011,7 @@ def power_transform(X, method='warn', standardize=True, copy=True):
     pt = PowerTransformer(method=method, standardize=standardize, copy=copy)
     return pt.fit_transform(X)
 
+
 class NaNFilter(BaseEstimator):
     """
     A resampler that removes samples containing NaN in X.
@@ -3068,9 +3069,18 @@ class NaNFilter(BaseEstimator):
              `count` NaN values removed.
         """
         X, y = check_X_y(X, y, force_all_finite='allow-nan')
+
+        # NOTE this is probably not the best way to do this
+        kws = {
+            kw: check_X_y(X, kws[kw], force_all_finite='allow-nan')[1]
+            for kw in kws
+        }
         mask = np.sum(np.isnan(X), axis=1) < self.count
         kwsr = {
-            kw: safe_indexing(kws[kw], np.where(mask)[0])
+            kw: safe_indexing(kws[kw], mask)
             for kw in kws
         }
         return safe_indexing(X, mask), safe_indexing(y, mask), kwsr
+
+    def _more_tags(self):
+        return {'allow_nan': True}
