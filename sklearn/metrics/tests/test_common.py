@@ -211,9 +211,9 @@ THRESHOLDED_METRICS = {
     "weighted_roc_auc": partial(roc_auc_score, average="weighted"),
     "samples_roc_auc": partial(roc_auc_score, average="samples"),
     "micro_roc_auc": partial(roc_auc_score, average="micro"),
-    "ovo_roc_auc": partial(roc_auc_score, average="macro", multiclass='ovo'),
+    "ovo_roc_auc": partial(roc_auc_score, average="macro", multi_class='ovo'),
     "weighted_ovo_roc_auc": partial(roc_auc_score, average="weighted",
-                                    multiclass='ovo'),
+                                    multi_class='ovo'),
     "partial_roc_auc": partial(roc_auc_score, max_fpr=0.5),
 
     "average_precision_score":

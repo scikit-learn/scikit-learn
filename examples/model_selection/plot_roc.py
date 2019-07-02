@@ -156,13 +156,13 @@ plt.show()
 # prevalence-weighted average.
 y_prob = classifier.predict_proba(X_test)
 
-macro_roc_auc_ovo = roc_auc_score(y_test, y_prob, multiclass="ovo",
+macro_roc_auc_ovo = roc_auc_score(y_test, y_prob, multi_class="ovo",
                                   average="macro")
-weighted_roc_auc_ovo = roc_auc_score(y_test, y_prob, multiclass="ovo",
+weighted_roc_auc_ovo = roc_auc_score(y_test, y_prob, multi_class="ovo",
                                      average="weighted")
-macro_roc_auc_ovr = roc_auc_score(y_test, y_prob, multiclass="ovr",
+macro_roc_auc_ovr = roc_auc_score(y_test, y_prob, multi_class="ovr",
                                   average="macro")
-weighted_roc_auc_ovr = roc_auc_score(y_test, y_prob, multiclass="ovr",
+weighted_roc_auc_ovr = roc_auc_score(y_test, y_prob, multi_class="ovr",
                                      average="weighted")
 print("One-vs-One ROC AUC scores:\n{:.6f} (macro),\n{:.6f} "
       "(weighted by prevalence)"

@@ -475,7 +475,7 @@ def test_multiclass_ovo_roc_auc_toydata(y_true, labels):
     ovo_unweighted_score = (
         average_score_01 + average_score_02 + average_score_12) / 3
     assert_almost_equal(
-        roc_auc_score(y_true, y_scores, labels=labels, multiclass="ovo"),
+        roc_auc_score(y_true, y_scores, labels=labels, multi_class="ovo"),
         ovo_unweighted_score)
 
     # Weighted, one-vs-one multiclass ROC AUC algorithm
@@ -488,7 +488,7 @@ def test_multiclass_ovo_roc_auc_toydata(y_true, labels):
             y_true,
             y_scores,
             labels=labels,
-            multiclass="ovo",
+            multi_class="ovo",
             average="weighted"), ovo_weighted_score)
 
 
@@ -511,12 +511,12 @@ def test_multiclass_ovo_roc_auc_toydata_binary(y_true, labels):
     ovo_score = (score_01 + score_10) / 2
 
     assert_almost_equal(
-        roc_auc_score(y_true, y_scores, labels=labels, multiclass='ovo'),
+        roc_auc_score(y_true, y_scores, labels=labels, multi_class='ovo'),
         ovo_score)
 
     # Weighted, one-vs-one multiclass ROC AUC algorithm
     assert_almost_equal(
-        roc_auc_score(y_true, y_scores, labels=labels, multiclass='ovo',
+        roc_auc_score(y_true, y_scores, labels=labels, multi_class='ovo',
                       average="weighted"), ovo_score)
 
 
@@ -539,7 +539,7 @@ def test_multiclass_ovr_roc_auc_toydata(y_true, labels):
     result_unweighted = (out_0 + out_1 + out_2) / 3.
 
     assert_almost_equal(
-        roc_auc_score(y_true, y_scores, multiclass="ovr", labels=labels),
+        roc_auc_score(y_true, y_scores, multi_class="ovr", labels=labels),
         result_unweighted)
 
     # Tests the weighted, one-vs-rest multiclass ROC AUC algorithm
@@ -549,7 +549,7 @@ def test_multiclass_ovr_roc_auc_toydata(y_true, labels):
         roc_auc_score(
             y_true,
             y_scores,
-            multiclass="ovr",
+            multi_class="ovr",
             labels=labels,
             average="weighted"), result_weighted)
 
@@ -581,30 +581,31 @@ def test_multiclass_ovr_roc_auc_toydata(y_true, labels):
       np.array(["a", "b", "c", "d"]), ["a", "b", "c"]),
      ("'y_true' contains labels not in parameter 'labels'",
       np.array([0, 1, 2, 3]), [0, 1, 2])])
-@pytest.mark.parametrize("multiclass", ["ovo", "ovr"])
+@pytest.mark.parametrize("multi_class", ["ovo", "ovr"])
 def test_roc_auc_score_multiclass_labels_error(
-        msg, y_true, labels, multiclass):
+        msg, y_true, labels, multi_class):
     y_scores = np.array(
         [[0.1, 0.8, 0.1], [0.3, 0.4, 0.3], [0.35, 0.5, 0.15], [0, 0.2, 0.8]])
 
     with pytest.raises(ValueError, match=msg):
-        roc_auc_score(y_true, y_scores, labels=labels, multiclass=multiclass)
+        roc_auc_score(y_true, y_scores, labels=labels, multi_class=multi_class)
 
 
 @pytest.mark.parametrize("msg, kwargs", [
     ((r"Parameter 'average' must be one of \('macro', 'weighted'\) for "
-      r"multiclass problems\."), {"average": "samples"}),
+      r"multiclass problems"), {"average": "samples", "multi_class": "ovo"}),
     ((r"Parameter 'average' must be one of \('macro', 'weighted'\) for "
-      r"multiclass problems\."), {"average": "micro"}),
+      r"multiclass problems"), {"average": "micro", "multi_class": "ovr"}),
     ((r"Parameter 'sample_weight' is not supported for multiclass one-vs-one "
-      r"ROC AUC. 'sample_weight' must be None in this case\."),
-     {"multiclass": "ovo", "sample_weight": []}),
-    ((r"Partial AUC computation not available in multiclass setting\. "
-      r"Parameter 'max_fpr' must be set to `None`. Received `max_fpr=0.5` "
-      r"instead\."), {"multiclass": "ovo", "max_fpr": 0.5}),
-    ((r"Parameter multiclass='ovp' is not supported for multiclass ROC AUC\. "
-      r"'multiclass' must be one of \('ovo', 'ovr'\)\."),
-     {"multiclass": "ovp"})
+      r"ROC AUC. 'sample_weight' must be None in this case"),
+     {"multi_class": "ovo", "sample_weight": []}),
+    ((r"Partial AUC computation not available in multiclass setting, "
+      r"'max_fpr' must be set to `None`, received `max_fpr=0.5` "
+      r"instead"), {"multi_class": "ovo", "max_fpr": 0.5}),
+    ((r"Parameter multi_class='ovp' is not supported for multiclass ROC AUC, "
+      r"multi_class must be one of \('ovo', 'ovr'\)"),
+     {"multi_class": "ovp"}),
+    (r"multi_class must be one of \('ovo' or 'ovr'\)", {})
 ])
 def test_roc_auc_score_multiclass_error(msg, kwargs):
     # Test that roc_auc_score function returns an error when trying
