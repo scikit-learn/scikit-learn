@@ -451,7 +451,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
 
         par_exec = Parallel(n_jobs=n_jobs, **self._parallel_args())
         par_results = par_exec(
-            delayed(get_depths)(
+            delayed(get_depths, check_pickle=False)(
                 _X=X, trees=self.estimators_[starts[i]: starts[i + 1]],
                 trees_features=self.estimators_features_[
                                starts[i]: starts[i + 1]],
