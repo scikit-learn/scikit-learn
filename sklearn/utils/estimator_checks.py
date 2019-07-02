@@ -962,7 +962,7 @@ def check_transformer_general(name, transformer, readonly_memmap=False):
                       random_state=0, n_features=2, cluster_std=0.1)
     X = StandardScaler().fit_transform(X)
     X -= X.min()
-
+    X = pairwise_estimator_convert_X(X, transformer, kernel=rbf_kernel)
     if readonly_memmap:
         X, y = create_memmap_backed_data([X, y])
 
@@ -1067,7 +1067,7 @@ def _check_transformer(name, transformer_orig, X, y):
                                "features in transform is different from"
                                " the number of features in "
                                "fit.".format(name)):
-                transformer.transform(X.T)
+                transformer.transform(X[:, :-1])
 
 
 @ignore_warnings
