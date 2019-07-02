@@ -45,6 +45,17 @@ jobs:
         TEST_DOCSTRINGS: 'true'
         CHECK_WARNINGS: 'true'
 
+- template: build_tools/azure/posix-32.yml
+  parameters:
+    name: Linux32
+    vmImage: ubuntu-16.04
+    matrix:
+      py35_np_atlas_32bit:
+        DISTRIB: 'ubuntu-32'
+        PYTHON_VERSION: '3.5'
+        JOBLIB_VERSION: '0.11'
+        SKLEARN_NO_OPENMP: 'True'
+
 - template: build_tools/azure/posix.yml
   parameters:
     name: macOS
