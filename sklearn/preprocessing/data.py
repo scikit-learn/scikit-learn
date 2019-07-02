@@ -2256,7 +2256,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             self._sparse_fit(X, rng)
         else:
             self._dense_fit(X, rng)
-        self._n_features_out = np.sum(self.n_quantiles_)
+        self._n_features_out = X.shape[1]
         return self
 
     def _transform_col(self, X_col, quantiles, inverse):
