@@ -5,7 +5,6 @@ import numpy as np
 
 from sklearn.utils.testing import assert_almost_equal, assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raise_message
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LinearRegression
@@ -109,9 +108,9 @@ def test_tie_situation():
     clf2 = RandomForestClassifier(random_state=123)
     eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2)],
                             voting='hard')
-    assert_equal(clf1.fit(X, y).predict(X)[73], 2)
-    assert_equal(clf2.fit(X, y).predict(X)[73], 1)
-    assert_equal(eclf.fit(X, y).predict(X)[73], 1)
+    assert clf1.fit(X, y).predict(X)[73] == 2
+    assert clf2.fit(X, y).predict(X)[73] == 1
+    assert eclf.fit(X, y).predict(X)[73] == 1
 
 
 def test_weights_iris():
@@ -174,21 +173,21 @@ def test_predict_on_toy_problem():
 
     y = np.array([1, 1, 1, 2, 2, 2])
 
-    assert_equal(all(clf1.fit(X, y).predict(X)), all([1, 1, 1, 2, 2, 2]))
-    assert_equal(all(clf2.fit(X, y).predict(X)), all([1, 1, 1, 2, 2, 2]))
-    assert_equal(all(clf3.fit(X, y).predict(X)), all([1, 1, 1, 2, 2, 2]))
+    assert all(clf1.fit(X, y).predict(X)) == all([1, 1, 1, 2, 2, 2])
+    assert all(clf2.fit(X, y).predict(X)) == all([1, 1, 1, 2, 2, 2])
+    assert all(clf3.fit(X, y).predict(X)) == all([1, 1, 1, 2, 2, 2])
 
     eclf = VotingClassifier(estimators=[
                             ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
                             voting='hard',
                             weights=[1, 1, 1])
-    assert_equal(all(eclf.fit(X, y).predict(X)), all([1, 1, 1, 2, 2, 2]))
+    assert all(eclf.fit(X, y).predict(X)) == all([1, 1, 1, 2, 2, 2])
 
     eclf = VotingClassifier(estimators=[
                             ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
                             voting='soft',
                             weights=[1, 1, 1])
-    assert_equal(all(eclf.fit(X, y).predict(X)), all([1, 1, 1, 2, 2, 2]))
+    assert all(eclf.fit(X, y).predict(X)) == all([1, 1, 1, 2, 2, 2])
 
 
 def test_predict_proba_on_toy_problem():
@@ -370,15 +369,15 @@ def test_set_params():
 
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
     assert_array_almost_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
-    assert_equal(eclf2.estimators[0][1].get_params(), clf1.get_params())
-    assert_equal(eclf2.estimators[1][1].get_params(), clf2.get_params())
+    assert eclf2.estimators[0][1].get_params() == clf1.get_params()
+    assert eclf2.estimators[1][1].get_params() == clf2.get_params()
 
     eclf1.set_params(lr__C=10.0)
     eclf2.set_params(nb__max_depth=5)
 
     assert eclf1.estimators[0][1].get_params()['C'] == 10.0
     assert eclf2.estimators[1][1].get_params()['max_depth'] == 5
-    assert_equal(eclf1.get_params()["lr__C"],
+    assert (eclf1.get_params()["lr__C"] ==
                  eclf1.get_params()["lr"].get_params()['C'])
 
 

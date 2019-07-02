@@ -27,7 +27,6 @@ from sklearn.datasets.tests.test_common import check_return_X_y
 
 from sklearn.externals._pilutil import pillow_installed
 
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils import IS_PYPY
 
@@ -72,7 +71,7 @@ def test_category_dir_2(load_files_root):
 def test_data_home(data_home):
     # get_data_home will point to a pre-existing folder
     data_home = get_data_home(data_home=data_home)
-    assert_equal(data_home, data_home)
+    assert data_home == data_home
     assert os.path.exists(data_home)
 
     # clear_data_home will delete both the content and the folder it-self
@@ -86,9 +85,9 @@ def test_data_home(data_home):
 
 def test_default_empty_load_files(load_files_root):
     res = load_files(load_files_root)
-    assert_equal(len(res.filenames), 0)
-    assert_equal(len(res.target_names), 0)
-    assert_equal(res.DESCR, None)
+    assert len(res.filenames) == 0
+    assert len(res.target_names) == 0
+    assert res.DESCR is None
 
 
 def test_default_load_files(test_category_dir_1, test_category_dir_2,
@@ -96,10 +95,10 @@ def test_default_load_files(test_category_dir_1, test_category_dir_2,
     if IS_PYPY:
         pytest.xfail('[PyPy] fails due to string containing NUL characters')
     res = load_files(load_files_root)
-    assert_equal(len(res.filenames), 1)
-    assert_equal(len(res.target_names), 2)
-    assert_equal(res.DESCR, None)
-    assert_equal(res.data, [b"Hello World!\n"])
+    assert len(res.filenames) == 1
+    assert len(res.target_names) == 2
+    assert res.DESCR is None
+    assert res.data == [b"Hello World!\n"]
 
 
 def test_load_files_w_categories_desc_and_encoding(
@@ -109,26 +108,26 @@ def test_load_files_w_categories_desc_and_encoding(
     category = os.path.abspath(test_category_dir_1).split('/').pop()
     res = load_files(load_files_root, description="test",
                      categories=category, encoding="utf-8")
-    assert_equal(len(res.filenames), 1)
-    assert_equal(len(res.target_names), 1)
-    assert_equal(res.DESCR, "test")
-    assert_equal(res.data, ["Hello World!\n"])
+    assert len(res.filenames) == 1
+    assert len(res.target_names) == 1
+    assert res.DESCR == "test"
+    assert res.data == ["Hello World!\n"]
 
 
 def test_load_files_wo_load_content(
         test_category_dir_1, test_category_dir_2, load_files_root):
     res = load_files(load_files_root, load_content=False)
-    assert_equal(len(res.filenames), 1)
-    assert_equal(len(res.target_names), 2)
-    assert_equal(res.DESCR, None)
-    assert_equal(res.get('data'), None)
+    assert len(res.filenames) == 1
+    assert len(res.target_names) == 2
+    assert res.DESCR is None
+    assert res.get('data') is None
 
 
 def test_load_sample_images():
     try:
         res = load_sample_images()
-        assert_equal(len(res.images), 2)
-        assert_equal(len(res.filenames), 2)
+        assert len(res.images) == 2
+        assert len(res.filenames) == 2
         images = res.images
 
         # assert is china image
@@ -144,8 +143,8 @@ def test_load_sample_images():
 
 def test_load_digits():
     digits = load_digits()
-    assert_equal(digits.data.shape, (1797, 64))
-    assert_equal(numpy.unique(digits.target).size, 10)
+    assert digits.data.shape == (1797, 64)
+    assert numpy.unique(digits.target).size == 10
 
     # test return_X_y option
     check_return_X_y(digits, partial(load_digits))
@@ -153,15 +152,15 @@ def test_load_digits():
 
 def test_load_digits_n_class_lt_10():
     digits = load_digits(9)
-    assert_equal(digits.data.shape, (1617, 64))
-    assert_equal(numpy.unique(digits.target).size, 9)
+    assert digits.data.shape == (1617, 64)
+    assert numpy.unique(digits.target).size == 9
 
 
 def test_load_sample_image():
     try:
         china = load_sample_image('china.jpg')
-        assert_equal(china.dtype, 'uint8')
-        assert_equal(china.shape, (427, 640, 3))
+        assert china.dtype == 'uint8'
+        assert china.shape == (427, 640, 3)
     except ImportError:
         warnings.warn("Could not load sample images, PIL is not available.")
 
@@ -176,9 +175,9 @@ def test_load_missing_sample_image_error():
 
 def test_load_diabetes():
     res = load_diabetes()
-    assert_equal(res.data.shape, (442, 10))
+    assert res.data.shape == (442, 10)
     assert res.target.size, 442
-    assert_equal(len(res.feature_names), 10)
+    assert len(res.feature_names) == 10
     assert res.DESCR
 
     # test return_X_y option
@@ -187,9 +186,9 @@ def test_load_diabetes():
 
 def test_load_linnerud():
     res = load_linnerud()
-    assert_equal(res.data.shape, (20, 3))
-    assert_equal(res.target.shape, (20, 3))
-    assert_equal(len(res.target_names), 3)
+    assert res.data.shape == (20, 3)
+    assert res.target.shape == (20, 3)
+    assert len(res.target_names) == 3
     assert res.DESCR
     assert os.path.exists(res.data_filename)
     assert os.path.exists(res.target_filename)
@@ -200,9 +199,9 @@ def test_load_linnerud():
 
 def test_load_iris():
     res = load_iris()
-    assert_equal(res.data.shape, (150, 4))
-    assert_equal(res.target.size, 150)
-    assert_equal(res.target_names.size, 3)
+    assert res.data.shape == (150, 4)
+    assert res.target.size == 150
+    assert res.target_names.size == 3
     assert res.DESCR
     assert os.path.exists(res.filename)
 
@@ -212,9 +211,9 @@ def test_load_iris():
 
 def test_load_wine():
     res = load_wine()
-    assert_equal(res.data.shape, (178, 13))
-    assert_equal(res.target.size, 178)
-    assert_equal(res.target_names.size, 3)
+    assert res.data.shape == (178, 13)
+    assert res.target.size == 178
+    assert res.target_names.size == 3
     assert res.DESCR
 
     # test return_X_y option
@@ -223,9 +222,9 @@ def test_load_wine():
 
 def test_load_breast_cancer():
     res = load_breast_cancer()
-    assert_equal(res.data.shape, (569, 30))
-    assert_equal(res.target.size, 569)
-    assert_equal(res.target_names.size, 2)
+    assert res.data.shape == (569, 30)
+    assert res.target.size == 569
+    assert res.target_names.size == 2
     assert res.DESCR
     assert os.path.exists(res.filename)
 
@@ -235,9 +234,9 @@ def test_load_breast_cancer():
 
 def test_load_boston():
     res = load_boston()
-    assert_equal(res.data.shape, (506, 13))
-    assert_equal(res.target.size, 506)
-    assert_equal(res.feature_names.size, 13)
+    assert res.data.shape == (506, 13)
+    assert res.target.size == 506
+    assert res.feature_names.size == 13
     assert res.DESCR
     assert os.path.exists(res.filename)
 
@@ -249,7 +248,7 @@ def test_loads_dumps_bunch():
     bunch = Bunch(x="x")
     bunch_from_pkl = loads(dumps(bunch))
     bunch_from_pkl.x = "y"
-    assert_equal(bunch_from_pkl['x'], bunch_from_pkl.x)
+    assert bunch_from_pkl['x'] == bunch_from_pkl.x
 
 
 def test_bunch_pickle_generated_with_0_16_and_read_with_0_17():
@@ -264,13 +263,13 @@ def test_bunch_pickle_generated_with_0_16_and_read_with_0_17():
     bunch.__dict__['key'] = 'set from __dict__'
     bunch_from_pkl = loads(dumps(bunch))
     # After loading from pickle the __dict__ should have been ignored
-    assert_equal(bunch_from_pkl.key, 'original')
-    assert_equal(bunch_from_pkl['key'], 'original')
+    assert bunch_from_pkl.key == 'original'
+    assert bunch_from_pkl['key'] == 'original'
     # Making sure that changing the attr does change the value
     # associated with __getitem__ as well
     bunch_from_pkl.key = 'changed'
-    assert_equal(bunch_from_pkl.key, 'changed')
-    assert_equal(bunch_from_pkl['key'], 'changed')
+    assert bunch_from_pkl.key == 'changed'
+    assert bunch_from_pkl['key'] == 'changed'
 
 
 def test_bunch_dir():

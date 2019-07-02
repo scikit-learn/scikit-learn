@@ -13,10 +13,8 @@ from sklearn.model_selection import cross_val_score
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_no_warnings
 
@@ -143,7 +141,7 @@ def test_gnb_prior_large_bias():
     """Test if good prediction when class prior favor largely one class"""
     clf = GaussianNB(priors=np.array([0.01, 0.99]))
     clf.fit(X, y)
-    assert_equal(clf.predict([[-0.1, -0.1]]), np.array([2]))
+    assert clf.predict([[-0.1, -0.1]]) == np.array([2])
 
 
 def test_gnb_check_update_with_no_data():
@@ -155,8 +153,8 @@ def test_gnb_check_update_with_no_data():
     x_empty = np.empty((0, X.shape[1]))
     tmean, tvar = GaussianNB._update_mean_variance(prev_points, mean,
                                                    var, x_empty)
-    assert_equal(tmean, mean)
-    assert_equal(tvar, var)
+    assert tmean == mean
+    assert tvar == var
 
 
 def test_gnb_pfit_wrong_nb_features():
@@ -289,8 +287,8 @@ def test_discretenb_predict_proba():
     for cls, X in zip([BernoulliNB, MultinomialNB],
                       [X_bernoulli, X_multinomial]):
         clf = cls().fit(X, y)
-        assert_equal(clf.predict(X[-1:]), 2)
-        assert_equal(clf.predict_proba([X[0]]).shape, (1, 2))
+        assert clf.predict(X[-1:]) == 2
+        assert clf.predict_proba([X[0]]).shape == (1, 2)
         assert_array_almost_equal(clf.predict_proba(X[:2]).sum(axis=1),
                                   np.array([1., 1.]), 6)
 
@@ -299,8 +297,8 @@ def test_discretenb_predict_proba():
     for cls, X in zip([BernoulliNB, MultinomialNB],
                       [X_bernoulli, X_multinomial]):
         clf = cls().fit(X, y)
-        assert_equal(clf.predict_proba(X[0:1]).shape, (1, 3))
-        assert_equal(clf.predict_proba(X[:2]).shape, (2, 3))
+        assert clf.predict_proba(X[0:1]).shape == (1, 3)
+        assert clf.predict_proba(X[:2]).shape == (2, 3)
         assert_almost_equal(np.sum(clf.predict_proba([X[1]])), 1)
         assert_almost_equal(np.sum(clf.predict_proba([X[-1]])), 1)
         assert_almost_equal(np.sum(np.exp(clf.class_log_prior_)), 1)
@@ -387,8 +385,8 @@ def test_discretenb_coef_intercept_shape(cls):
     clf = cls()
 
     clf.fit(X, y)
-    assert_equal(clf.coef_.shape, (1, 3))
-    assert_equal(clf.intercept_.shape, (1,))
+    assert clf.coef_.shape == (1, 3)
+    assert clf.intercept_.shape == (1,)
 
 
 @pytest.mark.parametrize('kind', ('dense', 'sparse'))
@@ -716,24 +714,24 @@ def test_check_accuracy_on_digits():
 
     # Multinomial NB
     scores = cross_val_score(MultinomialNB(alpha=10), X, y, cv=10)
-    assert_greater(scores.mean(), 0.86)
+    assert scores.mean() > 0.86
 
     scores = cross_val_score(MultinomialNB(alpha=10), X_3v8, y_3v8, cv=10)
-    assert_greater(scores.mean(), 0.94)
+    assert scores.mean() > 0.94
 
     # Bernoulli NB
     scores = cross_val_score(BernoulliNB(alpha=10), X > 4, y, cv=10)
-    assert_greater(scores.mean(), 0.83)
+    assert scores.mean() > 0.83
 
     scores = cross_val_score(BernoulliNB(alpha=10), X_3v8 > 4, y_3v8, cv=10)
-    assert_greater(scores.mean(), 0.92)
+    assert scores.mean() > 0.92
 
     # Gaussian NB
     scores = cross_val_score(GaussianNB(), X, y, cv=10)
-    assert_greater(scores.mean(), 0.77)
+    assert scores.mean() > 0.77
 
     scores = cross_val_score(GaussianNB(var_smoothing=0.1), X, y, cv=10)
-    assert_greater(scores.mean(), 0.89)
+    assert scores.mean() > 0.89
 
     scores = cross_val_score(GaussianNB(), X_3v8, y_3v8, cv=10)
-    assert_greater(scores.mean(), 0.86)
+    assert scores.mean() > 0.86
