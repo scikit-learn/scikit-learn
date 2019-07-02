@@ -523,8 +523,9 @@ boolean mask array or callable
         if self._remainder[2] is not None and hasattr(self, '_df_columns'):
             if len(X.columns) != len(self._df_columns) \
                or any(X.columns != self._df_columns):
-                raise ValueError('Column ordering must be equal for fit and for'
-                                 'transform when using the remainder keyword')
+                raise ValueError('Column ordering must be equal for fit '
+                                 'and for transform when using the '
+                                 'remainder keyword')
 
         X = _check_X(X)
         Xs = self._fit_transform(X, None, _transform_one, fitted=True)
