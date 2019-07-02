@@ -10,8 +10,7 @@ from scipy.sparse.csgraph import connected_components
 from sklearn.feature_extraction.image import (
     img_to_graph, grid_to_graph, extract_patches_2d,
     reconstruct_from_patches_2d, PatchExtractor, extract_patches)
-from sklearn.utils.testing import (assert_equal, assert_raises,
-                                   ignore_warnings)
+from sklearn.utils.testing import assert_raises, ignore_warnings
 
 
 def test_img_to_graph():

@@ -10,7 +10,7 @@ from io import StringIO
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils import deprecated
 from sklearn.utils.testing import (assert_raises_regex,
-                                   assert_equal, ignore_warnings,
+                                   ignore_warnings,
                                    assert_warns, assert_raises)
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks \

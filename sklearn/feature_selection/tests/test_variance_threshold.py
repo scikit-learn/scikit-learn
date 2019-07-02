@@ -1,8 +1,7 @@
 import numpy as np
 import pytest
 
-from sklearn.utils.testing import (assert_array_equal, assert_equal,
-                                   assert_raises)
+from sklearn.utils.testing import assert_array_equal, assert_raises
 
 from scipy.sparse import bsr_matrix, csc_matrix, csr_matrix
 
