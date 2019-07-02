@@ -521,7 +521,8 @@ boolean mask array or callable
 
         # No column reordering allowed for named cols combined with remainder
         if self._remainder[2] is not None and hasattr(self, '_df_columns'):
-            if any(X.columns != self._df_columns):
+            if len(X.columns) != len(self._df_columns) \
+               or any(X.columns != self._df_columns):
                 raise ValueError('Column ordering must be equal for fit and for'
                                  'transform when using the remainder keyword')
 
