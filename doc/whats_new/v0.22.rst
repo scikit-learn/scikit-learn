@@ -39,6 +39,12 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.datasets`
+.......................
+
+- |Feature| :func:`fetch_openml` now supports heterogeneous data using pandas 
+  by setting `as_frame=True`. :pr:`13902` by `Thomas Fan`_.
+
 :mod:`sklearn.ensemble`
 .......................
 
