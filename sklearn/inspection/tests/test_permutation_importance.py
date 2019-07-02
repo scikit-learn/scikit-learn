@@ -1,11 +1,15 @@
 import pytest
 import numpy as np
 
+from numpy.testing import assert_allclose
+
 from sklearn.compose import ColumnTransformer
 from sklearn.datasets import load_boston
 from sklearn.datasets import load_iris
+from sklearn.datasets import make_regression
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import LogisticRegression
 from sklearn.impute import SimpleImputer
 from sklearn.inspection import permutation_importance
@@ -116,3 +120,20 @@ def test_permutation_importance_mixed_types_pandas():
     # the correlated feature with y is the last column and should
     # have the highest importance
     assert np.all(result.importances_mean[-1] > result.importances_mean[:-1])
+
+
+def test_permutation_importance_linear_regresssion():
+    X, y = make_regression(n_samples=500, n_features=10, random_state=0)
+
+    y -= y.mean()
+    X_std = X.std(axis=0)
+    X -= X.mean(axis=0)
+    X /= X_std
+
+    lr = LinearRegression().fit(X, y)
+    expected_importances = 2 * lr.coef_**2
+    results = permutation_importance(lr, X, y,
+                                     n_repeats=50,
+                                     scoring='neg_mean_squared_error')
+    assert_allclose(expected_importances, results.importances_mean,
+                    rtol=1e-1, atol=1e-6)
