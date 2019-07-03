@@ -104,16 +104,6 @@ class ResampledTrainer(MetaEstimatorMixin, BaseEstimator):
         return fit_transform
 
     @property
-    def fit_predict(self):
-        self.estimator.predict
-
-        def fit_predict(X, y, **kwargs):
-            self.fit(X, y, **kwargs)
-            return self.estimator_.predict(X)
-
-        return fit_predict
-
-    @property
     def _estimator_type(self):
         return self.estimator._estimator_type
 
