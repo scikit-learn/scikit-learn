@@ -202,3 +202,27 @@ def newton_cg(grad_hess, func, grad, x0, args=(), tol=1e-4,
         warnings.warn("newton-cg failed to converge. Increase the "
                       "number of iterations.", ConvergenceWarning)
     return xk, k
+
+
+def _check_optimize_result(solver, result):
+    """Check the OptimizeResult for successful convergence
+
+    Parameters
+    ----------
+    solver: str
+       solver name. Currently only `lbfgs` (or `L-BFGS-B`) is supported.
+    result: OptimizeResult
+       result of the scipy.optimize.minimize function
+
+    Returns
+    -------
+    n_iter: int
+       number of iterations
+    """
+    # handle both scipy and scikit-learn solver names
+    if solver in ["lbfgs", "L-BFGS-B"]:
+        if result.status != 0:
+            warnings.warn("{} failed to converge. Increase the number "
+                          "of iterations.".format(solver), ConvergenceWarning)
+    else:
+        raise NotImplementedError

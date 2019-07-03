@@ -28,7 +28,7 @@ from ..utils.extmath import (log_logistic, safe_sparse_dot, softmax,
                              squared_norm)
 from ..utils.extmath import row_norms
 from ..utils.fixes import logsumexp
-from ..utils.optimize import newton_cg
+from ..utils.optimize import newton_cg, _check_optimize_result
 from ..utils.validation import check_X_y
 from ..utils.validation import check_is_fitted
 from ..utils import deprecated
@@ -926,16 +926,16 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         if solver == 'lbfgs':
             iprint = [-1, 50, 1, 100, 101][
                 np.searchsorted(np.array([0, 1, 2, 3]), verbose)]
-            w0, loss, info = optimize.fmin_l_bfgs_b(
-                func, w0, fprime=None,
+            opt_res = optimize.minimize(
+                func, w0, method="L-BFGS-B", jac=True,
                 args=(X, target, 1. / C, sample_weight),
-                iprint=iprint, pgtol=tol, maxiter=max_iter)
-            if info["warnflag"] == 1:
-                warnings.warn("lbfgs failed to converge. Increase the number "
-                              "of iterations.", ConvergenceWarning)
+                options={"iprint": iprint, "gtol": tol, "maxiter": max_iter}
+            )
+            _check_optimize_result(solver, opt_res)
             # In scipy <= 1.0.0, nit may exceed maxiter.
             # See https://github.com/scipy/scipy/issues/7854.
-            n_iter_i = min(info['nit'], max_iter)
+            n_iter_i = min(opt_res.nit, max_iter)
+            w0, loss = opt_res.x, opt_res.fun
         elif solver == 'newton-cg':
             args = (X, target, 1. / C, sample_weight)
             w0, n_iter_i = newton_cg(hess, func, grad, w0, args=args,
