@@ -940,11 +940,11 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
     >>> regr.fit(X, y)
     AdaBoostRegressor(n_estimators=100, random_state=0)
     >>> regr.feature_importances_
-    array([0.2788..., 0.7109..., 0.0065..., 0.0036...])
+    array([0.284..., 0.703..., 0.006..., 0.005... ])
     >>> regr.predict([[0, 0, 0, 0]])
-    array([4.7972...])
+    array([3.236...])
     >>> regr.score(X, y)
-    0.9771...
+    0.9750...
 
     See also
     --------
