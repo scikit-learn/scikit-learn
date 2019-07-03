@@ -56,7 +56,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
     >>> y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = NearestCentroid()
     >>> clf.fit(X, y)
-    NearestCentroid(metric='euclidean', shrink_threshold=None)
+    NearestCentroid()
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -89,7 +89,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Training vector, where n_samples in the number of samples and
+            Training vector, where n_samples is the number of samples and
             n_features is the number of features.
             Note that centroid shrinking cannot be used with sparse matrices.
         y : array, shape = [n_samples]

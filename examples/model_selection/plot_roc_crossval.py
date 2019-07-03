@@ -34,7 +34,6 @@ print(__doc__)
 import numpy as np
 from scipy import interp
 import matplotlib.pyplot as plt
-from itertools import cycle
 
 from sklearn import svm, datasets
 from sklearn.metrics import roc_curve, auc

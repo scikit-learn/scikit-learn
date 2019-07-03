@@ -1,6 +1,5 @@
 """ Dictionary learning
 """
-from __future__ import print_function
 # Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
 # License: BSD 3 clause
 
@@ -12,15 +11,22 @@ from math import ceil
 
 import numpy as np
 from scipy import linalg
+from joblib import Parallel, delayed, effective_n_jobs
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import Parallel, delayed, effective_n_jobs
-from ..externals.six.moves import zip
 from ..utils import (check_array, check_random_state, gen_even_slices,
                      gen_batches)
 from ..utils.extmath import randomized_svd, row_norms
 from ..utils.validation import check_is_fitted
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
+
+
+def _check_positive_coding(method, positive):
+    if positive and method in ["omp", "lars"]:
+        raise ValueError(
+                "Positive constraint not supported for '{}' "
+                "coding method.".format(method)
+            )
 
 
 def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
@@ -109,6 +115,8 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         copy_cov = False
         cov = np.dot(dictionary, X.T)
 
+    _check_positive_coding(algorithm, positive)
+
     if algorithm == 'lasso_lars':
         alpha = float(regularization) / n_features  # account for scaling
         try:
@@ -149,7 +157,7 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
             # corrects the verbosity level.
             lars = Lars(fit_intercept=False, verbose=verbose, normalize=False,
                         precompute=gram, n_nonzero_coefs=int(regularization),
-                        fit_path=False, positive=positive)
+                        fit_path=False)
             lars.fit(dictionary.T, X.T, Xy=cov)
             new_code = lars.coef_
         finally:
@@ -162,18 +170,13 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
             np.clip(new_code, 0, None, out=new_code)
 
     elif algorithm == 'omp':
-        # TODO: Should verbose argument be passed to this?
-        if positive:
-            raise ValueError(
-                "Positive constraint not supported for \"omp\" coding method."
-            )
         new_code = orthogonal_mp_gram(
             Gram=gram, Xy=cov, n_nonzero_coefs=int(regularization),
             tol=None, norms_squared=row_norms(X, squared=True),
             copy_Xy=copy_cov).T
     else:
         raise ValueError('Sparse coding method must be "lasso_lars" '
-                         '"lasso_cd",  "lasso", "threshold" or "omp", got %s.'
+                         '"lasso_cd", "lasso", "threshold" or "omp", got %s.'
                          % algorithm)
     if new_code.ndim != 2:
         return new_code.reshape(n_samples, n_components)
@@ -301,7 +304,7 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
         if regularization is None:
             regularization = 1.
 
-    if effective_n_jobs(n_jobs) or algorithm == 'threshold':
+    if effective_n_jobs(n_jobs) == 1 or algorithm == 'threshold':
         code = _sparse_encode(X,
                               dictionary, gram, cov=cov,
                               algorithm=algorithm,
@@ -521,6 +524,9 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
     if method not in ('lars', 'cd'):
         raise ValueError('Coding method %r not supported as a fit algorithm.'
                          % method)
+
+    _check_positive_coding(method, positive_code)
+
     method = 'lasso_' + method
 
     t0 = time.time()
@@ -731,6 +737,9 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
 
     if method not in ('lars', 'cd'):
         raise ValueError('Coding method not supported as a fit algorithm.')
+
+    _check_positive_coding(method, positive_code)
+
     method = 'lasso_' + method
 
     t0 = time.time()
@@ -1129,7 +1138,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
     **References:**
 
     J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
-    for sparse coding (http://www.di.ens.fr/sierra/pdfs/icml09.pdf)
+    for sparse coding (https://www.di.ens.fr/sierra/pdfs/icml09.pdf)
 
     See also
     --------
@@ -1317,7 +1326,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
     **References:**
 
     J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
-    for sparse coding (http://www.di.ens.fr/sierra/pdfs/icml09.pdf)
+    for sparse coding (https://www.di.ens.fr/sierra/pdfs/icml09.pdf)
 
     See also
     --------

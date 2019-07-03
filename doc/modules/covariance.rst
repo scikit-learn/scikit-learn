@@ -264,7 +264,7 @@ paper. It is the same algorithm as in the R ``glasso`` package.
 .. topic:: References:
 
    * Friedman et al, `"Sparse inverse covariance estimation with the
-     graphical lasso" <http://biostatistics.oxfordjournals.org/content/9/3/432.short>`_,
+     graphical lasso" <https://biostatistics.oxfordjournals.org/content/9/3/432.short>`_,
      Biostatistics 9, pp 432, 2008
 
 .. _robust_covariance:

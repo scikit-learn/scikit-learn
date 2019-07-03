@@ -12,10 +12,9 @@ from scipy.sparse import issparse, csc_matrix
 
 from ..base import TransformerMixin
 from ..utils import check_array, safe_mask
-from ..externals import six
 
 
-class SelectorMixin(six.with_metaclass(ABCMeta, TransformerMixin)):
+class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
     """
     Transformer mixin that performs feature selection given a support mask
 

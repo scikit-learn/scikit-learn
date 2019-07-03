@@ -12,8 +12,6 @@ from scipy.sparse import lil_matrix
 from sklearn.utils.multiclass import type_of_target
 
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_warns_message
@@ -53,7 +51,7 @@ def test_label_binarizer():
     # For sparse case:
     lb = LabelBinarizer(sparse_output=True)
     got = lb.fit_transform(inp)
-    assert_true(issparse(got))
+    assert issparse(got)
     assert_array_equal(lb.classes_, ["pos"])
     assert_array_equal(expected, got.toarray())
     assert_array_equal(lb.inverse_transform(got.toarray()), inp)
@@ -256,8 +254,8 @@ def test_sparse_output_multilabel_binarizer():
     # test input as iterable of iterables
     inputs = [
         lambda: [(2, 3), (1,), (1, 2)],
-        lambda: (set([2, 3]), set([1]), set([1, 2])),
-        lambda: iter([iter((2, 3)), iter((1,)), set([1, 2])]),
+        lambda: ({2, 3}, {1}, {1, 2}),
+        lambda: iter([iter((2, 3)), iter((1,)), {1, 2}]),
     ]
     indicator_mat = np.array([[0, 1, 1],
                               [1, 0, 0],
@@ -269,26 +267,26 @@ def test_sparse_output_multilabel_binarizer():
             # With fit_transform
             mlb = MultiLabelBinarizer(sparse_output=sparse_output)
             got = mlb.fit_transform(inp())
-            assert_equal(issparse(got), sparse_output)
+            assert issparse(got) == sparse_output
             if sparse_output:
                 # verify CSR assumption that indices and indptr have same dtype
-                assert_equal(got.indices.dtype, got.indptr.dtype)
+                assert got.indices.dtype == got.indptr.dtype
                 got = got.toarray()
             assert_array_equal(indicator_mat, got)
             assert_array_equal([1, 2, 3], mlb.classes_)
-            assert_equal(mlb.inverse_transform(got), inverse)
+            assert mlb.inverse_transform(got) == inverse
 
             # With fit
             mlb = MultiLabelBinarizer(sparse_output=sparse_output)
             got = mlb.fit(inp()).transform(inp())
-            assert_equal(issparse(got), sparse_output)
+            assert issparse(got) == sparse_output
             if sparse_output:
                 # verify CSR assumption that indices and indptr have same dtype
-                assert_equal(got.indices.dtype, got.indptr.dtype)
+                assert got.indices.dtype == got.indptr.dtype
                 got = got.toarray()
             assert_array_equal(indicator_mat, got)
             assert_array_equal([1, 2, 3], mlb.classes_)
-            assert_equal(mlb.inverse_transform(got), inverse)
+            assert mlb.inverse_transform(got) == inverse
 
     assert_raises(ValueError, mlb.inverse_transform,
                   csr_matrix(np.array([[0, 1, 1],
@@ -300,8 +298,8 @@ def test_multilabel_binarizer():
     # test input as iterable of iterables
     inputs = [
         lambda: [(2, 3), (1,), (1, 2)],
-        lambda: (set([2, 3]), set([1]), set([1, 2])),
-        lambda: iter([iter((2, 3)), iter((1,)), set([1, 2])]),
+        lambda: ({2, 3}, {1}, {1, 2}),
+        lambda: iter([iter((2, 3)), iter((1,)), {1, 2}]),
     ]
     indicator_mat = np.array([[0, 1, 1],
                               [1, 0, 0],
@@ -313,14 +311,14 @@ def test_multilabel_binarizer():
         got = mlb.fit_transform(inp())
         assert_array_equal(indicator_mat, got)
         assert_array_equal([1, 2, 3], mlb.classes_)
-        assert_equal(mlb.inverse_transform(got), inverse)
+        assert mlb.inverse_transform(got) == inverse
 
         # With fit
         mlb = MultiLabelBinarizer()
         got = mlb.fit(inp()).transform(inp())
         assert_array_equal(indicator_mat, got)
         assert_array_equal([1, 2, 3], mlb.classes_)
-        assert_equal(mlb.inverse_transform(got), inverse)
+        assert mlb.inverse_transform(got) == inverse
 
 
 def test_multilabel_binarizer_empty_sample():
@@ -373,6 +371,30 @@ def test_multilabel_binarizer_given_classes():
     inp = iter(inp)
     mlb = MultiLabelBinarizer(classes=[1, 3, 2])
     assert_array_equal(mlb.fit(inp).transform(inp), indicator_mat)
+
+    # ensure a ValueError is thrown if given duplicate classes
+    err_msg = "The classes argument contains duplicate classes. Remove " \
+              "these duplicates before passing them to MultiLabelBinarizer."
+    mlb = MultiLabelBinarizer(classes=[1, 3, 2, 3])
+    assert_raise_message(ValueError, err_msg, mlb.fit, inp)
+
+
+def test_multilabel_binarizer_multiple_calls():
+    inp = [(2, 3), (1,), (1, 2)]
+    indicator_mat = np.array([[0, 1, 1],
+                              [1, 0, 0],
+                              [1, 0, 1]])
+
+    indicator_mat2 = np.array([[0, 1, 1],
+                               [1, 0, 0],
+                               [1, 1, 0]])
+
+    # first call
+    mlb = MultiLabelBinarizer(classes=[1, 3, 2])
+    assert_array_equal(mlb.fit_transform(inp), indicator_mat)
+    # second call change class
+    mlb.classes = [1, 2, 3]
+    assert_array_equal(mlb.fit_transform(inp), indicator_mat2)
 
 
 def test_multilabel_binarizer_same_length_sequence():
@@ -474,7 +496,7 @@ def check_binarized_results(y, classes, pos_label, neg_label, expected):
                                    pos_label=pos_label,
                                    sparse_output=sparse_output)
         assert_array_equal(toarray(binarized), expected)
-        assert_equal(issparse(binarized), sparse_output)
+        assert issparse(binarized) == sparse_output
 
         # check inverse
         y_type = type_of_target(y)
@@ -496,10 +518,10 @@ def check_binarized_results(y, classes, pos_label, neg_label, expected):
                             sparse_output=sparse_output)
         binarized = lb.fit_transform(y)
         assert_array_equal(toarray(binarized), expected)
-        assert_equal(issparse(binarized), sparse_output)
+        assert issparse(binarized) == sparse_output
         inverse_output = lb.inverse_transform(binarized)
         assert_array_equal(toarray(inverse_output), toarray(y))
-        assert_equal(issparse(inverse_output), issparse(y))
+        assert issparse(inverse_output) == issparse(y)
 
 
 def test_label_binarize_binary():
@@ -582,3 +604,24 @@ def test_encode_util(values, expected):
     assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
     _, encoded = _encode(values, uniques, encode=True)
     assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
+
+
+def test_encode_check_unknown():
+    # test for the check_unknown parameter of _encode()
+    uniques = np.array([1, 2, 3])
+    values = np.array([1, 2, 3, 4])
+
+    # Default is True, raise error
+    with pytest.raises(ValueError,
+                       match='y contains previously unseen labels'):
+        _encode(values, uniques, encode=True, check_unknown=True)
+
+    # dont raise error if False
+    _encode(values, uniques, encode=True, check_unknown=False)
+
+    # parameter is ignored for object dtype
+    uniques = np.array(['a', 'b', 'c'], dtype=object)
+    values = np.array(['a', 'b', 'c', 'd'], dtype=object)
+    with pytest.raises(ValueError,
+                       match='y contains previously unseen labels'):
+        _encode(values, uniques, encode=True, check_unknown=False)

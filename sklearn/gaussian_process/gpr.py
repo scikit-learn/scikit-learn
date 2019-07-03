@@ -11,15 +11,16 @@ import numpy as np
 from scipy.linalg import cholesky, cho_solve, solve_triangular
 from scipy.optimize import fmin_l_bfgs_b
 
-from sklearn.base import BaseEstimator, RegressorMixin, clone
-from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
-from sklearn.utils import check_random_state
-from sklearn.utils.validation import check_X_y, check_array
-from sklearn.utils.deprecation import deprecated
-from sklearn.exceptions import ConvergenceWarning
+from ..base import BaseEstimator, RegressorMixin, clone
+from ..base import MultiOutputMixin
+from .kernels import RBF, ConstantKernel as C
+from ..utils import check_random_state
+from ..utils.validation import check_X_y, check_array
+from ..exceptions import ConvergenceWarning
 
 
-class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
+class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
+                               MultiOutputMixin):
     """Gaussian process regression (GPR).
 
     The implementation is based on Algorithm 2.1 of Gaussian Processes
@@ -141,9 +142,9 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
     >>> kernel = DotProduct() + WhiteKernel()
     >>> gpr = GaussianProcessRegressor(kernel=kernel,
     ...         random_state=0).fit(X, y)
-    >>> gpr.score(X, y) # doctest: +ELLIPSIS
+    >>> gpr.score(X, y)
     0.3680...
-    >>> gpr.predict(X[:2,:], return_std=True) # doctest: +ELLIPSIS
+    >>> gpr.predict(X[:2,:], return_std=True)
     (array([653.0..., 592.1...]), array([316.6..., 316.6...]))
 
     """
@@ -157,18 +158,6 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         self.normalize_y = normalize_y
         self.copy_X_train = copy_X_train
         self.random_state = random_state
-
-    @property
-    @deprecated("Attribute rng was deprecated in version 0.19 and "
-                "will be removed in 0.21.")
-    def rng(self):
-        return self._rng
-
-    @property
-    @deprecated("Attribute y_train_mean was deprecated in version 0.19 and "
-                "will be removed in 0.21.")
-    def y_train_mean(self):
-        return self._y_train_mean
 
     def fit(self, X, y):
         """Fit Gaussian process regression model.
@@ -485,3 +474,6 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
             raise ValueError("Unknown optimizer %s." % self.optimizer)
 
         return theta_opt, func_min
+
+    def _more_tags(self):
+        return {'requires_fit': False}

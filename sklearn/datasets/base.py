@@ -6,8 +6,6 @@ Base IO code for all datasets
 #               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #               2010 Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
-from __future__ import print_function
-
 import os
 import csv
 import sys
@@ -22,7 +20,7 @@ from ..utils import check_random_state
 
 import numpy as np
 
-from sklearn.externals.six.moves.urllib.request import urlretrieve
+from urllib.request import urlretrieve
 
 RemoteFileMetadata = namedtuple('RemoteFileMetadata',
                                 ['filename', 'url', 'checksum'])
@@ -527,7 +525,7 @@ def load_digits(n_class=10, return_X_y=False):
         .. versionadded:: 0.18
 
     This is a copy of the test set of the UCI ML hand-written digits datasets
-    http://archive.ics.uci.edu/ml/datasets/Optical+Recognition+of+Handwritten+Digits
+    https://archive.ics.uci.edu/ml/datasets/Optical+Recognition+of+Handwritten+Digits
 
     Examples
     --------
@@ -547,7 +545,7 @@ def load_digits(n_class=10, return_X_y=False):
                       delimiter=',')
     with open(join(module_path, 'descr', 'digits.rst')) as f:
         descr = f.read()
-    target = data[:, -1].astype(np.int)
+    target = data[:, -1].astype(np.int, copy=False)
     flat_data = data[:, :-1]
     images = flat_data.view()
     images.shape = (-1, 8, 8)
@@ -570,12 +568,12 @@ def load_digits(n_class=10, return_X_y=False):
 def load_diabetes(return_X_y=False):
     """Load and return the diabetes dataset (regression).
 
-    ==============      ==================
-    Samples total       442
-    Dimensionality      10
-    Features            real, -.2 < x < .2
-    Targets             integer 25 - 346
-    ==============      ==================
+    ==============   ==================
+    Samples total    442
+    Dimensionality   10
+    Features         real, -.2 < x < .2
+    Targets          integer 25 - 346
+    ==============   ==================
 
     Read more in the :ref:`User Guide <diabetes_dataset>`.
 
@@ -623,12 +621,12 @@ def load_diabetes(return_X_y=False):
 def load_linnerud(return_X_y=False):
     """Load and return the linnerud dataset (multivariate regression).
 
-    ==============    ============================
-    Samples total     20
-    Dimensionality    3 (for both data and target)
-    Features          integer
-    Targets           integer
-    ==============    ============================
+    ==============   ============================
+    Samples total    20
+    Dimensionality   3 (for both data and target)
+    Features         integer
+    Targets          integer
+    ==============   ============================
 
     Read more in the :ref:`User Guide <linnerrud_dataset>`.
 
@@ -644,8 +642,8 @@ def load_linnerud(return_X_y=False):
     -------
     data : Bunch
         Dictionary-like object, the interesting attributes are: 'data' and
-        'targets', the two multivariate datasets, with 'data' corresponding to
-        the exercise and 'targets' corresponding to the physiological
+        'target', the two multivariate datasets, with 'data' corresponding to
+        the exercise and 'target' corresponding to the physiological
         measurements, as well as 'feature_names' and 'target_names'.
         In addition, you will also have access to 'data_filename',
         the physical location of linnerud data csv dataset, and
@@ -687,12 +685,12 @@ def load_linnerud(return_X_y=False):
 def load_boston(return_X_y=False):
     """Load and return the boston house-prices dataset (regression).
 
-    ==============     ==============
-    Samples total                 506
-    Dimensionality                 13
-    Features           real, positive
-    Targets             real 5. - 50.
-    ==============     ==============
+    ==============   ==============
+    Samples total               506
+    Dimensionality               13
+    Features         real, positive
+    Targets           real 5. - 50.
+    ==============   ==============
 
     Read more in the :ref:`User Guide <boston_dataset>`.
 
@@ -796,7 +794,7 @@ def load_sample_images():
     with open(join(module_path, 'README.txt')) as f:
         descr = f.read()
     filenames = [join(module_path, filename)
-                 for filename in os.listdir(module_path)
+                 for filename in sorted(os.listdir(module_path))
                  if filename.endswith(".jpg")]
     # Load image data for each image in the source folder.
     images = [imread(filename) for filename in filenames]
@@ -812,7 +810,7 @@ def load_sample_image(image_name):
     Read more in the :ref:`User Guide <sample_images>`.
 
     Parameters
-    -----------
+    ----------
     image_name : {`china.jpg`, `flower.jpg`}
         The name of the sample image loaded
 
@@ -822,7 +820,7 @@ def load_sample_image(image_name):
         The image as a numpy array: height x width x color
 
     Examples
-    ---------
+    --------
 
     >>> from sklearn.datasets import load_sample_image
     >>> china = load_sample_image('china.jpg')   # doctest: +SKIP
@@ -897,7 +895,7 @@ def _fetch_remote(remote, dirname=None):
     downloaded file.
 
     Parameters
-    -----------
+    ----------
     remote : RemoteFileMetadata
         Named tuple containing remote dataset meta information: url, filename
         and checksum

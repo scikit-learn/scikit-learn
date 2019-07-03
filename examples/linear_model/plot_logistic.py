@@ -22,6 +22,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn import linear_model
+from scipy.special import expit
 
 # General a toy dataset:s it's just a straight line with some Gaussian noise:
 xmin, xmax = -5, 5
@@ -35,7 +36,7 @@ X += .3 * np.random.normal(size=n_samples)
 X = X[:, np.newaxis]
 
 # Fit the classifier
-clf = linear_model.LogisticRegression(C=1e5, solver='lbfgs')
+clf = linear_model.LogisticRegression(C=1e5)
 clf.fit(X, y)
 
 # and plot the result
@@ -44,12 +45,7 @@ plt.clf()
 plt.scatter(X.ravel(), y, color='black', zorder=20)
 X_test = np.linspace(-5, 10, 300)
 
-
-def model(x):
-    return 1 / (1 + np.exp(-x))
-
-
-loss = model(X_test * clf.coef_ + clf.intercept_).ravel()
+loss = expit(X_test * clf.coef_ + clf.intercept_).ravel()
 plt.plot(X_test, loss, color='red', linewidth=3)
 
 ols = linear_model.LinearRegression()

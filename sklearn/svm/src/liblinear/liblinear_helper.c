@@ -7,8 +7,9 @@
  * expected to be an array of length nrow*ncol.
  *
  * Typically the matrix will be dense, so we speed up the routine for
- * this case. We create a temporary array temp that collects non-zero
- * elements and after we just memcpy that to the proper array.
+ * this case. We create an array big enough to hold the largest possible
+ * number of non-zero elements and after collecting them we just call
+ * realloc to shrink the array and reclaim any unused memory.
  *
  * Special care must be taken with indices, since libsvm indices start
  * at 1 and not at 0.
@@ -20,20 +21,22 @@ static struct feature_node **dense_to_sparse(double *x, npy_intp *dims,
 {
     struct feature_node **sparse;
     int i, j;                           /* number of nonzero elements in row i */
-    struct feature_node *temp;          /* stack for nonzero elements */
     struct feature_node *T;             /* pointer to the top of the stack */
     int count;
 
     sparse = malloc (dims[0] * sizeof(struct feature_node *));
     if (sparse == NULL)
-        goto sparse_error;
-
-    temp = malloc ((dims[1]+2) * sizeof(struct feature_node));
-    if (temp == NULL)
-        goto temp_error;
+        return NULL;
 
     for (i=0; i<dims[0]; ++i) {
-        T = temp; /* reset stack pointer */
+        /* allocate stack for nonzero elements */
+        T = sparse[i] = malloc((dims[1]+2) * sizeof(struct feature_node));
+        if (T == NULL) {
+            for (j=0; j<i; j++)
+                free(sparse[j]);
+            free(sparse);
+            return NULL;
+        }
 
         for (j=1; j<=dims[1]; ++j) {
             if (*x != 0) {
@@ -55,53 +58,38 @@ static struct feature_node **dense_to_sparse(double *x, npy_intp *dims,
         T->index = -1;
         ++ T;
 
-        /* allocate memory and copy collected items*/
-        count = T - temp;
-        sparse[i] = malloc(count * sizeof(struct feature_node));
-        if (sparse[i] == NULL) {
-            int k;
-            for (k=0; k<i; k++)
-                free(sparse[k]);
-            goto sparse_i_error;
-        }
-        memcpy(sparse[i], temp, count * sizeof(struct feature_node));
+        /* shrink stack to size */
+        count = T - sparse[i];
+        sparse[i] = realloc(sparse[i], count * sizeof(struct feature_node));
     }
 
-    free(temp);
     return sparse;
-
-sparse_i_error:
-    free(temp);
-temp_error:
-    free(sparse);
-sparse_error:
-    return NULL;
 }
 
 
 /*
  * Convert scipy.sparse.csr to libsvm's sparse data structure
  */
-static struct feature_node **csr_to_sparse(double *values,
-        npy_intp *shape_indices, int *indices, npy_intp *shape_indptr,
-        int *indptr, double bias, int n_features)
+static struct feature_node **csr_to_sparse(double *values, int *indices,
+        int *indptr, int n_samples, int n_features, double bias)
 {
     struct feature_node **sparse, *temp;
     int i, j=0, k=0, n;
+    int have_bias = (bias > 0);
 
-    sparse = malloc ((shape_indptr[0]-1)* sizeof(struct feature_node *));
+    sparse = malloc (n_samples * sizeof(struct feature_node *));
     if (sparse == NULL)
         return NULL;
 
-    for (i=0; i<shape_indptr[0]-1; ++i) {
+    for (i=0; i<n_samples; ++i) {
         n = indptr[i+1] - indptr[i]; /* count elements in row i */
 
-        sparse[i] = malloc ((n+2) * sizeof(struct feature_node));
+        sparse[i] = malloc ((n+have_bias+1) * sizeof(struct feature_node));
         if (sparse[i] == NULL) {
-            int l;
-            for (l=0; l<i; l++)
-                free(sparse[l]);
-            break;
+            for (j=0; j<i; ++j)
+                free(sparse[j]);
+            free(sparse);
+            return NULL;
         }
 
         temp = sparse[i];
@@ -111,7 +99,7 @@ static struct feature_node **csr_to_sparse(double *values,
             ++k;
         }
 
-        if (bias > 0) {
+        if (have_bias) {
             temp[j].value = bias;
             temp[j].index = n_features + 1;
             ++j;
@@ -151,14 +139,14 @@ struct problem * set_problem(char *X,char *Y, npy_intp *dims, double bias, char*
     return problem;
 }
 
-struct problem * csr_set_problem (char *values, npy_intp *n_indices,
-	char *indices, npy_intp *n_indptr, char *indptr, char *Y,
-        npy_intp n_features, double bias, char *sample_weight) {
+struct problem * csr_set_problem (char *values, char *indices, char *indptr,
+        char *Y, int n_samples, int n_features, double bias,
+        char *sample_weight) {
 
     struct problem *problem;
     problem = malloc (sizeof (struct problem));
     if (problem == NULL) return NULL;
-    problem->l = (int) n_indptr[0] -1;
+    problem->l = n_samples;
     problem->sample_weight = (double *) sample_weight;
 
     if (bias > 0){
@@ -168,8 +156,8 @@ struct problem * csr_set_problem (char *values, npy_intp *n_indices,
     }
 
     problem->y = (double *) Y;
-    problem->x = csr_to_sparse((double *) values, n_indices, (int *) indices,
-			n_indptr, (int *) indptr, bias, n_features);
+    problem->x = csr_to_sparse((double *) values, (int *) indices,
+                        (int *) indptr, n_samples, n_features, bias);
     problem->bias = bias;
     problem->sample_weight = sample_weight;
 

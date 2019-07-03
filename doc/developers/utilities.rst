@@ -30,9 +30,10 @@ should be used when applicable.
 - :func:`as_float_array`: convert input to an array of floats.  If a sparse
   matrix is passed, a sparse matrix will be returned.
 
-- :func:`check_array`: convert input to 2d array, raise error on sparse
-  matrices.  Allowed sparse matrix formats can be given optionally, as well as
-  allowing 1d or nd arrays.  Calls :func:`assert_all_finite` by default.
+- :func:`check_array`: check that input is a 2D array, raise error on sparse
+  matrices. Allowed sparse matrix formats can be given optionally, as well as
+  allowing 1D or N-dimensional arrays. Calls :func:`assert_all_finite` by
+  default.
 
 - :func:`check_X_y`: check that X and y have consistent length, calls
   check_array on X, and column_or_1d on y. For multilabel classification or
@@ -172,12 +173,6 @@ Graph Routines
   connectivity matrix is a ``scipy.sparse.csr_matrix``.
 
 
-Benchmarking
-------------
-
-- :func:`bench.total_seconds`:  Used in ``benchmarks/bench_glm.py``.
-
-
 Testing Functions
 =================
 
@@ -186,9 +181,6 @@ Testing Functions
 
 - :func:`testing.assert_raise_message`: Assertions for checking the
   error raise message.
-
-- :func:`testing.mock_mldata_urlopen`: Mocks the urlopen function to fake
-  requests to mldata.org. Used in tests of :mod:`sklearn.datasets`.
 
 - :func:`testing.all_estimators` : returns a list of all estimators in
   scikit-learn to test for consistent behavior and interfaces.

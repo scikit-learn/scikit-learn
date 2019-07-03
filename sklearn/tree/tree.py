@@ -14,9 +14,6 @@ randomized trees. Single and multi-output problems are both handled.
 #
 # License: BSD 3 clause
 
-from __future__ import division
-
-
 import numbers
 import warnings
 from abc import ABCMeta
@@ -30,7 +27,7 @@ from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import is_classifier
-from ..externals import six
+from ..base import MultiOutputMixin
 from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import compute_sample_weight
@@ -72,7 +69,7 @@ SPARSE_SPLITTERS = {"best": _splitter.BestSparseSplitter,
 # =============================================================================
 
 
-class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
+class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
     """Base class for decision trees.
 
     Warning: This class should not be used directly.
@@ -107,6 +104,21 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.min_impurity_split = min_impurity_split
         self.class_weight = class_weight
         self.presort = presort
+
+    def get_depth(self):
+        """Returns the depth of the decision tree.
+
+        The depth of a tree is the maximum distance between the root
+        and any leaf.
+        """
+        check_is_fitted(self, 'tree_')
+        return self.tree_.max_depth
+
+    def get_n_leaves(self):
+        """Returns the number of leaves of the decision tree.
+        """
+        check_is_fitted(self, 'tree_')
+        return self.tree_.n_leaves
 
     def fit(self, X, y, sample_weight=None, check_input=True,
             X_idx_sorted=None):
@@ -173,7 +185,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         max_leaf_nodes = (-1 if self.max_leaf_nodes is None
                           else self.max_leaf_nodes)
 
-        if isinstance(self.min_samples_leaf, (numbers.Integral, np.integer)):
+        if isinstance(self.min_samples_leaf, numbers.Integral):
             if not 1 <= self.min_samples_leaf:
                 raise ValueError("min_samples_leaf must be at least 1 "
                                  "or in (0, 0.5], got %s"
@@ -186,7 +198,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                                  % self.min_samples_leaf)
             min_samples_leaf = int(ceil(self.min_samples_leaf * n_samples))
 
-        if isinstance(self.min_samples_split, (numbers.Integral, np.integer)):
+        if isinstance(self.min_samples_split, numbers.Integral):
             if not 2 <= self.min_samples_split:
                 raise ValueError("min_samples_split must be an integer "
                                  "greater than 1 or a float in (0.0, 1.0]; "
@@ -204,7 +216,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         min_samples_split = max(min_samples_split, 2 * min_samples_leaf)
 
-        if isinstance(self.max_features, six.string_types):
+        if isinstance(self.max_features, str):
             if self.max_features == "auto":
                 if is_classification:
                     max_features = max(1, int(np.sqrt(self.n_features_)))
@@ -220,7 +232,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                     'values are "auto", "sqrt" or "log2".')
         elif self.max_features is None:
             max_features = self.n_features_
-        elif isinstance(self.max_features, (numbers.Integral, np.integer)):
+        elif isinstance(self.max_features, numbers.Integral):
             max_features = self.max_features
         else:  # float
             if self.max_features > 0.0:
@@ -240,7 +252,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise ValueError("max_depth must be greater than zero. ")
         if not (0 < max_features <= self.n_features_):
             raise ValueError("max_features must be in (0, n_features]")
-        if not isinstance(max_leaf_nodes, (numbers.Integral, np.integer)):
+        if not isinstance(max_leaf_nodes, numbers.Integral):
             raise ValueError("max_leaf_nodes must be integral number but was "
                              "%r" % max_leaf_nodes)
         if -1 < max_leaf_nodes < 2:
@@ -276,8 +288,9 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                                np.sum(sample_weight))
 
         if self.min_impurity_split is not None:
-            warnings.warn("The min_impurity_split parameter is deprecated and"
-                          " will be removed in version 0.21. "
+            warnings.warn("The min_impurity_split parameter is deprecated. "
+                          "Its default value will change from 1e-7 to 0 in "
+                          "version 0.23, and it will be removed in 0.25. "
                           "Use the min_impurity_decrease parameter instead.",
                           DeprecationWarning)
             min_impurity_split = self.min_impurity_split
@@ -422,8 +435,9 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                 return self.classes_.take(np.argmax(proba, axis=1), axis=0)
 
             else:
-                predictions = np.zeros((n_samples, self.n_outputs_))
-
+                class_type = self.classes_[0].dtype
+                predictions = np.zeros((n_samples, self.n_outputs_),
+                                       dtype=class_type)
                 for k in range(self.n_outputs_):
                     predictions[:, k] = self.classes_[k].take(
                         np.argmax(proba[:, k], axis=1),
@@ -612,14 +626,15 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float,
+    min_impurity_split : float, (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
         .. deprecated:: 0.19
            ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
-           Use ``min_impurity_decrease`` instead.
+           ``min_impurity_decrease`` in 0.19. The default value of
+           ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
+           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
     class_weight : dict, list of dicts, "balanced" or None, default=None
         Weights associated with classes in the form ``{class_label: weight}``.
@@ -712,7 +727,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
            Learning", Springer, 2009.
 
     .. [4] L. Breiman, and A. Cutler, "Random Forests",
-           http://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm
+           https://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm
 
     Examples
     --------
@@ -741,7 +756,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                  min_impurity_split=None,
                  class_weight=None,
                  presort=False):
-        super(DecisionTreeClassifier, self).__init__(
+        super().__init__(
             criterion=criterion,
             splitter=splitter,
             max_depth=max_depth,
@@ -792,7 +807,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         self : object
         """
 
-        super(DecisionTreeClassifier, self).fit(
+        super().fit(
             X, y,
             sample_weight=sample_weight,
             check_input=check_input,
@@ -984,14 +999,15 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float,
+    min_impurity_split : float, (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
         .. deprecated:: 0.19
            ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
-           Use ``min_impurity_decrease`` instead.
+           ``min_impurity_decrease`` in 0.19. The default value of
+           ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
+           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
     presort : bool, optional (default=False)
         Whether to presort the data to speed up the finding of best splits in
@@ -1055,7 +1071,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
            Learning", Springer, 2009.
 
     .. [4] L. Breiman, and A. Cutler, "Random Forests",
-           http://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm
+           https://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm
 
     Examples
     --------
@@ -1083,7 +1099,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
                  presort=False):
-        super(DecisionTreeRegressor, self).__init__(
+        super().__init__(
             criterion=criterion,
             splitter=splitter,
             max_depth=max_depth,
@@ -1132,7 +1148,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         self : object
         """
 
-        super(DecisionTreeRegressor, self).fit(
+        super().fit(
             X, y,
             sample_weight=sample_weight,
             check_input=check_input,
@@ -1246,14 +1262,15 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float,
+    min_impurity_split : float, (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
         .. deprecated:: 0.19
            ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
-           Use ``min_impurity_decrease`` instead.
+           ``min_impurity_decrease`` in 0.19. The default value of
+           ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
+           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
     class_weight : dict, list of dicts, "balanced" or None, default=None
         Weights associated with classes in the form ``{class_label: weight}``.
@@ -1308,7 +1325,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
                  class_weight=None):
-        super(ExtraTreeClassifier, self).__init__(
+        super().__init__(
             criterion=criterion,
             splitter=splitter,
             max_depth=max_depth,
@@ -1429,14 +1446,15 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float,
+    min_impurity_split : float, (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
         .. deprecated:: 0.19
            ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
-           Use ``min_impurity_decrease`` instead.
+           ``min_impurity_decrease`` in 0.19. The default value of
+           ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
+           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
     max_leaf_nodes : int or None, optional (default=None)
         Grow a tree with ``max_leaf_nodes`` in best-first fashion.
@@ -1475,7 +1493,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
                  max_leaf_nodes=None):
-        super(ExtraTreeRegressor, self).__init__(
+        super().__init__(
             criterion=criterion,
             splitter=splitter,
             max_depth=max_depth,

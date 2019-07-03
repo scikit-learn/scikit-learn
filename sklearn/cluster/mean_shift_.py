@@ -16,16 +16,14 @@ Seeding is performed using a binning technique for scalability.
 
 import numpy as np
 import warnings
+from joblib import Parallel, delayed
 
 from collections import defaultdict
-from ..externals import six
 from ..utils.validation import check_is_fitted
 from ..utils import check_random_state, gen_batches, check_array
 from ..base import BaseEstimator, ClusterMixin
 from ..neighbors import NearestNeighbors
 from ..metrics.pairwise import pairwise_distances_argmin
-from ..utils import Parallel
-from ..utils import delayed
 
 
 def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0,
@@ -184,8 +182,8 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     if bandwidth is None:
         bandwidth = estimate_bandwidth(X, n_jobs=n_jobs)
     elif bandwidth <= 0:
-        raise ValueError("bandwidth needs to be greater than zero or None,\
-            got %f" % bandwidth)
+        raise ValueError("bandwidth needs to be greater than zero or None,"
+                         " got %f" % bandwidth)
     if seeds is None:
         if bin_seeding:
             seeds = get_bin_seeds(X, bandwidth, min_bin_freq)
@@ -285,7 +283,7 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
         bin_sizes[tuple(binned_point)] += 1
 
     # Select only those bins as seeds which have enough members
-    bin_seeds = np.array([point for point, freq in six.iteritems(bin_sizes) if
+    bin_seeds = np.array([point for point, freq in bin_sizes.items() if
                           freq >= min_bin_freq], dtype=np.float32)
     if len(bin_seeds) == len(X):
         warnings.warn("Binning data failed with provided bin_size=%f,"
@@ -368,9 +366,8 @@ class MeanShift(BaseEstimator, ClusterMixin):
     array([1, 1, 1, 0, 0, 0])
     >>> clustering.predict([[0, 0], [5, 5]])
     array([1, 0])
-    >>> clustering # doctest: +NORMALIZE_WHITESPACE
-    MeanShift(bandwidth=2, bin_seeding=False, cluster_all=True, min_bin_freq=1,
-         n_jobs=None, seeds=None)
+    >>> clustering
+    MeanShift(bandwidth=2)
 
     Notes
     -----
@@ -410,7 +407,7 @@ class MeanShift(BaseEstimator, ClusterMixin):
         """Perform clustering.
 
         Parameters
-        -----------
+        ----------
         X : array-like, shape=[n_samples, n_features]
             Samples to cluster.
 
