@@ -9,7 +9,7 @@ from operator import itemgetter
 
 import numpy as np
 from scipy.linalg import cholesky, cho_solve, solve_triangular
-from scipy import optimize
+import scipy.optimize
 
 from ..base import BaseEstimator, RegressorMixin, clone
 from ..base import MultiOutputMixin
@@ -17,7 +17,6 @@ from .kernels import RBF, ConstantKernel as C
 from ..utils import check_random_state
 from ..utils.validation import check_X_y, check_array
 from ..utils.optimize import _check_optimize_result
-from ..exceptions import ConvergenceWarning
 
 
 class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
@@ -78,7 +77,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
                 # the corresponding value of the target function.
                 return theta_opt, func_min
 
-        Per default, the 'L-BGFS-B' algorithm from scipy.optimize.maximize
+        Per default, the 'L-BGFS-B' algorithm from scipy.optimize.minimize
         is used. If None is passed, the kernel's parameters are kept fixed.
         Available internal optimizers are::
 
@@ -462,7 +461,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
 
     def _constrained_optimization(self, obj_func, initial_theta, bounds):
         if self.optimizer == "fmin_l_bfgs_b":
-            opt_res = optimize.minimize(
+            opt_res = scipy.optimize.minimize(
                 obj_func, initial_theta, method="L-BFGS-B", jac=True,
                 bounds=bounds)
             _check_optimize_result("lbfgs", opt_res)

@@ -8,7 +8,7 @@ from operator import itemgetter
 
 import numpy as np
 from scipy.linalg import cholesky, cho_solve, solve
-from scipy import optimize
+import scipy.optimize
 from scipy.special import erf, expit
 
 from ..base import BaseEstimator, ClassifierMixin, clone
@@ -73,7 +73,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
                 # the corresponding value of the target function.
                 return theta_opt, func_min
 
-        Per default, the 'fmin_l_bfgs_b' algorithm from scipy.optimize
+        Per default, the 'L-BFGS-B' algorithm from scipy.optimize.maximize
         is used. If None is passed, the kernel's parameters are kept fixed.
         Available internal optimizers are::
 
@@ -425,7 +425,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
     def _constrained_optimization(self, obj_func, initial_theta, bounds):
         if self.optimizer == "fmin_l_bfgs_b":
-            opt_res = optimize.minimize(
+            opt_res = scipy.optimize.minimize(
                 obj_func, initial_theta, method="L-BFGS-B", jac=True,
                 bounds=bounds)
             _check_optimize_result("lbfgs", opt_res)
