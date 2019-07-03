@@ -74,7 +74,7 @@ class MockClassifier(object):
     def __init__(self, foo_param=0):
         self.foo_param = foo_param
 
-    def fit(self, X, Y):
+    def fit(self, X, y, feature_names_in=None):
         assert len(X) == len(Y)
         self.classes_ = np.unique(Y)
         return self
@@ -538,7 +538,7 @@ class BrokenClassifier(BaseEstimator):
     def __init__(self, parameter=None):
         self.parameter = parameter
 
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         assert not hasattr(self, 'has_been_fit_')
         self.has_been_fit_ = True
 

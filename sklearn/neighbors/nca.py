@@ -168,7 +168,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         self.verbose = verbose
         self.random_state = random_state
 
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         """Fit the model according to the given training data.
 
         Parameters

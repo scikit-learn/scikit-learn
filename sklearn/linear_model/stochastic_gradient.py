@@ -104,7 +104,7 @@ class BaseSGD(BaseEstimator, SparseCoefMixin, metaclass=ABCMeta):
         return self
 
     @abstractmethod
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         """Fit model."""
 
     def _validate_params(self, set_max_iter=True, for_partial_fit=False):

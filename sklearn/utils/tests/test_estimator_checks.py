@@ -43,7 +43,7 @@ class CorrectNotFittedError(ValueError):
 
 
 class BaseBadClassifier(BaseEstimator, ClassifierMixin):
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         return self
 
     def predict(self, X):
@@ -145,13 +145,13 @@ class ModifiesAnotherValue(BaseEstimator):
 
 
 class NoCheckinPredict(BaseBadClassifier):
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         X, y = check_X_y(X, y)
         return self
 
 
 class NoSparseClassifier(BaseBadClassifier):
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc'])
         if sp.issparse(X):
             raise ValueError("Nonsensical Error")
@@ -163,7 +163,7 @@ class NoSparseClassifier(BaseBadClassifier):
 
 
 class CorrectNotFittedErrorClassifier(BaseBadClassifier):
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         X, y = check_X_y(X, y)
         self.coef_ = np.ones(X.shape[1])
         return self
@@ -197,7 +197,7 @@ class BadBalancedWeightsClassifier(BaseBadClassifier):
     def __init__(self, class_weight=None):
         self.class_weight = class_weight
 
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         from sklearn.preprocessing import LabelEncoder
         from sklearn.utils import compute_class_weight
 
@@ -226,7 +226,7 @@ class BadTransformerWithoutMixin(BaseEstimator):
 
 
 class NotInvariantPredict(BaseEstimator):
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         # Convert data
         X, y = check_X_y(X, y,
                          accept_sparse=("csr", "csc"),
@@ -243,7 +243,7 @@ class NotInvariantPredict(BaseEstimator):
 
 
 class LargeSparseNotSupportedClassifier(BaseEstimator):
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         X, y = check_X_y(X, y,
                          accept_sparse=("csr", "csc", "coo"),
                          accept_large_sparse=True,
@@ -294,7 +294,7 @@ class TaggedBinaryClassifier(UntaggedBinaryClassifier):
 
 class RequiresPositiveYRegressor(LinearRegression):
 
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         X, y = check_X_y(X, y)
         if (y <= 0).any():
             raise ValueError('negative y values not supported!')
@@ -311,7 +311,7 @@ def test_check_fit_score_takes_y_works_on_deprecated_fit():
     class TestEstimatorWithDeprecatedFitMethod(BaseEstimator):
         @deprecated("Deprecated for the purpose of testing "
                     "check_fit_score_takes_y")
-        def fit(self, X, y):
+        def fit(self, X, y, feature_names_in=None):
             return self
 
     check_fit_score_takes_y("test", TestEstimatorWithDeprecatedFitMethod())

@@ -108,7 +108,7 @@ def _check_estimator(estimator):
 
 class _ConstantPredictor(BaseEstimator):
 
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         self.y_ = y
         return self
 
@@ -180,7 +180,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
         self.estimator = estimator
         self.n_jobs = n_jobs
 
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         """Fit underlying estimators.
 
         Parameters
@@ -479,7 +479,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         self.estimator = estimator
         self.n_jobs = n_jobs
 
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         """Fit underlying estimators.
 
         Parameters
@@ -706,7 +706,7 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         self.random_state = random_state
         self.n_jobs = n_jobs
 
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         """Fit underlying estimators.
 
         Parameters

@@ -60,7 +60,7 @@ class NoFit:
 
 class NoTrans(NoFit):
 
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names=None):
         return self
 
     def get_params(self, deep=False):
@@ -95,7 +95,7 @@ class Mult(BaseEstimator):
     def __init__(self, mult=1):
         self.mult = mult
 
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         return self
 
     def transform(self, X):
@@ -139,7 +139,7 @@ class FitParamT(BaseEstimator):
 class DummyTransf(Transf):
     """Transformer which store the column means"""
 
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         self.means_ = np.mean(X, axis=0)
         # store timestamp to figure out whether the result of 'fit' has been
         # cached or not
@@ -150,7 +150,7 @@ class DummyTransf(Transf):
 class DummyEstimatorParams(BaseEstimator):
     """Mock classifier that takes params on predict"""
 
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         return self
 
     def predict(self, X, got_attribute=False):

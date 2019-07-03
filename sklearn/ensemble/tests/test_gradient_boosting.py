@@ -1335,7 +1335,7 @@ class _NoSampleWeightWrapper(BaseEstimator):
     def __init__(self, est):
         self.est = est
 
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         self.est.fit(X, y)
 
     def predict(self, X):

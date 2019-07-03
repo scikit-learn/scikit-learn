@@ -80,7 +80,7 @@ def test_sparse_classification():
     class CustomSVC(SVC):
         """SVC variant that records the nature of the training set"""
 
-        def fit(self, X, y):
+        def fit(self, X, y, feature_names_in=None):
             super().fit(X, y)
             self.data_type_ = type(X)
             return self
@@ -166,7 +166,7 @@ def test_sparse_regression():
     class CustomSVR(SVR):
         """SVC variant that records the nature of the training set"""
 
-        def fit(self, X, y):
+        def fit(self, X, y, feature_names_in=None):
             super().fit(X, y)
             self.data_type_ = type(X)
             return self
@@ -218,7 +218,7 @@ def test_sparse_regression():
 
 class DummySizeEstimator(BaseEstimator):
 
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         self.training_size_ = X.shape[0]
         self.training_hash_ = joblib.hash(X)
 
@@ -582,7 +582,7 @@ def test_bagging_with_pipeline():
 
 class DummyZeroEstimator(BaseEstimator):
 
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         self.classes_ = np.unique(y)
         return self
 

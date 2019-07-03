@@ -857,7 +857,7 @@ class RadiusNeighborsMixin:
 
 
 class SupervisedFloatMixin:
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         """Fit the model using X as training data and y as target values
 
         Parameters
@@ -877,7 +877,7 @@ class SupervisedFloatMixin:
 
 
 class SupervisedIntegerMixin:
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         """Fit the model using X as training data and y as target values
 
         Parameters

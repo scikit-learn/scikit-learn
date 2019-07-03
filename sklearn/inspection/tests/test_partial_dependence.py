@@ -273,7 +273,7 @@ def test_multiclass_multioutput(Estimator):
 
 
 class NoPredictProbaNoDecisionFunction(BaseEstimator, ClassifierMixin):
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         return self
 
 

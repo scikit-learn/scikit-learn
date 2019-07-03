@@ -74,7 +74,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             raise ValueError('tol={} '
                              'must not be smaller than 0.'.format(self.tol))
 
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         """Fit the gradient boosting model.
 
         Parameters

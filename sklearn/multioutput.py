@@ -395,7 +395,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         self.random_state = random_state
 
     @abstractmethod
-    def fit(self, X, Y):
+    def fit(self, X, y, feature_names_in=None):
         """Fit the model to data matrix X and targets Y.
 
         Parameters
@@ -568,7 +568,7 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
 
     """
 
-    def fit(self, X, Y):
+    def fit(self, X, y, feature_names_in=None):
         """Fit the model to data matrix X and targets Y.
 
         Parameters
@@ -718,7 +718,7 @@ class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
         chaining.
 
     """
-    def fit(self, X, Y):
+    def fit(self, X, y, feature_names_in=None):
         """Fit the model to data matrix X and targets Y.
 
         Parameters

@@ -407,7 +407,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         self.coef_ = np.dot(coef, self.scalings_.T)
         self.intercept_ -= np.dot(self.xbar_, self.coef_.T)
 
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         """Fit LinearDiscriminantAnalysis model according to the given
            training data and parameters.
 
@@ -636,7 +636,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         self.store_covariance = store_covariance
         self.tol = tol
 
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         """Fit the model according to the given training data and parameters.
 
             .. versionchanged:: 0.19

@@ -927,7 +927,7 @@ When the change is in a class, we validate and raise warning in ``fit``::
           self.n_clusters = n_clusters
           self.k = k
 
-      def fit(self, X, y):
+      def fit(self, X, y, feature_names_in=None):
           if self.k != 'not_used':
               warnings.warn("'k' was renamed to n_clusters in version 0.13 and "
                             "will be removed in 0.15.", DeprecationWarning)
@@ -983,7 +983,7 @@ When the change is in a class, we validate and raise warning in ``fit``::
       def __init__(self, n_clusters='warn'):
           self.n_clusters = n_clusters
 
-      def fit(self, X, y):
+      def fit(self, X, y, feature_names_in=None):
           if self.n_clusters == 'warn':
             warnings.warn("The default value of n_clusters will change from "
                           "5 to 10 in 0.22.", FutureWarning)
@@ -1339,7 +1339,7 @@ the correct interface more easily.
       ...     def __init__(self, demo_param='demo'):
       ...         self.demo_param = demo_param
       ...
-      ...     def fit(self, X, y):
+      ...     def fit(self, X, y, feature_names_in=None):
       ...
       ...         # Check that X and y have correct shape
       ...         X, y = check_X_y(X, y)

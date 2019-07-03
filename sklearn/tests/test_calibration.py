@@ -330,7 +330,7 @@ def test_calibration_accepts_ndarray(X):
     class MockTensorClassifier(BaseEstimator):
         """A toy estimator that accepts tensor inputs"""
 
-        def fit(self, X, y):
+        def fit(self, X, y, feature_names_in=None):
             self.classes_ = np.unique(y)
             return self
 

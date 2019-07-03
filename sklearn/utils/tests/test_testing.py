@@ -412,7 +412,7 @@ class Klass:
 class MockEst:
     def __init__(self):
         """MockEstimator"""
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         return X
 
     def predict(self, X):
@@ -470,7 +470,7 @@ class MockMetaEstimator:
         return X
 
     @deprecated('Testing deprecated function with wrong params')
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         """Incorrect docstring but should not be tested"""
 
 

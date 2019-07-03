@@ -32,7 +32,7 @@ class MyPassiveAggressive(ClassifierMixin):
         self.fit_intercept = fit_intercept
         self.n_iter = n_iter
 
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         n_samples, n_features = X.shape
         self.w = np.zeros(n_features, dtype=np.float64)
         self.b = 0.0

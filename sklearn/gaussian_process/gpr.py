@@ -159,7 +159,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
         self.copy_X_train = copy_X_train
         self.random_state = random_state
 
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         """Fit Gaussian process regression model.
 
         Parameters

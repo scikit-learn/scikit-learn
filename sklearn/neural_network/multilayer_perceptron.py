@@ -624,7 +624,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             if self.loss_curve_[-1] < self.best_loss_:
                 self.best_loss_ = self.loss_curve_[-1]
 
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         """Fit the model to data matrix X and target(s) y.
 
         Parameters
@@ -991,7 +991,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 
         return self._label_binarizer.inverse_transform(y_pred)
 
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         """Fit the model to data matrix X and target(s) y.
 
         Parameters

@@ -200,7 +200,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin, metaclass=ABCMeta):
         probabilities /= normalizer
         return probabilities
 
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         """Fit a semi-supervised label propagation model based
 
         All the input data is provided matrix X (labeled and unlabeled)
@@ -396,7 +396,7 @@ class LabelPropagation(BaseLabelPropagation):
             affinity_matrix /= normalizer[:, np.newaxis]
         return affinity_matrix
 
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         return super().fit(X, y)
 
 

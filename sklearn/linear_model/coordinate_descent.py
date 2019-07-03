@@ -1059,7 +1059,7 @@ class LinearModelCV(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
         self.random_state = random_state
         self.selection = selection
 
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         """Fit linear model with coordinate descent
 
         Fit is on grid of alphas and best alpha estimated by cross-validation.
@@ -1730,7 +1730,7 @@ class MultiTaskElasticNet(Lasso):
         self.random_state = random_state
         self.selection = selection
 
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         """Fit MultiTaskElasticNet model with coordinate descent
 
         Parameters

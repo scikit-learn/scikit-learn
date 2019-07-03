@@ -232,7 +232,7 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin, MultiOutputMixin,
         self.tol = tol
         self.copy = copy
 
-    def fit(self, X, Y):
+    def fit(self, X, y, feature_names_in=None):
         """Fit model to data.
 
         Parameters
@@ -809,7 +809,7 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         self.scale = scale
         self.copy = copy
 
-    def fit(self, X, Y):
+    def fit(self, X, y, feature_names_in=None):
         """Fit model to data.
 
         Parameters

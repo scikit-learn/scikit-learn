@@ -29,7 +29,7 @@ class MockClassifier:
     def __init__(self, foo_param=0):
         self.foo_param = foo_param
 
-    def fit(self, X, Y):
+    def fit(self, X, y, feature_names_in=None):
         assert len(X) == len(Y)
         self.coef_ = np.ones(X.shape[1], dtype=np.float64)
         return self

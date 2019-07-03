@@ -1349,7 +1349,7 @@ class LarsCV(Lars):
                          n_nonzero_coefs=500,
                          eps=eps, copy_X=copy_X, fit_path=True)
 
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         """Fit the model using X, y as training data.
 
         Parameters

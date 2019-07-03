@@ -156,7 +156,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         self.copy_X_train = copy_X_train
         self.random_state = random_state
 
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         """Fit Gaussian process classification model
 
         Parameters
@@ -589,7 +589,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         self.multi_class = multi_class
         self.n_jobs = n_jobs
 
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         """Fit Gaussian process classification model
 
         Parameters

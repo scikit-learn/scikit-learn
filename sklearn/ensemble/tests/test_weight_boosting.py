@@ -470,7 +470,7 @@ def test_sample_weight_adaboost_regressor():
     """
     class DummyEstimator(BaseEstimator):
 
-        def fit(self, X, y):
+        def fit(self, X, y, feature_names_in=None):
             pass
 
         def predict(self, X):

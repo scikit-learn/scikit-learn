@@ -194,7 +194,7 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
     """Base class for Linear Models"""
 
     @abstractmethod
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         """Fit model."""
 
     def _decision_function(self, X):

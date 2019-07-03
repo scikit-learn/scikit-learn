@@ -37,7 +37,7 @@ class LogisticRegression(BaseEstimator):
         self.n_jobs = n_jobs
         self.l1_ratio = l1_ratio
 
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names_in=None):
         return self
 
 
