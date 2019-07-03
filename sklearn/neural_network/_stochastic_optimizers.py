@@ -1,13 +1,13 @@
 """Stochastic optimization methods for MLP
 """
 
-# Authors:  Jiyuan Qian <jq401@nyu.edu>
+# Authors: Jiyuan Qian <jq401@nyu.edu>
 # License: BSD 3 clause
 
 import numpy as np
 
 
-class BaseOptimizer(object):
+class BaseOptimizer:
     """Base (Stochastic) gradient descent optimizer
 
     Parameters
@@ -117,7 +117,7 @@ class SGDOptimizer(BaseOptimizer):
 
     def __init__(self, params, learning_rate_init=0.1, lr_schedule='constant',
                  momentum=0.9, nesterov=True, power_t=0.5):
-        super(SGDOptimizer, self).__init__(params, learning_rate_init)
+        super().__init__(params, learning_rate_init)
 
         self.lr_schedule = lr_schedule
         self.momentum = momentum
@@ -230,7 +230,7 @@ class AdamOptimizer(BaseOptimizer):
 
     def __init__(self, params, learning_rate_init=0.001, beta_1=0.9,
                  beta_2=0.999, epsilon=1e-8):
-        super(AdamOptimizer, self).__init__(params, learning_rate_init)
+        super().__init__(params, learning_rate_init)
 
         self.beta_1 = beta_1
         self.beta_2 = beta_2

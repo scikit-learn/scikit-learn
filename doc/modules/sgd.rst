@@ -60,13 +60,8 @@ for the training samples::
     >>> X = [[0., 0.], [1., 1.]]
     >>> y = [0, 1]
     >>> clf = SGDClassifier(loss="hinge", penalty="l2", max_iter=5)
-    >>> clf.fit(X, y)   # doctest: +NORMALIZE_WHITESPACE
-    SGDClassifier(alpha=0.0001, average=False, class_weight=None,
-               early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
-               l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=5,
-               n_iter=None, n_iter_no_change=5, n_jobs=None, penalty='l2',
-               power_t=0.5, random_state=None, shuffle=True, tol=None,
-               validation_fraction=0.1, verbose=0, warm_start=False)
+    >>> clf.fit(X, y)
+    SGDClassifier(max_iter=5)
 
 
 After being fitted, the model can then be used to predict new values::
@@ -77,12 +72,12 @@ After being fitted, the model can then be used to predict new values::
 SGD fits a linear model to the training data. The member ``coef_`` holds
 the model parameters::
 
-    >>> clf.coef_                                         # doctest: +ELLIPSIS
+    >>> clf.coef_
     array([[9.9..., 9.9...]])
 
 Member ``intercept_`` holds the intercept (aka offset or bias)::
 
-    >>> clf.intercept_                                    # doctest: +ELLIPSIS
+    >>> clf.intercept_
     array([-9.9...])
 
 Whether or not the model should use an intercept, i.e. a biased
@@ -90,7 +85,7 @@ hyperplane, is controlled by the parameter ``fit_intercept``.
 
 To get the signed distance to the hyperplane use :meth:`SGDClassifier.decision_function`::
 
-    >>> clf.decision_function([[2., 2.]])                 # doctest: +ELLIPSIS
+    >>> clf.decision_function([[2., 2.]])
     array([29.6...])
 
 The concrete loss function can be set via the ``loss``
@@ -111,7 +106,7 @@ Using ``loss="log"`` or ``loss="modified_huber"`` enables the
 :math:`P(y|x)` per sample :math:`x`::
 
     >>> clf = SGDClassifier(loss="log", max_iter=5).fit(X, y)
-    >>> clf.predict_proba([[1., 1.]])                      # doctest: +ELLIPSIS
+    >>> clf.predict_proba([[1., 1.]])
     array([[0.00..., 0.99...]])
 
 The concrete penalty can be set via the ``penalty`` parameter.
@@ -154,7 +149,7 @@ one-vs-all classification.
 
 :class:`SGDClassifier` supports both weighted classes and weighted
 instances via the fit parameters ``class_weight`` and ``sample_weight``. See
-the examples below and the doc string of :meth:`SGDClassifier.fit` for
+the examples below and the docstring of :meth:`SGDClassifier.fit` for
 further information.
 
 .. topic:: Examples:
@@ -215,7 +210,7 @@ Stochastic Gradient Descent for sparse data
 There is built-in support for sparse data given in any matrix in a format
 supported by `scipy.sparse <https://docs.scipy.org/doc/scipy/reference/sparse.html>`_. For maximum efficiency, however, use the CSR
 matrix format as defined in `scipy.sparse.csr_matrix
-<http://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html>`_.
+<https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html>`_.
 
 .. topic:: Examples:
 
@@ -421,7 +416,7 @@ The model parameters can be accessed through the members ``coef_`` and
 
  * `"Towards Optimal One Pass Large Scale Learning with
    Averaged Stochastic Gradient Descent"
-   <http://arxiv.org/pdf/1107.2490v2.pdf>`_
+   <https://arxiv.org/pdf/1107.2490v2.pdf>`_
    Xu, Wei
 
 
@@ -429,7 +424,7 @@ Implementation details
 ======================
 
 The implementation of SGD is influenced by the `Stochastic Gradient SVM
-<http://leon.bottou.org/projects/sgd>`_  of Léon Bottou. Similar to SvmSGD,
+<https://leon.bottou.org/projects/sgd>`_  of Léon Bottou. Similar to SvmSGD,
 the weight vector is represented as the product of a scalar and a vector
 which allows an efficient weight update in the case of L2 regularization.
 In the case of sparse feature vectors, the intercept is updated with a
@@ -444,14 +439,14 @@ The code is written in Cython.
 
 .. topic:: References:
 
- * `"Stochastic Gradient Descent" <http://leon.bottou.org/projects/sgd>`_ L. Bottou - Website, 2010.
+ * `"Stochastic Gradient Descent" <https://leon.bottou.org/projects/sgd>`_ L. Bottou - Website, 2010.
 
- * `"The Tradeoffs of Large Scale Machine Learning" <http://leon.bottou.org/slides/largescale/lstut.pdf>`_ L. Bottou - Website, 2011.
+ * `"The Tradeoffs of Large Scale Machine Learning" <https://leon.bottou.org/slides/largescale/lstut.pdf>`_ L. Bottou - Website, 2011.
 
  * `"Pegasos: Primal estimated sub-gradient solver for svm"
    <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.74.8513>`_
    S. Shalev-Shwartz, Y. Singer, N. Srebro - In Proceedings of ICML '07.
 
  * `"Stochastic gradient descent training for l1-regularized log-linear models with cumulative penalty"
-   <http://www.aclweb.org/anthology/P/P09/P09-1054.pdf>`_
+   <https://www.aclweb.org/anthology/P/P09/P09-1054.pdf>`_
    Y. Tsuruoka, J. Tsujii, S. Ananiadou -  In Proceedings of the AFNLP/ACL '09.

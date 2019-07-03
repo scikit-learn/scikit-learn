@@ -7,15 +7,18 @@ import os
 import re
 import scipy.sparse
 import sklearn
+import pytest
 
 from sklearn.datasets import fetch_openml
 from sklearn.datasets.openml import (_open_openml_url,
                                      _get_data_description_by_id,
-                                     _download_data_arff)
+                                     _download_data_arff,
+                                     _get_local_path,
+                                     _retry_with_clean_cache)
 from sklearn.utils.testing import (assert_warns_message,
                                    assert_raise_message)
-from sklearn.externals.six import string_types
-from sklearn.externals.six.moves.urllib.error import HTTPError
+from sklearn.utils import is_scalar_nan
+from urllib.error import HTTPError
 from sklearn.datasets.tests.test_common import check_return_X_y
 from functools import partial
 
@@ -23,7 +26,6 @@ from functools import partial
 currdir = os.path.dirname(os.path.abspath(__file__))
 # if True, urlopen will be monkey patched to only use local files
 test_offline = True
-test_gzip = True
 
 
 def _test_features_list(data_id):
@@ -36,8 +38,8 @@ def _test_features_list(data_id):
             # XXX: This would be faster with np.take, although it does not
             # handle missing values fast (also not with mode='wrap')
             cat = data_bunch.categories[col_name]
-            result = [cat[idx] if 0 <= idx < len(cat) else None for idx in
-                      data_bunch.data[:, col_idx].astype(int)]
+            result = [None if is_scalar_nan(idx) else cat[int(idx)]
+                      for idx in data_bunch.data[:, col_idx]]
             return np.array(result, dtype='O')
         else:
             # non-nominal attribute
@@ -53,7 +55,7 @@ def _test_features_list(data_id):
                          'code relatively simple')
     data_arff = _download_data_arff(data_description['file_id'],
                                     sparse, None, False)
-    data_downloaded = np.array(data_arff['data'], dtype='O')
+    data_downloaded = np.array(list(data_arff['data']), dtype='O')
 
     for i in range(len(data_bunch.feature_names)):
         # XXX: Test per column, as this makes it easier to avoid problems with
@@ -77,6 +79,8 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
                                    cache=False)
     assert int(data_by_name_id.details['id']) == data_id
 
+    # Please note that cache=False is crucial, as the monkey patched files are
+    # not consistent with reality
     fetch_openml(name=data_name, cache=False)
     # without specifying the version, there is no guarantee that the data id
     # will be the same
@@ -97,7 +101,7 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
     assert data_by_id.target.dtype == expected_target_dtype
     assert len(data_by_id.feature_names) == expected_features
     for feature in data_by_id.feature_names:
-        assert isinstance(feature, string_types)
+        assert isinstance(feature, str)
 
     # TODO: pass in a list of expected nominal features
     for feature, categories in data_by_id.categories.items():
@@ -135,44 +139,84 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
     return data_by_id
 
 
-def _monkey_patch_webbased_functions(context, data_id, gziped_files):
+def _monkey_patch_webbased_functions(context,
+                                     data_id,
+                                     gzip_response):
+    # monkey patches the urlopen function. Important note: Do NOT use this
+    # in combination with a regular cache directory, as the files that are
+    # stored as cache should not be mixed up with real openml datasets
     url_prefix_data_description = "https://openml.org/api/v1/json/data/"
     url_prefix_data_features = "https://openml.org/api/v1/json/data/features/"
     url_prefix_download_data = "https://openml.org/data/v1/"
     url_prefix_data_list = "https://openml.org/api/v1/json/data/list/"
 
-    path_suffix = ''
-    read_fn = open
-    if gziped_files:
-        path_suffix = '.gz'
-        read_fn = gzip.open
+    path_suffix = '.gz'
+    read_fn = gzip.open
+
+    class MockHTTPResponse:
+        def __init__(self, data, is_gzip):
+            self.data = data
+            self.is_gzip = is_gzip
+
+        def read(self, amt=-1):
+            return self.data.read(amt)
+
+        def tell(self):
+            return self.data.tell()
+
+        def seek(self, pos, whence=0):
+            return self.data.seek(pos, whence)
+
+        def close(self):
+            self.data.close()
+
+        def info(self):
+            if self.is_gzip:
+                return {'Content-Encoding': 'gzip'}
+            return {}
 
     def _file_name(url, suffix):
         return (re.sub(r'\W', '-', url[len("https://openml.org/"):])
                 + suffix + path_suffix)
 
-    def _mock_urlopen_data_description(url):
+    def _mock_urlopen_data_description(url, has_gzip_header):
         assert url.startswith(url_prefix_data_description)
 
         path = os.path.join(currdir, 'data', 'openml', str(data_id),
                             _file_name(url, '.json'))
-        return read_fn(path, 'rb')
 
-    def _mock_urlopen_data_features(url):
+        if has_gzip_header and gzip_response:
+            fp = open(path, 'rb')
+            return MockHTTPResponse(fp, True)
+        else:
+            fp = read_fn(path, 'rb')
+            return MockHTTPResponse(fp, False)
+
+    def _mock_urlopen_data_features(url, has_gzip_header):
         assert url.startswith(url_prefix_data_features)
-
         path = os.path.join(currdir, 'data', 'openml', str(data_id),
                             _file_name(url, '.json'))
-        return read_fn(path, 'rb')
+        if has_gzip_header and gzip_response:
+            fp = open(path, 'rb')
+            return MockHTTPResponse(fp, True)
+        else:
+            fp = read_fn(path, 'rb')
+            return MockHTTPResponse(fp, False)
 
-    def _mock_urlopen_download_data(url):
+    def _mock_urlopen_download_data(url, has_gzip_header):
         assert (url.startswith(url_prefix_download_data))
 
         path = os.path.join(currdir, 'data', 'openml', str(data_id),
                             _file_name(url, '.arff'))
-        return read_fn(path, 'rb')
 
-    def _mock_urlopen_data_list(url):
+        if has_gzip_header and gzip_response:
+            fp = open(path, 'rb')
+            return MockHTTPResponse(fp, True)
+        else:
+            fp = read_fn(path, 'rb')
+            return MockHTTPResponse(fp, False)
+
+    def _mock_urlopen_data_list(url, has_gzip_header):
         assert url.startswith(url_prefix_data_list)
 
         json_file_path = os.path.join(currdir, 'data', 'openml',
@@ -184,17 +228,25 @@ def _monkey_patch_webbased_functions(context, data_id, gziped_files):
             raise HTTPError(url=None, code=412,
                             msg='Simulated mock error',
                             hdrs=None, fp=None)
-        return read_fn(json_file_path, 'rb')
 
-    def _mock_urlopen(url):
+        if has_gzip_header:
+            fp = open(json_file_path, 'rb')
+            return MockHTTPResponse(fp, True)
+        else:
+            fp = read_fn(json_file_path, 'rb')
+            return MockHTTPResponse(fp, False)
+
+    def _mock_urlopen(request):
+        url = request.get_full_url()
+        has_gzip_header = request.get_header('Accept-encoding') == "gzip"
         if url.startswith(url_prefix_data_list):
-            return _mock_urlopen_data_list(url)
+            return _mock_urlopen_data_list(url, has_gzip_header)
         elif url.startswith(url_prefix_data_features):
-            return _mock_urlopen_data_features(url)
+            return _mock_urlopen_data_features(url, has_gzip_header)
         elif url.startswith(url_prefix_download_data):
-            return _mock_urlopen_download_data(url)
+            return _mock_urlopen_download_data(url, has_gzip_header)
         elif url.startswith(url_prefix_data_description):
-            return _mock_urlopen_data_description(url)
+            return _mock_urlopen_data_description(url, has_gzip_header)
         else:
             raise ValueError('Unknown mocking URL pattern: %s' % url)
 
@@ -203,7 +255,8 @@ def _monkey_patch_webbased_functions(context, data_id, gziped_files):
         context.setattr(sklearn.datasets.openml, 'urlopen', _mock_urlopen)
 
 
-def test_fetch_openml_iris(monkeypatch):
+@pytest.mark.parametrize('gzip_response', [True, False])
+def test_fetch_openml_iris(monkeypatch, gzip_response):
     # classification dataset with numeric only columns
     data_id = 61
     data_name = 'iris'
@@ -213,7 +266,7 @@ def test_fetch_openml_iris(monkeypatch):
     expected_features = 4
     expected_missing = 0
 
-    _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip)
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     assert_warns_message(
         UserWarning,
         "Multiple active versions of the dataset matching the name"
@@ -233,12 +286,14 @@ def test_fetch_openml_iris(monkeypatch):
     )
 
 
-def test_decode_iris():
+def test_decode_iris(monkeypatch):
     data_id = 61
+    _monkey_patch_webbased_functions(monkeypatch, data_id, False)
     _test_features_list(data_id)
 
 
-def test_fetch_openml_iris_multitarget(monkeypatch):
+@pytest.mark.parametrize('gzip_response', [True, False])
+def test_fetch_openml_iris_multitarget(monkeypatch, gzip_response):
     # classification dataset with numeric only columns
     data_id = 61
     data_name = 'iris'
@@ -248,7 +303,7 @@ def test_fetch_openml_iris_multitarget(monkeypatch):
     expected_features = 3
     expected_missing = 0
 
-    _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip)
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
                                expected_observations, expected_features,
                                expected_missing,
@@ -256,7 +311,8 @@ def test_fetch_openml_iris_multitarget(monkeypatch):
                                compare_default_target=False)
 
 
-def test_fetch_openml_anneal(monkeypatch):
+@pytest.mark.parametrize('gzip_response', [True, False])
+def test_fetch_openml_anneal(monkeypatch, gzip_response):
     # classification dataset with numeric and categorical columns
     data_id = 2
     data_name = 'anneal'
@@ -266,7 +322,7 @@ def test_fetch_openml_anneal(monkeypatch):
     expected_observations = 11
     expected_features = 38
     expected_missing = 267
-    _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip)
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
                                expected_observations, expected_features,
                                expected_missing,
@@ -274,12 +330,14 @@ def test_fetch_openml_anneal(monkeypatch):
                                compare_default_target=True)
 
 
-def test_decode_anneal():
+def test_decode_anneal(monkeypatch):
     data_id = 2
+    _monkey_patch_webbased_functions(monkeypatch, data_id, False)
     _test_features_list(data_id)
 
 
-def test_fetch_openml_anneal_multitarget(monkeypatch):
+@pytest.mark.parametrize('gzip_response', [True, False])
+def test_fetch_openml_anneal_multitarget(monkeypatch, gzip_response):
     # classification dataset with numeric and categorical columns
     data_id = 2
     data_name = 'anneal'
@@ -289,7 +347,7 @@ def test_fetch_openml_anneal_multitarget(monkeypatch):
     expected_observations = 11
     expected_features = 36
     expected_missing = 267
-    _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip)
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
                                expected_observations, expected_features,
                                expected_missing,
@@ -297,7 +355,8 @@ def test_fetch_openml_anneal_multitarget(monkeypatch):
                                compare_default_target=False)
 
 
-def test_fetch_openml_cpu(monkeypatch):
+@pytest.mark.parametrize('gzip_response', [True, False])
+def test_fetch_openml_cpu(monkeypatch, gzip_response):
     # regression dataset with numeric and categorical columns
     data_id = 561
     data_name = 'cpu'
@@ -306,7 +365,7 @@ def test_fetch_openml_cpu(monkeypatch):
     expected_observations = 209
     expected_features = 7
     expected_missing = 0
-    _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip)
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
                                expected_observations, expected_features,
                                expected_missing,
@@ -314,12 +373,14 @@ def test_fetch_openml_cpu(monkeypatch):
                                compare_default_target=True)
 
 
-def test_decode_cpu():
+def test_decode_cpu(monkeypatch):
     data_id = 561
+    _monkey_patch_webbased_functions(monkeypatch, data_id, False)
     _test_features_list(data_id)
 
 
-def test_fetch_openml_australian(monkeypatch):
+@pytest.mark.parametrize('gzip_response', [True, False])
+def test_fetch_openml_australian(monkeypatch, gzip_response):
     # sparse dataset
     # Australian is the only sparse dataset that is reasonably small
     # as it is inactive, we need to catch the warning. Due to mocking
@@ -332,7 +393,7 @@ def test_fetch_openml_australian(monkeypatch):
     expected_observations = 85
     expected_features = 14
     expected_missing = 0
-    _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip)
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     assert_warns_message(
         UserWarning,
         "Version 1 of dataset Australian is inactive,",
@@ -350,7 +411,27 @@ def test_fetch_openml_australian(monkeypatch):
     )
 
 
-def test_fetch_openml_miceprotein(monkeypatch):
+@pytest.mark.parametrize('gzip_response', [True, False])
+def test_fetch_openml_adultcensus(monkeypatch, gzip_response):
+    # Check because of the numeric row attribute (issue #12329)
+    data_id = 1119
+    data_name = 'adult-census'
+    data_version = 1
+    target_column = 'class'
+    # Not all original instances included for space reasons
+    expected_observations = 10
+    expected_features = 14
+    expected_missing = 0
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
+    _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
+                               expected_observations, expected_features,
+                               expected_missing,
+                               np.float64, object, expect_sparse=False,
+                               compare_default_target=True)
+
+
+@pytest.mark.parametrize('gzip_response', [True, False])
+def test_fetch_openml_miceprotein(monkeypatch, gzip_response):
     # JvR: very important check, as this dataset defined several row ids
     # and ignore attributes. Note that data_features json has 82 attributes,
     # and row id (1), ignore attributes (3) have been removed (and target is
@@ -363,7 +444,7 @@ def test_fetch_openml_miceprotein(monkeypatch):
     expected_observations = 7
     expected_features = 77
     expected_missing = 7
-    _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip)
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
                                expected_observations, expected_features,
                                expected_missing,
@@ -371,7 +452,8 @@ def test_fetch_openml_miceprotein(monkeypatch):
                                compare_default_target=True)
 
 
-def test_fetch_openml_emotions(monkeypatch):
+@pytest.mark.parametrize('gzip_response', [True, False])
+def test_fetch_openml_emotions(monkeypatch, gzip_response):
     # classification dataset with multiple targets (natively)
     data_id = 40589
     data_name = 'emotions'
@@ -381,7 +463,7 @@ def test_fetch_openml_emotions(monkeypatch):
     expected_observations = 13
     expected_features = 72
     expected_missing = 0
-    _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip)
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
 
     _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
                                expected_observations, expected_features,
@@ -390,44 +472,135 @@ def test_fetch_openml_emotions(monkeypatch):
                                compare_default_target=True)
 
 
-def test_decode_emotions():
+def test_decode_emotions(monkeypatch):
     data_id = 40589
+    _monkey_patch_webbased_functions(monkeypatch, data_id, False)
     _test_features_list(data_id)
 
 
-def test_open_openml_url_cache(monkeypatch):
+@pytest.mark.parametrize('gzip_response', [True, False])
+def test_open_openml_url_cache(monkeypatch, gzip_response, tmpdir):
     data_id = 61
 
-    _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip)
+    _monkey_patch_webbased_functions(
+        monkeypatch, data_id, gzip_response)
     openml_path = sklearn.datasets.openml._DATA_FILE.format(data_id)
-    test_directory = os.path.join(os.path.expanduser('~'), 'scikit_learn_data')
+    cache_directory = str(tmpdir.mkdir('scikit_learn_data'))
     # first fill the cache
-    response1 = _open_openml_url(openml_path, test_directory)
+    response1 = _open_openml_url(openml_path, cache_directory)
     # assert file exists
-    location = os.path.join(test_directory, 'openml.org', openml_path + '.gz')
+    location = _get_local_path(openml_path, cache_directory)
     assert os.path.isfile(location)
     # redownload, to utilize cache
-    response2 = _open_openml_url(openml_path, test_directory)
+    response2 = _open_openml_url(openml_path, cache_directory)
     assert response1.read() == response2.read()
 
 
-def test_fetch_openml_notarget(monkeypatch):
+@pytest.mark.parametrize('gzip_response', [True, False])
+@pytest.mark.parametrize('write_to_disk', [True, False])
+def test_open_openml_url_unlinks_local_path(
+        monkeypatch, gzip_response, tmpdir, write_to_disk):
+    data_id = 61
+    openml_path = sklearn.datasets.openml._DATA_FILE.format(data_id)
+    cache_directory = str(tmpdir.mkdir('scikit_learn_data'))
+    location = _get_local_path(openml_path, cache_directory)
+
+    def _mock_urlopen(request):
+        if write_to_disk:
+            with open(location, "w") as f:
+                f.write("")
+        raise ValueError("Invalid request")
+
+    monkeypatch.setattr(sklearn.datasets.openml, 'urlopen', _mock_urlopen)
+
+    with pytest.raises(ValueError, match="Invalid request"):
+        _open_openml_url(openml_path, cache_directory)
+
+    assert not os.path.exists(location)
+
+
+def test_retry_with_clean_cache(tmpdir):
+    data_id = 61
+    openml_path = sklearn.datasets.openml._DATA_FILE.format(data_id)
+    cache_directory = str(tmpdir.mkdir('scikit_learn_data'))
+    location = _get_local_path(openml_path, cache_directory)
+    os.makedirs(os.path.dirname(location))
+
+    with open(location, 'w') as f:
+        f.write("")
+
+    @_retry_with_clean_cache(openml_path, cache_directory)
+    def _load_data():
+        # The first call will raise an error since location exists
+        if os.path.exists(location):
+            raise Exception("File exist!")
+        return 1
+
+    warn_msg = "Invalid cache, redownloading file"
+    with pytest.warns(RuntimeWarning, match=warn_msg):
+        result = _load_data()
+    assert result == 1
+
+
+def test_retry_with_clean_cache_http_error(tmpdir):
+    data_id = 61
+    openml_path = sklearn.datasets.openml._DATA_FILE.format(data_id)
+    cache_directory = str(tmpdir.mkdir('scikit_learn_data'))
+
+    @_retry_with_clean_cache(openml_path, cache_directory)
+    def _load_data():
+        raise HTTPError(url=None, code=412,
+                        msg='Simulated mock error',
+                        hdrs=None, fp=None)
+
+    error_msg = "Simulated mock error"
+    with pytest.raises(HTTPError, match=error_msg):
+        _load_data()
+
+
+@pytest.mark.parametrize('gzip_response', [True, False])
+def test_fetch_openml_cache(monkeypatch, gzip_response, tmpdir):
+    def _mock_urlopen_raise(request):
+        raise ValueError('This mechanism intends to test correct cache'
+                         'handling. As such, urlopen should never be '
+                         'accessed. URL: %s' % request.get_full_url())
+    data_id = 2
+    cache_directory = str(tmpdir.mkdir('scikit_learn_data'))
+    _monkey_patch_webbased_functions(
+        monkeypatch, data_id, gzip_response)
+    X_fetched, y_fetched = fetch_openml(data_id=data_id, cache=True,
+                                        data_home=cache_directory,
+                                        return_X_y=True)
+
+    monkeypatch.setattr(sklearn.datasets.openml, 'urlopen',
+                        _mock_urlopen_raise)
+
+    X_cached, y_cached = fetch_openml(data_id=data_id, cache=True,
+                                      data_home=cache_directory,
+                                      return_X_y=True)
+    np.testing.assert_array_equal(X_fetched, X_cached)
+    np.testing.assert_array_equal(y_fetched, y_cached)
+
+
+@pytest.mark.parametrize('gzip_response', [True, False])
+def test_fetch_openml_notarget(monkeypatch, gzip_response):
     data_id = 61
     target_column = None
     expected_observations = 150
     expected_features = 5
 
-    _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip)
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     data = fetch_openml(data_id=data_id, target_column=target_column,
                         cache=False)
     assert data.data.shape == (expected_observations, expected_features)
     assert data.target is None
 
 
-def test_fetch_openml_inactive(monkeypatch):
+@pytest.mark.parametrize('gzip_response', [True, False])
+def test_fetch_openml_inactive(monkeypatch, gzip_response):
     # fetch inactive dataset by id
     data_id = 40675
-    _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip)
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     glas2 = assert_warns_message(
         UserWarning, "Version 1 of dataset glass2 is inactive,", fetch_openml,
         data_id=data_id, cache=False)
@@ -439,19 +612,21 @@ def test_fetch_openml_inactive(monkeypatch):
     assert int(glas2_by_version.details['id']) == data_id
 
 
-def test_fetch_nonexiting(monkeypatch):
+@pytest.mark.parametrize('gzip_response', [True, False])
+def test_fetch_nonexiting(monkeypatch, gzip_response):
     # there is no active version of glass2
     data_id = 40675
-    _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip)
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     # Note that we only want to search by name (not data id)
     assert_raise_message(ValueError, "No active dataset glass2 found",
                          fetch_openml, name='glass2', cache=False)
 
 
-def test_raises_illegal_multitarget(monkeypatch):
+@pytest.mark.parametrize('gzip_response', [True, False])
+def test_raises_illegal_multitarget(monkeypatch, gzip_response):
     data_id = 61
     targets = ['sepalwidth', 'class']
-    _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip)
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     # Note that we only want to search by name (not data id)
     assert_raise_message(ValueError,
                          "Can only handle homogeneous multi-target datasets,",
@@ -459,11 +634,12 @@ def test_raises_illegal_multitarget(monkeypatch):
                          target_column=targets, cache=False)
 
 
-def test_warn_ignore_attribute(monkeypatch):
+@pytest.mark.parametrize('gzip_response', [True, False])
+def test_warn_ignore_attribute(monkeypatch, gzip_response):
     data_id = 40966
     expected_row_id_msg = "target_column={} has flag is_row_identifier."
     expected_ignore_msg = "target_column={} has flag is_ignore."
-    _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip)
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     # single column test
     assert_warns_message(UserWarning, expected_row_id_msg.format('MouseID'),
                          fetch_openml, data_id=data_id,
@@ -484,18 +660,44 @@ def test_warn_ignore_attribute(monkeypatch):
                          cache=False)
 
 
-def test_string_attribute(monkeypatch):
+@pytest.mark.parametrize('gzip_response', [True, False])
+def test_string_attribute(monkeypatch, gzip_response):
     data_id = 40945
-    _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip)
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     # single column test
     assert_raise_message(ValueError,
                          'STRING attributes are not yet supported',
                          fetch_openml, data_id=data_id, cache=False)
 
 
-def test_illegal_column(monkeypatch):
+@pytest.mark.parametrize('gzip_response', [True, False])
+def test_dataset_with_openml_error(monkeypatch, gzip_response):
+    data_id = 1
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
+    assert_warns_message(
+        UserWarning,
+        "OpenML registered a problem with the dataset. It might be unusable. "
+        "Error:",
+        fetch_openml, data_id=data_id, cache=False
+    )
+
+
+@pytest.mark.parametrize('gzip_response', [True, False])
+def test_dataset_with_openml_warning(monkeypatch, gzip_response):
+    data_id = 3
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
+    assert_warns_message(
+        UserWarning,
+        "OpenML raised a warning on the dataset. It might be unusable. "
+        "Warning:",
+        fetch_openml, data_id=data_id, cache=False
+    )
+
+
+@pytest.mark.parametrize('gzip_response', [True, False])
+def test_illegal_column(monkeypatch, gzip_response):
     data_id = 61
-    _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip)
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     assert_raise_message(KeyError, "Could not find target_column=",
                          fetch_openml, data_id=data_id,
                          target_column='undefined', cache=False)
@@ -506,9 +708,10 @@ def test_illegal_column(monkeypatch):
                          cache=False)
 
 
-def test_fetch_openml_raises_missing_values_target(monkeypatch):
+@pytest.mark.parametrize('gzip_response', [True, False])
+def test_fetch_openml_raises_missing_values_target(monkeypatch, gzip_response):
     data_id = 2
-    _monkey_patch_webbased_functions(monkeypatch, data_id, test_gzip)
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     assert_raise_message(ValueError, "Target column ",
                          fetch_openml, data_id=data_id, target_column='family')
 

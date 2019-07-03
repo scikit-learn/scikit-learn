@@ -28,15 +28,16 @@ import tarfile
 import numpy as np
 import logging
 
+import joblib
+
 from .base import get_data_home
 from .base import _fetch_remote
 from .base import _pkl_filepath
 from .base import RemoteFileMetadata
 from ..utils import Bunch
-from ..externals import joblib
 
 # The original data can be found at:
-# http://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.tgz
+# https://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.tgz
 ARCHIVE = RemoteFileMetadata(
     filename='cal_housing.tgz',
     url='https://ndownloader.figshare.com/files/5976036',
@@ -50,12 +51,12 @@ def fetch_california_housing(data_home=None, download_if_missing=True,
                              return_X_y=False):
     """Load the California housing dataset (regression).
 
-    ==============     ==============
-    Samples total               20640
-    Dimensionality                  8
-    Features                     real
-    Target             real 0.15 - 5.
-    ==============     ==============
+    ==============   ==============
+    Samples total             20640
+    Dimensionality                8
+    Features                   real
+    Target           real 0.15 - 5.
+    ==============   ==============
 
     Read more in the :ref:`User Guide <california_housing_dataset>`.
 
@@ -97,7 +98,7 @@ def fetch_california_housing(data_home=None, download_if_missing=True,
         .. versionadded:: 0.20
 
     Notes
-    ------
+    -----
 
     This dataset consists of 20,640 samples and 9 features.
     """

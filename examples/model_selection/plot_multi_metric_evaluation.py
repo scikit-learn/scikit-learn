@@ -92,5 +92,5 @@ for scorer, color in zip(sorted(scoring), ['g', 'k']):
                 (X_axis[best_index], best_score + 0.005))
 
 plt.legend(loc="best")
-plt.grid('off')
+plt.grid(False)
 plt.show()
