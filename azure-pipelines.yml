@@ -39,6 +39,7 @@ jobs:
         PYAMG_VERSION: '*'
         PILLOW_VERSION: '*'
         JOBLIB_VERSION: '*'
+        PYTEST_VERSION: '4.6.2'
         MATPLOTLIB_VERSION: '*'
         COVERAGE: 'true'
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
@@ -69,6 +70,7 @@ jobs:
         SCIPY_VERSION: '*'
         CYTHON_VERSION: '*'
         PILLOW_VERSION: '*'
+        PYTEST_VERSION: '4.6.2'
         JOBLIB_VERSION: '*'
         COVERAGE: 'true'
 
@@ -81,6 +83,7 @@ jobs:
         PYTHON_VERSION: '3.7'
         CHECK_WARNINGS: 'true'
         PYTHON_ARCH: '64'
+        PYTEST_VERSION: '4.6.2'
         COVERAGE: 'true'
       py35_32:
         PYTHON_VERSION: '3.5'
