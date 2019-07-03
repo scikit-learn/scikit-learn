@@ -204,15 +204,17 @@ def newton_cg(grad_hess, func, grad, x0, args=(), tol=1e-4,
     return xk, k
 
 
-def _check_optimize_result(solver, result, max_iter):
+def _check_optimize_result(solver, result, max_iter=None):
     """Check the OptimizeResult for successful convergence
 
     Parameters
     ----------
     solver: str
-       solver name. Currently only `lbfgs` (or `L-BFGS-B`) is supported.
+       solver name. Currently only `lbfgs` is supported.
     result: OptimizeResult
        result of the scipy.optimize.minimize function
+    max_iter: {int, None}
+       expected maximum number of iterations
 
     Returns
     -------
@@ -220,13 +222,18 @@ def _check_optimize_result(solver, result, max_iter):
        number of iterations
     """
     # handle both scipy and scikit-learn solver names
-    if solver in ["lbfgs", "L-BFGS-B"]:
+    if solver == "lbfgs":
         if result.status != 0:
-            warnings.warn("{} failed to converge. Increase the number "
-                          "of iterations.".format(solver), ConvergenceWarning)
-        # In scipy <= 1.0.0, nit may exceed maxiter.
-        # See https://github.com/scipy/scipy/issues/7854.
-        n_iter_i = min(result.nit, max_iter)
+            warnings.warn("{} failed to converge (status={}): {}. "
+                          "Increase the number of iterations."
+                          .format(solver, result.status, result.message),
+                          ConvergenceWarning)
+        if max_iter is not None:
+            # In scipy <= 1.0.0, nit may exceed maxiter for lbfgs.
+            # See https://github.com/scipy/scipy/issues/7854
+            n_iter_i = min(result.nit, max_iter)
+        else:
+            n_iter_i = result.nit
     else:
         raise NotImplementedError
 
