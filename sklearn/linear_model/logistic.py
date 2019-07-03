@@ -32,7 +32,7 @@ from ..utils.optimize import newton_cg, _check_optimize_result
 from ..utils.validation import check_X_y
 from ..utils.validation import check_is_fitted
 from ..utils import deprecated
-from ..exceptions import (ConvergenceWarning, ChangedBehaviorWarning)
+from ..exceptions import ChangedBehaviorWarning
 from ..utils.multiclass import check_classification_targets
 from ..utils.fixes import _joblib_parallel_args
 from ..model_selection import check_cv
@@ -899,7 +899,8 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                 w0[:, :coef.shape[1]] = coef
 
     if multi_class == 'multinomial':
-        # fmin_l_bfgs_b and newton-cg accepts only ravelled parameters.
+        # scipy.optimize.minimize and newton-cg accepts only
+        # ravelled parameters.
         if solver in ['lbfgs', 'newton-cg']:
             w0 = w0.ravel()
         target = Y_multi
@@ -931,10 +932,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                 args=(X, target, 1. / C, sample_weight),
                 options={"iprint": iprint, "gtol": tol, "maxiter": max_iter}
             )
-            _check_optimize_result(solver, opt_res)
-            # In scipy <= 1.0.0, nit may exceed maxiter.
-            # See https://github.com/scipy/scipy/issues/7854.
-            n_iter_i = min(opt_res.nit, max_iter)
+            n_iter_i = _check_optimize_result(solver, opt_res, max_iter)
             w0, loss = opt_res.x, opt_res.fun
         elif solver == 'newton-cg':
             args = (X, target, 1. / C, sample_weight)

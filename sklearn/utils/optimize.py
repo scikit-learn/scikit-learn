@@ -204,7 +204,7 @@ def newton_cg(grad_hess, func, grad, x0, args=(), tol=1e-4,
     return xk, k
 
 
-def _check_optimize_result(solver, result):
+def _check_optimize_result(solver, result, max_iter):
     """Check the OptimizeResult for successful convergence
 
     Parameters
@@ -224,5 +224,10 @@ def _check_optimize_result(solver, result):
         if result.status != 0:
             warnings.warn("{} failed to converge. Increase the number "
                           "of iterations.".format(solver), ConvergenceWarning)
+        # In scipy <= 1.0.0, nit may exceed maxiter.
+        # See https://github.com/scipy/scipy/issues/7854.
+        n_iter_i = min(result.nit, max_iter)
     else:
         raise NotImplementedError
+
+    return n_iter_i
