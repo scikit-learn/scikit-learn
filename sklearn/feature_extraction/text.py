@@ -328,7 +328,10 @@ class VectorizerMixin:
             pass
 
     def build_analyzer(self):
-        """Return a callable that handles preprocessing and tokenization"""
+        """Return a callable that handles preprocessing, tokenization
+
+        and n-grams generation.
+        """
         if callable(self.analyzer):
             if self.input in ['file', 'filename']:
                 self._validate_custom_analyzer()
