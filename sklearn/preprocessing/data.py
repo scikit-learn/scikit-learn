@@ -20,7 +20,7 @@ from scipy import optimize
 from scipy.special import boxcox
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import check_array, check_X_y, check_X_y_kwargs, safe_indexing
+from ..utils import check_array, check_X_y_kwargs, safe_indexing
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,

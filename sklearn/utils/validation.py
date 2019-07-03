@@ -601,15 +601,15 @@ def check_X_y_kwargs(X, y, kwargs, accept_sparse=False,
                      copy=False, force_all_finite=True, ensure_2d=True,
                      allow_nd=False, multi_output=False, ensure_min_samples=1,
                      ensure_min_features=1, y_numeric=False,
-                     warn_on_dtype=None, estimator=None):
+                     estimator=None):
     """Input validation for standard estimators.
 
     Checks X, y and all kwargs for consistent length, enforces X to be 2D and y
     and kwargs 1D. By default, X is checked to be non-empty and containing only
-    finite values. Standard input checks are also applied to y, such as checking
-    that y does not have np.nan or np.inf targets. For multi-label y, set
-    multi_output=True to allow 2D and sparse y. If the dtype of X is object,
-    attempt converting to float, raising on failure.
+    finite values. Standard input checks are also applied to y, such as
+    checking that y does not have np.nan or np.inf targets. For multi-label y,
+    set multi_output=True to allow 2D and sparse y. If the dtype of X is
+    object, attempt converting to float, raising on failure.
 
     Further, kwargs are checked to not have np.nan or np.inf.
 
@@ -633,8 +633,6 @@ def check_X_y_kwargs(X, y, kwargs, accept_sparse=False,
         accept_sparse, accept_large_sparse will cause it to be accepted only
         if its indices are stored with a 32-bit dtype.
 
-        .. versionadded:: 0.20
-
     dtype : string, type, list of types or None (default="numeric")
         Data type of result. If None, the dtype of the input is preserved.
         If "numeric", dtype is preserved unless array.dtype is object.
@@ -657,9 +655,6 @@ def check_X_y_kwargs(X, y, kwargs, accept_sparse=False,
         - False: accept both np.inf and np.nan in X.
         - 'allow-nan': accept only np.nan values in X. Values cannot be
           infinite.
-
-        .. versionadded:: 0.20
-           ``force_all_finite`` accepts the string ``'allow-nan'``.
 
     ensure_2d : boolean (default=True)
         Whether to raise a value error if X is not 2D.
@@ -688,14 +683,6 @@ def check_X_y_kwargs(X, y, kwargs, accept_sparse=False,
         it is converted to float64. Should only be used for regression
         algorithms.
 
-    warn_on_dtype : boolean or None, optional (default=None)
-        Raise DataConversionWarning if the dtype of the input data structure
-        does not match the requested dtype, causing a memory copy.
-
-        .. deprecated:: 0.21
-            ``warn_on_dtype`` is deprecated in version 0.21 and will be
-             removed in 0.23.
-
     estimator : str or estimator instance (default=None)
         If passed, include the name of the estimator in warning messages.
 
@@ -717,7 +704,7 @@ def check_X_y_kwargs(X, y, kwargs, accept_sparse=False,
         ensure_2d=ensure_2d, allow_nd=allow_nd, multi_output=multi_output,
         ensure_min_samples=ensure_min_samples,
         ensure_min_features=ensure_min_features, y_numeric=y_numeric,
-        warn_on_dtype=warn_on_dtype, estimator=estimator
+        estimator=estimator
     )
     kwargs_converted = {
         kw: check_array(
