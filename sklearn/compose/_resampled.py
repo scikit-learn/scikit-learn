@@ -2,7 +2,7 @@
 
 from ..base import BaseEstimator, MetaEstimatorMixin, clone
 from ..utils.metaestimators import if_delegate_has_method
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, check_X_y_kwargs
 
 
 class ResampledTrainer(MetaEstimatorMixin, BaseEstimator):
@@ -54,13 +54,10 @@ class ResampledTrainer(MetaEstimatorMixin, BaseEstimator):
     # TODO: tags?
 
     def fit(self, X, y=None, **kw):
+        X, y, kw = check_X_y_kwargs(X, y, kw)
         self.resampler_ = clone(self.resampler)
-        ret = self.resampler_.fit_resample(X, y, **kw)
-        if len(ret) == 2:
-            kw = {}
-            X, y = ret
-        else:
-            X, y, kw = ret
+        X, y, kw = self.resampler_.fit_resample(X, y, **kw)
+
         self.estimator_ = clone(self.estimator).fit(X, y, **kw)
         return self
 
