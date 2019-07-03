@@ -75,7 +75,7 @@ def _yield_checks(name, estimator):
     tags = _safe_tags(estimator)
     yield check_estimators_dtypes
     yield check_fit_score_takes_y
-    if hasattr(estimator, 'fit'):
+    if not hasattr(estimator, 'fit_resample') or hasattr(estimator, 'fit'):
         yield check_sample_weights_pandas_series
         yield check_sample_weights_list
         yield check_sample_weights_invariance
@@ -107,7 +107,7 @@ def _yield_checks(name, estimator):
 
     yield check_estimator_sparse_data
 
-    if hasattr(estimator, 'fit'):
+    if not hasattr(estimator, 'fit_resample') or hasattr(estimator, 'fit'):
         # Test that estimators can be pickled, and once pickled
         # give the same answer as before.
         yield check_estimators_pickle
@@ -272,19 +272,17 @@ def _yield_all_checks(name, estimator):
     if is_outlier_detector(estimator):
         for check in _yield_outliers_checks(name, estimator):
             yield check
-    if hasattr(estimator, 'fit'):
-        yield check_fit2d_predict1d
-        yield check_methods_subset_invariance
     yield check_fit2d_1sample
     yield check_fit2d_1feature
     yield check_fit1d
     yield check_get_params_invariance
+    yield check_dont_overwrite_parameters
     yield check_set_params
 
-    if hasattr(estimator, 'fit'):
+    if not hasattr(estimator, 'fit_resample') or hasattr(estimator, 'fit'):
+        yield check_fit2d_predict1d
+        yield check_methods_subset_invariance
         yield check_dict_unchanged
-    yield check_dont_overwrite_parameters
-    if hasattr(estimator, 'fit'):
         yield check_fit_idempotent
 
 
@@ -1280,7 +1278,8 @@ def check_estimators_nan_inf(name, estimator_orig):
             estimator = clone(estimator_orig)
             set_random_state(estimator, 1)
 
-            if hasattr(estimator, 'fit'):
+            if (not hasattr(estimator, 'fit_resample')
+                or hasattr(estimator, 'fit')):
                 # try to fit
                 try:
                     estimator.fit(X_train, y)
