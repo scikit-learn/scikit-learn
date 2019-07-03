@@ -1808,10 +1808,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             Default changed from 'ovr' to 'auto' in 0.22.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        The seed of the pseudo random number generator.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     l1_ratios : list of float or None, optional (default=None)
