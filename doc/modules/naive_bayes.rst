@@ -72,7 +72,7 @@ it is known to be a bad estimator, so the probability outputs from
 .. topic:: References:
 
  * H. Zhang (2004). `The optimality of Naive Bayes.
-   <http://www.cs.unb.ca/~hzhang/publications/FLAIRS04ZhangH.pdf>`_
+   <https://www.cs.unb.ca/~hzhang/publications/FLAIRS04ZhangH.pdf>`_
    Proc. FLAIRS.
 
 .. _gaussian_naive_bayes:
@@ -85,19 +85,21 @@ classification. The likelihood of the features is assumed to be Gaussian:
 
 .. math::
 
-   P(x_i \mid y) &= \frac{1}{\sqrt{2\pi\sigma^2_y}} \exp\left(-\frac{(x_i - \mu_y)^2}{2\sigma^2_y}\right)
+   P(x_i \mid y) = \frac{1}{\sqrt{2\pi\sigma^2_y}} \exp\left(-\frac{(x_i - \mu_y)^2}{2\sigma^2_y}\right)
 
 The parameters :math:`\sigma_y` and :math:`\mu_y`
 are estimated using maximum likelihood.
 
-    >>> from sklearn import datasets
-    >>> iris = datasets.load_iris()
-    >>> from sklearn.naive_bayes import GaussianNB
-    >>> gnb = GaussianNB()
-    >>> y_pred = gnb.fit(iris.data, iris.target).predict(iris.data)
-    >>> print("Number of mislabeled points out of a total %d points : %d"
-    ...       % (iris.data.shape[0],(iris.target != y_pred).sum()))
-    Number of mislabeled points out of a total 150 points : 6
+   >>> from sklearn.datasets import load_iris
+   >>> from sklearn.model_selection import train_test_split
+   >>> from sklearn.naive_bayes import GaussianNB
+   >>> X, y = load_iris(return_X_y=True)
+   >>> X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=0)
+   >>> gnb = GaussianNB()
+   >>> y_pred = gnb.fit(X_train, y_train).predict(X_test)
+   >>> print("Number of mislabeled points out of a total %d points : %d"
+   ...       % (X_test.shape[0], (y_test != y_pred).sum()))
+   Number of mislabeled points out of a total 75 points : 4
 
 .. _multinomial_naive_bayes:
 
@@ -125,7 +127,7 @@ version of maximum likelihood, i.e. relative frequency counting:
 where :math:`N_{yi} = \sum_{x \in T} x_i` is
 the number of times feature :math:`i` appears in a sample of class :math:`y`
 in the training set :math:`T`,
-and :math:`N_{y} = \sum_{i=1}^{|T|} N_{yi}` is the total count of
+and :math:`N_{y} = \sum_{i=1}^{n} N_{yi}` is the total count of
 all features for class :math:`y`.
 
 The smoothing priors :math:`\alpha \ge 0` accounts for
@@ -175,7 +177,7 @@ match.
 
  * Rennie, J. D., Shih, L., Teevan, J., & Karger, D. R. (2003).
    `Tackling the poor assumptions of naive bayes text classifiers.
-   <http://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf>`_
+   <https://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf>`_
    In ICML (Vol. 3, pp. 616-623).
 
 .. _bernoulli_naive_bayes:

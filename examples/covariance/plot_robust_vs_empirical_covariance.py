@@ -6,7 +6,7 @@ Robust vs Empirical covariance estimate
 The usual covariance maximum likelihood estimate is very sensitive to the
 presence of outliers in the data set. In such a case, it would be better to
 use a robust estimator of covariance to guarantee that the estimation is
-resistant to "erroneous" observations in the data set.
+resistant to "erroneous" observations in the data set. [1]_, [2]_
 
 Minimum Covariance Determinant Estimator
 ----------------------------------------
@@ -23,7 +23,7 @@ fact that the estimates were learned from only a portion of the initial data,
 we end up with robust estimates of the data set location and covariance.
 
 The Minimum Covariance Determinant estimator (MCD) has been introduced by
-P.J.Rousseuw in [1]_.
+P.J.Rousseuw in [3]_.
 
 Evaluation
 ----------
@@ -42,14 +42,14 @@ distributed data sets:
 
 References
 ----------
-.. [1] P. J. Rousseeuw. Least median of squares regression. Journal of American
-    Statistical Ass., 79:871, 1984.
-.. [2] Johanna Hardin, David M Rocke. The distribution of robust distances.
+.. [1] Johanna Hardin, David M Rocke. The distribution of robust distances.
     Journal of Computational and Graphical Statistics. December 1, 2005,
     14(4): 928-946.
-.. [3] Zoubir A., Koivunen V., Chakhchoukh Y. and Muma M. (2012). Robust
+.. [2] Zoubir A., Koivunen V., Chakhchoukh Y. and Muma M. (2012). Robust
     estimation in signal processing: A tutorial-style treatment of
     fundamental concepts. IEEE Signal Processing Magazine 29(4), 61-80.
+.. [3] P. J. Rousseeuw. Least median of squares regression. Journal of American
+    Statistical Ass., 79:871, 1984.
 
 """
 print(__doc__)

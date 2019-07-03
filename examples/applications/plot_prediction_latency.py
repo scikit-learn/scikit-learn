@@ -16,7 +16,6 @@ The plots represent the distribution of the prediction latency as a boxplot.
 # Authors: Eustache Diemert <eustache@diemert.fr>
 # License: BSD 3 clause
 
-from __future__ import print_function
 from collections import defaultdict
 
 import time
@@ -26,7 +25,6 @@ import matplotlib.pyplot as plt
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
-from scipy.stats import scoreatpercentile
 from sklearn.datasets.samples_generator import make_regression
 from sklearn.ensemble.forest import RandomForestRegressor
 from sklearn.linear_model.ridge import Ridge
@@ -50,7 +48,7 @@ def atomic_benchmark_estimator(estimator, X_test, verbose=False):
         estimator.predict(instance)
         runtimes[i] = time.time() - start
     if verbose:
-        print("atomic_benchmark runtimes:", min(runtimes), scoreatpercentile(
+        print("atomic_benchmark runtimes:", min(runtimes), np.percentile(
             runtimes, 50), max(runtimes))
     return runtimes
 
@@ -65,7 +63,7 @@ def bulk_benchmark_estimator(estimator, X_test, n_bulk_repeats, verbose):
         runtimes[i] = time.time() - start
     runtimes = np.array(list(map(lambda x: x / float(n_instances), runtimes)))
     if verbose:
-        print("bulk_benchmark runtimes:", min(runtimes), scoreatpercentile(
+        print("bulk_benchmark runtimes:", min(runtimes), np.percentile(
             runtimes, 50), max(runtimes))
     return runtimes
 
@@ -207,8 +205,8 @@ def n_feature_influence(estimators, n_train, n_test, n_features, percentile):
             estimator.fit(X_train, y_train)
             gc.collect()
             runtimes = bulk_benchmark_estimator(estimator, X_test, 30, False)
-            percentiles[cls_name][n] = 1e6 * scoreatpercentile(runtimes,
-                                                               percentile)
+            percentiles[cls_name][n] = 1e6 * np.percentile(runtimes,
+                                                           percentile)
     return percentiles
 
 

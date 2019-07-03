@@ -27,19 +27,18 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 
+from scipy.special import xlogy
+
 from .base import BaseEnsemble
-from ..base import ClassifierMixin, RegressorMixin, is_regressor, is_classifier
-from ..externals import six
-from ..externals.six.moves import zip
-from ..externals.six.moves import xrange as range
-from .forest import BaseForest
+from ..base import ClassifierMixin, RegressorMixin, is_classifier, is_regressor
+
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..tree.tree import BaseDecisionTree
-from ..tree._tree import DTYPE
-from ..utils import check_array, check_X_y, check_random_state
+from ..utils import check_array, check_random_state, check_X_y, safe_indexing
 from ..utils.extmath import stable_cumsum
 from ..metrics import accuracy_score, r2_score
-from sklearn.utils.validation import has_fit_parameter, check_is_fitted
+from ..utils.validation import check_is_fitted
+from ..utils.validation import has_fit_parameter
+from ..utils.validation import _num_samples
 
 __all__ = [
     'AdaBoostClassifier',
@@ -47,7 +46,7 @@ __all__ = [
 ]
 
 
-class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
+class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
     """Base class for AdaBoost estimators.
 
     Warning: This class should not be used directly. Use derived classes
@@ -62,13 +61,33 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                  learning_rate=1.,
                  random_state=None):
 
-        super(BaseWeightBoosting, self).__init__(
+        super().__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
             estimator_params=estimator_params)
 
         self.learning_rate = learning_rate
         self.random_state = random_state
+
+    def _validate_data(self, X, y=None):
+
+        # Accept or convert to these sparse matrix formats so we can
+        # use safe_indexing
+        accept_sparse = ['csr', 'csc']
+        if y is None:
+            ret = check_array(X,
+                              accept_sparse=accept_sparse,
+                              ensure_2d=False,
+                              allow_nd=True,
+                              dtype=None)
+        else:
+            ret = check_X_y(X, y,
+                            accept_sparse=accept_sparse,
+                            ensure_2d=False,
+                            allow_nd=True,
+                            dtype=None,
+                            y_numeric=is_regressor(self))
+        return ret
 
     def fit(self, X, y, sample_weight=None):
         """Build a boosted classifier/regressor from the training set (X, y).
@@ -77,9 +96,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         ----------
         X : {array-like, sparse matrix} of shape = [n_samples, n_features]
             The training input samples. Sparse matrix can be CSC, CSR, COO,
-            DOK, or LIL. COO, DOK, and LIL are converted to CSR. The dtype is
-            forced to DTYPE from tree._tree if the base classifier of this
-            ensemble weighted boosting classifier is a tree or forest.
+            DOK, or LIL. COO, DOK, and LIL are converted to CSR.
 
         y : array-like of shape = [n_samples]
             The target values (class labels in classification, real numbers in
@@ -97,22 +114,12 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         if self.learning_rate <= 0:
             raise ValueError("learning_rate must be greater than zero")
 
-        if (self.base_estimator is None or
-                isinstance(self.base_estimator, (BaseDecisionTree,
-                                                 BaseForest))):
-            dtype = DTYPE
-            accept_sparse = 'csc'
-        else:
-            dtype = None
-            accept_sparse = ['csr', 'csc']
-
-        X, y = check_X_y(X, y, accept_sparse=accept_sparse, dtype=dtype,
-                         y_numeric=is_regressor(self))
+        X, y = self._validate_data(X, y)
 
         if sample_weight is None:
             # Initialize weights to 1 / n_samples
-            sample_weight = np.empty(X.shape[0], dtype=np.float64)
-            sample_weight[:] = 1. / X.shape[0]
+            sample_weight = np.empty(_num_samples(X), dtype=np.float64)
+            sample_weight[:] = 1. / _num_samples(X)
         else:
             sample_weight = check_array(sample_weight, ensure_2d=False)
             # Normalize existing weights
@@ -223,7 +230,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         ----------
         X : {array-like, sparse matrix} of shape = [n_samples, n_features]
             The training input samples. Sparse matrix can be CSC, CSR, COO,
-            DOK, or LIL. DOK and LIL are converted to CSR.
+            DOK, or LIL. COO, DOK, and LIL are converted to CSR.
 
         y : array-like, shape = [n_samples]
             Labels for X.
@@ -235,6 +242,8 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         -------
         z : float
         """
+        X = self._validate_data(X)
+
         for y_pred in self.staged_predict(X):
             if is_classifier(self):
                 yield accuracy_score(y, y_pred, sample_weight=sample_weight)
@@ -265,18 +274,6 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 "Unable to compute feature importances "
                 "since base_estimator does not have a "
                 "feature_importances_ attribute")
-
-    def _validate_X_predict(self, X):
-        """Ensure that X is in the proper format"""
-        if (self.base_estimator is None or
-                isinstance(self.base_estimator,
-                           (BaseDecisionTree, BaseForest))):
-            X = check_array(X, accept_sparse='csr', dtype=DTYPE)
-
-        else:
-            X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
-
-        return X
 
 
 def _samme_proba(estimator, n_classes, X):
@@ -363,6 +360,23 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
     feature_importances_ : array of shape = [n_features]
         The feature importances if supported by the ``base_estimator``.
 
+    Examples
+    --------
+    >>> from sklearn.ensemble import AdaBoostClassifier
+    >>> from sklearn.datasets import make_classification
+    >>> X, y = make_classification(n_samples=1000, n_features=4,
+    ...                            n_informative=2, n_redundant=0,
+    ...                            random_state=0, shuffle=False)
+    >>> clf = AdaBoostClassifier(n_estimators=100, random_state=0)
+    >>> clf.fit(X, y)
+    AdaBoostClassifier(n_estimators=100, random_state=0)
+    >>> clf.feature_importances_
+    array([0.28..., 0.42..., 0.14..., 0.16...])
+    >>> clf.predict([[0, 0, 0, 0]])
+    array([1])
+    >>> clf.score(X, y)
+    0.983...
+
     See also
     --------
     AdaBoostRegressor, GradientBoostingClassifier,
@@ -383,7 +397,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
                  algorithm='SAMME.R',
                  random_state=None):
 
-        super(AdaBoostClassifier, self).__init__(
+        super().__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
             learning_rate=learning_rate,
@@ -398,7 +412,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         ----------
         X : {array-like, sparse matrix} of shape = [n_samples, n_features]
             The training input samples. Sparse matrix can be CSC, CSR, COO,
-            DOK, or LIL. DOK and LIL are converted to CSR.
+            DOK, or LIL. COO, DOK, and LIL are converted to CSR.
 
         y : array-like of shape = [n_samples]
             The target values (class labels).
@@ -416,11 +430,11 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             raise ValueError("algorithm %s is not supported" % self.algorithm)
 
         # Fit
-        return super(AdaBoostClassifier, self).fit(X, y, sample_weight)
+        return super().fit(X, y, sample_weight)
 
     def _validate_estimator(self):
         """Check the estimator and set the base_estimator_ attribute."""
-        super(AdaBoostClassifier, self)._validate_estimator(
+        super()._validate_estimator(
             default=DecisionTreeClassifier(max_depth=1))
 
         #  SAMME-R requires predict_proba-enabled base estimators
@@ -449,8 +463,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             The index of the current boost iteration.
 
         X : {array-like, sparse matrix} of shape = [n_samples, n_features]
-            The training input samples. Sparse matrix can be CSC, CSR, COO,
-            DOK, or LIL. DOK and LIL are converted to CSR.
+            The training input samples.
 
         y : array-like of shape = [n_samples]
             The target values (class labels).
@@ -529,7 +542,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         # Boost weight using multi-class AdaBoost SAMME.R alg
         estimator_weight = (-1. * self.learning_rate
                             * ((n_classes - 1.) / n_classes)
-                            * (y_coding * np.log(y_predict_proba)).sum(axis=1))
+                            * xlogy(y_coding, y_predict_proba).sum(axis=1))
 
         # Only boost the weights if it will fit again
         if not iboost == self.n_estimators - 1:
@@ -598,13 +611,15 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         ----------
         X : {array-like, sparse matrix} of shape = [n_samples, n_features]
             The training input samples. Sparse matrix can be CSC, CSR, COO,
-            DOK, or LIL. DOK and LIL are converted to CSR.
+            DOK, or LIL. COO, DOK, and LIL are converted to CSR.
 
         Returns
         -------
         y : array of shape = [n_samples]
             The predicted classes.
         """
+        X = self._validate_data(X)
+
         pred = self.decision_function(X)
 
         if self.n_classes_ == 2:
@@ -625,13 +640,16 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         Parameters
         ----------
         X : array-like of shape = [n_samples, n_features]
-            The input samples.
+            The input samples. Sparse matrix can be CSC, CSR, COO,
+            DOK, or LIL. COO, DOK, and LIL are converted to CSR.
 
         Returns
         -------
         y : generator of array, shape = [n_samples]
             The predicted classes.
         """
+        X = self._validate_data(X)
+
         n_classes = self.n_classes_
         classes = self.classes_
 
@@ -651,7 +669,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         ----------
         X : {array-like, sparse matrix} of shape = [n_samples, n_features]
             The training input samples. Sparse matrix can be CSC, CSR, COO,
-            DOK, or LIL. DOK and LIL are converted to CSR.
+            DOK, or LIL. COO, DOK, and LIL are converted to CSR.
 
         Returns
         -------
@@ -664,17 +682,16 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             class in ``classes_``, respectively.
         """
         check_is_fitted(self, "n_classes_")
-        X = self._validate_X_predict(X)
+        X = self._validate_data(X)
 
         n_classes = self.n_classes_
         classes = self.classes_[:, np.newaxis]
-        pred = None
 
         if self.algorithm == 'SAMME.R':
             # The weights are all 1. for SAMME.R
             pred = sum(_samme_proba(estimator, n_classes, X)
                        for estimator in self.estimators_)
-        else:   # self.algorithm == "SAMME"
+        else:  # self.algorithm == "SAMME"
             pred = sum((estimator.predict(X) == classes).T * w
                        for estimator, w in zip(self.estimators_,
                                                self.estimator_weights_))
@@ -695,7 +712,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         ----------
         X : {array-like, sparse matrix} of shape = [n_samples, n_features]
             The training input samples. Sparse matrix can be CSC, CSR, COO,
-            DOK, or LIL. DOK and LIL are converted to CSR.
+            DOK, or LIL. COO, DOK, and LIL are converted to CSR.
 
         Returns
         -------
@@ -708,7 +725,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             class in ``classes_``, respectively.
         """
         check_is_fitted(self, "n_classes_")
-        X = self._validate_X_predict(X)
+        X = self._validate_data(X)
 
         n_classes = self.n_classes_
         classes = self.classes_[:, np.newaxis]
@@ -749,7 +766,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         ----------
         X : {array-like, sparse matrix} of shape = [n_samples, n_features]
             The training input samples. Sparse matrix can be CSC, CSR, COO,
-            DOK, or LIL. DOK and LIL are converted to CSR.
+            DOK, or LIL. COO, DOK, and LIL are converted to CSR.
 
         Returns
         -------
@@ -758,18 +775,18 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             outputs is the same of that of the `classes_` attribute.
         """
         check_is_fitted(self, "n_classes_")
+        X = self._validate_data(X)
 
         n_classes = self.n_classes_
-        X = self._validate_X_predict(X)
 
         if n_classes == 1:
-            return np.ones((X.shape[0], 1))
+            return np.ones((_num_samples(X), 1))
 
         if self.algorithm == 'SAMME.R':
             # The weights are all 1. for SAMME.R
             proba = sum(_samme_proba(estimator, n_classes, X)
                         for estimator in self.estimators_)
-        else:   # self.algorithm == "SAMME"
+        else:  # self.algorithm == "SAMME"
             proba = sum(estimator.predict_proba(X) * w
                         for estimator, w in zip(self.estimators_,
                                                 self.estimator_weights_))
@@ -798,7 +815,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         ----------
         X : {array-like, sparse matrix} of shape = [n_samples, n_features]
             The training input samples. Sparse matrix can be CSC, CSR, COO,
-            DOK, or LIL. DOK and LIL are converted to CSR.
+            DOK, or LIL. COO, DOK, and LIL are converted to CSR.
 
         Returns
         -------
@@ -806,7 +823,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             The class probabilities of the input samples. The order of
             outputs is the same of that of the `classes_` attribute.
         """
-        X = self._validate_X_predict(X)
+        X = self._validate_data(X)
 
         n_classes = self.n_classes_
         proba = None
@@ -845,7 +862,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         ----------
         X : {array-like, sparse matrix} of shape = [n_samples, n_features]
             The training input samples. Sparse matrix can be CSC, CSR, COO,
-            DOK, or LIL. DOK and LIL are converted to CSR.
+            DOK, or LIL. COO, DOK, and LIL are converted to CSR.
 
         Returns
         -------
@@ -853,6 +870,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             The class probabilities of the input samples. The order of
             outputs is the same of that of the `classes_` attribute.
         """
+        X = self._validate_data(X)
         return np.log(self.predict_proba(X))
 
 
@@ -909,6 +927,22 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
     feature_importances_ : array of shape = [n_features]
         The feature importances if supported by the ``base_estimator``.
 
+    Examples
+    --------
+    >>> from sklearn.ensemble import AdaBoostRegressor
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(n_features=4, n_informative=2,
+    ...                        random_state=0, shuffle=False)
+    >>> regr = AdaBoostRegressor(random_state=0, n_estimators=100)
+    >>> regr.fit(X, y)
+    AdaBoostRegressor(n_estimators=100, random_state=0)
+    >>> regr.feature_importances_
+    array([0.2788..., 0.7109..., 0.0065..., 0.0036...])
+    >>> regr.predict([[0, 0, 0, 0]])
+    array([4.7972...])
+    >>> regr.score(X, y)
+    0.9771...
+
     See also
     --------
     AdaBoostClassifier, GradientBoostingRegressor,
@@ -929,7 +963,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
                  loss='linear',
                  random_state=None):
 
-        super(AdaBoostRegressor, self).__init__(
+        super().__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
             learning_rate=learning_rate,
@@ -945,7 +979,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         ----------
         X : {array-like, sparse matrix} of shape = [n_samples, n_features]
             The training input samples. Sparse matrix can be CSC, CSR, COO,
-            DOK, or LIL. DOK and LIL are converted to CSR.
+            DOK, or LIL. COO, DOK, and LIL are converted to CSR.
 
         y : array-like of shape = [n_samples]
             The target values (real numbers).
@@ -964,11 +998,11 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
                 "loss must be 'linear', 'square', or 'exponential'")
 
         # Fit
-        return super(AdaBoostRegressor, self).fit(X, y, sample_weight)
+        return super().fit(X, y, sample_weight)
 
     def _validate_estimator(self):
         """Check the estimator and set the base_estimator_ attribute."""
-        super(AdaBoostRegressor, self)._validate_estimator(
+        super()._validate_estimator(
             default=DecisionTreeRegressor(max_depth=3))
 
     def _boost(self, iboost, X, y, sample_weight, random_state):
@@ -983,8 +1017,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
             The index of the current boost iteration.
 
         X : {array-like, sparse matrix} of shape = [n_samples, n_features]
-            The training input samples. Sparse matrix can be CSC, CSR, COO,
-            DOK, or LIL. DOK and LIL are converted to CSR.
+            The training input samples.
 
         y : array-like of shape = [n_samples]
             The target values (class labels in classification, real numbers in
@@ -1016,14 +1049,16 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         # For NumPy >= 1.7.0 use np.random.choice
         cdf = stable_cumsum(sample_weight)
         cdf /= cdf[-1]
-        uniform_samples = random_state.random_sample(X.shape[0])
+        uniform_samples = random_state.random_sample(_num_samples(X))
         bootstrap_idx = cdf.searchsorted(uniform_samples, side='right')
         # searchsorted returns a scalar
         bootstrap_idx = np.array(bootstrap_idx, copy=False)
 
         # Fit on the bootstrapped sample and obtain a prediction
         # for all samples in the training set
-        estimator.fit(X[bootstrap_idx], y[bootstrap_idx])
+        X_ = safe_indexing(X, bootstrap_idx)
+        y_ = safe_indexing(y, bootstrap_idx)
+        estimator.fit(X_, y_)
         y_predict = estimator.predict(X)
 
         error_vect = np.abs(y_predict - y)
@@ -1075,10 +1110,10 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         median_or_above = weight_cdf >= 0.5 * weight_cdf[:, -1][:, np.newaxis]
         median_idx = median_or_above.argmax(axis=1)
 
-        median_estimators = sorted_idx[np.arange(X.shape[0]), median_idx]
+        median_estimators = sorted_idx[np.arange(_num_samples(X)), median_idx]
 
         # Return median predictions
-        return predictions[np.arange(X.shape[0]), median_estimators]
+        return predictions[np.arange(_num_samples(X)), median_estimators]
 
     def predict(self, X):
         """Predict regression value for X.
@@ -1090,7 +1125,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         ----------
         X : {array-like, sparse matrix} of shape = [n_samples, n_features]
             The training input samples. Sparse matrix can be CSC, CSR, COO,
-            DOK, or LIL. DOK and LIL are converted to CSR.
+            DOK, or LIL. COO, DOK, and LIL are converted to CSR.
 
         Returns
         -------
@@ -1098,7 +1133,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
             The predicted regression values.
         """
         check_is_fitted(self, "estimator_weights_")
-        X = self._validate_X_predict(X)
+        X = self._validate_data(X)
 
         return self._get_median_predict(X, len(self.estimators_))
 
@@ -1115,8 +1150,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape = [n_samples, n_features]
-            The training input samples. Sparse matrix can be CSC, CSR, COO,
-            DOK, or LIL. DOK and LIL are converted to CSR.
+            The training input samples.
 
         Returns
         -------
@@ -1124,7 +1158,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
             The predicted regression values.
         """
         check_is_fitted(self, "estimator_weights_")
-        X = self._validate_X_predict(X)
+        X = self._validate_data(X)
 
         for i, _ in enumerate(self.estimators_, 1):
             yield self._get_median_predict(X, limit=i)

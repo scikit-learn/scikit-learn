@@ -11,8 +11,6 @@ from sklearn.datasets import fetch_rcv1
 from sklearn.datasets.tests.test_common import check_return_X_y
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import SkipTest
 
 
@@ -27,19 +25,19 @@ def test_fetch_rcv1():
     cat_list, s1 = data1.target_names.tolist(), data1.sample_id
 
     # test sparsity
-    assert_true(sp.issparse(X1))
-    assert_true(sp.issparse(Y1))
-    assert_equal(60915113, X1.data.size)
-    assert_equal(2606875, Y1.data.size)
+    assert sp.issparse(X1)
+    assert sp.issparse(Y1)
+    assert 60915113 == X1.data.size
+    assert 2606875 == Y1.data.size
 
     # test shapes
-    assert_equal((804414, 47236), X1.shape)
-    assert_equal((804414, 103), Y1.shape)
-    assert_equal((804414,), s1.shape)
-    assert_equal(103, len(cat_list))
+    assert (804414, 47236) == X1.shape
+    assert (804414, 103) == Y1.shape
+    assert (804414,) == s1.shape
+    assert 103 == len(cat_list)
 
     # test ordering of categories
-    first_categories = [u'C11', u'C12', u'C13', u'C14', u'C15', u'C151']
+    first_categories = ['C11', 'C12', 'C13', 'C14', 'C15', 'C151']
     assert_array_equal(first_categories, cat_list[:6])
 
     # test number of sample for some categories
@@ -47,7 +45,7 @@ def test_fetch_rcv1():
     number_non_zero_in_cat = (5, 1206, 381327)
     for num, cat in zip(number_non_zero_in_cat, some_categories):
         j = cat_list.index(cat)
-        assert_equal(num, Y1[:, j].data.size)
+        assert num == Y1[:, j].data.size
 
     # test shuffling and subset
     data2 = fetch_rcv1(shuffle=True, subset='train', random_state=77,

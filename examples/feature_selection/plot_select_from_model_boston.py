@@ -23,7 +23,7 @@ boston = load_boston()
 X, y = boston['data'], boston['target']
 
 # We use the base estimator LassoCV since the L1 norm promotes sparsity of features.
-clf = LassoCV()
+clf = LassoCV(cv=5)
 
 # Set a minimum threshold of 0.25
 sfm = SelectFromModel(clf, threshold=0.25)

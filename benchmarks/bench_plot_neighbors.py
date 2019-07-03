@@ -38,10 +38,10 @@ def barplot_neighbors(Nrange=2 ** np.arange(1, 11),
 
     #------------------------------------------------------------
     # varying N
-    N_results_build = dict([(alg, np.zeros(len(Nrange)))
-                            for alg in algorithms])
-    N_results_query = dict([(alg, np.zeros(len(Nrange)))
-                            for alg in algorithms])
+    N_results_build = {alg: np.zeros(len(Nrange))
+                       for alg in algorithms}
+    N_results_query = {alg: np.zeros(len(Nrange))
+                       for alg in algorithms}
 
     for i, NN in enumerate(Nrange):
         print("N = %i (%i out of %i)" % (NN, i + 1, len(Nrange)))
@@ -61,10 +61,10 @@ def barplot_neighbors(Nrange=2 ** np.arange(1, 11),
 
     #------------------------------------------------------------
     # varying D
-    D_results_build = dict([(alg, np.zeros(len(Drange)))
-                            for alg in algorithms])
-    D_results_query = dict([(alg, np.zeros(len(Drange)))
-                            for alg in algorithms])
+    D_results_build = {alg: np.zeros(len(Drange))
+                       for alg in algorithms}
+    D_results_query = {alg: np.zeros(len(Drange))
+                       for alg in algorithms}
 
     for i, DD in enumerate(Drange):
         print("D = %i (%i out of %i)" % (DD, i + 1, len(Drange)))
@@ -84,10 +84,10 @@ def barplot_neighbors(Nrange=2 ** np.arange(1, 11),
 
     #------------------------------------------------------------
     # varying k
-    k_results_build = dict([(alg, np.zeros(len(krange)))
-                            for alg in algorithms])
-    k_results_query = dict([(alg, np.zeros(len(krange)))
-                            for alg in algorithms])
+    k_results_build = {alg: np.zeros(len(krange))
+                       for alg in algorithms}
+    k_results_query = {alg: np.zeros(len(krange))
+                       for alg in algorithms}
 
     X = get_data(N, DD, dataset)
 

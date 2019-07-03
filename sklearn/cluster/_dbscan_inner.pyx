@@ -1,6 +1,8 @@
 # Fast inner loop for DBSCAN.
 # Author: Lars Buitinck
 # License: 3-clause BSD
+#
+# cython: boundscheck=False, wraparound=False
 
 cimport cython
 from libcpp.vector cimport vector
@@ -14,8 +16,6 @@ cdef inline void push(vector[np.npy_intp] &stack, np.npy_intp i) except +:
     stack.push_back(i)
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 def dbscan_inner(np.ndarray[np.uint8_t, ndim=1, mode='c'] is_core,
                  np.ndarray[object, ndim=1] neighborhoods,
                  np.ndarray[np.npy_intp, ndim=1, mode='c'] labels):
