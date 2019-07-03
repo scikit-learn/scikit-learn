@@ -8,25 +8,27 @@ from sklearn.decomposition import PCA
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ResampledTrainer
 from sklearn.utils.estimator_checks import check_estimator
-from sklearn.utils.validation import _num_samples, check_X_y
+from sklearn.utils.validation import _num_samples, check_X_y_kwargs
 
 
 class HalfSampler(BaseEstimator):
     "Train with every second sample"
 
-    def fit_resample(self, X, y, **kw):
-        X, y = check_X_y(X, y, accept_sparse="csr")
+    def fit_resample(self, X, y, **kws):
+        X, y, kws = check_X_y_kwargs(X, y, kws, accept_sparse="csr")
         if _num_samples(X) > 1:
-            return X[::2], y[::2]
-        return X, y
+            return X[::2], y[::2], {kw: kws[kw][::2] for kw in kws}
+
+        return X, y, kws
 
 
 class DataSaver(BaseEstimator):
     "remembers the data that it was fitted with"
 
-    def fit(self, X, y):
+    def fit(self, X, y, **kws):
         self.X = X
         self.y = y
+        self.kws = kws
         return self
 
     def predict(self, X):
@@ -51,6 +53,19 @@ def test_correct_halfsampler():
 
         np.testing.assert_array_equal(
             rt.estimator_.y, np.array([0, 2, 4, 6, 8])
+        )
+        assert rt.estimator_.kws == {}
+        method(X, y, sample_weight=np.arange(10, 20),
+               sample_prop=np.arange(20, 30))
+
+        np.testing.assert_array_equal(
+            rt.estimator_.y, np.array([0, 2, 4, 6, 8])
+        )
+        np.testing.assert_array_equal(
+            rt.estimator_.kws['sample_weight'], np.array([10, 12, 14, 16, 18])
+        )
+        np.testing.assert_array_equal(
+            rt.estimator_.kws['sample_prop'], np.array([20, 22, 24, 26, 28])
         )
 
 
