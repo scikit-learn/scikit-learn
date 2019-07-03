@@ -467,7 +467,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                     "maxfun": self.max_fun,
                     "maxiter": self.max_iter,
                     "iprint": iprint,
-                    "pgtol": self.tol
+                    "gtol": self.tol
                 },
                 args=(X, y, activations, deltas, coef_grads, intercept_grads))
         self.n_iter_ = _check_optimize_result("lbfgs", opt_res, self.max_iter)
