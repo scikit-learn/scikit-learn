@@ -20,8 +20,8 @@ from .deprecation import deprecated
 from .validation import (as_float_array,
                          assert_all_finite,
                          check_random_state, column_or_1d, check_array,
-                         check_consistent_length, check_X_y, indexable,
-                         check_symmetric, check_scalar)
+                         check_consistent_length, check_X_y, check_X_y_kwargs,
+                         indexable, check_symmetric, check_scalar)
 from .. import get_config
 
 

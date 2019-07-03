@@ -14,7 +14,7 @@ import numpy as np
 
 from . import __version__
 from sklearn.utils import _IS_32BIT
-from sklearn.utils import safe_indexing, check_X_y
+from sklearn.utils import safe_indexing, check_X_y_kwargs
 
 _DEFAULT_TAGS = {
     'non_deterministic': False,
@@ -634,12 +634,7 @@ class OutlierRejectionMixin:
              dict of keyword arguments, with all outlier samples removed.
         """
 
-        check_X_y(X, y)
-        # NOTE this is probably not the best way to do this
-        kws = {
-            kw: check_X_y(X, kws[kw], force_all_finite='allow-nan')[1]
-            for kw in kws
-        }
+        check_X_y_kwargs(X, y, kws)
         inliers = self.fit_predict(X) == 1
         kwsr = {
             kw: safe_indexing(kws[kw], inliers)

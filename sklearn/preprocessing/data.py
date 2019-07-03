@@ -20,7 +20,7 @@ from scipy import optimize
 from scipy.special import boxcox
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import check_array, check_X_y, safe_indexing
+from ..utils import check_array, check_X_y, check_X_y_kwargs, safe_indexing
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
@@ -3038,7 +3038,7 @@ class NaNFilter(BaseEstimator):
 
     See also
     --------
-    :ref:`Imputation <impute>` : removing NaNs by replacing them with values.
+    SimpleImputer : Transformer for completing missing values.
     """
     def __init__(self, count=1):
         self.count = count
@@ -3068,13 +3068,8 @@ class NaNFilter(BaseEstimator):
              dict of keyword arguments, with all samples containing more than
              `count` NaN values removed.
         """
-        X, y = check_X_y(X, y, force_all_finite='allow-nan')
+        X, y, kws = check_X_y_kwargs(X, y, kws, force_all_finite='allow-nan')
 
-        # NOTE this is probably not the best way to do this
-        kws = {
-            kw: check_X_y(X, kws[kw], force_all_finite='allow-nan')[1]
-            for kw in kws
-        }
         mask = np.sum(np.isnan(X), axis=1) < self.count
         kwsr = {
             kw: safe_indexing(kws[kw], mask)

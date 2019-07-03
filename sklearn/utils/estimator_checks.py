@@ -2630,6 +2630,10 @@ def check_resampler_structure(name, estimator_orig):
 
 
 def check_resample_fails_on_non_matching_shapes():
+    # check that resamplers enforce matching shapes between kwargs, X and y
+    pass
+
+def check_resample_resamples_kwargs():
     pass
 
 
