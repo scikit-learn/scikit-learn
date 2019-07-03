@@ -355,12 +355,12 @@ class PCA(_BasePCA):
 
         Notes
         -----
-        This method returns an f-ordered array.
-        To get the output array in c-order,
-        do a transpose of the result i.e
+        This method returns a Fortran-ordered array.To convert it to a C-ordered array,
+        use 'np.ascontiguousarray' e.g
 
         y = PCA().fit_transform(x)
-        y = y.transpose()
+        y = np.ascontiguousarray(y, dtype=np.float32)
+
 
 
         """
