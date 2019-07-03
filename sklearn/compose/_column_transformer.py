@@ -19,6 +19,7 @@ from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
 from ..utils import safe_indexing
 from ..utils import _get_column_indices
+from ..utils import _check_key_type
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted
 
