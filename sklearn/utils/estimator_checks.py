@@ -1279,7 +1279,7 @@ def check_estimators_nan_inf(name, estimator_orig):
             set_random_state(estimator, 1)
 
             if (not hasattr(estimator, 'fit_resample')
-                or hasattr(estimator, 'fit')):
+               or hasattr(estimator, 'fit')):
                 # try to fit
                 try:
                     estimator.fit(X_train, y)

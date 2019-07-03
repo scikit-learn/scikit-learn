@@ -3028,7 +3028,7 @@ class NaNFilter(BaseEstimator):
     >>> nan = float('nan')
     >>> data = [[1, 2], [1, nan], [nan, nan]]
     >>> y = [0, 0, 0]
-    >>> Xr, yr, _ = NaNFilter().fit_resample(data))
+    >>> Xr, yr, _ = NaNFilter().fit_resample(data)
     >>> print(Xr)
     [[1. 2.]]
     >>> Xr, yr, _ = NaNFilter(count=2).fit_resample(data)
