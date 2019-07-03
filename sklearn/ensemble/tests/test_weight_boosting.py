@@ -1,27 +1,33 @@
 """Testing for the boost module (sklearn.ensemble.boost)."""
 
 import numpy as np
+import pytest
 
-from sklearn.utils.testing import assert_array_equal, assert_array_less
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_raises, assert_raises_regexp
-
-from sklearn.base import BaseEstimator
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import GridSearchCV
-from sklearn.ensemble import AdaBoostClassifier
-from sklearn.ensemble import AdaBoostRegressor
-from sklearn.ensemble import weight_boosting
 from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
 from scipy.sparse import coo_matrix
 from scipy.sparse import dok_matrix
 from scipy.sparse import lil_matrix
+
+from sklearn.utils.testing import assert_array_equal, assert_array_less
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_allclose
+from sklearn.utils.testing import assert_raises, assert_raises_regexp
+from sklearn.utils.testing import set_random_state
+
+from sklearn.base import BaseEstimator
+from sklearn.base import clone
+from sklearn import datasets
+from sklearn.dummy import DummyClassifier
+from sklearn.dummy import DummyRegressor
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.ensemble import AdaBoostRegressor
+from sklearn.ensemble import weight_boosting
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GridSearchCV
 from sklearn.svm import SVC, SVR
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import shuffle
-from sklearn import datasets
-
 
 # Common random state
 rng = np.random.RandomState(0)
@@ -304,16 +310,6 @@ def test_base_estimator():
                          clf.fit, X_fail, y_fail)
 
 
-def test_sample_weight_missing():
-    from sklearn.cluster import KMeans
-
-    clf = AdaBoostClassifier(KMeans(), algorithm="SAMME")
-    assert_raises(ValueError, clf.fit, X, y_regr)
-
-    clf = AdaBoostRegressor(KMeans())
-    assert_raises(ValueError, clf.fit, X, y_regr)
-
-
 def test_sparse_classification():
     # Check classification with sparse input.
 
@@ -462,25 +458,6 @@ def test_sparse_regression():
                    for t in types])
 
 
-def test_sample_weight_adaboost_regressor():
-    """
-    AdaBoostRegressor should work without sample_weights in the base estimator
-    The random weighted sampling is done internally in the _boost method in
-    AdaBoostRegressor.
-    """
-    class DummyEstimator(BaseEstimator):
-
-        def fit(self, X, y):
-            pass
-
-        def predict(self, X):
-            return np.zeros(X.shape[0])
-
-    boost = AdaBoostRegressor(DummyEstimator(), n_estimators=3)
-    boost.fit(X, y_regr)
-    assert len(boost.estimator_weights_) == len(boost.estimator_errors_)
-
-
 def test_multidimensional_X():
     """
     Check that the AdaBoost estimators can work with n-dimensional
@@ -503,3 +480,69 @@ def test_multidimensional_X():
     boost = AdaBoostRegressor(DummyRegressor())
     boost.fit(X, yr)
     boost.predict(X)
+
+
+class ClassifierWithoutWeight(DummyClassifier):
+    """Classifier not supporting `sample_weight`."""
+    def fit(self, X, y):
+        super().fit(X, y)
+        return self
+
+
+class RegressorWithoutWeight(DummyRegressor):
+    """Regressor not supporting `sample_weight`."""
+    def fit(self, X, y):
+        super().fit(X, y)
+        return self
+
+
+@pytest.mark.parametrize("algorithm", ['SAMME', 'SAMME.R'])
+def test_adaboostclassifier_without_sample_weight(algorithm):
+    X, y = iris.data, iris.target
+    base_estimator = ClassifierWithoutWeight()
+    clf = AdaBoostClassifier(
+        base_estimator=base_estimator, algorithm=algorithm
+    )
+    err_msg = ("Underlying estimator {} does not support sample weights"
+               .format(base_estimator.__class__.__name__))
+    with pytest.raises(ValueError, match=err_msg):
+        clf.fit(X, y)
+
+
+def test_adaboostregressor_without_sample_weight():
+    X, y = boston.data, boston.target
+    base_estimator = RegressorWithoutWeight()
+    regr = AdaBoostRegressor(base_estimator=base_estimator)
+    err_msg = ("Underlying estimator {} does not support sample weights"
+               .format(base_estimator.__class__.__name__))
+    with pytest.raises(ValueError, match=err_msg):
+        regr.fit(X, y)
+
+
+@pytest.mark.parametrize(
+    "adaboost, data",
+    [(AdaBoostClassifier(algorithm='SAMME', n_estimators=4), iris),
+     (AdaBoostClassifier(algorithm='SAMME.R', n_estimators=4), iris),
+     (AdaBoostRegressor(n_estimators=4), boston)]
+)
+def test_adaboost_sample_weight_resampling_equivalence(adaboost, data):
+    # TODO: remove this test when including a common test
+    # regression test for #14191
+    # check that passing sample_weight is equivalent to resample the dataset
+    X, y = data.data, data.target
+
+    estimator1 = clone(adaboost)
+    estimator2 = clone(adaboost)
+    set_random_state(estimator1, random_state=0)
+    set_random_state(estimator2, random_state=0)
+
+    indices = np.arange(start=0, stop=y.size, step=2)
+    sample_weight = np.ones((y.size,)) * np.bincount(indices, minlength=y.size)
+
+    estimator1.fit(X, y=y, sample_weight=sample_weight)
+    estimator2.fit(X[indices], y[indices])
+
+    assert_allclose(estimator1.predict(X), estimator2.predict(X))
+    assert_allclose(
+        estimator1.estimator_weights_, estimator2.estimator_weights_
+    )

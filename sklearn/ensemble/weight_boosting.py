@@ -89,6 +89,19 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
                             y_numeric=is_regressor(self))
         return ret
 
+    @staticmethod
+    def _fit_estimator(estimator, X, y, sample_weight):
+        """Fit an estimator checking support for sample weight."""
+        try:
+            return estimator.fit(X, y, sample_weight=sample_weight)
+        except TypeError as exc:
+            if "unexpected keyword argument 'sample_weight'" in str(exc):
+                raise ValueError(
+                    "Underlying estimator {} does not support sample weights."
+                    .format(estimator.__class__.__name__)
+                ) from exc
+            raise
+
     def fit(self, X, y, sample_weight=None):
         """Build a boosted classifier/regressor from the training set (X, y).
 
@@ -439,9 +452,6 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
                     "probabilities with a predict_proba method.\n"
                     "Please change the base estimator or set "
                     "algorithm='SAMME' instead.")
-        if not has_fit_parameter(self.base_estimator_, "sample_weight"):
-            raise ValueError("%s doesn't support sample_weight."
-                             % self.base_estimator_.__class__.__name__)
 
     def _boost(self, iboost, X, y, sample_weight, random_state):
         """Implement a single boost.
@@ -492,7 +502,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         """Implement a single boost using the SAMME.R real algorithm."""
         estimator = self._make_estimator(random_state=random_state)
 
-        estimator.fit(X, y, sample_weight=sample_weight)
+        self._fit_estimator(estimator, X, y, sample_weight)
 
         y_predict_proba = estimator.predict_proba(X)
 
@@ -550,7 +560,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         """Implement a single boost using the SAMME discrete algorithm."""
         estimator = self._make_estimator(random_state=random_state)
 
-        estimator.fit(X, y, sample_weight=sample_weight)
+        self._fit_estimator(estimator, X, y, sample_weight)
 
         y_predict = estimator.predict(X)
 
@@ -1036,25 +1046,27 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
             The regression error for the current boost.
             If None then boosting has terminated early.
         """
+        random_state = check_random_state(random_state)
         estimator = self._make_estimator(random_state=random_state)
 
-        # Weighted sampling of the training set with replacement
-        # For NumPy >= 1.7.0 use np.random.choice
-        cdf = stable_cumsum(sample_weight)
-        cdf /= cdf[-1]
-        uniform_samples = random_state.random_sample(_num_samples(X))
-        bootstrap_idx = cdf.searchsorted(uniform_samples, side='right')
-        # searchsorted returns a scalar
-        bootstrap_idx = np.array(bootstrap_idx, copy=False)
+        # create a bootstrap sample with observations having non-null weights
+        n_samples = X.shape[0]
+        sample_mask = sample_weight > 0
+        indices = random_state.choice(
+            np.flatnonzero(sample_mask), size=np.count_nonzero(sample_mask),
+            replace=True
+        )
+        sample_weight_bootstrap = (np.ones((n_samples,)) *
+                                   np.bincount(indices, minlength=n_samples))
+        # combine the bootstrap sample with the original sample_weight
+        sample_weight_bootstrap *= sample_weight
 
-        # Fit on the bootstrapped sample and obtain a prediction
-        # for all samples in the training set
-        X_ = safe_indexing(X, bootstrap_idx)
-        y_ = safe_indexing(y, bootstrap_idx)
-        estimator.fit(X_, y_)
+        self._fit_estimator(estimator, X, y, sample_weight_bootstrap)
+
         y_predict = estimator.predict(X)
 
         error_vect = np.abs(y_predict - y)
+        error_vect[~sample_mask] = 0
         error_max = error_vect.max()
 
         if error_max != 0.:
