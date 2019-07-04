@@ -489,8 +489,14 @@ average_precision_scorer = make_scorer(average_precision_score,
                                        needs_threshold=True)
 roc_auc_ovo_scorer = make_scorer(roc_auc_score, needs_threshold=True,
                                  multi_class='ovo')
+roc_auc_ovo_weighted_scorer = make_scorer(roc_auc_score, needs_threshold=True,
+                                          multi_class='ovo',
+                                          average='weighted')
 roc_auc_ovr_scorer = make_scorer(roc_auc_score, needs_threshold=True,
                                  multi_class='ovr')
+roc_auc_ovr_weighted_scorer = make_scorer(roc_auc_score, needs_threshold=True,
+                                          multi_class='ovr',
+                                          average='weighted')
 
 # Score function for probabilistic classification
 neg_log_loss_scorer = make_scorer(log_loss, greater_is_better=False,
