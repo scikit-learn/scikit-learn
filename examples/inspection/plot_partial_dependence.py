@@ -64,10 +64,10 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1,
                                                     random_state=0)
 
 ##############################################################################
-# Partial Dependence computation
-# ------------------------------
+# Partial Dependence computation for multi-layer perceptron
+# ---------------------------------------------------------
 #
-# Let's fit the models and compute the partial dependence plots either
+# Let's fit a MLPRegressor and compute the partial dependence plots either
 # or one or two variables at a time.
 
 print("Training MLPRegressor...")
@@ -95,6 +95,13 @@ fig = plt.gcf()
 fig.suptitle('Partial dependence of house value on non-location features\n'
              'for the California housing dataset, with MLPRegressor')
 plt.subplots_adjust(top=0.9)  # tight_layout causes overlap with suptitle
+
+##############################################################################
+# Partial Dependence computation for Gradient Boosting
+# ----------------------------------------------------
+#
+# Let's fit a GradientBoostingRegressor and compute the partial dependence
+# plots either or one or two variables at a time.
 
 print("Training GradientBoostingRegressor...")
 tic = time()
