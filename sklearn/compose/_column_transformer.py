@@ -712,6 +712,8 @@ def make_column_transformer(*transformers, **kwargs):
     require, and does not permit, naming the transformers. Instead, they will
     be given names automatically based on their types. It also does not allow
     weighting with ``transformer_weights``.
+    
+    Read more in the :ref:`User Guide <make_column_transformer>`.
 
     Parameters
     ----------
