@@ -296,7 +296,6 @@ def test_type_of_target():
 
 def test_type_of_target_pandas_sparse(monkeypatch):
     pd = pytest.importorskip("pandas")
-    monkeypatch.setattr(pd, "__version__", "0.23")
 
     y = pd.SparseArray([1, np.nan, np.nan, 1, np.nan])
     msg = "y cannot be class 'SparseSeries' or 'SparseArray'"
