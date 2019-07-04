@@ -149,7 +149,7 @@ def strip_newsgroup_footer(text):
 def fetch_20newsgroups(data_home=None, subset='train', categories=None,
                        shuffle=True, random_state=42,
                        remove=(),
-                       download_if_missing=True):
+                       download_if_missing=True, return_X_y=False):
     """Load the filenames and data from the 20 newsgroups dataset \
 (classification).
 
@@ -205,6 +205,10 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
     download_if_missing : optional, True by default
         If False, raise an IOError if the data is not locally available
         instead of trying to download the data from the source site.
+        
+    return_X_y : boolean, default=False.
+        If True, returns ``(data.data, data.target)`` instead of a Bunch
+        object.
 
     Returns
     -------
@@ -301,8 +305,11 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         data_lst = np.array(data.data, dtype=object)
         data_lst = data_lst[indices]
         data.data = data_lst.tolist()
-
-    return data
+        
+    if return_X_y:
+        return data, target
+    else:
+        return data
 
 
 def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
