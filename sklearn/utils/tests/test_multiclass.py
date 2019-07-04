@@ -13,7 +13,6 @@ from scipy.sparse import lil_matrix
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_allclose
@@ -280,9 +279,9 @@ def test_check_classification_targets():
 def test_type_of_target():
     for group, group_examples in EXAMPLES.items():
         for example in group_examples:
-            assert_equal(type_of_target(example), group,
-                         msg=('type_of_target(%r) should be %r, got %r'
-                              % (example, group, type_of_target(example))))
+            assert type_of_target(example) == group, (
+                'type_of_target(%r) should be %r, got %r'
+                % (example, group, type_of_target(example)))
 
     for example in NON_ARRAY_LIKE_EXAMPLES:
         msg_regex = r'Expected array-like \(array or non-string sequence\).*'

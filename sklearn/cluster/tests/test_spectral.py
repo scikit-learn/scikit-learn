@@ -8,7 +8,6 @@ import pytest
 import pickle
 
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns_message
@@ -137,7 +136,7 @@ def test_affinities():
 
     def histogram(x, y, **kwargs):
         # Histogram kernel implemented as a callable.
-        assert_equal(kwargs, {})    # no kernel_params that we didn't ask for
+        assert kwargs == {}    # no kernel_params that we didn't ask for
         return np.minimum(x, y).sum()
 
     sp = SpectralClustering(n_clusters=2, affinity=histogram, random_state=0)

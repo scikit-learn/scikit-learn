@@ -61,17 +61,22 @@ __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_run_python_script", "SkipTest"]
 
 _dummy = TestCase('__init__')
-assert_equal = _dummy.assertEqual
-assert_not_equal = _dummy.assertNotEqual
+deprecation_message = (
+    'This helper is deprecated in version 0.22 and will be removed in version '
+    '0.24. Please use "assert" instead'
+)
+assert_equal = deprecated(deprecation_message)(_dummy.assertEqual)
+assert_not_equal = deprecated(deprecation_message)(_dummy.assertNotEqual)
 assert_raises = _dummy.assertRaises
 SkipTest = unittest.case.SkipTest
 assert_dict_equal = _dummy.assertDictEqual
-assert_in = _dummy.assertIn
-assert_not_in = _dummy.assertNotIn
-assert_less = _dummy.assertLess
-assert_greater = _dummy.assertGreater
-assert_less_equal = _dummy.assertLessEqual
-assert_greater_equal = _dummy.assertGreaterEqual
+assert_in = deprecated(deprecation_message)(_dummy.assertIn)
+assert_not_in = deprecated(deprecation_message)(_dummy.assertNotIn)
+assert_less = deprecated(deprecation_message)(_dummy.assertLess)
+assert_greater = deprecated(deprecation_message)(_dummy.assertGreater)
+assert_less_equal = deprecated(deprecation_message)(_dummy.assertLessEqual)
+assert_greater_equal = deprecated(deprecation_message)(
+    _dummy.assertGreaterEqual)
 
 assert_raises_regex = _dummy.assertRaisesRegex
 # assert_raises_regexp is deprecated in Python 3.4 in favor of
