@@ -664,7 +664,27 @@ Kernels:
    impute.SimpleImputer
    impute.IterativeImputer
    impute.MissingIndicator
-   
+
+
+.. _inspection_ref:
+
+:mod:`sklearn.inspection`: inspection
+=====================================
+
+.. automodule:: sklearn.inspection
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   inspection.partial_dependence
+   inspection.plot_partial_dependence
+
+
 .. _kernel_approximation_ref:
 
 :mod:`sklearn.kernel_approximation` Kernel Approximation
@@ -1234,25 +1254,6 @@ Model validation
 
    pipeline.make_pipeline
    pipeline.make_union
-
-
-.. _inspection_ref:
-
-:mod:`sklearn.inspection`: inspection
-=====================================
-
-.. automodule:: sklearn.inspection
-   :no-members:
-   :no-inherited-members:
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   inspection.partial_dependence
-   inspection.plot_partial_dependence
 
 
 .. _preprocessing_ref:
