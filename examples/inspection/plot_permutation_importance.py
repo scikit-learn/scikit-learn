@@ -135,11 +135,13 @@ tree_feature_importances = (
 sorted_idx = tree_feature_importances.argsort()
 
 y_ticks = np.arange(0, len(feature_names))
-_, ax = plt.subplots(figsize=(10, 8))
+fig, ax = plt.subplots()
 ax.barh(y_ticks, tree_feature_importances[sorted_idx])
 ax.set_yticklabels(feature_names[sorted_idx])
 ax.set_yticks(y_ticks)
 ax.set_title("Random Forest Feature Importances (MDI)")
+fig.tight_layout()
+plt.show()
 
 
 ##############################################################################
@@ -154,10 +156,12 @@ result = permutation_importance(rf, X_test, y_test, n_repeats=10,
 sorted_idx = result.importances_mean.argsort()
 
 # sphinx_gallery_thumbnail_number = 2
-_, ax = plt.subplots()
+fig, ax = plt.subplots()
 ax.boxplot(result.importances[sorted_idx].T,
            vert=False, labels=X_test.columns[sorted_idx])
 ax.set_title("Permutation Importances (test set)")
+fig.tight_layout()
+plt.show()
 
 ##############################################################################
 # It is also possible to compute the permutation importances on the training
@@ -171,8 +175,9 @@ result = permutation_importance(rf, X_train, y_train, n_repeats=10,
 sorted_idx = result.importances_mean.argsort()
 
 # sphinx_gallery_thumbnail_number = 3
-_, ax = plt.subplots()
+fig, ax = plt.subplots()
 ax.boxplot(result.importances[sorted_idx].T,
            vert=False, labels=X_train.columns[sorted_idx])
 ax.set_title("Permutation Importances (train set)")
+fig.tight_layout()
 plt.show()
