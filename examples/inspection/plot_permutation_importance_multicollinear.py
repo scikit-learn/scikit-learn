@@ -95,7 +95,7 @@ plt.show()
 # Next, we pick a threshold to group our features into clusters and choose a
 # feature from each cluster to keep, select those features from our dataset,
 # and train a new random forest. The test accuracy of the new random forest did
-# not changed much compared to the random forest trained on the complete
+# not change much compared to the random forest trained on the complete
 # dataset.
 cluster_ids = hierarchy.fcluster(corr_linkage, 1, criterion='distance')
 cluster_id_to_feature_ids = defaultdict(list)
