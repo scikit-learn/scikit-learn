@@ -16,6 +16,7 @@ from sklearn.metrics import mean_squared_log_error
 from sklearn.metrics import median_absolute_error
 from sklearn.metrics import max_error
 from sklearn.metrics import r2_score
+from sklearn.metrics import mean_tweedie_deviance_error
 
 from sklearn.metrics.regression import _check_reg_targets
 
@@ -35,6 +36,25 @@ def test_regression_metrics(n_samples=50):
     assert_almost_equal(max_error(y_true, y_pred), 1.)
     assert_almost_equal(r2_score(y_true, y_pred),  0.995, 2)
     assert_almost_equal(explained_variance_score(y_true, y_pred), 1.)
+    assert_almost_equal(mean_tweedie_deviance_error(y_true, y_pred, p=0),
+                        mean_squared_error(y_true, y_pred))
+
+    # Tweedie deviance needs positive y_pred, except for p=0,
+    # p>=2 needs positive y_true
+    # results evaluated by sympy
+    y_true = np.arange(1, 1 + n_samples)
+    y_pred = 2 * y_true
+    n = n_samples
+    assert_almost_equal(mean_tweedie_deviance_error(y_true, y_pred, p=-1),
+                        5/12 * n * (n**2 + 2 * n + 1))
+    assert_almost_equal(mean_tweedie_deviance_error(y_true, y_pred, p=1),
+                        (n + 1) * (1 - np.log(2)))
+    assert_almost_equal(mean_tweedie_deviance_error(y_true, y_pred, p=2),
+                        2 * np.log(2) - 1)
+    assert_almost_equal(mean_tweedie_deviance_error(y_true, y_pred, p=3/2),
+                        (6 * np.sqrt(2) - 8)/n * np.sqrt(y_true).sum())
+    assert_almost_equal(mean_tweedie_deviance_error(y_true, y_pred, p=3),
+                        np.sum(1 / y_true) / (4 * n))
 
 
 def test_multioutput_regression():
@@ -75,6 +95,35 @@ def test_regression_metrics_at_limits():
     assert_raises_regex(ValueError, "Mean Squared Logarithmic Error cannot be "
                         "used when targets contain negative values.",
                         mean_squared_log_error, [1., -2., 3.], [1., 2., 3.])
+
+    # Tweedie deviance error
+    p = -1.2
+    assert_almost_equal(mean_tweedie_deviance_error([0], [1.], p=p),
+                        2./(2.-p), 2)
+    assert_raises_regex(ValueError, "Mean Tweedie deviance error with p=-1.2 "
+                        "can only be used on positive y_pred.",
+                        mean_tweedie_deviance_error, [0.], [0.], None, p)
+    p = 0.
+    assert_almost_equal(mean_tweedie_deviance_error([0.], [0.], p=p), 0.00, 2)
+    p = 1.5
+    assert_almost_equal(mean_tweedie_deviance_error([0.], [1.], p=p),
+                        2./(2.-p), 2)
+    assert_raises_regex(ValueError, "Mean Tweedie deviance error with p=1.5 "
+                        "can only be used on non-negative y_true and positive "
+                        "y_pred.",
+                        mean_tweedie_deviance_error, [0.], [0.], None, p)
+    p = 2.
+    assert_almost_equal(mean_tweedie_deviance_error([1.], [1.], p=p),
+                        0.00, 2)
+    assert_raises_regex(ValueError, "Mean Tweedie deviance error with p=2.0 "
+                        "can only be used on positive y_true and y_pred.",
+                        mean_tweedie_deviance_error, [0.], [0.], None, p)
+    p = 3.
+    assert_almost_equal(mean_tweedie_deviance_error([1.], [1.], p=p),
+                        0.00, 2)
+    assert_raises_regex(ValueError, "Mean Tweedie deviance error with p=3.0 "
+                        "can only be used on positive y_true and y_pred.",
+                        mean_tweedie_deviance_error, [0.], [0.], None, p)
 
 
 def test__check_reg_targets():

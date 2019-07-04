@@ -54,44 +54,45 @@ the model and the data, like :func:`metrics.mean_squared_error`, are
 available as neg_mean_squared_error which return the negated value
 of the metric.
 
-==============================    =============================================     ==================================
-Scoring                           Function                                          Comment
-==============================    =============================================     ==================================
+=================================    =============================================     ==================================
+Scoring                              Function                                          Comment
+=================================    =============================================     ==================================
 **Classification**
-'accuracy'                        :func:`metrics.accuracy_score`
-'balanced_accuracy'               :func:`metrics.balanced_accuracy_score`
-'average_precision'               :func:`metrics.average_precision_score`
-'brier_score_loss'                :func:`metrics.brier_score_loss`
-'f1'                              :func:`metrics.f1_score`                          for binary targets
-'f1_micro'                        :func:`metrics.f1_score`                          micro-averaged
-'f1_macro'                        :func:`metrics.f1_score`                          macro-averaged
-'f1_weighted'                     :func:`metrics.f1_score`                          weighted average
-'f1_samples'                      :func:`metrics.f1_score`                          by multilabel sample
-'neg_log_loss'                    :func:`metrics.log_loss`                          requires ``predict_proba`` support
-'precision' etc.                  :func:`metrics.precision_score`                   suffixes apply as with 'f1'
-'recall' etc.                     :func:`metrics.recall_score`                      suffixes apply as with 'f1'
-'jaccard' etc.                    :func:`metrics.jaccard_score`                     suffixes apply as with 'f1'
-'roc_auc'                         :func:`metrics.roc_auc_score`
+'accuracy'                           :func:`metrics.accuracy_score`
+'balanced_accuracy'                  :func:`metrics.balanced_accuracy_score`
+'average_precision'                  :func:`metrics.average_precision_score`
+'brier_score_loss'                   :func:`metrics.brier_score_loss`
+'f1'                                 :func:`metrics.f1_score`                          for binary targets
+'f1_micro'                           :func:`metrics.f1_score`                          micro-averaged
+'f1_macro'                           :func:`metrics.f1_score`                          macro-averaged
+'f1_weighted'                        :func:`metrics.f1_score`                          weighted average
+'f1_samples'                         :func:`metrics.f1_score`                          by multilabel sample
+'neg_log_loss'                       :func:`metrics.log_loss`                          requires ``predict_proba`` support
+'precision' etc.                     :func:`metrics.precision_score`                   suffixes apply as with 'f1'
+'recall' etc.                        :func:`metrics.recall_score`                      suffixes apply as with 'f1'
+'jaccard' etc.                       :func:`metrics.jaccard_score`                     suffixes apply as with 'f1'
+'roc_auc'                            :func:`metrics.roc_auc_score`
 
 **Clustering**
-'adjusted_mutual_info_score'      :func:`metrics.adjusted_mutual_info_score`
-'adjusted_rand_score'             :func:`metrics.adjusted_rand_score`
-'completeness_score'              :func:`metrics.completeness_score`
-'fowlkes_mallows_score'           :func:`metrics.fowlkes_mallows_score`
-'homogeneity_score'               :func:`metrics.homogeneity_score`
-'mutual_info_score'               :func:`metrics.mutual_info_score`
-'normalized_mutual_info_score'    :func:`metrics.normalized_mutual_info_score`
-'v_measure_score'                 :func:`metrics.v_measure_score`
+'adjusted_mutual_info_score'         :func:`metrics.adjusted_mutual_info_score`
+'adjusted_rand_score'                :func:`metrics.adjusted_rand_score`
+'completeness_score'                 :func:`metrics.completeness_score`
+'fowlkes_mallows_score'              :func:`metrics.fowlkes_mallows_score`
+'homogeneity_score'                  :func:`metrics.homogeneity_score`
+'mutual_info_score'                  :func:`metrics.mutual_info_score`
+'normalized_mutual_info_score'       :func:`metrics.normalized_mutual_info_score`
+'v_measure_score'                    :func:`metrics.v_measure_score`
 
 **Regression**
-'explained_variance'              :func:`metrics.explained_variance_score`
-'max_error'                       :func:`metrics.max_error`
-'neg_mean_absolute_error'         :func:`metrics.mean_absolute_error`
-'neg_mean_squared_error'          :func:`metrics.mean_squared_error`
-'neg_mean_squared_log_error'      :func:`metrics.mean_squared_log_error`
-'neg_median_absolute_error'       :func:`metrics.median_absolute_error`
-'r2'                              :func:`metrics.r2_score`
-==============================    =============================================     ==================================
+'explained_variance'                 :func:`metrics.explained_variance_score`
+'max_error'                          :func:`metrics.max_error`
+'neg_mean_absolute_error'            :func:`metrics.mean_absolute_error`
+'neg_mean_squared_error'             :func:`metrics.mean_squared_error`
+'neg_mean_squared_log_error'         :func:`metrics.mean_squared_log_error`
+'neg_median_absolute_error'          :func:`metrics.median_absolute_error`
+'r2'                                 :func:`metrics.r2_score`
+'neg_mean_tweedie_deviance_error'    :func:`metrics.mean_tweedie_deviance_error`
+=================================    =============================================     ==================================
 
 
 Usage examples:
@@ -1890,6 +1891,33 @@ Here is a small example of usage of the :func:`r2_score` function::
   * See :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
     for an example of R² score usage to
     evaluate Lasso and Elastic Net on sparse signals.
+
+.. neg_mean_tweedie_deviance_error:
+
+Mean Tweedie deviance error
+---------------------------
+The :func:`mean_tweedie_deviance_error` function computes `mean Tweedie
+deviance error <https://en.wikipedia.org/wiki/Mean_squared_error>`_
+with Tweedie power parameter `p`. This is a metric that elicits
+predicted expectation values of regression targets. For `p=0` it equals
+:func:`mean_squared_error`. The higher `p` the less weight is given to extreme
+deviations between true and predicted target.
+If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample,
+and :math:`y_i` is the corresponding true value, then the mean Tweedie
+deviance error (D) estimated over :math:`n_{\text{samples}}` is defined as
+.. math::
+  \text{D}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} #TODO#.
+Here is a small example of usage of the :func:`mean_squared_error`
+function::
+    >>> from sklearn.metrics import mean_squared_error
+    >>> y_true = [3, -0.5, 2, 7]
+    >>> y_pred = [2.5, 0.0, 2, 8]
+    >>> mean_squared_error(y_true, y_pred)
+    0.375
+    >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
+    >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
+    >>> mean_squared_error(y_true, y_pred)
+    0.7083...
 
 .. _clustering_metrics:
 

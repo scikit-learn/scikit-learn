@@ -664,7 +664,7 @@ Kernels:
    impute.SimpleImputer
    impute.IterativeImputer
    impute.MissingIndicator
-   
+
 .. _kernel_approximation_ref:
 
 :mod:`sklearn.kernel_approximation` Kernel Approximation
@@ -800,7 +800,7 @@ Kernels:
     manifold.smacof
     manifold.spectral_embedding
     manifold.t_sne.trustworthiness
-	
+
 
 .. _metrics_ref:
 
@@ -880,6 +880,7 @@ details.
    metrics.mean_squared_log_error
    metrics.median_absolute_error
    metrics.r2_score
+   metrics.mean_tweedie_deviance_error
 
 Multilabel ranking metrics
 --------------------------
