@@ -16,7 +16,7 @@
 #
 # License: BSD 3 clause
 
-from cpython cimport Py_INCREF, PyObject
+from cpython cimport Py_INCREF, PyObject, PyTypeObject
 
 from libc.stdlib cimport free
 from libc.math cimport fabs
@@ -39,7 +39,7 @@ from ._utils cimport safe_realloc
 from ._utils cimport sizet_ptr_to_ndarray
 
 cdef extern from "numpy/arrayobject.h":
-    object PyArray_NewFromDescr(object subtype, np.dtype descr,
+    object PyArray_NewFromDescr(PyTypeObject* subtype, np.dtype descr,
                                 int nd, np.npy_intp* dims,
                                 np.npy_intp* strides,
                                 void* data, int flags, object obj)
@@ -1117,7 +1117,8 @@ cdef class Tree:
         strides[0] = sizeof(Node)
         cdef np.ndarray arr
         Py_INCREF(NODE_DTYPE)
-        arr = PyArray_NewFromDescr(np.ndarray, <np.dtype> NODE_DTYPE, 1, shape,
+        arr = PyArray_NewFromDescr(<PyTypeObject *> np.ndarray,
+                                   <np.dtype> NODE_DTYPE, 1, shape,
                                    strides, <void*> self.nodes,
                                    np.NPY_DEFAULT, None)
         Py_INCREF(self)

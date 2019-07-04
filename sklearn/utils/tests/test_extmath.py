@@ -12,12 +12,10 @@ from scipy.special import expit
 
 import pytest
 
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import skip_if_32bit
@@ -47,7 +45,7 @@ def test_density():
     X_lil = sparse.lil_matrix(X)
 
     for X_ in (X_csr, X_csc, X_coo, X_lil):
-        assert_equal(density(X_), density(X))
+        assert density(X_) == density(X)
 
 
 def test_uniform_weights():
@@ -96,7 +94,7 @@ def check_randomized_svd_low_rank(dtype):
     X = make_low_rank_matrix(n_samples=n_samples, n_features=n_features,
                              effective_rank=rank, tail_strength=0.0,
                              random_state=0).astype(dtype, copy=False)
-    assert_equal(X.shape, (n_samples, n_features))
+    assert X.shape == (n_samples, n_features)
 
     # compute the singular values of X using the slow exact method
     U, s, V = linalg.svd(X, full_matrices=False)
@@ -123,9 +121,9 @@ def check_randomized_svd_low_rank(dtype):
             assert sa.dtype == np.float64
             assert Va.dtype == np.float64
 
-        assert_equal(Ua.shape, (n_samples, k))
-        assert_equal(sa.shape, (k,))
-        assert_equal(Va.shape, (k, n_features))
+        assert Ua.shape == (n_samples, k)
+        assert sa.shape == (k,)
+        assert Va.shape == (k, n_features)
 
         # ensure that the singular values of both methods are equal up to the
         # real rank of the matrix
@@ -203,7 +201,7 @@ def test_randomized_svd_low_rank_with_noise():
     X = make_low_rank_matrix(n_samples=n_samples, n_features=n_features,
                              effective_rank=rank, tail_strength=0.1,
                              random_state=0)
-    assert_equal(X.shape, (n_samples, n_features))
+    assert X.shape == (n_samples, n_features)
 
     # compute the singular values of X using the slow exact method
     _, s, _ = linalg.svd(X, full_matrices=False)
@@ -216,7 +214,7 @@ def test_randomized_svd_low_rank_with_noise():
                                   random_state=0)
 
         # the approximation does not tolerate the noise:
-        assert_greater(np.abs(s[:k] - sa).max(), 0.01)
+        assert np.abs(s[:k] - sa).max() > 0.01
 
         # compute the singular values of X using the fast approximate
         # method with iterated power method
@@ -240,7 +238,7 @@ def test_randomized_svd_infinite_rank():
     X = make_low_rank_matrix(n_samples=n_samples, n_features=n_features,
                              effective_rank=rank, tail_strength=1.0,
                              random_state=0)
-    assert_equal(X.shape, (n_samples, n_features))
+    assert X.shape == (n_samples, n_features)
 
     # compute the singular values of X using the slow exact method
     _, s, _ = linalg.svd(X, full_matrices=False)
@@ -251,7 +249,7 @@ def test_randomized_svd_infinite_rank():
                                   power_iteration_normalizer=normalizer)
 
         # the approximation does not tolerate the noise:
-        assert_greater(np.abs(s[:k] - sa).max(), 0.1)
+        assert np.abs(s[:k] - sa).max() > 0.1
 
         # compute the singular values of X using the fast approximate method
         # with iterated power method
@@ -273,7 +271,7 @@ def test_randomized_svd_transpose_consistency():
     X = make_low_rank_matrix(n_samples=n_samples, n_features=n_features,
                              effective_rank=rank, tail_strength=0.5,
                              random_state=0)
-    assert_equal(X.shape, (n_samples, n_features))
+    assert X.shape == (n_samples, n_features)
 
     U1, s1, V1 = randomized_svd(X, k, n_iter=3, transpose=False,
                                 random_state=0)
@@ -313,7 +311,7 @@ def test_randomized_svd_power_iteration_normalizer():
                              power_iteration_normalizer='none')
     A = X - U.dot(np.diag(s).dot(V))
     error_20 = linalg.norm(A, ord='fro')
-    assert_greater(np.abs(error_2 - error_20), 100)
+    assert np.abs(error_2 - error_20) > 100
 
     for normalizer in ['LU', 'QR', 'auto']:
         U, s, V = randomized_svd(X, n_components, n_iter=2,
@@ -328,7 +326,7 @@ def test_randomized_svd_power_iteration_normalizer():
                                      random_state=0)
             A = X - U.dot(np.diag(s).dot(V))
             error = linalg.norm(A, ord='fro')
-            assert_greater(15, np.abs(error_2 - error))
+            assert 15 > np.abs(error_2 - error)
 
 
 def test_randomized_svd_sparse_warnings():
@@ -552,7 +550,7 @@ def test_incremental_variance_numerical_stability():
         stable_var = two_pass_var
 
     # Naive one pass var: >tol (=1063)
-    assert_greater(np.abs(stable_var(A) - one_pass_var(A)).max(), tol)
+    assert np.abs(stable_var(A) - one_pass_var(A)).max() > tol
 
     # Starting point for online algorithms: after A0
 
@@ -561,10 +559,10 @@ def test_incremental_variance_numerical_stability():
     for i in range(A1.shape[0]):
         mean, var, n = \
             naive_mean_variance_update(A1[i, :], mean, var, n)
-    assert_equal(n, A.shape[0])
+    assert n == A.shape[0]
     # the mean is also slightly unstable
-    assert_greater(np.abs(A.mean(axis=0) - mean).max(), 1e-6)
-    assert_greater(np.abs(stable_var(A) - var).max(), tol)
+    assert np.abs(A.mean(axis=0) - mean).max() > 1e-6
+    assert np.abs(stable_var(A) - var).max() > tol
 
     # Robust implementation: <tol (177)
     mean, var = A0[0, :], np.zeros(n_features)
@@ -575,7 +573,7 @@ def test_incremental_variance_numerical_stability():
                                       mean, var, n)
     assert_array_equal(n, A.shape[0])
     assert_array_almost_equal(A.mean(axis=0), mean)
-    assert_greater(tol, np.abs(stable_var(A) - var).max())
+    assert tol > np.abs(stable_var(A) - var).max()
 
 
 def test_incremental_variance_ddof():

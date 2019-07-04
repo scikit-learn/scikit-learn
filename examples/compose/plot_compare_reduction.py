@@ -102,13 +102,12 @@ plt.show()
 #     cache. Hence, use the ``memory`` constructor parameter when the fitting
 #     of a transformer is costly.
 
-from tempfile import mkdtemp
-from shutil import rmtree
 from joblib import Memory
+from shutil import rmtree
 
 # Create a temporary folder to store the transformers of the pipeline
-cachedir = mkdtemp()
-memory = Memory(location=cachedir, verbose=10)
+location = 'cachedir'
+memory = Memory(location=location, verbose=10)
 cached_pipe = Pipeline([('reduce_dim', PCA()),
                         ('classify', LinearSVC(dual=False, max_iter=10000))],
                        memory=memory)
@@ -119,7 +118,8 @@ digits = load_digits()
 grid.fit(digits.data, digits.target)
 
 # Delete the temporary cache before exiting
-rmtree(cachedir)
+memory.clear(warn=False)
+rmtree(location)
 
 ###############################################################################
 # The ``PCA`` fitting is only computed at the evaluation of the first
