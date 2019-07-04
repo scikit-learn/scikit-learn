@@ -542,7 +542,7 @@ def test_adaboost_sample_weight_resampling_equivalence(adaboost, data):
     estimator1.fit(X, y=y, sample_weight=sample_weight)
     estimator2.fit(X[indices], y[indices])
 
-    assert_allclose(estimator1.predict(X), estimator2.predict(X))
     assert_allclose(
-        estimator1.estimator_weights_, estimator2.estimator_weights_
+        estimator1.estimator_weights_, estimator2.estimator_weights_,
+        rtol=1e-4
     )
