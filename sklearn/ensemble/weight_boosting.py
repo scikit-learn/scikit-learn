@@ -940,9 +940,9 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
     >>> regr.fit(X, y)
     AdaBoostRegressor(n_estimators=100, random_state=0)
     >>> regr.feature_importances_
-    array([0.2..., 0.7..., 0.0..., 0.0... ])
+    array([0.28..., 0.68..., 0.01..., 0.00...])
     >>> regr.predict([[0, 0, 0, 0]])
-    array([3.2...])
+    array([3.0...])
     >>> regr.score(X, y)
     0.97...
 
@@ -1058,8 +1058,10 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         )
         sample_weight_bootstrap = (np.ones((n_samples,)) *
                                    np.bincount(indices, minlength=n_samples))
+        sample_weight_bootstrap /= sample_weight_bootstrap.sum()
         # combine the bootstrap sample with the original sample_weight
         sample_weight_bootstrap *= sample_weight
+        sample_weight_bootstrap /= sample_weight_bootstrap.sum()
 
         self._fit_estimator(estimator, X, y, sample_weight_bootstrap)
 
