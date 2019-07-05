@@ -652,9 +652,10 @@ def check_sample_weights_equivalence_sampling(name, estimator_orig):
             X, y = load_boston(return_X_y=True)
         y = enforce_estimator_tags_y(estimator1, y)
 
-        indices = np.arange(start=0, stop=y.size, step=2)
-        sample_weight = np.ones((y.size,)) * np.bincount(indices,
-                                                         minlength=y.size)
+        step = 2
+        indices = np.arange(start=0, stop=y.size, step=step)
+        sample_weight = np.zeros((y.size,))
+        sample_weight[::step] = 1.
 
         estimator1.fit(X, y=y, sample_weight=sample_weight)
         estimator2.fit(X[indices], y[indices])
@@ -665,10 +666,7 @@ def check_sample_weights_equivalence_sampling(name, estimator_orig):
             if hasattr(estimator_orig, method):
                 X_pred1 = getattr(estimator1, method)(X)
                 X_pred2 = getattr(estimator2, method)(X)
-                if sparse.issparse(X_pred1):
-                    X_pred1 = X_pred1.toarray()
-                    X_pred2 = X_pred2.toarray()
-                assert_allclose(X_pred1, X_pred2, err_msg=err_msg)
+                assert_allclose_dense_sparse(X_pred1, X_pred2, err_msg=err_msg)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning, UserWarning))
