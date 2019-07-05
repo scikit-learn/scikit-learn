@@ -625,10 +625,6 @@ class _CacheEstimator:
     def __getattr__(self, name):
         return getattr(self.estimator, name)
 
-    @property
-    def __class__(self):
-        return self.estimator.__class__
-
 
 def _multimetric_score(estimator, X_test, y_test, scorers):
     """Return a dict of score for multimetric scoring"""

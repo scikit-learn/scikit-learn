@@ -1740,7 +1740,6 @@ def test_cached_estimator(func_name):
     assert cached_est.cache[func_name] == 42
 
     assert cached_est.my_attribute == "hello"
-    assert isinstance(cached_est, Mock)
 
     # only called once
     assert mock_func.call_count == 1
