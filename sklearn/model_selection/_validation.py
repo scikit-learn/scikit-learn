@@ -622,9 +622,6 @@ class _CacheEstimator:
                 func = partial(_call_func, name=func_name)
                 setattr(self, func_name, func)
 
-    def __getattr__(self, name):
-        return getattr(self.estimator, name)
-
 
 def _multimetric_score(estimator, X_test, y_test, scorers):
     """Return a dict of score for multimetric scoring"""

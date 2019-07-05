@@ -1727,7 +1727,6 @@ def test_score():
                           "decision_function", "score"])
 def test_cached_estimator(func_name):
     mock_est = Mock()
-    mock_est.my_attribute = "hello"
     mock_func = getattr(mock_est, func_name)
     mock_func.return_value = 42
 
@@ -1738,8 +1737,6 @@ def test_cached_estimator(func_name):
     assert func() == 42
     assert func() == 42
     assert cached_est.cache[func_name] == 42
-
-    assert cached_est.my_attribute == "hello"
 
     # only called once
     assert mock_func.call_count == 1
