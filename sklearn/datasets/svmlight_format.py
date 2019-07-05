@@ -25,10 +25,12 @@ import scipy.sparse as sp
 from .. import __version__
 
 from ..utils import check_array, IS_PYPY
+from builtins import isinstance
 
 if not IS_PYPY:
     from ._svmlight_format import _load_svmlight_file
 else:
+
     def _load_svmlight_file(*args, **kwargs):
         raise NotImplementedError(
                 'load_svmlight_file is currently not '
@@ -39,7 +41,7 @@ else:
 
 def load_svmlight_file(f, n_features=None, dtype=np.float64,
                        multilabel=False, zero_based="auto", query_id=False,
-                       offset=0, length=-1):
+                       fis=None, offset=0, length=-1, sampling_rate=1.0):
     """Load datasets in the svmlight / libsvm format into sparse CSR matrix
 
     This format is a text-based format, with one sample per line. It does
@@ -110,6 +112,10 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
     query_id : boolean, default False
         If True, will return the query_id array for each file.
 
+    fis : array of indices, optional, default=None
+        List of feature indices to be included. If None, all features are
+        selected
+
     offset : integer, optional, default 0
         Ignore the offset first bytes by seeking forward, then
         discarding the following bytes up until the next new line
@@ -118,6 +124,10 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
     length : integer, optional, default -1
         If strictly positive, stop reading any new line of data once the
         position in the file has reached the (offset + length) bytes threshold.
+
+    sampling_rate : float, optional, default 1.0
+        Select random rows from the input file. This is useful when extracting
+        statistics from a very large libsvm file.
 
     Returns
     -------
@@ -152,7 +162,8 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
         X, y = get_data()
     """
     return tuple(load_svmlight_files([f], n_features, dtype, multilabel,
-                                     zero_based, query_id, offset, length))
+                                     zero_based, query_id, fis, offset, length,
+                                     sampling_rate))
 
 
 def _gen_open(f):
@@ -173,32 +184,34 @@ def _gen_open(f):
 
 
 def _open_and_load(f, dtype, multilabel, zero_based, query_id,
-                   offset=0, length=-1):
+                   sampling_rate, fis, offset=0, length=-1):
+    if fis is not None:
+        fis = np.array(fis)
     if hasattr(f, "read"):
         actual_dtype, data, ind, indptr, labels, query = \
             _load_svmlight_file(f, dtype, multilabel, zero_based, query_id,
-                                offset, length)
+                                offset, length, sampling_rate, fis)
     else:
         with closing(_gen_open(f)) as f:
             actual_dtype, data, ind, indptr, labels, query = \
                 _load_svmlight_file(f, dtype, multilabel, zero_based, query_id,
-                                    offset, length)
+                                    offset, length, sampling_rate, fis)
 
     # convert from array.array, give data the right dtype
     if not multilabel:
         labels = np.frombuffer(labels, np.float64)
     data = np.frombuffer(data, actual_dtype)
     indices = np.frombuffer(ind, np.longlong)
-    indptr = np.frombuffer(indptr, dtype=np.longlong)   # never empty
+    indptr = np.frombuffer(indptr, dtype=np.longlong)  # never empty
     query = np.frombuffer(query, np.int64)
 
-    data = np.asarray(data, dtype=dtype)    # no-op for float{32,64}
+    data = np.asarray(data, dtype=dtype)  # no-op for float{32,64}
     return data, indices, indptr, labels, query
 
 
 def load_svmlight_files(files, n_features=None, dtype=np.float64,
                         multilabel=False, zero_based="auto", query_id=False,
-                        offset=0, length=-1):
+                        fis=None, offset=0, length=-1, sampling_rate=1.0):
     """Load dataset from multiple files in SVMlight format
 
     This function is equivalent to mapping load_svmlight_file over a list of
@@ -254,6 +267,10 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
     query_id : boolean, defaults to False
         If True, will return the query_id array for each file.
 
+    fis : array of indices, optional, default=None
+        List of feature indices to be included. If None, all features are
+        selected
+
     offset : integer, optional, default 0
         Ignore the offset first bytes by seeking forward, then
         discarding the following bytes up until the next new line
@@ -262,6 +279,10 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
     length : integer, optional, default -1
         If strictly positive, stop reading any new line of data once the
         position in the file has reached the (offset + length) bytes threshold.
+
+    sampling_rate : float, optional, default 1.0
+        Select random rows from the input file. This is useful when extracting
+        statistics from a very large libsvm file.
 
     Returns
     -------
@@ -292,8 +313,24 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
         raise ValueError(
             "n_features is required when offset or length is specified.")
 
+    if (sampling_rate < 1) and zero_based == "auto":
+        # there is no guarantee that a row with index 0 will be read when
+        # sampling, so disable heuristic
+        raise ValueError("zero based must be set if sampling rows")
+
+    if fis is not None:
+        if zero_based == "auto":
+            raise ValueError(
+                "zero based must set if selecting features while reading " +
+                "input file.")
+        if zero_based is False:
+            fis = [idx+1 for idx in fis]
+
+    if fis is not None and n_features is None:
+        raise ValueError("n_features is required when fis is set.")
+
     r = [_open_and_load(f, dtype, multilabel, bool(zero_based), bool(query_id),
-                        offset=offset, length=length)
+                        sampling_rate, fis, offset=offset, length=length)
          for f in files]
 
     if (zero_based is False or
@@ -380,7 +417,7 @@ def _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id):
         f.write((line_pattern % feat).encode('ascii'))
 
 
-def dump_svmlight_file(X, y, f,  zero_based=True, comment=None, query_id=None,
+def dump_svmlight_file(X, y, f, zero_based=True, comment=None, query_id=None,
                        multilabel=False):
     """Dump the dataset in svmlight / libsvm file format.
 
@@ -453,8 +490,8 @@ def dump_svmlight_file(X, y, f,  zero_based=True, comment=None, query_id=None,
 
     Xval = check_array(X, accept_sparse='csr')
     if Xval.shape[0] != yval.shape[0]:
-        raise ValueError("X.shape[0] and y.shape[0] should be the same, got"
-                         " %r and %r instead." % (Xval.shape[0], yval.shape[0]))
+        raise ValueError("X.shape[0] and y.shape[0] should be the same, got "
+                         "%r and %r instead." % (Xval.shape[0], yval.shape[0]))
 
     # We had some issues with CSR matrices with unsorted indices (e.g. #1501),
     # so sort them here, but first make sure we don't modify the user's X.

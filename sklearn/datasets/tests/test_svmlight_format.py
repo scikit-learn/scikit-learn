@@ -28,6 +28,19 @@ invalidfile2 = os.path.join(currdir, "data", "svmlight_invalid_order.txt")
 pytestmark = fails_if_pypy
 
 
+def test_column_selection():
+    def assert_column_selection(zero_based):
+        fis = [2, 11]
+        X, y = load_svmlight_file(datafile, zero_based=zero_based)
+        X1, y1 = load_svmlight_file(datafile, zero_based=zero_based,
+                                    fis=fis, n_features=X.shape[1])
+        for j in fis:
+            np.testing.assert_array_equal(X.getcol(j).data, X1.getcol(j).data)
+
+    assert_column_selection(True)
+    assert_column_selection(False)
+
+
 def test_load_svmlight_file():
     X, y = load_svmlight_file(datafile)
 
