@@ -6,8 +6,11 @@ import numpy as np
 import pytest
 from scipy import interpolate, sparse
 from copy import deepcopy
+import joblib
+from distutils.version import LooseVersion
 
 from sklearn.datasets import load_boston
+from sklearn.datasets import make_regression
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -868,3 +871,24 @@ def test_sparse_input_convergence_warning():
         Lasso(max_iter=1000).fit(sparse.csr_matrix(X, dtype=np.float32), y)
 
     assert not record.list
+
+
+@pytest.mark.parametrize("backend",
+                         ["loky", "multiprocessing", "threading"])
+@pytest.mark.parametrize("estimator",
+                         [ElasticNetCV, MultiTaskElasticNetCV,
+                          LassoCV, MultiTaskLassoCV])
+def test_linear_models_cv_fit_for_all_backends(backend, estimator):
+    # LinearModelsCV.fit performs inplace operations on input data which would
+    # have been memmapped when using loky or multiprocessing backend, causing
+    # an error without require='sharedmem'.
+
+    if joblib.__version__ < LooseVersion('0.12') and backend == 'loky':
+        pytest.skip('loky backend does not exist in joblib <0.12')
+
+    # Create a problem sufficiently large to cause memmapping (1MB).
+    n_targets = 1 + (estimator in (MultiTaskElasticNetCV, MultiTaskLassoCV))
+    X, y = make_regression(20000, 10, n_targets=n_targets)
+
+    with joblib.parallel_backend(backend=backend):
+        estimator(n_jobs=2, cv=3).fit(X, y)
