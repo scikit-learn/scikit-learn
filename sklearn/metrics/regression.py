@@ -619,7 +619,7 @@ def max_error(y_true, y_pred):
 def mean_tweedie_deviance_error(y_true, y_pred, sample_weight=None, p=0):
     """Mean Tweedie deviance regression loss.
 
-    Read more in the :ref:`User Guide <mean_tweedie_deviance_score>`.
+    Read more in the :ref:`User Guide <mean_tweedie_deviance>`.
 
     Parameters
     ----------
@@ -647,7 +647,7 @@ def mean_tweedie_deviance_error(y_true, y_pred, sample_weight=None, p=0):
         - p = 2 : Gamma distribution. Requires: y_true > 0 and y_pred > 0.
         - p = 3 : Inverse Gaussian distribution. Requires: y_true > 0
           and y_pred > 0.
-        - p > 2 : Positive stable distribution. Requires: y_true > 0
+        - otherwise : Positive stable distribution. Requires: y_true > 0
           and y_pred > 0.
 
     Returns

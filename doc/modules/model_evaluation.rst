@@ -1892,7 +1892,7 @@ Here is a small example of usage of the :func:`r2_score` function::
     for an example of R² score usage to
     evaluate Lasso and Elastic Net on sparse signals.
 
-.. neg_mean_tweedie_deviance_error:
+.. _mean_tweedie_deviance:
 
 Mean Tweedie deviance error
 ---------------------------
@@ -1933,7 +1933,7 @@ prediction difference of the second point,::
     >>> mean_tweedie_deviance_error([1.0], [1.5], p=0)
     0.25
     >>> mean_tweedie_deviance_error([100.], [150.], p=0)
-    2500
+    2500.0
 
 If we increase ``p`` to 1,::
 
