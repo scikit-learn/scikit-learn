@@ -1940,14 +1940,14 @@ If we increase ``p`` to 1,::
     >>> mean_tweedie_deviance_error([1.0], [1.5], p=1)
     0.18...
     >>> mean_tweedie_deviance_error([100.], [150.], p=1)
-    18.9..
+    18.9...
 
 the difference in errors decreases. Finally, by settting, ``p=2``::
 
     >>> mean_tweedie_deviance_error([1.0], [1.5], p=2)
-    0.14..
+    0.14...
     >>> mean_tweedie_deviance_error([100.], [150.], p=2)
-    0.14..
+    0.14...
 
 we would get identical errors in this example.
 
