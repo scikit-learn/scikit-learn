@@ -8,8 +8,6 @@ adapted from :func:`pandas.show_versions`
 import platform
 import sys
 import importlib
-import numpy
-import scipy
 
 
 def _get_sys_info():
