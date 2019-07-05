@@ -596,6 +596,38 @@ def _score(estimator, X_test, y_test, scorer, is_multimetric=False):
     return score
 
 
+class _CacheEstimator:
+    """Cache predict, predict_proba, decision_function, and score
+    of an estimator
+    """
+    def __init__(self, estimator):
+        self.estimator = estimator
+        self.cache = {}
+
+        def _call_func(*args, name=None, **kwargs):
+            try:
+                return self.cache[name]
+            except KeyError:
+                func = getattr(self.estimator, name)
+                result = func(*args, **kwargs)
+                self.cache[name] = result
+                return result
+
+        func_names = ['predict', 'predict_proba', 'decision_function', 'score']
+        for func_name in func_names:
+            # only add when estimator defines func_name
+            if hasattr(estimator, func_name):
+                func = partial(_call_func, name=func_name)
+                setattr(self, func_name, func)
+
+    def __getattr__(self, name):
+        return getattr(self.estimator, name)
+
+    @property
+    def __class__(self):
+        return self.estimator.__class__
+
+
 def _multimetric_score(estimator, X_test, y_test, scorers):
     """Return a dict of score for multimetric scoring"""
     scores = {}
