@@ -209,7 +209,12 @@ and then::
     In order to build the documentation and run the example code contains in
     this documentation you will need matplotlib::
 
-        sudo apt-get install python3-matplotlib
+        pip3 install matplotlib
+
+When precompiled wheels are not avalaible for your architecture, you can
+install the system versions::
+
+    sudo apt-get install cython3 python3-numpy python3-scipy python3-matplotlib
 
 On Red Hat and clones (e.g. CentOS), install the dependencies using::
 
