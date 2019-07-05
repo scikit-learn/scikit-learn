@@ -1410,6 +1410,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     References
     ----------
 
+    L-BFGS-B -- Software for Large-scale Bound-constrained Optimization
+        Ciyou Zhu, Richard Byrd, Jorge Nocedal and Jose Luis Morales.
+        http://users.iems.northwestern.edu/~nocedal/lbfgsb.html
+
     LIBLINEAR -- A Library for Large Linear Classification
         https://www.csie.ntu.edu.tw/~cjlin/liblinear/
 
