@@ -1,7 +1,6 @@
 IF SKLEARN_OPENMP_SUPPORTED:
     cimport openmp
-
-from joblib import effective_n_jobs
+    from joblib import effective_n_jobs
 
 
 cpdef _openmp_effective_n_threads(n_threads=None):
