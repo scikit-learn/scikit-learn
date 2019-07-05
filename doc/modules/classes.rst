@@ -676,7 +676,7 @@ Kernels:
 .. autosummary::
    :toctree: generated/
    :template: class.rst
-   
+
    isotonic.IsotonicRegression
 
 .. autosummary::
@@ -685,6 +685,7 @@ Kernels:
 
    isotonic.check_increasing
    isotonic.isotonic_regression
+
 
 .. _kernel_approximation_ref:
 
@@ -821,7 +822,7 @@ Kernels:
     manifold.smacof
     manifold.spectral_embedding
     manifold.t_sne.trustworthiness
-
+	
 
 .. _metrics_ref:
 

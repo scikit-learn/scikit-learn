@@ -45,7 +45,7 @@ __ALL__ = [
 ]
 
 
-def _check_reg_targets(y_true, y_pred, multioutput):
+def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
     """Check that y_true and y_pred belong to the same regression task
 
     Parameters
@@ -75,11 +75,13 @@ def _check_reg_targets(y_true, y_pred, multioutput):
         Custom output weights if ``multioutput`` is array-like or
         just the corresponding argument if ``multioutput`` is a
         correct keyword.
+    dtype: str or list, default="numeric"
+        the dtype argument passed to check_array
 
     """
     check_consistent_length(y_true, y_pred)
-    y_true = check_array(y_true, ensure_2d=False)
-    y_pred = check_array(y_pred, ensure_2d=False)
+    y_true = check_array(y_true, ensure_2d=False, dtype=dtype)
+    y_pred = check_array(y_pred, ensure_2d=False, dtype=dtype)
 
     if y_true.ndim == 1:
         y_true = y_true.reshape((-1, 1))
@@ -631,7 +633,22 @@ def mean_tweedie_deviance_error(y_true, y_pred, sample_weight=None, p=0):
         Sample weights.
 
     p : number, optional
-        Tweedie power parameter. Either p <= 0 or p >= 1.
+        Tweedie power parameter. Either p ≤ 0 or p ≥ 1.
+
+        The higher `p` the less weight is given to extreme
+        deviations between true and predicted targets.
+
+        - p < 0: Extreme stable distribution. Requires: y_pred > 0.
+        - p = 0 : Normal distribution, output corresponds to
+          mean_squared_error. y_true and y_pred can be any real numbers.
+        - p = 1 : Poisson distribution. Requires: y_true ≥ 0 and y_pred > 0.
+        - 1 < p < 2 : Compound Poisson distribution. Requires: y_true ≥ 0
+          and y_pred > 0.
+        - p = 2 : Gamma distribution. Requires: y_true > 0 and y_pred > 0.
+        - p = 3 : Inverse Gaussian distribution. Requires: y_true > 0
+          and y_pred > 0.
+        - p > 2 : Positive stable distribution. Requires: y_true > 0
+          and y_pred > 0.
 
     Returns
     -------
@@ -641,19 +658,22 @@ def mean_tweedie_deviance_error(y_true, y_pred, sample_weight=None, p=0):
     Examples
     --------
     >>> from sklearn.metrics import mean_tweedie_deviance_error
-    >>> p = 1
     >>> y_true = [2, 0, 1, 4]
     >>> y_pred = [0.5, 0.5, 2., 2.]
-    >>> mean_tweedie_deviance_error(y_true, y_pred, p=p)
+    >>> mean_tweedie_deviance_error(y_true, y_pred, p=1)
     1.4260...
     """
-    y_type, y_true, y_pred, _ = _check_reg_targets(y_true, y_pred, None)
+    y_type, y_true, y_pred, _ = _check_reg_targets(
+        y_true, y_pred, None, dtype=[np.float64, np.float32])
     if y_type == 'continuous-multioutput':
         raise ValueError("Multioutput not supported in "
                          "mean_tweedie_deviance_score")
     check_consistent_length(y_true, y_pred, sample_weight)
-    y_true = y_true.astype(float)
-    y_pred = y_pred.astype(float)
+
+    if sample_weight is not None:
+        sample_weight = column_or_1d(sample_weight)
+        sample_weight = sample_weight[:, np.newaxis]
+
     message = ("Mean Tweedie deviance error with p={} can only be used on "
                .format(p))
     if p < 0:
@@ -694,5 +714,4 @@ def mean_tweedie_deviance_error(y_true, y_pred, sample_weight=None, p=0):
                    y_true * np.power(y_pred, 1-p)/(1-p) +
                    np.power(y_pred, 2-p)/(2-p))
 
-    # without float(..), test_scorer_memmap_input fails
-    return float(np.average(dev, weights=sample_weight, axis=0))
+    return np.average(dev, weights=sample_weight)

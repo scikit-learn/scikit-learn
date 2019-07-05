@@ -1896,28 +1896,60 @@ Here is a small example of usage of the :func:`r2_score` function::
 
 Mean Tweedie deviance error
 ---------------------------
-The :func:`mean_tweedie_deviance_error` function computes `mean Tweedie
-deviance error <https://en.wikipedia.org/wiki/Mean_squared_error>`_
-with Tweedie power parameter `p`. This is a metric that elicits
-predicted expectation values of regression targets. For `p=0` it equals
-:func:`mean_squared_error`. The higher `p` the less weight is given to extreme
-deviations between true and predicted target.
+The :func:`mean_tweedie_deviance_error` function computes the `mean Tweedie
+deviance error
+<https://en.wikipedia.org/wiki/Tweedie_distribution#The_Tweedie_deviance>`_
+with power parameter `p`. This is a metric that elicits predicted expectation
+values of regression targets.  For `p=0` it is equivalent to
+:func:`mean_squared_error`.
+
 If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample,
 and :math:`y_i` is the corresponding true value, then the mean Tweedie
 deviance error (D) estimated over :math:`n_{\text{samples}}` is defined as
+
 .. math::
-  \text{D}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} #TODO#.
-Here is a small example of usage of the :func:`mean_squared_error`
-function::
-    >>> from sklearn.metrics import mean_squared_error
-    >>> y_true = [3, -0.5, 2, 7]
-    >>> y_pred = [2.5, 0.0, 2, 8]
-    >>> mean_squared_error(y_true, y_pred)
-    0.375
-    >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
-    >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
-    >>> mean_squared_error(y_true, y_pred)
-    0.7083...
+
+  \text{D}(y, \hat{y}) = \frac{1}{n_\text{samples}}
+  \sum_{i=0}^{n_\text{samples} - 1}
+  \begin{cases}
+  (y_i-\hat{y}_i)^2, & \text{for }p=0\\
+  2(y_i \log(y/\hat{y}_i) + \hat{y}_i - y_i),  & \text{for }p=1\\
+  2(\log(\hat{y}_i/y_i) + y_i/\hat{y}_i - 1),  & \text{for }p=2\\
+  2\left(\frac{\max(y_i,0)^{2-p}}{(1-p)(2-p)}-
+  \frac{y\,\hat{y}^{1-p}_i}{1-p}+\frac{\hat{y}^{2-p}_i}{2-p}\right),
+  & \text{otherwise}
+  \end{cases}
+
+The higher `p` the less weight is given to extreme deviations between true and
+predicted targets.
+
+For instance, let's consider two data samples: `[1.0]` and `[100]`,
+both predicted with a relative error of 50%.
+
+The mean squared error (``p=0``) is very sensitive to the
+prediction difference of the second point,::
+
+    >>> from sklearn.metrics import mean_tweedie_deviance_error
+    >>> mean_tweedie_deviance_error([1.0], [1.5], p=0)
+    0.25
+    >>> mean_tweedie_deviance_error([100.], [150.], p=0)
+    2500
+
+If we increase ``p`` to 1,::
+
+    >>> mean_tweedie_deviance_error([1.0], [1.5], p=1)
+    0.18...
+    >>> mean_tweedie_deviance_error([100.], [150.], p=1)
+    18.9..
+
+the difference in errors decreases. Finally, by settting, ``p=2``::
+
+    >>> mean_tweedie_deviance_error([1.0], [1.5], p=2)
+    0.14..
+    >>> mean_tweedie_deviance_error([100.], [150.], p=2)
+    0.14..
+
+we would get identical errors in this example.
 
 .. _clustering_metrics:
 

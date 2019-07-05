@@ -1,5 +1,6 @@
 
 import numpy as np
+from numpy.testing import assert_allclose
 from itertools import product
 import pytest
 
@@ -97,32 +98,39 @@ def test_regression_metrics_at_limits():
 
     # Tweedie deviance error
     p = -1.2
-    assert_almost_equal(mean_tweedie_deviance_error([0], [1.], p=p),
-                        2./(2.-p), 2)
-    assert_raises_regex(ValueError, "Mean Tweedie deviance error with p=-1.2 "
-                        "can only be used on positive y_pred.",
-                        mean_tweedie_deviance_error, [0.], [0.], None, p)
-    p = 0.
-    assert_almost_equal(mean_tweedie_deviance_error([0.], [0.], p=p), 0.00, 2)
+    assert_allclose(mean_tweedie_deviance_error([0], [1.], p=p),
+                    2./(2.-p), rtol=1e-3)
+    with pytest.raises(ValueError,
+                       match="can only be used on positive y_pred."):
+        mean_tweedie_deviance_error([0.], [0.], p=p)
+    assert_almost_equal(mean_tweedie_deviance_error([0.], [0.], p=0), 0.00, 2)
+
+    msg = "can only be used on non-negative y_true and positive y_pred."
+    with pytest.raises(ValueError, match=msg):
+        mean_tweedie_deviance_error([0.], [0.], p=1.0)
+
     p = 1.5
-    assert_almost_equal(mean_tweedie_deviance_error([0.], [1.], p=p),
-                        2./(2.-p), 2)
-    assert_raises_regex(ValueError, "Mean Tweedie deviance error with p=1.5 "
-                        "can only be used on non-negative y_true and positive "
-                        "y_pred.",
-                        mean_tweedie_deviance_error, [0.], [0.], None, p)
+    assert_allclose(mean_tweedie_deviance_error([0.], [1.], p=p), 2./(2.-p))
+    msg = "can only be used on non-negative y_true and positive y_pred."
+    with pytest.raises(ValueError, match=msg):
+        mean_tweedie_deviance_error([0.], [0.], p=p)
     p = 2.
-    assert_almost_equal(mean_tweedie_deviance_error([1.], [1.], p=p),
-                        0.00, 2)
-    assert_raises_regex(ValueError, "Mean Tweedie deviance error with p=2.0 "
-                        "can only be used on positive y_true and y_pred.",
-                        mean_tweedie_deviance_error, [0.], [0.], None, p)
+    assert_allclose(mean_tweedie_deviance_error([1.], [1.], p=p), 0.00,
+                    atol=1e-8)
+    msg = "can only be used on positive y_true and y_pred."
+    with pytest.raises(ValueError, match=msg):
+        mean_tweedie_deviance_error([0.], [0.], p=p)
     p = 3.
-    assert_almost_equal(mean_tweedie_deviance_error([1.], [1.], p=p),
-                        0.00, 2)
-    assert_raises_regex(ValueError, "Mean Tweedie deviance error with p=3.0 "
-                        "can only be used on positive y_true and y_pred.",
-                        mean_tweedie_deviance_error, [0.], [0.], None, p)
+    assert_allclose(mean_tweedie_deviance_error([1.], [1.], p=p),
+                    0.00, atol=1e-8)
+
+    msg = "can only be used on positive y_true and y_pred."
+    with pytest.raises(ValueError, match=msg):
+        mean_tweedie_deviance_error([0.], [0.], p=p)
+
+    with pytest.raises(ValueError,
+                       match="error exists only for p<=0 and p>=1"):
+        mean_tweedie_deviance_error([0.], [0.], p=0.5)
 
 
 def test__check_reg_targets():
