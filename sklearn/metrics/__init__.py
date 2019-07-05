@@ -71,6 +71,9 @@ from .scorer import make_scorer
 from .scorer import SCORERS
 from .scorer import get_scorer
 
+from .plot import plot_roc_curve
+
+
 __all__ = [
     'accuracy_score',
     'adjusted_mutual_info_score',
@@ -119,6 +122,7 @@ __all__ = [
     'pairwise_distances_argmin_min',
     'pairwise_distances_chunked',
     'pairwise_kernels',
+    'plot_roc_curve',
     'precision_recall_curve',
     'precision_recall_fscore_support',
     'precision_score',

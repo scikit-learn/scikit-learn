@@ -1003,6 +1003,28 @@ See the :ref:`metrics` section of the user guide for further details.
    metrics.pairwise_distances_chunked
 
 
+Plotting metrics
+----------------
+
+.. automodule:: sklearn.metrics.plot
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   metrics.plot_roc_curve
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   metrics.plot.RocCurveViz
+
+
 .. _mixture_ref:
 
 :mod:`sklearn.mixture`: Gaussian Mixture Models
