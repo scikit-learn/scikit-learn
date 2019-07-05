@@ -25,7 +25,8 @@ from ..utils import (indexable, check_random_state, safe_indexing,
                      _message_with_time)
 from ..utils.validation import _is_arraylike, _num_samples
 from ..utils.metaestimators import _safe_split
-from ..metrics.scorer import check_scoring, _check_multimetric_scoring
+from ..metrics.scorer import (check_scoring, _check_multimetric_scoring,
+                              _BaseScorer)
 from ..exceptions import FitFailedWarning
 from ._split import check_cv
 from ..preprocessing import LabelEncoder
@@ -633,12 +634,13 @@ def _multimetric_score(estimator, X_test, y_test, scorers):
     """Return a dict of score for multimetric scoring"""
     scores = {}
 
-    cached_estimator = _CacheEstimator(estimator)
+    if all(isinstance(scorer, _BaseScorer) for scorer in scorers.values()):
+        estimator = _CacheEstimator(estimator)
     for name, scorer in scorers.items():
         if y_test is None:
-            score = scorer(cached_estimator, X_test)
+            score = scorer(estimator, X_test)
         else:
-            score = scorer(cached_estimator, X_test, y_test)
+            score = scorer(estimator, X_test, y_test)
 
         if hasattr(score, 'item'):
             try:
