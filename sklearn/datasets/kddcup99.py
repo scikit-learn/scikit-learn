@@ -294,7 +294,7 @@ def _fetch_brute_kddcup99(data_home=None,
         X, y
     except NameError:
         X, y = _refresh_cache([samples_path, targets_path], 0)
-        # Revert to the following two lines in v0.23
+        # TODO: Revert to the following two lines in v0.23
         # X = joblib.load(samples_path)
         # y = joblib.load(targets_path)
 

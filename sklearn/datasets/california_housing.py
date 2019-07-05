@@ -131,7 +131,7 @@ def fetch_california_housing(data_home=None, download_if_missing=True,
 
     else:
         cal_housing = _refresh_cache([filepath], 6)
-        # Revert to the following two lines in v0.23
+        # TODO: Revert to the following line in v0.23
         # cal_housing = joblib.load(filepath)
 
     feature_names = ["MedInc", "HouseAge", "AveRooms", "AveBedrms",

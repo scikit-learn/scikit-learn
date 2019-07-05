@@ -261,7 +261,7 @@ def fetch_species_distributions(data_home=None,
         joblib.dump(bunch, archive_path, compress=9)
     else:
         bunch = _refresh_cache([archive_path], 9)
-        # Revert to the following two lines in v0.23
+        # TODO: Revert to the following line in v0.23
         # bunch = joblib.load(archive_path)
 
     return bunch

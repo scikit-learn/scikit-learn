@@ -923,7 +923,7 @@ def _fetch_remote(remote, dirname=None):
 
 
 def _refresh_cache(files, compress):
-    # REMOVE in v0.23
+    # TODO: REMOVE in v0.23
     import joblib
     msg = "sklearn.externals.joblib is deprecated in 0.21"
     with warnings.catch_warnings(record=True) as warns:
@@ -947,7 +947,4 @@ def _refresh_cache(files, compress):
                        % ("\n".join(files)))
             warnings.warn(message=message, category=DeprecationWarning)
 
-    if len(data) == 1:
-        return data[0]
-    else:
-        return data
+    return data[0] if len(data) == 1 else data

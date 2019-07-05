@@ -191,7 +191,7 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
             remove(f.name)
     else:
         X, sample_id = _refresh_cache([samples_path, sample_id_path], 9)
-        # Revert to the following two lines in v0.23
+        # TODO: Revert to the following two lines in v0.23
         # X = joblib.load(samples_path)
         # sample_id = joblib.load(sample_id_path)
 
@@ -247,7 +247,7 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
         joblib.dump(categories, topics_path, compress=9)
     else:
         y, categories = _refresh_cache([sample_topics_path, topics_path], 9)
-        # Revert to the following two lines in v0.23
+        # TODO: Revert to the following two lines in v0.23
         # y = joblib.load(sample_topics_path)
         # categories = joblib.load(topics_path)
 

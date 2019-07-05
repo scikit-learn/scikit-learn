@@ -12,6 +12,16 @@ Version 0.21.3
 Changelog
 ---------
 
+:mod:`sklearn.datasets`
+.......................
+
+- |Fix| :func:`fetch_california_housing`, :func:`fetch_covtype`,
+  :func:`fetch_kddcup99`, :func:`fetch_olivetti_faces`,
+  :func:`fetch_rcv1`, and :func:`fetch_species_distributions` try to persist
+  the previously cache using the new ``joblib`` if the cahce was persisted
+  using the deprecated ``sklearn.externals.joblib``. This behavior is set to
+  be deprecated and removed in v0.23. :pr:`14197` by `Adrin Jalali`_.
+
 :mod:`sklearn.impute`
 .....................
 

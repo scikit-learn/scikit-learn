@@ -109,7 +109,7 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         del mfile
     else:
         faces = _refresh_cache([filepath], 6)
-        # Revert to the following two lines in v0.23
+        # TODO: Revert to the following line in v0.23
         # faces = joblib.load(filepath)
 
     # We want floating point data, but float32 is enough (there is only
