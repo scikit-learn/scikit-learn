@@ -1068,6 +1068,8 @@ def test_column_transformer_reordered_column_names_remainder(explicit_colname):
        ColumnTransformer remainder on changing DataFrame column ordering'
 
        Should raise error on changed order combined with remainder.
+       Should allow for added columns in `transform` input DataFrame
+       as long as all preceding columns match.
     """
     pd = pytest.importorskip('pandas')
 
@@ -1084,3 +1086,9 @@ def test_column_transformer_reordered_column_names_remainder(explicit_colname):
     assert_raise_message(ValueError,
                          'Column ordering must be equal',
                          tf.transform, X_trans_df)
+
+    # No for added columns if ordering is equal
+    X_extended_df = X_fit_df.copy()
+    X_extended_df['third'] = [3, 6, 9]
+
+    tf.transform(X_extended_df)  # No error should be raised

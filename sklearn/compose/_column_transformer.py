@@ -81,9 +81,8 @@ boolean mask array or callable
         By setting ``remainder`` to be an estimator, the remaining
         non-specified columns will use the ``remainder`` estimator. The
         estimator must support :term:`fit` and :term:`transform`.
-        If columns in `transformers` are provided as strings, the ordering
-        of columns in X must be the same for the `fit` and `transform`
-        steps.
+        Note that using this feature requires that the DataFrame columns
+        input at :term:`fit` and :term:`transform` have identical order.
 
     sparse_threshold : float, default = 0.3
         If the output of the different transformers contains sparse matrices,
@@ -524,8 +523,10 @@ boolean mask array or callable
 
         # No column reordering allowed for named cols combined with remainder
         if self._remainder[2] is not None and hasattr(self, '_df_columns'):
-            if len(X.columns) != len(self._df_columns) \
-               or any(X.columns != self._df_columns):
+            n_cols_fit = len(self._df_columns)
+            n_cols_transform = len(X.columns)
+            if n_cols_transform < n_cols_fit \
+               or any(X.columns[:n_cols_fit] != self._df_columns):
                 raise ValueError('Column ordering must be equal for fit '
                                  'and for transform when using the '
                                  'remainder keyword')
