@@ -67,8 +67,8 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1,
 # Partial Dependence computation for multi-layer perceptron
 # ---------------------------------------------------------
 #
-# Let's fit a MLPRegressor and compute the partial dependence plots either
-# or one or two variables at a time.
+# Let's fit a MLPRegressor and compute single-variable partial dependence
+# plots
 
 print("Training MLPRegressor...")
 tic = time()
@@ -100,7 +100,7 @@ plt.subplots_adjust(top=0.9)  # tight_layout causes overlap with suptitle
 # Partial Dependence computation for Gradient Boosting
 # ----------------------------------------------------
 #
-# Let's fit a GradientBoostingRegressor and compute the partial dependence
+# Let's now fit a GradientBoostingRegressor and compute the partial dependence
 # plots either or one or two variables at a time.
 
 print("Training GradientBoostingRegressor...")
