@@ -618,31 +618,6 @@ Kernels:
   gaussian_process.kernels.Sum
   gaussian_process.kernels.WhiteKernel
 
-.. _isotonic_ref:
-
-:mod:`sklearn.isotonic`: Isotonic regression
-============================================
-
-.. automodule:: sklearn.isotonic
-   :no-members:
-   :no-inherited-members:
-
-**User guide:** See the :ref:`isotonic` section for further details.
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   isotonic.IsotonicRegression
-
-.. autosummary::
-   :toctree: generated
-   :template: function.rst
-
-   isotonic.check_increasing
-   isotonic.isotonic_regression
 
 .. _impute_ref:
 
@@ -664,6 +639,52 @@ Kernels:
    impute.SimpleImputer
    impute.IterativeImputer
    impute.MissingIndicator
+
+
+.. _inspection_ref:
+
+:mod:`sklearn.inspection`: inspection
+=====================================
+
+.. automodule:: sklearn.inspection
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   inspection.partial_dependence
+   inspection.plot_partial_dependence
+
+
+.. _isotonic_ref:
+
+:mod:`sklearn.isotonic`: Isotonic regression
+============================================
+
+.. automodule:: sklearn.isotonic
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`isotonic` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+   
+   isotonic.IsotonicRegression
+
+.. autosummary::
+   :toctree: generated
+   :template: function.rst
+
+   isotonic.check_increasing
+   isotonic.isotonic_regression
 
 .. _kernel_approximation_ref:
 
@@ -1235,25 +1256,6 @@ Model validation
 
    pipeline.make_pipeline
    pipeline.make_union
-
-
-.. _inspection_ref:
-
-:mod:`sklearn.inspection`: inspection
-=====================================
-
-.. automodule:: sklearn.inspection
-   :no-members:
-   :no-inherited-members:
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   inspection.partial_dependence
-   inspection.plot_partial_dependence
 
 
 .. _preprocessing_ref:

@@ -22,13 +22,7 @@ from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_greater_equal
-from sklearn.utils.testing import assert_less
-from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
@@ -164,9 +158,9 @@ for name in DATASETS:
 
 
 def assert_tree_equal(d, s, message):
-    assert_equal(s.node_count, d.node_count,
-                 "{0}: inequal number of node ({1} != {2})"
-                 "".format(message, s.node_count, d.node_count))
+    assert s.node_count == d.node_count, (
+        "{0}: inequal number of node ({1} != {2})"
+        "".format(message, s.node_count, d.node_count))
 
     assert_array_equal(d.children_right, s.children_right,
                        message + ": inequal children_right")
@@ -248,13 +242,11 @@ def test_xor():
     for name, Tree in CLF_TREES.items():
         clf = Tree(random_state=0)
         clf.fit(X, y)
-        assert_equal(clf.score(X, y), 1.0,
-                     "Failed with {0}".format(name))
+        assert clf.score(X, y) == 1.0, "Failed with {0}".format(name)
 
         clf = Tree(random_state=0, max_features=1)
         clf.fit(X, y)
-        assert_equal(clf.score(X, y), 1.0,
-                     "Failed with {0}".format(name))
+        assert clf.score(X, y) == 1.0, "Failed with {0}".format(name)
 
 
 def test_iris():
@@ -263,16 +255,16 @@ def test_iris():
         clf = Tree(criterion=criterion, random_state=0)
         clf.fit(iris.data, iris.target)
         score = accuracy_score(clf.predict(iris.data), iris.target)
-        assert_greater(score, 0.9,
-                       "Failed with {0}, criterion = {1} and score = {2}"
-                       "".format(name, criterion, score))
+        assert score > 0.9, (
+            "Failed with {0}, criterion = {1} and score = {2}"
+            "".format(name, criterion, score))
 
         clf = Tree(criterion=criterion, max_features=2, random_state=0)
         clf.fit(iris.data, iris.target)
         score = accuracy_score(clf.predict(iris.data), iris.target)
-        assert_greater(score, 0.5,
-                       "Failed with {0}, criterion = {1} and score = {2}"
-                       "".format(name, criterion, score))
+        assert score > 0.5, (
+            "Failed with {0}, criterion = {1} and score = {2}"
+            "".format(name, criterion, score))
 
 
 def test_boston():
@@ -282,18 +274,18 @@ def test_boston():
         reg = Tree(criterion=criterion, random_state=0)
         reg.fit(boston.data, boston.target)
         score = mean_squared_error(boston.target, reg.predict(boston.data))
-        assert_less(score, 1,
-                    "Failed with {0}, criterion = {1} and score = {2}"
-                    "".format(name, criterion, score))
+        assert score < 1, (
+            "Failed with {0}, criterion = {1} and score = {2}"
+            "".format(name, criterion, score))
 
         # using fewer features reduces the learning ability of this tree,
         # but reduces training time.
         reg = Tree(criterion=criterion, max_features=6, random_state=0)
         reg.fit(boston.data, boston.target)
         score = mean_squared_error(boston.target, reg.predict(boston.data))
-        assert_less(score, 2,
-                    "Failed with {0}, criterion = {1} and score = {2}"
-                    "".format(name, criterion, score))
+        assert score < 2, (
+            "Failed with {0}, criterion = {1} and score = {2}"
+            "".format(name, criterion, score))
 
 
 def test_probability():
@@ -384,8 +376,8 @@ def test_importances():
         importances = clf.feature_importances_
         n_important = np.sum(importances > 0.1)
 
-        assert_equal(importances.shape[0], 10, "Failed with {0}".format(name))
-        assert_equal(n_important, 3, "Failed with {0}".format(name))
+        assert importances.shape[0] == 10, "Failed with {0}".format(name)
+        assert n_important == 3, "Failed with {0}".format(name)
 
     # Check on iris that importances are the same for all builders
     clf = DecisionTreeClassifier(random_state=0)
@@ -435,48 +427,48 @@ def test_max_features():
     for name, TreeRegressor in REG_TREES.items():
         reg = TreeRegressor(max_features="auto")
         reg.fit(boston.data, boston.target)
-        assert_equal(reg.max_features_, boston.data.shape[1])
+        assert reg.max_features_ == boston.data.shape[1]
 
     for name, TreeClassifier in CLF_TREES.items():
         clf = TreeClassifier(max_features="auto")
         clf.fit(iris.data, iris.target)
-        assert_equal(clf.max_features_, 2)
+        assert clf.max_features_ == 2
 
     for name, TreeEstimator in ALL_TREES.items():
         est = TreeEstimator(max_features="sqrt")
         est.fit(iris.data, iris.target)
-        assert_equal(est.max_features_,
+        assert (est.max_features_ ==
                      int(np.sqrt(iris.data.shape[1])))
 
         est = TreeEstimator(max_features="log2")
         est.fit(iris.data, iris.target)
-        assert_equal(est.max_features_,
+        assert (est.max_features_ ==
                      int(np.log2(iris.data.shape[1])))
 
         est = TreeEstimator(max_features=1)
         est.fit(iris.data, iris.target)
-        assert_equal(est.max_features_, 1)
+        assert est.max_features_ == 1
 
         est = TreeEstimator(max_features=3)
         est.fit(iris.data, iris.target)
-        assert_equal(est.max_features_, 3)
+        assert est.max_features_ == 3
 
         est = TreeEstimator(max_features=0.01)
         est.fit(iris.data, iris.target)
-        assert_equal(est.max_features_, 1)
+        assert est.max_features_ == 1
 
         est = TreeEstimator(max_features=0.5)
         est.fit(iris.data, iris.target)
-        assert_equal(est.max_features_,
+        assert (est.max_features_ ==
                      int(0.5 * iris.data.shape[1]))
 
         est = TreeEstimator(max_features=1.0)
         est.fit(iris.data, iris.target)
-        assert_equal(est.max_features_, iris.data.shape[1])
+        assert est.max_features_ == iris.data.shape[1]
 
         est = TreeEstimator(max_features=None)
         est.fit(iris.data, iris.target)
-        assert_equal(est.max_features_, iris.data.shape[1])
+        assert est.max_features_ == iris.data.shape[1]
 
         # use values of max_features that are invalid
         est = TreeEstimator(max_features=10)
@@ -590,8 +582,7 @@ def test_min_samples_split():
         # count samples on nodes, -1 means it is a leaf
         node_samples = est.tree_.n_node_samples[est.tree_.children_left != -1]
 
-        assert_greater(np.min(node_samples), 9,
-                       "Failed with {0}".format(name))
+        assert np.min(node_samples) > 9, "Failed with {0}".format(name)
 
         # test for float parameter
         est = TreeEstimator(min_samples_split=0.2,
@@ -601,8 +592,7 @@ def test_min_samples_split():
         # count samples on nodes, -1 means it is a leaf
         node_samples = est.tree_.n_node_samples[est.tree_.children_left != -1]
 
-        assert_greater(np.min(node_samples), 9,
-                       "Failed with {0}".format(name))
+        assert np.min(node_samples) > 9, "Failed with {0}".format(name)
 
 
 def test_min_samples_leaf():
@@ -624,8 +614,7 @@ def test_min_samples_leaf():
         node_counts = np.bincount(out)
         # drop inner nodes
         leaf_count = node_counts[node_counts != 0]
-        assert_greater(np.min(leaf_count), 4,
-                       "Failed with {0}".format(name))
+        assert np.min(leaf_count) > 4, "Failed with {0}".format(name)
 
         # test float parameter
         est = TreeEstimator(min_samples_leaf=0.1,
@@ -636,8 +625,7 @@ def test_min_samples_leaf():
         node_counts = np.bincount(out)
         # drop inner nodes
         leaf_count = node_counts[node_counts != 0]
-        assert_greater(np.min(leaf_count), 4,
-                       "Failed with {0}".format(name))
+        assert np.min(leaf_count) > 4, "Failed with {0}".format(name)
 
 
 def check_min_weight_fraction_leaf(name, datasets, sparse=False):
@@ -671,12 +659,11 @@ def check_min_weight_fraction_leaf(name, datasets, sparse=False):
         node_weights = np.bincount(out, weights=weights)
         # drop inner nodes
         leaf_weights = node_weights[node_weights != 0]
-        assert_greater_equal(
-            np.min(leaf_weights),
-            total_weight * est.min_weight_fraction_leaf,
-            "Failed with {0} "
-            "min_weight_fraction_leaf={1}".format(
-                name, est.min_weight_fraction_leaf))
+        assert (
+            np.min(leaf_weights) >=
+            total_weight * est.min_weight_fraction_leaf), (
+                "Failed with {0} min_weight_fraction_leaf={1}".format(
+                    name, est.min_weight_fraction_leaf))
 
     # test case with no weights passed in
     total_weight = X.shape[0]
@@ -695,12 +682,11 @@ def check_min_weight_fraction_leaf(name, datasets, sparse=False):
         node_weights = np.bincount(out)
         # drop inner nodes
         leaf_weights = node_weights[node_weights != 0]
-        assert_greater_equal(
-            np.min(leaf_weights),
-            total_weight * est.min_weight_fraction_leaf,
-            "Failed with {0} "
-            "min_weight_fraction_leaf={1}".format(
-                name, est.min_weight_fraction_leaf))
+        assert (
+            np.min(leaf_weights) >=
+            total_weight * est.min_weight_fraction_leaf), (
+                "Failed with {0} min_weight_fraction_leaf={1}".format(
+                    name, est.min_weight_fraction_leaf))
 
 
 @pytest.mark.parametrize("name", ALL_TREES)
@@ -741,15 +727,14 @@ def check_min_weight_fraction_leaf_with_min_samples_leaf(name, datasets,
         node_weights = np.bincount(out)
         # drop inner nodes
         leaf_weights = node_weights[node_weights != 0]
-        assert_greater_equal(
-            np.min(leaf_weights),
+        assert (
+            np.min(leaf_weights) >=
             max((total_weight *
-                 est.min_weight_fraction_leaf), 5),
-            "Failed with {0} "
-            "min_weight_fraction_leaf={1}, "
-            "min_samples_leaf={2}".format(name,
-                                          est.min_weight_fraction_leaf,
-                                          est.min_samples_leaf))
+                 est.min_weight_fraction_leaf), 5)), (
+                     "Failed with {0} min_weight_fraction_leaf={1}, "
+                     "min_samples_leaf={2}".format(
+                         name, est.min_weight_fraction_leaf,
+                         est.min_samples_leaf))
     for max_leaf_nodes, frac in product((None, 1000), np.linspace(0, 0.5, 3)):
         # test float min_samples_leaf
         est = TreeEstimator(min_weight_fraction_leaf=frac,
@@ -766,15 +751,14 @@ def check_min_weight_fraction_leaf_with_min_samples_leaf(name, datasets,
         node_weights = np.bincount(out)
         # drop inner nodes
         leaf_weights = node_weights[node_weights != 0]
-        assert_greater_equal(
-            np.min(leaf_weights),
+        assert (
+            np.min(leaf_weights) >=
             max((total_weight * est.min_weight_fraction_leaf),
-                (total_weight * est.min_samples_leaf)),
-            "Failed with {0} "
-            "min_weight_fraction_leaf={1}, "
-            "min_samples_leaf={2}".format(name,
-                                          est.min_weight_fraction_leaf,
-                                          est.min_samples_leaf))
+                (total_weight * est.min_samples_leaf))), (
+                    "Failed with {0} min_weight_fraction_leaf={1}, "
+                    "min_samples_leaf={2}".format(name,
+                                                  est.min_weight_fraction_leaf,
+                                                  est.min_samples_leaf))
 
 
 @pytest.mark.parametrize("name", ALL_TREES)
@@ -815,11 +799,10 @@ def test_min_impurity_split():
         for node in range(est.tree_.node_count):
             if (est.tree_.children_left[node] == TREE_LEAF or
                     est.tree_.children_right[node] == TREE_LEAF):
-                assert_equal(est.tree_.impurity[node], 0.,
-                             "Failed with {0} "
-                             "min_impurity_split={1}".format(
-                                 est.tree_.impurity[node],
-                                 est.min_impurity_split))
+                assert est.tree_.impurity[node] == 0., (
+                    "Failed with {0} min_impurity_split={1}".format(
+                        est.tree_.impurity[node],
+                        est.min_impurity_split))
 
         # verify leaf nodes have impurity [0,min_impurity_split] when using
         # min_impurity_split
@@ -832,16 +815,14 @@ def test_min_impurity_split():
         for node in range(est.tree_.node_count):
             if (est.tree_.children_left[node] == TREE_LEAF or
                     est.tree_.children_right[node] == TREE_LEAF):
-                assert_greater_equal(est.tree_.impurity[node], 0,
-                                     "Failed with {0}, "
-                                     "min_impurity_split={1}".format(
-                                         est.tree_.impurity[node],
-                                         est.min_impurity_split))
-                assert_less_equal(est.tree_.impurity[node], min_impurity_split,
-                                  "Failed with {0}, "
-                                  "min_impurity_split={1}".format(
-                                      est.tree_.impurity[node],
-                                      est.min_impurity_split))
+                assert est.tree_.impurity[node] >= 0, (
+                    "Failed with {0}, min_impurity_split={1}".format(
+                        est.tree_.impurity[node],
+                        est.min_impurity_split))
+                assert est.tree_.impurity[node] <= min_impurity_split, (
+                    "Failed with {0}, min_impurity_split={1}".format(
+                        est.tree_.impurity[node],
+                        est.min_impurity_split))
 
 
 def test_min_impurity_decrease():
@@ -868,10 +849,10 @@ def test_min_impurity_decrease():
 
         for est, expected_decrease in ((est1, 1e-7), (est2, 0.05),
                                        (est3, 0.0001), (est4, 0.1)):
-            assert_less_equal(est.min_impurity_decrease, expected_decrease,
-                              "Failed, min_impurity_decrease = {0} > {1}"
-                              .format(est.min_impurity_decrease,
-                                      expected_decrease))
+            assert est.min_impurity_decrease <= expected_decrease, (
+                "Failed, min_impurity_decrease = {0} > {1}".format(
+                    est.min_impurity_decrease,
+                    expected_decrease))
             est.fit(X, y)
             for node in range(est.tree_.node_count):
                 # If current node is a not leaf node, check if the split was
@@ -899,11 +880,10 @@ def test_min_impurity_decrease():
                     actual_decrease = fractional_node_weight * (
                         imp_parent - wtd_avg_left_right_imp)
 
-                    assert_greater_equal(actual_decrease, expected_decrease,
-                                         "Failed with {0} "
-                                         "expected min_impurity_decrease={1}"
-                                         .format(actual_decrease,
-                                                 expected_decrease))
+                    assert actual_decrease >= expected_decrease, (
+                        "Failed with {0} expected min_impurity_decrease={1}"
+                        .format(actual_decrease,
+                                expected_decrease))
 
     for name, TreeEstimator in ALL_TREES.items():
         if "Classifier" in name:
@@ -920,17 +900,17 @@ def test_min_impurity_decrease():
 
         serialized_object = pickle.dumps(est)
         est2 = pickle.loads(serialized_object)
-        assert_equal(type(est2), est.__class__)
+        assert type(est2) == est.__class__
         score2 = est2.score(X, y)
-        assert_equal(score, score2,
-                     "Failed to generate same score  after pickling "
-                     "with {0}".format(name))
+        assert score == score2, (
+            "Failed to generate same score  after pickling "
+            "with {0}".format(name))
 
         for attribute in fitted_attribute:
-            assert_equal(getattr(est2.tree_, attribute),
-                         fitted_attribute[attribute],
-                         "Failed to generate same attribute {0} after "
-                         "pickling with {1}".format(attribute, name))
+            assert (getattr(est2.tree_, attribute) ==
+                    fitted_attribute[attribute]), (
+                        "Failed to generate same attribute {0} after "
+                        "pickling with {1}".format(attribute, name))
 
 
 def test_multioutput():
@@ -969,24 +949,24 @@ def test_multioutput():
         clf = TreeClassifier(random_state=0)
         y_hat = clf.fit(X, y).predict(T)
         assert_array_equal(y_hat, y_true)
-        assert_equal(y_hat.shape, (4, 2))
+        assert y_hat.shape == (4, 2)
 
         proba = clf.predict_proba(T)
-        assert_equal(len(proba), 2)
-        assert_equal(proba[0].shape, (4, 2))
-        assert_equal(proba[1].shape, (4, 4))
+        assert len(proba) == 2
+        assert proba[0].shape == (4, 2)
+        assert proba[1].shape == (4, 4)
 
         log_proba = clf.predict_log_proba(T)
-        assert_equal(len(log_proba), 2)
-        assert_equal(log_proba[0].shape, (4, 2))
-        assert_equal(log_proba[1].shape, (4, 4))
+        assert len(log_proba) == 2
+        assert log_proba[0].shape == (4, 2)
+        assert log_proba[1].shape == (4, 4)
 
     # toy regression problem
     for name, TreeRegressor in REG_TREES.items():
         reg = TreeRegressor(random_state=0)
         y_hat = reg.fit(X, y).predict(T)
         assert_almost_equal(y_hat, y_true)
-        assert_equal(y_hat.shape, (4, 2))
+        assert y_hat.shape == (4, 2)
 
 
 def test_classes_shape():
@@ -996,15 +976,15 @@ def test_classes_shape():
         clf = TreeClassifier(random_state=0)
         clf.fit(X, y)
 
-        assert_equal(clf.n_classes_, 2)
+        assert clf.n_classes_ == 2
         assert_array_equal(clf.classes_, [-1, 1])
 
         # Classification, multi-output
         _y = np.vstack((y, np.array(y) * 2)).T
         clf = TreeClassifier(random_state=0)
         clf.fit(X, _y)
-        assert_equal(len(clf.n_classes_), 2)
-        assert_equal(len(clf.classes_), 2)
+        assert len(clf.n_classes_) == 2
+        assert len(clf.classes_) == 2
         assert_array_equal(clf.n_classes_, [2, 2])
         assert_array_equal(clf.classes_, [[-1, 1], [-2, 2]])
 
@@ -1090,12 +1070,12 @@ def test_sample_weight():
     sample_weight[y == 2] = .51  # Samples of class '2' are still weightier
     clf = DecisionTreeClassifier(max_depth=1, random_state=0)
     clf.fit(X, y, sample_weight=sample_weight)
-    assert_equal(clf.tree_.threshold[0], 149.5)
+    assert clf.tree_.threshold[0] == 149.5
 
     sample_weight[y == 2] = .5  # Samples of class '2' are no longer weightier
     clf = DecisionTreeClassifier(max_depth=1, random_state=0)
     clf.fit(X, y, sample_weight=sample_weight)
-    assert_equal(clf.tree_.threshold[0], 49.5)  # Threshold should have moved
+    assert clf.tree_.threshold[0] == 49.5  # Threshold should have moved
 
     # Test that sample weighting is the same as having duplicates
     X = iris.data
@@ -1214,7 +1194,7 @@ def test_max_leaf_nodes():
     k = 4
     for name, TreeEstimator in ALL_TREES.items():
         est = TreeEstimator(max_depth=None, max_leaf_nodes=k + 1).fit(X, y)
-        assert_equal(est.get_n_leaves(), k + 1)
+        assert est.get_n_leaves() == k + 1
 
         # max_leaf_nodes in (0, 1) should raise ValueError
         est = TreeEstimator(max_depth=None, max_leaf_nodes=0)
@@ -1231,7 +1211,7 @@ def test_max_leaf_nodes_max_depth():
     k = 4
     for name, TreeEstimator in ALL_TREES.items():
         est = TreeEstimator(max_depth=1, max_leaf_nodes=k).fit(X, y)
-        assert_equal(est.get_depth(), 1)
+        assert est.get_depth() == 1
 
 
 def test_arrays_persist():
@@ -1253,7 +1233,7 @@ def test_only_constant_features():
     for name, TreeEstimator in ALL_TREES.items():
         est = TreeEstimator(random_state=0)
         est.fit(X, y)
-        assert_equal(est.tree_.max_depth, 0)
+        assert est.tree_.max_depth == 0
 
 
 def test_behaviour_constant_feature_after_splits():
@@ -1265,8 +1245,8 @@ def test_behaviour_constant_feature_after_splits():
         if "ExtraTree" not in name:
             est = TreeEstimator(random_state=0, max_features=1)
             est.fit(X, y)
-            assert_equal(est.tree_.max_depth, 2)
-            assert_equal(est.tree_.node_count, 5)
+            assert est.tree_.max_depth == 2
+            assert est.tree_.node_count == 5
 
 
 def test_with_only_one_non_constant_features():
@@ -1277,13 +1257,13 @@ def test_with_only_one_non_constant_features():
     for name, TreeEstimator in CLF_TREES.items():
         est = TreeEstimator(random_state=0, max_features=1)
         est.fit(X, y)
-        assert_equal(est.tree_.max_depth, 1)
+        assert est.tree_.max_depth == 1
         assert_array_equal(est.predict_proba(X), np.full((4, 2), 0.5))
 
     for name, TreeEstimator in REG_TREES.items():
         est = TreeEstimator(random_state=0, max_features=1)
         est.fit(X, y)
-        assert_equal(est.tree_.max_depth, 1)
+        assert est.tree_.max_depth == 1
         assert_array_equal(est.predict(X), np.full((4, ), 0.5))
 
 
@@ -1294,7 +1274,7 @@ def test_big_input():
     try:
         clf.fit(X, [0, 1, 0, 1])
     except ValueError as e:
-        assert_in("float32", str(e))
+        assert "float32" in str(e)
 
 
 def test_realloc():
@@ -1494,8 +1474,8 @@ def check_explicit_sparse_zeros(tree, max_depth=3,
     X_sparse_test = X_sparse_test.copy()
 
     # Ensure that we have explicit zeros
-    assert_greater((X_sparse.data == 0.).sum(), 0)
-    assert_greater((X_sparse_test.data == 0.).sum(), 0)
+    assert (X_sparse.data == 0.).sum() > 0
+    assert (X_sparse_test.data == 0.).sum() > 0
 
     # Perform the comparison
     d = TreeEstimator(random_state=0, max_depth=max_depth).fit(X, y)
@@ -1554,11 +1534,11 @@ def test_1d_input(name):
 def _check_min_weight_leaf_split_level(TreeEstimator, X, y, sample_weight):
     est = TreeEstimator(random_state=0)
     est.fit(X, y, sample_weight=sample_weight)
-    assert_equal(est.tree_.max_depth, 1)
+    assert est.tree_.max_depth == 1
 
     est = TreeEstimator(random_state=0, min_weight_fraction_leaf=0.4)
     est.fit(X, y, sample_weight=sample_weight)
-    assert_equal(est.tree_.max_depth, 0)
+    assert est.tree_.max_depth == 0
 
 
 def check_min_weight_leaf_split_level(name):
@@ -1656,7 +1636,7 @@ def check_decision_path(name):
 
     node_indicator_csr = est.decision_path(X)
     node_indicator = node_indicator_csr.toarray()
-    assert_equal(node_indicator.shape, (n_samples, est.tree_.node_count))
+    assert node_indicator.shape == (n_samples, est.tree_.node_count)
 
     # Assert that leaves index are correct
     leaves = est.apply(X)
@@ -1670,7 +1650,7 @@ def check_decision_path(name):
 
     # Ensure max depth is consistent with sum of indicator
     max_depth = node_indicator.sum(axis=1).max()
-    assert_less_equal(est.tree_.max_depth, max_depth)
+    assert est.tree_.max_depth <= max_depth
 
 
 @pytest.mark.parametrize("name", ALL_TREES)
@@ -1801,17 +1781,17 @@ def test_criterion_copy():
             criteria = typename(n_outputs, n_classes)
             result = copy_func(criteria).__reduce__()
             typename_, (n_outputs_, n_classes_), _ = result
-            assert_equal(typename, typename_)
-            assert_equal(n_outputs, n_outputs_)
+            assert typename == typename_
+            assert n_outputs == n_outputs_
             assert_array_equal(n_classes, n_classes_)
 
         for _, typename in CRITERIA_REG.items():
             criteria = typename(n_outputs, n_samples)
             result = copy_func(criteria).__reduce__()
             typename_, (n_outputs_, n_samples_), _ = result
-            assert_equal(typename, typename_)
-            assert_equal(n_outputs, n_outputs_)
-            assert_equal(n_samples, n_samples_)
+            assert typename == typename_
+            assert n_outputs == n_outputs_
+            assert n_samples == n_samples_
 
 
 def test_empty_leaf_infinite_threshold():
