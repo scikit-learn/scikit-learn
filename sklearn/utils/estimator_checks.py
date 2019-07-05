@@ -635,7 +635,7 @@ def check_sample_weights_invariance(name, estimator_orig):
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_sample_weights_equivalence_sampling(name, estimator_orig):
     # check that the estimators yield same results for
-    # over-sample dataset by indice filtering and using sampl_weight
+    # over-sample dataset by indice filtering and using sample_weight
     if (has_fit_parameter(estimator_orig, "sample_weight") and
             not (hasattr(estimator_orig, "_pairwise")
                  and estimator_orig._pairwise)):
