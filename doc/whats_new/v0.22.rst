@@ -60,6 +60,10 @@ Changelog
   parameter called `warm_start` that enables warm starting. :pr:`14012` by
   :user:`Johann Faouzi <johannfaouzi>`.
 
+- |Fix| :class:`ensemble.AdaBoostRegressor` where the loss should be normalized
+  by the max of the samples with non-null weights.
+  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 

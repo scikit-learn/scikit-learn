@@ -1,12 +1,16 @@
 """Testing for the boost module (sklearn.ensemble.boost)."""
 
 import numpy as np
+import pytest
 
 from sklearn.utils.testing import assert_array_equal, assert_array_less
-from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_array_almost_equal, assert_allclose
 from sklearn.utils.testing import assert_raises, assert_raises_regexp
+from sklearn.utils.testing import set_random_state
 
 from sklearn.base import BaseEstimator
+from sklearn.base import clone
+from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import AdaBoostClassifier
@@ -304,16 +308,6 @@ def test_base_estimator():
                          clf.fit, X_fail, y_fail)
 
 
-def test_sample_weight_missing():
-    from sklearn.cluster import KMeans
-
-    clf = AdaBoostClassifier(KMeans(), algorithm="SAMME")
-    assert_raises(ValueError, clf.fit, X, y_regr)
-
-    clf = AdaBoostRegressor(KMeans())
-    assert_raises(ValueError, clf.fit, X, y_regr)
-
-
 def test_sparse_classification():
     # Check classification with sparse input.
 
@@ -486,9 +480,6 @@ def test_multidimensional_X():
     Check that the AdaBoost estimators can work with n-dimensional
     data matrix
     """
-
-    from sklearn.dummy import DummyClassifier, DummyRegressor
-
     rng = np.random.RandomState(0)
 
     X = rng.randn(50, 3, 3)
@@ -503,3 +494,23 @@ def test_multidimensional_X():
     boost = AdaBoostRegressor(DummyRegressor())
     boost.fit(X, yr)
     boost.predict(X)
+
+
+class ClassifierWithoutWeight(DummyClassifier):
+    """Classifier not supporting `sample_weight`."""
+    def fit(self, X, y):
+        super().fit(X, y)
+        return self
+
+
+@pytest.mark.parametrize("algorithm", ['SAMME', 'SAMME.R'])
+def test_adaboostclassifier_without_sample_weight(algorithm):
+    X, y = iris.data, iris.target
+    base_estimator = ClassifierWithoutWeight()
+    clf = AdaBoostClassifier(
+        base_estimator=base_estimator, algorithm=algorithm
+    )
+    err_msg = ("{} doesn't support sample_weight"
+               .format(base_estimator.__class__.__name__))
+    with pytest.raises(ValueError, match=err_msg):
+        clf.fit(X, y)

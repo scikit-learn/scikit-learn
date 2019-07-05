@@ -1039,13 +1039,10 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         estimator = self._make_estimator(random_state=random_state)
 
         # Weighted sampling of the training set with replacement
-        # For NumPy >= 1.7.0 use np.random.choice
-        cdf = stable_cumsum(sample_weight)
-        cdf /= cdf[-1]
-        uniform_samples = random_state.random_sample(_num_samples(X))
-        bootstrap_idx = cdf.searchsorted(uniform_samples, side='right')
-        # searchsorted returns a scalar
-        bootstrap_idx = np.array(bootstrap_idx, copy=False)
+        bootstrap_idx = random_state.choice(
+            np.arange(_num_samples(X)), size=_num_samples(X), replace=True,
+            p=sample_weight
+        )
 
         # Fit on the bootstrapped sample and obtain a prediction
         # for all samples in the training set
@@ -1055,9 +1052,14 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         y_predict = estimator.predict(X)
 
         error_vect = np.abs(y_predict - y)
-        error_max = error_vect.max()
 
-        if error_max != 0.:
+        sample_mask = sample_weight > 0
+        if not np.count_nonzero(sample_mask):
+            error_max = 0
+        else:
+            error_max = error_vect[sample_mask].max()
+
+        if error_max != 0:
             error_vect /= error_max
 
         if self.loss == 'square':
