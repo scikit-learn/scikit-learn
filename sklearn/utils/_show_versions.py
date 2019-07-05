@@ -85,9 +85,3 @@ def show_versions():
     print('\nPython deps:')
     for k, stat in deps_info.items():
         print("{k:>10}: {stat}".format(k=k, stat=stat))
-
-    print('\nNumpy BLAS/LAPACK:')
-    numpy.show_config()
-
-    print('\nScipy BLAS/LAPACK:')
-    scipy.show_config()
