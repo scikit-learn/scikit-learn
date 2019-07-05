@@ -12,10 +12,7 @@ from sklearn.base import BaseEstimator
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_raise_message
@@ -241,7 +238,7 @@ def test_bootstrap_samples():
                                 bootstrap=False,
                                 random_state=rng).fit(X_train, y_train)
 
-    assert_equal(base_estimator.score(X_train, y_train),
+    assert (base_estimator.score(X_train, y_train) ==
                  ensemble.score(X_train, y_train))
 
     # with bootstrap, trees are no longer perfect on the training set
@@ -250,7 +247,7 @@ def test_bootstrap_samples():
                                 bootstrap=True,
                                 random_state=rng).fit(X_train, y_train)
 
-    assert_greater(base_estimator.score(X_train, y_train),
+    assert (base_estimator.score(X_train, y_train) >
                    ensemble.score(X_train, y_train))
 
     # check that each sampling correspond to a complete bootstrap resample.
@@ -278,7 +275,7 @@ def test_bootstrap_features():
                                 random_state=rng).fit(X_train, y_train)
 
     for features in ensemble.estimators_features_:
-        assert_equal(boston.data.shape[1], np.unique(features).shape[0])
+        assert boston.data.shape[1] == np.unique(features).shape[0]
 
     ensemble = BaggingRegressor(base_estimator=DecisionTreeRegressor(),
                                 max_features=1.0,
@@ -286,7 +283,7 @@ def test_bootstrap_features():
                                 random_state=rng).fit(X_train, y_train)
 
     for features in ensemble.estimators_features_:
-        assert_greater(boston.data.shape[1], np.unique(features).shape[0])
+        assert boston.data.shape[1] > np.unique(features).shape[0]
 
 
 def test_probability():
@@ -338,7 +335,7 @@ def test_oob_score_classification():
 
         test_score = clf.score(X_test, y_test)
 
-        assert_less(abs(test_score - clf.oob_score_), 0.1)
+        assert abs(test_score - clf.oob_score_) < 0.1
 
         # Test with few estimators
         assert_warns(UserWarning,
@@ -367,7 +364,7 @@ def test_oob_score_regression():
 
     test_score = clf.score(X_test, y_test)
 
-    assert_less(abs(test_score - clf.oob_score_), 0.1)
+    assert abs(test_score - clf.oob_score_) < 0.1
 
     # Test with few estimators
     assert_warns(UserWarning,
@@ -616,13 +613,13 @@ def test_warm_start(random_state=42):
         else:
             clf_ws.set_params(n_estimators=n_estimators)
         clf_ws.fit(X, y)
-        assert_equal(len(clf_ws), n_estimators)
+        assert len(clf_ws) == n_estimators
 
     clf_no_ws = BaggingClassifier(n_estimators=10, random_state=random_state,
                                   warm_start=False)
     clf_no_ws.fit(X, y)
 
-    assert_equal(set([tree.random_state for tree in clf_ws]),
+    assert (set([tree.random_state for tree in clf_ws]) ==
                  set([tree.random_state for tree in clf_no_ws]))
 
 
@@ -700,7 +697,7 @@ def test_oob_score_consistency():
     bagging = BaggingClassifier(KNeighborsClassifier(), max_samples=0.5,
                                 max_features=0.5, oob_score=True,
                                 random_state=1)
-    assert_equal(bagging.fit(X, y).oob_score_, bagging.fit(X, y).oob_score_)
+    assert bagging.fit(X, y).oob_score_ == bagging.fit(X, y).oob_score_
 
 
 def test_estimators_samples():
@@ -719,9 +716,9 @@ def test_estimators_samples():
     estimators = bagging.estimators_
 
     # Test for correct formatting
-    assert_equal(len(estimators_samples), len(estimators))
-    assert_equal(len(estimators_samples[0]), len(X) // 2)
-    assert_equal(estimators_samples[0].dtype.kind, 'i')
+    assert len(estimators_samples) == len(estimators)
+    assert len(estimators_samples[0]) == len(X) // 2
+    assert estimators_samples[0].dtype.kind == 'i'
 
     # Re-fit single estimator to test for consistent sampling
     estimator_index = 0
@@ -776,7 +773,7 @@ def test_max_samples_consistency():
                                 max_samples=max_samples,
                                 max_features=0.5, random_state=1)
     bagging.fit(X, y)
-    assert_equal(bagging._max_samples, max_samples)
+    assert bagging._max_samples == max_samples
 
 
 def test_set_oob_score_label_encoding():
@@ -793,7 +790,7 @@ def test_set_oob_score_label_encoding():
                            random_state=random_state).fit(X, Y2).oob_score_
     x3 = BaggingClassifier(oob_score=True,
                            random_state=random_state).fit(X, Y3).oob_score_
-    assert_equal([x1, x2], [x3, x3])
+    assert [x1, x2] == [x3, x3]
 
 
 def replace(X):
@@ -829,7 +826,7 @@ def test_bagging_regressor_with_missing_inputs():
         pipeline.fit(X, y).predict(X)
         bagging_regressor = BaggingRegressor(pipeline)
         y_hat = bagging_regressor.fit(X, y).predict(X)
-        assert_equal(y.shape, y_hat.shape)
+        assert y.shape == y_hat.shape
 
         # Verify that exceptions can be raised by wrapper regressor
         regressor = DecisionTreeRegressor()
@@ -857,7 +854,7 @@ def test_bagging_classifier_with_missing_inputs():
     bagging_classifier = BaggingClassifier(pipeline)
     bagging_classifier.fit(X, y)
     y_hat = bagging_classifier.predict(X)
-    assert_equal(y.shape, y_hat.shape)
+    assert y.shape == y_hat.shape
     bagging_classifier.predict_log_proba(X)
     bagging_classifier.predict_proba(X)
 

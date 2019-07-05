@@ -20,7 +20,6 @@ from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_less
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import ignore_warnings
@@ -473,13 +472,13 @@ def test_symmetry():
     y_pred_bin = random_state.randint(0, 2, size=(20, 25))
 
     # We shouldn't forget any metrics
-    assert_equal(SYMMETRIC_METRICS.union(
+    assert (SYMMETRIC_METRICS.union(
         NOT_SYMMETRIC_METRICS, set(THRESHOLDED_METRICS),
-        METRIC_UNDEFINED_BINARY_MULTICLASS),
+        METRIC_UNDEFINED_BINARY_MULTICLASS) ==
         set(ALL_METRICS))
 
-    assert_equal(
-        SYMMETRIC_METRICS.intersection(NOT_SYMMETRIC_METRICS),
+    assert (
+        SYMMETRIC_METRICS.intersection(NOT_SYMMETRIC_METRICS) ==
         set())
 
     # Symmetric metric

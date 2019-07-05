@@ -9,10 +9,7 @@ import joblib
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
@@ -211,13 +208,13 @@ def _test_warm_start(klass, X, Y, lr):
                  warm_start=True, learning_rate=lr)
     clf3.fit(X, Y)
 
-    assert_equal(clf3.t_, clf.t_)
+    assert clf3.t_ == clf.t_
     assert_array_almost_equal(clf3.coef_, clf.coef_)
 
     clf3.set_params(alpha=0.001)
     clf3.fit(X, Y)
 
-    assert_equal(clf3.t_, clf2.t_)
+    assert clf3.t_ == clf2.t_
     assert_array_almost_equal(clf3.coef_, clf2.coef_)
 
 
@@ -583,9 +580,9 @@ def test_partial_fit_weight_class_balanced(klass):
 def test_sgd_multiclass(klass):
     # Multi-class test case
     clf = klass(alpha=0.01, max_iter=20).fit(X2, Y2)
-    assert_equal(clf.coef_.shape, (3, 2))
-    assert_equal(clf.intercept_.shape, (3,))
-    assert_equal(clf.decision_function([[0, 0]]).shape, (1, 3))
+    assert clf.coef_.shape == (3, 2)
+    assert clf.intercept_.shape == (3,)
+    assert clf.decision_function([[0, 0]]).shape == (1, 3)
     pred = clf.predict(T2)
     assert_array_equal(pred, true_result2)
 
@@ -621,7 +618,7 @@ def test_sgd_multiclass_with_init_coef(klass):
     clf = klass(alpha=0.01, max_iter=20)
     clf.fit(X2, Y2, coef_init=np.zeros((3, 2)),
             intercept_init=np.zeros(3))
-    assert_equal(clf.coef_.shape, (3, 2))
+    assert clf.coef_.shape == (3, 2)
     assert clf.intercept_.shape, (3,)
     pred = clf.predict(T2)
     assert_array_equal(pred, true_result2)
@@ -631,9 +628,9 @@ def test_sgd_multiclass_with_init_coef(klass):
 def test_sgd_multiclass_njobs(klass):
     # Multi-class test case with multi-core support
     clf = klass(alpha=0.01, max_iter=20, n_jobs=2).fit(X2, Y2)
-    assert_equal(clf.coef_.shape, (3, 2))
-    assert_equal(clf.intercept_.shape, (3,))
-    assert_equal(clf.decision_function([[0, 0]]).shape, (1, 3))
+    assert clf.coef_.shape == (3, 2)
+    assert clf.intercept_.shape == (3,)
+    assert clf.decision_function([[0, 0]]).shape == (1, 3)
     pred = clf.predict(T2)
     assert_array_equal(pred, true_result2)
 
@@ -739,9 +736,9 @@ def test_sgd_proba(klass):
     d = clf.decision_function([[3, 2]])
     p = clf.predict_proba([[3, 2]])
     if klass != SparseSGDClassifier:
-        assert_equal(np.argmax(d, axis=1), np.argmax(p, axis=1))
+        assert np.argmax(d, axis=1) == np.argmax(p, axis=1)
     else:   # XXX the sparse test gets a different X2 (?)
-        assert_equal(np.argmin(d, axis=1), np.argmin(p, axis=1))
+        assert np.argmin(d, axis=1) == np.argmin(p, axis=1)
 
     # the following sample produces decision_function values < -1,
     # which would cause naive normalization to fail (see comment
@@ -896,14 +893,14 @@ def test_balanced_weight(klass):
     clf = klass(max_iter=1000, class_weight=None, shuffle=False)
     clf.fit(X_imbalanced, y_imbalanced)
     y_pred = clf.predict(X)
-    assert_less(metrics.f1_score(y, y_pred, average='weighted'), 0.96)
+    assert metrics.f1_score(y, y_pred, average='weighted') < 0.96
 
     # fit a model with balanced class_weight enabled
     clf = klass(max_iter=1000, class_weight="balanced",
                 shuffle=False)
     clf.fit(X_imbalanced, y_imbalanced)
     y_pred = clf.predict(X)
-    assert_greater(metrics.f1_score(y, y_pred, average='weighted'), 0.96)
+    assert metrics.f1_score(y, y_pred, average='weighted') > 0.96
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
@@ -947,9 +944,9 @@ def test_partial_fit_binary(klass):
     classes = np.unique(Y)
 
     clf.partial_fit(X[:third], Y[:third], classes=classes)
-    assert_equal(clf.coef_.shape, (1, X.shape[1]))
-    assert_equal(clf.intercept_.shape, (1,))
-    assert_equal(clf.decision_function([[0, 0]]).shape, (1, ))
+    assert clf.coef_.shape == (1, X.shape[1])
+    assert clf.intercept_.shape == (1,)
+    assert clf.decision_function([[0, 0]]).shape == (1, )
     id1 = id(clf.coef_.data)
 
     clf.partial_fit(X[third:], Y[third:])
@@ -968,9 +965,9 @@ def test_partial_fit_multiclass(klass):
     classes = np.unique(Y2)
 
     clf.partial_fit(X2[:third], Y2[:third], classes=classes)
-    assert_equal(clf.coef_.shape, (3, X2.shape[1]))
-    assert_equal(clf.intercept_.shape, (3,))
-    assert_equal(clf.decision_function([[0, 0]]).shape, (1, 3))
+    assert clf.coef_.shape == (3, X2.shape[1])
+    assert clf.intercept_.shape == (3,)
+    assert clf.decision_function([[0, 0]]).shape == (1, 3)
     id1 = id(clf.coef_.data)
 
     clf.partial_fit(X2[third:], Y2[third:])
@@ -986,12 +983,12 @@ def test_partial_fit_multiclass_average(klass):
     classes = np.unique(Y2)
 
     clf.partial_fit(X2[:third], Y2[:third], classes=classes)
-    assert_equal(clf.coef_.shape, (3, X2.shape[1]))
-    assert_equal(clf.intercept_.shape, (3,))
+    assert clf.coef_.shape == (3, X2.shape[1])
+    assert clf.intercept_.shape == (3,)
 
     clf.partial_fit(X2[third:], Y2[third:])
-    assert_equal(clf.coef_.shape, (3, X2.shape[1]))
-    assert_equal(clf.intercept_.shape, (3,))
+    assert clf.coef_.shape == (3, X2.shape[1])
+    assert clf.intercept_.shape == (3,)
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
@@ -1022,7 +1019,7 @@ def test_partial_fit_equal_fit_classif(klass, lr):
             clf.partial_fit(X_, Y_, classes=classes)
         y_pred2 = clf.decision_function(T_)
 
-        assert_equal(clf.t_, t)
+        assert clf.t_ == t
         assert_array_almost_equal(y_pred, y_pred2, decimal=2)
 
 
@@ -1033,22 +1030,22 @@ def test_regression_losses(klass):
                 eta0=0.1, loss="epsilon_insensitive",
                 random_state=random_state)
     clf.fit(X, Y)
-    assert_equal(1.0, np.mean(clf.predict(X) == Y))
+    assert 1.0 == np.mean(clf.predict(X) == Y)
 
     clf = klass(alpha=0.01, learning_rate="constant",
                 eta0=0.1, loss="squared_epsilon_insensitive",
                 random_state=random_state)
     clf.fit(X, Y)
-    assert_equal(1.0, np.mean(clf.predict(X) == Y))
+    assert 1.0 == np.mean(clf.predict(X) == Y)
 
     clf = klass(alpha=0.01, loss="huber", random_state=random_state)
     clf.fit(X, Y)
-    assert_equal(1.0, np.mean(clf.predict(X) == Y))
+    assert 1.0 == np.mean(clf.predict(X) == Y)
 
     clf = klass(alpha=0.01, learning_rate="constant", eta0=0.01,
                 loss="squared_loss", random_state=random_state)
     clf.fit(X, Y)
-    assert_equal(1.0, np.mean(clf.predict(X) == Y))
+    assert 1.0 == np.mean(clf.predict(X) == Y)
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
@@ -1076,7 +1073,7 @@ def test_sgd_reg(klass):
     # Check that SGD gives any results.
     clf = klass(alpha=0.1, max_iter=2, fit_intercept=False)
     clf.fit([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
-    assert_equal(clf.coef_[0], clf.coef_[1])
+    assert clf.coef_[0] == clf.coef_[1]
 
 
 @pytest.mark.parametrize('klass', [SGDRegressor, SparseSGDRegressor])
@@ -1177,7 +1174,7 @@ def test_sgd_least_squares_fit(klass):
                 fit_intercept=False)
     clf.fit(X, y)
     score = clf.score(X, y)
-    assert_greater(score, 0.99)
+    assert score > 0.99
 
     # simple linear function with noise
     y = 0.5 * X.ravel() + rng.randn(n_samples, 1).ravel()
@@ -1186,7 +1183,7 @@ def test_sgd_least_squares_fit(klass):
                 fit_intercept=False)
     clf.fit(X, y)
     score = clf.score(X, y)
-    assert_greater(score, 0.5)
+    assert score > 0.5
 
 
 @pytest.mark.parametrize('klass', [SGDRegressor, SparseSGDRegressor])
@@ -1231,7 +1228,7 @@ def test_sgd_huber_fit(klass):
                 fit_intercept=False)
     clf.fit(X, y)
     score = clf.score(X, y)
-    assert_greater(score, 0.99)
+    assert score > 0.99
 
     # simple linear function with noise
     y = 0.5 * X.ravel() + rng.randn(n_samples, 1).ravel()
@@ -1240,7 +1237,7 @@ def test_sgd_huber_fit(klass):
                 fit_intercept=False)
     clf.fit(X, y)
     score = clf.score(X, y)
-    assert_greater(score, 0.5)
+    assert score > 0.5
 
 
 @pytest.mark.parametrize('klass', [SGDRegressor, SparseSGDRegressor])
@@ -1279,9 +1276,9 @@ def test_partial_fit(klass):
     clf = klass(alpha=0.01)
 
     clf.partial_fit(X[:third], Y[:third])
-    assert_equal(clf.coef_.shape, (X.shape[1], ))
-    assert_equal(clf.intercept_.shape, (1,))
-    assert_equal(clf.predict([[0, 0]]).shape, (1, ))
+    assert clf.coef_.shape == (X.shape[1], )
+    assert clf.intercept_.shape == (1,)
+    assert clf.predict([[0, 0]]).shape == (1, )
     id1 = id(clf.coef_.data)
 
     clf.partial_fit(X[third:], Y[third:])
@@ -1306,7 +1303,7 @@ def test_partial_fit_equal_fit(klass, lr):
         clf.partial_fit(X, Y)
     y_pred2 = clf.predict(T)
 
-    assert_equal(clf.t_, t)
+    assert clf.t_ == t
     assert_array_almost_equal(y_pred, y_pred2, decimal=2)
 
 
@@ -1407,25 +1404,25 @@ def test_tol_parameter():
     max_iter = 42
     model_0 = SGDClassifier(tol=None, random_state=0, max_iter=max_iter)
     model_0.fit(X, y)
-    assert_equal(max_iter, model_0.n_iter_)
+    assert max_iter == model_0.n_iter_
 
     # If tol is not None, the number of iteration should be less than max_iter
     max_iter = 2000
     model_1 = SGDClassifier(tol=0, random_state=0, max_iter=max_iter)
     model_1.fit(X, y)
-    assert_greater(max_iter, model_1.n_iter_)
-    assert_greater(model_1.n_iter_, 5)
+    assert max_iter > model_1.n_iter_
+    assert model_1.n_iter_ > 5
 
     # A larger tol should yield a smaller number of iteration
     model_2 = SGDClassifier(tol=0.1, random_state=0, max_iter=max_iter)
     model_2.fit(X, y)
-    assert_greater(model_1.n_iter_, model_2.n_iter_)
-    assert_greater(model_2.n_iter_, 3)
+    assert model_1.n_iter_ > model_2.n_iter_
+    assert model_2.n_iter_ > 3
 
     # Strict tolerance and small max_iter should trigger a warning
     model_3 = SGDClassifier(max_iter=3, tol=1e-3, random_state=0)
     model_3 = assert_warns(ConvergenceWarning, model_3.fit, X, y)
-    assert_equal(model_3.n_iter_, 3)
+    assert model_3.n_iter_ == 3
 
 
 def _test_gradient_common(loss_function, cases):
