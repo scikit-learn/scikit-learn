@@ -94,7 +94,7 @@ print("done in {:.3f}s".format(time() - tic))
 fig = plt.gcf()
 fig.suptitle('Partial dependence of house value on non-location features\n'
              'for the California housing dataset, with MLPRegressor')
-plt.subplots_adjust(top=0.9)  # tight_layout causes overlap with suptitle
+fig.tight_layout(rect=[0, 0.03, 1, 0.95])
 
 ##############################################################################
 # Partial Dependence computation for Gradient Boosting
@@ -120,7 +120,7 @@ print("done in {:.3f}s".format(time() - tic))
 fig = plt.gcf()
 fig.suptitle('Partial dependence of house value on non-location features\n'
              'for the California housing dataset, with Gradient Boosting')
-plt.subplots_adjust(top=0.9)
+fig.tight_layout(rect=[0, 0.03, 1, 0.95])
 
 ##############################################################################
 # Analysis of the plots
