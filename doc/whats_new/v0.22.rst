@@ -80,6 +80,9 @@ Changelog
   plot model scalability (see learning_curve example).
   :pr:`13938` by :user:`Hadrien Reboul <H4dr1en>`.
 
+- |Efficiency| Multimetric scoring now caches predictions to avoid repeated 		
+  calls. :pr:`14261` by `Thomas Fan`_.
+
 :mod:`sklearn.pipeline`
 .......................
 
