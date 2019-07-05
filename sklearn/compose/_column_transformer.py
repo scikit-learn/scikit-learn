@@ -717,7 +717,15 @@ def make_column_transformer(*transformers, **kwargs):
 
     Parameters
     ----------
-    *transformers : tuples of transformers and column selections
+	*transformers : tuples of transformers and column selections
+
+      transformer : estimator or {'passthrough', 'drop'}
+            Estimator must support `fit` and `transform`. Special-cased
+            strings 'drop' and 'passthrough' are accepted as well, to
+            indicate to drop the columns or to pass them through untransformed,
+            respectively.
+            
+      column(s) : string or int, array-like of string or int, slice, \
 
     remainder : {'drop', 'passthrough'} or estimator, default 'drop'
         By default, only the specified columns in `transformers` are
