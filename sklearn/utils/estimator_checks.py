@@ -78,6 +78,7 @@ def _yield_checks(name, estimator):
     yield check_sample_weights_pandas_series
     yield check_sample_weights_list
     yield check_sample_weights_invariance
+    yield check_sample_weights_effects
     yield check_estimators_fit_returns_self
     yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
 
@@ -629,6 +630,46 @@ def check_sample_weights_invariance(name, estimator_orig):
                                 err_msg="For %s sample_weight=None is not"
                                         " equivalent to sample_weight=ones"
                                         % name)
+
+
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
+def check_sample_weights_effects(name, estimator_orig):
+    # check that passing sample_weight to an estimator has an effect on
+    # the predictions
+    if (has_fit_parameter(estimator_orig, "sample_weight") and
+            not (hasattr(estimator_orig, "_pairwise")
+                 and estimator_orig._pairwise)):
+        # We skip pairwise because the data is not pairwise
+
+        estimator1 = clone(estimator_orig)
+        estimator2 = clone(estimator_orig)
+        set_random_state(estimator1, random_state=0)
+        set_random_state(estimator2, random_state=0)
+
+        if is_classifier(estimator1):
+            X, y = load_iris(return_X_y=True)
+        else:
+            X, y = load_boston(return_X_y=True)
+        y = enforce_estimator_tags_y(estimator1, y)
+
+        sample_weight = np.zeros((y.size,))
+        sample_weight[::2] = 1.
+
+        estimator1.fit(X, y=y, sample_weight=sample_weight)
+        estimator2.fit(X, y)
+
+        err_msg = ("For {} passing sample_weight does not have effect on the "
+                   "prediction".format(name))
+        for method in ["predict", "transform"]:
+            if hasattr(estimator_orig, method):
+                X_pred1 = getattr(estimator1, method)(X)
+                X_pred2 = getattr(estimator2, method)(X)
+                try:
+                    assert_allclose_dense_sparse(X_pred1, X_pred2)
+                except AssertionError:
+                    pass
+                else:
+                    raise AssertionError(err_msg)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning, UserWarning))
