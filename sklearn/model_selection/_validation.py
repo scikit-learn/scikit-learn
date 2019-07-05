@@ -14,6 +14,7 @@ import warnings
 import numbers
 import time
 from traceback import format_exception_only
+from functools import partial
 
 import numpy as np
 import scipy.sparse as sp
@@ -632,11 +633,12 @@ def _multimetric_score(estimator, X_test, y_test, scorers):
     """Return a dict of score for multimetric scoring"""
     scores = {}
 
+    cached_estimator = _CacheEstimator(estimator)
     for name, scorer in scorers.items():
         if y_test is None:
-            score = scorer(estimator, X_test)
+            score = scorer(cached_estimator, X_test)
         else:
-            score = scorer(estimator, X_test, y_test)
+            score = scorer(cached_estimator, X_test, y_test)
 
         if hasattr(score, 'item'):
             try:

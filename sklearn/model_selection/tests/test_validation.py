@@ -5,6 +5,7 @@ import warnings
 import tempfile
 import os
 from time import sleep
+from unittest.mock import Mock
 
 import pytest
 import numpy as np
@@ -76,6 +77,7 @@ from sklearn.datasets import make_multilabel_classification
 
 from sklearn.model_selection.tests.common import OneTimeSplitter
 from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection._validation import _CacheEstimator
 
 
 try:
