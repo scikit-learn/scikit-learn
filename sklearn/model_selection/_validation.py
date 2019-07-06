@@ -606,7 +606,7 @@ def _cache_estimator(estimator):
         try:
             return cache[name, id(X)]
         except KeyError:
-            result = func(*args, **kwargs)
+            result = func(X, *args, **kwargs)
             cache[name, id(X)] = result
             return result
 
