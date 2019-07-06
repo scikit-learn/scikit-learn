@@ -183,7 +183,7 @@ class _BaseTreeExporter(object):
                  class_names=None, label='all', filled=False,
                  impurity=True, node_ids=False,
                  proportion=False, rotate=False, rounded=False,
-                 precision=3, fontsize=None):
+                 precision=3, fontsize=None,fontname='helvetica'):
         self.max_depth = max_depth
         self.feature_names = feature_names
         self.class_names = class_names
@@ -196,6 +196,7 @@ class _BaseTreeExporter(object):
         self.rounded = rounded
         self.precision = precision
         self.fontsize = fontsize
+        self.fontname=fontname
 
     def get_color(self, value):
         # Find the appropriate color & intensity for a node
@@ -355,7 +356,7 @@ class _DOTTreeExporter(_BaseTreeExporter):
                  feature_names=None, class_names=None, label='all',
                  filled=False, leaves_parallel=False, impurity=True,
                  node_ids=False, proportion=False, rotate=False, rounded=False,
-                 special_characters=False, precision=3):
+                 special_characters=False, precision=3,fontname='helvetica'):
 
         super().__init__(
             max_depth=max_depth, feature_names=feature_names,
@@ -364,6 +365,7 @@ class _DOTTreeExporter(_BaseTreeExporter):
             node_ids=node_ids, proportion=proportion, rotate=rotate,
             rounded=rounded,
             precision=precision)
+            fontname=fontname)
         self.leaves_parallel = leaves_parallel
         self.out_file = out_file
         self.special_characters = special_characters
@@ -434,7 +436,7 @@ class _DOTTreeExporter(_BaseTreeExporter):
                 ', style="%s", color="black"'
                 % ", ".join(rounded_filled))
         if self.rounded:
-            self.out_file.write(', fontname=helvetica')
+            self.out_file.write(', fontname=%s'%self.fontname)
         self.out_file.write('] ;\n')
 
         # Specify graph & edge aesthetics
@@ -442,7 +444,7 @@ class _DOTTreeExporter(_BaseTreeExporter):
             self.out_file.write(
                 'graph [ranksep=equally, splines=polyline] ;\n')
         if self.rounded:
-            self.out_file.write('edge [fontname=helvetica] ;\n')
+            self.out_file.write('edge [fontname=%s] ;\n'%self.fontname)
         if self.rotate:
             self.out_file.write('rankdir=LR ;\n')
 
@@ -656,7 +658,7 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
                     feature_names=None, class_names=None, label='all',
                     filled=False, leaves_parallel=False, impurity=True,
                     node_ids=False, proportion=False, rotate=False,
-                    rounded=False, special_characters=False, precision=3):
+                    rounded=False, special_characters=False, precision=3,fontname='helvetica'):
     """Export a decision tree in DOT format.
 
     This function generates a GraphViz representation of the decision tree,
@@ -772,7 +774,8 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
             filled=filled, leaves_parallel=leaves_parallel, impurity=impurity,
             node_ids=node_ids, proportion=proportion, rotate=rotate,
             rounded=rounded, special_characters=special_characters,
-            precision=precision)
+            precision=precision,
+            fontname=fontname)
         exporter.export(decision_tree)
 
         if return_string:
