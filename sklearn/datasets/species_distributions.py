@@ -41,22 +41,19 @@ from io import BytesIO
 from os import makedirs, remove
 from os.path import exists
 
-import sys
-
 import logging
 import numpy as np
+
+import joblib
 
 from .base import get_data_home
 from .base import _fetch_remote
 from .base import RemoteFileMetadata
 from ..utils import Bunch
-from sklearn.datasets.base import _pkl_filepath
-from sklearn.externals import joblib
-
-PY3_OR_LATER = sys.version_info[0] >= 3
+from .base import _pkl_filepath
 
 # The original data can be found at:
-# http://biodiversityinformatics.amnh.org/open_source/maxent/samples.zip
+# https://biodiversityinformatics.amnh.org/open_source/maxent/samples.zip
 SAMPLES = RemoteFileMetadata(
     filename='samples.zip',
     url='https://ndownloader.figshare.com/files/5976075',
@@ -64,7 +61,7 @@ SAMPLES = RemoteFileMetadata(
               '3c098f7f85955e89d321ee8efe37ac28'))
 
 # The original data can be found at:
-# http://biodiversityinformatics.amnh.org/open_source/maxent/coverages.zip
+# https://biodiversityinformatics.amnh.org/open_source/maxent/coverages.zip
 COVERAGES = RemoteFileMetadata(
     filename='coverages.zip',
     url='https://ndownloader.figshare.com/files/5976078',
@@ -82,7 +79,7 @@ def _load_coverage(F, header_length=6, dtype=np.int16):
 
     This will return a numpy array of the given dtype
     """
-    header = [F.readline() for i in range(header_length)]
+    header = [F.readline() for _ in range(header_length)]
     make_tuple = lambda t: (t.split()[0], float(t.split()[1]))
     header = dict([make_tuple(line) for line in header])
 
@@ -106,12 +103,7 @@ def _load_csv(F):
     rec : np.ndarray
         record array representing the data
     """
-    if PY3_OR_LATER:
-        # Numpy recarray wants Python 3 str but not bytes...
-        names = F.readline().decode('ascii').strip().split(',')
-    else:
-        # Numpy recarray wants Python 2 str but not unicode
-        names = F.readline().strip().split(',')
+    names = F.readline().decode('ascii').strip().split(',')
 
     rec = np.loadtxt(F, skiprows=0, delimiter=',', dtype='a22,f4,f4')
     rec.dtype.names = names
@@ -162,7 +154,7 @@ def fetch_species_distributions(data_home=None,
         instead of trying to download the data from the source site.
 
     Returns
-    --------
+    -------
     The data is returned as a Bunch object with the following attributes:
 
     coverages : array, shape = [14, 1592, 1212]
@@ -170,14 +162,14 @@ def fetch_species_distributions(data_home=None,
         The latitude/longitude values for the grid are discussed below.
         Missing data is represented by the value -9999.
 
-    train : record array, shape = (1623,)
+    train : record array, shape = (1624,)
         The training points for the data.  Each point has three fields:
 
         - train['species'] is the species name
         - train['dd long'] is the longitude, in degrees
         - train['dd lat'] is the latitude, in degrees
 
-    test : record array, shape = (619,)
+    test : record array, shape = (620,)
         The test points for the data.  Same format as the training data.
 
     Nx, Ny : integers
@@ -240,28 +232,26 @@ def fetch_species_distributions(data_home=None,
         logger.info('Downloading species data from %s to %s' % (
             SAMPLES.url, data_home))
         samples_path = _fetch_remote(SAMPLES, dirname=data_home)
-        X = np.load(samples_path)  # samples.zip is a valid npz
+        with np.load(samples_path) as X:  # samples.zip is a valid npz
+            for f in X.files:
+                fhandle = BytesIO(X[f])
+                if 'train' in f:
+                    train = _load_csv(fhandle)
+                if 'test' in f:
+                    test = _load_csv(fhandle)
         remove(samples_path)
-
-        for f in X.files:
-            fhandle = BytesIO(X[f])
-            if 'train' in f:
-                train = _load_csv(fhandle)
-            if 'test' in f:
-                test = _load_csv(fhandle)
 
         logger.info('Downloading coverage data from %s to %s' % (
             COVERAGES.url, data_home))
         coverages_path = _fetch_remote(COVERAGES, dirname=data_home)
-        X = np.load(coverages_path)  # coverages.zip is a valid npz
+        with np.load(coverages_path) as X:  # coverages.zip is a valid npz
+            coverages = []
+            for f in X.files:
+                fhandle = BytesIO(X[f])
+                logger.debug(' - converting {}'.format(f))
+                coverages.append(_load_coverage(fhandle))
+            coverages = np.asarray(coverages, dtype=dtype)
         remove(coverages_path)
-
-        coverages = []
-        for f in X.files:
-            fhandle = BytesIO(X[f])
-            logger.debug(' - converting {}'.format(f))
-            coverages.append(_load_coverage(fhandle))
-        coverages = np.asarray(coverages, dtype=dtype)
 
         bunch = Bunch(coverages=coverages,
                       test=test,

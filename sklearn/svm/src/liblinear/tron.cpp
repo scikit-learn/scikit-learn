@@ -12,10 +12,6 @@ template <class T> static inline T min(T x,T y) { return (x<y)?x:y; }
 template <class T> static inline T max(T x,T y) { return (x>y)?x:y; }
 #endif
 
-extern "C" {
-#include <cblas.h>
-}
-
 static void default_print(const char *buf)
 {
 	fputs(buf,stdout);
@@ -32,11 +28,12 @@ void TRON::info(const char *fmt,...)
 	(*tron_print_string)(buf);
 }
 
-TRON::TRON(const function *fun_obj, double eps, int max_iter)
+TRON::TRON(const function *fun_obj, double eps, int max_iter, BlasFunctions *blas)
 {
 	this->fun_obj=const_cast<function *>(fun_obj);
 	this->eps=eps;
 	this->max_iter=max_iter;
+	this->blas=blas;
 	tron_print_string = default_print;
 }
 
@@ -67,7 +64,7 @@ int TRON::tron(double *w)
 
 	f = fun_obj->fun(w);
 	fun_obj->grad(w, g);
-	delta = cblas_dnrm2(n, g, inc);
+	delta = blas->nrm2(n, g, inc);
 	double gnorm1 = delta;
 	double gnorm = gnorm1;
 
@@ -81,17 +78,17 @@ int TRON::tron(double *w)
 		cg_iter = trcg(delta, g, s, r);
 
 		memcpy(w_new, w, sizeof(double)*n);
-		cblas_daxpy(n, 1.0, s, inc, w_new, inc);
+		blas->axpy(n, 1.0, s, inc, w_new, inc);
 
-		gs = cblas_ddot(n, g, inc, s, inc);
-		prered = -0.5*(gs - cblas_ddot(n, s, inc, r, inc));
+		gs = blas->dot(n, g, inc, s, inc);
+		prered = -0.5*(gs - blas->dot(n, s, inc, r, inc));
 		fnew = fun_obj->fun(w_new);
 
 		// Compute the actual reduction.
 		actred = f - fnew;
 
 		// On the first iteration, adjust the initial step bound.
-		snorm = cblas_dnrm2(n, s, inc);
+		snorm = blas->nrm2(n, s, inc);
 		if (iter == 1)
 			delta = min(delta, snorm);
 
@@ -120,7 +117,7 @@ int TRON::tron(double *w)
 			f = fnew;
 			fun_obj->grad(w, g);
 
-			gnorm = cblas_dnrm2(n, g, inc);
+			gnorm = blas->nrm2(n, g, inc);
 			if (gnorm <= eps*gnorm1)
 				break;
 		}
@@ -163,45 +160,45 @@ int TRON::trcg(double delta, double *g, double *s, double *r)
 		r[i] = -g[i];
 		d[i] = r[i];
 	}
-	cgtol = 0.1 * cblas_dnrm2(n, g, inc);
+	cgtol = 0.1 * blas->nrm2(n, g, inc);
 
 	int cg_iter = 0;
-	rTr = cblas_ddot(n, r, inc, r, inc);
+	rTr = blas->dot(n, r, inc, r, inc);
 	while (1)
 	{
-		if (cblas_dnrm2(n, r, inc) <= cgtol)
+		if (blas->nrm2(n, r, inc) <= cgtol)
 			break;
 		cg_iter++;
 		fun_obj->Hv(d, Hd);
 
-		alpha = rTr / cblas_ddot(n, d, inc, Hd, inc);
-		cblas_daxpy(n, alpha, d, inc, s, inc);
-		if (cblas_dnrm2(n, s, inc) > delta)
+		alpha = rTr / blas->dot(n, d, inc, Hd, inc);
+		blas->axpy(n, alpha, d, inc, s, inc);
+		if (blas->nrm2(n, s, inc) > delta)
 		{
 			info("cg reaches trust region boundary\n");
 			alpha = -alpha;
-			cblas_daxpy(n, alpha, d, inc, s, inc);
+			blas->axpy(n, alpha, d, inc, s, inc);
 
-			double std = cblas_ddot(n, s, inc, d, inc);
-			double sts = cblas_ddot(n, s, inc, s, inc);
-			double dtd = cblas_ddot(n, d, inc, d, inc);
+			double std = blas->dot(n, s, inc, d, inc);
+			double sts = blas->dot(n, s, inc, s, inc);
+			double dtd = blas->dot(n, d, inc, d, inc);
 			double dsq = delta*delta;
 			double rad = sqrt(std*std + dtd*(dsq-sts));
 			if (std >= 0)
 				alpha = (dsq - sts)/(std + rad);
 			else
 				alpha = (rad - std)/dtd;
-			cblas_daxpy(n, alpha, d, inc, s, inc);
+			blas->axpy(n, alpha, d, inc, s, inc);
 			alpha = -alpha;
-			cblas_daxpy(n, alpha, Hd, inc, r, inc);
+			blas->axpy(n, alpha, Hd, inc, r, inc);
 			break;
 		}
 		alpha = -alpha;
-		cblas_daxpy(n, alpha, Hd, inc, r, inc);
-		rnewTrnew = cblas_ddot(n, r, inc, r, inc);
+		blas->axpy(n, alpha, Hd, inc, r, inc);
+		rnewTrnew = blas->dot(n, r, inc, r, inc);
 		beta = rnewTrnew/rTr;
-		cblas_dscal(n, beta, d, inc);
-		cblas_daxpy(n, 1.0, r, inc, d, inc);
+		blas->scal(n, beta, d, inc);
+		blas->axpy(n, 1.0, r, inc, d, inc);
 		rTr = rnewTrnew;
 	}
 

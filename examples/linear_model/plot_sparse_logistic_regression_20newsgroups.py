@@ -18,7 +18,8 @@ A more traditional (and possibly better) way to predict on a sparse subset of
 input features would be to use univariate feature selection followed by a
 traditional (l2-penalised) logistic regression model.
 """
-import time
+import timeit
+import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -26,11 +27,14 @@ import numpy as np
 from sklearn.datasets import fetch_20newsgroups_vectorized
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
+from sklearn.exceptions import ConvergenceWarning
 
 print(__doc__)
 # Author: Arthur Mensch
 
-t0 = time.clock()
+warnings.filterwarnings("ignore", category=ConvergenceWarning,
+                        module="sklearn")
+t0 = timeit.default_timer()
 
 # We use SAGA solver
 solver = 'saga'
@@ -55,7 +59,7 @@ n_classes = np.unique(y).shape[0]
 print('Dataset 20newsgroup, train_samples=%i, n_features=%i, n_classes=%i'
       % (train_samples, n_features, n_classes))
 
-models = {'ovr': {'name': 'One versus Rest', 'iters': [1, 3]},
+models = {'ovr': {'name': 'One versus Rest', 'iters': [1, 2, 4]},
           'multinomial': {'name': 'Multinomial', 'iters': [1, 3, 7]}}
 
 for model in models:
@@ -78,9 +82,9 @@ for model in models:
                                 max_iter=this_max_iter,
                                 random_state=42,
                                 )
-        t1 = time.clock()
+        t1 = timeit.default_timer()
         lr.fit(X_train, y_train)
-        train_time = time.clock() - t1
+        train_time = timeit.default_timer() - t1
 
         y_pred = lr.predict(X_test)
         accuracy = np.sum(y_pred == y_test) / y_test.shape[0]
@@ -113,6 +117,6 @@ fig.suptitle('Multinomial vs One-vs-Rest Logistic L1\n'
              'Dataset %s' % '20newsgroups')
 fig.tight_layout()
 fig.subplots_adjust(top=0.85)
-run_time = time.clock() - t0
+run_time = timeit.default_timer() - t0
 print('Example run in %.3f s' % run_time)
 plt.show()

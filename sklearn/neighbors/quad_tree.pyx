@@ -1,17 +1,18 @@
 # cython: boundscheck=False
 # cython: wraparound=False
 # cython: cdivision=True
+#
 # Author: Thomas Moreau <thomas.moreau.2010@gmail.com>
 # Author: Olivier Grisel <olivier.grisel@ensta.fr>
 
 
-from cpython cimport Py_INCREF, PyObject
+from cpython cimport Py_INCREF, PyObject, PyTypeObject
 
 from libc.stdlib cimport malloc, free
 from libc.string cimport memcpy
 from libc.stdio cimport printf
 
-from sklearn.tree._utils cimport safe_realloc, sizet_ptr_to_ndarray
+from ..tree._utils cimport safe_realloc, sizet_ptr_to_ndarray
 from ..utils import check_array
 
 import numpy as np
@@ -22,7 +23,7 @@ cdef extern from "math.h":
     float fabsf(float x) nogil
 
 cdef extern from "numpy/arrayobject.h":
-    object PyArray_NewFromDescr(object subtype, np.dtype descr,
+    object PyArray_NewFromDescr(PyTypeObject* subtype, np.dtype descr,
                                 int nd, np.npy_intp* dims,
                                 np.npy_intp* strides,
                                 void* data, int flags, object obj)
@@ -422,7 +423,7 @@ cdef class _QuadTree:
             the query point:
             - results[idx:idx+n_dimensions] contains the coordinate-wise
                 difference between the query point and the summary cell idx.
-                This is usefull in t-SNE to compute the negative forces.
+                This is useful in t-SNE to compute the negative forces.
             - result[idx+n_dimensions+1] contains the squared euclidean
                 distance to the summary cell idx.
             - result[idx+n_dimensions+2] contains the number of point of the
@@ -571,7 +572,8 @@ cdef class _QuadTree:
         strides[0] = sizeof(Cell)
         cdef np.ndarray arr
         Py_INCREF(CELL_DTYPE)
-        arr = PyArray_NewFromDescr(np.ndarray, CELL_DTYPE, 1, shape,
+        arr = PyArray_NewFromDescr(<PyTypeObject *> np.ndarray,
+                                   CELL_DTYPE, 1, shape,
                                    strides, <void*> self.cells,
                                    np.NPY_DEFAULT, None)
         Py_INCREF(self)

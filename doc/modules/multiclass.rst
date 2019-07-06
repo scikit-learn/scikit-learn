@@ -227,7 +227,8 @@ O(n_classes^2) complexity. However, this method may be advantageous for
 algorithms such as kernel algorithms which don't scale well with
 ``n_samples``. This is because each individual learning problem only involves
 a small subset of the data whereas, with one-vs-the-rest, the complete
-dataset is used ``n_classes`` times.
+dataset is used ``n_classes`` times. The decision function is the result
+of a monotonic transformation of the one-versus-one classification.
 
 Multiclass learning
 -------------------
@@ -367,10 +368,10 @@ classifier per target.  This allows multiple target variable
 classifications. The purpose of this class is to extend estimators
 to be able to estimate a series of target functions (f1,f2,f3...,fn)
 that are trained on a single X predictor matrix to predict a series
-of reponses (y1,y2,y3...,yn).
+of responses (y1,y2,y3...,yn).
 
 Below is an example of multioutput classification:
-    
+
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.multioutput import MultiOutputClassifier
     >>> from sklearn.ensemble import RandomForestClassifier
@@ -383,7 +384,7 @@ Below is an example of multioutput classification:
     >>> n_samples, n_features = X.shape # 10,100
     >>> n_outputs = Y.shape[1] # 3
     >>> n_classes = 3
-    >>> forest = RandomForestClassifier(n_estimators=100, random_state=1)
+    >>> forest = RandomForestClassifier(random_state=1)
     >>> multi_target_forest = MultiOutputClassifier(forest, n_jobs=-1)
     >>> multi_target_forest.fit(X, Y).predict(X)
     array([[2, 2, 0],
@@ -396,6 +397,8 @@ Below is an example of multioutput classification:
            [1, 1, 1],
            [0, 0, 2],
            [2, 0, 0]])
+
+.. _classifierchain:
 
 Classifier Chain
 ================
@@ -425,3 +428,13 @@ averaged together.
 
     Jesse Read, Bernhard Pfahringer, Geoff Holmes, Eibe Frank,
         "Classifier Chains for Multi-label Classification", 2009.
+
+.. _regressorchain:
+
+Regressor Chain
+================
+
+Regressor chains (see :class:`RegressorChain`) is analogous to 
+ClassifierChain as a way of combining a number of regressions 
+into a single multi-target model that is capable of exploiting 
+correlations among targets.

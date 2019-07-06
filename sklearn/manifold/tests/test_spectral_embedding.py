@@ -1,8 +1,9 @@
+import pytest
+
 import numpy as np
-from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_array_equal
 
 from scipy import sparse
+from scipy.sparse import csgraph
 from scipy.linalg import eigh
 
 from sklearn.manifold.spectral_embedding_ import SpectralEmbedding
@@ -14,7 +15,9 @@ from sklearn.metrics import normalized_mutual_info_score
 from sklearn.cluster import KMeans
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
-from sklearn.utils.testing import assert_true, assert_equal, assert_raises
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import SkipTest
 
 
@@ -74,12 +77,12 @@ def test_sparse_graph_connected_component():
     for start, stop in zip(boundaries[:-1], boundaries[1:]):
         component_1 = _graph_connected_component(affinity, p[start])
         component_size = stop - start
-        assert_equal(component_1.sum(), component_size)
+        assert component_1.sum() == component_size
 
         # We should retrieve the same component mask by starting by both ends
         # of the group
         component_2 = _graph_connected_component(affinity, p[stop - 1])
-        assert_equal(component_2.sum(), component_size)
+        assert component_2.sum() == component_size
         assert_array_equal(component_1, component_2)
 
 
@@ -97,11 +100,11 @@ def test_spectral_embedding_two_components(seed=36):
 
     # Test of internal _graph_connected_component before connection
     component = _graph_connected_component(affinity, 0)
-    assert_true(component[:n_sample].all())
-    assert_true(not component[n_sample:].any())
+    assert component[:n_sample].all()
+    assert not component[n_sample:].any()
     component = _graph_connected_component(affinity, -1)
-    assert_true(not component[:n_sample].any())
-    assert_true(component[n_sample:].all())
+    assert not component[:n_sample].any()
+    assert component[n_sample:].all()
 
     # connection
     affinity[0, n_sample + 1] = 1
@@ -120,7 +123,7 @@ def test_spectral_embedding_two_components(seed=36):
         se_precomp.fit_transform(affinity.astype(np.float32))
     # thresholding on the first components using 0.
     label_ = np.array(embedded_coordinate.ravel() < 0, dtype="float")
-    assert_equal(normalized_mutual_info_score(true_label, label_), 1.0)
+    assert normalized_mutual_info_score(true_label, label_) == 1.0
 
 
 def test_spectral_embedding_precomputed_affinity(seed=36):
@@ -135,7 +138,7 @@ def test_spectral_embedding_precomputed_affinity(seed=36):
     embed_rbf = se_rbf.fit_transform(S)
     assert_array_almost_equal(
         se_precomp.affinity_matrix_, se_rbf.affinity_matrix_)
-    assert_true(_check_with_col_sign_flipping(embed_precomp, embed_rbf, 0.05))
+    assert _check_with_col_sign_flipping(embed_precomp, embed_rbf, 0.05)
 
 
 def test_spectral_embedding_callable_affinity(seed=36):
@@ -155,8 +158,7 @@ def test_spectral_embedding_callable_affinity(seed=36):
     assert_array_almost_equal(
         se_callable.affinity_matrix_, se_rbf.affinity_matrix_)
     assert_array_almost_equal(kern, se_rbf.affinity_matrix_)
-    assert_true(
-        _check_with_col_sign_flipping(embed_rbf, embed_callable, 0.05))
+    assert _check_with_col_sign_flipping(embed_rbf, embed_callable, 0.05)
 
 
 def test_spectral_embedding_amg_solver(seed=36):
@@ -174,7 +176,7 @@ def test_spectral_embedding_amg_solver(seed=36):
                                   random_state=np.random.RandomState(seed))
     embed_amg = se_amg.fit_transform(S)
     embed_arpack = se_arpack.fit_transform(S)
-    assert_true(_check_with_col_sign_flipping(embed_amg, embed_arpack, 0.05))
+    assert _check_with_col_sign_flipping(embed_amg, embed_arpack, 0.05)
 
 
 def test_pipeline_spectral_clustering(seed=36):
@@ -218,17 +220,17 @@ def test_connectivity(seed=36):
                       [0, 1, 1, 1, 0],
                       [0, 0, 1, 1, 1],
                       [0, 0, 0, 1, 1]])
-    assert_equal(_graph_is_connected(graph), False)
-    assert_equal(_graph_is_connected(sparse.csr_matrix(graph)), False)
-    assert_equal(_graph_is_connected(sparse.csc_matrix(graph)), False)
+    assert not _graph_is_connected(graph)
+    assert not _graph_is_connected(sparse.csr_matrix(graph))
+    assert not _graph_is_connected(sparse.csc_matrix(graph))
     graph = np.array([[1, 1, 0, 0, 0],
                       [1, 1, 1, 0, 0],
                       [0, 1, 1, 1, 0],
                       [0, 0, 1, 1, 1],
                       [0, 0, 0, 1, 1]])
-    assert_equal(_graph_is_connected(graph), True)
-    assert_equal(_graph_is_connected(sparse.csr_matrix(graph)), True)
-    assert_equal(_graph_is_connected(sparse.csc_matrix(graph)), True)
+    assert _graph_is_connected(graph)
+    assert _graph_is_connected(sparse.csr_matrix(graph))
+    assert _graph_is_connected(sparse.csc_matrix(graph))
 
 
 def test_spectral_embedding_deterministic():
@@ -254,10 +256,29 @@ def test_spectral_embedding_unnormalized():
                                      drop_first=False)
 
     # Verify using manual computation with dense eigh
-    laplacian, dd = sparse.csgraph.laplacian(sims, normed=False,
-                                             return_diag=True)
+    laplacian, dd = csgraph.laplacian(sims, normed=False,
+                                      return_diag=True)
     _, diffusion_map = eigh(laplacian)
-    embedding_2 = diffusion_map.T[:n_components] * dd
+    embedding_2 = diffusion_map.T[:n_components]
     embedding_2 = _deterministic_vector_sign_flip(embedding_2).T
 
     assert_array_almost_equal(embedding_1, embedding_2)
+
+
+def test_spectral_embedding_first_eigen_vector():
+    # Test that the first eigenvector of spectral_embedding
+    # is constant and that the second is not (for a connected graph)
+    random_state = np.random.RandomState(36)
+    data = random_state.randn(10, 30)
+    sims = rbf_kernel(data)
+    n_components = 2
+
+    for seed in range(10):
+        embedding = spectral_embedding(sims,
+                                       norm_laplacian=False,
+                                       n_components=n_components,
+                                       drop_first=False,
+                                       random_state=seed)
+
+        assert np.std(embedding[:, 0]) == pytest.approx(0)
+        assert np.std(embedding[:, 1]) > 1e-3

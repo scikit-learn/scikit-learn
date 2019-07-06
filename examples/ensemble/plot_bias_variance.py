@@ -88,11 +88,13 @@ estimators = [("Tree", DecisionTreeRegressor()),
 
 n_estimators = len(estimators)
 
+
 # Generate data
 def f(x):
     x = x.ravel()
 
     return np.exp(-x ** 2) + 1.5 * np.exp(-(x - 2) ** 2)
+
 
 def generate(n_samples, noise, n_repeat=1):
     X = np.random.rand(n_samples) * 10 - 5
@@ -110,6 +112,7 @@ def generate(n_samples, noise, n_repeat=1):
 
     return X, y
 
+
 X_train = []
 y_train = []
 
@@ -119,6 +122,8 @@ for i in range(n_repeat):
     y_train.append(y)
 
 X_test, y_test = generate(n_samples=n_test, noise=noise, n_repeat=n_repeat)
+
+plt.figure(figsize=(10, 8))
 
 # Loop over estimators to compare
 for n, (name, estimator) in enumerate(estimators):
@@ -156,18 +161,18 @@ for n, (name, estimator) in enumerate(estimators):
 
     for i in range(n_repeat):
         if i == 0:
-            plt.plot(X_test, y_predict[:, i], "r", label="$\^y(x)$")
+            plt.plot(X_test, y_predict[:, i], "r", label=r"$\^y(x)$")
         else:
             plt.plot(X_test, y_predict[:, i], "r", alpha=0.05)
 
     plt.plot(X_test, np.mean(y_predict, axis=1), "c",
-             label="$\mathbb{E}_{LS} \^y(x)$")
+             label=r"$\mathbb{E}_{LS} \^y(x)$")
 
     plt.xlim([-5, 5])
     plt.title(name)
 
-    if n == 0:
-        plt.legend(loc="upper left", prop={"size": 11})
+    if n == n_estimators - 1:
+        plt.legend(loc=(1.1, .5))
 
     plt.subplot(2, n_estimators, n_estimators + n + 1)
     plt.plot(X_test, y_error, "r", label="$error(x)$")
@@ -178,7 +183,9 @@ for n, (name, estimator) in enumerate(estimators):
     plt.xlim([-5, 5])
     plt.ylim([0, 0.1])
 
-    if n == 0:
-        plt.legend(loc="upper left", prop={"size": 11})
+    if n == n_estimators - 1:
 
+        plt.legend(loc=(1.1, .5))
+
+plt.subplots_adjust(right=.75)
 plt.show()
