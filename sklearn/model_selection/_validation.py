@@ -602,12 +602,12 @@ def _score(estimator, X_test, y_test, scorer, is_multimetric=False):
 @contextmanager
 def _cache_estimator(estimator):
 
-    def _call_func(*args, name=None, func=None, cache=None, **kwargs):
+    def _call_func(X, *args, name=None, func=None, cache=None, **kwargs):
         try:
-            return cache[name]
+            return cache[name, id(X)]
         except KeyError:
             result = func(*args, **kwargs)
-            cache[name] = result
+            cache[name, id(X)] = result
             return result
 
     cache = {}

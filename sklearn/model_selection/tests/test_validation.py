@@ -1728,12 +1728,13 @@ def test_cached_estimator(func_name):
     mock_est = Mock()
     mock_func = getattr(mock_est, func_name)
     mock_func.return_value = 42
+    X = np.array([[1]])
 
     with _cache_estimator(mock_est) as cached_est:
         # call func twice
         func = getattr(cached_est, func_name)
-        assert func() == 42
-        assert func() == 42
+        assert func(X) == 42
+        assert func(X) == 42
 
         # only called once
         assert mock_func.call_count == 1
