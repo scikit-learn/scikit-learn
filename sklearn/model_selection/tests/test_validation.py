@@ -77,8 +77,7 @@ from sklearn.datasets import make_multilabel_classification
 
 from sklearn.model_selection.tests.common import OneTimeSplitter
 from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection._validation import _CacheEstimator
-
+from sklearn.model_selection._validation import _cache_estimator
 
 try:
     WindowsError
@@ -1722,21 +1721,19 @@ def test_score():
                          _score, *fit_and_score_args)
 
 
-@pytest.mark.parametrize("func_name",
-                         ["predict", "predict_proba",
-                          "decision_function", "score"])
+@pytest.mark.parametrize('func_name',
+                         ['predict', 'predict_proba',
+                          'decision_function', 'score'])
 def test_cached_estimator(func_name):
     mock_est = Mock()
     mock_func = getattr(mock_est, func_name)
     mock_func.return_value = 42
 
-    cached_est = _CacheEstimator(mock_est)
+    with _cache_estimator(mock_est) as cached_est:
+        # call func twice
+        func = getattr(cached_est, func_name)
+        assert func() == 42
+        assert func() == 42
 
-    # call func twice
-    func = getattr(cached_est, func_name)
-    assert func() == 42
-    assert func() == 42
-    assert cached_est.cache[func_name] == 42
-
-    # only called once
-    assert mock_func.call_count == 1
+        # only called once
+        assert mock_func.call_count == 1

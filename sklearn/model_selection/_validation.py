@@ -14,6 +14,7 @@ import warnings
 import numbers
 import time
 from traceback import format_exception_only
+from contextlib import contextmanager
 from functools import partial
 
 import numpy as np
@@ -598,42 +599,43 @@ def _score(estimator, X_test, y_test, scorer, is_multimetric=False):
     return score
 
 
-class _CacheEstimator:
-    """Cache predict, predict_proba, decision_function, and score
-    of an estimator
-    """
-    def __init__(self, estimator):
-        self.estimator = estimator
-        self.cache = {}
+@contextmanager
+def _cache_estimator(estimator):
 
-        def _call_func(*args, name=None, **kwargs):
-            try:
-                return self.cache[name]
-            except KeyError:
-                func = getattr(self.estimator, name)
-                result = func(*args, **kwargs)
-                self.cache[name] = result
-                return result
+    def _call_func(*args, name=None, func=None, cache=None, **kwargs):
+        try:
+            return cache[name]
+        except KeyError:
+            result = func(*args, **kwargs)
+            cache[name] = result
+            return result
 
-        func_names = ['predict', 'predict_proba', 'decision_function', 'score']
-        for func_name in func_names:
-            # only add when estimator defines func_name
-            if hasattr(estimator, func_name):
-                func = partial(_call_func, name=func_name)
-                setattr(self, func_name, func)
+    cache = {}
+    names = ['predict', 'predict_proba', 'decision_function', 'score']
+    cache_funcs = {name: getattr(estimator, name) for name in names if
+                   hasattr(estimator, name)}
+
+    # patch methods
+    for name, func in cache_funcs.items():
+        setattr(estimator, name,
+                partial(_call_func, name=name, func=func, cache=cache))
+    yield estimator
+
+    # place methods back
+    for name, func in cache_funcs.items():
+        setattr(estimator, name, func)
 
 
 def _multimetric_score(estimator, X_test, y_test, scorers):
     """Return a dict of score for multimetric scoring"""
     scores = {}
 
-    if all(isinstance(scorer, _BaseScorer) for scorer in scorers.values()):
-        estimator = _CacheEstimator(estimator)
     for name, scorer in scorers.items():
-        if y_test is None:
-            score = scorer(estimator, X_test)
-        else:
-            score = scorer(estimator, X_test, y_test)
+        with _cache_estimator(estimator) as cached_estimator:
+            if y_test is None:
+                score = scorer(cached_estimator, X_test)
+            else:
+                score = scorer(cached_estimator, X_test, y_test)
 
         if hasattr(score, 'item'):
             try:
