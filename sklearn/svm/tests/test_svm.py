@@ -278,7 +278,6 @@ def test_oneclass_decision_function():
     dec_func_outliers = clf.decision_function(X_outliers)
     assert_array_equal((dec_func_outliers > 0).ravel(), y_pred_outliers == 1)
 
-
 def test_oneclass_score_samples():
     X_train = [[1, 1], [1, 2], [2, 1]]
     clf = svm.OneClassSVM(gamma=1).fit(X_train)
@@ -439,6 +438,82 @@ def test_sample_weights():
     assert_array_almost_equal(dual_coef_no_weight, clf.dual_coef_)
 
 
+def test_negative_sample_weights():
+    # Testing all specializations of libsvm
+
+    # 1. SVC - test that masking all samples that represent a label with X
+    # make flake8-diff. flake8 path_to_file fail during fit() with
+    # Exception. Fix issue #9494
+
+    # masking label "1" completely - raises exception.
+    # Label: Y = [1, 1, 1, 2, 2, 2]
+    wgts = np.array([0, -0.5, 0, 1, 1, 1], dtype=np.float)
+    assert_raises(ValueError, svm.SVC(kernel='linear', C=0.5).fit, X, Y, wgts)
+
+    # un-masking even one element from the "masked" label enables fit to
+    # succeed.  Label: Y = [1, 1, 1, 2, 2, 2]
+    wgts = np.array([0, -0.5, 1, 1, 1, 1], dtype=np.float)
+    clf = svm.SVC(kernel='linear', C=0.5).fit(X, Y, wgts)
+    assert_array_almost_equal(clf.coef_, [[0.3076,  0.4615]], decimal=4)
+
+    # masking label "2" completely - raises exception.
+    # Label: Y = [1, 1, 1, 2, 2, 2]
+    wgts = np.array([1, 1, 1, 0, -0.1, -0.3], dtype=np.float)
+    assert_raises(ValueError, svm.SVC(kernel='linear', C=0.5).fit, X, Y, wgts)
+
+    # un-masking elements from the "masked" label enables fit to succeed.
+    # Label: Y = [1, 1, 1, 2, 2, 2]
+    wgts = np.array([1, 1, 1, 0, 1, 1], dtype=np.float)
+    clf = svm.SVC(kernel='linear', C=0.5).fit(X, Y, wgts)
+    assert_array_almost_equal(clf.coef_, [[0.4,  0.3999]], decimal=4)
+
+    # 2. NuSVC - test that masking all samples that represent a label
+    # with zero/negative weights will fail during fit() with
+    # Exception
+
+    # masking label "2" completely - raises exception.
+    # Label: Y = [1, 1, 1, 2, 2, 2]
+    wgts = np.array([1, 1, 1, 0, 0, -0.3], dtype=np.float)
+    assert_raises(ValueError, svm.NuSVC(kernel='linear').fit, X, Y, wgts)
+
+    # un-masking elements from the "masked" label enables fit to succeed.
+    # Label: Y = [1, 1, 1, 2, 2, 2]
+    wgts = np.array([1, 1, 1, 1, 1, -0.3], dtype=np.float)
+    clf = svm.NuSVC(kernel='linear').fit(X, Y, wgts)
+    assert_array_almost_equal(clf.coef_, [[0.3333, 0.3333]], decimal=4)
+
+    # 3. SVR - masking all samples with zero/negative weights  will
+    # fail fit(). There must be at least one remaining sample after
+    # scanning of  samples with negative labels
+
+    # masking all samples throws Exception
+    wgts = np.array([0, 0, 0, 0, 0, 0], dtype=np.float)
+    assert_raises(ValueError, svm.SVR(kernel='linear').fit, X, Y, wgts)
+
+    # unmasking label results in valid model.
+    # Label: Y = [1, 1, 1, 2, 2, 2]
+    wgts = np.array([1, 1, 1, 1, 1, 1], dtype=np.float)
+    reg = svm.SVR(kernel='linear').fit(X, Y, wgts)
+    assert_array_almost_equal(reg.coef_, [[0.2, 0.2]])
+
+    # 4. NuSVR - masking all samples  with zero/negative weights
+    # will not fail fit().
+
+    # masking all samples throws Exception
+    wgts = np.array([0, 0, 0, 0, 0, 0], dtype=np.float)
+    assert_raises(ValueError, svm.NuSVR(kernel='linear').fit, X, Y, wgts)
+
+    # unmasking labels. positive weights.  Label: Y = [1, 1, 1, 2, 2, 2]
+    wgts = np.array([1, 1, 1, 1, 1, 1], dtype=np.float)
+    reg = svm.NuSVR(kernel='linear').fit(X, Y, wgts)
+    assert_array_almost_equal(reg.coef_, [[0.1999, 0.2]], decimal=4)
+
+    # 5. OneClassSVM
+
+    # masking all samples throws Exception
+    wgts = np.array([-0.3, -0.3, -0.3, -0.3, -0.3, -0.3], dtype=np.float)
+    assert_raises(ValueError, svm.OneClassSVM(kernel='linear').fit, X, Y, wgts)
+
 @ignore_warnings(category=UndefinedMetricWarning)
 def test_auto_weight():
     # Test class weights for imbalanced data
@@ -510,7 +585,6 @@ def test_bad_input():
     clf = svm.SVC()
     clf.fit(X, Y)
     assert_raises(ValueError, clf.predict, Xt)
-
 
 @pytest.mark.parametrize(
     'Estimator, data',

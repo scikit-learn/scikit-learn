@@ -3101,6 +3101,59 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
 		free(count);
 	}
 
+	if (svm_type == C_SVC ||
+	   svm_type == EPSILON_SVR ||
+	   svm_type == NU_SVR ||
+	   svm_type == ONE_CLASS)
+	{
+	    PREFIX(problem) newprob;
+	    remove_zero_weight(&newprob, prob); // applying same sample cleaning method as the algorithm - PREFIX(train)
+
+	    if (prob->l == newprob.l)
+	    {
+	        free(newprob.x);
+            free(newprob.y);
+            free(newprob.W);
+	        return NULL;
+	    }
+
+	    if (newprob.l == 0)
+	    {
+	        free(newprob.x);
+            free(newprob.y);
+            free(newprob.W);
+	        return "Sample weights cannot be all (zero or negative).";
+	    }
+
+        if (svm_type == C_SVC)
+        {
+            int label_counter = 0;
+            for (int i =0; i<newprob.l; i++)
+            {
+                label_counter += newprob.y[i];
+            }
+
+            char* msg = NULL;
+            int first_label = newprob.y[0];
+            if (label_counter == 0 ||
+                (float)label_counter / newprob.l == first_label)
+            {
+                msg = "After removing samples having zero/negative weights, the number of labels in the remaining training set has to be greater than one";
+            }
+
+            if (msg != NULL)
+            {
+                free(newprob.x);
+                free(newprob.y);
+                free(newprob.W);
+                return msg;
+            }
+        }
+        free(newprob.x);
+        free(newprob.y);
+        free(newprob.W);
+	}
+
 	return NULL;
 }
 
