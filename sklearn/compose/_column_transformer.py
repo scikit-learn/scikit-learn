@@ -788,7 +788,6 @@ boolean mask array or callable
                                      ['numerical_column']),
                                     ('onehotencoder', OneHotEncoder(...),
                                      ['categorical_column'])])
-
     """
     # transformer_weights keyword is not passed through because the user
     # would need to know the automatically generated names of the transformers
