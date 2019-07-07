@@ -815,7 +815,7 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
         ranges, min, max = _precompute_gower_params(X_num, Y_num, scale)
 
         if not process_scale and (np.min(min) < 0 or np.max(max) > 1):
-           raise ValueError("Input data is not scaled between 0 and 1.")
+            raise ValueError("Input data is not scaled between 0 and 1.")
 
     y_n_rows = Y.shape[0]
     D = np.zeros((n_rows, y_n_rows), dtype=np.float)

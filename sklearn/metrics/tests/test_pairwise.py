@@ -1055,17 +1055,16 @@ def test_gower_distances():
          [1934.0, 4],
          [3000, 3000]]
 
-
     D = gower_distances(X, Y)
 
     # The expected normalized values above are:
-    Xn = [[0.22403432, 0.010841  ],
-          [1.0       , 0.0       ],
+    Xn = [[0.22403432, 0.010841],
+          [1.0, 0.0],
           [0.00529507, 0.01478318]]
 
-    Yn =[[0.0 ,        0.01478318],
-         [0.05114832,  0.01576873],
-         [0.07643522 , 1.0       ]]
+    Yn =[[0.0, 0.01478318],
+         [0.05114832, 0.01576873],
+         [0.07643522, 1.0]]
 
     # Simplified calculation of Gower distance for expected values
     n_rows, n_cols = np.shape(X)
@@ -1079,7 +1078,7 @@ def test_gower_distances():
     # Test the use of range parameters
     D = gower_distances(X, Y, scale=[42156.22, 3044.0])
     assert_array_almost_equal(D_expected, D)
-    #same without scale, as long the entire data is present
+    # same without scale, as long the entire data is present
     D = gower_distances(X, Y)
     assert_array_almost_equal(D_expected, D)
 
@@ -1119,8 +1118,8 @@ def test_gower_distances():
     D = gower_distances(X)
     assert_array_almost_equal(X, D)
 
-    X = np.random.normal(size=(10, 5)) *10
-    Y = np.random.normal(size=(10, 5)) *100
+    X = np.random.normal(size=(10, 5)) * 10
+    Y = np.random.normal(size=(10, 5)) * 100
     D = pairwise_distances(X, Y, metric='gower', n_jobs=2)
     D_expected = gower_distances(X, Y)
     assert_array_almost_equal(D_expected, D)
