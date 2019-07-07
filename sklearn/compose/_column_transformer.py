@@ -714,13 +714,12 @@ def make_column_transformer(*transformers, **kwargs):
     weighting with ``transformer_weights``.
     
     Read more in the :ref:`User Guide <make_column_transformer>`.
-
+    
     Parameters
     ----------
-
     *transformers :  Tuples
-        Tuples of the form ( transformer, column(s))  specifying the transformer objects 
-        to be applied to subsets of the data.
+        Tuples of the form ( transformer, column(s))  specifying the transformer
+        objects  to be applied to subsets of the data.
 
         transformer : estimator or {'passthrough', 'drop'}
             Estimator must support `fit` and `transform`. Special-cased
