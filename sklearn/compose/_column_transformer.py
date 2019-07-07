@@ -712,14 +712,14 @@ def make_column_transformer(*transformers, **kwargs):
     require, and does not permit, naming the transformers. Instead, they will
     be given names automatically based on their types. It also does not allow
     weighting with ``transformer_weights``.
-    
+
     Read more in the :ref:`User Guide <make_column_transformer>`.
-    
+
     Parameters
     ----------
     *transformers :  Tuples
-        Tuples of the form ( transformer, column(s))  specifying the transformer
-        objects  to be applied to subsets of the data.
+        Tuples of the form ( transformer, column(s))  specifying the
+        transformer objects  to be applied to subsets of the data.
 
         transformer : estimator or {'passthrough', 'drop'}
             Estimator must support `fit` and `transform`. Special-cased
