@@ -249,12 +249,11 @@ class BaseEstimator:
         y : array-like, shape (n_samples, 1)
             Label vector, where n_samples is the number of samples.
 
-
         Notes
         -----
-        There is a very good chance that this method 
+        There is a very good chance that this method
         is overridden by mixins. In the event that occurs,
-        this base class will attempt to use the method of 
+        this base class will attempt to use the method of
         its inherited mixin.
 
         Returns
@@ -262,6 +261,7 @@ class BaseEstimator:
         self : object
             Returns the instance itself.
         """
+
         if hasattr(super(), 'fit'):
             return super().fit(X, y)
         else:
