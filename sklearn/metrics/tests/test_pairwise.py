@@ -784,6 +784,7 @@ def test_gower_distances():
     #
     # The calculation formula for Gower similarity is available in the
     # user guide.
+
     with pytest.raises(TypeError):
         gower_distances(csr_matrix((2, 2)))
     with pytest.raises(ValueError):
@@ -1046,24 +1047,25 @@ def test_gower_distances():
         gower_distances(X, scale=False)
 
     # Test X and Y with diferent ranges of numeric values
-    X = [[222.22, 1],
-         [1934.0, 4],
+    X = [[9222.22, -11],
+         [41934.0, -44],
          [1, 1]]
 
-    Y = [[222.22, 1],
+    Y = [[-222.22, 1],
          [1934.0, 4],
          [3000, 3000]]
+
 
     D = gower_distances(X, Y)
 
     # The expected normalized values above are:
-    Xn = [[0.073765, 0.0],
-          [0.644548, 0.001],
-          [0.0,      0.0]]
+    Xn = [[0.22403432, 0.010841  ],
+          [1.0       , 0.0       ],
+          [0.00529507, 0.01478318]]
 
-    Yn = [[0.073765, 0.0],
-          [0.644548, 0.001],
-          [1.0,      1.0]]
+    Yn =[[0.0 ,        0.01478318],
+         [0.05114832,  0.01576873],
+         [0.07643522 , 1.0       ]]
 
     # Simplified calculation of Gower distance for expected values
     n_rows, n_cols = np.shape(X)
@@ -1074,25 +1076,40 @@ def test_gower_distances():
                                 abs(Xn[i][1] - Yn[j][1])) / n_cols
 
     assert_array_almost_equal(D_expected, D)
-
     # Test the use of range parameters
-    D = gower_distances(X, Y, scale=[2999, 2999])
-
+    D = gower_distances(X, Y, scale=[42156.22, 3044.0])
+    assert_array_almost_equal(D_expected, D)
+    #same without scale, as long the entire data is present
+    D = gower_distances(X, Y)
     assert_array_almost_equal(D_expected, D)
 
-    # Test gower robustness after slice de data, with its original ranges
-    D = gower_distances(X[0:2], Y[0:2], scale=[2999, 2999])
-    assert_array_almost_equal(D_expected[0:2, 0:2], D)
+    # Test gower robustness after slice the data, with its original ranges
+    D = gower_distances(X, Y[1:2],  scale=[42156.22, 3044.0])
+    assert_array_almost_equal(D_expected[:, 1:2], D)
 
-    D = gower_distances(X[0:1], Y[0:1], scale=[2999, 2999])
-    assert_array_almost_equal(D_expected[0:1, 0:1], D)
+    # an assertion error is expected here, because there is no scale
+    D = gower_distances(X, Y[1:2])
+    with pytest.raises(AssertionError):
+        assert_array_almost_equal(D_expected[:, 1:2], D)
 
-    D = gower_distances(X[1:], Y[1:], scale=[2999, 2999])
-    assert_array_almost_equal(D_expected[1:3, 1:3], D)
+    D = gower_distances(X, Y[0:1], scale=[42156.22, 3044.0])
+    assert_array_almost_equal(D_expected[:, 0:1], D)
+
+    # an assertion error is expected here, because there is no scale
+    D = gower_distances(X, Y[0:1])
+    with pytest.raises(AssertionError):
+        assert_array_almost_equal(D_expected[:, 0:1], D)
 
     # Test gower under pairwise_distances
-    X = np.random.randn(1000).reshape(200, -1)*1000
-    X = np.append(X, np.random.randn(1000).reshape(200, -1)*-10000, axis=1)
+    D = pairwise_distances(X, Y, metric='gower', n_jobs=2)
+    assert_array_almost_equal(D_expected, D)
+
+    X = np.random.randn(1000).reshape(200, -1) * 10
+    X = np.append(X, np.random.randn(1000).reshape(200, -1) * 10000, axis=1)
+
+    D_expected = gower_distances(X)
+    D = pairwise_distances(X, metric='gower', n_jobs=2)
+    assert_array_almost_equal(D_expected, D)
 
     D_expected = pairwise_distances(X, metric='gower')
     D = pairwise_distances(X, metric='gower', n_jobs=2)
@@ -1100,6 +1117,19 @@ def test_gower_distances():
 
     X = [[np.nan, np.nan], [np.nan, np.nan]]
     D = gower_distances(X)
+    assert_array_almost_equal(X, D)
+
+    X = np.random.normal(size=(10, 5)) *10
+    Y = np.random.normal(size=(10, 5)) *100
+    D = pairwise_distances(X, Y, metric='gower', n_jobs=2)
+    D_expected = gower_distances(X, Y)
+    assert_array_almost_equal(D_expected, D)
+
+    # test if method is "division by zero" proof
+    X = [[0, 0], [0, 0]]
+    D = gower_distances(X)
+    assert_array_almost_equal(X, D)
+    D = gower_distances(X, scale=[0, 0])
     assert_array_almost_equal(X, D)
 
 def test_haversine_distances():

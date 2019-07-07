@@ -25,7 +25,6 @@ from ..utils import check_array
 from ..utils import gen_even_slices
 from ..utils import gen_batches, get_chunk_n_rows
 from ..utils.extmath import row_norms, safe_sparse_dot
-from ..preprocessing import MinMaxScaler
 from ..preprocessing import normalize
 
 from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
@@ -800,6 +799,7 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
     # Calculates the min and max values, and if requested, scale the
     # input values in order to obtain the distances between 0 and 1,
     # as proposed by the Gower's paper.
+    ranges = None
     if n_col_num_present:
         process_scale = False
         if isinstance(scale, bool):
@@ -812,25 +812,10 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
                                  "to the number of numerical columns.")
             process_scale = True
 
-        min = np.nanmin(X_num, axis=0)
-        if X_num is not Y_num:
-            min = np.minimum(np.nanmin(Y_num, axis=0), min)
+        ranges, min, max = _precompute_gower_params(X_num, Y_num, scale)
 
-        params = _precompute_metric_params(X_num, Y_num, metric='gower',
-                                           scale=scale, min=min)
-        max = min + params['scale']
-
-        # Scales the numeric values between 0 and 1.
-        if process_scale:
-            scaler = MinMaxScaler().fit([min, max])
-            X_num = scaler.transform(X_num)
-            if y_is_not_none:
-                Y_num = scaler.transform(Y_num)
-            else:
-                Y_num = X_num
-        # If not, checks if the data is scaled.
-        elif np.min(min) < 0 or np.max(max) > 1:
-            raise ValueError("Input data is not scaled between 0 and 1.")
+        if not process_scale and (np.min(min) < 0 or np.max(max) > 1):
+           raise ValueError("Input data is not scaled between 0 and 1.")
 
     y_n_rows = Y.shape[0]
     D = np.zeros((n_rows, y_n_rows), dtype=np.float)
@@ -871,8 +856,9 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
                                            np.isnan(Y_num[j_start:n_rows, :])))
                                         .astype(np.int), axis=1)
 
-            sum_s = sum_s + np.nansum(
-                np.absolute(X_num[i, :] - Y_num[j_start:n_rows, :]), axis=1)
+            sum_s = sum_s + (np.nansum(
+                    np.absolute(X_num[i, :] - Y_num[j_start:n_rows, :])
+                    / ranges, axis=1))
 
         result = np.divide(sum_s, n_cols_not_missing,
                            out=np.full(n_cols_not_missing.shape, np.nan),
@@ -935,8 +921,26 @@ def _detect_categorical_features(X, categorical_features=None):
     return categorical_features_obj, categorical_features_num, \
         ~(categorical_features_obj | categorical_features_num)
 
-# Paired distances
 
+def _precompute_gower_params(X, Y, scale):
+    """Precompute data-derived metric parameters for gower distances
+    """
+    min = np.nanmin(X, axis=0)
+    compute_y = Y is not None and X is not Y
+    if compute_y:
+        min = np.minimum(np.nanmin(Y, axis=0), min)
+
+    max = np.nanmax(X, axis=0)
+    if compute_y:
+        max = np.maximum(np.nanmax(Y, axis=0), max)
+
+    if scale is None or type(scale) is bool:
+        scale = np.abs(max - min)
+
+    return scale, min, max
+
+
+# Paired distances
 def paired_euclidean_distances(X, Y):
     """
     Computes the paired euclidean distances between X and Y
@@ -1536,22 +1540,7 @@ def _precompute_metric_params(X, Y, metric=None, **kwds):
         scale = None
         if 'scale' in kwds:
             scale = kwds['scale']
-
-        if scale is None or type(scale) is bool:
-            min = None
-            # This is expected when called from gower function
-            if 'min' in kwds:
-                min = kwds['min']
-            else:
-                min = np.nanmin(X, axis=0)
-                if X is not Y:
-                    min = np.minimum(np.nanmin(Y, axis=0), min)
-
-            max = np.nanmax(X, axis=0)
-            if X is not Y:
-                max = np.maximum(np.nanmax(Y, axis=0), max)
-
-            scale = np.abs(max - min)
+        scale, _, _ = _precompute_gower_params(X, Y, scale)
 
         return {'scale': scale}
     if metric == "seuclidean" and 'V' not in kwds:
@@ -1830,6 +1819,10 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
         check_non_negative(X, whom=whom)
         return X
     elif metric in PAIRWISE_DISTANCE_FUNCTIONS:
+        if metric == 'gower':
+            params = _precompute_metric_params(X, Y, metric=metric, **kwds)
+            kwds.update(**params)
+
         func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
     elif callable(metric):
         func = partial(_pairwise_callable, metric=metric, **kwds)
