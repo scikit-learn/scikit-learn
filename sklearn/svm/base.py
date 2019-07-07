@@ -657,7 +657,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin, metaclass=ABCMeta):
         self._check_proba()
         return self._predict_log_proba
 
-    @predict_proba.setter
+    @predict_log_proba.setter
     def predict_log_proba(self, func):
         self._predict_log_proba = func
 
