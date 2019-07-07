@@ -40,6 +40,15 @@ Changelog
   ``tol`` required too strict types. :pr:`14092` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+:mod:`sklearn.compose`
+.....................
+
+- |Fix| Fixed an issue in :class:`compose.ColumnTransformer` where using
+  DataFrames whose column order differs between :func:``fit`` and
+  :func:``transform`` could lead to silently passing incorrect columns to the
+  ``remainder`` transformer.
+  :pr:`14237` by `Andreas Schuderer <schuderer>`.
+
 .. _changes_0_21_2:
 
 Version 0.21.2
