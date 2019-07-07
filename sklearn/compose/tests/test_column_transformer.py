@@ -1087,7 +1087,7 @@ def test_column_transformer_reordered_column_names_remainder(explicit_colname):
                          'Column ordering must be equal',
                          tf.transform, X_trans_df)
 
-    # No for added columns if ordering is equal
+    # No error for added columns if ordering is identical
     X_extended_df = X_fit_df.copy()
     X_extended_df['third'] = [3, 6, 9]
 

@@ -138,10 +138,6 @@ boolean mask array or callable
     dropped from the resulting transformed feature matrix, unless specified
     in the `passthrough` keyword. Those columns specified with `passthrough`
     are added at the right to the output of the transformers.
-    Although this, as well as the option to specify column names,
-    seemingly suggest that column order does not matter for named columns,
-    this is not the case and one should take care to avoid differing column
-    ordering between the input provided to `fit` and to `transform`.
 
     See also
     --------
