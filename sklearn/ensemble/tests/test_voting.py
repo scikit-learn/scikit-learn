@@ -503,3 +503,14 @@ def test_none_estimator_with_weights(X, y, voter, drop):
     voter.fit(X, y, sample_weight=np.ones(y.shape))
     y_pred = voter.predict(X)
     assert y_pred.shape == y.shape
+
+
+def test_duck_typing_voting_hard():
+    clf1 = LogisticRegression(random_state=1)
+    clf2 = RandomForestClassifier(random_state=1)
+    clf3 = GaussianNB()
+    eclf = VotingClassifier(estimators=[
+                ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
+                voting='hard')
+    eclf.fit(X, y)
+    assert not hasattr(eclf, "predict_proba")
