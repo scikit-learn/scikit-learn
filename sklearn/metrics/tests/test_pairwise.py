@@ -801,6 +801,10 @@ def test_gower_distances():
     with pytest.raises(ValueError):
         gower_distances(X, scale=[1])
 
+    # No errors are expected to be raised here
+    D = gower_distances(X, scale=[np.nan, np.nan])
+    D = gower_distances(X, scale=np.array([1, 1]))
+
     D = gower_distances(X)
 
     # These are the normalized values for X above
