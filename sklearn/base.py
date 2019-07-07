@@ -237,6 +237,36 @@ class BaseEstimator:
 
         return self
 
+    def fit(self, X, y=None):
+        """Fit the model from data in X.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training vector, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like, shape (n_samples, 1)
+            Label vector, where n_samples is the number of samples.
+
+
+        Notes
+        -----
+        There is a very good chance that this method 
+        is overridden by mixins. In the event that occurs,
+        this base class will attempt to use the method of 
+        its inherited mixin.
+
+        Returns
+        -------
+        self : object
+            Returns the instance itself.
+        """
+        if hasattr(super(), 'fit'):
+            return super().fit(X, y)
+        else:
+            raise NotImplementedError('please implement fit')
+
     def __repr__(self, N_CHAR_MAX=700):
         # N_CHAR_MAX is the (approximate) maximum number of non-blank
         # characters to render. We pass it as an optional parameter to ease
