@@ -3109,49 +3109,39 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
 	    PREFIX(problem) newprob;
 	    remove_zero_weight(&newprob, prob); // applying same sample cleaning method as the algorithm - PREFIX(train)
 
-	    if (prob->l == newprob.l)
+	    char* msg = NULL;
+	    if (prob->l == newprob.l) // no samples were removed from training set. all weights positive.
 	    {
-	        free(newprob.x);
-            free(newprob.y);
-            free(newprob.W);
-	        return NULL;
+	        msg = NULL;
 	    }
-
-	    if (newprob.l == 0)
+	    else if (newprob.l == 0) // all samples were removed
 	    {
-	        free(newprob.x);
-            free(newprob.y);
-            free(newprob.W);
-	        return "Sample weights cannot be all (zero or negative).";
+	        msg =  "Sample weights cannot be all (zero or negative).";
 	    }
-
-        if (svm_type == C_SVC)
+        else if (svm_type == C_SVC)
         {
-            int label_counter = 0;
-            for (int i =0; i<newprob.l; i++)
-            {
-                label_counter += newprob.y[i];
-            }
-
-            char* msg = NULL;
+            bool only_one_label = true;
             int first_label = newprob.y[0];
-            if (label_counter == 0 ||
-                (float)label_counter / newprob.l == first_label)
+            for (int i =1; i<newprob.l; i++)
+            {
+                if (newprob.y[i] != first_label)
+                {
+                    only_one_label = false; break;
+                }
+            }
+            if (only_one_label == true)
             {
                 msg = "After removing samples having zero/negative weights, the number of labels in the remaining training set has to be greater than one";
             }
-
-            if (msg != NULL)
-            {
-                free(newprob.x);
-                free(newprob.y);
-                free(newprob.W);
-                return msg;
-            }
         }
+
         free(newprob.x);
         free(newprob.y);
         free(newprob.W);
+        if (msg != NULL)
+        {
+            return msg;
+        }
 	}
 
 	return NULL;
