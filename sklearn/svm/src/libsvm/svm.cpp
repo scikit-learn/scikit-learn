@@ -3116,7 +3116,7 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
 	    }
 	    else if (newprob.l == 0) // all samples were removed
 	    {
-	        msg =  "Sample weights cannot be all (zero or negative).";
+	        msg =  "Invalid input - all samples have zero/negative weights.";
 	    }
         else if (svm_type == C_SVC)
         {
@@ -3131,7 +3131,7 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
             }
             if (only_one_label == true)
             {
-                msg = "After removing samples having zero/negative weights, the number of labels in the remaining training set has to be greater than one";
+                msg = "Invalid input - all samples with positive weights have the same label.";
             }
         }
 
