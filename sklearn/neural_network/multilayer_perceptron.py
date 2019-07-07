@@ -664,6 +664,10 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                                  % self.solver)
         return self._partial_fit
 
+    @partial_fit.setter
+    def partial_fit(self, func):
+        self._partial_fit = func
+
     def _partial_fit(self, X, y):
         return self._fit(X, y, incremental=True)
 
@@ -1039,6 +1043,10 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
                                  " optimizer. %s is not stochastic"
                                  % self.solver)
         return self._partial_fit
+
+    @partial_fit.setter
+    def partial_fit(self, func):
+        self._partial_fit = func
 
     def _partial_fit(self, X, y, classes=None):
         if _check_partial_fit_first_call(self, classes):

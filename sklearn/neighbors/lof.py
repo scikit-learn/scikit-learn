@@ -296,6 +296,10 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
         return self._predict
 
+    @predict.setter
+    def predict(self, func):
+        self._predict = func
+
     def _predict(self, X=None):
         """Predict the labels (1 inlier, -1 outlier) of X according to LOF.
 
@@ -362,6 +366,10 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
             raise AttributeError(msg)
 
         return self._decision_function
+
+    @decision_function.setter
+    def decision_function(self, func):
+        self._decision_function = func
 
     def _decision_function(self, X):
         """Shifted opposite of the Local Outlier Factor of X.

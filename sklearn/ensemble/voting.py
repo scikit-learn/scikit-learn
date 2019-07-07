@@ -337,6 +337,10 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
         """
         return self._predict_proba
 
+    @predict_proba.setter
+    def predict_proba(self, func):
+        self._predict_proba = func
+
     def transform(self, X):
         """Return class labels or probabilities for X for each estimator.
 
