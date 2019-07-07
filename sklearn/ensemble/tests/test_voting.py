@@ -68,7 +68,15 @@ def test_predictproba_hardvoting():
                                         ('lr2', LogisticRegression())],
                             voting='hard')
     msg = "predict_proba is not available when voting='hard'"
-    assert_raise_message(AttributeError, msg, eclf.predict_proba, X)
+    with pytest.raises(AttributeError, match=msg):
+        eclf.predict_proba
+
+    with pytest.raises(AttributeError, match=msg):
+        eclf.predict_proba(X)
+
+    assert not hasattr(eclf, "predict_proba")
+    eclf.fit(X, y)
+    assert not hasattr(eclf, "predict_proba")
 
 
 def test_notfitted():
@@ -503,14 +511,3 @@ def test_none_estimator_with_weights(X, y, voter, drop):
     voter.fit(X, y, sample_weight=np.ones(y.shape))
     y_pred = voter.predict(X)
     assert y_pred.shape == y.shape
-
-
-def test_duck_typing_voting_hard():
-    clf1 = LogisticRegression(random_state=1)
-    clf2 = RandomForestClassifier(random_state=1)
-    clf3 = GaussianNB()
-    eclf = VotingClassifier(estimators=[
-                ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
-                voting='hard')
-    eclf.fit(X, y)
-    assert not hasattr(eclf, "predict_proba")
