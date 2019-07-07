@@ -1062,9 +1062,9 @@ def test_gower_distances():
           [1.0, 0.0],
           [0.00529507, 0.01478318]]
 
-    Yn =[[0.0, 0.01478318],
-         [0.05114832, 0.01576873],
-         [0.07643522, 1.0]]
+    Yn = [[0.0, 0.01478318],
+          [0.05114832, 0.01576873],
+          [0.07643522, 1.0]]
 
     # Simplified calculation of Gower distance for expected values
     n_rows, n_cols = np.shape(X)
