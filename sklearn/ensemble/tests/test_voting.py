@@ -71,9 +71,6 @@ def test_predictproba_hardvoting():
     with pytest.raises(AttributeError, match=msg):
         eclf.predict_proba
 
-    with pytest.raises(AttributeError, match=msg):
-        eclf.predict_proba(X)
-
     assert not hasattr(eclf, "predict_proba")
     eclf.fit(X, y)
     assert not hasattr(eclf, "predict_proba")
