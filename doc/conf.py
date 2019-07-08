@@ -37,8 +37,12 @@ extensions = [
     'sphinx.ext.imgconverter',
     'sphinx_gallery.gen_gallery',
     'sphinx_issues',
-    'custom_references_resolver'
+    'custom_references_resolver',
+    'sphinx_sitemap'
 ]
+
+# This tells scphinx_sitemap where to find the main documentation
+html_baseurl = 'https://scikit-learn.org/stable/'
 
 # this is needed for some reason...
 # see https://github.com/numpy/numpydoc/issues/69

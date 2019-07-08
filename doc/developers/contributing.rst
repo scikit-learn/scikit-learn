@@ -527,7 +527,7 @@ the development version.
 
 Building the documentation requires installing some additional packages::
 
-    pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas scikit-image
+    pip install sphinx sphinx-gallery sphinx-sitemap numpydoc matplotlib Pillow pandas scikit-image
 
 To build the documentation, you need to be in the ``doc`` folder::
 

@@ -127,6 +127,7 @@ conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
 
 source activate testenv
 pip install "sphinx-gallery>=0.2,<0.3"
+pip install sphinx-sitemap
 pip install numpydoc==0.9
 
 # Build and install scikit-learn in dev mode
