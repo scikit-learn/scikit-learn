@@ -229,7 +229,7 @@ def _yield_outliers_checks(name, estimator):
             yield check_estimators_unfitted
 
 
-def _yield_all_checks(name, estimator):
+def yield_all_checks(name, estimator):
     tags = _safe_tags(estimator)
     if "2darray" not in tags["X_types"]:
         warnings.warn("Can't test estimator {} which requires input "
@@ -301,15 +301,13 @@ def check_estimator(Estimator):
         estimator = Estimator
         name = type(estimator).__name__
 
-    for check in _yield_all_checks(name, estimator):
+    for check in yield_all_checks(name, estimator):
         try:
             check(name, estimator)
         except SkipTest as exception:
             # the only SkipTest thrown currently results from not
             # being able to import pandas.
             warnings.warn(str(exception), SkipTestWarning)
-    # Run tests using pytest
-    pytest.main(['-vvv', 'tests'])
 
 
 def _boston_subset(n_samples=200):

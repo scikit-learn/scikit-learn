@@ -99,12 +99,7 @@ def _rename_partial(val):
         return type(val).__name__
 
 
-@pytest.mark.parametrize(
-        "estimator, check",
-        _generate_checks_per_estimator(_yield_all_checks,
-                                       _tested_estimators()),
-        ids=_rename_partial
-)
+@pytest.mark.estimator_checks(_tested_estimators())
 def test_estimators(estimator, check):
     # Common tests for estimator instances
     with ignore_warnings(category=(DeprecationWarning, ConvergenceWarning,
