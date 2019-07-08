@@ -60,6 +60,11 @@ Changelog
   parameter called `warm_start` that enables warm starting. :pr:`14012` by
   :user:`Johann Faouzi <johannfaouzi>`.
 
+- |Enhancement| :class:`ensemble.HistGradientBoostingClassifier` the training
+  loss or score is now monitored on a class-wise stratified subsample to
+  preserve the class balance of the original training set. :pr:`14194`
+  by :user:`Johann Faouzi <johannfaouzi>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
