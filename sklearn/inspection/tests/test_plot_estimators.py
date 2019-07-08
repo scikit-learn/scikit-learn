@@ -17,7 +17,7 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.inspection._plot_estimators import _write_label_html
 from sklearn.inspection._plot_estimators import _estimator_tool_tip
 from sklearn.inspection._plot_estimators import _type_of_html_estimator
-from sklearn.inspection._plot_estimators import export_html
+from sklearn.inspection._plot_estimators import display_estimator
 from sklearn.inspection._plot_estimators import _STYLE
 
 
@@ -120,7 +120,7 @@ def test_type_of_html_estimator_column_transformer():
     assert est_html_info.name_tips == [['num1', 'num2'], [0, 3]]
 
 
-expected_export_html = """<html><head><style>
+expected_display_estimator = """<html><head><style>
 {style}
 </style></head>
 <body>
@@ -302,7 +302,7 @@ expected_export_html = """<html><head><style>
 """.format(style=_STYLE).replace('\n', '').replace(' ', '')
 
 
-def test_export_html():
+def test_display_estimator():
     num_trans = Pipeline(steps=[
         ('pass', 'passthrough'),
         ('imputer', SimpleImputer(strategy='median'))
@@ -333,6 +333,6 @@ def test_export_html():
     pipe = Pipeline([
         ('preprocessor', preprocess), ('feat_u', feat_u), ('classifier', clf)
     ])
-    html_output = export_html(pipe)
+    html_output = display_estimator(pipe)
 
-    assert expected_export_html == html_output.replace(' ', '')
+    assert expected_display_estimator == html_output.replace(' ', '')

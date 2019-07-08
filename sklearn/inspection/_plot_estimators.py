@@ -209,7 +209,7 @@ _STYLE = """
 """
 
 
-def export_html(estimator, print_changed_only=True):
+def display_estimator(estimator, print_changed_only=True):
     """Build a HTML representation of an estimator
 
     Parameters
