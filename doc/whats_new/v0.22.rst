@@ -60,6 +60,11 @@ Changelog
   parameter called `warm_start` that enables warm starting. :pr:`14012` by
   :user:`Johann Faouzi <johannfaouzi>`.
 
+- |Enhancement| :class:`ensemble.HistGradientBoostingClassifier` the training
+  loss or score is now monitored on a class-wise stratified subsample to
+  preserve the class balance of the original training set. :pr:`14194`
+  by :user:`Johann Faouzi <johannfaouzi>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
@@ -68,9 +73,9 @@ Changelog
   of the maximization procedure in :term:`fit`.
   :pr:`13618` by :user:`Yoshihiro Uchida <c56pony>`.
 
-- |Efficiency| The 'liblinear' logistic regression solver now consumes less
-  memory if ``fit_intercept=False`` and ``X`` is a CSR sparse matrix.
-  :pr:`14108` by :user:`Alex Henrie <alexhenrie>`.
+- |Efficiency| The 'liblinear' logistic regression solver is now faster and
+  requires less memory.
+  :pr:`14108`, pr:`14170` by :user:`Alex Henrie <alexhenrie>`.
 
 :mod:`sklearn.model_selection`
 ..................
@@ -121,7 +126,14 @@ Changelog
   remove constant features due to numerical instability, by using range
   rather than variance in this case.
   :pr:`13704` by `Roddy MacSween <rlms>`.
-  
+
+:mod:`sklearn.utils`
+....................
+
+- |Enhancement| :func:`utils.safe_indexing` accepts an ``axis`` parameter to
+  index array-like across rows and columns. The column indexing can be done on
+  NumPy array, SciPy sparse matrix, and Pandas DataFrame.
+  :pr:`14035` by `Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.neural_network`
 .............................
