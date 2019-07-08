@@ -3,6 +3,12 @@
 import numpy as np
 import pytest
 
+from scipy.sparse import csc_matrix
+from scipy.sparse import csr_matrix
+from scipy.sparse import coo_matrix
+from scipy.sparse import dok_matrix
+from scipy.sparse import lil_matrix
+
 from sklearn.utils.testing import assert_array_equal, assert_array_less
 from sklearn.utils.testing import assert_array_almost_equal, assert_allclose
 from sklearn.utils.testing import assert_raises, assert_raises_regexp
@@ -16,11 +22,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import AdaBoostRegressor
 from sklearn.ensemble import weight_boosting
-from scipy.sparse import csc_matrix
-from scipy.sparse import csr_matrix
-from scipy.sparse import coo_matrix
-from scipy.sparse import dok_matrix
-from scipy.sparse import lil_matrix
+from sklearn.linear_model import LinearRegression
 from sklearn.svm import SVC, SVR
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import shuffle
@@ -514,3 +516,30 @@ def test_adaboostclassifier_without_sample_weight(algorithm):
                .format(base_estimator.__class__.__name__))
     with pytest.raises(ValueError, match=err_msg):
         clf.fit(X, y)
+
+
+def test_adaboost_regressor_sample_weight():
+    # check that giving weight will have an influence on the error computed
+    # for a weak learner
+    X, y = datasets.make_regression(n_features=50, random_state=0)
+
+    # add an arbitrary outlier to make sure
+    X = np.vstack([X, X.sum(axis=0)])
+    y = np.hstack([y, 10])
+
+    regr_no_outlier = AdaBoostRegressor(
+        base_estimator=LinearRegression(), n_estimators=4, random_state=0
+    )
+    regr_with_weight = clone(regr_no_outlier)
+
+    # fit 2 models:
+    # - a model without the outlier
+    # - a model containing the outlier but with a null sample-weight
+    # Therefore, the error of the first weak learner will be identical.
+    regr_no_outlier.fit(X[:-1], y[:-1])
+    sample_weight = np.array([1.] * (y.size - 1) + [0.])
+    regr_with_weight.fit(X, y, sample_weight=sample_weight)
+
+    # check that the error is similar with 2 decimals
+    assert (regr_no_outlier.estimator_errors_[0] ==
+            pytest.approx(regr_with_weight.estimator_errors_[0], abs=1e-2))
