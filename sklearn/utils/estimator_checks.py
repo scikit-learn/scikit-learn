@@ -3,7 +3,6 @@ import warnings
 import sys
 import traceback
 import pickle
-import pytest
 from copy import deepcopy
 from functools import partial
 from inspect import signature
