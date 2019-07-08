@@ -539,6 +539,6 @@ def test_adaboost_regressor_sample_weight():
     sample_weight = np.array([1.] * (y.size - 1) + [0.])
     regr_with_weight.fit(X, y, sample_weight=sample_weight)
 
-    # check that the error is similar with 2 decimals
+    # check that the error is similar with 1 decimal
     assert (regr_no_outlier.estimator_errors_[0] ==
-            pytest.approx(regr_with_weight.estimator_errors_[0], abs=1e-2))
+            pytest.approx(regr_with_weight.estimator_errors_[0], abs=1e-1))
