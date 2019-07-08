@@ -67,7 +67,7 @@ Changelog
 
 - |Fix| :class:`ensemble.AdaBoostRegressor` where the loss should be normalized
   by the max of the samples with non-null weights.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`14294` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.linear_model`
 ...........................
