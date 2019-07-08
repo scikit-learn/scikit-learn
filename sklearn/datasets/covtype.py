@@ -20,13 +20,13 @@ from os.path import dirname, exists, join
 from os import remove, makedirs
 
 import numpy as np
+import joblib
 
 from .base import get_data_home
 from .base import _fetch_remote
 from .base import RemoteFileMetadata
 from ..utils import Bunch
 from .base import _pkl_filepath
-from ..utils import _joblib
 from ..utils import check_random_state
 
 # The original data can be found in:
@@ -117,16 +117,16 @@ def fetch_covtype(data_home=None, download_if_missing=True,
         X = Xy[:, :-1]
         y = Xy[:, -1].astype(np.int32, copy=False)
 
-        _joblib.dump(X, samples_path, compress=9)
-        _joblib.dump(y, targets_path, compress=9)
+        joblib.dump(X, samples_path, compress=9)
+        joblib.dump(y, targets_path, compress=9)
 
     elif not available and not download_if_missing:
         raise IOError("Data not found and `download_if_missing` is False")
     try:
         X, y
     except NameError:
-        X = _joblib.load(samples_path)
-        y = _joblib.load(targets_path)
+        X = joblib.load(samples_path)
+        y = joblib.load(targets_path)
 
     if shuffle:
         ind = np.arange(X.shape[0])

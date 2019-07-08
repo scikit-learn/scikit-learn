@@ -1,7 +1,7 @@
 # Author: Lars Buitinck
 # License: BSD 3 clause
 #
-# cython: language_level=3, boundscheck=False, cdivision=True
+# cython: boundscheck=False, cdivision=True
 
 import sys
 import array
@@ -11,8 +11,8 @@ from libc.stdlib cimport abs
 cimport numpy as np
 import numpy as np
 
-from sklearn.utils.murmurhash cimport murmurhash3_bytes_s32
-from sklearn.utils.fixes import sp_version
+from ..utils.murmurhash cimport murmurhash3_bytes_s32
+from ..utils.fixes import sp_version
 
 np.import_array()
 

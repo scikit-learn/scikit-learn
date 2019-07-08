@@ -16,13 +16,14 @@ This module contains:
 import numpy as np
 from abc import abstractmethod
 
+from joblib import Parallel, delayed
+
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import TransformerMixin
 from ..base import clone
 from ..preprocessing import LabelEncoder
-from ..utils._joblib import Parallel, delayed
-from ..utils.validation import has_fit_parameter, check_is_fitted
+from ..utils.validation import check_is_fitted
 from ..utils.metaestimators import _BaseComposition
 from ..utils import Bunch
 
@@ -30,7 +31,15 @@ from ..utils import Bunch
 def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
     """Private function used to fit an estimator within a job."""
     if sample_weight is not None:
-        estimator.fit(X, y, sample_weight=sample_weight)
+        try:
+            estimator.fit(X, y, sample_weight=sample_weight)
+        except TypeError as exc:
+            if "unexpected keyword argument 'sample_weight'" in str(exc):
+                raise ValueError(
+                    "Underlying estimator {} does not support sample weights."
+                    .format(estimator.__class__.__name__)
+                ) from exc
+            raise
     else:
         estimator.fit(X, y)
     return estimator
@@ -53,8 +62,8 @@ class _BaseVoting(_BaseComposition, TransformerMixin):
         """Get the weights of not `None` estimators"""
         if self.weights is None:
             return None
-        return [w for est, w in zip(self.estimators,
-                                    self.weights) if est[1] is not None]
+        return [w for est, w in zip(self.estimators, self.weights)
+                if est[1] not in (None, 'drop')]
 
     def _predict(self, X):
         """Collect results from clf.predict calls. """
@@ -76,24 +85,22 @@ class _BaseVoting(_BaseComposition, TransformerMixin):
                              '; got %d weights, %d estimators'
                              % (len(self.weights), len(self.estimators)))
 
-        if sample_weight is not None:
-            for name, step in self.estimators:
-                if not has_fit_parameter(step, 'sample_weight'):
-                    raise ValueError('Underlying estimator \'%s\' does not'
-                                     ' support sample weights.' % name)
-
         names, clfs = zip(*self.estimators)
         self._validate_names(names)
 
-        n_isnone = np.sum([clf is None for _, clf in self.estimators])
+        n_isnone = np.sum(
+            [clf in (None, 'drop') for _, clf in self.estimators]
+        )
         if n_isnone == len(self.estimators):
-            raise ValueError('All estimators are None. At least one is '
-                             'required!')
+            raise ValueError(
+                'All estimators are None or "drop". At least one is required!'
+            )
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
                 delayed(_parallel_fit_estimator)(clone(clf), X, y,
                                                  sample_weight=sample_weight)
-                for clf in clfs if clf is not None)
+                for clf in clfs if clf not in (None, 'drop')
+            )
 
         self.named_estimators_ = Bunch()
         for k, e in zip(self.estimators, self.estimators_):
@@ -147,8 +154,8 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
     estimators : list of (string, estimator) tuples
         Invoking the ``fit`` method on the ``VotingClassifier`` will fit clones
         of those original estimators that will be stored in the class attribute
-        ``self.estimators_``. An estimator can be set to `None` using
-        ``set_params``.
+        ``self.estimators_``. An estimator can be set to ``None`` or ``'drop'``
+        using ``set_params``.
 
     voting : str, {'hard', 'soft'} (default='hard')
         If 'hard', uses predicted class labels for majority rule voting.
@@ -194,8 +201,7 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
     >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.naive_bayes import GaussianNB
     >>> from sklearn.ensemble import RandomForestClassifier, VotingClassifier
-    >>> clf1 = LogisticRegression(solver='lbfgs', multi_class='multinomial',
-    ...                           random_state=1)
+    >>> clf1 = LogisticRegression(multi_class='multinomial', random_state=1)
     >>> clf2 = RandomForestClassifier(n_estimators=50, random_state=1)
     >>> clf3 = GaussianNB()
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
@@ -281,7 +287,7 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
             The input samples.
 
         Returns
-        ----------
+        -------
         maj : array-like, shape (n_samples,)
             Predicted class labels.
         """
@@ -325,7 +331,7 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
             The input samples.
 
         Returns
-        ----------
+        -------
         avg : array-like, shape (n_samples, n_classes)
             Weighted average probability for each class per sample.
         """
@@ -379,9 +385,9 @@ class VotingRegressor(_BaseVoting, RegressorMixin):
     Parameters
     ----------
     estimators : list of (string, estimator) tuples
-        Invoking the ``fit`` method on the ``VotingRegressor`` will fit
-        clones of those original estimators that will be stored in the class
-        attribute ``self.estimators_``. An estimator can be set to `None`
+        Invoking the ``fit`` method on the ``VotingRegressor`` will fit clones
+        of those original estimators that will be stored in the class attribute
+        ``self.estimators_``. An estimator can be set to ``None`` or ``'drop'``
         using ``set_params``.
 
     weights : array-like, shape (n_regressors,), optional (default=`None`)

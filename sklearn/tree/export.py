@@ -547,16 +547,16 @@ class _MPLTreeExporter(_BaseTreeExporter):
 
         self.arrow_args = dict(arrowstyle="<-")
 
-    def _make_tree(self, node_id, et, depth=0):
+    def _make_tree(self, node_id, et, criterion, depth=0):
         # traverses _tree.Tree recursively, builds intermediate
         # "_reingold_tilford.Tree" object
-        name = self.node_to_str(et, node_id, criterion='entropy')
+        name = self.node_to_str(et, node_id, criterion=criterion)
         if (et.children_left[node_id] != _tree.TREE_LEAF
                 and (self.max_depth is None or depth <= self.max_depth)):
             children = [self._make_tree(et.children_left[node_id], et,
-                                        depth=depth + 1),
+                                        criterion, depth=depth + 1),
                         self._make_tree(et.children_right[node_id], et,
-                                        depth=depth + 1)]
+                                        criterion, depth=depth + 1)]
         else:
             return Tree(name, node_id)
         return Tree(name, node_id, *children)
@@ -568,7 +568,8 @@ class _MPLTreeExporter(_BaseTreeExporter):
             ax = plt.gca()
         ax.clear()
         ax.set_axis_off()
-        my_tree = self._make_tree(0, decision_tree.tree_)
+        my_tree = self._make_tree(0, decision_tree.tree_,
+                                  decision_tree.criterion)
         draw_tree = buchheim(my_tree)
 
         # important to make sure we're still
@@ -749,7 +750,7 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
     >>> iris = load_iris()
 
     >>> clf = clf.fit(iris.data, iris.target)
-    >>> tree.export_graphviz(clf) # doctest: +ELLIPSIS
+    >>> tree.export_graphviz(clf)
     'digraph Tree {...
     """
 
@@ -839,7 +840,7 @@ def export_text(decision_tree, feature_names=None, max_depth=10,
         Text summary of all the rules in the decision tree.
 
     Examples
-    -------
+    --------
 
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.tree import DecisionTreeClassifier
@@ -858,7 +859,6 @@ def export_text(decision_tree, feature_names=None, max_depth=10,
     |   |   |--- class: 1
     |   |--- petal width (cm) >  1.75
     |   |   |--- class: 2
-    ...
     """
     check_is_fitted(decision_tree, 'tree_')
     tree_ = decision_tree.tree_
@@ -890,7 +890,8 @@ def export_text(decision_tree, feature_names=None, max_depth=10,
         value_fmt = "{}{} value: {}\n"
 
     if feature_names:
-        feature_names_ = [feature_names[i] for i in tree_.feature]
+        feature_names_ = [feature_names[i] if i != _tree.TREE_UNDEFINED
+                          else None for i in tree_.feature]
     else:
         feature_names_ = ["feature_{}".format(i) for i in tree_.feature]
 
