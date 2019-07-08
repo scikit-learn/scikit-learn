@@ -73,7 +73,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
                 # the corresponding value of the target function.
                 return theta_opt, func_min
 
-        Per default, the 'L-BFGS-B' algorithm from scipy.optimize.maximize
+        Per default, the 'L-BFGS-B' algorithm from scipy.optimize.minimize
         is used. If None is passed, the kernel's parameters are kept fixed.
         Available internal optimizers are::
 
