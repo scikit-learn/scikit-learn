@@ -17,6 +17,10 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
+- :class:`decomposition.SparseCoder`,
+  :class:`decomposition.DictionaryLearning`, and
+  :class:`decomposition.MiniBatchDictionaryLearning` |Fix|
+- :class:`decomposition.SparseCoder` with `algorithm='lasso_lars'` |Fix|
 - :class:`decomposition.SparsePCA` where `normalize_components` has no effect
   due to deprecation.
 
@@ -40,7 +44,22 @@ Changelog
     where 123456 is the *pull request* number, not the issue number.
 
 :mod:`sklearn.decomposition`
-..................
+............................
+
+- |Fix| :func:`decomposition.sparse_encode()` now passes the `max_iter` to the
+  underlying `LassoLars` when `algorithm='lasso_lars'`. :issue:`12650` by
+  `Adrin Jalali`_.
+
+- |Enhancement| :func:`decomposition.dict_learning()` and
+  :func:`decomposition.dict_learning_online()` now accept `method_max_iter` and
+  pass it to `sparse_encode`. :issue:`12650` by `Adrin Jalali`_.
+
+- |Enhancement| :class:`decomposition.SparseCoder`,
+  :class:`decomposition.DictionaryLearning`, and
+  :class:`decomposition.MiniBatchDictionaryLearning` now take a
+  `transform_max_iter` parameter and pass it to either
+  :func:`decomposition.dict_learning()` or
+  :func:`decomposition.sparse_encode()`. :issue:`12650` by `Adrin Jalali`_.
 
 - |Enhancement| :class:`decomposition.IncrementalPCA` now accepts sparse
   matrices as input, converting them to dense in batches thereby avoiding the
