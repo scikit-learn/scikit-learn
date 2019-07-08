@@ -31,7 +31,7 @@ from sklearn.linear_model import Ridge
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.utils import IS_PYPY
 from sklearn.utils.estimator_checks import (
-    _yield_all_checks,
+    yield_all_checks,
     _safe_tags,
     set_checking_parameters,
     check_parameters_default_constructible,
