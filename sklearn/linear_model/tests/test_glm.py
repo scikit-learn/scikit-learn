@@ -349,7 +349,6 @@ def test_poisson_ridge(solver, tol):
     # b            0.03741173122
     X = np.array([[-2, -1, 1, 2], [0, 0, 1, 1]]).T
     y = np.array([0, 1, 1, 2])
-    rng = np.random.RandomState(42)
     glm = GeneralizedLinearRegressor(alpha=1,
                                      fit_intercept=True, family='poisson',
                                      link='log', tol=1e-7,
