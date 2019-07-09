@@ -518,7 +518,9 @@ boolean mask array or callable
         check_is_fitted(self, 'transformers_')
 
         # No column reordering allowed for named cols combined with remainder
-        if self._remainder[2] is not None and hasattr(self, '_df_columns'):
+        if self._remainder[2] is not None \
+           and hasattr(self, '_df_columns') \
+           and hasattr(X, 'columns'):
             n_cols_fit = len(self._df_columns)
             n_cols_transform = len(X.columns)
             if n_cols_transform < n_cols_fit \

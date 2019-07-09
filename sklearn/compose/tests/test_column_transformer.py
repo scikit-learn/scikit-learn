@@ -1090,5 +1090,10 @@ def test_column_transformer_reordered_column_names_remainder(explicit_colname):
     # No error for added columns if ordering is identical
     X_extended_df = X_fit_df.copy()
     X_extended_df['third'] = [3, 6, 9]
-
     tf.transform(X_extended_df)  # No error should be raised
+
+    # No 'columns' AttributeError when transform input is a numpy array
+    X_array = X_fit_array.copy()
+    assert_raise_message(ValueError,
+                         "Specifying the columns",
+                         tf.transform, X_array)
