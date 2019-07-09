@@ -6,36 +6,6 @@ Generalized Linear Models with Exponential Dispersion Family
 # some parts and tricks stolen from other sklearn files.
 # License: BSD 3 clause
 
-# TODO: Add cross validation support, e.g. GCV?
-# TODO: Should GeneralizedLinearRegressor inherit from LinearModel?
-#       So far, it does not.
-# TODO: Include further classes in class.rst? ExponentialDispersionModel?
-#       TweedieDistribution?
-# TODO: Negative values in P1 are not allowed so far. They could be used
-#       for group lasso.
-
-# Design Decisions:
-# - Which name? GeneralizedLinearModel vs GeneralizedLinearRegressor.
-#   Estimators in sklearn are either regressors or classifiers. A GLM can do
-#   both depending on the distr (Normal => regressor, Binomial => classifier).
-#   Solution: GeneralizedLinearRegressor since this is the focus.
-# - Allow for finer control of penalty terms:
-#   L1: ||P1*w||_1 with P1*w as element-wise product, this allows to exclude
-#       factors from the L1 penalty.
-#   L2: w*P2*w with P2 a positive (semi-) definite matrix, e.g. P2 could be
-#   a 1st or 2nd order difference matrix (compare B-spline penalties and
-#   Tikhonov regularization).
-# - The link function (instance of class Link) is necessary for the evaluation
-#   of deviance, score, Fisher and Hessian matrix as functions of the
-#   coefficients, which is needed by optimizers.
-#   Solution: link as argument in those functions
-# - Which name/symbol for sample_weight in docu?
-#   sklearn.linear_models uses w for coefficients, standard literature on
-#   GLMs use beta for coefficients and w for (sample) weights.
-#   So far, coefficients=w and sample weights=s.
-# - The intercept term is the first index, i.e. coef[0]
-
-
 from __future__ import division
 from abc import ABCMeta, abstractmethod
 import numbers
@@ -49,6 +19,7 @@ from ..exceptions import ConvergenceWarning
 from ..utils import check_array, check_X_y
 from ..utils.optimize import newton_cg
 from ..utils.validation import check_is_fitted, check_random_state
+
 
 
 def _check_weights(sample_weight, n_samples):
@@ -854,47 +825,12 @@ class InverseGaussianDistribution(TweedieDistribution):
         super(InverseGaussianDistribution, self).__init__(power=3)
 
 
-class GeneralizedHyperbolicSecant(ExponentialDispersionModel):
-    """A class for the Generalized Hyperbolic Secant (GHS) distribution.
-
-    The GHS distribution is for targets y in (-inf, inf).
-    """
-    def __init__(self):
-        self._lower_bound = -np.Inf
-        self._upper_bound = np.Inf
-        self._include_lower_bound = False
-        self._include_upper_bound = False
-
-    def unit_variance(self, mu):
-        return 1 + mu**2
-
-    def unit_variance_derivative(self, mu):
-        return 2 * mu
-
-    def unit_deviance(self, y, mu):
-        return (2 * y * (np.arctan(y) - np.arctan(mu)) +
-                np.log((1 + mu**2)/(1 + y**2)))
-
-
-class BinomialDistribution(ExponentialDispersionModel):
-    """A class for the Binomial distribution.
-
-    The Binomial distribution is for targets y in [0, 1].
-    """
-    def __init__(self):
-        self._lower_bound = 0
-        self._upper_bound = 1
-        self._include_lower_bound = True
-        self._include_upper_bound = True
-
-    def unit_variance(self, mu):
-        return mu * (1 - mu)
-
-    def unit_variance_derivative(self, mu):
-        return 1 - 2 * mu
-
-    def unit_deviance(self, y, mu):
-        return 2 * (special.xlogy(y, y/mu) + special.xlogy(1-y, (1-y)/(1-mu)))
+EDM_DISTRIBUTIONS = {
+    'normal': NormalDistribution,
+    'poisson': PoissonDistribution,
+    'gamma': GammaDistribution,
+    'inverse.gaussian': InverseGaussianDistribution,
+}
 
 
 def _irls_step(X, W, P2, z, fit_intercept=True):
@@ -1690,28 +1626,19 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         #######################################################################
         # 1. input validation                                                 #
         #######################################################################
-        # 1.1 validate arguments of __init__ ##################################
+        # 1.1 validate arguments of __init__
         # Guarantee that self._family_instance is an instance of class
         # ExponentialDispersionModel
         if isinstance(self.family, ExponentialDispersionModel):
             self._family_instance = self.family
+        elif self.family in EDM_DISTRIBUTIONS:
+            self._family_instance = EDM_DISTRIBUTIONS[self.family]()
         else:
-            if self.family == 'normal':
-                self._family_instance = NormalDistribution()
-            elif self.family == 'poisson':
-                self._family_instance = PoissonDistribution()
-            elif self.family == 'gamma':
-                self._family_instance = GammaDistribution()
-            elif self.family == 'inverse.gaussian':
-                self._family_instance = InverseGaussianDistribution()
-            elif self.family == 'binomial':
-                self._family_instance = BinomialDistribution()
-            else:
-                raise ValueError(
-                    "The family must be an instance of class"
-                    " ExponentialDispersionModel or an element of"
-                    " ['normal', 'poisson', 'gamma', 'inverse.gaussian', "
-                    "'binomial']; got (family={0})".format(self.family))
+            raise ValueError(
+                "The family must be an instance of class"
+                " ExponentialDispersionModel or an element of"
+                " ['normal', 'poisson', 'gamma', 'inverse.gaussian', "
+                "'binomial']; got (family={0})".format(self.family))
 
         # Guarantee that self._link_instance is set to an instance of
         # class Link
@@ -1724,11 +1651,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                         self._link_instance = IdentityLink()
                     if self._family_instance.power >= 1:
                         self._link_instance = LogLink()
-                elif isinstance(self._family_instance,
-                                GeneralizedHyperbolicSecant):
-                    self._link_instance = IdentityLink()
-                elif isinstance(self._family_instance, BinomialDistribution):
-                    self._link_instance = LogitLink()
                 else:
                     raise ValueError("No default link known for the "
                                      "specified distribution family. Please "
@@ -2048,7 +1970,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         # 4. fit                                                              #
         #######################################################################
         # algorithms for optimization
-        # TODO: Parallelize it?
 
         # 4.1 IRLS ############################################################
         # Note: we already set P2 = l2*P2, see above

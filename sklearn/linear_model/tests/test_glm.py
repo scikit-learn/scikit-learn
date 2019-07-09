@@ -18,7 +18,6 @@ from sklearn.linear_model._glm import (
     TweedieDistribution,
     NormalDistribution, PoissonDistribution,
     GammaDistribution, InverseGaussianDistribution,
-    GeneralizedHyperbolicSecant, BinomialDistribution,
 )
 from sklearn.linear_model import ElasticNet, LogisticRegression, Ridge
 from sklearn.metrics import mean_absolute_error
@@ -103,7 +102,7 @@ def test_tweedie_distribution_power():
      (TweedieDistribution(power=1.5), [0.1, 1.5]),
      (TweedieDistribution(power=2.5), [0.1, 1.5]),
      (TweedieDistribution(power=-4), [0.1, 1.5]),
-     (GeneralizedHyperbolicSecant(), [0.1, 1.5])])
+])
 def test_deviance_zero(family, chk_values):
     """Test deviance(y,y) = 0 for different families."""
     for x in chk_values:
@@ -196,7 +195,7 @@ def test_sample_weights_validation():
                           ('poisson', PoissonDistribution()),
                           ('gamma', GammaDistribution()),
                           ('inverse.gaussian', InverseGaussianDistribution()),
-                          ('binomial', BinomialDistribution())])
+])
 def test_glm_family_argument(f, fam):
     """Test GLM family argument set as string."""
     y = np.array([0.1, 0.5])  # in range of all distributions
@@ -424,7 +423,7 @@ def test_glm_identity_regression(solver):
     [NormalDistribution(), PoissonDistribution(),
      GammaDistribution(), InverseGaussianDistribution(),
      TweedieDistribution(power=1.5), TweedieDistribution(power=4.5),
-     GeneralizedHyperbolicSecant()])
+])
 @pytest.mark.parametrize('solver, tol', [('irls', 1e-6),
                                          ('lbfgs', 1e-6),
                                          ('newton-cg', 1e-7),
@@ -618,33 +617,6 @@ def test_poisson_enet():
     glm.fit(X, y)
     assert_allclose(glm.intercept_, glmnet_intercept, rtol=1e-4)
     assert_allclose(glm.coef_, glmnet_coef, rtol=1e-4)
-
-
-@pytest.mark.parametrize('alpha', [0.01, 0.1, 1, 10])
-def test_binomial_enet(alpha):
-    """Test elastic net regression with binomial family and LogitLink.
-
-    Compare to LogisticRegression.
-    """
-    l1_ratio = 0.5
-    n_samples = 500
-    rng = np.random.RandomState(42)
-    X, y = make_classification(n_samples=n_samples, n_classes=2, n_features=6,
-                               n_informative=5, n_redundant=0, n_repeated=0,
-                               random_state=rng)
-    log = LogisticRegression(
-        penalty='elasticnet', random_state=rng, fit_intercept=False, tol=1e-6,
-        max_iter=1000, l1_ratio=l1_ratio, C=1./(n_samples * alpha),
-        solver='saga')
-    log.fit(X, y)
-
-    glm = GeneralizedLinearRegressor(
-        family=BinomialDistribution(), link=LogitLink(), fit_intercept=False,
-        alpha=alpha, l1_ratio=l1_ratio, solver='cd', selection='cyclic',
-        tol=1e-7)
-    glm.fit(X, y)
-    assert_allclose(log.intercept_[0], glm.intercept_, rtol=1e-6)
-    assert_allclose(log.coef_[0, :], glm.coef_, rtol=5e-6)
 
 
 @pytest.mark.parametrize(
