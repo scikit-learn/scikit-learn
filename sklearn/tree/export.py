@@ -150,6 +150,11 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
     fontsize : int, optional (default=None)
         Size of text font. If None, determined automatically to fit figure.
      optional (default=None)
+
+    fontname : str,optional (default='helvetica')
+        Set dot file "font name" field
+        Output font cannot display optional
+        font name "sans" or other correct font
     Returns
     -------
     annotations : list of artists
@@ -734,6 +739,7 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
     precision : int, optional (default=3)
         Number of digits of precision for floating point in the values of
         impurity, threshold and value attributes of each node.
+    
     fontname : str,optional (default='helvetica')
         Set dot file "font name" field
         Output font cannot display optional
