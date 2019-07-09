@@ -3101,7 +3101,7 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
 		free(count);
 	}
 
-	if (svm_type == C_SVC ||
+	if(svm_type == C_SVC ||
 	   svm_type == EPSILON_SVR ||
 	   svm_type == NU_SVR ||
 	   svm_type == ONE_CLASS)
