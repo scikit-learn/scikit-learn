@@ -3107,7 +3107,8 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
 	   svm_type == ONE_CLASS)
 	{
 	    PREFIX(problem) newprob;
-	    remove_zero_weight(&newprob, prob); // filter samples with negative weights like algorithm PREFIX(train)
+          // filter samples with negative weights like algorithm PREFIX(train)
+	    remove_zero_weight(&newprob, prob);
 
 	    char* msg = NULL;
 	    if (prob->l == newprob.l) // no samples were removed from training set. all weights positive.
