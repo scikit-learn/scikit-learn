@@ -19,13 +19,19 @@ the feature.
 The :func:`permutation_importance` function calculates the feature importance
 of `estimators` for a given dataset. The ``n_repeats`` parameter sets the number
 of times a feature is randomly shuffled and returns a sample of feature
-importances. Note that :func:`permutation_importance` can be computed on any
-dataset, though it is common practice to use a hold-out set since estimates
-on the training set might not be accurate. Feature importance based on
-the training set can inflate the importances, when in fact, the model is
-overfitting and the feature is not important. Feature importance based on the
-test set gives the importance of a feature on unseen data, which gives a sense
-of the features that are *actually* important.
+importances. Permutation importances can either be computed on the training set
+or an held-out testing or validation set. Using a held-out set makes it 
+possible to highlight which features contribute the most to the generalization
+power of the inspected model. Features that are important on the training set
+but not on the held-out set might cause the model to overfit.
+
+Note that features that are deemed non-important for some model with a
+low predictive performance could be highly predictive for a model that
+generalizes better. The conclusions should always be drawn in the context of
+the specific model under inspection and cannot be automatically generalized to
+the intrinsic predictive value of the features by them-selves. Therefore it is
+always important to evaluate the predictive power of a model using a held-out
+set (or better with cross-validation) prior to computing importances.
 
 Relation to feature importance in trees
 ---------------------------------------
@@ -33,10 +39,13 @@ Relation to feature importance in trees
 Tree based models provides a different measure of own feature importances based
 on the mean decrease in the splitting criterion. This gives importance to 
 features that may not be predictive on unseen data. The permutation feature 
-importance avoids this issue, since it can be applied to unseen data. 
-Additionally, the permutation feature importance may use an arbitrary metric on 
-the tree's predictions. These two methods of obtaining feature importance are 
-explored in:
+importance avoids this issue, since it can be applied to unseen data.
+Furthermore, the tree importance computed based on the impurity decrease of
+splits in trees are strongly biased and favor high cardinality features
+(typically numerical features). Permutation-based feature importances do not
+exhibit such a bias. Additionally, the permutation feature importance may use
+an arbitrary metric on the tree's predictions. These two methods of obtaining
+feature importance are explored in:
 :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`.
 
 Strongly correlated features
