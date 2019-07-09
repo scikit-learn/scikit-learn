@@ -31,11 +31,12 @@ Relation to feature importance in trees
 ---------------------------------------
 
 Tree based models provides a different measure of own feature importances based
-on the mean decrease in the criterion. This gives importances to features
-that may not be predictive on unseen data. The permutation feature importance
-avoids this issue, since it can be applied to unseen data. Additionally, the
-permtuation feature importance uses an arbitrary metric on the tree's 
-predictions. These two methods of obtaining feature importance is explored in:
+on the mean decrease in the splitting criterion. This gives importance to 
+features that may not be predictive on unseen data. The permutation feature 
+importance avoids this issue, since it can be applied to unseen data. 
+Additionally, the permutation feature importance may use an arbitrary metric on 
+the tree's predictions. These two methods of obtaining feature importance are 
+explored in:
 :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`.
 
 Strongly correlated features

@@ -18,7 +18,8 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import StandardScaler
 
 
-def test_permutation_importance_correlated_feature_regression():
+@pytest.mark.parametrize("n_jobs", [1, 2])
+def test_permutation_importance_correlated_feature_regression(n_jobs):
     # Make sure that feature highly correlated to the target have a higher
     # importance
     rng = np.random.RandomState(42)
@@ -35,7 +36,7 @@ def test_permutation_importance_correlated_feature_regression():
     clf.fit(X, y)
 
     result = permutation_importance(clf, X, y, n_repeats=n_repeats,
-                                    random_state=rng)
+                                    random_state=rng, n_jobs=n_jobs)
 
     assert result.importances.shape == (X.shape[1], n_repeats)
 
@@ -45,7 +46,8 @@ def test_permutation_importance_correlated_feature_regression():
                   result.importances_mean[:-1])
 
 
-def test_permutation_importance_correlated_feature_regression_pandas():
+@pytest.mark.parametrize("n_jobs", [1, 2])
+def test_permutation_importance_correlated_feature_regression_pandas(n_jobs):
     pd = pytest.importorskip("pandas")
 
     # Make sure that feature highly correlated to the target have a higher
@@ -66,7 +68,7 @@ def test_permutation_importance_correlated_feature_regression_pandas():
     clf.fit(X, y)
 
     result = permutation_importance(clf, X, y, n_repeats=n_repeats,
-                                    random_state=rng)
+                                    random_state=rng, n_jobs=n_jobs)
 
     assert result.importances.shape == (X.shape[1], n_repeats)
 

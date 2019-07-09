@@ -155,7 +155,6 @@ result = permutation_importance(rf, X_test, y_test, n_repeats=10,
                                 random_state=42)
 sorted_idx = result.importances_mean.argsort()
 
-# sphinx_gallery_thumbnail_number = 2
 fig, ax = plt.subplots()
 ax.boxplot(result.importances[sorted_idx].T,
            vert=False, labels=X_test.columns[sorted_idx])
@@ -174,7 +173,6 @@ result = permutation_importance(rf, X_train, y_train, n_repeats=10,
                                 random_state=42)
 sorted_idx = result.importances_mean.argsort()
 
-# sphinx_gallery_thumbnail_number = 3
 fig, ax = plt.subplots()
 ax.boxplot(result.importances[sorted_idx].T,
            vert=False, labels=X_train.columns[sorted_idx])
