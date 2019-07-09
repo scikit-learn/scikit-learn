@@ -1457,33 +1457,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
     warm_start : boolean, optional (default=False)
         If set to ``True``, reuse the solution of the previous call to ``fit``
-        as initialization for ``coef_`` and ``intercept_`` (supersedes option
-        ``start_params``). If set to ``True`` or if the attribute ``coef_``
-        does not exit (first call to ``fit``), option ``start_params`` sets the
-        start values for ``coef_`` and ``intercept_``.
-
-    start_params : {'guess', 'zero', array of shape (n_features*, )}, \
-            optional (default='guess')
-        Relevant only if ``warm_start=False`` or if fit is called
-        the first time (``self.coef_`` does not yet exist).
-
-        'guess'
-            Start values of mu are calculated by family.starting_mu(..). Then,
-            one Newton step obtains start values for ``coef_``. If
-            ``solver='irls'``, it uses one irls step, else the Newton step is
-            calculated by the cd solver.
-            This gives usually good starting values.
-
-        'zero'
-        All coefficients are set to zero. If ``fit_intercept=True``, the
-        start value for the intercept is obtained by the weighted average of y.
-
-        array
-        The array of size n_features* is directly used as start values
-        for ``coef_``. If ``fit_intercept=True``, the first element
-        is assumed to be the start value for the ``intercept_``.
-        Note that n_features* = X.shape[1] + fit_intercept, i.e. it includes
-        the intercept in counting.
+        as initialization for ``coef_`` and ``intercept_``.
 
     selection : str, optional (default='cyclic')
         For the solver 'cd' (coordinate descent), the coordinates (features)
@@ -1503,7 +1477,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         'random'.
 
     diag_fisher : boolean, optional, (default=False)
-        Only relevant for solver 'cd' (see also ``start_params='guess'``).
+        Only relevant for solver 'cd'.
         If ``False``, the full Fisher matrix (expected Hessian) is computed in
         each outer iteration (Newton iteration). If ``True``, only a diagonal
         matrix (stored as 1d array) is computed, such that
@@ -1576,7 +1550,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     def __init__(self, alpha=1.0, l1_ratio=0, P1='identity', P2='identity',
                  fit_intercept=True, family='normal', link='auto',
                  fit_dispersion=None, solver='auto', max_iter=100,
-                 tol=1e-4, warm_start=False, start_params='guess',
+                 tol=1e-4, warm_start=False,
                  selection='cyclic', random_state=None, diag_fisher=False,
                  copy_X=True, check_input=True, verbose=0):
         self.alpha = alpha
@@ -1591,7 +1565,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         self.max_iter = max_iter
         self.tol = tol
         self.warm_start = warm_start
-        self.start_params = start_params
         self.selection = selection
         self.random_state = random_state
         self.diag_fisher = diag_fisher
@@ -1742,7 +1715,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         n_samples, n_features = X.shape
 
         # 1.3 arguments to take special care ##################################
-        # P1, P2, start_params
+        # P1, P2
         if isinstance(self.P1, str) and self.P1 == 'identity':
             P1 = np.ones(n_features)
         else:
@@ -1792,25 +1765,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                                  "n_features=X.shape[1]; "
                                  "got (P2.shape=({0}, {1})), needed ({2}, {2})"
                                  .format(P2.shape[0], P2.shape[1], X.shape[1]))
-
-        start_params = self.start_params
-        if isinstance(start_params, str):
-            if start_params not in ['guess',  'zero']:
-                raise ValueError("The argument start_params must be 'guess', "
-                                 "'zero' or an array of correct length; "
-                                 "got(start_params={0})".format(start_params))
-        else:
-            start_params = check_array(start_params, accept_sparse=False,
-                                       force_all_finite=True, ensure_2d=False,
-                                       dtype=_dtype, copy=True)
-            if ((start_params.shape[0] != X.shape[1] + self.fit_intercept) or
-                    (start_params.ndim != 1)):
-                raise ValueError("Start values for parameters must have the"
-                                 "right length and dimension; required (length"
-                                 "={0}, ndim=1); got (length={1}, ndim={2})."
-                                 .format(X.shape[1] + self.fit_intercept,
-                                         start_params.shape[0],
-                                         start_params.ndim))
 
         l1 = self.alpha * self.l1_ratio
         l2 = self.alpha * (1 - self.l1_ratio)
@@ -1899,72 +1853,12 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                                        self.coef_))
             else:
                 coef = self.coef_
-        elif isinstance(start_params, str):
-            if start_params == 'guess':
-                # Set mu=starting_mu of the family and do one Newton step
-                # If solver=cd use cd, else irls
-                mu = family.starting_mu(y, weights=weights)
-                eta = link.link(mu)  # linear predictor
-                if solver in ['cd', 'lbfgs', 'newton-cg']:
-                    # see function _cd_solver
-                    sigma_inv = 1/family.variance(mu, phi=1, weights=weights)
-                    d1 = link.inverse_derivative(eta)
-                    temp = sigma_inv * d1 * (y - mu)
-                    if self.fit_intercept:
-                        score = np.concatenate(([temp.sum()], temp @ X))
-                    else:
-                        score = temp @ X  # same as X.T @ temp
-
-                    d2_sigma_inv = d1 * d1 * sigma_inv
-                    diag_fisher = self.diag_fisher
-                    if diag_fisher:
-                        fisher = d2_sigma_inv
-                    else:
-                        fisher = \
-                            _safe_sandwich_dot(X, d2_sigma_inv,
-                                               intercept=self.fit_intercept)
-                    # set up space for search direction d for inner loop
-                    if self.fit_intercept:
-                        coef = np.zeros(n_features+1)
-                    else:
-                        coef = np.zeros(n_features)
-                    d = np.zeros_like(coef)
-                    # initial stopping tolerance of inner loop
-                    # use L1-norm of minimum of norm of subgradient of F
-                    # use less restrictive tolerance for initial guess
-                    inner_tol = _min_norm_sugrad(coef=coef, grad=-score, P2=P2,
-                                                 P1=P1)
-                    inner_tol = 4 * linalg.norm(inner_tol, ord=1)
-                    # just one outer loop = Newton step
-                    n_cycles = 0
-                    d, coef_P2, n_cycles, inner_tol = \
-                        _cd_cycle(d, X, coef, score, fisher, P1, P2, n_cycles,
-                                  inner_tol, max_inner_iter=1000,
-                                  selection=self.selection,
-                                  random_state=random_state,
-                                  diag_fisher=self.diag_fisher)
-                    coef += d  # for simplicity no line search here
-                else:
-                    # See _irls_solver
-                    # h'(eta)
-                    hp = link.inverse_derivative(eta)
-                    # working weights W, in principle a diagonal matrix
-                    # therefore here just as 1d array
-                    W = (hp**2 / family.variance(mu, phi=1, weights=weights))
-                    # working observations
-                    z = eta + (y-mu)/hp
-                    # solve A*coef = b
-                    # A = X' W X + l2 P2, b = X' W z
-                    coef = _irls_step(X, W, P2, z,
-                                      fit_intercept=self.fit_intercept)
-            else:  # start_params == 'zero'
-                if self.fit_intercept:
-                    coef = np.zeros(n_features+1)
-                    coef[0] = link.link(np.average(y, weights=weights))
-                else:
-                    coef = np.zeros(n_features)
-        else:  # assign given array as start values
-            coef = start_params
+        else:
+            if self.fit_intercept:
+                coef = np.zeros(n_features+1)
+                coef[0] = link.link(np.average(y, weights=weights))
+            else:
+                coef = np.zeros(n_features)
 
         #######################################################################
         # 4. fit                                                              #
@@ -2312,32 +2206,7 @@ class PoissonRegressor(GeneralizedLinearRegressor):
 
     warm_start : boolean, optional (default=False)
         If set to ``True``, reuse the solution of the previous call to ``fit``
-        as initialization for ``coef_`` and ``intercept_`` (supersedes option
-        ``start_params``). If set to ``True`` or if the attribute ``coef_``
-        does not exit (first call to ``fit``), option ``start_params`` sets the
-        start values for ``coef_`` and ``intercept_``.
-
-    start_params : {'guess', 'zero', array of shape (n_features*, )}, \
-            optional (default='guess')
-        Relevant only if ``warm_start=False`` or if fit is called
-        the first time (``self.coef_`` does not yet exist).
-
-        'guess'
-            Start values of mu are calculated by family.starting_mu(..). Then,
-            one Newton step obtains start values for ``coef_``. If
-            ``solver='irls'``, it uses one irls step. This gives usually good
-            starting values.
-
-        'zero'
-        All coefficients are set to zero. If ``fit_intercept=True``, the
-        start value for the intercept is obtained by the weighted average of y.
-
-        array
-        The array of size n_features* is directly used as start values
-        for ``coef_``. If ``fit_intercept=True``, the first element
-        is assumed to be the start value for the ``intercept_``.
-        Note that n_features* = X.shape[1] + fit_intercept, i.e. it includes
-        the intercept in counting.
+        as initialization for ``coef_`` and ``intercept_`` .
 
     random_state : {int, RandomState instance, None}, optional (default=None)
         If int, random_state is the seed used by the random
@@ -2401,12 +2270,12 @@ class PoissonRegressor(GeneralizedLinearRegressor):
     """
     def __init__(self, alpha=1.0, fit_intercept=True, fit_dispersion=None,
                  solver='irls', max_iter=100,
-                 tol=1e-4, warm_start=False, start_params='guess',
+                 tol=1e-4, warm_start=False,
                  random_state=None, copy_X=True, check_input=True, verbose=0):
 
         super().__init__(alpha=alpha, fit_intercept=fit_intercept,
                          family="poisson", link='log',
                          fit_dispersion=fit_dispersion, solver=solver,
                          max_iter=max_iter, tol=tol, warm_start=warm_start,
-                         start_params=start_params, random_state=random_state,
+                         random_state=random_state,
                          copy_X=copy_X, verbose=verbose)
