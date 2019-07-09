@@ -10,15 +10,13 @@ from __future__ import division
 from abc import ABCMeta, abstractmethod
 import numbers
 import numpy as np
-from scipy import linalg, sparse, special
-import scipy.sparse.linalg as splinalg
+from scipy import sparse, special
 from scipy.optimize import fmin_l_bfgs_b
 import warnings
 from ..base import BaseEstimator, RegressorMixin
 from ..exceptions import ConvergenceWarning
 from ..utils import check_array, check_X_y
-from ..utils.validation import check_is_fitted, check_random_state
-
+from ..utils.validation import check_is_fitted
 
 
 def _check_weights(sample_weight, n_samples):
@@ -680,7 +678,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             1/(2*sum(s)) * deviance(y, h(X*w); s)
             + 1/2 * alpha * |w|_2
 
-    with inverse link function h and s=sample_weight. 
+    with inverse link function h and s=sample_weight.
     The parameter ``alpha`` corresponds to the lambda parameter in glmnet.
 
     Read more in the :ref:`User Guide <Generalized_linear_regression>`.
@@ -742,17 +740,11 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         Stopping criterion. For the lbfgs solver,
         the iteration will stop when ``max{|g_i|, i = 1, ..., n} <= tol``
         where ``g_i`` is the i-th component of the gradient (derivative) of
-        the objective function. 
+        the objective function.
 
     warm_start : boolean, optional (default=False)
         If set to ``True``, reuse the solution of the previous call to ``fit``
         as initialization for ``coef_`` and ``intercept_``.
-
-    random_state : {int, RandomState instance, None}, optional (default=None)
-        If int, random_state is the seed used by the random
-        number generator; if RandomState instance, random_state is the random
-        number generator; if None, the random number generator is the
-        RandomState instance used by `np.random`. 
 
     copy_X : boolean, optional, (default=True)
         If ``True``, X will be copied; else, it may be overwritten.
@@ -819,7 +811,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                  fit_intercept=True, family='normal', link='auto',
                  fit_dispersion=None, solver='auto', max_iter=100,
                  tol=1e-4, warm_start=False,
-                 random_state=None,
                  copy_X=True, check_input=True, verbose=0):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
@@ -830,7 +821,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         self.max_iter = max_iter
         self.tol = tol
         self.warm_start = warm_start
-        self.random_state = random_state
         self.copy_X = copy_X
         self.check_input = check_input
         self.verbose = verbose
@@ -929,7 +919,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         if not isinstance(self.warm_start, bool):
             raise ValueError("The argument warm_start must be bool;"
                              " got {0}".format(self.warm_start))
-        random_state = check_random_state(self.random_state)
         if not isinstance(self.copy_X, bool):
             raise ValueError("The argument copy_X must be bool;"
                              " got {0}".format(self.copy_X))
@@ -959,7 +948,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                                  "range for family {0}"
                                  .format(family.__class__.__name__))
             # TODO: if alpha=0 check that X is not rank deficient
-            # TODO: what else to check?
 
         #######################################################################
         # 2. rescaling of weights (sample_weight)                             #
@@ -1026,7 +1014,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                 warnings.warn("lbfgs failed for the reason: {0}"
                               .format(info["task"]))
             self.n_iter_ = info['nit']
-
 
         #######################################################################
         # 5. postprocessing                                                   #
@@ -1235,12 +1222,6 @@ class PoissonRegressor(GeneralizedLinearRegressor):
         If set to ``True``, reuse the solution of the previous call to ``fit``
         as initialization for ``coef_`` and ``intercept_`` .
 
-    random_state : {int, RandomState instance, None}, optional (default=None)
-        If int, random_state is the seed used by the random
-        number generator; if RandomState instance, random_state is the random
-        number generator; if None, the random number generator is the
-        RandomState instance used by `np.random`.
-
     copy_X : boolean, optional, (default=True)
         If ``True``, X will be copied; else, it may be overwritten.
 
@@ -1296,11 +1277,10 @@ class PoissonRegressor(GeneralizedLinearRegressor):
     """
     def __init__(self, alpha=1.0, fit_intercept=True, fit_dispersion=None,
                  solver='lbfgs', max_iter=100, tol=1e-4, warm_start=False,
-                 random_state=None, copy_X=True, check_input=True, verbose=0):
+                 copy_X=True, check_input=True, verbose=0):
 
         super().__init__(alpha=alpha, fit_intercept=fit_intercept,
                          family="poisson", link='log',
                          fit_dispersion=fit_dispersion, solver=solver,
                          max_iter=max_iter, tol=tol, warm_start=warm_start,
-                         random_state=random_state,
                          copy_X=copy_X, verbose=verbose)

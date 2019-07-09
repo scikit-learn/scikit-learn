@@ -5,10 +5,8 @@
 import numpy as np
 from numpy.testing import assert_allclose
 import pytest
-import scipy as sp
-from scipy import linalg, optimize, sparse
 
-from sklearn.datasets import make_classification, make_regression
+from sklearn.datasets import make_regression
 from sklearn.linear_model import GeneralizedLinearRegressor
 from sklearn.linear_model._glm import (
     Link,
@@ -19,7 +17,7 @@ from sklearn.linear_model._glm import (
     NormalDistribution, PoissonDistribution,
     GammaDistribution, InverseGaussianDistribution,
 )
-from sklearn.linear_model import ElasticNet, LogisticRegression, Ridge
+from sklearn.linear_model import Ridge
 from sklearn.metrics import mean_absolute_error
 from sklearn.exceptions import ConvergenceWarning
 
@@ -101,8 +99,7 @@ def test_tweedie_distribution_power():
      (TweedieDistribution(power=-1), [0.1, 1.5]),
      (TweedieDistribution(power=1.5), [0.1, 1.5]),
      (TweedieDistribution(power=2.5), [0.1, 1.5]),
-     (TweedieDistribution(power=-4), [0.1, 1.5]),
-])
+     (TweedieDistribution(power=-4), [0.1, 1.5])])
 def test_deviance_zero(family, chk_values):
     """Test deviance(y,y) = 0 for different families."""
     for x in chk_values:
@@ -151,8 +148,7 @@ def test_sample_weights_validation():
                          [('normal', NormalDistribution()),
                           ('poisson', PoissonDistribution()),
                           ('gamma', GammaDistribution()),
-                          ('inverse.gaussian', InverseGaussianDistribution()),
-])
+                          ('inverse.gaussian', InverseGaussianDistribution())])
 def test_glm_family_argument(f, fam):
     """Test GLM family argument set as string."""
     y = np.array([0.1, 0.5])  # in range of all distributions
@@ -244,16 +240,6 @@ def test_glm_warm_start_argument(warm_start):
         glm.fit(X, y)
 
 
-@pytest.mark.parametrize('random_state', ['a string', 0.5, [0]])
-def test_glm_random_state_argument(random_state):
-    """Test GLM for invalid random_state argument."""
-    y = np.array([1, 2])
-    X = np.array([[1], [1]])
-    glm = GeneralizedLinearRegressor(random_state=random_state)
-    with pytest.raises(ValueError, match="cannot be used to seed"):
-        glm.fit(X, y)
-
-
 @pytest.mark.parametrize('copy_X', ['not bool', 1, 0, [True]])
 def test_glm_copy_X_argument(copy_X):
     """Test GLM for invalid copy_X arguments."""
@@ -291,8 +277,7 @@ def test_glm_identity_regression(solver):
     'family',
     [NormalDistribution(), PoissonDistribution(),
      GammaDistribution(), InverseGaussianDistribution(),
-     TweedieDistribution(power=1.5), TweedieDistribution(power=4.5),
-])
+     TweedieDistribution(power=1.5), TweedieDistribution(power=4.5)])
 @pytest.mark.parametrize('solver, tol', [('lbfgs', 1e-6)])
 def test_glm_log_regression(family, solver, tol):
     """Test GLM regression with log link on a simple dataset."""
@@ -338,7 +323,7 @@ def test_normal_ridge_comparison(n_samples, n_features, fit_intercept, solver):
     glm = GeneralizedLinearRegressor(alpha=1.0, family='normal',
                                      link='identity', fit_intercept=True,
                                      max_iter=300, solver=solver, tol=1e-6,
-                                     check_input=False, random_state=42)
+                                     check_input=False)
     glm.fit(X, y)
     assert glm.coef_.shape == (X.shape[1], )
     assert_allclose(glm.coef_, ridge.coef_, rtol=5e-6)
@@ -369,7 +354,7 @@ def test_poisson_ridge(solver, tol):
                                      fit_intercept=True, family='poisson',
                                      link='log', tol=1e-7,
                                      solver=solver, max_iter=300,
-                                     random_state=rng)
+                                     )
     glm.fit(X, y)
     assert_allclose(glm.intercept_, -0.12889386979, rtol=1e-5)
     assert_allclose(glm.coef_, [0.29019207995, 0.03741173122], rtol=1e-5)
@@ -385,11 +370,10 @@ def test_poisson_ridge(solver, tol):
 )
 def test_solver_equivalence(params, regression_data):
     X, y = regression_data
-    est_ref = GeneralizedLinearRegressor(random_state=2)
+    est_ref = GeneralizedLinearRegressor()
     est_ref.fit(X, y)
 
     estimator = GeneralizedLinearRegressor(**params)
-    estimator.set_params(random_state=2)
 
     estimator.fit(X, y)
 
@@ -405,16 +389,15 @@ def test_solver_equivalence(params, regression_data):
 def test_fit_dispersion(regression_data):
     X, y = regression_data
 
-    est1 = GeneralizedLinearRegressor(random_state=2)
+    est1 = GeneralizedLinearRegressor()
     est1.fit(X, y)
     assert not hasattr(est1, "dispersion_")
 
-    est2 = GeneralizedLinearRegressor(random_state=2, fit_dispersion="chisqr")
+    est2 = GeneralizedLinearRegressor(fit_dispersion="chisqr")
     est2.fit(X, y)
     assert isinstance(est2.dispersion_, float)
 
-    est3 = GeneralizedLinearRegressor(
-            random_state=2, fit_dispersion="deviance")
+    est3 = GeneralizedLinearRegressor(fit_dispersion="deviance")
     est3.fit(X, y)
     assert isinstance(est3.dispersion_, float)
 
@@ -425,7 +408,7 @@ def test_fit_dispersion(regression_data):
 def test_convergence_warning(solver, regression_data):
     X, y = regression_data
 
-    est = GeneralizedLinearRegressor(solver=solver, random_state=2,
+    est = GeneralizedLinearRegressor(solver=solver,
                                      max_iter=1, tol=1e-20)
     with pytest.warns(ConvergenceWarning):
         est.fit(X, y)
