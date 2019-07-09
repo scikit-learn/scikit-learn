@@ -278,6 +278,7 @@ def test_oneclass_decision_function():
     dec_func_outliers = clf.decision_function(X_outliers)
     assert_array_equal((dec_func_outliers > 0).ravel(), y_pred_outliers == 1)
 
+
 def test_oneclass_score_samples():
     X_train = [[1, 1], [1, 2], [2, 1]]
     clf = svm.OneClassSVM(gamma=1).fit(X_train)
@@ -585,6 +586,7 @@ def test_bad_input():
     clf = svm.SVC()
     clf.fit(X, Y)
     assert_raises(ValueError, clf.predict, Xt)
+
 
 @pytest.mark.parametrize(
     'Estimator, data',
