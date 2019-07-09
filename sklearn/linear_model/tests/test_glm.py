@@ -25,7 +25,7 @@ from sklearn.exceptions import ConvergenceWarning
 
 from sklearn.utils.testing import assert_array_equal
 
-GLM_SOLVERS = ['irls', 'lbfgs']
+GLM_SOLVERS = ['lbfgs']
 
 
 @pytest.fixture(scope="module")
@@ -193,39 +193,6 @@ def test_glm_alpha_argument(alpha):
         glm.fit(X, y)
 
 
-@pytest.mark.parametrize('P2', ['a string', [1, 2, 3], [[2, 3]],
-                                sparse.csr_matrix([1, 2, 3]), [-1]])
-def test_glm_P2_argument(P2):
-    """Test GLM for invalid P2 argument."""
-    y = np.array([1, 2])
-    X = np.array([[1], [2]])
-    glm = GeneralizedLinearRegressor(P2=P2, check_input=True)
-    with pytest.raises(ValueError):
-        glm.fit(X, y)
-
-
-def test_glm_P2_positive_semidefinite():
-    """Test GLM for a positive semi-definite P2 argument."""
-    n_samples, n_features = 10, 5
-    y = np.arange(n_samples)
-    X = np.zeros((n_samples, n_features))
-    P2 = np.diag([100, 10, 5, 0, -1E-5])
-    rng = np.random.RandomState(42)
-    # construct random orthogonal matrix Q
-    Q, R = linalg.qr(rng.randn(n_features, n_features))
-    P2 = Q.T @ P2 @ Q
-    glm = GeneralizedLinearRegressor(P2=P2, fit_intercept=False,
-                                     check_input=True)
-    with pytest.raises(ValueError, match="P2 must be positive semi-definite"):
-        glm.fit(X, y)
-
-    P2 = sparse.csr_matrix(P2)
-    glm = GeneralizedLinearRegressor(P2=P2, fit_intercept=False,
-                                     check_input=True)
-    with pytest.raises(ValueError, match="P2 must be positive semi-definite"):
-        glm.fit(X, y)
-
-
 @pytest.mark.parametrize('fit_intercept', ['not bool', 1, 0, [True]])
 def test_glm_fit_intercept_argument(fit_intercept):
     """Test GLM for invalid fit_intercept argument."""
@@ -287,16 +254,6 @@ def test_glm_random_state_argument(random_state):
         glm.fit(X, y)
 
 
-@pytest.mark.parametrize('diag_fisher', ['not bool', 1, 0, [True]])
-def test_glm_diag_fisher_argument(diag_fisher):
-    """Test GLM for invalid diag_fisher arguments."""
-    y = np.array([1, 2])
-    X = np.array([[1], [1]])
-    glm = GeneralizedLinearRegressor(diag_fisher=diag_fisher)
-    with pytest.raises(ValueError, match="diag_fisher must be bool"):
-        glm.fit(X, y)
-
-
 @pytest.mark.parametrize('copy_X', ['not bool', 1, 0, [True]])
 def test_glm_copy_X_argument(copy_X):
     """Test GLM for invalid copy_X arguments."""
@@ -336,9 +293,7 @@ def test_glm_identity_regression(solver):
      GammaDistribution(), InverseGaussianDistribution(),
      TweedieDistribution(power=1.5), TweedieDistribution(power=4.5),
 ])
-@pytest.mark.parametrize('solver, tol', [('irls', 1e-6),
-                                         ('lbfgs', 1e-6),
-])
+@pytest.mark.parametrize('solver, tol', [('lbfgs', 1e-6)])
 def test_glm_log_regression(family, solver, tol):
     """Test GLM regression with log link on a simple dataset."""
     coef = [0.2, -0.1]
@@ -391,10 +346,7 @@ def test_normal_ridge_comparison(n_samples, n_features, fit_intercept, solver):
     assert_allclose(glm.predict(T), ridge.predict(T), rtol=1e-5)
 
 
-@pytest.mark.parametrize('solver, tol',
-                         [('irls', 1e-7),
-                          ('lbfgs', 1e-7),
-])
+@pytest.mark.parametrize('solver, tol', [('lbfgs', 1e-7)])
 def test_poisson_ridge(solver, tol):
     """Test ridge regression with poisson family and LogLink.
 
@@ -426,9 +378,6 @@ def test_poisson_ridge(solver, tol):
 @pytest.mark.parametrize(
         "params",
         [
-            {"solver": "irls" },
-            {"solver": "irls" },
-            {"solver": "lbfgs" },
             {"solver": "lbfgs"},
         ],
         ids=lambda params: ', '.join("%s=%s" % (key, val)

@@ -669,164 +669,16 @@ EDM_DISTRIBUTIONS = {
 }
 
 
-def _irls_step(X, W, P2, z, fit_intercept=True):
-    """Compute one step in iteratively reweighted least squares.
-
-    Solve A w = b for w with
-    A = (X' W X + P2)
-    b = X' W z
-    z = eta + D^-1 (y-mu)
-
-    See also fit method of :class:`GeneralizedLinearRegressor`.
-
-    Parameters
-    ----------
-    X : {ndarray, sparse matrix}, shape (n_samples, n_features)
-        Training data (with intercept included if present)
-
-    W : ndarray, shape (n_samples,)
-
-    P2 : {ndarray, sparse matrix}, shape (n_features, n_features)
-        The L2-penalty matrix or vector (=diagonal matrix)
-
-    z : ndarray, shape (n_samples,)
-        Working observations
-
-    fit_intercept : boolean, optional (default=True)
-
-    Returns
-    -------
-    coef : ndarray, shape (c,)
-        If fit_intercept=False, shape c=X.shape[1].
-        If fit_intercept=True, then c=X.shapee[1] + 1.
-    """
-    # Note: solve vs least squares, what is more appropriate?
-    #       scipy.linalg.solve seems faster, but scipy.linalg.lstsq
-    #       is more robust.
-    # Note: X.T @ W @ X is not sparse, even when X is sparse.
-    #      Sparse solver would splinalg.spsolve(A, b) or splinalg.lsmr(A, b)
-    if fit_intercept:
-        Wz = W * z
-        if sparse.issparse(X):
-            b = np.concatenate(([Wz.sum()], X.transpose() @ Wz))
-        else:
-            b = np.concatenate(([Wz.sum()], X.T @ Wz))
-        A = _safe_sandwich_dot(X, W, intercept=fit_intercept)
-        if P2.ndim == 1:
-            idx = np.arange(start=1, stop=A.shape[0])
-            A[(idx, idx)] += P2  # add to diag elements without intercept
-        elif sparse.issparse(P2):
-            A[1:, 1:] += P2.toarray()
-        else:
-            A[1:, 1:] += P2
-    else:
-        if sparse.issparse(X):
-            XtW = X.transpose().multiply(W)
-            # for older versions of numpy and scipy, A may be a np.matrix
-            A = _safe_toarray(XtW @ X)
-        else:
-            XtW = (X.T * W)
-            A = XtW @ X
-        b = XtW @ z
-        if P2.ndim == 1:
-            A[np.diag_indices_from(A)] += P2
-        elif sparse.issparse(P2):
-            A += P2.toarray()
-        else:
-            A += P2
-
-    coef, *_ = linalg.lstsq(A, b, overwrite_a=True, overwrite_b=True)
-    return coef
-
-
-def _irls_solver(coef, X, y, weights, P2, fit_intercept, family, link,
-                 max_iter, tol):
-    """Solve GLM with L2 penalty by IRLS algorithm.
-
-    Note: If X is sparse, P2 must also be sparse.
-    """
-    # Solve Newton-Raphson (1): Obj'' (w - w_old) = -Obj'
-    #   Obj = objective function = 1/2 Dev + l2/2 w P2 w
-    #   Dev = deviance, s = normalized weights, variance V(mu) but phi=1
-    #   D   = link.inverse_derivative(eta) = diag_matrix(h'(X w))
-    #   D2  = link.inverse_derivative(eta)^2 = D^2
-    #   W   = D2/V(mu)
-    #   l2  = alpha
-    #   Obj' = d(Obj)/d(w) = 1/2 Dev' + l2 P2 w
-    #        = -X' D (y-mu)/V(mu) + l2 P2 w
-    #   Obj''= d2(Obj)/d(w)d(w') = Hessian = -X'(...) X + l2 P2
-    #   Use Fisher matrix instead of full info matrix -X'(...) X,
-    #    i.e. E[Dev''] with E[y-mu]=0:
-    #   Obj'' ~ X' W X + l2 P2
-    # (1): w = (X' W X + l2 P2)^-1 X' W z,
-    #      with z = eta + D^-1 (y-mu)
-    # Note: P2 must be symmetrized
-    # Note: ' denotes derivative, but also transpose for matrices
-
-    eta = _safe_lin_pred(X, coef)
-    mu = link.inverse(eta)
-    # D = h'(eta)
-    hp = link.inverse_derivative(eta)
-    V = family.variance(mu, phi=1, weights=weights)
-
-    converged = False
-    n_iter = 0
-    while n_iter < max_iter:
-        n_iter += 1
-        # coef_old not used so far.
-        # coef_old = coef
-        # working weights W, in principle a diagonal matrix
-        # therefore here just as 1d array
-        W = hp**2 / V
-        # working observations
-        z = eta + (y - mu) / hp
-        # solve A*coef = b
-        # A = X' W X + P2, b = X' W z
-        coef = _irls_step(X, W, P2, z, fit_intercept=fit_intercept)
-        # updated linear predictor
-        # do it here for updated values for tolerance
-        eta = _safe_lin_pred(X, coef)
-        mu = link.inverse(eta)
-        hp = link.inverse_derivative(eta)
-        V = family.variance(mu, phi=1, weights=weights)
-
-        # which tolerace? |coef - coef_old| or gradient?
-        # use gradient for compliance with newton-cg and lbfgs
-        # gradient = -X' D (y-mu)/V(mu) + l2 P2 w
-        temp = hp * (y - mu) / V
-        if sparse.issparse(X):
-            gradient = -(X.transpose() @ temp)
-        else:
-            gradient = -(X.T @ temp)
-        idx = 1 if fit_intercept else 0  # offset if coef[0] is intercept
-        if P2.ndim == 1:
-            gradient += P2 * coef[idx:]
-        else:
-            gradient += P2 @ coef[idx:]
-        if fit_intercept:
-            gradient = np.concatenate(([-temp.sum()], gradient))
-        if (np.max(np.abs(gradient)) <= tol):
-            converged = True
-            break
-
-    if not converged:
-        warnings.warn("irls failed to converge. Increase the number "
-                      "of iterations (currently {0})"
-                      .format(max_iter), ConvergenceWarning)
-
-    return coef, n_iter
-
-
 class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     """Regression via a Generalized Linear Model (GLM) with penalties.
 
     GLMs based on a reproductive Exponential Dispersion Model (EDM) aim at
     fitting and predicting the mean of the target y as mu=h(X*w). Therefore,
-    the fit minimizes the following objective function with combined L1 and L2
+    the fit minimizes the following objective function with L2
     priors as regularizer::
 
             1/(2*sum(s)) * deviance(y, h(X*w); s)
-            + 1/2 * alpha * w*P2*w
+            + 1/2 * alpha * |w|_2
 
     with inverse link function h and s=sample_weight. 
     The parameter ``alpha`` corresponds to the lambda parameter in glmnet.
@@ -842,18 +694,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         parameter.``alpha = 0`` is equivalent to unpenalized GLMs. In this
         case, the design matrix X must have full column rank
         (no collinearities).
-
-    P2 : {'identity', array-like, sparse matrix}, shape \
-            (n_features,) or (n_features, n_features), optional \
-            (default='identity')
-        With this option, you can set the P2 matrix in the L2 penalty `w*P2*w`.
-        This gives a fine control over this penalty (Tikhonov regularization).
-        A 2d array is directly used as the square matrix P2. A 1d array is
-        interpreted as diagonal (square) matrix. The default 'identity' sets
-        the identity matrix, which gives the usual squared L2-norm. If you just
-        want to exclude certain coefficients, pass a 1d array filled with 1,
-        and 0 for the coefficients to be excluded.
-        Note that P2 must be positive semi-definite.
 
     fit_intercept : boolean, optional (default=True)
         Specifies if a constant (a.k.a. bias or intercept) should be
@@ -882,17 +722,11 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         the chi squared statistic or the deviance statistic. If None, the
         dispersion is not estimated.
 
-    solver : {'auto', 'irls', 'lbfgs'}, \
-            optional (default='auto')
+    solver : {'auto', 'lbfgs'}, optional (default='auto')
         Algorithm to use in the optimization problem:
 
         'auto'
-            Sets 'irls'
-
-        'irls'
-            Iterated reweighted least squares.
-            It is the standard algorithm for GLMs. It cannot deal with
-            L1 penalties.
+            Sets 'lbfgs'
 
         'lbfgs'
             Calls scipy's L-BFGS-B optimizer.
@@ -905,7 +739,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         The maximal number of iterations for solver algorithms.
 
     tol : float, optional (default=1e-4)
-        Stopping criterion. For the irls, and lbfgs solvers,
+        Stopping criterion. For the lbfgs solver,
         the iteration will stop when ``max{|g_i|, i = 1, ..., n} <= tol``
         where ``g_i`` is the i-th component of the gradient (derivative) of
         the objective function. 
@@ -920,22 +754,12 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         number generator; if None, the random number generator is the
         RandomState instance used by `np.random`. 
 
-    diag_fisher : boolean, optional, (default=False)
-        Only relevant for solver 'cd'.
-        If ``False``, the full Fisher matrix (expected Hessian) is computed in
-        each outer iteration (Newton iteration). If ``True``, only a diagonal
-        matrix (stored as 1d array) is computed, such that
-        fisher = X.T @ diag @ X. This saves memory and matrix-matrix
-        multiplications, but needs more matrix-vector multiplications. If you
-        use large sparse X or if you have many features,
-        i.e. n_features >> n_samples, you might set this option to ``True``.
-
     copy_X : boolean, optional, (default=True)
         If ``True``, X will be copied; else, it may be overwritten.
 
     check_input : boolean, optional (default=True)
         Allow to bypass several checks on input: y values in range of family,
-        sample_weight non-negative, P2 positive semi-definite.
+        sample_weight non-negative.
         Don't use this parameter unless you know what you do.
 
     verbose : int, optional (default=0)
@@ -991,14 +815,13 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
           Journal of Machine Learning Research 13 (2012) 1999-2030
           https://www.csie.ntu.edu.tw/~cjlin/papers/l1_glmnet/long-glmnet.pdf
     """
-    def __init__(self, alpha=1.0, P2='identity',
+    def __init__(self, alpha=1.0,
                  fit_intercept=True, family='normal', link='auto',
                  fit_dispersion=None, solver='auto', max_iter=100,
                  tol=1e-4, warm_start=False,
-                 random_state=None, diag_fisher=False,
+                 random_state=None,
                  copy_X=True, check_input=True, verbose=0):
         self.alpha = alpha
-        self.P2 = P2
         self.fit_intercept = fit_intercept
         self.family = family
         self.link = link
@@ -1008,7 +831,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         self.tol = tol
         self.warm_start = warm_start
         self.random_state = random_state
-        self.diag_fisher = diag_fisher
         self.copy_X = copy_X
         self.check_input = check_input
         self.verbose = verbose
@@ -1051,8 +873,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             raise ValueError(
                 "The family must be an instance of class"
                 " ExponentialDispersionModel or an element of"
-                " ['normal', 'poisson', 'gamma', 'inverse.gaussian', "
-                "'binomial']; got (family={0})".format(self.family))
+                " ['normal', 'poisson', 'gamma', 'inverse.gaussian']"
+                "; got (family={0})".format(self.family))
 
         # Guarantee that self._link_instance is set to an instance of
         # class Link
@@ -1089,13 +911,13 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         if not isinstance(self.fit_intercept, bool):
             raise ValueError("The argument fit_intercept must be bool;"
                              " got {0}".format(self.fit_intercept))
-        if self.solver not in ['auto', 'irls', 'lbfgs']:
+        if self.solver not in ['auto', 'lbfgs']:
             raise ValueError("GeneralizedLinearRegressor supports only solvers"
-                             "'auto', 'irls', 'lbfgs';"
+                             "'auto', 'lbfgs';"
                              " got {0}".format(self.solver))
         solver = self.solver
         if self.solver == 'auto':
-            solver = 'irls'
+            solver = 'lbfgs'
         if (not isinstance(self.max_iter, int)
                 or self.max_iter <= 0):
             raise ValueError("Maximum number of iteration must be a positive "
@@ -1108,9 +930,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             raise ValueError("The argument warm_start must be bool;"
                              " got {0}".format(self.warm_start))
         random_state = check_random_state(self.random_state)
-        if not isinstance(self.diag_fisher, bool):
-            raise ValueError("The argument diag_fisher must be bool;"
-                             " got {0}".format(self.diag_fisher))
         if not isinstance(self.copy_X, bool):
             raise ValueError("The argument copy_X must be bool;"
                              " got {0}".format(self.copy_X))
@@ -1133,95 +952,12 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         n_samples, n_features = X.shape
 
-        # 1.3 arguments to take special care ##################################
-        # P2
-
-        # If X is sparse, make P2 sparse, too.
-        if isinstance(self.P2, str) and self.P2 == 'identity':
-            if sparse.issparse(X):
-                P2 = (sparse.dia_matrix((np.ones(n_features), 0),
-                      shape=(n_features, n_features))).tocsc()
-            else:
-                P2 = np.ones(n_features)
-        else:
-            P2 = check_array(self.P2, copy=True,
-                             accept_sparse=_stype,
-                             dtype=_dtype, ensure_2d=False)
-            if P2.ndim == 1:
-                P2 = np.asarray(P2)
-                if P2.shape[0] != n_features:
-                    raise ValueError("P2 should be a 1d array of shape "
-                                     "(n_features,) with "
-                                     "n_features=X.shape[1]; "
-                                     "got (P2.shape=({0},)), needed ({1},)"
-                                     .format(P2.shape[0], X.shape[1]))
-                if sparse.issparse(X):
-                    P2 = (sparse.dia_matrix((P2, 0),
-                          shape=(n_features, n_features))).tocsc()
-            elif (P2.ndim == 2 and P2.shape[0] == P2.shape[1] and
-                    P2.shape[0] == X.shape[1]):
-                if sparse.issparse(X):
-                    P2 = (sparse.dia_matrix((P2, 0),
-                          shape=(n_features, n_features))).tocsc()
-            else:
-                raise ValueError("P2 must be either None or an array of shape "
-                                 "(n_features, n_features) with "
-                                 "n_features=X.shape[1]; "
-                                 "got (P2.shape=({0}, {1})), needed ({2}, {2})"
-                                 .format(P2.shape[0], P2.shape[1], X.shape[1]))
-
-        l2 = self.alpha
-        # P2 is now for sure a copy
-        P2 = l2 * P2
-        # one only ever needs the symmetrized L2 penalty matrix 1/2 (P2 + P2')
-        # reason: w' P2 w = (w' P2 w)', i.e. it is symmetric
-        if P2.ndim == 2:
-            if sparse.issparse(P2):
-                if sparse.isspmatrix_csc(P2):
-                    P2 = 0.5 * (P2 + P2.transpose()).tocsc()
-                else:
-                    P2 = 0.5 * (P2 + P2.transpose()).tocsr()
-            else:
-                P2 = 0.5 * (P2 + P2.T)
-
-        # For coordinate descent, if X is sparse, P2 must also be csc
-        if solver == 'cd' and sparse.issparse(X):
-            P2 = sparse.csc_matrix(P2)
-
         # 1.4 additional validations ##########################################
         if self.check_input:
             if not np.all(family.in_y_range(y)):
                 raise ValueError("Some value(s) of y are out of the valid "
                                  "range for family {0}"
                                  .format(family.__class__.__name__))
-            # check if P2 is positive semidefinite
-            # np.linalg.cholesky(P2) 'only' asserts positive definite
-            if not isinstance(self.P2, str):  # self.P2 != 'identity'
-                # due to numerical precision, we allow eigenvalues to be a
-                # tiny bit negative
-                epsneg = -10 * np.finfo(P2.dtype).epsneg
-                if P2.ndim == 1 or P2.shape[0] == 1:
-                    p2 = P2
-                    if sparse.issparse(P2):
-                        p2 = P2.toarray()
-                    if not np.all(p2 >= 0):
-                        raise ValueError("1d array P2 must not have negative "
-                                         "values.")
-                elif sparse.issparse(P2):
-                    # for sparse matrices, not all eigenvals can be computed
-                    # efficiently, use only half of n_features
-                    # k = how many eigenvals to compute
-                    k = np.min([10, n_features // 10 + 1])
-                    sigma = 0  # start searching near this value
-                    which = 'SA'  # find smallest algebraic eigenvalues first
-                    eigenvalues = splinalg.eigsh(P2, k=k, sigma=sigma,
-                                                 which=which,
-                                                 return_eigenvectors=False)
-                    if not np.all(eigenvalues >= epsneg):
-                        raise ValueError("P2 must be positive semi-definite.")
-                else:
-                    if not np.all(linalg.eigvalsh(P2) >= epsneg):
-                        raise ValueError("P2 must be positive semi-definite.")
             # TODO: if alpha=0 check that X is not rank deficient
             # TODO: what else to check?
 
@@ -1229,10 +965,10 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         # 2. rescaling of weights (sample_weight)                             #
         #######################################################################
         # IMPORTANT NOTE: Since we want to minimize
-        # 1/(2*sum(sample_weight)) * deviance + L1 + L2,
+        # 1/(2*sum(sample_weight)) * deviance + L2,
         # deviance = sum(sample_weight * unit_deviance),
         # we rescale weights such that sum(weights) = 1 and this becomes
-        # 1/2*deviance + L1 + L2 with deviance=sum(weights * unit_deviance)
+        # 1/2*deviance + L2 with deviance=sum(weights * unit_deviance)
         weights_sum = np.sum(weights)
         weights = weights/weights_sum
 
@@ -1260,33 +996,21 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         #######################################################################
         # algorithms for optimization
 
-        # 4.1 IRLS ############################################################
-        # Note: we already set P2 = l2*P2, see above
-        # Note: we already symmetrized P2 = 1/2 (P2 + P2')
-        if solver == 'irls':
-            coef, self.n_iter_ = \
-                _irls_solver(coef=coef, X=X, y=y, weights=weights, P2=P2,
-                             fit_intercept=self.fit_intercept, family=family,
-                             link=link, max_iter=self.max_iter, tol=self.tol)
-
-        # 4.2 L-BFGS ##########################################################
-        elif solver == 'lbfgs':
-            def func(coef, X, y, weights, P2, family, link):
+        # 4.1 L-BFGS ##########################################################
+        if solver == 'lbfgs':
+            def func(coef, X, y, weights, alpha, family, link):
                 mu, devp = \
                     family._mu_deviance_derivative(coef, X, y, weights, link)
                 dev = family.deviance(y, mu, weights)
                 intercept = (coef.size == X.shape[1] + 1)
                 idx = 1 if intercept else 0  # offset if coef[0] is intercept
-                if P2.ndim == 1:
-                    L2 = P2 * coef[idx:]
-                else:
-                    L2 = P2 @ coef[idx:]
+                L2 = alpha * coef[idx:]
                 obj = 0.5 * dev + 0.5 * (coef[idx:] @ L2)
                 objp = 0.5 * devp
                 objp[idx:] += L2
                 return obj, objp
 
-            args = (X, y, weights, P2, family, link)
+            args = (X, y, weights, self.alpha, family, link)
             # TODO: refactor this once
             # https://github.com/scikit-learn/scikit-learn/pull/14250
             # is merged.
@@ -1492,12 +1216,8 @@ class PoissonRegressor(GeneralizedLinearRegressor):
         the chi squared statistic or the deviance statistic. If None, the
         dispersion is not estimated.
 
-    solver : {'irls', 'lbfgs'}, optional (default='irls')
+    solver : {'lbfgs'}, optional (default='lbfgs')
         Algorithm to use in the optimization problem:
-
-        'irls'
-            Iterated reweighted least squares. It is the standard algorithm
-            for GLMs.
 
         'lbfgs'
             Calls scipy's L-BFGS-B optimizer.
@@ -1506,7 +1226,7 @@ class PoissonRegressor(GeneralizedLinearRegressor):
         The maximal number of iterations for solver algorithms.
 
     tol : float, optional (default=1e-4)
-        Stopping criterion. For the irls, and lbfgs solvers,
+        Stopping criterion. For the lbfgs solver,
         the iteration will stop when ``max{|g_i|, i = 1, ..., n} <= tol``
         where ``g_i`` is the i-th component of the gradient (derivative) of
         the objective function.
@@ -1575,8 +1295,7 @@ class PoissonRegressor(GeneralizedLinearRegressor):
           https://www.csie.ntu.edu.tw/~cjlin/papers/l1_glmnet/long-glmnet.pdf
     """
     def __init__(self, alpha=1.0, fit_intercept=True, fit_dispersion=None,
-                 solver='irls', max_iter=100,
-                 tol=1e-4, warm_start=False,
+                 solver='lbfgs', max_iter=100, tol=1e-4, warm_start=False,
                  random_state=None, copy_X=True, check_input=True, verbose=0):
 
         super().__init__(alpha=alpha, fit_intercept=fit_intercept,
