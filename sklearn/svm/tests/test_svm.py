@@ -439,81 +439,75 @@ def test_sample_weights():
     assert_array_almost_equal(dual_coef_no_weight, clf.dual_coef_)
 
 
-def test_negative_sample_weights():
-    # Testing all specializations of libsvm
+@pytest.mark.parametrize(
+    "CLF, params",
+    [(svm.SVC,
+      {"err_msg":
+       'Invalid input - all samples have zero/negative weights'}),
+     (svm.NuSVC,
+     {"err_msg":
+      '(negative dimensions are not allowed|nu is infeasible)'}),
+     (svm.SVR,
+     {"err_msg":
+      'Invalid input - all samples have zero/negative weights'}),
+     (svm.NuSVR,
+     {"err_msg":
+      'Invalid input - all samples have zero/negative weights'}),
+     (svm.OneClassSVM,
+     {"err_msg":
+      'Invalid input - all samples have zero/negative weights'})
+     ],
+    ids=['SVC', 'NuSVC', 'SVR', 'NuSVR', 'OneClassSVM']
+)
+@pytest.mark.parametrize(
+    "sample_weight",
+    [[0] * len(Y), [-0.3] * len(Y)],
+    ids=['weights-are-zero', 'weights-are-negative']
+)
+def test_negative_sample_weights_mask_all_samples(CLF, params, sample_weight):
+    clf = CLF(kernel='linear')
+    with pytest.raises(ValueError, match=params['err_msg']):
+        clf.fit(X, Y, sample_weight=sample_weight)
 
-    # 1. SVC - test that masking all samples that represent a label with X
-    # make flake8-diff. flake8 path_to_file fail during fit() with
-    # Exception. Fix issue #9494
 
-    # masking label "1" completely - raises exception.
-    # Label: Y = [1, 1, 1, 2, 2, 2]
-    wgts = np.array([0, -0.5, 0, 1, 1, 1], dtype=np.float)
-    assert_raises(ValueError, svm.SVC(kernel='linear', C=0.5).fit, X, Y, wgts)
+@pytest.mark.parametrize(
+    "CLF, params",
+    [(svm.SVC, {"err_msg":
+     'Invalid input - all samples with positive weights have the same label'}),
+     (svm.NuSVC, {"err_msg": 'specified nu is infeasible'})],
+    ids=['SVC', 'NuSVC']
+)
+@pytest.mark.parametrize(
+    "sample_weight",
+    [[0, -0.5, 0, 1, 1, 1],
+     [1, 1, 1, 0, -0.1, -0.3]],
+    ids=['mask-label-1', 'mask-label-2']
+)
+def test_negative_weights_svc_leave_just_one_label(CLF, params, sample_weight):
+    clf = CLF(kernel='linear')
+    with pytest.raises(ValueError, match=params['err_msg']):
+        clf.fit(X, Y, sample_weight=sample_weight)
 
-    # un-masking even one element from the "masked" label enables fit to
-    # succeed.  Label: Y = [1, 1, 1, 2, 2, 2]
-    wgts = np.array([0, -0.5, 1, 1, 1, 1], dtype=np.float)
-    clf = svm.SVC(kernel='linear', C=0.5).fit(X, Y, wgts)
-    assert_array_almost_equal(clf.coef_, [[0.3076,  0.4615]], decimal=4)
 
-    # masking label "2" completely - raises exception.
-    # Label: Y = [1, 1, 1, 2, 2, 2]
-    wgts = np.array([1, 1, 1, 0, -0.1, -0.3], dtype=np.float)
-    assert_raises(ValueError, svm.SVC(kernel='linear', C=0.5).fit, X, Y, wgts)
+@pytest.mark.parametrize(
+    "CLF, model",
+    [(svm.SVC, {'when-left': [0.3998,  0.4], 'when-right': [0.4,  0.3999]}),
+     (svm.NuSVC, {'when-left': [0.3333,  0.3333],
+      'when-right': [0.3333, 0.3333]})],
+    ids=['SVC', 'NuSVC']
+)
+@pytest.mark.parametrize(
+    "sample_weight, mask_side",
+    [([1, -0.5, 1, 1, 1, 1], 'when-left'),
+     ([1, 1, 1, 0, 1, 1], 'when-right')],
+    ids=['partial-mask-label-1', 'partial-mask-label-2']
+)
+def test_negative_weights_svc_leave_two_labels(CLF, model,
+                                               sample_weight, mask_side):
+    clf = CLF(kernel='linear')
+    clf.fit(X, Y, sample_weight=sample_weight)
+    assert_array_almost_equal(clf.coef_, [model[mask_side]], decimal=4)
 
-    # un-masking elements from the "masked" label enables fit to succeed.
-    # Label: Y = [1, 1, 1, 2, 2, 2]
-    wgts = np.array([1, 1, 1, 0, 1, 1], dtype=np.float)
-    clf = svm.SVC(kernel='linear', C=0.5).fit(X, Y, wgts)
-    assert_array_almost_equal(clf.coef_, [[0.4,  0.3999]], decimal=4)
-
-    # 2. NuSVC - test that masking all samples that represent a label
-    # with zero/negative weights will fail during fit() with
-    # Exception
-
-    # masking label "2" completely - raises exception.
-    # Label: Y = [1, 1, 1, 2, 2, 2]
-    wgts = np.array([1, 1, 1, 0, 0, -0.3], dtype=np.float)
-    assert_raises(ValueError, svm.NuSVC(kernel='linear').fit, X, Y, wgts)
-
-    # un-masking elements from the "masked" label enables fit to succeed.
-    # Label: Y = [1, 1, 1, 2, 2, 2]
-    wgts = np.array([1, 1, 1, 1, 1, -0.3], dtype=np.float)
-    clf = svm.NuSVC(kernel='linear').fit(X, Y, wgts)
-    assert_array_almost_equal(clf.coef_, [[0.3333, 0.3333]], decimal=4)
-
-    # 3. SVR - masking all samples with zero/negative weights  will
-    # fail fit(). There must be at least one remaining sample after
-    # scanning of  samples with negative labels
-
-    # masking all samples throws Exception
-    wgts = np.array([0, 0, 0, 0, 0, 0], dtype=np.float)
-    assert_raises(ValueError, svm.SVR(kernel='linear').fit, X, Y, wgts)
-
-    # unmasking label results in valid model.
-    # Label: Y = [1, 1, 1, 2, 2, 2]
-    wgts = np.array([1, 1, 1, 1, 1, 1], dtype=np.float)
-    reg = svm.SVR(kernel='linear').fit(X, Y, wgts)
-    assert_array_almost_equal(reg.coef_, [[0.2, 0.2]])
-
-    # 4. NuSVR - masking all samples  with zero/negative weights
-    # will not fail fit().
-
-    # masking all samples throws Exception
-    wgts = np.array([0, 0, 0, 0, 0, 0], dtype=np.float)
-    assert_raises(ValueError, svm.NuSVR(kernel='linear').fit, X, Y, wgts)
-
-    # unmasking labels. positive weights.  Label: Y = [1, 1, 1, 2, 2, 2]
-    wgts = np.array([1, 1, 1, 1, 1, 1], dtype=np.float)
-    reg = svm.NuSVR(kernel='linear').fit(X, Y, wgts)
-    assert_array_almost_equal(reg.coef_, [[0.1999, 0.2]], decimal=4)
-
-    # 5. OneClassSVM
-
-    # masking all samples throws Exception
-    wgts = np.array([-0.3, -0.3, -0.3, -0.3, -0.3, -0.3], dtype=np.float)
-    assert_raises(ValueError, svm.OneClassSVM(kernel='linear').fit, X, Y, wgts)
 
 @ignore_warnings(category=UndefinedMetricWarning)
 def test_auto_weight():
