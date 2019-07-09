@@ -3140,7 +3140,6 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
         if(msg != NULL)
             return msg;
 	}
-
 	return NULL;
 }
 
