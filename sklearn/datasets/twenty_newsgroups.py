@@ -306,7 +306,7 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         data.data = data_lst.tolist()
         
     if return_X_y:
-        return data, target
+        return data.data, data.target
     else:
         return data
 
