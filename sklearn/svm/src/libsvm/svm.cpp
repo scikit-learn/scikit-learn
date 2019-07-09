@@ -3137,7 +3137,7 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
         free(newprob.x);
         free(newprob.y);
         free(newprob.W);
-        if (msg != NULL)
+        if(msg != NULL)
         {
             return msg;
         }
