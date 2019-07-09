@@ -13,8 +13,6 @@ import scipy.sparse as sp
 import pytest
 
 from sklearn.utils.fixes import sp_version
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
@@ -23,7 +21,6 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
@@ -122,7 +119,7 @@ y = np.array([1, 1, 2, 2])
 
 
 def assert_grid_iter_equals_getitem(grid):
-    assert_equal(list(grid), [grid[i] for i in range(len(grid))])
+    assert list(grid) == [grid[i] for i in range(len(grid))]
 
 
 @pytest.mark.parametrize(
@@ -144,33 +141,33 @@ def test_parameter_grid():
     grid1 = ParameterGrid(params1)
     assert isinstance(grid1, Iterable)
     assert isinstance(grid1, Sized)
-    assert_equal(len(grid1), 3)
+    assert len(grid1) == 3
     assert_grid_iter_equals_getitem(grid1)
 
     params2 = {"foo": [4, 2],
                "bar": ["ham", "spam", "eggs"]}
     grid2 = ParameterGrid(params2)
-    assert_equal(len(grid2), 6)
+    assert len(grid2) == 6
 
     # loop to assert we can iterate over the grid multiple times
     for i in range(2):
         # tuple + chain transforms {"a": 1, "b": 2} to ("a", 1, "b", 2)
         points = set(tuple(chain(*(sorted(p.items())))) for p in grid2)
-        assert_equal(points,
+        assert (points ==
                      set(("bar", x, "foo", y)
                          for x, y in product(params2["bar"], params2["foo"])))
     assert_grid_iter_equals_getitem(grid2)
 
     # Special case: empty grid (useful to get default estimator settings)
     empty = ParameterGrid({})
-    assert_equal(len(empty), 1)
-    assert_equal(list(empty), [{}])
+    assert len(empty) == 1
+    assert list(empty) == [{}]
     assert_grid_iter_equals_getitem(empty)
     assert_raises(IndexError, lambda: empty[1])
 
     has_empty = ParameterGrid([{'C': [1, 10]}, {}, {'C': [.5]}])
-    assert_equal(len(has_empty), 4)
-    assert_equal(list(has_empty), [{'C': 1}, {'C': 10}, {}, {'C': .5}])
+    assert len(has_empty) == 4
+    assert list(has_empty) == [{'C': 1}, {'C': 10}, {}, {'C': .5}]
     assert_grid_iter_equals_getitem(has_empty)
 
 
@@ -183,7 +180,7 @@ def test_grid_search():
     sys.stdout = StringIO()
     grid_search.fit(X, y)
     sys.stdout = old_stdout
-    assert_equal(grid_search.best_estimator_.foo_param, 2)
+    assert grid_search.best_estimator_.foo_param == 2
 
     assert_array_equal(grid_search.cv_results_["param_foo_param"].data,
                        [1, 2, 3])
@@ -243,9 +240,9 @@ def test_grid_search_no_score():
     grid_search_no_score.fit(X, y)
 
     # check that best params are equal
-    assert_equal(grid_search_no_score.best_params_, grid_search.best_params_)
+    assert grid_search_no_score.best_params_ == grid_search.best_params_
     # check that we can call score and that it gives the correct result
-    assert_equal(grid_search.score(X, y), grid_search_no_score.score(X, y))
+    assert grid_search.score(X, y) == grid_search_no_score.score(X, y)
 
     # giving no scoring function raises an error
     grid_search_no_score = GridSearchCV(clf_no_score, {'C': Cs})
@@ -276,7 +273,7 @@ def test_grid_search_score_method():
     # ensure the test is sane
     assert score_auc < 1.0
     assert score_accuracy < 1.0
-    assert_not_equal(score_auc, score_accuracy)
+    assert score_auc != score_accuracy
 
     assert_almost_equal(score_accuracy, score_no_scoring)
     assert_almost_equal(score_auc, score_no_score_auc)
@@ -409,7 +406,7 @@ def test_grid_search_when_param_grid_includes_range():
     grid_search = None
     grid_search = GridSearchCV(clf, {'foo_param': range(1, 4)}, cv=3)
     grid_search.fit(X, y)
-    assert_equal(grid_search.best_estimator_.foo_param, 2)
+    assert grid_search.best_estimator_.foo_param == 2
 
 
 def test_grid_search_bad_param_grid():
@@ -459,7 +456,7 @@ def test_grid_search_sparse():
     C2 = cv.best_estimator_.C
 
     assert np.mean(y_pred == y_pred2) >= .9
-    assert_equal(C, C2)
+    assert C == C2
 
 
 def test_grid_search_sparse_scoring():
@@ -479,7 +476,7 @@ def test_grid_search_sparse_scoring():
     C2 = cv.best_estimator_.C
 
     assert_array_equal(y_pred, y_pred2)
-    assert_equal(C, C2)
+    assert C == C2
     # Smoke test the score
     # np.testing.assert_allclose(f1_score(cv.predict(X_[:180]), y[:180]),
     #                            cv.score(X_[:180], y[:180]))
@@ -493,7 +490,7 @@ def test_grid_search_sparse_scoring():
     y_pred3 = cv.predict(X_[180:])
     C3 = cv.best_estimator_.C
 
-    assert_equal(C, C3)
+    assert C == C3
     assert_array_equal(y_pred, y_pred3)
 
 
@@ -747,18 +744,18 @@ def test_unsupervised_grid_search():
                                    scoring=scoring, refit=refit)
         grid_search.fit(X, y)
         # Both ARI and FMS can find the right number :)
-        assert_equal(grid_search.best_params_["n_clusters"], 3)
+        assert grid_search.best_params_["n_clusters"] == 3
 
     # Single metric evaluation unsupervised
     grid_search = GridSearchCV(km, param_grid=dict(n_clusters=[2, 3, 4]),
                                scoring='fowlkes_mallows_score')
     grid_search.fit(X, y)
-    assert_equal(grid_search.best_params_["n_clusters"], 3)
+    assert grid_search.best_params_["n_clusters"] == 3
 
     # Now without a score, and without y
     grid_search = GridSearchCV(km, param_grid=dict(n_clusters=[2, 3, 4]))
     grid_search.fit(X)
-    assert_equal(grid_search.best_params_["n_clusters"], 4)
+    assert grid_search.best_params_["n_clusters"] == 4
 
 
 def test_gridsearch_no_predict():
@@ -772,8 +769,8 @@ def test_gridsearch_no_predict():
                           param_grid=dict(bandwidth=[.01, .1, 1]),
                           scoring=custom_scoring)
     search.fit(X)
-    assert_equal(search.best_params_['bandwidth'], .1)
-    assert_equal(search.best_score_, 42)
+    assert search.best_params_['bandwidth'] == .1
+    assert search.best_score_ == 42
 
 
 def test_param_sampler():
@@ -783,7 +780,7 @@ def test_param_sampler():
     sampler = ParameterSampler(param_distributions=param_distributions,
                                n_iter=10, random_state=0)
     samples = [x for x in sampler]
-    assert_equal(len(samples), 10)
+    assert len(samples) == 10
     for sample in samples:
         assert sample["kernel"] in ["rbf", "linear"]
         assert 0 <= sample["C"] <= 1
@@ -792,13 +789,13 @@ def test_param_sampler():
     param_distributions = {"C": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
     sampler = ParameterSampler(param_distributions=param_distributions,
                                n_iter=3, random_state=0)
-    assert_equal([x for x in sampler], [x for x in sampler])
+    assert [x for x in sampler] == [x for x in sampler]
 
     if sp_version >= (0, 16):
         param_distributions = {"C": uniform(0, 1)}
         sampler = ParameterSampler(param_distributions=param_distributions,
                                    n_iter=10, random_state=0)
-        assert_equal([x for x in sampler], [x for x in sampler])
+        assert [x for x in sampler] == [x for x in sampler]
 
 
 def check_cv_results_array_types(search, param_keys, score_keys):
@@ -852,7 +849,7 @@ def test_grid_search_cv_results():
         search = GridSearchCV(SVC(), cv=n_splits, iid=iid,
                               param_grid=params, return_train_score=True)
         search.fit(X, y)
-        assert_equal(iid, search.iid)
+        assert iid == search.iid
         cv_results = search.cv_results_
         # Check if score and timing are reasonable
         assert all(cv_results['rank_test_score'] >= 1)
@@ -905,7 +902,7 @@ def test_random_search_cv_results():
                                     param_distributions=params,
                                     return_train_score=True)
         search.fit(X, y)
-        assert_equal(iid, search.iid)
+        assert iid == search.iid
         cv_results = search.cv_results_
         # Check results structure
         check_cv_results_array_types(search, param_keys, score_keys)
@@ -1008,7 +1005,7 @@ def test_search_iid_param():
         train_std = search.cv_results_['std_train_score'][0]
 
         # Test the first candidate
-        assert_equal(search.cv_results_['param_C'][0], 1)
+        assert search.cv_results_['param_C'][0] == 1
         assert_array_almost_equal(test_cv_scores, [1, 1. / 3.])
         assert_array_almost_equal(train_cv_scores, [1, 1])
 
@@ -1054,7 +1051,7 @@ def test_search_iid_param():
         train_mean = search.cv_results_['mean_train_score'][0]
         train_std = search.cv_results_['std_train_score'][0]
 
-        assert_equal(search.cv_results_['param_C'][0], 1)
+        assert search.cv_results_['param_C'][0] == 1
         # scores are the same as above
         assert_array_almost_equal(test_cv_scores, [1, 1. / 3.])
         # Unweighted mean/std is used
@@ -1084,7 +1081,7 @@ def test_grid_search_cv_results_multimetric():
                                        iid=iid, param_grid=params,
                                        scoring=scoring, refit=False)
             grid_search.fit(X, y)
-            assert_equal(grid_search.iid, iid)
+            assert grid_search.iid == iid
             grid_searches.append(grid_search)
 
         compare_cv_results_multimetric_with_single(*grid_searches, iid=iid)
@@ -1133,7 +1130,7 @@ def compare_cv_results_multimetric_with_single(
     """Compare multi-metric cv_results with the ensemble of multiple
     single metric cv_results from single metric grid/random search"""
 
-    assert_equal(search_multi.iid, iid)
+    assert search_multi.iid == iid
     assert search_multi.multimetric_
     assert_array_equal(sorted(search_multi.scorer_),
                        ('accuracy', 'recall'))
@@ -1162,10 +1159,10 @@ def compare_cv_results_multimetric_with_single(
 def compare_refit_methods_when_refit_with_acc(search_multi, search_acc, refit):
     """Compare refit multi-metric search methods with single metric methods"""
     if refit:
-        assert_equal(search_multi.refit, 'accuracy')
+        assert search_multi.refit == 'accuracy'
     else:
         assert not search_multi.refit
-    assert_equal(search_acc.refit, refit)
+    assert search_acc.refit == refit
 
     X, y = make_blobs(n_samples=100, n_features=4, random_state=42)
     for method in ('predict', 'predict_proba', 'predict_log_proba'):
@@ -1173,7 +1170,7 @@ def compare_refit_methods_when_refit_with_acc(search_multi, search_acc, refit):
                             getattr(search_acc, method)(X))
     assert_almost_equal(search_multi.score(X, y), search_acc.score(X, y))
     for key in ('best_index_', 'best_score_', 'best_params_'):
-        assert_equal(getattr(search_multi, key), getattr(search_acc, key))
+        assert getattr(search_multi, key) == getattr(search_acc, key)
 
 
 def test_search_cv_results_rank_tie_breaking():
@@ -1245,7 +1242,7 @@ def test_search_cv_timing():
 
         assert hasattr(search, "refit_time_")
         assert isinstance(search.refit_time_, float)
-        assert_greater_equal(search.refit_time_, 0)
+        assert search.refit_time_ >= 0
 
 
 def test_grid_search_correct_score_results():
@@ -1301,8 +1298,8 @@ def test_fit_grid_point():
 
             # Test the return values of fit_grid_point
             assert_almost_equal(this_scores, expected_score)
-            assert_equal(params, this_params)
-            assert_equal(n_test_samples, test.size)
+            assert params == this_params
+            assert n_test_samples == test.size
 
     # Should raise an error upon multimetric scorer
     assert_raise_message(ValueError, "For evaluating multiple scores, use "
@@ -1492,7 +1489,7 @@ def test_parameters_sampler_replacement():
     # degenerates to GridSearchCV if n_iter the same as grid_size
     sampler = ParameterSampler(params, n_iter=6)
     samples = list(sampler)
-    assert_equal(len(samples), 6)
+    assert len(samples) == 6
     for values in ParameterGrid(params):
         assert values in samples
 
@@ -1500,16 +1497,16 @@ def test_parameters_sampler_replacement():
     params = {'a': range(10), 'b': range(10), 'c': range(10)}
     sampler = ParameterSampler(params, n_iter=99, random_state=42)
     samples = list(sampler)
-    assert_equal(len(samples), 99)
+    assert len(samples) == 99
     hashable_samples = ["a%db%dc%d" % (p['a'], p['b'], p['c'])
                         for p in samples]
-    assert_equal(len(set(hashable_samples)), 99)
+    assert len(set(hashable_samples)) == 99
 
     # doesn't go into infinite loops
     params_distribution = {'first': bernoulli(.5), 'second': ['a', 'b', 'c']}
     sampler = ParameterSampler(params_distribution, n_iter=7)
     samples = list(sampler)
-    assert_equal(len(samples), 7)
+    assert len(samples) == 7
 
 
 def test_stochastic_gradient_loss_param():
