@@ -25,7 +25,7 @@ from sklearn.exceptions import ConvergenceWarning
 
 from sklearn.utils.testing import assert_array_equal
 
-GLM_SOLVERS = ['irls', 'lbfgs', 'newton-cg', 'cd']
+GLM_SOLVERS = ['irls', 'lbfgs', 'newton-cg']
 
 
 @pytest.fixture(scope="module")
@@ -236,28 +236,6 @@ def test_glm_alpha_argument(alpha):
         glm.fit(X, y)
 
 
-@pytest.mark.parametrize('l1_ratio', ['not a number', -4.2, 1.1, [1]])
-def test_glm_l1_ratio_argument(l1_ratio):
-    """Test GLM for invalid l1_ratio argument."""
-    y = np.array([1, 2])
-    X = np.array([[1], [2]])
-    glm = GeneralizedLinearRegressor(family='normal', l1_ratio=l1_ratio)
-    with pytest.raises(ValueError,
-                       match="l1_ratio must be a number in interval.*0, 1"):
-        glm.fit(X, y)
-
-
-@pytest.mark.parametrize('P1', [['a string', 'a string'], [1, [2]], [1, 2, 3],
-                                [-1]])
-def test_glm_P1_argument(P1):
-    """Test GLM for invalid P1 argument."""
-    y = np.array([1, 2])
-    X = np.array([[1], [2]])
-    glm = GeneralizedLinearRegressor(P1=P1, l1_ratio=0.5, check_input=True)
-    with pytest.raises((ValueError, TypeError)):
-        glm.fit(X, y)
-
-
 @pytest.mark.parametrize('P2', ['a string', [1, 2, 3], [[2, 3]],
                                 sparse.csr_matrix([1, 2, 3]), [-1]])
 def test_glm_P2_argument(P2):
@@ -301,14 +279,13 @@ def test_glm_fit_intercept_argument(fit_intercept):
         glm.fit(X, y)
 
 
-@pytest.mark.parametrize('solver, l1_ratio',
-                         [('not a solver', 0), (1, 0), ([1], 0),
-                          ('irls', 0.5), ('lbfgs', 0.5), ('newton-cg', 0.5)])
-def test_glm_solver_argument(solver, l1_ratio):
+@pytest.mark.parametrize('solver',
+                         ['not a solver', 1, [1]])
+def test_glm_solver_argument(solver):
     """Test GLM for invalid solver argument."""
     y = np.array([1, 2])
     X = np.array([[1], [2]])
-    glm = GeneralizedLinearRegressor(solver=solver, l1_ratio=l1_ratio)
+    glm = GeneralizedLinearRegressor(solver=solver)
     with pytest.raises(ValueError):
         glm.fit(X, y)
 
@@ -340,28 +317,6 @@ def test_glm_warm_start_argument(warm_start):
     X = np.array([[1], [1]])
     glm = GeneralizedLinearRegressor(warm_start=warm_start)
     with pytest.raises(ValueError, match="warm_start must be bool"):
-        glm.fit(X, y)
-
-
-@pytest.mark.parametrize('start_params',
-                         ['not a start_params', ['zero'], [0, 0, 0],
-                          [[0, 0]], ['a', 'b']])
-def test_glm_start_params_argument(start_params):
-    """Test GLM for invalid start_params argument."""
-    y = np.array([1, 2])
-    X = np.array([[1], [1]])
-    glm = GeneralizedLinearRegressor(start_params=start_params)
-    with pytest.raises(ValueError):
-        glm.fit(X, y)
-
-
-@pytest.mark.parametrize('selection', ['not a selection', 1, 0, ['cyclic']])
-def test_glm_selection_argument(selection):
-    """Test GLM for invalid selection argument"""
-    y = np.array([1, 2])
-    X = np.array([[1], [1]])
-    glm = GeneralizedLinearRegressor(selection=selection)
-    with pytest.raises(ValueError, match="argument selection must be"):
         glm.fit(X, y)
 
 
@@ -413,7 +368,7 @@ def test_glm_identity_regression(solver):
     y = np.dot(X, coef)
     glm = GeneralizedLinearRegressor(alpha=0, family='normal', link='identity',
                                      fit_intercept=False, solver=solver,
-                                     start_params='zero', tol=1e-7)
+                                     tol=1e-7)
     res = glm.fit(X, y)
     assert_allclose(res.coef_, coef, rtol=1e-6)
 
@@ -427,7 +382,7 @@ def test_glm_identity_regression(solver):
 @pytest.mark.parametrize('solver, tol', [('irls', 1e-6),
                                          ('lbfgs', 1e-6),
                                          ('newton-cg', 1e-7),
-                                         ('cd', 1e-7)])
+])
 def test_glm_log_regression(family, solver, tol):
     """Test GLM regression with log link on a simple dataset."""
     coef = [0.2, -0.1]
@@ -435,7 +390,7 @@ def test_glm_log_regression(family, solver, tol):
     y = np.exp(np.dot(X, coef))
     glm = GeneralizedLinearRegressor(
                 alpha=0, family=family, link='log', fit_intercept=False,
-                solver=solver, start_params='guess', tol=tol)
+                solver=solver, tol=tol)
     res = glm.fit(X, y)
     assert_allclose(res.coef_, coef, rtol=5e-6)
 
@@ -472,14 +427,14 @@ def test_normal_ridge_comparison(n_samples, n_features, fit_intercept, solver):
                   random_state=42, **ridge_params)
     ridge.fit(X, y)
 
-    glm = GeneralizedLinearRegressor(alpha=1.0, l1_ratio=0, family='normal',
+    glm = GeneralizedLinearRegressor(alpha=1.0, family='normal',
                                      link='identity', fit_intercept=True,
                                      max_iter=300, solver=solver, tol=1e-6,
                                      check_input=False, random_state=42)
     glm.fit(X, y)
     assert glm.coef_.shape == (X.shape[1], )
     assert_allclose(glm.coef_, ridge.coef_, rtol=5e-6)
-    assert_allclose(glm.intercept_, ridge.intercept_, rtol=1e-6)
+    assert_allclose(glm.intercept_, ridge.intercept_, rtol=1e-5)
     assert_allclose(glm.predict(T), ridge.predict(T), rtol=1e-5)
 
 
@@ -487,7 +442,7 @@ def test_normal_ridge_comparison(n_samples, n_features, fit_intercept, solver):
                          [('irls', 1e-7),
                           ('lbfgs', 1e-7),
                           ('newton-cg', 1e-7),
-                          ('cd', 1e-7)])
+])
 def test_poisson_ridge(solver, tol):
     """Test ridge regression with poisson family and LogLink.
 
@@ -506,130 +461,24 @@ def test_poisson_ridge(solver, tol):
     X = np.array([[-2, -1, 1, 2], [0, 0, 1, 1]]).T
     y = np.array([0, 1, 1, 2])
     rng = np.random.RandomState(42)
-    glm = GeneralizedLinearRegressor(alpha=1, l1_ratio=0,
+    glm = GeneralizedLinearRegressor(alpha=1,
                                      fit_intercept=True, family='poisson',
                                      link='log', tol=1e-7,
                                      solver=solver, max_iter=300,
                                      random_state=rng)
     glm.fit(X, y)
     assert_allclose(glm.intercept_, -0.12889386979, rtol=1e-5)
-    assert_allclose(glm.coef_, [0.29019207995, 0.03741173122], rtol=1e-6)
-
-
-@pytest.mark.parametrize('diag_fisher', [False, True])
-def test_normal_enet(diag_fisher):
-    """Test elastic net regression with normal/gaussian family."""
-    alpha, l1_ratio = 0.3, 0.7
-    n_samples, n_features = 20, 2
-    rng = np.random.RandomState(42)
-    X = rng.randn(n_samples, n_features).copy(order='F')
-    beta = rng.randn(n_features)
-    y = 2 + np.dot(X, beta) + rng.randn(n_samples)
-
-    # 1. test normal enet on dense data
-    glm = GeneralizedLinearRegressor(alpha=alpha, l1_ratio=l1_ratio,
-                                     family='normal', link='identity',
-                                     fit_intercept=True, tol=1e-8,
-                                     max_iter=100, selection='cyclic',
-                                     solver='cd', start_params='zero',
-                                     check_input=False,
-                                     diag_fisher=diag_fisher)
-    glm.fit(X, y)
-
-    enet = ElasticNet(alpha=alpha, l1_ratio=l1_ratio, fit_intercept=True,
-                      normalize=False, tol=1e-8, copy_X=True)
-    enet.fit(X, y)
-
-    assert_allclose(glm.intercept_, enet.intercept_, rtol=2e-7)
-    assert_allclose(glm.coef_, enet.coef_, rtol=5e-5)
-
-    # 2. test normal enet on sparse data
-    X = sparse.csc_matrix(X)
-    glm.fit(X, y)
-    assert_allclose(glm.intercept_, enet.intercept_, rtol=2e-7)
-    assert_allclose(glm.coef_, enet.coef_, rtol=5e-5)
-
-
-def test_poisson_enet():
-    """Test elastic net regression with poisson family and LogLink.
-
-    Compare to R's glmnet"""
-    # library("glmnet")
-    # options(digits=10)
-    # df <- data.frame(a=c(-2,-1,1,2), b=c(0,0,1,1), y=c(0,1,1,2))
-    # x <- data.matrix(df[,c("a", "b")])
-    # y <- df$y
-    # fit <- glmnet(x=x, y=y, alpha=0.5, intercept=T, family="poisson",
-    #               standardize=F, thresh=1e-10, nlambda=10000)
-    # coef(fit, s=1)
-    # (Intercept) -0.03550978409
-    # a            0.16936423283
-    # b            .
-    glmnet_intercept = -0.03550978409
-    glmnet_coef = [0.16936423283, 0.]
-    X = np.array([[-2, -1, 1, 2], [0, 0, 1, 1]]).T
-    y = np.array([0, 1, 1, 2])
-    rng = np.random.RandomState(42)
-    glm = GeneralizedLinearRegressor(alpha=1, l1_ratio=0.5, family='poisson',
-                                     link='log', solver='cd', tol=1e-8,
-                                     selection='random', random_state=rng,
-                                     start_params='guess')
-    glm.fit(X, y)
-    assert_allclose(glm.intercept_, glmnet_intercept, rtol=2e-6)
-    assert_allclose(glm.coef_, glmnet_coef, rtol=2e-7)
-
-    # test results with general optimization procedure
-    def obj(coef):
-        pd = PoissonDistribution()
-        link = LogLink()
-        N = y.shape[0]
-        mu = link.inverse(X @ coef[1:] + coef[0])
-        alpha, l1_ratio = (1, 0.5)
-        return 1./(2.*N) * pd.deviance(y, mu) \
-            + 0.5 * alpha * (1-l1_ratio) * (coef[1:]**2).sum() \
-            + alpha * l1_ratio * np.sum(np.abs(coef[1:]))
-    res = optimize.minimize(obj, [0, 0, 0], method='nelder-mead', tol=1e-10,
-                            options={'maxiter': 1000, 'disp': False})
-    assert_allclose(glm.intercept_, res.x[0], rtol=5e-5)
-    assert_allclose(glm.coef_, res.x[1:], rtol=1e-5, atol=1e-9)
-    assert_allclose(obj(np.concatenate(([glm.intercept_], glm.coef_))),
-                    res.fun, rtol=1e-8)
-
-    # same for start_params='zero' and selection='cyclic'
-    # with reduced precision
-    glm = GeneralizedLinearRegressor(alpha=1, l1_ratio=0.5, family='poisson',
-                                     link='log', solver='cd', tol=1e-5,
-                                     selection='cyclic', start_params='zero')
-    glm.fit(X, y)
-    assert_allclose(glm.intercept_, glmnet_intercept, rtol=1e-4)
-    assert_allclose(glm.coef_, glmnet_coef, rtol=1e-4)
-
-    # check warm_start, therefore start with different alpha
-    glm = GeneralizedLinearRegressor(alpha=0.005, l1_ratio=0.5,
-                                     family='poisson', max_iter=300,
-                                     link='log', solver='cd', tol=1e-5,
-                                     selection='cyclic', start_params='zero')
-    glm.fit(X, y)
-    # warm start with original alpha and use of sparse matrices
-    glm.warm_start = True
-    glm.alpha = 1
-    X = sparse.csr_matrix(X)
-    glm.fit(X, y)
-    assert_allclose(glm.intercept_, glmnet_intercept, rtol=1e-4)
-    assert_allclose(glm.coef_, glmnet_coef, rtol=1e-4)
+    assert_allclose(glm.coef_, [0.29019207995, 0.03741173122], rtol=1e-5)
 
 
 @pytest.mark.parametrize(
         "params",
         [
-            {"solver": "irls", "start_params": "guess"},
-            {"solver": "irls", "start_params": "zero"},
-            {"solver": "lbfgs", "start_params": "guess"},
-            {"solver": "lbfgs", "start_params": "zero"},
+            {"solver": "irls" },
+            {"solver": "irls" },
+            {"solver": "lbfgs" },
+            {"solver": "lbfgs"},
             {"solver": "newton-cg"},
-            {"solver": "cd", "selection": "cyclic", "diag_fisher": False},
-            {"solver": "cd", "selection": "cyclic", "diag_fisher": True},
-            {"solver": "cd", "selection": "random", "diag_fisher": False},
         ],
         ids=lambda params: ', '.join("%s=%s" % (key, val)
                                      for key,  val in params.items())

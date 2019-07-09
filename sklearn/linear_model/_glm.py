@@ -93,49 +93,6 @@ def _safe_sandwich_dot(X, d, intercept=False):
     return res
 
 
-def _min_norm_sugrad(coef, grad, P2, P1):
-    """Compute the gradient of all subgradients with minimal L2-norm.
-
-    subgrad = grad + P2 * coef + P1 * subgrad(|coef|_1)
-
-    g_i = grad_i + (P2*coef)_i
-
-    if coef_i > 0:   g_i + P1_i
-    if coef_i < 0:   g_i - P1_i
-    if coef_i = 0:   sign(g_i) * max(|g_i|-P1_i, 0)
-
-    Parameters
-    ----------
-    coef : ndarray
-        coef[0] may be intercept.
-
-    grad : ndarray, shape=coef.shape
-
-    P2 : {1d or 2d array, None}
-        always without intercept, ``None`` means P2 = 0
-
-    P1 : ndarray
-        always without intercept
-    """
-    intercept = (coef.size == P1.size + 1)
-    idx = 1 if intercept else 0  # offset if coef[0] is intercept
-    # compute grad + coef @ P2 without intercept
-    grad_wP2 = grad[idx:].copy()
-    if P2 is None:
-        pass
-    elif P2.ndim == 1:
-        grad_wP2 += coef[idx:] * P2
-    else:
-        grad_wP2 += coef[idx:] @ P2
-    res = np.where(coef[idx:] == 0,
-                   np.sign(grad_wP2) * np.maximum(np.abs(grad_wP2) - P1, 0),
-                   grad_wP2 + np.sign(coef[idx:]) * P1)
-    if intercept:
-        return np.concatenate(([grad[0]], res))
-    else:
-        return res
-
-
 class Link(metaclass=ABCMeta):
     """Abstract base class for Link functions."""
 
@@ -915,7 +872,7 @@ def _irls_solver(coef, X, y, weights, P2, fit_intercept, family, link,
     #   D   = link.inverse_derivative(eta) = diag_matrix(h'(X w))
     #   D2  = link.inverse_derivative(eta)^2 = D^2
     #   W   = D2/V(mu)
-    #   l2  = alpha * (1 - l1_ratio)
+    #   l2  = alpha
     #   Obj' = d(Obj)/d(w) = 1/2 Dev' + l2 P2 w
     #        = -X' D (y-mu)/V(mu) + l2 P2 w
     #   Obj''= d2(Obj)/d(w)d(w') = Hessian = -X'(...) X + l2 P2
@@ -981,345 +938,6 @@ def _irls_solver(coef, X, y, weights, P2, fit_intercept, family, link,
     return coef, n_iter
 
 
-def _cd_cycle(d, X, coef, score, fisher, P1, P2, n_cycles, inner_tol,
-              max_inner_iter=1000, selection='cyclic',
-              random_state=None, diag_fisher=False):
-    """Compute inner loop of coordinate descent, i.e. cycles through features.
-
-    Minimization of 1-d subproblems::
-
-        min_z q(d+z*e_j) - q(d)
-        = min_z A_j z + 1/2 B_jj z^2 + ||P1_j (w_j+d_j+z)||_1
-
-    A = f'(w) + d*H(w) + (w+d)*P2
-    B = H+P2
-    Note: f'=-score and H=fisher are updated at the end of outer iteration.
-    """
-    # TODO: use sparsity (coefficient already 0 due to L1 penalty)
-    #       => active set of features for featurelist, see paper
-    #          of Improved GLMNET or Gap Safe Screening Rules
-    #          https://arxiv.org/abs/1611.05780
-    n_samples, n_features = X.shape
-    intercept = (coef.size == X.shape[1] + 1)
-    idx = 1 if intercept else 0  # offset if coef[0] is intercept
-    B = fisher
-    if P2.ndim == 1:
-        coef_P2 = coef[idx:] * P2
-        if not diag_fisher:
-            idiag = np.arange(start=idx, stop=B.shape[0])
-            # B[np.diag_indices_from(B)] += P2
-            B[(idiag, idiag)] += P2
-    else:
-        coef_P2 = coef[idx:] @ P2
-        if not diag_fisher:
-            if sparse.issparse(P2):
-                B[idx:, idx:] += P2.toarray()
-            else:
-                B[idx:, idx:] += P2
-    A = -score
-    A[idx:] += coef_P2
-    # A += d @ (H+P2) but so far d=0
-    # inner loop
-    for inner_iter in range(1, max_inner_iter+1):
-        inner_iter += 1
-        n_cycles += 1
-        # cycle through features, update intercept separately at the end
-        if selection == 'random':
-            featurelist = random_state.permutation(n_features)
-        else:
-            featurelist = np.arange(n_features)
-        for j in featurelist:
-            # minimize_z: a z + 1/2 b z^2 + c |d+z|
-            # a = A_j
-            # b = B_jj > 0
-            # c = |P1_j| = P1_j > 0, see 1.3
-            # d = w_j + d_j
-            # cf. https://arxiv.org/abs/0708.1485 Eqs. (3) - (4)
-            # with beta = z+d, beta_hat = d-a/b and gamma = c/b
-            # z = 1/b * S(bd-a,c) - d
-            # S(a,b) = sign(a) max(|a|-b, 0) soft thresholding
-            jdx = j+idx  # index for arrays containing entries for intercept
-            a = A[jdx]
-            if diag_fisher:
-                # Note: fisher is ndarray of shape (n_samples,) => no idx
-                # Calculate Bj = B[j, :] = B[:, j] as it is needed later anyway
-                Bj = np.zeros_like(A)
-                if intercept:
-                    Bj[0] = fisher.sum()
-                if sparse.issparse(X):
-                    Bj[idx:] = _safe_toarray(X[:, j].transpose() @
-                                             X.multiply(fisher[:, np.newaxis])
-                                             ).ravel()
-                else:
-                    Bj[idx:] = (fisher * X[:, j]) @ X
-
-                if P2.ndim == 1:
-                    Bj[idx:] += P2[j]
-                else:
-                    if sparse.issparse(P2):
-                        # slice columns as P2 is csc
-                        Bj[idx:] += P2[:, j].toarray().ravel()
-                    else:
-                        Bj[idx:] += P2[:, j]
-                b = Bj[jdx]
-            else:
-                b = B[jdx, jdx]
-
-            # those ten lines are what it is all about
-            if b <= 0:
-                z = 0
-            elif P1[j] == 0:
-                z = -a/b
-            elif a + P1[j] < b * (coef[jdx] + d[jdx]):
-                z = -(a + P1[j])/b
-            elif a - P1[j] > b * (coef[jdx] + d[jdx]):
-                z = -(a - P1[j])/b
-            else:
-                z = -(coef[jdx] + d[jdx])
-
-            # update direction d
-            d[jdx] += z
-            # update A because d_j is now d_j+z
-            # A = f'(w) + d*H(w) + (w+d)*P2
-            # => A += (H+P2)*e_j z = B_j * z
-            # Note: B is symmetric B = B.transpose
-            if diag_fisher:
-                # Bj = B[:, j] calculated above, still valid
-                A += Bj * z
-            else:
-                # B is symmetric, C- or F-contiguous, but never sparse
-                if B.flags['F_CONTIGUOUS']:
-                    # slice columns like for sparse csc
-                    A += B[:, jdx] * z
-                else:  # B.flags['C_CONTIGUOUS'] might be true
-                    # slice rows
-                    A += B[jdx, :] * z
-            # end of cycle over features
-        # update intercept
-        if intercept:
-            if diag_fisher:
-                Bj = np.zeros_like(A)
-                Bj[0] = fisher.sum()
-                Bj[1:] = fisher @ X
-                b = Bj[0]
-            else:
-                b = B[0, 0]
-            z = 0 if b <= 0 else -A[0]/b
-            d[0] += z
-            if diag_fisher:
-                A += Bj * z
-            else:
-                if B.flags['F_CONTIGUOUS']:
-                    A += B[:, 0] * z
-                else:
-                    A += B[0, :] * z
-        # end of complete cycle
-        # stopping criterion for inner loop
-        # sum_i(|minimum of norm of subgrad of q(d)_i|)
-        # subgrad q(d) = A + subgrad ||P1*(w+d)||_1
-        mn_subgrad = _min_norm_sugrad(coef=coef + d, grad=A, P2=None, P1=P1)
-        mn_subgrad = linalg.norm(mn_subgrad, ord=1)
-        if mn_subgrad <= inner_tol:
-            if inner_iter == 1:
-                inner_tol = inner_tol/4.
-            break
-        # end of inner loop
-    return d, coef_P2, n_cycles, inner_tol
-
-
-def _cd_solver(coef, X, y, weights, P1, P2, fit_intercept, family, link,
-               max_iter=100, max_inner_iter=1000, tol=1e-4,
-               selection='cyclic ', random_state=None,
-               diag_fisher=False, copy_X=True):
-    """Solve GLM with L1 and L2 penalty by coordinate descent algorithm.
-
-    The objective being minimized in the coefficients w=coef is::
-
-        F = f + g, f(w) = 1/2 deviance, g = 1/2 w*P2*w + ||P1*w||_1
-
-    An Improved GLMNET for L1-regularized Logistic Regression:
-
-    1. Find optimal descent direction d by minimizing
-       min_d F(w+d) = min_d F(w+d) - F(w)
-    2. Quadratic approximation of F(w+d)-F(w) = q(d):
-       using f(w+d) = f(w) + f'(w)*d + 1/2 d*H(w)*d + O(d^3) gives:
-       q(d) = (f'(w) + w*P2)*d + 1/2 d*(H(w)+P2)*d
-       + ||P1*(w+d)||_1 - ||P1*w||_1
-       Then minimize q(d): min_d q(d)
-    3. Coordinate descent by updating coordinate j (d -> d+z*e_j):
-       min_z q(d+z*e_j)
-       = min_z q(d+z*e_j) - q(d)
-       = min_z A_j z + 1/2 B_jj z^2
-               + ||P1_j (w_j+d_j+z)||_1 - ||P1_j (w_j+d_j)||_1
-       A = f'(w) + d*H(w) + (w+d)*P2
-       B = H + P2
-
-    Repeat steps 1-3 until convergence.
-    Note: Use Fisher matrix instead of Hessian for H.
-    Note: f' = -score, H = Fisher matrix
-
-    Parameters
-    ----------
-    coef : ndarray, shape (c,)
-        If fit_intercept=False, shape c=X.shape[1].
-        If fit_intercept=True, then c=X.shape[1] + 1.
-
-    X : {ndarray, csc sparse matrix}, shape (n_samples, n_features)
-        Training data (with intercept included if present). If not sparse,
-        pass directly as Fortran-contiguous data to avoid
-        unnecessary memory duplication.
-
-    y : ndarray, shape (n_samples,)
-        Target values.
-
-    weights: ndarray, shape (n_samples,)
-        Sample weights with which the deviance is weighted. The weights must
-        bee normalized and sum to 1.
-
-    P1 : {ndarray}, shape (n_features,)
-        The L1-penalty vector (=diagonal matrix)
-
-    P2 : {ndarray, csc sparse matrix}, shape (n_features, n_features)
-        The L2-penalty matrix or vector (=diagonal matrix). If a matrix is
-        passed, it must be symmetric. If X is sparse, P2 must also be sparse.
-
-    fit_intercept : boolean, optional (default=True)
-        Specifies if a constant (a.k.a. bias or intercept) should be
-        added to the linear predictor (X*coef+intercept).
-
-    family : ExponentialDispersionModel
-
-    link : Link
-
-    max_iter : int, optional (default=100)
-        Maximum numer of outer (Newton) iterations.
-
-    max_inner_iter : int, optional (default=1000)
-        Maximum number of iterations in each inner loop, i.e. max number of
-        cycles over all features per inner loop.
-
-    tol : float, optional (default=1e-4)
-        Convergence criterion is
-        sum_i(|minimum of norm of subgrad of objective_i|)<=tol.
-
-    selection : str, optional (default='cyclic')
-        If 'random', randomly chose features in inner loop.
-
-    random_state : {int, RandomState instance, None}, optional (default=None)
-
-    diag_fisher : boolean, optional (default=False)
-        ``False`` calculates full fisher matrix, ``True`` only diagonal matrix
-        s.t. fisher = X.T @ diag @ X. This saves storage but needs more
-        matrix-vector multiplications.
-
-    copy_X : boolean, optional (default=True)
-        If ``True``, X will be copied; else, it may be overwritten.
-
-    Returns
-    -------
-    coef : ndarray, shape (c,)
-        If fit_intercept=False, shape c=X.shape[1].
-        If fit_intercept=True, then c=X.shape[1] + 1.
-
-    n_iter : number of outer iterations = newton iterations
-
-    n_cycles : number of cycles over features
-
-    References
-    ----------
-    Guo-Xun Yuan, Chia-Hua Ho, Chih-Jen Lin
-    An Improved GLMNET for L1-regularized Logistic Regression,
-    Journal of Machine Learning Research 13 (2012) 1999-2030
-    https://www.csie.ntu.edu.tw/~cjlin/papers/l1_glmnet/long-glmnet.pdf
-    """
-    X = check_array(X, 'csc', dtype=[np.float64, np.float32],
-                    order='F', copy=copy_X)
-    if P2.ndim == 2:
-        P2 = check_array(P2, 'csc', dtype=[np.float64, np.float32],
-                         order='F', copy=copy_X)
-    if sparse.issparse(X):
-        if not sparse.isspmatrix_csc(P2):
-            raise ValueError("If X is sparse, P2 must also be sparse csc"
-                             "format. Got P2 not sparse.")
-    random_state = check_random_state(random_state)
-    # Note: we already set P2 = l2*P2, P1 = l1*P1
-    # Note: we already symmetrized P2 = 1/2 (P2 + P2')
-    n_iter = 0  # number of outer iterations
-    n_cycles = 0  # number of (complete) cycles over features
-    converged = False
-    n_samples, n_features = X.shape
-    idx = 1 if fit_intercept else 0  # offset if coef[0] is intercept
-    # line search parameters
-    (beta, sigma) = (0.5, 0.01)
-    # some precalculations
-    # Note: For diag_fisher=False, fisher = X.T @ fisher @ X and fisher is a
-    #       1d array representing a diagonal matrix.
-    eta, mu, score, fisher = family._eta_mu_score_fisher(
-        coef=coef, phi=1, X=X, y=y, weights=weights, link=link,
-        diag_fisher=diag_fisher)
-    # set up space for search direction d for inner loop
-    d = np.zeros_like(coef)
-    # initial stopping tolerance of inner loop
-    # use L1-norm of minimum of norm of subgradient of F
-    inner_tol = _min_norm_sugrad(coef=coef, grad=-score, P2=P2, P1=P1)
-    inner_tol = linalg.norm(inner_tol, ord=1)
-    # outer loop
-    while n_iter < max_iter:
-        n_iter += 1
-        # initialize search direction d (to be optimized) with zero
-        d.fill(0)
-        # inner loop = _cd_cycle
-        d, coef_P2, n_cycles, inner_tol = \
-            _cd_cycle(d, X, coef, score, fisher, P1, P2, n_cycles, inner_tol,
-                      max_inner_iter=max_inner_iter, selection=selection,
-                      random_state=random_state, diag_fisher=diag_fisher)
-        # line search by sequence beta^k, k=0, 1, ..
-        # F(w + lambda d) - F(w) <= lambda * bound
-        # bound = sigma * (f'(w)*d + w*P2*d
-        #                  +||P1 (w+d)||_1 - ||P1 w||_1)
-        P1w_1 = linalg.norm(P1 * coef[idx:], ord=1)
-        P1wd_1 = linalg.norm(P1 * (coef + d)[idx:], ord=1)
-        # Note: coef_P2 already calculated and still valid
-        bound = sigma * (-(score @ d) + coef_P2 @ d[idx:] + P1wd_1 - P1w_1)
-        Fw = (0.5 * family.deviance(y, mu, weights) +
-              0.5 * (coef_P2 @ coef[idx:]) + P1w_1)
-        la = 1./beta
-        for k in range(20):
-            la *= beta  # starts with la=1
-            coef_wd = coef + la * d
-            mu_wd = link.inverse(_safe_lin_pred(X, coef_wd))
-            Fwd = (0.5 * family.deviance(y, mu_wd, weights) +
-                   linalg.norm(P1 * coef_wd[idx:], ord=1))
-            if P2.ndim == 1:
-                Fwd += 0.5 * ((coef_wd[idx:] * P2) @ coef_wd[idx:])
-            else:
-                Fwd += 0.5 * (coef_wd[idx:] @ (P2 @ coef_wd[idx:]))
-            if Fwd - Fw <= sigma * la * bound:
-                break
-        # update coefficients
-        coef += la * d
-        # calculate eta, mu, score, Fisher matrix for next iteration
-        eta, mu, score, fisher = family._eta_mu_score_fisher(
-            coef=coef, phi=1, X=X, y=y, weights=weights, link=link,
-            diag_fisher=diag_fisher)
-        # stopping criterion for outer loop
-        # sum_i(|minimum-norm of subgrad of F(w)_i|)
-        # fp_wP2 = f'(w) + w*P2
-        # Note: eta, mu and score are already updated
-        mn_subgrad = _min_norm_sugrad(coef=coef, grad=-score, P2=P2, P1=P1)
-        mn_subgrad = linalg.norm(mn_subgrad, ord=1)
-        if mn_subgrad <= tol:
-            converged = True
-            break
-        # end of outer loop
-    if not converged:
-        warnings.warn("Coordinate descent failed to converge. Increase"
-                      " the maximum number of iterations max_iter"
-                      " (currently {0})".format(max_iter), ConvergenceWarning)
-
-    return coef, n_iter, n_cycles
-
-
 class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     """Regression via a Generalized Linear Model (GLM) with penalties.
 
@@ -1329,28 +947,10 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     priors as regularizer::
 
             1/(2*sum(s)) * deviance(y, h(X*w); s)
-            + alpha * l1_ratio * ||P1*w||_1
-            + 1/2 * alpha * (1 - l1_ratio) * w*P2*w
+            + 1/2 * alpha * w*P2*w
 
-    with inverse link function h and s=sample_weight. Note that for
-    ``sample_weight=None``, one has s_i=1 and sum(s)=n_samples).
-    For ``P1=P2='identity'``, the penalty is the elastic net::
-
-            alpha * l1_ratio * ||w||_1
-            + 1/2 * alpha * (1 - l1_ratio) * ||w||_2^2
-
-    If you are interested in controlling the L1 and L2 penalties
-    separately, keep in mind that this is equivalent to::
-
-            a * L1 + b * L2
-
-    where::
-
-            alpha = a + b and l1_ratio = a / (a + b)
-
-    The parameter ``l1_ratio`` corresponds to alpha in the R package glmnet,
-    while ``alpha`` corresponds to the lambda parameter in glmnet.
-    Specifically, l1_ratio = 1 is the lasso penalty.
+    with inverse link function h and s=sample_weight. 
+    The parameter ``alpha`` corresponds to the lambda parameter in glmnet.
 
     Read more in the :ref:`User Guide <Generalized_linear_regression>`.
 
@@ -1363,19 +963,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         parameter.``alpha = 0`` is equivalent to unpenalized GLMs. In this
         case, the design matrix X must have full column rank
         (no collinearities).
-
-    l1_ratio : float, optional (default=0)
-        The elastic net mixing parameter, with ``0 <= l1_ratio <= 1``. For
-        ``l1_ratio = 0`` the penalty is an L2 penalty. ``For l1_ratio = 1`` it
-        is an L1 penalty.  For ``0 < l1_ratio < 1``, the penalty is a
-        combination of L1 and L2.
-
-    P1 : {'identity', array-like}, shape (n_features,), optional \
-            (default='identity')
-        With this array, you can exclude coefficients from the L1 penalty.
-        Set the corresponding value to 1 (include) or 0 (exclude). The
-        default value ``'identity'`` is the same as a 1d array of ones.
-        Note that n_features = X.shape[1].
 
     P2 : {'identity', array-like, sparse matrix}, shape \
             (n_features,) or (n_features, n_features), optional \
@@ -1416,18 +1003,12 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         the chi squared statistic or the deviance statistic. If None, the
         dispersion is not estimated.
 
-    solver : {'auto', 'cd', 'irls', 'lbfgs', 'newton-cg'}, \
+    solver : {'auto', 'irls', 'lbfgs', 'newton-cg'}, \
             optional (default='auto')
         Algorithm to use in the optimization problem:
 
         'auto'
-            Sets 'irls' if l1_ratio equals 0, else 'cd'.
-
-        'cd'
-            Coordinate descent algorithm. It can deal with L1 as well as L2
-            penalties. Note that in order to avoid unnecessary memory
-            duplication of X in the ``fit`` method, X should be directly passed
-            as a Fortran-contiguous numpy array or sparse csc matrix.
+            Sets 'irls'
 
         'irls'
             Iterated reweighted least squares.
@@ -1450,31 +1031,17 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         Stopping criterion. For the irls, newton-cg and lbfgs solvers,
         the iteration will stop when ``max{|g_i|, i = 1, ..., n} <= tol``
         where ``g_i`` is the i-th component of the gradient (derivative) of
-        the objective function. For the cd solver, convergence is reached
-        when ``sum_i(|minimum-norm of g_i|)``, where ``g_i`` is the
-        subgradient of the objective and minimum-norm of ``g_i`` is the element
-        of the subgradient ``g_i`` with the smallest L2-norm.
+        the objective function. 
 
     warm_start : boolean, optional (default=False)
         If set to ``True``, reuse the solution of the previous call to ``fit``
         as initialization for ``coef_`` and ``intercept_``.
 
-    selection : str, optional (default='cyclic')
-        For the solver 'cd' (coordinate descent), the coordinates (features)
-        can be updated in either cyclic or random order.
-        If set to 'random', a random coefficient is updated every iteration
-        rather than looping over features sequentially in the same order. This
-        (setting to 'random') often leads to significantly faster convergence
-        especially when tol is higher than 1e-4.
-
     random_state : {int, RandomState instance, None}, optional (default=None)
-        The seed of the pseudo random number generator that selects a random
-        feature to be updated for solver 'cd' (coordinate descent).
         If int, random_state is the seed used by the random
         number generator; if RandomState instance, random_state is the random
         number generator; if None, the random number generator is the
-        RandomState instance used by `np.random`. Used when ``selection`` ==
-        'random'.
+        RandomState instance used by `np.random`. 
 
     diag_fisher : boolean, optional, (default=False)
         Only relevant for solver 'cd'.
@@ -1547,15 +1114,13 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
           Journal of Machine Learning Research 13 (2012) 1999-2030
           https://www.csie.ntu.edu.tw/~cjlin/papers/l1_glmnet/long-glmnet.pdf
     """
-    def __init__(self, alpha=1.0, l1_ratio=0, P1='identity', P2='identity',
+    def __init__(self, alpha=1.0, P2='identity',
                  fit_intercept=True, family='normal', link='auto',
                  fit_dispersion=None, solver='auto', max_iter=100,
                  tol=1e-4, warm_start=False,
-                 selection='cyclic', random_state=None, diag_fisher=False,
+                 random_state=None, diag_fisher=False,
                  copy_X=True, check_input=True, verbose=0):
         self.alpha = alpha
-        self.l1_ratio = l1_ratio
-        self.P1 = P1
         self.P2 = P2
         self.fit_intercept = fit_intercept
         self.family = family
@@ -1565,7 +1130,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         self.max_iter = max_iter
         self.tol = tol
         self.warm_start = warm_start
-        self.selection = selection
         self.random_state = random_state
         self.diag_fisher = diag_fisher
         self.copy_X = copy_X
@@ -1645,28 +1209,16 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         if not isinstance(self.alpha, numbers.Number) or self.alpha < 0:
             raise ValueError("Penalty term must be a non-negative number;"
                              " got (alpha={0})".format(self.alpha))
-        if (not isinstance(self.l1_ratio, numbers.Number) or
-                self.l1_ratio < 0 or self.l1_ratio > 1):
-            raise ValueError("l1_ratio must be a number in interval [0, 1];"
-                             " got (l1_ratio={0})".format(self.l1_ratio))
         if not isinstance(self.fit_intercept, bool):
             raise ValueError("The argument fit_intercept must be bool;"
                              " got {0}".format(self.fit_intercept))
-        if self.solver not in ['auto', 'irls', 'lbfgs', 'newton-cg', 'cd']:
+        if self.solver not in ['auto', 'irls', 'lbfgs', 'newton-cg']:
             raise ValueError("GeneralizedLinearRegressor supports only solvers"
-                             " 'auto', 'irls', 'lbfgs', 'newton-cg' and 'cd';"
+                             " 'auto', 'irls', 'lbfgs', 'newton-cg';"
                              " got {0}".format(self.solver))
         solver = self.solver
         if self.solver == 'auto':
-            if self.l1_ratio == 0:
-                solver = 'irls'
-            else:
-                solver = 'cd'
-        if (self.alpha > 0 and self.l1_ratio > 0 and solver not in ['cd']):
-            raise ValueError("The chosen solver (solver={0}) can't deal "
-                             "with L1 penalties, which are included with "
-                             "(alpha={1}) and (l1_ratio={2})."
-                             .format(solver, self.alpha, self.l1_ratio))
+            solver = 'irls'
         if (not isinstance(self.max_iter, int)
                 or self.max_iter <= 0):
             raise ValueError("Maximum number of iteration must be a positive "
@@ -1678,10 +1230,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         if not isinstance(self.warm_start, bool):
             raise ValueError("The argument warm_start must be bool;"
                              " got {0}".format(self.warm_start))
-        if self.selection not in ['cyclic', 'random']:
-            raise ValueError("The argument selection must be 'cyclic' or "
-                             "'random'; got (selection={0})"
-                             .format(self.selection))
         random_state = check_random_state(self.random_state)
         if not isinstance(self.diag_fisher, bool):
             raise ValueError("The argument diag_fisher must be bool;"
@@ -1698,16 +1246,10 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         # 1.2 validate arguments of fit #######################################
         _dtype = [np.float64, np.float32]
-        if solver == 'cd':
-            _stype = ['csc']
-        else:
-            _stype = ['csc', 'csr']
+        _stype = ['csc', 'csr']
         X, y = check_X_y(X, y, accept_sparse=_stype,
                          dtype=_dtype, y_numeric=True, multi_output=False,
                          copy=self.copy_X)
-        # Without converting y to float, deviance might raise
-        # ValueError: Integers to negative integer powers are not allowed.
-        # Also, y must not be sparse.
         y = np.asarray(y, dtype=np.float64)
 
         weights = _check_weights(sample_weight, y.shape[0])
@@ -1715,23 +1257,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         n_samples, n_features = X.shape
 
         # 1.3 arguments to take special care ##################################
-        # P1, P2
-        if isinstance(self.P1, str) and self.P1 == 'identity':
-            P1 = np.ones(n_features)
-        else:
-            P1 = np.atleast_1d(self.P1)
-            try:
-                P1 = P1.astype(np.float64, casting='safe', copy=False)
-            except TypeError:
-                raise TypeError("The given P1 cannot be converted to a numeric"
-                                "array; got (P1.dtype={0})."
-                                .format(P1.dtype))
-            if (P1.ndim != 1) or (P1.shape[0] != n_features):
-                raise ValueError("P1 must be either 'identity' or a 1d array "
-                                 "with the length of X.shape[1]; "
-                                 "got (P1.shape[0]={0}), "
-                                 "needed (X.shape[1]={1})."
-                                 .format(P1.shape[0], n_features))
+        # P2
+
         # If X is sparse, make P2 sparse, too.
         if isinstance(self.P2, str) and self.P2 == 'identity':
             if sparse.issparse(X):
@@ -1766,10 +1293,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                                  "got (P2.shape=({0}, {1})), needed ({2}, {2})"
                                  .format(P2.shape[0], P2.shape[1], X.shape[1]))
 
-        l1 = self.alpha * self.l1_ratio
-        l2 = self.alpha * (1 - self.l1_ratio)
-        # P1 and P2 are now for sure copies
-        P1 = l1 * P1
+        l2 = self.alpha
+        # P2 is now for sure a copy
         P2 = l2 * P2
         # one only ever needs the symmetrized L2 penalty matrix 1/2 (P2 + P2')
         # reason: w' P2 w = (w' P2 w)', i.e. it is symmetric
@@ -1792,11 +1317,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                 raise ValueError("Some value(s) of y are out of the valid "
                                  "range for family {0}"
                                  .format(family.__class__.__name__))
-            # check if P1 has only non-negative values, negative values might
-            # indicate group lasso in the future.
-            if not isinstance(self.P1, str):  # if self.P1 != 'identity':
-                if not np.all(P1 >= 0):
-                    raise ValueError("P1 must not have negative values.")
             # check if P2 is positive semidefinite
             # np.linalg.cholesky(P2) 'only' asserts positive definite
             if not isinstance(self.P2, str):  # self.P2 != 'identity'
@@ -1845,8 +1365,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         # Note: Since phi=self.dispersion_ does not enter the estimation
         #       of mu_i=E[y_i], set it to 1.
 
-        # set start values for coef
-        coef = None
         if self.warm_start and hasattr(self, 'coef_'):
             if self.fit_intercept:
                 coef = np.concatenate((np.array([self.intercept_]),
@@ -1975,18 +1493,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                                            args=args, maxiter=self.max_iter,
                                            tol=self.tol)
 
-        # 4.4 coordinate descent ##############################################
-        # Note: we already set P1 = l1*P1, see above
-        # Note: we already set P2 = l2*P2, see above
-        # Note: we already symmetrized P2 = 1/2 (P2 + P2')
-        elif solver == 'cd':
-            coef, self.n_iter_, self._n_cycles = \
-                _cd_solver(coef=coef, X=X, y=y, weights=weights, P1=P1,
-                           P2=P2, fit_intercept=self.fit_intercept,
-                           family=family, link=link,
-                           max_iter=self.max_iter, tol=self.tol,
-                           selection=self.selection, random_state=random_state,
-                           diag_fisher=self.diag_fisher, copy_X=self.copy_X)
 
         #######################################################################
         # 5. postprocessing                                                   #
@@ -2097,9 +1603,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             dev = self._family_instance.deviance(y, mu, weights)
             return dev/(n_samples - n_features)
 
-    # Note: check_estimator(GeneralizedLinearRegressor) might raise
-    # "AssertionError: -0.28014056555724598 not greater than 0.5"
-    # unless GeneralizedLinearRegressor has a score which passes the test.
     def score(self, X, y, sample_weight=None):
         """Compute D^2, the percentage of deviance explained.
 
@@ -2212,8 +1715,7 @@ class PoissonRegressor(GeneralizedLinearRegressor):
         If int, random_state is the seed used by the random
         number generator; if RandomState instance, random_state is the random
         number generator; if None, the random number generator is the
-        RandomState instance used by `np.random`. Used when ``selection`` ==
-        'random'.
+        RandomState instance used by `np.random`.
 
     copy_X : boolean, optional, (default=True)
         If ``True``, X will be copied; else, it may be overwritten.
