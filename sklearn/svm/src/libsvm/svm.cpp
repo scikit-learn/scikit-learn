@@ -3121,7 +3121,7 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
         {
             bool only_one_label = true;
             int first_label = newprob.y[0];
-            for (int i =1; i<newprob.l; i++)
+            for(int i=1;i<newprob.l;i++)
             {
                 if (newprob.y[i] != first_label)
                 {
