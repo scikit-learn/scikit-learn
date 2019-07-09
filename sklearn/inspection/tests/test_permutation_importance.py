@@ -79,7 +79,7 @@ def test_permutation_importance_correlated_feature_regression_pandas(n_jobs):
 
 def test_permutation_importance_mixed_types():
     rng = np.random.RandomState(42)
-    n_repeats = 3
+    n_repeats = 4
 
     # Last column is correlated with y
     X = np.array([[1.0, 2.0, 3.0, np.nan], [2, 1, 2, 1]]).T
@@ -95,6 +95,18 @@ def test_permutation_importance_mixed_types():
     # the correlated feature with y is the last column and should
     # have the highest importance
     assert np.all(result.importances_mean[-1] > result.importances_mean[:-1])
+
+    # use another random state
+    rng = np.random.RandomState(0)
+    result2 = permutation_importance(clf, X, y, n_repeats=n_repeats,
+                                     random_state=rng)
+    assert result2.importances.shape == (X.shape[1], n_repeats)
+
+    assert not np.allclose(result.importances, result2.importances)
+
+    # the correlated feature with y is the last column and should
+    # have the highest importance
+    assert np.all(result2.importances_mean[-1] > result2.importances_mean[:-1])
 
 
 def test_permutation_importance_mixed_types_pandas():
