@@ -109,49 +109,6 @@ def test_deviance_zero(family, chk_values):
         assert_allclose(family.deviance(x, x), 0, atol=1e-9)
 
 
-@pytest.mark.parametrize(
-    'family, link',
-    [(NormalDistribution(), IdentityLink()),
-     (PoissonDistribution(), LogLink()),
-     (GammaDistribution(), LogLink()),
-     (InverseGaussianDistribution(), LogLink()),
-     (TweedieDistribution(power=1.5), LogLink()),
-     (TweedieDistribution(power=4.5), LogLink())],
-    ids=lambda args: args.__class__.__name__)
-def test_fisher_matrix(family, link):
-    """Test the Fisher matrix numerically.
-    Trick: Use numerical differentiation with y = mu"""
-    coef = np.array([-2, 1, 0, 1, 2.5])
-    phi = 0.5
-    rng = np.random.RandomState(42)
-    X = rng.randn(10, 5)
-    lin_pred = np.dot(X, coef)
-    mu = link.inverse(lin_pred)
-    weights = rng.randn(10)**2 + 1
-    fisher = family._fisher_matrix(coef=coef, phi=phi, X=X, y=mu,
-                                   weights=weights, link=link)
-    # check that the Fisher matrix is square and positive definite
-    assert fisher.ndim == 2
-    assert fisher.shape[0] == fisher.shape[1]
-    assert np.all(np.linalg.eigvals(fisher) >= 0)
-
-    approx = np.array([]).reshape(0, coef.shape[0])
-    for i in range(coef.shape[0]):
-        def f(coef):
-            return -family._score(coef=coef, phi=phi, X=X, y=mu,
-                                  weights=weights, link=link)[i]
-        approx = np.vstack(
-            [approx, sp.optimize.approx_fprime(xk=coef, f=f, epsilon=1e-5)])
-    assert_allclose(fisher, approx, rtol=1e-3)
-
-    # check the observed information matrix
-    oim = family._observed_information(coef=coef, phi=phi, X=X, y=mu,
-                                       weights=weights, link=link)
-    assert oim.ndim == 2
-    assert oim.shape == fisher.shape
-    assert_allclose(oim, fisher)
-
-
 def test_sample_weights_validation():
     """Test the raised errors in the validation of sample_weight."""
     # scalar value but not positive
