@@ -3127,7 +3127,6 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
                     only_one_label = false; break;
             }
             if(only_one_label == true)
-            {
                 msg = "Invalid input - all samples with positive weights have the same label.";
         }
 
