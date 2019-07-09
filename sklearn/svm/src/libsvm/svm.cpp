@@ -3114,7 +3114,6 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
           // no samples were removed from training set. all weights positive.
 	    if(prob->l == newprob.l)
 	        msg = NULL;
-	    }
 	    else if (newprob.l == 0) // all samples were removed
 	    {
 	        msg =  "Invalid input - all samples have zero/negative weights.";
