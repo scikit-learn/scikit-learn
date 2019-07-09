@@ -3111,7 +3111,7 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
 	    remove_zero_weight(&newprob, prob);
 
 	    char* msg = NULL;
-          // no samples were removed from training set. all weights positive.
+          // no samples were removed from training set - all weights positive.
 	    if(prob->l == newprob.l)
 	        msg = NULL;
           // all samples were removed
