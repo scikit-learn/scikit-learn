@@ -17,7 +17,6 @@ import warnings
 from ..base import BaseEstimator, RegressorMixin
 from ..exceptions import ConvergenceWarning
 from ..utils import check_array, check_X_y
-from ..utils.optimize import newton_cg
 from ..utils.validation import check_is_fitted, check_random_state
 
 
@@ -1003,7 +1002,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         the chi squared statistic or the deviance statistic. If None, the
         dispersion is not estimated.
 
-    solver : {'auto', 'irls', 'lbfgs', 'newton-cg'}, \
+    solver : {'auto', 'irls', 'lbfgs'}, \
             optional (default='auto')
         Algorithm to use in the optimization problem:
 
@@ -1016,10 +1015,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             L1 penalties.
 
         'lbfgs'
-            Calls scipy's L-BFGS-B optimizer. It cannot deal with L1 penalties.
+            Calls scipy's L-BFGS-B optimizer.
 
-        'newton-cg', 'lbfgs'
-            Newton conjugate gradient algorithm cannot deal with L1 penalties.
 
         Note that all solvers except lbfgs use the fisher matrix, i.e. the
         expected Hessian instead of the Hessian matrix.
@@ -1028,7 +1025,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         The maximal number of iterations for solver algorithms.
 
     tol : float, optional (default=1e-4)
-        Stopping criterion. For the irls, newton-cg and lbfgs solvers,
+        Stopping criterion. For the irls, and lbfgs solvers,
         the iteration will stop when ``max{|g_i|, i = 1, ..., n} <= tol``
         where ``g_i`` is the i-th component of the gradient (derivative) of
         the objective function. 
@@ -1212,9 +1209,9 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         if not isinstance(self.fit_intercept, bool):
             raise ValueError("The argument fit_intercept must be bool;"
                              " got {0}".format(self.fit_intercept))
-        if self.solver not in ['auto', 'irls', 'lbfgs', 'newton-cg']:
+        if self.solver not in ['auto', 'irls', 'lbfgs']:
             raise ValueError("GeneralizedLinearRegressor supports only solvers"
-                             " 'auto', 'irls', 'lbfgs', 'newton-cg';"
+                             "'auto', 'irls', 'lbfgs';"
                              " got {0}".format(self.solver))
         solver = self.solver
         if self.solver == 'auto':
@@ -1410,6 +1407,9 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                 return obj, objp
 
             args = (X, y, weights, P2, family, link)
+            # TODO: refactor this once
+            # https://github.com/scikit-learn/scikit-learn/pull/14250
+            # is merged.
             coef, loss, info = fmin_l_bfgs_b(
                 func, coef, fprime=None, args=args,
                 iprint=(self.verbose > 0) - 1, pgtol=self.tol,
@@ -1422,76 +1422,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                 warnings.warn("lbfgs failed for the reason: {0}"
                               .format(info["task"]))
             self.n_iter_ = info['nit']
-
-        # 4.3 Newton-CG #######################################################
-        # We use again the fisher matrix instead of the hessian. More
-        # precisely, expected hessian of deviance.
-        elif solver == 'newton-cg':
-            def func(coef, X, y, weights, P2, family, link):
-                intercept = (coef.size == X.shape[1] + 1)
-                idx = 1 if intercept else 0  # offset if coef[0] is intercept
-                if P2.ndim == 1:
-                    L2 = coef[idx:] @ (P2 * coef[idx:])
-                else:
-                    L2 = coef[idx:] @ (P2 @ coef[idx:])
-                mu = link.inverse(_safe_lin_pred(X, coef))
-                return 0.5 * family.deviance(y, mu, weights) + 0.5 * L2
-
-            def grad(coef, X, y, weights, P2, family, link):
-                mu, devp = \
-                    family._mu_deviance_derivative(coef, X, y, weights, link)
-                intercept = (coef.size == X.shape[1] + 1)
-                idx = 1 if intercept else 0  # offset if coef[0] is intercept
-                if P2.ndim == 1:
-                    L2 = P2 * coef[idx:]
-                else:
-                    L2 = P2 @ coef[idx:]
-                objp = 0.5 * devp
-                objp[idx:] += L2
-                return objp
-
-            def grad_hess(coef, X, y, weights, P2, family, link):
-                intercept = (coef.size == X.shape[1] + 1)
-                idx = 1 if intercept else 0  # offset if coef[0] is intercept
-                if P2.ndim == 1:
-                    L2 = P2 * coef[idx:]
-                else:
-                    L2 = P2 @ coef[idx:]
-                eta = _safe_lin_pred(X, coef)
-                mu = link.inverse(eta)
-                d1 = link.inverse_derivative(eta)
-                temp = d1 * family.deviance_derivative(y, mu, weights)
-                if intercept:
-                    grad = np.concatenate(([0.5 * temp.sum()],
-                                           0.5 * temp @ X + L2))
-                else:
-                    grad = 0.5 * temp @ X + L2  # same as 0.5* X.T @ temp + L2
-
-                # expected hessian = fisher = X.T @ diag_matrix @ X
-                # calculate only diag_matrix
-                diag = d1**2 / family.variance(mu, phi=1, weights=weights)
-                if intercept:
-                    h0i = np.concatenate(([diag.sum()], diag @ X))
-
-                def Hs(coef):
-                    # return (0.5 * fisher + P2) @ coef
-                    # ret = 0.5 * (X.T @ (diag * (X @ coef)))
-                    ret = 0.5 * ((diag * (X @ coef[idx:])) @ X)
-                    if P2.ndim == 1:
-                        ret += P2 * coef[idx:]
-                    else:
-                        ret += P2 @ coef[idx:]
-                    if intercept:
-                        ret = np.concatenate(([0.5 * (h0i @ coef)],
-                                             ret + 0.5 * coef[0] * h0i[1:]))
-                    return ret
-
-                return grad, Hs
-
-            args = (X, y, weights, P2, family, link)
-            coef, self.n_iter_ = newton_cg(grad_hess, func, grad, coef,
-                                           args=args, maxiter=self.max_iter,
-                                           tol=self.tol)
 
 
         #######################################################################
@@ -1511,7 +1441,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         return self
 
-    def linear_predictor(self, X):
+    def _linear_predictor(self, X):
         """Compute the linear_predictor = X*coef_ + intercept_.
 
         Parameters
@@ -1552,7 +1482,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
                         dtype='numeric', copy=True, ensure_2d=True,
                         allow_nd=False)
-        eta = self.linear_predictor(X)
+        eta = self._linear_predictor(X)
         mu = self._link_instance.inverse(eta)
         weights = _check_weights(sample_weight, X.shape[0])
 
@@ -1682,7 +1612,7 @@ class PoissonRegressor(GeneralizedLinearRegressor):
         the chi squared statistic or the deviance statistic. If None, the
         dispersion is not estimated.
 
-    solver : {'irls', 'lbfgs', 'newton-cg'}, optional (default='irls')
+    solver : {'irls', 'lbfgs'}, optional (default='irls')
         Algorithm to use in the optimization problem:
 
         'irls'
@@ -1692,17 +1622,11 @@ class PoissonRegressor(GeneralizedLinearRegressor):
         'lbfgs'
             Calls scipy's L-BFGS-B optimizer.
 
-        'newton-cg'
-            Newton conjugate gradient algorithm.
-
-        Note that all solvers except lbfgs use the fisher matrix, i.e. the
-        expected Hessian instead of the Hessian matrix.
-
     max_iter : int, optional (default=100)
         The maximal number of iterations for solver algorithms.
 
     tol : float, optional (default=1e-4)
-        Stopping criterion. For the irls, newton-cg and lbfgs solvers,
+        Stopping criterion. For the irls, and lbfgs solvers,
         the iteration will stop when ``max{|g_i|, i = 1, ..., n} <= tol``
         where ``g_i`` is the i-th component of the gradient (derivative) of
         the objective function.

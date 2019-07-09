@@ -25,7 +25,7 @@ from sklearn.exceptions import ConvergenceWarning
 
 from sklearn.utils.testing import assert_array_equal
 
-GLM_SOLVERS = ['irls', 'lbfgs', 'newton-cg']
+GLM_SOLVERS = ['irls', 'lbfgs']
 
 
 @pytest.fixture(scope="module")
@@ -381,7 +381,6 @@ def test_glm_identity_regression(solver):
 ])
 @pytest.mark.parametrize('solver, tol', [('irls', 1e-6),
                                          ('lbfgs', 1e-6),
-                                         ('newton-cg', 1e-7),
 ])
 def test_glm_log_regression(family, solver, tol):
     """Test GLM regression with log link on a simple dataset."""
@@ -395,9 +394,6 @@ def test_glm_log_regression(family, solver, tol):
     assert_allclose(res.coef_, coef, rtol=5e-6)
 
 
-# newton-cg may issue a LineSearchWarning, which we filter out
-@pytest.mark.filterwarnings('ignore:The line search algorithm')
-@pytest.mark.filterwarnings('ignore:Line Search failed')
 @pytest.mark.parametrize('n_samples, n_features', [(100, 10), (10, 100)])
 @pytest.mark.parametrize('fit_intercept', [True, False])
 @pytest.mark.parametrize('solver', GLM_SOLVERS)
@@ -441,7 +437,6 @@ def test_normal_ridge_comparison(n_samples, n_features, fit_intercept, solver):
 @pytest.mark.parametrize('solver, tol',
                          [('irls', 1e-7),
                           ('lbfgs', 1e-7),
-                          ('newton-cg', 1e-7),
 ])
 def test_poisson_ridge(solver, tol):
     """Test ridge regression with poisson family and LogLink.
@@ -478,7 +473,6 @@ def test_poisson_ridge(solver, tol):
             {"solver": "irls" },
             {"solver": "lbfgs" },
             {"solver": "lbfgs"},
-            {"solver": "newton-cg"},
         ],
         ids=lambda params: ', '.join("%s=%s" % (key, val)
                                      for key,  val in params.items())
