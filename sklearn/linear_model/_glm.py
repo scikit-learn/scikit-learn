@@ -10,7 +10,7 @@ from __future__ import division
 from abc import ABCMeta, abstractmethod
 import numbers
 import numpy as np
-from scipy import sparse, special
+from scipy import special
 from scipy.optimize import fmin_l_bfgs_b
 import warnings
 from ..base import BaseEstimator, RegressorMixin
@@ -52,42 +52,6 @@ def _safe_lin_pred(X, coef):
         return X @ coef[1:] + coef[0]
     else:
         return X @ coef
-
-
-def _safe_toarray(X):
-    """Returns a numpy array."""
-    if sparse.issparse(X):
-        return X.toarray()
-    else:
-        return np.asarray(X)
-
-
-def _safe_sandwich_dot(X, d, intercept=False):
-    """Compute sandwich product X.T @ diag(d) @ X.
-
-    With ``intercept=True``, X is treated as if a column of 1 were appended as
-    first column of X.
-    X can be sparse, d must be an ndarray. Always returns a ndarray."""
-    if sparse.issparse(X):
-        temp = (X.transpose() @ X.multiply(d[:, np.newaxis]))
-        # for older versions of numpy and scipy, temp may be a np.matrix
-        temp = _safe_toarray(temp)
-    else:
-        temp = (X.T * d) @ X
-    if intercept:
-        dim = X.shape[1] + 1
-        if sparse.issparse(X):
-            order = 'F' if sparse.isspmatrix_csc(X) else 'C'
-        else:
-            order = 'F' if X.flags['F_CONTIGUOUS'] else 'C'
-        res = np.empty((dim, dim), dtype=max(X.dtype, d.dtype), order=order)
-        res[0, 0] = d.sum()
-        res[1:, 0] = d @ X
-        res[0, 1:] = res[1:, 0]
-        res[1:, 1:] = temp
-    else:
-        res = temp
-    return res
 
 
 class Link(metaclass=ABCMeta):
@@ -250,7 +214,6 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
     starting_mu
 
     _mu_deviance_derivative
-    _score
 
     References
     ----------
@@ -483,35 +446,6 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         else:
             devp = temp @ X  # sampe as X.T @ temp
         return mu, devp
-
-    def _score(self, coef, phi, X, y, weights, link):
-        r"""Compute the score function.
-
-        The score function is the derivative of the
-        log-likelihood w.r.t. `coef` (:math:`w`).
-        It is given by
-
-        .. math:
-
-            \mathbf{score}(\boldsymbol{w})
-            = \frac{\partial loglike}{\partial\boldsymbol{w}}
-            = \mathbf{X}^T \mathbf{D}
-            \boldsymbol{\Sigma}^-1 (\mathbf{y} - \boldsymbol{\mu})\,,
-
-        with :math:`\mathbf{D}=\mathrm{diag}(h'(\eta_1),\ldots)` and
-        :math:`\boldsymbol{\Sigma}=\mathrm{diag}(\mathbf{V}[y_1],\ldots)`.
-        Note: The derivative of the deviance w.r.t. coef equals -2 * score.
-        """
-        lin_pred = _safe_lin_pred(X, coef)
-        mu = link.inverse(lin_pred)
-        sigma_inv = 1/self.variance(mu, phi=phi, weights=weights)
-        d = link.inverse_derivative(lin_pred)
-        temp = sigma_inv * d * (y - mu)
-        if coef.size == X.shape[1] + 1:
-            score = np.concatenate(([temp.sum()], temp @ X))
-        else:
-            score = temp @ X  # sampe as X.T @ temp
-        return score
 
 
 class TweedieDistribution(ExponentialDispersionModel):
