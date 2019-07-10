@@ -1055,7 +1055,7 @@ The :class:`StackingClassifier` and :class:`StackingRegressor` provide such
 strategies which can be applied to classification and regression problems.
 
 The `estimators` parameter corresponds to the list of the estimators which
-are stacked together. It should be given as a list of name and estimator::
+are stacked together. It should be given as a list of names and estimators::
 
   >>> from sklearn.linear_model import RidgeCV, LassoCV
   >>> from sklearn.svm import SVR

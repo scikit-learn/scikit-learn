@@ -84,7 +84,7 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
                                    else pred for pred in predictions], axis=1)
 
     def set_params(self, **params):
-        """ Setting the parameters for the stacking estimator.
+        """Setting the parameters for the stacking estimator.
 
         Valid parameter keys can be listed with get_params().
 
@@ -120,7 +120,7 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
         return super()._get_params('estimators', deep=deep)
 
     def fit(self, X, y, sample_weight=None):
-        """ Fit the estimators.
+        """Fit the estimators.
 
         Parameters
         ----------
