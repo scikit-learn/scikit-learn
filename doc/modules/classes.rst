@@ -1020,7 +1020,7 @@ Plotting metrics
 
 .. autosummary::
    :toctree: generated/
-   :template: class.rst
+   :template: class_without_init.rst
 
    metrics.plot.RocCurveViz
 

@@ -1,5 +1,7 @@
 from .. import roc_curve
 
+from ...utils import check_matplotlib_support  # noqa
+
 
 class RocCurveViz:
     """ROC Curve visualization
@@ -29,9 +31,24 @@ class RocCurveViz:
         on a plotted ROC curve. This is useful in order to create lighter
         ROC curves.
 
+    response_method : 'predict_proba' or 'decision_function' optional \
+    (default='predict_proba')
+        Method to call estimator to get target scores
+
     Attributes
     ----------
-    hello_ : int
+    fpr_ : ndarray
+        False positive rate.
+    tpr_ : ndarray
+        True positive rate.
+    label_ : string
+        Name of estimator.
+    line_ : matplotlib Artist
+        ROC Curve.
+    ax_ : matplotlib Axes
+        Axes with roc curve
+    figure_ : matplotlib Figure
+        Figure containing the curve
     """
 
     def __init__(self, estimator, X, y, *,
@@ -41,8 +58,19 @@ class RocCurveViz:
                  response_method="predict_proba"):
         """Computes and stores values needed for visualization"""
 
-        if y_pred.ndim == 2:
-            y_pred = y_pred[:,1]
+        prediction_method = getattr(estimator, response_method)
+        y_pred = prediction_method(X)
+
+        if y_pred.ndim != 1:
+            if y_pred.shape[1] > 2:
+                raise ValueError("Estimator must be a binary classifier")
+            y_pred = y_pred[:, 1]
+        fpr, tpr, _ = roc_curve(y, y_pred, pos_label=pos_label,
+                                drop_intermediate=drop_intermediate)
+
+        self.fpr_ = fpr
+        self.tpr_ = tpr
+        self.label_ = estimator.__class__.__name__
 
     def plot(self, ax=None):
         """Plot visualization
@@ -52,7 +80,19 @@ class RocCurveViz:
         ax : Matplotlib Axes, optional (default=None)
             axes object to plot on
         """
-        return
+        check_matplotlib_support('plot_roc_curve')  # noqa
+        import matplotlib.pyplot as plt  # noqa
+
+        if ax is None:
+            fig, ax = plt.subplots()
+
+        self.line_ = ax.plot(self.fpr_, self.tpr_, label=self.label_)[0]
+        ax.set_xlabel('False Positive Rate')
+        ax.set_ylabel('True Positive Rate')
+
+        self.ax_ = ax
+        self.figure_ = ax.figure
+        return self
 
 
 def plot_roc_curve(estimator,
