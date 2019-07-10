@@ -736,8 +736,7 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
         impurity, threshold and value attributes of each node.
 
     fontname : str,optional (default='helvetica')
-        Set output dot file font
-        optional font name "sans" or other correct font
+        Set output dot file font. if there is a font error, try using "sans"
 
     Returns
     -------
