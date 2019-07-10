@@ -940,9 +940,9 @@ follows:
     >>> reg.fit([[0, 0], [0, 1], [2, 2]], [0, 1, 2])
     GeneralizedLinearRegressor(alpha=0.5, family='poisson', link='log')
     >>> reg.coef_
-    array([0.24630169, 0.43373464])
+    array([0.2463..., 0.4337...])
     >>> reg.intercept_
-    -0.76383633...
+    -0.7638...
 
 
 .. topic:: Examples:
