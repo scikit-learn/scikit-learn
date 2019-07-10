@@ -625,9 +625,9 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None,
                       pre_dispatch='2*n_jobs', method='predict'):
     """Generate cross-validated estimates for each input data point
 
-    Passing these predictions into an evaluation metric may not be a valid way 
+    Passing these predictions into an evaluation metric may not be a valid way
     to measure generalization performance. Results can differ from `cross_validate`
-    and `cross_val_score` unless all tests sets have equal size and the metric 
+    and `cross_val_score` unless all tests sets have equal size and the metric
     decomposes over samples.
 
     Read more in the :ref:`User Guide <cross_validation>`.
