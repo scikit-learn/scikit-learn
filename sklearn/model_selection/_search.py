@@ -596,7 +596,8 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
 
         groups : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
-            train/test set.
+            train/test set. Only used in conjunction with a "Group" `cv`
+            instance (e.g., `GroupKFold`).
 
         **fit_params : dict of string -> object
             Parameters passed to the ``fit`` method of the estimator
@@ -1419,7 +1420,8 @@ class RandomizedSearchCV(BaseSearchCV):
     >>> from sklearn.model_selection import RandomizedSearchCV
     >>> from scipy.stats import uniform
     >>> iris = load_iris()
-    >>> logistic = LogisticRegression(solver='saga', tol=1e-2, max_iter=200)
+    >>> logistic = LogisticRegression(solver='saga', tol=1e-2, max_iter=200,
+    ...                               random_state=0)
     >>> distributions = dict(C=uniform(loc=0, scale=4),
     ...                      penalty=['l2', 'l1'])
     >>> clf = RandomizedSearchCV(logistic, distributions, random_state=0)

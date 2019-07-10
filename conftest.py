@@ -8,9 +8,11 @@
 import platform
 from distutils.version import LooseVersion
 
-from sklearn import set_config
 import pytest
 from _pytest.doctest import DoctestItem
+
+from sklearn import set_config
+from sklearn.utils import _IS_32BIT
 
 PYTEST_MIN_VERSION = '3.3.0'
 
@@ -51,13 +53,17 @@ def pytest_collection_modifyitems(config, items):
     try:
         import numpy as np
         if LooseVersion(np.__version__) < LooseVersion('1.14'):
+            reason = 'doctests are only run for numpy >= 1.14'
+            skip_doctests = True
+        elif _IS_32BIT:
+            reason = ('doctest are only run when the default numpy int is '
+                      '64 bits.')
             skip_doctests = True
     except ImportError:
         pass
 
     if skip_doctests:
-        skip_marker = pytest.mark.skip(
-            reason='doctests are only run for numpy >= 1.14 and python >= 3')
+        skip_marker = pytest.mark.skip(reason=reason)
 
         for item in items:
             if isinstance(item, DoctestItem):
