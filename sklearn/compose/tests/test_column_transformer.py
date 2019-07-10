@@ -492,6 +492,16 @@ def test_column_transformer_invalid_columns(remainder):
         assert_raise_message(ValueError, "Specifying the columns",
                              ct.fit, X_array)
 
+    # transformed n_features does not match fitted n_features
+    col = [0, 1]
+    ct = ColumnTransformer([('trans', Trans(), col)], remainder=remainder)
+    ct.fit(X_array)
+    X_array_more = np.array([[0, 1, 2], [2, 4, 6], [3, 6, 9]]).T
+    ct.transform(X_array_more)  # Should accept added columns
+    X_array_fewer = np.array([[0, 1, 2], ]).T
+    assert_raise_message(ValueError, "Number of features",
+                         ct.transform, X_array_fewer)
+
 
 def test_column_transformer_invalid_transformer():
 
