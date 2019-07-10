@@ -1052,12 +1052,8 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         y_predict = estimator.predict(X)
 
         error_vect = np.abs(y_predict - y)
-
         sample_mask = sample_weight > 0
-        if np.all(~sample_mask):
-            error_max = 0
-        else:
-            error_max = error_vect[sample_mask].max()
+        error_max = error_vect[sample_mask].max()
 
         if error_max != 0:
             error_vect /= error_max
