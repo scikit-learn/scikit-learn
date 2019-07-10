@@ -311,12 +311,12 @@ boolean mask array or callable
            and any(_check_key_type(cols, str) for cols in self._columns):
             self._df_columns = X.columns
 
-        self.n_features_ = X.shape[1]
+        self._n_features = X.shape[1]
         cols = []
         for columns in self._columns:
             cols.extend(_get_column_indices(X, columns))
         remaining_idx = \
-            sorted(list(set(range(self.n_features_)) - set(cols)))\
+            sorted(list(set(range(self._n_features)) - set(cols)))\
             or None
 
         self._remainder = ('remainder', self.remainder, remaining_idx)
@@ -520,12 +520,12 @@ boolean mask array or callable
         check_is_fitted(self, 'transformers_')
         X = _check_X(X)
 
-        if self.n_features_ > X.shape[1]:
+        if self._n_features > X.shape[1]:
             raise ValueError('Number of features of the input must be equal '
                              'to or greater than that of the fitted '
                              'transformer. Transformer n_features is {0} '
                              'and input n_features is {1}.'
-                             ''.format(self.n_features_, X.shape[1]))
+                             ''.format(self._n_features, X.shape[1]))
 
         # No column reordering allowed for named cols combined with remainder
         if self._remainder[2] is not None \
