@@ -366,14 +366,14 @@ def test_splitting_missing_values(X_binned, all_gradients,
 
 @pytest.mark.parametrize(
     'X_binned, all_gradients, has_missing_values, n_bins_non_missing, '
-    ' expected_bin_idx, bin_is_nan, expected_go_to_left', [
+    ' expected_bin_idx, split_is_nan, expected_go_to_left', [
 
         ([0, 1, 2, 3, 7, 8, 9, 9, 9, 9],  # 9 <=> missing
          [1, 1, 1, 1, 1, 1, 5, 5, 5, 5],
          True,  # missing values
          9,  # n_bins_non_missing
          8,  # cut on bin_idx=max_bins - 1
-         True,  # bin_is_nan
+         True,  # split_is_nan
          False),  # missing values go to right
 
         ([9, 9, 9, 9, 9, 9, 1, 3, 8, 6],  # 9 <=> missing
@@ -381,16 +381,15 @@ def test_splitting_missing_values(X_binned, all_gradients,
          True,  # missing values
          9,  # n_bins_non_missing
          8,  # cut on bin_idx=max_bins - 1
-         True,  # bin_is_nan
+         True,  # split_is_nan
          False),  # missing values go to right
     ]
 )
 def test_splitting_missing_values_edge_case(
         X_binned, all_gradients,
         has_missing_values, n_bins_non_missing,
-        expected_bin_idx, bin_is_nan,
+        expected_bin_idx, split_is_nan,
         expected_go_to_left):
-    print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
     n_bins = max(X_binned) + 1
     n_samples = len(X_binned)
     l2_regularization = 0.
