@@ -315,9 +315,9 @@ boolean mask array or callable
         cols = []
         for columns in self._columns:
             cols.extend(_get_column_indices(X, columns))
-        remaining_idx = \
-            sorted(list(set(range(self._n_features)) - set(cols)))\
-            or None
+        remaining_idx = (sorted(list(set(range(self._n_features)) -
+                                     set(cols)))
+                         or None)
 
         self._remainder = ('remainder', self.remainder, remaining_idx)
 
