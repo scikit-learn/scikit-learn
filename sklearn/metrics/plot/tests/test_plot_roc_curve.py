@@ -28,8 +28,9 @@ def test_plot_roc_curve_error_non_binary(pyplot, data):
                          ["predict_proba", "decision_function"])
 @pytest.mark.parametrize("pos_label", [0, 1])
 @pytest.mark.parametrize("drop_intermediate", [True, False])
+@pytest.mark.parametrize("label", ["one", None])
 def test_plot_roc_curve(pyplot, response_method, data,
-                        pos_label, drop_intermediate):
+                        pos_label, drop_intermediate, label):
     X, y = data
     X, y = X[y < 2], y[y < 2]
 
@@ -37,7 +38,7 @@ def test_plot_roc_curve(pyplot, response_method, data,
     lr.fit(X, y)
 
     viz = plot_roc_curve(lr, X, y, pos_label=pos_label,
-                         drop_intermediate=drop_intermediate)
+                         drop_intermediate=drop_intermediate, label=label)
 
     y_pred = getattr(lr, response_method)(X)
     if y_pred.ndim == 2:
@@ -46,7 +47,11 @@ def test_plot_roc_curve(pyplot, response_method, data,
     fpr, tpr, _ = roc_curve(y, y_pred, pos_label=pos_label,
                             drop_intermediate=drop_intermediate)
 
-    assert viz.label_ == "LogisticRegression"
+    if label is None:
+        assert viz.label_ == "LogisticRegression"
+    else:
+        assert viz.label_ == label
+
     assert_allclose(viz.fpr_, fpr)
     assert_allclose(viz.tpr_, tpr)
 

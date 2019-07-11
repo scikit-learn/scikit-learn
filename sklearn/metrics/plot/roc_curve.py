@@ -35,6 +35,9 @@ class RocCurveVisualizer:
     (default='predict_proba')
         Method to call estimator to get target scores
 
+    label : str or None, optional (default=None)
+        Label for ROC curve.
+
     Attributes
     ----------
     fpr_ : ndarray
@@ -42,20 +45,18 @@ class RocCurveVisualizer:
     tpr_ : ndarray
         True positive rate.
     label_ : string
-        Name of estimator.
+        Label of ROC curve.
     line_ : matplotlib Artist
         ROC Curve.
     ax_ : matplotlib Axes
-        Axes with roc curve
+        Axes with ROC curve
     figure_ : matplotlib Figure
         Figure containing the curve
     """
 
-    def __init__(self, estimator, X, y, *,
-                 pos_label=None,
-                 sample_weight=None,
-                 drop_intermediate=True,
-                 response_method="predict_proba"):
+    def __init__(self, estimator, X, y, *, pos_label=None, sample_weight=None,
+                 drop_intermediate=True, response_method="predict_proba",
+                 label=None):
         """Computes and stores values needed for visualization"""
 
         prediction_method = getattr(estimator, response_method)
@@ -70,7 +71,11 @@ class RocCurveVisualizer:
 
         self.fpr_ = fpr
         self.tpr_ = tpr
-        self.label_ = estimator.__class__.__name__
+
+        if label is None:
+            self.label_ = estimator.__class__.__name__
+        else:
+            self.label_ = label
 
     def plot(self, ax=None):
         """Plot visualization
@@ -102,6 +107,7 @@ def plot_roc_curve(estimator,
                    sample_weight=None,
                    drop_intermediate=True,
                    response_method="predict_proba",
+                   label=None,
                    ax=None):
     """Plot Receiver operating characteristic (ROC) curve
 
@@ -138,6 +144,9 @@ def plot_roc_curve(estimator,
     (default='predict_proba')
         Method to call estimator to get target scores
 
+    label : str or None, optional (default=None)
+        Label for ROC curve.
+
     ax : matplotlib axes, optional (default=None)
         axes object to plot on
 
@@ -152,6 +161,7 @@ def plot_roc_curve(estimator,
                              sample_weight=sample_weight,
                              pos_label=pos_label,
                              drop_intermediate=drop_intermediate,
-                             response_method=response_method)
+                             response_method=response_method,
+                             label=label)
     viz.plot(ax=ax)
     return viz
