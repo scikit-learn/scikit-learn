@@ -200,8 +200,12 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
         )
 
         self.named_estimators_ = Bunch()
-        for k, e in zip(self.estimators, self.estimators_):
-            self.named_estimators_[k[0]] = e
+        est_fitted_idx = 0
+        for name_est, org_est in zip(names, estimators_):
+            if org_est not in (None, 'drop'):
+                self.named_estimators_[name_est] = self.estimators_[
+                    est_fitted_idx]
+                est_fitted_idx += 1
 
         # To train the meta-classifier using the most data as possible, we use
         # a cross-validation to obtain the output of the stacked estimators.

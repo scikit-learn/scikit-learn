@@ -1094,7 +1094,8 @@ Note that the output of the `estimators` is controlled by the parameter
 `predict_method`. It corresponds to the method called by each
 estimator. This parameter is either a list of string of the methods name or
 `'auto'` which will automatically call the method depending on the
-availability and a pre-determined order of preference.
+availability and a pre-determined order of preference (`predict_proba`,
+`decision_function` and `predict`).
 
 The fitted stacking estimators have a `predict` method, and classifier also
 have a `predict_proba` method. They can be used as any other estimator, e.g.::

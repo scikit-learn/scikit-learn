@@ -21,6 +21,7 @@ from sklearn.svm import LinearSVC
 from sklearn.svm import LinearSVR
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.preprocessing import scale
 
 from sklearn.ensemble import StackingClassifier
 from sklearn.ensemble import StackingRegressor
@@ -48,10 +49,14 @@ X_iris, y_iris = load_iris(return_X_y=True)
 )
 def test_stacking_classifier_iris(cv, final_estimator, passthrough,
                                   X_trans_shape, X_trans_lr_out_shape):
+
+    # prescale the data to avoid convergence warning without using a pipeline
+    # for later assert
     X_train, X_test, y_train, y_test = train_test_split(
-        X_iris, y_iris, stratify=y_iris, random_state=42
+        scale(X_iris), y_iris, stratify=y_iris, random_state=42
     )
-    estimators = [('lr', LogisticRegression()), ('svc', LinearSVC())]
+    estimators = [('lr', LogisticRegression()),
+                  ('svc', LinearSVC())]
     clf = StackingClassifier(estimators=estimators,
                              final_estimator=final_estimator,
                              cv=cv, passthrough=passthrough, random_state=42)
@@ -78,8 +83,10 @@ def test_stacking_classifier_iris(cv, final_estimator, passthrough,
      [('lr', 'drop'), ('svc', LinearSVC(random_state=0))]]
 )
 def test_stacking_classifier_drop_estimator(estimators):
+    # prescale the data to avoid convergence warning without using a pipeline
+    # for later assert
     X_train, X_test, y_train, _ = train_test_split(
-        X_iris, y_iris, stratify=y_iris, random_state=42
+        scale(X_iris), y_iris, stratify=y_iris, random_state=42
     )
     rf = RandomForestClassifier(n_estimators=10, random_state=42)
     clf = StackingClassifier(
@@ -103,8 +110,10 @@ def test_stacking_classifier_drop_estimator(estimators):
      [('lr', 'drop'), ('svr', LinearSVR(random_state=0))]]
 )
 def test_stacking_regressor_drop_estimator(estimators):
+    # prescale the data to avoid convergence warning without using a pipeline
+    # for later assert
     X_train, X_test, y_train, _ = train_test_split(
-        X_diabetes, y_diabetes, random_state=42
+        scale(X_diabetes), y_diabetes, random_state=42
     )
     rf = RandomForestRegressor(n_estimators=10, random_state=42)
     reg = StackingRegressor(
@@ -138,8 +147,10 @@ def test_stacking_regressor_drop_estimator(estimators):
 def test_stacking_regressor_diabetes(cv, final_estimator, predict_params,
                                      passthrough, X_trans_shape,
                                      X_trans_lr_out_shape):
-    X_train, X_test, y_train, y_test = train_test_split(
-        X_diabetes, y_diabetes, random_state=42
+    # prescale the data to avoid convergence warning without using a pipeline
+    # for later assert
+    X_train, X_test, y_train, _ = train_test_split(
+        scale(X_diabetes), y_diabetes, random_state=42
     )
     estimators = [('lr', LinearRegression()), ('svr', LinearSVR())]
     reg = StackingRegressor(estimators=estimators,
@@ -226,7 +237,9 @@ class NoWeightClassifier(BaseEstimator, ClassifierMixin):
 def test_stacking_classifier_error(y, params, type_err, msg_err):
     with pytest.raises(type_err, match=msg_err):
         clf = StackingClassifier(**params, cv=3)
-        clf.fit(X_iris, y, sample_weight=np.ones(X_iris.shape[0]))
+        clf.fit(
+            scale(X_iris), y, sample_weight=np.ones(X_iris.shape[0])
+        )
 
 
 @pytest.mark.parametrize(
@@ -274,7 +287,9 @@ def test_stacking_classifier_error(y, params, type_err, msg_err):
 def test_stacking_regressor_error(y, params, type_err, msg_err):
     with pytest.raises(type_err, match=msg_err):
         reg = StackingRegressor(**params, cv=3)
-        reg.fit(X_diabetes, y, sample_weight=np.ones(X_diabetes.shape[0]))
+        reg.fit(
+            scale(X_diabetes), y, sample_weight=np.ones(X_diabetes.shape[0])
+        )
 
 
 @pytest.mark.parametrize(
@@ -282,11 +297,29 @@ def test_stacking_regressor_error(y, params, type_err, msg_err):
     [StackingClassifier(estimators=[('lr', LogisticRegression()),
                                     ('svm', LinearSVC())]),
      StackingRegressor(estimators=[('lr', LinearRegression()),
-                                   ('svm', LinearSVR())])]
+                                   ('svm', LinearSVR(max_iter=1e4))])]
 )
 def test_stacking_named_estimators(stacking_estimator):
-    stacking_estimator.fit(X_iris, y_iris)
+    stacking_estimator.fit(scale(X_iris), y_iris)
     estimators = stacking_estimator.named_estimators_
+    assert len(estimators) == 2
+    assert sorted(list(estimators.keys())) == sorted(['lr', 'svm'])
+
+
+@pytest.mark.parametrize(
+    "stacking_estimator",
+    [StackingClassifier(estimators=[('lr', LogisticRegression()),
+                                    ('rf', RandomForestClassifier()),
+                                    ('svm', LinearSVC())]),
+     StackingRegressor(estimators=[('lr', LinearRegression()),
+                                   ('rf', RandomForestRegressor()),
+                                   ('svm', LinearSVR(max_iter=1e4))])]
+)
+def test_stacking_named_estimators_dropped(stacking_estimator):
+    stacking_estimator.set_params(rf='drop')
+    stacking_estimator.fit(scale(X_iris), y_iris)
+    estimators = stacking_estimator.named_estimators_
+    assert 'rf' not in estimators.keys()
     assert len(estimators) == 2
     assert sorted(list(estimators.keys())) == sorted(['lr', 'svm'])
 
