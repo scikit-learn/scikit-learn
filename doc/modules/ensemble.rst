@@ -972,7 +972,7 @@ Using the `VotingClassifier` with `GridSearchCV`
 ------------------------------------------------
 
 The :class:`VotingClassifier` can also be used together with
-:class:`sklearn.model_selection.GridSearch` in order to tune the
+:class:`sklearn.model_selection.GridSearchCV` in order to tune the
 hyperparameters of the individual estimators::
 
    >>> from sklearn.model_selection import GridSearchCV
