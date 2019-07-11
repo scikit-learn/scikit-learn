@@ -520,7 +520,7 @@ def test_negative_sample_weights_mask_all_samples(Estimator,
      [1, 1, 1, 0, -0.1, -0.3]],
     ids=['mask-label-1', 'mask-label-2']
 )
-def test_negative_weights_svc_leave_just_one_label(Classifier, 
+def test_negative_weights_svc_leave_just_one_label(Classifier,
                                                    params, sample_weight):
     clf = Classifier(kernel='linear')
     with pytest.raises(ValueError, match=params['err_msg']):
