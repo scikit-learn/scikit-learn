@@ -13,8 +13,9 @@ This module contains:
 #
 # License: BSD 3 clause
 
-import numpy as np
 from abc import abstractmethod
+
+import numpy as np
 
 from joblib import Parallel, delayed
 
@@ -25,6 +26,7 @@ from ..base import clone
 from ..preprocessing import LabelEncoder
 from ..utils.validation import check_is_fitted
 from ..utils.metaestimators import _BaseComposition
+from ..utils.multiclass import check_classification_targets
 from ..utils import Bunch
 
 
@@ -264,6 +266,7 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
         -------
         self : object
         """
+        check_classification_targets(y)
         if isinstance(y, np.ndarray) and len(y.shape) > 1 and y.shape[1] > 1:
             raise NotImplementedError('Multilabel and multi-output'
                                       ' classification is not supported.')

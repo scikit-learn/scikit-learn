@@ -399,6 +399,9 @@ def set_checking_parameters(estimator):
     if name == 'OneHotEncoder':
         estimator.set_params(handle_unknown='ignore')
 
+    if name == 'VotingClassifier':
+        estimator.set_params(voting='soft')
+
 
 class NotAnArray:
     """An object that is convertible to an array
@@ -2220,7 +2223,7 @@ def check_parameters_default_constructible(name, Estimator):
             # true for mixins
             return
         params = estimator.get_params()
-        if required_parameters == ["estimator"]:
+        if required_parameters or (["estimator"], ["estimators"]):
             # they can need a non-default argument
             init_params = init_params[1:]
 
