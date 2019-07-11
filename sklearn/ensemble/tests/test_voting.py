@@ -320,7 +320,7 @@ def test_sample_weight():
         voting='soft')
     msg = ('Underlying estimator KNeighborsClassifier does not support '
            'sample weights.')
-    with pytest.raises(ValueError, match=msg):
+    with pytest.raises(TypeError, match=msg):
         eclf3.fit(X, y, sample_weight)
 
     # check that _parallel_fit_estimator will raise the right error
