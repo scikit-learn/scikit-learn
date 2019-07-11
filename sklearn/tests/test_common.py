@@ -25,6 +25,10 @@ from sklearn.cluster.bicluster import BiclusterMixin
 
 from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.linear_model import Ridge
+from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeRegressor
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.utils import IS_PYPY
 from sklearn.utils.estimator_checks import (
@@ -68,6 +72,17 @@ def _tested_estimators():
                     estimator = Estimator(Ridge())
                 else:
                     estimator = Estimator(LinearDiscriminantAnalysis())
+            elif "estimators" in required_parameters:
+                if issubclass(Estimator, RegressorMixin):
+                    estimator = Estimator(
+                        estimators=[('tree', DecisionTreeRegressor(random_state=0)),
+                                    ('lr', LinearRegression())]
+                    )
+                else:
+                    estimator = Estimator(
+                        estimators=[('tree', DecisionTreeClassifier(random_state=0)),
+                                    ('lr', LogisticRegression(random_state=0))]
+                    )
             else:
                 warnings.warn("Can't instantiate estimator {} which requires "
                               "parameters {}".format(name,
