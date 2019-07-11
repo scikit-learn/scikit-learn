@@ -558,6 +558,7 @@ def test_negative_weights_svc_leave_two_labels(Classifier, model,
     ids=['partial-mask-label-1', 'partial-mask-label-2']
 )
 def test_negative_weight_equal_coeffs(Estimator, sample_weight):
+    # model generates equal coefficients
     est = Estimator(kernel='linear')
     est.fit(X, Y, sample_weight=sample_weight)
     coef = np.abs(est.coef_).ravel()
