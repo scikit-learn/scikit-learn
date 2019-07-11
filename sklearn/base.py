@@ -3,6 +3,9 @@
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD 3 clause
 
+from abc import abstractmethod
+from abc import ABCMeta
+
 import copy
 import warnings
 from collections import defaultdict
@@ -140,7 +143,7 @@ def _update_if_consistent(dict1, dict2):
     return dict1
 
 
-class BaseEstimator:
+class BaseEstimator(metaclass=ABCMeta):
     """Base class for all estimators in scikit-learn
 
     Notes
@@ -237,8 +240,10 @@ class BaseEstimator:
 
         return self
 
+    @abstractmethod
     def fit(self, X, y=None):
-        """Fit the model from data in X.
+        """
+        Fit the model from data in X.
 
         Parameters
         ----------
@@ -261,11 +266,7 @@ class BaseEstimator:
         self : object
             Returns the instance itself.
         """
-
-        if hasattr(super(), 'fit'):
-            return super().fit(X, y)
-        else:
-            raise NotImplementedError('please implement fit')
+        pass
 
     def __repr__(self, N_CHAR_MAX=700):
         # N_CHAR_MAX is the (approximate) maximum number of non-blank
