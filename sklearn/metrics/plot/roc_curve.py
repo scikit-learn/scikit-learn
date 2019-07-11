@@ -35,9 +35,6 @@ class RocCurveVisualizer:
     (default='predict_proba')
         Method to call estimator to get target scores
 
-    label : str or None, optional (default=None)
-        Label for ROC curve.
-
     Attributes
     ----------
     fpr_ : ndarray
@@ -55,8 +52,7 @@ class RocCurveVisualizer:
     """
 
     def __init__(self, estimator, X, y, *, pos_label=None, sample_weight=None,
-                 drop_intermediate=True, response_method="predict_proba",
-                 label=None):
+                 drop_intermediate=True, response_method="predict_proba"):
         """Computes and stores values needed for visualization"""
 
         prediction_method = getattr(estimator, response_method)
@@ -71,19 +67,18 @@ class RocCurveVisualizer:
 
         self.fpr_ = fpr
         self.tpr_ = tpr
+        self.label_ = estimator.__class__.__name__
 
-        if label is None:
-            self.label_ = estimator.__class__.__name__
-        else:
-            self.label_ = label
-
-    def plot(self, ax=None):
+    def plot(self, ax=None, line_kw=None):
         """Plot visualization
 
         Parameters
         ----------
         ax : Matplotlib Axes, optional (default=None)
-            axes object to plot on
+            Axes object to plot on.
+
+        line_kwargs : dict or None, optional (default=None)
+            Keyword arguments to pass to
         """
         check_matplotlib_support('plot_roc_curve')  # noqa
         import matplotlib.pyplot as plt  # noqa
@@ -91,7 +86,10 @@ class RocCurveVisualizer:
         if ax is None:
             fig, ax = plt.subplots()
 
-        self.line_ = ax.plot(self.fpr_, self.tpr_, label=self.label_)[0]
+        line_kwargs = {"label": self.label_}
+        if line_kw is not None:
+            line_kwargs.update(**line_kw)
+        self.line_ = ax.plot(self.fpr_, self.tpr_, **line_kwargs)[0]
         ax.set_xlabel('False Positive Rate')
         ax.set_ylabel('True Positive Rate')
 
@@ -107,7 +105,6 @@ def plot_roc_curve(estimator,
                    sample_weight=None,
                    drop_intermediate=True,
                    response_method="predict_proba",
-                   label=None,
                    ax=None):
     """Plot Receiver operating characteristic (ROC) curve
 
@@ -161,7 +158,6 @@ def plot_roc_curve(estimator,
                              sample_weight=sample_weight,
                              pos_label=pos_label,
                              drop_intermediate=drop_intermediate,
-                             response_method=response_method,
-                             label=label)
+                             response_method=response_method)
     viz.plot(ax=ax)
     return viz
