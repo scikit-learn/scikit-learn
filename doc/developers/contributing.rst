@@ -1647,3 +1647,62 @@ make this task easier and faster (in no particular order).
     <https://git-scm.com/docs/git-grep#_examples>`_) is also extremely
     useful to see every occurrence of a pattern (e.g. a function call or a
     variable) in the code base.
+
+
+.. _plotting_api:
+
+Plotting API
+------------
+
+Scikit-learn defines a simple API for creating visualizations for model. The
+key features of this API is to run calculations once and the flexibility to
+position and style the plotting elements. This logic is encapsulated into a
+visualizer object where the calculations are done during construction and
+plotting is done in a ``plot`` method. The visualizer object's ``__init__`` 
+method contains only parameters that are needed to calculate the items in the
+visualization and saving the items as attributes. The ``plot`` method takes in
+parameters that only have to do with visualization, such as a matplotlib axes.
+The ``plot`` method will store the matplotlib artists as attributes allowing
+for style adjustments through the visualizer object. Along with the visualizer
+object, a ``plot_*`` helper function is defined to create, plot and return the
+object. This function will contain the parameters from both the ``__init__``
+and ``plot`` methods for the visualizer object and pass the parameters to the
+respective methods.
+
+For example, the `RocCurveVisualizer` defines the following methods:
+
+.. code-block:: python
+
+   class RocCurveVisualizer:
+       def __init__(self, estimator, X, y, *, pos_label=None,
+                   sample_weight=None, drop_intermediate=True,
+                   response_method="predict_proba"):
+           ...
+           self.fpr_ = ...
+           self.tpr_ = ...
+           self.label_ = ...
+
+       def plot(self, ax=None):
+           ...
+           self.line_ = ...
+           self.ax_ = ax
+           self.figure_ = ax.figure_
+
+   def plot_roc_curve(estimator, X, y, *, pos_label=None,
+                      sample_weight=None, drop_intermediate=True,
+                      response_method="predict_proba", ax=None):
+       viz = RocCurveVisualizer(estimator,
+                                X,
+                                y,
+                                sample_weight=sample_weight,
+                                pos_label=pos_label,
+                                drop_intermediate=drop_intermediate,
+                                response_method=response_method)
+       viz.plot(ax=ax)
+       return viz
+```
+
+Note that the ``__init__`` method defines attributes that are going to be used
+for plotting and the ``plot`` method defines attributes that are related to the
+the matplotlib object itself. The line artist is stored as an attribute to
+allow for customizations after calling ``plot``.

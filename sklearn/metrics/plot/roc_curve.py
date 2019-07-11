@@ -3,7 +3,7 @@ from .. import roc_curve
 from ...utils import check_matplotlib_support  # noqa
 
 
-class RocCurveViz:
+class RocCurveVisualizer:
     """ROC Curve visualization
 
     Parameters
@@ -18,7 +18,7 @@ class RocCurveViz:
     y : array-like, shape (n_samples,)
         Target values.
 
-    pos_label : int or str, default=None
+    pos_label : int str or None, optional(default=None)
         The label of the positive class.
         When ``pos_label=None``, if y_true is in {-1, 1} or {0, 1},
         ``pos_label`` is set to 1, otherwise an error will be raised.
@@ -143,15 +143,15 @@ def plot_roc_curve(estimator,
 
     Returns
     -------
-    viz : :class:`sklearn.metrics.plot.RocCurveViz`
+    viz : :class:`sklearn.metrics.plot.RocCurveVisualizer`
         object that stores computed values
     """
-    viz = RocCurveViz(estimator,
-                      X,
-                      y,
-                      sample_weight=sample_weight,
-                      pos_label=pos_label,
-                      drop_intermediate=drop_intermediate,
-                      response_method=response_method)
+    viz = RocCurveVisualizer(estimator,
+                             X,
+                             y,
+                             sample_weight=sample_weight,
+                             pos_label=pos_label,
+                             drop_intermediate=drop_intermediate,
+                             response_method=response_method)
     viz.plot(ax=ax)
     return viz

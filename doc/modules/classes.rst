@@ -1022,7 +1022,7 @@ Plotting metrics
    :toctree: generated/
    :template: class_without_init.rst
 
-   metrics.plot.RocCurveViz
+   metrics.plot.RocCurveVisualizer
 
 
 .. _mixture_ref:
