@@ -1925,7 +1925,14 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         -------
         self : returns an instance of self.
         """
+        
         K = check_array(K, dtype=FLOAT_DTYPES)
+
+        if K.shape[0] != K.shape[1]:
+            raise ValueError("Kernel matrix must be a square matrix."
+                             " Input is a {}x{} matrix." 3
+                             .format(K.shape[0], K.shape[1]))
+                             
         n_samples = K.shape[0]
         self.K_fit_rows_ = np.sum(K, axis=0) / n_samples
         self.K_fit_all_ = self.K_fit_rows_.sum() / n_samples
