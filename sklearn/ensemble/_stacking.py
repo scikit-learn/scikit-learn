@@ -40,13 +40,12 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
 
     @abstractmethod
     def __init__(self, estimators, final_estimator=None, cv=None,
-                 predict_method='auto', passthrough=False, n_jobs=1,
-                 random_state=None, verbose=0):
+                 predict_method='auto', n_jobs=None, random_state=None,
+                 verbose=0):
         self.estimators = estimators
         self.final_estimator = final_estimator
         self.cv = cv
         self.predict_method = predict_method
-        self.passthrough = passthrough
         self.n_jobs = n_jobs
         self.random_state = random_state
         self.verbose = verbose
@@ -73,15 +72,6 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
                 raise ValueError('Underlying estimator {} does not implement '
                                  'the method {}.'.format(name, method))
             return method
-
-    def _concatenate_predictions(self, X, predictions):
-        if self.passthrough:
-            return np.concatenate([X] + [pred.reshape(-1, 1) if pred.ndim == 1
-                                         else pred for pred in predictions],
-                                  axis=1)
-        else:
-            return np.concatenate([pred.reshape(-1, 1) if pred.ndim == 1
-                                   else pred for pred in predictions], axis=1)
 
     def set_params(self, **params):
         """Setting the parameters for the stacking estimator.
@@ -119,6 +109,27 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
         """
         return super()._get_params('estimators', deep=deep)
 
+    def _concatenate_predictions(self, predictions):
+        """Concatenate the predictions of each first layer learner.
+
+        This helper is in charge of ensuring the preditions are 2D arrays and
+        it will drop one of the probability column when the problem is binary
+        since a p(c=1) = 1 - p(c=2).
+        """
+        X_meta = []
+        for est_idx, preds in enumerate(predictions):
+            # case where the the estimator returned a 1D array
+            if preds.ndim == 1:
+                X_meta.append(preds.reshape(-1, 1))
+            else:
+                # remove one column in case of probabilities with binary case
+                if (self.predict_method_[est_idx] == 'predict_proba' and
+                        preds.shape[1] == 2):
+                    X_meta.append(preds[:, [1]])
+                else:
+                    X_meta.append(preds)
+        return np.concatenate(X_meta, axis=1)
+
     def fit(self, X, y, sample_weight=None):
         """Fit the estimators.
 
@@ -147,12 +158,6 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
             raise AttributeError(
                 "Invalid 'estimators' attribute, 'estimators' should be a list"
                 " of (string, estimator) tuples."
-            )
-
-        if not isinstance(self.passthrough, bool):
-            raise AttributeError(
-                "Invalid 'passthrough' attribute, 'passthrough' should be a "
-                "boolean. Got {!r} instead.".format(self.passthrough)
             )
 
         names, estimators_ = zip(*self.estimators)
@@ -186,11 +191,6 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
                 )
             predict_method = self.predict_method
 
-        self.predict_method_ = [
-            self._method_name(name, est, meth)
-            for name, est, meth in zip(names, estimators_, predict_method)
-        ]
-
         # Fit the base estimators on the whole training data. Those
         # base estimators will be used in transform, predict, and
         # predict_proba. They are exposed publicly.
@@ -218,7 +218,12 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
         if hasattr(cv, 'random_state'):
             cv.random_state = random_state
 
-        X_meta = Parallel(n_jobs=self.n_jobs)(
+        self.predict_method_ = [
+            self._method_name(name, est, meth)
+            for name, est, meth in zip(names, estimators_, predict_method)
+        ]
+
+        predictions = Parallel(n_jobs=self.n_jobs)(
             delayed(cross_val_predict)(clone(est), X, y, cv=deepcopy(cv),
                                        method=meth, n_jobs=self.n_jobs,
                                        verbose=self.verbose)
@@ -233,7 +238,7 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
             if est not in (None, 'drop')
         ]
 
-        X_meta = self._concatenate_predictions(X, X_meta)
+        X_meta = self._concatenate_predictions(predictions)
         self.final_estimator_.fit(X_meta, y)
 
         return self
@@ -253,11 +258,12 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
             Prediction outputs for each estimator.
         """
         check_is_fitted(self, 'estimators_')
-        return self._concatenate_predictions(
-            X, [getattr(est, meth)(X)
-                for est, meth in zip(self.estimators_, self.predict_method_)
-                if est not in (None, 'drop')]
-        )
+        predictions = [
+            getattr(est, meth)(X)
+            for est, meth in zip(self.estimators_, self.predict_method_)
+            if est not in (None, 'drop')
+        ]
+        return self._concatenate_predictions(predictions)
 
     @if_delegate_has_method(delegate='final_estimator_')
     def predict(self, X, **predict_params):
@@ -336,11 +342,6 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
         * if 'auto', it will try to invoke, for each estimator,
           `predict_proba`, `decision_function` or `predict` in that order.
 
-    passthrough : bool, default=False
-        Whether or not to concatenate the original data `X` with the output
-        of `estimators` to feed the `final_estimator`. The default is
-        False.
-
     n_jobs : int, default=None
         The number of jobs to run in parallel for both `fit` the `estimators`.
         `None` means 1 unless in a `joblib.parallel_backend` context. -1 means
@@ -399,14 +400,13 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
 
     """
     def __init__(self, estimators, final_estimator=None, cv=None,
-                 predict_method='auto', passthrough=False, n_jobs=None,
-                 random_state=None, verbose=0):
+                 predict_method='auto', n_jobs=None, random_state=None,
+                 verbose=0):
         super().__init__(
             estimators=estimators,
             final_estimator=final_estimator,
             cv=cv,
             predict_method=predict_method,
-            passthrough=passthrough,
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose
@@ -495,11 +495,6 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
         * if 'auto', it will try to invoke, for each estimator,
           `predict_proba`, `decision_function` or `predict` in that order.
 
-    passthrough : bool, default=False
-        Whether or not to concatenate the original data `X` with the output
-        of `estimators` to feed the `final_estimator`. The default is
-        False.
-
     n_jobs : int, default=None
         The number of jobs to run in parallel for both `fit` the `estimators`.
         `None` means 1 unless in a `joblib.parallel_backend` context. -1 means
@@ -556,14 +551,13 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
 
     """
     def __init__(self, estimators, final_estimator=None, cv=None,
-                 predict_method='auto', passthrough=False, n_jobs=None,
-                 random_state=None, verbose=0):
+                 predict_method='auto', n_jobs=None, random_state=None,
+                 verbose=0):
         super().__init__(
             estimators=estimators,
             final_estimator=final_estimator,
             cv=cv,
             predict_method=predict_method,
-            passthrough=passthrough,
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose

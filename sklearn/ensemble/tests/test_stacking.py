@@ -42,13 +42,7 @@ X_iris, y_iris = load_iris(return_X_y=True)
 @pytest.mark.parametrize(
     "final_estimator", [None, RandomForestClassifier(random_state=42)]
 )
-@pytest.mark.parametrize(
-    "passthrough, X_trans_shape, X_trans_lr_out_shape",
-    [(False, 6, 3),  # 2/1 estimators * 3 classes
-     (True, 10, 7)]  # + 4 original features from iris
-)
-def test_stacking_classifier_iris(cv, final_estimator, passthrough,
-                                  X_trans_shape, X_trans_lr_out_shape):
+def test_stacking_classifier_iris(cv, final_estimator):
 
     # prescale the data to avoid convergence warning without using a pipeline
     # for later assert
@@ -57,16 +51,17 @@ def test_stacking_classifier_iris(cv, final_estimator, passthrough,
     )
     estimators = [('lr', LogisticRegression()),
                   ('svc', LinearSVC())]
-    clf = StackingClassifier(estimators=estimators,
-                             final_estimator=final_estimator,
-                             cv=cv, passthrough=passthrough, random_state=42)
+    clf = StackingClassifier(
+        estimators=estimators, final_estimator=final_estimator, cv=cv,
+        random_state=42
+    )
     clf.fit(X_train, y_train)
     clf.predict(X_test)
     clf.predict_proba(X_test)
     assert clf.score(X_test, y_test) > 0.8
 
     X_trans = clf.transform(X_test)
-    assert X_trans.shape[1] == X_trans_shape
+    assert X_trans.shape[1] == 6
 
     clf.set_params(lr=None)
     clf.fit(X_train, y_train)
@@ -74,7 +69,7 @@ def test_stacking_classifier_iris(cv, final_estimator, passthrough,
     clf.predict_proba(X_test)
 
     X_trans = clf.transform(X_test)
-    assert X_trans.shape[1] == X_trans_lr_out_shape
+    assert X_trans.shape[1] == 3
 
 
 @pytest.mark.parametrize(
@@ -139,23 +134,17 @@ def test_stacking_regressor_drop_estimator(estimators):
      (RandomForestRegressor(random_state=42), {}),
      (DummyRegressor(), {'return_std': True})]
 )
-@pytest.mark.parametrize(
-    "passthrough, X_trans_shape, X_trans_lr_out_shape",
-    [(False, 2, 1),
-     (True, 12, 11)]
-)
-def test_stacking_regressor_diabetes(cv, final_estimator, predict_params,
-                                     passthrough, X_trans_shape,
-                                     X_trans_lr_out_shape):
+def test_stacking_regressor_diabetes(cv, final_estimator, predict_params):
     # prescale the data to avoid convergence warning without using a pipeline
     # for later assert
     X_train, X_test, y_train, _ = train_test_split(
         scale(X_diabetes), y_diabetes, random_state=42
     )
     estimators = [('lr', LinearRegression()), ('svr', LinearSVR())]
-    reg = StackingRegressor(estimators=estimators,
-                            final_estimator=final_estimator,
-                            cv=cv, passthrough=passthrough, random_state=42)
+    reg = StackingRegressor(
+        estimators=estimators, final_estimator=final_estimator, cv=cv,
+        random_state=42
+    )
     reg.fit(X_train, y_train)
     result = reg.predict(X_test, **predict_params)
     expected_result_length = 2 if predict_params else 1
@@ -163,14 +152,32 @@ def test_stacking_regressor_diabetes(cv, final_estimator, predict_params,
         assert len(result) == expected_result_length
 
     X_trans = reg.transform(X_test)
-    assert X_trans.shape[1] == X_trans_shape
+    assert X_trans.shape[1] == 2
 
     reg.set_params(lr=None)
     reg.fit(X_train, y_train)
     reg.predict(X_test)
 
     X_trans = reg.transform(X_test)
-    assert X_trans.shape[1] == X_trans_lr_out_shape
+    assert X_trans.shape[1] == 1
+
+
+def test_stacking_classifier_drop_binary_prob():
+    # check that classifier will drop one of the probability column for
+    # binary classification problem
+
+    # Select only the 2 first classes
+    X_, y_ = scale(X_iris[:100]), y_iris[:100]
+
+    estimators = [
+        ('lr', LogisticRegression()), ('rf', RandomForestClassifier())
+    ]
+    clf = StackingClassifier(
+        estimators=estimators, random_state=42
+    )
+    clf.fit(X_, y_)
+    X_meta = clf.transform(X_)
+    assert X_meta.shape[1] == 2
 
 
 class NoWeightRegressor(BaseEstimator, RegressorMixin):
@@ -202,10 +209,6 @@ class NoWeightClassifier(BaseEstimator, ClassifierMixin):
       AttributeError, "Invalid 'estimators' attribute,"),
      (y_iris,
       {'estimators': [('lr', LogisticRegression()), ('svm', LinearSVC())],
-       'passthrough': 'random'},
-      AttributeError, "Invalid 'passthrough' attribute,"),
-     (y_iris,
-      {'estimators': [('lr', LogisticRegression()), ('svm', LinearSVC())],
        'predict_method': 'random'},
       AttributeError, "When 'predict_method' is a string"),
      (y_iris,
@@ -213,7 +216,8 @@ class NoWeightClassifier(BaseEstimator, ClassifierMixin):
        'predict_method': ['predict']},
       AttributeError, "When 'predict_method' is a list"),
      (y_iris,
-      {'estimators': [('lr', LinearRegression()), ('svm', LinearSVR())],
+      {'estimators': [('lr', LinearRegression()),
+                      ('svm', LinearSVR(max_iter=5e4))],
        'predict_method': ['predict', 'predict_proba']},
       ValueError, 'does not implement the method'),
      (y_iris,
@@ -250,10 +254,6 @@ def test_stacking_classifier_error(y, params, type_err, msg_err):
      (y_diabetes,
       {'estimators': []},
       AttributeError, "Invalid 'estimators' attribute,"),
-     (y_diabetes,
-      {'estimators': [('lr', LogisticRegression()), ('svm', LinearSVR())],
-       'passthrough': 'random'},
-      AttributeError, "Invalid 'passthrough' attribute,"),
      (y_diabetes,
       {'estimators': [('lr', LinearRegression()), ('svm', LinearSVR())],
        'predict_method': 'random'},
