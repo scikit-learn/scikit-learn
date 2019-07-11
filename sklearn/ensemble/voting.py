@@ -24,10 +24,11 @@ from ..base import RegressorMixin
 from ..base import TransformerMixin
 from ..base import clone
 from ..preprocessing import LabelEncoder
+from ..utils import Bunch
 from ..utils.validation import check_is_fitted
 from ..utils.metaestimators import _BaseComposition
 from ..utils.multiclass import check_classification_targets
-from ..utils import Bunch
+from ..utils.validation import column_or_1d
 
 
 def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
@@ -69,7 +70,15 @@ class _BaseVoting(_BaseComposition, TransformerMixin):
 
     def _predict(self, X):
         """Collect results from clf.predict calls. """
-        return np.asarray([clf.predict(X) for clf in self.estimators_]).T
+        predictions = [est.predict(X) for est in self.estimators_]
+        # the shape of the predictions might be inconsistent depending of the
+        # underlying estimator
+        if len(set([pred.ndim for pred in predictions])) != 1:
+            for pred_idx, _ in enumerate(predictions):
+                if predictions[pred_idx].ndim == 1:
+                    predictions[pred_idx] = \
+                        predictions[pred_idx][:, np.newaxis]
+        return np.asarray(predictions).T
 
     @abstractmethod
     def fit(self, X, y, sample_weight=None):
@@ -457,6 +466,7 @@ class VotingRegressor(_BaseVoting, RegressorMixin):
         -------
         self : object
         """
+        y = column_or_1d(y, warn=True)
         return super().fit(X, y, sample_weight)
 
     def predict(self, X):

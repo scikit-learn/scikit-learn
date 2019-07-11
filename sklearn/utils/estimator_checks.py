@@ -1728,6 +1728,8 @@ def check_supervised_y_2d(name, estimator_orig):
         assert len(w) > 0, msg
         assert "DataConversionWarning('A column-vector y" \
                " was passed when a 1d array was expected" in msg
+    else:
+        print(estimator.__class__.__name__)
     assert_allclose(y_pred.ravel(), y_pred_2d.ravel())
 
 
