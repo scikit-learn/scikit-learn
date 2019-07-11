@@ -28,8 +28,11 @@ from .testing import assert_dict_equal
 from .testing import create_memmap_backed_data
 from . import is_scalar_nan
 from ..discriminant_analysis import LinearDiscriminantAnalysis
+from ..linear_model import LinearRegression
+from ..linear_model import LogisticRegression
 from ..linear_model import Ridge
-
+from ..tree import DecisionTreeClassifier
+from ..tree import DecisionTreeRegressor
 
 from ..base import (clone, ClusterMixin, is_classifier, is_regressor,
                     _DEFAULT_TAGS, RegressorMixin, is_outlier_detector)
@@ -2165,6 +2168,21 @@ def check_parameters_default_constructible(name, Estimator):
                     estimator = Estimator(Ridge())
                 else:
                     estimator = Estimator(LinearDiscriminantAnalysis())
+            elif "estimators" in required_parameters:
+                if issubclass(Estimator, RegressorMixin):
+                    estimator = Estimator(
+                        estimators=[
+                            ('lr', LinearRegression()),
+                            ('tree', DecisionTreeRegressor(random_state=0))
+                        ]
+                    )
+                else:
+                    estimator = Estimator(
+                        estimators=[
+                            ('lr', LogisticRegression(random_state=0)),
+                            ('tree', DecisionTreeClassifier(random_state=0))
+                        ]
+                    )
             else:
                 raise SkipTest("Can't instantiate estimator {} which"
                                " requires parameters {}".format(
