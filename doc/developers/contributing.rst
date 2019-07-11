@@ -1676,7 +1676,7 @@ For example, the `RocCurveVisualizer` defines the following methods:
    class RocCurveVisualizer:
        def __init__(self, estimator, X, y, *, pos_label=None,
                    sample_weight=None, drop_intermediate=True,
-                   response_method="predict_proba"):
+                   response_method="predict_proba", label=None):
            ...
            self.fpr_ = ...
            self.tpr_ = ...
@@ -1690,14 +1690,15 @@ For example, the `RocCurveVisualizer` defines the following methods:
 
    def plot_roc_curve(estimator, X, y, *, pos_label=None,
                       sample_weight=None, drop_intermediate=True,
-                      response_method="predict_proba", ax=None):
+                      response_method="predict_proba", label=None, ax=None):
        viz = RocCurveVisualizer(estimator,
                                 X,
                                 y,
                                 sample_weight=sample_weight,
                                 pos_label=pos_label,
                                 drop_intermediate=drop_intermediate,
-                                response_method=response_method)
+                                response_method=response_method,
+                                label=label)
        viz.plot(ax=ax)
        return viz
 ```
