@@ -659,8 +659,10 @@ cdef inline unsigned char sample_goes_left(
         X_BINNED_DTYPE_C bin_value) nogil:
     return (
         (
+            # if we split on nan, nans always go to right child.
             split_on_nan and
-            bin_value != missing_values_bin_idx)
+            bin_value != missing_values_bin_idx
+        )
         or (
             missing_go_to_left and
             bin_value == missing_values_bin_idx
