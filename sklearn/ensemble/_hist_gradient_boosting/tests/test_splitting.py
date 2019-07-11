@@ -371,24 +371,25 @@ def test_splitting_missing_values(X_binned, all_gradients,
         ([0, 1, 2, 3, 7, 8, 9, 9, 9, 9],  # 9 <=> missing
          [1, 1, 1, 1, 1, 1, 5, 5, 5, 5],
          True,  # missing values
-         8,  # n_bins_non_missing
-         7,  # cut on bin_idx=max_bins - 1
-         True, # bin_is_nan
+         9,  # n_bins_non_missing
+         8,  # cut on bin_idx=max_bins - 1
+         True,  # bin_is_nan
          False),  # missing values go to right
 
         ([9, 9, 9, 9, 9, 9, 1, 3, 8, 6],  # 9 <=> missing
          [1, 1, 1, 1, 1, 1, 5, 5, 5, 5],
          True,  # missing values
-         8,  # n_bins_non_missing
-         7,  # cut on bin_idx=max_bins - 1
-         True, # bin_is_nan
+         9,  # n_bins_non_missing
+         8,  # cut on bin_idx=max_bins - 1
+         True,  # bin_is_nan
          False),  # missing values go to right
     ]
 )
-def test_splitting_missing_values_edge_case(X_binned, all_gradients,
-                                  has_missing_values, n_bins_non_missing,
-                                  expected_bin_idx, bin_is_nan,
-                                  expected_go_to_left):
+def test_splitting_missing_values_edge_case(
+        X_binned, all_gradients,
+        has_missing_values, n_bins_non_missing,
+        expected_bin_idx, bin_is_nan,
+        expected_go_to_left):
     print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
     n_bins = max(X_binned) + 1
     n_samples = len(X_binned)
@@ -423,7 +424,7 @@ def test_splitting_missing_values_edge_case(X_binned, all_gradients,
     split_info = splitter.find_node_split(n_samples, histograms,
                                           sum_gradients, sum_hessians)
 
-    #assert split_info.bin_idx == expected_bin_idx
+    assert split_info.bin_idx == expected_bin_idx
     if has_missing_values:
         assert split_info.missing_go_to_left == expected_go_to_left
 
@@ -433,5 +434,5 @@ def test_splitting_missing_values_edge_case(X_binned, all_gradients,
     samples_left, samples_right, _ = splitter.split_indices(
         split_info, splitter.partition)
 
-    assert set(samples_left) == set([0, 1, 2, 3, 4, 5])
-    assert set(samples_right) == set([6, 7, 8, 9])
+    nan_idx = np.flatnonzero(np.array(X_binned) == n_bins_non_missing)
+    assert set(samples_right) == set(nan_idx)

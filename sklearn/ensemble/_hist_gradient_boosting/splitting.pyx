@@ -32,7 +32,7 @@ cdef struct split_info_struct:
     Y_DTYPE_C gain
     int feature_idx
     unsigned int bin_idx
-    unsigned char bin_is_nan
+    unsigned char split_is_nan
     unsigned char missing_go_to_left
     Y_DTYPE_C sum_gradient_left
     Y_DTYPE_C sum_gradient_right
@@ -53,7 +53,7 @@ class SplitInfo:
         The index of the feature to be split.
     bin_idx : int
         The index of the bin on which the split is made.
-    bin_is_nan : bool
+    split_is_nan : bool
         Whether the split has only NaN on one side.
     missing_go_to_left : bool
         Whether missing values should go to the left child.
@@ -70,14 +70,14 @@ class SplitInfo:
     n_samples_right : int
         The number of samples in the right child.
     """
-    def __init__(self, gain, feature_idx, bin_idx, bin_is_nan,
+    def __init__(self, gain, feature_idx, bin_idx, split_is_nan,
                  missing_go_to_left, sum_gradient_left, sum_hessian_left,
                  sum_gradient_right, sum_hessian_right, n_samples_left,
                  n_samples_right):
         self.gain = gain
         self.feature_idx = feature_idx
         self.bin_idx = bin_idx
-        self.bin_is_nan = bin_is_nan
+        self.split_is_nan = split_is_nan
         self.missing_go_to_left = missing_go_to_left
         self.sum_gradient_left = sum_gradient_left
         self.sum_hessian_left = sum_hessian_left
@@ -253,7 +253,7 @@ cdef class Splitter:
             int n_samples = sample_indices.shape[0]
             X_BINNED_DTYPE_C bin_idx = split_info.bin_idx
             unsigned char missing_go_to_left = split_info.missing_go_to_left
-            unsigned char split_on_nan = split_info.bin_is_nan
+            unsigned char split_on_nan = split_info.split_is_nan
             unsigned char missing_values_bin_idx = self.missing_values_bin_idx
             int feature_idx = split_info.feature_idx
             const X_BINNED_DTYPE_C [::1] X_binned = \
@@ -262,7 +262,8 @@ cdef class Splitter:
             unsigned int [::1] right_indices_buffer = self.right_indices_buffer
 
             IF SKLEARN_OPENMP_SUPPORTED:
-                int n_threads = omp_get_max_threads()
+                #int n_threads = omp_get_max_threads()
+                int n_threads = 1
             ELSE:
                 int n_threads = 1
 
@@ -410,7 +411,8 @@ cdef class Splitter:
                     feature_idx, histograms, n_samples,
                     sum_gradients, sum_hessians, &split_infos[feature_idx])
 
-                if has_missing_values[feature_idx]:
+                if (has_missing_values[feature_idx]
+                        and not split_infos[feature_idx].split_is_nan):
                     self._find_best_bin_to_split_right_to_left(
                         feature_idx, histograms, n_samples,
                         sum_gradients, sum_hessians, &split_infos[feature_idx])
@@ -424,7 +426,7 @@ cdef class Splitter:
             split_info.gain,
             split_info.feature_idx,
             split_info.bin_idx,
-            split_info.bin_is_nan,
+            split_info.split_is_nan,
             split_info.missing_go_to_left,
             split_info.sum_gradient_left,
             split_info.sum_hessian_left,
@@ -517,14 +519,13 @@ cdef class Splitter:
                                sum_gradient_right, sum_hessian_right,
                                negative_loss_current_node,
                                self.l2_regularization)
-            with gil:
-                print(gain)
+
             if gain > split_info.gain and gain > self.min_gain_to_split:
                 split_info.gain = gain
                 split_info.feature_idx = feature_idx
                 split_info.bin_idx = bin_idx
                 # the split is on NaN if bin_idx happens at the end
-                split_info.bin_is_nan = bin_idx == end - 1
+                split_info.split_is_nan = bin_idx == end - 1
                 # we scan from left to right so missing values go to the right
                 split_info.missing_go_to_left = False
                 split_info.sum_gradient_left = sum_gradient_left
@@ -604,14 +605,12 @@ cdef class Splitter:
                                negative_loss_current_node,
                                self.l2_regularization)
 
-            with gil:
-                print(gain)
             if gain > split_info.gain and gain > self.min_gain_to_split:
                 split_info.gain = gain
                 split_info.feature_idx = feature_idx
                 split_info.bin_idx = bin_idx
                 # the split is on NaN if bin_idx happens at the end
-                split_info.bin_is_nan = bin_idx == start
+                split_info.split_is_nan = bin_idx == start
                 # we scan from right to left so missing values go to the left
                 split_info.missing_go_to_left = True
                 split_info.sum_gradient_left = sum_gradient_left
