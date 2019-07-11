@@ -1092,7 +1092,7 @@ During training, the `estimators` are fitted on the whole training data
 
 Note that the output of the `estimators` is controlled by the parameter
 `predict_method`. It corresponds to the method called by each
-estimator. This parameter is either a list of string of the methods name or
+estimator. This parameter is either a list of strings, being method names, or
 `'auto'` which will automatically call the method depending on the
 availability and a pre-determined order of preference (`predict_proba`,
 `decision_function` and `predict`).
