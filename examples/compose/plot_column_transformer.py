@@ -26,7 +26,6 @@ the technique.
 # Author: Matt Terry <matt.terry@gmail.com>
 #
 # License: BSD 3 clause
-from __future__ import print_function
 
 import numpy as np
 
@@ -40,7 +39,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import classification_report
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
-from sklearn.svm import SVC
+from sklearn.svm import LinearSVC
 
 
 class TextStats(BaseEstimator, TransformerMixin):
@@ -89,7 +88,7 @@ pipeline = Pipeline([
     # Extract the subject & body
     ('subjectbody', SubjectBodyExtractor()),
 
-    # Use C toolumnTransformer to combine the features from subject and body
+    # Use ColumnTransformer to combine the features from subject and body
     ('union', ColumnTransformer(
         [
             # Pulling features from the post's subject line (first column)
@@ -117,8 +116,8 @@ pipeline = Pipeline([
     )),
 
     # Use a SVC classifier on the combined features
-    ('svc', SVC(kernel='linear')),
-])
+    ('svc', LinearSVC(dual=False)),
+], verbose=True)
 
 # limit the list of categories to make running this example faster.
 categories = ['alt.atheism', 'talk.religion.misc']

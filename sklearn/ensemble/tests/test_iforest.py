@@ -10,15 +10,12 @@ import pytest
 
 import numpy as np
 
-from sklearn.utils.fixes import euler_gamma
-from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import assert_allclose
 
 from sklearn.model_selection import ParameterGrid
 from sklearn.ensemble import IsolationForest
@@ -29,6 +26,7 @@ from sklearn.utils import check_random_state
 from sklearn.metrics import roc_auc_score
 
 from scipy.sparse import csc_matrix, csr_matrix
+from unittest.mock import Mock, patch
 
 rng = check_random_state(0)
 
@@ -126,28 +124,33 @@ def test_iforest_error():
     # test X_test n_features match X_train one:
     assert_raises(ValueError, IsolationForest().fit(X).predict, X[:, 1:])
 
+    # test that behaviour='old' will raise an error
+    msg = "The old behaviour of IsolationForest is not implemented anymore."
+    with pytest.raises(NotImplementedError, match=msg):
+        IsolationForest(behaviour='old').fit(X)
+
 
 def test_recalculate_max_depth():
     """Check max_depth recalculation when max_samples is reset to n_samples"""
     X = iris.data
     clf = IsolationForest().fit(X)
     for est in clf.estimators_:
-        assert_equal(est.max_depth, int(np.ceil(np.log2(X.shape[0]))))
+        assert est.max_depth == int(np.ceil(np.log2(X.shape[0])))
 
 
 def test_max_samples_attribute():
     X = iris.data
     clf = IsolationForest().fit(X)
-    assert_equal(clf.max_samples_, X.shape[0])
+    assert clf.max_samples_ == X.shape[0]
 
     clf = IsolationForest(max_samples=500)
     assert_warns_message(UserWarning,
                          "max_samples will be set to n_samples for estimation",
                          clf.fit, X)
-    assert_equal(clf.max_samples_, X.shape[0])
+    assert clf.max_samples_ == X.shape[0]
 
     clf = IsolationForest(max_samples=0.4).fit(X)
-    assert_equal(clf.max_samples_, 0.4*X.shape[0])
+    assert clf.max_samples_ == 0.4*X.shape[0]
 
 
 def test_iforest_parallel_regression():
@@ -195,29 +198,29 @@ def test_iforest_performance():
     y_pred = - clf.decision_function(X_test)
 
     # check that there is at most 6 errors (false positive or false negative)
-    assert_greater(roc_auc_score(y_test, y_pred), 0.98)
+    assert roc_auc_score(y_test, y_pred) > 0.98
 
 
-def test_iforest_works():
+@pytest.mark.parametrize("contamination", [0.25, "auto"])
+def test_iforest_works(contamination):
     # toy sample (the last two samples are outliers)
     X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [6, 3], [-4, 7]]
 
     # Test IsolationForest
-    for contamination in [0.25, "auto"]:
-        clf = IsolationForest(random_state=rng, contamination=contamination)
-        clf.fit(X)
-        decision_func = - clf.decision_function(X)
-        pred = clf.predict(X)
-        # assert detect outliers:
-        assert_greater(np.min(decision_func[-2:]), np.max(decision_func[:-2]))
-        assert_array_equal(pred, 6 * [1] + 2 * [-1])
+    clf = IsolationForest(random_state=rng, contamination=contamination)
+    clf.fit(X)
+    decision_func = -clf.decision_function(X)
+    pred = clf.predict(X)
+    # assert detect outliers:
+    assert np.min(decision_func[-2:]) > np.max(decision_func[:-2])
+    assert_array_equal(pred, 6 * [1] + 2 * [-1])
 
 
 def test_max_samples_consistency():
     # Make sure validated max_samples in iforest and BaseBagging are identical
     X = iris.data
     clf = IsolationForest().fit(X)
-    assert_equal(clf.max_samples_, clf._max_samples)
+    assert clf.max_samples_ == clf._max_samples
 
 
 def test_iforest_subsampled_features():
@@ -234,14 +237,21 @@ def test_iforest_subsampled_features():
 def test_iforest_average_path_length():
     # It tests non-regression for #8549 which used the wrong formula
     # for average path length, strictly for the integer case
-
-    result_one = 2. * (np.log(4.) + euler_gamma) - 2. * 4. / 5.
-    result_two = 2. * (np.log(998.) + euler_gamma) - 2. * 998. / 999.
-    assert_almost_equal(_average_path_length(1), 1., decimal=10)
-    assert_almost_equal(_average_path_length(5), result_one, decimal=10)
-    assert_almost_equal(_average_path_length(999), result_two, decimal=10)
-    assert_array_almost_equal(_average_path_length(np.array([1, 5, 999])),
-                              [1., result_one, result_two], decimal=10)
+    # Updated to check average path length when input is <= 2 (issue #11839)
+    result_one = 2.0 * (np.log(4.0) + np.euler_gamma) - 2.0 * 4.0 / 5.0
+    result_two = 2.0 * (np.log(998.0) + np.euler_gamma) - 2.0 * 998.0 / 999.0
+    assert_allclose(_average_path_length([0]), [0.0])
+    assert_allclose(_average_path_length([1]), [0.0])
+    assert_allclose(_average_path_length([2]), [1.0])
+    assert_allclose(_average_path_length([5]), [result_one])
+    assert_allclose(_average_path_length([999]), [result_two])
+    assert_allclose(
+        _average_path_length(np.array([1, 2, 5, 999])),
+        [0.0, 1.0, result_one, result_two],
+    )
+    # _average_path_length is increasing
+    avg_path_length = _average_path_length(np.arange(5))
+    assert_array_equal(avg_path_length, np.sort(avg_path_length))
 
 
 def test_score_samples():
@@ -256,14 +266,59 @@ def test_score_samples():
                        clf2.score_samples([[2., 2.]]))
 
 
-def test_deprecation():
-    assert_warns_message(DeprecationWarning,
-                         'default contamination parameter 0.1 will change '
-                         'in version 0.22 to "auto"',
-                         IsolationForest, )
-    X = [[0.0], [1.0]]
-    clf = IsolationForest().fit(X)
-    assert_warns_message(DeprecationWarning,
-                         "threshold_ attribute is deprecated in 0.20 and will"
-                         " be removed in 0.22.",
-                         getattr, clf, "threshold_")
+def test_iforest_warm_start():
+    """Test iterative addition of iTrees to an iForest """
+
+    rng = check_random_state(0)
+    X = rng.randn(20, 2)
+
+    # fit first 10 trees
+    clf = IsolationForest(n_estimators=10, max_samples=20,
+                          random_state=rng, warm_start=True)
+    clf.fit(X)
+    # remember the 1st tree
+    tree_1 = clf.estimators_[0]
+    # fit another 10 trees
+    clf.set_params(n_estimators=20)
+    clf.fit(X)
+    # expecting 20 fitted trees and no overwritten trees
+    assert len(clf.estimators_) == 20
+    assert clf.estimators_[0] is tree_1
+
+
+# mock get_chunk_n_rows to actually test more than one chunk (here one
+# chunk = 3 rows:
+@patch(
+    "sklearn.ensemble.iforest.get_chunk_n_rows",
+    side_effect=Mock(**{"return_value": 3}),
+)
+@pytest.mark.parametrize(
+    "contamination, n_predict_calls", [(0.25, 3), ("auto", 2)]
+)
+def test_iforest_chunks_works1(
+    mocked_get_chunk, contamination, n_predict_calls
+):
+    test_iforest_works(contamination)
+    assert mocked_get_chunk.call_count == n_predict_calls
+
+
+# idem with chunk_size = 5 rows
+@patch(
+    "sklearn.ensemble.iforest.get_chunk_n_rows",
+    side_effect=Mock(**{"return_value": 10}),
+)
+@pytest.mark.parametrize(
+    "contamination, n_predict_calls", [(0.25, 3), ("auto", 2)]
+)
+def test_iforest_chunks_works2(
+    mocked_get_chunk, contamination, n_predict_calls
+):
+    test_iforest_works(contamination)
+    assert mocked_get_chunk.call_count == n_predict_calls
+
+
+def test_iforest_deprecation():
+    iforest = IsolationForest(behaviour='new')
+    warn_msg = "'behaviour' is deprecated in 0.22 and will be removed in 0.24"
+    with pytest.warns(DeprecationWarning, match=warn_msg):
+        iforest.fit(iris.data)

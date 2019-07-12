@@ -90,8 +90,9 @@ enhance the functionality of scikit-learn's estimators.
 
 **Model export for production**
 
-- `sklearn-pmml <https://github.com/alex-pirozhenko/sklearn-pmml>`_
-  Serialization of (some) scikit-learn estimators into PMML.
+- `onnxmltools <https://github.com/onnx/onnxmltools>`_ Serializes many
+  Scikit-learn pipelines to `ONNX <https://onnx.ai/>`_ for interchange and
+  prediction.
 
 - `sklearn2pmml <https://github.com/jpmml/sklearn2pmml>`_
   Serialization of a wide variety of scikit-learn estimators and transformers
@@ -139,7 +140,7 @@ and tasks.
 - `pylearn2 <http://deeplearning.net/software/pylearn2/>`_ A deep learning and
   neural network library build on theano with scikit-learn like interface.
 
-- `sklearn_theano <http://sklearn-theano.github.io/>`_ scikit-learn compatible
+- `sklearn_theano <https://sklearn-theano.github.io/>`_ scikit-learn compatible
   estimators, transformers, and datasets which use Theano internally
 
 - `nolearn <https://github.com/dnouri/nolearn>`_ A number of wrappers and
@@ -150,6 +151,9 @@ and tasks.
 
 - `lasagne <https://github.com/Lasagne/Lasagne>`_ A lightweight library to
   build and train neural networks in Theano.
+  
+- `skorch <https://github.com/dnouri/skorch>`_ A scikit-learn compatible 
+  neural network library that wraps PyTorch.
 
 **Broad scope**
 
@@ -164,7 +168,7 @@ and tasks.
 - `xgboost <https://github.com/dmlc/xgboost>`_ Optimised gradient boosted decision
   tree library.
 
-- `ML-Ensemble <http://mlens.readthedocs.io/en/latest/>`_ Generalized
+- `ML-Ensemble <https://mlens.readthedocs.io/>`_ Generalized
   ensemble learning (stacking, blending, subsemble, deep ensembles,
   etc.).
 
@@ -183,7 +187,10 @@ and tasks.
 
 - `multiisotonic <https://github.com/alexfields/multiisotonic>`_ Isotonic
   regression on multidimensional features.
-  
+
+- `scikit-multilearn <https://scikit.ml>`_ Multi-label classification with 
+  focus on label space manipulation.
+
 - `seglearn <https://github.com/dmbee/seglearn>`_ Time series and sequence 
   learning using sliding window segmentation.
 
@@ -225,23 +232,23 @@ Statistical learning with Python
 --------------------------------
 Other packages useful for data analysis and machine learning.
 
-- `Pandas <http://pandas.pydata.org>`_ Tools for working with heterogeneous and
+- `Pandas <https://pandas.pydata.org/>`_ Tools for working with heterogeneous and
   columnar data, relational queries, time series and basic statistics.
 
 - `theano <http://deeplearning.net/software/theano/>`_ A CPU/GPU array
   processing framework geared towards deep learning research.
 
-- `statsmodels <http://www.statsmodels.org>`_ Estimating and analysing
+- `statsmodels <https://www.statsmodels.org>`_ Estimating and analysing
   statistical models. More focused on statistical tests and less on prediction
   than scikit-learn.
 
-- `PyMC <http://pymc-devs.github.io/pymc/>`_ Bayesian statistical models and
+- `PyMC <https://pymc-devs.github.io/pymc/>`_ Bayesian statistical models and
   fitting algorithms.
 
 - `Sacred <https://github.com/IDSIA/Sacred>`_ Tool to help you configure,
   organize, log and reproduce experiments
 
-- `Seaborn <http://stanford.edu/~mwaskom/software/seaborn/>`_ Visualization library based on
+- `Seaborn <https://stanford.edu/~mwaskom/software/seaborn/>`_ Visualization library based on
   matplotlib. It provides a high-level interface for drawing attractive statistical graphics.
 
 - `Deep Learning <http://deeplearning.net/software_links/>`_ A curated list of deep learning
@@ -251,10 +258,10 @@ Other packages useful for data analysis and machine learning.
 Domain specific packages
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-- `scikit-image <http://scikit-image.org/>`_ Image processing and computer
+- `scikit-image <https://scikit-image.org/>`_ Image processing and computer
   vision in python.
 
-- `Natural language toolkit (nltk) <http://www.nltk.org/>`_ Natural language
+- `Natural language toolkit (nltk) <https://www.nltk.org/>`_ Natural language
   processing and some machine learning.
 
 - `gensim <https://radimrehurek.com/gensim/>`_  A library for topic modelling,
@@ -262,12 +269,12 @@ Domain specific packages
 
 - `NiLearn <https://nilearn.github.io/>`_ Machine learning for neuro-imaging.
 
-- `AstroML <http://www.astroml.org/>`_  Machine learning for astronomy.
+- `AstroML <https://www.astroml.org/>`_  Machine learning for astronomy.
 
 - `MSMBuilder <http://msmbuilder.org/>`_  Machine learning for protein
   conformational dynamics time series.
 
-- `scikit-surprise <http://surpriselib.com>`_ A scikit for building and
+- `scikit-surprise <https://surpriselib.com/>`_ A scikit for building and
   evaluating recommender systems.
 
 Snippets and tidbits

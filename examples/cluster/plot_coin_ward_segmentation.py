@@ -17,16 +17,23 @@ print(__doc__)
 import time as time
 
 import numpy as np
+from distutils.version import LooseVersion
 from scipy.ndimage.filters import gaussian_filter
 
 import matplotlib.pyplot as plt
 
+import skimage
 from skimage.data import coins
 from skimage.transform import rescale
 
 from sklearn.feature_extraction.image import grid_to_graph
 from sklearn.cluster import AgglomerativeClustering
 
+# these were introduced in skimage-0.14
+if LooseVersion(skimage.__version__) >= '0.14':
+    rescale_params = {'anti_aliasing': False, 'multichannel': False}
+else:
+    rescale_params = {}
 
 # #############################################################################
 # Generate data
@@ -37,7 +44,7 @@ orig_coins = coins()
 # reduces aliasing artifacts.
 smoothened_coins = gaussian_filter(orig_coins, sigma=2)
 rescaled_coins = rescale(smoothened_coins, 0.2, mode="reflect",
-                         multichannel=False, anti_aliasing=False)
+                         **rescale_params)
 
 X = np.reshape(rescaled_coins, (-1, 1))
 

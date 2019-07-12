@@ -9,7 +9,6 @@ import numpy as np
 from scipy import linalg
 
 from .base import BaseMixture, _check_shape
-from ..externals.six.moves import zip
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
 from ..utils.extmath import row_norms
@@ -310,7 +309,7 @@ def _compute_precision_cholesky(covariances, covariance_type):
         "or collapsed samples). Try to decrease the number of components, "
         "or increase reg_covar.")
 
-    if covariance_type in 'full':
+    if covariance_type == 'full':
         n_components, n_features, _ = covariances.shape
         precisions_chol = np.empty((n_components, n_features, n_features))
         for k, covariance in enumerate(covariances):
@@ -512,6 +511,8 @@ class GaussianMixture(BaseMixture):
         If 'warm_start' is True, the solution of the last fitting is used as
         initialization for the next call of fit(). This can speed up
         convergence when fit is called several times on similar problems.
+        In that case, 'n_init' is ignored and only a single initialization
+        occurs upon the first call.
         See :term:`the Glossary <warm_start>`.
 
     verbose : int, default to 0.
@@ -575,7 +576,8 @@ class GaussianMixture(BaseMixture):
         Number of step used by the best fit of EM to reach the convergence.
 
     lower_bound_ : float
-        Log-likelihood of the best fit of EM.
+        Lower bound value on the log-likelihood (of the training data with
+        respect to the model) of the best fit of EM.
 
     See Also
     --------
@@ -588,7 +590,7 @@ class GaussianMixture(BaseMixture):
                  weights_init=None, means_init=None, precisions_init=None,
                  random_state=None, warm_start=False,
                  verbose=0, verbose_interval=10):
-        super(GaussianMixture, self).__init__(
+        super().__init__(
             n_components=n_components, tol=tol, reg_covar=reg_covar,
             max_iter=max_iter, n_init=n_init, init_params=init_params,
             random_state=random_state, warm_start=warm_start,

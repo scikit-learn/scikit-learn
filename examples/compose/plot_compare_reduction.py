@@ -29,7 +29,6 @@ fitting of a transformer is costly.
 
 # Authors: Robert McGibbon, Joel Nothman, Guillaume Lemaitre
 
-from __future__ import print_function, division
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -43,8 +42,9 @@ from sklearn.feature_selection import SelectKBest, chi2
 print(__doc__)
 
 pipe = Pipeline([
-    ('reduce_dim', PCA()),
-    ('classify', LinearSVC())
+    # the reduce_dim stage is populated by the param_grid
+    ('reduce_dim', 'passthrough'),
+    ('classify', LinearSVC(dual=False, max_iter=10000))
 ])
 
 N_FEATURES_OPTIONS = [2, 4, 8]
@@ -63,7 +63,7 @@ param_grid = [
 ]
 reducer_labels = ['PCA', 'NMF', 'KBest(chi2)']
 
-grid = GridSearchCV(pipe, cv=3, n_jobs=1, param_grid=param_grid)
+grid = GridSearchCV(pipe, cv=5, n_jobs=1, param_grid=param_grid)
 digits = load_digits()
 grid.fit(digits.data, digits.target)
 
@@ -102,24 +102,24 @@ plt.show()
 #     cache. Hence, use the ``memory`` constructor parameter when the fitting
 #     of a transformer is costly.
 
-from tempfile import mkdtemp
+from joblib import Memory
 from shutil import rmtree
-from sklearn.externals.joblib import Memory
 
 # Create a temporary folder to store the transformers of the pipeline
-cachedir = mkdtemp()
-memory = Memory(cachedir=cachedir, verbose=10)
+location = 'cachedir'
+memory = Memory(location=location, verbose=10)
 cached_pipe = Pipeline([('reduce_dim', PCA()),
-                        ('classify', LinearSVC())],
+                        ('classify', LinearSVC(dual=False, max_iter=10000))],
                        memory=memory)
 
 # This time, a cached pipeline will be used within the grid search
-grid = GridSearchCV(cached_pipe, cv=3, n_jobs=1, param_grid=param_grid)
+grid = GridSearchCV(cached_pipe, cv=5, n_jobs=1, param_grid=param_grid)
 digits = load_digits()
 grid.fit(digits.data, digits.target)
 
 # Delete the temporary cache before exiting
-rmtree(cachedir)
+memory.clear(warn=False)
+rmtree(location)
 
 ###############################################################################
 # The ``PCA`` fitting is only computed at the evaluation of the first

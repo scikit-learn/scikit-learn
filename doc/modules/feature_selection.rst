@@ -245,7 +245,7 @@ meta-transformer)::
   >>> X, y = iris.data, iris.target
   >>> X.shape
   (150, 4)
-  >>> clf = ExtraTreesClassifier()
+  >>> clf = ExtraTreesClassifier(n_estimators=50)
   >>> clf = clf.fit(X, y)
   >>> clf.feature_importances_  # doctest: +SKIP
   array([ 0.04...,  0.05...,  0.4...,  0.4...])
