@@ -44,7 +44,12 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
         if node.is_leaf:
             return node.value
 
-        if isnan(numeric_data[row, node.feature_idx]):
+        if isnan(node.threshold):
+            if isnan(numeric_data[row, node.feature_idx]):
+                node = nodes[node.right]
+            else:
+                node = nodes[node.left]
+        elif isnan(numeric_data[row, node.feature_idx]):
             if node.missing_go_to_left:
                 node = nodes[node.left]
             else:
