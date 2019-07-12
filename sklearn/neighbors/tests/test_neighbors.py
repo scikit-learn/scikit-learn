@@ -19,9 +19,6 @@ from sklearn.neighbors.base import _is_sorted_by_data, _check_precomputed
 from sklearn.pipeline import make_pipeline
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_warns
@@ -572,8 +569,8 @@ def test_radius_neighbors_boundary_handling():
         nbrs = neighbors.NearestNeighbors(radius=radius,
                                           algorithm=algorithm).fit(X)
         results = nbrs.radius_neighbors([[0.0]], return_distance=False)
-        assert_equal(results.shape, (1,))
-        assert_equal(results.dtype, object)
+        assert results.shape == (1,)
+        assert results.dtype == object
         assert_array_equal(results[0], [0, 1])
 
 
@@ -601,7 +598,7 @@ def test_RadiusNeighborsClassifier_multioutput():
             y_pred_so.append(rnn.predict(X_test))
 
         y_pred_so = np.vstack(y_pred_so).T
-        assert_equal(y_pred_so.shape, y_test.shape)
+        assert y_pred_so.shape == y_test.shape
 
         # Multioutput prediction
         rnn_mo = neighbors.RadiusNeighborsClassifier(weights=weights,
@@ -609,7 +606,7 @@ def test_RadiusNeighborsClassifier_multioutput():
         rnn_mo.fit(X_train, y_train)
         y_pred_mo = rnn_mo.predict(X_test)
 
-        assert_equal(y_pred_mo.shape, y_test.shape)
+        assert y_pred_mo.shape == y_test.shape
         assert_array_almost_equal(y_pred_mo, y_pred_so)
 
 
@@ -662,8 +659,8 @@ def test_KNeighborsClassifier_multioutput():
             y_pred_proba_so.append(knn.predict_proba(X_test))
 
         y_pred_so = np.vstack(y_pred_so).T
-        assert_equal(y_pred_so.shape, y_test.shape)
-        assert_equal(len(y_pred_proba_so), n_output)
+        assert y_pred_so.shape == y_test.shape
+        assert len(y_pred_proba_so) == n_output
 
         # Multioutput prediction
         knn_mo = neighbors.KNeighborsClassifier(weights=weights,
@@ -671,12 +668,12 @@ def test_KNeighborsClassifier_multioutput():
         knn_mo.fit(X_train, y_train)
         y_pred_mo = knn_mo.predict(X_test)
 
-        assert_equal(y_pred_mo.shape, y_test.shape)
+        assert y_pred_mo.shape == y_test.shape
         assert_array_almost_equal(y_pred_mo, y_pred_so)
 
         # Check proba
         y_pred_proba_mo = knn_mo.predict_proba(X_test)
-        assert_equal(len(y_pred_proba_mo), n_output)
+        assert len(y_pred_proba_mo) == n_output
 
         for proba_mo, proba_so in zip(y_pred_proba_mo, y_pred_proba_so):
             assert_array_almost_equal(proba_mo, proba_so)
@@ -730,8 +727,8 @@ def test_KNeighborsRegressor_multioutput_uniform_weight():
 
         y_pred = knn.predict(X_test)
 
-        assert_equal(y_pred.shape, y_test.shape)
-        assert_equal(y_pred_idx.shape, y_test.shape)
+        assert y_pred.shape == y_test.shape
+        assert y_pred_idx.shape == y_test.shape
         assert_array_almost_equal(y_pred, y_pred_idx)
 
 
@@ -757,7 +754,7 @@ def test_kneighbors_regressor_multioutput(n_samples=40,
         knn.fit(X, y)
         epsilon = 1E-5 * (2 * rng.rand(1, n_features) - 1)
         y_pred = knn.predict(X[:n_test_pts] + epsilon)
-        assert_equal(y_pred.shape, y_target.shape)
+        assert y_pred.shape == y_target.shape
 
         assert np.all(np.abs(y_pred - y_target) < 0.3)
 
@@ -828,8 +825,8 @@ def test_RadiusNeighborsRegressor_multioutput_with_uniform_weight():
         y_pred_idx = np.array(y_pred_idx)
         y_pred = rnn.predict(X_test)
 
-        assert_equal(y_pred_idx.shape, y_test.shape)
-        assert_equal(y_pred.shape, y_test.shape)
+        assert y_pred_idx.shape == y_test.shape
+        assert y_pred.shape == y_test.shape
         assert_array_almost_equal(y_pred, y_pred_idx)
 
 
@@ -856,7 +853,7 @@ def test_RadiusNeighborsRegressor_multioutput(n_samples=40,
         epsilon = 1E-5 * (2 * rng.rand(1, n_features) - 1)
         y_pred = rnn.predict(X[:n_test_pts] + epsilon)
 
-        assert_equal(y_pred.shape, y_target.shape)
+        assert y_pred.shape == y_target.shape
         assert np.all(np.abs(y_pred - y_target) < 0.3)
 
 
@@ -906,7 +903,7 @@ def test_neighbors_iris():
 
         rgs = neighbors.KNeighborsRegressor(n_neighbors=5, algorithm=algorithm)
         rgs.fit(iris.data, iris.target)
-        assert_greater(np.mean(rgs.predict(iris.data).round() == iris.target),
+        assert (np.mean(rgs.predict(iris.data).round() == iris.target) >
                        0.95)
 
 
@@ -927,7 +924,7 @@ def test_neighbors_digits():
     score_uint8 = clf.fit(X_train, Y_train).score(X_test, Y_test)
     score_float = clf.fit(X_train.astype(float, copy=False), Y_train).score(
         X_test.astype(float, copy=False), Y_test)
-    assert_equal(score_uint8, score_float)
+    assert score_uint8 == score_float
 
 
 def test_kneighbors_graph():
@@ -1075,8 +1072,8 @@ def test_neighbors_badargs():
         assert_raises(ValueError,
                       nbrs.predict,
                       [[]])
-        if (isinstance(cls, neighbors.KNeighborsClassifier) or
-                isinstance(cls, neighbors.KNeighborsRegressor)):
+        if (issubclass(cls, neighbors.KNeighborsClassifier) or
+                issubclass(cls, neighbors.KNeighborsRegressor)):
             nbrs = cls(n_neighbors=-1)
             assert_raises(ValueError, nbrs.fit, X, y)
 
@@ -1169,7 +1166,7 @@ def test_valid_brute_metric_for_auto_algorithm():
 
     # check that there is a metric that is valid for brute
     # but not ball_tree (so we actually test something)
-    assert_in("cosine", VALID_METRICS['brute'])
+    assert "cosine" in VALID_METRICS['brute']
     assert "cosine" not in VALID_METRICS['ball_tree']
 
     # Metric which don't required any additional parameter
@@ -1319,9 +1316,9 @@ def test_k_and_radius_neighbors_X_None():
         rng = nn.radius_neighbors_graph(None, radius=1.5)
         kng = nn.kneighbors_graph(None)
         for graph in [rng, kng]:
-            assert_array_equal(rng.A, [[0, 1], [1, 0]])
-            assert_array_equal(rng.data, [1, 1])
-            assert_array_equal(rng.indices, [1, 0])
+            assert_array_equal(graph.A, [[0, 1], [1, 0]])
+            assert_array_equal(graph.data, [1, 1])
+            assert_array_equal(graph.indices, [1, 0])
 
         X = [[0, 1], [0, 1], [1, 1]]
         nn = neighbors.NearestNeighbors(n_neighbors=2, algorithm=algorithm)

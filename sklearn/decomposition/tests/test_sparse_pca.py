@@ -7,7 +7,6 @@ import pytest
 import numpy as np
 
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import if_safe_multiprocessing_with_blas
 
@@ -45,13 +44,13 @@ def test_correct_shapes():
     X = rng.randn(12, 10)
     spca = SparsePCA(n_components=8, random_state=rng)
     U = spca.fit_transform(X)
-    assert_equal(spca.components_.shape, (8, 10))
-    assert_equal(U.shape, (12, 8))
+    assert spca.components_.shape == (8, 10)
+    assert U.shape == (12, 8)
     # test overcomplete decomposition
     spca = SparsePCA(n_components=13, random_state=rng)
     U = spca.fit_transform(X)
-    assert_equal(spca.components_.shape, (13, 10))
-    assert_equal(U.shape, (12, 13))
+    assert spca.components_.shape == (13, 10)
+    assert U.shape == (12, 13)
 
 
 def test_fit_transform():
@@ -122,13 +121,13 @@ def test_mini_batch_correct_shapes():
     X = rng.randn(12, 10)
     pca = MiniBatchSparsePCA(n_components=8, random_state=rng)
     U = pca.fit_transform(X)
-    assert_equal(pca.components_.shape, (8, 10))
-    assert_equal(U.shape, (12, 8))
+    assert pca.components_.shape == (8, 10)
+    assert U.shape == (12, 8)
     # test overcomplete decomposition
     pca = MiniBatchSparsePCA(n_components=13, random_state=rng)
     U = pca.fit_transform(X)
-    assert_equal(pca.components_.shape, (13, 10))
-    assert_equal(U.shape, (12, 13))
+    assert pca.components_.shape == (13, 10)
+    assert U.shape == (12, 13)
 
 
 # XXX: test always skipped
