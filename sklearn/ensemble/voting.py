@@ -70,14 +70,14 @@ class _BaseVoting(_BaseComposition, TransformerMixin):
 
     def _predict(self, X):
         """Collect results from clf.predict calls. """
-        predictions = [est.predict(X) for est in self.estimators_]
-        # the shape of the predictions might be inconsistent depending of the
-        # underlying estimator
-        if len(set([pred.ndim for pred in predictions])) != 1:
-            for pred_idx, _ in enumerate(predictions):
-                if predictions[pred_idx].ndim == 1:
-                    predictions[pred_idx] = \
-                        predictions[pred_idx][:, np.newaxis]
+        predictions = []
+        for est in self.estimators_:
+            preds = est.predict(X)
+            # make sure that the predictions a 2D array to be able to
+            # concatenate them
+            if preds.ndim == 1:
+                preds.reshape(-1, 1)
+            predictions.append(preds)
         return np.asarray(predictions).T
 
     @abstractmethod
