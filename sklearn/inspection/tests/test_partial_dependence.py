@@ -21,6 +21,7 @@ from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import MultiTaskLasso
+from sklearn.tree import DecisionTreeRegressor
 from sklearn.datasets import load_boston, load_iris
 from sklearn.datasets import make_classification, make_regression
 from sklearn.cluster import KMeans
@@ -58,6 +59,7 @@ multioutput_regression_data = (make_regression(n_samples=50, n_targets=2,
     (GradientBoostingClassifier, 'brute', multiclass_classification_data),
     (GradientBoostingRegressor, 'recursion', regression_data),
     (GradientBoostingRegressor, 'brute', regression_data),
+    (DecisionTreeRegressor, 'brute', regression_data),
     (LinearRegression, 'brute', regression_data),
     (LinearRegression, 'brute', multioutput_regression_data),
     (LogisticRegression, 'brute', binary_classification_data),
@@ -261,7 +263,6 @@ def test_partial_dependence_easy_target(est, power):
     assert r2 > .99
 
 
-@pytest.mark.filterwarnings('ignore:The default value of ')  # 0.22
 @pytest.mark.parametrize('Estimator',
                          (sklearn.tree.DecisionTreeClassifier,
                           sklearn.tree.ExtraTreeClassifier,
@@ -288,6 +289,8 @@ def test_multiclass_multioutput(Estimator):
 
 class NoPredictProbaNoDecisionFunction(BaseEstimator, ClassifierMixin):
     def fit(self, X, y):
+        # simulate that we have some classes
+        self.classes_ = [0, 1]
         return self
 
 
