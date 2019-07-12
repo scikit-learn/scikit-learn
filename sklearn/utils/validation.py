@@ -982,7 +982,7 @@ def check_scalar(x, name, target_type, min_val=None, max_val=None):
         raise ValueError('`{}`= {}, must be <= {}.'.format(name, x, max_val))
 
 
-def _check_sample_weight(sample_weight, y=None, n_samples=None, dtype=None,
+def _check_sample_weight(sample_weight, X, dtype=None,
                          order=None):
     """Validate sample weights
 
@@ -990,10 +990,8 @@ def _check_sample_weight(sample_weight, y=None, n_samples=None, dtype=None,
     ----------
     sample_weight : {ndarray, Number or None}, shape (n_samples,)
        Input sample weights.
-    y : ndarray or None, shape (n_samples,)
-       Target variable. Either `y` or `n_samples` must be provided.
-    n_samples : int or None
-       expected number of samples. Either y or n_samples must be provided.
+    X : nd-array, list or sparse matrix
+        Input data.
     dtype: dtype
        dtype of the validated `sample_weight`.
     order : 'F', 'C' or None (default=None)
@@ -1007,10 +1005,7 @@ def _check_sample_weight(sample_weight, y=None, n_samples=None, dtype=None,
     sample_weight : ndarray, shape (n_samples,)
        Validated sample weights.
     """
-    if n_samples is not None and y is not None:
-        raise ValueError('Only one of y, n_samples must be provided!')
-    elif y is not None:
-        n_samples = y.shape[0]
+    n_samples = _num_samples(X)
 
     if sample_weight is None or isinstance(sample_weight, numbers.Number):
         if order is None:

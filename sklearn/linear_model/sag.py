@@ -252,7 +252,7 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
     n_classes = int(y.max()) + 1 if loss == 'multinomial' else 1
 
     # initialization
-    sample_weight = _check_sample_weight(sample_weight, n_samples=n_samples,
+    sample_weight = _check_sample_weight(sample_weight, X,
                                          dtype=X.dtype, order='C')
 
     if 'coef' in warm_start_mem.keys():

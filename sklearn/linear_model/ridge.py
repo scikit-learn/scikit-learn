@@ -1406,7 +1406,7 @@ class _RidgeGCV(LinearModel):
                 "alphas must be positive. Got {} containing some "
                 "negative or null value instead.".format(self.alphas))
 
-        sample_weight = _check_sample_weight(sample_weight, y, dtype=X.dtype)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         n_samples, n_features = X.shape
 

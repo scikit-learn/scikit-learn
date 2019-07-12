@@ -858,25 +858,22 @@ def test_check_scalar_invalid(x, target_name, target_type, min_val, max_val,
 
 
 def test_check_sample_weight():
-    with pytest.raises(ValueError,
-                       match="Only one of y, n_samples must be provided"):
-        _check_sample_weight(np.ones(3), y=np.ones(3), n_samples=3)
-
     # check order="C" parameter
     sample_weight = np.ones(10)[::2]
     assert not sample_weight.flags["C_CONTIGUOUS"]
-    sample_weight = _check_sample_weight(sample_weight, n_samples=5, order="C")
+    sample_weight = _check_sample_weight(sample_weight, X=np.ones((5, 1)),
+                                         order="C")
     assert sample_weight.flags["C_CONTIGUOUS"]
 
     # check None input
-    sample_weight = _check_sample_weight(None, n_samples=5)
+    sample_weight = _check_sample_weight(None, X=np.ones((5, 2)))
     assert_allclose(sample_weight, np.ones(5))
 
     # check numbers input
-    sample_weight = _check_sample_weight(2.0, n_samples=5)
+    sample_weight = _check_sample_weight(2.0, X=np.ones((5, 2)))
     assert_allclose(sample_weight, 2*np.ones(5))
 
     # check wrong number of dimensions
     with pytest.raises(ValueError,
                        match="Sample weights must be 1D array or scalar"):
-        _check_sample_weight(np.ones((2, 4)), n_samples=5)
+        _check_sample_weight(np.ones((2, 4)), X=np.ones((2, 2)))

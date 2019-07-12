@@ -908,7 +908,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     y_ind = np.asarray(y_ind, dtype=np.float64).ravel()
     y_ind = np.require(y_ind, requirements="W")
 
-    sample_weight = _check_sample_weight(sample_weight, n_samples=X.shape[0],
+    sample_weight = _check_sample_weight(sample_weight, X,
                                          dtype=np.float64, order='C')
 
     solver_type = _get_liblinear_solver_type(multi_class, penalty, loss, dual)

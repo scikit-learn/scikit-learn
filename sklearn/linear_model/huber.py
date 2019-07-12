@@ -254,7 +254,7 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
             X, y, copy=False, accept_sparse=['csr'], y_numeric=True,
             dtype=[np.float64, np.float32])
 
-        sample_weight = _check_sample_weight(sample_weight, y)
+        sample_weight = _check_sample_weight(sample_weight, X)
 
         if self.epsilon < 1.0:
             raise ValueError(

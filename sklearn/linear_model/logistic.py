@@ -826,7 +826,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     # If sample weights exist, convert them to array (support for lists)
     # and check length
     # Otherwise set them to 1 for all examples
-    sample_weight = _check_sample_weight(sample_weight, n_samples=X.shape[0],
+    sample_weight = _check_sample_weight(sample_weight, X,
                                          dtype=X.dtype, order='C')
 
     # If class_weights is a dict (provided by the user), the weights
@@ -1132,7 +1132,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     y_test = y[test]
 
     if sample_weight is not None:
-        sample_weight = _check_sample_weight(sample_weight, y)
+        sample_weight = _check_sample_weight(sample_weight, X)
         sample_weight = sample_weight[train]
 
     coefs, Cs, n_iter = _logistic_regression_path(

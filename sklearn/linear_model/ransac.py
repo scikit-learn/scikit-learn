@@ -324,7 +324,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
             raise ValueError("%s does not support sample_weight. Samples"
                              " weights are only used for the calibration"
                              " itself." % estimator_name)
-        sample_weight = _check_sample_weight(sample_weight, y)
+        sample_weight = _check_sample_weight(sample_weight, X)
 
         n_inliers_best = 1
         score_best = -np.inf
