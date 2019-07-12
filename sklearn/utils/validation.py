@@ -1008,7 +1008,7 @@ def _check_sample_weight(sample_weight, y=None, n_samples=None, dtype=None,
     Parameters
     ----------
     sample_weight : ndarray, shape (n_samples,)
-       validated sample weights
+       Validated sample weights.
     """
     if n_samples is not None and y is not None:
         raise ValueError('Only one of y, n_samples must be provided!')
