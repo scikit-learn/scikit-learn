@@ -717,9 +717,9 @@ def make_column_transformer(*transformers, **kwargs):
 
     Parameters
     ----------
-    *transformers :  Tuples
-        Tuples of the form ( transformer, column(s))  specifying the
-        transformer objects  to be applied to subsets of the data.
+    *transformers : tuples
+        Tuples of the form (transformer, column(s)) specifying the
+        transformer objects to be applied to subsets of the data.
 
         transformer : estimator or {'passthrough', 'drop'}
             Estimator must support `fit` and `transform`. Special-cased
@@ -730,7 +730,7 @@ def make_column_transformer(*transformers, **kwargs):
 boolean mask array or callable
             Indexes the data on its second axis. Integers are interpreted as
             positional columns, while strings can reference DataFrame columns
-            by name.  A scalar string or int should be used where
+            by name. A scalar string or int should be used where
             ``transformer`` expects X to be a 1d array-like (vector),
             otherwise a 2d array will be passed to the transformer.
             A callable is passed the input data `X` and can return any of the
@@ -787,6 +787,7 @@ boolean mask array or callable
                                      ['numerical_column']),
                                     ('onehotencoder', OneHotEncoder(...),
                                      ['categorical_column'])])
+
     """
     # transformer_weights keyword is not passed through because the user
     # would need to know the automatically generated names of the transformers
