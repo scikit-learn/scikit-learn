@@ -20,6 +20,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose_dense_sparse
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y
 from sklearn.utils import deprecated
@@ -39,7 +40,8 @@ from sklearn.utils.validation import (
     check_memory,
     check_non_negative,
     _num_samples,
-    check_scalar)
+    check_scalar,
+    _check_sample_weight)
 import sklearn
 
 from sklearn.exceptions import NotFittedError
@@ -853,3 +855,28 @@ def test_check_scalar_invalid(x, target_name, target_type, min_val, max_val,
                      min_val=min_val, max_val=max_val)
     assert str(raised_error.value) == str(err_msg)
     assert type(raised_error.value) == type(err_msg)
+
+
+def test_check_sample_weight():
+    with pytest.raises(ValueError,
+                       match="Only one of y, n_samples must be provided"):
+        _check_sample_weight(np.ones(3), y=np.ones(3), n_samples=3)
+
+    # check order="C" parameter
+    sample_weight = np.ones(10)[::2]
+    assert not sample_weight.flags["C_CONTIGUOUS"]
+    sample_weight = _check_sample_weight(sample_weight, n_samples=5, order="C")
+    assert sample_weight.flags["C_CONTIGUOUS"]
+
+    # check None input
+    sample_weight = _check_sample_weight(None, n_samples=5)
+    assert_allclose(sample_weight, np.ones(5))
+
+    # check numbers input
+    sample_weight = _check_sample_weight(2.0, n_samples=5)
+    assert_allclose(sample_weight, np.ones(5))
+
+    # check wrong number of dimensions
+    with pytest.raises(ValueError,
+                       match="Sample weights must be 1D array or scalar"):
+        _check_sample_weight(np.ones((2, 4)), n_samples=5)

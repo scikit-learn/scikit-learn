@@ -1024,7 +1024,7 @@ def _check_sample_weight(sample_weight, y=None, n_samples=None, dtype=None,
             dtype = [np.float64, np.float32]
         sample_weight = check_array(
                 sample_weight, accept_sparse=False,
-                ensure_2d=False, dtype=dtype, **kwargs
+                ensure_2d=False, dtype=dtype, order=order, **kwargs
         )
         if sample_weight.ndim != 1:
             raise ValueError("Sample weights must be 1D array or scalar")
