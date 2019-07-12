@@ -28,16 +28,8 @@ from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import Ridge
-<<<<<<< HEAD
-from sklearn.linear_model import LinearRegression
-from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-=======
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.tree import DecisionTreeRegressor
->>>>>>> glemaitre/test_meta_estimators
 from sklearn.utils import IS_PYPY
 from sklearn.utils.estimator_checks import (
     _yield_all_checks,
@@ -83,15 +75,6 @@ def _tested_estimators():
             elif "estimators" in required_parameters:
                 if issubclass(Estimator, RegressorMixin):
                     estimator = Estimator(
-<<<<<<< HEAD
-                        estimators=[('tree', DecisionTreeRegressor(random_state=0)),
-                                    ('lr', LinearRegression())]
-                    )
-                else:
-                    estimator = Estimator(
-                        estimators=[('tree', DecisionTreeClassifier(random_state=0)),
-                                    ('lr', LogisticRegression(random_state=0))]
-=======
                         estimators=[
                             ('lr', LinearRegression()),
                             ('tree', DecisionTreeRegressor(random_state=0))
@@ -103,7 +86,6 @@ def _tested_estimators():
                             ('lr', LogisticRegression(random_state=0)),
                             ('tree', DecisionTreeClassifier(random_state=0))
                         ]
->>>>>>> glemaitre/test_meta_estimators
                     )
             else:
                 warnings.warn("Can't instantiate estimator {} which requires "
