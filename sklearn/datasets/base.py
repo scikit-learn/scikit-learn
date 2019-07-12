@@ -568,12 +568,12 @@ def load_digits(n_class=10, return_X_y=False):
 def load_diabetes(return_X_y=False):
     """Load and return the diabetes dataset (regression).
 
-    ==============      ==================
-    Samples total       442
-    Dimensionality      10
-    Features            real, -.2 < x < .2
-    Targets             integer 25 - 346
-    ==============      ==================
+    ==============   ==================
+    Samples total    442
+    Dimensionality   10
+    Features         real, -.2 < x < .2
+    Targets          integer 25 - 346
+    ==============   ==================
 
     Read more in the :ref:`User Guide <diabetes_dataset>`.
 
@@ -621,12 +621,12 @@ def load_diabetes(return_X_y=False):
 def load_linnerud(return_X_y=False):
     """Load and return the linnerud dataset (multivariate regression).
 
-    ==============    ============================
-    Samples total     20
-    Dimensionality    3 (for both data and target)
-    Features          integer
-    Targets           integer
-    ==============    ============================
+    ==============   ============================
+    Samples total    20
+    Dimensionality   3 (for both data and target)
+    Features         integer
+    Targets          integer
+    ==============   ============================
 
     Read more in the :ref:`User Guide <linnerrud_dataset>`.
 
@@ -685,12 +685,12 @@ def load_linnerud(return_X_y=False):
 def load_boston(return_X_y=False):
     """Load and return the boston house-prices dataset (regression).
 
-    ==============     ==============
-    Samples total                 506
-    Dimensionality                 13
-    Features           real, positive
-    Targets             real 5. - 50.
-    ==============     ==============
+    ==============   ==============
+    Samples total               506
+    Dimensionality               13
+    Features         real, positive
+    Targets           real 5. - 50.
+    ==============   ==============
 
     Read more in the :ref:`User Guide <boston_dataset>`.
 
@@ -810,7 +810,7 @@ def load_sample_image(image_name):
     Read more in the :ref:`User Guide <sample_images>`.
 
     Parameters
-    -----------
+    ----------
     image_name : {`china.jpg`, `flower.jpg`}
         The name of the sample image loaded
 
@@ -820,7 +820,7 @@ def load_sample_image(image_name):
         The image as a numpy array: height x width x color
 
     Examples
-    ---------
+    --------
 
     >>> from sklearn.datasets import load_sample_image
     >>> china = load_sample_image('china.jpg')   # doctest: +SKIP
@@ -895,7 +895,7 @@ def _fetch_remote(remote, dirname=None):
     downloaded file.
 
     Parameters
-    -----------
+    ----------
     remote : RemoteFileMetadata
         Named tuple containing remote dataset meta information: url, filename
         and checksum

@@ -116,8 +116,8 @@ pipeline = Pipeline([
     )),
 
     # Use a SVC classifier on the combined features
-    ('svc', LinearSVC()),
-])
+    ('svc', LinearSVC(dual=False)),
+], verbose=True)
 
 # limit the list of categories to make running this example faster.
 categories = ['alt.atheism', 'talk.religion.misc']

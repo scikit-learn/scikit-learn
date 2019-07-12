@@ -1,4 +1,3 @@
-# cython: language_level=3
 """
 Binding for libsvm_skl
 ----------------------

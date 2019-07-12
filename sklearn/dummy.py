@@ -386,7 +386,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
 
     Attributes
     ----------
-    constant_ : float or array of shape [n_outputs]
+    constant_ : array, shape (1, n_outputs)
         Mean or median or quantile of the training targets or constant value
         given by the user.
 
@@ -492,10 +492,10 @@ class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
 
         Returns
         -------
-        y : array, shape = [n_samples]  or [n_samples, n_outputs]
+        y : array, shape = [n_samples] or [n_samples, n_outputs]
             Predicted target values for X.
 
-        y_std : array, shape = [n_samples]  or [n_samples, n_outputs]
+        y_std : array, shape = [n_samples] or [n_samples, n_outputs]
             Standard deviation of predictive distribution of query points.
         """
         check_is_fitted(self, "constant_")

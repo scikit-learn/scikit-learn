@@ -69,7 +69,7 @@ preprocessor = ColumnTransformer(
 # Append classifier to preprocessing pipeline.
 # Now we have a full prediction pipeline.
 clf = Pipeline(steps=[('preprocessor', preprocessor),
-                      ('classifier', LogisticRegression(solver='lbfgs'))])
+                      ('classifier', LogisticRegression())])
 
 X = data.drop('survived', axis=1)
 y = data['survived']
@@ -96,7 +96,7 @@ param_grid = {
     'classifier__C': [0.1, 1.0, 10, 100],
 }
 
-grid_search = GridSearchCV(clf, param_grid, cv=10, iid=False)
+grid_search = GridSearchCV(clf, param_grid, cv=10)
 grid_search.fit(X_train, y_train)
 
 print(("best logistic regression from grid search: %.3f"

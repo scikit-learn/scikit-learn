@@ -2,9 +2,11 @@
 The :mod:`sklearn.utils` module includes various utilities.
 """
 from collections.abc import Sequence
+from contextlib import contextmanager
 import numbers
 import platform
 import struct
+import timeit
 
 import warnings
 import numpy as np
@@ -64,7 +66,7 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "check_symmetric", "indices_to_mask", "deprecated",
            "cpu_count", "Parallel", "Memory", "delayed", "parallel_backend",
            "register_parallel_backend", "hash", "effective_n_jobs",
-           "resample", "shuffle"]
+           "resample", "shuffle", "check_matplotlib_support"]
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
 _IS_32BIT = 8 * struct.calcsize("P") == 32
@@ -176,14 +178,60 @@ def axis0_safe_slice(X, mask, len_mask):
     return np.zeros(shape=(0, X.shape[1]))
 
 
-def safe_indexing(X, indices):
+def safe_indexing(X, indices, axis=0):
+    """Return rows, items or columns of X using indices.
+
+    Parameters
+    ----------
+    X : array-like, sparse-matrix, list, pandas.DataFrame, pandas.Series
+        Data from which to sample rows, items or columns.
+    indices : array-like
+        - When ``axis=0``, indices need to be an array of integer.
+        - When ``axis=1``, indices can be one of:
+            - scalar: output is 1D, unless `X` is sparse.
+              Supported data types for scalars:
+                - integer: supported for arrays, sparse matrices and
+                  dataframes.
+                - string (key-based): only supported for dataframes.
+            - container: lists, slices, boolean masks: output is 2D.
+              Supported data types for containers:
+                - integer or boolean (positional): supported for
+                  arrays, sparse matrices and dataframes
+                - string (key-based): only supported for dataframes. No keys
+                  other than strings are allowed.
+    axis : int, default=0
+        The axis along which `X` will be subsampled. ``axis=0`` will select
+        rows while ``axis=1`` will select columns.
+
+    Returns
+    -------
+    subset
+        Subset of X on axis 0 or 1.
+
+    Notes
+    -----
+    CSR, CSC, and LIL sparse matrices are supported. COO sparse matrices are
+    not supported.
+    """
+    if axis == 0:
+        return _safe_indexing_row(X, indices)
+    elif axis == 1:
+        return _safe_indexing_column(X, indices)
+    else:
+        raise ValueError(
+            "'axis' should be either 0 (to index rows) or 1 (to index "
+            " column). Got {} instead.".format(axis)
+        )
+
+
+def _safe_indexing_row(X, indices):
     """Return items or rows from X using indices.
 
     Allows simple indexing of lists or arrays.
 
     Parameters
     ----------
-    X : array-like, sparse-matrix, list, pandas.DataFrame, pandas.Series.
+    X : array-like, sparse-matrix, list, pandas.DataFrame, pandas.Series
         Data from which to sample rows or items.
     indices : array-like of int
         Indices according to which X will be subsampled.
@@ -191,7 +239,7 @@ def safe_indexing(X, indices):
     Returns
     -------
     subset
-        Subset of X on first axis
+        Subset of X on first axis.
 
     Notes
     -----
@@ -200,6 +248,7 @@ def safe_indexing(X, indices):
     """
     if hasattr(X, "iloc"):
         # Work-around for indexing with read-only indices in pandas
+        indices = np.asarray(indices)
         indices = indices if indices.flags.writeable else indices.copy()
         # Pandas Dataframes and Series
         try:
@@ -219,6 +268,149 @@ def safe_indexing(X, indices):
             return X[indices]
     else:
         return [X[idx] for idx in indices]
+
+
+def _check_key_type(key, superclass):
+    """Check that scalar, list or slice is of a certain type.
+
+    This is only used in _safe_indexing_column and _get_column_indices to check
+    if the ``key`` (column specification) is fully integer or fully
+    string-like.
+
+    Parameters
+    ----------
+    key : scalar, list, slice, array-like
+        The column specification to check.
+    superclass : int or str
+        The type for which to check the `key`.
+    """
+    if isinstance(key, superclass):
+        return True
+    if isinstance(key, slice):
+        return (isinstance(key.start, (superclass, type(None))) and
+                isinstance(key.stop, (superclass, type(None))))
+    if isinstance(key, list):
+        return all(isinstance(x, superclass) for x in key)
+    if hasattr(key, 'dtype'):
+        if superclass is int:
+            return key.dtype.kind == 'i'
+        elif superclass is bool:
+            return key.dtype.kind == 'b'
+        else:
+            # superclass = str
+            return key.dtype.kind in ('O', 'U', 'S')
+    return False
+
+
+def _safe_indexing_column(X, key):
+    """Get feature column(s) from input data X.
+
+    Supported input types (X): numpy arrays, sparse arrays and DataFrames.
+
+    Supported key types (key):
+    - scalar: output is 1D;
+    - lists, slices, boolean masks: output is 2D.
+
+    Supported key data types:
+    - integer or boolean mask (positional):
+        - supported for arrays, sparse matrices and dataframes.
+    - string (key-based):
+        - only supported for dataframes;
+        - So no keys other than strings are allowed (while in principle you
+          can use any hashable object as key).
+    """
+    # check that X is a 2D structure
+    if X.ndim != 2:
+        raise ValueError(
+            "'X' should be a 2D NumPy array, 2D sparse matrix or pandas "
+            "dataframe when indexing the columns (i.e. 'axis=1'). "
+            "Got {} instead with {} dimension(s).".format(type(X), X.ndim)
+        )
+    # check whether we have string column names or integers
+    if _check_key_type(key, int):
+        column_names = False
+    elif _check_key_type(key, str):
+        column_names = True
+    elif hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_):
+        # boolean mask
+        column_names = False
+        if hasattr(X, 'loc'):
+            # pandas boolean masks don't work with iloc, so take loc path
+            column_names = True
+    else:
+        raise ValueError("No valid specification of the columns. Only a "
+                         "scalar, list or slice of all integers or all "
+                         "strings, or boolean mask is allowed")
+
+    if column_names:
+        if hasattr(X, 'loc'):
+            # pandas dataframes
+            return X.loc[:, key]
+        else:
+            raise ValueError("Specifying the columns using strings is only "
+                             "supported for pandas DataFrames")
+    else:
+        if hasattr(X, 'iloc'):
+            # pandas dataframes
+            return X.iloc[:, key]
+        else:
+            # numpy arrays, sparse arrays
+            return X[:, key]
+
+
+def _get_column_indices(X, key):
+    """Get feature column indices for input data X and key.
+
+    For accepted values of `key`, see the docstring of
+    :func:`_safe_indexing_column`.
+    """
+    n_columns = X.shape[1]
+
+    if (_check_key_type(key, int)
+            or hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_)):
+        # Convert key into positive indexes
+        try:
+            idx = np.arange(n_columns)[key]
+        except IndexError as e:
+            raise ValueError(
+                'all features must be in [0, %d]' % (n_columns - 1)
+            ) from e
+        return np.atleast_1d(idx).tolist()
+    elif _check_key_type(key, str):
+        try:
+            all_columns = list(X.columns)
+        except AttributeError:
+            raise ValueError("Specifying the columns using strings is only "
+                             "supported for pandas DataFrames")
+        if isinstance(key, str):
+            columns = [key]
+        elif isinstance(key, slice):
+            start, stop = key.start, key.stop
+            if start is not None:
+                start = all_columns.index(start)
+            if stop is not None:
+                # pandas indexing with strings is endpoint included
+                stop = all_columns.index(stop) + 1
+            else:
+                stop = n_columns + 1
+            return list(range(n_columns)[slice(start, stop)])
+        else:
+            columns = list(key)
+
+        try:
+            column_indices = [all_columns.index(col) for col in columns]
+        except ValueError as e:
+            if 'not in list' in str(e):
+                raise ValueError(
+                    "A given column is not a column of the dataframe"
+                ) from e
+            raise
+
+        return column_indices
+    else:
+        raise ValueError("No valid specification of the columns. Only a "
+                         "scalar, list or slice of all integers or all "
+                         "strings, or boolean mask is allowed")
 
 
 def resample(*arrays, **options):
@@ -252,6 +444,10 @@ def resample(*arrays, **options):
         generator; If None, the random number generator is the RandomState
         instance used by `np.random`.
 
+    stratify : array-like or None (default=None)
+        If not None, data is split in a stratified fashion, using this as
+        the class labels.
+
     Returns
     -------
     resampled_arrays : sequence of indexable data-structures
@@ -275,7 +471,7 @@ def resample(*arrays, **options):
              [2., 1.],
              [1., 0.]])
 
-      >>> X_sparse                   # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+      >>> X_sparse
       <3x2 sparse matrix of type '<... 'numpy.float64'>'
           with 4 stored elements in Compressed Sparse Row format>
 
@@ -290,14 +486,23 @@ def resample(*arrays, **options):
       >>> resample(y, n_samples=2, random_state=0)
       array([0, 1])
 
+    Example using stratification::
+
+      >>> y = [0, 0, 1, 1, 1, 1, 1, 1, 1]
+      >>> resample(y, n_samples=5, replace=False, stratify=y,
+      ...          random_state=0)
+      [1, 1, 1, 0, 1]
+
 
     See also
     --------
     :func:`sklearn.utils.shuffle`
     """
+
     random_state = check_random_state(options.pop('random_state', None))
     replace = options.pop('replace', True)
     max_n_samples = options.pop('n_samples', None)
+    stratify = options.pop('stratify', None)
     if options:
         raise ValueError("Unexpected kw arguments: %r" % options.keys())
 
@@ -316,12 +521,42 @@ def resample(*arrays, **options):
 
     check_consistent_length(*arrays)
 
-    if replace:
-        indices = random_state.randint(0, n_samples, size=(max_n_samples,))
+    if stratify is None:
+        if replace:
+            indices = random_state.randint(0, n_samples, size=(max_n_samples,))
+        else:
+            indices = np.arange(n_samples)
+            random_state.shuffle(indices)
+            indices = indices[:max_n_samples]
     else:
-        indices = np.arange(n_samples)
-        random_state.shuffle(indices)
-        indices = indices[:max_n_samples]
+        # Code adapted from StratifiedShuffleSplit()
+        y = check_array(stratify, ensure_2d=False, dtype=None)
+        if y.ndim == 2:
+            # for multi-label y, map each distinct row to a string repr
+            # using join because str(row) uses an ellipsis if len(row) > 1000
+            y = np.array([' '.join(row.astype('str')) for row in y])
+
+        classes, y_indices = np.unique(y, return_inverse=True)
+        n_classes = classes.shape[0]
+
+        class_counts = np.bincount(y_indices)
+
+        # Find the sorted list of instances for each class:
+        # (np.unique above performs a sort, so code is O(n logn) already)
+        class_indices = np.split(np.argsort(y_indices, kind='mergesort'),
+                                 np.cumsum(class_counts)[:-1])
+
+        n_i = _approximate_mode(class_counts, max_n_samples, random_state)
+
+        indices = []
+
+        for i in range(n_classes):
+            indices_i = random_state.choice(class_indices[i], n_i[i],
+                                            replace=replace)
+            indices.extend(indices_i)
+
+        indices = random_state.permutation(indices)
+
 
     # convert sparse matrices to CSR for row-based indexing
     arrays = [a.tocsr() if issparse(a) else a for a in arrays]
@@ -381,7 +616,7 @@ def shuffle(*arrays, **options):
              [2., 1.],
              [1., 0.]])
 
-      >>> X_sparse                   # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+      >>> X_sparse
       <3x2 sparse matrix of type '<... 'numpy.float64'>'
           with 3 stored elements in Compressed Sparse Row format>
 
@@ -497,9 +732,9 @@ def gen_even_slices(n, n_packs, n_samples=None):
     >>> from sklearn.utils import gen_even_slices
     >>> list(gen_even_slices(10, 1))
     [slice(0, 10, None)]
-    >>> list(gen_even_slices(10, 10))                     #doctest: +ELLIPSIS
+    >>> list(gen_even_slices(10, 10))
     [slice(0, 1, None), slice(1, 2, None), ..., slice(9, 10, None)]
-    >>> list(gen_even_slices(10, 5))                      #doctest: +ELLIPSIS
+    >>> list(gen_even_slices(10, 5))
     [slice(0, 2, None), slice(2, 4, None), ..., slice(8, 10, None)]
     >>> list(gen_even_slices(10, 3))
     [slice(0, 4, None), slice(4, 7, None), slice(7, 10, None)]
@@ -565,6 +800,60 @@ def indices_to_mask(indices, mask_length):
     mask[indices] = True
 
     return mask
+
+
+def _message_with_time(source, message, time):
+    """Create one line message for logging purposes
+
+    Parameters
+    ----------
+    source : str
+        String indicating the source or the reference of the message
+
+    message : str
+        Short message
+
+    time : int
+        Time in seconds
+    """
+    start_message = "[%s] " % source
+
+    # adapted from joblib.logger.short_format_time without the Windows -.1s
+    # adjustment
+    if time > 60:
+        time_str = "%4.1fmin" % (time / 60)
+    else:
+        time_str = " %5.1fs" % time
+    end_message = " %s, total=%s" % (message, time_str)
+    dots_len = (70 - len(start_message) - len(end_message))
+    return "%s%s%s" % (start_message, dots_len * '.', end_message)
+
+
+@contextmanager
+def _print_elapsed_time(source, message=None):
+    """Log elapsed time to stdout when the context is exited
+
+    Parameters
+    ----------
+    source : str
+        String indicating the source or the reference of the message
+
+    message : str or None
+        Short message. If None, nothing will be printed
+
+    Returns
+    -------
+    context_manager
+        Prints elapsed time upon exit if verbose
+    """
+    if message is None:
+        yield
+    else:
+        start = timeit.default_timer()
+        yield
+        print(
+            _message_with_time(source, message,
+                               timeit.default_timer() - start))
 
 
 def get_chunk_n_rows(row_bytes, max_n_rows=None,
@@ -636,3 +925,92 @@ def is_scalar_nan(x):
     # convert from numpy.bool_ to python bool to ensure that testing
     # is_scalar_nan(x) is True does not fail.
     return bool(isinstance(x, numbers.Real) and np.isnan(x))
+
+
+def _approximate_mode(class_counts, n_draws, rng):
+    """Computes approximate mode of multivariate hypergeometric.
+
+    This is an approximation to the mode of the multivariate
+    hypergeometric given by class_counts and n_draws.
+    It shouldn't be off by more than one.
+
+    It is the mostly likely outcome of drawing n_draws many
+    samples from the population given by class_counts.
+
+    Parameters
+    ----------
+    class_counts : ndarray of int
+        Population per class.
+    n_draws : int
+        Number of draws (samples to draw) from the overall population.
+    rng : random state
+        Used to break ties.
+
+    Returns
+    -------
+    sampled_classes : ndarray of int
+        Number of samples drawn from each class.
+        np.sum(sampled_classes) == n_draws
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils import _approximate_mode
+    >>> _approximate_mode(class_counts=np.array([4, 2]), n_draws=3, rng=0)
+    array([2, 1])
+    >>> _approximate_mode(class_counts=np.array([5, 2]), n_draws=4, rng=0)
+    array([3, 1])
+    >>> _approximate_mode(class_counts=np.array([2, 2, 2, 1]),
+    ...                   n_draws=2, rng=0)
+    array([0, 1, 1, 0])
+    >>> _approximate_mode(class_counts=np.array([2, 2, 2, 1]),
+    ...                   n_draws=2, rng=42)
+    array([1, 1, 0, 0])
+    """
+    rng = check_random_state(rng)
+    # this computes a bad approximation to the mode of the
+    # multivariate hypergeometric given by class_counts and n_draws
+    continuous = n_draws * class_counts / class_counts.sum()
+    # floored means we don't overshoot n_samples, but probably undershoot
+    floored = np.floor(continuous)
+    # we add samples according to how much "left over" probability
+    # they had, until we arrive at n_samples
+    need_to_add = int(n_draws - floored.sum())
+    if need_to_add > 0:
+        remainder = continuous - floored
+        values = np.sort(np.unique(remainder))[::-1]
+        # add according to remainder, but break ties
+        # randomly to avoid biases
+        for value in values:
+            inds, = np.where(remainder == value)
+            # if we need_to_add less than what's in inds
+            # we draw randomly from them.
+            # if we need to add more, we add them all and
+            # go to the next value
+            add_now = min(len(inds), need_to_add)
+            inds = rng.choice(inds, size=add_now, replace=False)
+            floored[inds] += 1
+            need_to_add -= add_now
+            if need_to_add == 0:
+                break
+    return floored.astype(np.int)
+
+
+def check_matplotlib_support(caller_name):
+    """Raise ImportError with detailed error message if mpl is not installed.
+
+    Plot utilities like :func:`plot_partial_dependence` should lazily import
+    matplotlib and call this helper before any computation.
+
+    Parameters
+    ----------
+    caller_name : str
+        The name of the caller that requires matplotlib.
+    """
+    try:
+        import matplotlib  # noqa
+    except ImportError as e:
+        raise ImportError(
+            "{} requires matplotlib. You can install matplotlib with "
+            "`pip install matplotlib`".format(caller_name)
+        ) from e
