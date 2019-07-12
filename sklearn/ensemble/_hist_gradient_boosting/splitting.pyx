@@ -262,8 +262,7 @@ cdef class Splitter:
             unsigned int [::1] right_indices_buffer = self.right_indices_buffer
 
             IF SKLEARN_OPENMP_SUPPORTED:
-                #int n_threads = omp_get_max_threads()
-                int n_threads = 1
+                int n_threads = omp_get_max_threads()
             ELSE:
                 int n_threads = 1
 
