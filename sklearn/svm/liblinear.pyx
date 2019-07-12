@@ -33,8 +33,7 @@ def train_wrap(X, np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
     else:
         problem = set_problem(
                 (<np.ndarray[np.float64_t, ndim=2, mode='c']>X).data,
-                Y.data,
-                (<np.ndarray[np.float64_t, ndim=2, mode='c']>X).shape,
+                Y.data, (<np.int32_t>X.shape[0]), (<np.int32_t>X.shape[1]),
                 (<np.int32_t>np.count_nonzero(X)), bias, sample_weight.data)
 
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
