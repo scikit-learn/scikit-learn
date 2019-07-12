@@ -995,7 +995,7 @@ def _check_sample_weight(sample_weight, y=None, n_samples=None, dtype=None,
     n_samples: int or None
        expected number of samples. Either y or n_samples must be provided.
     dtype: dtype
-       dtype of the validated sample_weight
+       dtype of the validated `sample_weight`.
     order : 'F', 'C' or None (default=None)
         Whether an array will be forced to be fortran or c-style.
         When order is None (default), if ``sample_weights`` is an ndarray,
