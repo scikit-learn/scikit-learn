@@ -405,6 +405,9 @@ cdef class Splitter:
                 # (left to right scan) or to the left (right to left case).
                 # See algo 3 from the XGBoost paper
                 # https://arxiv.org/abs/1603.02754
+                # If we know that the right child only contains nans
+                # (split_on_nan is True), then there is no need to scan nodes
+                # from right to left.
 
                 self._find_best_bin_to_split_left_to_right(
                     feature_idx, histograms, n_samples,
@@ -656,6 +659,8 @@ cdef inline unsigned char sample_goes_left(
         unsigned char missing_values_bin_idx,
         X_BINNED_DTYPE_C split_bin_idx,
         X_BINNED_DTYPE_C bin_value) nogil:
+    """Helper to decide whether sample should go to left or right child."""
+
     return (
         (
             # if we split on nan, nans always go to right child.
