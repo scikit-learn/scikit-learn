@@ -22,11 +22,15 @@ from ..linear_model import LinearRegression
 from ..model_selection import cross_val_predict
 from ..model_selection import check_cv
 
+from ..preprocessing import LabelEncoder
+
 from ..utils import check_random_state
 from ..utils import Bunch
 from ..utils.metaestimators import _BaseComposition
 from ..utils.metaestimators import if_delegate_has_method
+from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
+from ..utils.validation import column_or_1d
 
 
 class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
@@ -422,6 +426,56 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
                 .format(self.final_estimator_)
             )
 
+    def fit(self, X, y, sample_weight=None):
+        """Fit the estimators.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Training vectors, where n_samples is the number of samples and
+            n_features is the number of features.
+
+        y : array-like, shape (n_samples,)
+            Target values.
+
+        sample_weight : array-like, shape (n_samples,) or None
+            Sample weights. If None, then samples are equally weighted.
+            Note that this is supported only if all underlying estimators
+            support sample weights.
+
+        Returns
+        -------
+        self : object
+        """
+        check_classification_targets(y)
+        self._le = LabelEncoder().fit(y)
+        self.classes_ = self._le.classes_
+        return super().fit(X, self._le.transform(y), sample_weight)
+
+    @if_delegate_has_method(delegate='final_estimator_')
+    def predict(self, X, **predict_params):
+        """Predict target for X.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Training vectors, where n_samples is the number of samples and
+            n_features is the number of features.
+
+        **predict_params : dict of string -> object
+            Parameters to the `predict` called by the `final_estimator`. Note
+            that this may be used to return uncertainties from some estimators
+            with `return_std` or `return_cov`.
+
+        Returns
+        -------
+        y_pred : ndarray, shape (n_samples,) or (n_samples, n_output)
+            Predicted targets.
+        """
+        y_pred = super().predict(X, **predict_params)
+        return self._le.inverse_transform(y_pred)
+
+
     @if_delegate_has_method(delegate='final_estimator_')
     def predict_proba(self, X):
         """Predict class probabilities for X.
@@ -520,6 +574,9 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
     predict_method_ : list of string
         The method used by each base estimator.
 
+    classes_ : ndarray, shape (n_predictions,)
+        The classes labels.
+
     References
     ----------
     .. [1] Wolpert, David H. "Stacked generalization." Neural networks 5.2
@@ -572,3 +629,27 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
                 "'final_estimator' parameter should be a regressor. Got {}"
                 .format(self.final_estimator_)
             )
+
+    def fit(self, X, y, sample_weight=None):
+        """Fit the estimators.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Training vectors, where n_samples is the number of samples and
+            n_features is the number of features.
+
+        y : array-like, shape (n_samples,)
+            Target values.
+
+        sample_weight : array-like, shape (n_samples,) or None
+            Sample weights. If None, then samples are equally weighted.
+            Note that this is supported only if all underlying estimators
+            support sample weights.
+
+        Returns
+        -------
+        self : object
+        """
+        y = column_or_1d(y, warn=True)
+        return super().fit(X, y, sample_weight)
