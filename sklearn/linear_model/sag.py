@@ -253,7 +253,7 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
 
     # initialization
     sample_weight = _check_sample_weight(sample_weight, n_samples=n_samples,
-                                         order='C')
+                                         dtype=X.dtype, order='C')
 
     if 'coef' in warm_start_mem.keys():
         coef_init = warm_start_mem['coef']
