@@ -611,8 +611,8 @@ cdef class Splitter:
                 split_info.gain = gain
                 split_info.feature_idx = feature_idx
                 split_info.bin_idx = bin_idx
-                # the split is on NaN if bin_idx happens at the end
-                split_info.split_on_nan = bin_idx == start
+                # split_on_nan is only possible when we go from left to right
+                split_info.split_on_nan = False
                 # we scan from right to left so missing values go to the left
                 split_info.missing_go_to_left = True
                 split_info.sum_gradient_left = sum_gradient_left
