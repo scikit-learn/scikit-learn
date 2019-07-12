@@ -284,12 +284,12 @@ def _feature_to_dtype(feature):
     raise ValueError('Unsupported feature: {}'.format(feature))
 
 
-def _convert_arff_data_dataframe(arrf, columns, features_dict):
+def _convert_arff_data_dataframe(arff, columns, features_dict):
     """Convert the ARFF object into a pandas DataFrame.
 
     Parameters
     ----------
-    arrf : dict
+    arff : dict
         As obtained from liac-arff object.
 
     columns : list
@@ -304,23 +304,25 @@ def _convert_arff_data_dataframe(arrf, columns, features_dict):
     """
     pd = check_pandas_support('fetch_openml with as_frame=True')
 
-    attributes = OrderedDict(arrf['attributes'])
-    arrf_columns = list(attributes)
+    attributes = OrderedDict(arff['attributes'])
+    arff_columns = list(attributes)
 
     # calculate chunksize
-    first_row = next(arrf['data'])
-    first_df = pd.DataFrame([first_row], columns=arrf_columns)
+    first_row = next(arff['data'])
+    first_df = pd.DataFrame([first_row], columns=arff_columns)
 
     row_bytes = first_df.memory_usage(deep=True).sum()
     chunksize = get_chunk_n_rows(row_bytes)
 
-    # read arrf data with chunks
-    columns_to_keep = [col for col in arrf_columns if col in columns]
+    # read arff data with chunks
+    columns_to_keep = [col for col in arff_columns if col in columns]
     dfs = []
     dfs.append(first_df[columns_to_keep])
-    for data in _chunk_generator(arrf['data'], chunksize):
-        dfs.append(pd.DataFrame(data, columns=arrf_columns)[columns_to_keep])
+    for data in _chunk_generator(arff['data'], chunksize):
+        dfs.append(pd.DataFrame(data, columns=arff_columns)[columns_to_keep])
     df = pd.concat(dfs)
+
+    df.reset_index(drop=True, inplace=True)
 
     for column in columns_to_keep:
         dtype = _feature_to_dtype(features_dict[column])
