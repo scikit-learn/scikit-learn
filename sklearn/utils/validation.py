@@ -983,7 +983,7 @@ def check_scalar(x, name, target_type, min_val=None, max_val=None):
 
 
 def _check_sample_weight(sample_weight, y=None, n_samples=None, dtype=None,
-                         order=None, **kwargs):
+                         order=None):
     """Validate sample weights
 
     Parameters
@@ -1001,9 +1001,6 @@ def _check_sample_weight(sample_weight, y=None, n_samples=None, dtype=None,
         When order is None (default), if ``sample_weights`` is an ndarray,
         nothing is ensured about the memory layout of the output array,
         otherwise it will be of 'C' order by default.
-
-    kwargs :
-       Additional parameters to pass to `check_array`
 
     Parameters
     ----------
@@ -1028,7 +1025,7 @@ def _check_sample_weight(sample_weight, y=None, n_samples=None, dtype=None,
             dtype = [np.float64, np.float32]
         sample_weight = check_array(
                 sample_weight, accept_sparse=False,
-                ensure_2d=False, dtype=dtype, order=order, **kwargs
+                ensure_2d=False, dtype=dtype, order=order
         )
         if sample_weight.ndim != 1:
             raise ValueError("Sample weights must be 1D array or scalar")
