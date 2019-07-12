@@ -475,7 +475,6 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
         y_pred = super().predict(X, **predict_params)
         return self._le.inverse_transform(y_pred)
 
-
     @if_delegate_has_method(delegate='final_estimator_')
     def predict_proba(self, X):
         """Predict class probabilities for X.
