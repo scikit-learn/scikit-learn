@@ -983,7 +983,7 @@ def check_scalar(x, name, target_type, min_val=None, max_val=None):
 
 
 def _check_sample_weight(sample_weight, y=None, n_samples=None, dtype=None,
-                         **kwargs):
+                         order=None, **kwargs):
     """Validate sample weights
 
     Parameters
@@ -996,6 +996,12 @@ def _check_sample_weight(sample_weight, y=None, n_samples=None, dtype=None,
        expected number of samples. Either y or n_samples must be provided.
     dtype: dtype
        dtype of the validated sample_weight
+    order : 'F', 'C' or None (default=None)
+        Whether an array will be forced to be fortran or c-style.
+        When order is None (default), if ``sample_weights`` is an ndarray,
+        nothing is ensured about the memory layout of the output array,
+        otherwise it will be of 'C' order by default.
+
     kwargs:
        additional parameters to pass to check_array
 
@@ -1010,7 +1016,9 @@ def _check_sample_weight(sample_weight, y=None, n_samples=None, dtype=None,
         n_samples = y.shape[0]
 
     if sample_weight is None or isinstance(sample_weight, numbers.Number):
-        sample_weight = np.ones(n_samples, dtype=dtype)
+        if order is None:
+            order = 'C'
+        sample_weight = np.ones(n_samples, dtype=dtype, order=order)
     else:
         if dtype is None:
             dtype = [np.float64, np.float32]
