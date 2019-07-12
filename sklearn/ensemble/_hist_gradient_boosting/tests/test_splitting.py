@@ -275,7 +275,7 @@ def test_min_gain_to_split():
 
 @pytest.mark.parametrize(
     'X_binned, all_gradients, has_missing_values, n_bins_non_missing, '
-    ' expected_bin_idx, expected_go_to_left', [
+    ' expected_split_on_nan, expected_bin_idx, expected_go_to_left', [
 
         # basic sanity check with no missing values: given the gradient
         # values, the split must occur on bin_idx=3
@@ -283,38 +283,96 @@ def test_min_gain_to_split():
          [1, 1, 1, 1, 5, 5, 5, 5, 5, 5],  # gradients
          False,  # no missing values
          10,  # n_bins_non_missing
+         False,  # don't split on nans
          3,  # expected_bin_idx
          'not_applicable'),
 
-        # We replace 2 samples by NaNs (bin_idx=9)
+        # We replace 2 samples by NaNs (bin_idx=8)
         # These 2 samples were mapped to the left node before, so they should
         # be mapped to left node again
         # Notice how the bin_idx threshold changes from 3 to 1.
+        ([8, 0, 1, 8, 2, 3, 4, 5, 6, 7],  # 8 <=> missing
+         [1, 1, 1, 1, 5, 5, 5, 5, 5, 5],
+         True,  # missing values
+         8,  # n_bins_non_missing
+         False,  # don't split on nans
+         1,  # cut on bin_idx=1
+         True),  # missing values go to left
+
+        # same as above, but with non-consecutive missing_values_bin
         ([9, 0, 1, 9, 2, 3, 4, 5, 6, 7],  # 9 <=> missing
          [1, 1, 1, 1, 5, 5, 5, 5, 5, 5],
          True,  # missing values
          8,  # n_bins_non_missing
+         False,  # don't split on nans
          1,  # cut on bin_idx=1
          True),  # missing values go to left
 
-        # Same, this time replacing 2 samples that were on the right.
+        # this time replacing 2 samples that were on the right.
+        ([0, 1, 2, 3, 8, 4, 8, 5, 6, 7],  # 8 <=> missing
+         [1, 1, 1, 1, 5, 5, 5, 5, 5, 5],
+         True,  # missing values
+         8,  # n_bins_non_missing
+         False,  # don't split on nans
+         3,  # cut on bin_idx=3 (like in first case)
+         False),  # missing values go to right
+
+        # same as above, but with non-consecutive missing_values_bin
         ([0, 1, 2, 3, 9, 4, 9, 5, 6, 7],  # 9 <=> missing
          [1, 1, 1, 1, 5, 5, 5, 5, 5, 5],
          True,  # missing values
          8,  # n_bins_non_missing
+         False,  # don't split on nans
          3,  # cut on bin_idx=3 (like in first case)
+         False),  # missing values go to right
+
+        # For the following case, split_on_nans is True (we replace all of the
+        # samples with nans, instead of just 2).
+        ([0, 1, 2, 3, 4, 5, 6, 6, 6, 6],  # 6 <=> missing
+         [1, 1, 1, 1, 1, 1, 5, 5, 5, 5],
+         True,  # missing values
+         6,  # n_bins_non_missing
+         True,  # split on nans
+         5,  # cut on bin_idx=5
+         False),  # missing values go to right
+
+        # same as above, but with non-consecutive missing_values_bin
+        ([0, 1, 2, 3, 4, 5, 9, 9, 9, 9],  # 9 <=> missing
+         [1, 1, 1, 1, 1, 1, 5, 5, 5, 5],
+         True,  # missing values
+         6,  # n_bins_non_missing
+         True,  # split on nans
+         5,  # cut on bin_idx=5
+         False),  # missing values go to right
+
+        ([4, 4, 4, 4, 4, 4, 0, 1, 2, 3],  # 4 <=> missing
+         [1, 1, 1, 1, 1, 1, 5, 5, 5, 5],
+         True,  # missing values
+         4,  # n_bins_non_missing
+         True,  # split on nans
+         3,  # cut on bin_idx=3
+         False),  # missing values go to right
+
+        # same as above, but with non-consecutive missing_values_bin
+        ([9, 9, 9, 9, 9, 9, 0, 1, 2, 3],  # 9 <=> missing
+         [1, 1, 1, 1, 1, 1, 5, 5, 5, 5],
+         True,  # missing values
+         4,  # n_bins_non_missing
+         True,  # split on nans
+         3,  # cut on bin_idx=3
          False),  # missing values go to right
     ]
 )
 def test_splitting_missing_values(X_binned, all_gradients,
                                   has_missing_values, n_bins_non_missing,
-                                  expected_bin_idx, expected_go_to_left):
+                                  expected_split_on_nan, expected_bin_idx,
+                                  expected_go_to_left):
     # Make sure missing values are properly supported.
     # we build an artificial example with gradients such that the best split
     # is on bin_idx=3, when there are no missing values.
     # Then we introduce missing values and:
     #   - make sure the chosen bin is correct (find_best_bin()): it's
-    #     still the same split, even though the index of the bin changes
+    #     still the same split, even though the index of the bin  may
     #   - make sure the missing values are mapped to the correct child
     #     (split_indices())
 
@@ -355,10 +413,25 @@ def test_splitting_missing_values(X_binned, all_gradients,
     if has_missing_values:
         assert split_info.missing_go_to_left == expected_go_to_left
 
-    # Whatever the missing values, the split should always be the same. This
-    # also make sure missing values are properly assigned to the correct child
-    # in split_indices()
+    assert split_info.split_on_nan == expected_split_on_nan
+
+    # Make sure the split is properly computed.
+    # This also make sure missing values are properly assigned to the correct
+    # child in split_indices()
     samples_left, samples_right, _ = splitter.split_indices(
         split_info, splitter.partition)
-    assert set(samples_left) == set([0, 1, 2, 3])
-    assert set(samples_right) == set([4, 5, 6, 7, 8, 9])
+
+    if not expected_split_on_nan:
+        # When we don't split on nans, the split should always be the same.
+        assert set(samples_left) == set([0, 1, 2, 3])
+        assert set(samples_right) == set([4, 5, 6, 7, 8, 9])
+    else:
+        # When we split on nans, samples with missing values are always mapped
+        # to the right child.
+        missing_samples_indices = np.flatnonzero(
+            np.array(X_binned) == missing_values_bin_idx)
+        non_missing_samples_indices = np.flatnonzero(
+            np.array(X_binned) != missing_values_bin_idx)
+
+        assert set(samples_right) == set(missing_samples_indices)
+        assert set(samples_left) == set(non_missing_samples_indices)
