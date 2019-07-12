@@ -70,15 +70,7 @@ class _BaseVoting(_BaseComposition, TransformerMixin):
 
     def _predict(self, X):
         """Collect results from clf.predict calls. """
-        predictions = []
-        for est in self.estimators_:
-            preds = est.predict(X)
-            # make sure that the predictions a 2D array to be able to
-            # concatenate them
-            if preds.ndim == 1:
-                preds = preds.reshape(-1, 1)
-            predictions.append(preds)
-        return np.concatenate(predictions, axis=1)
+        return np.asarray([est.predict(X) for est in self.estimators_]).T
 
     @abstractmethod
     def fit(self, X, y, sample_weight=None):
