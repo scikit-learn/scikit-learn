@@ -15,6 +15,9 @@ from sklearn.inspection.partial_dependence import (
 )
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import MultiTaskLasso
@@ -148,12 +151,13 @@ def test_grid_from_X_error(grid_resolution, percentiles, err_msg):
         )
 
 
-@pytest.mark.parametrize('target_feature', (0, 3))
-@pytest.mark.parametrize(
-    'est, method',
-    [(LinearRegression(), 'brute'),
-     (GradientBoostingRegressor(random_state=0), 'recursion'),
-     (GradientBoostingRegressor(random_state=0), 'brute')]
+@pytest.mark.parametrize('target_feature', range(5))
+@pytest.mark.parametrize('est, method', [
+    (LinearRegression(), 'brute'),
+    (GradientBoostingRegressor(random_state=0), 'brute'),
+    (GradientBoostingRegressor(random_state=0), 'recursion'),
+    (HistGradientBoostingRegressor(random_state=0), 'brute'),
+    (HistGradientBoostingRegressor(random_state=0), 'recursion')]
 )
 def test_partial_dependence_helpers(est, method, target_feature):
     # Check that what is returned by _partial_dependence_brute or
@@ -163,7 +167,7 @@ def test_partial_dependence_helpers(est, method, target_feature):
     # This also checks that the brute and recursion methods give the same
     # output.
 
-    X, y = make_regression(random_state=0)
+    X, y = make_regression(random_state=0, n_features=5, n_informative=5)
     # The 'init' estimator for GBDT (here the average prediction) isn't taken
     # into account with the recursion method, for technical reasons. We set
     # the mean to 0 to that this 'bug' doesn't have any effect.
@@ -188,11 +192,18 @@ def test_partial_dependence_helpers(est, method, target_feature):
         mean_predictions.append(est.predict(X_).mean())
 
     pdp = pdp[0]  # (shape is (1, 2) so make it (2,))
-    assert_allclose(pdp, mean_predictions, atol=1e-3)
+
+    # allow for greater margin for error with recursion method
+    rtol = 1e-1 if method == 'recursion' else 1e-3
+    assert np.allclose(pdp, mean_predictions, rtol=rtol)
 
 
+@pytest.mark.parametrize('est', (
+    GradientBoostingClassifier(random_state=0),
+    HistGradientBoostingClassifier(random_state=0),
+))
 @pytest.mark.parametrize('target_feature', (0, 1, 2, 3, 4, 5))
-def test_recursion_decision_function(target_feature):
+def test_recursion_decision_function(est, target_feature):
     # Make sure the recursion method (implicitly uses decision_function) has
     # the same result as using brute method with
     # response_method=decision_function
@@ -201,7 +212,6 @@ def test_recursion_decision_function(target_feature):
                                random_state=1)
     assert np.mean(y) == .5  # make sure the init estimator predicts 0 anyway
 
-    est = GradientBoostingClassifier(random_state=0, loss='deviance')
     est.fit(X, y)
 
     preds_1, _ = partial_dependence(est, X, [target_feature],
@@ -214,8 +224,12 @@ def test_recursion_decision_function(target_feature):
     assert_allclose(preds_1, preds_2, atol=1e-7)
 
 
-@pytest.mark.parametrize('est', (LinearRegression(),
-                                 GradientBoostingRegressor(random_state=0)))
+@pytest.mark.parametrize('est', (
+    LinearRegression(),
+    GradientBoostingRegressor(random_state=0),
+    HistGradientBoostingRegressor(random_state=0, min_samples_leaf=1,
+                                  max_leaf_nodes=None, max_iter=1))
+)
 @pytest.mark.parametrize('power', (1, 2))
 def test_partial_dependence_easy_target(est, power):
     # If the target y only depends on one feature in an obvious way (linear or
@@ -226,7 +240,7 @@ def test_partial_dependence_easy_target(est, power):
     # correctly reflects the target.
 
     rng = np.random.RandomState(0)
-    n_samples = 100
+    n_samples = 200
     target_variable = 2
     X = rng.normal(size=(n_samples, 5))
     y = X[:, target_variable]**power
@@ -309,8 +323,7 @@ class NoPredictProbaNoDecisionFunction(BaseEstimator, ClassifierMixin):
       'blahblah is invalid. Accepted method names are brute, recursion, auto'),
      (LinearRegression(),
       {'features': [0], 'method': 'recursion'},
-      "'estimator' must be an instance of BaseGradientBoosting for the"
-      " 'recursion'")]
+      "Only the following estimators support the 'recursion' method:")]
 )
 def test_partial_dependence_error(estimator, params, err_msg):
     X, y = make_classification(random_state=0)
@@ -377,6 +390,7 @@ def test_partial_dependence_sample_weight():
     # Test near perfect correlation between partial dependence and diagonal
     # when sample weights emphasize y = x predictions
     # non-regression test for #13193
+    # TODO: extend to HistGradientBoosting once sample_weight is supported
     N = 1000
     rng = np.random.RandomState(123456)
     mask = rng.randint(2, size=N, dtype=bool)

@@ -28,8 +28,11 @@ from .testing import assert_dict_equal
 from .testing import create_memmap_backed_data
 from . import is_scalar_nan
 from ..discriminant_analysis import LinearDiscriminantAnalysis
+from ..linear_model import LinearRegression
+from ..linear_model import LogisticRegression
 from ..linear_model import Ridge
-
+from ..tree import DecisionTreeClassifier
+from ..tree import DecisionTreeRegressor
 
 from ..base import (clone, ClusterMixin, is_classifier, is_regressor,
                     _DEFAULT_TAGS, RegressorMixin, is_outlier_detector)
@@ -395,6 +398,9 @@ def set_checking_parameters(estimator):
 
     if name == 'OneHotEncoder':
         estimator.set_params(handle_unknown='ignore')
+
+    if name == 'VotingClassifier':
+        estimator.set_params(voting='soft')
 
 
 class NotAnArray:
@@ -1722,6 +1728,8 @@ def check_supervised_y_2d(name, estimator_orig):
         assert len(w) > 0, msg
         assert "DataConversionWarning('A column-vector y" \
                " was passed when a 1d array was expected" in msg
+    else:
+        print(estimator.__class__.__name__)
     assert_allclose(y_pred.ravel(), y_pred_2d.ravel())
 
 
@@ -2165,6 +2173,21 @@ def check_parameters_default_constructible(name, Estimator):
                     estimator = Estimator(Ridge())
                 else:
                     estimator = Estimator(LinearDiscriminantAnalysis())
+            elif "estimators" in required_parameters:
+                if issubclass(Estimator, RegressorMixin):
+                    estimator = Estimator(
+                        estimators=[
+                            ('lr', LinearRegression()),
+                            ('tree', DecisionTreeRegressor(random_state=0))
+                        ]
+                    )
+                else:
+                    estimator = Estimator(
+                        estimators=[
+                            ('lr', LogisticRegression(random_state=0)),
+                            ('tree', DecisionTreeClassifier(random_state=0))
+                        ]
+                    )
             else:
                 raise SkipTest("Can't instantiate estimator {} which"
                                " requires parameters {}".format(
@@ -2202,7 +2225,7 @@ def check_parameters_default_constructible(name, Estimator):
             # true for mixins
             return
         params = estimator.get_params()
-        if required_parameters == ["estimator"]:
+        if required_parameters or (["estimator"], ["estimators"]):
             # they can need a non-default argument
             init_params = init_params[1:]
 
