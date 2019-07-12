@@ -35,8 +35,7 @@ ax = plt.gca()
 # Draw the graph nodes
 for i in range(X.shape[0]):
     ax.text(X[i, 0], X[i, 1], str(i), va='center', ha='center')
-    ax.scatter(X[i, 0], X[i, 1], s=300, c=cm.Set1(y[i]), alpha=0.4)
-
+    ax.scatter(X[i, 0], X[i, 1], s=300, c=cm.Set1(y[[i]]), alpha=0.4)
 
 def p_i(X, i):
     diff_embedded = X[i] - X
@@ -87,7 +86,7 @@ relate_point(X_embedded, i, ax2)
 for i in range(len(X)):
     ax2.text(X_embedded[i, 0], X_embedded[i, 1], str(i),
              va='center', ha='center')
-    ax2.scatter(X_embedded[i, 0], X_embedded[i, 1], s=300, c=cm.Set1(y[i]),
+    ax2.scatter(X_embedded[i, 0], X_embedded[i, 1], s=300, c=cm.Set1(y[[i]]),
                 alpha=0.4)
 
 # Make axes equal so that boundaries are displayed correctly as circles

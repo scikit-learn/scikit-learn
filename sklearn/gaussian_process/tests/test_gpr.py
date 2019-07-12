@@ -15,8 +15,8 @@ from sklearn.gaussian_process.kernels \
 from sklearn.gaussian_process.kernels import DotProduct
 
 from sklearn.utils.testing \
-    import (assert_greater, assert_array_less,
-            assert_almost_equal, assert_equal, assert_raise_message,
+    import (assert_array_less,
+            assert_almost_equal, assert_raise_message,
             assert_array_almost_equal, assert_array_equal)
 
 

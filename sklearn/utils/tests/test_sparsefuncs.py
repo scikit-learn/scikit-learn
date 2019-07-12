@@ -3,9 +3,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from scipy import linalg
-from numpy.testing import (assert_array_almost_equal,
-                           assert_array_equal,
-                           assert_equal)
+from numpy.testing import assert_array_almost_equal, assert_array_equal
 from numpy.random import RandomState
 
 from sklearn.datasets import make_classification

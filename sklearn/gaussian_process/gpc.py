@@ -4,12 +4,11 @@
 #
 # License: BSD 3 clause
 
-import warnings
 from operator import itemgetter
 
 import numpy as np
 from scipy.linalg import cholesky, cho_solve, solve
-from scipy.optimize import fmin_l_bfgs_b
+import scipy.optimize
 from scipy.special import erf, expit
 
 from ..base import BaseEstimator, ClassifierMixin, clone
@@ -17,9 +16,9 @@ from .kernels \
     import RBF, CompoundKernel, ConstantKernel as C
 from ..utils.validation import check_X_y, check_is_fitted, check_array
 from ..utils import check_random_state
+from ..utils.optimize import _check_optimize_result
 from ..preprocessing import LabelEncoder
 from ..multiclass import OneVsRestClassifier, OneVsOneClassifier
-from ..exceptions import ConvergenceWarning
 
 
 # Values required for approximating the logistic sigmoid by
@@ -74,7 +73,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
                 # the corresponding value of the target function.
                 return theta_opt, func_min
 
-        Per default, the 'fmin_l_bfgs_b' algorithm from scipy.optimize
+        Per default, the 'L-BFGS-B' algorithm from scipy.optimize.minimize
         is used. If None is passed, the kernel's parameters are kept fixed.
         Available internal optimizers are::
 
@@ -426,12 +425,11 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
     def _constrained_optimization(self, obj_func, initial_theta, bounds):
         if self.optimizer == "fmin_l_bfgs_b":
-            theta_opt, func_min, convergence_dict = \
-                fmin_l_bfgs_b(obj_func, initial_theta, bounds=bounds)
-            if convergence_dict["warnflag"] != 0:
-                warnings.warn("fmin_l_bfgs_b terminated abnormally with the "
-                              " state: %s" % convergence_dict,
-                              ConvergenceWarning)
+            opt_res = scipy.optimize.minimize(
+                obj_func, initial_theta, method="L-BFGS-B", jac=True,
+                bounds=bounds)
+            _check_optimize_result("lbfgs", opt_res)
+            theta_opt, func_min = opt_res.x, opt_res.fun
         elif callable(self.optimizer):
             theta_opt, func_min = \
                 self.optimizer(obj_func, initial_theta, bounds=bounds)
@@ -482,7 +480,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
                 # the corresponding value of the target function.
                 return theta_opt, func_min
 
-        Per default, the 'fmin_l_bfgs_b' algorithm from scipy.optimize
+        Per default, the 'L-BFGS-B' algorithm from scipy.optimize.minimize
         is used. If None is passed, the kernel's parameters are kept fixed.
         Available internal optimizers are::
 
