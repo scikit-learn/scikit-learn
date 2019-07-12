@@ -25,6 +25,7 @@ import joblib
 from .base import get_data_home
 from .base import _fetch_remote
 from .base import RemoteFileMetadata
+from .base import _refresh_cache
 from ..utils import Bunch
 from .base import _pkl_filepath
 from ..utils import check_random_state
@@ -125,8 +126,10 @@ def fetch_covtype(data_home=None, download_if_missing=True,
     try:
         X, y
     except NameError:
-        X = joblib.load(samples_path)
-        y = joblib.load(targets_path)
+        X, y = _refresh_cache([samples_path, targets_path], 9)
+        # TODO: Revert to the following two lines in v0.23
+        # X = joblib.load(samples_path)
+        # y = joblib.load(targets_path)
 
     if shuffle:
         ind = np.arange(X.shape[0])
