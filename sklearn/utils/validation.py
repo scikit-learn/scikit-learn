@@ -992,7 +992,7 @@ def _check_sample_weight(sample_weight, y=None, n_samples=None, dtype=None,
        Input sample weights.
     y : ndarray or None, shape (n_samples,)
        Target variable. Either `y` or `n_samples` must be provided.
-    n_samples: int or None
+    n_samples : int or None
        expected number of samples. Either y or n_samples must be provided.
     dtype: dtype
        dtype of the validated `sample_weight`.
