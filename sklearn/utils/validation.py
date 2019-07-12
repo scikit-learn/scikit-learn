@@ -1003,7 +1003,7 @@ def _check_sample_weight(sample_weight, y=None, n_samples=None, dtype=None,
         otherwise it will be of 'C' order by default.
 
     kwargs:
-       additional parameters to pass to check_array
+       Additional parameters to pass to `check_array`
 
     Parameters
     ----------
