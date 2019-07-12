@@ -68,7 +68,12 @@ def test_predictproba_hardvoting():
                                         ('lr2', LogisticRegression())],
                             voting='hard')
     msg = "predict_proba is not available when voting='hard'"
-    assert_raise_message(AttributeError, msg, eclf.predict_proba, X)
+    with pytest.raises(AttributeError, match=msg):
+        eclf.predict_proba
+
+    assert not hasattr(eclf, "predict_proba")
+    eclf.fit(X, y)
+    assert not hasattr(eclf, "predict_proba")
 
 
 def test_notfitted():
