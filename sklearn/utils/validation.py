@@ -1002,7 +1002,7 @@ def _check_sample_weight(sample_weight, y=None, n_samples=None, dtype=None,
         nothing is ensured about the memory layout of the output array,
         otherwise it will be of 'C' order by default.
 
-    kwargs:
+    kwargs :
        Additional parameters to pass to `check_array`
 
     Parameters
