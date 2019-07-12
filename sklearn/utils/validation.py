@@ -980,3 +980,32 @@ def check_scalar(x, name, target_type, min_val=None, max_val=None):
 
     if max_val is not None and x > max_val:
         raise ValueError('`{}`= {}, must be <= {}.'.format(name, x, max_val))
+
+
+def _check_sample_weight(sample_weight, y, **kwargs):
+    """Validate sample weights
+
+    Parameters
+    ----------
+    sample_weight : {ndarray, Number or None}
+       input sample weights
+    y: ndarray or None
+       target variable
+    kwargs:
+       additional parameters to pass to check_array
+
+    Parameters
+    ----------
+    sample_weight : ndarray
+       validated sample weights
+    """
+    if sample_weight is None or isinstance(sample_weight, numbers.Number):
+        sample_weight = np.ones_like(y)
+    else:
+        sample_weight = check_array(
+                sample_weight, accept_sparse=False,
+                ensure_2d=False, dtype=[np.float64, np.float32],
+                **kwargs
+        )
+        check_consistent_length(y, sample_weight)
+    return sample_weight
