@@ -84,6 +84,13 @@ Changelog
   preserve the class balance of the original training set. :pr:`14194`
   by :user:`Johann Faouzi <johannfaouzi>`.
 
+- |Fix| Enable to run :func:`utils.check_estimator` on both
+  :class:`ensemble.VotingClassifier` and :class:`ensemble.VotingRegressor`.
+  It leads to solve issues regarding shape consistency during `predict` which
+  was failing with the underlying estimators were not outputting consistent
+  array dimensions.
+  :pr:`14305` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
