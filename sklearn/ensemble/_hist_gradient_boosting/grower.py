@@ -473,7 +473,7 @@ def _fill_predictor_node_array(predictor_nodes, grower_node,
         node['feature_idx'] = feature_idx
         node['bin_threshold'] = bin_idx
         node['missing_go_to_left'] = split_info.missing_go_to_left
-        if split_info.split_is_nan:
+        if split_info.split_on_nan:
             node['threshold'] = np.nan
         elif bin_thresholds is not None:
             threshold = bin_thresholds[feature_idx][bin_idx]
