@@ -69,15 +69,18 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
+- |Feature| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` have an additional
+  parameter called `warm_start` that enables warm starting. :pr:`14012` by
+  :user:`Johann Faouzi <johannfaouzi>`.
+
 - |Fix| :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` now bin the training and
   validation data separately to avoid any data leak. :pr:`13933` by
   `Nicolas Hug`_.
 
-- |Feature| :class:`ensemble.HistGradientBoostingClassifier` and
-  :class:`ensemble.HistGradientBoostingRegressor` have an additional
-  parameter called `warm_start` that enables warm starting. :pr:`14012` by
-  :user:`Johann Faouzi <johannfaouzi>`.
+- |Fix| :func:`ensemble.VotingClassifier.predict_proba` will no longer be
+  present when `voting='hard'`. :pr:`14287` by `Thomas Fan`_.
 
 - |Enhancement| :class:`ensemble.HistGradientBoostingClassifier` the training
   loss or score is now monitored on a class-wise stratified subsample to
