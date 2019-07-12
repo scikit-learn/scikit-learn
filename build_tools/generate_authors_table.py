@@ -120,9 +120,8 @@ def get_profile(login):
 
 
 def key(profile):
-    """Sort profile"""
-    last_name = profile["name"].split(' ')[-1].lower()
-    return last_name
+    """Get the last name in lower case"""
+    return profile["name"].split(' ')[-1].lower()
 
 
 def generate_table(contributors):
