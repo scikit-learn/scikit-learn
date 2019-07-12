@@ -27,6 +27,7 @@ from ..utils import check_array
 from ..utils import check_consistent_length
 from ..utils import compute_sample_weight
 from ..utils import column_or_1d
+from ..utils.validation import _check_sample_weight
 from ..preprocessing import LabelBinarizer
 from ..model_selection import GridSearchCV
 from ..metrics.scorer import check_scoring
@@ -428,8 +429,7 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                          " %d != %d" % (n_samples, n_samples_))
 
     if has_sw:
-        if np.atleast_1d(sample_weight).ndim > 1:
-            raise ValueError("Sample weights must be 1D array or scalar")
+        sample_weight = _check_sample_weight(sample_weight, y)
 
         if solver not in ['sag', 'saga']:
             # SAG supports sample_weight directly. For other solvers,
@@ -1406,9 +1406,8 @@ class _RidgeGCV(LinearModel):
                 "alphas must be positive. Got {} containing some "
                 "negative or null value instead.".format(self.alphas))
 
-        if sample_weight is not None and not isinstance(sample_weight, float):
-            sample_weight = check_array(sample_weight, ensure_2d=False,
-                                        dtype=X.dtype)
+        sample_weight = _check_sample_weight(sample_weight, y, dtype=X.dtype)
+
         n_samples, n_features = X.shape
 
         X, y, X_offset, y_offset, X_scale = LinearModel._preprocess_data(

@@ -982,7 +982,8 @@ def check_scalar(x, name, target_type, min_val=None, max_val=None):
         raise ValueError('`{}`= {}, must be <= {}.'.format(name, x, max_val))
 
 
-def _check_sample_weight(sample_weight, y, **kwargs):
+def _check_sample_weight(sample_weight, y=None, n_samples=None, dtype=None,
+                         **kwargs):
     """Validate sample weights
 
     Parameters
@@ -990,7 +991,11 @@ def _check_sample_weight(sample_weight, y, **kwargs):
     sample_weight : {ndarray, Number or None}
        input sample weights
     y: ndarray or None
-       target variable
+       target variable. Either y or n_samples must be provided.
+    n_samples: int or None
+       expected number of samples. Either y or n_samples must be provided.
+    dtype: dtype
+       dtype of the validated sample_weight
     kwargs:
        additional parameters to pass to check_array
 
@@ -999,13 +1004,24 @@ def _check_sample_weight(sample_weight, y, **kwargs):
     sample_weight : ndarray
        validated sample weights
     """
+    if n_samples is not None and y is not None:
+        raise ValueError('Only one of y, n_samples must be provided!')
+    elif y is not None:
+        n_samples = y.shape[0]
+
     if sample_weight is None or isinstance(sample_weight, numbers.Number):
-        sample_weight = np.ones(y.shape)
+        sample_weight = np.ones(n_samples, dtype=dtype)
     else:
+        if dtype is None:
+            dtype = [np.float64, np.float32]
         sample_weight = check_array(
                 sample_weight, accept_sparse=False,
-                ensure_2d=False, dtype=[np.float64, np.float32],
-                **kwargs
+                ensure_2d=False, dtype=dtype, **kwargs
         )
-        check_consistent_length(y, sample_weight)
+        if sample_weight.ndim != 1:
+            raise ValueError("Sample weights must be 1D array or scalar")
+
+        if sample_weight.shape != (n_samples,):
+            raise ValueError("samples_weight.shape == {}, expected {}!"
+                             .format(sample_weight.shape, (n_samples,)))
     return sample_weight
