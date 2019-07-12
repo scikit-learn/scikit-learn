@@ -874,7 +874,7 @@ def test_check_sample_weight():
 
     # check numbers input
     sample_weight = _check_sample_weight(2.0, n_samples=5)
-    assert_allclose(sample_weight, np.ones(5))
+    assert_allclose(sample_weight, 2*np.ones(5))
 
     # check wrong number of dimensions
     with pytest.raises(ValueError,

@@ -1018,7 +1018,11 @@ def _check_sample_weight(sample_weight, y=None, n_samples=None, dtype=None,
     if sample_weight is None or isinstance(sample_weight, numbers.Number):
         if order is None:
             order = 'C'
-        sample_weight = np.ones(n_samples, dtype=dtype, order=order)
+        if sample_weight is None:
+            sample_weight = np.ones(n_samples, dtype=dtype, order=order)
+        else:
+            sample_weight = np.full(n_samples, sample_weight,
+                                    dtype=dtype, order=order)
     else:
         if dtype is None:
             dtype = [np.float64, np.float32]
