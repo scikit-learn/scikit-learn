@@ -1000,7 +1000,7 @@ def _check_sample_weight(sample_weight, y, **kwargs):
        validated sample weights
     """
     if sample_weight is None or isinstance(sample_weight, numbers.Number):
-        sample_weight = np.ones_like(y)
+        sample_weight = np.ones(y.shape)
     else:
         sample_weight = check_array(
                 sample_weight, accept_sparse=False,
