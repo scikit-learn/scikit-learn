@@ -104,7 +104,7 @@ Changelog
 
 - |Fix| Fixed a bug in :func:`inspection.partial_dependence` to only check
   classifier and not regressor for the multiclass-multioutput case.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`14309` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.metrics`
 ......................
