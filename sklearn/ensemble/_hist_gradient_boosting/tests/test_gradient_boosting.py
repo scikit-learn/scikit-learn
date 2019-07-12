@@ -1,6 +1,9 @@
 import numpy as np
 import pytest
+from numpy.testing import assert_allclose
 from sklearn.datasets import make_classification, make_regression
+from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler
+from sklearn.model_selection import train_test_split
 
 # To use this experimental feature, we need to explicitly ask for it:
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
@@ -275,3 +278,63 @@ def test_small_trainset():
     # Test that the class distributions in the whole dataset and in the small
     # training set are identical
     assert small_distrib == pytest.approx(original_distrib)
+
+
+def test_missing_values_minmax_imputation():
+    # Compare the buit-in missing value handling of Histogram GBC with an
+    # a-priori missing value imputation strategy that should yield the same
+    # results in terms of decision function.
+    rng = np.random.RandomState(42)
+    X, y = make_regression(n_samples=int(1e3), n_features=4, random_state=rng)
+
+    # Pre-bin the data to ensure a deterministic handling by the 2 strategies
+    # and also make it easier to insert np.nan in a structured way:
+    X = KBinsDiscretizer(n_bins=42, encode="ordinal").fit_transform(X)
+
+    # First feature has missing values completely at random:
+    rnd_mask = rng.rand(X.shape[0]) > 0.6
+    X[rnd_mask, 0] = np.nan
+
+    # Second and third features have missing values for extreme values
+    # (censoring missingness).
+    low_mask = X[:, 1] <= 3
+    X[low_mask, 1] = np.nan
+
+    high_mask = X[:, 2] >= 40
+    X[high_mask, 2] = np.nan
+
+    # Last feature has a missing pattern that is highly predictive of the
+    # target variable
+    target_mask = y > 0
+    X[target_mask, 3] = np.nan
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
+
+    builtin_gbm = HistGradientBoostingRegressor(max_iter=10, random_state=0)
+    builtin_gbm.fit(X_train, y_train)
+    y_builtin_predict_train = builtin_gbm.predict(X_train)
+    y_builtin_predict_test = builtin_gbm.predict(X_test)
+
+    # Implement min-max feature imputation
+    mm = MinMaxScaler().fit(X_train)
+    X_train_min, X_train_max = X_train.copy(), X_train.copy()
+    X_test_min, X_test_max = X_test.copy(), X_test.copy()
+    for feature_idx in range(X.shape[1]):
+        nan_mask = np.isnan(X_train[:, feature_idx])
+        X_train_min[nan_mask, feature_idx] = mm.data_min_[feature_idx] - 1
+        X_train_max[nan_mask, feature_idx] = mm.data_max_[feature_idx] + 1
+
+        nan_mask = np.isnan(X_test[:, feature_idx])
+        X_test_min[nan_mask, feature_idx] = mm.data_min_[feature_idx] - 1
+        X_test_max[nan_mask, feature_idx] = mm.data_max_[feature_idx] + 1
+
+    X_train_imputed = np.concatenate([X_train_min, X_train_max], axis=1)
+    X_test_imputed = np.concatenate([X_test_min, X_test_max], axis=1)
+
+    imputed_gbm = HistGradientBoostingRegressor(max_iter=10, random_state=0)
+    imputed_gbm.fit(X_train_imputed, y_train)
+    y_imputed_predict_train = imputed_gbm.predict(X_train_imputed)
+    y_imputed_predict_test = imputed_gbm.predict(X_test_imputed)
+
+    assert_allclose(y_builtin_predict_train, y_imputed_predict_train)
+    assert_allclose(y_builtin_predict_test, y_imputed_predict_test)
