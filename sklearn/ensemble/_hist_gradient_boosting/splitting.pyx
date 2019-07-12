@@ -565,7 +565,7 @@ cdef class Splitter:
             Y_DTYPE_C sum_gradient_right
             Y_DTYPE_C negative_loss_current_node
             Y_DTYPE_C gain
-            unsigned int start = self.n_bins_non_missing[feature_idx] - 1
+            unsigned int start = self.n_bins_non_missing[feature_idx] - 2
 
         sum_gradient_right, sum_hessian_right = 0., 0.
         n_samples_right = 0

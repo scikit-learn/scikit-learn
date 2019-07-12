@@ -286,10 +286,18 @@ def test_min_gain_to_split():
          3,  # expected_bin_idx
          'not_applicable'),
 
-        # We replace 2 samples by NaNs (bin_idx=9)
+        # We replace 2 samples by NaNs (bin_idx=8)
         # These 2 samples were mapped to the left node before, so they should
         # be mapped to left node again
         # Notice how the bin_idx threshold changes from 3 to 1.
+        ([8, 0, 1, 8, 2, 3, 4, 5, 6, 7],  # 8 <=> missing
+         [1, 1, 1, 1, 5, 5, 5, 5, 5, 5],
+         True,  # missing values
+         8,  # n_bins_non_missing
+         1,  # cut on bin_idx=1
+         True),  # missing values go to left
+
+        # same as above, but with non-consecutive missing_values_bin
         ([9, 0, 1, 9, 2, 3, 4, 5, 6, 7],  # 9 <=> missing
          [1, 1, 1, 1, 5, 5, 5, 5, 5, 5],
          True,  # missing values
@@ -297,7 +305,15 @@ def test_min_gain_to_split():
          1,  # cut on bin_idx=1
          True),  # missing values go to left
 
-        # Same, this time replacing 2 samples that were on the right.
+        # this time replacing 2 samples that were on the right.
+        ([0, 1, 2, 3, 8, 4, 8, 5, 6, 7],  # 8 <=> missing
+         [1, 1, 1, 1, 5, 5, 5, 5, 5, 5],
+         True,  # missing values
+         8,  # n_bins_non_missing
+         3,  # cut on bin_idx=3 (like in first case)
+         False),  # missing values go to right
+
+        # same as above, but with non-consecutive missing_values_bin
         ([0, 1, 2, 3, 9, 4, 9, 5, 6, 7],  # 9 <=> missing
          [1, 1, 1, 1, 5, 5, 5, 5, 5, 5],
          True,  # missing values
@@ -368,21 +384,40 @@ def test_splitting_missing_values(X_binned, all_gradients,
     'X_binned, all_gradients, has_missing_values, n_bins_non_missing, '
     ' expected_bin_idx, split_is_nan, expected_go_to_left', [
 
-        ([0, 1, 2, 3, 7, 8, 9, 9, 9, 9],  # 9 <=> missing
+        ([0, 1, 2, 3, 4, 5, 6, 6, 6, 6],  # 6 <=> missing
          [1, 1, 1, 1, 1, 1, 5, 5, 5, 5],
          True,  # missing values
-         9,  # n_bins_non_missing
-         8,  # cut on bin_idx=max_bins - 1
+         6,  # n_bins_non_missing
+         5,  # cut on bin_idx=max_bins - 1
          True,  # split_is_nan
          False),  # missing values go to right
 
-        ([9, 9, 9, 9, 9, 9, 1, 3, 8, 6],  # 9 <=> missing
+        # same as above, but with non-consecutive missing_values_bin
+        ([0, 1, 2, 3, 4, 5, 9, 9, 9, 9],  # 9 <=> missing
          [1, 1, 1, 1, 1, 1, 5, 5, 5, 5],
          True,  # missing values
-         9,  # n_bins_non_missing
-         8,  # cut on bin_idx=max_bins - 1
+         6,  # n_bins_non_missing
+         5,
          True,  # split_is_nan
          False),  # missing values go to right
+
+        ([4, 4, 4, 4, 4, 4, 0, 1, 2, 3],  # 4 <=> missing
+         [1, 1, 1, 1, 1, 1, 5, 5, 5, 5],
+         True,  # missing values
+         4,  # n_bins_non_missing
+         3,  # cut on bin_idx=max_bins - 1
+         True,  # split_is_nan
+         False),  # missing values go to right
+
+        # same as above, but with non-consecutive missing_values_bin
+        ([9, 9, 9, 9, 9, 9, 0, 1, 2, 3],  # 9 <=> missing
+         [1, 1, 1, 1, 1, 1, 5, 5, 5, 5],
+         True,  # missing values
+         4,  # n_bins_non_missing
+         3,  # cut on bin_idx=max_bins - 1
+         True,  # split_is_nan
+         False),  # missing values go to right
+
     ]
 )
 def test_splitting_missing_values_edge_case(
@@ -433,5 +468,6 @@ def test_splitting_missing_values_edge_case(
     samples_left, samples_right, _ = splitter.split_indices(
         split_info, splitter.partition)
 
-    nan_idx = np.flatnonzero(np.array(X_binned) == n_bins_non_missing)
-    assert set(samples_right) == set(nan_idx)
+    missing_samples_indices = np.flatnonzero(
+        np.array(X_binned) == missing_values_bin_idx)
+    assert set(samples_right) == set(missing_samples_indices)
