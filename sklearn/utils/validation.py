@@ -993,7 +993,8 @@ def _check_sample_weight(sample_weight, X, dtype=None,
     X : nd-array, list or sparse matrix
         Input data.
     dtype: dtype
-       dtype of the validated `sample_weight`.
+       dtype of the validated `sample_weight`. Note that if `dtype` is not
+       one of `float32`, `float64`, the output will be of dtype `float64`.
     order : 'F', 'C' or None (default=None)
         Whether an array will be forced to be fortran or c-style.
         When order is None (default), if ``sample_weights`` is an ndarray,
@@ -1006,6 +1007,9 @@ def _check_sample_weight(sample_weight, X, dtype=None,
        Validated sample weights.
     """
     n_samples = _num_samples(X)
+
+    if dtype is not None and dtype not in [np.float32, np.float64]:
+        dtype = np.float64
 
     if sample_weight is None or isinstance(sample_weight, numbers.Number):
         if order is None:

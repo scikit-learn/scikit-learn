@@ -877,3 +877,8 @@ def test_check_sample_weight():
     with pytest.raises(ValueError,
                        match="Sample weights must be 1D array or scalar"):
         _check_sample_weight(np.ones((2, 4)), X=np.ones((2, 2)))
+
+    # int dtype will be converted to float64 instead
+    X = np.ones((5, 2), dtype=np.int)
+    sample_weight = _check_sample_weight(None, X, dtype=X.dtype)
+    assert sample_weight.dtype == np.float64
