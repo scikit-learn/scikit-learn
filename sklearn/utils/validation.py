@@ -989,7 +989,7 @@ def _check_sample_weight(sample_weight, y=None, n_samples=None, dtype=None,
     Parameters
     ----------
     sample_weight : {ndarray, Number or None}, shape (n_samples,)
-       input sample weights
+       Input sample weights.
     y: ndarray or None
        target variable. Either y or n_samples must be provided.
     n_samples: int or None
