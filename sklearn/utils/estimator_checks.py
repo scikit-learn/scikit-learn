@@ -164,7 +164,7 @@ def check_constant_features(name, estimator_orig):
 
     # create features with a constant column
     rng = np.random.RandomState(888)
-    if name=='SVC':
+    if name == 'SVC':
         X = np.abs(rng.randn(10, 10))
     else:
         X = np.abs(rng.randn(10, 5))
