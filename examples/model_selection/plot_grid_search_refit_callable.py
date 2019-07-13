@@ -93,9 +93,10 @@ grid.fit(digits.data, digits.target)
 
 n_components = grid.cv_results_['param_reduce_dim__n_components']
 test_scores = grid.cv_results_['mean_test_score']
+component_locations = [2, 4, 6, 8]
 
 plt.figure()
-plt.bar(n_components, test_scores, width=1.3, color='b')
+plt.bar(component_locations, test_scores, width=1.3, color='b')
 
 lower = lower_bound(grid.cv_results_)
 plt.axhline(np.max(test_scores), linestyle='--', color='y',
@@ -105,7 +106,7 @@ plt.axhline(lower, linestyle='--', color='.5', label='Best score - 1 std')
 plt.title("Balance model complexity and cross-validated score")
 plt.xlabel('Number of PCA components used')
 plt.ylabel('Digit classification accuracy')
-plt.xticks(n_components.tolist())
+plt.xticks(ticks=component_locations, labels=n_components.tolist())
 plt.ylim((0, 1.0))
 plt.legend(loc='upper left')
 
