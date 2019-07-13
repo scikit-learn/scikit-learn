@@ -1930,7 +1930,7 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
 
         if K.shape[0] != K.shape[1]:
             raise ValueError("Kernel matrix must be a square matrix."
-                             " Input is a {}x{} matrix." 3
+                             " Input is a {}x{} matrix."
                              .format(K.shape[0], K.shape[1]))
                              
         n_samples = K.shape[0]
