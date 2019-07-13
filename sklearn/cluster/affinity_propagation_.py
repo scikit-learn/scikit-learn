@@ -141,7 +141,7 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
 
     if random_state is None:
         random_state = np.random.RandomState(0)
-    elif not isinstance(random_state, int):
+    elif not isinstance(random_state, (int, np.random.RandomState,)):
         raise TypeError('Random state must be of type int or None.')
 
     # Place preference on the diagonal of S
