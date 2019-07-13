@@ -98,7 +98,7 @@ rbm_features_classifier = Pipeline(
 # using a GridSearchCV. Here we are not performing cross-validation to
 # save time.
 rbm.learning_rate = 0.06
-rbm.n_iter = 10
+rbm.n_iter = 20
 # More components tend to give better prediction performance, but larger
 # fitting time
 rbm.n_components = 100
