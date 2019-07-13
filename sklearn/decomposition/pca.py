@@ -236,6 +236,14 @@ class PCA(_BasePCA):
         number is estimated from input data. Otherwise it equals the parameter
         n_components, or the lesser value of n_features and n_samples
         if n_components is None.
+        
+    n_features_ : int
+        The number of features in the data matrix the PCA transformed was
+        fitted on.
+
+    n_samples_ : int
+        The number of samples in the data matrix the PCA transformed was
+        fitted on.
 
     noise_variance_ : float
         The estimated noise covariance following the Probabilistic PCA model
