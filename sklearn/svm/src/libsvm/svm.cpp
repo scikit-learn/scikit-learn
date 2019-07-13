@@ -44,7 +44,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
    - Add support for instance weights, Fabian Pedregosa based on work
      by Ming-Wei Chang, Hsuan-Tien Lin, Ming-Hen Tsai, Chia-Hua Ho and
      Hsiang-Fu Yu,
-     <http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/#weights_for_data_instances>.
+     <https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/#weights_for_data_instances>.
 
    - Make labels sorted in svm_group_classes, Fabian Pedregosa.
 

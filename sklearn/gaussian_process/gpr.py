@@ -9,17 +9,18 @@ from operator import itemgetter
 
 import numpy as np
 from scipy.linalg import cholesky, cho_solve, solve_triangular
-from scipy.optimize import fmin_l_bfgs_b
+import scipy.optimize
 
-from sklearn.base import BaseEstimator, RegressorMixin, clone
-from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
-from sklearn.utils import check_random_state
-from sklearn.utils.validation import check_X_y, check_array
-from sklearn.utils.deprecation import deprecated
-from sklearn.exceptions import ConvergenceWarning
+from ..base import BaseEstimator, RegressorMixin, clone
+from ..base import MultiOutputMixin
+from .kernels import RBF, ConstantKernel as C
+from ..utils import check_random_state
+from ..utils.validation import check_X_y, check_array
+from ..utils.optimize import _check_optimize_result
 
 
-class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
+class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
+                               MultiOutputMixin):
     """Gaussian process regression (GPR).
 
     The implementation is based on Algorithm 2.1 of Gaussian Processes
@@ -76,7 +77,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                 # the corresponding value of the target function.
                 return theta_opt, func_min
 
-        Per default, the 'fmin_l_bfgs_b' algorithm from scipy.optimize
+        Per default, the 'L-BGFS-B' algorithm from scipy.optimize.minimize
         is used. If None is passed, the kernel's parameters are kept fixed.
         Available internal optimizers are::
 
@@ -132,6 +133,20 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
     log_marginal_likelihood_value_ : float
         The log-marginal-likelihood of ``self.kernel_.theta``
 
+    Examples
+    --------
+    >>> from sklearn.datasets import make_friedman2
+    >>> from sklearn.gaussian_process import GaussianProcessRegressor
+    >>> from sklearn.gaussian_process.kernels import DotProduct, WhiteKernel
+    >>> X, y = make_friedman2(n_samples=500, noise=0, random_state=0)
+    >>> kernel = DotProduct() + WhiteKernel()
+    >>> gpr = GaussianProcessRegressor(kernel=kernel,
+    ...         random_state=0).fit(X, y)
+    >>> gpr.score(X, y)
+    0.3680...
+    >>> gpr.predict(X[:2,:], return_std=True)
+    (array([653.0..., 592.1...]), array([316.6..., 316.6...]))
+
     """
     def __init__(self, kernel=None, alpha=1e-10,
                  optimizer="fmin_l_bfgs_b", n_restarts_optimizer=0,
@@ -143,18 +158,6 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         self.normalize_y = normalize_y
         self.copy_X_train = copy_X_train
         self.random_state = random_state
-
-    @property
-    @deprecated("Attribute rng was deprecated in version 0.19 and "
-                "will be removed in 0.21.")
-    def rng(self):
-        return self._rng
-
-    @property
-    @deprecated("Attribute y_train_mean was deprecated in version 0.19 and "
-                "will be removed in 0.21.")
-    def y_train_mean(self):
-        return self._y_train_mean
 
     def fit(self, X, y):
         """Fit Gaussian process regression model.
@@ -458,12 +461,11 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
 
     def _constrained_optimization(self, obj_func, initial_theta, bounds):
         if self.optimizer == "fmin_l_bfgs_b":
-            theta_opt, func_min, convergence_dict = \
-                fmin_l_bfgs_b(obj_func, initial_theta, bounds=bounds)
-            if convergence_dict["warnflag"] != 0:
-                warnings.warn("fmin_l_bfgs_b terminated abnormally with the "
-                              " state: %s" % convergence_dict,
-                              ConvergenceWarning)
+            opt_res = scipy.optimize.minimize(
+                obj_func, initial_theta, method="L-BFGS-B", jac=True,
+                bounds=bounds)
+            _check_optimize_result("lbfgs", opt_res)
+            theta_opt, func_min = opt_res.x, opt_res.fun
         elif callable(self.optimizer):
             theta_opt, func_min = \
                 self.optimizer(obj_func, initial_theta, bounds=bounds)
@@ -471,3 +473,6 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
             raise ValueError("Unknown optimizer %s." % self.optimizer)
 
         return theta_opt, func_min
+
+    def _more_tags(self):
+        return {'requires_fit': False}

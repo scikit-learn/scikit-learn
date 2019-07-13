@@ -36,7 +36,6 @@ rng = RandomState(0)
 # Load faces data
 dataset = fetch_olivetti_faces(shuffle=True, random_state=rng)
 faces = dataset.data
-
 n_samples, n_features = faces.shape
 
 # global centering
@@ -96,7 +95,7 @@ estimators = [
      True),
 
     ('Factor Analysis components - FA',
-     decomposition.FactorAnalysis(n_components=n_components, max_iter=2),
+     decomposition.FactorAnalysis(n_components=n_components, max_iter=20),
      True),
 ]
 
@@ -155,12 +154,14 @@ estimators = [
     ('Dictionary learning - positive code',
         decomposition.MiniBatchDictionaryLearning(n_components=15, alpha=0.1,
                                                   n_iter=50, batch_size=3,
+                                                  fit_algorithm='cd',
                                                   random_state=rng,
                                                   positive_code=True),
      True),
     ('Dictionary learning - positive dictionary & code',
         decomposition.MiniBatchDictionaryLearning(n_components=15, alpha=0.1,
                                                   n_iter=50, batch_size=3,
+                                                  fit_algorithm='cd',
                                                   random_state=rng,
                                                   positive_dict=True,
                                                   positive_code=True),

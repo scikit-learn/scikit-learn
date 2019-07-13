@@ -63,7 +63,7 @@ def get_name(estimator):
 
 # list of (estimator, param_grid), where param_grid is used in GridSearchCV
 classifiers = [
-    (LogisticRegression(solver='lbfgs', random_state=0), {
+    (LogisticRegression(random_state=0), {
         'C': np.logspace(-2, 7, 10)
     }),
     (LinearSVC(random_state=0), {
@@ -71,7 +71,7 @@ classifiers = [
     }),
     (make_pipeline(
         KBinsDiscretizer(encode='onehot'),
-        LogisticRegression(solver='lbfgs', random_state=0)), {
+        LogisticRegression(random_state=0)), {
             'kbinsdiscretizer__n_bins': np.arange(2, 10),
             'logisticregression__C': np.logspace(-2, 7, 10),
         }),
@@ -83,7 +83,7 @@ classifiers = [
     (GradientBoostingClassifier(n_estimators=50, random_state=0), {
         'learning_rate': np.logspace(-4, 0, 10)
     }),
-    (SVC(random_state=0, gamma='scale'), {
+    (SVC(random_state=0), {
         'C': np.logspace(-2, 7, 10)
     }),
 ]
@@ -99,10 +99,12 @@ datasets = [
                         n_clusters_per_class=1)
 ]
 
-figure = plt.figure(figsize=(21, 9))
+fig, axes = plt.subplots(nrows=len(datasets), ncols=len(classifiers) + 1,
+                         figsize=(21, 9))
+
 cm = plt.cm.PiYG
 cm_bright = ListedColormap(['#b30065', '#178000'])
-i = 1
+
 # iterate over datasets
 for ds_cnt, (X, y) in enumerate(datasets):
     print('\ndataset %d\n---------' % ds_cnt)
@@ -119,7 +121,7 @@ for ds_cnt, (X, y) in enumerate(datasets):
         np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
 
     # plot the dataset first
-    ax = plt.subplot(len(datasets), len(classifiers) + 1, i)
+    ax = axes[ds_cnt, 0]
     if ds_cnt == 0:
         ax.set_title("Input data")
     # plot the training points
@@ -132,14 +134,13 @@ for ds_cnt, (X, y) in enumerate(datasets):
     ax.set_ylim(yy.min(), yy.max())
     ax.set_xticks(())
     ax.set_yticks(())
-    i += 1
 
     # iterate over classifiers
-    for name, (estimator, param_grid) in zip(names, classifiers):
-        ax = plt.subplot(len(datasets), len(classifiers) + 1, i)
+    for est_idx, (name, (estimator, param_grid)) in \
+            enumerate(zip(names, classifiers)):
+        ax = axes[ds_cnt, est_idx + 1]
 
-        clf = GridSearchCV(estimator=estimator, param_grid=param_grid, cv=5,
-                           iid=False)
+        clf = GridSearchCV(estimator=estimator, param_grid=param_grid, cv=5)
         with ignore_warnings(category=ConvergenceWarning):
             clf.fit(X_train, y_train)
         score = clf.score(X_test, y_test)
@@ -173,7 +174,6 @@ for ds_cnt, (X, y) in enumerate(datasets):
                 bbox=dict(boxstyle='round', alpha=0.8, facecolor='white'),
                 transform=ax.transAxes, horizontalalignment='right')
 
-        i += 1
 
 plt.tight_layout()
 
@@ -184,8 +184,8 @@ suptitles = [
     'Feature discretization and linear classifiers',
     'Non-linear classifiers',
 ]
-for i, suptitle in zip([2, 4, 6], suptitles):
-    ax = plt.subplot(len(datasets), len(classifiers) + 1, i)
+for i, suptitle in zip([1, 3, 5], suptitles):
+    ax = axes[0, i]
     ax.text(1.05, 1.25, suptitle, transform=ax.transAxes,
             horizontalalignment='center', size='x-large')
 plt.show()

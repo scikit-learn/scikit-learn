@@ -46,11 +46,11 @@ lr.fit(x[:, np.newaxis], y)  # x needs to be 2d for LinearRegression
 segments = [[[i, y[i]], [i, y_[i]]] for i in range(n)]
 lc = LineCollection(segments, zorder=0)
 lc.set_array(np.ones(len(y)))
-lc.set_linewidths(0.5 * np.ones(n))
+lc.set_linewidths(np.full(n, 0.5))
 
 fig = plt.figure()
 plt.plot(x, y, 'r.', markersize=12)
-plt.plot(x, y_, 'g.-', markersize=12)
+plt.plot(x, y_, 'b.-', markersize=12)
 plt.plot(x, lr.predict(x[:, np.newaxis]), 'b-')
 plt.gca().add_collection(lc)
 plt.legend(('Data', 'Isotonic Fit', 'Linear Fit'), loc='lower right')

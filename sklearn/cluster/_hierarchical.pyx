@@ -13,8 +13,8 @@ ctypedef np.int8_t INT8
 
 np.import_array()
 
-from sklearn.utils.fast_dict cimport IntFloatDict
 from sklearn.neighbors.dist_metrics cimport DistanceMetric
+from ..utils.fast_dict cimport IntFloatDict
 
 # C++
 from cython.operator cimport dereference as deref, preincrement as inc
@@ -346,7 +346,7 @@ cdef class UnionFind(object):
     cdef ITYPE_t[:] size
 
     def __init__(self, N):
-        self.parent = -1 * np.ones(2 * N - 1, dtype=ITYPE, order='C')
+        self.parent = np.full(2 * N - 1, -1., dtype=ITYPE, order='C')
         self.next_label = N
         self.size = np.hstack((np.ones(N, dtype=ITYPE),
                                np.zeros(N - 1, dtype=ITYPE)))
@@ -452,6 +452,7 @@ def single_linkage_label(L):
         raise ValueError("Input MST array must be sorted by weight")
 
     return _single_linkage_label(L)
+  
 
 # Implements MST-LINKAGE-CORE from https://arxiv.org/abs/1109.2378
 @cython.boundscheck(False)
@@ -558,3 +559,4 @@ cpdef np.ndarray[DTYPE_t, ndim=2] mst_linkage_core(
         current_node = new_node
 
     return np.array(result)
+

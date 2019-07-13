@@ -3,7 +3,7 @@ import numpy as np
 from scipy import sparse
 
 from sklearn.preprocessing import FunctionTransformer
-from sklearn.utils.testing import (assert_equal, assert_array_equal,
+from sklearn.utils.testing import (assert_array_equal,
                                    assert_allclose_dense_sparse)
 from sklearn.utils.testing import assert_warns_message, assert_no_warnings
 
@@ -30,49 +30,28 @@ def test_delegate_to_func():
     )
 
     # The function should only have received X.
-    assert_equal(
-        args_store,
-        [X],
-        'Incorrect positional arguments passed to func: {args}'.format(
-            args=args_store,
-        ),
-    )
-    assert_equal(
-        kwargs_store,
-        {},
-        'Unexpected keyword arguments passed to func: {args}'.format(
-            args=kwargs_store,
-        ),
-    )
+    assert args_store == [X], ('Incorrect positional arguments passed to '
+                               'func: {args}'.format(args=args_store))
+
+    assert not kwargs_store, ('Unexpected keyword arguments passed to '
+                              'func: {args}'.format(args=kwargs_store))
 
     # reset the argument stores.
-    args_store[:] = []  # python2 compatible inplace list clear.
+    args_store[:] = []
     kwargs_store.clear()
-    y = object()
-    transformed = assert_warns_message(
-        DeprecationWarning, "pass_y is deprecated",
-        FunctionTransformer(
-            _make_func(args_store, kwargs_store),
-            pass_y=True).transform, X, y)
+    transformed = FunctionTransformer(
+        _make_func(args_store, kwargs_store),
+    ).transform(X)
 
     assert_array_equal(transformed, X,
                        err_msg='transform should have returned X unchanged')
 
-    # The function should have received X and y.
-    assert_equal(
-        args_store,
-        [X, y],
-        'Incorrect positional arguments passed to func: {args}'.format(
-            args=args_store,
-        ),
-    )
-    assert_equal(
-        kwargs_store,
-        {},
-        'Unexpected keyword arguments passed to func: {args}'.format(
-            args=kwargs_store,
-        ),
-    )
+    # The function should have received X
+    assert args_store == [X], ('Incorrect positional arguments passed '
+                               'to func: {args}'.format(args=args_store))
+
+    assert not kwargs_store, ('Unexpected keyword arguments passed to '
+                              'func: {args}'.format(args=kwargs_store))
 
 
 def test_np_log():
@@ -173,23 +152,9 @@ def test_check_inverse():
     assert_no_warnings(trans.fit, X_dense)
 
 
-@pytest.mark.parametrize("validate, expected_warning",
-                         [(None, FutureWarning),
-                          (True, None),
-                          (False, None)])
-def test_function_transformer_future_warning(validate, expected_warning):
-    # FIXME: to be removed in 0.22
-    X = np.random.randn(100, 10)
-    transformer = FunctionTransformer(validate=validate)
-    with pytest.warns(expected_warning) as results:
-        transformer.fit_transform(X)
-    if expected_warning is None:
-        assert len(results) == 0
-
-
 def test_function_transformer_frame():
     pd = pytest.importorskip('pandas')
     X_df = pd.DataFrame(np.random.randn(100, 10))
-    transformer = FunctionTransformer(validate=False)
+    transformer = FunctionTransformer()
     X_df_trans = transformer.fit_transform(X_df)
     assert hasattr(X_df_trans, 'loc')
