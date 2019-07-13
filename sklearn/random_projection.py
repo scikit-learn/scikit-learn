@@ -573,7 +573,7 @@ class SparseRandomProjection(BaseRandomProjection):
 
     Attributes
     ----------
-    n_component_ : int
+    n_components_ : int
         Concrete number of components computed when n_components="auto".
 
     components_ : CSR matrix with shape [n_components, n_features]
