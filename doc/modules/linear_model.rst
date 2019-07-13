@@ -929,7 +929,7 @@ Since the linear predictor :math:`Xw` can be negative and
 Poisson, Gamma and Inverse Gaussian distributions don't support negative values,
 it is convenient to apply a link function different from the identity link
 :math:`h(Xw)=Xw` that guarantees the non-negativeness, e.g. the log-link with
-:math:`h(Xw)=\exp(Xw)`.
+:math:`h(x^\top w)=\exp(x^\top w)`.
 
 Note that the feature matrix `X` should be standardized before fitting. This
 ensures that the penalty treats features equally. The estimator can be used as
