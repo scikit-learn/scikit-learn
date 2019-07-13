@@ -80,7 +80,7 @@ def _yield_checks(name, estimator):
     yield check_sample_weights_invariance
     yield check_estimators_fit_returns_self
     yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
-
+    yield check_constant_features
     # Check that all estimator yield informative messages when
     # trained on empty datasets
     if not tags["no_validation"]:
@@ -154,6 +154,19 @@ def check_supervised_y_no_nan(name, estimator_orig):
     else:
         raise ValueError("Estimator {0} should have raised error on fitting "
                          "array y with NaN value.".format(name))
+
+
+def check_constant_features(name, estimator_orig):
+    # Checks that estimators work with constant features or raise a reasonable error message
+    estimator = clone(estimator_orig)
+    rng = np.random.RandomState(888)
+    X = rng.randn(10, 5)
+    X[:, 1] = 1
+    y = np.full(10, 1)
+    y[5] = 0
+    y = enforce_estimator_tags_y(estimator, y)
+    estimator.fit(X, y)
+
 
 
 def _yield_regressor_checks(name, regressor):
