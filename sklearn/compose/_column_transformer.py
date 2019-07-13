@@ -307,17 +307,16 @@ boolean mask array or callable
                 self.remainder)
 
         # Make it possible to check for reordered named columns on transform
-        if hasattr(X, 'columns') \
-           and any(_check_key_type(cols, str) for cols in self._columns):
+        if (hasattr(X, 'columns') and
+                any(_check_key_type(cols, str) for cols in self._columns)):
             self._df_columns = X.columns
 
         self._n_features = X.shape[1]
         cols = []
         for columns in self._columns:
             cols.extend(_get_column_indices(X, columns))
-        remaining_idx = (sorted(list(set(range(self._n_features)) -
-                                     set(cols)))
-                         or None)
+        remaining_idx = list(set(range(self._n_features)) - set(cols))
+        remaining_idx = sorted(remaining_idx) or None
 
         self._remainder = ('remainder', self.remainder, remaining_idx)
 
@@ -525,16 +524,16 @@ boolean mask array or callable
                              'to or greater than that of the fitted '
                              'transformer. Transformer n_features is {0} '
                              'and input n_features is {1}.'
-                             ''.format(self._n_features, X.shape[1]))
+                             .format(self._n_features, X.shape[1]))
 
         # No column reordering allowed for named cols combined with remainder
-        if self._remainder[2] is not None \
-           and hasattr(self, '_df_columns') \
-           and hasattr(X, 'columns'):
+        if (self._remainder[2] is not None and
+                hasattr(self, '_df_columns') and
+                hasattr(X, 'columns')):
             n_cols_fit = len(self._df_columns)
             n_cols_transform = len(X.columns)
-            if n_cols_transform >= n_cols_fit \
-               and any(X.columns[:n_cols_fit] != self._df_columns):
+            if (n_cols_transform >= n_cols_fit and
+                    any(X.columns[:n_cols_fit] != self._df_columns)):
                 raise ValueError('Column ordering must be equal for fit '
                                  'and for transform when using the '
                                  'remainder keyword')

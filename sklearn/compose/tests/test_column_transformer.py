@@ -499,8 +499,9 @@ def test_column_transformer_invalid_columns(remainder):
     X_array_more = np.array([[0, 1, 2], [2, 4, 6], [3, 6, 9]]).T
     ct.transform(X_array_more)  # Should accept added columns
     X_array_fewer = np.array([[0, 1, 2], ]).T
-    assert_raise_message(ValueError, "Number of features",
-                         ct.transform, X_array_fewer)
+    err_msg = 'Number of features'
+    with pytest.raises(ValueError, match=err_msg):
+        ct.transform(X_array_fewer)
 
 
 def test_column_transformer_invalid_transformer():
@@ -1093,9 +1094,9 @@ def test_column_transformer_reordered_column_names_remainder(explicit_colname):
                            remainder=Trans())
 
     tf.fit(X_fit_df)
-    assert_raise_message(ValueError,
-                         'Column ordering must be equal',
-                         tf.transform, X_trans_df)
+    err_msg = 'Column ordering must be equal'
+    with pytest.raises(ValueError, match=err_msg):
+        tf.transform(X_trans_df)
 
     # No error for added columns if ordering is identical
     X_extended_df = X_fit_df.copy()
@@ -1104,6 +1105,6 @@ def test_column_transformer_reordered_column_names_remainder(explicit_colname):
 
     # No 'columns' AttributeError when transform input is a numpy array
     X_array = X_fit_array.copy()
-    assert_raise_message(ValueError,
-                         "Specifying the columns",
-                         tf.transform, X_array)
+    err_msg = 'Specifying the columns'
+    with pytest.raises(ValueError, match=err_msg):
+        tf.transform(X_array)
