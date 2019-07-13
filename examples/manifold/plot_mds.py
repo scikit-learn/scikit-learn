@@ -60,7 +60,7 @@ pos = clf.fit_transform(pos)
 npos = clf.fit_transform(npos)
 
 fig = plt.figure(1)
-ax = plt.axes([0., 0., 1., 1.])
+ax = plt.axes()
 
 s = 100
 plt.scatter(X_true[:, 0], X_true[:, 1], color='navy', s=s, lw=0,
