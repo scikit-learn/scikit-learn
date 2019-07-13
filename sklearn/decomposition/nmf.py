@@ -1194,7 +1194,7 @@ class NMF(BaseEstimator, TransformerMixin):
 
     n_components_ : integer
         The number of components. It is same as the `n_components` parameter
-        if it was given. Otherwise, it will be same with the number of
+        if it was given. Otherwise, it will be same as the number of
         features.
 
     reconstruction_err_ : number
