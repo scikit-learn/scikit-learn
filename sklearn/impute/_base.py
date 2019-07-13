@@ -1,7 +1,3 @@
-# Authors: Nicolas Tresegnie <nicolas.tresegnie@gmail.com>
-#          Sergey Feldman <sergeyfeldman@gmail.com>
-# License: BSD 3 clause
-
 from __future__ import division
 
 import warnings
@@ -612,7 +608,12 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
             raise ValueError("'sparse' has to be a boolean or 'auto'. "
                              "Got {!r} instead.".format(self.sparse))
 
-        self.features_ = self._get_missing_features_info(X)[1]
+
+        """assign the values returned by function _get_missing_features_info,
+        so as to prevent it from being called again in fit_transform function
+        """
+        self.missing_features_info = self._get_missing_features_info(X)
+        self.features_ = self.missing_features_info[1]
 
         return self
 
@@ -667,8 +668,29 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
             will be boolean.
 
         """
-        return self.fit(X, y).transform(X)
+
+        """
+            fit
+        """
+        self.fit(X, y)
+
+
+        """
+            transform
+        """
+
+        """since we called the function _get_missing_features_info in fit
+           and stored the values it returned in a list missing_features_info
+           so we need not call the function again
+        """
+        imputer_mask, features = self.missing_features_info
+
+        if (self.features == "missing-only") and (self.features_.size < self._n_features):
+            imputer_mask = imputer_mask[:, self.features_]
+
+        return imputer_mask
 
     def _more_tags(self):
         return {'allow_nan': True,
                 'X_types': ['2darray', 'string']}
+ 
