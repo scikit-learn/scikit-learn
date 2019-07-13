@@ -1193,7 +1193,7 @@ class NMF(BaseEstimator, TransformerMixin):
         Factorization matrix, sometimes called 'dictionary'.
 
     n_components_ : integer
-        The number of components. It is same to the `n_components` parameter
+        The number of components. It is same as the `n_components` parameter
         if it was given. Otherwise, it will be same with the number of
         features.
 
