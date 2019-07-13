@@ -423,7 +423,7 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
         Whether score_func requires predict_proba to get probability estimates
         out of a classifier.
 
-        If True, for binary y_true, the score function is supposed to accpet
+        If True, for binary y_true, the score function is supposed to accept
         1d y_pred (i.e., probability of the positive class, shape
         ``(n_samples,)``).
 
@@ -432,7 +432,7 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
         This only works for binary classification using estimators that
         have either a decision_function or predict_proba method.
 
-        If True, for binary y_true, the score function is supposed to accpet
+        If True, for binary y_true, the score function is supposed to accept
         1d y_pred (i.e., probability of the positive class or the decision
         function, shape ``(n_samples,)``).
 
