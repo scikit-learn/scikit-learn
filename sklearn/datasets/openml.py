@@ -320,9 +320,7 @@ def _convert_arff_data_dataframe(arff, columns, features_dict):
     dfs.append(first_df[columns_to_keep])
     for data in _chunk_generator(arff['data'], chunksize):
         dfs.append(pd.DataFrame(data, columns=arff_columns)[columns_to_keep])
-    df = pd.concat(dfs)
-
-    df.reset_index(drop=True, inplace=True)
+    df = pd.concat(dfs, ignore_index=True)
 
     for column in columns_to_keep:
         dtype = _feature_to_dtype(features_dict[column])
