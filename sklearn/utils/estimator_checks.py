@@ -121,7 +121,6 @@ def _yield_classifier_checks(name, classifier):
     yield check_classifiers_regression_target
     if not tags["no_validation"]:
         yield check_supervised_y_no_nan
-        yield check_constant_features
         yield check_supervised_y_2d
     if tags["requires_fit"]:
         yield check_estimators_unfitted
@@ -131,6 +130,7 @@ def _yield_classifier_checks(name, classifier):
     yield check_non_transformer_estimators_n_iter
     # test if predict_proba is a monotonic transformation of decision_function
     yield check_decision_proba_consistency
+    yield check_constant_features
 
 
 
@@ -158,14 +158,24 @@ def check_supervised_y_no_nan(name, estimator_orig):
 
 
 def check_constant_features(name, estimator_orig):
-    # Checks that estimators work with constant features or raise a reasonable error message
+    # Checks that estimators work with constant features
+    # or raise a reasonable error message
     estimator = clone(estimator_orig)
+
+    # create features with a constant column
     rng = np.random.RandomState(888)
-    X = np.abs(rng.randn(10, 5))
-    X[:, 1] = 1
-    y = np.full(10, 1)
-    y[0], y[5], y[6] = 0,0,0
+    if name=='SVC':
+        X = np.abs(rng.randn(10, 10))
+    else:
+        X = np.abs(rng.randn(10, 5))
+    X[:, 1] = 0
+    X[:, 2] = 1
+
+    # create target
+    y = np.arange(10) % 2
     y = enforce_estimator_tags_y(estimator, y)
+
+    # Test that estimators don't raise any exception
     estimator.fit(X, y)
 
 
