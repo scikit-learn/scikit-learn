@@ -95,6 +95,7 @@ import sys
 from time import time
 import numpy as np
 import matplotlib
+import warnings
 import matplotlib.pyplot as plt
 from distutils.version import LooseVersion
 from sklearn.random_projection import johnson_lindenstrauss_min_dim
@@ -102,6 +103,7 @@ from sklearn.random_projection import SparseRandomProjection
 from sklearn.datasets import fetch_20newsgroups_vectorized
 from sklearn.datasets import load_digits
 from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.exceptions import DataDimensionalityWarning
 
 # `normed` is being deprecated in favor of `density` in histograms
 if LooseVersion(matplotlib.__version__) >= '2.1':
@@ -109,6 +111,7 @@ if LooseVersion(matplotlib.__version__) >= '2.1':
 else:
     density_param = {'normed': True}
 
+warnings.filterwarnings('ignore', category=DataDimensionalityWarning)
 # Part 1: plot the theoretical dependency between n_components_min and
 # n_samples
 
