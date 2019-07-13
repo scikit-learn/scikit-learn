@@ -226,6 +226,11 @@ Support for Python 3.4 and below has been officially dropped.
   `calibration.CalibratedClassifierCV`. :pr:`13485` by
   :user:`William de Vazelhes <wdevazelhes>`.
 
+- |Fix| Fixed a bug that made `calibration.CalibratedClassifierCV` fail when
+  given a `sample_weight` parameter of type `list` (in the case where
+  `sample_weights` are not supported by the wrapped estimator). :issue:`1375`
+  by :user:`William de Vazelhes <wdevazelhes>`.
+
 :mod:`sklearn.cluster`
 ......................
 
