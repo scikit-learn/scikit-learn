@@ -27,6 +27,7 @@ from sklearn.datasets import load_digits
 from sklearn.decomposition import PCA
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import MinMaxScaler
 from sklearn.svm import LinearSVC
 
 
@@ -76,12 +77,13 @@ def best_low_complexity(cv_results):
 
 
 pipe = Pipeline([
+        ('standard_scaler', MinMaxScaler()),
         ('reduce_dim', PCA(random_state=42)),
-        ('classify', LinearSVC(random_state=42)),
+        ('classify', LinearSVC(random_state=42, tol=1e-1)),
 ])
 
 param_grid = {
-    'reduce_dim__n_components': [2, 4, 6, 8]
+    'reduce_dim__n_components': [2, 4, 8, 10]
 }
 
 grid = GridSearchCV(pipe, cv=10, n_jobs=1, param_grid=param_grid,
