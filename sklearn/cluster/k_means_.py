@@ -1667,7 +1667,8 @@ class MiniBatchKMeans(KMeans):
 
         """
 
-        X = check_array(X, accept_sparse="csr", order="C")
+        X = check_array(X, accept_sparse="csr", order="C",
+                        dtype=[np.float64, np.float32])
         n_samples, n_features = X.shape
         if hasattr(self.init, '__array__'):
             self.init = np.ascontiguousarray(self.init, dtype=X.dtype)
