@@ -475,8 +475,7 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
             dist_metric = DistanceMetric.get_metric(affinity)
 
             # The Cython routines used require contiguous arrays
-            if not X.flags['C_CONTIGUOUS']:
-                X = np.array(X, dtype=np.double, order='C')
+            X = np.array(X, dtype=np.double, order='C')
 
             mst = _hierarchical.mst_linkage_core(X, dist_metric)
             # Sort edges of the min_spanning_tree by weight
