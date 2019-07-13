@@ -436,6 +436,9 @@ class FastICA(BaseEstimator, TransformerMixin):
     mixing_ : array, shape (n_features, n_components)
         The mixing matrix.
 
+    mean_ : array, shape(n_features)
+        The mean over features. Only set if `self.whiten` is True.
+
     n_iter_ : int
         If the algorithm is "deflation", n_iter is the
         maximum number of iterations run across all components. Else
