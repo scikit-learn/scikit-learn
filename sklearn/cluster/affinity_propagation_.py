@@ -32,7 +32,7 @@ def _equal_similarities_and_preferences(S, preference):
 
 def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
                          damping=0.5, copy=True, verbose=False,
-                         return_n_iter=False):
+                         return_n_iter=False, random_state=0):
     """Perform Affinity Propagation Clustering of data
 
     Read more in the :ref:`User Guide <affinity_propagation>`.
@@ -71,6 +71,12 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
 
     return_n_iter : bool, default False
         Whether or not to return the number of iterations.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Returns
     -------
@@ -133,7 +139,10 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
                     if return_n_iter
                     else (np.array([0]), np.array([0] * n_samples)))
 
-    random_state = np.random.RandomState(0)
+    if random_state is None:
+        random_state = np.random.RandomState(0)
+    elif not isinstance(random_state, int):
+        raise TypeError('Random state must be of type int or None.')
 
     # Place preference on the diagonal of S
     S.flat[::(n_samples + 1)] = preference
