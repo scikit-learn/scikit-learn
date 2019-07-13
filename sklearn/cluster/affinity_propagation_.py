@@ -32,7 +32,7 @@ def _equal_similarities_and_preferences(S, preference):
 
 def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
                          damping=0.5, copy=True, verbose=False,
-                         return_n_iter=False, random_state=0):
+                         return_n_iter=False, random_state=None):
     """Perform Affinity Propagation Clustering of data
 
     Read more in the :ref:`User Guide <affinity_propagation>`.
