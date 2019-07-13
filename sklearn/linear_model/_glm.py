@@ -6,16 +6,16 @@ Generalized Linear Models with Exponential Dispersion Family
 # some parts and tricks stolen from other sklearn files.
 # License: BSD 3 clause
 
-from __future__ import division
 from abc import ABCMeta, abstractmethod
 import numbers
+
 import numpy as np
 from scipy import special
-from scipy.optimize import fmin_l_bfgs_b
-import warnings
+import scipy.optimize
+
 from ..base import BaseEstimator, RegressorMixin
-from ..exceptions import ConvergenceWarning
 from ..utils import check_array, check_X_y
+from ..utils.optimize import _check_optimize_result
 from ..utils.validation import check_is_fitted
 
 
@@ -933,21 +933,18 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                 return obj, objp
 
             args = (X, y, weights, self.alpha, family, link)
-            # TODO: refactor this once
-            # https://github.com/scikit-learn/scikit-learn/pull/14250
-            # is merged.
-            coef, loss, info = fmin_l_bfgs_b(
-                func, coef, fprime=None, args=args,
-                iprint=(self.verbose > 0) - 1, pgtol=self.tol,
-                maxiter=self.max_iter, factr=1e3)
-            if info["warnflag"] == 1:
-                warnings.warn("lbfgs failed to converge."
-                              " Increase the number of iterations.",
-                              ConvergenceWarning)
-            elif info["warnflag"] == 2:
-                warnings.warn("lbfgs failed for the reason: {0}"
-                              .format(info["task"]))
-            self.n_iter_ = info['nit']
+
+            opt_res = scipy.optimize.minimize(
+                func, coef, method="L-BFGS-B", jac=True,
+                options={
+                    "maxiter": self.max_iter,
+                    "iprint": (self.verbose > 0) - 1,
+                    "gtol": self.tol,
+                    "ftol": 1e3*np.finfo(float).eps,
+                },
+                args=args)
+            self.n_iter_ = _check_optimize_result("lbfgs", opt_res)
+            coef = opt_res.x
 
         #######################################################################
         # 5. postprocessing                                                   #
