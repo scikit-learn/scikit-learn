@@ -875,6 +875,8 @@ def check_fit2d_1sample(name, estimator_orig):
     # the number of samples or the number of classes.
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(1, 10))
+    X = pairwise_estimator_convert_X(X, estimator_orig)
+    
     y = X[:, 0].astype(np.int)
     estimator = clone(estimator_orig)
     y = enforce_estimator_tags_y(estimator, y)
@@ -977,6 +979,7 @@ def check_transformer_data_not_an_array(name, transformer):
     # We need to make sure that we have non negative data, for things
     # like NMF
     X -= X.min() - .1
+    X = pairwise_estimator_convert_X(X, transformer) 
     this_X = NotAnArray(X)
     this_y = NotAnArray(np.asarray(y))
     _check_transformer(name, transformer, this_X, this_y)
