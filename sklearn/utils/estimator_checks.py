@@ -1063,15 +1063,15 @@ def _check_transformer(name, transformer_orig, X, y):
             assert _num_samples(X_pred3) == n_samples
 
         # raises error on malformed input for transform
-        if hasattr(X, 'T') and not _safe_tags(transformer, "stateless") \
-            and np.array((X != X.T)).all():
+        if hasattr(X, 'shape') and not _safe_tags(transformer, "stateless") \
+            and len(X.shape) == 2 and X.shape[1] > 1:
             # If it's not an array, it does not have a 'T' property
             with assert_raises(ValueError, msg="The transformer {} does "
                                "not raise an error when the number of "
                                "features in transform is different from"
                                " the number of features in "
                                "fit.".format(name)):
-                transformer.transform(X.T)
+                transformer.transform(X[:,:-1])
 
 
 @ignore_warnings
