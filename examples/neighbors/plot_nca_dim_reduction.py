@@ -39,6 +39,7 @@ from sklearn.neighbors import (KNeighborsClassifier,
                                NeighborhoodComponentsAnalysis)
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
+import warnings
 
 print(__doc__)
 
@@ -81,8 +82,12 @@ for i, (name, model) in enumerate(dim_reduction_methods):
     plt.figure()
     # plt.subplot(1, 3, i + 1, aspect=1)
 
-    # Fit the method's model
-    model.fit(X_train, y_train)
+    # There are some hard to avoid collinearity warnings that get raised
+    # by the LinearDiscriminantAnalysis
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        # Fit the method's model
+        model.fit(X_train, y_train)
 
     # Fit a nearest neighbor classifier on the embedded training set
     knn.fit(model.transform(X_train), y_train)
