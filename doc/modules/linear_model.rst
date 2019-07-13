@@ -898,7 +898,7 @@ ways [10]_. First, the predicted values :math:`\hat{y}` are linked to a linear
 combination of the input variables :math:`X` via an inverse link function
 :math:`h` as
 
-.. math::    \hat{y}(w, x) = h(xw) = h(w_0 + w_1 x_1 + ... + w_p x_p).
+.. math::    \hat{y}(w, x) = h(x^\top w) = h(w_0 + w_1 x_1 + ... + w_p x_p).
 
 Secondly, the squared loss function is replaced by the deviance :math:`D` of an
 exponential dispersion model (EDM) [11]_. The objective function being minimized
