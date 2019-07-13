@@ -949,4 +949,4 @@ def test_minibatch_kmeans_partial_fit_int_data():
     X = np.array([[-1], [1]], dtype=np.int)
     km = MiniBatchKMeans(n_clusters=2)
     km.partial_fit(X)
-    assert km.cluster_centers_.dtype == np.float64
+    assert km.cluster_centers_.dtype.kind == "f"
