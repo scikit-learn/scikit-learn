@@ -111,9 +111,6 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
 
-    n_iter_ : int
-        Maximum number of iterations run across all classes.
-
     Examples
     --------
     >>> from sklearn.svm import LinearSVC
@@ -323,9 +320,6 @@ class LinearSVR(LinearModel, RegressorMixin):
 
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
-
-    n_iter_ : int
-        Maximum number of iterations run across all classes.
 
     Examples
     --------
