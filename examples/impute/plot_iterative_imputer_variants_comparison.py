@@ -105,7 +105,7 @@ estimators = [
 score_iterative_imputer = pd.DataFrame()
 for impute_estimator in estimators:
     estimator = make_pipeline(
-        IterativeImputer(random_state=0, estimator=impute_estimator),
+        IterativeImputer(random_state=0, estimator=impute_estimator, tol=1),
         br_estimator
     )
     score_iterative_imputer[impute_estimator.__class__.__name__] = \
