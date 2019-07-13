@@ -453,7 +453,7 @@ class GaussianRandomProjection(BaseRandomProjection):
 
     Attributes
     ----------
-    n_component_ : int
+    n_components_ : int
         Concrete number of components computed when n_components="auto".
 
     components_ : numpy array of shape [n_components, n_features]
