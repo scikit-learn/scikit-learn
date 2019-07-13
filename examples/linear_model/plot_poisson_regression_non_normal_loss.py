@@ -1,6 +1,6 @@
 """
 ======================================
-Poisson regression and non normal loss
+Poisson regression and non-normal loss
 ======================================
 
 This example illustrate the use linear Poisson regression
