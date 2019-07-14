@@ -21,8 +21,7 @@ from sklearn.linear_model import LogisticRegression
 
 heldout = [0.95, 0.90, 0.75, 0.50, 0.01]
 rounds = 20
-digits = datasets.load_digits()
-X, y = digits.data, digits.target
+X, y = datasets.load_digits(return_X_y=True)
 
 classifiers = [
     ("SGD", SGDClassifier(max_iter=100, tol=1e-3)),

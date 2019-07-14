@@ -1192,6 +1192,11 @@ class NMF(BaseEstimator, TransformerMixin):
     components_ : array, [n_components, n_features]
         Factorization matrix, sometimes called 'dictionary'.
 
+    n_components_ : integer
+        The number of components. It is same as the `n_components` parameter
+        if it was given. Otherwise, it will be same as the number of
+        features.
+
     reconstruction_err_ : number
         Frobenius norm of the matrix difference, or beta-divergence, between
         the training data ``X`` and the reconstructed data ``WH`` from
