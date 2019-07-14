@@ -129,17 +129,16 @@ def _is_arraylike(x):
 
 def _num_samples(x):
     """Return number of samples in array-like x."""
+    message =  'Expected sequence or array-like, got %s' % x
     if hasattr(x, 'fit') and callable(x.fit):
         # Don't get num_samples from an ensembles length!
-        raise TypeError('Expected sequence or array-like, got '
-                        'estimator %s' % x)
+        raise TypeError(message)
 
     if not hasattr(x, '__len__') and not hasattr(x, 'shape'):
         if hasattr(x, '__array__'):
             x = np.asarray(x)
         else:
-            raise TypeError("Expected sequence or array-like, got %s" %
-                            type(x))
+            raise TypeError(message)
 
     if hasattr(x, 'shape') and x.shape is not None:
         if len(x.shape) == 0:
@@ -153,8 +152,7 @@ def _num_samples(x):
     if hasattr(x, '__len__'):
         return len(x)
     else:
-        raise TypeError("Expected sequence or array-like, got %s" %
-                        type(x))
+        raise TypeError(message)
 
 
 
