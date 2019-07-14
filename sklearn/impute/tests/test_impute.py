@@ -1008,9 +1008,12 @@ def test_missing_indicator_new(missing_values, arr_type, dtype, param_features,
     X_fit_expected = X_fit_expected.astype(dtype)
     X_trans_expected = X_trans_expected.astype(dtype)
 
-    indicator_test_ft = MissingIndicator(missing_values=missing_values, features=param_features, sparse=False)
-    assert_array_equal(indicator_test_ft.fit(X_fit).transform(X_fit),
-    indicator_test_ft.fit_transform(X_fit))
+    indicator_test_ft = MissingIndicator(missing_values=missing_values,
+                                         features=param_features,
+                                         sparse=False)
+    fit_transformer = indicator_test_ft.fit(X_fit).transform(X_fit)
+    fit_transformer_ = indicator_test_ft.fit_transform(X_fit)
+    assert_array_equal(fit_transformer, fit_transformer_)
 
     indicator = MissingIndicator(missing_values=missing_values,
                                  features=param_features,
