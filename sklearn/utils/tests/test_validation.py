@@ -827,7 +827,7 @@ def test_retrieve_samples_from_non_standard_shape():
         def __init__(self):
             self.shape = ("not numeric",)
 
-    with pytest.raises(TypeError) as raised_error:
+    with pytest.raises(TypeError, match="Expected sequence or array-like"):
         _num_samples(TestNoLenWeirdShape())
 
 

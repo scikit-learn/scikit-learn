@@ -133,13 +133,15 @@ def _num_samples(x):
         # Don't get num_samples from an ensembles length!
         raise TypeError('Expected sequence or array-like, got '
                         'estimator %s' % x)
+
     if not hasattr(x, '__len__') and not hasattr(x, 'shape'):
         if hasattr(x, '__array__'):
             x = np.asarray(x)
         else:
             raise TypeError("Expected sequence or array-like, got %s" %
                             type(x))
-    if hasattr(x, 'shape'):
+
+    if hasattr(x, 'shape') and x.shape is not None:
         if len(x.shape) == 0:
             raise TypeError("Singleton array %r cannot be considered"
                             " a valid collection." % x)
@@ -147,10 +149,13 @@ def _num_samples(x):
         # Dask dataframes may not return numeric shape[0] value
         if isinstance(x.shape[0], numbers.Integral):
             return x.shape[0]
-        else:
-            return len(x)
-    else:
+
+    if hasattr(x, '__len__'):
         return len(x)
+    else:
+        raise TypeError("Expected sequence or array-like, got %s" %
+                        type(x))
+
 
 
 def check_memory(memory):
