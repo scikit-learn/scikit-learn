@@ -10,7 +10,7 @@ import warnings
 
 from ..exceptions import ConvergenceWarning
 from ..base import BaseEstimator, ClusterMixin
-from ..utils import as_float_array, check_array
+from ..utils import as_float_array, check_array, check_random_state
 from ..utils.validation import check_is_fitted
 from ..metrics import euclidean_distances
 from ..metrics import pairwise_distances_argmin
@@ -72,11 +72,8 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
     return_n_iter : bool, default False
         Whether or not to return the number of iterations.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, np.random.RandomStateInstance or None, optional (default=None)
+        Pseudo-random number generator to control the starting state. See :term:`random_state`.
 
     Returns
     -------
@@ -139,10 +136,7 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
                     if return_n_iter
                     else (np.array([0]), np.array([0] * n_samples)))
 
-    if random_state is None:
-        random_state = np.random.RandomState(0)
-    elif not isinstance(random_state, (int, np.random.RandomState,)):
-        raise TypeError('Random state must be of type int or None.')
+    random_state = check_random_state(random_state)
 
     # Place preference on the diagonal of S
     S.flat[::(n_samples + 1)] = preference
