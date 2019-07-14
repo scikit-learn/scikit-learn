@@ -915,7 +915,7 @@ class RandomForestClassifier(ForestClassifier):
 
     Attributes
     ----------
-    base_estimator : DecisionTreeClassifier
+    base_estimator_ : DecisionTreeClassifier
         The child estimator template used to create the collection of fitted sub-estimators.
 
     estimators_ : list of DecisionTreeClassifier
@@ -1177,7 +1177,7 @@ class RandomForestRegressor(ForestRegressor):
 
     Attributes
     ----------
-    base_estimator : DecisionTreeClassifier
+    base_estimator_ : DecisionTreeRegressor
         The child estimator template used to create the collection of fitted sub-estimators.
 
     estimators_ : list of DecisionTreeRegressor
@@ -1450,6 +1450,9 @@ class ExtraTreesClassifier(ForestClassifier):
 
     Attributes
     ----------
+    base_estimator_ : ExtraTreeClassifier
+        The child estimator template used to create the collection of fitted sub-estimators.
+
     estimators_ : list of DecisionTreeClassifier
         The collection of fitted sub-estimators.
 
@@ -1686,6 +1689,9 @@ class ExtraTreesRegressor(ForestRegressor):
 
     Attributes
     ----------
+    base_estimator_ : ExtraTreeRegressor
+        The child estimator template used to create the collection of fitted sub-estimators.
+
     estimators_ : list of DecisionTreeRegressor
         The collection of fitted sub-estimators.
 
