@@ -72,8 +72,9 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
     return_n_iter : bool, default False
         Whether or not to return the number of iterations.
 
-    random_state : int, np.random.RandomStateInstance or None, optional (default=None)
-        Pseudo-random number generator to control the starting state. See :term:`random_state`.
+    random_state : int, np.random.RandomStateInstance or None, default: None
+        Pseudo-random number generator to control the starting state.
+        See :term:`random_state`.
 
     Returns
     -------
