@@ -3,7 +3,7 @@
 Tweedie regression on insurance claims
 ======================================
 
-This example illustrate the use Poisson, Gamma and Tweedie regression
+This example illustrates the use of Poisson, Gamma and Tweedie regression
 on the French Motor Third-Party Liability Claims dataset, and is inspired
 by an R tutorial [1].
 
@@ -13,9 +13,10 @@ of the total claim amount. There are several possibilities to do that, two of
 which are:
 
 1. Model the number of claims with a Poisson distribution, the average
-   claim amount as a Gamma distribution and multiply the predictions, to get
-   the total claim amount.
-2. Model total claim amount directly, typically with a Tweedie distribution.
+   claim amount as a Gamma distribution and multiply the predictions of both in
+   order to get the total claim amount.
+2. Model total claim amount directly, typically with a Tweedie distribution of
+   Tweedie power :math:`p \\in (1, 2)`.
 
 In this example we will illustrate both approaches. We start by defining a few
 helper functions for loading the data and visualizing results.
@@ -49,7 +50,7 @@ from sklearn.metrics import mean_absolute_error
 
 
 def load_mtpl2(n_samples=100000):
-    """Fetcher for French Motor Third-Party Liability Claims dataset
+    """Fetch the French Motor Third-Party Liability Claims dataset.
 
     Parameters
     ----------
@@ -81,24 +82,27 @@ def load_mtpl2(n_samples=100000):
     return df.iloc[:n_samples]
 
 
-def plot_obs_pred(df, feature, observed, y_predicted, weight, y_label=None,
+def plot_obs_pred(df, feature, weight, observed, predicted, y_label=None,
                   title=None, kind_weight=None, ax=None):
     """Plot observed and predicted - aggregated per feature level.
 
     Parameters
     ----------
-    df : DataFrame with at least one column named feature
+    df : DataFrame with at least three columns named feature, weight and
+         observed
+    feature: str
+        a column name of df for the feature to be plotted
+    weight : str
+        column name of df with the values of weights or exposure
     observed : str
-        a column name of the observed target
+        a column name of df with the observed target
     predicted : frame
         a dataframe, with the same index as df, with the predicted target
-    weight : str
-        column name with the values of weights/exposure
     """
     # aggregate observed and predicted variables by feature level
     df_ = df.loc[:, [feature, weight]].copy()
     df_["observed"] = df[observed] * df[weight]
-    df_["predicted"] = y_predicted * df[weight]
+    df_["predicted"] = predicted * df[weight]
     df_ = (
         df_.groupby([feature])[weight, "observed", "predicted"]
         .sum()
@@ -126,9 +130,10 @@ def plot_obs_pred(df, feature, observed, y_predicted, weight, y_label=None,
 # 1. Loading datasets and pre-processing
 # --------------------------------------
 #
-# We construct the freMTPL2 dataset by joining the  freMTPL2freq table,
-# containing the number of claims (``ClaimNb``) with the freMTPL2sev table
-# containing the claim amount (``ClaimAmount``) for the same user ids.
+# We construct the freMTPL2 dataset by joining the freMTPL2freq table,
+# containing the number of claims (``ClaimNb``), with the freMTPL2sev table,
+# containing the claim amount (``ClaimAmount``) for the same policy ids
+# (``IDpol``).
 
 df = load_mtpl2(n_samples=100000)
 
@@ -206,14 +211,14 @@ def score_estimator(
         y, _weights = df[target], df[weights]
 
         for score_label, metric in [
-            ("D² explaned", None),
+            ("D² explained", None),
             ("mean deviance", partial(mean_deviance, estimator)),
             ("mean abs. error", mean_absolute_error),
         ]:
             if estimator.__class__.__name__ == "ClaimProdEstimator":
-                # ClaimProdEstimator is the product of the frequency and
-                # severity models, together with a denormalized by the exposure
-                # values. It does not fully follow the scikit-learn API and we
+                # ClaimProdEstimator is the product of frequency and severity
+                # models, denormalized by the exposure values.
+                # It does not fully follow the scikit-learn API and we
                 # must handle it separately.
                 y_pred = estimator.predict(X, exposure=df.Exposure.values)
             else:
@@ -253,50 +258,50 @@ print(scores)
 #
 # We can visually compare observed and predicted values, aggregated by
 # the drivers age (``DrivAge``), vehicle age (``VehAge``) and the insurance
-# bonus/penalty (``BonusMalus``),
+# bonus/malus (``BonusMalus``).
 
 fig, ax = plt.subplots(2, 2, figsize=(16, 8))
 fig.subplots_adjust(hspace=0.3, wspace=0.2)
 
 plot_obs_pred(
-    df_train,
-    "DrivAge",
-    "Frequency",
-    glm_freq.predict(X_train),
+    df=df_train,
+    feature="DrivAge",
     weight="Exposure",
+    observed="Frequency",
+    predicted=glm_freq.predict(X_train),
     y_label="Claim Frequency",
     title="train data",
     ax=ax[0, 0],
 )
 
 plot_obs_pred(
-    df_test,
-    "DrivAge",
-    "Frequency",
-    glm_freq.predict(X_test),
+    df=df_test,
+    feature="DrivAge",
     weight="Exposure",
+    observed="Frequency",
+    predicted=glm_freq.predict(X_test),
     y_label="Claim Frequency",
     title="test data",
     ax=ax[0, 1],
 )
 
 plot_obs_pred(
-    df_test,
-    "VehAge",
-    "Frequency",
-    glm_freq.predict(X_test),
+    df=df_test,
+    feature="VehAge",
     weight="Exposure",
+    observed="Frequency",
+    predicted=glm_freq.predict(X_test),
     y_label="Claim Frequency",
     title="test data",
     ax=ax[1, 0],
 )
 
 plot_obs_pred(
-    df_test,
-    "BonusMalus",
-    "Frequency",
-    glm_freq.predict(X_test),
+    df=df_test,
+    feature="BonusMalus",
     weight="Exposure",
+    observed="Frequency",
+    predicted=glm_freq.predict(X_test),
     y_label="Claim Frequency",
     title="test data",
     ax=ax[1, 1],
@@ -308,12 +313,13 @@ plot_obs_pred(
 # 3. Severity model -  Gamma Distribution
 # ---------------------------------------
 # The mean claim amount or severity (`AvgClaimAmount`) can be empirically
-# shown to follow a Gamma distribution. We fit a GLM model for the severity
-# with the same features as the frequency model.
+# shown to follow approximately a Gamma distribution. We fit a GLM model for
+# the severity with the same features as the frequency model.
 #
 # Note:
-# - We filter out ``ClaimAmount == 0``` as the Gamma distribution as support
-# on :math:`(0, \infty)` not :math:`[0, \infty)`.
+#
+# - We filter out ``ClaimAmount == 0`` as the Gamma distribution has support
+#   on :math:`(0, \infty)`, not :math:`[0, \infty)`.
 # - We use ``ClaimNb`` as sample weights.
 
 mask_train = df_train["ClaimAmount"] > 0
@@ -341,19 +347,20 @@ print(scores)
 
 ##############################################################################
 #
-# Note that the resulting model is conditional on having at least one claim,
-# and cannot be used to predict the average claim amount in general,
+# Note that the resulting model is the average claim amount per claim. As such,
+# it is conditional on having at least one claim, and cannot be used to predict
+# the average claim amount per policy in general.
 
 print(
-    "Mean AvgClaim Amount:               %.2f "
+    "Mean AvgClaim Amount per policy:              %.2f "
     % df_train.AvgClaimAmount.mean()
 )
 print(
-    "Mean AvgClaim Amount | NbClaim > 0: %.2f"
+    "Mean AvgClaim Amount | NbClaim > 0:           %.2f"
     % df_train.AvgClaimAmount[df_train.AvgClaimAmount > 0].mean()
 )
 print(
-    "Predicted Mean AvgClaim Amount:     %.2f"
+    "Predicted Mean AvgClaim Amount | NbClaim > 0: %.2f"
     % glm_sev.predict(X_train).mean()
 )
 
@@ -361,28 +368,28 @@ print(
 ##############################################################################
 #
 # We can visually compare observed and predicted values, aggregated for
-# the drivers age (``Driv Age``),
+# the drivers age (``DrivAge``).
 
 fig, ax = plt.subplots(1, 2, figsize=(16, 4))
 
 # plot DivAge
 plot_obs_pred(
-    df_train.loc[mask_train],
-    "DrivAge",
-    "AvgClaimAmount",
-    glm_sev.predict(X_train[mask_train.values]),
+    df=df_train.loc[mask_train],
+    feature="DrivAge",
     weight="Exposure",
+    observed="AvgClaimAmount",
+    predicted=glm_sev.predict(X_train[mask_train.values]),
     y_label="Average Claim Severity",
     title="train data",
     ax=ax[0],
 )
 
 plot_obs_pred(
-    df_test.loc[mask_test],
-    "DrivAge",
-    "AvgClaimAmount",
-    glm_sev.predict(X_test[mask_test.values]),
+    df=df_test.loc[mask_test],
+    feature="DrivAge",
     weight="Exposure",
+    observed="AvgClaimAmount",
+    predicted=glm_sev.predict(X_test[mask_test.values]),
     y_label="Average Claim Severity",
     title="test data",
     ax=ax[1],
@@ -391,30 +398,40 @@ plot_obs_pred(
 
 ##############################################################################
 #
-# 3. Total Claims Amount -- Compound Poisson distribution
+# 4. Total Claims Amount -- Compound Poisson distribution
 # -------------------------------------------------------
 #
 # As mentionned in the introduction, the total claim amount can be modeled
-# either as the product of the frequency model by the severity model.
+# either as the product of the frequency model by the severity model,
 
 
 class ClaimProdEstimator:
-    """Total claim amount estimator
+    """Total claim amount estimator.
 
     Computed as the product of the frequency model by the serverity model,
-    denormalized by exposure.
+    denormalized by exposure. Use Tweedie deviance with `p=1.5`.
     """
 
     def __init__(self, est_freq, est_sev):
         self.est_freq = est_freq
         self.est_sev = est_sev
+        self._family_instance = TweedieDistribution(power=1.5)
 
     def predict(self, X, exposure):
-        """Predict the total claim amount
+        """Predict the total claim amount.
 
         The predict method is not compatible with the scikit-learn API.
         """
         return exposure * self.est_freq.predict(X) * self.est_sev.predict(X)
+
+    def score(self, X, y, sample_weight=None):
+        """Compute D², the percentage of deviance explained."""
+        mu = self.predict(X, exposure=sample_weight)
+        dev = self._family_instance.deviance(y, mu, weights=sample_weight)
+        y_mean = np.average(y, weights=sample_weight)
+        dev_null = self._family_instance.deviance(y, y_mean,
+                                                  weights=sample_weight)
+        return 1. - dev / dev_null
 
 
 est_prod = ClaimProdEstimator(glm_freq, glm_sev)
@@ -476,7 +493,9 @@ print(scores)
 # model than when using separate models for frequency and severity.
 #
 # We can additionally validate these models by comparing observed and predicted
-# total claim amount over the test and train subsets.
+# total claim amount over the test and train subsets. We see that in our case
+# the frequency-severity model underestimates the total claim amount, whereas
+# the Tweedie model overestimates.
 
 res = []
 for subset_label, X, df in [
