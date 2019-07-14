@@ -98,15 +98,9 @@ class RocCurveVisualizer:
         return self
 
 
-def plot_roc_curve(estimator,
-                   X,
-                   y,
-                   pos_label=None,
-                   sample_weight=None,
-                   drop_intermediate=True,
-                   response_method="predict_proba",
-                   line_kw=None,
-                   ax=None):
+def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
+                   drop_intermediate=True, response_method="predict_proba",
+                   ax=None, line_kw=None):
     """Plot Receiver operating characteristic (ROC) curve
 
     Note: this implementation is restricted to the binary classification task.
