@@ -260,11 +260,9 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         .. versionadded:: 0.17
            *data_range_*
 
-    n_samples_seen_ : int or array, shape (n_features,)
+    n_samples_seen_ : int
         The number of samples processed by the estimator for each feature.
-        If there are not missing samples, the ``n_samples_seen`` will be an
-        integer, otherwise it will be an array.
-        Will be reset on new calls to fit, but increments across
+        It will be reset on new calls to fit, but increments across
         ``partial_fit`` calls.
 
     Examples
