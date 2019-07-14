@@ -385,6 +385,7 @@ def test_radius_neighbors_classifier_outlier_labeling():
     z2 = np.array([[1.4, 1.4], [1.01, 1.01], [2.01, 2.01]])    # one outlier
     correct_labels1 = np.array([1, 2])
     correct_labels2 = np.array([-1, 1, 2])
+    outlier_proba = np.array([0, 0])
 
     weight_func = _weight_func
 
@@ -397,6 +398,66 @@ def test_radius_neighbors_classifier_outlier_labeling():
             clf.fit(X, y)
             assert_array_equal(correct_labels1, clf.predict(z1))
             assert_array_equal(correct_labels2, clf.predict(z2))
+            assert_array_equal(outlier_proba, clf.predict_proba(z2)[0])
+
+    # test outlier_labeling of using predict_proba()
+    RNC = neighbors.RadiusNeighborsClassifier
+    X = np.array([[0], [1], [2], [3], [4], [5], [6], [7], [8], [9]])
+    y = np.array([0, 2, 2, 1, 1, 1, 3, 3, 3, 3])
+
+    # test invalid outlier_label dtype
+    def check_exception():
+        clf = RNC(radius=1, outlier_label='a')
+        clf.fit(X, y)
+    assert_raises(TypeError, check_exception)
+
+    # test most frequent
+    clf = RNC(radius=1, outlier_label='most_frequent')
+    clf.fit(X, y)
+    proba = clf.predict_proba([[1], [15]])
+    assert_array_equal(proba[1, :], [0, 0, 0, 1])
+
+    # test manual label in y
+    clf = RNC(radius=1, outlier_label=1)
+    clf.fit(X, y)
+    proba = clf.predict_proba([[1], [15]])
+    assert_array_equal(proba[1, :], [0, 1, 0, 0])
+    pred = clf.predict([[1], [15]])
+    assert_array_equal(pred, [2, 1])
+
+    # test manual label out of y warning
+    def check_warning():
+        clf = RNC(radius=1, outlier_label=4)
+        clf.fit(X, y)
+        clf.predict_proba([[1], [15]])
+    assert_warns(UserWarning, check_warning)
+
+    # test multi output same outlier label
+    y_multi = [[0, 1], [2, 1], [2, 2], [1, 2], [1, 2],
+               [1, 3], [3, 3], [3, 3], [3, 0], [3, 0]]
+    clf = RNC(radius=1, outlier_label=1)
+    clf.fit(X, y_multi)
+    proba = clf.predict_proba([[7], [15]])
+    assert_array_equal(proba[1][1, :], [0, 1, 0, 0])
+    pred = clf.predict([[7], [15]])
+    assert_array_equal(pred[1, :], [1, 1])
+
+    # test multi output different outlier label
+    y_multi = [[0, 0], [2, 2], [2, 2], [1, 1], [1, 1],
+               [1, 1], [3, 3], [3, 3], [3, 3], [3, 3]]
+    clf = RNC(radius=1, outlier_label=[0, 1])
+    clf.fit(X, y_multi)
+    proba = clf.predict_proba([[7], [15]])
+    assert_array_equal(proba[0][1, :], [1, 0, 0, 0])
+    assert_array_equal(proba[1][1, :], [0, 1, 0, 0])
+    pred = clf.predict([[7], [15]])
+    assert_array_equal(pred[1, :], [0, 1])
+
+    # test inconsistent outlier label list length
+    def check_exception():
+        clf = RNC(radius=1, outlier_label=[0, 1, 2])
+        clf.fit(X, y_multi)
+    assert_raises(ValueError, check_exception)
 
 
 def test_radius_neighbors_classifier_zero_distance():
@@ -1413,3 +1474,21 @@ def test_pairwise_boolean_distance():
     nn1 = NN(metric="jaccard", algorithm='brute').fit(X)
     nn2 = NN(metric="jaccard", algorithm='ball_tree').fit(X)
     assert_array_equal(nn1.kneighbors(X)[0], nn2.kneighbors(X)[0])
+
+
+def test_radius_neighbors_predidct_proba():
+    for i in range(5):
+        X, y = datasets.make_classification(n_samples=50, n_features=5,
+                                            n_informative=3, n_redundant=0,
+                                            n_classes=3, random_state=i)
+        X_tr, X_te, y_tr, y_te = train_test_split(X, y, random_state=0)
+        outlier_label = int(2 - i)
+        clf = neighbors.RadiusNeighborsClassifier(radius=2,
+                                                  outlier_label=outlier_label)
+        clf.fit(X_tr, y_tr)
+        pred = clf.predict(X_te)
+        proba = clf.predict_proba(X_te)
+        proba_label = proba.argmax(axis=1)
+        proba_label = np.where(proba.sum(axis=1) == 0,
+                               outlier_label, proba_label)
+        assert_array_equal(pred, proba_label)

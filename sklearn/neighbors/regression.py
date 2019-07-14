@@ -15,7 +15,7 @@ import warnings
 import numpy as np
 from scipy.sparse import issparse
 
-from .base import _get_weights, _check_weights, NeighborsBase, KNeighborsMixin
+from .base import _check_weights, _get_weights, NeighborsBase, KNeighborsMixin
 from .base import RadiusNeighborsMixin, SupervisedFloatMixin
 from ..base import RegressorMixin
 from ..utils import check_array
@@ -321,11 +321,10 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
                                if len(ind) else empty_obs
                                for (i, ind) in enumerate(neigh_ind)])
 
-        if np.max(np.isnan(y_pred)):
+        if np.any(np.isnan(y_pred)):
             empty_warning_msg = ("One or more samples have no neighbors "
                                  "within specified radius; predicting NaN.")
             warnings.warn(empty_warning_msg)
-
 
         if self._y.ndim == 1:
             y_pred = y_pred.ravel()
