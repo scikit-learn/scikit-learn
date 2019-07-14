@@ -608,10 +608,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
             raise ValueError("'sparse' has to be a boolean or 'auto'. "
                              "Got {!r} instead.".format(self.sparse))
 
-        """store the values returned, to prevent it from being
-         called again in fit_transform"""
-        self.missing_features_info = self._get_missing_features_info(X)
-        self.features_ = self.missing_features_info[1]
+        self.features_ = self._get_missing_features_info(X)[1]
 
         return self
 
@@ -668,10 +665,23 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         """
 
         """fit"""
-        self.fit(X, y)
+        X = self._validate_input(X)
+        self._n_features = X.shape[1]
+
+        if self.features not in ('missing-only', 'all'):
+            raise ValueError("'features' has to be either 'missing-only' or "
+                             "'all'. Got {} instead.".format(self.features))
+
+        if not ((isinstance(self.sparse, str) and
+                self.sparse == "auto") or isinstance(self.sparse, bool)):
+            raise ValueError("'sparse' has to be a boolean or 'auto'. "
+                             "Got {!r} instead.".format(self.sparse))
+
+        missing_features_info = self._get_missing_features_info(X)
+        self.features_ = missing_features_info[1]
 
         """transform"""
-        imputer_mask, features = self.missing_features_info
+        imputer_mask, features = missing_features_info
 
         if (self.features == "missing-only"):
             if (self.features_.size < self._n_features):
