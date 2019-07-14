@@ -13,7 +13,6 @@ import re
 import numpy as np
 
 from . import __version__
-from .exceptions import InvalidParameterError, SignatureError
 from .utils import _IS_32BIT, get_param_names_from_constructor
 
 _DEFAULT_TAGS = {
@@ -188,7 +187,10 @@ class GetSetParamsMixin:
         for key, value in params.items():
             key, delim, sub_key = key.partition('__')
             if key not in valid_params:
-                raise InvalidParameterError(key)
+                raise ValueError("Invalid parameter %s for object %s. "
+                                 "Check the list of available parameters "
+                                 "with `object.get_params().keys()`."
+                                 % (key, self))
 
             if delim:
                 nested_params[key][sub_key] = value
@@ -228,13 +230,12 @@ class BaseEstimator(GetSetParamsMixin):
         """
         try:
             return super().get_params(deep=deep)
-        except SignatureError as e:
-            raise SignatureError("scikit-learn estimators should always "
-                                 "specify their parameters in the signature"
-                                 " of their __init__ (no varargs)."
-                                 " %s with constructor %s doesn't "
-                                 " follow this convention."
-                                 % (self.__class__, e.signature))
+        except RuntimeError as e:
+            raise RuntimeError("scikit-learn estimators should always "
+                               "specify their parameters in the signature"
+                               " of their __init__ (no varargs)."
+                               " %s doesn't follow this convention."
+                               % self.__class__) from e
 
     def set_params(self, **params):
         """Set the parameters of this estimator.
@@ -248,13 +249,7 @@ class BaseEstimator(GetSetParamsMixin):
         -------
         self
         """
-        try:
-            return super().set_params(**params)
-        except InvalidParameterError as e:
-            raise InvalidParameterError('Invalid parameter %s for estimator %s. '
-                                        'Check the list of available parameters '
-                                        'with `estimator.get_params().keys()`.' %
-                                        (e.param_name, self))
+        return super().set_params(**params)
 
     def __repr__(self, N_CHAR_MAX=700):
         # N_CHAR_MAX is the (approximate) maximum number of non-blank

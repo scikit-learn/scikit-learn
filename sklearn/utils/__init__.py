@@ -18,7 +18,7 @@ from scipy.sparse import issparse
 from .murmurhash import murmurhash3_32
 from .class_weight import compute_class_weight, compute_sample_weight
 from . import _joblib
-from ..exceptions import DataConversionWarning, SignatureError
+from ..exceptions import DataConversionWarning
 from .deprecation import deprecated
 from .fixes import np_version
 from .validation import (as_float_array,
@@ -124,15 +124,22 @@ class Bunch(dict):
 
 
 def get_param_names_from_constructor(cls):
-    """ TODO
+    """ Get the parameter names a given class from its constructor.
 
     Parameters
     ----------
-    cls
+    cls : type
+        Class to get the parameter names from.
 
     Returns
     -------
+    param_names : list of strings
+        Parameter names of the given class.
 
+    Raises
+    ------
+    RuntimeError
+        If the class constructor contains varargs.
     """
     # fetch the constructor or the original constructor before
     # deprecation wrapping if any
@@ -149,7 +156,8 @@ def get_param_names_from_constructor(cls):
                   if p.name != 'self' and p.kind != p.VAR_KEYWORD]
     for p in parameters:
         if p.kind == p.VAR_POSITIONAL:
-            raise SignatureError(init_signature)
+            raise RuntimeError("%s with constructor %s contains varargs."
+                               % (cls, init_signature))
     # Extract and sort argument names excluding 'self'
     return sorted([p.name for p in parameters])
 

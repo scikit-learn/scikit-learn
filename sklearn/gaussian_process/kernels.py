@@ -28,7 +28,6 @@ from scipy.special import kv, gamma
 from scipy.spatial.distance import pdist, cdist, squareform
 
 from ..base import clone, GetSetParamsMixin
-from ..exceptions import InvalidParameterError, SignatureError
 from ..metrics.pairwise import pairwise_kernels
 
 
@@ -136,13 +135,12 @@ class Kernel(GetSetParamsMixin, metaclass=ABCMeta):
         try:
             # for Kernels, get_params is always shallow
             return super().get_params(deep=False)
-        except SignatureError as e:
-            raise SignatureError("scikit-learn kernels should always "
-                                 "specify their parameters in the signature"
-                                 " of their __init__ (no varargs)."
-                                 " %s with constructor %s doesn't "
-                                 " follow this convention."
-                                 % (self.__class__, e.signature))
+        except RuntimeError as e:
+            raise RuntimeError("scikit-learn kernels should always "
+                               "specify their parameters in the signature"
+                               " of their __init__ (no varargs)."
+                               " %s doesn't follow this convention."
+                               % self.__class__) from e
 
     def set_params(self, **params):
         """Set the parameters of this kernel.
@@ -155,13 +153,7 @@ class Kernel(GetSetParamsMixin, metaclass=ABCMeta):
         -------
         self
         """
-        try:
-            return super().set_params(**params)
-        except InvalidParameterError as e:
-            raise InvalidParameterError('Invalid parameter %s for kernel %s. '
-                                        'Check the list of available parameters '
-                                        'with `kernel.get_params().keys()`.' %
-                                        (e.param_name, self))
+        return super().set_params(**params)
 
     def clone_with_theta(self, theta):
         """Returns a clone of self with given hyperparameters theta.

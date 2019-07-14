@@ -301,9 +301,9 @@ def test_pipeline_raise_set_params_error():
     pipe = Pipeline([('cls', LinearRegression())])
 
     # expected error message
-    error_msg = ('Invalid parameter %s for estimator %s. '
+    error_msg = ('Invalid parameter %s for object %s. '
                  'Check the list of available parameters '
-                 'with `estimator.get_params().keys()`.')
+                 'with `object.get_params().keys()`.')
 
     assert_raise_message(ValueError,
                          error_msg % ('fake', pipe),
