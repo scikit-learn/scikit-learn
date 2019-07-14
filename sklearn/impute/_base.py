@@ -669,28 +669,18 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
         """
 
-        """
-            fit
-        """
+        """fit"""
         self.fit(X, y)
 
-
-        """
-            transform
-        """
-
-        """since we called the function _get_missing_features_info in fit
-           and stored the values it returned in a list missing_features_info
-           so we need not call the function again
-        """
+        """transform"""
         imputer_mask, features = self.missing_features_info
 
-        if (self.features == "missing-only") and (self.features_.size < self._n_features):
-            imputer_mask = imputer_mask[:, self.features_]
+        if (self.features == "missing-only"):
+            if (self.features_.size < self._n_features):
+                imputer_mask = imputer_mask[:, self.features_]
 
         return imputer_mask
 
     def _more_tags(self):
         return {'allow_nan': True,
                 'X_types': ['2darray', 'string']}
- 
