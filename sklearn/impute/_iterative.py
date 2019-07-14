@@ -593,7 +593,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                                           axis=None)
                 if self.verbose > 0:
                     print('[IterativeImputer] '
-                          'Change: {}  scaled tolerance: {} '.format(
+                          'Change: {}, scaled tolerance: {} '.format(
                             inf_norm, normalized_tol))
                 if inf_norm < normalized_tol:
                     if self.verbose > 0:
