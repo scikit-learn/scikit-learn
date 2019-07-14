@@ -30,7 +30,7 @@ from matplotlib import pyplot as plt
 
 from sklearn import manifold, datasets
 
-X, y = datasets.load_digits(n_class=10, return_X_y=True)
+X, y = datasets.load_digits(return_X_y=True)
 n_samples, n_features = X.shape
 
 np.random.seed(0)
