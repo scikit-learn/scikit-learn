@@ -14,14 +14,15 @@ import matplotlib.pyplot as plt
 from sklearn.datasets import make_blobs
 from sklearn.svm import LinearSVC
 
-X, y = make_blobs(n_samples=40, centers=2, random_state=6)
+X, y = make_blobs(n_samples=40, centers=2, random_state=0)
 
 plt.figure(figsize=(10, 5))
 for i, C in enumerate([1, 100]):
-    clf = LinearSVC(C=C).fit(X, y)
+    # "hinge" is the standard SVM loss
+    clf = LinearSVC(C=C, loss="hinge").fit(X, y)
     # obtain the support vectors through the decision function
     decision_function = np.dot(X, clf.coef_[0]) + clf.intercept_[0]
-    support_vector_indices = np.where((2 * y - 1) * decision_function <= 1)[0]
+    support_vector_indices = np.where((2 * y - 1) * decision_function <= 1.0)[0]
     support_vectors = X[support_vector_indices]
 
     plt.subplot(1, 2, i + 1)
