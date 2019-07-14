@@ -11,6 +11,7 @@ def configuration(parent_package="", top_path=None):
         libraries.append('m')
 
     config.add_subpackage('plot')
+    config.add_subpackage('plot.tests')
     config.add_subpackage('cluster')
 
     config.add_extension("pairwise_fast",
