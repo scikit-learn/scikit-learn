@@ -12,6 +12,18 @@ Version 0.21.3
 Changelog
 ---------
 
+:mod:`sklearn.datasets`
+.......................
+
+- |Fix| :func:`datasets.fetch_california_housing`,
+  :func:`datasets.fetch_covtype`,
+  :func:`datasets.fetch_kddcup99`, :func:`datasets.fetch_olivetti_faces`,
+  :func:`datasets.fetch_rcv1`, and :func:`datasets.fetch_species_distributions`
+  try to persist the previously cache using the new ``joblib`` if the cahced
+  data was persisted using the deprecated ``sklearn.externals.joblib``. This
+  behavior is set to be deprecated and removed in v0.23.
+  :pr:`14197` by `Adrin Jalali`_.
+
 :mod:`sklearn.impute`
 .....................
 
@@ -213,6 +225,11 @@ Support for Python 3.4 and below has been officially dropped.
 - |Enhancement| Allow n-dimensional arrays as input for
   `calibration.CalibratedClassifierCV`. :pr:`13485` by
   :user:`William de Vazelhes <wdevazelhes>`.
+
+- |Fix| Fixed a bug that made `calibration.CalibratedClassifierCV` fail when
+  given a `sample_weight` parameter of type `list` (in the case where
+  `sample_weights` are not supported by the wrapped estimator). :issue:`1375`
+  by :user:`William de Vazelhes <wdevazelhes>`.
 
 :mod:`sklearn.cluster`
 ......................

@@ -496,6 +496,8 @@ the transformation::
          [0.5, 0.5],
          [1. , 0. ]])
 
+.. _make_column_transformer:
+
 The :func:`~sklearn.compose.make_column_transformer` function is available
 to more easily create a :class:`~sklearn.compose.ColumnTransformer` object.
 Specifically, the names will be given automatically. The equivalent for the
