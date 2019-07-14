@@ -22,7 +22,7 @@ for i, C in enumerate([1, 100]):
     clf = LinearSVC(C=C, loss="hinge").fit(X, y)
     # obtain the support vectors through the decision function
     decision_function = np.dot(X, clf.coef_[0]) + clf.intercept_[0]
-    support_vector_indices = np.where((2 * y - 1) * decision_function <= 1.0)[0]
+    support_vector_indices = np.where((2 * y - 1) * decision_function <= 1)[0]
     support_vectors = X[support_vector_indices]
 
     plt.subplot(1, 2, i + 1)
