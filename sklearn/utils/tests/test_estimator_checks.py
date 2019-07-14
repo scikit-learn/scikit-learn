@@ -333,11 +333,9 @@ def test_check_estimator():
     assert_raises_regex(AssertionError, msg, check_estimator,
                         ModifiesAnotherValue())
     # check that we have a fit method
-    msg = "please implement fit"
-    assert_raises_regex(NotImplementedError, msg, check_estimator,
-                        BaseEstimator)
-    assert_raises_regex(NotImplementedError, msg, check_estimator,
-                        BaseEstimator())
+    msg = "object has no attribute 'fit'"
+    assert_raises_regex(AttributeError, msg, check_estimator, BaseEstimator)
+    assert_raises_regex(AttributeError, msg, check_estimator, BaseEstimator())
     # check that fit does input validation
     msg = "ValueError not raised"
     assert_raises_regex(AssertionError, msg, check_estimator,
