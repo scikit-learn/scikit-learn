@@ -29,6 +29,7 @@ fitting of a transformer is costly.
 
 # Authors: Robert McGibbon, Joel Nothman, Guillaume Lemaitre
 
+
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_digits
@@ -39,7 +40,6 @@ from sklearn.decomposition import PCA, NMF
 from sklearn.feature_selection import SelectKBest, chi2
 
 print(__doc__)
-
 
 pipe = Pipeline([
     # the reduce_dim stage is populated by the param_grid
@@ -128,4 +128,3 @@ rmtree(location)
 # estimator data, leading to save processing time. Therefore, the use of
 # caching the pipeline using ``memory`` is highly beneficial when fitting
 # a transformer is costly.
-
