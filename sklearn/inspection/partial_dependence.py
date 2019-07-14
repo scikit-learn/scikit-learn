@@ -289,9 +289,15 @@ def partial_dependence(estimator, X, features, response_method='auto',
         raise ValueError(
             "'estimator' must be a fitted regressor or classifier.")
 
-    if (hasattr(estimator, 'classes_') and
-            isinstance(estimator.classes_[0], np.ndarray)):
-        raise ValueError('Multiclass-multioutput estimators are not supported')
+    if is_classifier(estimator):
+        if not hasattr(estimator, 'classes_'):
+            raise ValueError(
+                "'estimator' parameter must be a fitted estimator"
+            )
+        if isinstance(estimator.classes_[0], np.ndarray):
+            raise ValueError(
+                'Multiclass-multioutput estimators are not supported'
+            )
 
     X = check_array(X)
 
