@@ -822,6 +822,15 @@ def test_retrieve_samples_from_non_standard_shape():
 
     X = TestNonNumericShape()
     assert _num_samples(X) == len(X)
+    # check that it gives a good error if there's no __len__
+    class TestNoLenWeirdShape:
+        def __init__(self):
+            self.shape = ("not numeric",)
+
+    with pytest.raises(TypeError) as raised_error:
+        _num_samples(TestNoLenWeirdShape())
+
+
 
 
 @pytest.mark.parametrize('x, target_type, min_val, max_val',
