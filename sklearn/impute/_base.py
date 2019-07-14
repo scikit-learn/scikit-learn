@@ -1,3 +1,7 @@
+# Authors: Nicolas Tresegnie <nicolas.tresegnie@gmail.com>
+#          Sergey Feldman <sergeyfeldman@gmail.com>
+# License: BSD 3 clause
+
 from __future__ import division
 
 import warnings
