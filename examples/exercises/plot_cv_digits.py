@@ -15,9 +15,7 @@ import numpy as np
 from sklearn.model_selection import cross_val_score
 from sklearn import datasets, svm
 
-digits = datasets.load_digits()
-X = digits.data
-y = digits.target
+X, y = datasets.load_digits(return_X_y=True)
 
 svc = svm.SVC(kernel='linear')
 C_s = np.logspace(-10, 0, 10)
