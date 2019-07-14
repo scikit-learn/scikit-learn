@@ -20,8 +20,7 @@ from sklearn.datasets import load_digits
 from sklearn.svm import SVC
 from sklearn.model_selection import validation_curve
 
-digits = load_digits()
-X, y = digits.data, digits.target
+X, y = load_digits(return_X_y=True)
 
 param_range = np.logspace(-6, -1, 5)
 train_scores, test_scores = validation_curve(

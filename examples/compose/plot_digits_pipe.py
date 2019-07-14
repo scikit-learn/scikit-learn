@@ -38,9 +38,7 @@ logistic = SGDClassifier(loss='log', penalty='l2', early_stopping=True,
 pca = PCA()
 pipe = Pipeline(steps=[('pca', pca), ('logistic', logistic)])
 
-digits = datasets.load_digits()
-X_digits = digits.data
-y_digits = digits.target
+X_digits, y_digits = datasets.load_digits(return_X_y=True)
 
 # Parameters of pipelines can be set using ‘__’ separated parameter names:
 param_grid = {
