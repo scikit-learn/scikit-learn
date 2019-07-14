@@ -608,7 +608,8 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
             raise ValueError("'sparse' has to be a boolean or 'auto'. "
                              "Got {!r} instead.".format(self.sparse))
 
-        """store the values returned, to prevent it from being called again in fit_transform"""
+        """store the values returned, to prevent it from being
+         called again in fit_transform"""
         self.missing_features_info = self._get_missing_features_info(X)
         self.features_ = self.missing_features_info[1]
 
