@@ -1895,6 +1895,14 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
 
     Read more in the :ref:`User Guide <kernel_centering>`.
 
+    Parameters
+    ----------
+    K_fit_rows_ : numpy array of shape [1, n_samples]
+        Average of each column of Kernel matrix
+
+    K_fit_all_ : float
+        Average of Kernel matrix
+
     Examples
     --------
     >>> from sklearn.preprocessing import KernelCenterer
@@ -1927,12 +1935,6 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         ----------
         K : numpy array of shape [n_samples, n_samples]
             Kernel matrix.
-
-        K_fit_rows_ : numpy array of shape [1, n_samples]
-                      Average of each column of Kernel matrix
-
-        K_fit_all_ : float
-                     Average of Kernel matrix
 
         Returns
         -------
