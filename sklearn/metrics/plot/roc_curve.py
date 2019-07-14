@@ -77,7 +77,7 @@ class RocCurveVisualizer:
         ax : Matplotlib Axes, optional (default=None)
             Axes object to plot on.
 
-        line_kwargs : dict or None, optional (default=None)
+        line_kw : dict or None, optional (default=None)
             Keyword arguments to pass to
         """
         check_matplotlib_support('plot_roc_curve')  # noqa
@@ -105,6 +105,7 @@ def plot_roc_curve(estimator,
                    sample_weight=None,
                    drop_intermediate=True,
                    response_method="predict_proba",
+                   line_kw=None,
                    ax=None):
     """Plot Receiver operating characteristic (ROC) curve
 
@@ -141,11 +142,11 @@ def plot_roc_curve(estimator,
     (default='predict_proba')
         Method to call estimator to get target scores
 
-    label : str or None, optional (default=None)
-        Label for ROC curve.
-
     ax : matplotlib axes, optional (default=None)
         axes object to plot on
+
+    line_kw : dict or None, optional (default=None)
+        Keyword arguments to pass to
 
     Returns
     -------
@@ -159,5 +160,5 @@ def plot_roc_curve(estimator,
                              pos_label=pos_label,
                              drop_intermediate=drop_intermediate,
                              response_method=response_method)
-    viz.plot(ax=ax)
+    viz.plot(ax=ax, line_kw=line_kw)
     return viz
