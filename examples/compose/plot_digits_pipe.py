@@ -56,8 +56,8 @@ print(search.best_params_)
 pca.fit(X_digits)
 
 fig, (ax0, ax1) = plt.subplots(nrows=2, sharex=True, figsize=(6, 6))
-ax0.plot(pca.explained_variance_ratio_, linewidth=2)
-ax0.set_ylabel('PCA explained variance')
+ax0.plot(1 + np.arange(64), pca.explained_variance_ratio_, '+', linewidth=2)
+ax0.set_ylabel('PCA explained variance ratio')
 
 ax0.axvline(search.best_estimator_.named_steps['pca'].n_components,
             linestyle=':', label='n_components chosen')
@@ -73,6 +73,8 @@ best_clfs.plot(x=components_col, y='mean_test_score', yerr='std_test_score',
                legend=False, ax=ax1)
 ax1.set_ylabel('Classification accuracy (val)')
 ax1.set_xlabel('n_components')
+
+plt.xlim(-1, 70)
 
 plt.tight_layout()
 plt.show()
