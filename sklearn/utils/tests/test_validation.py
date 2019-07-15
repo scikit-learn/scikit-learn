@@ -861,8 +861,7 @@ def test_check_sample_weight():
     # check order="C" parameter
     sample_weight = np.ones(10)[::2]
     assert not sample_weight.flags["C_CONTIGUOUS"]
-    sample_weight = _check_sample_weight(sample_weight, X=np.ones((5, 1)),
-                                         order="C")
+    sample_weight = _check_sample_weight(sample_weight, X=np.ones((5, 1)))
     assert sample_weight.flags["C_CONTIGUOUS"]
 
     # check None input

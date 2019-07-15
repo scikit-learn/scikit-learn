@@ -475,7 +475,7 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin, metaclass=ABCMeta):
         # Allocate datastructures from input arguments
         self._expanded_class_weight = compute_class_weight(self.class_weight,
                                                            self.classes_, y)
-        sample_weight = _check_sample_weight(sample_weight, X, order="C")
+        sample_weight = _check_sample_weight(sample_weight, X)
 
         if getattr(self, "coef_", None) is None or coef_init is not None:
             self._allocate_parameter_mem(n_classes, n_features,
@@ -1082,7 +1082,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
         n_samples, n_features = X.shape
 
-        sample_weight = _check_sample_weight(sample_weight, X, order="C")
+        sample_weight = _check_sample_weight(sample_weight, X)
 
         # Allocate datastructures from input arguments
         if getattr(self, "coef_", None) is None:

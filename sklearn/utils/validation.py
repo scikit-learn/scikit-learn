@@ -982,29 +982,25 @@ def check_scalar(x, name, target_type, min_val=None, max_val=None):
         raise ValueError('`{}`= {}, must be <= {}.'.format(name, x, max_val))
 
 
-def _check_sample_weight(sample_weight, X, dtype=None,
-                         order=None):
+def _check_sample_weight(sample_weight, X, dtype=None):
     """Validate sample weights
 
     Parameters
     ----------
     sample_weight : {ndarray, Number or None}, shape (n_samples,)
        Input sample weights.
+
     X : nd-array, list or sparse matrix
         Input data.
+
     dtype: dtype
        dtype of the validated `sample_weight`. Note that if `dtype` is not
        one of `float32`, `float64`, the output will be of dtype `float64`.
-    order : 'F', 'C' or None (default=None)
-        Whether an array will be forced to be fortran or c-style.
-        When order is None (default), if ``sample_weights`` is an ndarray,
-        nothing is ensured about the memory layout of the output array,
-        otherwise it will be of 'C' order by default.
 
-    Parameters
-    ----------
+    Returns
+    -------
     sample_weight : ndarray, shape (n_samples,)
-       Validated sample weights.
+       Validated sample weights. They are guaranteed to be "C" contiguous.
     """
     n_samples = _num_samples(X)
 
@@ -1012,19 +1008,17 @@ def _check_sample_weight(sample_weight, X, dtype=None,
         dtype = np.float64
 
     if sample_weight is None or isinstance(sample_weight, numbers.Number):
-        if order is None:
-            order = 'C'
         if sample_weight is None:
-            sample_weight = np.ones(n_samples, dtype=dtype, order=order)
+            sample_weight = np.ones(n_samples, dtype=dtype)
         else:
             sample_weight = np.full(n_samples, sample_weight,
-                                    dtype=dtype, order=order)
+                                    dtype=dtype)
     else:
         if dtype is None:
             dtype = [np.float64, np.float32]
         sample_weight = check_array(
                 sample_weight, accept_sparse=False,
-                ensure_2d=False, dtype=dtype, order=order
+                ensure_2d=False, dtype=dtype, order="C"
         )
         if sample_weight.ndim != 1:
             raise ValueError("Sample weights must be 1D array or scalar")

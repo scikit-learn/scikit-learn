@@ -909,7 +909,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     y_ind = np.require(y_ind, requirements="W")
 
     sample_weight = _check_sample_weight(sample_weight, X,
-                                         dtype=np.float64, order='C')
+                                         dtype=np.float64)
 
     solver_type = _get_liblinear_solver_type(multi_class, penalty, loss, dual)
     raw_coef_, n_iter_ = liblinear.train_wrap(
