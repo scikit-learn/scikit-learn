@@ -325,6 +325,13 @@ def test_missing_values_minmax_imputation():
                                                 max_leaf_nodes=5,
                                                 random_state=0)
     builtin_gbm.fit(X_train, y_train)
+    assert_allclose(builtin_gbm.bin_mapper_.bin_thresholds_[0],
+                    np.arange(0, 41) + .5)
+    assert_allclose(builtin_gbm.bin_mapper_.bin_thresholds_[1],
+                    np.arange(1, 41) + .5)
+    assert_allclose(builtin_gbm.bin_mapper_.bin_thresholds_[2],
+                    np.arange(0, 40) + .5)
+
     y_builtin_predict_train = builtin_gbm.predict(X_train)
     y_builtin_predict_test = builtin_gbm.predict(X_test)
 
@@ -348,6 +355,19 @@ def test_missing_values_minmax_imputation():
 
     imputed_gbm = clone(builtin_gbm)
     imputed_gbm.fit(X_train_imputed, y_train)
+    assert_allclose(imputed_gbm.bin_mapper_.bin_thresholds_[0],
+                    np.arange(-1, 41) + .5)
+    assert_allclose(imputed_gbm.bin_mapper_.bin_thresholds_[1],
+                    np.arange(0, 41) + .5)
+    assert_allclose(imputed_gbm.bin_mapper_.bin_thresholds_[2],
+                    np.arange(-1, 40) + .5)
+    assert_allclose(imputed_gbm.bin_mapper_.bin_thresholds_[3],
+                    np.arange(0, 42) + .5)
+    assert_allclose(imputed_gbm.bin_mapper_.bin_thresholds_[4],
+                    np.arange(1, 42) + .5)
+    assert_allclose(imputed_gbm.bin_mapper_.bin_thresholds_[5],
+                    np.arange(0, 41) + .5)
+
     y_imputed_predict_train = imputed_gbm.predict(X_train_imputed)
     y_imputed_predict_test = imputed_gbm.predict(X_test_imputed)
 
