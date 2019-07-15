@@ -101,7 +101,8 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
     Attributes
     ----------
-    coef_ : array, shape = [n_features] if n_classes == 2 else [n_classes, n_features]
+    coef_ : array, shape = [1, n_features] if n_classes == 2 \
+else [n_classes, n_features]
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
