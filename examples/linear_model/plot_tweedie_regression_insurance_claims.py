@@ -46,7 +46,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
 from sklearn.preprocessing import StandardScaler, KBinsDiscretizer
 
-from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 
 def load_mtpl2(n_samples=100000):
@@ -83,7 +83,7 @@ def load_mtpl2(n_samples=100000):
 
 
 def plot_obs_pred(df, feature, weight, observed, predicted, y_label=None,
-                  title=None, kind_weight=None, ax=None):
+                  title=None, ax=None):
     """Plot observed and predicted - aggregated per feature level.
 
     Parameters
@@ -141,9 +141,11 @@ df = load_mtpl2(n_samples=100000)
 # requires a strictly positive target values.
 df.loc[(df.ClaimAmount == 0) & (df.ClaimNb >= 1), "ClaimNb"] = 0
 
-# correct for unreasonable observations (that might be data error)
+# Correct for unreasonable observations (that might be data error)
+# and a few exceptionally large claim amounts
 df["ClaimNb"] = df["ClaimNb"].clip(upper=4)
 df["Exposure"] = df["Exposure"].clip(upper=1)
+df["ClaimAmount"] = df["ClaimAmount"].clip(upper=200000)
 
 column_trans = ColumnTransformer(
     [
@@ -188,7 +190,9 @@ print(df[df.ClaimAmount > 0].head())
 
 df_train, df_test, X_train, X_test = train_test_split(df, X, random_state=2)
 
-glm_freq = GeneralizedLinearRegressor(family="poisson", alpha=0)
+# Some of the features are colinear, we use a weak penalization to avoid
+# numerical issues.
+glm_freq = GeneralizedLinearRegressor(family="poisson", alpha=1e-2)
 glm_freq.fit(X_train, df_train.Frequency, sample_weight=df_train.Exposure)
 
 
@@ -214,6 +218,7 @@ def score_estimator(
             ("D² explained", None),
             ("mean deviance", partial(mean_deviance, estimator)),
             ("mean abs. error", mean_absolute_error),
+            ("mean squared error", mean_squared_error),
         ]:
             if estimator.__class__.__name__ == "ClaimProdEstimator":
                 # ClaimProdEstimator is the product of frequency and severity
@@ -325,7 +330,7 @@ plot_obs_pred(
 mask_train = df_train["ClaimAmount"] > 0
 mask_test = df_test["ClaimAmount"] > 0
 
-glm_sev = GeneralizedLinearRegressor(family="gamma", alpha=1)
+glm_sev = GeneralizedLinearRegressor(family="gamma")
 
 glm_sev.fit(
     X_train[mask_train.values],
