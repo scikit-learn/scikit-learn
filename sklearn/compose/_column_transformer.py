@@ -17,6 +17,8 @@ from ..base import clone, TransformerMixin
 from ..pipeline import _fit_transform_one, _transform_one, _name_estimators
 from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
+from ..utils import safe_indexing
+from ..utils import _get_column_indices
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted
 
@@ -402,7 +404,7 @@ boolean mask array or callable
             return Parallel(n_jobs=self.n_jobs)(
                 delayed(func)(
                     transformer=clone(trans) if not fitted else trans,
-                    X=_get_column(X, column),
+                    X=safe_indexing(X, column, axis=1),
                     y=y,
                     weight=weight,
                     message_clsname='ColumnTransformer',
@@ -553,132 +555,6 @@ def _check_X(X):
     return check_array(X, force_all_finite='allow-nan', dtype=np.object)
 
 
-def _check_key_type(key, superclass):
-    """
-    Check that scalar, list or slice is of a certain type.
-
-    This is only used in _get_column and _get_column_indices to check
-    if the `key` (column specification) is fully integer or fully string-like.
-
-    Parameters
-    ----------
-    key : scalar, list, slice, array-like
-        The column specification to check
-    superclass : int or str
-        The type for which to check the `key`
-
-    """
-    if isinstance(key, superclass):
-        return True
-    if isinstance(key, slice):
-        return (isinstance(key.start, (superclass, type(None))) and
-                isinstance(key.stop, (superclass, type(None))))
-    if isinstance(key, list):
-        return all(isinstance(x, superclass) for x in key)
-    if hasattr(key, 'dtype'):
-        if superclass is int:
-            return key.dtype.kind == 'i'
-        else:
-            # superclass = str
-            return key.dtype.kind in ('O', 'U', 'S')
-    return False
-
-
-def _get_column(X, key):
-    """
-    Get feature column(s) from input data X.
-
-    Supported input types (X): numpy arrays, sparse arrays and DataFrames
-
-    Supported key types (key):
-    - scalar: output is 1D
-    - lists, slices, boolean masks: output is 2D
-    - callable that returns any of the above
-
-    Supported key data types:
-
-    - integer or boolean mask (positional):
-        - supported for arrays, sparse matrices and dataframes
-    - string (key-based):
-        - only supported for dataframes
-        - So no keys other than strings are allowed (while in principle you
-          can use any hashable object as key).
-
-    """
-    # check whether we have string column names or integers
-    if _check_key_type(key, int):
-        column_names = False
-    elif _check_key_type(key, str):
-        column_names = True
-    elif hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_):
-        # boolean mask
-        column_names = False
-        if hasattr(X, 'loc'):
-            # pandas boolean masks don't work with iloc, so take loc path
-            column_names = True
-    else:
-        raise ValueError("No valid specification of the columns. Only a "
-                         "scalar, list or slice of all integers or all "
-                         "strings, or boolean mask is allowed")
-
-    if column_names:
-        if hasattr(X, 'loc'):
-            # pandas dataframes
-            return X.loc[:, key]
-        else:
-            raise ValueError("Specifying the columns using strings is only "
-                             "supported for pandas DataFrames")
-    else:
-        if hasattr(X, 'iloc'):
-            # pandas dataframes
-            return X.iloc[:, key]
-        else:
-            # numpy arrays, sparse arrays
-            return X[:, key]
-
-
-def _get_column_indices(X, key):
-    """
-    Get feature column indices for input data X and key.
-
-    For accepted values of `key`, see the docstring of _get_column
-
-    """
-    n_columns = X.shape[1]
-
-    if (_check_key_type(key, int)
-            or hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_)):
-        # Convert key into positive indexes
-        idx = np.arange(n_columns)[key]
-        return np.atleast_1d(idx).tolist()
-    elif _check_key_type(key, str):
-        try:
-            all_columns = list(X.columns)
-        except AttributeError:
-            raise ValueError("Specifying the columns using strings is only "
-                             "supported for pandas DataFrames")
-        if isinstance(key, str):
-            columns = [key]
-        elif isinstance(key, slice):
-            start, stop = key.start, key.stop
-            if start is not None:
-                start = all_columns.index(start)
-            if stop is not None:
-                # pandas indexing with strings is endpoint included
-                stop = all_columns.index(stop) + 1
-            else:
-                stop = n_columns + 1
-            return list(range(n_columns)[slice(start, stop)])
-        else:
-            columns = list(key)
-
-        return [all_columns.index(col) for col in columns]
-    else:
-        raise ValueError("No valid specification of the columns. Only a "
-                         "scalar, list or slice of all integers or all "
-                         "strings, or boolean mask is allowed")
-
-
 def _is_empty_column_selection(column):
     """
     Return True if the column selection is empty (empty list or all-False
@@ -713,9 +589,28 @@ def make_column_transformer(*transformers, **kwargs):
     be given names automatically based on their types. It also does not allow
     weighting with ``transformer_weights``.
 
+    Read more in the :ref:`User Guide <make_column_transformer>`.
+
     Parameters
     ----------
-    *transformers : tuples of transformers and column selections
+    *transformers : tuples
+        Tuples of the form (transformer, column(s)) specifying the
+        transformer objects to be applied to subsets of the data.
+
+        transformer : estimator or {'passthrough', 'drop'}
+            Estimator must support `fit` and `transform`. Special-cased
+            strings 'drop' and 'passthrough' are accepted as well, to
+            indicate to drop the columns or to pass them through untransformed,
+            respectively.
+        column(s) : string or int, array-like of string or int, slice, \
+boolean mask array or callable
+            Indexes the data on its second axis. Integers are interpreted as
+            positional columns, while strings can reference DataFrame columns
+            by name. A scalar string or int should be used where
+            ``transformer`` expects X to be a 1d array-like (vector),
+            otherwise a 2d array will be passed to the transformer.
+            A callable is passed the input data `X` and can return any of the
+            above.
 
     remainder : {'drop', 'passthrough'} or estimator, default 'drop'
         By default, only the specified columns in `transformers` are

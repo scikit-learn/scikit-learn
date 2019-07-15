@@ -12,6 +12,25 @@ Version 0.21.3
 Changelog
 ---------
 
+:mod:`sklearn.datasets`
+.......................
+
+- |Fix| :func:`datasets.fetch_california_housing`,
+  :func:`datasets.fetch_covtype`,
+  :func:`datasets.fetch_kddcup99`, :func:`datasets.fetch_olivetti_faces`,
+  :func:`datasets.fetch_rcv1`, and :func:`datasets.fetch_species_distributions`
+  try to persist the previously cache using the new ``joblib`` if the cahced
+  data was persisted using the deprecated ``sklearn.externals.joblib``. This
+  behavior is set to be deprecated and removed in v0.23.
+  :pr:`14197` by `Adrin Jalali`_.
+
+:mod:`sklearn.impute`
+.....................
+
+- |Fix| Fixed a bug in :class:`SimpleImputer` and :class:`IterativeImputer`
+  so that no errors are thrown when there are missing values in training data.
+  :pr:`13974` by `Frank Hoang <fhoang7>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 - |Fix| Fixed a bug in :class:`linear_model.LogisticRegressionCV` where
@@ -91,6 +110,13 @@ This is a bug-fix release to primarily resolve some packaging issues in version
 
 Changelog
 ---------
+
+:mod:`sklearn.inspection`
+.........................
+
+- |Fix| Fixed a bug in :func:`inspection.partial_dependence` to only check
+  classifier and not regressor for the multiclass-multioutput case.
+  :pr:`14309` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.metrics`
 ......................

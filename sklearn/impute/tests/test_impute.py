@@ -16,6 +16,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 # make IterativeImputer available
 from sklearn.experimental import enable_iterative_imputer  # noqa
 
+from sklearn.datasets import load_boston
 from sklearn.impute import MissingIndicator
 from sklearn.impute import SimpleImputer, IterativeImputer
 from sklearn.dummy import DummyRegressor
@@ -65,21 +66,22 @@ def _check_statistics(X, X_true,
     assert_ae(X_trans, X_true, err_msg=err_msg.format(True))
 
 
-def test_imputation_shape():
+@pytest.mark.parametrize("strategy",
+                         ['mean', 'median', 'most_frequent', "constant"])
+def test_imputation_shape(strategy):
     # Verify the shapes of the imputed matrix for different strategies.
     X = np.random.randn(10, 2)
     X[::2] = np.nan
 
-    for strategy in ['mean', 'median', 'most_frequent', "constant"]:
-        imputer = SimpleImputer(strategy=strategy)
-        X_imputed = imputer.fit_transform(sparse.csr_matrix(X))
-        assert X_imputed.shape == (10, 2)
-        X_imputed = imputer.fit_transform(X)
-        assert X_imputed.shape == (10, 2)
+    imputer = SimpleImputer(strategy=strategy)
+    X_imputed = imputer.fit_transform(sparse.csr_matrix(X))
+    assert X_imputed.shape == (10, 2)
+    X_imputed = imputer.fit_transform(X)
+    assert X_imputed.shape == (10, 2)
 
-        iterative_imputer = IterativeImputer(initial_strategy=strategy)
-        X_imputed = iterative_imputer.fit_transform(X)
-        assert X_imputed.shape == (10, 2)
+    iterative_imputer = IterativeImputer(initial_strategy=strategy)
+    X_imputed = iterative_imputer.fit_transform(X)
+    assert X_imputed.shape == (10, 2)
 
 
 @pytest.mark.parametrize("strategy", ["const", 101, None])
@@ -443,6 +445,16 @@ def test_imputation_constant_pandas(dtype):
     X_trans = imputer.fit_transform(df)
 
     assert_array_equal(X_trans, X_true)
+
+
+@pytest.mark.parametrize('Imputer', (SimpleImputer, IterativeImputer))
+def test_imputation_missing_value_in_test_array(Imputer):
+    # [Non Regression Test for issue #13968] Missing value in test set should
+    # not throw an error and return a finite dataset
+    train = [[1], [2]]
+    test = [[3], [np.nan]]
+    imputer = Imputer(add_indicator=True)
+    imputer.fit(train).transform(test)
 
 
 def test_imputation_pipeline_grid_search():
@@ -911,6 +923,32 @@ def test_iterative_imputer_early_stopping():
                                random_state=rng)
     imputer.fit(X_missing)
     assert imputer.n_iter_ == imputer.max_iter
+
+
+def test_iterative_imputer_catch_warning():
+    # check that we catch a RuntimeWarning due to a division by zero when a
+    # feature is constant in the dataset
+    X, y = load_boston(return_X_y=True)
+    n_samples, n_features = X.shape
+
+    # simulate that a feature only contain one category during fit
+    X[:, 3] = 1
+
+    # add some missing values
+    rng = np.random.RandomState(0)
+    missing_rate = 0.15
+    for feat in range(n_features):
+        sample_idx = rng.choice(
+            np.arange(n_samples), size=int(n_samples * missing_rate),
+            replace=False
+        )
+        X[sample_idx, feat] = np.nan
+
+    imputer = IterativeImputer(n_nearest_features=5, sample_posterior=True)
+    with pytest.warns(None) as record:
+        X_fill = imputer.fit_transform(X, y)
+    assert not record.list
+    assert not np.any(np.isnan(X_fill))
 
 
 @pytest.mark.parametrize(

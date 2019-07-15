@@ -6,6 +6,7 @@ from sklearn.ensemble._hist_gradient_boosting.types import G_H_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.types import X_BINNED_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.splitting import Splitter
 from sklearn.ensemble._hist_gradient_boosting.histogram import HistogramBuilder
+from sklearn.utils.testing import skip_if_32bit
 
 
 @pytest.mark.parametrize('n_bins', [3, 32, 256])
@@ -61,6 +62,7 @@ def test_histogram_split(n_bins):
             assert split_info.n_samples_left == split_info.sum_hessian_left
 
 
+@skip_if_32bit
 @pytest.mark.parametrize('constant_hessian', [True, False])
 def test_gradient_and_hessian_sanity(constant_hessian):
     # This test checks that the values of gradients and hessians are
