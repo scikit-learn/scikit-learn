@@ -585,6 +585,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
                              "array instead.")
 
         return X
+
     def _fit(self, X, y=None):
         """Fit the transformer on X.
 
@@ -612,7 +613,6 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
                              "Got {!r} instead.".format(self.sparse))
 
         return self._get_missing_features_info(X)
-
 
     def fit(self, X, y=None):
         """Fit the transformer on X.
