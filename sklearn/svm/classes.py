@@ -206,7 +206,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         -------
         self : object
         """
-        # FIXME Remove l1/l2 support in 0.22 ----------------------------------
+        # FIXME Remove l1/l2 support in 0.23 ----------------------------------
         msg = ("loss='%s' has been deprecated in favor of "
                "loss='%s' as of 0.16. Backward compatibility"
                " for the loss='%s' will be removed in %s")
@@ -214,7 +214,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         if self.loss in ('l1', 'l2'):
             old_loss = self.loss
             self.loss = {'l1': 'hinge', 'l2': 'squared_hinge'}.get(self.loss)
-            warnings.warn(msg % (old_loss, self.loss, old_loss, '0.22'),
+            warnings.warn(msg % (old_loss, self.loss, old_loss, '0.23'),
                           DeprecationWarning)
         # ---------------------------------------------------------------------
 
@@ -390,7 +390,7 @@ class LinearSVR(LinearModel, RegressorMixin):
         -------
         self : object
         """
-        # FIXME Remove l1/l2 support in 0.22 ----------------------------------
+        # FIXME Remove l1/l2 support in 0.23 ----------------------------------
         msg = ("loss='%s' has been deprecated in favor of "
                "loss='%s' as of 0.16. Backward compatibility"
                " for the loss='%s' will be removed in %s")
@@ -400,7 +400,7 @@ class LinearSVR(LinearModel, RegressorMixin):
             self.loss = {'l1': 'epsilon_insensitive',
                          'l2': 'squared_epsilon_insensitive'
                          }.get(self.loss)
-            warnings.warn(msg % (old_loss, self.loss, old_loss, '0.22'),
+            warnings.warn(msg % (old_loss, self.loss, old_loss, '0.23'),
                           DeprecationWarning)
         # ---------------------------------------------------------------------
 
