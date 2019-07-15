@@ -1000,7 +1000,7 @@ def _check_sample_weight(sample_weight, X, dtype=None):
     Returns
     -------
     sample_weight : ndarray, shape (n_samples,)
-       Validated sample weights. They are guaranteed to be "C" contiguous.
+       Validated sample weight. It is guaranteed to be "C" contiguous.
     """
     n_samples = _num_samples(X)
 
