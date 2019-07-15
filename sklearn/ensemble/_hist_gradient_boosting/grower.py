@@ -266,8 +266,8 @@ class TreeGrower:
             self._finalize_leaf(self.root)
             return
 
-        self.root.histograms = self.histogram_builder.compute_histograms_brute(
-            self.root.sample_indices)
+        self.root.histograms, _ = self.histogram_builder.compute_histograms_brute(
+            self.root.sample_indices, None)
         self._compute_best_split_and_push(self.root)
 
     def _compute_best_split_and_push(self, node):
@@ -374,12 +374,10 @@ class TreeGrower:
             # smallest number of samples, and the subtraction trick O(n_bins)
             # on the other one.
             tic = time()
-            smallest_child.histograms = \
+            smallest_child.histograms, largest_child.histograms = \
                 self.histogram_builder.compute_histograms_brute(
-                    smallest_child.sample_indices)
-            largest_child.histograms = \
-                self.histogram_builder.compute_histograms_subtraction(
-                    node.histograms, smallest_child.histograms)
+                    smallest_child.sample_indices, node.histograms)
+
             self.total_compute_hist_time += time() - tic
 
             tic = time()

@@ -103,7 +103,9 @@ cdef class HistogramBuilder:
 
     def compute_histograms_brute(
             HistogramBuilder self,
-            const unsigned int [::1] sample_indices):  # IN
+            const unsigned int [::1] sample_indices,
+            hist_struct [:, ::1] parent):  # IN
+
         """Compute the histograms of the node by scanning through all the data.
 
         For a given feature, the complexity is O(n_samples)
@@ -122,6 +124,7 @@ cdef class HistogramBuilder:
             int n_samples
             int feature_idx
             int i
+
             # need local views to avoid python interactions
             unsigned char hessians_are_constant = \
                 self.hessians_are_constant
@@ -130,10 +133,13 @@ cdef class HistogramBuilder:
             G_H_DTYPE_C [::1] gradients = self.gradients
             G_H_DTYPE_C [::1] ordered_hessians = self.ordered_hessians
             G_H_DTYPE_C [::1] hessians = self.hessians
-            hist_struct [:, ::1] histograms = np.zeros(
+            # hist_struct [:, ::1] histograms = np.zeros(
+            hist_struct [:, ::1] histograms = np.empty(
                 shape=(self.n_features, self.max_bins),
-                dtype=HISTOGRAM_DTYPE
-            )
+                dtype=HISTOGRAM_DTYPE)
+            hist_struct [:, ::1] sibling = np.empty(
+                shape=(self.n_features, self.max_bins),
+                dtype=HISTOGRAM_DTYPE)
 
         with nogil:
             n_samples = sample_indices.shape[0]
@@ -150,18 +156,21 @@ cdef class HistogramBuilder:
                         ordered_gradients[i] = gradients[sample_indices[i]]
                         ordered_hessians[i] = hessians[sample_indices[i]]
 
+        with nogil:
+            n_samples = sample_indices.shape[0]
             for feature_idx in prange(n_features, schedule='static'):
                 # Compute histogram of each feature
                 self._compute_histogram_brute_single_feature(
-                    feature_idx, sample_indices, histograms)
-
-        return histograms
+                    feature_idx, sample_indices, histograms, parent, sibling)
+        return histograms, sibling
 
     cdef void _compute_histogram_brute_single_feature(
             HistogramBuilder self,
             const int feature_idx,
             const unsigned int [::1] sample_indices,  # IN
-            hist_struct [:, ::1] histograms) nogil:  # OUT
+            hist_struct [:, ::1] histograms,
+            hist_struct [:, ::1] parent,
+            hist_struct [:, ::1] sibling) nogil:  # OUT
         """Compute the histogram for a given feature."""
 
         cdef:
@@ -175,6 +184,11 @@ cdef class HistogramBuilder:
                 self.ordered_hessians[:n_samples]
             unsigned char hessians_are_constant = \
                 self.hessians_are_constant
+
+        for i in range(self.max_bins):
+            histograms[feature_idx, i].sum_gradients = 0
+            histograms[feature_idx, i].sum_hessians = 0
+            histograms[feature_idx, i].count = 0
 
         if root_node:
             if hessians_are_constant:
@@ -194,6 +208,7 @@ cdef class HistogramBuilder:
                 _build_histogram(feature_idx, sample_indices,
                                  X_binned, ordered_gradients,
                                  ordered_hessians, histograms)
+            _subtract_histograms(feature_idx, self.max_bins, parent, histograms, sibling)
 
     def compute_histograms_subtraction(
             HistogramBuilder self,
@@ -225,12 +240,14 @@ cdef class HistogramBuilder:
         cdef:
             int feature_idx
             int n_features = self.n_features
-            hist_struct [:, ::1] histograms = np.zeros(
+            # hist_struct [:, ::1] histograms = np.zeros(
+            hist_struct [:, ::1] histograms = np.empty(
                 shape=(self.n_features, self.max_bins),
                 dtype=HISTOGRAM_DTYPE
             )
 
-        for feature_idx in prange(n_features, schedule='static', nogil=True):
+        # for feature_idx in prange(n_features, schedule='static', nogil=True):
+        for feature_idx in range(n_features):
             # Compute histogram of each feature
             _subtract_histograms(feature_idx,
                                  self.max_bins,
