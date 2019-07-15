@@ -10,8 +10,8 @@ cluster rows and columns of a data matrix. These clusters of rows and
 columns are known as biclusters. Each determines a submatrix of the
 original data matrix with some desired properties.
 
-For instance, given a matrix of shape ``(10, 10)``, one possible bicluster
-with three rows and two columns induces a submatrix of shape ``(3, 2)``::
+For instance, given a matrix of shape `(10, 10)`, one possible bicluster
+with three rows and two columns induces a submatrix of shape `(3, 2)`::
 
     >>> import numpy as np
     >>> data = np.arange(100).reshape(10, 10)
@@ -64,12 +64,12 @@ small:
    An example of checkerboard biclusters.
 
 After fitting a model, row and column cluster membership can be found
-in the ``rows_`` and ``columns_`` attributes. ``rows_[i]`` is a binary vector
+in the `rows_` and `columns_` attributes. `rows_[i]` is a binary vector
 with nonzero entries corresponding to rows that belong to bicluster
-``i``. Similarly, ``columns_[i]`` indicates which columns belong to
-bicluster ``i``.
+`i`. Similarly, `columns_[i]` indicates which columns belong to
+bicluster `i`.
 
-Some models also have ``row_labels_`` and ``column_labels_`` attributes.
+Some models also have `row_labels_` and `column_labels_` attributes.
 These models partition the rows and columns, such as in the block
 diagonal and checkerboard bicluster structures.
 
@@ -144,8 +144,8 @@ where the columns of :math:`U` are :math:`u_2, \dots, u_{\ell +
 1}`, and similarly for :math:`V`.
 
 Then the rows of :math:`Z` are clustered using :ref:`k-means
-<k_means>`. The first ``n_rows`` labels provide the row partitioning,
-and the remaining ``n_columns`` labels provide the column partitioning.
+<k_means>`. The first `n_rows` labels provide the row partitioning,
+and the remaining `n_columns` labels provide the column partitioning.
 
 
 .. topic:: Examples:

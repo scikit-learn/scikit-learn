@@ -20,9 +20,9 @@ Changelog
 - Fixed a bug in the reassignment of small clusters in the :class:`cluster.MiniBatchKMeans`
   by `Gael Varoquaux`_.
 
-- Fixed default value of ``gamma`` in :class:`decomposition.KernelPCA` by `Lars Buitinck`_.
+- Fixed default value of `gamma` in :class:`decomposition.KernelPCA` by `Lars Buitinck`_.
 
-- Updated joblib to ``0.7.0d`` by `Gael Varoquaux`_.
+- Updated joblib to `0.7.0d` by `Gael Varoquaux`_.
 
 - Fixed scaling of the deviance in :class:`ensemble.GradientBoostingClassifier` by `Peter Prettenhofer`_.
 
@@ -116,7 +116,7 @@ New Estimator Classes
 Changelog
 ---------
 
-- :func:`metrics.zero_one_loss` (formerly ``metrics.zero_one``) now has
+- :func:`metrics.zero_one_loss` (formerly `metrics.zero_one`) now has
   option for normalized output that reports the fraction of
   misclassifications, rather than the raw number of misclassifications. By
   Kyle Beauchamp.
@@ -144,12 +144,12 @@ Changelog
   that they might sometimes select different features than they did
   previously.
 
-- Ridge regression and ridge classification fitting with ``sparse_cg`` solver
+- Ridge regression and ridge classification fitting with `sparse_cg` solver
   no longer has quadratic memory complexity, by `Lars Buitinck`_ and
   `Fabian Pedregosa`_.
 
 - Ridge regression and ridge classification now support a new fast solver
-  called ``lsqr``, by `Mathieu Blondel`_.
+  called `lsqr`, by `Mathieu Blondel`_.
 
 - Speed up of :func:`metrics.precision_recall_curve` by Conrad Lee.
 
@@ -177,7 +177,7 @@ Changelog
 - Fix of longstanding bug in :class:`naive_bayes.BernoulliNB` fixed by
   Shaun Jackman.
 
-- Implemented ``predict_proba`` in :class:`multiclass.OneVsRestClassifier`,
+- Implemented `predict_proba` in :class:`multiclass.OneVsRestClassifier`,
   by Andrew Winterman.
 
 - Improve consistency in gradient boosting: estimators
@@ -197,9 +197,9 @@ Changelog
   :func:`metrics.mean_absolute_error` and
   :func:`metrics.r2_score` metrics support multioutput by `Arnaud Joly`_.
 
-- Fixed ``class_weight`` support in :class:`svm.LinearSVC` and
+- Fixed `class_weight` support in :class:`svm.LinearSVC` and
   :class:`linear_model.LogisticRegression` by `Andreas Müller`_. The meaning
-  of ``class_weight`` was reversed as erroneously higher weight meant less
+  of `class_weight` was reversed as erroneously higher weight meant less
   positives of a given class in earlier releases.
 
 - Improve narrative documentation and consistency in
@@ -215,108 +215,108 @@ Changelog
 
 API changes summary
 -------------------
-- Renamed all occurrences of ``n_atoms`` to ``n_components`` for consistency.
+- Renamed all occurrences of `n_atoms` to `n_components` for consistency.
   This applies to :class:`decomposition.DictionaryLearning`,
   :class:`decomposition.MiniBatchDictionaryLearning`,
   :func:`decomposition.dict_learning`, :func:`decomposition.dict_learning_online`.
 
-- Renamed all occurrences of ``max_iters`` to ``max_iter`` for consistency.
+- Renamed all occurrences of `max_iters` to `max_iter` for consistency.
   This applies to :class:`semi_supervised.LabelPropagation` and
   :class:`semi_supervised.label_propagation.LabelSpreading`.
 
-- Renamed all occurrences of ``learn_rate`` to ``learning_rate`` for
+- Renamed all occurrences of `learn_rate` to `learning_rate` for
   consistency in :class:`ensemble.BaseGradientBoosting` and
   :class:`ensemble.GradientBoostingRegressor`.
 
-- The module ``sklearn.linear_model.sparse`` is gone. Sparse matrix support
+- The module `sklearn.linear_model.sparse` is gone. Sparse matrix support
   was already integrated into the "regular" linear models.
 
 - :func:`sklearn.metrics.mean_square_error`, which incorrectly returned the
-  accumulated error, was removed. Use ``mean_squared_error`` instead.
+  accumulated error, was removed. Use `mean_squared_error` instead.
 
-- Passing ``class_weight`` parameters to ``fit`` methods is no longer
+- Passing `class_weight` parameters to `fit` methods is no longer
   supported. Pass them to estimator constructors instead.
 
-- GMMs no longer have ``decode`` and ``rvs`` methods. Use the ``score``,
-  ``predict`` or ``sample`` methods instead.
+- GMMs no longer have `decode` and `rvs` methods. Use the `score`,
+  `predict` or `sample` methods instead.
 
-- The ``solver`` fit option in Ridge regression and classification is now
+- The `solver` fit option in Ridge regression and classification is now
   deprecated and will be removed in v0.14. Use the constructor option
   instead.
 
 - :class:`feature_extraction.text.DictVectorizer` now returns sparse
   matrices in the CSR format, instead of COO.
 
-- Renamed ``k`` in :class:`cross_validation.KFold` and
-  :class:`cross_validation.StratifiedKFold` to ``n_folds``, renamed
-  ``n_bootstraps`` to ``n_iter`` in ``cross_validation.Bootstrap``.
+- Renamed `k` in :class:`cross_validation.KFold` and
+  :class:`cross_validation.StratifiedKFold` to `n_folds`, renamed
+  `n_bootstraps` to `n_iter` in `cross_validation.Bootstrap`.
 
-- Renamed all occurrences of ``n_iterations`` to ``n_iter`` for consistency.
+- Renamed all occurrences of `n_iterations` to `n_iter` for consistency.
   This applies to :class:`cross_validation.ShuffleSplit`,
   :class:`cross_validation.StratifiedShuffleSplit`,
   :func:`utils.randomized_range_finder` and :func:`utils.randomized_svd`.
 
-- Replaced ``rho`` in :class:`linear_model.ElasticNet` and
-  :class:`linear_model.SGDClassifier` by ``l1_ratio``. The ``rho`` parameter
-  had different meanings; ``l1_ratio`` was introduced to avoid confusion.
-  It has the same meaning as previously ``rho`` in
-  :class:`linear_model.ElasticNet` and ``(1-rho)`` in
+- Replaced `rho` in :class:`linear_model.ElasticNet` and
+  :class:`linear_model.SGDClassifier` by `l1_ratio`. The `rho` parameter
+  had different meanings; `l1_ratio` was introduced to avoid confusion.
+  It has the same meaning as previously `rho` in
+  :class:`linear_model.ElasticNet` and `(1-rho)` in
   :class:`linear_model.SGDClassifier`.
 
 - :class:`linear_model.LassoLars` and :class:`linear_model.Lars` now
   store a list of paths in the case of multiple targets, rather than
   an array of paths.
 
-- The attribute ``gmm`` of :class:`hmm.GMMHMM` was renamed to ``gmm_``
+- The attribute `gmm` of :class:`hmm.GMMHMM` was renamed to `gmm_`
   to adhere more strictly with the API.
 
 - :func:`cluster.spectral_embedding` was moved to
   :func:`manifold.spectral_embedding`.
 
-- Renamed ``eig_tol`` in :func:`manifold.spectral_embedding`,
-  :class:`cluster.SpectralClustering` to ``eigen_tol``, renamed ``mode``
-  to ``eigen_solver``.
+- Renamed `eig_tol` in :func:`manifold.spectral_embedding`,
+  :class:`cluster.SpectralClustering` to `eigen_tol`, renamed `mode`
+  to `eigen_solver`.
 
-- Renamed ``mode`` in :func:`manifold.spectral_embedding` and
-  :class:`cluster.SpectralClustering` to ``eigen_solver``.
+- Renamed `mode` in :func:`manifold.spectral_embedding` and
+  :class:`cluster.SpectralClustering` to `eigen_solver`.
 
-- ``classes_`` and ``n_classes_`` attributes of
+- `classes_` and `n_classes_` attributes of
   :class:`tree.DecisionTreeClassifier` and all derived ensemble models are
   now flat in case of single output problems and nested in case of
   multi-output problems.
 
-- The ``estimators_`` attribute of
+- The `estimators_` attribute of
   :class:`ensemble.gradient_boosting.GradientBoostingRegressor` and
   :class:`ensemble.gradient_boosting.GradientBoostingClassifier` is now an
   array of :class:'tree.DecisionTreeRegressor'.
 
-- Renamed ``chunk_size`` to ``batch_size`` in
+- Renamed `chunk_size` to `batch_size` in
   :class:`decomposition.MiniBatchDictionaryLearning` and
   :class:`decomposition.MiniBatchSparsePCA` for consistency.
 
-- :class:`svm.SVC` and :class:`svm.NuSVC` now provide a ``classes_``
-  attribute and support arbitrary dtypes for labels ``y``.
-  Also, the dtype returned by ``predict`` now reflects the dtype of
-  ``y`` during ``fit`` (used to be ``np.float``).
+- :class:`svm.SVC` and :class:`svm.NuSVC` now provide a `classes_`
+  attribute and support arbitrary dtypes for labels `y`.
+  Also, the dtype returned by `predict` now reflects the dtype of
+  `y` during `fit` (used to be `np.float`).
 
 - Changed default test_size in :func:`cross_validation.train_test_split`
-  to None, added possibility to infer ``test_size`` from ``train_size`` in
+  to None, added possibility to infer `test_size` from `train_size` in
   :class:`cross_validation.ShuffleSplit` and
   :class:`cross_validation.StratifiedShuffleSplit`.
 
 - Renamed function :func:`sklearn.metrics.zero_one` to
   :func:`sklearn.metrics.zero_one_loss`. Be aware that the default behavior
   in :func:`sklearn.metrics.zero_one_loss` is different from
-  :func:`sklearn.metrics.zero_one`: ``normalize=False`` is changed to
-  ``normalize=True``.
+  :func:`sklearn.metrics.zero_one`: `normalize=False` is changed to
+  `normalize=True`.
 
 - Renamed function :func:`metrics.zero_one_score` to
   :func:`metrics.accuracy_score`.
 
 - :func:`datasets.make_circles` now has the same number of inner and outer points.
 
-- In the Naive Bayes classifiers, the ``class_prior`` parameter was moved
-  from ``fit`` to ``__init__``.
+- In the Naive Bayes classifiers, the `class_prior` parameter was moved
+  from `fit` to `__init__`.
 
 People
 ------

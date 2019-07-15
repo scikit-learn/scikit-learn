@@ -143,7 +143,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
     indicator_ : :class:`sklearn.impute.MissingIndicator`
         Indicator used to add binary indicators for missing values.
-        ``None`` if add_indicator is False.
+        `None` if add_indicator is False.
 
     See also
     --------
@@ -222,8 +222,8 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Input data, where ``n_samples`` is the number of samples and
-            ``n_features`` is the number of features.
+            Input data, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         Returns
         -------
@@ -469,14 +469,14 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
     error_on_new : boolean, optional
         If True (default), transform will raise an error when there are
         features with missing values in transform that have no missing values
-        in fit. This is applicable only when ``features="missing-only"``.
+        in fit. This is applicable only when `features="missing-only"`.
 
     Attributes
     ----------
     features_ : ndarray, shape (n_missing_features,) or (n_features,)
-        The features indices which will be returned when calling ``transform``.
-        They are computed during ``fit``. For ``features='all'``, it is
-        to ``range(n_features)``.
+        The features indices which will be returned when calling `transform`.
+        They are computed during `fit`. For `features='all'`, it is
+        to `range(n_features)`.
 
     Examples
     --------
@@ -513,8 +513,8 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : {ndarray or sparse matrix}, shape (n_samples, n_features)
-            The input data with missing values. Note that ``X`` has been
-            checked in ``fit`` and ``transform`` before to call this function.
+            The input data with missing values. Note that `X` has been
+            checked in `fit` and `transform` before to call this function.
 
         Returns
         -------
@@ -592,8 +592,8 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Input data, where ``n_samples`` is the number of samples and
-            ``n_features`` is the number of features.
+            Input data, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         Returns
         -------
@@ -627,7 +627,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         Returns
         -------
         Xt : {ndarray or sparse matrix}, shape (n_samples, n_features)
-            The missing indicator for input data. The data type of ``Xt``
+            The missing indicator for input data. The data type of `Xt`
             will be boolean.
 
         """
@@ -663,7 +663,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         Returns
         -------
         Xt : {ndarray or sparse matrix}, shape (n_samples, n_features)
-            The missing indicator for input data. The data type of ``Xt``
+            The missing indicator for input data. The data type of `Xt`
             will be boolean.
 
         """

@@ -165,18 +165,18 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                 each EM update.
                 Old `components_` will be overwritten in each iteration.
             'online': Online variational Bayes method. In each EM update, use
-                mini-batch of training data to update the ``components_``
+                mini-batch of training data to update the `components_`
                 variable incrementally. The learning rate is controlled by the
-                ``learning_decay`` and the ``learning_offset`` parameters.
+                `learning_decay` and the `learning_offset` parameters.
 
         .. versionchanged:: 0.20
-            The default learning method is now ``"batch"``.
+            The default learning method is now `"batch"`.
 
     learning_decay : float, optional (default=0.7)
         It is a parameter that control learning rate in the online learning
         method. The value should be set between (0.5, 1.0] to guarantee
         asymptotic convergence. When the value is 0.0 and batch_size is
-        ``n_samples``, the update method is same as batch learning. In the
+        `n_samples`, the update method is same as batch learning. In the
         literature, this is called kappa.
 
     learning_offset : float, optional (default=10.)
@@ -204,7 +204,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
     perp_tol : float, optional (default=1e-1)
         Perplexity tolerance in batch learning. Only used when
-        ``evaluate_every`` is greater than 0.
+        `evaluate_every` is greater than 0.
 
     mean_change_tol : float, optional (default=1e-3)
         Stopping tolerance for updating document topic distribution in E-step.
@@ -215,8 +215,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to use in the E-step.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     verbose : int, optional (default=0)
@@ -233,11 +233,11 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
     components_ : array, [n_components, n_features]
         Variational parameters for topic word distribution. Since the complete
         conditional for topic word distribution is a Dirichlet,
-        ``components_[i, j]`` can be viewed as pseudocount that represents the
+        `components_[i, j]` can be viewed as pseudocount that represents the
         number of times word `j` was assigned to topic `i`.
         It can also be viewed as distribution over the words for each topic
         after normalization:
-        ``model.components_ / model.components_.sum(axis=1)[:, np.newaxis]``.
+        `model.components_ / model.components_.sum(axis=1)[:, np.newaxis]`.
 
     n_batch_iter_ : int
         Number of iterations of the EM step.
@@ -352,7 +352,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         cal_sstats : boolean
             Parameter that indicate whether to calculate sufficient statistics
-            or not. Set ``cal_sstats`` to True when we need to run M-step.
+            or not. Set `cal_sstats` to True when we need to run M-step.
 
         random_init : boolean
             Parameter that indicate whether to initialize document topic

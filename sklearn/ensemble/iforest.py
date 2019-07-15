@@ -72,8 +72,8 @@ class IsolationForest(BaseBagging, OutlierMixin):
             - If float, the contamination should be in the range [0, 0.5].
 
         .. versionchanged:: 0.22
-           The default value of ``contamination`` changed from 0.1
-           to ``'auto'``.
+           The default value of `contamination` changed from 0.1
+           to `'auto'`.
 
     max_features : int or float, optional (default=1.0)
         The number of features to draw from X to train each base estimator.
@@ -88,22 +88,22 @@ class IsolationForest(BaseBagging, OutlierMixin):
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for both `fit` and `predict`.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     behaviour : str, default='deprecated'
         This parameter has not effect, is deprecated, and will be removed.
 
         .. versionadded:: 0.20
-           ``behaviour`` is added in 0.20 for back-compatibility purpose.
+           `behaviour` is added in 0.20 for back-compatibility purpose.
 
         .. deprecated:: 0.20
-           ``behaviour='old'`` is deprecated in 0.20 and will not be possible
+           `behaviour='old'` is deprecated in 0.20 and will not be possible
            in 0.22.
 
         .. deprecated:: 0.22
-           ``behaviour`` parameter is deprecated in 0.22 and removed in
+           `behaviour` parameter is deprecated in 0.22 and removed in
            0.24.
 
     random_state : int, RandomState instance or None, optional (default=None)
@@ -116,7 +116,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
         Controls the verbosity of the tree building process.
 
     warm_start : bool, optional (default=False)
-        When set to ``True``, reuse the solution of the previous call to fit
+        When set to `True`, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`the Glossary <warm_start>`.
 
@@ -136,8 +136,8 @@ class IsolationForest(BaseBagging, OutlierMixin):
 
     offset_ : float
         Offset used to define the decision function from the raw scores. We
-        have the relation: ``decision_function = score_samples - offset_``.
-        ``offset_`` is defined as follows. When the contamination parameter is
+        have the relation: `decision_function = score_samples - offset_`.
+        `offset_` is defined as follows. When the contamination parameter is
         set to "auto", the offset is equal to -0.5 as the scores of inliers are
         close to 0 and the scores of outliers are close to -1. When a
         contamination parameter different than "auto" is provided, the offset
@@ -147,7 +147,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
     Notes
     -----
     The implementation is based on an ensemble of ExtraTreeRegressor. The
-    maximum depth of each tree is set to ``ceil(log_2(n))`` where
+    maximum depth of each tree is set to `ceil(log_2(n))` where
     :math:`n` is the number of samples used to build the tree
     (see (Liu et al., 2008) for more details).
 
@@ -207,9 +207,9 @@ class IsolationForest(BaseBagging, OutlierMixin):
         Parameters
         ----------
         X : array-like or sparse matrix, shape (n_samples, n_features)
-            The input samples. Use ``dtype=np.float32`` for maximum
+            The input samples. Use `dtype=np.float32` for maximum
             efficiency. Sparse matrices are also supported, use sparse
-            ``csc_matrix`` for maximum efficiency.
+            `csc_matrix` for maximum efficiency.
 
         sample_weight : array-like, shape = [n_samples] or None
             Sample weights. If None, then samples are equally weighted.
@@ -294,8 +294,8 @@ class IsolationForest(BaseBagging, OutlierMixin):
         ----------
         X : array-like or sparse matrix, shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
-            ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
+            `dtype=np.float32` and if a sparse matrix is provided
+            to a sparse `csr_matrix`.
 
         Returns
         -------
@@ -325,8 +325,8 @@ class IsolationForest(BaseBagging, OutlierMixin):
         ----------
         X : array-like or sparse matrix, shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
-            ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
+            `dtype=np.float32` and if a sparse matrix is provided
+            to a sparse `csr_matrix`.
 
         Returns
         -------

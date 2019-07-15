@@ -16,10 +16,10 @@ Before a release
 3. Ensure the change log and commits correspond (within reason!), and that the
    change log is reasonably well curated. Some tools for these tasks include:
 
-   - ``maint_tools/sort_whats_new.py`` can put what's new entries into
+   - `maint_tools/sort_whats_new.py` can put what's new entries into
      sections.
 
-   - The ``maint_tools/whats_missing.sh`` script may be used to identify pull
+   - The `maint_tools/whats_missing.sh` script may be used to identify pull
      requests that were merged but likely missing from What's New.
 
 Preparing a bug-fix-release
@@ -38,8 +38,8 @@ the bug fix (version 0.999.3), you can use::
     $ git rebase -i 0.999.X
 
 Then pick the commits for release and resolve any issues, and create a pull
-request with 0.999.X as base. Add a commit updating ``sklearn.__version__``.
-Additional commits can be cherry-picked into the ``release-0.999.3`` branch
+request with 0.999.X as base. Add a commit updating `sklearn.__version__`.
+Additional commits can be cherry-picked into the `release-0.999.3` branch
 while preparing the release.
 
 Making a release
@@ -60,7 +60,7 @@ Making a release
      the release branch.
 
 2. On the branch for releasing, update the version number in
-   sklearn/__init__.py, the ``__version__`` variable by removing ``dev*`` only
+   sklearn/__init__.py, the `__version__` variable by removing `dev*` only
    when ready to release.
    On master, increment the verson in the same place (when branching for
    release).
@@ -85,7 +85,7 @@ Making a release
    with the wheels. Check that you can install it in a new virtualenv and
    that the tests pass.
 
-5. Update the dependency versions and set ``BUILD_COMMIT`` variable to the
+5. Update the dependency versions and set `BUILD_COMMIT` variable to the
    release tag at:
 
    https://github.com/MacPython/scikit-learn-wheels
@@ -108,7 +108,7 @@ Making a release
 
        $ twine upload dist/*
 
-7. For major/minor (not bug-fix release), update the symlink for ``stable``
+7. For major/minor (not bug-fix release), update the symlink for `stable`
    in https://github.com/scikit-learn/scikit-learn.github.io::
 
        $ cd /tmp
@@ -161,8 +161,8 @@ related to a numpy change and not a scikit-learn one, so it would not make sense
 to blame the PR author for the Travis failure.
 
 The definition of what gets run in the Cron job is done in the .travis.yml
-config file, exactly the same way as the other Travis jobs. We use a ``if: type
-= cron`` filter in order for the build to be run only in Cron jobs.
+config file, exactly the same way as the other Travis jobs. We use a `if: type
+= cron` filter in order for the build to be run only in Cron jobs.
 
 The branch targeted by the Cron job and the frequency of the Cron job is set
 via the web UI at https://www.travis-ci.org/scikit-learn/scikit-learn/settings.
@@ -182,11 +182,11 @@ or
 <https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/experimental/enable_iterative_imputer.py>`_.
 
 Note that the public import path must be to a public subpackage (like
-``sklearn/ensemble`` or ``sklearn/impute``), not just a ``.py`` module.
+`sklearn/ensemble` or `sklearn/impute`), not just a `.py` module.
 Also, the (private) experimental features that are imported must be in a
 submodule/subpackage of the public subpackage, e.g.
-``sklearn/ensemble/_hist_gradient_boosting/`` or
-``sklearn/impute/_iterative.py``. This is needed so that pickles still work
+`sklearn/ensemble/_hist_gradient_boosting/` or
+`sklearn/impute/_iterative.py`. This is needed so that pickles still work
 in the future when the features aren't experimental anymore
 
 Please also write basic tests following those in
@@ -194,13 +194,13 @@ Please also write basic tests following those in
 <https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/experimental/tests/test_enable_hist_gradient_boosting.py>`_.
 
 Make sure every user-facing code you write explicitly mentions that the feature
-is experimental, and add a ``# noqa`` comment to avoid pep8-related warnings::
+is experimental, and add a `# noqa` comment to avoid pep8-related warnings::
 
     # To use this experimental feature, we need to explicitly ask for it:
     from sklearn.experimental import enable_hist_gradient_boosting  # noqa
     from sklearn.ensemble import HistGradientBoostingRegressor
 
 For the docs to render properly, please also import
-``enable_my_experimental_feature`` in ``doc/conf.py``, else sphinx won't be
-able to import the corresponding modules. Note that using ``from
-sklearn.experimental import *`` **does not work**.
+`enable_my_experimental_feature` in `doc/conf.py`, else sphinx won't be
+able to import the corresponding modules. Note that using `from
+sklearn.experimental import *` **does not work**.

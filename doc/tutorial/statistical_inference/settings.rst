@@ -24,9 +24,9 @@ these arrays is the **samples** axis, while the second is the
 
     It is made of 150 observations of irises, each described by 4
     features: their sepal and petal length and width, as detailed in
-    ``iris.DESCR``.
+    `iris.DESCR`.
 
-When the data is not initially in the ``(n_samples, n_features)`` shape, it
+When the data is not initially in the `(n_samples, n_features)` shape, it
 needs to be preprocessed in order to be used by scikit-learn.
 
 .. topic:: An example of reshaping data would be the digits dataset
@@ -71,7 +71,7 @@ Estimators objects
 it may be a classification, regression or clustering algorithm or
 a *transformer* that extracts/filters useful features from raw data.
 
-All estimator objects expose a ``fit`` method that takes a dataset
+All estimator objects expose a `fit` method that takes a dataset
 (usually a 2-d array):
 
     >>> estimator.fit(data)

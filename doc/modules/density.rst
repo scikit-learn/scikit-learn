@@ -86,7 +86,7 @@ follows:
    array([-0.41075698, -0.41075698, -0.41076071, -0.41075698, -0.41075698,
           -0.41076071])
 
-Here we have used ``kernel='gaussian'``, as seen above.
+Here we have used `kernel='gaussian'`, as seen above.
 Mathematically, a kernel is a positive function :math:`K(x;h)`
 which is controlled by the bandwidth parameter :math:`h`.
 Given this kernel form, the density estimate at a point :math:`y` within
@@ -111,27 +111,27 @@ forms, which are shown in the following figure:
 
 The form of these kernels is as follows:
 
-* Gaussian kernel (``kernel = 'gaussian'``)
+* Gaussian kernel (`kernel = 'gaussian'`)
 
   :math:`K(x; h) \propto \exp(- \frac{x^2}{2h^2} )`
 
-* Tophat kernel (``kernel = 'tophat'``)
+* Tophat kernel (`kernel = 'tophat'`)
 
   :math:`K(x; h) \propto 1` if :math:`x < h`
 
-* Epanechnikov kernel (``kernel = 'epanechnikov'``)
+* Epanechnikov kernel (`kernel = 'epanechnikov'`)
 
   :math:`K(x; h) \propto 1 - \frac{x^2}{h^2}`
 
-* Exponential kernel (``kernel = 'exponential'``)
+* Exponential kernel (`kernel = 'exponential'`)
 
   :math:`K(x; h) \propto \exp(-x/h)`
 
-* Linear kernel (``kernel = 'linear'``)
+* Linear kernel (`kernel = 'linear'`)
 
   :math:`K(x; h) \propto 1 - x/h` if :math:`x < h`
 
-* Cosine kernel (``kernel = 'cosine'``)
+* Cosine kernel (`kernel = 'cosine'`)
 
   :math:`K(x; h) \propto \cos(\frac{\pi x}{2h})` if :math:`x < h`
 

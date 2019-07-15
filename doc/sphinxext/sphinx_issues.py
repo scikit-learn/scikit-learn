@@ -32,7 +32,7 @@ __license__ = "MIT"
 def user_role(name, rawtext, text, lineno, inliner, options=None, content=None):
     """Sphinx role for linking to a user profile. Defaults to linking to
     Github profiles, but the profile URIS can be configured via the
-    ``issues_user_uri`` config value.
+    `issues_user_uri` config value.
     Examples: ::
         :user:`sloria`
     Anchor text also works: ::
@@ -147,7 +147,7 @@ class IssueRole(object):
 
 
 """Sphinx role for linking to an issue. Must have
-`issues_uri` or `issues_github_path` configured in ``conf.py``.
+`issues_uri` or `issues_github_path` configured in `conf.py`.
 Examples: ::
     :issue:`123`
     :issue:`42,45`
@@ -160,7 +160,7 @@ issue_role = IssueRole(
 )
 
 """Sphinx role for linking to a pull request. Must have
-`issues_pr_uri` or `issues_github_path` configured in ``conf.py``.
+`issues_pr_uri` or `issues_github_path` configured in `conf.py`.
 Examples: ::
     :pr:`123`
     :pr:`42,45`
@@ -178,7 +178,7 @@ def format_commit_text(sha):
 
 
 """Sphinx role for linking to a commit. Must have
-`issues_pr_uri` or `issues_github_path` configured in ``conf.py``.
+`issues_pr_uri` or `issues_github_path` configured in `conf.py`.
 Examples: ::
     :commit:`123abc456def`
     :commit:`sloria/konch@123abc456def`

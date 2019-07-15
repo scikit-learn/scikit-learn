@@ -18,8 +18,8 @@ that provide their own version of scikit-learn.
 MacPorts for Mac OSX
 --------------------
 
-The MacPorts package is named ``py<XY>-scikits-learn``,
-where ``XY`` denotes the Python version.
+The MacPorts package is named `py<XY>-scikits-learn`,
+where `XY` denotes the Python version.
 It can be installed by typing the following
 command::
 
@@ -35,7 +35,7 @@ Arch Linux
 
 Arch Linux's package is provided through the `official repositories
 <https://www.archlinux.org/packages/?q=scikit-learn>`_ as
-``python-scikit-learn`` for Python.
+`python-scikit-learn` for Python.
 It can be installed by typing the following command:
 
 .. code-block:: none
@@ -54,9 +54,9 @@ scikit-learn is available via `pkgsrc-wip <http://pkgsrc-wip.sourceforge.net/>`_
 Fedora
 ------
 
-The Fedora package is called ``python-scikit-learn`` for the Python 2 version
-and ``python3-scikit-learn`` for the Python 3 version. Both versions can
-be installed using ``yum``::
+The Fedora package is called `python-scikit-learn` for the Python 2 version
+and `python3-scikit-learn` for the Python 3 version. Both versions can
+be installed using `yum`::
 
     $ sudo yum install python-scikit-learn
 

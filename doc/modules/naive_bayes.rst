@@ -67,7 +67,7 @@ dimensionality.
 
 On the flip side, although naive Bayes is known as a decent classifier,
 it is known to be a bad estimator, so the probability outputs from
-``predict_proba`` are not to be taken too seriously.
+`predict_proba` are not to be taken too seriously.
 
 .. topic:: References:
 
@@ -190,8 +190,8 @@ algorithms for data that is distributed according to multivariate Bernoulli
 distributions; i.e., there may be multiple features but each one is assumed
 to be a binary-valued (Bernoulli, boolean) variable.
 Therefore, this class requires samples to be represented as binary-valued
-feature vectors; if handed any other kind of data, a ``BernoulliNB`` instance
-may binarize its input (depending on the ``binarize`` parameter).
+feature vectors; if handed any other kind of data, a `BernoulliNB` instance
+may binarize its input (depending on the `binarize` parameter).
 
 The decision rule for Bernoulli naive Bayes is based on
 
@@ -205,7 +205,7 @@ that is an indicator for class :math:`y`,
 where the multinomial variant would simply ignore a non-occurring feature.
 
 In the case of text classification, word occurrence vectors (rather than word
-count vectors) may be used to train and use this classifier. ``BernoulliNB``
+count vectors) may be used to train and use this classifier. `BernoulliNB`
 might perform better on some datasets, especially those with shorter documents.
 It is advisable to evaluate both models, if time permits.
 
@@ -231,12 +231,12 @@ Out-of-core naive Bayes model fitting
 Naive Bayes models can be used to tackle large scale classification problems
 for which the full training set might not fit in memory. To handle this case,
 :class:`MultinomialNB`, :class:`BernoulliNB`, and :class:`GaussianNB`
-expose a ``partial_fit`` method that can be used
+expose a `partial_fit` method that can be used
 incrementally as done with other classifiers as demonstrated in
 :ref:`sphx_glr_auto_examples_applications_plot_out_of_core_classification.py`. All naive Bayes
 classifiers support sample weighting.
 
-Contrary to the ``fit`` method, the first call to ``partial_fit`` needs to be
+Contrary to the `fit` method, the first call to `partial_fit` needs to be
 passed the list of all the expected class labels.
 
 For an overview of available strategies in scikit-learn, see also the
@@ -244,6 +244,6 @@ For an overview of available strategies in scikit-learn, see also the
 
 .. note::
 
-   The ``partial_fit`` method call of naive Bayes models introduces some
+   The `partial_fit` method call of naive Bayes models introduces some
    computational overhead. It is recommended to use data chunk sizes that are as
    large as possible, that is as the available RAM allows.

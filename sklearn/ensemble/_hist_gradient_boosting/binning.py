@@ -25,11 +25,11 @@ def _find_binning_thresholds(data, max_bins, subsample, random_state):
         The data to bin.
     max_bins : int
         The maximum number of bins to use. If for a given feature the number of
-        unique values is less than ``max_bins``, then those unique values
+        unique values is less than `max_bins`, then those unique values
         will be used to compute the bin thresholds, instead of the quantiles.
     subsample : int or None
-        If ``n_samples > subsample``, then ``sub_samples`` samples will be
-        randomly choosen to compute the quantiles. If ``None``, the whole data
+        If `n_samples > subsample`, then `sub_samples` samples will be
+        randomly choosen to compute the quantiles. If `None`, the whole data
         is used.
     random_state: int or numpy.random.RandomState or None
         Pseudo-random number generator to control the random sub-sampling.
@@ -39,8 +39,8 @@ def _find_binning_thresholds(data, max_bins, subsample, random_state):
     ------
     binning_thresholds: list of arrays
         For each feature, stores the increasing numeric values that can
-        be used to separate the bins. Thus ``len(binning_thresholds) ==
-        n_features``.
+        be used to separate the bins. Thus `len(binning_thresholds) ==
+        n_features`.
     """
     if not (2 <= max_bins <= 256):
         raise ValueError('max_bins={} should be no smaller than 2 '
@@ -81,18 +81,18 @@ class _BinMapper(BaseEstimator, TransformerMixin):
     speed-up the binning, but the quantiles should remain stable.
 
     If the number of unique values for a given feature is less than
-    ``max_bins``, then the unique values of this feature are used instead of
+    `max_bins`, then the unique values of this feature are used instead of
     the quantiles.
 
     Parameters
     ----------
     max_bins : int, optional (default=256)
         The maximum number of bins to use. If for a given feature the number of
-        unique values is less than ``max_bins``, then those unique values
+        unique values is less than `max_bins`, then those unique values
         will be used to compute the bin thresholds, instead of the quantiles.
     subsample : int or None, optional (default=2e5)
-        If ``n_samples > subsample``, then ``sub_samples`` samples will be
-        randomly choosen to compute the quantiles. If ``None``, the whole data
+        If `n_samples > subsample`, then `sub_samples` samples will be
+        randomly choosen to compute the quantiles. If `None`, the whole data
         is used.
     random_state: int or numpy.random.RandomState or None, \
         optional (default=None)

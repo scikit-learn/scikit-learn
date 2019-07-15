@@ -760,7 +760,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
           least tol, or fail to increase validation score by at least tol if
           'early_stopping' is on, the current learning rate is divided by 5.
 
-        Only used when ``solver='sgd'``.
+        Only used when `solver='sgd'`.
 
     learning_rate_init : double, optional, default 0.001
         The initial learning rate used. It controls the step-size
@@ -790,8 +790,8 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 
     tol : float, optional, default 1e-4
         Tolerance for the optimization. When the loss or score is not improving
-        by at least ``tol`` for ``n_iter_no_change`` consecutive iterations,
-        unless ``learning_rate`` is set to 'adaptive', convergence is
+        by at least `tol` for `n_iter_no_change` consecutive iterations,
+        unless `learning_rate` is set to 'adaptive', convergence is
         considered to be reached and training stops.
 
     verbose : bool, optional, default False
@@ -815,7 +815,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         score is not improving. If set to true, it will automatically set
         aside 10% of training data as validation and terminate training when
         validation score is not improving by at least tol for
-        ``n_iter_no_change`` consecutive epochs. The split is stratified,
+        `n_iter_no_change` consecutive epochs. The split is stratified,
         except in a multilabel setting.
         Only effective when solver='sgd' or 'adam'
 
@@ -836,7 +836,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         Value for numerical stability in adam. Only used when solver='adam'
 
     n_iter_no_change : int, optional, default 10
-        Maximum number of epochs to not meet ``tol`` improvement.
+        Maximum number of epochs to not meet `tol` improvement.
         Only effective when solver='sgd' or 'adam'
 
         .. versionadded:: 0.20
@@ -1142,7 +1142,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         - 'constant' is a constant learning rate given by
           'learning_rate_init'.
 
-        - 'invscaling' gradually decreases the learning rate ``learning_rate_``
+        - 'invscaling' gradually decreases the learning rate `learning_rate_`
           at each time step 't' using an inverse scaling exponent of 'power_t'.
           effective_learning_rate = learning_rate_init / pow(t, power_t)
 
@@ -1182,8 +1182,8 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
 
     tol : float, optional, default 1e-4
         Tolerance for the optimization. When the loss or score is not improving
-        by at least ``tol`` for ``n_iter_no_change`` consecutive iterations,
-        unless ``learning_rate`` is set to 'adaptive', convergence is
+        by at least `tol` for `n_iter_no_change` consecutive iterations,
+        unless `learning_rate` is set to 'adaptive', convergence is
         considered to be reached and training stops.
 
     verbose : bool, optional, default False
@@ -1206,8 +1206,8 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         Whether to use early stopping to terminate training when validation
         score is not improving. If set to true, it will automatically set
         aside 10% of training data as validation and terminate training when
-        validation score is not improving by at least ``tol`` for
-        ``n_iter_no_change`` consecutive epochs.
+        validation score is not improving by at least `tol` for
+        `n_iter_no_change` consecutive epochs.
         Only effective when solver='sgd' or 'adam'
 
     validation_fraction : float, optional, default 0.1
@@ -1227,7 +1227,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         Value for numerical stability in adam. Only used when solver='adam'
 
     n_iter_no_change : int, optional, default 10
-        Maximum number of epochs to not meet ``tol`` improvement.
+        Maximum number of epochs to not meet `tol` improvement.
         Only effective when solver='sgd' or 'adam'
 
         .. versionadded:: 0.20

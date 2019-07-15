@@ -7,7 +7,7 @@ Model selection: choosing estimators and their parameters
 Score, and cross-validated scores
 ==================================
 
-As we have seen, every estimator exposes a ``score`` method that can judge
+As we have seen, every estimator exposes a `score` method that can judge
 the quality of the fit (or the prediction) on new data. **Bigger is
 better**.
 
@@ -51,11 +51,11 @@ Cross-validation generators
 Scikit-learn has a collection of classes which can be used to generate lists of
 train/test indices for popular cross-validation strategies.
 
-They expose a ``split`` method which accepts the input
+They expose a `split` method which accepts the input
 dataset to be split and yields the train/test set indices for each iteration
 of the chosen cross-validation strategy.
 
-This example shows an example usage of the ``split`` method.
+This example shows an example usage of the `split` method.
 
     >>> from sklearn.model_selection import KFold, cross_val_score
     >>> X = ["a", "a", "a", "b", "b", "c", "c", "c", "c", "c"]
@@ -80,7 +80,7 @@ and the input dataset, the :func:`cross_val_score` splits the data repeatedly in
 a training and a testing set, trains the estimator using the training set and
 computes the scores based on the testing set for each iteration of cross-validation.
 
-By default the estimator's ``score`` method is used to compute the individual scores.
+By default the estimator's `score` method is used to compute the individual scores.
 
 Refer the :ref:`metrics module <metrics>` to learn more on the available scoring
 methods.
@@ -91,7 +91,7 @@ methods.
 `n_jobs=-1` means that the computation will be dispatched on all the CPUs
 of the computer.
 
-Alternatively, the ``scoring`` argument can be provided to specify an alternative
+Alternatively, the `scoring` argument can be provided to specify an alternative
 scoring method.
 
     >>> cross_val_score(svc, X_digits, y_digits, cv=k_fold,
@@ -188,7 +188,7 @@ scoring method.
         :scale: 90
 
    On the digits dataset, plot the cross-validation score of a :class:`SVC`
-   estimator with an linear kernel as a function of parameter ``C`` (use a
+   estimator with an linear kernel as a function of parameter `C` (use a
    logarithmic grid of points, from 1 to 10).
 
    .. literalinclude:: ../../auto_examples/exercises/plot_cv_digits.py
@@ -240,14 +240,14 @@ version 0.22.
         array([0.938..., 0.963..., 0.944...])
 
     Two cross-validation loops are performed in parallel: one by the
-    :class:`GridSearchCV` estimator to set ``gamma`` and the other one by
-    ``cross_val_score`` to measure the prediction performance of the
+    :class:`GridSearchCV` estimator to set `gamma` and the other one by
+    `cross_val_score` to measure the prediction performance of the
     estimator. The resulting scores are unbiased estimates of the
     prediction score on new data.
 
 .. warning::
 
-    You cannot nest objects with parallel computing (``n_jobs`` different
+    You cannot nest objects with parallel computing (`n_jobs` different
     than 1).
 
 .. _cv_estimators_tut:

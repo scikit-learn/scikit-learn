@@ -5,14 +5,14 @@ regression.
 
 The module structure is the following:
 
-- The ``BaseWeightBoosting`` base class implements a common ``fit`` method
+- The `BaseWeightBoosting` base class implements a common `fit` method
   for all the estimators in the module. Regression and classification
   only differ from each other in the loss function that is optimized.
 
-- ``AdaBoostClassifier`` implements adaptive boosting (AdaBoost-SAMME) for
+- `AdaBoostClassifier` implements adaptive boosting (AdaBoost-SAMME) for
   classification problems.
 
-- ``AdaBoostRegressor`` implements adaptive boosting (AdaBoost.R2) for
+- `AdaBoostRegressor` implements adaptive boosting (AdaBoost.R2) for
   regression problems.
 """
 
@@ -307,8 +307,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
     base_estimator : object, optional (default=None)
         The base estimator from which the boosted ensemble is built.
         Support for sample weighting is required, as well as proper
-        ``classes_`` and ``n_classes_`` attributes. If ``None``, then
-        the base estimator is ``DecisionTreeClassifier(max_depth=1)``
+        `classes_` and `n_classes_` attributes. If `None`, then
+        the base estimator is `DecisionTreeClassifier(max_depth=1)`
 
     n_estimators : integer, optional (default=50)
         The maximum number of estimators at which boosting is terminated.
@@ -316,12 +316,12 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
     learning_rate : float, optional (default=1.)
         Learning rate shrinks the contribution of each classifier by
-        ``learning_rate``. There is a trade-off between ``learning_rate`` and
-        ``n_estimators``.
+        `learning_rate`. There is a trade-off between `learning_rate` and
+        `n_estimators`.
 
     algorithm : {'SAMME', 'SAMME.R'}, optional (default='SAMME.R')
         If 'SAMME.R' then use the SAMME.R real boosting algorithm.
-        ``base_estimator`` must support calculation of class probabilities.
+        `base_estimator` must support calculation of class probabilities.
         If 'SAMME' then use the SAMME discrete boosting algorithm.
         The SAMME.R algorithm typically converges faster than SAMME,
         achieving a lower test error with fewer boosting iterations.
@@ -351,7 +351,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         ensemble.
 
     feature_importances_ : array of shape = [n_features]
-        The feature importances if supported by the ``base_estimator``.
+        The feature importances if supported by the `base_estimator`.
 
     Examples
     --------
@@ -412,7 +412,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         sample_weight : array-like of shape = [n_samples], optional
             Sample weights. If None, the sample weights are initialized to
-            ``1 / n_samples``.
+            `1 / n_samples`.
 
         Returns
         -------
@@ -656,7 +656,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
                     np.argmax(pred, axis=1), axis=0))
 
     def decision_function(self, X):
-        """Compute the decision function of ``X``.
+        """Compute the decision function of `X`.
 
         Parameters
         ----------
@@ -669,10 +669,10 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         score : array, shape = [n_samples, k]
             The decision function of the input samples. The order of
             outputs is the same of that of the `classes_` attribute.
-            Binary classification is a special cases with ``k == 1``,
-            otherwise ``k==n_classes``. For binary classification,
+            Binary classification is a special cases with `k == 1`,
+            otherwise `k==n_classes`. For binary classification,
             values closer to -1 or 1 mean more like the first or second
-            class in ``classes_``, respectively.
+            class in `classes_`, respectively.
         """
         check_is_fitted(self, "n_classes_")
         X = self._validate_data(X)
@@ -696,7 +696,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         return pred
 
     def staged_decision_function(self, X):
-        """Compute decision function of ``X`` for each boosting iteration.
+        """Compute decision function of `X` for each boosting iteration.
 
         This method allows monitoring (i.e. determine error on testing set)
         after each boosting iteration.
@@ -712,10 +712,10 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         score : generator of array, shape = [n_samples, k]
             The decision function of the input samples. The order of
             outputs is the same of that of the `classes_` attribute.
-            Binary classification is a special cases with ``k == 1``,
-            otherwise ``k==n_classes``. For binary classification,
+            Binary classification is a special cases with `k == 1`,
+            otherwise `k==n_classes`. For binary classification,
             values closer to -1 or 1 mean more like the first or second
-            class in ``classes_``, respectively.
+            class in `classes_`, respectively.
         """
         check_is_fitted(self, "n_classes_")
         X = self._validate_data(X)
@@ -884,8 +884,8 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
     ----------
     base_estimator : object, optional (default=None)
         The base estimator from which the boosted ensemble is built.
-        Support for sample weighting is required. If ``None``, then
-        the base estimator is ``DecisionTreeRegressor(max_depth=3)``
+        Support for sample weighting is required. If `None`, then
+        the base estimator is `DecisionTreeRegressor(max_depth=3)`
 
     n_estimators : integer, optional (default=50)
         The maximum number of estimators at which boosting is terminated.
@@ -893,8 +893,8 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
     learning_rate : float, optional (default=1.)
         Learning rate shrinks the contribution of each regressor by
-        ``learning_rate``. There is a trade-off between ``learning_rate`` and
-        ``n_estimators``.
+        `learning_rate`. There is a trade-off between `learning_rate` and
+        `n_estimators`.
 
     loss : {'linear', 'square', 'exponential'}, optional (default='linear')
         The loss function to use when updating the weights after each
@@ -918,7 +918,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         Regression error for each estimator in the boosted ensemble.
 
     feature_importances_ : array of shape = [n_features]
-        The feature importances if supported by the ``base_estimator``.
+        The feature importances if supported by the `base_estimator`.
 
     Examples
     --------

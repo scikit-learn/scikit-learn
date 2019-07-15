@@ -30,8 +30,8 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
 
     n_components : int, optional, default: 2
         Number of dimensions in which to immerse the dissimilarities. If an
-        ``init`` array is provided, this option is overridden and the shape of
-        ``init`` is used to determine the dimensionality of the embedding
+        `init` array is provided, this option is overridden and the shape of
+        `init` is used to determine the dimensionality of the embedding
         space.
 
     init : ndarray, shape (n_samples, n_components), optional, default: None
@@ -57,7 +57,7 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
     Returns
     -------
     X : ndarray, shape (n_samples, n_components)
-        Coordinates of the points in a ``n_components``-space.
+        Coordinates of the points in a `n_components`-space.
 
     stress : float
         The final value of the stress (sum of squared distance of the
@@ -162,8 +162,8 @@ def smacof(dissimilarities, metric=True, n_components=2, init=None, n_init=8,
 
     n_components : int, optional, default: 2
         Number of dimensions in which to immerse the dissimilarities. If an
-        ``init`` array is provided, this option is overridden and the shape of
-        ``init`` is used to determine the dimensionality of the embedding
+        `init` array is provided, this option is overridden and the shape of
+        `init` is used to determine the dimensionality of the embedding
         space.
 
     init : ndarray, shape (n_samples, n_components), optional, default: None
@@ -173,16 +173,16 @@ def smacof(dissimilarities, metric=True, n_components=2, init=None, n_init=8,
     n_init : int, optional, default: 8
         Number of times the SMACOF algorithm will be run with different
         initializations. The final results will be the best output of the runs,
-        determined by the run with the smallest final stress. If ``init`` is
+        determined by the run with the smallest final stress. If `init` is
         provided, this option is overridden and a single run is performed.
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation. If multiple
-        initializations are used (``n_init``), each run of the algorithm is
+        initializations are used (`n_init`), each run of the algorithm is
         computed in parallel.
 
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     max_iter : int, optional, default: 300
@@ -207,7 +207,7 @@ def smacof(dissimilarities, metric=True, n_components=2, init=None, n_init=8,
     Returns
     -------
     X : ndarray, shape (n_samples, n_components)
-        Coordinates of the points in a ``n_components``-space.
+        Coordinates of the points in a `n_components`-space.
 
     stress : float
         The final value of the stress (sum of squared distance of the
@@ -215,7 +215,7 @@ def smacof(dissimilarities, metric=True, n_components=2, init=None, n_init=8,
 
     n_iter : int
         The number of iterations corresponding to the best stress. Returned
-        only if ``return_n_iter`` is set to ``True``.
+        only if `return_n_iter` is set to `True`.
 
     Notes
     -----
@@ -285,7 +285,7 @@ class MDS(BaseEstimator):
         Number of dimensions in which to immerse the dissimilarities.
 
     metric : boolean, optional, default: True
-        If ``True``, perform metric MDS; otherwise, perform nonmetric MDS.
+        If `True`, perform metric MDS; otherwise, perform nonmetric MDS.
 
     n_init : int, optional, default: 4
         Number of times the SMACOF algorithm will be run with different
@@ -304,11 +304,11 @@ class MDS(BaseEstimator):
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation. If multiple
-        initializations are used (``n_init``), each run of the algorithm is
+        initializations are used (`n_init`), each run of the algorithm is
         computed in parallel.
 
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     random_state : int, RandomState instance or None, optional, default: None
@@ -324,8 +324,8 @@ class MDS(BaseEstimator):
             Pairwise Euclidean distances between points in the dataset.
 
         - 'precomputed':
-            Pre-computed dissimilarities are passed directly to ``fit`` and
-            ``fit_transform``.
+            Pre-computed dissimilarities are passed directly to `fit` and
+            `fit_transform`.
 
     Attributes
     ----------
@@ -384,7 +384,7 @@ class MDS(BaseEstimator):
         Parameters
         ----------
         X : array, shape (n_samples, n_features) or (n_samples, n_samples)
-            Input data. If ``dissimilarity=='precomputed'``, the input should
+            Input data. If `dissimilarity=='precomputed'`, the input should
             be the dissimilarity matrix.
 
         y : Ignored
@@ -404,7 +404,7 @@ class MDS(BaseEstimator):
         Parameters
         ----------
         X : array, shape (n_samples, n_features) or (n_samples, n_samples)
-            Input data. If ``dissimilarity=='precomputed'``, the input should
+            Input data. If `dissimilarity=='precomputed'`, the input should
             be the dissimilarity matrix.
 
         y : Ignored
@@ -416,10 +416,10 @@ class MDS(BaseEstimator):
         """
         X = check_array(X)
         if X.shape[0] == X.shape[1] and self.dissimilarity != "precomputed":
-            warnings.warn("The MDS API has changed. ``fit`` now constructs an"
+            warnings.warn("The MDS API has changed. `fit` now constructs an"
                           " dissimilarity matrix from data. To use a custom "
                           "dissimilarity matrix, set "
-                          "``dissimilarity='precomputed'``.")
+                          "`dissimilarity='precomputed'`.")
 
         if self.dissimilarity == "precomputed":
             self.dissimilarity_matrix_ = X

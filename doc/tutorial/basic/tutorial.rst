@@ -81,8 +81,8 @@ datasets for classification and the `boston house prices dataset
 <https://archive.ics.uci.edu/ml/machine-learning-databases/housing/>`_ for regression.
 
 In the following, we start a Python interpreter from our shell and then
-load the ``iris`` and ``digits`` datasets.  Our notational convention is that
-``$`` denotes the shell prompt while ``>>>`` denotes the Python
+load the `iris` and `digits` datasets.  Our notational convention is that
+`$` denotes the shell prompt while `>>>` denotes the Python
 interpreter prompt::
 
   $ python
@@ -91,13 +91,13 @@ interpreter prompt::
   >>> digits = datasets.load_digits()
 
 A dataset is a dictionary-like object that holds all the data and some
-metadata about the data. This data is stored in the ``.data`` member,
-which is a ``n_samples, n_features`` array. In the case of supervised
-problem, one or more response variables are stored in the ``.target`` member. More
+metadata about the data. This data is stored in the `.data` member,
+which is a `n_samples, n_features` array. In the case of supervised
+problem, one or more response variables are stored in the `.target` member. More
 details on the different datasets can be found in the :ref:`dedicated
 section <datasets>`.
 
-For instance, in the case of the digits dataset, ``digits.data`` gives
+For instance, in the case of the digits dataset, `digits.data` gives
 access to the features that can be used to classify the digits samples::
 
   >>> print(digits.data)
@@ -109,7 +109,7 @@ access to the features that can be used to classify the digits samples::
    [ 0.   0.   2. ...  12.   0.   0.]
    [ 0.   0.  10. ...  12.   1.   0.]]
 
-and ``digits.target`` gives the ground truth for the digit dataset, that
+and `digits.target` gives the ground truth for the digit dataset, that
 is the number corresponding to each digit image that we are trying to
 learn::
 
@@ -118,9 +118,9 @@ learn::
 
 .. topic:: Shape of the data arrays
 
-    The data is always a 2D array, shape ``(n_samples, n_features)``, although
+    The data is always a 2D array, shape `(n_samples, n_features)`, although
     the original data may have had a different shape. In the case of the
-    digits, each original sample is an image of shape ``(8, 8)`` and can be
+    digits, each original sample is an image of shape `(8, 8)` and can be
     accessed using::
 
       >>> digits.images[0]
@@ -152,9 +152,9 @@ possible classes (the digits zero through nine) on which we *fit* an
 the classes to which unseen samples belong.
 
 In scikit-learn, an estimator for classification is a Python object that
-implements the methods ``fit(X, y)`` and ``predict(T)``.
+implements the methods `fit(X, y)` and `predict(T)`.
 
-An example of an estimator is the class ``sklearn.svm.SVC``, which
+An example of an estimator is the class `sklearn.svm.SVC`, which
 implements `support vector classification
 <https://en.wikipedia.org/wiki/Support_vector_machine>`_. The
 estimator's constructor takes as arguments the model's parameters.
@@ -166,24 +166,24 @@ For now, we will consider the estimator as a black box::
 
 .. topic:: Choosing the parameters of the model
 
-  In this example, we set the value of ``gamma`` manually.
+  In this example, we set the value of `gamma` manually.
   To find good values for these parameters, we can use tools
   such as :ref:`grid search <grid_search>` and :ref:`cross validation
   <cross_validation>`.
 
-The ``clf`` (for classifier) estimator instance is first
+The `clf` (for classifier) estimator instance is first
 fitted to the model; that is, it must *learn* from the model. This is
-done by passing our training set to the ``fit`` method. For the training
+done by passing our training set to the `fit` method. For the training
 set, we'll use all the images from our dataset, except for the last
 image, which we'll reserve for our predicting. We select the training set with
-the ``[:-1]`` Python syntax, which produces a new array that contains all but
-the last item from ``digits.data``::
+the `[:-1]` Python syntax, which produces a new array that contains all but
+the last item from `digits.data`::
 
   >>> clf.fit(digits.data[:-1], digits.target[:-1])
   SVC(C=100.0, gamma=0.001)
 
 Now you can *predict* new values. In this case, you'll predict using the last
-image from ``digits.data``. By predicting, you'll determine the image from the 
+image from `digits.data`. By predicting, you'll determine the image from the 
 training set that best matches the last image.
 
 
@@ -228,7 +228,7 @@ persistence model, `pickle <https://docs.python.org/2/library/pickle.html>`_::
   0
 
 In the specific case of scikit-learn, it may be more interesting to use
-joblib's replacement for pickle (``joblib.dump`` & ``joblib.load``),
+joblib's replacement for pickle (`joblib.dump` & `joblib.load`),
 which is more efficient on big data but it can only pickle to the disk
 and not to a string::
 
@@ -242,7 +242,7 @@ with::
 
 .. note::
 
-    ``joblib.dump`` and ``joblib.load`` functions also accept file-like object
+    `joblib.dump` and `joblib.load` functions also accept file-like object
     instead of filenames. More information on data persistence with Joblib is
     available `here <https://joblib.readthedocs.io/en/latest/persistence.html>`_.
 
@@ -260,7 +260,7 @@ predictive.  These are described in more detail in the :ref:`glossary`.
 Type casting
 ~~~~~~~~~~~~
 
-Unless otherwise specified, input will be cast to ``float64``::
+Unless otherwise specified, input will be cast to `float64`::
 
   >>> import numpy as np
   >>> from sklearn import random_projection
@@ -276,10 +276,10 @@ Unless otherwise specified, input will be cast to ``float64``::
   >>> X_new.dtype
   dtype('float64')
 
-In this example, ``X`` is ``float32``, which is cast to ``float64`` by
-``fit_transform(X)``.
+In this example, `X` is `float32`, which is cast to `float64` by
+`fit_transform(X)`.
 
-Regression targets are cast to ``float64`` and classification targets are
+Regression targets are cast to `float64` and classification targets are
 maintained::
 
     >>> from sklearn import datasets
@@ -298,16 +298,16 @@ maintained::
     >>> list(clf.predict(iris.data[:3]))
     ['setosa', 'setosa', 'setosa']
 
-Here, the first ``predict()`` returns an integer array, since ``iris.target``
-(an integer array) was used in ``fit``. The second ``predict()`` returns a string
-array, since ``iris.target_names`` was for fitting.
+Here, the first `predict()` returns an integer array, since `iris.target`
+(an integer array) was used in `fit`. The second `predict()` returns a string
+array, since `iris.target_names` was for fitting.
 
 Refitting and updating parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Hyper-parameters of an estimator can be updated after it has been constructed
-via the :term:`set_params()<set_params>` method. Calling ``fit()`` more than
-once will overwrite what was learned by any previous ``fit()``::
+via the :term:`set_params()<set_params>` method. Calling `fit()` more than
+once will overwrite what was learned by any previous `fit()`::
 
   >>> import numpy as np
   >>> from sklearn.datasets import load_iris
@@ -325,9 +325,9 @@ once will overwrite what was learned by any previous ``fit()``::
   >>> clf.predict(X[:5])
   array([0, 0, 0, 0, 0])
 
-Here, the default kernel ``rbf`` is first changed to ``linear`` via
+Here, the default kernel `rbf` is first changed to `linear` via
 :func:`SVC.set_params()<sklearn.svm.SVC.set_params>` after the estimator has
-been constructed, and changed back to ``rbf`` to refit the estimator and to
+been constructed, and changed back to `rbf` to refit the estimator and to
 make a second prediction.
 
 Multiclass vs. multilabel fitting
@@ -349,7 +349,7 @@ the target data fit upon::
     array([0, 0, 1, 1, 2])
 
 In the above case, the classifier is fit on a 1d array of multiclass labels and
-the ``predict()`` method therefore provides corresponding multiclass predictions.
+the `predict()` method therefore provides corresponding multiclass predictions.
 It is also possible to fit upon a 2d array of binary label indicators::
 
     >>> y = LabelBinarizer().fit_transform(y)
@@ -360,13 +360,13 @@ It is also possible to fit upon a 2d array of binary label indicators::
            [0, 0, 0],
            [0, 0, 0]])
 
-Here, the classifier is ``fit()``  on a 2d binary label representation of ``y``,
+Here, the classifier is `fit()`  on a 2d binary label representation of `y`,
 using the :class:`LabelBinarizer <sklearn.preprocessing.LabelBinarizer>`.
-In this case ``predict()`` returns a 2d array representing the corresponding
+In this case `predict()` returns a 2d array representing the corresponding
 multilabel predictions.
 
 Note that the fourth and fifth instances returned all zeroes, indicating that
-they matched none of the three labels ``fit`` upon. With multilabel outputs, it
+they matched none of the three labels `fit` upon. With multilabel outputs, it
 is similarly possible for an instance to be assigned multiple labels::
 
   >>> from sklearn.preprocessing import MultiLabelBinarizer
@@ -381,5 +381,5 @@ is similarly possible for an instance to be assigned multiple labels::
 
 In this case, the classifier is fit upon instances each assigned multiple labels.
 The :class:`MultiLabelBinarizer <sklearn.preprocessing.MultiLabelBinarizer>` is
-used to binarize the 2d array of multilabels to ``fit`` upon. As a result,
-``predict()`` returns a 2d array with multiple predicted labels for each instance.
+used to binarize the 2d array of multilabels to `fit` upon. As a result,
+`predict()` returns a 2d array with multiple predicted labels for each instance.

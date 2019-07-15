@@ -156,7 +156,7 @@ def img_to_graph(img, mask=None, return_as=sparse.coo_matrix, dtype=None):
     returns an np.ndarray, as expected.
 
     For compatibility, user code relying on this method should wrap its
-    calls in ``np.asarray`` to avoid type issues.
+    calls in `np.asarray` to avoid type issues.
     """
     img = np.atleast_3d(img)
     n_x, n_y, n_z = img.shape
@@ -192,7 +192,7 @@ def grid_to_graph(n_x, n_y, n_z=1, mask=None, return_as=sparse.coo_matrix,
     returns an np.ndarray, as expected.
 
     For compatibility, user code relying on this method should wrap its
-    calls in ``np.asarray`` to avoid type issues.
+    calls in `np.asarray` to avoid type issues.
     """
     return _to_graph(n_x, n_y, n_z, mask=mask, return_as=return_as,
                      dtype=dtype)

@@ -532,7 +532,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin, metaclass=ABCMeta):
         If decision_function_shape='ovo', the function values are proportional
         to the distance of the samples X to the separating hyperplane. If the
         exact distances are required, divide the function values by the norm of
-        the weight vector (``coef_``). See also `this question
+        the weight vector (`coef_`). See also `this question
         <https://stats.stackexchange.com/questions/14876/
         interpreting-distance-from-hyperplane-in-svm>`_ for further details.
         If decision_function_shape='ovr', the decision function is a monotonic
@@ -804,14 +804,14 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
         such that the feature vector becomes [x, intercept_scaling].
 
     class_weight : {dict, 'balanced'}, optional
-        Weights associated with classes in the form ``{class_label: weight}``.
+        Weights associated with classes in the form `{class_label: weight}`.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
         order as the columns of y.
 
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``
+        as `n_samples / (n_classes * np.bincount(y))`
 
     penalty : str, {'l1', 'l2'}
         The norm of the penalty used in regularization.

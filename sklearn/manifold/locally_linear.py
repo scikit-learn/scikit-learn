@@ -83,8 +83,8 @@ def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=None):
 
     n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     Returns
@@ -147,7 +147,7 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``solver`` == 'arpack'.
+        by `np.random`. Used when `solver` == 'arpack'.
 
     """
     if eigen_solver == 'auto':
@@ -253,12 +253,12 @@ def locally_linear_embedding(
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``solver`` == 'arpack'.
+        by `np.random`. Used when `solver` == 'arpack'.
 
     n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     Returns
@@ -268,7 +268,7 @@ def locally_linear_embedding(
 
     squared_error : float
         Reconstruction error for the embedding vectors. Equivalent to
-        ``norm(Y - W Y, 'fro')**2``, where W are the reconstruction weights.
+        `norm(Y - W Y, 'fro')**2`, where W are the reconstruction weights.
 
     References
     ----------
@@ -562,7 +562,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin,
         standard : use the standard locally linear embedding algorithm.  see
                    reference [1]
         hessian  : use the Hessian eigenmap method. This method requires
-                   ``n_neighbors > n_components * (1 + (n_components + 1) / 2``
+                   `n_neighbors > n_components * (1 + (n_components + 1) / 2`
                    see reference [2]
         modified : use the modified locally linear embedding algorithm.
                    see reference [3]
@@ -571,11 +571,11 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin,
 
     hessian_tol : float, optional
         Tolerance for Hessian eigenmapping method.
-        Only used if ``method == 'hessian'``
+        Only used if `method == 'hessian'`
 
     modified_tol : float, optional
         Tolerance for modified LLE method.
-        Only used if ``method == 'modified'``
+        Only used if `method == 'modified'`
 
     neighbors_algorithm : string ['auto'|'brute'|'kd_tree'|'ball_tree']
         algorithm to use for nearest neighbors search,
@@ -585,12 +585,12 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin,
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``eigen_solver`` == 'arpack'.
+        by `np.random`. Used when `eigen_solver` == 'arpack'.
 
     n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     Attributes

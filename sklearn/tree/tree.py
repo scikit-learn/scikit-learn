@@ -412,8 +412,8 @@ class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
         ----------
         X : array-like or sparse matrix of shape = [n_samples, n_features]
             The input samples. Internally, it will be converted to
-            ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
+            `dtype=np.float32` and if a sparse matrix is provided
+            to a sparse `csr_matrix`.
 
         check_input : boolean, (default=True)
             Allow to bypass several input checking.
@@ -463,8 +463,8 @@ class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
         ----------
         X : array_like or sparse matrix, shape = [n_samples, n_features]
             The input samples. Internally, it will be converted to
-            ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
+            `dtype=np.float32` and if a sparse matrix is provided
+            to a sparse `csr_matrix`.
 
         check_input : boolean, (default=True)
             Allow to bypass several input checking.
@@ -475,7 +475,7 @@ class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
         X_leaves : array_like, shape = [n_samples,]
             For each datapoint x in X, return the index of the leaf x
             ends up in. Leaves are numbered within
-            ``[0; self.tree_.node_count)``, possibly with gaps in the
+            `[0; self.tree_.node_count)`, possibly with gaps in the
             numbering.
         """
         check_is_fitted(self, 'tree_')
@@ -491,8 +491,8 @@ class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
         ----------
         X : array_like or sparse matrix, shape = [n_samples, n_features]
             The input samples. Internally, it will be converted to
-            ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
+            `dtype=np.float32` and if a sparse matrix is provided
+            to a sparse `csr_matrix`.
 
         check_input : boolean, (default=True)
             Allow to bypass several input checking.
@@ -564,7 +564,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node.
         A split point at any depth will only be considered if it leaves at
-        least ``min_samples_leaf`` training samples in each of the left and
+        least `min_samples_leaf` training samples in each of the left and
         right branches.  This may have the effect of smoothing the model,
         especially in regression.
 
@@ -595,7 +595,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
-        effectively inspect more than ``max_features`` features.
+        effectively inspect more than `max_features` features.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -604,7 +604,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         by `np.random`.
 
     max_leaf_nodes : int or None, optional (default=None)
-        Grow a tree with ``max_leaf_nodes`` in best-first fashion.
+        Grow a tree with `max_leaf_nodes` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
@@ -617,12 +617,12 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             N_t / N * (impurity - N_t_R / N_t * right_impurity
                                 - N_t_L / N_t * left_impurity)
 
-        where ``N`` is the total number of samples, ``N_t`` is the number of
-        samples at the current node, ``N_t_L`` is the number of samples in the
-        left child, and ``N_t_R`` is the number of samples in the right child.
+        where `N` is the total number of samples, `N_t` is the number of
+        samples at the current node, `N_t_L` is the number of samples in the
+        left child, and `N_t_R` is the number of samples in the right child.
 
-        ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
-        if ``sample_weight`` is passed.
+        `N`, `N_t`, `N_t_R` and `N_t_L` all refer to the weighted sum,
+        if `sample_weight` is passed.
 
         .. versionadded:: 0.19
 
@@ -631,13 +631,13 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         if its impurity is above the threshold, otherwise it is a leaf.
 
         .. deprecated:: 0.19
-           ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19. The default value of
-           ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
-           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
+           `min_impurity_split` has been deprecated in favor of
+           `min_impurity_decrease` in 0.19. The default value of
+           `min_impurity_split` will change from 1e-7 to 0 in 0.23 and it
+           will be removed in 0.25. Use `min_impurity_decrease` instead.
 
     class_weight : dict, list of dicts, "balanced" or None, default=None
-        Weights associated with classes in the form ``{class_label: weight}``.
+        Weights associated with classes in the form `{class_label: weight}`.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
         order as the columns of y.
@@ -650,7 +650,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``
+        as `n_samples / (n_classes * np.bincount(y))`
 
         For multi-output, the weights of each column of y will be multiplied.
 
@@ -685,31 +685,31 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         output (for multi-output problems).
 
     n_features_ : int
-        The number of features when ``fit`` is performed.
+        The number of features when `fit` is performed.
 
     n_outputs_ : int
-        The number of outputs when ``fit`` is performed.
+        The number of outputs when `fit` is performed.
 
     tree_ : Tree object
         The underlying Tree object. Please refer to
-        ``help(sklearn.tree._tree.Tree)`` for attributes of Tree object and
+        `help(sklearn.tree._tree.Tree)` for attributes of Tree object and
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
         for basic usage of these attributes.
 
     Notes
     -----
     The default values for the parameters controlling the size of the trees
-    (e.g. ``max_depth``, ``min_samples_leaf``, etc.) lead to fully grown and
+    (e.g. `max_depth`, `min_samples_leaf`, etc.) lead to fully grown and
     unpruned trees which can potentially be very large on some data sets. To
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
 
     The features are always randomly permuted at each split. Therefore,
     the best found split may vary, even with the same training data and
-    ``max_features=n_features``, if the improvement of the criterion is
+    `max_features=n_features`, if the improvement of the criterion is
     identical for several splits enumerated during the search of the best
     split. To obtain a deterministic behaviour during fitting,
-    ``random_state`` has to be fixed.
+    `random_state` has to be fixed.
 
     See also
     --------
@@ -779,8 +779,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         ----------
         X : array-like or sparse matrix, shape = [n_samples, n_features]
             The training input samples. Internally, it will be converted to
-            ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csc_matrix``.
+            `dtype=np.float32` and if a sparse matrix is provided
+            to a sparse `csc_matrix`.
 
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             The target values (class labels) as integers or strings.
@@ -828,8 +828,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         ----------
         X : array-like or sparse matrix of shape = [n_samples, n_features]
             The input samples. Internally, it will be converted to
-            ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
+            `dtype=np.float32` and if a sparse matrix is provided
+            to a sparse `csr_matrix`.
 
         check_input : bool
             Run check_array on X.
@@ -872,8 +872,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         ----------
         X : array-like or sparse matrix of shape = [n_samples, n_features]
             The input samples. Internally, it will be converted to
-            ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
+            `dtype=np.float32` and if a sparse matrix is provided
+            to a sparse `csr_matrix`.
 
         Returns
         -------
@@ -937,7 +937,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node.
         A split point at any depth will only be considered if it leaves at
-        least ``min_samples_leaf`` training samples in each of the left and
+        least `min_samples_leaf` training samples in each of the left and
         right branches.  This may have the effect of smoothing the model,
         especially in regression.
 
@@ -968,7 +968,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
-        effectively inspect more than ``max_features`` features.
+        effectively inspect more than `max_features` features.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -977,7 +977,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         by `np.random`.
 
     max_leaf_nodes : int or None, optional (default=None)
-        Grow a tree with ``max_leaf_nodes`` in best-first fashion.
+        Grow a tree with `max_leaf_nodes` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
@@ -990,12 +990,12 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
             N_t / N * (impurity - N_t_R / N_t * right_impurity
                                 - N_t_L / N_t * left_impurity)
 
-        where ``N`` is the total number of samples, ``N_t`` is the number of
-        samples at the current node, ``N_t_L`` is the number of samples in the
-        left child, and ``N_t_R`` is the number of samples in the right child.
+        where `N` is the total number of samples, `N_t` is the number of
+        samples at the current node, `N_t_L` is the number of samples in the
+        left child, and `N_t_R` is the number of samples in the right child.
 
-        ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
-        if ``sample_weight`` is passed.
+        `N`, `N_t`, `N_t_R` and `N_t_L` all refer to the weighted sum,
+        if `sample_weight` is passed.
 
         .. versionadded:: 0.19
 
@@ -1004,10 +1004,10 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         if its impurity is above the threshold, otherwise it is a leaf.
 
         .. deprecated:: 0.19
-           ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19. The default value of
-           ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
-           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
+           `min_impurity_split` has been deprecated in favor of
+           `min_impurity_decrease` in 0.19. The default value of
+           `min_impurity_split` will change from 1e-7 to 0 in 0.23 and it
+           will be removed in 0.25. Use `min_impurity_decrease` instead.
 
     presort : bool, optional (default=False)
         Whether to presort the data to speed up the finding of best splits in
@@ -1029,31 +1029,31 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         The inferred value of max_features.
 
     n_features_ : int
-        The number of features when ``fit`` is performed.
+        The number of features when `fit` is performed.
 
     n_outputs_ : int
-        The number of outputs when ``fit`` is performed.
+        The number of outputs when `fit` is performed.
 
     tree_ : Tree object
         The underlying Tree object. Please refer to
-        ``help(sklearn.tree._tree.Tree)`` for attributes of Tree object and
+        `help(sklearn.tree._tree.Tree)` for attributes of Tree object and
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
         for basic usage of these attributes.
 
     Notes
     -----
     The default values for the parameters controlling the size of the trees
-    (e.g. ``max_depth``, ``min_samples_leaf``, etc.) lead to fully grown and
+    (e.g. `max_depth`, `min_samples_leaf`, etc.) lead to fully grown and
     unpruned trees which can potentially be very large on some data sets. To
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
 
     The features are always randomly permuted at each split. Therefore,
     the best found split may vary, even with the same training data and
-    ``max_features=n_features``, if the improvement of the criterion is
+    `max_features=n_features`, if the improvement of the criterion is
     identical for several splits enumerated during the search of the best
     split. To obtain a deterministic behaviour during fitting,
-    ``random_state`` has to be fixed.
+    `random_state` has to be fixed.
 
     See also
     --------
@@ -1121,12 +1121,12 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         ----------
         X : array-like or sparse matrix, shape = [n_samples, n_features]
             The training input samples. Internally, it will be converted to
-            ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csc_matrix``.
+            `dtype=np.float32` and if a sparse matrix is provided
+            to a sparse `csc_matrix`.
 
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
-            The target values (real numbers). Use ``dtype=np.float64`` and
-            ``order='C'`` for maximum efficiency.
+            The target values (real numbers). Use `dtype=np.float64` and
+            `order='C'` for maximum efficiency.
 
         sample_weight : array-like, shape = [n_samples] or None
             Sample weights. If None, then samples are equally weighted. Splits
@@ -1200,7 +1200,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node.
         A split point at any depth will only be considered if it leaves at
-        least ``min_samples_leaf`` training samples in each of the left and
+        least `min_samples_leaf` training samples in each of the left and
         right branches.  This may have the effect of smoothing the model,
         especially in regression.
 
@@ -1231,7 +1231,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
-        effectively inspect more than ``max_features`` features.
+        effectively inspect more than `max_features` features.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -1240,7 +1240,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         by `np.random`.
 
     max_leaf_nodes : int or None, optional (default=None)
-        Grow a tree with ``max_leaf_nodes`` in best-first fashion.
+        Grow a tree with `max_leaf_nodes` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
@@ -1253,12 +1253,12 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             N_t / N * (impurity - N_t_R / N_t * right_impurity
                                 - N_t_L / N_t * left_impurity)
 
-        where ``N`` is the total number of samples, ``N_t`` is the number of
-        samples at the current node, ``N_t_L`` is the number of samples in the
-        left child, and ``N_t_R`` is the number of samples in the right child.
+        where `N` is the total number of samples, `N_t` is the number of
+        samples at the current node, `N_t_L` is the number of samples in the
+        left child, and `N_t_R` is the number of samples in the right child.
 
-        ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
-        if ``sample_weight`` is passed.
+        `N`, `N_t`, `N_t_R` and `N_t_L` all refer to the weighted sum,
+        if `sample_weight` is passed.
 
         .. versionadded:: 0.19
 
@@ -1267,13 +1267,13 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         if its impurity is above the threshold, otherwise it is a leaf.
 
         .. deprecated:: 0.19
-           ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19. The default value of
-           ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
-           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
+           `min_impurity_split` has been deprecated in favor of
+           `min_impurity_decrease` in 0.19. The default value of
+           `min_impurity_split` will change from 1e-7 to 0 in 0.23 and it
+           will be removed in 0.25. Use `min_impurity_decrease` instead.
 
     class_weight : dict, list of dicts, "balanced" or None, default=None
-        Weights associated with classes in the form ``{class_label: weight}``.
+        Weights associated with classes in the form `{class_label: weight}`.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
         order as the columns of y.
@@ -1286,7 +1286,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``
+        as `n_samples / (n_classes * np.bincount(y))`
 
         For multi-output, the weights of each column of y will be multiplied.
 
@@ -1308,14 +1308,14 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         output (for multi-output problems).
 
     n_features_ : int
-        The number of features when ``fit`` is performed.
+        The number of features when `fit` is performed.
 
     n_outputs_ : int
-        The number of outputs when ``fit`` is performed.
+        The number of outputs when `fit` is performed.
 
     tree_ : Tree object
         The underlying Tree object. Please refer to
-        ``help(sklearn.tree._tree.Tree)`` for attributes of Tree object and
+        `help(sklearn.tree._tree.Tree)` for attributes of Tree object and
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
         for basic usage of these attributes.
 
@@ -1327,7 +1327,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     Notes
     -----
     The default values for the parameters controlling the size of the trees
-    (e.g. ``max_depth``, ``min_samples_leaf``, etc.) lead to fully grown and
+    (e.g. `max_depth`, `min_samples_leaf`, etc.) lead to fully grown and
     unpruned trees which can potentially be very large on some data sets. To
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
@@ -1415,7 +1415,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node.
         A split point at any depth will only be considered if it leaves at
-        least ``min_samples_leaf`` training samples in each of the left and
+        least `min_samples_leaf` training samples in each of the left and
         right branches.  This may have the effect of smoothing the model,
         especially in regression.
 
@@ -1446,7 +1446,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
-        effectively inspect more than ``max_features`` features.
+        effectively inspect more than `max_features` features.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -1463,12 +1463,12 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             N_t / N * (impurity - N_t_R / N_t * right_impurity
                                 - N_t_L / N_t * left_impurity)
 
-        where ``N`` is the total number of samples, ``N_t`` is the number of
-        samples at the current node, ``N_t_L`` is the number of samples in the
-        left child, and ``N_t_R`` is the number of samples in the right child.
+        where `N` is the total number of samples, `N_t` is the number of
+        samples at the current node, `N_t_L` is the number of samples in the
+        left child, and `N_t_R` is the number of samples in the right child.
 
-        ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
-        if ``sample_weight`` is passed.
+        `N`, `N_t`, `N_t_R` and `N_t_L` all refer to the weighted sum,
+        if `sample_weight` is passed.
 
         .. versionadded:: 0.19
 
@@ -1477,13 +1477,13 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         if its impurity is above the threshold, otherwise it is a leaf.
 
         .. deprecated:: 0.19
-           ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19. The default value of
-           ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
-           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
+           `min_impurity_split` has been deprecated in favor of
+           `min_impurity_decrease` in 0.19. The default value of
+           `min_impurity_split` will change from 1e-7 to 0 in 0.23 and it
+           will be removed in 0.25. Use `min_impurity_decrease` instead.
 
     max_leaf_nodes : int or None, optional (default=None)
-        Grow a tree with ``max_leaf_nodes`` in best-first fashion.
+        Grow a tree with `max_leaf_nodes` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
@@ -1493,14 +1493,14 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         The inferred value of max_features.
 
     n_features_ : int
-        The number of features when ``fit`` is performed.
+        The number of features when `fit` is performed.
 
     n_outputs_ : int
-        The number of outputs when ``fit`` is performed.
+        The number of outputs when `fit` is performed.
 
     tree_ : Tree object
         The underlying Tree object. Please refer to
-        ``help(sklearn.tree._tree.Tree)`` for attributes of Tree object and
+        `help(sklearn.tree._tree.Tree)` for attributes of Tree object and
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
         for basic usage of these attributes.
 
@@ -1512,7 +1512,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     Notes
     -----
     The default values for the parameters controlling the size of the trees
-    (e.g. ``max_depth``, ``min_samples_leaf``, etc.) lead to fully grown and
+    (e.g. `max_depth`, `min_samples_leaf`, etc.) lead to fully grown and
     unpruned trees which can potentially be very large on some data sets. To
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.

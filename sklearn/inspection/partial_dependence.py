@@ -31,10 +31,10 @@ __all__ = ['partial_dependence', 'plot_partial_dependence']
 def _grid_from_X(X, percentiles, grid_resolution):
     """Generate a grid of points based on the percentiles of X.
 
-    The grid is a cartesian product between the columns of ``values``. The
-    ith column of ``values`` consists in ``grid_resolution`` equally-spaced
+    The grid is a cartesian product between the columns of `values`. The
+    ith column of `values` consists in `grid_resolution` equally-spaced
     points between the percentiles of the jth column of X.
-    If ``grid_resolution`` is bigger than the number of unique values in the
+    If `grid_resolution` is bigger than the number of unique values in the
     jth column of X, then those unique values will be used instead.
 
     Parameters
@@ -51,12 +51,12 @@ def _grid_from_X(X, percentiles, grid_resolution):
     Returns
     -------
     grid : ndarray, shape (n_points, n_target_features)
-        A value for each feature at each point in the grid. ``n_points`` is
-        always ``<= grid_resolution ** X.shape[1]``.
+        A value for each feature at each point in the grid. `n_points` is
+        always `<= grid_resolution ** X.shape[1]`.
     values : list of 1d ndarrays
         The values with which the grid has been created. The size of each
-        array ``values[j]`` is either ``grid_resolution``, or the number of
-        unique values in ``X[:, j]``, whichever is smaller.
+        array `values[j]` is either `grid_resolution`, or the number of
+        unique values in `X[:, j]`, whichever is smaller.
     """
     if not isinstance(percentiles, Iterable) or len(percentiles) != 2:
         raise ValueError("'percentiles' must be a sequence of 2 elements.")
@@ -166,7 +166,7 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
 def partial_dependence(estimator, X, features, response_method='auto',
                        percentiles=(0.05, 0.95), grid_resolution=100,
                        method='auto'):
-    """Partial dependence of ``features``.
+    """Partial dependence of `features`.
 
     Partial dependence of a feature (or a set of features) corresponds to
     the average response of an estimator for each possible value of the
@@ -181,8 +181,8 @@ def partial_dependence(estimator, X, features, response_method='auto',
         or `decision_function`. Multioutput-multiclass classifiers are not
         supported.
     X : array-like, shape (n_samples, n_features)
-        ``X`` is used both to generate a grid of values for the
-        ``features``, and to compute the averaged predictions when
+        `X` is used both to generate a grid of values for the
+        `features`, and to compute the averaged predictions when
         method is 'brute'.
     features : list or array-like of int
         The target features for which the partial dependency should be
@@ -194,7 +194,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
         this parameter is ignored and the response is always the output of
         :term:`predict`. By default, :term:`predict_proba` is tried first
         and we revert to :term:`decision_function` if it doesn't exist. If
-        ``method`` is 'recursion', the response is always the output of
+        `method` is 'recursion', the response is always the output of
         :term:`decision_function`.
     percentiles : tuple of float, optional (default=(0.05, 0.95))
         The lower and upper percentile used to create the extreme values
@@ -211,9 +211,9 @@ def partial_dependence(estimator, X, features, response_method='auto',
           :class:`HistGradientBoostingClassifier<sklearn.ensemble.HistGradientBoostingClassifier>`,
           :class:`HistGradientBoostingRegressor<sklearn.ensemble.HistGradientBoostingRegressor>`)
           but is more efficient in terms of speed.
-          With this method, ``X`` is only used to build the
+          With this method, `X` is only used to build the
           grid and the partial dependences are computed using the training
-          data. This method does not account for the ``init`` predicor of
+          data. This method does not account for the `init` predicor of
           the boosting process, which may lead to incorrect values (see
           warning below). With this method, the target response of a
           classifier is always the decision function, not the predicted
@@ -228,7 +228,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
             :class:`GradientBoostingClassifier<sklearn.ensemble.GradientBoostingClassifier>`
             and
             :class:`GradientBoostingRegressor<sklearn.ensemble.GradientBoostingRegressor>`
-            if ``init=None``, and for
+            if `init=None`, and for
             :class:`HistGradientBoostingClassifier<sklearn.ensemble.HistGradientBoostingClassifier>`
             and
             :class:`HistGradientBoostingRegressor<sklearn.ensemble.HistGradientBoostingRegressor>`.
@@ -239,17 +239,17 @@ def partial_dependence(estimator, X, features, response_method='auto',
     averaged_predictions : ndarray, \
             shape (n_outputs, len(values[0]), len(values[1]), ...)
         The predictions for all the points in the grid, averaged over all
-        samples in X (or over the training data if ``method`` is
-        'recursion'). ``n_outputs`` corresponds to the number of classes in
+        samples in X (or over the training data if `method` is
+        'recursion'). `n_outputs` corresponds to the number of classes in
         a multi-class setting, or to the number of tasks for multi-output
         regression. For classical regression and binary classification
-        ``n_outputs==1``. ``n_values_feature_j`` corresponds to the size
-        ``values[j]``.
+        `n_outputs==1`. `n_values_feature_j` corresponds to the size
+        `values[j]`.
     values : seq of 1d ndarrays
         The values with which the grid has been created. The generated grid
-        is a cartesian product of the arrays in ``values``. ``len(values) ==
-        len(features)``. The size of each array ``values[j]`` is either
-        ``grid_resolution``, or the number of unique values in ``X[:, j]``,
+        is a cartesian product of the arrays in `values`. `len(values) ==
+        len(features)`. The size of each array `values[j]` is either
+        `grid_resolution`, or the number of unique values in `X[:, j]`,
         whichever is smaller.
 
     Examples
@@ -269,17 +269,17 @@ def partial_dependence(estimator, X, features, response_method='auto',
     Warnings
     --------
     The 'recursion' method only works for gradient boosting estimators, and
-    unlike the 'brute' method, it does not account for the ``init``
+    unlike the 'brute' method, it does not account for the `init`
     predictor of the boosting process. In practice this will produce the
     same values as 'brute' up to a constant offset in the target response,
-    provided that ``init`` is a consant estimator (which is the default).
-    However, as soon as ``init`` is not a constant estimator, the partial
+    provided that `init` is a consant estimator (which is the default).
+    However, as soon as `init` is not a constant estimator, the partial
     dependence values are incorrect for 'recursion'. This is not relevant for
     :class:`HistGradientBoostingClassifier
     <sklearn.ensemble.HistGradientBoostingClassifier>` and
     :class:`HistGradientBoostingRegressor
     <sklearn.ensemble.HistGradientBoostingRegressor>`, which do not have an
-    ``init`` parameter.
+    `init` parameter.
     """
 
     if not (is_classifier(estimator) or is_regressor(estimator)):
@@ -377,7 +377,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
                             line_kw=None, contour_kw=None):
     """Partial dependence plots.
 
-    The ``len(features)`` plots are arranged in a grid with ``n_cols``
+    The `len(features)` plots are arranged in a grid with `n_cols`
     columns. Two-way partial dependence plots are plotted as contour plots.
 
     Read more in the :ref:`User Guide <partial_dependence>`.
@@ -396,7 +396,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         If features[i] is an int or a string, a one-way PDP is created; if
         features[i] is a tuple, a two-way PDP is created. Each tuple must be
         of size 2.
-        if any entry is a string, then it must be in ``feature_names``.
+        if any entry is a string, then it must be in `feature_names`.
     feature_names : seq of str, shape (n_features,), optional
         Name of each feature; feature_names[i] holds the name of the feature
         with index i. By default, the name of the feature corresponds to
@@ -415,7 +415,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         this parameter is ignored and the response is always the output of
         :term:`predict`. By default, :term:`predict_proba` is tried first
         and we revert to :term:`decision_function` if it doesn't exist. If
-        ``method`` is 'recursion', the response is always the output of
+        `method` is 'recursion', the response is always the output of
         :term:`decision_function`.
     n_cols : int, optional (default=3)
         The maximum number of columns in the grid plot.
@@ -434,9 +434,9 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
           :class:`HistGradientBoostingClassifier<sklearn.ensemble.HistGradientBoostingClassifier>`,
           :class:`HistGradientBoostingRegressor<sklearn.ensemble.HistGradientBoostingRegressor>`)
           but is more efficient in terms of speed.
-          With this method, ``X`` is optional and is only used to build the
+          With this method, `X` is optional and is only used to build the
           grid and the partial dependences are computed using the training
-          data. This method does not account for the ``init`` predicor of
+          data. This method does not account for the `init` predicor of
           the boosting process, which may lead to incorrect values (see
           warning below. With this method, the target response of a
           classifier is always the decision function, not the predicted
@@ -450,8 +450,8 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
           - 'brute' is used for all other estimators.
     n_jobs : int, optional (default=None)
         The number of CPUs to use to compute the partial dependences.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
     verbose : int, optional (default=0)
         Verbose output during PD computations.
@@ -459,10 +459,10 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         A figure object onto which the plots will be drawn, after the figure
         has been cleared. By default, a new one is created.
     line_kw : dict, optional
-        Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
+        Dict with keywords passed to the `matplotlib.pyplot.plot` call.
         For one-way partial dependence plots.
     contour_kw : dict, optional
-        Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
+        Dict with keywords passed to the `matplotlib.pyplot.plot` call.
         For two-way partial dependence plots.
 
     Examples
@@ -481,17 +481,17 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     Warnings
     --------
     The 'recursion' method only works for gradient boosting estimators, and
-    unlike the 'brute' method, it does not account for the ``init``
+    unlike the 'brute' method, it does not account for the `init`
     predictor of the boosting process. In practice this will produce the
     same values as 'brute' up to a constant offset in the target response,
-    provided that ``init`` is a consant estimator (which is the default).
-    However, as soon as ``init`` is not a constant estimator, the partial
+    provided that `init` is a consant estimator (which is the default).
+    However, as soon as `init` is not a constant estimator, the partial
     dependence values are incorrect for 'recursion'. This is not relevant for
     :class:`HistGradientBoostingClassifier
     <sklearn.ensemble.HistGradientBoostingClassifier>` and
     :class:`HistGradientBoostingRegressor
     <sklearn.ensemble.HistGradientBoostingRegressor>`, which do not have an
-    ``init`` parameter.
+    `init` parameter.
     """
     check_matplotlib_support('plot_partial_dependence')  # noqa
     import matplotlib.pyplot as plt  # noqa

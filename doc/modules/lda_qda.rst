@@ -47,7 +47,7 @@ only makes sense in a multiclass setting.
 
 This is implemented in
 :func:`discriminant_analysis.LinearDiscriminantAnalysis.transform`. The desired
-dimensionality can be set using the ``n_components`` constructor parameter.
+dimensionality can be set using the `n_components` constructor parameter.
 This parameter has no influence on
 :func:`discriminant_analysis.LinearDiscriminantAnalysis.fit` or
 :func:`discriminant_analysis.LinearDiscriminantAnalysis.predict`.
@@ -130,7 +130,7 @@ We can reduce the dimension even more, to a chosen :math:`L`, by projecting
 onto the linear subspace :math:`H_L` which maximizes the variance of the
 :math:`\mu^*_k` after projection (in effect, we are doing a form of PCA for the
 transformed class means :math:`\mu^*_k`). This :math:`L` corresponds to the
-``n_components`` parameter used in the
+`n_components` parameter used in the
 :func:`discriminant_analysis.LinearDiscriminantAnalysis.transform` method. See
 [#1]_ for more details.
 
@@ -140,14 +140,14 @@ Shrinkage
 Shrinkage is a tool to improve estimation of covariance matrices in situations
 where the number of training samples is small compared to the number of
 features. In this scenario, the empirical sample covariance is a poor
-estimator. Shrinkage LDA can be used by setting the ``shrinkage`` parameter of
+estimator. Shrinkage LDA can be used by setting the `shrinkage` parameter of
 the :class:`discriminant_analysis.LinearDiscriminantAnalysis` class to 'auto'.
 This automatically determines the optimal shrinkage parameter in an analytic
 way following the lemma introduced by Ledoit and Wolf [#2]_. Note that
-currently shrinkage only works when setting the ``solver`` parameter to 'lsqr'
+currently shrinkage only works when setting the `solver` parameter to 'lsqr'
 or 'eigen'.
 
-The ``shrinkage`` parameter can also be manually set between 0 and 1. In
+The `shrinkage` parameter can also be manually set between 0 and 1. In
 particular, a value of 0 corresponds to no shrinkage (which means the empirical
 covariance matrix will be used) and a value of 1 corresponds to complete
 shrinkage (which means that the diagonal matrix of variances will be used as

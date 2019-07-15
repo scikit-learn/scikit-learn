@@ -146,8 +146,8 @@ class BaseEstimator:
     Notes
     -----
     All estimators should specify all the parameters that can be set
-    at the class level in their ``__init__`` as explicit keyword
-    arguments (no ``*args`` or ``**kwargs``).
+    at the class level in their `__init__` as explicit keyword
+    arguments (no `*args` or `**kwargs`).
     """
 
     @classmethod
@@ -205,7 +205,7 @@ class BaseEstimator:
 
         The method works on simple estimators as well as on nested objects
         (such as pipelines). The latter have parameters of the form
-        ``<component>__<parameter>`` so that it's possible to update each
+        `<component>__<parameter>` so that it's possible to update each
         component of a nested object.
 
         Returns
@@ -396,14 +396,14 @@ class RegressorMixin:
 
         Notes
         -----
-        The R2 score used when calling ``score`` on a regressor will use
-        ``multioutput='uniform_average'`` from version 0.23 to keep consistent
-        with `metrics.r2_score`. This will influence the ``score`` method of
+        The R2 score used when calling `score` on a regressor will use
+        `multioutput='uniform_average'` from version 0.23 to keep consistent
+        with `metrics.r2_score`. This will influence the `score` method of
         all the multioutput regressors (except for
         `multioutput.MultiOutputRegressor`). To specify the default value
         manually and avoid the warning, please either call `metrics.r2_score`
         directly or make a custom scorer with `metrics.make_scorer` (the
-        built-in scorer ``'r2'`` uses ``multioutput='uniform_average'``).
+        built-in scorer `'r2'` uses `multioutput='uniform_average'`).
         """
 
         from .metrics import r2_score
@@ -458,14 +458,14 @@ class BiclusterMixin:
     def biclusters_(self):
         """Convenient way to get row and column indicators together.
 
-        Returns the ``rows_`` and ``columns_`` members.
+        Returns the `rows_` and `columns_` members.
         """
         return self.rows_, self.columns_
 
     def get_indices(self, i):
         """Row and column indices of the i'th bicluster.
 
-        Only works if ``rows_`` and ``columns_`` attributes exist.
+        Only works if `rows_` and `columns_` attributes exist.
 
         Parameters
         ----------
@@ -517,8 +517,8 @@ class BiclusterMixin:
 
         Notes
         -----
-        Works with sparse matrices. Only works if ``rows_`` and
-        ``columns_`` attributes exist.
+        Works with sparse matrices. Only works if `rows_` and
+        `columns_` attributes exist.
         """
         from .utils.validation import check_array
         data = check_array(data, accept_sparse='csr')

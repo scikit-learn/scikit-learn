@@ -31,7 +31,7 @@ and the variance of such variables is given by
 
 .. math:: \mathrm{Var}[X] = p(1 - p)
 
-so we can select using the threshold ``.8 * (1 - .8)``::
+so we can select using the threshold `.8 * (1 - .8)`::
 
   >>> from sklearn.feature_selection import VarianceThreshold
   >>> X = [[0, 0, 1], [0, 1, 0], [1, 0, 0], [0, 1, 1], [0, 1, 0], [0, 1, 1]]
@@ -44,7 +44,7 @@ so we can select using the threshold ``.8 * (1 - .8)``::
          [1, 0],
          [1, 1]])
 
-As expected, ``VarianceThreshold`` has removed the first column,
+As expected, `VarianceThreshold` has removed the first column,
 which has a probability :math:`p = 5/6 > .8` of containing a zero.
 
 .. _univariate_feature_selection:
@@ -55,7 +55,7 @@ Univariate feature selection
 Univariate feature selection works by selecting the best features based on
 univariate statistical tests. It can be seen as a preprocessing step
 to an estimator. Scikit-learn exposes feature selection routines
-as objects that implement the ``transform`` method:
+as objects that implement the `transform` method:
 
  * :class:`SelectKBest` removes all but the :math:`k` highest scoring features
 
@@ -123,8 +123,8 @@ Given an external estimator that assigns weights to features (e.g., the
 coefficients of a linear model), recursive feature elimination (:class:`RFE`)
 is to select features by recursively considering smaller and smaller sets of
 features.  First, the estimator is trained on the initial set of features and
-the importance of each feature is obtained either through a ``coef_`` attribute
-or through a ``feature_importances_`` attribute. Then, the least important
+the importance of each feature is obtained either through a `coef_` attribute
+or through a `feature_importances_` attribute. Then, the least important
 features are pruned from current set of features.That procedure is recursively
 repeated on the pruned set until the desired number of features to select is
 eventually reached.
@@ -147,10 +147,10 @@ Feature selection using SelectFromModel
 =======================================
 
 :class:`SelectFromModel` is a meta-transformer that can be used along with any
-estimator that has a ``coef_`` or ``feature_importances_`` attribute after fitting.
+estimator that has a `coef_` or `feature_importances_` attribute after fitting.
 The features are considered unimportant and removed, if the corresponding
-``coef_`` or ``feature_importances_`` values are below the provided
-``threshold`` parameter. Apart from specifying the threshold numerically,
+`coef_` or `feature_importances_` values are below the provided
+`threshold` parameter. Apart from specifying the threshold numerically,
 there are built-in heuristics for finding a threshold using a string argument.
 Available heuristics are "mean", "median" and float multiples of these like
 "0.1*mean".

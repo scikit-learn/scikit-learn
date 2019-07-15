@@ -12,15 +12,15 @@ dataset. We only consider the first 2 features of this dataset:
 This example shows how to plot the decision surface for four SVM classifiers
 with different kernels.
 
-The linear models ``LinearSVC()`` and ``SVC(kernel='linear')`` yield slightly
+The linear models `LinearSVC()` and `SVC(kernel='linear')` yield slightly
 different decision boundaries. This can be a consequence of the following
 differences:
 
-- ``LinearSVC`` minimizes the squared hinge loss while ``SVC`` minimizes the
+- `LinearSVC` minimizes the squared hinge loss while `SVC` minimizes the
   regular hinge loss.
 
-- ``LinearSVC`` uses the One-vs-All (also known as One-vs-Rest) multiclass
-  reduction while ``SVC`` uses the One-vs-One multiclass reduction.
+- `LinearSVC` uses the One-vs-All (also known as One-vs-Rest) multiclass
+  reduction while `SVC` uses the One-vs-One multiclass reduction.
 
 Both linear models have linear decision boundaries (intersecting hyperplanes)
 while the non-linear kernel models (polynomial or Gaussian RBF) have more

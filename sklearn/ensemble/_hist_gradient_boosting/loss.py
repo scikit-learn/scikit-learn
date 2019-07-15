@@ -47,7 +47,7 @@ class BaseLoss(ABC):
             The initial gradients. The array is not initialized.
         hessians : ndarray, shape (prediction_dim, n_samples)
             If hessians are constant (e.g. for `LeastSquares` loss, the
-            array is initialized to ``1``. Otherwise, the array is allocated
+            array is initialized to `1`. Otherwise, the array is allocated
             without being initialized.
         """
         shape = (prediction_dim, n_samples)
@@ -87,7 +87,7 @@ class BaseLoss(ABC):
 
         The gradients (resp. hessians) are the first (resp. second) order
         derivatives of the loss for each sample with respect to the
-        predictions of model, evaluated at iteration ``i - 1``.
+        predictions of model, evaluated at iteration `i - 1`.
 
         Parameters
         ----------
@@ -100,7 +100,7 @@ class BaseLoss(ABC):
             The true target values or each training sample.
         raw_predictions : ndarray, shape (prediction_dim, n_samples)
             The raw_predictions (i.e. values from the trees) of the tree
-            ensemble at iteration ``i - 1``.
+            ensemble at iteration `i - 1`.
         """
 
 

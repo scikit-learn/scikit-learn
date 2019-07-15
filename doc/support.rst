@@ -43,7 +43,7 @@ Please describe the nature of your data and the how you preprocessed it:
 what is the number of samples, what is the number and type of features
 (i.d. categorical or numerical) and for supervised learning tasks,
 what target are your trying to predict: binary, multiclass (1 out of
-``n_classes``) or multilabel (``k`` out of ``n_classes``) classification
+`n_classes`) or multilabel (`k` out of `n_classes`) classification
 or continuous variable regression.
 
 
@@ -67,7 +67,7 @@ Don't forget to include:
 To help developers fix your bug faster, please link to a https://gist.github.com
 holding a standalone minimalistic python script that reproduces your bug and
 optionally a minimalistic subsample of your dataset (for instance exported
-as CSV files using ``numpy.savetxt``).
+as CSV files using `numpy.savetxt`).
 
 Note: gists are git cloneable repositories and thus you can use git to
 push datafiles to them.
@@ -78,8 +78,8 @@ push datafiles to them.
 IRC
 ===
 
-Some developers like to hang out on channel ``#scikit-learn`` on
-``irc.freenode.net``.
+Some developers like to hang out on channel `#scikit-learn` on
+`irc.freenode.net`.
 
 If you do not have an IRC client or are behind a firewall this web
 client works fine: https://webchat.freenode.net

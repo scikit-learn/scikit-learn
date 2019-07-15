@@ -181,7 +181,7 @@ cdef class Splitter:
             The indices of the samples in the right child. This is a view on
             self.partition.
         right_child_position : int
-            The position of the right child in ``sample_indices``.
+            The position of the right child in `sample_indices`.
         """
         # This is a multi-threaded implementation inspired by lightgbm. Here
         # is a quick break down. Let's suppose we want to split a node with 24
@@ -211,7 +211,7 @@ cdef class Splitter:
         #    - left_indices_buffer =  [abef..|il....|mnopqr|tux...]
         #    - right_indices_buffer = [cd....|ghjk..|......|svw...]
         # 3. We keep track of the start positions of the regions (the '|') in
-        #    ``offset_in_buffers`` as well as the size of each region. We also
+        #    `offset_in_buffers` as well as the size of each region. We also
         #    keep track of the number of samples put into the left/right child
         #    by each thread. Concretely:
         #    - left_counts =  [4, 2, 6, 3]

@@ -71,11 +71,11 @@ User installation
 ~~~~~~~~~~~~~~~~~
 
 If you already have a working installation of numpy and scipy,
-the easiest way to install scikit-learn is using ``pip``   ::
+the easiest way to install scikit-learn is using `pip`   ::
 
     pip install -U scikit-learn
 
-or ``conda``::
+or `conda`::
 
     conda install scikit-learn
 
@@ -122,7 +122,7 @@ Testing
 ~~~~~~~
 
 After installation, you can launch the test suite from outside the
-source directory (you will need to have ``pytest`` >= 3.3.0 installed)::
+source directory (you will need to have `pytest` >= 3.3.0 installed)::
 
     pytest sklearn
 
@@ -130,7 +130,7 @@ See the web page http://scikit-learn.org/dev/developers/advanced_installation.ht
 for more information.
 
     Random number generation can be controlled during testing by setting
-    the ``SKLEARN_SEED`` environment variable.
+    the `SKLEARN_SEED` environment variable.
 
 Submitting a Pull Request
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -167,7 +167,7 @@ Communication
 ~~~~~~~~~~~~~
 
 - Mailing list: https://mail.python.org/mailman/listinfo/scikit-learn
-- IRC channel: ``#scikit-learn`` at ``webchat.freenode.net``
+- IRC channel: `#scikit-learn` at `webchat.freenode.net`
 - Stack Overflow: https://stackoverflow.com/questions/tagged/scikit-learn
 - Website: http://scikit-learn.org
 

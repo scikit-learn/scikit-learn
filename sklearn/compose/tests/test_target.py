@@ -253,8 +253,8 @@ class DummyCheckerListRegressor(DummyRegressor):
 
 
 def test_transform_target_regressor_ensure_y_array():
-    # check that the target ``y`` passed to the transformer will always be a
-    # numpy array. Similarly, if ``X`` is passed as a list, we check that the
+    # check that the target `y` passed to the transformer will always be a
+    # numpy array. Similarly, if `X` is passed as a list, we check that the
     # predictor receive as it is.
     X, y = friedman
     tt = TransformedTargetRegressor(transformer=DummyCheckerArrayTransformer(),

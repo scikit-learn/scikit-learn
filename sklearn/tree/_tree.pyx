@@ -281,7 +281,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
 cdef inline int _add_to_frontier(PriorityHeapRecord* rec,
                                  PriorityHeap frontier) nogil except -1:
-    """Adds record ``rec`` to the priority queue ``frontier``
+    """Adds record `rec` to the priority queue `frontier`
 
     Returns -1 in case of failure to allocate memory (and raise MemoryError)
     or 0 otherwise.
@@ -430,7 +430,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                     bint is_first, bint is_left, Node* parent,
                                     SIZE_t depth,
                                     PriorityHeapRecord* res) nogil except -1:
-        """Adds node w/ partition ``[start, end)`` to the frontier. """
+        """Adds node w/ partition `[start, end)` to the frontier. """
         cdef SplitRecord split
         cdef SIZE_t node_id
         cdef SIZE_t n_node_samples
@@ -1129,9 +1129,9 @@ cdef class Tree:
     def compute_partial_dependence(self, DTYPE_t[:, ::1] X,
                                    int[::1] target_features,
                                    double[::1] out):
-        """Partial dependence of the response on the ``target_feature`` set.
+        """Partial dependence of the response on the `target_feature` set.
 
-        For each sample in ``X`` a tree traversal is performed.
+        For each sample in `X` a tree traversal is performed.
         Each traversal starts from the root with weight 1.0.
 
         At each non-leaf node that splits on a target feature, either

@@ -70,7 +70,7 @@ following:
   5. Once the code is optimized (not simple bottleneck spottable by
      profiling), check whether it is possible to have **coarse grained
      parallelism** that is amenable to **multi-processing** by using the
-     ``joblib.Parallel`` class.
+     `joblib.Parallel` class.
 
 When using Cython, use either
 
@@ -78,7 +78,7 @@ When using Cython, use either
    $ python setup.py install
 
 to generate C files. You are responsible for adding .c/.cpp extensions along
-with build parameters in each submodule ``setup.py``.
+with build parameters in each submodule `setup.py`.
 
 C/C++ generated files are embedded in distributed stable packages. The goal is
 to make it possible to install scikit-learn stable version
@@ -111,7 +111,7 @@ overhead and save it somewhere for later reference::
   In [4]: %timeit NMF(n_components=16, tol=1e-2).fit(X)
   1 loops, best of 3: 1.7 s per loop
 
-To have a look at the overall performance profile using the ``%prun``
+To have a look at the overall performance profile using the `%prun`
 magic command::
 
   In [5]: %prun -l nmf.py NMF(n_components=16, tol=1e-2).fit(X)
@@ -131,16 +131,16 @@ magic command::
           1    0.000    0.000    0.000    0.000 nmf.py:337(__init__)
           1    0.000    0.000    1.681    1.681 nmf.py:461(fit)
 
-The ``tottime`` column is the most interesting: it gives to total time spent
+The `tottime` column is the most interesting: it gives to total time spent
 executing the code of a given function ignoring the time spent in executing the
 sub-functions. The real total time (local code + sub-function calls) is given by
-the ``cumtime`` column.
+the `cumtime` column.
 
-Note the use of the ``-l nmf.py`` that restricts the output to lines that
+Note the use of the `-l nmf.py` that restricts the output to lines that
 contains the "nmf.py" string. This is useful to have a quick look at the hotspot
 of the nmf Python module it-self ignoring anything else.
 
-Here is the beginning of the output of the same command without the ``-l nmf.py``
+Here is the beginning of the output of the same command without the `-l nmf.py`
 filter::
 
   In [5] %prun NMF(n_components=16, tol=1e-2).fit(X)
@@ -176,10 +176,10 @@ that are both costly and useless to avoid computing then rather than
 trying to optimize their implementation).
 
 It is however still interesting to check what's happening inside the
-``_nls_subproblem`` function which is the hotspot if we only consider
+`_nls_subproblem` function which is the hotspot if we only consider
 Python code: it takes around 100% of the accumulated time of the module. In
 order to better understand the profile of this specific function, let
-us install ``line_profiler`` and wire it to IPython::
+us install `line_profiler` and wire it to IPython::
 
   $ pip install line_profiler
 
@@ -188,12 +188,12 @@ us install ``line_profiler`` and wire it to IPython::
     $ ipython profile create
 
   Then register the line_profiler extension in
-  ``~/.ipython/profile_default/ipython_config.py``::
+  `~/.ipython/profile_default/ipython_config.py`::
 
     c.TerminalIPythonApp.extensions.append('line_profiler')
     c.InteractiveShellApp.extensions.append('line_profiler')
 
-  This will register the ``%lprun`` magic command in the IPython terminal
+  This will register the `%lprun` magic command in the IPython terminal
   application and the other frontends such as qtconsole and notebook.
 
 Now restart IPython and let us use this new toy::
@@ -242,7 +242,7 @@ Now restart IPython and let us use this new toy::
      193      1474       515390    349.7     26.9              dQd = np.sum(np.dot(WtW, d) * d)
      ...
 
-By looking at the top values of the ``% Time`` column it is really easy to
+By looking at the top values of the `% Time` column it is really easy to
 pin-point the most expensive expressions that would deserve additional care.
 
 
@@ -255,26 +255,26 @@ install the latest version::
 
     $ pip install -U memory_profiler
 
-Then, setup the magics in a manner similar to ``line_profiler``.
+Then, setup the magics in a manner similar to `line_profiler`.
 
 - **Under IPython 0.11+**, first create a configuration profile::
 
     $ ipython profile create
 
   Then register the extension in
-  ``~/.ipython/profile_default/ipython_config.py``
+  `~/.ipython/profile_default/ipython_config.py`
   alongside the line profiler::
 
     c.TerminalIPythonApp.extensions.append('memory_profiler')
     c.InteractiveShellApp.extensions.append('memory_profiler')
 
-  This will register the ``%memit`` and ``%mprun`` magic commands in the
+  This will register the `%memit` and `%mprun` magic commands in the
   IPython terminal application and the other frontends such as qtconsole and
   notebook.
 
-``%mprun`` is useful to examine, line-by-line, the memory usage of key
-functions in your program. It is very similar to ``%lprun``, discussed in the
-previous section. For example, from the ``memory_profiler`` ``examples``
+`%mprun` is useful to examine, line-by-line, the memory usage of key
+functions in your program. It is very similar to `%lprun`, discussed in the
+previous section. For example, from the `memory_profiler` `examples`
 directory::
 
     In [1] from example import my_func
@@ -291,16 +291,16 @@ directory::
          7     13.61 MB -152.59 MB       del b
          8     13.61 MB    0.00 MB       return a
 
-Another useful magic that ``memory_profiler`` defines is ``%memit``, which is
-analogous to ``%timeit``. It can be used as follows::
+Another useful magic that `memory_profiler` defines is `%memit`, which is
+analogous to `%timeit`. It can be used as follows::
 
     In [1]: import numpy as np
 
     In [2]: %memit np.zeros(1e7)
     maximum of 3: 76.402344 MB per loop
 
-For more details, see the docstrings of the magics, using ``%memit?`` and
-``%mprun?``.
+For more details, see the docstrings of the magics, using `%memit?` and
+`%mprun?`.
 
 
 Performance tips for the Cython developer
@@ -308,10 +308,10 @@ Performance tips for the Cython developer
 
 If profiling of the Python code reveals that the Python interpreter
 overhead is larger by one order of magnitude or more than the cost of the
-actual numerical computation (e.g. ``for`` loops over vector components,
+actual numerical computation (e.g. `for` loops over vector components,
 nested evaluation of conditional expression, scalar arithmetic...), it
 is probably adequate to extract the hotspot portion of the code as a
-standalone function in a ``.pyx`` file, add static type declarations and
+standalone function in a `.pyx` file, add static type declarations and
 then use Cython to generate a C program suitable to be compiled as a
 Python extension module.
 
@@ -347,7 +347,7 @@ syntax::
 
 .. note::
 
-   Protecting the parallel loop, ``prange``, is already done by cython.
+   Protecting the parallel loop, `prange`, is already done by cython.
 
 
 .. _profiling-compiled-extension:
@@ -371,11 +371,11 @@ Easy profiling without special compilation options use yep:
 Using gprof
 -----------
 
-In order to profile compiled Python extensions one could use ``gprof``
-after having recompiled the project with ``gcc -pg`` and using the
-``python-dbg`` variant of the interpreter on debian / ubuntu: however
-this approach requires to also have ``numpy`` and ``scipy`` recompiled
-with ``-pg`` which is rather complicated to get working.
+In order to profile compiled Python extensions one could use `gprof`
+after having recompiled the project with `gcc -pg` and using the
+`python-dbg` variant of the interpreter on debian / ubuntu: however
+this approach requires to also have `numpy` and `scipy` recompiled
+with `-pg` which is rather complicated to get working.
 
 Fortunately there exist two alternative profilers that don't require you to
 recompile everything.
@@ -386,8 +386,8 @@ Using valgrind / callgrind / kcachegrind
 kcachegrind
 ~~~~~~~~~~~
 
-``yep`` can be used to create a profiling report.
-``kcachegrind`` provides a graphical environment to visualize this report::
+`yep` can be used to create a profiling report.
+`kcachegrind` provides a graphical environment to visualize this report::
 
   # Run yep to profile some python script
   python -m yep -c my_file.py
@@ -397,10 +397,10 @@ kcachegrind
 
 .. note::
 
-   ``yep`` can be executed with the argument ``--lines`` or ``-l`` to compile
+   `yep` can be executed with the argument `--lines` or `-l` to compile
    a profiling report 'line by line'.
 
-Multi-core parallelism using ``joblib.Parallel``
+Multi-core parallelism using `joblib.Parallel`
 ================================================
 
 TODO: give a simple teaser example here.

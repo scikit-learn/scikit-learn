@@ -2,14 +2,14 @@
 =========================================================
 SVM Tie Breaking Example
 =========================================================
-Tie breaking is costly if ``decision_function_shape='ovr'``, and therefore it
+Tie breaking is costly if `decision_function_shape='ovr'`, and therefore it
 is not enabled by default. This example illustrates the effect of the
-``break_ties`` parameter for a multiclass classification problem and
-``decision_function_shape='ovr'``.
+`break_ties` parameter for a multiclass classification problem and
+`decision_function_shape='ovr'`.
 
 The two plots differ only in the area in the middle where the classes are
-tied. If ``break_ties=False``, all input in that area would be classified as
-one class, whereas if ``break_ties=True``, the tie-breaking mechanism will
+tied. If `break_ties=False`, all input in that area would be classified as
+one class, whereas if `break_ties=True`, the tie-breaking mechanism will
 create a non-convex decision boundary in that area.
 """
 print(__doc__)

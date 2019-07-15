@@ -8,7 +8,7 @@ Gaussian mixture models
 
 .. currentmodule:: sklearn.mixture
 
-``sklearn.mixture`` is a package which enables one to learn
+`sklearn.mixture` is a package which enables one to learn
 Gaussian Mixture Models (diagonal, spherical, tied and full covariance
 matrices supported), sample them, and estimate them from
 data. Facilities to help determine the appropriate number of
@@ -164,7 +164,7 @@ much so as to render usage unpractical.
 
 Due to its Bayesian nature, the variational algorithm needs more hyper-
 parameters than expectation-maximization, the most important of these being the
-concentration parameter ``weight_concentration_prior``. Specifying a low value
+concentration parameter `weight_concentration_prior`. Specifying a low value
 for the concentration prior will make the model put most of the weight on few
 components set the remaining components weights very close to zero. High values
 of the concentration prior will allow a larger number of components to be active
@@ -179,9 +179,9 @@ the Stick-breaking representation). The number of components actually used
 almost always depends on the data.
 
 The next figure compares the results obtained for the different type of the
-weight concentration prior (parameter ``weight_concentration_prior_type``)
-for different values of ``weight_concentration_prior``.
-Here, we can see the value of the ``weight_concentration_prior`` parameter
+weight concentration prior (parameter `weight_concentration_prior_type`)
+for different values of `weight_concentration_prior`.
+Here, we can see the value of the `weight_concentration_prior` parameter
 has a strong impact on the effective number of active components obtained. We
 can also notice that large values for the concentration weight prior lead to
 more uniform weights when the type of prior is 'dirichlet_distribution' while
@@ -205,7 +205,7 @@ dataset composed of 2 clusters. We can see that the variational Gaussian mixture
 with a Dirichlet process prior is able to limit itself to only 2 components
 whereas the Gaussian mixture fits the data with a fixed number of components
 that has to be set a priori by the user. In this case the user has selected
-``n_components=5`` which does not match the true generative distribution of this
+`n_components=5` which does not match the true generative distribution of this
 toy dataset. Note that with very little observations, the variational Gaussian
 mixture models with a Dirichlet process prior can take a conservative stand, and
 fit only one component.
@@ -217,7 +217,7 @@ fit only one component.
 
 
 On the following figure we are fitting a dataset not well-depicted by a
-Gaussian mixture. Adjusting the ``weight_concentration_prior``, parameter of the
+Gaussian mixture. Adjusting the `weight_concentration_prior`, parameter of the
 :class:`BayesianGaussianMixture` controls the number of components used to fit
 this data. We also present on the last two plots a random sampling generated
 from the two resulting mixtures.
@@ -242,8 +242,8 @@ from the two resulting mixtures.
     * See :ref:`sphx_glr_auto_examples_mixture_plot_concentration_prior.py`
       for an example plotting the confidence ellipsoids for the
       :class:`BayesianGaussianMixture` with different
-      ``weight_concentration_prior_type`` for different values of the parameter
-      ``weight_concentration_prior``.
+      `weight_concentration_prior_type` for different values of the parameter
+      `weight_concentration_prior`.
 
 
 Pros and cons of variational inference with :class:`BayesianGaussianMixture`
@@ -252,8 +252,8 @@ Pros and cons of variational inference with :class:`BayesianGaussianMixture`
 Pros
 .....
 
-:Automatic selection: when ``weight_concentration_prior`` is small enough and
-   ``n_components`` is larger than what is found necessary by the model, the
+:Automatic selection: when `weight_concentration_prior` is small enough and
+   `n_components` is larger than what is found necessary by the model, the
    Variational Bayesian mixture model has a natural tendency to set some mixture
    weights values close to zero. This makes it possible to let the model choose
    a suitable number of effective components automatically. Only an upper bound
@@ -265,7 +265,7 @@ Pros
    almost always use all components as much as they can, and hence will produce
    wildly different solutions for different numbers of components, the
    variational inference with a Dirichlet process prior
-   (``weight_concentration_prior_type='dirichlet_process'``) won't change much
+   (`weight_concentration_prior_type='dirichlet_process'`) won't change much
    with changes to the parameters, leading to more stability and less tuning.
 
 :Regularization: due to the incorporation of prior information,

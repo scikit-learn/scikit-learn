@@ -12,7 +12,7 @@ Version 0.15.2
 Bug fixes
 ---------
 
-- Fixed handling of the ``p`` parameter of the Minkowski distance that was
+- Fixed handling of the `p` parameter of the Minkowski distance that was
   previously ignored in nearest neighbors models. By :user:`Nikolay
   Mayorov <nmayorov>`.
 
@@ -31,18 +31,18 @@ Bug fixes
 - Removed unnecessary data copy in :class:`cluster.KMeans`.
   By `Gael Varoquaux`_.
 
-- Explicitly close open files to avoid ``ResourceWarnings`` under Python 3.
+- Explicitly close open files to avoid `ResourceWarnings` under Python 3.
   By Calvin Giles.
 
-- The ``transform`` of :class:`discriminant_analysis.LinearDiscriminantAnalysis`
+- The `transform` of :class:`discriminant_analysis.LinearDiscriminantAnalysis`
   now projects the input on the most discriminant directions. By Martin Billinger.
 
-- Fixed potential overflow in ``_tree.safe_realloc`` by `Lars Buitinck`_.
+- Fixed potential overflow in `_tree.safe_realloc` by `Lars Buitinck`_.
 
 - Performance optimization in :class:`isotonic.IsotonicRegression`.
   By Robert Bradshaw.
 
-- ``nose`` is non-longer a runtime dependency to import ``sklearn``, only for
+- `nose` is non-longer a runtime dependency to import `sklearn`, only for
   running the tests. By `Joel Nothman`_.
 
 - Many documentation and website fixes by `Joel Nothman`_, `Lars Buitinck`_
@@ -80,12 +80,12 @@ Bug fixes
   text processing pipelines. By `Andreas Müller`_.
 
 - Fixed data input checks of most estimators to accept input data that
-  implements the NumPy ``__array__`` protocol. This is the case for
-  for ``pandas.Series`` and ``pandas.DataFrame`` in recent versions of
+  implements the NumPy `__array__` protocol. This is the case for
+  for `pandas.Series` and `pandas.DataFrame` in recent versions of
   pandas. By `Gael Varoquaux`_.
 
 - Fixed a regression for :class:`linear_model.SGDClassifier` with
-  ``class_weight="auto"`` on data with non-contiguous labels. By
+  `class_weight="auto"` on data with non-contiguous labels. By
   `Olivier Grisel`_.
 
 
@@ -144,10 +144,10 @@ New features
 - Shuffle option for :class:`cross_validation.StratifiedKFold`.
   By :user:`Jeffrey Blackburne <jblackburne>`.
 
-- Incremental learning (``partial_fit``) for Gaussian Naive Bayes by
+- Incremental learning (`partial_fit`) for Gaussian Naive Bayes by
   Imran Haque.
 
-- Added ``partial_fit`` to :class:`BernoulliRBM
+- Added `partial_fit` to :class:`BernoulliRBM
   <neural_network.BernoulliRBM>`
   By :user:`Danny Sullivan <dsullivan7>`.
 
@@ -173,14 +173,14 @@ Enhancements
 
 - Memory improvements of decision trees, by `Arnaud Joly`_.
 
-- Decision trees can now be built in best-first manner by using ``max_leaf_nodes``
+- Decision trees can now be built in best-first manner by using `max_leaf_nodes`
   as the stopping criteria. Refactored the tree code to use either a
   stack or a priority queue for tree building.
   By `Peter Prettenhofer`_ and `Gilles Louppe`_.
 
 - Decision trees can now be fitted on fortran- and c-style arrays, and
   non-continuous arrays without the need to make a copy.
-  If the input array has a different dtype than ``np.float32``, a fortran-
+  If the input array has a different dtype than `np.float32`, a fortran-
   style copy will be made since fortran-style memory layout has speed
   advantages. By `Peter Prettenhofer`_ and `Gilles Louppe`_.
 
@@ -189,9 +189,9 @@ Enhancements
   to speed improvement of the tree, forest and gradient boosting tree
   modules. By `Arnaud Joly`_
 
-- The ``img_to_graph`` and ``grid_tograph`` functions in
-  :mod:`sklearn.feature_extraction.image` now return ``np.ndarray``
-  instead of ``np.matrix`` when ``return_as=np.ndarray``.  See the
+- The `img_to_graph` and `grid_tograph` functions in
+  :mod:`sklearn.feature_extraction.image` now return `np.ndarray`
+  instead of `np.matrix` when `return_as=np.ndarray`.  See the
   Notes section for more information on compatibility.
 
 - Changed the internal storage of decision trees to use a struct array.
@@ -199,7 +199,7 @@ Enhancements
   speed gain. By `Joel Nothman`_.
 
 - Reduce memory usage and overhead when fitting and predicting with forests
-  of randomized trees in parallel with ``n_jobs != 1`` by leveraging new
+  of randomized trees in parallel with `n_jobs != 1` by leveraging new
   threading backend of joblib 0.8 and releasing the GIL in the tree fitting
   Cython code.  By `Olivier Grisel`_ and `Gilles Louppe`_.
 
@@ -207,9 +207,9 @@ Enhancements
   By `Gilles Louppe`_ and `Peter Prettenhofer`_.
 
 - Various enhancements to the  :mod:`sklearn.ensemble.gradient_boosting`
-  module: a ``warm_start`` argument to fit additional trees,
-  a ``max_leaf_nodes`` argument to fit GBM style trees,
-  a ``monitor`` fit argument to inspect the estimator during training, and
+  module: a `warm_start` argument to fit additional trees,
+  a `max_leaf_nodes` argument to fit GBM style trees,
+  a `monitor` fit argument to inspect the estimator during training, and
   refactoring of the verbose code. By `Peter Prettenhofer`_.
 
 - Faster :class:`sklearn.ensemble.ExtraTrees` by caching feature values.
@@ -220,7 +220,7 @@ Enhancements
   growing strategy) by avoiding trying to split on found constant features
   in the sample subset. By `Arnaud Joly`_.
 
-- Add ``min_weight_fraction_leaf`` pre-pruning parameter to tree-based
+- Add `min_weight_fraction_leaf` pre-pruning parameter to tree-based
   methods: the minimum weighted fraction of the input samples required to be
   at a leaf node. By `Noel Dawe`_.
 
@@ -278,7 +278,7 @@ Enhancements
   `Andrew Tulloch`_.
 
 - Speed and memory usage improvements to the SGD algorithm for linear
-  models: it now uses threads, not separate processes, when ``n_jobs>1``.
+  models: it now uses threads, not separate processes, when `n_jobs>1`.
   By `Lars Buitinck`_.
 
 - Grid search and cross validation allow NaNs in the input arrays so that
@@ -291,7 +291,7 @@ Enhancements
   Both solutions are provided by the Cholesky solver.
 
 - Several classification and regression metrics now support weighted
-  samples with the new ``sample_weight`` argument:
+  samples with the new `sample_weight` argument:
   :func:`metrics.accuracy_score`,
   :func:`metrics.zero_one_loss`,
   :func:`metrics.precision_score`,
@@ -331,25 +331,25 @@ Bug fixes
 .........
 
 - Fixed bug in :class:`decomposition.MiniBatchDictionaryLearning` :
-  ``partial_fit`` was not working properly.
+  `partial_fit` was not working properly.
 
 - Fixed bug in :class:`linear_model.stochastic_gradient` :
-  ``l1_ratio`` was used as ``(1.0 - l1_ratio)`` .
+  `l1_ratio` was used as `(1.0 - l1_ratio)` .
 
 - Fixed bug in :class:`multiclass.OneVsOneClassifier` with string
   labels
 
 - Fixed a bug in :class:`LassoCV <linear_model.LassoCV>` and
   :class:`ElasticNetCV <linear_model.ElasticNetCV>`: they would not
-  pre-compute the Gram matrix with ``precompute=True`` or
-  ``precompute="auto"`` and ``n_samples > n_features``. By `Manoj Kumar`_.
+  pre-compute the Gram matrix with `precompute=True` or
+  `precompute="auto"` and `n_samples > n_features`. By `Manoj Kumar`_.
 
 - Fixed incorrect estimation of the degrees of freedom in
   :func:`feature_selection.f_regression` when variates are not centered.
   By :user:`Virgile Fritsch <VirgileFritsch>`.
 
 - Fixed a race condition in parallel processing with
-  ``pre_dispatch != "all"`` (for instance, in ``cross_val_score``).
+  `pre_dispatch != "all"` (for instance, in `cross_val_score`).
   By `Olivier Grisel`_.
 
 - Raise error in :class:`cluster.FeatureAgglomeration` and
@@ -357,10 +357,10 @@ Bug fixes
   rather than returning meaningless clustering.
 
 - Fixed bug in :class:`gradient_boosting.GradientBoostingRegressor` with
-  ``loss='huber'``: ``gamma`` might have not been initialized.
+  `loss='huber'`: `gamma` might have not been initialized.
 
 - Fixed feature importances as computed with a forest of randomized trees
-  when fit with ``sample_weight != None`` and/or with ``bootstrap=True``.
+  when fit with `sample_weight != None` and/or with `bootstrap=True`.
   By `Gilles Louppe`_.
 
 API changes summary
@@ -399,24 +399,24 @@ API changes summary
   now returns the average log-likelihood of the samples. Use score_samples
   to get log-likelihood of each sample. By `Alexandre Gramfort`_.
 
-- Generating boolean masks (the setting ``indices=False``)
+- Generating boolean masks (the setting `indices=False`)
   from cross-validation generators is deprecated.
   Support for masks will be removed in 0.17.
   The generators have produced arrays of indices by default since 0.10.
   By `Joel Nothman`_.
 
-- 1-d arrays containing strings with ``dtype=object`` (as used in Pandas)
+- 1-d arrays containing strings with `dtype=object` (as used in Pandas)
   are now considered valid classification targets. This fixes a regression
   from version 0.13 in some classifiers. By `Joel Nothman`_.
 
-- Fix wrong ``explained_variance_ratio_`` attribute in
+- Fix wrong `explained_variance_ratio_` attribute in
   :class:`RandomizedPCA <decomposition.RandomizedPCA>`.
   By `Alexandre Gramfort`_.
 
-- Fit alphas for each ``l1_ratio`` instead of ``mean_l1_ratio`` in
+- Fit alphas for each `l1_ratio` instead of `mean_l1_ratio` in
   :class:`linear_model.ElasticNetCV` and :class:`linear_model.LassoCV`.
-  This changes the shape of ``alphas_`` from ``(n_alphas,)`` to
-  ``(n_l1_ratio, n_alphas)`` if the ``l1_ratio`` provided is a 1-D array like
+  This changes the shape of `alphas_` from `(n_alphas,)` to
+  `(n_l1_ratio, n_alphas)` if the `l1_ratio` provided is a 1-D array like
   object of length greater than one.
   By `Manoj Kumar`_.
 
@@ -425,16 +425,16 @@ API changes summary
   of alphas was not computed correctly and the scaling with normalize
   was wrong. By `Manoj Kumar`_.
 
-- Fix wrong maximal number of features drawn (``max_features``) at each split
+- Fix wrong maximal number of features drawn (`max_features`) at each split
   for decision trees, random forests and gradient tree boosting.
   Previously, the count for the number of drawn features started only after
   one non constant features in the split. This bug fix will affect
   computational and generalization performance of those algorithms in the
   presence of constant features. To get back previous generalization
-  performance, you should modify the value of ``max_features``.
+  performance, you should modify the value of `max_features`.
   By `Arnaud Joly`_.
 
-- Fix wrong maximal number of features drawn (``max_features``) at each split
+- Fix wrong maximal number of features drawn (`max_features`) at each split
   for :class:`ensemble.ExtraTreesClassifier` and
   :class:`ensemble.ExtraTreesRegressor`. Previously, only non constant
   features in the split was counted as drawn. Now constant features are
@@ -442,15 +442,15 @@ API changes summary
   in order to make a valid split. This bug fix will affect
   computational and generalization performance of extra trees in the
   presence of constant features. To get back previous generalization
-  performance, you should modify the value of ``max_features``.
+  performance, you should modify the value of `max_features`.
   By `Arnaud Joly`_.
 
-- Fix :func:`utils.compute_class_weight` when ``class_weight=="auto"``.
-  Previously it was broken for input of non-integer ``dtype`` and the
+- Fix :func:`utils.compute_class_weight` when `class_weight=="auto"`.
+  Previously it was broken for input of non-integer `dtype` and the
   weighted array that was returned was wrong. By `Manoj Kumar`_.
 
-- Fix :class:`cross_validation.Bootstrap` to return ``ValueError``
-  when ``n_train + n_test > n``. By :user:`Ronald Phlypo <rphlypo>`.
+- Fix :class:`cross_validation.Bootstrap` to return `ValueError`
+  when `n_train + n_test > n`. By :user:`Ronald Phlypo <rphlypo>`.
 
 
 People

@@ -79,9 +79,9 @@ Building Scikit-learn also requires
 .. note::
 
    It is possible to build scikit-learn without OpenMP support by setting the
-   ``SKLEARN_NO_OPENMP`` environment variable (before cythonization). This is
+   `SKLEARN_NO_OPENMP` environment variable (before cythonization). This is
    not recommended since it will force some estimators to run in sequential
-   mode and their ``n_jobs`` parameter will be ignored.
+   mode and their `n_jobs` parameter will be ignored.
 
 
 Running tests requires
@@ -104,7 +104,7 @@ You can check out the latest sources with the command::
 
     git clone git://github.com/scikit-learn/scikit-learn.git
 
-If you want to build a stable version, you can ``git checkout <VERSION>``
+If you want to build a stable version, you can `git checkout <VERSION>`
 to get the code for that particular version, or download an zip archive of
 the version from github.
 
@@ -121,7 +121,7 @@ builds the extension in place and creates a link to the development directory
 
 .. note::
 
-    This is fundamentally similar to using the command ``python setup.py develop``
+    This is fundamentally similar to using the command `python setup.py develop`
     (see `the setuptool docs <https://setuptools.readthedocs.io/en/latest/setuptools.html#development-mode>`_).
     It is however preferred to use pip.
 
@@ -135,8 +135,8 @@ builds the extension in place and creates a link to the development directory
     instance when switching branches or pulling changes from upstream).
     Compiled extensions are Cython files (ending in `.pyx` or `.pxd`).
 
-On Unix-like systems, you can equivalently type ``make in`` from the
-top-level folder. Have a look at the ``Makefile`` for additional utilities.
+On Unix-like systems, you can equivalently type `make in` from the
+top-level folder. Have a look at the `Makefile` for additional utilities.
 
 Mac OSX
 -------
@@ -172,8 +172,8 @@ include OpenMP support. You need to install the `openmp` library from packages
 
     sudo pkg install openmp
     
-This will install header files in ``/usr/local/include`` and libs in 
-``/usr/local/lib``. Since these directories are not searched by default, you 
+This will install header files in `/usr/local/include` and libs in 
+`/usr/local/lib`. Since these directories are not searched by default, you 
 can set the environment variables to these locations::
 
     export CFLAGS="$CFLAGS -I/usr/local/include"
@@ -252,7 +252,7 @@ addition to numpy, scipy and setuptools.
 
 The building command depends on the architecture of the Python interpreter,
 32-bit or 64-bit. You can check the architecture by running the following in
-``cmd`` or ``powershell`` console::
+`cmd` or `powershell` console::
 
     python -c "import struct; print(struct.calcsize('P') * 8)"
 
@@ -271,18 +271,18 @@ And build scikit-learn from this environment::
 
     python setup.py install
 
-Replace ``x64`` by ``x86`` to build for 32-bit Python.
+Replace `x64` by `x86` to build for 32-bit Python.
 
 
 Building binary packages and installers
 ---------------------------------------
 
-The ``.whl`` package and ``.exe`` installers can be built with::
+The `.whl` package and `.exe` installers can be built with::
 
     pip install wheel
     python setup.py bdist_wheel bdist_wininst -b doc/logos/scikit-learn-logo.bmp
 
-The resulting packages are generated in the ``dist/`` folder.
+The resulting packages are generated in the `dist/` folder.
 
 
 Using an alternative compiler
@@ -293,9 +293,9 @@ OS) as an alternative to MSVC for 32-bit Python. Not that extensions built with
 mingw32 can be redistributed as reusable packages as they depend on GCC runtime
 libraries typically not installed on end-users environment.
 
-To force the use of a particular compiler, pass the ``--compiler`` flag to the
+To force the use of a particular compiler, pass the `--compiler` flag to the
 build step::
 
     python setup.py build --compiler=my_compiler install
 
-where ``my_compiler`` should be one of ``mingw32`` or ``msvc``.
+where `my_compiler` should be one of `mingw32` or `msvc`.

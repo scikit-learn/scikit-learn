@@ -42,7 +42,7 @@ class BaseNB(BaseEstimator, ClassifierMixin, metaclass=ABCMeta):
     def _joint_log_likelihood(self, X):
         """Compute the unnormalized posterior log probability of X
 
-        I.e. ``log P(c) + log P(x|c)`` for all rows x of X, as an array-like of
+        I.e. `log P(c) + log P(x|c)` for all rows x of X, as an array-like of
         shape [n_classes, n_samples].
 
         Input is passed to _joint_log_likelihood as-is by predict,
@@ -667,15 +667,15 @@ class MultinomialNB(BaseDiscreteNB):
         Smoothed empirical log probability for each class.
 
     intercept_ : array, shape (n_classes, )
-        Mirrors ``class_log_prior_`` for interpreting MultinomialNB
+        Mirrors `class_log_prior_` for interpreting MultinomialNB
         as a linear model.
 
     feature_log_prob_ : array, shape (n_classes, n_features)
         Empirical log probability of features
-        given a class, ``P(x_i|y)``.
+        given a class, `P(x_i|y)`.
 
     coef_ : array, shape (n_classes, n_features)
-        Mirrors ``feature_log_prob_`` for interpreting MultinomialNB
+        Mirrors `feature_log_prob_` for interpreting MultinomialNB
         as a linear model.
 
     class_count_ : array, shape (n_classes,)

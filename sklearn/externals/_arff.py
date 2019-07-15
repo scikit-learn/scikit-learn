@@ -67,10 +67,10 @@ the case of XOR dataset::
     %
     %
 
-Notice that several lines are starting with an ``%`` symbol, denoting a
-comment, thus, lines with ``%`` at the beginning will be ignored, except by the
-description part at the beginning of the file. The declarations ``@RELATION``,
-``@ATTRIBUTE``, and ``@DATA`` are all case insensitive and obligatory.
+Notice that several lines are starting with an `%` symbol, denoting a
+comment, thus, lines with `%` at the beginning will be ignored, except by the
+description part at the beginning of the file. The declarations `@RELATION`,
+`@ATTRIBUTE`, and `@DATA` are all case insensitive and obligatory.
 
 For more information and details about the ARFF file description, consult
 http://www.cs.waikato.ac.nz/~ml/weka/arff.html
@@ -96,9 +96,9 @@ and have the following keys:
   a list with values, depending on the attributes.
 
 The above keys must follow the case which were described, i.e., the keys are
-case sensitive. The attribute type ``attribute_type`` must be one of these
-strings (they are not case sensitive): ``NUMERIC``, ``INTEGER``, ``REAL`` or
-``STRING``. For nominal attributes, the ``atribute_type`` must be a list of
+case sensitive. The attribute type `attribute_type` must be one of these
+strings (they are not case sensitive): `NUMERIC`, `INTEGER`, `REAL` or
+`STRING`. For nominal attributes, the `atribute_type` must be a list of
 strings.
 
 In this format, the XOR dataset presented above can be represented as a python
@@ -133,8 +133,8 @@ This module provides several features, including:
   and lists of dictionaries as used by SVMLight
 - Supports the following attribute types: NUMERIC, REAL, INTEGER, STRING, and
   NOMINAL;
-- Has an interface similar to other built-in modules such as ``json``, or
-  ``zipfile``;
+- Has an interface similar to other built-in modules such as `json`, or
+  `zipfile`;
 - Supports read and write the descriptions of files;
 - Supports missing values and names with spaces;
 - Supports unicode values and names;
@@ -671,7 +671,7 @@ class ArffDecoder(object):
     def _decode_comment(self, s):
         '''(INTERNAL) Decodes a comment line.
 
-        Comments are single line strings starting, obligatorily, with the ``%``
+        Comments are single line strings starting, obligatorily, with the `%`
         character, and can have any symbol, including whitespaces or special
         characters.
 
@@ -687,8 +687,8 @@ class ArffDecoder(object):
     def _decode_relation(self, s):
         '''(INTERNAL) Decodes a relation line.
 
-        The relation declaration is a line with the format ``@RELATION
-        <relation-name>``, where ``relation-name`` is a string. The string must
+        The relation declaration is a line with the format `@RELATION
+        <relation-name>`, where `relation-name` is a string. The string must
         start with alphabetic character and must be quoted if the name includes
         spaces, otherwise this method will raise a `BadRelationFormat` exception.
 
@@ -715,11 +715,11 @@ class ArffDecoder(object):
 
              @attribute <attribute-name> <datatype>
 
-        where ``attribute-name`` is a string, quoted if the name contains any
-        whitespace, and ``datatype`` can be:
+        where `attribute-name` is a string, quoted if the name contains any
+        whitespace, and `datatype` can be:
 
-        - Numerical attributes as ``NUMERIC``, ``INTEGER`` or ``REAL``.
-        - Strings as ``STRING``.
+        - Numerical attributes as `NUMERIC`, `INTEGER` or `REAL`.
+        - Strings as `STRING`.
         - Dates (NOT IMPLEMENTED).
         - Nominal attributes with format:
 
@@ -766,7 +766,7 @@ class ArffDecoder(object):
         return (name, type_)
 
     def _decode(self, s, encode_nominal=False, matrix_type=DENSE):
-        '''Do the job the ``encode``.'''
+        '''Do the job the `encode`.'''
 
         # Make sure this method is idempotent
         self._current_line = 0
@@ -901,11 +901,11 @@ class ArffEncoder(object):
     def _encode_comment(self, s=''):
         '''(INTERNAL) Encodes a comment line.
 
-        Comments are single line strings starting, obligatorily, with the ``%``
+        Comments are single line strings starting, obligatorily, with the `%`
         character, and can have any symbol, including whitespaces or special
         characters.
 
-        If ``s`` is None, this method will simply return an empty comment.
+        If `s` is None, this method will simply return an empty comment.
 
         :param s: (OPTIONAL) string.
         :return: a string with the encoded comment line.
@@ -918,8 +918,8 @@ class ArffEncoder(object):
     def _encode_relation(self, name):
         '''(INTERNAL) Decodes a relation line.
 
-        The relation declaration is a line with the format ``@RELATION
-        <relation-name>``, where ``relation-name`` is a string.
+        The relation declaration is a line with the format `@RELATION
+        <relation-name>`, where `relation-name` is a string.
 
         :param name: a string.
         :return: a string with the encoded relation declaration.
@@ -938,17 +938,17 @@ class ArffEncoder(object):
 
              @attribute <attribute-name> <datatype>
 
-        where ``attribute-name`` is a string, and ``datatype`` can be:
+        where `attribute-name` is a string, and `datatype` can be:
 
-        - Numerical attributes as ``NUMERIC``, ``INTEGER`` or ``REAL``.
-        - Strings as ``STRING``.
+        - Numerical attributes as `NUMERIC`, `INTEGER` or `REAL`.
+        - Strings as `STRING`.
         - Dates (NOT IMPLEMENTED).
         - Nominal attributes with format:
 
             {<nominal-name1>, <nominal-name2>, <nominal-name3>, ...}
 
         This method must receive a the name of the attribute and its type, if
-        the attribute type is nominal, ``type`` must be a list of values.
+        the attribute type is nominal, `type` must be a list of values.
 
         :param name: a string.
         :param type_: a string or a list of string.

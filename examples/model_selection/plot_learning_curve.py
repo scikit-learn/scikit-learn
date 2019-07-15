@@ -62,17 +62,17 @@ def plot_learning_curve(estimator, title, X, y, axes=None, ylim=None, cv=None,
           - :term:`CV splitter`,
           - An iterable yielding (train, test) splits as arrays of indices.
 
-        For integer/None inputs, if ``y`` is binary or multiclass,
+        For integer/None inputs, if `y` is binary or multiclass,
         :class:`StratifiedKFold` used. If the estimator is not a classifier
-        or if ``y`` is neither binary nor multiclass, :class:`KFold` is used.
+        or if `y` is neither binary nor multiclass, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validators that can be used here.
 
     n_jobs : int or None, optional (default=None)
         Number of jobs to run in parallel.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     train_sizes : array-like, shape (n_ticks,), dtype float or int

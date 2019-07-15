@@ -4,28 +4,28 @@ Those methods include random forests and extremely randomized trees.
 
 The module structure is the following:
 
-- The ``BaseForest`` base class implements a common ``fit`` method for all
-  the estimators in the module. The ``fit`` method of the base ``Forest``
-  class calls the ``fit`` method of each sub-estimator on random samples
+- The `BaseForest` base class implements a common `fit` method for all
+  the estimators in the module. The `fit` method of the base `Forest`
+  class calls the `fit` method of each sub-estimator on random samples
   (with replacement, a.k.a. bootstrap) of the training set.
 
   The init of the sub-estimator is further delegated to the
-  ``BaseEnsemble`` constructor.
+  `BaseEnsemble` constructor.
 
-- The ``ForestClassifier`` and ``ForestRegressor`` base classes further
+- The `ForestClassifier` and `ForestRegressor` base classes further
   implement the prediction logic by computing an average of the predicted
   outcomes of the sub-estimators.
 
-- The ``RandomForestClassifier`` and ``RandomForestRegressor`` derived
+- The `RandomForestClassifier` and `RandomForestRegressor` derived
   classes provide the user with concrete implementations of
   the forest ensemble method using classical, deterministic
-  ``DecisionTreeClassifier`` and ``DecisionTreeRegressor`` as
+  `DecisionTreeClassifier` and `DecisionTreeRegressor` as
   sub-estimator implementations.
 
-- The ``ExtraTreesClassifier`` and ``ExtraTreesRegressor`` derived
+- The `ExtraTreesClassifier` and `ExtraTreesRegressor` derived
   classes provide the user with concrete implementations of the
   forest ensemble method using the extremely randomized trees
-  ``ExtraTreeClassifier`` and ``ExtraTreeRegressor`` as
+  `ExtraTreeClassifier` and `ExtraTreeRegressor` as
   sub-estimator implementations.
 
 Single and multi-output problems are both handled.
@@ -161,8 +161,8 @@ class BaseForest(BaseEnsemble, MultiOutputMixin, metaclass=ABCMeta):
         ----------
         X : array-like or sparse matrix, shape = [n_samples, n_features]
             The input samples. Internally, its dtype will be converted to
-            ``dtype=np.float32``. If a sparse matrix is provided, it will be
-            converted into a sparse ``csr_matrix``.
+            `dtype=np.float32`. If a sparse matrix is provided, it will be
+            converted into a sparse `csr_matrix`.
 
         Returns
         -------
@@ -187,8 +187,8 @@ class BaseForest(BaseEnsemble, MultiOutputMixin, metaclass=ABCMeta):
         ----------
         X : array-like or sparse matrix, shape = [n_samples, n_features]
             The input samples. Internally, its dtype will be converted to
-            ``dtype=np.float32``. If a sparse matrix is provided, it will be
-            converted into a sparse ``csr_matrix``.
+            `dtype=np.float32`. If a sparse matrix is provided, it will be
+            converted into a sparse `csr_matrix`.
 
         Returns
         -------
@@ -221,8 +221,8 @@ class BaseForest(BaseEnsemble, MultiOutputMixin, metaclass=ABCMeta):
         ----------
         X : array-like or sparse matrix of shape = [n_samples, n_features]
             The training input samples. Internally, its dtype will be converted
-            to ``dtype=np.float32``. If a sparse matrix is provided, it will be
-            converted into a sparse ``csc_matrix``.
+            to `dtype=np.float32`. If a sparse matrix is provided, it will be
+            converted into a sparse `csc_matrix`.
 
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             The target values (class labels in classification, real numbers in
@@ -526,8 +526,8 @@ class ForestClassifier(BaseForest, ClassifierMixin, metaclass=ABCMeta):
         ----------
         X : array-like or sparse matrix of shape = [n_samples, n_features]
             The input samples. Internally, its dtype will be converted to
-            ``dtype=np.float32``. If a sparse matrix is provided, it will be
-            converted into a sparse ``csr_matrix``.
+            `dtype=np.float32`. If a sparse matrix is provided, it will be
+            converted into a sparse `csr_matrix`.
 
         Returns
         -------
@@ -565,8 +565,8 @@ class ForestClassifier(BaseForest, ClassifierMixin, metaclass=ABCMeta):
         ----------
         X : array-like or sparse matrix of shape = [n_samples, n_features]
             The input samples. Internally, its dtype will be converted to
-            ``dtype=np.float32``. If a sparse matrix is provided, it will be
-            converted into a sparse ``csr_matrix``.
+            `dtype=np.float32`. If a sparse matrix is provided, it will be
+            converted into a sparse `csr_matrix`.
 
         Returns
         -------
@@ -611,8 +611,8 @@ class ForestClassifier(BaseForest, ClassifierMixin, metaclass=ABCMeta):
         ----------
         X : array-like or sparse matrix of shape = [n_samples, n_features]
             The input samples. Internally, its dtype will be converted to
-            ``dtype=np.float32``. If a sparse matrix is provided, it will be
-            converted into a sparse ``csr_matrix``.
+            `dtype=np.float32`. If a sparse matrix is provided, it will be
+            converted into a sparse `csr_matrix`.
 
         Returns
         -------
@@ -672,8 +672,8 @@ class ForestRegressor(BaseForest, RegressorMixin, metaclass=ABCMeta):
         ----------
         X : array-like or sparse matrix of shape = [n_samples, n_features]
             The input samples. Internally, its dtype will be converted to
-            ``dtype=np.float32``. If a sparse matrix is provided, it will be
-            converted into a sparse ``csr_matrix``.
+            `dtype=np.float32`. If a sparse matrix is provided, it will be
+            converted into a sparse `csr_matrix`.
 
         Returns
         -------
@@ -765,7 +765,7 @@ class RandomForestClassifier(ForestClassifier):
         The number of trees in the forest.
 
         .. versionchanged:: 0.22
-           The default value of ``n_estimators`` changed from 10 to 100
+           The default value of `n_estimators` changed from 10 to 100
            in 0.22.
 
     criterion : string, optional (default="gini")
@@ -792,7 +792,7 @@ class RandomForestClassifier(ForestClassifier):
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node.
         A split point at any depth will only be considered if it leaves at
-        least ``min_samples_leaf`` training samples in each of the left and
+        least `min_samples_leaf` training samples in each of the left and
         right branches.  This may have the effect of smoothing the model,
         especially in regression.
 
@@ -823,10 +823,10 @@ class RandomForestClassifier(ForestClassifier):
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
-        effectively inspect more than ``max_features`` features.
+        effectively inspect more than `max_features` features.
 
     max_leaf_nodes : int or None, optional (default=None)
-        Grow trees with ``max_leaf_nodes`` in best-first fashion.
+        Grow trees with `max_leaf_nodes` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
@@ -839,12 +839,12 @@ class RandomForestClassifier(ForestClassifier):
             N_t / N * (impurity - N_t_R / N_t * right_impurity
                                 - N_t_L / N_t * left_impurity)
 
-        where ``N`` is the total number of samples, ``N_t`` is the number of
-        samples at the current node, ``N_t_L`` is the number of samples in the
-        left child, and ``N_t_R`` is the number of samples in the right child.
+        where `N` is the total number of samples, `N_t` is the number of
+        samples at the current node, `N_t_L` is the number of samples in the
+        left child, and `N_t_R` is the number of samples in the right child.
 
-        ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
-        if ``sample_weight`` is passed.
+        `N`, `N_t`, `N_t_R` and `N_t_L` all refer to the weighted sum,
+        if `sample_weight` is passed.
 
         .. versionadded:: 0.19
 
@@ -853,10 +853,10 @@ class RandomForestClassifier(ForestClassifier):
         if its impurity is above the threshold, otherwise it is a leaf.
 
         .. deprecated:: 0.19
-           ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19. The default value of
-           ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
-           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
+           `min_impurity_split` has been deprecated in favor of
+           `min_impurity_decrease` in 0.19. The default value of
+           `min_impurity_split` will change from 1e-7 to 0 in 0.23 and it
+           will be removed in 0.25. Use `min_impurity_decrease` instead.
 
 
     bootstrap : boolean, optional (default=True)
@@ -869,8 +869,8 @@ class RandomForestClassifier(ForestClassifier):
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for both `fit` and `predict`.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     random_state : int, RandomState instance or None, optional (default=None)
@@ -883,13 +883,13 @@ class RandomForestClassifier(ForestClassifier):
         Controls the verbosity when fitting and predicting.
 
     warm_start : bool, optional (default=False)
-        When set to ``True``, reuse the solution of the previous call to fit
+        When set to `True`, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`the Glossary <warm_start>`.
 
     class_weight : dict, list of dicts, "balanced", "balanced_subsample" or \
     None, optional (default=None)
-        Weights associated with classes in the form ``{class_label: weight}``.
+        Weights associated with classes in the form `{class_label: weight}`.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
         order as the columns of y.
@@ -902,7 +902,7 @@ class RandomForestClassifier(ForestClassifier):
 
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``
+        as `n_samples / (n_classes * np.bincount(y))`
 
         The "balanced_subsample" mode is the same as "balanced" except that
         weights are computed based on the bootstrap sample for every tree
@@ -931,10 +931,10 @@ class RandomForestClassifier(ForestClassifier):
         number of classes for each output (multi-output problem).
 
     n_features_ : int
-        The number of features when ``fit`` is performed.
+        The number of features when `fit` is performed.
 
     n_outputs_ : int
-        The number of outputs when ``fit`` is performed.
+        The number of outputs when `fit` is performed.
 
     feature_importances_ : array of shape = [n_features]
         The feature importances (the higher, the more important the feature).
@@ -967,17 +967,17 @@ class RandomForestClassifier(ForestClassifier):
     Notes
     -----
     The default values for the parameters controlling the size of the trees
-    (e.g. ``max_depth``, ``min_samples_leaf``, etc.) lead to fully grown and
+    (e.g. `max_depth`, `min_samples_leaf`, etc.) lead to fully grown and
     unpruned trees which can potentially be very large on some data sets. To
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
 
     The features are always randomly permuted at each split. Therefore,
     the best found split may vary, even with the same training data,
-    ``max_features=n_features`` and ``bootstrap=False``, if the improvement
+    `max_features=n_features` and `bootstrap=False`, if the improvement
     of the criterion is identical for several splits enumerated during the
     search of the best split. To obtain a deterministic behaviour during
-    fitting, ``random_state`` has to be fixed.
+    fitting, `random_state` has to be fixed.
 
     References
     ----------
@@ -1051,7 +1051,7 @@ class RandomForestRegressor(ForestRegressor):
         The number of trees in the forest.
 
         .. versionchanged:: 0.22
-           The default value of ``n_estimators`` changed from 10 to 100
+           The default value of `n_estimators` changed from 10 to 100
            in 0.22.
 
     criterion : string, optional (default="mse")
@@ -1082,7 +1082,7 @@ class RandomForestRegressor(ForestRegressor):
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node.
         A split point at any depth will only be considered if it leaves at
-        least ``min_samples_leaf`` training samples in each of the left and
+        least `min_samples_leaf` training samples in each of the left and
         right branches.  This may have the effect of smoothing the model,
         especially in regression.
 
@@ -1113,10 +1113,10 @@ class RandomForestRegressor(ForestRegressor):
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
-        effectively inspect more than ``max_features`` features.
+        effectively inspect more than `max_features` features.
 
     max_leaf_nodes : int or None, optional (default=None)
-        Grow trees with ``max_leaf_nodes`` in best-first fashion.
+        Grow trees with `max_leaf_nodes` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
@@ -1129,12 +1129,12 @@ class RandomForestRegressor(ForestRegressor):
             N_t / N * (impurity - N_t_R / N_t * right_impurity
                                 - N_t_L / N_t * left_impurity)
 
-        where ``N`` is the total number of samples, ``N_t`` is the number of
-        samples at the current node, ``N_t_L`` is the number of samples in the
-        left child, and ``N_t_R`` is the number of samples in the right child.
+        where `N` is the total number of samples, `N_t` is the number of
+        samples at the current node, `N_t_L` is the number of samples in the
+        left child, and `N_t_R` is the number of samples in the right child.
 
-        ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
-        if ``sample_weight`` is passed.
+        `N`, `N_t`, `N_t_R` and `N_t_L` all refer to the weighted sum,
+        if `sample_weight` is passed.
 
         .. versionadded:: 0.19
 
@@ -1143,10 +1143,10 @@ class RandomForestRegressor(ForestRegressor):
         if its impurity is above the threshold, otherwise it is a leaf.
 
         .. deprecated:: 0.19
-           ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19. The default value of
-           ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
-           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
+           `min_impurity_split` has been deprecated in favor of
+           `min_impurity_decrease` in 0.19. The default value of
+           `min_impurity_split` will change from 1e-7 to 0 in 0.23 and it
+           will be removed in 0.25. Use `min_impurity_decrease` instead.
 
     bootstrap : boolean, optional (default=True)
         Whether bootstrap samples are used when building trees. If False, the
@@ -1158,8 +1158,8 @@ class RandomForestRegressor(ForestRegressor):
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for both `fit` and `predict`.
-        `None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     random_state : int, RandomState instance or None, optional (default=None)
@@ -1172,7 +1172,7 @@ class RandomForestRegressor(ForestRegressor):
         Controls the verbosity when fitting and predicting.
 
     warm_start : bool, optional (default=False)
-        When set to ``True``, reuse the solution of the previous call to fit
+        When set to `True`, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`the Glossary <warm_start>`.
 
@@ -1189,10 +1189,10 @@ class RandomForestRegressor(ForestRegressor):
         The feature importances (the higher, the more important the feature).
 
     n_features_ : int
-        The number of features when ``fit`` is performed.
+        The number of features when `fit` is performed.
 
     n_outputs_ : int
-        The number of outputs when ``fit`` is performed.
+        The number of outputs when `fit` is performed.
 
     oob_score_ : float
         Score of the training dataset obtained using an out-of-bag estimate.
@@ -1218,20 +1218,20 @@ class RandomForestRegressor(ForestRegressor):
     Notes
     -----
     The default values for the parameters controlling the size of the trees
-    (e.g. ``max_depth``, ``min_samples_leaf``, etc.) lead to fully grown and
+    (e.g. `max_depth`, `min_samples_leaf`, etc.) lead to fully grown and
     unpruned trees which can potentially be very large on some data sets. To
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
 
     The features are always randomly permuted at each split. Therefore,
     the best found split may vary, even with the same training data,
-    ``max_features=n_features`` and ``bootstrap=False``, if the improvement
+    `max_features=n_features` and `bootstrap=False`, if the improvement
     of the criterion is identical for several splits enumerated during the
     search of the best split. To obtain a deterministic behaviour during
-    fitting, ``random_state`` has to be fixed.
+    fitting, `random_state` has to be fixed.
 
-    The default value ``max_features="auto"`` uses ``n_features``
-    rather than ``n_features / 3``. The latter was originally suggested in
+    The default value `max_features="auto"` uses `n_features`
+    rather than `n_features / 3`. The latter was originally suggested in
     [1], whereas the former was more recently justified empirically in [2].
 
     References
@@ -1305,7 +1305,7 @@ class ExtraTreesClassifier(ForestClassifier):
         The number of trees in the forest.
 
         .. versionchanged:: 0.22
-           The default value of ``n_estimators`` changed from 10 to 100
+           The default value of `n_estimators` changed from 10 to 100
            in 0.22.
 
     criterion : string, optional (default="gini")
@@ -1331,7 +1331,7 @@ class ExtraTreesClassifier(ForestClassifier):
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node.
         A split point at any depth will only be considered if it leaves at
-        least ``min_samples_leaf`` training samples in each of the left and
+        least `min_samples_leaf` training samples in each of the left and
         right branches.  This may have the effect of smoothing the model,
         especially in regression.
 
@@ -1362,10 +1362,10 @@ class ExtraTreesClassifier(ForestClassifier):
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
-        effectively inspect more than ``max_features`` features.
+        effectively inspect more than `max_features` features.
 
     max_leaf_nodes : int or None, optional (default=None)
-        Grow trees with ``max_leaf_nodes`` in best-first fashion.
+        Grow trees with `max_leaf_nodes` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
@@ -1378,12 +1378,12 @@ class ExtraTreesClassifier(ForestClassifier):
             N_t / N * (impurity - N_t_R / N_t * right_impurity
                                 - N_t_L / N_t * left_impurity)
 
-        where ``N`` is the total number of samples, ``N_t`` is the number of
-        samples at the current node, ``N_t_L`` is the number of samples in the
-        left child, and ``N_t_R`` is the number of samples in the right child.
+        where `N` is the total number of samples, `N_t` is the number of
+        samples at the current node, `N_t_L` is the number of samples in the
+        left child, and `N_t_R` is the number of samples in the right child.
 
-        ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
-        if ``sample_weight`` is passed.
+        `N`, `N_t`, `N_t_R` and `N_t_L` all refer to the weighted sum,
+        if `sample_weight` is passed.
 
         .. versionadded:: 0.19
 
@@ -1392,10 +1392,10 @@ class ExtraTreesClassifier(ForestClassifier):
         if its impurity is above the threshold, otherwise it is a leaf.
 
         .. deprecated:: 0.19
-           ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19. The default value of
-           ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
-           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
+           `min_impurity_split` has been deprecated in favor of
+           `min_impurity_decrease` in 0.19. The default value of
+           `min_impurity_split` will change from 1e-7 to 0 in 0.23 and it
+           will be removed in 0.25. Use `min_impurity_decrease` instead.
 
     bootstrap : boolean, optional (default=False)
         Whether bootstrap samples are used when building trees. If False, the
@@ -1407,8 +1407,8 @@ class ExtraTreesClassifier(ForestClassifier):
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for both `fit` and `predict`.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     random_state : int, RandomState instance or None, optional (default=None)
@@ -1421,13 +1421,13 @@ class ExtraTreesClassifier(ForestClassifier):
         Controls the verbosity when fitting and predicting.
 
     warm_start : bool, optional (default=False)
-        When set to ``True``, reuse the solution of the previous call to fit
+        When set to `True`, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`the Glossary <warm_start>`.
 
     class_weight : dict, list of dicts, "balanced", "balanced_subsample" or \
     None, optional (default=None)
-        Weights associated with classes in the form ``{class_label: weight}``.
+        Weights associated with classes in the form `{class_label: weight}`.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
         order as the columns of y.
@@ -1440,7 +1440,7 @@ class ExtraTreesClassifier(ForestClassifier):
 
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``
+        as `n_samples / (n_classes * np.bincount(y))`
 
         The "balanced_subsample" mode is the same as "balanced" except that weights are
         computed based on the bootstrap sample for every tree grown.
@@ -1471,10 +1471,10 @@ class ExtraTreesClassifier(ForestClassifier):
         The feature importances (the higher, the more important the feature).
 
     n_features_ : int
-        The number of features when ``fit`` is performed.
+        The number of features when `fit` is performed.
 
     n_outputs_ : int
-        The number of outputs when ``fit`` is performed.
+        The number of outputs when `fit` is performed.
 
     oob_score_ : float
         Score of the training dataset obtained using an out-of-bag estimate.
@@ -1488,7 +1488,7 @@ class ExtraTreesClassifier(ForestClassifier):
     Notes
     -----
     The default values for the parameters controlling the size of the trees
-    (e.g. ``max_depth``, ``min_samples_leaf``, etc.) lead to fully grown and
+    (e.g. `max_depth`, `min_samples_leaf`, etc.) lead to fully grown and
     unpruned trees which can potentially be very large on some data sets. To
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
@@ -1566,7 +1566,7 @@ class ExtraTreesRegressor(ForestRegressor):
         The number of trees in the forest.
 
         .. versionchanged:: 0.22
-           The default value of ``n_estimators`` changed from 10 to 100
+           The default value of `n_estimators` changed from 10 to 100
            in 0.22.
 
     criterion : string, optional (default="mse")
@@ -1597,7 +1597,7 @@ class ExtraTreesRegressor(ForestRegressor):
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node.
         A split point at any depth will only be considered if it leaves at
-        least ``min_samples_leaf`` training samples in each of the left and
+        least `min_samples_leaf` training samples in each of the left and
         right branches.  This may have the effect of smoothing the model,
         especially in regression.
 
@@ -1628,10 +1628,10 @@ class ExtraTreesRegressor(ForestRegressor):
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
-        effectively inspect more than ``max_features`` features.
+        effectively inspect more than `max_features` features.
 
     max_leaf_nodes : int or None, optional (default=None)
-        Grow trees with ``max_leaf_nodes`` in best-first fashion.
+        Grow trees with `max_leaf_nodes` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
@@ -1644,12 +1644,12 @@ class ExtraTreesRegressor(ForestRegressor):
             N_t / N * (impurity - N_t_R / N_t * right_impurity
                                 - N_t_L / N_t * left_impurity)
 
-        where ``N`` is the total number of samples, ``N_t`` is the number of
-        samples at the current node, ``N_t_L`` is the number of samples in the
-        left child, and ``N_t_R`` is the number of samples in the right child.
+        where `N` is the total number of samples, `N_t` is the number of
+        samples at the current node, `N_t_L` is the number of samples in the
+        left child, and `N_t_R` is the number of samples in the right child.
 
-        ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
-        if ``sample_weight`` is passed.
+        `N`, `N_t`, `N_t_R` and `N_t_L` all refer to the weighted sum,
+        if `sample_weight` is passed.
 
         .. versionadded:: 0.19
 
@@ -1658,10 +1658,10 @@ class ExtraTreesRegressor(ForestRegressor):
         if its impurity is above the threshold, otherwise it is a leaf.
 
         .. deprecated:: 0.19
-           ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19. The default value of
-           ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
-           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
+           `min_impurity_split` has been deprecated in favor of
+           `min_impurity_decrease` in 0.19. The default value of
+           `min_impurity_split` will change from 1e-7 to 0 in 0.23 and it
+           will be removed in 0.25. Use `min_impurity_decrease` instead.
 
     bootstrap : boolean, optional (default=False)
         Whether bootstrap samples are used when building trees. If False, the
@@ -1672,8 +1672,8 @@ class ExtraTreesRegressor(ForestRegressor):
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for both `fit` and `predict`.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     random_state : int, RandomState instance or None, optional (default=None)
@@ -1686,7 +1686,7 @@ class ExtraTreesRegressor(ForestRegressor):
         Controls the verbosity when fitting and predicting.
 
     warm_start : bool, optional (default=False)
-        When set to ``True``, reuse the solution of the previous call to fit
+        When set to `True`, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`the Glossary <warm_start>`.
 
@@ -1717,7 +1717,7 @@ class ExtraTreesRegressor(ForestRegressor):
     Notes
     -----
     The default values for the parameters controlling the size of the trees
-    (e.g. ``max_depth``, ``min_samples_leaf``, etc.) lead to fully grown and
+    (e.g. `max_depth`, `min_samples_leaf`, etc.) lead to fully grown and
     unpruned trees which can potentially be very large on some data sets. To
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
@@ -1786,8 +1786,8 @@ class RandomTreesEmbedding(BaseForest):
     the forest.
 
     The dimensionality of the resulting representation is
-    ``n_out <= n_estimators * max_leaf_nodes``. If ``max_leaf_nodes == None``,
-    the number of leaf nodes is at most ``n_estimators * 2 ** max_depth``.
+    `n_out <= n_estimators * max_leaf_nodes`. If `max_leaf_nodes == None`,
+    the number of leaf nodes is at most `n_estimators * 2 ** max_depth`.
 
     Read more in the :ref:`User Guide <random_trees_embedding>`.
 
@@ -1797,7 +1797,7 @@ class RandomTreesEmbedding(BaseForest):
         Number of trees in the forest.
 
         .. versionchanged:: 0.22
-           The default value of ``n_estimators`` changed from 10 to 100
+           The default value of `n_estimators` changed from 10 to 100
            in 0.22.
 
     max_depth : integer, optional (default=5)
@@ -1819,7 +1819,7 @@ class RandomTreesEmbedding(BaseForest):
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node.
         A split point at any depth will only be considered if it leaves at
-        least ``min_samples_leaf`` training samples in each of the left and
+        least `min_samples_leaf` training samples in each of the left and
         right branches.  This may have the effect of smoothing the model,
         especially in regression.
 
@@ -1837,7 +1837,7 @@ class RandomTreesEmbedding(BaseForest):
         equal weight when sample_weight is not provided.
 
     max_leaf_nodes : int or None, optional (default=None)
-        Grow trees with ``max_leaf_nodes`` in best-first fashion.
+        Grow trees with `max_leaf_nodes` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
@@ -1850,12 +1850,12 @@ class RandomTreesEmbedding(BaseForest):
             N_t / N * (impurity - N_t_R / N_t * right_impurity
                                 - N_t_L / N_t * left_impurity)
 
-        where ``N`` is the total number of samples, ``N_t`` is the number of
-        samples at the current node, ``N_t_L`` is the number of samples in the
-        left child, and ``N_t_R`` is the number of samples in the right child.
+        where `N` is the total number of samples, `N_t` is the number of
+        samples at the current node, `N_t_L` is the number of samples in the
+        left child, and `N_t_R` is the number of samples in the right child.
 
-        ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
-        if ``sample_weight`` is passed.
+        `N`, `N_t`, `N_t_R` and `N_t_L` all refer to the weighted sum,
+        if `sample_weight` is passed.
 
         .. versionadded:: 0.19
 
@@ -1864,10 +1864,10 @@ class RandomTreesEmbedding(BaseForest):
         if its impurity is above the threshold, otherwise it is a leaf.
 
         .. deprecated:: 0.19
-           ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19. The default value of
-           ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
-           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
+           `min_impurity_split` has been deprecated in favor of
+           `min_impurity_decrease` in 0.19. The default value of
+           `min_impurity_split` will change from 1e-7 to 0 in 0.23 and it
+           will be removed in 0.25. Use `min_impurity_decrease` instead.
 
     sparse_output : bool, optional (default=True)
         Whether or not to return a sparse CSR matrix, as default behavior,
@@ -1875,8 +1875,8 @@ class RandomTreesEmbedding(BaseForest):
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for both `fit` and `predict`.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     random_state : int, RandomState instance or None, optional (default=None)
@@ -1889,7 +1889,7 @@ class RandomTreesEmbedding(BaseForest):
         Controls the verbosity when fitting and predicting.
 
     warm_start : bool, optional (default=False)
-        When set to ``True``, reuse the solution of the previous call to fit
+        When set to `True`, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`the Glossary <warm_start>`.
 
@@ -1958,9 +1958,9 @@ class RandomTreesEmbedding(BaseForest):
         Parameters
         ----------
         X : array-like or sparse matrix, shape=(n_samples, n_features)
-            The input samples. Use ``dtype=np.float32`` for maximum
+            The input samples. Use `dtype=np.float32` for maximum
             efficiency. Sparse matrices are also supported, use sparse
-            ``csc_matrix`` for maximum efficiency.
+            `csc_matrix` for maximum efficiency.
 
         sample_weight : array-like, shape = [n_samples] or None
             Sample weights. If None, then samples are equally weighted. Splits
@@ -1983,7 +1983,7 @@ class RandomTreesEmbedding(BaseForest):
         Parameters
         ----------
         X : array-like or sparse matrix, shape=(n_samples, n_features)
-            Input data used to build forests. Use ``dtype=np.float32`` for
+            Input data used to build forests. Use `dtype=np.float32` for
             maximum efficiency.
 
         sample_weight : array-like, shape = [n_samples] or None
@@ -2017,9 +2017,9 @@ class RandomTreesEmbedding(BaseForest):
         Parameters
         ----------
         X : array-like or sparse matrix, shape=(n_samples, n_features)
-            Input data to be transformed. Use ``dtype=np.float32`` for maximum
+            Input data to be transformed. Use `dtype=np.float32` for maximum
             efficiency. Sparse matrices are also supported, use sparse
-            ``csr_matrix`` for maximum efficiency.
+            `csr_matrix` for maximum efficiency.
 
         Returns
         -------

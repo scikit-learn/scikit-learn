@@ -78,7 +78,7 @@ def bytescale(data, cmin=None, cmax=None, high=255, low=0):
     Byte scales an array (image).
 
     Byte scaling means converting the input image to uint8 dtype and scaling
-    the range to ``(low, high)`` (default 0-255).
+    the range to `(low, high)` (default 0-255).
     If the input image already has dtype uint8, no scaling is done.
 
     This function is only available if Python Imaging Library (PIL) is installed.
@@ -88,9 +88,9 @@ def bytescale(data, cmin=None, cmax=None, high=255, low=0):
     data : ndarray
         PIL image data array.
     cmin : scalar, optional
-        Bias scaling of small values. Default is ``data.min()``.
+        Bias scaling of small values. Default is `data.min()`.
     cmax : scalar, optional
-        Bias scaling of large values. Default is ``data.max()``.
+        Bias scaling of large values. Default is `data.max()`.
     high : scalar, optional
         Scale max value to `high`.  Default is 255.
     low : scalar, optional
@@ -161,7 +161,7 @@ def imread(name, flatten=False, mode=None):
     flatten : bool, optional
         If True, flattens the color layers into a single gray-scale layer.
     mode : str, optional
-        Mode to convert image to, e.g. ``'RGB'``.  See the Notes for more
+        Mode to convert image to, e.g. `'RGB'`.  See the Notes for more
         details.
 
     Returns
@@ -216,8 +216,8 @@ def imsave(name, arr, format=None):
     .. warning::
 
         This function uses `bytescale` under the hood to rescale images to use
-        the full (0, 255) range if ``mode`` is one of ``None, 'L', 'P', 'l'``.
-        It will also cast data for 2-D images to ``uint32`` for ``mode=None``
+        the full (0, 255) range if `mode` is one of `None, 'L', 'P', 'l'`.
+        It will also cast data for 2-D images to `uint32` for `mode=None`
         (which is the default).
 
     Parameters
@@ -225,10 +225,10 @@ def imsave(name, arr, format=None):
     name : str or file object
         Output file name or file object.
     arr : ndarray, MxN or MxNx3 or MxNx4
-        Array containing image values.  If the shape is ``MxN``, the array
-        represents a grey-level image.  Shape ``MxNx3`` stores the red, green
+        Array containing image values.  If the shape is `MxN`, the array
+        represents a grey-level image.  Shape `MxNx3` stores the red, green
         and blue bands along the last dimension.  An alpha layer may be
-        included, specified as the last colour band of an ``MxNx4`` array.
+        included, specified as the last colour band of an `MxNx4` array.
     format : str
         Image format. If omitted, the format to use is determined from the
         file name extension. If a file object was used instead of a file name,
@@ -275,7 +275,7 @@ def fromimage(im, flatten=False, mode=None):
     flatten : bool
         If true, convert the output to grey-scale.
     mode : str, optional
-        Mode to convert image to, e.g. ``'RGB'``.  See the Notes of the
+        Mode to convert image to, e.g. `'RGB'`.  See the Notes of the
         `imread` docstring for more details.
 
     Returns
@@ -332,14 +332,14 @@ def toimage(arr, high=255, low=0, cmin=None, cmax=None, pal=None,
     `mode` keywords.
 
     For 2-D arrays, if `pal` is a valid (N,3) byte-array giving the RGB values
-    (from 0 to 255) then ``mode='P'``, otherwise ``mode='L'``, unless mode
+    (from 0 to 255) then `mode='P'`, otherwise `mode='L'`, unless mode
     is given as 'F' or 'I' in which case a float and/or integer array is made.
 
     .. warning::
 
         This function uses `bytescale` under the hood to rescale images to use
-        the full (0, 255) range if ``mode`` is one of ``None, 'L', 'P', 'l'``.
-        It will also cast data for 2-D images to ``uint32`` for ``mode=None``
+        the full (0, 255) range if `mode` is one of `None, 'L', 'P', 'l'`.
+        It will also cast data for 2-D images to `uint32` for `mode=None`
         (which is the default).
 
     Notes
@@ -457,8 +457,8 @@ def imresize(arr, size, interp='bilinear', mode=None):
     .. warning::
 
         This function uses `bytescale` under the hood to rescale images to use
-        the full (0, 255) range if ``mode`` is one of ``None, 'L', 'P', 'l'``.
-        It will also cast data for 2-D images to ``uint32`` for ``mode=None``
+        the full (0, 255) range if `mode` is one of `None, 'L', 'P', 'l'`.
+        It will also cast data for 2-D images to `uint32` for `mode=None`
         (which is the default).
 
     Parameters
@@ -475,9 +475,9 @@ def imresize(arr, size, interp='bilinear', mode=None):
         'bicubic' or 'cubic').
     mode : str, optional
         The PIL image mode ('P', 'L', etc.) to convert `arr` before resizing.
-        If ``mode=None`` (the default), 2-D images will be treated like
-        ``mode='L'``, i.e. casting to long integer.  For 3-D and 4-D arrays,
-        `mode` will be set to ``'RGB'`` and ``'RGBA'`` respectively.
+        If `mode=None` (the default), 2-D images will be treated like
+        `mode='L'`, i.e. casting to long integer.  For 3-D and 4-D arrays,
+        `mode` will be set to `'RGB'` and `'RGBA'` respectively.
 
     Returns
     -------

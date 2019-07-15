@@ -164,7 +164,7 @@ class Kernel(metaclass=ABCMeta):
         """Set the parameters of this kernel.
 
         The method works on simple kernels as well as on nested kernels.
-        The latter have parameters of the form ``<component>__<parameter>``
+        The latter have parameters of the form `<component>__<parameter>`
         so that it's possible to update each component of a nested object.
 
         Returns

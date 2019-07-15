@@ -218,24 +218,24 @@ then submit a "pull request" (PR):
    for more details about advanced installation, see the
    :ref:`install_bleeding_edge` section.
 
-6. Add the ``upstream`` remote. This saves a reference to the main
+6. Add the `upstream` remote. This saves a reference to the main
    scikit-learn repository, which you can use to keep your repository
    synchronized with the latest changes::
 
     $ git remote add upstream https://github.com/scikit-learn/scikit-learn.git
 
-7. Fetch the ``upstream`` and then create a branch to hold your development
+7. Fetch the `upstream` and then create a branch to hold your development
    changes::
 
        $ git fetch upstream
        $ git checkout -b my-feature upstream/master
 
-   and start making changes. Always use a ``feature`` branch. It's good
-   practice to never work on the ``master`` branch!
+   and start making changes. Always use a `feature` branch. It's good
+   practice to never work on the `master` branch!
 
 8. Develop the feature on your feature branch on your computer, using Git to do the
-   version control. When you're done editing, add changed files using ``git add``
-   and then ``git commit`` files::
+   version control. When you're done editing, add changed files using `git add`
+   and then `git commit` files::
 
        $ git add modified_files
        $ git commit
@@ -276,11 +276,11 @@ Pull request checklist
 ----------------------
 
 Before a PR can be merged, it needs to be approved by two core developers.
-Please prefix the title of your pull request with ``[MRG]`` if the
+Please prefix the title of your pull request with `[MRG]` if the
 contribution is complete and should be subjected to a detailed review. An
 incomplete contribution -- where you expect to do more work before receiving
-a full review -- should be prefixed ``[WIP]`` (to indicate a work in
-progress) and changed to ``[MRG]`` when it matures. WIPs may be useful to:
+a full review -- should be prefixed `[WIP]` (to indicate a work in
+progress) and changed to `[MRG]` when it matures. WIPs may be useful to:
 indicate you are working on something to avoid duplicated work, request
 broad review of functionality or API, or seek collaborators. WIPs often
 benefit from the inclusion of a `task list
@@ -288,7 +288,7 @@ benefit from the inclusion of a `task list
 the PR description.
 
 In order to ease the reviewing process, we recommend that your contribution
-complies with the following rules before marking a PR as ``[MRG]``. The
+complies with the following rules before marking a PR as `[MRG]`. The
 **bolded** ones are especially important:
 
 1. **Give your pull request a helpful title** that summarises what your
@@ -342,18 +342,18 @@ complies with the following rules before marking a PR as ``[MRG]``. The
 6. Follow the `coding-guidelines`_ (see below).
 
 7. When applicable, use the validation tools and scripts in the
-   ``sklearn.utils`` submodule.  A list of utility routines available
+   `sklearn.utils` submodule.  A list of utility routines available
    for developers can be found in the :ref:`developers-utils` page.
 
 8. Often pull requests resolve one or more other issues (or pull requests).
    If merging your pull request means that some other issues/PRs should
    be closed, you should `use keywords to create link to them
    <https://github.com/blog/1506-closing-issues-via-pull-requests/>`_
-   (e.g., ``Fixes #1234``; multiple issues/PRs are allowed as long as each
+   (e.g., `Fixes #1234`; multiple issues/PRs are allowed as long as each
    one is preceded by a keyword). Upon merging, those issues/PRs will
    automatically be closed by GitHub. If your pull request is simply
    related to some other issues/PRs, create a link to them without using
-   the keywords (e.g., ``See also #1234``).
+   the keywords (e.g., `See also #1234`).
 
 9. PRs should often substantiate the change, through benchmarks of
    performance and efficiency or through examples of usage. Examples also
@@ -510,13 +510,13 @@ Documentation
 
 We are glad to accept any sort of documentation: function docstrings,
 reStructuredText documents (like this one), tutorials, etc. reStructuredText
-documents live in the source code repository under the ``doc/`` directory.
+documents live in the source code repository under the `doc/` directory.
 
 You can edit the documentation using any text editor, and then generate the
-HTML output by typing ``make`` from the ``doc/`` directory. Alternatively,
-``make html`` may be used to generate the documentation **with** the example
+HTML output by typing `make` from the `doc/` directory. Alternatively,
+`make html` may be used to generate the documentation **with** the example
 gallery (which takes quite some time). The resulting HTML files will be
-placed in ``_build/html/stable`` and are viewable in a web browser.
+placed in `_build/html/stable` and are viewable in a web browser.
 
 
 Building the documentation
@@ -529,7 +529,7 @@ Building the documentation requires installing some additional packages::
 
     pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas scikit-image
 
-To build the documentation, you need to be in the ``doc`` folder::
+To build the documentation, you need to be in the `doc` folder::
 
     cd doc
 
@@ -538,7 +538,7 @@ without the example gallery::
 
     make
 
-The documentation will be generated in the ``_build/html/stable`` directory.
+The documentation will be generated in the `_build/html/stable` directory.
 To also generate the example gallery you can use::
 
     make html
@@ -608,7 +608,7 @@ Finally, follow the formatting rules below to make it consistently good:
     * For "References" in docstrings, see the Silhouette Coefficient
       (:func:`sklearn.metrics.silhouette_score`).
 
-* When editing reStructuredText (``.rst``) files, try to keep line length under
+* When editing reStructuredText (`.rst`) files, try to keep line length under
   80 characters when possible (exceptions include links and tables).
 
 .. _generated_doc_CI:
@@ -623,11 +623,11 @@ builds it. To view the documentation generated by CircleCI:
   statuses. You may need to click on "Show all checks" to see all the CI
   statuses.
 * click on the CircleCI status with "doc" in the title.
-* add ``#artifacts`` at the end of the URL. Note: you need to wait for the
+* add `#artifacts` at the end of the URL. Note: you need to wait for the
   CircleCI build to finish before being able to look at the artifacts.
-* once the artifacts are visible, navigate to ``doc/_changed.html`` to see a
+* once the artifacts are visible, navigate to `doc/_changed.html` to see a
   list of documentation pages that are likely to be affected by your pull
-  request. Navigate to ``doc/index.html`` to see the full generated html
+  request. Navigate to `doc/index.html` to see the full generated html
   documentation.
 
 If you often need to look at the documentation generated by CircleCI, e.g. when
@@ -652,7 +652,7 @@ the corresponding subpackages.
 
 We expect code coverage of new features to be at least around 90%.
 
-For guidelines on how to use ``pytest`` efficiently, see the
+For guidelines on how to use `pytest` efficiently, see the
 :ref:`pytest_tips`.
 
 Writing matplotlib related tests
@@ -660,12 +660,12 @@ Writing matplotlib related tests
 
 Test fixtures ensure that a set of tests will be executing with the appropriate
 initialization and cleanup. The scikit-learn test suite implements a fixture
-which can be used with ``matplotlib``.
+which can be used with `matplotlib`.
 
-``pyplot``
-    The ``pyplot`` fixture should be used when a test function is dealing with
-    ``matplotlib``. ``matplotlib`` is a soft dependency and is not required.
-    This fixture is in charge of skipping the tests if ``matplotlib`` is not
+`pyplot`
+    The `pyplot` fixture should be used when a test function is dealing with
+    `matplotlib`. `matplotlib` is a soft dependency and is not required.
+    This fixture is in charge of skipping the tests if `matplotlib` is not
     installed. In addition, figures created during the tests will be
     automatically closed once the test function has been executed.
 
@@ -749,21 +749,21 @@ follow it.
 
 In addition, we add the following guidelines:
 
-* Use underscores to separate words in non class names: ``n_samples``
-  rather than ``nsamples``.
+* Use underscores to separate words in non class names: `n_samples`
+  rather than `nsamples`.
 
 * Avoid multiple statements on one line. Prefer a line return after
-  a control flow statement (``if``/``for``).
+  a control flow statement (`if`/`for`).
 
 * Use relative imports for references inside scikit-learn.
 
 * Unit tests are an exception to the previous rule;
   they should use absolute imports, exactly as client code would.
-  A corollary is that, if ``sklearn.foo`` exports a class or function
-  that is implemented in ``sklearn.foo.bar.baz``,
-  the test should import it from ``sklearn.foo``.
+  A corollary is that, if `sklearn.foo` exports a class or function
+  that is implemented in `sklearn.foo.bar.baz`,
+  the test should import it from `sklearn.foo`.
 
-* **Please don't use** ``import *`` **in any case**. It is considered harmful
+* **Please don't use** `import *` **in any case**. It is considered harmful
   by the `official Python recommendations
   <https://docs.python.org/2/howto/doanddont.html#from-module-import>`_.
   It makes the code harder to read as the origin of symbols is no
@@ -786,15 +786,15 @@ Input validation
 .. currentmodule:: sklearn.utils
 
 The module :mod:`sklearn.utils` contains various functions for doing input
-validation and conversion. Sometimes, ``np.asarray`` suffices for validation;
-do *not* use ``np.asanyarray`` or ``np.atleast_2d``, since those let NumPy's
-``np.matrix`` through, which has a different API
-(e.g., ``*`` means dot product on ``np.matrix``,
-but Hadamard product on ``np.ndarray``).
+validation and conversion. Sometimes, `np.asarray` suffices for validation;
+do *not* use `np.asanyarray` or `np.atleast_2d`, since those let NumPy's
+`np.matrix` through, which has a different API
+(e.g., `*` means dot product on `np.matrix`,
+but Hadamard product on `np.ndarray`).
 
 In other cases, be sure to call :func:`check_array` on any array-like argument
 passed to a scikit-learn API function. The exact parameters to use depends
-mainly on whether and which ``scipy.sparse`` matrices must be accepted.
+mainly on whether and which `scipy.sparse` matrices must be accepted.
 
 For more information, refer to the :ref:`developers-utils` page.
 
@@ -802,10 +802,10 @@ Random Numbers
 --------------
 
 If your code depends on a random number generator, do not use
-``numpy.random.random()`` or similar routines.  To ensure
+`numpy.random.random()` or similar routines.  To ensure
 repeatability in error checking, the routine should accept a keyword
-``random_state`` and use this to construct a
-``numpy.random.RandomState`` object.
+`random_state` and use this to construct a
+`numpy.random.RandomState` object.
 See :func:`sklearn.utils.check_random_state` in :ref:`developers-utils`.
 
 Here's a simple example of code using some of the above guidelines::
@@ -837,14 +837,14 @@ Here's a simple example of code using some of the above guidelines::
 If you use randomness in an estimator instead of a freestanding function,
 some additional guidelines apply.
 
-First off, the estimator should take a ``random_state`` argument to its
-``__init__`` with a default value of ``None``.
+First off, the estimator should take a `random_state` argument to its
+`__init__` with a default value of `None`.
 It should store that argument's value, **unmodified**,
-in an attribute ``random_state``.
-``fit`` can call ``check_random_state`` on that attribute
+in an attribute `random_state`.
+`fit` can call `check_random_state` on that attribute
 to get an actual random number generator.
-If, for some reason, randomness is needed after ``fit``,
-the RNG should be stored in an attribute ``random_state_``.
+If, for some reason, randomness is needed after `fit`,
+the RNG should be stored in an attribute `random_state_`.
 The following example should make this clear::
 
     class GaussianNoise(BaseEstimator, TransformerMixin):
@@ -866,9 +866,9 @@ The following example should make this clear::
             return self.random_state_.randn(n_samples, n_components)
 
 The reason for this setup is reproducibility:
-when an estimator is ``fit`` twice to the same data,
+when an estimator is `fit` twice to the same data,
 it should produce an identical model both times,
-hence the validation in ``fit``, not ``__init__``.
+hence the validation in `fit`, not `__init__`.
 
 .. _contributing_deprecation:
 
@@ -878,9 +878,9 @@ Deprecation
 If any publicly accessible method, function, attribute or parameter
 is renamed, we still support the old one for two releases and issue
 a deprecation warning when it is called/passed/accessed.
-E.g., if the function ``zero_one`` is renamed to ``zero_one_loss``,
-we add the decorator ``deprecated`` (from ``sklearn.utils``)
-to ``zero_one`` and call ``zero_one_loss`` from that function::
+E.g., if the function `zero_one` is renamed to `zero_one_loss`,
+we add the decorator `deprecated` (from `sklearn.utils`)
+to `zero_one` and call `zero_one_loss` from that function::
 
     from ..utils import deprecated
 
@@ -896,10 +896,10 @@ to ``zero_one`` and call ``zero_one_loss`` from that function::
         return zero_one_loss(y_true, y_pred, normalize)
 
 If an attribute is to be deprecated,
-use the decorator ``deprecated`` on a property. Please note that the
-``property`` decorator should be placed before the ``deprecated``
+use the decorator `deprecated` on a property. Please note that the
+`property` decorator should be placed before the `deprecated`
 decorator for the docstrings to be rendered properly.
-E.g., renaming an attribute ``labels_`` to ``classes_`` can be done as::
+E.g., renaming an attribute `labels_` to `classes_` can be done as::
 
     @deprecated("Attribute labels_ was deprecated in version 0.13 and "
                 "will be removed in 0.15. Use 'classes_' instead")
@@ -907,7 +907,7 @@ E.g., renaming an attribute ``labels_`` to ``classes_`` can be done as::
     def labels_(self):
         return self.classes_
 
-If a parameter has to be deprecated, use ``DeprecationWarning`` appropriately.
+If a parameter has to be deprecated, use `DeprecationWarning` appropriately.
 In the following example, k is deprecated and renamed to n_clusters::
 
     import warnings
@@ -918,7 +918,7 @@ In the following example, k is deprecated and renamed to n_clusters::
                           "will be removed in 0.15.", DeprecationWarning)
             n_clusters = k
 
-When the change is in a class, we validate and raise warning in ``fit``::
+When the change is in a class, we validate and raise warning in `fit`::
 
   import warnings
 
@@ -946,15 +946,15 @@ and the old behavior will be removed in version 0.20.
 
 In addition, a deprecation note should be added in the docstring, recalling the
 same information as the deprecation warning as explained above. Use the
-``.. deprecated::`` directive::
+`.. deprecated::` directive::
 
   .. deprecated:: 0.13
-     ``k`` was renamed to ``n_clusters`` in version 0.13 and will be removed
+     `k` was renamed to `n_clusters` in version 0.13 and will be removed
      in 0.15.
 
 What's more, a deprecation requires a test which ensures that the warning is
 raised in relevant cases but not in other cases. The warning should be caught
-in all other tests (using e.g., ``@pytest.mark.filterwarnings``),
+in all other tests (using e.g., `@pytest.mark.filterwarnings`),
 and there should be no warning in the examples.
 
 
@@ -962,9 +962,9 @@ Change the default value of a parameter
 ---------------------------------------
 
 If the default value of a parameter needs to be changed, please replace the
-default value with a specific value (e.g., ``warn``) and raise
-``FutureWarning`` when users are using the default value. In the following
-example, we change the default value of ``n_clusters`` from 5 to 10
+default value with a specific value (e.g., `warn`) and raise
+`FutureWarning` when users are using the default value. In the following
+example, we change the default value of `n_clusters` from 5 to 10
 (current version is 0.20)::
 
     import warnings
@@ -975,7 +975,7 @@ example, we change the default value of ``n_clusters`` from 5 to 10
                           "5 to 10 in 0.22.", FutureWarning)
             n_clusters = 5
 
-When the change is in a class, we validate and raise warning in ``fit``::
+When the change is in a class, we validate and raise warning in `fit`::
 
   import warnings
 
@@ -994,7 +994,7 @@ version in which the change happened and the version in which the old behavior
 will be removed. The docstring needs to be updated accordingly. We need a test
 which ensures that the warning is raised in relevant cases but not in other
 cases. The warning should be caught in all other tests
-(using e.g., ``@pytest.mark.filterwarnings``), and there should be no warning
+(using e.g., `@pytest.mark.filterwarnings`), and there should be no warning
 in the examples.
 
 
@@ -1087,7 +1087,7 @@ multiple interfaces):
 
 :Estimator:
 
-    The base object, implements a ``fit`` method to learn from data, either::
+    The base object, implements a `fit` method to learn from data, either::
 
       estimator = estimator.fit(data, targets)
 
@@ -1102,7 +1102,7 @@ multiple interfaces):
       prediction = predictor.predict(data)
 
     Classification algorithms usually also offer a way to quantify certainty
-    of a prediction, either using ``decision_function`` or ``predict_proba``::
+    of a prediction, either using `decision_function` or `predict_proba`::
 
       probability = predictor.predict_proba(data)
 
@@ -1135,26 +1135,26 @@ classifier or a regressor. All estimators implement the fit method::
 
     estimator.fit(X, y)
 
-All built-in estimators also have a ``set_params`` method, which sets
+All built-in estimators also have a `set_params` method, which sets
 data-independent parameters (overriding previous parameter values passed
-to ``__init__``).
+to `__init__`).
 
 All estimators in the main scikit-learn codebase should inherit from
-``sklearn.base.BaseEstimator``.
+`sklearn.base.BaseEstimator`.
 
 Instantiation
 ^^^^^^^^^^^^^
 
-This concerns the creation of an object. The object's ``__init__`` method
+This concerns the creation of an object. The object's `__init__` method
 might accept constants as arguments that determine the estimator's behavior
 (like the C constant in SVMs). It should not, however, take the actual training
-data as an argument, as this is left to the ``fit()`` method::
+data as an argument, as this is left to the `fit()` method::
 
     clf2 = SVC(C=2.3)
     clf3 = SVC([[1, 2], [2, 3]], [-1, 1]) # WRONG!
 
 
-The arguments accepted by ``__init__`` should all be keyword arguments
+The arguments accepted by `__init__` should all be keyword arguments
 with a default value. In other words, a user should be able to instantiate
 an estimator without passing any arguments to it. The arguments should all
 correspond to hyperparameters describing the model or the optimisation
@@ -1163,11 +1163,11 @@ are always remembered by the estimator.
 Also note that they should not be documented under the "Attributes" section,
 but rather under the "Parameters" section for that estimator.
 
-In addition, **every keyword argument accepted by** ``__init__`` **should
+In addition, **every keyword argument accepted by** `__init__` **should
 correspond to an attribute on the instance**. Scikit-learn relies on this to
 find the relevant attributes to set on an estimator when doing model selection.
 
-To summarize, an ``__init__`` should look like::
+To summarize, an `__init__` should look like::
 
     def __init__(self, param1=1, param2=2):
         self.param1 = param1
@@ -1176,7 +1176,7 @@ To summarize, an ``__init__`` should look like::
 There should be no logic, not even input validation,
 and the parameters should not be changed.
 The corresponding logic should be put where the parameters are used,
-typically in ``fit``.
+typically in `fit`.
 The following is wrong::
 
     def __init__(self, param1=1, param2=2, param3=3):
@@ -1189,16 +1189,16 @@ The following is wrong::
         self.param3 = param2
 
 The reason for postponing the validation is that the same validation
-would have to be performed in ``set_params``,
-which is used in algorithms like ``GridSearchCV``.
+would have to be performed in `set_params`,
+which is used in algorithms like `GridSearchCV`.
 
 Fitting
 ^^^^^^^
 
 The next thing you will probably want to do is to estimate some
-parameters in the model. This is implemented in the ``fit()`` method.
+parameters in the model. This is implemented in the `fit()` method.
 
-The ``fit()`` method takes the training data as arguments, which can be one
+The `fit()` method takes the training data as arguments, which can be one
 array in the case of unsupervised learning, or two arrays in the case
 of supervised learning.
 
@@ -1217,40 +1217,40 @@ y             array, shape (n_samples,)
 kwargs        optional data-dependent parameters.
 ============= ======================================================
 
-``X.shape[0]`` should be the same as ``y.shape[0]``. If this requisite
-is not met, an exception of type ``ValueError`` should be raised.
+`X.shape[0]` should be the same as `y.shape[0]`. If this requisite
+is not met, an exception of type `ValueError` should be raised.
 
-``y`` might be ignored in the case of unsupervised learning. However, to
+`y` might be ignored in the case of unsupervised learning. However, to
 make it possible to use the estimator as part of a pipeline that can
 mix both supervised and unsupervised transformers, even unsupervised
-estimators need to accept a ``y=None`` keyword argument in
+estimators need to accept a `y=None` keyword argument in
 the second position that is just ignored by the estimator.
-For the same reason, ``fit_predict``, ``fit_transform``, ``score``
-and ``partial_fit`` methods need to accept a ``y`` argument in
+For the same reason, `fit_predict`, `fit_transform`, `score`
+and `partial_fit` methods need to accept a `y` argument in
 the second place if they are implemented.
 
-The method should return the object (``self``). This pattern is useful
+The method should return the object (`self`). This pattern is useful
 to be able to implement quick one liners in an IPython session such as::
 
   y_predicted = SVC(C=100).fit(X_train, y_train).predict(X_test)
 
-Depending on the nature of the algorithm, ``fit`` can sometimes also
+Depending on the nature of the algorithm, `fit` can sometimes also
 accept additional keywords arguments. However, any parameter that can
 have a value assigned prior to having access to the data should be an
-``__init__`` keyword argument. **fit parameters should be restricted
+`__init__` keyword argument. **fit parameters should be restricted
 to directly data dependent variables**. For instance a Gram matrix or
-an affinity matrix which are precomputed from the data matrix ``X`` are
-data dependent. A tolerance stopping criterion ``tol`` is not directly
+an affinity matrix which are precomputed from the data matrix `X` are
+data dependent. A tolerance stopping criterion `tol` is not directly
 data dependent (although the optimal value according to some scoring
 function probably is).
 
-When ``fit`` is called, any previous call to ``fit`` should be ignored. In
-general, calling ``estimator.fit(X1)`` and then ``estimator.fit(X2)`` should
-be the same as only calling ``estimator.fit(X2)``. However, this may not be
-true in practice when ``fit`` depends on some random process, see
+When `fit` is called, any previous call to `fit` should be ignored. In
+general, calling `estimator.fit(X1)` and then `estimator.fit(X2)` should
+be the same as only calling `estimator.fit(X2)`. However, this may not be
+true in practice when `fit` depends on some random process, see
 :term:`random_state`. Another exception to this rule is when the
-hyper-parameter ``warm_start`` is set to ``True`` for estimators that
-support it. ``warm_start=True`` means that the previous state of the
+hyper-parameter `warm_start` is set to `True` for estimators that
+support it. `warm_start=True` means that the previous state of the
 trainable parameters of the estimator are reused instead of using the
 default initialization strategy.
 
@@ -1259,25 +1259,25 @@ Estimated Attributes
 
 Attributes that have been estimated from the data must always have a name
 ending with trailing underscore, for example the coefficients of
-some regression estimator would be stored in a ``coef_`` attribute after
-``fit`` has been called.
+some regression estimator would be stored in a `coef_` attribute after
+`fit` has been called.
 
-The estimated attributes are expected to be overridden when you call ``fit``
+The estimated attributes are expected to be overridden when you call `fit`
 a second time.
 
 Optional Arguments
 ^^^^^^^^^^^^^^^^^^
 
 In iterative algorithms, the number of iterations should be specified by
-an integer called ``n_iter``.
+an integer called `n_iter`.
 
 Pairwise Attributes
 ^^^^^^^^^^^^^^^^^^^
 
-An estimator that accept ``X`` of shape ``(n_samples, n_samples)`` and defines
-a :term:`_pairwise` property equal to ``True`` allows for cross-validation of
-the dataset, e.g. when ``X`` is a precomputed kernel matrix. Specifically,
-the :term:`_pairwise` property is used by ``utils.metaestimators._safe_split``
+An estimator that accept `X` of shape `(n_samples, n_samples)` and defines
+a :term:`_pairwise` property equal to `True` allows for cross-validation of
+the dataset, e.g. when `X` is a precomputed kernel matrix. Specifically,
+the :term:`_pairwise` property is used by `utils.metaestimators._safe_split`
 to slice rows and columns.
 
 Rolling your own estimator
@@ -1309,13 +1309,13 @@ the correct interface more easily.
 
     * an initial git repository with Python package directory structure
     * a template of a scikit-learn estimator
-    * an initial test suite including use of ``check_estimator``
+    * an initial test suite including use of `check_estimator`
     * directory structures and scripts to compile documentation and example
       galleries
     * scripts to manage continuous integration (testing on Linux and Windows)
     * instructions from getting started to publishing on `PyPi <https://pypi.org/>`_
 
-.. topic:: ``BaseEstimator`` and mixins:
+.. topic:: `BaseEstimator` and mixins:
 
     We tend to use "duck typing", so building an estimator which follows
     the API suffices for compatibility, without needing to inherit from or
@@ -1323,8 +1323,8 @@ the correct interface more easily.
 
     However, if a dependency on scikit-learn is acceptable in your code,
     you can prevent a lot of boilerplate code
-    by deriving a class from ``BaseEstimator``
-    and optionally the mixin classes in ``sklearn.base``.
+    by deriving a class from `BaseEstimator`
+    and optionally the mixin classes in `sklearn.base`.
     For example, below is a custom classifier, with more examples included
     in the scikit-learn-contrib
     `project template <https://github.com/scikit-learn-contrib/project-template/blob/master/skltemplate/_template.py>`__.
@@ -1365,25 +1365,25 @@ the correct interface more easily.
 
 get_params and set_params
 -------------------------
-All scikit-learn estimators have ``get_params`` and ``set_params`` functions.
-The ``get_params`` function takes no arguments and returns a dict of the
-``__init__`` parameters of the estimator, together with their values.
-It must take one keyword argument, ``deep``,
+All scikit-learn estimators have `get_params` and `set_params` functions.
+The `get_params` function takes no arguments and returns a dict of the
+`__init__` parameters of the estimator, together with their values.
+It must take one keyword argument, `deep`,
 which receives a boolean value that determines
 whether the method should return the parameters of sub-estimators
 (for most estimators, this can be ignored).
-The default value for ``deep`` should be true.
+The default value for `deep` should be true.
 
-The ``set_params`` on the other hand takes as input a dict of the form
-``'parameter': value`` and sets the parameter of the estimator using this dict.
+The `set_params` on the other hand takes as input a dict of the form
+`'parameter': value` and sets the parameter of the estimator using this dict.
 Return value must be estimator itself.
 
-While the ``get_params`` mechanism is not essential (see :ref:`cloning` below),
-the ``set_params`` function is necessary as it is used to set parameters during
+While the `get_params` mechanism is not essential (see :ref:`cloning` below),
+the `set_params` function is necessary as it is used to set parameters during
 grid searches.
 
 The easiest way to implement these functions, and to get a sensible
-``__repr__`` method, is to inherit from ``sklearn.base.BaseEstimator``. If you
+`__repr__` method, is to inherit from `sklearn.base.BaseEstimator`. If you
 do not want to make your code dependent on scikit-learn, the easiest way to
 implement the interface is::
 
@@ -1399,46 +1399,46 @@ implement the interface is::
 
 Parameters and init
 -------------------
-As :class:`model_selection.GridSearchCV` uses ``set_params``
+As :class:`model_selection.GridSearchCV` uses `set_params`
 to apply parameter setting to estimators,
-it is essential that calling ``set_params`` has the same effect
-as setting parameters using the ``__init__`` method.
+it is essential that calling `set_params` has the same effect
+as setting parameters using the `__init__` method.
 The easiest and recommended way to accomplish this is to
-**not do any parameter validation in** ``__init__``.
+**not do any parameter validation in** `__init__`.
 All logic behind estimator parameters,
-like translating string arguments into functions, should be done in ``fit``.
+like translating string arguments into functions, should be done in `fit`.
 
-Also it is expected that parameters with trailing ``_`` are **not to be set
-inside the** ``__init__`` **method**. All and only the public attributes set by
-fit have a trailing ``_``. As a result the existence of parameters with
-trailing ``_`` is used to check if the estimator has been fitted.
+Also it is expected that parameters with trailing `_` are **not to be set
+inside the** `__init__` **method**. All and only the public attributes set by
+fit have a trailing `_`. As a result the existence of parameters with
+trailing `_` is used to check if the estimator has been fitted.
 
 .. _cloning:
 
 Cloning
 -------
 For use with the :mod:`model_selection` module,
-an estimator must support the ``base.clone`` function to replicate an estimator.
-This can be done by providing a ``get_params`` method.
-If ``get_params`` is present, then ``clone(estimator)`` will be an instance of
-``type(estimator)`` on which ``set_params`` has been called with clones of
-the result of ``estimator.get_params()``.
+an estimator must support the `base.clone` function to replicate an estimator.
+This can be done by providing a `get_params` method.
+If `get_params` is present, then `clone(estimator)` will be an instance of
+`type(estimator)` on which `set_params` has been called with clones of
+the result of `estimator.get_params()`.
 
 Objects that do not provide this method will be deep-copied
-(using the Python standard function ``copy.deepcopy``)
-if ``safe=False`` is passed to ``clone``.
+(using the Python standard function `copy.deepcopy`)
+if `safe=False` is passed to `clone`.
 
 Pipeline compatibility
 ----------------------
-For an estimator to be usable together with ``pipeline.Pipeline`` in any but the
-last step, it needs to provide a ``fit`` or ``fit_transform`` function.
+For an estimator to be usable together with `pipeline.Pipeline` in any but the
+last step, it needs to provide a `fit` or `fit_transform` function.
 To be able to evaluate the pipeline on any data but the training set,
-it also needs to provide a ``transform`` function.
+it also needs to provide a `transform` function.
 There are no special requirements for the last step in a pipeline, except that
-it has a ``fit`` function. All ``fit`` and ``fit_transform`` functions must
-take arguments ``X, y``, even if y is not used. Similarly, for ``score`` to be
-usable, the last step of the pipeline needs to have a ``score`` function that
-accepts an optional ``y``.
+it has a `fit` function. All `fit` and `fit_transform` functions must
+take arguments `X, y`, even if y is not used. Similarly, for `score` to be
+usable, the last step of the pipeline needs to have a `score` function that
+accepts an optional `y`.
 
 Estimator types
 ---------------
@@ -1446,43 +1446,43 @@ Some common functionality depends on the kind of estimator passed.
 For example, cross-validation in :class:`model_selection.GridSearchCV` and
 :func:`model_selection.cross_val_score` defaults to being stratified when used
 on a classifier, but not otherwise. Similarly, scorers for average precision
-that take a continuous prediction need to call ``decision_function`` for classifiers,
-but ``predict`` for regressors. This distinction between classifiers and regressors
-is implemented using the ``_estimator_type`` attribute, which takes a string value.
-It should be ``"classifier"`` for classifiers and ``"regressor"`` for
-regressors and ``"clusterer"`` for clustering methods, to work as expected.
-Inheriting from ``ClassifierMixin``, ``RegressorMixin`` or ``ClusterMixin``
+that take a continuous prediction need to call `decision_function` for classifiers,
+but `predict` for regressors. This distinction between classifiers and regressors
+is implemented using the `_estimator_type` attribute, which takes a string value.
+It should be `"classifier"` for classifiers and `"regressor"` for
+regressors and `"clusterer"` for clustering methods, to work as expected.
+Inheriting from `ClassifierMixin`, `RegressorMixin` or `ClusterMixin`
 will set the attribute automatically.  When a meta-estimator needs to distinguish
-among estimator types, instead of checking ``_estimator_type`` directly, helpers
+among estimator types, instead of checking `_estimator_type` directly, helpers
 like :func:`base.is_classifier` should be used.
 
 Specific models
 ---------------
 
-Classifiers should accept ``y`` (target) arguments to ``fit`` that are
+Classifiers should accept `y` (target) arguments to `fit` that are
 sequences (lists, arrays) of either strings or integers.  They should not
 assume that the class labels are a contiguous range of integers; instead, they
-should store a list of classes in a ``classes_`` attribute or property.  The
+should store a list of classes in a `classes_` attribute or property.  The
 order of class labels in this attribute should match the order in which
-``predict_proba``, ``predict_log_proba`` and ``decision_function`` return their
+`predict_proba`, `predict_log_proba` and `decision_function` return their
 values.  The easiest way to achieve this is to put::
 
     self.classes_, y = np.unique(y, return_inverse=True)
 
-in ``fit``.  This returns a new ``y`` that contains class indexes, rather than
-labels, in the range [0, ``n_classes``).
+in `fit`.  This returns a new `y` that contains class indexes, rather than
+labels, in the range [0, `n_classes`).
 
-A classifier's ``predict`` method should return
-arrays containing class labels from ``classes_``.
-In a classifier that implements ``decision_function``,
+A classifier's `predict` method should return
+arrays containing class labels from `classes_`.
+In a classifier that implements `decision_function`,
 this can be achieved with::
 
     def predict(self, X):
         D = self.decision_function(X)
         return self.classes_[np.argmax(D, axis=1)]
 
-In linear models, coefficients are stored in an array called ``coef_``, and the
-independent term is stored in ``intercept_``.  ``sklearn.linear_model.base``
+In linear models, coefficients are stored in an array called `coef_`, and the
+independent term is stored in `intercept_`.  `sklearn.linear_model.base`
 contains a few base classes and mixins that implement common linear model
 patterns.
 
@@ -1500,19 +1500,19 @@ Estimator Tags
 Scikit-learn introduced estimator tags in version 0.21.  These are annotations
 of estimators that allow programmatic inspection of their capabilities, such as
 sparse matrix support, supported output types and supported methods.  The
-estimator tags are a dictionary returned by the method ``_get_tags()``.  These
+estimator tags are a dictionary returned by the method `_get_tags()`.  These
 tags are used by the common tests and the :func:`sklearn.utils.estimator_checks.check_estimator` function to
 decide what tests to run and what input data is appropriate. Tags can depend on
 estimator parameters or even system architecture and can in general only be
 determined at runtime.
 
-The default value of all tags except for ``X_types`` and ``requires_fit`` is
-``False``. These are defined in the ``BaseEstimator`` class.
+The default value of all tags except for `X_types` and `requires_fit` is
+`False`. These are defined in the `BaseEstimator` class.
 
 The current set of estimator tags are:
 
 non_deterministic
-    whether the estimator is not deterministic given a fixed ``random_state``
+    whether the estimator is not deterministic given a fixed `random_state`
 
 requires_positive_X - unused for now
     whether the estimator requires positive X.
@@ -1531,7 +1531,7 @@ multilabel
 
 stateless
     whether the estimator needs access to data for fitting. Even though
-    an estimator is stateless, it might still need a call to ``fit`` for initialization.
+    an estimator is stateless, it might still need a call to `fit` for initialization.
 
 requires_fit
     whether the estimator requires to be fitted before calling one of
@@ -1544,7 +1544,7 @@ poor_score
     whether the estimator fails to provide a "reasonable" test-set score, which
     currently for regression is an R2 of 0.5 on a subset of the boston housing
     dataset, and for classification an accuracy of 0.83 on
-    ``make_blobs(n_samples=300, random_state=0)``. These datasets and values
+    `make_blobs(n_samples=300, random_state=0)`. These datasets and values
     are based on current estimators in sklearn and might be replaced by
     something more systematic.
 
@@ -1561,12 +1561,12 @@ _skip_test
 X_types
     Supported input types for X as list of strings. Tests are currently only run if '2darray' is contained
     in the list, signifying that the estimator takes continuous 2d numpy arrays as input. The default
-    value is ['2darray']. Other possible types are ``'string'``, ``'sparse'``,
-    ``'categorical'``, ``dict``, ``'1dlabels'`` and ``'2dlabels'``.
+    value is ['2darray']. Other possible types are `'string'`, `'sparse'`,
+    `'categorical'`, `dict`, `'1dlabels'` and `'2dlabels'`.
     The goal is that in the future the supported input type will determine the
-    data used during testing, in particular for ``'string'``, ``'sparse'`` and
-    ``'categorical'`` data.  For now, the test for sparse data do not make use
-    of the ``'sparse'`` tag.
+    data used during testing, in particular for `'string'`, `'sparse'` and
+    `'categorical'` data.  For now, the test for sparse data do not make use
+    of the `'sparse'` tag.
 
 
 To override the tags of a child class, one must define the `_more_tags()`
@@ -1579,11 +1579,11 @@ method and return a dict with the desired tags, e.g::
                     'non_deterministic': True}
 
 In addition to the tags, estimators also need to declare any non-optional
-parameters to ``__init__`` in the ``_required_parameters`` class attribute,
-which is a list or tuple.  If ``_required_parameters`` is only
-``["estimator"]`` or ``["base_estimator"]``, then the estimator will be
-instantiated with an instance of ``LinearDiscriminantAnalysis`` (or
-``RidgeRegression`` if the estimator is a regressor) in the tests. The choice
+parameters to `__init__` in the `_required_parameters` class attribute,
+which is a list or tuple.  If `_required_parameters` is only
+`["estimator"]` or `["base_estimator"]`, then the estimator will be
+instantiated with an instance of `LinearDiscriminantAnalysis` (or
+`RidgeRegression` if the estimator is a regressor) in the tests. The choice
 of these two models is somewhat idiosyncratic but both should provide robust
 closed-form solutions.
 
@@ -1608,29 +1608,29 @@ make this task easier and faster (in no particular order).
   relevant, and which are not. In scikit-learn **a lot** of input checking
   is performed, especially at the beginning of the :term:`fit` methods.
   Sometimes, only a very small portion of the code is doing the actual job.
-  For example looking at the ``fit()`` method of
+  For example looking at the `fit()` method of
   :class:`sklearn.linear_model.LinearRegression`, what you're looking for
-  might just be the call the ``scipy.linalg.lstsq``, but it is buried into
+  might just be the call the `scipy.linalg.lstsq`, but it is buried into
   multiple lines of input checking and the handling of different kinds of
   parameters.
 - Due to the use of `Inheritance
   <https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)>`_,
   some methods may be implemented in parent classes. All estimators inherit
   at least from :class:`BaseEstimator <sklearn.base.BaseEstimator>`, and
-  from a ``Mixin`` class (e.g. :class:`ClassifierMixin
+  from a `Mixin` class (e.g. :class:`ClassifierMixin
   <sklearn.base.ClassifierMixin>`) that enables default behaviour depending
   on the nature of the estimator (classifier, regressor, transformer, etc.).
 - Sometimes, reading the tests for a given function will give you an idea of
-  what its intended purpose is. You can use ``git grep`` (see below) to find
+  what its intended purpose is. You can use `git grep` (see below) to find
   all the tests written for a function. Most tests for a specific
-  function/class are placed under the ``tests/`` folder of the module
+  function/class are placed under the `tests/` folder of the module
 - You'll often see code looking like this:
-  ``out = Parallel(...)(delayed(some_function)(param) for param in
-  some_iterable)``. This runs ``some_function`` in parallel using `Joblib
-  <https://joblib.readthedocs.io/>`_. ``out`` is then an iterable containing
-  the values returned by ``some_function`` for each call.
+  `out = Parallel(...)(delayed(some_function)(param) for param in
+  some_iterable)`. This runs `some_function` in parallel using `Joblib
+  <https://joblib.readthedocs.io/>`_. `out` is then an iterable containing
+  the values returned by `some_function` for each call.
 - We use `Cython <https://cython.org/>`_ to write fast code. Cython code is
-  located in ``.pyx`` and ``.pxd`` files. Cython code has a more C-like
+  located in `.pyx` and `.pxd` files. Cython code has a more C-like
   flavor: we use pointers, perform manual memory allocation, etc. Having
   some minimal experience in C / C++ is pretty much mandatory here.
 - Master your tools.
@@ -1641,9 +1641,9 @@ make this task easier and faster (in no particular order).
     So does being able to quickly see where a given name is used in a file.
   - `git <https://git-scm.com/book/en>`_ also has some built-in killer
     features. It is often useful to understand how a file changed over time,
-    using e.g. ``git blame`` (`manual
+    using e.g. `git blame` (`manual
     <https://git-scm.com/docs/git-blame>`_). This can also be done directly
-    on GitHub. ``git grep`` (`examples
+    on GitHub. `git grep` (`examples
     <https://git-scm.com/docs/git-grep#_examples>`_) is also extremely
     useful to see every occurrence of a pattern (e.g. a function call or a
     variable) in the code base.

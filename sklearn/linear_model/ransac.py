@@ -62,7 +62,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
     be found in the general documentation of linear models.
 
     A detailed description of the algorithm can be found in the documentation
-    of the ``linear_model`` sub-package.
+    of the `linear_model` sub-package.
 
     Read more in the :ref:`User Guide <ransac_regression>`.
 
@@ -80,7 +80,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
            which is used to compute residual error using loss function.
 
         If `base_estimator` is None, then
-        ``base_estimator=sklearn.linear_model.LinearRegression()`` is used for
+        `base_estimator=sklearn.linear_model.LinearRegression()` is used for
         target values of dtype float.
 
         Note that the current implementation only supports regression
@@ -92,8 +92,8 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
         relative number `ceil(min_samples * X.shape[0]`) for
         `min_samples < 1`. This is typically chosen as the minimal number of
         samples necessary to estimate the given `base_estimator`. By default a
-        ``sklearn.linear_model.LinearRegression()`` estimator is assumed and
-        `min_samples` is chosen as ``X.shape[1] + 1``.
+        `sklearn.linear_model.LinearRegression()` estimator is assumed and
+        `min_samples` is chosen as `X.shape[1] + 1`.
 
     residual_threshold : float, optional
         Maximum residual for a data sample to be classified as an inlier.
@@ -118,8 +118,8 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
 
     max_skips : int, optional
         Maximum number of iterations that can be skipped due to finding zero
-        inliers or invalid data defined by ``is_data_valid`` or invalid models
-        defined by ``is_model_valid``.
+        inliers or invalid data defined by `is_data_valid` or invalid models
+        defined by `is_model_valid`.
 
         .. versionadded:: 0.19
 
@@ -145,12 +145,12 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
         find the absolute loss and squared loss per sample
         respectively.
 
-        If ``loss`` is a callable, then it should be a function that takes
+        If `loss` is a callable, then it should be a function that takes
         two arrays as inputs, the true and predicted value and returns a 1-D
         array with the i-th value of the array corresponding to the loss
-        on ``X[i]``.
+        on `X[i]`.
 
-        If the loss on a sample is greater than the ``residual_threshold``,
+        If the loss on a sample is greater than the `residual_threshold`,
         then this sample is classified as an outlier.
 
     random_state : int, RandomState instance or None, optional, default None
@@ -166,10 +166,10 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
 
     n_trials_ : int
         Number of random selection trials until one of the stop criteria is
-        met. It is always ``<= max_trials``.
+        met. It is always `<= max_trials`.
 
     inlier_mask_ : bool array of shape [n_samples]
-        Boolean mask of inliers classified as ``True``.
+        Boolean mask of inliers classified as `True`.
 
     n_skips_no_inliers_ : int
         Number of iterations skipped due to finding zero inliers.
@@ -178,13 +178,13 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
 
     n_skips_invalid_data_ : int
         Number of iterations skipped due to invalid data defined by
-        ``is_data_valid``.
+        `is_data_valid`.
 
         .. versionadded:: 0.19
 
     n_skips_invalid_model_ : int
         Number of iterations skipped due to an invalid model defined by
-        ``is_model_valid``.
+        `is_model_valid`.
 
         .. versionadded:: 0.19
 

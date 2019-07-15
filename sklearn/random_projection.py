@@ -430,7 +430,7 @@ class GaussianRandomProjection(BaseRandomProjection):
         n_components can be automatically adjusted according to the
         number of samples in the dataset and the bound given by the
         Johnson-Lindenstrauss lemma. In that case the quality of the
-        embedding is controlled by the ``eps`` parameter.
+        embedding is controlled by the `eps` parameter.
 
         It should be noted that Johnson-Lindenstrauss lemma can yield
         very conservative estimated of the required number of components
@@ -530,7 +530,7 @@ class SparseRandomProjection(BaseRandomProjection):
         n_components can be automatically adjusted according to the
         number of samples in the dataset and the bound given by the
         Johnson-Lindenstrauss lemma. In that case the quality of the
-        embedding is controlled by the ``eps`` parameter.
+        embedding is controlled by the `eps` parameter.
 
         It should be noted that Johnson-Lindenstrauss lemma can yield
         very conservative estimated of the required number of components

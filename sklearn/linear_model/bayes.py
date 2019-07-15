@@ -80,12 +80,12 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
 
     normalize : boolean, optional, default False
-        This parameter is ignored when ``fit_intercept`` is set to False.
+        This parameter is ignored when `fit_intercept` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
+        :class:`sklearn.preprocessing.StandardScaler` before calling `fit`
+        on an estimator with `normalize=False`.
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
@@ -101,7 +101,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
     intercept_ : float
         Independent term in decision function. Set to 0.0 if
-        ``fit_intercept = False``.
+        `fit_intercept = False`.
 
     alpha_ : float
        Estimated precision of the noise.
@@ -429,12 +429,12 @@ class ARDRegression(LinearModel, RegressorMixin):
         Default is True.
 
     normalize : boolean, optional, default False
-        This parameter is ignored when ``fit_intercept`` is set to False.
+        This parameter is ignored when `fit_intercept` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
+        :class:`sklearn.preprocessing.StandardScaler` before calling `fit`
+        on an estimator with `normalize=False`.
 
     copy_X : boolean, optional, default True.
         If True, X will be copied; else, it may be overwritten.
@@ -480,10 +480,10 @@ class ARDRegression(LinearModel, RegressorMixin):
 
     R. Salakhutdinov, Lecture notes on Statistical Machine Learning,
     http://www.utstat.toronto.edu/~rsalakhu/sta4273/notes/Lecture2.pdf#page=15
-    Their beta is our ``self.alpha_``
-    Their alpha is our ``self.lambda_``
+    Their beta is our `self.alpha_`
+    Their alpha is our `self.lambda_`
     ARD is a little different than the slide: only dimensions/features for
-    which ``self.lambda_ < self.threshold_lambda`` are kept and the rest are
+    which `self.lambda_ < self.threshold_lambda` are kept and the rest are
     discarded.
     """
 

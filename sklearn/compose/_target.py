@@ -19,10 +19,10 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
 
     Useful for applying a non-linear transformation in regression
     problems. This transformation can be given as a Transformer such as the
-    QuantileTransformer or as a function and its inverse such as ``log`` and
-    ``exp``.
+    QuantileTransformer or as a function and its inverse such as `log` and
+    `exp`.
 
-    The computation during ``fit`` is::
+    The computation during `fit` is::
 
         regressor.fit(X, func(y))
 
@@ -30,7 +30,7 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
 
         regressor.fit(X, transformer.transform(y))
 
-    The computation during ``predict`` is::
+    The computation during `predict` is::
 
         inverse_func(regressor.predict(X))
 
@@ -43,32 +43,32 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
     Parameters
     ----------
     regressor : object, default=LinearRegression()
-        Regressor object such as derived from ``RegressorMixin``. This
+        Regressor object such as derived from `RegressorMixin`. This
         regressor will automatically be cloned each time prior to fitting.
 
     transformer : object, default=None
-        Estimator object such as derived from ``TransformerMixin``. Cannot be
-        set at the same time as ``func`` and ``inverse_func``. If
-        ``transformer`` is ``None`` as well as ``func`` and ``inverse_func``,
+        Estimator object such as derived from `TransformerMixin`. Cannot be
+        set at the same time as `func` and `inverse_func`. If
+        `transformer` is `None` as well as `func` and `inverse_func`,
         the transformer will be an identity transformer. Note that the
         transformer will be cloned during fitting. Also, the transformer is
-        restricting ``y`` to be a numpy array.
+        restricting `y` to be a numpy array.
 
     func : function, optional
-        Function to apply to ``y`` before passing to ``fit``. Cannot be set at
-        the same time as ``transformer``. The function needs to return a
-        2-dimensional array. If ``func`` is ``None``, the function used will be
+        Function to apply to `y` before passing to `fit`. Cannot be set at
+        the same time as `transformer`. The function needs to return a
+        2-dimensional array. If `func` is `None`, the function used will be
         the identity function.
 
     inverse_func : function, optional
         Function to apply to the prediction of the regressor. Cannot be set at
-        the same time as ``transformer`` as well. The function needs to return
+        the same time as `transformer` as well. The function needs to return
         a 2-dimensional array. The inverse function is used to return
         predictions to the same space of the original training labels.
 
     check_inverse : bool, default=True
-        Whether to check that ``transform`` followed by ``inverse_transform``
-        or ``func`` followed by ``inverse_func`` leads to the original targets.
+        Whether to check that `transform` followed by `inverse_transform`
+        or `func` followed by `inverse_func` leads to the original targets.
 
     Attributes
     ----------
@@ -76,7 +76,7 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
         Fitted regressor.
 
     transformer_ : object
-        Transformer used in ``fit`` and ``predict``.
+        Transformer used in `fit` and `predict`.
 
     Examples
     --------
@@ -96,9 +96,9 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
 
     Notes
     -----
-    Internally, the target ``y`` is always converted into a 2-dimensional array
+    Internally, the target `y` is always converted into a 2-dimensional array
     to be used by scikit-learn transformers. At the time of prediction, the
-    output will be reshaped to a have the same number of dimensions as ``y``.
+    output will be reshaped to a have the same number of dimensions as `y`.
 
     See :ref:`examples/compose/plot_transformed_target.py
     <sphx_glr_auto_examples_compose_plot_transformed_target.py>`.
@@ -207,8 +207,8 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
     def predict(self, X):
         """Predict using the base regressor, applying inverse.
 
-        The regressor is used to predict and the ``inverse_func`` or
-        ``inverse_transform`` is applied before returning the prediction.
+        The regressor is used to predict and the `inverse_func` or
+        `inverse_transform` is applied before returning the prediction.
 
         Parameters
         ----------

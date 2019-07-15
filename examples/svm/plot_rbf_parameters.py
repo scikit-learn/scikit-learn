@@ -3,20 +3,20 @@
 RBF SVM parameters
 ==================
 
-This example illustrates the effect of the parameters ``gamma`` and ``C`` of
+This example illustrates the effect of the parameters `gamma` and `C` of
 the Radial Basis Function (RBF) kernel SVM.
 
-Intuitively, the ``gamma`` parameter defines how far the influence of a single
+Intuitively, the `gamma` parameter defines how far the influence of a single
 training example reaches, with low values meaning 'far' and high values meaning
-'close'. The ``gamma`` parameters can be seen as the inverse of the radius of
+'close'. The `gamma` parameters can be seen as the inverse of the radius of
 influence of samples selected by the model as support vectors.
 
-The ``C`` parameter trades off correct classification of training examples
+The `C` parameter trades off correct classification of training examples
 against maximization of the decision function's margin. For larger values of
-``C``, a smaller margin will be accepted if the decision function is better at
-classifying all training points correctly. A lower ``C`` will encourage a
+`C`, a smaller margin will be accepted if the decision function is better at
+classifying all training points correctly. A lower `C` will encourage a
 larger margin, therefore a simpler decision function, at the cost of training
-accuracy. In other words``C`` behaves as a regularization parameter in the
+accuracy. In other words`C` behaves as a regularization parameter in the
 SVM.
 
 The first plot is a visualization of the decision function for a variety of
@@ -26,7 +26,7 @@ kind of plot is not possible to do for problems with more features or target
 classes.
 
 The second plot is a heatmap of the classifier's cross-validation accuracy as a
-function of ``C`` and ``gamma``. For this example we explore a relatively large
+function of `C` and `gamma`. For this example we explore a relatively large
 grid for illustration purposes. In practice, a logarithmic grid from
 :math:`10^{-3}` to :math:`10^3` is usually sufficient. If the best parameters
 lie on the boundaries of the grid, it can be extended in that direction in a
@@ -36,36 +36,36 @@ Note that the heat map plot has a special colorbar with a midpoint value close
 to the score values of the best performing models so as to make it easy to tell
 them apart in the blink of an eye.
 
-The behavior of the model is very sensitive to the ``gamma`` parameter. If
-``gamma`` is too large, the radius of the area of influence of the support
+The behavior of the model is very sensitive to the `gamma` parameter. If
+`gamma` is too large, the radius of the area of influence of the support
 vectors only includes the support vector itself and no amount of
-regularization with ``C`` will be able to prevent overfitting.
+regularization with `C` will be able to prevent overfitting.
 
-When ``gamma`` is very small, the model is too constrained and cannot capture
+When `gamma` is very small, the model is too constrained and cannot capture
 the complexity or "shape" of the data. The region of influence of any selected
 support vector would include the whole training set. The resulting model will
 behave similarly to a linear model with a set of hyperplanes that separate the
 centers of high density of any pair of two classes.
 
 For intermediate values, we can see on the second plot that good models can
-be found on a diagonal of ``C`` and ``gamma``. Smooth models (lower ``gamma``
+be found on a diagonal of `C` and `gamma`. Smooth models (lower `gamma`
 values) can be made more complex by increasing the importance of classifying
-each point correctly (larger ``C`` values) hence the diagonal of good
+each point correctly (larger `C` values) hence the diagonal of good
 performing models.
 
-Finally one can also observe that for some intermediate values of ``gamma`` we
-get equally performing models when ``C`` becomes very large: it is not
+Finally one can also observe that for some intermediate values of `gamma` we
+get equally performing models when `C` becomes very large: it is not
 necessary to regularize by enforcing a larger margin. The radius of the RBF
 kernel alone acts as a good structural regularizer. In practice though it
 might still be interesting to simplify the decision function with a lower
-value of ``C`` so as to favor models that use less memory and that are faster
+value of `C` so as to favor models that use less memory and that are faster
 to predict.
 
 We should also note that small differences in scores results from the random
 splits of the cross-validation procedure. Those spurious variations can be
-smoothed out by increasing the number of CV iterations ``n_splits`` at the
-expense of compute time. Increasing the value number of ``C_range`` and
-``gamma_range`` steps will increase the resolution of the hyper-parameter heat
+smoothed out by increasing the number of CV iterations `n_splits` at the
+expense of compute time. Increasing the value number of `C_range` and
+`gamma_range` steps will increase the resolution of the hyper-parameter heat
 map.
 
 '''

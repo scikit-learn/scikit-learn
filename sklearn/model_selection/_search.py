@@ -138,7 +138,7 @@ class ParameterGrid:
                    for p in self.param_grid)
 
     def __getitem__(self, ind):
-        """Get the parameters that would be ``ind``th in iteration
+        """Get the parameters that would be `ind`th in iteration
 
         Parameters
         ----------
@@ -189,10 +189,10 @@ class ParameterSampler:
     It is highly recommended to use continuous distributions for continuous
     parameters.
 
-    Note that before SciPy 0.16, the ``scipy.stats.distributions`` do not
+    Note that before SciPy 0.16, the `scipy.stats.distributions` do not
     accept a custom RNG instance and always use the singleton RNG from
-    ``numpy.random``. Hence setting ``random_state`` will not guarantee a
-    deterministic iteration whenever ``scipy.stats`` distributions are used to
+    `numpy.random`. Hence setting `random_state` will not guarantee a
+    deterministic iteration whenever `scipy.stats` distributions are used to
     define the parameter search space. Deterministic behavior is however
     guaranteed from SciPy 0.16 onwards.
 
@@ -203,7 +203,7 @@ class ParameterSampler:
     param_distributions : dict
         Dictionary where the keys are parameters and values
         are distributions from which a parameter is to be sampled.
-        Distributions either have to provide a ``rvs`` function
+        Distributions either have to provide a `rvs` function
         to sample from them, or can be given as a list of values,
         where a uniform distribution is assumed.
 
@@ -302,8 +302,8 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
     estimator : estimator object
         A object of that type is instantiated for each grid point.
         This is assumed to implement the scikit-learn estimator interface.
-        Either estimator needs to provide a ``score`` function,
-        or ``scoring`` must be passed.
+        Either estimator needs to provide a `score` function,
+        or `scoring` must be passed.
 
     parameters : dict
         Parameters to be set on estimator for this grid point.
@@ -316,9 +316,9 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
 
     scorer : callable or None
         The scorer callable object / function must have its signature as
-        ``scorer(estimator, X, y)``.
+        `scorer(estimator, X, y)`.
 
-        If ``None`` the estimator's score method is used.
+        If `None` the estimator's score method is used.
 
     verbose : int
         Verbosity level.
@@ -330,7 +330,7 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error. Default is ``np.nan``.
+        step, which will always raise the error. Default is `np.nan`.
 
     Returns
     -------
@@ -402,8 +402,8 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
     def score(self, X, y=None):
         """Returns the score on the given data, if the estimator has been refit.
 
-        This uses the score defined by ``scoring`` where provided, and the
-        ``best_estimator_.score`` method otherwise.
+        This uses the score defined by `scoring` where provided, and the
+        `best_estimator_.score` method otherwise.
 
         Parameters
         ----------
@@ -433,7 +433,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
                                  'with refit=False. %s is '
                                  'available only after refitting on the best '
                                  'parameters. You can refit an estimator '
-                                 'manually using the ``best_params_`` '
+                                 'manually using the `best_params_` '
                                  'attribute'
                                  % (type(self).__name__, method_name))
         else:
@@ -443,8 +443,8 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
     def predict(self, X):
         """Call predict on the estimator with the best found parameters.
 
-        Only available if ``refit=True`` and the underlying estimator supports
-        ``predict``.
+        Only available if `refit=True` and the underlying estimator supports
+        `predict`.
 
         Parameters
         ----------
@@ -460,8 +460,8 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
     def predict_proba(self, X):
         """Call predict_proba on the estimator with the best found parameters.
 
-        Only available if ``refit=True`` and the underlying estimator supports
-        ``predict_proba``.
+        Only available if `refit=True` and the underlying estimator supports
+        `predict_proba`.
 
         Parameters
         ----------
@@ -477,8 +477,8 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
     def predict_log_proba(self, X):
         """Call predict_log_proba on the estimator with the best found parameters.
 
-        Only available if ``refit=True`` and the underlying estimator supports
-        ``predict_log_proba``.
+        Only available if `refit=True` and the underlying estimator supports
+        `predict_log_proba`.
 
         Parameters
         ----------
@@ -494,8 +494,8 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
     def decision_function(self, X):
         """Call decision_function on the estimator with the best found parameters.
 
-        Only available if ``refit=True`` and the underlying estimator supports
-        ``decision_function``.
+        Only available if `refit=True` and the underlying estimator supports
+        `decision_function`.
 
         Parameters
         ----------
@@ -511,8 +511,8 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
     def transform(self, X):
         """Call transform on the estimator with the best found parameters.
 
-        Only available if the underlying estimator supports ``transform`` and
-        ``refit=True``.
+        Only available if the underlying estimator supports `transform` and
+        `refit=True`.
 
         Parameters
         ----------
@@ -529,7 +529,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         """Call inverse_transform on the estimator with the best found params.
 
         Only available if the underlying estimator implements
-        ``inverse_transform`` and ``refit=True``.
+        `inverse_transform` and `refit=True`.
 
         Parameters
         ----------
@@ -564,7 +564,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         evaluate_candidates : callable
             This callback accepts a list of candidates, where each candidate is
             a dict of parameter settings. It returns a dict of all results so
-            far, formatted like ``cv_results_``.
+            far, formatted like `cv_results_`.
 
         Examples
         --------
@@ -600,7 +600,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
             instance (e.g., `GroupKFold`).
 
         **fit_params : dict of string -> object
-            Parameters passed to the ``fit`` method of the estimator
+            Parameters passed to the `fit` method of the estimator
         """
         estimator = self.estimator
         cv = check_cv(self.cv, y, classifier=is_classifier(estimator))
@@ -833,8 +833,8 @@ class GridSearchCV(BaseSearchCV):
     ----------
     estimator : estimator object.
         This is assumed to implement the scikit-learn estimator interface.
-        Either estimator needs to provide a ``score`` function,
-        or ``scoring`` must be passed.
+        Either estimator needs to provide a `score` function,
+        or `scoring` must be passed.
 
     param_grid : dict or list of dictionaries
         Dictionary with parameters names (string) as keys and lists of
@@ -860,8 +860,8 @@ class GridSearchCV(BaseSearchCV):
 
     n_jobs : int or None, optional (default=None)
         Number of jobs to run in parallel.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     pre_dispatch : int, or string, optional
@@ -888,7 +888,7 @@ class GridSearchCV(BaseSearchCV):
         the total loss per sample, and not the mean loss across the folds.
 
         .. deprecated:: 0.22
-            Parameter ``iid`` is deprecated in 0.22 and will be removed in 0.24
+            Parameter `iid` is deprecated in 0.22 and will be removed in 0.24
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
@@ -899,7 +899,7 @@ class GridSearchCV(BaseSearchCV):
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
-        For integer/None inputs, if the estimator is a classifier and ``y`` is
+        For integer/None inputs, if the estimator is a classifier and `y` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
         other cases, :class:`KFold` is used.
 
@@ -907,7 +907,7 @@ class GridSearchCV(BaseSearchCV):
         cross-validation strategies that can be used here.
 
         .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
+            `cv` default value if None changed from 3-fold to 5-fold.
 
     refit : boolean, string, or callable, default=True
         Refit an estimator using the best found parameters on the whole
@@ -918,19 +918,19 @@ class GridSearchCV(BaseSearchCV):
         the estimator at the end.
 
         Where there are considerations other than maximum score in
-        choosing a best estimator, ``refit`` can be set to a function which
-        returns the selected ``best_index_`` given ``cv_results_``.
+        choosing a best estimator, `refit` can be set to a function which
+        returns the selected `best_index_` given `cv_results_`.
 
-        The refitted estimator is made available at the ``best_estimator_``
-        attribute and permits using ``predict`` directly on this
-        ``GridSearchCV`` instance.
+        The refitted estimator is made available at the `best_estimator_`
+        attribute and permits using `predict` directly on this
+        `GridSearchCV` instance.
 
-        Also for multiple metric evaluation, the attributes ``best_index_``,
-        ``best_score_`` and ``best_params_`` will only be available if
-        ``refit`` is set and all of them will be determined w.r.t this specific
-        scorer. ``best_score_`` is not returned if refit is callable.
+        Also for multiple metric evaluation, the attributes `best_index_`,
+        `best_score_` and `best_params_` will only be available if
+        `refit` is set and all of them will be determined w.r.t this specific
+        scorer. `best_score_` is not returned if refit is callable.
 
-        See ``scoring`` parameter to know more about multiple metric
+        See `scoring` parameter to know more about multiple metric
         evaluation.
 
         .. versionchanged:: 0.20
@@ -943,10 +943,10 @@ class GridSearchCV(BaseSearchCV):
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error. Default is ``np.nan``.
+        step, which will always raise the error. Default is `np.nan`.
 
     return_train_score : boolean, default=False
-        If ``False``, the ``cv_results_`` attribute will not include training
+        If `False`, the `cv_results_` attribute will not include training
         scores.
         Computing training scores is used to get insights on how different
         parameter settings impact the overfitting/underfitting trade-off.
@@ -977,7 +977,7 @@ class GridSearchCV(BaseSearchCV):
     ----------
     cv_results_ : dict of numpy (masked) ndarrays
         A dict with keys as column headers and values as columns, that can be
-        imported into a pandas ``DataFrame``.
+        imported into a pandas `DataFrame`.
 
         For instance the below given table
 
@@ -993,7 +993,7 @@ class GridSearchCV(BaseSearchCV):
         |  'rbf'     |     0.2   |     --     |       0.93      |...|    1    |
         +------------+-----------+------------+-----------------+---+---------+
 
-        will be represented by a ``cv_results_`` dict of::
+        will be represented by a `cv_results_` dict of::
 
             {
             'param_kernel': masked_array(data = ['poly', 'poly', 'rbf', 'rbf'],
@@ -1020,45 +1020,45 @@ class GridSearchCV(BaseSearchCV):
 
         NOTE
 
-        The key ``'params'`` is used to store a list of parameter
+        The key `'params'` is used to store a list of parameter
         settings dicts for all the parameter candidates.
 
-        The ``mean_fit_time``, ``std_fit_time``, ``mean_score_time`` and
-        ``std_score_time`` are all in seconds.
+        The `mean_fit_time`, `std_fit_time`, `mean_score_time` and
+        `std_score_time` are all in seconds.
 
         For multi-metric evaluation, the scores for all the scorers are
-        available in the ``cv_results_`` dict at the keys ending with that
-        scorer's name (``'_<scorer_name>'``) instead of ``'_score'`` shown
+        available in the `cv_results_` dict at the keys ending with that
+        scorer's name (`'_<scorer_name>'`) instead of `'_score'` shown
         above. ('split0_test_precision', 'mean_train_precision' etc.)
 
     best_estimator_ : estimator or dict
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
-        on the left out data. Not available if ``refit=False``.
+        on the left out data. Not available if `refit=False`.
 
-        See ``refit`` parameter for more information on allowed values.
+        See `refit` parameter for more information on allowed values.
 
     best_score_ : float
         Mean cross-validated score of the best_estimator
 
-        For multi-metric evaluation, this is present only if ``refit`` is
+        For multi-metric evaluation, this is present only if `refit` is
         specified.
 
     best_params_ : dict
         Parameter setting that gave the best results on the hold out data.
 
-        For multi-metric evaluation, this is present only if ``refit`` is
+        For multi-metric evaluation, this is present only if `refit` is
         specified.
 
     best_index_ : int
-        The index (of the ``cv_results_`` arrays) which corresponds to the best
+        The index (of the `cv_results_` arrays) which corresponds to the best
         candidate parameter setting.
 
-        The dict at ``search.cv_results_['params'][search.best_index_]`` gives
+        The dict at `search.cv_results_['params'][search.best_index_]` gives
         the parameter setting for the best model, that gives the highest
-        mean score (``search.best_score_``).
+        mean score (`search.best_score_`).
 
-        For multi-metric evaluation, this is present only if ``refit`` is
+        For multi-metric evaluation, this is present only if `refit` is
         specified.
 
     scorer_ : function or a dict
@@ -1066,7 +1066,7 @@ class GridSearchCV(BaseSearchCV):
         parameters for the model.
 
         For multi-metric evaluation, this attribute holds the validated
-        ``scoring`` dict which maps the scorer key to the scorer callable.
+        `scoring` dict which maps the scorer key to the scorer callable.
 
     n_splits_ : int
         The number of cross-validation splits (folds/iterations).
@@ -1074,7 +1074,7 @@ class GridSearchCV(BaseSearchCV):
     refit_time_ : float
         Seconds used for refitting the best model on the whole dataset.
 
-        This is present only if ``refit`` is not False.
+        This is present only if `refit` is not False.
 
     Notes
     -----
@@ -1144,10 +1144,10 @@ class RandomizedSearchCV(BaseSearchCV):
     It is highly recommended to use continuous distributions for continuous
     parameters.
 
-    Note that before SciPy 0.16, the ``scipy.stats.distributions`` do not
+    Note that before SciPy 0.16, the `scipy.stats.distributions` do not
     accept a custom RNG instance and always use the singleton RNG from
-    ``numpy.random``. Hence setting ``random_state`` will not guarantee a
-    deterministic iteration whenever ``scipy.stats`` distributions are used to
+    `numpy.random`. Hence setting `random_state` will not guarantee a
+    deterministic iteration whenever `scipy.stats` distributions are used to
     define the parameter search space.
 
     Read more in the :ref:`User Guide <randomized_parameter_search>`.
@@ -1157,12 +1157,12 @@ class RandomizedSearchCV(BaseSearchCV):
     estimator : estimator object.
         A object of that type is instantiated for each grid point.
         This is assumed to implement the scikit-learn estimator interface.
-        Either estimator needs to provide a ``score`` function,
-        or ``scoring`` must be passed.
+        Either estimator needs to provide a `score` function,
+        or `scoring` must be passed.
 
     param_distributions : dict
         Dictionary with parameters names (string) as keys and distributions
-        or lists of parameters to try. Distributions must provide a ``rvs``
+        or lists of parameters to try. Distributions must provide a `rvs`
         method for sampling (such as those from scipy.stats.distributions).
         If a list is given, it is sampled uniformly.
 
@@ -1187,8 +1187,8 @@ class RandomizedSearchCV(BaseSearchCV):
 
     n_jobs : int or None, optional (default=None)
         Number of jobs to run in parallel.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     pre_dispatch : int, or string, optional
@@ -1215,7 +1215,7 @@ class RandomizedSearchCV(BaseSearchCV):
         the total loss per sample, and not the mean loss across the folds.
 
         .. deprecated:: 0.22
-            Parameter ``iid`` is deprecated in 0.22 and will be removed in 0.24
+            Parameter `iid` is deprecated in 0.22 and will be removed in 0.24
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
@@ -1226,7 +1226,7 @@ class RandomizedSearchCV(BaseSearchCV):
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
-        For integer/None inputs, if the estimator is a classifier and ``y`` is
+        For integer/None inputs, if the estimator is a classifier and `y` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
         other cases, :class:`KFold` is used.
 
@@ -1234,7 +1234,7 @@ class RandomizedSearchCV(BaseSearchCV):
         cross-validation strategies that can be used here.
 
         .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
+            `cv` default value if None changed from 3-fold to 5-fold.
 
     refit : boolean, string, or callable, default=True
         Refit an estimator using the best found parameters on the whole
@@ -1245,19 +1245,19 @@ class RandomizedSearchCV(BaseSearchCV):
         the estimator at the end.
 
         Where there are considerations other than maximum score in
-        choosing a best estimator, ``refit`` can be set to a function which
-        returns the selected ``best_index_`` given the ``cv_results``.
+        choosing a best estimator, `refit` can be set to a function which
+        returns the selected `best_index_` given the `cv_results`.
 
-        The refitted estimator is made available at the ``best_estimator_``
-        attribute and permits using ``predict`` directly on this
-        ``RandomizedSearchCV`` instance.
+        The refitted estimator is made available at the `best_estimator_`
+        attribute and permits using `predict` directly on this
+        `RandomizedSearchCV` instance.
 
-        Also for multiple metric evaluation, the attributes ``best_index_``,
-        ``best_score_`` and ``best_params_`` will only be available if
-        ``refit`` is set and all of them will be determined w.r.t this specific
-        scorer. When refit is callable, ``best_score_`` is disabled.
+        Also for multiple metric evaluation, the attributes `best_index_`,
+        `best_score_` and `best_params_` will only be available if
+        `refit` is set and all of them will be determined w.r.t this specific
+        scorer. When refit is callable, `best_score_` is disabled.
 
-        See ``scoring`` parameter to know more about multiple metric
+        See `scoring` parameter to know more about multiple metric
         evaluation.
 
         .. versionchanged:: 0.20
@@ -1278,10 +1278,10 @@ class RandomizedSearchCV(BaseSearchCV):
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error. Default is ``np.nan``.
+        step, which will always raise the error. Default is `np.nan`.
 
     return_train_score : boolean, default=False
-        If ``False``, the ``cv_results_`` attribute will not include training
+        If `False`, the `cv_results_` attribute will not include training
         scores.
         Computing training scores is used to get insights on how different
         parameter settings impact the overfitting/underfitting trade-off.
@@ -1293,7 +1293,7 @@ class RandomizedSearchCV(BaseSearchCV):
     ----------
     cv_results_ : dict of numpy (masked) ndarrays
         A dict with keys as column headers and values as columns, that can be
-        imported into a pandas ``DataFrame``.
+        imported into a pandas `DataFrame`.
 
         For instance the below given table
 
@@ -1307,7 +1307,7 @@ class RandomizedSearchCV(BaseSearchCV):
         |    'rbf'     |     0.3     |       0.70        |...|       1       |
         +--------------+-------------+-------------------+---+---------------+
 
-        will be represented by a ``cv_results_`` dict of::
+        will be represented by a `cv_results_` dict of::
 
             {
             'param_kernel' : masked_array(data = ['rbf', 'rbf', 'rbf'],
@@ -1331,56 +1331,56 @@ class RandomizedSearchCV(BaseSearchCV):
 
         NOTE
 
-        The key ``'params'`` is used to store a list of parameter
+        The key `'params'` is used to store a list of parameter
         settings dicts for all the parameter candidates.
 
-        The ``mean_fit_time``, ``std_fit_time``, ``mean_score_time`` and
-        ``std_score_time`` are all in seconds.
+        The `mean_fit_time`, `std_fit_time`, `mean_score_time` and
+        `std_score_time` are all in seconds.
 
         For multi-metric evaluation, the scores for all the scorers are
-        available in the ``cv_results_`` dict at the keys ending with that
-        scorer's name (``'_<scorer_name>'``) instead of ``'_score'`` shown
+        available in the `cv_results_` dict at the keys ending with that
+        scorer's name (`'_<scorer_name>'`) instead of `'_score'` shown
         above. ('split0_test_precision', 'mean_train_precision' etc.)
 
     best_estimator_ : estimator or dict
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
-        on the left out data. Not available if ``refit=False``.
+        on the left out data. Not available if `refit=False`.
 
         For multi-metric evaluation, this attribute is present only if
-        ``refit`` is specified.
+        `refit` is specified.
 
-        See ``refit`` parameter for more information on allowed values.
+        See `refit` parameter for more information on allowed values.
 
     best_score_ : float
         Mean cross-validated score of the best_estimator.
 
-        For multi-metric evaluation, this is not available if ``refit`` is
-        ``False``. See ``refit`` parameter for more information.
+        For multi-metric evaluation, this is not available if `refit` is
+        `False`. See `refit` parameter for more information.
 
     best_params_ : dict
         Parameter setting that gave the best results on the hold out data.
 
-        For multi-metric evaluation, this is not available if ``refit`` is
-        ``False``. See ``refit`` parameter for more information.
+        For multi-metric evaluation, this is not available if `refit` is
+        `False`. See `refit` parameter for more information.
 
     best_index_ : int
-        The index (of the ``cv_results_`` arrays) which corresponds to the best
+        The index (of the `cv_results_` arrays) which corresponds to the best
         candidate parameter setting.
 
-        The dict at ``search.cv_results_['params'][search.best_index_]`` gives
+        The dict at `search.cv_results_['params'][search.best_index_]` gives
         the parameter setting for the best model, that gives the highest
-        mean score (``search.best_score_``).
+        mean score (`search.best_score_`).
 
-        For multi-metric evaluation, this is not available if ``refit`` is
-        ``False``. See ``refit`` parameter for more information.
+        For multi-metric evaluation, this is not available if `refit` is
+        `False`. See `refit` parameter for more information.
 
     scorer_ : function or a dict
         Scorer function used on the held out data to choose the best
         parameters for the model.
 
         For multi-metric evaluation, this attribute holds the validated
-        ``scoring`` dict which maps the scorer key to the scorer callable.
+        `scoring` dict which maps the scorer key to the scorer callable.
 
     n_splits_ : int
         The number of cross-validation splits (folds/iterations).
@@ -1388,7 +1388,7 @@ class RandomizedSearchCV(BaseSearchCV):
     refit_time_ : float
         Seconds used for refitting the best model on the whole dataset.
 
-        This is present only if ``refit`` is not False.
+        This is present only if `refit` is not False.
 
     Notes
     -----

@@ -35,14 +35,14 @@ face detector from various online websites.
 Usage
 ~~~~~
 
-``scikit-learn`` provides two loaders that will automatically download,
+`scikit-learn` provides two loaders that will automatically download,
 cache, parse the metadata files, decode the jpeg and convert the
 interesting slices into memmapped numpy arrays. This dataset size is more
 than 200 MB. The first load typically takes more than a couple of minutes
 to fully decode the relevant part of the JPEG files into numpy arrays. If
 the dataset has  been loaded once, the following times the loading times
 less than 200ms by using a memmapped version memoized on the disk in the
-``~/scikit_learn_data/lfw_home/`` folder using ``joblib``.
+`~/scikit_learn_data/lfw_home/` folder using `joblib`.
 
 The first loader is used for the Face Identification task: a multi-class
 classification task (hence supervised learning)::
@@ -73,7 +73,7 @@ most of the background::
   >>> lfw_people.images.shape
   (1288, 50, 37)
 
-Each of the ``1140`` faces is assigned to a single person id in the ``target``
+Each of the `1140` faces is assigned to a single person id in the `target`
 array::
 
   >>> lfw_people.target.shape
@@ -103,12 +103,12 @@ is a pair of two picture belonging or not to the same person::
 Both for the :func:`sklearn.datasets.fetch_lfw_people` and
 :func:`sklearn.datasets.fetch_lfw_pairs` function it is
 possible to get an additional dimension with the RGB color channels by
-passing ``color=True``, in that case the shape will be
-``(2200, 2, 62, 47, 3)``.
+passing `color=True`, in that case the shape will be
+`(2200, 2, 62, 47, 3)`.
 
 The :func:`sklearn.datasets.fetch_lfw_pairs` datasets is subdivided into
-3 subsets: the development ``train`` set, the development ``test`` set and
-an evaluation ``10_folds`` set meant to compute performance metrics using a
+3 subsets: the development `train` set, the development `test` set and
+an evaluation `10_folds` set meant to compute performance metrics using a
 10-folds cross validation scheme.
 
 .. topic:: References:

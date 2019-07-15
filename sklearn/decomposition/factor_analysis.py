@@ -57,14 +57,14 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
     ----------
     n_components : int | None
         Dimensionality of latent space, the number of components
-        of ``X`` that are obtained after ``transform``.
+        of `X` that are obtained after `transform`.
         If None, n_components is set to the number of features.
 
     tol : float
         Stopping tolerance for EM algorithm.
 
     copy : bool
-        Whether to make a copy of X. If ``False``, the input X gets overwritten
+        Whether to make a copy of X. If `False`, the input X gets overwritten
         during fitting.
 
     max_iter : int
@@ -76,7 +76,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
     svd_method : {'lapack', 'randomized'}
         Which SVD method to use. If 'lapack' use standard SVD from
-        scipy.linalg, if 'randomized' use fast ``randomized_svd`` function.
+        scipy.linalg, if 'randomized' use fast `randomized_svd` function.
         Defaults to 'randomized'. For most applications 'randomized' will
         be sufficiently precise while providing significant speed gains.
         Accuracy can also be improved by setting higher values for
@@ -85,13 +85,13 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
     iterated_power : int, optional
         Number of iterations for the power method. 3 by default. Only used
-        if ``svd_method`` equals 'randomized'
+        if `svd_method` equals 'randomized'
 
     random_state : int, RandomState instance or None, optional (default=0)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`. Only used when ``svd_method`` equals 'randomized'.
+        by `np.random`. Only used when `svd_method` equals 'randomized'.
 
     Attributes
     ----------
@@ -275,7 +275,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
     def get_covariance(self):
         """Compute data covariance with the FactorAnalysis model.
 
-        ``cov = components_.T * components_ + diag(noise_variance)``
+        `cov = components_.T * components_ + diag(noise_variance)`
 
         Returns
         -------

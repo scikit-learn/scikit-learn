@@ -611,7 +611,7 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
 
     This estimator is much faster than
     :class:`GradientBoostingRegressor<sklearn.ensemble.GradientBoostingRegressor>`
-    for big datasets (n_samples >= 10 000). The input data ``X`` is pre-binned
+    for big datasets (n_samples >= 10 000). The input data `X` is pre-binned
     into integer-valued bins, which considerably reduces the number of
     splitting points to consider, and allows the algorithm to leverage
     integer-based data structures. For small sample sizes,
@@ -626,7 +626,7 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
 
       This estimator is still **experimental** for now: the predictions
       and the API might change without any deprecation cycle. To use it,
-      you need to explicitly import ``enable_hist_gradient_boosting``::
+      you need to explicitly import `enable_hist_gradient_boosting`::
 
         >>> # explicitly require this experimental feature
         >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
@@ -642,7 +642,7 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
         to simplify the computation of the gradient.
     learning_rate : float, optional (default=0.1)
         The learning rate, also known as *shrinkage*. This is used as a
-        multiplicative factor for the leaves values. Use ``1`` for no
+        multiplicative factor for the leaves values. Use `1` for no
         shrinkage.
     max_iter : int, optional (default=100)
         The maximum number of iterations of the boosting process, i.e. the
@@ -659,16 +659,16 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
         than a few hundred samples, it is recommended to lower this value
         since only very shallow trees would be built.
     l2_regularization : float, optional (default=0)
-        The L2 regularization parameter. Use ``0`` for no regularization
+        The L2 regularization parameter. Use `0` for no regularization
         (default).
     max_bins : int, optional (default=256)
         The maximum number of bins to use. Before training, each feature of
-        the input array ``X`` is binned into at most ``max_bins`` bins, which
+        the input array `X` is binned into at most `max_bins` bins, which
         allows for a much faster training stage. Features with a small
-        number of unique values may use less than ``max_bins`` bins. Must be no
+        number of unique values may use less than `max_bins` bins. Must be no
         larger than 256.
     warm_start : bool, optional (default=False)
-        When set to ``True``, reuse the solution of the previous call to fit
+        When set to `True`, reuse the solution of the previous call to fit
         and add more estimators to the ensemble. For results to be valid, the
         estimator should be re-trained on the same data only.
         See :term:`the Glossary <warm_start>`.
@@ -676,16 +676,16 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
         Scoring parameter to use for early stopping. It can be a single
         string (see :ref:`scoring_parameter`) or a callable (see
         :ref:`scoring`). If None, the estimator's default scorer is used. If
-        ``scoring='loss'``, early stopping is checked w.r.t the loss value.
-        Only used if ``n_iter_no_change`` is not None.
+        `scoring='loss'`, early stopping is checked w.r.t the loss value.
+        Only used if `n_iter_no_change` is not None.
     validation_fraction : int or float or None, optional (default=0.1)
         Proportion (or absolute size) of training data to set aside as
         validation data for early stopping. If None, early stopping is done on
-        the training data. Only used if ``n_iter_no_change`` is not None.
+        the training data. Only used if `n_iter_no_change` is not None.
     n_iter_no_change : int or None, optional (default=None)
         Used to determine when to "early stop". The fitting process is
-        stopped when none of the last ``n_iter_no_change`` scores are better
-        than the ``n_iter_no_change - 1`` -th-to-last one, up to some
+        stopped when none of the last `n_iter_no_change` scores are better
+        than the `n_iter_no_change - 1` -th-to-last one, up to some
         tolerance. If None or 0, no early-stopping is done.
     tol : float or None, optional (default=1e-7)
         The absolute tolerance to use when comparing scores during early
@@ -712,14 +712,14 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
     train_score_ : ndarray, shape (n_iter_ + 1,)
         The scores at each iteration on the training data. The first entry
         is the score of the ensemble before the first iteration. Scores are
-        computed according to the ``scoring`` parameter. If ``scoring`` is
+        computed according to the `scoring` parameter. If `scoring` is
         not 'loss', scores are computed on a subset of at most 10 000
         samples. Empty if no early stopping.
     validation_score_ : ndarray, shape (n_iter_ + 1,)
         The scores at each iteration on the held-out validation data. The
         first entry is the score of the ensemble before the first iteration.
-        Scores are computed according to the ``scoring`` parameter. Empty if
-        no early stopping or if ``validation_fraction`` is None.
+        Scores are computed according to the `scoring` parameter. Empty if
+        no early stopping or if `validation_fraction` is None.
 
     Examples
     --------
@@ -784,7 +784,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
 
     This estimator is much faster than
     :class:`GradientBoostingClassifier<sklearn.ensemble.GradientBoostingClassifier>`
-    for big datasets (n_samples >= 10 000). The input data ``X`` is pre-binned
+    for big datasets (n_samples >= 10 000). The input data `X` is pre-binned
     into integer-valued bins, which considerably reduces the number of
     splitting points to consider, and allows the algorithm to leverage
     integer-based data structures. For small sample sizes,
@@ -799,7 +799,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
 
       This estimator is still **experimental** for now: the predictions
       and the API might change without any deprecation cycle. To use it,
-      you need to explicitly import ``enable_hist_gradient_boosting``::
+      you need to explicitly import `enable_hist_gradient_boosting`::
 
         >>> # explicitly require this experimental feature
         >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
@@ -817,7 +817,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         on the nature of the problem.
     learning_rate : float, optional (default=0.1)
         The learning rate, also known as *shrinkage*. This is used as a
-        multiplicative factor for the leaves values. Use ``1`` for no
+        multiplicative factor for the leaves values. Use `1` for no
         shrinkage.
     max_iter : int, optional (default=100)
         The maximum number of iterations of the boosting process, i.e. the
@@ -838,12 +838,12 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         The L2 regularization parameter. Use 0 for no regularization.
     max_bins : int, optional (default=256)
         The maximum number of bins to use. Before training, each feature of
-        the input array ``X`` is binned into at most ``max_bins`` bins, which
+        the input array `X` is binned into at most `max_bins` bins, which
         allows for a much faster training stage. Features with a small
-        number of unique values may use less than ``max_bins`` bins. Must be no
+        number of unique values may use less than `max_bins` bins. Must be no
         larger than 256.
     warm_start : bool, optional (default=False)
-        When set to ``True``, reuse the solution of the previous call to fit
+        When set to `True`, reuse the solution of the previous call to fit
         and add more estimators to the ensemble. For results to be valid, the
         estimator should be re-trained on the same data only.
         See :term:`the Glossary <warm_start>`.
@@ -851,16 +851,16 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         Scoring parameter to use for early stopping. It can be a single
         string (see :ref:`scoring_parameter`) or a callable (see
         :ref:`scoring`). If None, the estimator's default scorer
-        is used. If ``scoring='loss'``, early stopping is checked
-        w.r.t the loss value. Only used if ``n_iter_no_change`` is not None.
+        is used. If `scoring='loss'`, early stopping is checked
+        w.r.t the loss value. Only used if `n_iter_no_change` is not None.
     validation_fraction : int or float or None, optional (default=0.1)
         Proportion (or absolute size) of training data to set aside as
         validation data for early stopping. If None, early stopping is done on
         the training data.
     n_iter_no_change : int or None, optional (default=None)
         Used to determine when to "early stop". The fitting process is
-        stopped when none of the last ``n_iter_no_change`` scores are better
-        than the ``n_iter_no_change - 1`` -th-to-last one, up to some
+        stopped when none of the last `n_iter_no_change` scores are better
+        than the `n_iter_no_change - 1` -th-to-last one, up to some
         tolerance. If None or 0, no early-stopping is done.
     tol : float or None, optional (default=1e-7)
         The absolute tolerance to use when comparing scores. The higher the
@@ -883,19 +883,19 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         n_iter_no_change is not None). Otherwise it corresponds to max_iter.
     n_trees_per_iteration_ : int
         The number of tree that are built at each iteration. This is equal to 1
-        for binary classification, and to ``n_classes`` for multiclass
+        for binary classification, and to `n_classes` for multiclass
         classification.
     train_score_ : ndarray, shape (n_iter_ + 1,)
         The scores at each iteration on the training data. The first entry
         is the score of the ensemble before the first iteration. Scores are
-        computed according to the ``scoring`` parameter. If ``scoring`` is
+        computed according to the `scoring` parameter. If `scoring` is
         not 'loss', scores are computed on a subset of at most 10 000
         samples. Empty if no early stopping.
     validation_score_ : ndarray, shape (n_iter_ + 1,)
         The scores at each iteration on the held-out validation data. The
         first entry is the score of the ensemble before the first iteration.
-        Scores are computed according to the ``scoring`` parameter. Empty if
-        no early stopping or if ``validation_fraction`` is None.
+        Scores are computed according to the `scoring` parameter. Empty if
+        no early stopping or if `validation_fraction` is None.
 
     Examples
     --------

@@ -62,7 +62,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True,
     coef : array, shape (n_features, n_nonzero_coefs)
         The first k values of column k correspond to the coefficient value
         for the active features at that step. The lower left triangle contains
-        garbage. Only returned if ``return_path=True``.
+        garbage. Only returned if `return_path=True`.
 
     n_active : int
         Number of active features at convergence.
@@ -184,7 +184,7 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
     coefs : array, shape (n_features, n_nonzero_coefs)
         The first k values of column k correspond to the coefficient value
         for the active features at that step. The lower left triangle contains
-        garbage. Only returned if ``return_path=True``.
+        garbage. Only returned if `return_path=True`.
 
     n_active : int
         Number of active features at convergence.
@@ -559,12 +559,12 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin, MultiOutputMixin):
         (e.g. data is expected to be already centered).
 
     normalize : boolean, optional, default True
-        This parameter is ignored when ``fit_intercept`` is set to False.
+        This parameter is ignored when `fit_intercept` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
+        :class:`sklearn.preprocessing.StandardScaler` before calling `fit`
+        on an estimator with `normalize=False`.
 
     precompute : {True, False, 'auto'}, default 'auto'
         Whether to use a precomputed Gram and Xy matrix to speed up
@@ -704,12 +704,12 @@ def _omp_path_residues(X_train, y_train, X_test, y_test, copy=True,
         (e.g. data is expected to be already centered).
 
     normalize : boolean, optional, default True
-        This parameter is ignored when ``fit_intercept`` is set to False.
+        This parameter is ignored when `fit_intercept` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
+        :class:`sklearn.preprocessing.StandardScaler` before calling `fit`
+        on an estimator with `normalize=False`.
 
     max_iter : integer, optional
         Maximum numbers of iterations to perform, therefore maximum features
@@ -773,16 +773,16 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
         (e.g. data is expected to be already centered).
 
     normalize : boolean, optional, default True
-        This parameter is ignored when ``fit_intercept`` is set to False.
+        This parameter is ignored when `fit_intercept` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
+        :class:`sklearn.preprocessing.StandardScaler` before calling `fit`
+        on an estimator with `normalize=False`.
 
     max_iter : integer, optional
         Maximum numbers of iterations to perform, therefore maximum features
-        to include. 10% of ``n_features`` but at least 5 if available.
+        to include. 10% of `n_features` but at least 5 if available.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
@@ -799,12 +799,12 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
         cross-validation strategies that can be used here.
 
         .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
+            `cv` default value if None changed from 3-fold to 5-fold.
 
     n_jobs : int or None, optional (default=None)
         Number of CPUs to use during the cross validation.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     verbose : boolean or integer, optional

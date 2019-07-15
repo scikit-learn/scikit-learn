@@ -256,7 +256,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
-        Alpha corresponds to ``C^-1`` in other linear models such as
+        Alpha corresponds to `C^-1` in other linear models such as
         LogisticRegression or LinearSVC. If an array is passed, penalties are
         assumed to be specific to the targets. Hence they must correspond in
         number.
@@ -325,7 +325,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
-        instance used by `np.random`. Used when ``solver`` == 'sag'.
+        instance used by `np.random`. Used when `solver` == 'sag'.
 
     return_n_iter : boolean, default False
         If True, the method also returns `n_iter`, the actual number of
@@ -604,7 +604,7 @@ class Ridge(_BaseRidge, RegressorMixin):
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
-        Alpha corresponds to ``C^-1`` in other linear models such as
+        Alpha corresponds to `C^-1` in other linear models such as
         LogisticRegression or LinearSVC. If an array is passed, penalties are
         assumed to be specific to the targets. Hence they must correspond in
         number.
@@ -615,12 +615,12 @@ class Ridge(_BaseRidge, RegressorMixin):
         (e.g. data is expected to be already centered).
 
     normalize : boolean, optional, default False
-        This parameter is ignored when ``fit_intercept`` is set to False.
+        This parameter is ignored when `fit_intercept` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
+        :class:`sklearn.preprocessing.StandardScaler` before calling `fit`
+        on an estimator with `normalize=False`.
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
@@ -676,7 +676,7 @@ class Ridge(_BaseRidge, RegressorMixin):
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
-        instance used by `np.random`. Used when ``solver`` == 'sag'.
+        instance used by `np.random`. Used when `solver` == 'sag'.
 
         .. versionadded:: 0.17
            *random_state* to support Stochastic Average Gradient.
@@ -688,7 +688,7 @@ class Ridge(_BaseRidge, RegressorMixin):
 
     intercept_ : float | array, shape = (n_targets,)
         Independent term in decision function. Set to 0.0 if
-        ``fit_intercept = False``.
+        `fit_intercept = False`.
 
     n_iter_ : array or None, shape (n_targets,)
         Actual number of iterations for each target. Available only for
@@ -757,7 +757,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
-        Alpha corresponds to ``C^-1`` in other linear models such as
+        Alpha corresponds to `C^-1` in other linear models such as
         LogisticRegression or LinearSVC.
 
     fit_intercept : boolean
@@ -766,12 +766,12 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         already centered).
 
     normalize : boolean, optional, default False
-        This parameter is ignored when ``fit_intercept`` is set to False.
+        This parameter is ignored when `fit_intercept` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
+        :class:`sklearn.preprocessing.StandardScaler` before calling `fit`
+        on an estimator with `normalize=False`.
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
@@ -784,12 +784,12 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         Precision of the solution.
 
     class_weight : dict or 'balanced', optional
-        Weights associated with classes in the form ``{class_label: weight}``.
+        Weights associated with classes in the form `{class_label: weight}`.
         If not given, all classes are supposed to have weight one.
 
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``
+        as `n_samples / (n_classes * np.bincount(y))`
 
     solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga'}
         Solver to use in the computational routines:
@@ -830,18 +830,18 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
-        instance used by `np.random`. Used when ``solver`` == 'sag'.
+        instance used by `np.random`. Used when `solver` == 'sag'.
 
     Attributes
     ----------
     coef_ : array, shape (1, n_features) or (n_classes, n_features)
         Coefficient of the features in the decision function.
 
-        ``coef_`` is of shape (1, n_features) when the given problem is binary.
+        `coef_` is of shape (1, n_features) when the given problem is binary.
 
     intercept_ : float | array, shape = (n_targets,)
         Independent term in decision function. Set to 0.0 if
-        ``fit_intercept = False``.
+        `fit_intercept = False`.
 
     n_iter_ : array or None, shape (n_targets,)
         Actual number of iterations for each target. Available only for
@@ -1105,7 +1105,7 @@ class _RidgeGCV(LinearModel):
         gram : ndarray, shape (n_samples, n_samples)
             The Gram matrix.
         X_mean : ndarray, shape (n_feature,)
-            The weighted mean of ``X`` for each feature.
+            The weighted mean of `X` for each feature.
 
         Notes
         -----
@@ -1155,7 +1155,7 @@ class _RidgeGCV(LinearModel):
         covariance : ndarray, shape (n_features, n_features)
             The covariance matrix.
         X_mean : ndarray, shape (n_feature,)
-            The weighted mean of ``X`` for each feature.
+            The weighted mean of `X` for each feature.
 
         Notes
         -----
@@ -1574,7 +1574,7 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
-        Alpha corresponds to ``C^-1`` in other linear models such as
+        Alpha corresponds to `C^-1` in other linear models such as
         LogisticRegression or LinearSVC.
         If using generalized cross-validation, alphas must be positive.
 
@@ -1584,17 +1584,17 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
         (e.g. data is expected to be already centered).
 
     normalize : boolean, optional, default False
-        This parameter is ignored when ``fit_intercept`` is set to False.
+        This parameter is ignored when `fit_intercept` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
+        :class:`sklearn.preprocessing.StandardScaler` before calling `fit`
+        on an estimator with `normalize=False`.
 
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
+        `scorer(estimator, X, y)`.
         If None, the negative mean squared error if cv is 'auto' or None
         (i.e. when using generalized cross-validation), and r2 score otherwise.
 
@@ -1608,7 +1608,7 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
-        For integer/None inputs, if ``y`` is binary or multiclass,
+        For integer/None inputs, if `y` is binary or multiclass,
         :class:`sklearn.model_selection.StratifiedKFold` is used, else,
         :class:`sklearn.model_selection.KFold` is used.
 
@@ -1629,25 +1629,25 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
 
     store_cv_values : boolean, default=False
         Flag indicating if the cross-validation values corresponding to
-        each alpha should be stored in the ``cv_values_`` attribute (see
-        below). This flag is only compatible with ``cv=None`` (i.e. using
+        each alpha should be stored in the `cv_values_` attribute (see
+        below). This flag is only compatible with `cv=None` (i.e. using
         Generalized Cross-Validation).
 
     Attributes
     ----------
     cv_values_ : array, shape = [n_samples, n_alphas] or \
         shape = [n_samples, n_targets, n_alphas], optional
-        Cross-validation values for each alpha (if ``store_cv_values=True``\
-        and ``cv=None``). After ``fit()`` has been called, this attribute \
+        Cross-validation values for each alpha (if `store_cv_values=True`\
+        and `cv=None`). After `fit()` has been called, this attribute \
         will contain the mean squared errors (by default) or the values \
-        of the ``{loss,score}_func`` function (if provided in the constructor).
+        of the `{loss,score}_func` function (if provided in the constructor).
 
     coef_ : array, shape = [n_features] or [n_targets, n_features]
         Weight vector(s).
 
     intercept_ : float | array, shape = (n_targets,)
         Independent term in decision function. Set to 0.0 if
-        ``fit_intercept = False``.
+        `fit_intercept = False`.
 
     alpha_ : float
         Estimated regularization parameter.
@@ -1688,7 +1688,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
-        Alpha corresponds to ``C^-1`` in other linear models such as
+        Alpha corresponds to `C^-1` in other linear models such as
         LogisticRegression or LinearSVC.
 
     fit_intercept : boolean
@@ -1697,17 +1697,17 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         (e.g. data is expected to be already centered).
 
     normalize : boolean, optional, default False
-        This parameter is ignored when ``fit_intercept`` is set to False.
+        This parameter is ignored when `fit_intercept` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
+        :class:`sklearn.preprocessing.StandardScaler` before calling `fit`
+        on an estimator with `normalize=False`.
 
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
+        `scorer(estimator, X, y)`.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
@@ -1722,35 +1722,35 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         cross-validation strategies that can be used here.
 
     class_weight : dict or 'balanced', optional
-        Weights associated with classes in the form ``{class_label: weight}``.
+        Weights associated with classes in the form `{class_label: weight}`.
         If not given, all classes are supposed to have weight one.
 
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``
+        as `n_samples / (n_classes * np.bincount(y))`
 
     store_cv_values : boolean, default=False
         Flag indicating if the cross-validation values corresponding to
-        each alpha should be stored in the ``cv_values_`` attribute (see
-        below). This flag is only compatible with ``cv=None`` (i.e. using
+        each alpha should be stored in the `cv_values_` attribute (see
+        below). This flag is only compatible with `cv=None` (i.e. using
         Generalized Cross-Validation).
 
     Attributes
     ----------
     cv_values_ : array, shape = [n_samples, n_targets, n_alphas], optional
-        Cross-validation values for each alpha (if ``store_cv_values=True`` and
-        ``cv=None``). After ``fit()`` has been called, this attribute will
+        Cross-validation values for each alpha (if `store_cv_values=True` and
+        `cv=None`). After `fit()` has been called, this attribute will
         contain the mean squared errors (by default) or the values of the
-        ``{loss,score}_func`` function (if provided in the constructor).
+        `{loss,score}_func` function (if provided in the constructor).
 
     coef_ : array, shape (1, n_features) or (n_targets, n_features)
         Coefficient of the features in the decision function.
 
-        ``coef_`` is of shape (1, n_features) when the given problem is binary.
+        `coef_` is of shape (1, n_features) when the given problem is binary.
 
     intercept_ : float | array, shape = (n_targets,)
         Independent term in decision function. Set to 0.0 if
-        ``fit_intercept = False``.
+        `fit_intercept = False`.
 
     alpha_ : float
         Estimated regularization parameter

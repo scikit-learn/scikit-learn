@@ -284,15 +284,15 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
     If affinity is the adjacency matrix of a graph, this method can be
     used to find normalized graph cuts.
 
-    When calling ``fit``, an affinity matrix is constructed using either
+    When calling `fit`, an affinity matrix is constructed using either
     kernel function such the Gaussian (aka RBF) kernel of the euclidean
-    distanced ``d(X, X)``::
+    distanced `d(X, X)`::
 
             np.exp(-gamma * d(X,X) ** 2)
 
     or a k-nearest neighbors connectivity matrix.
 
-    Alternatively, using ``precomputed``, a user-provided affinity
+    Alternatively, using `precomputed`, a user-provided affinity
     matrix can be used.
 
     Read more in the :ref:`User Guide <spectral_clustering>`.
@@ -312,7 +312,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
 
     random_state : int, RandomState instance or None (default)
         A pseudo random number generator used for the initialization of the
-        lobpcg eigen vectors decomposition when ``eigen_solver='amg'`` and by
+        lobpcg eigen vectors decomposition when `eigen_solver='amg'` and by
         the K-Means initialization. Use an int to make the randomness
         deterministic.
         See :term:`Glossary <random_state>`.
@@ -324,7 +324,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
 
     gamma : float, default=1.0
         Kernel coefficient for rbf, poly, sigmoid, laplacian and chi2 kernels.
-        Ignored for ``affinity='nearest_neighbors'``.
+        Ignored for `affinity='nearest_neighbors'`.
 
     affinity : string, array-like or callable, default 'rbf'
         If a string, this may be one of 'nearest_neighbors', 'precomputed',
@@ -337,11 +337,11 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
 
     n_neighbors : integer
         Number of neighbors to use when constructing the affinity matrix using
-        the nearest neighbors method. Ignored for ``affinity='rbf'``.
+        the nearest neighbors method. Ignored for `affinity='rbf'`.
 
     eigen_tol : float, optional, default: 0.0
         Stopping criterion for eigendecomposition of the Laplacian matrix
-        when ``eigen_solver='arpack'``.
+        when `eigen_solver='arpack'`.
 
     assign_labels : {'kmeans', 'discretize'}, default: 'kmeans'
         The strategy to use to assign labels in the embedding
@@ -363,15 +363,15 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
 
     n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     Attributes
     ----------
     affinity_matrix_ : array-like, shape (n_samples, n_samples)
         Affinity matrix used for clustering. Available only if after calling
-        ``fit``.
+        `fit`.
 
     labels_ :
         Labels of each point
@@ -401,7 +401,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
 
         np.exp(- dist_matrix ** 2 / (2. * delta ** 2))
 
-    Where ``delta`` is a free parameter representing the width of the Gaussian
+    Where `delta` is a free parameter representing the width of the Gaussian
     kernel.
 
     Another alternative is to take a symmetric version of the k
@@ -453,10 +453,10 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         X : array-like or sparse matrix, shape (n_samples, n_features), or \
             array-like, shape (n_samples, n_samples)
             Training instances to cluster, or similarities / affinities between
-            instances if ``affinity='precomputed'``. If a sparse matrix is
-            provided in a format other than ``csr_matrix``, ``csc_matrix``,
-            or ``coo_matrix``, it will be converted into a sparse
-            ``csr_matrix``.
+            instances if `affinity='precomputed'`. If a sparse matrix is
+            provided in a format other than `csr_matrix`, `csc_matrix`,
+            or `coo_matrix`, it will be converted into a sparse
+            `csr_matrix`.
 
         y : Ignored
             Not used, present here for API consistency by convention.
@@ -469,10 +469,10 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
                         dtype=np.float64, ensure_min_samples=2)
         if X.shape[0] == X.shape[1] and self.affinity != "precomputed":
-            warnings.warn("The spectral clustering API has changed. ``fit``"
+            warnings.warn("The spectral clustering API has changed. `fit`"
                           "now constructs an affinity matrix from data. To use"
                           " a custom affinity matrix, "
-                          "set ``affinity=precomputed``.")
+                          "set `affinity=precomputed`.")
 
         if self.affinity == 'nearest_neighbors':
             connectivity = kneighbors_graph(X, n_neighbors=self.n_neighbors,
@@ -513,10 +513,10 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         X : array-like or sparse matrix, shape (n_samples, n_features), or \
             array-like, shape (n_samples, n_samples)
             Training instances to cluster, or similarities / affinities between
-            instances if ``affinity='precomputed'``. If a sparse matrix is
-            provided in a format other than ``csr_matrix``, ``csc_matrix``,
-            or ``coo_matrix``, it will be converted into a sparse
-            ``csr_matrix``.
+            instances if `affinity='precomputed'`. If a sparse matrix is
+            provided in a format other than `csr_matrix`, `csc_matrix`,
+            or `coo_matrix`, it will be converted into a sparse
+            `csr_matrix`.
 
         y : Ignored
             Not used, present here for API consistency by convention.

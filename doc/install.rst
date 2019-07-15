@@ -33,11 +33,11 @@ pandas >= 0.18.0.
     Scikit-learn now requires Python 3.5 or newer.
 
 If you already have a working installation of numpy and scipy,
-the easiest way to install scikit-learn is using ``pip`` ::
+the easiest way to install scikit-learn is using `pip` ::
 
     pip install -U scikit-learn
 
-or ``conda``::
+or `conda`::
 
     conda install scikit-learn
 
@@ -52,8 +52,8 @@ implementation of linear algebra routines.
 Instead, use a third-party distribution as described below.
 
 If you must install scikit-learn and its dependencies with pip, you can install
-it as ``scikit-learn[alldeps]``. The most common use case for this is in a
-``requirements.txt`` file used as part of an automated build process for a PaaS
+it as `scikit-learn[alldeps]`. The most common use case for this is in a
+`requirements.txt` file used as part of an automated build process for a PaaS
 application or a Docker image. This option is not intended for manual
 installation from the command line.
 
@@ -93,22 +93,22 @@ Anaconda offers scikit-learn as part of its free distribution.
 .. warning::
 
     To upgrade or uninstall scikit-learn installed with Anaconda
-    or ``conda`` you **should not use the pip command**. Instead:
+    or `conda` you **should not use the pip command**. Instead:
 
-    To upgrade ``scikit-learn``::
+    To upgrade `scikit-learn`::
 
         conda update scikit-learn
 
-    To uninstall ``scikit-learn``::
+    To uninstall `scikit-learn`::
 
         conda remove scikit-learn
 
-    Upgrading with ``pip install -U scikit-learn`` or uninstalling
-    ``pip uninstall scikit-learn`` is likely fail to properly remove files
-    installed by the ``conda`` command.
+    Upgrading with `pip install -U scikit-learn` or uninstalling
+    `pip uninstall scikit-learn` is likely fail to properly remove files
+    installed by the `conda` command.
 
     pip upgrade and uninstall operations only work on packages installed
-    via ``pip install``.
+    via `pip install`.
 
 
 WinPython for Windows

@@ -280,7 +280,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
     Notes
     -----
     This estimator approximates a slightly different version of the additive
-    chi squared kernel then ``metric.additive_chi2`` computes.
+    chi squared kernel then `metric.additive_chi2` computes.
 
     See also
     --------
@@ -471,11 +471,11 @@ class Nystroem(BaseEstimator, TransformerMixin):
         Subset of training points used to construct the feature map.
 
     component_indices_ : array, shape (n_components)
-        Indices of ``components_`` in the training set.
+        Indices of `components_` in the training set.
 
     normalization_ : array, shape (n_components, n_components)
         Normalization matrix needed for embedding.
-        Square root of the kernel matrix on ``components_``.
+        Square root of the kernel matrix on `components_`.
 
     Examples
     --------

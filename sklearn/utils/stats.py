@@ -5,7 +5,7 @@ from .extmath import stable_cumsum
 
 def _weighted_percentile(array, sample_weight, percentile=50):
     """
-    Compute the weighted ``percentile`` of ``array`` with ``sample_weight``.
+    Compute the weighted `percentile` of `array` with `sample_weight`.
     """
     sorted_idx = np.argsort(array)
 

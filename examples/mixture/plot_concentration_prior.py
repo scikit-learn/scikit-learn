@@ -4,15 +4,15 @@ Concentration Prior Type Analysis of Variation Bayesian Gaussian Mixture
 ========================================================================
 
 This example plots the ellipsoids obtained from a toy dataset (mixture of three
-Gaussians) fitted by the ``BayesianGaussianMixture`` class models with a
+Gaussians) fitted by the `BayesianGaussianMixture` class models with a
 Dirichlet distribution prior
-(``weight_concentration_prior_type='dirichlet_distribution'``) and a Dirichlet
-process prior (``weight_concentration_prior_type='dirichlet_process'``). On
+(`weight_concentration_prior_type='dirichlet_distribution'`) and a Dirichlet
+process prior (`weight_concentration_prior_type='dirichlet_process'`). On
 each figure, we plot the results for three different values of the weight
 concentration prior.
 
-The ``BayesianGaussianMixture`` class can adapt its number of mixture
-components automatically. The parameter ``weight_concentration_prior`` has a
+The `BayesianGaussianMixture` class can adapt its number of mixture
+components automatically. The parameter `weight_concentration_prior` has a
 direct link with the resulting number of components with non-zero weights.
 Specifying a low value for the concentration prior will make the model put most
 of the weight on few components set the remaining components weights very close

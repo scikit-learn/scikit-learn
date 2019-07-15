@@ -22,12 +22,12 @@ slopes and intercepts.
 In certain cases Theil-Sen performs better than :ref:`RANSAC
 <ransac_regression>` which is also a robust method. This is illustrated in the
 second example below where outliers with respect to the x-axis perturb RANSAC.
-Tuning the ``residual_threshold`` parameter of RANSAC remedies this but in
+Tuning the `residual_threshold` parameter of RANSAC remedies this but in
 general a priori knowledge about the data and the nature of the outliers is
 needed.
 Due to the computational complexity of Theil-Sen it is recommended to use it
 only for small problems in terms of number of samples and features. For larger
-problems the ``max_subpopulation`` parameter restricts the magnitude of all
+problems the `max_subpopulation` parameter restricts the magnitude of all
 possible combinations of p subsample points to a randomly chosen subset and
 therefore also limits the runtime. Therefore, Theil-Sen is applicable to larger
 problems with the drawback of losing some of its mathematical properties since

@@ -17,7 +17,7 @@ Bug fixes
 
 
 - Upgrade vendored joblib to version 0.9.4 that fixes an important bug in
-  ``joblib.Parallel`` that can silently yield to wrong results when working
+  `joblib.Parallel` that can silently yield to wrong results when working
   on datasets larger than 1MB:
   https://github.com/joblib/joblib/blob/0.9.4/CHANGES.rst
 
@@ -32,7 +32,7 @@ Bug fixes
   several CPU / cores on large arrays. See :issue:`6147`
   By `Olivier Grisel`_.
 
-- Fixed a bug that prevented to properly set the ``presort`` parameter
+- Fixed a bug that prevented to properly set the `presort` parameter
   in :class:`ensemble.GradientBoostingRegressor`. See :issue:`5857`
   By Andrew McCulloh.
 
@@ -72,7 +72,7 @@ New features
   By :user:`Thomas Unterthiner <untom>`.
 
 - The new class :class:`preprocessing.FunctionTransformer` turns a Python
-  function into a ``Pipeline``-compatible transformer object.
+  function into a `Pipeline`-compatible transformer object.
   By Joe Jevnik.
 
 - The new classes :class:`cross_validation.LabelKFold` and
@@ -87,20 +87,20 @@ New features
   inference. By :user:`Chyi-Kwei Yau <chyikwei>`, with code based on an implementation
   by Matt Hoffman. (:issue:`3659`)
 
-- The new solver ``sag`` implements a Stochastic Average Gradient descent
+- The new solver `sag` implements a Stochastic Average Gradient descent
   and is available in both :class:`linear_model.LogisticRegression` and
   :class:`linear_model.Ridge`. This solver is very efficient for large
   datasets. By :user:`Danny Sullivan <dsullivan7>` and `Tom Dupre la Tour`_.
   (:issue:`4738`)
 
-- The new solver ``cd`` implements a Coordinate Descent in
+- The new solver `cd` implements a Coordinate Descent in
   :class:`decomposition.NMF`. Previous solver based on Projected Gradient is
-  still available setting new parameter ``solver`` to ``pg``, but is
+  still available setting new parameter `solver` to `pg`, but is
   deprecated and will be removed in 0.19, along with
-  :class:`decomposition.ProjectedGradientNMF` and parameters ``sparseness``,
-  ``eta``, ``beta`` and ``nls_max_iter``. New parameters ``alpha`` and
-  ``l1_ratio`` control L1 and L2 regularization, and ``shuffle`` adds a
-  shuffling step in the ``cd`` solver.
+  :class:`decomposition.ProjectedGradientNMF` and parameters `sparseness`,
+  `eta`, `beta` and `nls_max_iter`. New parameters `alpha` and
+  `l1_ratio` control L1 and L2 regularization, and `shuffle` adds a
+  shuffling step in the `cd` solver.
   By `Tom Dupre la Tour`_ and `Mathieu Blondel`_.
 
 Enhancements
@@ -110,16 +110,16 @@ Enhancements
   (:issue:`4025`)
 
 - :class:`cluster.mean_shift_.MeanShift` now supports parallel execution,
-  as implemented in the ``mean_shift`` function. By :user:`Martino
+  as implemented in the `mean_shift` function. By :user:`Martino
   Sorbaro <martinosorb>`.
 
-- :class:`naive_bayes.GaussianNB` now supports fitting with ``sample_weight``.
+- :class:`naive_bayes.GaussianNB` now supports fitting with `sample_weight`.
   By `Jan Hendrik Metzen`_.
 
 - :class:`dummy.DummyClassifier` now supports a prior fitting strategy.
   By `Arnaud Joly`_.
 
-- Added a ``fit_predict`` method for :class:`mixture.GMM` and subclasses.
+- Added a `fit_predict` method for :class:`mixture.GMM` and subclasses.
   By :user:`Cory Lorenz <clorenz7>`.
 
 - Added the :func:`metrics.label_ranking_loss` metric.
@@ -127,13 +127,13 @@ Enhancements
 
 - Added the :func:`metrics.cohen_kappa_score` metric.
 
-- Added a ``warm_start`` constructor parameter to the bagging ensemble
+- Added a `warm_start` constructor parameter to the bagging ensemble
   models to increase the size of the ensemble. By :user:`Tim Head <betatim>`.
 
 - Added option to use multi-output regression metrics without averaging.
   By Konstantin Shmelkov and :user:`Michael Eickenberg<eickenberg>`.
 
-- Added ``stratify`` option to :func:`cross_validation.train_test_split`
+- Added `stratify` option to :func:`cross_validation.train_test_split`
   for stratified splitting. By Miroslav Batchkarov.
 
 - The :func:`tree.export_graphviz` function now supports aesthetic
@@ -142,30 +142,30 @@ Enhancements
   by their majority class or impurity, showing variable names, and using
   node proportions instead of raw sample counts. By `Trevor Stephens`_.
 
-- Improved speed of ``newton-cg`` solver in
+- Improved speed of `newton-cg` solver in
   :class:`linear_model.LogisticRegression`, by avoiding loss computation.
   By `Mathieu Blondel`_ and `Tom Dupre la Tour`_.
 
-- The ``class_weight="auto"`` heuristic in classifiers supporting
-  ``class_weight`` was deprecated and replaced by the ``class_weight="balanced"``
+- The `class_weight="auto"` heuristic in classifiers supporting
+  `class_weight` was deprecated and replaced by the `class_weight="balanced"`
   option, which has a simpler formula and interpretation.
   By `Hanna Wallach`_ and `Andreas Müller`_.
 
-- Add ``class_weight`` parameter to automatically weight samples by class
+- Add `class_weight` parameter to automatically weight samples by class
   frequency for :class:`linear_model.PassiveAggressiveClassifier`. By
   `Trevor Stephens`_.
 
 - Added backlinks from the API reference pages to the user guide. By
   `Andreas Müller`_.
 
-- The ``labels`` parameter to :func:`sklearn.metrics.f1_score`,
+- The `labels` parameter to :func:`sklearn.metrics.f1_score`,
   :func:`sklearn.metrics.fbeta_score`,
   :func:`sklearn.metrics.recall_score` and
   :func:`sklearn.metrics.precision_score` has been extended.
   It is now possible to ignore one or more labels, such as where
   a multiclass problem has a majority class to ignore. By `Joel Nothman`_.
 
-- Add ``sample_weight`` support to :class:`linear_model.RidgeClassifier`.
+- Add `sample_weight` support to :class:`linear_model.RidgeClassifier`.
   By `Trevor Stephens`_.
 
 - Provide an option for sparse output from
@@ -175,7 +175,7 @@ Enhancements
 - Add :func:`minmax_scale` to provide a function interface for
   :class:`MinMaxScaler`. By :user:`Thomas Unterthiner <untom>`.
 
-- ``dump_svmlight_file`` now handles multi-label datasets.
+- `dump_svmlight_file` now handles multi-label datasets.
   By Chih-Wei Chang.
 
 - RCV1 dataset loader (:func:`sklearn.datasets.fetch_rcv1`).
@@ -189,7 +189,7 @@ Enhancements
   short tasks. This makes it possible for scikit-learn to benefit from
   parallelism when many very short tasks are executed in parallel, for
   instance by the :class:`grid_search.GridSearchCV` meta-estimator
-  with ``n_jobs > 1`` used with a large grid of parameters on a small
+  with `n_jobs > 1` used with a large grid of parameters on a small
   dataset. By `Vlad Niculae`_, `Olivier Grisel`_ and `Loic Esteve`_.
 
 - For more details about changes in joblib 0.9.3 see the release notes:
@@ -203,13 +203,13 @@ Enhancements
   (using the ball-tree) by Nikolay Mayorov.
 
 - Allow :func:`datasets.make_multilabel_classification` to output
-  a sparse ``y``. By Kashif Rasul.
+  a sparse `y`. By Kashif Rasul.
 
 - :class:`cluster.DBSCAN` now accepts a sparse matrix of precomputed
   distances, allowing memory-efficient distance precomputation. By
   `Joel Nothman`_.
 
-- :class:`tree.DecisionTreeClassifier` now exposes an ``apply`` method
+- :class:`tree.DecisionTreeClassifier` now exposes an `apply` method
   for retrieving the leaf indices samples are predicted as. By
   :user:`Daniel Galvez <galv>` and `Gilles Louppe`_.
 
@@ -227,29 +227,29 @@ Enhancements
   features. By `Arnaud Joly`_.
 
 - :class:`ensemble.GradientBoostingRegressor` and
-  :class:`ensemble.GradientBoostingClassifier` now expose an ``apply``
+  :class:`ensemble.GradientBoostingClassifier` now expose an `apply`
   method for retrieving the leaf indices each sample ends up in under
   each try. By :user:`Jacob Schreiber <jmschrei>`.
 
-- Add ``sample_weight`` support to :class:`linear_model.LinearRegression`.
+- Add `sample_weight` support to :class:`linear_model.LinearRegression`.
   By Sonny Hu. (:issue:`#4881`)
 
-- Add ``n_iter_without_progress`` to :class:`manifold.TSNE` to control
+- Add `n_iter_without_progress` to :class:`manifold.TSNE` to control
   the stopping criterion. By Santi Villalba. (:issue:`5186`)
 
-- Added optional parameter ``random_state`` in :class:`linear_model.Ridge`
-  , to set the seed of the pseudo random generator used in ``sag`` solver. By `Tom Dupre la Tour`_.
+- Added optional parameter `random_state` in :class:`linear_model.Ridge`
+  , to set the seed of the pseudo random generator used in `sag` solver. By `Tom Dupre la Tour`_.
 
-- Added optional parameter ``warm_start`` in
+- Added optional parameter `warm_start` in
   :class:`linear_model.LogisticRegression`. If set to True, the solvers
-  ``lbfgs``, ``newton-cg`` and ``sag`` will be initialized with the
+  `lbfgs`, `newton-cg` and `sag` will be initialized with the
   coefficients computed in the previous fit. By `Tom Dupre la Tour`_.
 
-- Added ``sample_weight`` support to :class:`linear_model.LogisticRegression` for
-  the ``lbfgs``, ``newton-cg``, and ``sag`` solvers. By `Valentin Stolbunov`_.
-  Support added to the ``liblinear`` solver. By `Manoj Kumar`_.
+- Added `sample_weight` support to :class:`linear_model.LogisticRegression` for
+  the `lbfgs`, `newton-cg`, and `sag` solvers. By `Valentin Stolbunov`_.
+  Support added to the `liblinear` solver. By `Manoj Kumar`_.
 
-- Added optional parameter ``presort`` to :class:`ensemble.GradientBoostingRegressor`
+- Added optional parameter `presort` to :class:`ensemble.GradientBoostingRegressor`
   and :class:`ensemble.GradientBoostingClassifier`, keeping default behavior
   the same. This allows gradient boosters to turn off presorting when building
   deep trees or using sparse data. By :user:`Jacob Schreiber <jmschrei>`.
@@ -265,7 +265,7 @@ Enhancements
 - Added :func:`metrics.pairwise.laplacian_kernel`.  By `Clyde Fare <https://github.com/Clyde-fare>`_.
 
 - :class:`covariance.GraphLasso` allows separate control of the convergence criterion
-  for the Elastic-Net subproblem via  the ``enet_tol`` parameter.
+  for the Elastic-Net subproblem via  the `enet_tol` parameter.
 
 - Improved verbosity in :class:`decomposition.DictionaryLearning`.
 
@@ -274,14 +274,14 @@ Enhancements
   samples used in bagging, resulting in a much reduced memory footprint for
   storing random forest models.
 
-- Added ``positive`` option to :class:`linear_model.Lars` and
+- Added `positive` option to :class:`linear_model.Lars` and
   :func:`linear_model.lars_path` to force coefficients to be positive.
   (:issue:`5131`)
 
-- Added the ``X_norm_squared`` parameter to :func:`metrics.pairwise.euclidean_distances`
-  to provide precomputed squared norms for ``X``.
+- Added the `X_norm_squared` parameter to :func:`metrics.pairwise.euclidean_distances`
+  to provide precomputed squared norms for `X`.
 
-- Added the ``fit_predict`` method to :class:`pipeline.Pipeline`.
+- Added the `fit_predict` method to :class:`pipeline.Pipeline`.
 
 - Added the :func:`preprocessing.min_max_scale` function.
 
@@ -292,9 +292,9 @@ Bug fixes
   multi-label output. By `Andreas Müller`_.
 
 - Fixed the output shape of :class:`linear_model.RANSACRegressor` to
-  ``(n_samples, )``. By `Andreas Müller`_.
+  `(n_samples, )`. By `Andreas Müller`_.
 
-- Fixed bug in :class:`decomposition.DictLearning` when ``n_jobs < 0``. By
+- Fixed bug in :class:`decomposition.DictLearning` when `n_jobs < 0`. By
   `Andreas Müller`_.
 
 - Fixed bug where :class:`grid_search.RandomizedSearchCV` could consume a
@@ -306,8 +306,8 @@ Bug fixes
 - Fixed bug in :class:`ensemble.forest.ForestClassifier` while computing
   oob_score and X is a sparse.csc_matrix. By :user:`Ankur Ankan <ankurankan>`.
 
-- All regressors now consistently handle and warn when given ``y`` that is of
-  shape ``(n_samples, 1)``. By `Andreas Müller`_ and Henry Lin.
+- All regressors now consistently handle and warn when given `y` that is of
+  shape `(n_samples, 1)`. By `Andreas Müller`_ and Henry Lin.
   (:issue:`5431`)
 
 - Fix in :class:`cluster.KMeans` cluster reassignment for sparse input by
@@ -319,12 +319,12 @@ Bug fixes
 - Fixed :func:`cross_validation.cross_val_predict` for estimators with
   sparse predictions. By Buddha Prakash.
 
-- Fixed the ``predict_proba`` method of :class:`linear_model.LogisticRegression`
+- Fixed the `predict_proba` method of :class:`linear_model.LogisticRegression`
   to use soft-max instead of one-vs-rest normalization. By `Manoj Kumar`_.
   (:issue:`5182`)
 
 - Fixed the :func:`partial_fit` method of :class:`linear_model.SGDClassifier`
-  when called with ``average=True``. By :user:`Andrew Lamb <andylamb>`.
+  when called with `average=True`. By :user:`Andrew Lamb <andylamb>`.
   (:issue:`5282`)
 
 - Dataset fetchers use different filenames under Python 2 and Python 3 to
@@ -347,12 +347,12 @@ Bug fixes
   platform dependent output, and failed on `fit_transform`.
   By :user:`Arthur Mensch <arthurmensch>`.
 
-- Fixes to the ``Bunch`` class used to store datasets.
+- Fixes to the `Bunch` class used to store datasets.
 
 - Fixed :func:`ensemble.plot_partial_dependence` ignoring the
-  ``percentiles`` parameter.
+  `percentiles` parameter.
 
-- Providing a ``set`` as vocabulary in ``CountVectorizer`` no longer
+- Providing a `set` as vocabulary in `CountVectorizer` no longer
   leads to inconsistent results when pickling.
 
 - Fixed the conditions on when a precomputed Gram matrix needs to
@@ -365,18 +365,18 @@ Bug fixes
   :class:`covariance.GraphLasso`. (:issue:`5337`)
   By `Olivier Grisel`_.
 
-- :class:`manifold.LocallyLinearEmbedding` no longer ignores the ``reg``
+- :class:`manifold.LocallyLinearEmbedding` no longer ignores the `reg`
   parameter.
 
 - Nearest Neighbor estimators with custom distance metrics can now be pickled.
   (:issue:`4362`)
 
-- Fixed a bug in :class:`pipeline.FeatureUnion` where ``transformer_weights``
+- Fixed a bug in :class:`pipeline.FeatureUnion` where `transformer_weights`
   were not properly handled when performing grid-searches.
 
 - Fixed a bug in :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` when using
-  ``class_weight='balanced'`` or ``class_weight='auto'``.
+  `class_weight='balanced'` or `class_weight='auto'`.
   By `Tom Dupre la Tour`_.
 
 - Fixed bug :issue:`5495` when
@@ -396,29 +396,29 @@ API changes summary
   in :class:`preprocessing.StandardScaler` is deprecated and superseded
   by `scale_`; it won't be available in 0.19. By :user:`Giorgio Patrini <giorgiop>`.
 
-- :class:`svm.SVC`` and :class:`svm.NuSVC` now have an ``decision_function_shape``
-  parameter to make their decision function of shape ``(n_samples, n_classes)``
-  by setting ``decision_function_shape='ovr'``. This will be the default behavior
+- :class:`svm.SVC` and :class:`svm.NuSVC` now have an `decision_function_shape`
+  parameter to make their decision function of shape `(n_samples, n_classes)`
+  by setting `decision_function_shape='ovr'`. This will be the default behavior
   starting in 0.19. By `Andreas Müller`_.
 
 - Passing 1D data arrays as input to estimators is now deprecated as it
   caused confusion in how the array elements should be interpreted
   as features or as samples. All data arrays are now expected
-  to be explicitly shaped ``(n_samples, n_features)``.
+  to be explicitly shaped `(n_samples, n_features)`.
   By :user:`Vighnesh Birodkar <vighneshbirodkar>`.
 
 - :class:`lda.LDA` and :class:`qda.QDA` have been moved to
   :class:`discriminant_analysis.LinearDiscriminantAnalysis` and
   :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`.
 
-- The ``store_covariance`` and ``tol`` parameters have been moved from
+- The `store_covariance` and `tol` parameters have been moved from
   the fit method to the constructor in
   :class:`discriminant_analysis.LinearDiscriminantAnalysis` and the
-  ``store_covariances`` and ``tol`` parameters have been moved from the
+  `store_covariances` and `tol` parameters have been moved from the
   fit method to the constructor in
   :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`.
 
-- Models inheriting from ``_LearntSelectorMixin`` will no longer support the
+- Models inheriting from `_LearntSelectorMixin` will no longer support the
   transform methods. (i.e,  RandomForests, GradientBoosting, LogisticRegression,
   DecisionTrees, SVMs and SGD related models). Wrap these models around the
   metatransfomer :class:`feature_selection.SelectFromModel` to remove
@@ -426,37 +426,37 @@ API changes summary
   which are below a certain threshold value instead.
 
 - :class:`cluster.KMeans` re-runs cluster-assignments in case of non-convergence,
-  to ensure consistency of ``predict(X)`` and ``labels_``. By
+  to ensure consistency of `predict(X)` and `labels_`. By
   :user:`Vighnesh Birodkar <vighneshbirodkar>`.
 
 - Classifier and Regressor models are now tagged as such using the
-  ``_estimator_type`` attribute.
+  `_estimator_type` attribute.
 
 - Cross-validation iterators always provide indices into training and test set,
   not boolean masks.
 
-- The ``decision_function`` on all regressors was deprecated and will be
-  removed in 0.19.  Use ``predict`` instead.
+- The `decision_function` on all regressors was deprecated and will be
+  removed in 0.19.  Use `predict` instead.
 
 - :func:`datasets.load_lfw_pairs` is deprecated and will be removed in 0.19.
   Use :func:`datasets.fetch_lfw_pairs` instead.
 
-- The deprecated ``hmm`` module was removed.
+- The deprecated `hmm` module was removed.
 
-- The deprecated ``Bootstrap`` cross-validation iterator was removed.
+- The deprecated `Bootstrap` cross-validation iterator was removed.
 
-- The deprecated ``Ward`` and ``WardAgglomerative`` classes have been removed.
+- The deprecated `Ward` and `WardAgglomerative` classes have been removed.
   Use :class:`clustering.AgglomerativeClustering` instead.
 
 - :func:`cross_validation.check_cv` is now a public function.
 
-- The property ``residues_`` of :class:`linear_model.LinearRegression` is deprecated
+- The property `residues_` of :class:`linear_model.LinearRegression` is deprecated
   and will be removed in 0.19.
 
-- The deprecated ``n_jobs`` parameter of :class:`linear_model.LinearRegression` has been moved
+- The deprecated `n_jobs` parameter of :class:`linear_model.LinearRegression` has been moved
   to the constructor.
 
-- Removed deprecated ``class_weight`` parameter from :class:`linear_model.SGDClassifier`'s ``fit``
+- Removed deprecated `class_weight` parameter from :class:`linear_model.SGDClassifier`'s `fit`
   method. Use the construction parameter instead.
 
 - The deprecated support for the sequence of sequences (or list of lists) multilabel
@@ -464,15 +464,15 @@ API changes summary
   indicator matrix format, use
   :class:`MultiLabelBinarizer <preprocessing.MultiLabelBinarizer>`.
 
-- The behavior of calling the ``inverse_transform`` method of ``Pipeline.pipeline`` will
+- The behavior of calling the `inverse_transform` method of `Pipeline.pipeline` will
   change in 0.19. It will no longer reshape one-dimensional input to two-dimensional input.
 
-- The deprecated attributes ``indicator_matrix_``, ``multilabel_`` and ``classes_`` of
+- The deprecated attributes `indicator_matrix_`, `multilabel_` and `classes_` of
   :class:`preprocessing.LabelBinarizer` were removed.
 
-- Using ``gamma=0`` in :class:`svm.SVC` and :class:`svm.SVR` to automatically set the
-  gamma to ``1. / n_features`` is deprecated and will be removed in 0.19.
-  Use ``gamma="auto"`` instead.
+- Using `gamma=0` in :class:`svm.SVC` and :class:`svm.SVR` to automatically set the
+  gamma to `1. / n_features` is deprecated and will be removed in 0.19.
+  Use `gamma="auto"` instead.
 
 Code Contributors
 -----------------

@@ -13,7 +13,7 @@ Multiclass and multilabel algorithms
     unless you want to experiment with different multiclass strategies.
 
 The :mod:`sklearn.multiclass` module implements *meta-estimators* to solve
-``multiclass`` and ``multilabel`` classification problems
+`multiclass` and `multilabel` classification problems
 by decomposing such problems into binary classification problems. Multitarget
 regression is also supported.
 
@@ -140,7 +140,7 @@ In multilabel learning, the joint set of binary classification tasks is
 expressed with label binary indicator array: each sample is one row of a 2d
 array of shape (n_samples, n_classes) with binary values: the one, i.e. the non
 zero elements, corresponds to the subset of labels. An array such as
-``np.array([[1, 0, 0], [0, 1, 1], [0, 0, 0]])`` represents label 0 in the first
+`np.array([[1, 0, 0], [0, 1, 1], [0, 0, 0]])` represents label 0 in the first
 sample, labels 1 and 2 in the second sample, and no labels in the third sample.
 
 Producing multilabel data as a list of sets of labels may be more intuitive.
@@ -221,13 +221,13 @@ selects the class with the highest aggregate classification confidence by
 summing over the pair-wise classification confidence levels computed by the
 underlying binary classifiers.
 
-Since it requires to fit ``n_classes * (n_classes - 1) / 2`` classifiers,
+Since it requires to fit `n_classes * (n_classes - 1) / 2` classifiers,
 this method is usually slower than one-vs-the-rest, due to its
 O(n_classes^2) complexity. However, this method may be advantageous for
 algorithms such as kernel algorithms which don't scale well with
-``n_samples``. This is because each individual learning problem only involves
+`n_samples`. This is because each individual learning problem only involves
 a small subset of the data whereas, with one-vs-the-rest, the complete
-dataset is used ``n_classes`` times. The decision function is the result
+dataset is used `n_classes` times. The decision function is the result
 of a monotonic transformation of the one-versus-one classification.
 
 Multiclass learning
@@ -276,14 +276,14 @@ At fitting time, one binary classifier per bit in the code book is fitted.
 At prediction time, the classifiers are used to project new points in the
 class space and the class closest to the points is chosen.
 
-In :class:`OutputCodeClassifier`, the ``code_size`` attribute allows the user to
+In :class:`OutputCodeClassifier`, the `code_size` attribute allows the user to
 control the number of classifiers which will be used. It is a percentage of the
 total number of classes.
 
 A number between 0 and 1 will require fewer classifiers than
-one-vs-the-rest. In theory, ``log2(n_classes) / n_classes`` is sufficient to
+one-vs-the-rest. In theory, `log2(n_classes) / n_classes` is sufficient to
 represent each class unambiguously. However, in practice, it may not lead to
-good accuracy since ``log2(n_classes)`` is much smaller than n_classes.
+good accuracy since `log2(n_classes)` is much smaller than n_classes.
 
 A number greater than 1 will require more classifiers than
 one-vs-the-rest. In this case, some classifiers will in theory correct for

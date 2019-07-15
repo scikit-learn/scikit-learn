@@ -9,7 +9,7 @@ OOB estimates are almost identical to cross-validation estimates but
 they can be computed on-the-fly without the need for repeated model
 fitting.
 OOB estimates are only available for Stochastic Gradient Boosting
-(i.e. ``subsample < 1.0``), the estimates are derived from the improvement
+(i.e. `subsample < 1.0`), the estimates are derived from the improvement
 in loss based on the examples not included in the bootstrap sample
 (the so-called out-of-bag examples).
 The OOB estimator is a pessimistic estimator of the true
@@ -68,7 +68,7 @@ x = np.arange(n_estimators) + 1
 
 
 def heldout_score(clf, X_test, y_test):
-    """compute deviance scores on ``X_test`` and ``y_test``. """
+    """compute deviance scores on `X_test` and `y_test`. """
     score = np.zeros((n_estimators,), dtype=np.float64)
     for i, y_pred in enumerate(clf.staged_decision_function(X_test)):
         score[i] = clf.loss_(y_test, y_pred)

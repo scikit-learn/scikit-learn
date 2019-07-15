@@ -15,7 +15,7 @@ ensemble module::
     >>> from sklearn.ensemble import HistGradientBoostingRegressor
 
 
-The ``# noqa`` comment comment can be removed: it just tells linters like
+The `# noqa` comment comment can be removed: it just tells linters like
 flake8 to ignore the import, which appears as unused.
 """
 

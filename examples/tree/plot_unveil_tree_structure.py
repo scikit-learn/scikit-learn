@@ -9,7 +9,7 @@ show how to retrieve:
 
 - the binary tree structure;
 - the depth of each node and whether or not it's a leaf;
-- the nodes that were reached by a sample using the ``decision_path`` method;
+- the nodes that were reached by a sample using the `decision_path` method;
 - the leaf that was reached by a sample using the apply method;
 - the rules that were used to predict a sample;
 - the decision path shared by a group of samples.

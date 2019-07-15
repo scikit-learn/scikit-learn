@@ -62,7 +62,7 @@ class EllipticEnvelope(MinCovDet, OutlierMixin):
 
     offset_ : float
         Offset used to define the decision function from the raw scores.
-        We have the relation: ``decision_function = score_samples - offset_``.
+        We have the relation: `decision_function = score_samples - offset_`.
         The offset depends on the contamination parameter and is defined in
         such a way we obtain the expected number of outliers (samples with
         decision function < 0) in training.
@@ -95,7 +95,7 @@ class EllipticEnvelope(MinCovDet, OutlierMixin):
     -----
     Outlier detection from covariance estimation may break or not
     perform well in high-dimensional settings. In particular, one will
-    always take care to work with ``n_samples > n_features ** 2``.
+    always take care to work with `n_samples > n_features ** 2`.
 
     References
     ----------

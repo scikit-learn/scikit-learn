@@ -41,7 +41,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
     ----------
     n_components : int, optional (default=None)
         Preferred dimensionality of the projected space.
-        If None it will be set to ``n_features``.
+        If None it will be set to `n_features`.
 
     init : string or numpy array, optional (default='auto')
         Initialization of the linear transformation. Possible options are
@@ -49,29 +49,29 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         (n_features_a, n_features_b).
 
         'auto'
-            Depending on ``n_components``, the most reasonable initialization
-            will be chosen. If ``n_components <= n_classes`` we use 'lda', as
+            Depending on `n_components`, the most reasonable initialization
+            will be chosen. If `n_components <= n_classes` we use 'lda', as
             it uses labels information. If not, but
-            ``n_components < min(n_features, n_samples)``, we use 'pca', as
+            `n_components < min(n_features, n_samples)`, we use 'pca', as
             it projects data in meaningful directions (those of higher
             variance). Otherwise, we just use 'identity'.
 
         'pca'
-            ``n_components`` principal components of the inputs passed
+            `n_components` principal components of the inputs passed
             to :meth:`fit` will be used to initialize the transformation.
             (See `decomposition.PCA`)
 
         'lda'
-            ``min(n_components, n_classes)`` most discriminative
+            `min(n_components, n_classes)` most discriminative
             components of the inputs passed to :meth:`fit` will be used to
-            initialize the transformation. (If ``n_components > n_classes``,
+            initialize the transformation. (If `n_components > n_classes`,
             the rest of the components will be zero.) (See
             `discriminant_analysis.LinearDiscriminantAnalysis`)
 
         'identity'
-            If ``n_components`` is strictly smaller than the
+            If `n_components` is strictly smaller than the
             dimensionality of the inputs passed to :meth:`fit`, the identity
-            matrix will be truncated to the first ``n_components`` rows.
+            matrix will be truncated to the first `n_components` rows.
 
         'random'
             The initial transformation will be a random array of shape
@@ -81,12 +81,12 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         numpy array
             n_features_b must match the dimensionality of the inputs passed to
             :meth:`fit` and n_features_a must be less than or equal to that.
-            If ``n_components`` is not None, n_features_a must match it.
+            If `n_components` is not None, n_features_a must match it.
 
     warm_start : bool, optional, (default=False)
         If True and :meth:`fit` has been called before, the solution of the
         previous call to :meth:`fit` is used as the initial linear
-        transformation (``n_components`` and ``init`` will be ignored).
+        transformation (`n_components` and `init` will be ignored).
 
     max_iter : int, optional (default=50)
         Maximum number of iterations in the optimization.
@@ -104,14 +104,14 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
     verbose : int, optional (default=0)
         If 0, no progress messages will be printed.
         If 1, progress messages will be printed to stdout.
-        If > 1, progress messages will be printed and the ``disp``
+        If > 1, progress messages will be printed and the `disp`
         parameter of :func:`scipy.optimize.minimize` will be set to
-        ``verbose - 2``.
+        `verbose - 2`.
 
     random_state : int or numpy.RandomState or None, optional (default=None)
         A pseudo random number generator object or a seed for it if int. If
-        ``init='random'``, ``random_state`` is used to initialize the random
-        transformation. If ``init='pca'``, ``random_state`` is passed as an
+        `init='random'`, `random_state` is used to initialize the random
+        transformation. If `init='pca'`, `random_state` is passed as an
         argument to PCA when initializing the transformation.
 
     Attributes
@@ -449,7 +449,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         self.n_iter_ += 1
 
     def _loss_grad_lbfgs(self, transformation, X, same_class_mask, sign=1.0):
-        """Compute the loss and the loss gradient w.r.t. ``transformation``.
+        """Compute the loss and the loss gradient w.r.t. `transformation`.
 
         Parameters
         ----------
@@ -461,8 +461,8 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
             The training samples.
 
         same_class_mask : array, shape (n_samples, n_samples)
-            A mask where ``mask[i, j] == 1`` if ``X[i]`` and ``X[j]`` belong
-            to the same class, and ``0`` otherwise.
+            A mask where `mask[i, j] == 1` if `X[i]` and `X[j]` belong
+            to the same class, and `0` otherwise.
 
         Returns
         -------

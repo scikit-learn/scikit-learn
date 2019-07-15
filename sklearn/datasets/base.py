@@ -268,7 +268,7 @@ def load_wine(return_X_y=False):
     Parameters
     ----------
     return_X_y : boolean, default=False.
-        If True, returns ``(data, target)`` instead of a Bunch object.
+        If True, returns `(data, target)` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
     Returns
@@ -279,7 +279,7 @@ def load_wine(return_X_y=False):
         meaning of the labels, 'feature_names', the meaning of the features,
         and 'DESCR', the full description of the dataset.
 
-    (data, target) : tuple if ``return_X_y`` is True
+    (data, target) : tuple if `return_X_y` is True
 
     The copy of UCI ML Wine Data Set dataset is downloaded and modified to fit
     standard format from:
@@ -343,7 +343,7 @@ def load_iris(return_X_y=False):
     Parameters
     ----------
     return_X_y : boolean, default=False.
-        If True, returns ``(data, target)`` instead of a Bunch object. See
+        If True, returns `(data, target)` instead of a Bunch object. See
         below for more information about the `data` and `target` object.
 
         .. versionadded:: 0.18
@@ -358,7 +358,7 @@ def load_iris(return_X_y=False):
         the dataset, 'filename', the physical location of
         iris csv dataset (added in version `0.20`).
 
-    (data, target) : tuple if ``return_X_y`` is True
+    (data, target) : tuple if `return_X_y` is True
 
         .. versionadded:: 0.18
 
@@ -418,7 +418,7 @@ def load_breast_cancer(return_X_y=False):
     Parameters
     ----------
     return_X_y : boolean, default=False
-        If True, returns ``(data, target)`` instead of a Bunch object.
+        If True, returns `(data, target)` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
         .. versionadded:: 0.18
@@ -433,7 +433,7 @@ def load_breast_cancer(return_X_y=False):
         the dataset, 'filename', the physical location of
         breast cancer csv dataset (added in version `0.20`).
 
-    (data, target) : tuple if ``return_X_y`` is True
+    (data, target) : tuple if `return_X_y` is True
 
         .. versionadded:: 0.18
 
@@ -507,7 +507,7 @@ def load_digits(n_class=10, return_X_y=False):
         The number of classes to return.
 
     return_X_y : boolean, default=False.
-        If True, returns ``(data, target)`` instead of a Bunch object.
+        If True, returns `(data, target)` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
         .. versionadded:: 0.18
@@ -521,7 +521,7 @@ def load_digits(n_class=10, return_X_y=False):
         sample, 'target_names', the meaning of the labels, and 'DESCR',
         the full description of the dataset.
 
-    (data, target) : tuple if ``return_X_y`` is True
+    (data, target) : tuple if `return_X_y` is True
 
         .. versionadded:: 0.18
 
@@ -581,7 +581,7 @@ def load_diabetes(return_X_y=False):
     Parameters
     ----------
     return_X_y : boolean, default=False.
-        If True, returns ``(data, target)`` instead of a Bunch object.
+        If True, returns `(data, target)` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
         .. versionadded:: 0.18
@@ -595,7 +595,7 @@ def load_diabetes(return_X_y=False):
         of diabetes data csv dataset, and 'target_filename', the physical
         location of diabetes targets csv datataset (added in version `0.20`).
 
-    (data, target) : tuple if ``return_X_y`` is True
+    (data, target) : tuple if `return_X_y` is True
 
         .. versionadded:: 0.18
     """
@@ -634,7 +634,7 @@ def load_linnerud(return_X_y=False):
     Parameters
     ----------
     return_X_y : boolean, default=False.
-        If True, returns ``(data, target)`` instead of a Bunch object.
+        If True, returns `(data, target)` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
         .. versionadded:: 0.18
@@ -651,7 +651,7 @@ def load_linnerud(return_X_y=False):
         'target_filename', the physical location of
         linnerud targets csv datataset (added in version `0.20`).
 
-    (data, target) : tuple if ``return_X_y`` is True
+    (data, target) : tuple if `return_X_y` is True
 
         .. versionadded:: 0.18
     """
@@ -698,7 +698,7 @@ def load_boston(return_X_y=False):
     Parameters
     ----------
     return_X_y : boolean, default=False.
-        If True, returns ``(data, target)`` instead of a Bunch object.
+        If True, returns `(data, target)` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
         .. versionadded:: 0.18
@@ -712,7 +712,7 @@ def load_boston(return_X_y=False):
         and 'filename', the physical location of boston
         csv dataset (added in version `0.20`).
 
-    (data, target) : tuple if ``return_X_y`` is True
+    (data, target) : tuple if `return_X_y` is True
 
         .. versionadded:: 0.18
 
@@ -763,7 +763,7 @@ def load_boston(return_X_y=False):
 def load_sample_images():
     """Load sample images for image manipulation.
 
-    Loads both, ``china`` and ``flower``.
+    Loads both, `china` and `flower`.
 
     Read more in the :ref:`User Guide <sample_images>`.
 

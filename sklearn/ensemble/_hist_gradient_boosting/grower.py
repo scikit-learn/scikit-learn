@@ -126,10 +126,10 @@ class TreeGrower:
         The binned input samples. Must be Fortran-aligned.
     gradients : ndarray, shape (n_samples,)
         The gradients of each training sample. Those are the gradients of the
-        loss w.r.t the predictions, evaluated at iteration ``i - 1``.
+        loss w.r.t the predictions, evaluated at iteration `i - 1`.
     hessians : ndarray, shape (n_samples,)
         The hessians of each training sample. Those are the hessians of the
-        loss w.r.t the predictions, evaluated at iteration ``i - 1``.
+        loss w.r.t the predictions, evaluated at iteration `i - 1`.
     max_leaf_nodes : int or None, optional (default=None)
         The maximum number of leaves for each tree. If None, there is no
         maximum limit.
@@ -146,15 +146,15 @@ class TreeGrower:
         histograms.
     actual_n_bins : ndarray of int or int, optional (default=None)
         The actual number of bins needed for each feature, which is lower or
-        equal to ``max_bins``. If it's an int, all features are considered to
+        equal to `max_bins`. If it's an int, all features are considered to
         have the same number of bins. If None, all features are considered to
-        have ``max_bins`` bins.
+        have `max_bins` bins.
     l2_regularization : float, optional (default=0)
         The L2 regularization parameter.
     min_hessian_to_split : float, optional (default=1e-3)
         The minimum sum of hessians needed in each node. Splits that result in
         at least one child having a sum of hessians less than
-        ``min_hessian_to_split`` are discarded.
+        `min_hessian_to_split` are discarded.
     shrinkage : float, optional (default=1)
         The shrinkage parameter to apply to the leaves values, also known as
         learning rate.

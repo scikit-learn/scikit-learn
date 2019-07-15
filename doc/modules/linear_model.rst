@@ -14,7 +14,7 @@ value.
 .. math::    \hat{y}(w, x) = w_0 + w_1 x_1 + ... + w_p x_p
 
 Across the module, we designate the vector :math:`w = (w_1,
-..., w_p)` as ``coef_`` and :math:`w_0` as ``intercept_``.
+..., w_p)` as `coef_` and :math:`w_0` as `intercept_`.
 
 To perform classification with generalized linear models, see
 :ref:`Logistic_regression`.
@@ -37,9 +37,9 @@ solves a problem of the form:
    :align: center
    :scale: 50%
 
-:class:`LinearRegression` will take in its ``fit`` method arrays X, y
+:class:`LinearRegression` will take in its `fit` method arrays X, y
 and will store the coefficients :math:`w` of the linear model in its
-``coef_`` member::
+`coef_` member::
 
     >>> from sklearn import linear_model
     >>> reg = linear_model.LinearRegression()
@@ -97,9 +97,9 @@ of shrinkage and thus the coefficients become more robust to collinearity.
    :scale: 50%
 
 
-As with other linear models, :class:`Ridge` will take in its ``fit`` method
+As with other linear models, :class:`Ridge` will take in its `fit` method
 arrays X, y and will store the coefficients :math:`w` of the linear model in
-its ``coef_`` member::
+its `coef_` member::
 
     >>> from sklearn import linear_model
     >>> reg = linear_model.Ridge(alpha=.5)
@@ -226,13 +226,13 @@ the duality gap computation used for convergence control.
 Setting regularization parameter
 --------------------------------
 
-The ``alpha`` parameter controls the degree of sparsity of the estimated
+The `alpha` parameter controls the degree of sparsity of the estimated
 coefficients.
 
 Using cross-validation
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-scikit-learn exposes objects that set the Lasso ``alpha`` parameter by
+scikit-learn exposes objects that set the Lasso `alpha` parameter by
 cross-validation: :class:`LassoCV` and :class:`LassoLarsCV`.
 :class:`LassoLarsCV` is based on the :ref:`least_angle_regression` algorithm
 explained below.
@@ -281,8 +281,8 @@ They also tend to break when the problem is badly conditioned
 Comparison with the regularization parameter of SVM
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The equivalence between ``alpha`` and the regularization parameter of SVM,
-``C`` is given by ``alpha = 1 / C`` or ``alpha = 1 / (n_samples * C)``,
+The equivalence between `alpha` and the regularization parameter of SVM,
+`C` is given by `alpha = 1 / C` or `alpha = 1 / (n_samples * C)`,
 depending on the estimator and the exact objective function optimized by the
 model.
 
@@ -292,8 +292,8 @@ Multi-task Lasso
 ================
 
 The :class:`MultiTaskLasso` is a linear model that estimates sparse
-coefficients for multiple regression problems jointly: ``y`` is a 2D array,
-of shape ``(n_samples, n_tasks)``. The constraint is that the selected
+coefficients for multiple regression problems jointly: `y` is a 2D array,
+of shape `(n_samples, n_tasks)`. The constraint is that the selected
 features are the same for all the regression problems, also called tasks.
 
 The following figure compares the location of the non-zero entries in the
@@ -345,7 +345,7 @@ Elastic-Net
 This combination  allows for learning a sparse model where few of
 the weights are non-zero like :class:`Lasso`, while still maintaining
 the regularization properties of :class:`Ridge`. We control the convex
-combination of :math:`\ell_1` and :math:`\ell_2` using the ``l1_ratio``
+combination of :math:`\ell_1` and :math:`\ell_2` using the `l1_ratio`
 parameter.
 
 Elastic-net is useful when there are multiple features which are
@@ -369,7 +369,7 @@ The objective function to minimize is in this case
    :scale: 50%
 
 The class :class:`ElasticNetCV` can be used to set the parameters
-``alpha`` (:math:`\alpha`) and ``l1_ratio`` (:math:`\rho`) by cross-validation.
+`alpha` (:math:`\alpha`) and `l1_ratio` (:math:`\rho`) by cross-validation.
 
 .. topic:: Examples:
 
@@ -396,8 +396,8 @@ Multi-task Elastic-Net
 ======================
 
 The :class:`MultiTaskElasticNet` is an elastic-net model that estimates sparse
-coefficients for multiple regression problems jointly: ``Y`` is a 2D array
-of shape ``(n_samples, n_tasks)``. The constraint is that the selected
+coefficients for multiple regression problems jointly: `Y` is a 2D array
+of shape `(n_samples, n_tasks)`. The constraint is that the selected
 features are the same for all the regression problems, also called tasks.
 
 Mathematically, it consists of a linear model trained with a mixed
@@ -413,7 +413,7 @@ The implementation in the class :class:`MultiTaskElasticNet` uses coordinate des
 the algorithm to fit the coefficients.
 
 The class :class:`MultiTaskElasticNetCV` can be used to set the parameters
-``alpha`` (:math:`\alpha`) and ``l1_ratio`` (:math:`\rho`) by cross-validation.
+`alpha` (:math:`\alpha`) and `l1_ratio` (:math:`\rho`) by cross-validation.
 
 .. _least_angle_regression:
 
@@ -501,7 +501,7 @@ the residual.
 Instead of giving a vector result, the LARS solution consists of a
 curve denoting the solution for each value of the :math:`\ell_1` norm of the
 parameter vector. The full coefficients path is stored in the array
-``coef_path_``, which has size (n_features, max_features+1). The first
+`coef_path_`, which has size (n_features, max_features+1). The first
 column is always zero.
 
 .. topic:: References:
@@ -623,7 +623,7 @@ jointly during the fit of the model, the regularization parameters
 is based on the algorithm described in Appendix A of (Tipping, 2001)
 where the update of the parameters :math:`\alpha` and :math:`\lambda` is done
 as suggested in (MacKay, 1992). The initial value of the maximization procedure
-can be set with the hyperparameters ``alpha_init`` and ``lambda_init``.
+can be set with the hyperparameters `alpha_init` and `lambda_init`.
 
 There are four more hyperparameters, :math:`\alpha_1`, :math:`\alpha_2`,
 :math:`\lambda_1` and :math:`\lambda_2` of the gamma prior distributions over
@@ -853,15 +853,15 @@ with 'log' loss, which might be even faster but requires more tuning.
 .. topic:: Differences from liblinear:
 
    There might be a difference in the scores obtained between
-   :class:`LogisticRegression` with ``solver=liblinear``
+   :class:`LogisticRegression` with `solver=liblinear`
    or :class:`LinearSVC` and the external liblinear library directly,
-   when ``fit_intercept=False`` and the fit ``coef_`` (or) the data to
+   when `fit_intercept=False` and the fit `coef_` (or) the data to
    be predicted are zeroes. This is because for the sample(s) with
-   ``decision_function`` zero, :class:`LogisticRegression` and :class:`LinearSVC`
+   `decision_function` zero, :class:`LogisticRegression` and :class:`LinearSVC`
    predict the negative class, while liblinear predicts the positive class.
-   Note that a model with ``fit_intercept=False`` and having many samples with
-   ``decision_function`` zero, is likely to be a underfit, bad model and you are
-   advised to set ``fit_intercept=True`` and increase the intercept_scaling.
+   Note that a model with `fit_intercept=False` and having many samples with
+   `decision_function` zero, is likely to be a underfit, bad model and you are
+   advised to set `fit_intercept=True` and increase the intercept_scaling.
 
 .. note:: **Feature selection with sparse logistic regression**
 
@@ -871,7 +871,7 @@ with 'log' loss, which might be even faster but requires more tuning.
 
 :class:`LogisticRegressionCV` implements Logistic Regression with built-in
 cross-validation support, to find the optimal `C` and `l1_ratio` parameters
-according to the ``scoring`` attribute. The "newton-cg", "sag", "saga" and
+according to the `scoring` attribute. The "newton-cg", "sag", "saga" and
 "lbfgs" solvers are found to be faster for high-dimensional dense data, due
 to warm-starting (see :term:`Glossary <warm_start>`).
 
@@ -895,14 +895,14 @@ Stochastic Gradient Descent - SGD
 Stochastic gradient descent is a simple yet very efficient approach
 to fit linear models. It is particularly useful when the number of samples
 (and the number of features) is very large.
-The ``partial_fit`` method allows online/out-of-core learning.
+The `partial_fit` method allows online/out-of-core learning.
 
 The classes :class:`SGDClassifier` and :class:`SGDRegressor` provide
 functionality to fit linear models for classification and regression
 using different (convex) loss functions and different penalties.
-E.g., with ``loss="log"``, :class:`SGDClassifier`
+E.g., with `loss="log"`, :class:`SGDClassifier`
 fits a logistic regression model,
-while with ``loss="hinge"`` it fits a linear support vector machine (SVM).
+while with `loss="hinge"` it fits a linear support vector machine (SVM).
 
 .. topic:: References
 
@@ -934,13 +934,13 @@ Passive Aggressive Algorithms
 The passive-aggressive algorithms are a family of algorithms for large-scale
 learning. They are similar to the Perceptron in that they do not require a
 learning rate. However, contrary to the Perceptron, they include a
-regularization parameter ``C``.
+regularization parameter `C`.
 
 For classification, :class:`PassiveAggressiveClassifier` can be used with
-``loss='hinge'`` (PA-I) or ``loss='squared_hinge'`` (PA-II).  For regression,
+`loss='hinge'` (PA-I) or `loss='squared_hinge'` (PA-II).  For regression,
 :class:`PassiveAggressiveRegressor` can be used with
-``loss='epsilon_insensitive'`` (PA-I) or
-``loss='squared_epsilon_insensitive'`` (PA-II).
+`loss='epsilon_insensitive'` (PA-I) or
+`loss='squared_epsilon_insensitive'` (PA-II).
 
 .. topic:: References:
 
@@ -1016,7 +1016,7 @@ in these settings.
 
   * :ref:`HuberRegressor <huber_regression>` should be faster than
     :ref:`RANSAC <ransac_regression>` and :ref:`Theil Sen <theil_sen_regression>`
-    unless the number of samples are very large, i.e ``n_samples`` >> ``n_features``.
+    unless the number of samples are very large, i.e `n_samples` >> `n_features`.
     This is because :ref:`RANSAC <ransac_regression>` and :ref:`Theil Sen <theil_sen_regression>`
     fit on smaller subsets of the data. However, both :ref:`Theil Sen <theil_sen_regression>`
     and :ref:`RANSAC <ransac_regression>` are unlikely to be as robust as
@@ -1063,26 +1063,26 @@ Details of the algorithm
 
 Each iteration performs the following steps:
 
-1. Select ``min_samples`` random samples from the original data and check
-   whether the set of data is valid (see ``is_data_valid``).
-2. Fit a model to the random subset (``base_estimator.fit``) and check
-   whether the estimated model is valid (see ``is_model_valid``).
+1. Select `min_samples` random samples from the original data and check
+   whether the set of data is valid (see `is_data_valid`).
+2. Fit a model to the random subset (`base_estimator.fit`) and check
+   whether the estimated model is valid (see `is_model_valid`).
 3. Classify all data as inliers or outliers by calculating the residuals
-   to the estimated model (``base_estimator.predict(X) - y``) - all data
-   samples with absolute residuals smaller than the ``residual_threshold``
+   to the estimated model (`base_estimator.predict(X) - y`) - all data
+   samples with absolute residuals smaller than the `residual_threshold`
    are considered as inliers.
 4. Save fitted model as best model if number of inlier samples is
    maximal. In case the current estimated model has the same number of
    inliers, it is only considered as the best model if it has better score.
 
-These steps are performed either a maximum number of times (``max_trials``) or
-until one of the special stop criteria are met (see ``stop_n_inliers`` and
-``stop_score``). The final model is estimated using all inlier samples (consensus
+These steps are performed either a maximum number of times (`max_trials`) or
+until one of the special stop criteria are met (see `stop_n_inliers` and
+`stop_score`). The final model is estimated using all inlier samples (consensus
 set) of the previously determined best model.
 
-The ``is_data_valid`` and ``is_model_valid`` functions allow to identify and reject
+The `is_data_valid` and `is_model_valid` functions allow to identify and reject
 degenerate combinations of random sub-samples. If the estimated model is not
-needed for identifying degenerate cases, ``is_data_valid`` should be used as it
+needed for identifying degenerate cases, `is_data_valid` should be used as it
 is called prior to fitting the model and thus leading to better computational
 performance.
 
@@ -1198,16 +1198,16 @@ where
          2\epsilon|z| - \epsilon^2, & \text{otherwise}
   \end{cases}
 
-It is advised to set the parameter ``epsilon`` to 1.35 to achieve 95% statistical efficiency.
+It is advised to set the parameter `epsilon` to 1.35 to achieve 95% statistical efficiency.
 
 Notes
 -----
 The :class:`HuberRegressor` differs from using :class:`SGDRegressor` with loss set to `huber`
 in the following ways.
 
-- :class:`HuberRegressor` is scaling invariant. Once ``epsilon`` is set, scaling ``X`` and ``y``
+- :class:`HuberRegressor` is scaling invariant. Once `epsilon` is set, scaling `X` and `y`
   down or up by different values would produce the same robustness to outliers as before.
-  as compared to :class:`SGDRegressor` where ``epsilon`` has to be set again when ``X`` and ``y`` are
+  as compared to :class:`SGDRegressor` where `epsilon` has to be set again when `X` and `y` are
   scaled.
 
 - :class:`HuberRegressor` should be more efficient to use on data with small number of
@@ -1291,7 +1291,7 @@ It can be used as follows::
            [ 1.,  2.,  3.,  4.,  6.,  9.],
            [ 1.,  4.,  5., 16., 20., 25.]])
 
-The features of ``X`` have been transformed from :math:`[x_1, x_2]` to
+The features of `X` have been transformed from :math:`[x_1, x_2]` to
 :math:`[1, x_1, x_2, x_1^2, x_1 x_2, x_2^2]`, and can now be used within
 any linear model.
 
@@ -1319,7 +1319,7 @@ In some cases it's not necessary to include higher powers of any single feature,
 but only the so-called *interaction features*
 that multiply together at most :math:`d` distinct features.
 These can be gotten from :class:`PolynomialFeatures` with the setting
-``interaction_only=True``.
+`interaction_only=True`.
 
 For example, when dealing with boolean features,
 :math:`x_i^n = x_i` for all :math:`n` and is therefore useless;

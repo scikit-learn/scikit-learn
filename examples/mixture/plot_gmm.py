@@ -4,8 +4,8 @@ Gaussian Mixture Model Ellipsoids
 =================================
 
 Plot the confidence ellipsoids of a mixture of two Gaussians
-obtained with Expectation Maximisation (``GaussianMixture`` class) and
-Variational Inference (``BayesianGaussianMixture`` class models with
+obtained with Expectation Maximisation (`GaussianMixture` class) and
+Variational Inference (`BayesianGaussianMixture` class models with
 a Dirichlet process prior).
 
 Both models have access to five components with which to fit the data. Note

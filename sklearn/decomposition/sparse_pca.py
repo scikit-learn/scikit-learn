@@ -66,8 +66,8 @@ class SparsePCA(BaseEstimator, TransformerMixin):
 
     n_jobs : int or None, optional (default=None)
         Number of parallel jobs to run.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     U_init : array of shape (n_samples, n_components),
@@ -92,7 +92,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         .. versionadded:: 0.20
 
         .. deprecated:: 0.22
-           ``normalize_components`` is deprecated in 0.22 and will be removed
+           `normalize_components` is deprecated in 0.22 and will be removed
            in 0.24.
 
     Attributes
@@ -108,7 +108,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
 
     mean_ : array, shape (n_features,)
         Per-feature empirical mean, estimated from the training set.
-        Equal to ``X.mean(axis=0)``.
+        Equal to `X.mean(axis=0)`.
 
     Examples
     --------
@@ -271,8 +271,8 @@ class MiniBatchSparsePCA(SparsePCA):
 
     n_jobs : int or None, optional (default=None)
         Number of parallel jobs to run.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     method : {'lars', 'cd'}
@@ -295,7 +295,7 @@ class MiniBatchSparsePCA(SparsePCA):
         .. versionadded:: 0.20
 
         .. deprecated:: 0.22
-           ``normalize_components`` is deprecated in 0.22 and will be removed
+           `normalize_components` is deprecated in 0.22 and will be removed
            in 0.24.
 
     Attributes
@@ -308,7 +308,7 @@ class MiniBatchSparsePCA(SparsePCA):
 
     mean_ : array, shape (n_features,)
         Per-feature empirical mean, estimated from the training set.
-        Equal to ``X.mean(axis=0)``.
+        Equal to `X.mean(axis=0)`.
 
     Examples
     --------

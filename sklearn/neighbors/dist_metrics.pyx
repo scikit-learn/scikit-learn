@@ -129,13 +129,13 @@ cdef class DistanceMetric:
     ==============  ====================  ========  ===============================
     identifier      class name            args      distance function
     --------------  --------------------  --------  -------------------------------
-    "euclidean"     EuclideanDistance     -         ``sqrt(sum((x - y)^2))``
-    "manhattan"     ManhattanDistance     -         ``sum(|x - y|)``
-    "chebyshev"     ChebyshevDistance     -         ``max(|x - y|)``
-    "minkowski"     MinkowskiDistance     p         ``sum(|x - y|^p)^(1/p)``
-    "wminkowski"    WMinkowskiDistance    p, w      ``sum(|w * (x - y)|^p)^(1/p)``
-    "seuclidean"    SEuclideanDistance    V         ``sqrt(sum((x - y)^2 / V))``
-    "mahalanobis"   MahalanobisDistance   V or VI   ``sqrt((x - y)' V^-1 (x - y))``
+    "euclidean"     EuclideanDistance     -         `sqrt(sum((x - y)^2))`
+    "manhattan"     ManhattanDistance     -         `sum(|x - y|)`
+    "chebyshev"     ChebyshevDistance     -         `max(|x - y|)`
+    "minkowski"     MinkowskiDistance     p         `sum(|x - y|^p)^(1/p)`
+    "wminkowski"    WMinkowskiDistance    p, w      `sum(|w * (x - y)|^p)^(1/p)`
+    "seuclidean"    SEuclideanDistance    V         `sqrt(sum((x - y)^2 / V))`
+    "mahalanobis"   MahalanobisDistance   V or VI   `sqrt((x - y)' V^-1 (x - y))`
     ==============  ====================  ========  ===============================
 
     **Metrics intended for two-dimensional vector spaces:**  Note that the haversine
@@ -145,7 +145,7 @@ cdef class DistanceMetric:
     ============  ==================  ===============================================================
     identifier    class name          distance function
     ------------  ------------------  ---------------------------------------------------------------
-    "haversine"   HaversineDistance   ``2 arcsin(sqrt(sin^2(0.5*dx) + cos(x1)cos(x2)sin^2(0.5*dy)))``
+    "haversine"   HaversineDistance   `2 arcsin(sqrt(sin^2(0.5*dx) + cos(x1)cos(x2)sin^2(0.5*dy)))`
     ============  ==================  ===============================================================
 
 
@@ -156,9 +156,9 @@ cdef class DistanceMetric:
     =============  ====================  ========================================
     identifier     class name            distance function
     -------------  --------------------  ----------------------------------------
-    "hamming"      HammingDistance       ``N_unequal(x, y) / N_tot``
-    "canberra"     CanberraDistance      ``sum(|x - y| / (|x| + |y|))``
-    "braycurtis"   BrayCurtisDistance    ``sum(|x - y|) / (sum(|x|) + sum(|y|))``
+    "hamming"      HammingDistance       `N_unequal(x, y) / N_tot`
+    "canberra"     CanberraDistance      `sum(|x - y| / (|x| + |y|))`
+    "braycurtis"   BrayCurtisDistance    `sum(|x - y|) / (sum(|x|) + sum(|y|))`
     =============  ====================  ========================================
 
     **Metrics intended for boolean-valued vector spaces:**  Any nonzero entry
@@ -194,7 +194,7 @@ cdef class DistanceMetric:
     "pyfunc"       PyFuncDistance     func
     ===========    ===============    =======
 
-    Here ``func`` is a function which takes two one-dimensional numpy
+    Here `func` is a function which takes two one-dimensional numpy
     arrays, and returns a distance.  Note that in order to be used within
     the BallTree, the distance must be a true metric:
     i.e. it must satisfy the following properties

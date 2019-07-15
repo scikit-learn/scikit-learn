@@ -216,7 +216,7 @@ def lobpcg(A, X,
     ...     return invA  * x
     >>> M = LinearOperator(matvec=precond, shape=(n, n), dtype=float)
 
-    Here, ``invA`` could of course have been used directly as a preconditioner.
+    Here, `invA` could of course have been used directly as a preconditioner.
     Let us then solve the problem:
 
     >>> eigs, vecs = lobpcg(A, X, Y=Y, M=M, largest=False)
@@ -232,32 +232,32 @@ def lobpcg(A, X,
     the return tuple has the following format
     (lambda, V, lambda history, residual norms history).
 
-    In the following ``n`` denotes the matrix size and ``m`` the number
+    In the following `n` denotes the matrix size and `m` the number
     of required eigenvalues (smallest or largest).
 
-    The LOBPCG code internally solves eigenproblems of the size 3``m`` on every
-    iteration by calling the "standard" dense eigensolver, so if ``m`` is not
-    small enough compared to ``n``, it does not make sense to call the LOBPCG
+    The LOBPCG code internally solves eigenproblems of the size 3`m` on every
+    iteration by calling the "standard" dense eigensolver, so if `m` is not
+    small enough compared to `n`, it does not make sense to call the LOBPCG
     code, but rather one should use the "standard" eigensolver,
     e.g. numpy or scipy function in this case.
-    If one calls the LOBPCG algorithm for 5``m``>``n``,
+    If one calls the LOBPCG algorithm for 5`m`>`n`,
     it will most likely break internally, so the code tries to call
     the standard function instead.
 
     It is not that n should be large for the LOBPCG to work, but rather the
-    ratio ``n``/``m`` should be large. It you call LOBPCG with ``m``=1
-    and ``n``=10, it works though ``n`` is small. The method is intended
-    for extremely large ``n``/``m``, see e.g., reference [28] in
+    ratio `n`/`m` should be large. It you call LOBPCG with `m`=1
+    and `n`=10, it works though `n` is small. The method is intended
+    for extremely large `n`/`m`, see e.g., reference [28] in
     https://arxiv.org/abs/0705.2626
 
     The convergence speed depends basically on two factors:
 
     1. How well relatively separated the seeking eigenvalues are from the rest
-       of the eigenvalues. One can try to vary ``m`` to make this better.
+       of the eigenvalues. One can try to vary `m` to make this better.
 
     2. How well conditioned the problem is. This can be changed by using proper
        preconditioning. For example, a rod vibration test problem (under tests
-       directory) is ill-conditioned for large ``n``, so convergence will be
+       directory) is ill-conditioned for large `n`, so convergence will be
        slow, unless efficient preconditioning is used. For this specific
        problem, a good simple preconditioner function would be a linear solve
        for A, which is easy to code since A is tridiagonal.

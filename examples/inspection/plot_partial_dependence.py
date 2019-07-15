@@ -139,7 +139,7 @@ fig.tight_layout(rect=[0, 0.03, 1, 0.95])
 # smoother predictions than
 # :class:`~sklearn.ensemble.HistGradientBoostingRegressor`. For the plots to be
 # comparable, it is necessary to subtract the average value of the target
-# ``y``: The 'recursion' method, used by default for
+# `y`: The 'recursion' method, used by default for
 # :class:`~sklearn.ensemble.HistGradientBoostingRegressor`, does not account
 # for the initial predictor (in our case the average target). Setting the
 # target average to 0 avoids this bias.

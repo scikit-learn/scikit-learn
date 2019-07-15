@@ -77,7 +77,7 @@ def f_oneway(*args):
 
     The algorithm is from Heiman[2], pp.394-7.
 
-    See ``scipy.stats.f_oneway`` that should give the same results while
+    See `scipy.stats.f_oneway` that should give the same results while
     being less efficient.
 
     References
@@ -595,7 +595,7 @@ class SelectFpr(_BaseFilter):
 class SelectFdr(_BaseFilter):
     """Filter: Select the p-values for an estimated false discovery rate
 
-    This uses the Benjamini-Hochberg procedure. ``alpha`` is an upper bound
+    This uses the Benjamini-Hochberg procedure. `alpha` is an upper bound
     on the expected false discovery rate.
 
     Read more in the :ref:`User Guide <univariate_feature_selection>`.

@@ -194,7 +194,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
 
     explained_variance_ratio_ : array, shape (n_components,)
         Percentage of variance explained by each of the selected components.
-        If ``n_components`` is not set then all components are stored and the
+        If `n_components` is not set then all components are stored and the
         sum of explained variances is equal to 1.0. Only available when eigen
         or svd solver is used.
 
@@ -576,7 +576,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
 
     reg_param : float, optional
         Regularizes the covariance estimate as
-        ``(1-reg_param)*Sigma + reg_param*np.eye(n_features)``
+        `(1-reg_param)*Sigma + reg_param*np.eye(n_features)`
 
     store_covariance : boolean
         If True the covariance matrices are computed and stored in the
@@ -602,7 +602,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
 
     rotations_ : list of arrays
         For each class k an array of shape [n_features, n_k], with
-        ``n_k = min(n_features, number of elements in class k)``
+        `n_k = min(n_features, number of elements in class k)`
         It is the rotation of the Gaussian distribution, i.e. its
         principal axis.
 
@@ -640,11 +640,11 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         """Fit the model according to the given training data and parameters.
 
             .. versionchanged:: 0.19
-               ``store_covariances`` has been moved to main constructor as
-               ``store_covariance``
+               `store_covariances` has been moved to main constructor as
+               `store_covariance`
 
             .. versionchanged:: 0.19
-               ``tol`` has been moved to main constructor.
+               `tol` has been moved to main constructor.
 
         Parameters
         ----------

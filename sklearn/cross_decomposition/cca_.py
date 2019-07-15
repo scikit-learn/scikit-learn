@@ -62,7 +62,7 @@ class CCA(_PLS, _UnstableArchMixin):
     Notes
     -----
     For each component k, find the weights u, v that maximizes
-    max corr(Xk u, Yk v), such that ``|u| = |v| = 1``
+    max corr(Xk u, Yk v), such that `|u| = |v| = 1`
 
     Note that it maximizes only the correlations between the scores.
 

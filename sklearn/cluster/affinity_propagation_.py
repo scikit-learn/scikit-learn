@@ -91,12 +91,12 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
     <sphx_glr_auto_examples_cluster_plot_affinity_propagation.py>`.
 
     When the algorithm does not converge, it returns an empty array as
-    ``cluster_center_indices`` and ``-1`` as label for each training sample.
+    `cluster_center_indices` and `-1` as label for each training sample.
 
     When all training samples have equal similarities and equal preferences,
     the assignment of cluster centers and labels depends on the preference.
     If the preference is smaller than the similarities, a single cluster center
-    and label ``0`` for every sample will be returned. Otherwise, every
+    and label `0` for every sample will be returned. Otherwise, every
     training sample becomes its own cluster center and is assigned a unique
     label.
 
@@ -264,9 +264,9 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
         preferences value. If the preferences are not passed as arguments,
         they will be set to the median of the input similarities.
 
-    affinity : string, optional, default=``euclidean``
-        Which affinity to use. At the moment ``precomputed`` and
-        ``euclidean`` are supported. ``euclidean`` uses the
+    affinity : string, optional, default=`euclidean`
+        Which affinity to use. At the moment `precomputed` and
+        `euclidean` are supported. `euclidean` uses the
         negative squared euclidean distance between points.
 
     verbose : boolean, optional, default: False
@@ -279,13 +279,13 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
         Indices of cluster centers
 
     cluster_centers_ : array, shape (n_clusters, n_features)
-        Cluster centers (if affinity != ``precomputed``).
+        Cluster centers (if affinity != `precomputed`).
 
     labels_ : array, shape (n_samples,)
         Labels of each point
 
     affinity_matrix_ : array, shape (n_samples, n_samples)
-        Stores the affinity matrix used in ``fit``.
+        Stores the affinity matrix used in `fit`.
 
     n_iter_ : int
         Number of iterations taken to converge.
@@ -315,14 +315,14 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
     The algorithmic complexity of affinity propagation is quadratic
     in the number of points.
 
-    When ``fit`` does not converge, ``cluster_centers_`` becomes an empty
-    array and all training samples will be labelled as ``-1``. In addition,
-    ``predict`` will then label every sample as ``-1``.
+    When `fit` does not converge, `cluster_centers_` becomes an empty
+    array and all training samples will be labelled as `-1`. In addition,
+    `predict` will then label every sample as `-1`.
 
     When all training samples have equal similarities and equal preferences,
     the assignment of cluster centers and labels depends on the preference.
-    If the preference is smaller than the similarities, ``fit`` will result in
-    a single cluster center and label ``0`` for every sample. Otherwise, every
+    If the preference is smaller than the similarities, `fit` will result in
+    a single cluster center and label `0` for every sample. Otherwise, every
     training sample becomes its own cluster center and is assigned a unique
     label.
 
@@ -357,8 +357,8 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
         X : array-like or sparse matrix, shape (n_samples, n_features), or \
             array-like, shape (n_samples, n_samples)
             Training instances to cluster, or similarities / affinities between
-            instances if ``affinity='precomputed'``. If a sparse feature matrix
-            is provided, it will be converted into a sparse ``csr_matrix``.
+            instances if `affinity='precomputed'`. If a sparse feature matrix
+            is provided, it will be converted into a sparse `csr_matrix`.
 
         y : Ignored
             Not used, present here for API consistency by convention.
@@ -400,7 +400,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
         ----------
         X : array-like or sparse matrix, shape (n_samples, n_features)
             New data to predict. If a sparse matrix is provided, it will be
-            converted into a sparse ``csr_matrix``.
+            converted into a sparse `csr_matrix`.
 
         Returns
         -------
@@ -429,8 +429,8 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
         X : array-like or sparse matrix, shape (n_samples, n_features), or \
             array-like, shape (n_samples, n_samples)
             Training instances to cluster, or similarities / affinities between
-            instances if ``affinity='precomputed'``. If a sparse feature matrix
-            is provided, it will be converted into a sparse ``csr_matrix``.
+            instances if `affinity='precomputed'`. If a sparse feature matrix
+            is provided, it will be converted into a sparse `csr_matrix`.
 
         y : Ignored
             Not used, present here for API consistency by convention.

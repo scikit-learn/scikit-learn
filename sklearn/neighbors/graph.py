@@ -72,8 +72,8 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
 
     n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     Returns
@@ -150,8 +150,8 @@ def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',
 
     n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     Returns

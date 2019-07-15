@@ -83,7 +83,7 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
         classes : list of numpy arrays, shape (n_outputs)
             Each array is unique classes for one output in str/int
             Can be obtained by via
-            ``[np.unique(y[:, i]) for i in range(y.shape[1])]``, where y is the
+            `[np.unique(y[:, i]) for i in range(y.shape[1])]`, where y is the
             target matrix of the entire dataset.
             This argument is required for the first call to partial_fit
             and can be omitted in the subsequent calls.
@@ -216,8 +216,8 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for `fit`.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
         When individual estimators are fast to train or predict
@@ -226,7 +226,7 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
 
     Attributes
     ----------
-    estimators_ : list of ``n_output`` estimators
+    estimators_ : list of `n_output` estimators
         Estimators used for predictions.
     """
 
@@ -312,13 +312,13 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
     n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation.
         It does each target variable in y in parallel.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     Attributes
     ----------
-    estimators_ : list of ``n_output`` estimators
+    estimators_ : list of `n_output` estimators
         Estimators used for predictions.
     """
 
@@ -329,8 +329,8 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
         """Probability estimates.
         Returns prediction probabilities for each class of each output.
 
-        This method will raise a ``ValueError`` if any of the
-        estimators do not have ``predict_proba``.
+        This method will raise a `ValueError` if any of the
+        estimators do not have `predict_proba`.
 
         Parameters
         ----------
@@ -546,7 +546,7 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
     Attributes
     ----------
     classes_ : list
-        A list of arrays of length ``len(estimators_)`` containing the
+        A list of arrays of length `len(estimators_)` containing the
         class labels for each estimator in the chain.
 
     estimators_ : list

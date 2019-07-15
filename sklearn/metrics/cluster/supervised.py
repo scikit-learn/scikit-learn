@@ -88,11 +88,11 @@ def contingency_matrix(labels_true, labels_pred, eps=None, sparse=False):
     eps : None or float, optional.
         If a float, that value is added to all values in the contingency
         matrix. This helps to stop NaN propagation.
-        If ``None``, nothing is adjusted.
+        If `None`, nothing is adjusted.
 
     sparse : boolean, optional.
-        If True, return a sparse CSR continency matrix. If ``eps is not None``,
-        and ``sparse is True``, will throw ValueError.
+        If True, return a sparse CSR continency matrix. If `eps is not None`,
+        and `sparse is True`, will throw ValueError.
 
         .. versionadded:: 0.18
 
@@ -101,9 +101,9 @@ def contingency_matrix(labels_true, labels_pred, eps=None, sparse=False):
     contingency : {array-like, sparse}, shape=[n_classes_true, n_classes_pred]
         Matrix :math:`C` such that :math:`C_{i, j}` is the number of samples in
         true class :math:`i` and in predicted class :math:`j`. If
-        ``eps is None``, the dtype of this array will be integer. If ``eps`` is
+        `eps is None`, the dtype of this array will be integer. If `eps` is
         given, the dtype will be float.
-        Will be a ``scipy.sparse.csr_matrix`` if ``sparse=True``.
+        Will be a `scipy.sparse.csr_matrix` if `sparse=True`.
     """
 
     if eps is not None and sparse:
@@ -258,8 +258,8 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, beta=1.0):
     a permutation of the class or cluster label values won't change the
     score values in any way.
 
-    V-Measure is furthermore symmetric: swapping ``labels_true`` and
-    ``label_pred`` will give the same score. This does not hold for
+    V-Measure is furthermore symmetric: swapping `labels_true` and
+    `label_pred` will give the same score. This does not hold for
     homogeneity and completeness. V-Measure is identical to
     :func:`normalized_mutual_info_score` with the arithmetic averaging
     method.
@@ -275,10 +275,10 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, beta=1.0):
         cluster labels to evaluate
 
     beta : float
-        Ratio of weight attributed to ``homogeneity`` vs ``completeness``.
-        If ``beta`` is greater than 1, ``completeness`` is weighted more
-        strongly in the calculation. If ``beta`` is less than 1,
-        ``homogeneity`` is weighted more strongly.
+        Ratio of weight attributed to `homogeneity` vs `completeness`.
+        If `beta` is greater than 1, `completeness` is weighted more
+        strongly in the calculation. If `beta` is less than 1,
+        `homogeneity` is weighted more strongly.
 
     Returns
     -------
@@ -330,7 +330,7 @@ def homogeneity_score(labels_true, labels_pred):
     a permutation of the class or cluster label values won't change the
     score value in any way.
 
-    This metric is not symmetric: switching ``label_true`` with ``label_pred``
+    This metric is not symmetric: switching `label_true` with `label_pred`
     will return the :func:`completeness_score` which will be different in
     general.
 
@@ -400,7 +400,7 @@ def completeness_score(labels_true, labels_pred):
     a permutation of the class or cluster label values won't change the
     score value in any way.
 
-    This metric is not symmetric: switching ``label_true`` with ``label_pred``
+    This metric is not symmetric: switching `label_true` with `label_pred`
     will return the :func:`homogeneity_score` which will be different in
     general.
 
@@ -464,7 +464,7 @@ def v_measure_score(labels_true, labels_pred, beta=1.0):
     """V-measure cluster labeling given a ground truth.
 
     This score is identical to :func:`normalized_mutual_info_score` with
-    the ``'arithmetic'`` option for averaging.
+    the `'arithmetic'` option for averaging.
 
     The V-measure is the harmonic mean between homogeneity and completeness::
 
@@ -475,8 +475,8 @@ def v_measure_score(labels_true, labels_pred, beta=1.0):
     a permutation of the class or cluster label values won't change the
     score value in any way.
 
-    This metric is furthermore symmetric: switching ``label_true`` with
-    ``label_pred`` will return the same score value. This can be useful to
+    This metric is furthermore symmetric: switching `label_true` with
+    `label_pred` will return the same score value. This can be useful to
     measure the agreement of two independent label assignments strategies
     on the same dataset when the real ground truth is not known.
 
@@ -492,10 +492,10 @@ def v_measure_score(labels_true, labels_pred, beta=1.0):
         cluster labels to evaluate
 
     beta : float
-        Ratio of weight attributed to ``homogeneity`` vs ``completeness``.
-        If ``beta`` is greater than 1, ``completeness`` is weighted more
-        strongly in the calculation. If ``beta`` is less than 1,
-        ``homogeneity`` is weighted more strongly.
+        Ratio of weight attributed to `homogeneity` vs `completeness`.
+        If `beta` is greater than 1, `completeness` is weighted more
+        strongly in the calculation. If `beta` is less than 1,
+        `homogeneity` is weighted more strongly.
 
     Returns
     -------
@@ -578,8 +578,8 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     a permutation of the class or cluster label values won't change the
     score value in any way.
 
-    This metric is furthermore symmetric: switching ``label_true`` with
-    ``label_pred`` will return the same score value. This can be useful to
+    This metric is furthermore symmetric: switching `label_true` with
+    `label_pred` will return the same score value. This can be useful to
     measure the agreement of two independent label assignments strategies
     on the same dataset when the real ground truth is not known.
 
@@ -596,8 +596,8 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     contingency : {None, array, sparse matrix}, \
                   shape = [n_classes_true, n_classes_pred]
         A contingency matrix given by the :func:`contingency_matrix` function.
-        If value is ``None``, it will be computed, otherwise the given value is
-        used, with ``labels_true`` and ``labels_pred`` ignored.
+        If value is `None`, it will be computed, otherwise the given value is
+        used, with `labels_true` and `labels_pred` ignored.
 
     Returns
     -------
@@ -658,8 +658,8 @@ def adjusted_mutual_info_score(labels_true, labels_pred,
     a permutation of the class or cluster label values won't change the
     score value in any way.
 
-    This metric is furthermore symmetric: switching ``label_true`` with
-    ``label_pred`` will return the same score value. This can be useful to
+    This metric is furthermore symmetric: switching `label_true` with
+    `label_pred` will return the same score value. This can be useful to
     measure the agreement of two independent label assignments strategies
     on the same dataset when the real ground truth is not known.
 
@@ -683,7 +683,7 @@ def adjusted_mutual_info_score(labels_true, labels_pred,
         .. versionadded:: 0.20
 
         .. versionchanged:: 0.22
-           The default value of ``average_method`` changed from 'max' to
+           The default value of `average_method` changed from 'max' to
            'arithmetic'.
 
     Returns
@@ -770,8 +770,8 @@ def normalized_mutual_info_score(labels_true, labels_pred,
     Normalized Mutual Information (NMI) is a normalization of the Mutual
     Information (MI) score to scale the results between 0 (no mutual
     information) and 1 (perfect correlation). In this function, mutual
-    information is normalized by some generalized mean of ``H(labels_true)``
-    and ``H(labels_pred))``, defined by the `average_method`.
+    information is normalized by some generalized mean of `H(labels_true)`
+    and `H(labels_pred))`, defined by the `average_method`.
 
     This measure is not adjusted for chance. Therefore
     :func:`adjusted_mutual_info_score` might be preferred.
@@ -780,8 +780,8 @@ def normalized_mutual_info_score(labels_true, labels_pred,
     a permutation of the class or cluster label values won't change the
     score value in any way.
 
-    This metric is furthermore symmetric: switching ``label_true`` with
-    ``label_pred`` will return the same score value. This can be useful to
+    This metric is furthermore symmetric: switching `label_true` with
+    `label_pred` will return the same score value. This can be useful to
     measure the agreement of two independent label assignments strategies
     on the same dataset when the real ground truth is not known.
 
@@ -802,7 +802,7 @@ def normalized_mutual_info_score(labels_true, labels_pred,
         .. versionadded:: 0.20
 
         .. versionchanged:: 0.22
-           The default value of ``average_method`` changed from 'geometric' to
+           The default value of `average_method` changed from 'geometric' to
            'arithmetic'.
 
     Returns
@@ -871,13 +871,13 @@ def fowlkes_mallows_score(labels_true, labels_pred, sparse=False):
 
         FMI = TP / sqrt((TP + FP) * (TP + FN))
 
-    Where ``TP`` is the number of **True Positive** (i.e. the number of pair of
-    points that belongs in the same clusters in both ``labels_true`` and
-    ``labels_pred``), ``FP`` is the number of **False Positive** (i.e. the
+    Where `TP` is the number of **True Positive** (i.e. the number of pair of
+    points that belongs in the same clusters in both `labels_true` and
+    `labels_pred`), `FP` is the number of **False Positive** (i.e. the
     number of pair of points that belongs in the same clusters in
-    ``labels_true`` and not in ``labels_pred``) and ``FN`` is the number of
+    `labels_true` and not in `labels_pred`) and `FN` is the number of
     **False Negative** (i.e the number of pair of points that belongs in the
-    same clusters in ``labels_pred`` and not in ``labels_True``).
+    same clusters in `labels_pred` and not in `labels_True`).
 
     The score ranges from 0 to 1. A high value indicates a good similarity
     between two clusters.
@@ -886,10 +886,10 @@ def fowlkes_mallows_score(labels_true, labels_pred, sparse=False):
 
     Parameters
     ----------
-    labels_true : int array, shape = (``n_samples``,)
+    labels_true : int array, shape = (`n_samples`,)
         A clustering of the data into disjoint subsets.
 
-    labels_pred : array, shape = (``n_samples``, )
+    labels_pred : array, shape = (`n_samples`, )
         A clustering of the data into disjoint subsets.
 
     sparse : bool

@@ -723,8 +723,8 @@ def test_n_components_deprecation():
     X = np.array([[1, 2], [1, 4], [1, 0], [4, 2]])
     agc = AgglomerativeClustering().fit(X)
 
-    match = ("``n_components_`` attribute was deprecated "
-             "in favor of ``n_connected_components_``")
+    match = ("`n_components_` attribute was deprecated "
+             "in favor of `n_connected_components_`")
     with pytest.warns(DeprecationWarning, match=match):
         n = agc.n_components_
     assert n == agc.n_connected_components_

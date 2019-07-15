@@ -68,7 +68,7 @@ def check_increasing(x, y):
         if np.sign(rho_0) != np.sign(rho_1):
             warnings.warn("Confidence interval of the Spearman "
                           "correlation coefficient spans zero. "
-                          "Determination of ``increasing`` may be "
+                          "Determination of `increasing` may be "
                           "suspect.")
 
     return increasing_bool
@@ -105,7 +105,7 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
         If not None, set the highest value of the fit to y_max.
 
     increasing : boolean, optional, default: True
-        Whether to compute ``y_`` is increasing (if set to True) or decreasing
+        Whether to compute `y_` is increasing (if set to True) or decreasing
         (if set to False)
 
     Returns
@@ -148,11 +148,11 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         and min(y_) = y_min, max(y_) = y_max
 
     where:
-        - ``y[i]`` are inputs (real numbers)
-        - ``y_[i]`` are fitted
-        - ``X`` specifies the order.
-          If ``X`` is non-decreasing then ``y_`` is non-decreasing.
-        - ``w[i]`` are optional strictly positive weights (default to 1.0)
+        - `y[i]` are inputs (real numbers)
+        - `y_[i]` are fitted
+        - `X` specifies the order.
+          If `X` is non-decreasing then `y_` is non-decreasing.
+        - `w[i]` are optional strictly positive weights (default to 1.0)
 
     Read more in the :ref:`User Guide <isotonic>`.
 
@@ -173,11 +173,11 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         sign.
 
     out_of_bounds : string, optional, default: "nan"
-        The ``out_of_bounds`` parameter handles how x-values outside of the
+        The `out_of_bounds` parameter handles how x-values outside of the
         training domain are handled.  When set to "nan", predicted y-values
         will be NaN.  When set to "clip", predicted y-values will be
         set to the value corresponding to the nearest train interval endpoint.
-        When set to "raise", allow ``interp1d`` to throw ValueError.
+        When set to "raise", allow `interp1d` to throw ValueError.
 
 
     Attributes
@@ -189,7 +189,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         Maximum value of input array `X_` for right bound.
 
     f_ : function
-        The stepwise interpolating function that covers the input domain ``X``.
+        The stepwise interpolating function that covers the input domain `X`.
 
     Notes
     -----
@@ -235,7 +235,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         # Handle the out_of_bounds argument by setting bounds_error
         if self.out_of_bounds not in ["raise", "nan", "clip"]:
-            raise ValueError("The argument ``out_of_bounds`` must be in "
+            raise ValueError("The argument `out_of_bounds` must be in "
                              "'nan', 'clip', 'raise'; got {0}"
                              .format(self.out_of_bounds))
 
@@ -370,7 +370,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         # Handle the out_of_bounds argument by clipping if needed
         if self.out_of_bounds not in ["raise", "nan", "clip"]:
-            raise ValueError("The argument ``out_of_bounds`` must be in "
+            raise ValueError("The argument `out_of_bounds` must be in "
                              "'nan', 'clip', 'raise'; got {0}"
                              .format(self.out_of_bounds))
 

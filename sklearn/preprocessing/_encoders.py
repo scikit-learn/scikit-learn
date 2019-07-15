@@ -175,12 +175,12 @@ class OneHotEncoder(_BaseEncoder):
         Categories (unique values) per feature:
 
         - 'auto' : Determine categories automatically from the training data.
-        - list : ``categories[i]`` holds the categories expected in the ith
+        - list : `categories[i]` holds the categories expected in the ith
           column. The passed categories should not mix strings and numeric
           values within a single feature, and should be sorted in case of
           numeric values.
 
-        The used categories can be found in the ``categories_`` attribute.
+        The used categories can be found in the `categories_` attribute.
 
     drop : 'first' or a list/array of shape (n_features,), default=None.
         Specifies a methodology to use to drop one of the categories per
@@ -191,7 +191,7 @@ class OneHotEncoder(_BaseEncoder):
         - None : retain all features (the default).
         - 'first' : drop the first category in each feature. If only one
           category is present, the feature will be dropped entirely.
-        - array : ``drop[i]`` is the category in feature ``X[:, i]`` that
+        - array : `drop[i]` is the category in feature `X[:, i]` that
           should be dropped.
 
     sparse : boolean, default=True
@@ -213,11 +213,11 @@ class OneHotEncoder(_BaseEncoder):
     categories_ : list of arrays
         The categories of each feature determined during fitting
         (in order of the features in X and corresponding with the output
-        of ``transform``). This includes the category specified in ``drop``
+        of `transform`). This includes the category specified in `drop`
         (if any).
 
     drop_idx_ : array of shape (n_features,)
-        ``drop_idx_[i]`` is the index in ``categories_[i]`` of the category to
+        `drop_idx_[i]` is the index in `categories_[i]` of the category to
         be dropped for each feature. None if all the transformed features will
         be retained.
 
@@ -409,7 +409,7 @@ class OneHotEncoder(_BaseEncoder):
         """Convert the back data to the original representation.
 
         In case unknown categories are encountered (all zeros in the
-        one-hot encoding), ``None`` is used to represent this category.
+        one-hot encoding), `None` is used to represent this category.
 
         Parameters
         ----------
@@ -542,11 +542,11 @@ class OrdinalEncoder(_BaseEncoder):
         Categories (unique values) per feature:
 
         - 'auto' : Determine categories automatically from the training data.
-        - list : ``categories[i]`` holds the categories expected in the ith
+        - list : `categories[i]` holds the categories expected in the ith
           column. The passed categories should not mix strings and numeric
           values, and should be sorted in case of numeric values.
 
-        The used categories can be found in the ``categories_`` attribute.
+        The used categories can be found in the `categories_` attribute.
 
     dtype : number type, default np.float64
         Desired dtype of output.
@@ -556,7 +556,7 @@ class OrdinalEncoder(_BaseEncoder):
     categories_ : list of arrays
         The categories of each feature determined during fitting
         (in order of the features in X and corresponding with the output
-        of ``transform``).
+        of `transform`).
 
     Examples
     --------

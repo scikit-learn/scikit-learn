@@ -12,14 +12,14 @@ def compute_class_weight(class_weight, classes, y):
     ----------
     class_weight : dict, 'balanced' or None
         If 'balanced', class weights will be given by
-        ``n_samples / (n_classes * np.bincount(y))``.
+        `n_samples / (n_classes * np.bincount(y))`.
         If a dictionary is given, keys are classes and values
         are corresponding class weights.
         If None is given, the class weights will be uniform.
 
     classes : ndarray
         Array of the classes occurring in the data, as given by
-        ``np.unique(y_org)`` with ``y_org`` the original class labels.
+        `np.unique(y_org)` with `y_org` the original class labels.
 
     y : array-like, shape (n_samples,)
         Array of original class labels per sample;
@@ -75,7 +75,7 @@ def compute_sample_weight(class_weight, y, indices=None):
     Parameters
     ----------
     class_weight : dict, list of dicts, "balanced", or None, optional
-        Weights associated with classes in the form ``{class_label: weight}``.
+        Weights associated with classes in the form `{class_label: weight}`.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
         order as the columns of y.
@@ -88,7 +88,7 @@ def compute_sample_weight(class_weight, y, indices=None):
 
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data:
-        ``n_samples / (n_classes * np.bincount(y))``.
+        `n_samples / (n_classes * np.bincount(y))`.
 
         For multi-output, the weights of each column of y will be multiplied.
 

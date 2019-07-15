@@ -53,7 +53,7 @@ def set_config(assume_finite=None, working_memory=None,
     print_changed_only : bool, optional
         If True, only the parameters that were set to non-default
         values will be printed when printing an estimator. For example,
-        ``print(SVC())`` while True will only print 'SVC()' while the default
+        `print(SVC())` while True will only print 'SVC()' while the default
         behaviour would be to print 'SVC(C=1.0, cache_size=200, ...)' with
         all the non-changed parameters.
 

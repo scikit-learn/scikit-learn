@@ -11,18 +11,18 @@ Early stopping support in Gradient Boosting enables us to find the least number
 of iterations which is sufficient to build a model that generalizes well to
 unseen data.
 
-The concept of early stopping is simple. We specify a ``validation_fraction``
+The concept of early stopping is simple. We specify a `validation_fraction`
 which denotes the fraction of the whole dataset that will be kept aside from
 training to assess the validation loss of the model. The gradient boosting
 model is trained using the training set and evaluated using the validation set.
 When each additional stage of regression tree is added, the validation set is
 used to score the model.  This is continued until the scores of the model in
-the last ``n_iter_no_change`` stages do not improve by atleast `tol`. After
+the last `n_iter_no_change` stages do not improve by atleast `tol`. After
 that the model is considered to have converged and further addition of stages
 is "stopped early".
 
 The number of stages of the final model is available at the attribute
-``n_estimators_``.
+`n_estimators_`.
 
 This example illustrates how the early stopping can used in the
 :class:`sklearn.ensemble.GradientBoostingClassifier` model to achieve

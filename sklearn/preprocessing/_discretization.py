@@ -26,7 +26,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     n_bins : int or array-like, shape (n_features,) (default=5)
-        The number of bins to produce. Raises ValueError if ``n_bins < 2``.
+        The number of bins to produce. Raises ValueError if `n_bins < 2`.
 
     encode : {'onehot', 'onehot-dense', 'ordinal'}, (default='onehot')
         Method used to encode the transformed result.
@@ -60,7 +60,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         (i.e., <= 1e-8) are removed with a warning.
 
     bin_edges_ : array of arrays, shape (n_features, )
-        The edges of each bin. Contain arrays of varying shapes ``(n_bins_, )``
+        The edges of each bin. Contain arrays of varying shapes `(n_bins_, )`
         Ignored features will have empty arrays.
 
     Examples
@@ -80,7 +80,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
            [ 2., 2., 2., 2.]])
 
     Sometimes it may be useful to convert the data back into the original
-    feature space. The ``inverse_transform`` function converts the binned
+    feature space. The `inverse_transform` function converts the binned
     data into the original feature space. Each value will be equal to the mean
     of the two bin edges.
 
@@ -94,24 +94,24 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
     Notes
     -----
-    In bin edges for feature ``i``, the first and last values are used only for
-    ``inverse_transform``. During transform, bin edges are extended to::
+    In bin edges for feature `i`, the first and last values are used only for
+    `inverse_transform`. During transform, bin edges are extended to::
 
       np.concatenate([-np.inf, bin_edges_[i][1:-1], np.inf])
 
-    You can combine ``KBinsDiscretizer`` with
+    You can combine `KBinsDiscretizer` with
     :class:`sklearn.compose.ColumnTransformer` if you only want to preprocess
     part of the features.
 
-    ``KBinsDiscretizer`` might produce constant features (e.g., when
-    ``encode = 'onehot'`` and certain bins do not contain any data).
+    `KBinsDiscretizer` might produce constant features (e.g., when
+    `encode = 'onehot'` and certain bins do not contain any data).
     These features can be removed with feature selection algorithms
     (e.g., :class:`sklearn.feature_selection.VarianceThreshold`).
 
     See also
     --------
-     sklearn.preprocessing.Binarizer : class used to bin values as ``0`` or
-        ``1`` based on a parameter ``threshold``.
+     sklearn.preprocessing.Binarizer : class used to bin values as `0` or
+        `1` based on a parameter `threshold`.
     """
 
     def __init__(self, n_bins=5, encode='onehot', strategy='quantile'):
@@ -266,7 +266,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
             # Values which are close to a bin edge are susceptible to numeric
             # instability. Add eps to X so these values are binned correctly
             # with respect to their decimal truncation. See documentation of
-            # numpy.isclose for an explanation of ``rtol`` and ``atol``.
+            # numpy.isclose for an explanation of `rtol` and `atol`.
             rtol = 1.e-5
             atol = 1.e-8
             eps = atol + rtol * np.abs(Xt[:, jj])

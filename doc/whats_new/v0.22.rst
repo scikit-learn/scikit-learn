@@ -105,7 +105,7 @@ Changelog
 ...........................
 
 - |Enhancement| :class:`linearmodel.BayesianRidge` now accepts hyperparameters
-  ``alpha_init`` and ``lambda_init`` which can be used to set the initial value
+  `alpha_init` and `lambda_init` which can be used to set the initial value
   of the maximization procedure in :term:`fit`.
   :pr:`13618` by :user:`Yoshihiro Uchida <c56pony>`.
 
@@ -117,7 +117,7 @@ Changelog
 ..................
 
 - |Enhancement| :class:`model_selection.learning_curve` now accepts parameter
-  ``return_times`` which can be used to retrieve computation times in order to
+  `return_times` which can be used to retrieve computation times in order to
   plot model scalability (see learning_curve example).
   :pr:`13938` by :user:`Hadrien Reboul <H4dr1en>`.
 
@@ -132,9 +132,9 @@ Changelog
 ..................
 
 - |Enhancement| :class:`svm.SVC` and :class:`svm.NuSVC` now accept a
-  ``break_ties`` parameter. This parameter results in :term:`predict` breaking
+  `break_ties` parameter. This parameter results in :term:`predict` breaking
   the ties according to the confidence values of :term:`decision_function`, if
-  ``decision_function_shape='ovr'``, and the number of target classes > 2.
+  `decision_function_shape='ovr'`, and the number of target classes > 2.
   :pr:`12557` by `Adrin Jalali`_.
 
 
@@ -151,7 +151,7 @@ Changelog
 :mod:`sklearn.cluster`
 ......................
 
-- |Enhancement| :class:`cluster.SpectralClustering` now accepts a ``n_components`` 
+- |Enhancement| :class:`cluster.SpectralClustering` now accepts a `n_components` 
   parameter. This parameter extends `SpectralClustering` class functionality to
   match `spectral_clustering`.
   :pr:`13726` by :user:`Shuzhe Xiao <fdas3213>`.
@@ -166,7 +166,7 @@ Changelog
 :mod:`sklearn.utils`
 ....................
 
-- |Enhancement| :func:`utils.safe_indexing` accepts an ``axis`` parameter to
+- |Enhancement| :func:`utils.safe_indexing` accepts an `axis` parameter to
   index array-like across rows and columns. The column indexing can be done on
   NumPy array, SciPy sparse matrix, and Pandas DataFrame.
   :pr:`14035` by `Guillaume Lemaitre <glemaitre>`.
@@ -178,14 +178,14 @@ Changelog
   :class:`neural_network.BaseMultilayerPerceptron`,
   :class:`neural_network.MLPRegressor`, and
   :class:`neural_network.MLPClassifier` to give control over
-  maximum number of function evaluation to not meet ``tol`` improvement.
+  maximum number of function evaluation to not meet `tol` improvement.
   :issue:`9274` by :user:`Daniel Perry <daniel-perry>`.
 
 
 Miscellaneous
 .............
 
-- |API| Replace manual checks with ``check_is_fitted``. Errors thrown when
+- |API| Replace manual checks with `check_is_fitted`. Errors thrown when
   using a non-fitted estimators are now more uniform.
   :pr:`13013` by :user:`Agamemnon Krasoulis <agamemnonc>`.
 
@@ -198,9 +198,9 @@ Changes to estimator checks
 
 These changes mostly affect library developers.
 
-- Estimators are now expected to raise a ``NotFittedError`` if ``predict`` or
-  ``transform`` is called before ``fit``; previously an ``AttributeError`` or
-  ``ValueError`` was acceptable.
+- Estimators are now expected to raise a `NotFittedError` if `predict` or
+  `transform` is called before `fit`; previously an `AttributeError` or
+  `ValueError` was acceptable.
   :pr:`13013` by by :user:`Agamemnon Krasoulis <agamemnonc>`.
 
 - |Enhancement| Binary only classifiers are now supported in estimator checks.

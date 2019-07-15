@@ -33,7 +33,7 @@ Usage
 The :func:`sklearn.datasets.fetch_20newsgroups` function is a data
 fetching / caching functions that downloads the data archive from
 the original `20 newsgroups website`_, extracts the archive contents
-in the ``~/scikit_learn_data/20news_home`` folder and calls the
+in the `~/scikit_learn_data/20news_home` folder and calls the
 :func:`sklearn.datasets.load_files` on either the training or
 testing set folder, or both of them::
 
@@ -63,7 +63,7 @@ testing set folder, or both of them::
    'talk.politics.misc',
    'talk.religion.misc']
 
-The real data lies in the ``filenames`` and ``target`` attributes. The target
+The real data lies in the `filenames` and `target` attributes. The target
 attribute is the integer index of the category::
 
   >>> newsgroups_train.filenames.shape
@@ -95,7 +95,7 @@ Converting text to vectors
 In order to feed predictive or clustering models with the text data,
 one first need to turn the text into vectors of numerical values suitable
 for statistical analysis. This can be achieved with the utilities of the
-``sklearn.feature_extraction.text`` as demonstrated in the following
+`sklearn.feature_extraction.text` as demonstrated in the following
 example that extract `TF-IDF`_ vectors of unigram tokens
 from a subset of 20news::
 
@@ -171,7 +171,7 @@ Let's take a look at what the most informative features are:
 You can now see many things that these features have overfit to:
 
 - Almost every group is distinguished by whether headers such as
-  ``NNTP-Posting-Host:`` and ``Distribution:`` appear more or less often.
+  `NNTP-Posting-Host:` and `Distribution:` appear more or less often.
 - Another significant feature involves whether the sender is affiliated with
   a university, as indicated either by their headers or their signature.
 - The word "article" is a significant feature, based on how often people quote
@@ -187,7 +187,7 @@ same high level.
 For this reason, the functions that load 20 Newsgroups data provide a
 parameter called **remove**, telling it what kinds of information to strip out
 of each file. **remove** should be a tuple containing any subset of
-``('headers', 'footers', 'quotes')``, telling it to remove headers, signature
+`('headers', 'footers', 'quotes')`, telling it to remove headers, signature
 blocks, and quotation blocks respectively.
 
   >>> newsgroups_test = fetch_20newsgroups(subset='test',
@@ -217,13 +217,13 @@ It loses even more if we also strip this metadata from the training data:
 
 Some other classifiers cope better with this harder version of the task. Try
 running :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py` with and without
-the ``--filter`` option to compare the results.
+the `--filter` option to compare the results.
 
 .. topic:: Recommendation
 
   When evaluating text classifiers on the 20 Newsgroups data, you
   should strip newsgroup-related metadata. In scikit-learn, you can do this by
-  setting ``remove=('headers', 'footers', 'quotes')``. The F-score will be
+  setting `remove=('headers', 'footers', 'quotes')`. The F-score will be
   lower because it is more realistic.
 
 .. topic:: Examples

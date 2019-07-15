@@ -1,9 +1,9 @@
 """Metrics to assess performance on regression task
 
-Functions named as ``*_score`` return a scalar value to maximize: the higher
+Functions named as `*_score` return a scalar value to maximize: the higher
 the better
 
-Function named as ``*_error`` or ``*_loss`` return a scalar value to minimize:
+Function named as `*_error` or `*_loss` return a scalar value to minimize:
 the lower the better
 """
 
@@ -69,8 +69,8 @@ def _check_reg_targets(y_true, y_pred, multioutput):
 
     multioutput : array-like of shape = (n_outputs) or string in ['raw_values',
         uniform_average', 'variance_weighted'] or None
-        Custom output weights if ``multioutput`` is array-like or
-        just the corresponding argument if ``multioutput`` is a
+        Custom output weights if `multioutput` is array-like or
+        just the corresponding argument if `multioutput` is a
         correct keyword.
 
     """

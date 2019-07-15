@@ -23,7 +23,7 @@ np.import_array()
 cdef class WeightVector(object):
     """Dense vector represented by a scalar and a numpy array.
 
-    The class provides methods to ``add`` a sparse vector
+    The class provides methods to `add` a sparse vector
     and scale the vector.
     Representing a vector explicitly as a scalar times a
     vector allows for efficient scaling operations.
@@ -39,9 +39,9 @@ cdef class WeightVector(object):
     wscale : double
         The scale of the vector.
     n_features : int
-        The number of features (= dimensionality of ``w``).
+        The number of features (= dimensionality of `w`).
     sq_norm : double
-        The squared norm of ``w``.
+        The squared norm of `w`.
     """
 
     def __cinit__(self,
@@ -68,16 +68,16 @@ cdef class WeightVector(object):
                   double c) nogil:
         """Scales sample x by constant c and adds it to the weight vector.
 
-        This operation updates ``sq_norm``.
+        This operation updates `sq_norm`.
 
         Parameters
         ----------
         x_data_ptr : double*
-            The array which holds the feature values of ``x``.
+            The array which holds the feature values of `x`.
         x_ind_ptr : np.intc*
-            The array which holds the feature indices of ``x``.
+            The array which holds the feature indices of `x`.
         xnnz : int
-            The number of non-zero features of ``x``.
+            The number of non-zero features of `x`.
         c : double
             The scaling constant for the example.
         """
@@ -110,11 +110,11 @@ cdef class WeightVector(object):
         Parameters
         ----------
         x_data_ptr : double*
-            The array which holds the feature values of ``x``.
+            The array which holds the feature values of `x`.
         x_ind_ptr : np.intc*
-            The array which holds the feature indices of ``x``.
+            The array which holds the feature indices of `x`.
         xnnz : int
-            The number of non-zero features of ``x``.
+            The number of non-zero features of `x`.
         c : double
             The scaling constant for the example.
         num_iter : double
@@ -146,16 +146,16 @@ cdef class WeightVector(object):
         Parameters
         ----------
         x_data_ptr : double*
-            The array which holds the feature values of ``x``.
+            The array which holds the feature values of `x`.
         x_ind_ptr : np.intc*
-            The array which holds the feature indices of ``x``.
+            The array which holds the feature indices of `x`.
         xnnz : int
-            The number of non-zero features of ``x`` (length of x_ind_ptr).
+            The number of non-zero features of `x` (length of x_ind_ptr).
 
         Returns
         -------
         innerprod : double
-            The inner product of ``x`` and ``w``.
+            The inner product of `x` and `w`.
         """
         cdef int j
         cdef int idx
@@ -168,17 +168,17 @@ cdef class WeightVector(object):
         return innerprod
 
     cdef void scale(self, double c) nogil:
-        """Scales the weight vector by a constant ``c``.
+        """Scales the weight vector by a constant `c`.
 
-        It updates ``wscale`` and ``sq_norm``. If ``wscale`` gets too
-        small we call ``reset_swcale``."""
+        It updates `wscale` and `sq_norm`. If `wscale` gets too
+        small we call `reset_swcale`."""
         self.wscale *= c
         self.sq_norm *= (c * c)
         if self.wscale < 1e-9:
             self.reset_wscale()
 
     cdef void reset_wscale(self) nogil:
-        """Scales each coef of ``w`` by ``wscale`` and resets it to 1. """
+        """Scales each coef of `w` by `wscale` and resets it to 1. """
         if self.aw is not None:
             _axpy(<int>self.aw.shape[0], self.average_a,
                   <double *>self.w.data, 1, <double *>self.aw.data, 1)

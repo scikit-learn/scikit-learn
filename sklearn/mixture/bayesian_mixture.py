@@ -136,7 +136,7 @@ class BayesianGaussianMixture(BaseMixture):
         the center and will lead to more components being active, while a lower
         concentration parameter will lead to more mass at the edge of the
         mixture weights simplex. The value of the parameter must be greater
-        than 0. If it is None, it's set to ``1. / n_components``.
+        than 0. If it is None, it's set to `1. / n_components`.
 
     mean_precision_prior : float | None, optional.
         The precision prior on the mean distribution (Gaussian).
@@ -208,7 +208,7 @@ class BayesianGaussianMixture(BaseMixture):
         equivalently parameterized by the precision matrices. Storing the
         precision matrices instead of the covariance matrices makes it more
         efficient to compute the log-likelihood of new samples at test time.
-        The shape depends on ``covariance_type``::
+        The shape depends on `covariance_type`::
 
             (n_components,)                        if 'spherical',
             (n_features, n_features)               if 'tied',
@@ -222,7 +222,7 @@ class BayesianGaussianMixture(BaseMixture):
         Gaussian can be equivalently parameterized by the precision matrices.
         Storing the precision matrices instead of the covariance matrices makes
         it more efficient to compute the log-likelihood of new samples at test
-        time. The shape depends on ``covariance_type``::
+        time. The shape depends on `covariance_type`::
 
             (n_components,)                        if 'spherical',
             (n_features, n_features)               if 'tied',
@@ -243,7 +243,7 @@ class BayesianGaussianMixture(BaseMixture):
     weight_concentration_prior_ : tuple or float
         The dirichlet concentration of each component on the weight
         distribution (Dirichlet). The type depends on
-        ``weight_concentration_prior_type``::
+        `weight_concentration_prior_type`::
 
             (float, float) if 'dirichlet_process' (Beta parameters),
             float          if 'dirichlet_distribution' (Dirichlet parameters).

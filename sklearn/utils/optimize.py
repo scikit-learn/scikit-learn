@@ -138,8 +138,8 @@ def newton_cg(grad_hess, func, grad, x0, args=(), tol=1e-4,
 
     tol : float
         Stopping criterion. The iteration will stop when
-        ``max{|g_i | i = 1, ..., n} <= tol``
-        where ``g_i`` is the i-th component of the gradient.
+        `max{|g_i | i = 1, ..., n} <= tol`
+        where `g_i` is the i-th component of the gradient.
 
     maxiter : int
         Number of Newton iterations.

@@ -8,10 +8,10 @@ Clustering
 unlabeled data can be performed with the module :mod:`sklearn.cluster`.
 
 Each clustering algorithm comes in two variants: a class, that implements
-the ``fit`` method to learn the clusters on train data, and a function,
+the `fit` method to learn the clusters on train data, and a function,
 that, given train data, returns an array of integer labels corresponding
 to the different clusters. For the class, the labels over the training
-data can be found in the ``labels_`` attribute.
+data can be found in the `labels_` attribute.
 
 .. currentmodule:: sklearn.cluster
 
@@ -19,11 +19,11 @@ data can be found in the ``labels_`` attribute.
 
     One important thing to note is that the algorithms implemented in
     this module can take different kinds of matrix as input. All the
-    methods accept standard data matrices of shape ``[n_samples, n_features]``.
+    methods accept standard data matrices of shape `[n_samples, n_features]`.
     These can be obtained from the classes in the :mod:`sklearn.feature_extraction`
     module. For :class:`AffinityPropagation`, :class:`SpectralClustering`
     and :class:`DBSCAN` one can also input similarity matrices of shape
-    ``[n_samples, n_samples]``. These can be obtained from the functions
+    `[n_samples, n_samples]`. These can be obtained from the functions
     in the :mod:`sklearn.metrics.pairwise` module.
 
 Overview of clustering methods
@@ -49,7 +49,7 @@ Overview of clustering methods
 
    * - :ref:`K-Means <k_means>`
      - number of clusters
-     - Very large ``n_samples``, medium ``n_clusters`` with
+     - Very large `n_samples`, medium `n_clusters` with
        :ref:`MiniBatch code <mini_batch_kmeans>`
      - General-purpose, even cluster size, flat geometry, not too many clusters
      - Distances between points
@@ -62,38 +62,38 @@ Overview of clustering methods
 
    * - :ref:`Mean-shift <mean_shift>`
      - bandwidth
-     - Not scalable with ``n_samples``
+     - Not scalable with `n_samples`
      - Many clusters, uneven cluster size, non-flat geometry
      - Distances between points
 
    * - :ref:`Spectral clustering <spectral_clustering>`
      - number of clusters
-     - Medium ``n_samples``, small ``n_clusters``
+     - Medium `n_samples`, small `n_clusters`
      - Few clusters, even cluster size, non-flat geometry
      - Graph distance (e.g. nearest-neighbor graph)
 
    * - :ref:`Ward hierarchical clustering <hierarchical_clustering>`
      - number of clusters or distance threshold
-     - Large ``n_samples`` and ``n_clusters``
+     - Large `n_samples` and `n_clusters`
      - Many clusters, possibly connectivity constraints
      - Distances between points
 
    * - :ref:`Agglomerative clustering <hierarchical_clustering>`
      - number of clusters or distance threshold, linkage type, distance
-     - Large ``n_samples`` and ``n_clusters``
+     - Large `n_samples` and `n_clusters`
      - Many clusters, possibly connectivity constraints, non Euclidean
        distances
      - Any pairwise distance
 
    * - :ref:`DBSCAN <dbscan>`
      - neighborhood size
-     - Very large ``n_samples``, medium ``n_clusters``
+     - Very large `n_samples`, medium `n_clusters`
      - Non-flat geometry, uneven cluster sizes
      - Distances between nearest points
 
    * - :ref:`OPTICS <optics>`
      - minimum cluster membership
-     - Very large ``n_samples``, large ``n_clusters``
+     - Very large `n_samples`, large `n_clusters`
      - Non-flat geometry, uneven cluster sizes, variable cluster density
      - Distances between points
 
@@ -105,7 +105,7 @@ Overview of clustering methods
 
    * - :ref:`Birch`
      - branching factor, threshold, optional global clusterer.
-     - Large ``n_clusters`` and ``n_samples``
+     - Large `n_clusters` and `n_samples`
      - Large dataset, outlier removal, data reduction.
      - Euclidean distance between points
 
@@ -195,18 +195,18 @@ minimum. This is highly dependent on the initialization of the centroids.
 As a result, the computation is often done several times, with different
 initializations of the centroids. One method to help address this issue is the
 k-means++ initialization scheme, which has been implemented in scikit-learn
-(use the ``init='k-means++'`` parameter). This initializes the centroids to be
+(use the `init='k-means++'` parameter). This initializes the centroids to be
 (generally) distant from each other, leading to provably better results than
 random initialization, as shown in the reference.
 
 The algorithm supports sample weights, which can be given by a parameter
-``sample_weight``. This allows to assign more weight to some samples when
+`sample_weight`. This allows to assign more weight to some samples when
 computing cluster centers and values of inertia. For example, assigning a
 weight of 2 to a sample is equivalent to adding a duplicate of that sample
 to the dataset :math:`X`.
 
 A parameter can be given to allow K-means to be run in parallel, called
-``n_jobs``. Giving this parameter a positive value uses that many processors
+`n_jobs`. Giving this parameter a positive value uses that many processors
 (default: 1). A value of -1 uses all available processors, with -2 using one
 less, and so on. Parallelization generally speeds up computation at the cost of
 memory (in this case, multiple copies of centroids need to be stored, one for
@@ -398,9 +398,9 @@ to be the mean of the samples within its neighborhood:
     m(x_i) = \frac{\sum_{x_j \in N(x_i)}K(x_j - x_i)x_j}{\sum_{x_j \in N(x_i)}K(x_j - x_i)}
 
 The algorithm automatically sets the number of clusters, instead of relying on a
-parameter ``bandwidth``, which dictates the size of the region to search through.
+parameter `bandwidth`, which dictates the size of the region to search through.
 This parameter can be set manually, but can be estimated using the provided
-``estimate_bandwidth`` function, which is called if the bandwidth is not set.
+`estimate_bandwidth` function, which is called if the bandwidth is not set.
 
 The algorithm is not highly scalable, as it requires multiple nearest neighbor
 searches during the execution of the algorithm. The algorithm is guaranteed to
@@ -494,16 +494,16 @@ Different label assignment strategies
 -------------------------------------
 
 Different label assignment strategies can be used, corresponding to the
-``assign_labels`` parameter of :class:`SpectralClustering`.
-The ``"kmeans"`` strategy can match finer details of the data, but it can be
-more unstable. In particular, unless you control the ``random_state``, it
+`assign_labels` parameter of :class:`SpectralClustering`.
+The `"kmeans"` strategy can match finer details of the data, but it can be
+more unstable. In particular, unless you control the `random_state`, it
 may not be reproducible from run-to-run, as it depends on a random
-initialization. On the other hand, the ``"discretize"`` strategy is 100%
+initialization. On the other hand, the `"discretize"` strategy is 100%
 reproducible, but it tends to create parcels of fairly even and
 geometrical shape.
 
 =====================================  =====================================
- ``assign_labels="kmeans"``              ``assign_labels="discretize"``
+ `assign_labels="kmeans"`              `assign_labels="discretize"`
 =====================================  =====================================
 |coin_kmeans|                          |coin_discretize|
 =====================================  =====================================
@@ -736,14 +736,14 @@ cluster is therefore a set of core samples, each close to each other
 (measured by some distance measure)
 and a set of non-core samples that are close to a core sample (but are not
 themselves core samples). There are two parameters to the algorithm,
-``min_samples`` and ``eps``,
+`min_samples` and `eps`,
 which define formally what we mean when we say *dense*.
-Higher ``min_samples`` or lower ``eps``
+Higher `min_samples` or lower `eps`
 indicate higher density necessary to form a cluster.
 
 More formally, we define a core sample as being a sample in the dataset such
-that there exist ``min_samples`` other samples within a distance of
-``eps``, which are defined as *neighbors* of the core sample. This tells
+that there exist `min_samples` other samples within a distance of
+`eps`, which are defined as *neighbors* of the core sample. This tells
 us that the core sample is in a dense area of the vector space. A cluster
 is a set of core samples that can be built by recursively taking a core
 sample, finding all of its neighbors that are core samples, finding all of
@@ -753,16 +753,16 @@ in the cluster but are not themselves core samples. Intuitively, these samples
 are on the fringes of a cluster.
 
 Any core sample is part of a cluster, by definition. Any sample that is not a
-core sample, and is at least ``eps`` in distance from any core sample, is
+core sample, and is at least `eps` in distance from any core sample, is
 considered an outlier by the algorithm.
 
-While the parameter ``min_samples`` primarily controls how tolerant the
+While the parameter `min_samples` primarily controls how tolerant the
 algorithm is towards noise (on noisy and large data sets it may be desiable
-to increase this parameter), the parameter ``eps`` is *crucial to choose
+to increase this parameter), the parameter `eps` is *crucial to choose
 appropriately* for the data set and distance function and usually cannot be
 left at the default value. It controls the local neighborhood of the points.
 When chosen too small, most data will not be clustered at all (and labeled
-as ``-1`` for "noise"). When chosen too large, it causes close clusters to
+as `-1` for "noise"). When chosen too large, it causes close clusters to
 be merged into one cluster, and eventually the entire data set to be returned
 as a single cluster. Some heuristics for choosing this parameter have been
 discussed in literature, for example based on a knee in the nearest neighbor
@@ -792,9 +792,9 @@ by black points below.
     will depend on the order in which those samples are encountered in the data.
     Second and more importantly, the clusters to which non-core samples are assigned
     can differ depending on the data order.  This would happen when a non-core sample
-    has a distance lower than ``eps`` to two core samples in different clusters. By the
+    has a distance lower than `eps` to two core samples in different clusters. By the
     triangular inequality, those two core samples must be more distant than
-    ``eps`` from each other, or they would be in the same cluster. The non-core
+    `eps` from each other, or they would be in the same cluster. The non-core
     sample is assigned to whichever cluster is generated first in a pass
     through the data, and so the results will depend on the data ordering.
 
@@ -819,13 +819,13 @@ by black points below.
 
     - A sparse radius neighborhood graph (where missing entries are presumed to
       be out of eps) can be precomputed in a memory-efficient way and dbscan
-      can be run over this with ``metric='precomputed'``.  See
+      can be run over this with `metric='precomputed'`.  See
       :meth:`sklearn.neighbors.NearestNeighbors.radius_neighbors_graph`.
 
     - The dataset can be compressed, either by removing exact duplicates if
       these occur in your data, or by using BIRCH. Then you only have a
       relatively small number of representatives for a large number of points.
-      You can then provide a ``sample_weight`` when fitting DBSCAN.
+      You can then provide a `sample_weight` when fitting DBSCAN.
 
 .. topic:: References:
 
@@ -846,15 +846,15 @@ OPTICS
 
 The :class:`OPTICS` algorithm shares many similarities with the :class:`DBSCAN`
 algorithm, and can be considered a generalization of DBSCAN that relaxes the
-``eps`` requirement from a single value to a value range. The key difference
+`eps` requirement from a single value to a value range. The key difference
 between DBSCAN and OPTICS is that the OPTICS algorithm builds a *reachability*
-graph, which assigns each sample both a ``reachability_`` distance, and a spot
-within the cluster ``ordering_`` attribute; these two attributes are assigned
+graph, which assigns each sample both a `reachability_` distance, and a spot
+within the cluster `ordering_` attribute; these two attributes are assigned
 when the model is fitted, and are used to determine cluster membership. If
-OPTICS is run with the default value of *inf* set for ``max_eps``, then DBSCAN
+OPTICS is run with the default value of *inf* set for `max_eps`, then DBSCAN
 style cluster extraction can be performed repeatedly in linear time for any
-given ``eps`` value using the ``cluster_optics_dbscan`` method. Setting
-``max_eps`` to a lower value will result in shorter run times, and can be
+given `eps` value using the `cluster_optics_dbscan` method. Setting
+`max_eps` to a lower value will result in shorter run times, and can be
 thought of as the maximum neighborhood radius from each point to find other
 potential reachable points.
 
@@ -866,7 +866,7 @@ potential reachable points.
 
 The *reachability* distances generated by OPTICS allow for variable density
 extraction of clusters within a single data set. As shown in the above plot,
-combining *reachability* distances and data set ``ordering_`` produces a
+combining *reachability* distances and data set `ordering_` produces a
 *reachability plot*, where point density is represented on the Y-axis, and
 points are ordered such that nearby points are adjacent. 'Cutting' the
 reachability plot at a single value produces DBSCAN like results; all points
@@ -874,10 +874,10 @@ above the 'cut' are classified as noise, and each time that there is a break
 when reading from left to right signifies a new cluster. The default cluster
 extraction with OPTICS looks at the steep slopes within the graph to find
 clusters, and the user can define what counts as a steep slope using the
-parameter ``xi``. There are also other possibilities for analysis on the graph
+parameter `xi`. There are also other possibilities for analysis on the graph
 itself, such as generating hierarchical representations of the data through
 reachability-plot dendrograms, and the hierarchy of clusters detected by the
-algorithm can be accessed through the ``cluster_hierarchy_`` parameter. The
+algorithm can be accessed through the `cluster_hierarchy_` parameter. The
 plot above has been color-coded so that cluster colors in planar space match
 the linear segment clusters of the reachability plot. Note that the blue and
 red clusters are adjacent in the reachability plot, and can be hierarchically
@@ -890,7 +890,7 @@ represented as children of a larger parent cluster.
 
 .. topic:: Comparison with DBSCAN
 
-    The results from OPTICS ``cluster_optics_dbscan`` method and DBSCAN are
+    The results from OPTICS `cluster_optics_dbscan` method and DBSCAN are
     very similar, but not always identical; specifically, labeling of periphery
     and noise points. This is in part because the first samples of each dense
     area processed by OPTICS have a large reachability value while being close
@@ -898,24 +898,24 @@ represented as children of a larger parent cluster.
     rather than periphery. This affects adjacent points when they are
     considered as candidates for being marked as either periphery or noise.
 
-    Note that for any single value of ``eps``, DBSCAN will tend to have a
-    shorter run time than OPTICS; however, for repeated runs at varying ``eps``
+    Note that for any single value of `eps`, DBSCAN will tend to have a
+    shorter run time than OPTICS; however, for repeated runs at varying `eps`
     values, a single run of OPTICS may require less cumulative runtime than
     DBSCAN. It is also important to note that OPTICS' output is close to
-    DBSCAN's only if ``eps`` and ``max_eps`` are close.
+    DBSCAN's only if `eps` and `max_eps` are close.
 
 .. topic:: Computational Complexity
 
     Spatial indexing trees are used to avoid calculating the full distance
     matrix, and allow for efficient memory usage on large sets of samples.
-    Different distance metrics can be supplied via the ``metric`` keyword.
+    Different distance metrics can be supplied via the `metric` keyword.
 
     For large datasets, similar (but not identical) results can be obtained via
     `HDBSCAN <https://hdbscan.readthedocs.io>`_. The HDBSCAN implementation is
     multithreaded, and has better algorithmic runtime complexity than OPTICS,
     at the cost of worse memory scaling. For extremely large datasets that
     exhaust system memory using HDBSCAN, OPTICS will maintain *n* (as opposed
-    to *n^2*) memory scaling; however, tuning of the ``max_eps`` parameter
+    to *n^2*) memory scaling; however, tuning of the `max_eps` parameter
     will likely need to be used to give a solution in a reasonable amount of
     wall time.
 
@@ -954,8 +954,8 @@ subclusters.
 This algorithm can be viewed as an instance or data reduction method,
 since it reduces the input data to a set of subclusters which are obtained directly
 from the leaves of the CFT. This reduced data can be further processed by feeding
-it into a global clusterer. This global clusterer can be set by ``n_clusters``.
-If ``n_clusters`` is set to None, the subclusters from the leaves are directly
+it into a global clusterer. This global clusterer can be set by `n_clusters`.
+If `n_clusters` is set to None, the subclusters from the leaves are directly
 read off, otherwise a global clustering step labels these subclusters into global
 clusters (labels) and the samples are mapped to the global label of the nearest subcluster.
 
@@ -983,7 +983,7 @@ clusters (labels) and the samples are mapped to the global label of the nearest 
 **Birch or MiniBatchKMeans?**
 
  - Birch does not scale very well to high dimensional data. As a rule of thumb if
-   ``n_features`` is greater than twenty, it is generally better to use MiniBatchKMeans.
+   `n_features` is greater than twenty, it is generally better to use MiniBatchKMeans.
  - If the number of instances of data needs to be reduced, or if one wants a
    large number of subclusters either as a preprocessing step or otherwise,
    Birch is more useful than MiniBatchKMeans.
@@ -991,14 +991,14 @@ clusters (labels) and the samples are mapped to the global label of the nearest 
 
 **How to use partial_fit?**
 
-To avoid the computation of global clustering, for every call of ``partial_fit``
+To avoid the computation of global clustering, for every call of `partial_fit`
 the user is advised
 
- 1. To set ``n_clusters=None`` initially
+ 1. To set `n_clusters=None` initially
  2. Train all data by multiple calls to partial_fit.
- 3. Set ``n_clusters`` to a required value using
-    ``brc.set_params(n_clusters=n_clusters)``.
- 4. Call ``partial_fit`` finally with no arguments, i.e. ``brc.partial_fit()``
+ 3. Set `n_clusters` to a required value using
+    `brc.set_params(n_clusters=n_clusters)`.
+ 4. Call `partial_fit` finally with no arguments, i.e. `brc.partial_fit()`
     which performs the global clustering.
 
 .. image:: ../auto_examples/cluster/images/sphx_glr_plot_birch_vs_minibatchkmeans_001.png
@@ -1036,9 +1036,9 @@ classes according to some similarity metric.
 Adjusted Rand index
 -------------------
 
-Given the knowledge of the ground truth class assignments ``labels_true``
+Given the knowledge of the ground truth class assignments `labels_true`
 and our clustering algorithm assignments of the same samples
-``labels_pred``, the **adjusted Rand index** is a function that measures
+`labels_pred`, the **adjusted Rand index** is a function that measures
 the **similarity** of the two assignments, ignoring permutations and **with
 chance normalization**::
 
@@ -1081,7 +1081,7 @@ Advantages
 ~~~~~~~~~~
 
 - **Random (uniform) label assignments have a ARI score close to 0.0**
-  for any value of ``n_clusters`` and ``n_samples`` (which is not the
+  for any value of `n_clusters` and `n_samples` (which is not the
   case for raw Rand index or the V-measure for instance).
 
 - **Bounded range [-1, 1]**: negative values are bad (independent
@@ -1155,8 +1155,8 @@ random labelings by defining the adjusted Rand index as follows:
 Mutual Information based scores
 -------------------------------
 
-Given the knowledge of the ground truth class assignments ``labels_true`` and
-our clustering algorithm assignments of the same samples ``labels_pred``, the
+Given the knowledge of the ground truth class assignments `labels_true` and
+our clustering algorithm assignments of the same samples `labels_pred`, the
 **Mutual Information** is a function that measures the **agreement** of the two
 assignments, ignoring permutations.  Two different normalized versions of this
 measure are available, **Normalized Mutual Information (NMI)** and **Adjusted
@@ -1193,7 +1193,7 @@ Perfect labeling is scored 1.0::
   >>> metrics.normalized_mutual_info_score(labels_true, labels_pred)  # doctest: +SKIP
   1.0
 
-This is not true for ``mutual_info_score``, which is therefore harder to judge::
+This is not true for `mutual_info_score`, which is therefore harder to judge::
 
   >>> metrics.mutual_info_score(labels_true, labels_pred)  # doctest: +SKIP
   0.69...
@@ -1210,7 +1210,7 @@ Advantages
 ~~~~~~~~~~
 
 - **Random (uniform) label assignments have a AMI score close to 0.0**
-  for any value of ``n_clusters`` and ``n_samples`` (which is not the
+  for any value of `n_clusters` and `n_samples` (which is not the
   case for raw Mutual Information or the V-measure for instance).
 
 - **Upper bound  of 1**:  Values close to zero indicate two label
@@ -1298,7 +1298,7 @@ Various generalized means exist, and no firm rules exist for preferring one over
 others.  The decision is largely a field-by-field basis; for instance, in community
 detection, the arithmetic mean is most common. Each
 normalizing method provides "qualitatively similar behaviours" [YAT2016]_. In our
-implementation, this is controlled by the ``average_method`` parameter.
+implementation, this is controlled by the `average_method` parameter.
 
 Vinh et al. (2010) named variants of NMI and AMI by their averaging method [VEB2010]_. Their
 'sqrt' and 'sum' averages are the geometric and arithmetic means; we use these
@@ -1516,11 +1516,11 @@ pairwise precision and recall:
 
 .. math:: \text{FMI} = \frac{\text{TP}}{\sqrt{(\text{TP} + \text{FP}) (\text{TP} + \text{FN})}}
 
-Where ``TP`` is the number of **True Positive** (i.e. the number of pair
+Where `TP` is the number of **True Positive** (i.e. the number of pair
 of points that belong to the same clusters in both the true labels and the
-predicted labels), ``FP`` is the number of **False Positive** (i.e. the number
+predicted labels), `FP` is the number of **False Positive** (i.e. the number
 of pair of points that belong to the same clusters in the true labels and not
-in the predicted labels) and ``FN`` is the number of **False Negative** (i.e the
+in the predicted labels) and `FN` is the number of **False Negative** (i.e the
 number of pair of points that belongs in the same clusters in the predicted
 labels and not in the true labels).
 
@@ -1559,7 +1559,7 @@ Advantages
 ~~~~~~~~~~
 
 - **Random (uniform) label assignments have a FMI score close to 0.0**
-  for any value of ``n_clusters`` and ``n_samples`` (which is not the
+  for any value of `n_clusters` and `n_samples` (which is not the
   case for raw Mutual Information or the V-measure for instance).
 
 - **Upper-bounded at 1**:  Values close to zero indicate two label

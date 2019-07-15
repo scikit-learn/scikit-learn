@@ -9,7 +9,7 @@ Model evaluation: quantifying the quality of predictions
 There are 3 different APIs for evaluating the quality of a model's
 predictions:
 
-* **Estimator score method**: Estimators have a ``score`` method providing a
+* **Estimator score method**: Estimators have a `score` method providing a
   default evaluation criterion for the problem they are designed to solve.
   This is not discussed on this page, but in each estimator's documentation.
 
@@ -35,19 +35,19 @@ value of those metrics for random predictions.
 
 .. _scoring_parameter:
 
-The ``scoring`` parameter: defining model evaluation rules
+The `scoring` parameter: defining model evaluation rules
 ==========================================================
 
 Model selection and evaluation using tools, such as
 :class:`model_selection.GridSearchCV` and
-:func:`model_selection.cross_val_score`, take a ``scoring`` parameter that
+:func:`model_selection.cross_val_score`, take a `scoring` parameter that
 controls what metric they apply to the estimators evaluated.
 
 Common cases: predefined values
 -------------------------------
 
 For the most common use cases, you can designate a scorer object with the
-``scoring`` parameter; the table below shows all possible values.
+`scoring` parameter; the table below shows all possible values.
 All scorer objects follow the convention that **higher return values are better
 than lower return values**.  Thus metrics which measure the distance between
 the model and the data, like :func:`metrics.mean_squared_error`, are
@@ -67,7 +67,7 @@ Scoring                           Function                                      
 'f1_macro'                        :func:`metrics.f1_score`                          macro-averaged
 'f1_weighted'                     :func:`metrics.f1_score`                          weighted average
 'f1_samples'                      :func:`metrics.f1_score`                          by multilabel sample
-'neg_log_loss'                    :func:`metrics.log_loss`                          requires ``predict_proba`` support
+'neg_log_loss'                    :func:`metrics.log_loss`                          requires `predict_proba` support
 'precision' etc.                  :func:`metrics.precision_score`                   suffixes apply as with 'f1'
 'recall' etc.                     :func:`metrics.recall_score`                      suffixes apply as with 'f1'
 'jaccard' etc.                    :func:`metrics.jaccard_score`                     suffixes apply as with 'f1'
@@ -113,7 +113,7 @@ Usage examples:
     The values listed by the ValueError exception correspond to the functions measuring
     prediction accuracy described in the following sections.
     The scorer objects for those functions are stored in the dictionary
-    ``sklearn.metrics.SCORERS``.
+    `sklearn.metrics.SCORERS`.
 
 .. currentmodule:: sklearn.metrics
 
@@ -125,19 +125,19 @@ Defining your scoring strategy from metric functions
 The module :mod:`sklearn.metrics` also exposes a set of simple functions
 measuring a prediction error given ground truth and prediction:
 
-- functions ending with ``_score`` return a value to
+- functions ending with `_score` return a value to
   maximize, the higher the better.
 
-- functions ending with ``_error`` or ``_loss`` return a
+- functions ending with `_error` or `_loss` return a
   value to minimize, the lower the better.  When converting
   into a scorer object using :func:`make_scorer`, set
-  the ``greater_is_better`` parameter to False (True by default; see the
+  the `greater_is_better` parameter to False (True by default; see the
   parameter description below).
 
 Metrics available for various machine learning tasks are detailed in sections
 below.
 
-Many metrics are not given names to be used as ``scoring`` values,
+Many metrics are not given names to be used as `scoring` values,
 sometimes because they require additional parameters, such as
 :func:`fbeta_score`. In such cases, you need to generate an appropriate
 scoring object.  The simplest way to generate a callable object for scoring
@@ -145,7 +145,7 @@ is by using :func:`make_scorer`. That function converts metrics
 into callables that can be used for model evaluation.
 
 One typical use case is to wrap an existing metric function from the library
-with non-default values for its parameters, such as the ``beta`` parameter for
+with non-default values for its parameters, such as the `beta` parameter for
 the :func:`fbeta_score` function::
 
     >>> from sklearn.metrics import fbeta_score, make_scorer
@@ -159,22 +159,22 @@ The second use case is to build a completely custom scorer object
 from a simple python function using :func:`make_scorer`, which can
 take several parameters:
 
-* the python function you want to use (``my_custom_loss_func``
+* the python function you want to use (`my_custom_loss_func`
   in the example below)
 
-* whether the python function returns a score (``greater_is_better=True``,
-  the default) or a loss (``greater_is_better=False``).  If a loss, the output
+* whether the python function returns a score (`greater_is_better=True`,
+  the default) or a loss (`greater_is_better=False`).  If a loss, the output
   of the python function is negated by the scorer object, conforming to
   the cross validation convention that scorers return higher values for better models.
 
 * for classification metrics only: whether the python function you provided requires continuous decision
-  certainties (``needs_threshold=True``).  The default value is
+  certainties (`needs_threshold=True`).  The default value is
   False.
 
-* any additional parameters, such as ``beta`` or ``labels`` in :func:`f1_score`.
+* any additional parameters, such as `beta` or `labels` in :func:`f1_score`.
 
 Here is an example of building custom scorers, and of using the
-``greater_is_better`` parameter::
+`greater_is_better` parameter::
 
     >>> import numpy as np
     >>> def my_custom_loss_func(y_true, y_pred):
@@ -205,13 +205,13 @@ scoring object from scratch, without using the :func:`make_scorer` factory.
 For a callable to be a scorer, it needs to meet the protocol specified by
 the following two rules:
 
-- It can be called with parameters ``(estimator, X, y)``, where ``estimator``
-  is the model that should be evaluated, ``X`` is validation data, and ``y`` is
-  the ground truth target for ``X`` (in the supervised case) or ``None`` (in the
+- It can be called with parameters `(estimator, X, y)`, where `estimator`
+  is the model that should be evaluated, `X` is validation data, and `y` is
+  the ground truth target for `X` (in the supervised case) or `None` (in the
   unsupervised case).
 
 - It returns a floating point number that quantifies the
-  ``estimator`` prediction quality on ``X``, with reference to ``y``.
+  `estimator` prediction quality on `X`, with reference to `y`.
   Again, by convention higher numbers are better, so if your scorer
   returns loss, that value should be negated.
 
@@ -222,9 +222,9 @@ the following two rules:
     importing it from another module will be a more robust approach and work
     independently of the joblib backend.
 
-    For example, to use ``n_jobs`` greater than 1 in the example below,
-    ``custom_scoring_function`` function is saved in a user-created module
-    (``custom_scorer_module.py``) and imported::
+    For example, to use `n_jobs` greater than 1 in the example below,
+    `custom_scoring_function` function is saved in a user-created module
+    (`custom_scorer_module.py`) and imported::
 
         >>> from custom_scorer_module import custom_scoring_function # doctest: +SKIP
         >>> cross_val_score(model,
@@ -239,16 +239,16 @@ the following two rules:
 Using multiple metric evaluation
 --------------------------------
 
-Scikit-learn also permits evaluation of multiple metrics in ``GridSearchCV``,
-``RandomizedSearchCV`` and ``cross_validate``.
+Scikit-learn also permits evaluation of multiple metrics in `GridSearchCV`,
+`RandomizedSearchCV` and `cross_validate`.
 
-There are two ways to specify multiple scoring metrics for the ``scoring``
+There are two ways to specify multiple scoring metrics for the `scoring`
 parameter:
 
 - As an iterable of string metrics::
       >>> scoring = ['accuracy', 'precision']
 
-- As a ``dict`` mapping the scorer name to the scoring function::
+- As a `dict` mapping the scorer name to the scoring function::
       >>> from sklearn.metrics import accuracy_score
       >>> from sklearn.metrics import make_scorer
       >>> scoring = {'accuracy': make_scorer(accuracy_score),
@@ -292,7 +292,7 @@ functions to measure classification performance.
 Some metrics might require probability estimates of the positive class,
 confidence values, or binary decisions values.
 Most implementations allow each sample to provide a weighted contribution
-to the overall score, through the ``sample_weight`` parameter.
+to the overall score, through the `sample_weight` parameter.
 
 Some of these are restricted to the binary classification case:
 
@@ -353,40 +353,40 @@ From binary to multiclass and multilabel
 Some metrics are essentially defined for binary classification tasks (e.g.
 :func:`f1_score`, :func:`roc_auc_score`). In these cases, by default
 only the positive label is evaluated, assuming by default that the positive
-class is labelled ``1`` (though this may be configurable through the
-``pos_label`` parameter).
+class is labelled `1` (though this may be configurable through the
+`pos_label` parameter).
 
 In extending a binary metric to multiclass or multilabel problems, the data
 is treated as a collection of binary problems, one for each class.
 There are then a number of ways to average binary metric calculations across
 the set of classes, each of which may be useful in some scenario.
-Where available, you should select among these using the ``average`` parameter.
+Where available, you should select among these using the `average` parameter.
 
-* ``"macro"`` simply calculates the mean of the binary metrics,
+* `"macro"` simply calculates the mean of the binary metrics,
   giving equal weight to each class.  In problems where infrequent classes
   are nonetheless important, macro-averaging may be a means of highlighting
   their performance. On the other hand, the assumption that all classes are
   equally important is often untrue, such that macro-averaging will
   over-emphasize the typically low performance on an infrequent class.
-* ``"weighted"`` accounts for class imbalance by computing the average of
+* `"weighted"` accounts for class imbalance by computing the average of
   binary metrics in which each class's score is weighted by its presence in the
   true data sample.
-* ``"micro"`` gives each sample-class pair an equal contribution to the overall
+* `"micro"` gives each sample-class pair an equal contribution to the overall
   metric (except as a result of sample-weight). Rather than summing the
   metric per class, this sums the dividends and divisors that make up the
   per-class metrics to calculate an overall quotient.
   Micro-averaging may be preferred in multilabel settings, including
   multiclass classification where a majority class is to be ignored.
-* ``"samples"`` applies only to multilabel problems. It does not calculate a
+* `"samples"` applies only to multilabel problems. It does not calculate a
   per-class measure, instead calculating the metric over the true and predicted
   classes for each sample in the evaluation data, and returning their
-  (``sample_weight``-weighted) average.
-* Selecting ``average=None`` will return an array with the score for each
+  (`sample_weight`-weighted) average.
+* Selecting `average=None` will return an array with the score for each
   class.
 
 While multiclass data is provided to the metric, like binary targets, as an
 array of class labels, multilabel data is specified as an indicator matrix,
-in which cell ``[i, j]`` has value 1 if sample ``i`` has label ``j`` and value
+in which cell `[i, j]` has value 1 if sample `i` has label `j` and value
 0 otherwise.
 
 .. _accuracy_score:
@@ -462,7 +462,7 @@ In contrast, if the conventional accuracy is above chance only because the
 classifier takes advantage of an imbalanced test set, then the balanced
 accuracy, as appropriate, will drop to :math:`\frac{1}{n\_classes}`.
 
-The score ranges from 0 to 1, or when ``adjusted=True`` is used, it rescaled to
+The score ranges from 0 to 1, or when `adjusted=True` is used, it rescaled to
 the range :math:`\frac{1}{1 - n\_classes}` to 1, inclusive, with
 performance at random scoring 0.
 
@@ -481,7 +481,7 @@ defined as:
 
    \texttt{balanced-accuracy}(y, \hat{y}, w) = \frac{1}{\sum{\hat{w}_i}} \sum_i 1(\hat{y}_i = y_i) \hat{w}_i
 
-With ``adjusted=True``, balanced accuracy reports the relative increase from
+With `adjusted=True`, balanced accuracy reports the relative increase from
 :math:`\texttt{balanced-accuracy}(y, \mathbf{0}, w) =
 \frac{1}{n\_classes}`.  In the binary case, this is also known as
 `*Youden's J statistic* <https://en.wikipedia.org/wiki/Youden%27s_J_statistic>`_,
@@ -603,7 +603,7 @@ Classification report
 ----------------------
 
 The :func:`classification_report` function builds a text report showing the
-main classification metrics. Here is a small example with custom ``target_names``
+main classification metrics. Here is a small example with custom `target_names`
 and inferred labels::
 
    >>> from sklearn.metrics import classification_report
@@ -671,7 +671,7 @@ In the multilabel case with binary label indicators: ::
 .. note::
 
     In multiclass classification, the Hamming loss corresponds to the Hamming
-    distance between ``y_true`` and ``y_pred`` which is similar to the
+    distance between `y_true` and `y_pred` which is similar to the
     :ref:`zero_one_loss` function.  However, while zero-one loss penalizes
     prediction sets that do not strictly match true sets, the Hamming loss
     penalizes individual labels.  Thus the Hamming loss, upper bounded by the zero-one
@@ -848,7 +848,7 @@ Multiclass and multilabel classification
 In multiclass and multilabel classification task, the notions of precision,
 recall, and F-measures can be applied to each label independently.
 There are a few ways to combine results across labels,
-specified by the ``average`` argument to the
+specified by the `average` argument to the
 :func:`average_precision_score` (multilabel only), :func:`f1_score`,
 :func:`fbeta_score`, :func:`precision_recall_fscore_support`,
 :func:`precision_score` and :func:`recall_score` functions, as described
@@ -878,17 +878,17 @@ To make this more explicit, consider the following notation:
 Then the metrics are defined as:
 
 +---------------+------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------+
-|``average``    | Precision                                                                                                        | Recall                                                                                                           | F\_beta                                                                                                              |
+|`average`    | Precision                                                                                                        | Recall                                                                                                           | F\_beta                                                                                                              |
 +===============+==================================================================================================================+==================================================================================================================+======================================================================================================================+
-|``"micro"``    | :math:`P(y, \hat{y})`                                                                                            | :math:`R(y, \hat{y})`                                                                                            | :math:`F_\beta(y, \hat{y})`                                                                                          |
+|`"micro"`    | :math:`P(y, \hat{y})`                                                                                            | :math:`R(y, \hat{y})`                                                                                            | :math:`F_\beta(y, \hat{y})`                                                                                          |
 +---------------+------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------+
-|``"samples"``  | :math:`\frac{1}{\left|S\right|} \sum_{s \in S} P(y_s, \hat{y}_s)`                                                | :math:`\frac{1}{\left|S\right|} \sum_{s \in S} R(y_s, \hat{y}_s)`                                                | :math:`\frac{1}{\left|S\right|} \sum_{s \in S} F_\beta(y_s, \hat{y}_s)`                                              |
+|`"samples"`  | :math:`\frac{1}{\left|S\right|} \sum_{s \in S} P(y_s, \hat{y}_s)`                                                | :math:`\frac{1}{\left|S\right|} \sum_{s \in S} R(y_s, \hat{y}_s)`                                                | :math:`\frac{1}{\left|S\right|} \sum_{s \in S} F_\beta(y_s, \hat{y}_s)`                                              |
 +---------------+------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------+
-|``"macro"``    | :math:`\frac{1}{\left|L\right|} \sum_{l \in L} P(y_l, \hat{y}_l)`                                                | :math:`\frac{1}{\left|L\right|} \sum_{l \in L} R(y_l, \hat{y}_l)`                                                | :math:`\frac{1}{\left|L\right|} \sum_{l \in L} F_\beta(y_l, \hat{y}_l)`                                              |
+|`"macro"`    | :math:`\frac{1}{\left|L\right|} \sum_{l \in L} P(y_l, \hat{y}_l)`                                                | :math:`\frac{1}{\left|L\right|} \sum_{l \in L} R(y_l, \hat{y}_l)`                                                | :math:`\frac{1}{\left|L\right|} \sum_{l \in L} F_\beta(y_l, \hat{y}_l)`                                              |
 +---------------+------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------+
-|``"weighted"`` | :math:`\frac{1}{\sum_{l \in L} \left|\hat{y}_l\right|} \sum_{l \in L} \left|\hat{y}_l\right| P(y_l, \hat{y}_l)`  | :math:`\frac{1}{\sum_{l \in L} \left|\hat{y}_l\right|} \sum_{l \in L} \left|\hat{y}_l\right| R(y_l, \hat{y}_l)`  | :math:`\frac{1}{\sum_{l \in L} \left|\hat{y}_l\right|} \sum_{l \in L} \left|\hat{y}_l\right| F_\beta(y_l, \hat{y}_l)`|
+|`"weighted"` | :math:`\frac{1}{\sum_{l \in L} \left|\hat{y}_l\right|} \sum_{l \in L} \left|\hat{y}_l\right| P(y_l, \hat{y}_l)`  | :math:`\frac{1}{\sum_{l \in L} \left|\hat{y}_l\right|} \sum_{l \in L} \left|\hat{y}_l\right| R(y_l, \hat{y}_l)`  | :math:`\frac{1}{\sum_{l \in L} \left|\hat{y}_l\right|} \sum_{l \in L} \left|\hat{y}_l\right| F_\beta(y_l, \hat{y}_l)`|
 +---------------+------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------+
-|``None``       | :math:`\langle P(y_l, \hat{y}_l) | l \in L \rangle`                                                              | :math:`\langle R(y_l, \hat{y}_l) | l \in L \rangle`                                                              | :math:`\langle F_\beta(y_l, \hat{y}_l) | l \in L \rangle`                                                            |
+|`None`       | :math:`\langle P(y_l, \hat{y}_l) | l \in L \rangle`                                                              | :math:`\langle R(y_l, \hat{y}_l) | l \in L \rangle`                                                              | :math:`\langle F_\beta(y_l, \hat{y}_l) | l \in L \rangle`                                                            |
 +---------------+------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------+
 
   >>> from sklearn import metrics
@@ -983,7 +983,7 @@ loss is used in maximal margin classifiers such as support vector machines.)
 
 If the labels are encoded with +1 and -1,  :math:`y`: is the true
 value, and :math:`w` is the predicted decisions as output by
-``decision_function``, then the hinge loss is defined as:
+`decision_function`, then the hinge loss is defined as:
 
 .. math::
 
@@ -1042,7 +1042,7 @@ Log loss, also called logistic regression loss or
 cross-entropy loss, is defined on probability estimates.  It is
 commonly used in (multinomial) logistic regression and neural networks, as well
 as in some variants of expectation-maximization, and can be used to evaluate the
-probability outputs (``predict_proba``) of a classifier instead of its
+probability outputs (`predict_proba`) of a classifier instead of its
 discrete predictions.
 
 For binary classification with a true label :math:`y \in \{0,1\}`
@@ -1074,7 +1074,7 @@ so expanding the inner sum over :math:`y_{i,k} \in \{0,1\}`
 gives the binary log loss.
 
 The :func:`log_loss` function computes log loss given a list of ground-truth
-labels and a probability matrix, as returned by an estimator's ``predict_proba``
+labels and a probability matrix, as returned by an estimator's `predict_proba`
 method.
 
     >>> from sklearn.metrics import log_loss
@@ -1083,7 +1083,7 @@ method.
     >>> log_loss(y_true, y_pred)
     0.1738...
 
-The first ``[.9, .1]`` in ``y_pred`` denotes 90% probability that the first
+The first `[.9, .1]` in `y_pred` denotes 90% probability that the first
 sample has label 0.  The log loss is non-negative.
 
 .. _matthews_corrcoef:
@@ -1318,7 +1318,7 @@ F1 score, ROC doesn't require optimizing a threshold for each label. The
 if the predicted outputs have been binarized.
 
 In applications where a high false positive rate is not tolerable the parameter
-``max_fpr`` of :func:`roc_auc_score` can be used to summarize the ROC curve up
+`max_fpr` of :func:`roc_auc_score` can be used to summarize the ROC curve up
 to the given limit.
 
 
@@ -1349,13 +1349,13 @@ Zero one loss
 The :func:`zero_one_loss` function computes the sum or the average of the 0-1
 classification loss (:math:`L_{0-1}`) over :math:`n_{\text{samples}}`. By
 default, the function normalizes over the sample. To get the sum of the
-:math:`L_{0-1}`, set ``normalize`` to ``False``.
+:math:`L_{0-1}`, set `normalize` to `False`.
 
 In multilabel classification, the :func:`zero_one_loss` scores a subset as
 one if its labels strictly match the predictions, and as a zero if there
 are any errors.  By default, the function returns the percentage of imperfectly
 predicted subsets.  To get the count of such subsets instead, set
-``normalize`` to ``False``
+`normalize` to `False`
 
 If :math:`\hat{y}_i` is the predicted value of
 the :math:`i`-th sample and :math:`y_i` is the corresponding true value,
@@ -1491,7 +1491,7 @@ the coverage is defined as
     \sum_{i=0}^{n_{\text{samples}} - 1} \max_{j:y_{ij} = 1} \text{rank}_{ij}
 
 with :math:`\text{rank}_{ij} = \left|\left\{k: \hat{f}_{ik} \geq \hat{f}_{ij} \right\}\right|`.
-Given the rank definition, ties in ``y_scores`` are broken by giving the
+Given the rank definition, ties in `y_scores` are broken by giving the
 maximal rank that would have been assigned to all tied values.
 
 Here is a small example of usage of this function::
@@ -1609,24 +1609,24 @@ to handle the multioutput case: :func:`mean_squared_error`,
 :func:`r2_score`.
 
 
-These functions have an ``multioutput`` keyword argument which specifies the
+These functions have an `multioutput` keyword argument which specifies the
 way the scores or losses for each individual target should be averaged. The
-default is ``'uniform_average'``, which specifies a uniformly weighted mean
-over outputs. If an ``ndarray`` of shape ``(n_outputs,)`` is passed, then its
+default is `'uniform_average'`, which specifies a uniformly weighted mean
+over outputs. If an `ndarray` of shape `(n_outputs,)` is passed, then its
 entries are interpreted as weights and an according weighted average is
-returned. If ``multioutput`` is ``'raw_values'`` is specified, then all
+returned. If `multioutput` is `'raw_values'` is specified, then all
 unaltered individual scores or losses will be returned in an array of shape
-``(n_outputs,)``.
+`(n_outputs,)`.
 
 
 The :func:`r2_score` and :func:`explained_variance_score` accept an additional
-value ``'variance_weighted'`` for the ``multioutput`` parameter. This option
+value `'variance_weighted'` for the `multioutput` parameter. This option
 leads to a weighting of each individual score by the variance of the
 corresponding target variable. This setting quantifies the globally captured
 unscaled variance. If the target variables are of different scale, then this
 score puts more importance on well explaining the higher variance variables.
-``multioutput='variance_weighted'`` is the default value for :func:`r2_score`
-for backward compatibility. This will be changed to ``uniform_average`` in the
+`multioutput='variance_weighted'` is the default value for :func:`r2_score`
+for backward compatibility. This will be changed to `uniform_average` in the
 future.
 
 .. _explained_variance_score:
@@ -1672,7 +1672,7 @@ The :func:`max_error` function computes the maximum `residual error
 <https://en.wikipedia.org/wiki/Errors_and_residuals>`_ , a metric
 that captures the worst case error between the predicted value and
 the true value. In a perfectly fitted single output regression
-model, ``max_error`` would be ``0`` on the training set and though this
+model, `max_error` would be `0` on the training set and though this
 would be highly unlikely in the real world, this metric shows the
 extent of error that the model had when it was fitted.
 
@@ -1916,17 +1916,17 @@ When doing supervised learning, a simple sanity check consists of comparing
 one's estimator against simple rules of thumb. :class:`DummyClassifier`
 implements several such simple strategies for classification:
 
-- ``stratified`` generates random predictions by respecting the training
+- `stratified` generates random predictions by respecting the training
   set class distribution.
-- ``most_frequent`` always predicts the most frequent label in the training set.
-- ``prior`` always predicts the class that maximizes the class prior
-  (like ``most_frequent``) and ``predict_proba`` returns the class prior.
-- ``uniform`` generates predictions uniformly at random.
-- ``constant`` always predicts a constant label that is provided by the user.
+- `most_frequent` always predicts the most frequent label in the training set.
+- `prior` always predicts the class that maximizes the class prior
+  (like `most_frequent`) and `predict_proba` returns the class prior.
+- `uniform` generates predictions uniformly at random.
+- `constant` always predicts a constant label that is provided by the user.
    A major motivation of this method is F1-scoring, when the positive class
    is in the minority.
 
-Note that with all these strategies, the ``predict`` method completely ignores
+Note that with all these strategies, the `predict` method completely ignores
 the input data!
 
 To illustrate :class:`DummyClassifier`, first let's create an imbalanced
@@ -1939,7 +1939,7 @@ dataset::
   >>> y[y != 1] = -1
   >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
-Next, let's compare the accuracy of ``SVC`` and ``most_frequent``::
+Next, let's compare the accuracy of `SVC` and `most_frequent`::
 
   >>> from sklearn.dummy import DummyClassifier
   >>> from sklearn.svm import SVC
@@ -1952,7 +1952,7 @@ Next, let's compare the accuracy of ``SVC`` and ``most_frequent``::
   >>> clf.score(X_test, y_test)
   0.57...
 
-We see that ``SVC`` doesn't do much better than a dummy classifier. Now, let's
+We see that `SVC` doesn't do much better than a dummy classifier. Now, let's
 change the kernel::
 
   >>> clf = SVC(kernel='rbf', C=1).fit(X_train, y_train)
@@ -1973,10 +1973,10 @@ imbalance, etc...
 
 :class:`DummyRegressor` also implements four simple rules of thumb for regression:
 
-- ``mean`` always predicts the mean of the training targets.
-- ``median`` always predicts the median of the training targets.
-- ``quantile`` always predicts a user provided quantile of the training targets.
-- ``constant`` always predicts a constant value that is provided by the user.
+- `mean` always predicts the mean of the training targets.
+- `median` always predicts the median of the training targets.
+- `quantile` always predicts a user provided quantile of the training targets.
+- `constant` always predicts a constant value that is provided by the user.
 
-In all these strategies, the ``predict`` method completely ignores
+In all these strategies, the `predict` method completely ignores
 the input data.

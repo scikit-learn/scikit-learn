@@ -264,7 +264,7 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
         instead of trying to download the data from the source site.
 
     return_X_y : boolean, default=False.
-        If True, returns ``(dataset.data, dataset.target)`` instead of a Bunch
+        If True, returns `(dataset.data, dataset.target)` instead of a Bunch
         object. See below for more information about the `dataset.data` and
         `dataset.target` object.
 
@@ -276,12 +276,12 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
 
     dataset.data : numpy array of shape (13233, 2914)
         Each row corresponds to a ravelled face image of original size 62 x 47
-        pixels. Changing the ``slice_`` or resize parameters will change the
+        pixels. Changing the `slice_` or resize parameters will change the
         shape of the output.
 
     dataset.images : numpy array of shape (13233, 62, 47)
         Each row is a face image corresponding to one of the 5749 people in
-        the dataset. Changing the ``slice_`` or resize parameters will change
+        the dataset. Changing the `slice_` or resize parameters will change
         the shape of the output.
 
     dataset.target : numpy array of shape (13233,)
@@ -291,7 +291,7 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
     dataset.DESCR : string
         Description of the Labeled Faces in the Wild (LFW) dataset.
 
-    (data, target) : tuple if ``return_X_y`` is True
+    (data, target) : tuple if `return_X_y` is True
 
         .. versionadded:: 0.20
 
@@ -448,18 +448,18 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
     -------
     The data is returned as a Bunch object with the following attributes:
 
-    data : numpy array of shape (2200, 5828). Shape depends on ``subset``.
+    data : numpy array of shape (2200, 5828). Shape depends on `subset`.
         Each row corresponds to 2 ravel'd face images of original size 62 x 47
-        pixels. Changing the ``slice_``, ``resize`` or ``subset`` parameters
+        pixels. Changing the `slice_`, `resize` or `subset` parameters
         will change the shape of the output.
 
-    pairs : numpy array of shape (2200, 2, 62, 47). Shape depends on ``subset``
+    pairs : numpy array of shape (2200, 2, 62, 47). Shape depends on `subset`
         Each row has 2 face images corresponding to same or different person
-        from the dataset containing 5749 people. Changing the ``slice_``,
-        ``resize`` or ``subset`` parameters will change the shape of the
+        from the dataset containing 5749 people. Changing the `slice_`,
+        `resize` or `subset` parameters will change the shape of the
         output.
 
-    target : numpy array of shape (2200,). Shape depends on ``subset``.
+    target : numpy array of shape (2200,). Shape depends on `subset`.
         Labels associated to each pair of images. The two label values being
         different persons or the same person.
 

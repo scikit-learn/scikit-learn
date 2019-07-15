@@ -187,8 +187,8 @@ def safe_indexing(X, indices, axis=0):
     X : array-like, sparse-matrix, list, pandas.DataFrame, pandas.Series
         Data from which to sample rows, items or columns.
     indices : array-like
-        - When ``axis=0``, indices need to be an array of integer.
-        - When ``axis=1``, indices can be one of:
+        - When `axis=0`, indices need to be an array of integer.
+        - When `axis=1`, indices can be one of:
             - scalar: output is 1D, unless `X` is sparse.
               Supported data types for scalars:
                 - integer: supported for arrays, sparse matrices and
@@ -201,8 +201,8 @@ def safe_indexing(X, indices, axis=0):
                 - string (key-based): only supported for dataframes. No keys
                   other than strings are allowed.
     axis : int, default=0
-        The axis along which `X` will be subsampled. ``axis=0`` will select
-        rows while ``axis=1`` will select columns.
+        The axis along which `X` will be subsampled. `axis=0` will select
+        rows while `axis=1` will select columns.
 
     Returns
     -------
@@ -275,7 +275,7 @@ def _check_key_type(key, superclass):
     """Check that scalar, list or slice is of a certain type.
 
     This is only used in _safe_indexing_column and _get_column_indices to check
-    if the ``key`` (column specification) is fully integer or fully
+    if the `key` (column specification) is fully integer or fully
     string-like.
 
     Parameters
@@ -572,7 +572,7 @@ def resample(*arrays, **options):
 def shuffle(*arrays, **options):
     """Shuffle arrays or sparse matrices in a consistent way
 
-    This is a convenience alias to ``resample(*arrays, replace=False)`` to do
+    This is a convenience alias to `resample(*arrays, replace=False)` to do
     random permutations of the collections.
 
     Parameters
@@ -669,8 +669,8 @@ def safe_sqr(X, copy=True):
 
 
 def _chunk_generator(gen, chunksize):
-    """Chunk generator, ``gen`` into lists of length ``chunksize``. The last
-    chunk may have a length less than ``chunksize``."""
+    """Chunk generator, `gen` into lists of length `chunksize`. The last
+    chunk may have a length less than `chunksize`."""
     while True:
         chunk = list(islice(gen, chunksize))
         if chunk:
@@ -882,7 +882,7 @@ def get_chunk_n_rows(row_bytes, max_n_rows=None,
     working_memory : int or float, optional
         The number of rows to fit inside this number of MiB will be returned.
         When None (default), the value of
-        ``sklearn.get_config()['working_memory']`` is used.
+        `sklearn.get_config()['working_memory']` is used.
 
     Returns
     -------
@@ -890,7 +890,7 @@ def get_chunk_n_rows(row_bytes, max_n_rows=None,
 
     Warns
     -----
-    Issues a UserWarning if ``row_bytes`` exceeds ``working_memory`` MiB.
+    Issues a UserWarning if `row_bytes` exceeds `working_memory` MiB.
     """
 
     if working_memory is None:

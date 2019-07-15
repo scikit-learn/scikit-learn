@@ -53,7 +53,7 @@ Incremental learning
 
 Finally, for 3. we have a number of options inside scikit-learn. Although not
 all algorithms can learn incrementally (i.e. without seeing all the instances
-at once), all estimators implementing the ``partial_fit`` API are candidates.
+at once), all estimators implementing the `partial_fit` API are candidates.
 Actually, the ability to learn incrementally from a mini-batch of instances
 (sometimes called "online learning") is key to out-of-core learning as it
 guarantees that at any given time there will be only a small amount of
@@ -89,12 +89,12 @@ For classification, a somewhat important thing to note is that although a
 stateless feature extraction routine may be able to cope with new/unseen
 attributes, the incremental learner itself may be unable to cope with
 new/unseen targets classes. In this case you have to pass all the possible
-classes to the first ``partial_fit`` call using the ``classes=`` parameter.
+classes to the first `partial_fit` call using the `classes=` parameter.
 
 Another aspect to consider when choosing a proper algorithm is that not all of
 them put the same importance on each example over time. Namely, the
-``Perceptron`` is still sensitive to badly labeled examples even after many
-examples whereas the ``SGD*`` and ``PassiveAggressive*`` families are more
+`Perceptron` is still sensitive to badly labeled examples even after many
+examples whereas the `SGD*` and `PassiveAggressive*` families are more
 robust to this kind of artifacts. Conversely, the latter also tend to give less
 importance to remarkably different, yet properly labeled examples when they
 come late in the stream as their learning rate decreases over time.
@@ -118,9 +118,9 @@ algorithms with the number of processed examples.
 
 Now looking at the computation time of the different parts, we see that the
 vectorization is much more expensive than learning itself. From the different
-algorithms, ``MultinomialNB`` is the most expensive, but its overhead can be
+algorithms, `MultinomialNB` is the most expensive, but its overhead can be
 mitigated by increasing the size of the mini-batches (exercise: change
-``minibatch_size`` to 100 and 10000 in the program and compare).
+`minibatch_size` to 100 and 10000 in the program and compare).
 
 .. |computation_time| image::  ../auto_examples/applications/images/sphx_glr_plot_out_of_core_classification_003.png
     :target: ../auto_examples/applications/plot_out_of_core_classification.html
@@ -203,7 +203,7 @@ always faster, and for some of them by 1 to 2 orders of magnitude:
 .. centered:: |bulk_prediction_latency|
 
 To benchmark different estimators for your case you can simply change the
-``n_features`` parameter in this example:
+`n_features` parameter in this example:
 :ref:`sphx_glr_auto_examples_applications_plot_prediction_latency.py`. This should give
 you an estimate of the order of magnitude of the prediction latency.
 
@@ -211,11 +211,11 @@ Configuring Scikit-learn for reduced validation overhead
 .........................................................
 
 Scikit-learn does some validation on data that increases the overhead per
-call to ``predict`` and similar functions. In particular, checking that
+call to `predict` and similar functions. In particular, checking that
 features are finite (not NaN or infinite) involves a full pass over the
 data. If you ensure that your data is acceptable, you may suppress
 checking for finiteness by setting the environment variable
-``SKLEARN_ASSUME_FINITE`` to a non-empty string before importing
+`SKLEARN_ASSUME_FINITE` to a non-empty string before importing
 scikit-learn, or configure it in Python with :func:`sklearn.set_config`.
 For more control than these global settings, a :func:`config_context`
 allows you to set this configuration within a specified context::
@@ -279,7 +279,7 @@ As a rule of thumb you can consider that if the sparsity ratio is greater
 than 90% you can probably benefit from sparse formats. Check Scipy's sparse
 matrix formats `documentation <https://docs.scipy.org/doc/scipy/reference/sparse.html>`_
 for more information on how to build (or convert your data to) sparse matrix
-formats. Most of the time the ``CSR`` and ``CSC`` formats work best.
+formats. Most of the time the `CSR` and `CSC` formats work best.
 
 Influence of the Model Complexity
 ..................................
@@ -298,9 +298,9 @@ decision function that is applied at prediction time is the same (a dot product)
 
 Here is an example using
 :class:`sklearn.linear_model.stochastic_gradient.SGDClassifier` with the
-``elasticnet`` penalty. The regularization strength is globally controlled by
-the ``alpha`` parameter. With a sufficiently high ``alpha``,
-one can then increase the ``l1_ratio`` parameter of ``elasticnet`` to
+`elasticnet` penalty. The regularization strength is globally controlled by
+the `alpha` parameter. With a sufficiently high `alpha`,
+one can then increase the `l1_ratio` parameter of `elasticnet` to
 enforce various levels of sparsity in the model coefficients. Higher sparsity
 here is interpreted as less model complexity as we need fewer coefficients to
 describe it fully. Of course sparsity influences in turn the prediction time
@@ -318,7 +318,7 @@ the latency is tied to the number of support vectors (the fewer the faster).
 Latency and throughput should (asymptotically) grow linearly with the number
 of support vectors in a SVC or SVR model. The kernel will also influence the
 latency as it is used to compute the projection of the input vector once per
-support vector. In the following graph the ``nu`` parameter of
+support vector. In the following graph the `nu` parameter of
 :class:`sklearn.svm.classes.NuSVR` was used to influence the number of
 support vectors.
 
@@ -331,7 +331,7 @@ support vectors.
 For :mod:`sklearn.ensemble` of trees (e.g. RandomForest, GBT,
 ExtraTrees etc) the number of trees and their depth play the most
 important role. Latency and throughput should scale linearly with the number
-of trees. In this case we used directly the ``n_estimators`` parameter of
+of trees. In this case we used directly the `n_estimators` parameter of
 :class:`sklearn.ensemble.gradient_boosting.GradientBoostingRegressor`.
 
 .. |gbt_model_complexity| image::  ../auto_examples/applications/images/sphx_glr_plot_model_complexity_influence_003.png
@@ -405,9 +405,9 @@ Basically, you ought to make sure that Numpy is built using an optimized `BLAS
 
 Not all models benefit from optimized BLAS and Lapack implementations. For
 instance models based on (randomized) decision trees typically do not rely on
-BLAS calls in their inner loops, nor do kernel SVMs (``SVC``, ``SVR``,
-``NuSVC``, ``NuSVR``).  On the other hand a linear model implemented with a
-BLAS DGEMM call (via ``numpy.dot``) will typically benefit hugely from a tuned
+BLAS calls in their inner loops, nor do kernel SVMs (`SVC`, `SVR`,
+`NuSVC`, `NuSVR`).  On the other hand a linear model implemented with a
+BLAS DGEMM call (via `numpy.dot`) will typically benefit hugely from a tuned
 BLAS implementation and lead to orders of magnitude speedup over a
 non-optimized BLAS.
 
@@ -459,16 +459,16 @@ In this context it means that we want to control the model sparsity (i.e. the
 number of non-zero coordinates in the model vectors). It is generally a good
 idea to combine model sparsity with sparse input data representation.
 
-Here is sample code that illustrates the use of the ``sparsify()`` method::
+Here is sample code that illustrates the use of the `sparsify()` method::
 
     clf = SGDRegressor(penalty='elasticnet', l1_ratio=0.25)
     clf.fit(X_train, y_train).sparsify()
     clf.predict(X_test)
 
-In this example we prefer the ``elasticnet`` penalty as it is often a good
+In this example we prefer the `elasticnet` penalty as it is often a good
 compromise between model compactness and prediction power. One can also
-further tune the ``l1_ratio`` parameter (in combination with the
-regularization strength ``alpha``) to control this tradeoff.
+further tune the `l1_ratio` parameter (in combination with the
+regularization strength `alpha`) to control this tradeoff.
 
 A typical `benchmark <https://github.com/scikit-learn/scikit-learn/blob/master/benchmarks/bench_sparsify.py>`_
 on synthetic data yields a >30% decrease in latency when both the model and
@@ -494,7 +494,7 @@ if the raw data come from a database, it can make it possible to write simpler
 and faster queries or reduce I/O usage by making the queries return lighter
 records.
 At the moment, reshaping needs to be performed manually in scikit-learn.
-In the case of sparse input (particularly in ``CSR`` format), it is generally
+In the case of sparse input (particularly in `CSR` format), it is generally
 sufficient to not generate the relevant features, leaving their columns empty.
 
 Links

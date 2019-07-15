@@ -13,7 +13,7 @@ numeric features and one-hot encode the categorical ones.
 In this example, the numeric data is standard-scaled after
 mean-imputation, while the categorical data is one-hot
 encoded after imputing missing values with a new category
-(``'missing'``).
+(`'missing'`).
 
 Finally, the preprocessing pipeline is integrated in a
 full prediction pipeline using :class:`sklearn.pipeline.Pipeline`,
@@ -83,8 +83,8 @@ print("model score: %.3f" % clf.score(X_test, y_test))
 # Using the prediction pipeline in a grid search
 ###############################################################################
 # Grid search can also be performed on the different preprocessing steps
-# defined in the ``ColumnTransformer`` object, together with the classifier's
-# hyperparameters as part of the ``Pipeline``.
+# defined in the `ColumnTransformer` object, together with the classifier's
+# hyperparameters as part of the `Pipeline`.
 # We will search for both the imputer strategy of the numeric preprocessing
 # and the regularization parameter of the logistic regression using
 # :class:`sklearn.model_selection.GridSearchCV`.

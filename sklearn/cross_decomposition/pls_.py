@@ -193,7 +193,7 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin, MultiOutputMixin,
         Y block to latents rotations.
 
     coef_ : array, [p, q]
-        The coefficients of the linear model: ``Y = X coef_ + Err``
+        The coefficients of the linear model: `Y = X coef_ + Err`
 
     n_iter_ : array-like
         Number of iterations of the NIPALS inner loop for each
@@ -520,7 +520,7 @@ class PLSRegression(_PLS):
         Y block to latents rotations.
 
     coef_ : array, [p, q]
-        The coefficients of the linear model: ``Y = X coef_ + Err``
+        The coefficients of the linear model: `Y = X coef_ + Err`
 
     n_iter_ : array-like
         Number of iterations of the NIPALS inner loop for each
@@ -552,7 +552,7 @@ class PLSRegression(_PLS):
 
 
     For each component k, find weights u, v that optimizes:
-    ``max corr(Xk u, Yk v) * std(Xk u) std(Yk u)``, such that ``|u| = 1``
+    `max corr(Xk u, Yk v) * std(Xk u) std(Yk u)`, such that `|u| = 1`
 
     Note that it maximizes both the correlations between the scores and the
     intra-block variances.
@@ -691,7 +691,7 @@ class PLSCanonical(_PLS):
 
     For each component k, find weights u, v that optimize::
 
-        max corr(Xk u, Yk v) * std(Xk u) std(Yk u), such that ``|u| = |v| = 1``
+        max corr(Xk u, Yk v) * std(Xk u) std(Yk u), such that `|u| = |v| = 1`
 
     Note that it maximizes both the correlations between the scores and the
     intra-block variances.
@@ -707,7 +707,7 @@ class PLSCanonical(_PLS):
     This implementation provides the same results that the "plspm" package
     provided in the R language (R-project), using the function plsca(X, Y).
     Results are equal or collinear with the function
-    ``pls(..., mode = "canonical")`` of the "mixOmics" package. The difference
+    `pls(..., mode = "canonical")` of the "mixOmics" package. The difference
     relies in the fact that mixOmics implementation does not exactly implement
     the Wold algorithm since it does not normalize y_weights to one.
 

@@ -9,14 +9,14 @@ Supervised learning: predicting an output variable from high-dimensional observa
 
    :ref:`Supervised learning <supervised-learning>`
    consists in learning the link between two
-   datasets: the observed data ``X`` and an external variable ``y`` that we
+   datasets: the observed data `X` and an external variable `y` that we
    are trying to predict, usually called "target" or "labels". Most often,
-   ``y`` is a 1D array of length ``n_samples``.
+   `y` is a 1D array of length `n_samples`.
 
    All supervised `estimators <https://en.wikipedia.org/wiki/Estimator>`_
-   in scikit-learn implement a ``fit(X, y)`` method to fit the model
-   and a ``predict(X)`` method that, given unlabeled observations ``X``,
-   returns the predicted labels ``y``.
+   in scikit-learn implement a `fit(X, y)` method to fit the model
+   and a `predict(X)` method that, given unlabeled observations `X`,
+   returns the predicted labels `y`.
 
 .. topic:: Vocabulary: classification and regression
 
@@ -26,7 +26,7 @@ Supervised learning: predicting an output variable from high-dimensional observa
    is to predict a continuous target variable, it is said to be a
    **regression** task.
 
-   When doing classification in scikit-learn, ``y`` is a vector of integers
+   When doing classification in scikit-learn, `y` is a vector of integers
    or strings.
 
    Note: See the :ref:`Introduction to machine learning with scikit-learn
@@ -60,7 +60,7 @@ k-Nearest neighbors classifier
 
 The simplest possible classifier is the
 `nearest neighbor <https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm>`_:
-given a new observation ``X_test``, find in the training set (i.e. the data
+given a new observation `X_test`, find in the training set (i.e. the data
 used to train the estimator) the observation with the closest feature vector.
 (Please see the :ref:`Nearest Neighbors section<neighbors>` of the online
 Scikit-learn documentation for more information about this type of classifier.)
@@ -247,9 +247,9 @@ regression:
     ...     plt.scatter(this_X, y, s=3) # doctest: +SKIP
 
 This is an example of **bias/variance tradeoff**: the larger the ridge
-``alpha`` parameter, the higher the bias and the lower the variance.
+`alpha` parameter, the higher the bias and the lower the variance.
 
-We can choose ``alpha`` to minimize left out error, this time using the
+We can choose `alpha` to minimize left out error, this time using the
 diabetes dataset rather than our synthetic data::
 
     >>> alphas = np.logspace(-4, -1, 6)
@@ -306,7 +306,7 @@ Sparsity
 
 
 We can see that, although feature 2 has a strong coefficient on the full
-model, it conveys little information on ``y`` when considered with feature 1.
+model, it conveys little information on `y` when considered with feature 1.
 
 To improve the conditioning of the problem (i.e. mitigating the
 :ref:`curse_of_dimensionality`), it would be interesting to select only the
@@ -335,7 +335,7 @@ application of Occam's razor: *prefer simpler models*.
 .. topic:: **Different algorithms for the same problem**
 
     Different algorithms can be used to solve the same mathematical
-    problem. For instance the ``Lasso`` object in scikit-learn
+    problem. For instance the `Lasso` object in scikit-learn
     solves the lasso regression problem using a
     `coordinate descent <https://en.wikipedia.org/wiki/Coordinate_descent>`_ method,
     that is efficient on large datasets. However, scikit-learn also
@@ -384,11 +384,11 @@ This is known as :class:`LogisticRegression`.
 
 .. topic:: Shrinkage and sparsity with logistic regression
 
-   The ``C`` parameter controls the amount of regularization in the
-   :class:`LogisticRegression` object: a large value for ``C`` results in
+   The `C` parameter controls the amount of regularization in the
+   :class:`LogisticRegression` object: a large value for `C` results in
    less regularization.
-   ``penalty="l2"`` gives :ref:`shrinkage` (i.e. non-sparse coefficients), while
-   ``penalty="l1"`` gives :ref:`sparsity`.
+   `penalty="l2"` gives :ref:`shrinkage` (i.e. non-sparse coefficients), while
+   `penalty="l1"` gives :ref:`sparsity`.
 
 .. topic:: **Exercise**
    :class: green
@@ -412,10 +412,10 @@ Linear SVMs
 
 :ref:`svm` belong to the discriminant model family: they try to find a combination of
 samples to build a plane maximizing the margin between the two classes.
-Regularization is set by the ``C`` parameter: a small value for ``C`` means the margin
+Regularization is set by the `C` parameter: a small value for `C` means the margin
 is calculated using many or all of the observations around the separating line
 (more regularization);
-a large value for ``C`` means the margin is calculated on observations close to
+a large value for `C` means the margin is calculated on observations close to
 the separating line (less regularization).
 
 .. currentmodule :: sklearn.svm
@@ -540,7 +540,7 @@ creating a decision energy by positioning *kernels* on observations:
 .. topic:: **Interactive example**
 
    See the :ref:`SVM GUI <sphx_glr_auto_examples_applications_svm_gui.py>` to download
-   ``svm_gui.py``; add data points of both classes with right and left button,
+   `svm_gui.py`; add data points of both classes with right and left button,
    fit the model and change parameters and data.
 
 .. image:: /auto_examples/datasets/images/sphx_glr_plot_iris_dataset_001.png
@@ -558,7 +558,7 @@ creating a decision energy by positioning *kernels* on observations:
    **Warning**: the classes are ordered, do not leave out the last 10%,
    you would be testing on only one class.
 
-   **Hint**: You can use the ``decision_function`` method on a grid to get
+   **Hint**: You can use the `decision_function` method on a grid to get
    intuitions.
 
    .. literalinclude:: ../../auto_examples/exercises/plot_iris_exercise.py

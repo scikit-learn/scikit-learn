@@ -96,7 +96,7 @@ def as_float_array(X, copy=True, force_all_finite=True):
           infinite.
 
         .. versionadded:: 0.20
-           ``force_all_finite`` accepts the string ``'allow-nan'``.
+           `force_all_finite` accepts the string `'allow-nan'`.
 
     Returns
     -------
@@ -154,11 +154,11 @@ def _num_samples(x):
 
 
 def check_memory(memory):
-    """Check that ``memory`` is joblib.Memory-like.
+    """Check that `memory` is joblib.Memory-like.
 
-    joblib.Memory-like means that ``memory`` can be converted into a
-    joblib.Memory instance (typically a str denoting the ``location``)
-    or has the same interface (has a ``cache`` method).
+    joblib.Memory-like means that `memory` can be converted into a
+    joblib.Memory instance (typically a str denoting the `location`)
+    or has the same interface (has a `cache` method).
 
     Parameters
     ----------
@@ -171,7 +171,7 @@ def check_memory(memory):
     Raises
     ------
     ValueError
-        If ``memory`` is not joblib.Memory-like.
+        If `memory` is not joblib.Memory-like.
     """
 
     if memory is None or isinstance(memory, str):
@@ -265,7 +265,7 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
           infinite.
 
         .. versionadded:: 0.20
-           ``force_all_finite`` accepts the string ``'allow-nan'``.
+           `force_all_finite` accepts the string `'allow-nan'`.
 
     Returns
     -------
@@ -387,7 +387,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         For object dtyped data, only np.nan is checked and not np.inf.
 
         .. versionadded:: 0.20
-           ``force_all_finite`` accepts the string ``'allow-nan'``.
+           `force_all_finite` accepts the string `'allow-nan'`.
 
     ensure_2d : boolean (default=True)
         Whether to raise a value error if array is not 2D.
@@ -403,7 +403,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         Make sure that the 2D array has some minimum number of features
         (columns). The default value of 1 rejects empty datasets.
         This check is only enforced when the input data has effectively 2
-        dimensions or is originally 1D and ``ensure_2d`` is True. Setting to 0
+        dimensions or is originally 1D and `ensure_2d` is True. Setting to 0
         disables this check.
 
     warn_on_dtype : boolean or None, optional (default=None)
@@ -411,7 +411,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         does not match the requested dtype, causing a memory copy.
 
         .. deprecated:: 0.21
-            ``warn_on_dtype`` is deprecated in version 0.21 and will be
+            `warn_on_dtype` is deprecated in version 0.21 and will be
             removed in 0.23.
 
     estimator : str or estimator instance (default=None)
@@ -656,7 +656,7 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
           infinite.
 
         .. versionadded:: 0.20
-           ``force_all_finite`` accepts the string ``'allow-nan'``.
+           `force_all_finite` accepts the string `'allow-nan'`.
 
     ensure_2d : boolean (default=True)
         Whether to raise a value error if X is not 2D.
@@ -677,7 +677,7 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
         Make sure that the 2D array has some minimum number of features
         (columns). The default value of 1 rejects empty datasets.
         This check is only enforced when X has effectively 2 dimensions or
-        is originally 1D and ``ensure_2d`` is True. Setting to 0 disables
+        is originally 1D and `ensure_2d` is True. Setting to 0 disables
         this check.
 
     y_numeric : boolean (default=False)
@@ -690,7 +690,7 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
         does not match the requested dtype, causing a memory copy.
 
         .. deprecated:: 0.21
-            ``warn_on_dtype`` is deprecated in version 0.21 and will be
+            `warn_on_dtype` is deprecated in version 0.21 and will be
              removed in 0.23.
 
     estimator : str or estimator instance (default=None)
@@ -876,7 +876,7 @@ def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
 
     attributes : attribute name(s) given as string or a list/tuple of strings
         Eg.:
-            ``["coef_", "estimator_", ...], "coef_"``
+            `["coef_", "estimator_", ...], "coef_"`
 
     msg : string
         The default error message is, "This %(name)s instance is not fitted

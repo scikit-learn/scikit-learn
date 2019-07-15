@@ -9,11 +9,11 @@ projections, acquired along different angles. Such a dataset is acquired in
 
 Without any prior information on the sample, the number of projections
 required to reconstruct the image is of the order of the linear size
-``l`` of the image (in pixels). For simplicity we consider here a sparse
+`l` of the image (in pixels). For simplicity we consider here a sparse
 image, where only pixels on the boundary of objects have a non-zero
 value. Such data could correspond for example to a cellular material.
 Note however that most images are sparse in a different basis, such as
-the Haar wavelets. Only ``l/7`` projections are acquired, therefore it is
+the Haar wavelets. Only `l/7` projections are acquired, therefore it is
 necessary to use prior information available on the sample (its
 sparsity): this is an example of **compressive sensing**.
 

@@ -40,7 +40,7 @@ LEARNING_RATE_TYPES = {"constant": 1, "optimal": 2, "invscaling": 3,
 PENALTY_TYPES = {"none": 0, "l2": 2, "l1": 1, "elasticnet": 3}
 
 DEFAULT_EPSILON = 0.1
-# Default value of ``epsilon`` parameter.
+# Default value of `epsilon` parameter.
 
 MAX_INT = np.iinfo(np.int32).max
 
@@ -144,7 +144,7 @@ class BaseSGD(BaseEstimator, SparseCoefMixin, metaclass=ABCMeta):
             return
 
     def _get_loss_function(self, loss):
-        """Get concrete ``LossFunction`` object for str ``loss``. """
+        """Get concrete `LossFunction` object for str `loss`. """
         try:
             loss_ = self.loss_functions[loss]
             loss_class, args = loss_[0], loss_[1:]
@@ -190,7 +190,7 @@ class BaseSGD(BaseEstimator, SparseCoefMixin, metaclass=ABCMeta):
             if coef_init is not None:
                 coef_init = np.asarray(coef_init, order="C")
                 if coef_init.shape != (n_classes, n_features):
-                    raise ValueError("Provided ``coef_`` does not match "
+                    raise ValueError("Provided `coef_` does not match "
                                      "dataset. ")
                 self.coef_ = coef_init
             else:
@@ -635,7 +635,7 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin, metaclass=ABCMeta):
     def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Perform one epoch of stochastic gradient descent on given samples.
 
-        Internally, this method uses ``max_iter = 1``. Therefore, it is not
+        Internally, this method uses `max_iter = 1`. Therefore, it is not
         guaranteed that a minimum of the cost function is reached after calling
         it once. Matters such as objective convergence and early stopping
         should be handled by the user.
@@ -777,14 +777,14 @@ class SGDClassifier(BaseSGDClassifier):
 
     max_iter : int, optional (default=1000)
         The maximum number of passes over the training data (aka epochs).
-        It only impacts the behavior in the ``fit`` method, and not the
+        It only impacts the behavior in the `fit` method, and not the
         `partial_fit`.
 
         .. versionadded:: 0.19
 
     tol : float or None, optional (default=1e-3)
         The stopping criterion. If it is not None, the iterations will stop
-        when (loss > best_loss - tol) for ``n_iter_no_change`` consecutive
+        when (loss > best_loss - tol) for `n_iter_no_change` consecutive
         epochs.
 
         .. versionadded:: 0.19
@@ -807,8 +807,8 @@ class SGDClassifier(BaseSGDClassifier):
     n_jobs : int or None, optional (default=None)
         The number of CPUs to use to do the OVA (One Versus All, for
         multi-class problems) computation.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     random_state : int, RandomState instance or None, optional (default=None)
@@ -871,7 +871,7 @@ class SGDClassifier(BaseSGDClassifier):
 
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``
+        as `n_samples / (n_classes * np.bincount(y))`
 
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
@@ -882,15 +882,15 @@ class SGDClassifier(BaseSGDClassifier):
         result in a different solution than when calling fit a single time
         because of the way the data is shuffled.
         If a dynamic learning rate is used, the learning rate is adapted
-        depending on the number of samples already seen. Calling ``fit`` resets
-        this counter, while ``partial_fit`` will result in increasing the
+        depending on the number of samples already seen. Calling `fit` resets
+        this counter, while `partial_fit` will result in increasing the
         existing counter.
 
     average : bool or int, optional
         When set to True, computes the averaged SGD weights and stores the
-        result in the ``coef_`` attribute. If set to an int greater than 1,
+        result in the `coef_` attribute. If set to an int greater than 1,
         averaging will begin once the total number of samples seen reaches
-        average. So ``average=10`` will begin averaging after seeing 10
+        average. So `average=10` will begin averaging after seeing 10
         samples.
 
     Attributes
@@ -906,7 +906,7 @@ class SGDClassifier(BaseSGDClassifier):
         The actual number of iterations to reach the stopping criterion.
         For multiclass fits, it is the maximum over every binary fit.
 
-    loss_function_ : concrete ``LossFunction``
+    loss_function_ : concrete `LossFunction`
 
     Examples
     --------
@@ -1040,7 +1040,7 @@ class SGDClassifier(BaseSGDClassifier):
         When loss="modified_huber", probability estimates may be hard zeros
         and ones, so taking the logarithm is not possible.
 
-        See ``predict_proba`` for details.
+        See `predict_proba` for details.
 
         Parameters
         ----------
@@ -1118,7 +1118,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
     def partial_fit(self, X, y, sample_weight=None):
         """Perform one epoch of stochastic gradient descent on given samples.
 
-        Internally, this method uses ``max_iter = 1``. Therefore, it is not
+        Internally, this method uses `max_iter = 1`. Therefore, it is not
         guaranteed that a minimum of the cost function is reached after calling
         it once. Matters such as objective convergence and early stopping
         should be handled by the user.
@@ -1383,14 +1383,14 @@ class SGDRegressor(BaseSGDRegressor):
 
     max_iter : int, optional (default=1000)
         The maximum number of passes over the training data (aka epochs).
-        It only impacts the behavior in the ``fit`` method, and not the
+        It only impacts the behavior in the `fit` method, and not the
         `partial_fit`.
 
         .. versionadded:: 0.19
 
     tol : float or None, optional (default=1e-3)
         The stopping criterion. If it is not None, the iterations will stop
-        when (loss > best_loss - tol) for ``n_iter_no_change`` consecutive
+        when (loss > best_loss - tol) for `n_iter_no_change` consecutive
         epochs.
 
         .. versionadded:: 0.19
@@ -1470,15 +1470,15 @@ class SGDRegressor(BaseSGDRegressor):
         result in a different solution than when calling fit a single time
         because of the way the data is shuffled.
         If a dynamic learning rate is used, the learning rate is adapted
-        depending on the number of samples already seen. Calling ``fit`` resets
-        this counter, while ``partial_fit``  will result in increasing the
+        depending on the number of samples already seen. Calling `fit` resets
+        this counter, while `partial_fit`  will result in increasing the
         existing counter.
 
     average : bool or int, optional
         When set to True, computes the averaged SGD weights and stores the
-        result in the ``coef_`` attribute. If set to an int greater than 1,
+        result in the `coef_` attribute. If set to an int greater than 1,
         averaging will begin once the total number of samples seen reaches
-        average. So ``average=10`` will begin averaging after seeing 10
+        average. So `average=10` will begin averaging after seeing 10
         samples.
 
     Attributes

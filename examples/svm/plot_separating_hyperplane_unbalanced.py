@@ -14,12 +14,12 @@ unbalanced classes.
 
 .. note::
 
-    This example will also work by replacing ``SVC(kernel="linear")``
-    with ``SGDClassifier(loss="hinge")``. Setting the ``loss`` parameter
-    of the :class:`SGDClassifier` equal to ``hinge`` will yield behaviour
+    This example will also work by replacing `SVC(kernel="linear")`
+    with `SGDClassifier(loss="hinge")`. Setting the `loss` parameter
+    of the :class:`SGDClassifier` equal to `hinge` will yield behaviour
     such as that of a SVC with a linear kernel.
 
-    For example try instead of the ``SVC``::
+    For example try instead of the `SVC`::
 
         clf = SGDClassifier(n_iter=100, alpha=0.01)
 

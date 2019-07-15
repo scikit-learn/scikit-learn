@@ -379,7 +379,7 @@ cpdef np.ndarray[DTYPE_t, ndim=2] _single_linkage_label(
     Convert an linkage array or MST to a tree by labelling clusters at merges.
     This is done by using a Union find structure to keep track of merges
     efficiently. This is the private version of the function that assumes that
-    ``L`` has been properly validated. See ``single_linkage_label`` for the
+    `L` has been properly validated. See `single_linkage_label` for the
     user facing version of this function.
 
     Parameters

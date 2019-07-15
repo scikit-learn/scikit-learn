@@ -4,7 +4,7 @@
 Working With Text Data
 ======================
 
-The goal of this guide is to explore some of the main ``scikit-learn``
+The goal of this guide is to explore some of the main `scikit-learn`
 tools on a single practical task: analyzing a collection of text
 documents (newsgroups posts) on twenty different topics.
 
@@ -38,24 +38,24 @@ The source can also be found `on Github
 
 The tutorial folder should contain the following sub-folders:
 
-  * ``*.rst files`` - the source of the tutorial document written with sphinx
+  * `*.rst files` - the source of the tutorial document written with sphinx
 
-  * ``data`` - folder to put the datasets used during the tutorial
+  * `data` - folder to put the datasets used during the tutorial
 
-  * ``skeletons`` - sample incomplete scripts for the exercises
+  * `skeletons` - sample incomplete scripts for the exercises
 
-  * ``solutions`` - solutions of the exercises
+  * `solutions` - solutions of the exercises
 
 
 You can already copy the skeletons into a new folder somewhere
-on your hard-drive named ``sklearn_tut_workspace`` where you
+on your hard-drive named `sklearn_tut_workspace` where you
 will edit your own files for the exercises while keeping
 the original skeletons intact::
 
     % cp -r skeletons work_directory/sklearn_tut_workspace
 
-Machine learning algorithms need data. Go to each ``$TUTORIAL_HOME/data``
-sub-folder and run the ``fetch_data.py`` script from there (after
+Machine learning algorithms need data. Go to each `$TUTORIAL_HOME/data`
+sub-folder and run the `fetch_data.py` script from there (after
 having read them first).
 
 For instance::
@@ -84,7 +84,7 @@ description, quoted from the `website
 In the following we will use the built-in dataset loader for 20 newsgroups
 from scikit-learn. Alternatively, it is possible to download the dataset
 manually from the website and use the :func:`sklearn.datasets.load_files`
-function by pointing it to the ``20news-bydate-train`` sub-folder of the
+function by pointing it to the `20news-bydate-train` sub-folder of the
 uncompressed archive folder.
 
 In order to get faster execution times for this first example we will
@@ -100,15 +100,15 @@ We can now load the list of files matching those categories as follows::
   >>> twenty_train = fetch_20newsgroups(subset='train',
   ...     categories=categories, shuffle=True, random_state=42)
 
-The returned dataset is a ``scikit-learn`` "bunch": a simple holder
-object with fields that can be both accessed as python ``dict``
-keys or ``object`` attributes for convenience, for instance the
-``target_names`` holds the list of the requested category names::
+The returned dataset is a `scikit-learn` "bunch": a simple holder
+object with fields that can be both accessed as python `dict`
+keys or `object` attributes for convenience, for instance the
+`target_names` holds the list of the requested category names::
 
   >>> twenty_train.target_names
   ['alt.atheism', 'comp.graphics', 'sci.med', 'soc.religion.christian']
 
-The files themselves are loaded in memory in the ``data`` attribute. For
+The files themselves are loaded in memory in the `data` attribute. For
 reference the filenames are also available::
 
   >>> len(twenty_train.data)
@@ -131,10 +131,10 @@ document in the training set. In this case the category is the name of the
 newsgroup which also happens to be the name of the folder holding the
 individual documents.
 
-For speed and space efficiency reasons ``scikit-learn`` loads the
+For speed and space efficiency reasons `scikit-learn` loads the
 target attribute as an array of integers that corresponds to the
-index of the category name in the ``target_names`` list. The category
-integer id of each sample is stored in the ``target`` attribute::
+index of the category name in the `target_names` list. The category
+integer id of each sample is stored in the `target` attribute::
 
   >>> twenty_train.target[:10]
   array([1, 1, 3, 3, 3, 3, 3, 2, 2, 2])
@@ -156,7 +156,7 @@ It is possible to get back the category names as follows::
   sci.med
 
 You might have noticed that the samples were shuffled randomly when we called
-``fetch_20newsgroups(..., shuffle=True, random_state=42)``: this is useful if
+`fetch_20newsgroups(..., shuffle=True, random_state=42)`: this is useful if
 you wish to select only a subset of samples to quickly train a model and get a
 first idea of the results before re-training on the complete dataset later.
 
@@ -179,15 +179,15 @@ The most intuitive way to do so is to use a bags of words representation:
      of the training set (for instance by building a dictionary
      from words to integer indices).
 
-  2. For each document ``#i``, count the number of occurrences of each
-     word ``w`` and store it in ``X[i, j]`` as the value of feature
-     ``#j`` where ``j`` is the index of word ``w`` in the dictionary.
+  2. For each document `#i`, count the number of occurrences of each
+     word `w` and store it in `X[i, j]` as the value of feature
+     `#j` where `j` is the index of word `w` in the dictionary.
 
-The bags of words representation implies that ``n_features`` is
+The bags of words representation implies that `n_features` is
 the number of distinct words in the corpus: this number is typically
 larger than 100,000.
 
-If ``n_samples == 10000``, storing ``X`` as a NumPy array of type
+If `n_samples == 10000`, storing `X` as a NumPy array of type
 float32 would require 10000 x 100000 x 4 bytes = **4GB in RAM** which
 is barely manageable on today's computers.
 
@@ -197,11 +197,11 @@ used. For this reason we say that bags of words are typically
 **high-dimensional sparse datasets**. We can save a lot of memory by
 only storing the non-zero parts of the feature vectors in memory.
 
-``scipy.sparse`` matrices are data structures that do exactly this,
-and ``scikit-learn`` has built-in support for these structures.
+`scipy.sparse` matrices are data structures that do exactly this,
+and `scikit-learn` has built-in support for these structures.
 
 
-Tokenizing text with ``scikit-learn``
+Tokenizing text with `scikit-learn`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Text preprocessing, tokenizing and filtering of stopwords are all included
@@ -226,11 +226,11 @@ in the whole training corpus.
 
 .. note:
 
-  The method ``count_vect.fit_transform`` performs two actions:
+  The method `count_vect.fit_transform` performs two actions:
   it learns the vocabulary and transforms the documents into count vectors.
   It's possible to separate these steps by calling
-  ``count_vect.fit(twenty_train.data)`` followed by
-  ``X_train_counts = count_vect.transform(twenty_train.data)``,
+  `count_vect.fit(twenty_train.data)` followed by
+  `X_train_counts = count_vect.transform(twenty_train.data)`,
   but doing so would tokenize and vectorize each text file twice.
 
 
@@ -243,7 +243,7 @@ even though they might talk about the same topics.
 
 To avoid these potential discrepancies it suffices to divide the
 number of occurrences of each word in a document by the total number
-of words in the document: these new features are called ``tf`` for Term
+of words in the document: these new features are called `tf` for Term
 Frequencies.
 
 Another refinement on top of tf is to downscale weights for words
@@ -266,12 +266,12 @@ Both **tf** and **tf–idf** can be computed as follows using
   >>> X_train_tf.shape
   (2257, 35788)
 
-In the above example-code, we firstly use the ``fit(..)`` method to fit our
-estimator to the data and secondly the ``transform(..)`` method to transform
+In the above example-code, we firstly use the `fit(..)` method to fit our
+estimator to the data and secondly the `transform(..)` method to transform
 our count-matrix to a tf-idf representation.
 These two steps can be combined to achieve the same end result faster
 by skipping redundant processing. This is done through using the
-``fit_transform(..)`` method as shown below, and as mentioned in the note
+`fit_transform(..)` method as shown below, and as mentioned in the note
 in the previous section::
 
   >>> tfidf_transformer = TfidfTransformer()
@@ -286,7 +286,7 @@ Training a classifier
 Now that we have our features, we can train a classifier to try to predict
 the category of a post. Let's start with a :ref:`naïve Bayes <naive_bayes>`
 classifier, which
-provides a nice baseline for this task. ``scikit-learn`` includes several
+provides a nice baseline for this task. `scikit-learn` includes several
 variants of this classifier; the one most suitable for word counts is the
 multinomial variant::
 
@@ -295,7 +295,7 @@ multinomial variant::
 
 To try to predict the outcome on a new document we need to extract
 the features using almost the same feature extracting chain as before.
-The difference is that we call ``transform`` instead of ``fit_transform``
+The difference is that we call `transform` instead of `fit_transform`
 on the transformers, since they have already been fit to the training set::
 
   >>> docs_new = ['God is love', 'OpenGL on the GPU is fast']
@@ -315,7 +315,7 @@ Building a pipeline
 -------------------
 
 In order to make the vectorizer => transformer => classifier easier
-to work with, ``scikit-learn`` provides a :class:`~sklearn.pipeline.Pipeline` class that behaves
+to work with, `scikit-learn` provides a :class:`~sklearn.pipeline.Pipeline` class that behaves
 like a compound classifier::
 
   >>> from sklearn.pipeline import Pipeline
@@ -326,7 +326,7 @@ like a compound classifier::
   ... ])
 
 
-The names ``vect``, ``tfidf`` and ``clf`` (classifier) are arbitrary.
+The names `vect`, `tfidf` and `clf` (classifier) are arbitrary.
 We will use them to perform grid search for suitable hyperparameters below.
 We can now train the model with a single command::
 
@@ -369,7 +369,7 @@ classifier object into our pipeline::
   >>> np.mean(predicted == twenty_test.target)
   0.9101...
 
-We achieved 91.3% accuracy using the SVM. ``scikit-learn`` provides further
+We achieved 91.3% accuracy using the SVM. `scikit-learn` provides further
 utilities for more detailed performance analysis of the results::
 
   >>> from sklearn import metrics
@@ -403,11 +403,11 @@ with computer graphics.
   optimization algorithms that is known to be scalable when the dataset
   has many samples.
 
-  By setting ``loss="hinge"`` and ``penalty="l2"`` we are configuring
+  By setting `loss="hinge"` and `penalty="l2"` we are configuring
   the classifier model to tune its parameters for the linear Support
   Vector Machine cost function.
 
-  Alternatively we could have used ``sklearn.svm.LinearSVC`` (Linear
+  Alternatively we could have used `sklearn.svm.LinearSVC` (Linear
   Support Vector Machine Classifier) that provides an alternative
   optimizer for the same cost function based on the liblinear_ C++
   library.
@@ -418,12 +418,12 @@ with computer graphics.
 Parameter tuning using grid search
 ----------------------------------
 
-We've already encountered some parameters such as ``use_idf`` in the
-``TfidfTransformer``. Classifiers tend to have many parameters as well;
-e.g., ``MultinomialNB`` includes a smoothing parameter ``alpha`` and
-``SGDClassifier`` has a penalty parameter ``alpha`` and configurable loss
+We've already encountered some parameters such as `use_idf` in the
+`TfidfTransformer`. Classifiers tend to have many parameters as well;
+e.g., `MultinomialNB` includes a smoothing parameter `alpha` and
+`SGDClassifier` has a penalty parameter `alpha` and configurable loss
 and penalty terms in the objective function (see the module documentation,
-or use the Python ``help`` function to get a description of these).
+or use the Python `help` function to get a description of these).
 
 Instead of tweaking the parameters of the various components of the
 chain, it is possible to run an exhaustive search of the best
@@ -441,25 +441,25 @@ parameter of either 0.01 or 0.001 for the linear SVM::
 
 Obviously, such an exhaustive search can be expensive. If we have multiple
 CPU cores at our disposal, we can tell the grid searcher to try these eight
-parameter combinations in parallel with the ``n_jobs`` parameter. If we give
-this parameter a value of ``-1``, grid search will detect how many cores
+parameter combinations in parallel with the `n_jobs` parameter. If we give
+this parameter a value of `-1`, grid search will detect how many cores
 are installed and use them all::
 
   >>> gs_clf = GridSearchCV(text_clf, parameters, cv=5, n_jobs=-1)
 
-The grid search instance behaves like a normal ``scikit-learn``
+The grid search instance behaves like a normal `scikit-learn`
 model. Let's perform the search on a smaller subset of the training data
 to speed up the computation::
 
   >>> gs_clf = gs_clf.fit(twenty_train.data[:400], twenty_train.target[:400])
 
-The result of calling ``fit`` on a ``GridSearchCV`` object is a classifier
-that we can use to ``predict``::
+The result of calling `fit` on a `GridSearchCV` object is a classifier
+that we can use to `predict`::
 
   >>> twenty_train.target_names[gs_clf.predict(['God is love'])[0]]
   'soc.religion.christian'
 
-The object's ``best_score_`` and ``best_params_`` attributes store the best
+The object's `best_score_` and `best_params_` attributes store the best
 mean score and the parameters setting corresponding to that score::
 
   >>> gs_clf.best_score_
@@ -471,15 +471,15 @@ mean score and the parameters setting corresponding to that score::
   tfidf__use_idf: True
   vect__ngram_range: (1, 1)
 
-A more detailed summary of the search is available at ``gs_clf.cv_results_``.
+A more detailed summary of the search is available at `gs_clf.cv_results_`.
 
-The ``cv_results_`` parameter can be easily imported into pandas as a
-``DataFrame`` for further inspection.
+The `cv_results_` parameter can be easily imported into pandas as a
+`DataFrame` for further inspection.
 
 .. note:
 
-  A ``GridSearchCV`` object also stores the best classifier that it trained
-  as its ``best_estimator_`` attribute. In this case, that isn't much use as
+  A `GridSearchCV` object also stores the best classifier that it trained
+  as its `best_estimator_` attribute. In this case, that isn't much use as
   we trained on a small, 400-document subset of our full training set.
 
 
@@ -498,7 +498,7 @@ Then fire an ipython shell and run the work-in-progress script with::
 
   [1] %run workspace/exercise_XX_script.py arg1 arg2 arg3
 
-If an exception is triggered, use ``%debug`` to fire-up a post
+If an exception is triggered, use `%debug` to fire-up a post
 mortem ipdb session.
 
 Refine the implementation and iterate until the exercise is solved.
@@ -512,7 +512,7 @@ Exercise 1: Language identification
 -----------------------------------
 
 - Write a text classification pipeline using a custom preprocessor and
-  ``CharNGramAnalyzer`` using data from Wikipedia articles as training set.
+  `CharNGramAnalyzer` using data from Wikipedia articles as training set.
 
 - Evaluate the performance on some held out test set.
 
@@ -539,9 +539,9 @@ ipython command line::
 Exercise 3: CLI text classification utility
 -------------------------------------------
 
-Using the results of the previous exercises and the ``cPickle``
+Using the results of the previous exercises and the `cPickle`
 module of the standard library, write a command line utility that
-detects the language of some text provided on ``stdin`` and estimate
+detects the language of some text provided on `stdin` and estimate
 the polarity (positive or negative) if the text is written in
 English.
 
@@ -556,7 +556,7 @@ Here are a few suggestions to help further your scikit-learn intuition
 upon the completion of this tutorial:
 
 
-* Try playing around with the ``analyzer`` and ``token normalisation`` under
+* Try playing around with the `analyzer` and `token normalisation` under
   :class:`CountVectorizer`.
 
 * If you don't have labels, try using

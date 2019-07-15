@@ -46,9 +46,9 @@ SPARSE_INTERCEPT_DECAY = 0.01
 
 
 def make_dataset(X, y, sample_weight, random_state=None):
-    """Create ``Dataset`` abstraction for sparse and dense inputs.
+    """Create `Dataset` abstraction for sparse and dense inputs.
 
-    This also returns the ``intercept_decay`` which is different
+    This also returns the `intercept_decay` which is different
     for sparse datasets.
 
     Parameters
@@ -70,7 +70,7 @@ def make_dataset(X, y, sample_weight, random_state=None):
     Returns
     -------
     dataset
-        The ``Dataset`` abstraction
+        The `Dataset` abstraction
     intercept_decay
         The intercept decay
     """
@@ -316,8 +316,8 @@ class SparseCoefMixin:
     def densify(self):
         """Convert coefficient matrix to dense array format.
 
-        Converts the ``coef_`` member (back) to a numpy.ndarray. This is the
-        default format of ``coef_`` and is required for fitting, so calling
+        Converts the `coef_` member (back) to a numpy.ndarray. This is the
+        default format of `coef_` and is required for fitting, so calling
         this method is only required on models that have previously been
         sparsified; otherwise, it is a no-op.
 
@@ -334,18 +334,18 @@ class SparseCoefMixin:
     def sparsify(self):
         """Convert coefficient matrix to sparse format.
 
-        Converts the ``coef_`` member to a scipy.sparse matrix, which for
+        Converts the `coef_` member to a scipy.sparse matrix, which for
         L1-regularized models can be much more memory- and storage-efficient
         than the usual numpy.ndarray representation.
 
-        The ``intercept_`` member is not converted.
+        The `intercept_` member is not converted.
 
         Notes
         -----
-        For non-sparse models, i.e. when there are not many zeros in ``coef_``,
+        For non-sparse models, i.e. when there are not many zeros in `coef_`,
         this may actually *increase* memory usage, so use this method with
         care. A rule of thumb is that the number of zero elements, which can
-        be computed with ``(coef_ == 0).sum()``, must be more than 50% for this
+        be computed with `(coef_ == 0).sum()`, must be more than 50% for this
         to provide significant benefits.
 
         After calling this method, further fitting with the partial_fit
@@ -373,12 +373,12 @@ class LinearRegression(LinearModel, RegressorMixin, MultiOutputMixin):
         (e.g. data is expected to be already centered).
 
     normalize : boolean, optional, default False
-        This parameter is ignored when ``fit_intercept`` is set to False.
+        This parameter is ignored when `fit_intercept` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit`` on
-        an estimator with ``normalize=False``.
+        :class:`sklearn.preprocessing.StandardScaler` before calling `fit` on
+        an estimator with `normalize=False`.
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
@@ -386,8 +386,8 @@ class LinearRegression(LinearModel, RegressorMixin, MultiOutputMixin):
     n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation. This will only provide
         speedup for n_targets > 1 and sufficient large problems.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     Attributes

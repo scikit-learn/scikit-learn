@@ -77,8 +77,8 @@ General KDD structure :
     ================      ==========================================
 
 :func:`sklearn.datasets.fetch_kddcup99` will load the kddcup99 dataset; it
-returns a dictionary-like object with the feature matrix in the ``data`` member
-and the target values in ``target``. The dataset will be downloaded from the
+returns a dictionary-like object with the feature matrix in the `data` member
+and the target values in `target`. The dataset will be downloaded from the
 web if necessary.
 
 .. topic: References

@@ -491,7 +491,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     not handle warm-starting.
 
     .. deprecated:: 0.21
-        ``logistic_regression_path`` was deprecated in version 0.21 and will
+        `logistic_regression_path` was deprecated in version 0.21 and will
         be removed in 0.23.
 
     Read more in the :ref:`User Guide <logistic_regression>`.
@@ -523,8 +523,8 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
     tol : float
         Stopping criterion. For the newton-cg and lbfgs solvers, the iteration
-        will stop when ``max{|g_i | i = 1, ..., n} <= tol``
-        where ``g_i`` is the i-th component of the gradient.
+        will stop when `max{|g_i | i = 1, ..., n} <= tol`
+        where `g_i` is the i-th component of the gradient.
 
     verbose : int
         For the liblinear and lbfgs solvers set verbose to any positive
@@ -538,12 +538,12 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         Useless for liblinear solver.
 
     class_weight : dict or 'balanced', optional
-        Weights associated with classes in the form ``{class_label: weight}``.
+        Weights associated with classes in the form `{class_label: weight}`.
         If not given, all classes are supposed to have weight one.
 
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``.
+        as `n_samples / (n_classes * np.bincount(y))`.
 
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
@@ -564,7 +564,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         [x, self.intercept_scaling],
         i.e. a "synthetic" feature with constant value equal to
         intercept_scaling is appended to the instance vector.
-        The intercept becomes ``intercept_scaling * synthetic_feature_weight``.
+        The intercept becomes `intercept_scaling * synthetic_feature_weight`.
 
         Note! the synthetic feature weight is subject to l1/l2 regularization
         as all other features.
@@ -589,7 +589,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
-        instance used by `np.random`. Used when ``solver`` == 'sag' or
+        instance used by `np.random`. Used when `solver` == 'sag' or
         'liblinear'.
 
     check_input : bool, default True
@@ -605,10 +605,10 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         If not provided, then each sample is given unit weight.
 
     l1_ratio : float or None, optional (default=None)
-        The Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
-        used if ``penalty='elasticnet'``. Setting ``l1_ratio=0`` is equivalent
-        to using ``penalty='l2'``, while setting ``l1_ratio=1`` is equivalent
-        to using ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a
+        The Elastic-Net mixing parameter, with `0 <= l1_ratio <= 1`. Only
+        used if `penalty='elasticnet'`. Setting `l1_ratio=0` is equivalent
+        to using `penalty='l2'`, while setting `l1_ratio=1` is equivalent
+        to using `penalty='l1'`. For `0 < l1_ratio <1`, the penalty is a
         combination of L1 and L2.
 
     Returns
@@ -617,7 +617,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         List of coefficients for the Logistic Regression model. If
         fit_intercept is set to True then the second dimension will be
         n_features + 1, where the last item represents the intercept. For
-        ``multiclass='multinomial'``, the shape is (n_classes, n_cs,
+        `multiclass='multinomial'`, the shape is (n_classes, n_cs,
         n_features) or (n_classes, n_cs, n_features + 1).
 
     Cs : ndarray
@@ -689,8 +689,8 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
     tol : float
         Stopping criterion. For the newton-cg and lbfgs solvers, the iteration
-        will stop when ``max{|g_i | i = 1, ..., n} <= tol``
-        where ``g_i`` is the i-th component of the gradient.
+        will stop when `max{|g_i | i = 1, ..., n} <= tol`
+        where `g_i` is the i-th component of the gradient.
 
     verbose : int
         For the liblinear and lbfgs solvers set verbose to any positive
@@ -704,12 +704,12 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         Useless for liblinear solver.
 
     class_weight : dict or 'balanced', optional
-        Weights associated with classes in the form ``{class_label: weight}``.
+        Weights associated with classes in the form `{class_label: weight}`.
         If not given, all classes are supposed to have weight one.
 
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``.
+        as `n_samples / (n_classes * np.bincount(y))`.
 
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
@@ -730,7 +730,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         [x, self.intercept_scaling],
         i.e. a "synthetic" feature with constant value equal to
         intercept_scaling is appended to the instance vector.
-        The intercept becomes ``intercept_scaling * synthetic_feature_weight``.
+        The intercept becomes `intercept_scaling * synthetic_feature_weight`.
 
         Note! the synthetic feature weight is subject to l1/l2 regularization
         as all other features.
@@ -755,7 +755,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
-        instance used by `np.random`. Used when ``solver`` == 'sag' or
+        instance used by `np.random`. Used when `solver` == 'sag' or
         'liblinear'.
 
     check_input : bool, default True
@@ -771,10 +771,10 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         If not provided, then each sample is given unit weight.
 
     l1_ratio : float or None, optional (default=None)
-        The Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
-        used if ``penalty='elasticnet'``. Setting ``l1_ratio=0`` is equivalent
-        to using ``penalty='l2'``, while setting ``l1_ratio=1`` is equivalent
-        to using ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a
+        The Elastic-Net mixing parameter, with `0 <= l1_ratio <= 1`. Only
+        used if `penalty='elasticnet'`. Setting `l1_ratio=0` is equivalent
+        to using `penalty='l2'`, while setting `l1_ratio=1` is equivalent
+        to using `penalty='l1'`. For `0 < l1_ratio <1`, the penalty is a
         combination of L1 and L2.
 
     Returns
@@ -783,7 +783,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         List of coefficients for the Logistic Regression model. If
         fit_intercept is set to True then the second dimension will be
         n_features + 1, where the last item represents the intercept. For
-        ``multiclass='multinomial'``, the shape is (n_classes, n_cs,
+        `multiclass='multinomial'`, the shape is (n_classes, n_cs,
         n_features) or (n_classes, n_cs, n_features + 1).
 
     Cs : ndarray
@@ -1027,7 +1027,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     scoring : callable or None, optional, default: None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``. For a list of scoring functions
+        `scorer(estimator, X, y)`. For a list of scoring functions
         that can be used, look at :mod:`sklearn.metrics`. The
         default scoring option used is accuracy_score.
 
@@ -1042,12 +1042,12 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         Tolerance for stopping criteria.
 
     class_weight : dict or 'balanced', optional
-        Weights associated with classes in the form ``{class_label: weight}``.
+        Weights associated with classes in the form `{class_label: weight}`.
         If not given, all classes are supposed to have weight one.
 
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``
+        as `n_samples / (n_classes * np.bincount(y))`
 
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
@@ -1092,7 +1092,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
-        instance used by `np.random`. Used when ``solver`` == 'sag' and
+        instance used by `np.random`. Used when `solver` == 'sag' and
         'liblinear'.
 
     max_squared_sum : float, default None
@@ -1105,10 +1105,10 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         If not provided, then each sample is given unit weight.
 
     l1_ratio : float or None, optional (default=None)
-        The Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
-        used if ``penalty='elasticnet'``. Setting ``l1_ratio=0`` is equivalent
-        to using ``penalty='l2'``, while setting ``l1_ratio=1`` is equivalent
-        to using ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a
+        The Elastic-Net mixing parameter, with `0 <= l1_ratio <= 1`. Only
+        used if `penalty='elasticnet'`. Setting `l1_ratio=0` is equivalent
+        to using `penalty='l2'`, while setting `l1_ratio=1` is equivalent
+        to using `penalty='l1'`. For `0 < l1_ratio <1`, the penalty is a
         combination of L1 and L2.
 
     Returns
@@ -1244,7 +1244,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         [x, self.intercept_scaling],
         i.e. a "synthetic" feature with constant value equal to
         intercept_scaling is appended to the instance vector.
-        The intercept becomes ``intercept_scaling * synthetic_feature_weight``.
+        The intercept becomes `intercept_scaling * synthetic_feature_weight`.
 
         Note! the synthetic feature weight is subject to l1/l2 regularization
         as all other features.
@@ -1252,12 +1252,12 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         (and therefore on the intercept) intercept_scaling has to be increased.
 
     class_weight : dict or 'balanced', optional (default=None)
-        Weights associated with classes in the form ``{class_label: weight}``.
+        Weights associated with classes in the form `{class_label: weight}`.
         If not given, all classes are supposed to have weight one.
 
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``.
+        as `n_samples / (n_classes * np.bincount(y))`.
 
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
@@ -1270,7 +1270,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
-        instance used by `np.random`. Used when ``solver`` == 'sag' or
+        instance used by `np.random`. Used when `solver` == 'sag' or
         'liblinear'.
 
     solver : str, {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'}, \
@@ -1286,7 +1286,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         - 'newton-cg', 'lbfgs', 'sag' and 'saga' handle L2 or no penalty
         - 'liblinear' and 'saga' also handle L1 penalty
         - 'saga' also supports 'elasticnet' penalty
-        - 'liblinear' does not support setting ``penalty='none'``
+        - 'liblinear' does not support setting `penalty='none'`
 
         Note that 'sag' and 'saga' fast convergence is only guaranteed on
         features with approximately the same scale. You can
@@ -1329,17 +1329,17 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
     n_jobs : int or None, optional (default=None)
         Number of CPU cores used when parallelizing over classes if
-        multi_class='ovr'". This parameter is ignored when the ``solver`` is
+        multi_class='ovr'". This parameter is ignored when the `solver` is
         set to 'liblinear' regardless of whether 'multi_class' is specified or
-        not. ``None`` means 1 unless in a :obj:`joblib.parallel_backend`
-        context. ``-1`` means using all processors.
+        not. `None` means 1 unless in a :obj:`joblib.parallel_backend`
+        context. `-1` means using all processors.
         See :term:`Glossary <n_jobs>` for more details.
 
     l1_ratio : float or None, optional (default=None)
-        The Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
-        used if ``penalty='elasticnet'`. Setting ``l1_ratio=0`` is equivalent
-        to using ``penalty='l2'``, while setting ``l1_ratio=1`` is equivalent
-        to using ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a
+        The Elastic-Net mixing parameter, with `0 <= l1_ratio <= 1`. Only
+        used if `penalty='elasticnet'`. Setting `l1_ratio=0` is equivalent
+        to using `penalty='l2'`, while setting `l1_ratio=1` is equivalent
+        to using `penalty='l1'`. For `0 < l1_ratio <1`, the penalty is a
         combination of L1 and L2.
 
     Attributes
@@ -1372,7 +1372,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         .. versionchanged:: 0.20
 
             In SciPy <= 1.0.0 the number of lbfgs iterations may exceed
-            ``max_iter``. ``n_iter_`` will now report at most ``max_iter``.
+            `max_iter`. `n_iter_` will now report at most `max_iter`.
 
     Examples
     --------
@@ -1391,7 +1391,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     See also
     --------
     SGDClassifier : incrementally trained logistic regression (when given
-        the parameter ``loss="log"``).
+        the parameter `loss="log"`).
     LogisticRegressionCV : Logistic regression with built-in cross validation
 
     Notes
@@ -1631,7 +1631,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         -------
         T : array-like, shape = [n_samples, n_classes]
             Returns the probability of the sample for each class in the model,
-            where classes are ordered as they are in ``self.classes_``.
+            where classes are ordered as they are in `self.classes_`.
         """
         check_is_fitted(self, 'coef_')
 
@@ -1664,7 +1664,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         -------
         T : array-like, shape = [n_samples, n_classes]
             Returns the log-probability of the sample for each class in the
-            model, where classes are ordered as they are in ``self.classes_``.
+            model, where classes are ordered as they are in `self.classes_`.
         """
         return np.log(self.predict_proba(X))
 
@@ -1709,7 +1709,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         list of possible cross-validation objects.
 
         .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
+            `cv` default value if None changed from 3-fold to 5-fold.
 
     dual : bool, optional (default=False)
         Dual or primal formulation. Dual formulation is only implemented for
@@ -1724,7 +1724,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     scoring : string, callable, or None, optional (default=None)
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``. For a list of scoring functions
+        `scorer(estimator, X, y)`. For a list of scoring functions
         that can be used, look at :mod:`sklearn.metrics`. The
         default scoring option used is 'accuracy'.
 
@@ -1759,12 +1759,12 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         Maximum number of iterations of the optimization algorithm.
 
     class_weight : dict or 'balanced', optional (default=None)
-        Weights associated with classes in the form ``{class_label: weight}``.
+        Weights associated with classes in the form `{class_label: weight}`.
         If not given, all classes are supposed to have weight one.
 
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``.
+        as `n_samples / (n_classes * np.bincount(y))`.
 
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
@@ -1774,8 +1774,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
     n_jobs : int or None, optional (default=None)
         Number of CPU cores used during the cross-validation loop.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     verbose : int, optional (default=0)
@@ -1795,7 +1795,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         [x, self.intercept_scaling],
         i.e. a "synthetic" feature with constant value equal to
         intercept_scaling is appended to the instance vector.
-        The intercept becomes ``intercept_scaling * synthetic_feature_weight``.
+        The intercept becomes `intercept_scaling * synthetic_feature_weight`.
 
         Note! the synthetic feature weight is subject to l1/l2 regularization
         as all other features.
@@ -1822,10 +1822,10 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         by `np.random`.
 
     l1_ratios : list of float or None, optional (default=None)
-        The list of Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``.
-        Only used if ``penalty='elasticnet'``. A value of 0 is equivalent to
-        using ``penalty='l2'``, while 1 is equivalent to using
-        ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a combination
+        The list of Elastic-Net mixing parameter, with `0 <= l1_ratio <= 1`.
+        Only used if `penalty='elasticnet'`. A value of 0 is equivalent to
+        using `penalty='l2'`, while 1 is equivalent to using
+        `penalty='l1'`. For `0 < l1_ratio <1`, the penalty is a combination
         of L1 and L2.
 
     Attributes
@@ -1851,7 +1851,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
     l1_ratios_ : array, shape (n_l1_ratios)
         Array of l1_ratios used for cross-validation. If no l1_ratio is used
-        (i.e. penalty is not 'elasticnet'), this is set to ``[None]``
+        (i.e. penalty is not 'elasticnet'), this is set to `[None]`
 
     coefs_paths_ : array, shape (n_folds, n_cs, n_features) or \
                    (n_folds, n_cs, n_features + 1)
@@ -1860,11 +1860,11 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         after doing an OvR for the corresponding class as values.
         If the 'multi_class' option is set to 'multinomial', then
         the coefs_paths are the coefficients corresponding to each class.
-        Each dict value has shape ``(n_folds, n_cs, n_features)`` or
-        ``(n_folds, n_cs, n_features + 1)`` depending on whether the
-        intercept is fit or not. If ``penalty='elasticnet'``, the shape is
-        ``(n_folds, n_cs, n_l1_ratios_, n_features)`` or
-        ``(n_folds, n_cs, n_l1_ratios_, n_features + 1)``.
+        Each dict value has shape `(n_folds, n_cs, n_features)` or
+        `(n_folds, n_cs, n_features + 1)` depending on whether the
+        intercept is fit or not. If `penalty='elasticnet'`, the shape is
+        `(n_folds, n_cs, n_l1_ratios_, n_features)` or
+        `(n_folds, n_cs, n_l1_ratios_, n_features + 1)`.
 
     scores_ : dict
         dict with classes as the keys, and the values as the
@@ -1872,8 +1872,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         an OvR for the corresponding class. If the 'multi_class' option
         given is 'multinomial' then the same scores are repeated across
         all classes, since this is the multinomial class. Each dict value
-        has shape ``(n_folds, n_cs`` or ``(n_folds, n_cs, n_l1_ratios)`` if
-        ``penalty='elasticnet'``.
+        has shape `(n_folds, n_cs` or `(n_folds, n_cs, n_l1_ratios)` if
+        `penalty='elasticnet'`.
 
     C_ : array, shape (n_classes,) or (n_classes - 1,)
         Array of C that maps to the best scores across every class. If refit is
@@ -1890,8 +1890,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     n_iter_ : array, shape (n_classes, n_folds, n_cs) or (1, n_folds, n_cs)
         Actual number of iterations for all classes, folds and Cs.
         In the binary or multinomial cases, the first dimension is equal to 1.
-        If ``penalty='elasticnet'``, the shape is ``(n_classes, n_folds,
-        n_cs, n_l1_ratios)`` or ``(1, n_folds, n_cs, n_l1_ratios)``.
+        If `penalty='elasticnet'`, the shape is `(n_classes, n_folds,
+        n_cs, n_l1_ratios)` or `(1, n_folds, n_cs, n_l1_ratios)`.
 
 
     Examples

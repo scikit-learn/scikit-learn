@@ -160,7 +160,7 @@ def test_collinearity():
 
 
 def test_no_path():
-    # Test that the ``return_path=False`` option returns the correct output
+    # Test that the `return_path=False` option returns the correct output
     alphas_, _, coef_path_ = linear_model.lars_path(
         X, y, method='lar')
     alpha_, _, coef = linear_model.lars_path(
@@ -171,7 +171,7 @@ def test_no_path():
 
 
 def test_no_path_precomputed():
-    # Test that the ``return_path=False`` option with Gram remains correct
+    # Test that the `return_path=False` option with Gram remains correct
     alphas_, _, coef_path_ = linear_model.lars_path(
         X, y, method='lar', Gram=G)
     alpha_, _, coef = linear_model.lars_path(
@@ -182,7 +182,7 @@ def test_no_path_precomputed():
 
 
 def test_no_path_all_precomputed():
-    # Test that the ``return_path=False`` option with Gram and Xy remains
+    # Test that the `return_path=False` option with Gram and Xy remains
     # correct
     X, y = 3 * diabetes.data, diabetes.target
     G = np.dot(X.T, X)

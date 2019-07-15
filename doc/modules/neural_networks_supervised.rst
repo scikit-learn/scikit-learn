@@ -43,10 +43,10 @@ by a non-linear activation function :math:`g(\cdot):R \rightarrow R` - like
 the hyperbolic tan function. The output layer receives the values from the
 last hidden layer and transforms them into output values.
 
-The module contains the public attributes ``coefs_`` and ``intercepts_``.
-``coefs_`` is a list of weight matrices, where weight matrix at index
+The module contains the public attributes `coefs_` and `intercepts_`.
+`coefs_` is a list of weight matrices, where weight matrix at index
 :math:`i` represents the weights between layer :math:`i` and layer
-:math:`i+1`. ``intercepts_`` is a list of bias vectors, where the vector
+:math:`i+1`. `intercepts_` is a list of bias vectors, where the vector
 at index :math:`i` represents the bias values added to layer :math:`i+1`.
 
 The advantages of Multi-layer Perceptron are:
@@ -54,7 +54,7 @@ The advantages of Multi-layer Perceptron are:
     + Capability to learn non-linear models.
 
     + Capability to learn models in real-time (on-line learning)
-      using ``partial_fit``.
+      using `partial_fit`.
 
 
 The disadvantages of Multi-layer Perceptron (MLP) include:
@@ -98,7 +98,7 @@ After fitting (training), the model can predict labels for new samples::
     >>> clf.predict([[2., 2.], [-1., -2.]])
     array([1, 0])
 
-MLP can fit a non-linear model to the training data. ``clf.coefs_``
+MLP can fit a non-linear model to the training data. `clf.coefs_`
 contains the weight matrices that constitute the model parameters::
 
     >>> [coef.shape for coef in clf.coefs_]
@@ -106,7 +106,7 @@ contains the weight matrices that constitute the model parameters::
 
 Currently, :class:`MLPClassifier` supports only the
 Cross-Entropy loss function, which allows probability estimates by running the
-``predict_proba`` method.
+`predict_proba` method.
 
 MLP trains using Backpropagation. More precisely, it trains using some form of
 gradient descent and the gradients are calculated using Backpropagation. For
@@ -163,7 +163,7 @@ which a sample can have more than one target.
 Regularization
 ==============
 
-Both :class:`MLPRegressor` and :class:`MLPClassifier` use parameter ``alpha``
+Both :class:`MLPRegressor` and :class:`MLPClassifier` use parameter `alpha`
 for regularization (L2 regularization) term which helps in avoiding overfitting
 by penalizing weights with large magnitudes. Following plot displays varying
 decision function with value of alpha.
@@ -330,7 +330,7 @@ Tips on Practical Use
 
   * Finding a reasonable regularization parameter :math:`\alpha` is
     best done using :class:`GridSearchCV`, usually in the
-    range ``10.0 ** -np.arange(1, 7)``.
+    range `10.0 ** -np.arange(1, 7)`.
 
   * Empirically, we observed that `L-BFGS` converges faster and
     with better solutions on small datasets. For relatively large
@@ -342,8 +342,8 @@ Tips on Practical Use
 More control with warm_start
 ============================
 If you want more control over stopping criteria or learning rate in SGD,
-or want to do additional monitoring, using ``warm_start=True`` and
-``max_iter=1`` and iterating yourself can be helpful::
+or want to do additional monitoring, using `warm_start=True` and
+`max_iter=1` and iterating yourself can be helpful::
 
     >>> X = [[0., 0.], [1., 1.]]
     >>> y = [0, 1]

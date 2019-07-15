@@ -44,27 +44,27 @@ should be used when applicable.
   be sliced or indexed using safe_index.  This is used to validate input for
   cross-validation.
 
-- :func:`validation.check_memory` checks that input is ``joblib.Memory``-like,
+- :func:`validation.check_memory` checks that input is `joblib.Memory`-like,
   which means that it can be converted into a
-  ``sklearn.utils.Memory`` instance (typically a str denoting
-  the ``cachedir``) or has the same interface.
+  `sklearn.utils.Memory` instance (typically a str denoting
+  the `cachedir`) or has the same interface.
 
 If your code relies on a random number generator, it should never use
-functions like ``numpy.random.random`` or ``numpy.random.normal``.  This
+functions like `numpy.random.random` or `numpy.random.normal`.  This
 approach can lead to repeatability issues in unit tests.  Instead, a
-``numpy.random.RandomState`` object should be used, which is built from
-a ``random_state`` argument passed to the class or function.  The function
+`numpy.random.RandomState` object should be used, which is built from
+a `random_state` argument passed to the class or function.  The function
 :func:`check_random_state`, below, can then be used to create a random
 number generator object.
 
-- :func:`check_random_state`: create a ``np.random.RandomState`` object from
-  a parameter ``random_state``.
+- :func:`check_random_state`: create a `np.random.RandomState` object from
+  a parameter `random_state`.
 
-  - If ``random_state`` is ``None`` or ``np.random``, then a
-    randomly-initialized ``RandomState`` object is returned.
-  - If ``random_state`` is an integer, then it is used to seed a new
-    ``RandomState`` object.
-  - If ``random_state`` is a ``RandomState`` object, then it is passed through.
+  - If `random_state` is `None` or `np.random`, then a
+    randomly-initialized `RandomState` object is returned.
+  - If `random_state` is an integer, then it is used to seed a new
+    `RandomState` object.
+  - If `random_state` is a `RandomState` object, then it is passed through.
 
 For example::
 
@@ -78,11 +78,11 @@ When developing your own scikit-learn compatible estimator, the following
 helpers are available.
 
 - :func:`validation.check_is_fitted`: check that the estimator has been fitted
-  before calling ``transform``, ``predict``, or similar methods. This helper
+  before calling `transform`, `predict`, or similar methods. This helper
   allows to raise a standardized error message across estimator.
 
 - :func:`validation.has_fit_parameter`: check that a given parameter is
-  supported in the ``fit`` method of a given estimator.
+  supported in the `fit` method of a given estimator.
 
 Efficient Linear Algebra & Array Operations
 ===========================================
@@ -101,7 +101,7 @@ Efficient Linear Algebra & Array Operations
   (used in :func:`sklearn.linear_model.lars_path`)  Remove an
   item from a cholesky factorization.
 
-- :func:`arrayfuncs.min_pos`: (used in ``sklearn.linear_model.least_angle``)
+- :func:`arrayfuncs.min_pos`: (used in `sklearn.linear_model.least_angle`)
   Find the minimum of the positive values within an array.
 
 
@@ -111,10 +111,10 @@ Efficient Linear Algebra & Array Operations
 - :func:`extmath.density`: efficiently compute the density of a sparse vector
 
 - :func:`extmath.safe_sparse_dot`: dot product which will correctly handle
-  ``scipy.sparse`` inputs.  If the inputs are dense, it is equivalent to
-  ``numpy.dot``.
+  `scipy.sparse` inputs.  If the inputs are dense, it is equivalent to
+  `numpy.dot`.
 
-- :func:`extmath.weighted_mode`: an extension of ``scipy.stats.mode`` which
+- :func:`extmath.weighted_mode`: an extension of `scipy.stats.mode` which
   allows each item to have a real-valued weight.
 
 - :func:`resample`: Resample arrays or sparse matrices in a consistent way.
@@ -128,15 +128,15 @@ Efficient Random Sampling
 =========================
 
 - :func:`random.sample_without_replacement`: implements efficient algorithms
-  for sampling ``n_samples`` integers from a population of size ``n_population``
+  for sampling `n_samples` integers from a population of size `n_population`
   without replacement.
 
 
 Efficient Routines for Sparse Matrices
 ======================================
 
-The ``sklearn.utils.sparsefuncs`` cython module hosts compiled extensions to
-efficiently process ``scipy.sparse`` data.
+The `sklearn.utils.sparsefuncs` cython module hosts compiled extensions to
+efficiently process `scipy.sparse` data.
 
 - :func:`sparsefuncs.mean_variance_axis`: compute the means and
   variances along a specified axis of a CSR matrix.
@@ -163,14 +163,14 @@ Graph Routines
   to all connected nodes on a graph.  Code is adapted from `networkx
   <https://networkx.github.io/>`_.
   If this is ever needed again, it would be far faster to use a single
-  iteration of Dijkstra's algorithm from ``graph_shortest_path``.
+  iteration of Dijkstra's algorithm from `graph_shortest_path`.
 
 - :func:`graph_shortest_path.graph_shortest_path`:
   (used in :class:`sklearn.manifold.Isomap`)
   Return the shortest path between all pairs of connected points on a directed
   or undirected graph.  Both the Floyd-Warshall algorithm and Dijkstra's
   algorithm are available.  The algorithm is most efficient when the
-  connectivity matrix is a ``scipy.sparse.csr_matrix``.
+  connectivity matrix is a `scipy.sparse.csr_matrix`.
 
 
 Testing Functions
@@ -198,8 +198,8 @@ Multiclass and multilabel utility function
 Helper Functions
 ================
 
-- :class:`gen_even_slices`: generator to create ``n``-packs of slices going up
-  to ``n``.  Used in :func:`sklearn.decomposition.dict_learning` and
+- :class:`gen_even_slices`: generator to create `n`-packs of slices going up
+  to `n`.  Used in :func:`sklearn.decomposition.dict_learning` and
   :func:`sklearn.cluster.k_means`.
 
 - :func:`safe_mask`: Helper function to convert a mask to the format expected
@@ -207,7 +207,7 @@ Helper Functions
   matrices support integer indices only while numpy arrays support both
   boolean masks and integer indices).
 
-- :func:`safe_sqr`: Helper function for unified squaring (``**2``) of
+- :func:`safe_sqr`: Helper function for unified squaring (`**2`) of
   array-likes, matrices and sparse matrices.
 
 
@@ -215,7 +215,7 @@ Hash Functions
 ==============
 
 - :func:`murmurhash3_32` provides a python wrapper for the
-  ``MurmurHash3_x86_32`` C++ non cryptographic hash function. This hash
+  `MurmurHash3_x86_32` C++ non cryptographic hash function. This hash
   function is suitable for implementing lookup tables, Bloom filters,
   Count Min Sketch, feature hashing and implicitly defined sparse
   random projections::
@@ -227,7 +227,7 @@ Hash Functions
     >>> murmurhash3_32("some feature", seed=0, positive=True) == 3910350737
     True
 
-  The ``sklearn.utils.murmurhash`` module can also be "cimported" from
+  The `sklearn.utils.murmurhash` module can also be "cimported" from
   other cython modules so as to benefit from the high performance of
   MurmurHash while skipping the overhead of the Python interpreter.
 
@@ -238,4 +238,4 @@ Warnings and Exceptions
 - :class:`deprecated`: Decorator to mark a function or class as deprecated.
 
 - :class:`sklearn.exceptions.ConvergenceWarning`: Custom warning to catch
-  convergence problems. Used in ``sklearn.covariance.graphical_lasso``.
+  convergence problems. Used in `sklearn.covariance.graphical_lasso`.

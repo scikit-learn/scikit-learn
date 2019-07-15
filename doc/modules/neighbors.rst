@@ -53,9 +53,9 @@ It acts as a uniform interface to three different nearest neighbors
 algorithms: :class:`BallTree`, :class:`KDTree`, and a
 brute-force algorithm based on routines in :mod:`sklearn.metrics.pairwise`.
 The choice of neighbors search algorithm is controlled through the keyword
-``'algorithm'``, which must be one of
-``['auto', 'ball_tree', 'kd_tree', 'brute']``.  When the default value
-``'auto'`` is passed, the algorithm attempts to determine the best approach
+`'algorithm'`, which must be one of
+`['auto', 'ball_tree', 'kd_tree', 'brute']`.  When the default value
+`'auto'` is passed, the algorithm attempts to determine the best approach
 from the training data.  For a discussion of the strengths and weaknesses
 of each option, see `Nearest Neighbor Algorithms`_.
 
@@ -175,9 +175,9 @@ The basic nearest neighbors classification uses uniform weights: that is, the
 value assigned to a query point is computed from a simple majority vote of
 the nearest neighbors.  Under some circumstances, it is better to weight the
 neighbors such that nearer neighbors contribute more to the fit.  This can
-be accomplished through the ``weights`` keyword.  The default value,
-``weights = 'uniform'``, assigns uniform weights to each neighbor.
-``weights = 'distance'`` assigns weights proportional to the inverse of the
+be accomplished through the `weights` keyword.  The default value,
+`weights = 'uniform'`, assigns uniform weights to each neighbor.
+`weights = 'distance'` assigns weights proportional to the inverse of the
 distance from the query point.  Alternatively, a user-defined function of the
 distance can be supplied to compute the weights.
 
@@ -218,8 +218,8 @@ each point in the local neighborhood contributes uniformly to the
 classification of a query point.  Under some circumstances, it can be
 advantageous to weight points such that nearby points contribute more
 to the regression than faraway points.  This can be accomplished through
-the ``weights`` keyword.  The default value, ``weights = 'uniform'``,
-assigns equal weights to all points.  ``weights = 'distance'`` assigns
+the `weights` keyword.  The default value, `weights = 'uniform'`,
+assigns equal weights to all points.  `weights = 'distance'` assigns
 weights proportional to the inverse of the distance from the query point.
 Alternatively, a user-defined function of the distance can be supplied,
 which will be used to compute the weights.
@@ -266,7 +266,7 @@ competitive for small data samples.
 However, as the number of samples :math:`N` grows, the brute-force
 approach quickly becomes infeasible.  In the classes within
 :mod:`sklearn.neighbors`, brute-force neighbors searches are specified
-using the keyword ``algorithm = 'brute'``, and are computed using the
+using the keyword `algorithm = 'brute'`, and are computed using the
 routines available in :mod:`sklearn.metrics.pairwise`.
 
 .. _kd_tree:
@@ -300,7 +300,7 @@ Though the KD tree approach is very fast for low-dimensional (:math:`D < 20`)
 neighbors searches, it becomes inefficient as :math:`D` grows very large:
 this is one manifestation of the so-called "curse of dimensionality".
 In scikit-learn, KD tree neighbors searches are specified using the
-keyword ``algorithm = 'kd_tree'``, and are computed using the class
+keyword `algorithm = 'kd_tree'`, and are computed using the class
 :class:`KDTree`.
 
 
@@ -338,7 +338,7 @@ Because of the spherical geometry of the ball tree nodes, it can out-perform
 a *KD-tree* in high dimensions, though the actual performance is highly
 dependent on the structure of the training data.
 In scikit-learn, ball-tree-based
-neighbors searches are specified using the keyword ``algorithm = 'ball_tree'``,
+neighbors searches are specified using the keyword `algorithm = 'ball_tree'`,
 and are computed using the class :class:`sklearn.neighbors.BallTree`.
 Alternatively, the user can work with the :class:`BallTree` class directly.
 
@@ -354,8 +354,8 @@ Choice of Nearest Neighbors Algorithm
 The optimal algorithm for a given dataset is a complicated choice, and
 depends on a number of factors:
 
-* number of samples :math:`N` (i.e. ``n_samples``) and dimensionality
-  :math:`D` (i.e. ``n_features``).
+* number of samples :math:`N` (i.e. `n_samples`) and dimensionality
+  :math:`D` (i.e. `n_features`).
 
   * *Brute force* query time grows as :math:`O[D N]`
   * *Ball tree* query time grows as approximately :math:`O[D \log(N)]`
@@ -415,43 +415,43 @@ depends on a number of factors:
   a significant fraction of the total cost.  If very few query points
   will be required, brute force is better than a tree-based method.
 
-Currently, ``algorithm = 'auto'`` selects ``'brute'`` if :math:`k >= N/2`,
-the input data is sparse, or ``effective_metric_`` isn't in
-the ``VALID_METRICS`` list for either ``'kd_tree'`` or ``'ball_tree'``.
-Otherwise, it selects the first out of ``'kd_tree'`` and ``'ball_tree'``
-that has ``effective_metric_`` in its ``VALID_METRICS`` list.
+Currently, `algorithm = 'auto'` selects `'brute'` if :math:`k >= N/2`,
+the input data is sparse, or `effective_metric_` isn't in
+the `VALID_METRICS` list for either `'kd_tree'` or `'ball_tree'`.
+Otherwise, it selects the first out of `'kd_tree'` and `'ball_tree'`
+that has `effective_metric_` in its `VALID_METRICS` list.
 This choice is based on the assumption that the number of query points is at
-least the same order as the number of training points, and that ``leaf_size``
-is close to its default value of ``30``.
+least the same order as the number of training points, and that `leaf_size`
+is close to its default value of `30`.
 
-Effect of ``leaf_size``
+Effect of `leaf_size`
 -----------------------
 As noted above, for small sample sizes a brute force search can be more
 efficient than a tree-based query.  This fact is accounted for in the ball
 tree and KD tree by internally switching to brute force searches within
 leaf nodes.  The level of this switch can be specified with the parameter
-``leaf_size``.  This parameter choice has many effects:
+`leaf_size`.  This parameter choice has many effects:
 
 **construction time**
-  A larger ``leaf_size`` leads to a faster tree construction time, because
+  A larger `leaf_size` leads to a faster tree construction time, because
   fewer nodes need to be created
 
 **query time**
-  Both a large or small ``leaf_size`` can lead to suboptimal query cost.
-  For ``leaf_size`` approaching 1, the overhead involved in traversing
-  nodes can significantly slow query times.  For ``leaf_size`` approaching
+  Both a large or small `leaf_size` can lead to suboptimal query cost.
+  For `leaf_size` approaching 1, the overhead involved in traversing
+  nodes can significantly slow query times.  For `leaf_size` approaching
   the size of the training set, queries become essentially brute force.
-  A good compromise between these is ``leaf_size = 30``, the default value
+  A good compromise between these is `leaf_size = 30`, the default value
   of the parameter.
 
 **memory**
-  As ``leaf_size`` increases, the memory required to store a tree structure
+  As `leaf_size` increases, the memory required to store a tree structure
   decreases.  This is especially important in the case of ball tree, which
   stores a :math:`D`-dimensional centroid for each node.  The required
-  storage space for :class:`BallTree` is approximately ``1 / leaf_size`` times
+  storage space for :class:`BallTree` is approximately `1 / leaf_size` times
   the size of the training set.
 
-``leaf_size`` is not referenced for brute force queries.
+`leaf_size` is not referenced for brute force queries.
 
 .. _nearest_centroid_classifier:
 
@@ -483,10 +483,10 @@ for more complex methods that do not make this assumption. Usage of the default
 Nearest Shrunken Centroid
 -------------------------
 
-The :class:`NearestCentroid` classifier has a ``shrink_threshold`` parameter,
+The :class:`NearestCentroid` classifier has a `shrink_threshold` parameter,
 which implements the nearest shrunken centroid classifier. In effect, the value
 of each feature for each centroid is divided by the within-class variance of
-that feature. The feature values are then reduced by ``shrink_threshold``. Most
+that feature. The feature values are then reduced by `shrink_threshold`. Most
 notably, if a particular feature value crosses zero, it is set
 to zero. In effect, this removes the feature from affecting the classification.
 This is useful, for example, for removing noisy features.
@@ -606,7 +606,7 @@ Dimensionality reduction
 NCA can be used to perform supervised dimensionality reduction. The input data
 are projected onto a linear subspace consisting of the directions which
 minimize the NCA objective. The desired dimensionality can be set using the
-parameter ``n_components``. For instance, the following figure shows a
+parameter `n_components`. For instance, the following figure shows a
 comparison of dimensionality reduction with Principal Component Analysis
 (:class:`sklearn.decomposition.PCA`), Linear Discriminant Analysis
 (:class:`sklearn.discriminant_analysis.LinearDiscriminantAnalysis`) and
@@ -644,7 +644,7 @@ Mathematical formulation
 ------------------------
 
 The goal of NCA is to learn an optimal linear transformation matrix of size
-``(n_components, n_features)``, which maximises the sum over all samples
+`(n_components, n_features)`, which maximises the sum over all samples
 :math:`i` of the probability :math:`p_i` that :math:`i` is correctly
 classified, i.e.:
 
@@ -652,7 +652,7 @@ classified, i.e.:
 
   \underset{L}{\arg\max} \sum\limits_{i=0}^{N - 1} p_{i}
 
-with :math:`N` = ``n_samples`` and :math:`p_i` the probability of sample
+with :math:`N` = `n_samples` and :math:`p_i` the probability of sample
 :math:`i` being correctly classified according to a stochastic nearest
 neighbors rule in the learned embedded space:
 
@@ -680,7 +680,7 @@ NCA can be seen as learning a (squared) Mahalanobis distance metric:
     || L(x_i - x_j)||^2 = (x_i - x_j)^TM(x_i - x_j),
 
 where :math:`M = L^T L` is a symmetric positive semi-definite matrix of size
-``(n_features, n_features)``.
+`(n_features, n_features)`.
 
 
 Implementation
@@ -699,17 +699,17 @@ Complexity
 
 Training
 ^^^^^^^^
-NCA stores a matrix of pairwise distances, taking ``n_samples ** 2`` memory.
+NCA stores a matrix of pairwise distances, taking `n_samples ** 2` memory.
 Time complexity depends on the number of iterations done by the optimisation
 algorithm. However, one can set the maximum number of iterations with the
-argument ``max_iter``. For each iteration, time complexity is
-``O(n_components x n_samples x min(n_samples, n_features))``.
+argument `max_iter`. For each iteration, time complexity is
+`O(n_components x n_samples x min(n_samples, n_features))`.
 
 
 Transform
 ^^^^^^^^^
-Here the ``transform`` operation returns :math:`LX^T`, therefore its time
-complexity equals ``n_components * n_features * n_samples_test``. There is no
+Here the `transform` operation returns :math:`LX^T`, therefore its time
+complexity equals `n_components * n_features * n_samples_test`. There is no
 added space complexity in the operation.
 
 

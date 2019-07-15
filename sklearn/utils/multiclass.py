@@ -107,7 +107,7 @@ def _is_integral_float(y):
 
 
 def is_multilabel(y):
-    """ Check if ``y`` is in a multilabel format.
+    """ Check if `y` is in a multilabel format.
 
     Parameters
     ----------
@@ -117,7 +117,7 @@ def is_multilabel(y):
     Returns
     -------
     out : bool,
-        Return ``True``, if ``y`` is in a multilabel format, else ```False``.
+        Return `True`, if `y` is in a multilabel format, else `False`.
 
     Examples
     --------
@@ -175,11 +175,11 @@ def type_of_target(y):
     Note that this type is the most specific type that can be inferred.
     For example:
 
-        * ``binary`` is more specific but compatible with ``multiclass``.
-        * ``multiclass`` of integers is more specific but compatible with
-          ``continuous``.
-        * ``multilabel-indicator`` is more specific but compatible with
-          ``multiclass-multioutput``.
+        * `binary` is more specific but compatible with `multiclass`.
+        * `multiclass` of integers is more specific but compatible with
+          `continuous`.
+        * `multilabel-indicator` is more specific but compatible with
+          `multiclass-multioutput`.
 
     Parameters
     ----------
@@ -293,15 +293,15 @@ def type_of_target(y):
 def _check_partial_fit_first_call(clf, classes=None):
     """Private helper function for factorizing common classes param logic
 
-    Estimators that implement the ``partial_fit`` API need to be provided with
+    Estimators that implement the `partial_fit` API need to be provided with
     the list of possible classes at the first call to partial_fit.
 
-    Subsequent calls to partial_fit should check that ``classes`` is still
-    consistent with a previous value of ``clf.classes_`` when provided.
+    Subsequent calls to partial_fit should check that `classes` is still
+    consistent with a previous value of `clf.classes_` when provided.
 
     This function returns True if it detects that this was the first call to
-    ``partial_fit`` on ``clf``. In that case the ``classes_`` attribute is also
-    set on ``clf``.
+    `partial_fit` on `clf`. In that case the `classes_` attribute is also
+    set on `clf`.
 
     """
     if getattr(clf, 'classes_', None) is None and classes is None:
@@ -416,7 +416,7 @@ def _ovr_decision_function(predictions, confidences, n_classes):
 
     n_classes : int
         Number of classes. n_classifiers must be
-        ``n_classes * (n_classes - 1 ) / 2``
+        `n_classes * (n_classes - 1 ) / 2`
     """
     n_samples = predictions.shape[0]
     votes = np.zeros((n_samples, n_classes))

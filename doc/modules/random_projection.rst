@@ -119,7 +119,7 @@ Sparse random matrices are an alternative to dense Gaussian random
 projection matrix that guarantees similar embedding quality while being much
 more memory efficient and allowing faster computation of the projected data.
 
-If we define ``s = 1 / density``, the elements of the random matrix
+If we define `s = 1 / density`, the elements of the random matrix
 are drawn from
 
 .. math::

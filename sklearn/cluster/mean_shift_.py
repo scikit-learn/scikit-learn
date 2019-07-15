@@ -53,8 +53,8 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0,
 
     n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     Returns
@@ -156,8 +156,8 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
         The number of jobs to use for the computation. This works by computing
         each of the n_init runs in parallel.
 
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
         .. versionadded:: 0.17
@@ -343,8 +343,8 @@ class MeanShift(BaseEstimator, ClusterMixin):
         The number of jobs to use for the computation. This works by computing
         each of the n_init runs in parallel.
 
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     Attributes

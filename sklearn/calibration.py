@@ -55,7 +55,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         The method to use for calibration. Can be 'sigmoid' which
         corresponds to Platt's method or 'isotonic' which is a
         non-parametric approach. It is not advised to use isotonic calibration
-        with too few calibration samples ``(<<1000)`` since it tends to
+        with too few calibration samples `(<<1000)` since it tends to
         overfit.
         Use sigmoids (Platt's calibration) in this case.
 
@@ -68,8 +68,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
-        For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`sklearn.model_selection.StratifiedKFold` is used. If ``y`` is
+        For integer/None inputs, if `y` is binary or multiclass,
+        :class:`sklearn.model_selection.StratifiedKFold` is used. If `y` is
         neither binary nor multiclass, :class:`sklearn.model_selection.KFold`
         is used.
 
@@ -80,7 +80,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         fitted already and all data is used for calibration.
 
         .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
+            `cv` default value if None changed from 3-fold to 5-fold.
 
     Attributes
     ----------

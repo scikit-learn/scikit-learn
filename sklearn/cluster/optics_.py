@@ -47,14 +47,14 @@ class OPTICS(BaseEstimator, ClusterMixin):
     min_samples : int > 1 or float between 0 and 1 (default=None)
         The number of samples in a neighborhood for a point to be considered as
         a core point. Also, up and down steep regions can't have more then
-        ``min_samples`` consecutive non-steep points. Expressed as an absolute
+        `min_samples` consecutive non-steep points. Expressed as an absolute
         number or a fraction of the number of samples (rounded to be at least
         2).
 
     max_eps : float, optional (default=np.inf)
         The maximum distance between two samples for one to be considered as
-        in the neighborhood of the other. Default value of ``np.inf`` will
-        identify clusters across all scales; reducing ``max_eps`` will result
+        in the neighborhood of the other. Default value of `np.inf` will
+        identify clusters across all scales; reducing `max_eps` will result
         in shorter run times.
 
     metric : string or callable, optional (default='minkowski')
@@ -98,26 +98,26 @@ class OPTICS(BaseEstimator, ClusterMixin):
     eps : float, optional (default=None)
         The maximum distance between two samples for one to be considered as
         in the neighborhood of the other. By default it assumes the same value
-        as ``max_eps``.
-        Used only when ``cluster_method='dbscan'``.
+        as `max_eps`.
+        Used only when `cluster_method='dbscan'`.
 
     xi : float, between 0 and 1, optional (default=0.05)
         Determines the minimum steepness on the reachability plot that
         constitutes a cluster boundary. For example, an upwards point in the
         reachability plot is defined by the ratio from one point to its
         successor being at most 1-xi.
-        Used only when ``cluster_method='xi'``.
+        Used only when `cluster_method='xi'`.
 
     predecessor_correction : bool, optional (default=True)
         Correct clusters according to the predecessors calculated by OPTICS
         [2]_. This parameter has minimal effect on most datasets.
-        Used only when ``cluster_method='xi'``.
+        Used only when `cluster_method='xi'`.
 
     min_cluster_size : int > 1 or float between 0 and 1 (default=None)
         Minimum number of samples in an OPTICS cluster, expressed as an
         absolute number or a fraction of the number of samples (rounded to be
-        at least 2). If ``None``, the value of ``min_samples`` is used instead.
-        Used only when ``cluster_method='xi'``.
+        at least 2). If `None`, the value of `min_samples` is used instead.
+        Used only when `cluster_method='xi'`.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
@@ -139,8 +139,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     Attributes
@@ -148,11 +148,11 @@ class OPTICS(BaseEstimator, ClusterMixin):
     labels_ : array, shape (n_samples,)
         Cluster labels for each point in the dataset given to fit().
         Noisy samples and points which are not included in a leaf cluster
-        of ``cluster_hierarchy_`` are labeled as -1.
+        of `cluster_hierarchy_` are labeled as -1.
 
     reachability_ : array, shape (n_samples,)
         Reachability distances per sample, indexed by object order. Use
-        ``clust.reachability_[clust.ordering_]`` to access in cluster order.
+        `clust.reachability_[clust.ordering_]` to access in cluster order.
 
     ordering_ : array, shape (n_samples,)
         The cluster ordered list of sample indices.
@@ -160,22 +160,22 @@ class OPTICS(BaseEstimator, ClusterMixin):
     core_distances_ : array, shape (n_samples,)
         Distance at which each sample becomes a core point, indexed by object
         order. Points which will never be core have a distance of inf. Use
-        ``clust.core_distances_[clust.ordering_]`` to access in cluster order.
+        `clust.core_distances_[clust.ordering_]` to access in cluster order.
 
     predecessor_ : array, shape (n_samples,)
         Point that a sample was reached from, indexed by object order.
         Seed points have a predecessor of -1.
 
     cluster_hierarchy_ : array, shape (n_clusters, 2)
-        The list of clusters in the form of ``[start, end]`` in each row, with
+        The list of clusters in the form of `[start, end]` in each row, with
         all indices inclusive. The clusters are ordered according to
-        ``(end, -start)`` (ascending) so that larger clusters encompassing
-        smaller clusters come after those smaller ones. Since ``labels_`` does
+        `(end, -start)` (ascending) so that larger clusters encompassing
+        smaller clusters come after those smaller ones. Since `labels_` does
         not reflect the hierarchy, usually
-        ``len(cluster_hierarchy_) > np.unique(optics.labels_)``. Please also
-        note that these indices are of the ``ordering_``, i.e.
-        ``X[ordering_][start:end + 1]`` form a cluster.
-        Only available when ``cluster_method='xi'``.
+        `len(cluster_hierarchy_) > np.unique(optics.labels_)`. Please also
+        note that these indices are of the `ordering_`, i.e.
+        `X[ordering_][start:end + 1]` form a cluster.
+        Only available when `cluster_method='xi'`.
 
     See also
     --------
@@ -216,7 +216,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         """Perform OPTICS clustering
 
         Extracts an ordered list of points and reachability distances, and
-        performs initial clustering using ``max_eps`` distance specified at
+        performs initial clustering using `max_eps` distance specified at
         OPTICS object instantiation.
 
         Parameters
@@ -306,7 +306,7 @@ def _compute_core_distances_(X, neighbors, min_samples, working_memory):
     working_memory : int, optional
         The sought maximum memory for temporary distance matrix chunks.
         When None (default), the value of
-        ``sklearn.get_config()['working_memory']`` is used.
+        `sklearn.get_config()['working_memory']` is used.
 
     Returns
     -------
@@ -348,8 +348,8 @@ if metric=’precomputed’.
 
     max_eps : float, optional (default=np.inf)
         The maximum distance between two samples for one to be considered as
-        in the neighborhood of the other. Default value of ``np.inf`` will
-        identify clusters across all scales; reducing ``max_eps`` will result
+        in the neighborhood of the other. Default value of `np.inf` will
+        identify clusters across all scales; reducing `max_eps` will result
         in shorter run times.
 
     metric : string or callable, optional (default='minkowski')
@@ -406,8 +406,8 @@ if metric=’precomputed’.
 
     n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     Returns
@@ -418,11 +418,11 @@ if metric=’precomputed’.
     core_distances_ : array, shape (n_samples,)
         Distance at which each sample becomes a core point, indexed by object
         order. Points which will never be core have a distance of inf. Use
-        ``clust.core_distances_[clust.ordering_]`` to access in cluster order.
+        `clust.core_distances_[clust.ordering_]` to access in cluster order.
 
     reachability_ : array, shape (n_samples,)
         Reachability distances per sample, indexed by object order. Use
-        ``clust.reachability_[clust.ordering_]`` to access in cluster order.
+        `clust.reachability_[clust.ordering_]` to access in cluster order.
 
     predecessor_ : array, shape (n_samples,)
         Point that a sample was reached from, indexed by object order.
@@ -531,23 +531,23 @@ def cluster_optics_dbscan(reachability, core_distances, ordering, eps):
     """Performs DBSCAN extraction for an arbitrary epsilon.
 
     Extracting the clusters runs in linear time. Note that this results in
-    ``labels_`` which are close to a `DBSCAN` with similar settings and
-    ``eps``, only if ``eps`` is close to ``max_eps``.
+    `labels_` which are close to a `DBSCAN` with similar settings and
+    `eps`, only if `eps` is close to `max_eps`.
 
     Parameters
     ----------
     reachability : array, shape (n_samples,)
-        Reachability distances calculated by OPTICS (``reachability_``)
+        Reachability distances calculated by OPTICS (`reachability_`)
 
     core_distances : array, shape (n_samples,)
-        Distances at which points become core (``core_distances_``)
+        Distances at which points become core (`core_distances_`)
 
     ordering : array, shape (n_samples,)
-        OPTICS ordered point indices (``ordering_``)
+        OPTICS ordered point indices (`ordering_`)
 
     eps : float
-        DBSCAN ``eps`` parameter. Must be set to < ``max_eps``. Results
-        will be close to DBSCAN algorithm if ``eps`` and ``max_eps`` are close
+        DBSCAN `eps` parameter. Must be set to < `max_eps`. Results
+        will be close to DBSCAN algorithm if `eps` and `max_eps` are close
         to one another.
 
     Returns
@@ -584,14 +584,14 @@ def cluster_optics_xi(reachability, predecessor, ordering, min_samples,
 
     min_samples : int > 1 or float between 0 and 1 (default=None)
         The same as the min_samples given to OPTICS. Up and down steep regions
-        can't have more then ``min_samples`` consecutive non-steep points.
+        can't have more then `min_samples` consecutive non-steep points.
         Expressed as an absolute number or a fraction of the number of samples
         (rounded to be at least 2).
 
     min_cluster_size : int > 1 or float between 0 and 1 (default=None)
         Minimum number of samples in an OPTICS cluster, expressed as an
         absolute number or a fraction of the number of samples (rounded to be
-        at least 2). If ``None``, the value of ``min_samples`` is used instead.
+        at least 2). If `None`, the value of `min_samples` is used instead.
 
     xi : float, between 0 and 1, optional (default=0.05)
         Determines the minimum steepness on the reachability plot that
@@ -609,12 +609,12 @@ def cluster_optics_xi(reachability, predecessor, ordering, min_samples,
         in any cluster are labeled as -1.
 
     clusters : array, shape (n_clusters, 2)
-        The list of clusters in the form of ``[start, end]`` in each row, with
-        all indices inclusive. The clusters are ordered according to ``(end,
-        -start)`` (ascending) so that larger clusters encompassing smaller
-        clusters come after such nested smaller clusters. Since ``labels`` does
-        not reflect the hierarchy, usually ``len(clusters) >
-        np.unique(labels)``.
+        The list of clusters in the form of `[start, end]` in each row, with
+        all indices inclusive. The clusters are ordered according to `(end,
+        -start)` (ascending) so that larger clusters encompassing smaller
+        clusters come after such nested smaller clusters. Since `labels` does
+        not reflect the hierarchy, usually `len(clusters) >
+        np.unique(labels)`.
     """
     n_samples = len(reachability)
     _validate_size(min_samples, n_samples, 'min_samples')
@@ -645,9 +645,9 @@ def _extend_region(steep_point, xward_point, start, min_samples):
         - upward/downward: bool array indicating whether a point is
           upward/downward;
 
-    To extend an upward reagion, ``steep_point=steep_upward`` and
-    ``xward_point=downward`` are expected, and to extend a downward region,
-    ``steep_point=steep_downward`` and ``xward_point=upward``.
+    To extend an upward reagion, `steep_point=steep_upward` and
+    `xward_point=downward` are expected, and to extend a downward region,
+    `steep_point=steep_downward` and `xward_point=upward`.
 
     Parameters
     ----------
@@ -662,7 +662,7 @@ def _extend_region(steep_point, xward_point, start, min_samples):
 
     min_samples : integer
        The same as the min_samples given to OPTICS. Up and down steep
-       regions can't have more then ``min_samples`` consecutive non-steep
+       regions can't have more then `min_samples` consecutive non-steep
        points.
 
     Returns
@@ -673,7 +673,7 @@ def _extend_region(steep_point, xward_point, start, min_samples):
 
     end : integer
         The end of the region, which can be behind the index. The region
-        includes the ``end`` index.
+        includes the `end` index.
     """
     n_samples = len(steep_point)
     non_xward_points = 0
@@ -699,7 +699,7 @@ def _extend_region(steep_point, xward_point, start, min_samples):
 
 def _update_filter_sdas(sdas, mib, xi_complement, reachability_plot):
     """Update steep down areas (SDAs) using the new maximum in between (mib)
-    value, and the given complement of xi, i.e. ``1 - xi``.
+    value, and the given complement of xi, i.e. `1 - xi`.
     """
     if np.isinf(mib):
         return []
@@ -755,7 +755,7 @@ def _xi_cluster(reachability_plot, predecessor_plot, ordering, xi, min_samples,
 
     min_samples : int > 1 or float between 0 and 1 (default=None)
         The same as the min_samples given to OPTICS. Up and down steep regions
-        can't have more then ``min_samples`` consecutive non-steep points.
+        can't have more then `min_samples` consecutive non-steep points.
         Expressed as an absolute number or a fraction of the number of samples
         (rounded to be at least 2).
 

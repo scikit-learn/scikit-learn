@@ -64,7 +64,7 @@ Changelog
 
 - :class:`ensemble.GradientBoostingRegressor` and
   :class:`ensemble.GradientBoostingClassifier` now support feature subsampling
-  via the ``max_features`` argument, by `Peter Prettenhofer`_.
+  via the `max_features` argument, by `Peter Prettenhofer`_.
 
 - Added Huber and Quantile loss functions to
   :class:`ensemble.GradientBoostingRegressor`, by `Peter Prettenhofer`_.
@@ -115,7 +115,7 @@ Changelog
   by `Andreas Müller`_.
 
 - In :class:`feature_extraction.text.CountVectorizer`, added an option to
-  ignore infrequent words, ``min_df`` by  `Andreas Müller`_.
+  ignore infrequent words, `min_df` by  `Andreas Müller`_.
 
 - Add support for multiple targets in some linear models (ElasticNet, Lasso
   and OrthogonalMatchingPursuit) by `Vlad Niculae`_ and
@@ -129,23 +129,23 @@ Changelog
 API changes summary
 -------------------
 
-- The old ``scikits.learn`` package has disappeared; all code should import
-  from ``sklearn`` instead, which was introduced in 0.9.
+- The old `scikits.learn` package has disappeared; all code should import
+  from `sklearn` instead, which was introduced in 0.9.
 
-- In :func:`metrics.roc_curve`, the ``thresholds`` array is now returned
+- In :func:`metrics.roc_curve`, the `thresholds` array is now returned
   with it's order reversed, in order to keep it consistent with the order
-  of the returned ``fpr`` and ``tpr``.
+  of the returned `fpr` and `tpr`.
 
 - In :class:`hmm` objects, like :class:`hmm.GaussianHMM`,
   :class:`hmm.MultinomialHMM`, etc., all parameters must be passed to the
-  object when initialising it and not through ``fit``. Now ``fit`` will
+  object when initialising it and not through `fit`. Now `fit` will
   only accept the data as an input parameter.
 
-- For all SVM classes, a faulty behavior of ``gamma`` was fixed. Previously,
-  the default gamma value was only computed the first time ``fit`` was called
-  and then stored. It is now recalculated on every call to ``fit``.
+- For all SVM classes, a faulty behavior of `gamma` was fixed. Previously,
+  the default gamma value was only computed the first time `fit` was called
+  and then stored. It is now recalculated on every call to `fit`.
 
-- All ``Base`` classes are now abstract meta classes so that they can not be
+- All `Base` classes are now abstract meta classes so that they can not be
   instantiated.
 
 - :func:`cluster.ward_tree` now also returns the parent array. This is
@@ -153,12 +153,12 @@ API changes summary
   completely built.
 
 - In :class:`feature_extraction.text.CountVectorizer` the parameters
-  ``min_n`` and ``max_n`` were joined to the parameter ``n_gram_range`` to
+  `min_n` and `max_n` were joined to the parameter `n_gram_range` to
   enable grid-searching both at once.
 
 - In :class:`feature_extraction.text.CountVectorizer`, words that appear
   only in one document are now ignored by default. To reproduce
-  the previous behavior, set ``min_df=1``.
+  the previous behavior, set `min_df=1`.
 
 - Fixed API inconsistency: :meth:`linear_model.SGDClassifier.predict_proba` now
   returns 2d array when fit on two classes.
@@ -169,12 +169,12 @@ API changes summary
 
 - Grid of alphas used for fitting :class:`linear_model.LassoCV` and
   :class:`linear_model.ElasticNetCV` is now stored
-  in the attribute ``alphas_`` rather than overriding the init parameter
-  ``alphas``.
+  in the attribute `alphas_` rather than overriding the init parameter
+  `alphas`.
 
 - Linear models when alpha is estimated by cross-validation store
-  the estimated value in the ``alpha_`` attribute rather than just
-  ``alpha`` or ``best_alpha``.
+  the estimated value in the `alpha_` attribute rather than just
+  `alpha` or `best_alpha`.
 
 - :class:`ensemble.GradientBoostingClassifier` now supports
   :meth:`ensemble.GradientBoostingClassifier.staged_predict_proba`, and
@@ -184,12 +184,12 @@ API changes summary
   The all classes in the :ref:`svm` module now automatically select the
   sparse or dense representation base on the input.
 
-- All clustering algorithms now interpret the array ``X`` given to ``fit`` as
+- All clustering algorithms now interpret the array `X` given to `fit` as
   input data, in particular :class:`cluster.SpectralClustering` and
   :class:`cluster.AffinityPropagation` which previously expected affinity matrices.
 
 - For clustering algorithms that take the desired number of clusters as a parameter,
-  this parameter is now called ``n_clusters``.
+  this parameter is now called `n_clusters`.
 
 
 People
@@ -287,7 +287,7 @@ Highlights
   by Yannick Schwartz.
 
 - :class:`sklearn.neighbors.NearestCentroid` classifier added, along with a
-  ``shrink_threshold`` parameter, which implements **shrunken centroid
+  `shrink_threshold` parameter, which implements **shrunken centroid
   classification**, by `Robert Layton`_.
 
 Other changes
@@ -295,10 +295,10 @@ Other changes
 
 - Merged dense and sparse implementations of :ref:`sgd` module and
   exposed utility extension types for sequential
-  datasets ``seq_dataset`` and weight vectors ``weight_vector``
+  datasets `seq_dataset` and weight vectors `weight_vector`
   by `Peter Prettenhofer`_.
 
-- Added ``partial_fit`` (support for online/minibatch learning) and
+- Added `partial_fit` (support for online/minibatch learning) and
   warm_start to the :ref:`sgd` module by `Mathieu Blondel`_.
 
 - Dense and sparse implementations of :ref:`svm` classes and
@@ -311,19 +311,19 @@ Other changes
   and :func:`metrics.pairwise.pairwise_kernels` for parallel computation,
   by `Mathieu Blondel`_.
 
-- :ref:`k_means` can now be run in parallel, using the ``n_jobs`` argument
+- :ref:`k_means` can now be run in parallel, using the `n_jobs` argument
   to either :ref:`k_means` or :class:`KMeans`, by `Robert Layton`_.
 
 - Improved :ref:`cross_validation` and :ref:`grid_search` documentation
   and introduced the new :func:`cross_validation.train_test_split`
   helper function by `Olivier Grisel`_
 
-- :class:`svm.SVC` members ``coef_`` and ``intercept_`` changed sign for
-  consistency with ``decision_function``; for ``kernel==linear``,
-  ``coef_`` was fixed in the one-vs-one case, by `Andreas Müller`_.
+- :class:`svm.SVC` members `coef_` and `intercept_` changed sign for
+  consistency with `decision_function`; for `kernel==linear`,
+  `coef_` was fixed in the one-vs-one case, by `Andreas Müller`_.
 
 - Performance improvements to efficient leave-one-out cross-validated
-  Ridge regression, esp. for the ``n_samples > n_features`` case, in
+  Ridge regression, esp. for the `n_samples > n_features` case, in
   :class:`linear_model.RidgeCV`, by Reuben Fletcher-Costin.
 
 - Refactoring and simplification of the :ref:`text_feature_extraction`
@@ -335,7 +335,7 @@ Other changes
   version, you can use the python version in the git history as a reference.
 
 - Classes in :ref:`neighbors` now support arbitrary Minkowski metric for
-  nearest neighbors searches. The metric can be specified by argument ``p``.
+  nearest neighbors searches. The metric can be specified by argument `p`.
 
 API changes summary
 -------------------
@@ -343,7 +343,7 @@ API changes summary
 - :class:`covariance.EllipticEnvelop` is now deprecated - Please use :class:`covariance.EllipticEnvelope`
   instead.
 
-- ``NeighborsClassifier`` and ``NeighborsRegressor`` are gone in the module
+- `NeighborsClassifier` and `NeighborsRegressor` are gone in the module
   :ref:`neighbors`. Use the classes :class:`KNeighborsClassifier`,
   :class:`RadiusNeighborsClassifier`, :class:`KNeighborsRegressor`
   and/or :class:`RadiusNeighborsRegressor` instead.
@@ -352,27 +352,27 @@ API changes summary
 
 - In :class:`mixture.GMM`, :class:`mixture.DPGMM` and :class:`mixture.VBGMM`,
   parameters must be passed to an object when initialising it and not through
-  ``fit``. Now ``fit`` will only accept the data as an input parameter.
+  `fit`. Now `fit` will only accept the data as an input parameter.
 
-- methods ``rvs`` and ``decode`` in :class:`GMM` module are now deprecated.
-  ``sample`` and ``score`` or ``predict`` should be used instead.
+- methods `rvs` and `decode` in :class:`GMM` module are now deprecated.
+  `sample` and `score` or `predict` should be used instead.
 
-- attribute ``_scores`` and ``_pvalues`` in univariate feature selection
+- attribute `_scores` and `_pvalues` in univariate feature selection
   objects are now deprecated.
-  ``scores_`` or ``pvalues_`` should be used instead.
+  `scores_` or `pvalues_` should be used instead.
 
 - In :class:`LogisticRegression`, :class:`LinearSVC`, :class:`SVC` and
-  :class:`NuSVC`, the ``class_weight`` parameter is now an initialization
+  :class:`NuSVC`, the `class_weight` parameter is now an initialization
   parameter, not a parameter to fit. This makes grid searches
   over this parameter possible.
 
-- LFW ``data`` is now always shape ``(n_samples, n_features)`` to be
-  consistent with the Olivetti faces dataset. Use ``images`` and
-  ``pairs`` attribute to access the natural images shapes instead.
+- LFW `data` is now always shape `(n_samples, n_features)` to be
+  consistent with the Olivetti faces dataset. Use `images` and
+  `pairs` attribute to access the natural images shapes instead.
 
-- In :class:`svm.LinearSVC`, the meaning of the ``multi_class`` parameter
-  changed.  Options now are ``'ovr'`` and ``'crammer_singer'``, with
-  ``'ovr'`` being the default.  This does not change the default behavior
+- In :class:`svm.LinearSVC`, the meaning of the `multi_class` parameter
+  changed.  Options now are `'ovr'` and `'crammer_singer'`, with
+  `'ovr'` being the default.  This does not change the default behavior
   but hopefully is less confusing.
 
 - Class :class:`feature_selection.text.Vectorizer` is deprecated and
@@ -385,28 +385,28 @@ API changes summary
   :class:`feature_selection.text.CountVectorizer`, in particular the
   following parameters are now used:
 
-- ``analyzer`` can be ``'word'`` or ``'char'`` to switch the default
+- `analyzer` can be `'word'` or `'char'` to switch the default
   analysis scheme, or use a specific python callable (as previously).
 
-- ``tokenizer`` and ``preprocessor`` have been introduced to make it
+- `tokenizer` and `preprocessor` have been introduced to make it
   still possible to customize those steps with the new API.
 
-- ``input`` explicitly control how to interpret the sequence passed to
-  ``fit`` and ``predict``: filenames, file objects or direct (byte or
+- `input` explicitly control how to interpret the sequence passed to
+  `fit` and `predict`: filenames, file objects or direct (byte or
   Unicode) strings.
 
 - charset decoding is explicit and strict by default.
 
-- the ``vocabulary``, fitted or not is now stored in the
-  ``vocabulary_`` attribute to be consistent with the project
+- the `vocabulary`, fitted or not is now stored in the
+  `vocabulary_` attribute to be consistent with the project
   conventions.
 
 - Class :class:`feature_selection.text.TfidfVectorizer` now derives directly
   from :class:`feature_selection.text.CountVectorizer` to make grid
   search trivial.
 
-- methods ``rvs`` in :class:`_BaseHMM` module are now deprecated.
-  ``sample`` should be used instead.
+- methods `rvs` in :class:`_BaseHMM` module are now deprecated.
+  `sample` should be used instead.
 
 - Beam pruning option in :class:`_BaseHMM` module is removed since it is
   difficult to be Cythonized. If you are interested, you can look in the
@@ -416,16 +416,16 @@ API changes summary
   one-based column indices, since both occur "in the wild".
 
 - Arguments in class :class:`ShuffleSplit` are now consistent with
-  :class:`StratifiedShuffleSplit`. Arguments ``test_fraction`` and
-  ``train_fraction`` are deprecated and renamed to ``test_size`` and
-  ``train_size`` and can accept both ``float`` and ``int``.
+  :class:`StratifiedShuffleSplit`. Arguments `test_fraction` and
+  `train_fraction` are deprecated and renamed to `test_size` and
+  `train_size` and can accept both `float` and `int`.
 
 - Arguments in class :class:`Bootstrap` are now consistent with
-  :class:`StratifiedShuffleSplit`. Arguments ``n_test`` and
-  ``n_train`` are deprecated and renamed to ``test_size`` and
-  ``train_size`` and can accept both ``float`` and ``int``.
+  :class:`StratifiedShuffleSplit`. Arguments `n_test` and
+  `n_train` are deprecated and renamed to `test_size` and
+  `train_size` and can accept both `float` and `int`.
 
-- Argument ``p`` added to classes in :ref:`neighbors` to specify an
+- Argument `p` added to classes in :ref:`neighbors` to specify an
   arbitrary Minkowski metric for nearest neighbors searches.
 
 
@@ -510,8 +510,8 @@ Changelog
 - Silhouette Coefficient cluster analysis evaluation metric added as
   :func:`sklearn.metrics.silhouette_score` by Robert Layton.
 
-- Fixed a bug in :ref:`k_means` in the handling of the ``n_init`` parameter:
-  the clustering algorithm used to be run ``n_init`` times but the last
+- Fixed a bug in :ref:`k_means` in the handling of the `n_init` parameter:
+  the clustering algorithm used to be run `n_init` times but the last
   solution was retained instead of the best solution by `Olivier Grisel`_.
 
 - Minor refactoring in :ref:`sgd` module; consolidated dense and sparse
@@ -579,18 +579,18 @@ Here are the code migration instructions when upgrading from scikit-learn
 version 0.9:
 
 - Some estimators that may overwrite their inputs to save memory previously
-  had ``overwrite_`` parameters; these have been replaced with ``copy_``
+  had `overwrite_` parameters; these have been replaced with `copy_`
   parameters with exactly the opposite meaning.
 
   This particularly affects some of the estimators in :mod:`linear_model`.
   The default behavior is still to copy everything passed in.
 
 - The SVMlight dataset loader :func:`sklearn.datasets.load_svmlight_file` no
-  longer supports loading two files at once; use ``load_svmlight_files``
-  instead. Also, the (unused) ``buffer_mb`` parameter is gone.
+  longer supports loading two files at once; use `load_svmlight_files`
+  instead. Also, the (unused) `buffer_mb` parameter is gone.
 
 - Sparse estimators in the :ref:`sgd` module use dense parameter vector
-  ``coef_`` instead of ``sparse_coef_``. This significantly improves
+  `coef_` instead of `sparse_coef_`. This significantly improves
   test time performance.
 
 - The :ref:`covariance` module now has a robust estimator of
@@ -602,15 +602,15 @@ version 0.9:
   :mod:`metrics.cluster.unsupervised` which contains the Silhouette
   Coefficient.
 
-- The ``permutation_test_score`` function now behaves the same way as
-  ``cross_val_score`` (i.e. uses the mean score across the folds.)
+- The `permutation_test_score` function now behaves the same way as
+  `cross_val_score` (i.e. uses the mean score across the folds.)
 
-- Cross Validation generators now use integer indices (``indices=True``)
+- Cross Validation generators now use integer indices (`indices=True`)
   by default instead of boolean masks. This make it more intuitive to
   use with sparse matrix data.
 
-- The functions used for sparse coding, ``sparse_encode`` and
-  ``sparse_encode_parallel`` have been combined into
+- The functions used for sparse coding, `sparse_encode` and
+  `sparse_encode_parallel` have been combined into
   :func:`sklearn.decomposition.sparse_encode`, and the shapes of the arrays
   have been transposed for consistency with the matrix factorization setting,
   as opposed to the regression setting.
@@ -620,7 +620,7 @@ version 0.9:
   re-generated. (They should continue to work, but accidentally had one
   extra column of zeros prepended.)
 
-- ``BaseDictionaryLearning`` class replaced by ``SparseCodingMixin``.
+- `BaseDictionaryLearning` class replaced by `SparseCodingMixin`.
 
 - :func:`sklearn.utils.extmath.fast_svd` has been renamed
   :func:`sklearn.utils.extmath.randomized_svd` and the default
@@ -760,7 +760,7 @@ Changelog
 
 - Faster mean shift by Conrad Lee
 
-- New ``Bootstrap``, :ref:`ShuffleSplit` and various other
+- New `Bootstrap`, :ref:`ShuffleSplit` and various other
   improvements in cross validation schemes by `Olivier Grisel`_ and
   `Gael Varoquaux`_
 
@@ -794,8 +794,8 @@ API changes summary
 Here are the code migration instructions when upgrading from scikit-learn
 version 0.8:
 
-- The ``scikits.learn`` package was renamed ``sklearn``. There is
-  still a ``scikits.learn`` package alias for backward compatibility.
+- The `scikits.learn` package was renamed `sklearn`. There is
+  still a `scikits.learn` package alias for backward compatibility.
 
   Third-party projects with a dependency on scikit-learn 0.9+ should
   upgrade their codebase. For instance, under Linux / MacOSX just run
@@ -803,17 +803,17 @@ version 0.8:
 
       find -name "*.py" | xargs sed -i 's/\bscikits.learn\b/sklearn/g'
 
-- Estimators no longer accept model parameters as ``fit`` arguments:
+- Estimators no longer accept model parameters as `fit` arguments:
   instead all parameters must be only be passed as constructor
-  arguments or using the now public ``set_params`` method inherited
+  arguments or using the now public `set_params` method inherited
   from :class:`base.BaseEstimator`.
 
-  Some estimators can still accept keyword arguments on the ``fit``
+  Some estimators can still accept keyword arguments on the `fit`
   but this is restricted to data-dependent values (e.g. a Gram matrix
-  or an affinity matrix that are precomputed from the ``X`` data matrix.
+  or an affinity matrix that are precomputed from the `X` data matrix.
 
-- The ``cross_val`` package has been renamed to ``cross_validation``
-  although there is also a ``cross_val`` package alias in place for
+- The `cross_val` package has been renamed to `cross_validation`
+  although there is also a `cross_val` package alias in place for
   backward compatibility.
 
   Third-party projects with a dependency on scikit-learn 0.9+ should
@@ -822,43 +822,43 @@ version 0.8:
 
       find -name "*.py" | xargs sed -i 's/\bcross_val\b/cross_validation/g'
 
-- The ``score_func`` argument of the
-  ``sklearn.cross_validation.cross_val_score`` function is now expected
-  to accept ``y_test`` and ``y_predicted`` as only arguments for
-  classification and regression tasks or ``X_test`` for unsupervised
+- The `score_func` argument of the
+  `sklearn.cross_validation.cross_val_score` function is now expected
+  to accept `y_test` and `y_predicted` as only arguments for
+  classification and regression tasks or `X_test` for unsupervised
   estimators.
 
-- ``gamma`` parameter for support vector machine algorithms is set
-  to ``1 / n_features`` by default, instead of ``1 / n_samples``.
+- `gamma` parameter for support vector machine algorithms is set
+  to `1 / n_features` by default, instead of `1 / n_samples`.
 
-- The ``sklearn.hmm`` has been marked as orphaned: it will be removed
+- The `sklearn.hmm` has been marked as orphaned: it will be removed
   from scikit-learn in version 0.11 unless someone steps up to
   contribute documentation, examples and fix lurking numerical
   stability issues.
 
-- ``sklearn.neighbors`` has been made into a submodule.  The two previously
-  available estimators, ``NeighborsClassifier`` and ``NeighborsRegressor``
+- `sklearn.neighbors` has been made into a submodule.  The two previously
+  available estimators, `NeighborsClassifier` and `NeighborsRegressor`
   have been marked as deprecated.  Their functionality has been divided
-  among five new classes: ``NearestNeighbors`` for unsupervised neighbors
-  searches, ``KNeighborsClassifier`` & ``RadiusNeighborsClassifier``
-  for supervised classification problems, and ``KNeighborsRegressor``
-  & ``RadiusNeighborsRegressor`` for supervised regression problems.
+  among five new classes: `NearestNeighbors` for unsupervised neighbors
+  searches, `KNeighborsClassifier` & `RadiusNeighborsClassifier`
+  for supervised classification problems, and `KNeighborsRegressor`
+  & `RadiusNeighborsRegressor` for supervised regression problems.
 
-- ``sklearn.ball_tree.BallTree`` has been moved to
-  ``sklearn.neighbors.BallTree``.  Using the former will generate a warning.
+- `sklearn.ball_tree.BallTree` has been moved to
+  `sklearn.neighbors.BallTree`.  Using the former will generate a warning.
 
-- ``sklearn.linear_model.LARS()`` and related classes (LassoLARS,
+- `sklearn.linear_model.LARS()` and related classes (LassoLARS,
   LassoLARSCV, etc.) have been renamed to
-  ``sklearn.linear_model.Lars()``.
+  `sklearn.linear_model.Lars()`.
 
-- All distance metrics and kernels in ``sklearn.metrics.pairwise`` now have a Y
+- All distance metrics and kernels in `sklearn.metrics.pairwise` now have a Y
   parameter, which by default is None. If not given, the result is the distance
   (or kernel similarity) between each sample in Y. If given, the result is the
   pairwise distance (or kernel similarity) between samples in X to Y.
 
-- ``sklearn.metrics.pairwise.l1_distance`` is now called ``manhattan_distance``,
+- `sklearn.metrics.pairwise.l1_distance` is now called `manhattan_distance`,
   and by default returns the pairwise distance. For the component wise distance,
-  set the parameter ``sum_over_features`` to ``False``.
+  set the parameter `sum_over_features` to `False`.
 
 Backward compatibility package aliases and other deprecated classes and
 functions will be removed in version 0.11.
@@ -958,7 +958,7 @@ Some other modules benefited from significant improvements or cleanups.
 
 - Add attribute converged to Gaussian Mixture Models by Vincent Schut.
 
-- Implemented ``transform``, ``predict_log_proba`` in
+- Implemented `transform`, `predict_log_proba` in
   :class:`discriminant_analysis.LinearDiscriminantAnalysis` By `Mathieu Blondel`_.
 
 - Refactoring in the :ref:`svm` module and bug fixes by `Fabian Pedregosa`_,
@@ -1218,7 +1218,7 @@ New classes
 -----------
 
 - Support for sparse matrices in some classifiers of modules
-  ``svm`` and ``linear_model`` (see :class:`svm.sparse.SVC`,
+  `svm` and `linear_model` (see :class:`svm.sparse.SVC`,
   :class:`svm.sparse.SVR`, :class:`svm.sparse.LinearSVC`,
   :class:`linear_model.sparse.Lasso`, :class:`linear_model.sparse.ElasticNet`)
 
@@ -1272,7 +1272,7 @@ Examples
 --------
 
 - new examples using some of the mlcomp datasets:
-  ``sphx_glr_auto_examples_mlcomp_sparse_document_classification.py`` (since removed) and
+  `sphx_glr_auto_examples_mlcomp_sparse_document_classification.py` (since removed) and
   :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
 
 - Many more examples. `See here

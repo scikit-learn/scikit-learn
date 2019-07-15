@@ -38,7 +38,7 @@ persistence model, namely `pickle <https://docs.python.org/2/library/pickle.html
   0
 
 In the specific case of scikit-learn, it may be better to use joblib's
-replacement of pickle (``dump`` & ``load``), which is more efficient on
+replacement of pickle (`dump` & `load`), which is more efficient on
 objects that carry large numpy arrays internally as is often the case for
 fitted scikit-learn estimators, but can only pickle to the disk and not to a
 string::
@@ -53,7 +53,7 @@ with::
 
 .. note::
 
-   ``dump`` and ``load`` functions also accept file-like object
+   `dump` and `load` functions also accept file-like object
    instead of filenames. More information on data persistence with Joblib is
    available `here <https://joblib.readthedocs.io/en/latest/persistence.html>`_.
 

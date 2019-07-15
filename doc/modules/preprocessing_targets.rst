@@ -3,7 +3,7 @@
 .. _preprocessing_targets:
 
 ==========================================
-Transforming the prediction target (``y``)
+Transforming the prediction target (`y`)
 ==========================================
 
 These are transformers that are not intended to be used on features, only on

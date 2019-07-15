@@ -27,7 +27,7 @@ of steps in processing the data, for example feature selection, normalization
 and classification. :class:`Pipeline` serves multiple purposes here:
 
 Convenience and encapsulation
-    You only have to call ``fit`` and ``predict`` once on your
+    You only have to call `fit` and `predict` once on your
     data to fit a whole sequence of estimators.
 Joint parameter selection
     You can :ref:`grid search <grid_search>`
@@ -38,7 +38,7 @@ Safety
     used to train the transformers and predictors.
 
 All estimators in a pipeline, except the last one, must be transformers
-(i.e. must have a ``transform`` method).
+(i.e. must have a `transform` method).
 The last estimator may be any type (transformer, classifier, etc.).
 
 
@@ -48,8 +48,8 @@ Usage
 Construction
 ............
 
-The :class:`Pipeline` is built using a list of ``(key, value)`` pairs, where
-the ``key`` is a string containing the name you want to give this step and ``value``
+The :class:`Pipeline` is built using a list of `(key, value)` pairs, where
+the `key` is a string containing the name you want to give this step and `value`
 is an estimator object::
 
     >>> from sklearn.pipeline import Pipeline
@@ -74,8 +74,8 @@ filling in the names automatically::
 Accessing steps
 ...............
 
-The estimators of a pipeline are stored as a list in the ``steps`` attribute,
-but can be accessed by index or name by indexing (with ``[idx]``) the
+The estimators of a pipeline are stored as a list in the `steps` attribute,
+but can be accessed by index or name by indexing (with `[idx]`) the
 Pipeline::
 
     >>> pipe.steps[0]
@@ -105,7 +105,7 @@ Nested parameters
 .................
 
 Parameters of the estimators in the pipeline can be accessed using the
-``<estimator>__<parameter>`` syntax::
+`<estimator>__<parameter>` syntax::
 
     >>> pipe.set_params(clf__C=10)
     Pipeline(steps=[('reduce_dim', PCA()), ('clf', SVC(C=10))])
@@ -118,7 +118,7 @@ This is particularly important for doing grid searches::
     >>> grid_search = GridSearchCV(pipe, param_grid=param_grid)
 
 Individual steps may also be replaced as parameters, and non-final steps may be
-ignored by setting them to ``'passthrough'``::
+ignored by setting them to `'passthrough'`::
 
     >>> from sklearn.linear_model import LogisticRegression
     >>> param_grid = dict(reduce_dim=['passthrough', PCA(5), PCA(10)],
@@ -153,8 +153,8 @@ or by name::
 Notes
 -----
 
-Calling ``fit`` on the pipeline is the same as calling ``fit`` on
-each estimator in turn, ``transform`` the input and pass it on to the next step.
+Calling `fit` on the pipeline is the same as calling `fit` on
+each estimator in turn, `transform` the input and pass it on to the next step.
 The pipeline has all the methods that the last estimator in the pipeline has,
 i.e. if the last estimator is a classifier, the :class:`Pipeline` can be used
 as a classifier. If the last estimator is a transformer, again, so is the
@@ -168,15 +168,15 @@ Caching transformers: avoid repeated computation
 .. currentmodule:: sklearn.pipeline
 
 Fitting transformers may be computationally expensive. With its
-``memory`` parameter set, :class:`Pipeline` will cache each transformer
-after calling ``fit``.
+`memory` parameter set, :class:`Pipeline` will cache each transformer
+after calling `fit`.
 This feature is used to avoid computing the fit transformers within a pipeline
 if the parameters and input data are identical. A typical example is the case of
 a grid search in which the transformers can be fitted only once and reused for
 each configuration.
 
-The parameter ``memory`` is needed in order to cache the transformers.
-``memory`` can be either a string containing the directory where to cache the
+The parameter `memory` is needed in order to cache the transformers.
+`memory` can be either a string containing the directory where to cache the
 transformers or a `joblib.Memory <https://pythonhosted.org/joblib/memory.html>`_
 object::
 
@@ -213,10 +213,10 @@ object::
    Enabling caching triggers a clone of the transformers before fitting.
    Therefore, the transformer instance given to the pipeline cannot be
    inspected directly.
-   In following example, accessing the :class:`PCA` instance ``pca2``
-   will raise an ``AttributeError`` since ``pca2`` will be an unfitted
+   In following example, accessing the :class:`PCA` instance `pca2`
+   will raise an `AttributeError` since `pca2` will be an unfitted
    transformer.
-   Instead, use the attribute ``named_steps`` to inspect estimators within
+   Instead, use the attribute `named_steps` to inspect estimators within
    the pipeline::
 
      >>> cachedir = mkdtemp()
@@ -241,7 +241,7 @@ object::
 Transforming target in regression
 =================================
 
-:class:`TransformedTargetRegressor` transforms the targets ``y`` before fitting
+:class:`TransformedTargetRegressor` transforms the targets `y` before fitting
 a regression model. The predictions are mapped back to the original space via
 an inverse transform. It takes as an argument the regressor that will be used
 for prediction, and the transformer that will be applied to the target
@@ -289,7 +289,7 @@ Subsequently, the object is created as::
 
 By default, the provided functions are checked at each fit to be the inverse of
 each other. However, it is possible to bypass this checking by setting
-``check_inverse`` to ``False``::
+`check_inverse` to `False`::
 
   >>> def inverse_func(x):
   ...     return x
@@ -304,8 +304,8 @@ each other. However, it is possible to bypass this checking by setting
 
 .. note::
 
-   The transformation can be triggered by setting either ``transformer`` or the
-   pair of functions ``func`` and ``inverse_func``. However, setting both
+   The transformation can be triggered by setting either `transformer` or the
+   pair of functions `func` and `inverse_func`. However, setting both
    options will raise an error.
 
 .. topic:: Examples:
@@ -346,10 +346,10 @@ responsibility.)
 Usage
 -----
 
-A :class:`FeatureUnion` is built using a list of ``(key, value)`` pairs,
-where the ``key`` is the name you want to give to a given transformation
+A :class:`FeatureUnion` is built using a list of `(key, value)` pairs,
+where the `key` is the name you want to give to a given transformation
 (an arbitrary string; it only serves as an identifier)
-and ``value`` is an estimator object::
+and `value` is an estimator object::
 
     >>> from sklearn.pipeline import FeatureUnion
     >>> from sklearn.decomposition import PCA
@@ -365,8 +365,8 @@ Like pipelines, feature unions have a shorthand constructor called
 :func:`make_union` that does not require explicit naming of the components.
 
 
-Like ``Pipeline``, individual steps may be replaced using ``set_params``,
-and ignored by setting to ``'drop'``::
+Like `Pipeline`, individual steps may be replaced using `set_params`,
+and ignored by setting to `'drop'`::
 
     >>> combined.set_params(kernel_pca='drop')
     FeatureUnion(transformer_list=[('linear_pca', PCA()), 
@@ -418,14 +418,14 @@ preprocessing or a specific feature extraction method::
   ...      'expert_rating': [5, 3, 4, 5],
   ...      'user_rating': [4, 5, 4, 3]})
 
-For this data, we might want to encode the ``'city'`` column as a categorical
+For this data, we might want to encode the `'city'` column as a categorical
 variable using :class:`preprocessing.OneHotEncoder
 <sklearn.preprocessing.OneHotEncoder>` but apply a 
 :class:`feature_extraction.text.CountVectorizer
-<sklearn.feature_extraction.text.CountVectorizer>` to the ``'title'`` column.
+<sklearn.feature_extraction.text.CountVectorizer>` to the `'title'` column.
 As we might use multiple feature extraction methods on the same column, we give
-each transformer a unique name, say ``'city_category'`` and ``'title_bow'``.
-By default, the remaining rating columns are ignored (``remainder='drop'``)::
+each transformer a unique name, say `'city_category'` and `'title_bow'`.
+By default, the remaining rating columns are ignored (`remainder='drop'`)::
 
   >>> from sklearn.compose import ColumnTransformer
   >>> from sklearn.feature_extraction.text import CountVectorizer
@@ -455,10 +455,10 @@ By default, the remaining rating columns are ignored (``remainder='drop'``)::
 
 In the above example, the
 :class:`~sklearn.feature_extraction.text.CountVectorizer` expects a 1D array as
-input and therefore the columns were specified as a string (``'title'``).
+input and therefore the columns were specified as a string (`'title'`).
 However, :class:`preprocessing.OneHotEncoder <sklearn.preprocessing.OneHotEncoder>`
 as most of other transformers expects 2D data, therefore in that case you need
-to specify the column as a list of strings (``['city']``).
+to specify the column as a list of strings (`['city']`).
 
 Apart from a scalar or a single item list, the column selection can be specified
 as a list of multiple items, an integer array, a slice, or a boolean mask.
@@ -466,7 +466,7 @@ Strings can reference columns if the input is a DataFrame, integers are always
 interpreted as the positional columns.
 
 We can keep the remaining rating columns by setting
-``remainder='passthrough'``. The values are appended to the end of the
+`remainder='passthrough'`. The values are appended to the end of the
 transformation::
 
   >>> column_trans = ColumnTransformer(
@@ -480,7 +480,7 @@ transformation::
          [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 4, 4],
          [0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 5, 3]]...)
 
-The ``remainder`` parameter can be set to an estimator to transform the
+The `remainder` parameter can be set to an estimator to transform the
 remaining rating columns. The transformed values are appended to the end of
 the transformation::
 

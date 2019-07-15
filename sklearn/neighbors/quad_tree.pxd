@@ -94,7 +94,7 @@ cdef class _QuadTree:
     cdef int _check_point_in_cell(self, DTYPE_t[3] point, Cell* cell
                                   ) nogil except -1
 
-    # Private array manipulation to manage the ``cells`` array
+    # Private array manipulation to manage the `cells` array
     cdef int _resize(self, SIZE_t capacity) nogil except -1
     cdef int _resize_c(self, SIZE_t capacity=*) nogil except -1
     cdef int _get_cell(self, DTYPE_t[3] point, SIZE_t cell_id=*) nogil except -1

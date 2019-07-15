@@ -92,7 +92,7 @@ def _encode(values, uniques=None, encode=False, check_unknown=True):
     encode : bool, default False
         If True, also encode the values into integer codes based on `uniques`.
     check_unknown : bool, default True
-        If True, check for values in ``values`` that are not in ``unique``
+        If True, check for values in `values` that are not in `unique`
         and raise an error. This is ignored for object dtype, and treated as
         True in this case. This parameter is useful for
         _BaseEncoder._transform() to avoid calling _encode_check_unknown()
@@ -101,10 +101,10 @@ def _encode(values, uniques=None, encode=False, check_unknown=True):
     Returns
     -------
     uniques
-        If ``encode=False``. The unique values are sorted if the `uniques`
+        If `encode=False`. The unique values are sorted if the `uniques`
         parameter was None (and thus inferred from the data).
     (uniques, encoded)
-        If ``encode=True``.
+        If `encode=True`.
 
     """
     if values.dtype == object:
@@ -141,7 +141,7 @@ def _encode_check_unknown(values, uniques, return_mask=False):
         The unique values present in `values` and not in `uniques` (the
         unknown values).
     valid_mask : boolean array
-        Additionally returned if ``return_mask=True``.
+        Additionally returned if `return_mask=True`.
 
     """
     if values.dtype == object:
@@ -489,9 +489,9 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         threshold : float or None
             Threshold used in the binary and multi-label cases.
 
-            Use 0 when ``Y`` contains the output of decision_function
+            Use 0 when `Y` contains the output of decision_function
             (classifier).
-            Use 0.5 when ``Y`` contains the output of predict_proba.
+            Use 0.5 when `Y` contains the output of predict_proba.
 
             If None, the threshold is assumed to be half way between
             neg_label and pos_label.

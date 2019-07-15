@@ -125,13 +125,13 @@ def safe_sparse_dot(a, b, dense_output=False):
     a : array or sparse matrix
     b : array or sparse matrix
     dense_output : boolean, default False
-        When False, either ``a`` or ``b`` being sparse will yield sparse
+        When False, either `a` or `b` being sparse will yield sparse
         output. When True, output will always be an array.
 
     Returns
     -------
     dot_product : array or sparse matrix
-        sparse if ``a`` or ``b`` is sparse and ``dense_output=False``.
+        sparse if `a` or `b` is sparse and `dense_output=False`.
     """
     if sparse.issparse(a) or sparse.issparse(b):
         ret = a * b
@@ -524,7 +524,7 @@ def svd_flip(u, v, u_based_decision=True):
 
 
 def log_logistic(X, out=None):
-    """Compute the log of the logistic function, ``log(1 / (1 + e ** -x))``.
+    """Compute the log of the logistic function, `log(1 / (1 + e ** -x))`.
 
     This implementation is numerically stable because it splits positive and
     negative values::
@@ -532,7 +532,7 @@ def log_logistic(X, out=None):
         -log(1 + exp(-x_i))     if x_i > 0
         x_i - log(1 + exp(x_i)) if x_i <= 0
 
-    For the ordinary logistic function, use ``scipy.special.expit``.
+    For the ordinary logistic function, use `scipy.special.expit`.
 
     Parameters
     ----------
@@ -800,9 +800,9 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
         Axis along which the cumulative sum is computed.
         The default (None) is to compute the cumsum over the flattened array.
     rtol : float
-        Relative tolerance, see ``np.allclose``
+        Relative tolerance, see `np.allclose`
     atol : float
-        Absolute tolerance, see ``np.allclose``
+        Absolute tolerance, see `np.allclose`
     """
     out = np.cumsum(arr, axis=axis, dtype=np.float64)
     expected = np.sum(arr, axis=axis, dtype=np.float64)

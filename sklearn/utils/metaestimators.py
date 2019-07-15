@@ -76,14 +76,14 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
 class _IffHasAttrDescriptor:
     """Implements a conditional property using the descriptor protocol.
 
-    Using this class to create a decorator will raise an ``AttributeError``
-    if none of the delegates (specified in ``delegate_names``) is an attribute
+    Using this class to create a decorator will raise an `AttributeError`
+    if none of the delegates (specified in `delegate_names`) is an attribute
     of the base object or the first found delegate does not have an attribute
-    ``attribute_name``.
+    `attribute_name`.
 
     This allows ducktyping of the decorated method based on
-    ``delegate.attribute_name``. Here ``delegate`` is the first item in
-    ``delegate_names`` for which ``hasattr(object, delegate) is True``.
+    `delegate.attribute_name`. Here `delegate` is the first item in
+    `delegate_names` for which `hasattr(object, delegate) is True`.
 
     See https://docs.python.org/3/howto/descriptor.html for an explanation of
     descriptors.
@@ -148,10 +148,10 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
     Slice X, y according to indices for cross-validation, but take care of
     precomputed kernel-matrices or pairwise affinities / distances.
 
-    If ``estimator._pairwise is True``, X needs to be square and
-    we slice rows and columns. If ``train_indices`` is not None,
-    we slice rows using ``indices`` (assumed the test set) and columns
-    using ``train_indices``, indicating the training set.
+    If `estimator._pairwise is True`, X needs to be square and
+    we slice rows and columns. If `train_indices` is not None,
+    we slice rows using `indices` (assumed the test set) and columns
+    using `train_indices`, indicating the training set.
 
     Labels y will always be indexed only along the first axis.
 
@@ -162,7 +162,7 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
         columns.
 
     X : array-like, sparse matrix or iterable
-        Data to be indexed. If ``estimator._pairwise is True``,
+        Data to be indexed. If `estimator._pairwise is True`,
         this needs to be a square array-like or sparse matrix.
 
     y : array-like, sparse matrix or iterable
@@ -170,12 +170,12 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
 
     indices : array of int
         Rows to select from X and y.
-        If ``estimator._pairwise is True`` and ``train_indices is None``
-        then ``indices`` will also be used to slice columns.
+        If `estimator._pairwise is True` and `train_indices is None`
+        then `indices` will also be used to slice columns.
 
     train_indices : array of int or None, default=None
-        If ``estimator._pairwise is True`` and ``train_indices is not None``,
-        then ``train_indices`` will be use to slice the columns of X.
+        If `estimator._pairwise is True` and `train_indices is not None`,
+        then `train_indices` will be use to slice the columns of X.
 
     Returns
     -------

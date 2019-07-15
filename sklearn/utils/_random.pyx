@@ -7,7 +7,7 @@
 """
 Random utility function
 =======================
-This module complements missing features of ``numpy.random``.
+This module complements missing features of `numpy.random`.
 
 The module contains:
     * Several algorithms to sample integers without replacement.

@@ -87,7 +87,7 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
     might be present.
 
     The visualization is fit automatically to the size of the axis.
-    Use the ``figsize`` or ``dpi`` arguments of ``plt.figure``  to control
+    Use the `figsize` or `dpi` arguments of `plt.figure`  to control
     the size of the rendering.
 
     Read more in the :ref:`User Guide <tree>`.
@@ -109,7 +109,7 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
     class_names : list of strings, bool or None, optional (default=None)
         Names of each of the target classes in ascending numerical order.
         Only relevant for classification and not supported for multi-output.
-        If ``True``, shows a symbolic representation of the class name.
+        If `True`, shows a symbolic representation of the class name.
 
     label : {'all', 'root', 'none'}, optional (default='all')
         Whether to show informative labels for impurity, etc.
@@ -117,25 +117,25 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
         the top root node, or 'none' to not show at any node.
 
     filled : bool, optional (default=False)
-        When set to ``True``, paint nodes to indicate majority class for
+        When set to `True`, paint nodes to indicate majority class for
         classification, extremity of values for regression, or purity of node
         for multi-output.
 
     impurity : bool, optional (default=True)
-        When set to ``True``, show the impurity at each node.
+        When set to `True`, show the impurity at each node.
 
     node_ids : bool, optional (default=False)
-        When set to ``True``, show the ID number on each node.
+        When set to `True`, show the ID number on each node.
 
     proportion : bool, optional (default=False)
-        When set to ``True``, change the display of 'values' and/or 'samples'
+        When set to `True`, change the display of 'values' and/or 'samples'
         to be proportions and percentages respectively.
 
     rotate : bool, optional (default=False)
-        When set to ``True``, orient tree left to right rather than top-down.
+        When set to `True`, orient tree left to right rather than top-down.
 
     rounded : bool, optional (default=False)
-        When set to ``True``, draw node boxes with rounded corners and use
+        When set to `True`, draw node boxes with rounded corners and use
         Helvetica fonts instead of Times-Roman.
 
     precision : int, optional (default=3)
@@ -666,7 +666,7 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
         The decision tree to be exported to GraphViz.
 
     out_file : file object or string, optional (default=None)
-        Handle or name of the output file. If ``None``, the result is
+        Handle or name of the output file. If `None`, the result is
         returned as a string.
 
         .. versionchanged:: 0.20
@@ -682,7 +682,7 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
     class_names : list of strings, bool or None, optional (default=None)
         Names of each of the target classes in ascending numerical order.
         Only relevant for classification and not supported for multi-output.
-        If ``True``, shows a symbolic representation of the class name.
+        If `True`, shows a symbolic representation of the class name.
 
     label : {'all', 'root', 'none'}, optional (default='all')
         Whether to show informative labels for impurity, etc.
@@ -690,32 +690,32 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
         the top root node, or 'none' to not show at any node.
 
     filled : bool, optional (default=False)
-        When set to ``True``, paint nodes to indicate majority class for
+        When set to `True`, paint nodes to indicate majority class for
         classification, extremity of values for regression, or purity of node
         for multi-output.
 
     leaves_parallel : bool, optional (default=False)
-        When set to ``True``, draw all leaf nodes at the bottom of the tree.
+        When set to `True`, draw all leaf nodes at the bottom of the tree.
 
     impurity : bool, optional (default=True)
-        When set to ``True``, show the impurity at each node.
+        When set to `True`, show the impurity at each node.
 
     node_ids : bool, optional (default=False)
-        When set to ``True``, show the ID number on each node.
+        When set to `True`, show the ID number on each node.
 
     proportion : bool, optional (default=False)
-        When set to ``True``, change the display of 'values' and/or 'samples'
+        When set to `True`, change the display of 'values' and/or 'samples'
         to be proportions and percentages respectively.
 
     rotate : bool, optional (default=False)
-        When set to ``True``, orient tree left to right rather than top-down.
+        When set to `True`, orient tree left to right rather than top-down.
 
     rounded : bool, optional (default=False)
-        When set to ``True``, draw node boxes with rounded corners and use
+        When set to `True`, draw node boxes with rounded corners and use
         Helvetica fonts instead of Times-Roman.
 
     special_characters : bool, optional (default=False)
-        When set to ``False``, ignore special characters for PostScript
+        When set to `False`, ignore special characters for PostScript
         compatibility.
 
     precision : int, optional (default=3)
@@ -726,7 +726,7 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
     -------
     dot_data : string
         String representation of the input tree in GraphViz dot format.
-        Only returned if ``out_file`` is None.
+        Only returned if `out_file` is None.
 
         .. versionadded:: 0.18
 

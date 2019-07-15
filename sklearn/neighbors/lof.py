@@ -103,8 +103,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         - if a float, the contamination should be in the range [0, 0.5].
 
         .. versionchanged:: 0.22
-           The default value of ``contamination`` changed from 0.1
-           to ``'auto'``.
+           The default value of `contamination` changed from 0.1
+           to `'auto'`.
 
     novelty : boolean, default False
         By default, LocalOutlierFactor is only meant to be used for outlier
@@ -115,8 +115,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
     n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
         Affects only :meth:`kneighbors` and :meth:`kneighbors_graph` methods.
 
@@ -125,7 +125,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     ----------
     negative_outlier_factor_ : numpy array, shape (n_samples,)
         The opposite LOF of the training samples. The higher, the more normal.
-        Inliers tend to have a LOF score close to 1 (``negative_outlier_factor_``
+        Inliers tend to have a LOF score close to 1 (`negative_outlier_factor_`
         close to -1), while outliers tend to have a larger LOF score.
 
         The local outlier factor (LOF) of a sample captures its
@@ -404,7 +404,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         Also, the samples in X are not considered in the neighborhood of any
         point.
         The score_samples on training data is available by considering the
-        the ``negative_outlier_factor_`` attribute.
+        the `negative_outlier_factor_` attribute.
 
         Parameters
         ----------
@@ -440,7 +440,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         Also, the samples in X are not considered in the neighborhood of any
         point.
         The score_samples on training data is available by considering the
-        the ``negative_outlier_factor_`` attribute.
+        the `negative_outlier_factor_` attribute.
 
         Parameters
         ----------

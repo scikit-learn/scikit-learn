@@ -31,7 +31,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
     Likelihood (SML), also known as Persistent Contrastive Divergence (PCD)
     [2].
 
-    The time complexity of this implementation is ``O(d ** 2)`` assuming
+    The time complexity of this implementation is `O(d ** 2)` assuming
     d ~ n_features ~ n_components.
 
     Read more in the :ref:`User Guide <rbm>`.

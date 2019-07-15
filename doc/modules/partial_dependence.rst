@@ -44,7 +44,7 @@ on age.
 The :mod:`sklearn.inspection` module provides a convenience function
 :func:`plot_partial_dependence` to create one-way and two-way partial
 dependence plots. In the below example we show how to create a grid of
-partial dependence plots: two one-way PDPs for the features ``0`` and ``1``
+partial dependence plots: two one-way PDPs for the features `0` and `1`
 and a two-way PDP between the two features::
 
     >>> from sklearn.datasets import make_hastie_10_2
@@ -57,11 +57,11 @@ and a two-way PDP between the two features::
     >>> features = [0, 1, (0, 1)]
     >>> plot_partial_dependence(clf, X, features) #doctest: +SKIP
 
-You can access the newly created figure and Axes objects using ``plt.gcf()``
-and ``plt.gca()``.
+You can access the newly created figure and Axes objects using `plt.gcf()`
+and `plt.gca()`.
 
 For multi-class classification, you need to set the class label for which
-the PDPs should be created via the ``target`` argument::
+the PDPs should be created via the `target` argument::
 
     >>> from sklearn.datasets import load_iris
     >>> iris = load_iris()
@@ -70,7 +70,7 @@ the PDPs should be created via the ``target`` argument::
     >>> features = [3, 2, (3, 2)]
     >>> plot_partial_dependence(mc_clf, X, features, target=0) #doctest: +SKIP
 
-The same parameter ``target`` is used to specify the target in multi-output
+The same parameter `target` is used to specify the target in multi-output
 regression settings.
 
 If you need the raw values of the partial dependence function rather than
@@ -86,26 +86,26 @@ the plots, you can use the
     [array([-1.624..., -1.592..., ...
 
 The values at which the partial dependence should be evaluated are directly
-generated from ``X``. For 2-way partial dependence, a 2D-grid of values is
-generated. The ``values`` field returned by
+generated from `X`. For 2-way partial dependence, a 2D-grid of values is
+generated. The `values` field returned by
 :func:`sklearn.inspection.partial_dependence` gives the actual values
 used in the grid for each target feature. They also correspond to the axis
 of the plots.
 
-For each value of the 'target' features in the ``grid`` the partial
+For each value of the 'target' features in the `grid` the partial
 dependence function needs to marginalize the predictions of the estimator
-over all possible values of the 'complement' features. With the ``'brute'``
-method, this is done by replacing every target feature value of ``X`` by those
+over all possible values of the 'complement' features. With the `'brute'`
+method, this is done by replacing every target feature value of `X` by those
 in the grid, and computing the average prediction.
 
 In decision trees this can be evaluated efficiently without reference to the
-training data (``'recursion'`` method). For each grid point a weighted tree
+training data (`'recursion'` method). For each grid point a weighted tree
 traversal is performed: if a split node involves a 'target' feature, the
 corresponding left or right branch is followed, otherwise both branches are
 followed, each branch is weighted by the fraction of training samples that
 entered that branch. Finally, the partial dependence is given by a weighted
-average of all visited leaves. Note that with the ``'recursion'`` method,
-``X`` is only used to generate the grid, not to compute the averaged
+average of all visited leaves. Note that with the `'recursion'` method,
+`X` is only used to generate the grid, not to compute the averaged
 predictions. The averaged predictions will always be computed on the data with
 which the trees were trained.
 

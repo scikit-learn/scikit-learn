@@ -9,9 +9,9 @@ pairwise distances or affinity of sets of samples.
 This module contains both distance metrics and kernels. A brief summary is
 given on the two here.
 
-Distance metrics are functions ``d(a, b)`` such that ``d(a, b) < d(a, c)``
-if objects ``a`` and ``b`` are considered "more similar" than objects ``a``
-and ``c``. Two objects exactly alike would have a distance of zero.
+Distance metrics are functions `d(a, b)` such that `d(a, b) < d(a, c)`
+if objects `a` and `b` are considered "more similar" than objects `a`
+and `c`. Two objects exactly alike would have a distance of zero.
 One of the most popular examples is Euclidean distance.
 To be a 'true' metric, it must obey the following four conditions::
 
@@ -20,24 +20,24 @@ To be a 'true' metric, it must obey the following four conditions::
     3. d(a, b) == d(b, a), symmetry
     4. d(a, c) <= d(a, b) + d(b, c), the triangle inequality
 
-Kernels are measures of similarity, i.e. ``s(a, b) > s(a, c)``
-if objects ``a`` and ``b`` are considered "more similar" than objects
-``a`` and ``c``. A kernel must also be positive semi-definite.
+Kernels are measures of similarity, i.e. `s(a, b) > s(a, c)`
+if objects `a` and `b` are considered "more similar" than objects
+`a` and `c`. A kernel must also be positive semi-definite.
 
 There are a number of ways to convert between a distance metric and a
-similarity measure, such as a kernel. Let ``D`` be the distance, and ``S`` be
+similarity measure, such as a kernel. Let `D` be the distance, and `S` be
 the kernel:
 
-    1. ``S = np.exp(-D * gamma)``, where one heuristic for choosing
-       ``gamma`` is ``1 / num_features``
-    2. ``S = 1. / (D / np.max(D))``
+    1. `S = np.exp(-D * gamma)`, where one heuristic for choosing
+       `gamma` is `1 / num_features`
+    2. `S = 1. / (D / np.max(D))`
 
 
 .. currentmodule:: sklearn.metrics
 
-The distances between the row vectors of ``X`` and the row vectors of ``Y``
-can be evaluated using :func:`pairwise_distances`. If ``Y`` is omitted the
-pairwise distances of the row vectors of ``X`` are calculated. Similarly,
+The distances between the row vectors of `X` and the row vectors of `Y`
+can be evaluated using :func:`pairwise_distances`. If `Y` is omitted the
+pairwise distances of the row vectors of `X` are calculated. Similarly,
 :func:`pairwise.pairwise_kernels` can be used to calculate the kernel between `X`
 and `Y` using different kernel functions. See the API reference for more
 details.
@@ -82,8 +82,8 @@ denoted by the vectors.
 
 This kernel is a popular choice for computing the similarity of documents
 represented as tf-idf vectors.
-:func:`cosine_similarity` accepts ``scipy.sparse`` matrices.
-(Note that the tf-idf functionality in ``sklearn.feature_extraction.text``
+:func:`cosine_similarity` accepts `scipy.sparse` matrices.
+(Note that the tf-idf functionality in `sklearn.feature_extraction.text`
 can produce normalized vectors, in which case :func:`cosine_similarity`
 is equivalent to :func:`linear_kernel`, only slower.)
 
@@ -98,8 +98,8 @@ is equivalent to :func:`linear_kernel`, only slower.)
 Linear kernel
 -------------
 The function :func:`linear_kernel` computes the linear kernel, that is, a
-special case of :func:`polynomial_kernel` with ``degree=1`` and ``coef0=0`` (homogeneous).
-If ``x`` and ``y`` are column vectors, their linear kernel is:
+special case of :func:`polynomial_kernel` with `degree=1` and `coef0=0` (homogeneous).
+If `x` and `y` are column vectors, their linear kernel is:
 
 .. math::
 
@@ -123,8 +123,8 @@ The polynomial kernel is defined as:
 
 where:
 
-    * ``x``, ``y`` are the input vectors
-    * ``d`` is the kernel degree
+    * `x`, `y` are the input vectors
+    * `d` is the kernel degree
 
 If :math:`c_0 = 0` the kernel is said to be homogeneous.
 
@@ -143,7 +143,7 @@ activation function). It is defined as:
 
 where:
 
-    * ``x``, ``y`` are the input vectors
+    * `x`, `y` are the input vectors
     * :math:`\gamma` is known as slope
     * :math:`c_0` is known as intercept
 
@@ -158,7 +158,7 @@ between two vectors. This kernel is defined as:
 
     k(x, y) = \exp( -\gamma \| x-y \|^2)
 
-where ``x`` and ``y`` are the input vectors. If :math:`\gamma = \sigma^{-2}`
+where `x` and `y` are the input vectors. If :math:`\gamma = \sigma^{-2}`
 the kernel is known as the Gaussian kernel of variance :math:`\sigma^2`.
 
 .. _laplacian_kernel:
@@ -172,7 +172,7 @@ function kernel defined as:
 
     k(x, y) = \exp( -\gamma \| x-y \|_1)
 
-where ``x`` and ``y`` are the input vectors and :math:`\|x-y\|_1` is the 
+where `x` and `y` are the input vectors and :math:`\|x-y\|_1` is the 
 Manhattan distance between the input vectors.
 
 It has proven useful in ML applied to noiseless data.
@@ -186,7 +186,7 @@ Chi-squared kernel
 The chi-squared kernel is a very popular choice for training non-linear SVMs in
 computer vision applications.
 It can be computed using :func:`chi2_kernel` and then passed to an
-:class:`sklearn.svm.SVC` with ``kernel="precomputed"``::
+:class:`sklearn.svm.SVC` with `kernel="precomputed"`::
 
     >>> from sklearn.svm import SVC
     >>> from sklearn.metrics.pairwise import chi2_kernel
@@ -203,7 +203,7 @@ It can be computed using :func:`chi2_kernel` and then passed to an
     >>> svm.predict(K)
     array([0, 1, 0, 1])
 
-It can also be directly used as the ``kernel`` argument::
+It can also be directly used as the `kernel` argument::
 
     >>> svm = SVC(kernel=chi2_kernel).fit(X, y)
     >>> svm.predict(X)

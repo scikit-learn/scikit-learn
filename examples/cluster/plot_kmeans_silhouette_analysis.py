@@ -16,16 +16,16 @@ two neighboring clusters and negative values indicate that those samples might
 have been assigned to the wrong cluster.
 
 In this example the silhouette analysis is used to choose an optimal value for
-``n_clusters``. The silhouette plot shows that the ``n_clusters`` value of 3, 5
+`n_clusters`. The silhouette plot shows that the `n_clusters` value of 3, 5
 and 6 are a bad pick for the given data due to the presence of clusters with
 below average silhouette scores and also due to wide fluctuations in the size
 of the silhouette plots. Silhouette analysis is more ambivalent in deciding
 between 2 and 4.
 
 Also from the thickness of the silhouette plot the cluster size can be
-visualized. The silhouette plot for cluster 0 when ``n_clusters`` is equal to
+visualized. The silhouette plot for cluster 0 when `n_clusters` is equal to
 2, is bigger in size owing to the grouping of the 3 sub clusters into one big
-cluster. However when the ``n_clusters`` is equal to 4, all the plots are more
+cluster. However when the `n_clusters` is equal to 4, all the plots are more
 or less of similar thickness and hence are of similar sizes as can be also
 verified from the labelled scatter plot on the right.
 """

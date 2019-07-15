@@ -84,7 +84,7 @@ class CheckingClassifier(BaseEstimator, ClassifierMixin):
             None for unsupervised learning.
 
         **fit_params : dict of string -> object
-            Parameters passed to the ``fit`` method of the estimator
+            Parameters passed to the `fit` method of the estimator
         """
         assert len(X) == len(y)
         if self.check_X is not None:

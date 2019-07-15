@@ -152,10 +152,10 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
     Parameters
     ----------
     estimators : list of (string, estimator) tuples
-        Invoking the ``fit`` method on the ``VotingClassifier`` will fit clones
+        Invoking the `fit` method on the `VotingClassifier` will fit clones
         of those original estimators that will be stored in the class attribute
-        ``self.estimators_``. An estimator can be set to ``None`` or ``'drop'``
-        using ``set_params``.
+        `self.estimators_`. An estimator can be set to `None` or `'drop'`
+        using `set_params`.
 
     voting : str, {'hard', 'soft'} (default='hard')
         If 'hard', uses predicted class labels for majority rule voting.
@@ -169,9 +169,9 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
         before averaging (`soft` voting). Uses uniform weights if `None`.
 
     n_jobs : int or None, optional (default=None)
-        The number of jobs to run in parallel for ``fit``.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        The number of jobs to run in parallel for `fit`.
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     flatten_transform : bool, optional (default=True)
@@ -184,7 +184,7 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
     Attributes
     ----------
     estimators_ : list of classifiers
-        The collection of fitted sub-estimators as defined in ``estimators``
+        The collection of fitted sub-estimators as defined in `estimators`
         that are not `None`.
 
     named_estimators_ : Bunch object, a dictionary with attribute access
@@ -385,25 +385,25 @@ class VotingRegressor(_BaseVoting, RegressorMixin):
     Parameters
     ----------
     estimators : list of (string, estimator) tuples
-        Invoking the ``fit`` method on the ``VotingRegressor`` will fit clones
+        Invoking the `fit` method on the `VotingRegressor` will fit clones
         of those original estimators that will be stored in the class attribute
-        ``self.estimators_``. An estimator can be set to ``None`` or ``'drop'``
-        using ``set_params``.
+        `self.estimators_`. An estimator can be set to `None` or `'drop'`
+        using `set_params`.
 
     weights : array-like, shape (n_regressors,), optional (default=`None`)
         Sequence of weights (`float` or `int`) to weight the occurrences of
         predicted values before averaging. Uses uniform weights if `None`.
 
     n_jobs : int or None, optional (default=None)
-        The number of jobs to run in parallel for ``fit``.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        The number of jobs to run in parallel for `fit`.
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     Attributes
     ----------
     estimators_ : list of regressors
-        The collection of fitted sub-estimators as defined in ``estimators``
+        The collection of fitted sub-estimators as defined in `estimators`
         that are not `None`.
 
     named_estimators_ : Bunch object, a dictionary with attribute access

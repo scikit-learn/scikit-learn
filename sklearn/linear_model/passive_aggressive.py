@@ -23,7 +23,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
     max_iter : int, optional (default=1000)
         The maximum number of passes over the training data (aka epochs).
-        It only impacts the behavior in the ``fit`` method, and not the
+        It only impacts the behavior in the `fit` method, and not the
         `partial_fit`.
 
         .. versionadded:: 0.19
@@ -69,8 +69,8 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     n_jobs : int or None, optional (default=None)
         The number of CPUs to use to do the OVA (One Versus All, for
         multi-class problems) computation.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     random_state : int, RandomState instance or None, optional, default=None
@@ -97,14 +97,14 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``
+        as `n_samples / (n_classes * np.bincount(y))`
 
         .. versionadded:: 0.17
            parameter *class_weight* to automatically weight samples.
 
     average : bool or int, optional
         When set to True, computes the averaged SGD weights and stores the
-        result in the ``coef_`` attribute. If set to an int greater than 1,
+        result in the `coef_` attribute. If set to an int greater than 1,
         averaging will begin once the total number of samples seen reaches
         average. So average=10 will begin averaging after seeing 10 samples.
 
@@ -264,7 +264,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
 
     max_iter : int, optional (default=1000)
         The maximum number of passes over the training data (aka epochs).
-        It only impacts the behavior in the ``fit`` method, and not the
+        It only impacts the behavior in the `fit` method, and not the
         `partial_fit`.
 
         .. versionadded:: 0.19
@@ -330,7 +330,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
 
     average : bool or int, optional
         When set to True, computes the averaged SGD weights and stores the
-        result in the ``coef_`` attribute. If set to an int greater than 1,
+        result in the `coef_` attribute. If set to an int greater than 1,
         averaging will begin once the total number of samples seen reaches
         average. So average=10 will begin averaging after seeing 10 samples.
 

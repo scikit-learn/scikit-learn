@@ -877,7 +877,7 @@ def test_column_transformer_sparse_remainder_transformer():
     X_trans = ct.fit_transform(X_array)
     assert sparse.issparse(X_trans)
     # SparseMatrixTrans creates 3 features for each column. There is
-    # one column in ``transformers``, thus:
+    # one column in `transformers`, thus:
     assert X_trans.shape == (3, 3 + 1)
 
     exp_array = np.hstack(

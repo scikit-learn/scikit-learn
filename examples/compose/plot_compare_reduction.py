@@ -7,25 +7,25 @@ Selecting dimensionality reduction with Pipeline and GridSearchCV
 
 This example constructs a pipeline that does dimensionality
 reduction followed by prediction with a support vector
-classifier. It demonstrates the use of ``GridSearchCV`` and
-``Pipeline`` to optimize over different classes of estimators in a
-single CV run -- unsupervised ``PCA`` and ``NMF`` dimensionality
+classifier. It demonstrates the use of `GridSearchCV` and
+`Pipeline` to optimize over different classes of estimators in a
+single CV run -- unsupervised `PCA` and `NMF` dimensionality
 reductions are compared to univariate feature selection during
 the grid search.
 
-Additionally, ``Pipeline`` can be instantiated with the ``memory``
+Additionally, `Pipeline` can be instantiated with the `memory`
 argument to memoize the transformers within the pipeline, avoiding to fit
 again the same transformers over and over.
 
-Note that the use of ``memory`` to enable caching becomes interesting when the
+Note that the use of `memory` to enable caching becomes interesting when the
 fitting of a transformer is costly.
 """
 
 ###############################################################################
-# Illustration of ``Pipeline`` and ``GridSearchCV``
+# Illustration of `Pipeline` and `GridSearchCV`
 ###############################################################################
-# This section illustrates the use of a ``Pipeline`` with
-# ``GridSearchCV``
+# This section illustrates the use of a `Pipeline` with
+# `GridSearchCV`
 
 # Authors: Robert McGibbon, Joel Nothman, Guillaume Lemaitre
 
@@ -90,16 +90,16 @@ plt.legend(loc='upper left')
 plt.show()
 
 ###############################################################################
-# Caching transformers within a ``Pipeline``
+# Caching transformers within a `Pipeline`
 ###############################################################################
 # It is sometimes worthwhile storing the state of a specific transformer
-# since it could be used again. Using a pipeline in ``GridSearchCV`` triggers
-# such situations. Therefore, we use the argument ``memory`` to enable caching.
+# since it could be used again. Using a pipeline in `GridSearchCV` triggers
+# such situations. Therefore, we use the argument `memory` to enable caching.
 #
 # .. warning::
 #     Note that this example is, however, only an illustration since for this
 #     specific case fitting PCA is not necessarily slower than loading the
-#     cache. Hence, use the ``memory`` constructor parameter when the fitting
+#     cache. Hence, use the `memory` constructor parameter when the fitting
 #     of a transformer is costly.
 
 from joblib import Memory
@@ -120,9 +120,9 @@ memory.clear(warn=False)
 rmtree(location)
 
 ###############################################################################
-# The ``PCA`` fitting is only computed at the evaluation of the first
-# configuration of the ``C`` parameter of the ``LinearSVC`` classifier. The
-# other configurations of ``C`` will trigger the loading of the cached ``PCA``
+# The `PCA` fitting is only computed at the evaluation of the first
+# configuration of the `C` parameter of the `LinearSVC` classifier. The
+# other configurations of `C` will trigger the loading of the cached `PCA`
 # estimator data, leading to save processing time. Therefore, the use of
-# caching the pipeline using ``memory`` is highly beneficial when fitting
+# caching the pipeline using `memory` is highly beneficial when fitting
 # a transformer is costly.

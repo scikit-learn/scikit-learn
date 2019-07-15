@@ -24,28 +24,28 @@ class IncrementalPCA(_BasePCA):
     memory efficient than a PCA, and allows sparse input.
 
     This algorithm has constant memory complexity, on the order
-    of ``batch_size * n_features``, enabling use of np.memmap files without
+    of `batch_size * n_features`, enabling use of np.memmap files without
     loading the entire file into memory. For sparse matrices, the input
     is converted to dense in batches (in order to be able to subtract the
     mean) which avoids storing the entire dense matrix at any one time.
 
     The computational overhead of each SVD is
-    ``O(batch_size * n_features ** 2)``, but only 2 * batch_size samples
-    remain in memory at a time. There will be ``n_samples / batch_size`` SVD
+    `O(batch_size * n_features ** 2)`, but only 2 * batch_size samples
+    remain in memory at a time. There will be `n_samples / batch_size` SVD
     computations to get the principal components, versus 1 large SVD of
-    complexity ``O(n_samples * n_features ** 2)`` for PCA.
+    complexity `O(n_samples * n_features ** 2)` for PCA.
 
     Read more in the :ref:`User Guide <IncrementalPCA>`.
 
     Parameters
     ----------
     n_components : int or None, (default=None)
-        Number of components to keep. If ``n_components `` is ``None``,
-        then ``n_components`` is set to ``min(n_samples, n_features)``.
+        Number of components to keep. If `n_components ` is `None`,
+        then `n_components` is set to `min(n_samples, n_features)`.
 
     whiten : bool, optional
-        When True (False by default) the ``components_`` vectors are divided
-        by ``n_samples`` times ``components_`` to ensure uncorrelated outputs
+        When True (False by default) the `components_` vectors are divided
+        by `n_samples` times `components_` to ensure uncorrelated outputs
         with unit component-wise variances.
 
         Whitening will remove some information from the transformed signal
@@ -54,13 +54,13 @@ class IncrementalPCA(_BasePCA):
         making data respect some hard-wired assumptions.
 
     copy : bool, (default=True)
-        If False, X will be overwritten. ``copy=False`` can be used to
+        If False, X will be overwritten. `copy=False` can be used to
         save memory but is unsafe for general use.
 
     batch_size : int or None, (default=None)
         The number of samples to use for each batch. Only used when calling
-        ``fit``. If ``batch_size`` is ``None``, then ``batch_size``
-        is inferred from the data and set to ``5 * n_features``, to provide a
+        `fit`. If `batch_size` is `None`, then `batch_size`
+        is inferred from the data and set to `5 * n_features`, to provide a
         balance between approximation accuracy and memory consumption.
 
     Attributes
@@ -78,15 +78,15 @@ class IncrementalPCA(_BasePCA):
 
     singular_values_ : array, shape (n_components,)
         The singular values corresponding to each of the selected components.
-        The singular values are equal to the 2-norms of the ``n_components``
+        The singular values are equal to the 2-norms of the `n_components`
         variables in the lower-dimensional space.
 
     mean_ : array, shape (n_features,)
-        Per-feature empirical mean, aggregate over calls to ``partial_fit``.
+        Per-feature empirical mean, aggregate over calls to `partial_fit`.
 
     var_ : array, shape (n_features,)
         Per-feature empirical variance, aggregate over calls to
-        ``partial_fit``.
+        `partial_fit`.
 
     noise_variance_ : float
         The estimated noise covariance following the Probabilistic PCA model
@@ -96,11 +96,11 @@ class IncrementalPCA(_BasePCA):
 
     n_components_ : int
         The estimated number of components. Relevant when
-        ``n_components=None``.
+        `n_components=None`.
 
     n_samples_seen_ : int
         The number of samples processed by the estimator. Will be reset on
-        new calls to fit, but increments across ``partial_fit`` calls.
+        new calls to fit, but increments across `partial_fit` calls.
 
     Examples
     --------
@@ -137,8 +137,8 @@ class IncrementalPCA(_BasePCA):
     algorithmic complexity of the SVD. The source for this technique is
     *Matrix Computations, Third Edition, G. Holub and C. Van Loan, Chapter 5,
     section 5.4.4, pp 252-253.*. This technique has been omitted because it is
-    advantageous only when decomposing a matrix with ``n_samples`` (rows)
-    >= 5/3 * ``n_features`` (columns), and hurts the readability of the
+    advantageous only when decomposing a matrix with `n_samples` (rows)
+    >= 5/3 * `n_features` (columns), and hurts the readability of the
     implemented algorithm. This would be a good opportunity for future
     optimization, if it is deemed necessary.
 

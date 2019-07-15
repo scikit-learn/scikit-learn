@@ -6,15 +6,15 @@ Dataset loading utilities
 
 .. currentmodule:: sklearn.datasets
 
-The ``sklearn.datasets`` package embeds some small toy datasets
+The `sklearn.datasets` package embeds some small toy datasets
 as introduced in the :ref:`Getting Started <loading_example_dataset>` section.
 
 This package also features helpers to fetch larger datasets commonly
 used by the machine learning community to benchmark algorithms on data
 that comes from the 'real world'.
 
-To evaluate the impact of the scale of the dataset (``n_samples`` and
-``n_features``) while controlling the statistical properties of the data
+To evaluate the impact of the scale of the dataset (`n_samples` and
+`n_features`) while controlling the statistical properties of the data
 (typically the correlation and informativeness of the features), it is
 also possible to generate synthetic data.
 
@@ -31,24 +31,24 @@ described in the :ref:`toy_datasets` section.
 described in the :ref:`real_world_datasets` section.
 
 Both loaders and fetchers functions return a dictionary-like object holding 
-at least two items: an array of shape ``n_samples`` * ``n_features`` with 
-key ``data`` (except for 20newsgroups) and a numpy array of 
-length ``n_samples``, containing the target values, with key ``target``.
+at least two items: an array of shape `n_samples` * `n_features` with 
+key `data` (except for 20newsgroups) and a numpy array of 
+length `n_samples`, containing the target values, with key `target`.
 
 It's also possible for almost all of these function to constrain the output
 to be a tuple containing only the data and the target, by setting the 
-``return_X_y`` parameter to ``True``.
+`return_X_y` parameter to `True`.
 
-The datasets also contain a full description in their ``DESCR`` attribute and 
-some contain ``feature_names`` and ``target_names``. See the dataset 
+The datasets also contain a full description in their `DESCR` attribute and 
+some contain `feature_names` and `target_names`. See the dataset 
 descriptions below for details.  
 
 **The dataset generation functions.** They can be used to generate controlled 
 synthetic datasets, described in the :ref:`sample_generators` section.
 
-These functions return a tuple ``(X, y)`` consisting of a ``n_samples`` *
-``n_features`` numpy array ``X`` and an array of length ``n_samples``
-containing the targets ``y``.
+These functions return a tuple `(X, y)` consisting of a `n_samples` *
+`n_features` numpy array `X` and an array of length `n_samples`
+containing the targets `y`.
 
 In addition, there are also miscellaneous tools to load datasets of other 
 formats or from other locations, described in the :ref:`loading_other_datasets`
@@ -281,10 +281,10 @@ and pipeline on 2D data.
 
 .. warning::
 
-  The default coding of images is based on the ``uint8`` dtype to
+  The default coding of images is based on the `uint8` dtype to
   spare memory.  Often machine learning algorithms work best if the
   input is converted to a floating point representation first.  Also,
-  if you plan to use ``matplotlib.pyplpt.imshow`` don't forget to scale to the range
+  if you plan to use `matplotlib.pyplpt.imshow` don't forget to scale to the range
   0 - 1 as done in the following example.
 
 .. topic:: Examples:
@@ -298,9 +298,9 @@ Datasets in svmlight / libsvm format
 
 scikit-learn includes utility functions for loading
 datasets in the svmlight / libsvm format. In this format, each line
-takes the form ``<label> <feature-id>:<feature-value>
-<feature-id>:<feature-value> ...``. This format is especially suitable for sparse datasets.
-In this module, scipy sparse CSR matrices are used for ``X`` and numpy arrays are used for ``y``.
+takes the form `<label> <feature-id>:<feature-value>
+<feature-id>:<feature-value> ...`. This format is especially suitable for sparse datasets.
+In this module, scipy sparse CSR matrices are used for `X` and numpy arrays are used for `y`.
 
 You may load a dataset like as follows::
 
@@ -314,7 +314,7 @@ You may also load two (or more) datasets at once::
   ...     ("/path/to/train_dataset.txt", "/path/to/test_dataset.txt"))
   ...                                                         # doctest: +SKIP
 
-In this case, ``X_train`` and ``X_test`` are guaranteed to have the same number
+In this case, `X_train` and `X_test` are guaranteed to have the same number
 of features. Another way to achieve the same result is to fix the number of
 features::
 
@@ -342,7 +342,7 @@ Downloading datasets from the openml.org repository
 `openml.org <https://openml.org>`_ is a public repository for machine learning
 data and experiments, that allows everybody to upload open datasets.
 
-The ``sklearn.datasets`` package is able to download datasets
+The `sklearn.datasets` package is able to download datasets
 from the repository using the function
 :func:`sklearn.datasets.fetch_openml`.
 
@@ -363,8 +363,8 @@ classes::
   >>> np.unique(mice.target)
   array(['c-CS-m', 'c-CS-s', 'c-SC-m', 'c-SC-s', 't-CS-m', 't-CS-s', 't-SC-m', 't-SC-s'], dtype=object)
 
-You can get more information on the dataset by looking at the ``DESCR``
-and ``details`` attributes::
+You can get more information on the dataset by looking at the `DESCR`
+and `details` attributes::
 
   >>> print(mice.DESCR) # doctest: +SKIP
   **Author**: Clara Higuera, Katheleen J. Gardiner, Krzysztof J. Cios
@@ -385,17 +385,17 @@ and ``details`` attributes::
   'md5_checksum': '3c479a6885bfa0438971388283a1ce32'}
 
 
-The ``DESCR`` contains a free-text description of the data, while ``details``
+The `DESCR` contains a free-text description of the data, while `details`
 contains a dictionary of meta-data stored by openml, like the dataset id.
 For more details, see the `OpenML documentation
-<https://docs.openml.org/#data>`_ The ``data_id`` of the mice protein dataset
+<https://docs.openml.org/#data>`_ The `data_id` of the mice protein dataset
 is 40966, and you can use this (or the name) to get more information on the
 dataset on the openml website::
 
   >>> mice.url
   'https://www.openml.org/d/40966'
 
-The ``data_id`` also uniquely identifies a dataset from OpenML::
+The `data_id` also uniquely identifies a dataset from OpenML::
 
   >>> mice = fetch_openml(data_id=40966)
   >>> mice.details # doctest: +SKIP
@@ -415,15 +415,15 @@ The ``data_id`` also uniquely identifies a dataset from OpenML::
 Dataset Versions
 ~~~~~~~~~~~~~~~~
 
-A dataset is uniquely specified by its ``data_id``, but not necessarily by its
+A dataset is uniquely specified by its `data_id`, but not necessarily by its
 name. Several different "versions" of a dataset with the same name can exist
 which can contain entirely different datasets.
 If a particular version of a dataset has been found to contain significant
 issues, it might be deactivated. Using a name to specify a dataset will yield
 the earliest version of a dataset that is still active. That means that
-``fetch_openml(name="miceprotein")`` can yield different results at different
+`fetch_openml(name="miceprotein")` can yield different results at different
 times if earlier versions become inactive.
-You can see that the dataset with ``data_id`` 40966 that we fetched above is
+You can see that the dataset with `data_id` 40966 that we fetched above is
 the version 1 of the "miceprotein" dataset::
 
   >>> mice.details['version']  #doctest: +SKIP
@@ -451,9 +451,9 @@ has multiple versions::
   '969'
 
 Specifying the dataset by the name "iris" yields the lowest version, version 1,
-with the ``data_id`` 61. To make sure you always get this exact dataset, it is
-safest to specify it by the dataset ``data_id``. The other dataset, with
-``data_id`` 969, is version 3 (version 2 has become inactive), and contains a
+with the `data_id` 61. To make sure you always get this exact dataset, it is
+safest to specify it by the dataset `data_id`. The other dataset, with
+`data_id` 969, is version 3 (version 2 has become inactive), and contains a
 binarized version of the data::
 
   >>> np.unique(iris_969.target)

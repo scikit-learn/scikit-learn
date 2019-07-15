@@ -1595,7 +1595,7 @@ def test_grid_search_cv_splits_consistency():
                             _pop_time_keys(gs4.cv_results_))
 
     # OneTimeSplitter is a non-re-entrant cv where split can be called only
-    # once if ``cv.split`` is called once per param setting in GridSearchCV.fit
+    # once if `cv.split` is called once per param setting in GridSearchCV.fit
     # the 2nd and 3rd parameter will not be evaluated as no train/test indices
     # will be generated for the 2nd and subsequent cv.split calls.
     # This is a check to make sure cv.split is not called once per param

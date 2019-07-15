@@ -49,43 +49,43 @@ cdef void _predict_regression_tree_inplace_fast_dense(DTYPE_t *X,
                                                       Py_ssize_t n_samples,
                                                       Py_ssize_t n_features,
                                                       float64 *out):
-    """Predicts output for regression tree and stores it in ``out[i, k]``.
+    """Predicts output for regression tree and stores it in `out[i, k]`.
 
     This function operates directly on the data arrays of the tree
     data structures. This is 5x faster than the variant above because
     it allows us to avoid buffer validation.
 
-    The function assumes that the ndarray that wraps ``X`` is
+    The function assumes that the ndarray that wraps `X` is
     c-continuous.
 
     Parameters
     ----------
     X : DTYPE_t pointer
-        The pointer to the data array of the input ``X``.
+        The pointer to the data array of the input `X`.
         Assumes that the array is c-continuous.
     root_node : tree Node pointer
-        Pointer to the main node array of the :class:``sklearn.tree.Tree``.
+        Pointer to the main node array of the :class:`sklearn.tree.Tree`.
     value : np.float64_t pointer
-        The pointer to the data array of the ``value`` array attribute
-        of the :class:``sklearn.tree.Tree``.
+        The pointer to the data array of the `value` array attribute
+        of the :class:`sklearn.tree.Tree`.
     scale : double
         A constant to scale the predictions.
     k : int
         The index of the tree output to be predicted. Must satisfy
-        0 <= ``k`` < ``K``.
+        0 <= `k` < `K`.
     K : int
         The number of regression tree outputs. For regression and
-        binary classification ``K == 1``, for multi-class
-        classification ``K == n_classes``.
+        binary classification `K == 1`, for multi-class
+        classification `K == n_classes`.
     n_samples : int
-        The number of samples in the input array ``X``;
-        ``n_samples == X.shape[0]``.
+        The number of samples in the input array `X`;
+        `n_samples == X.shape[0]`.
     n_features : int
-        The number of features; ``n_samples == X.shape[1]``.
+        The number of features; `n_samples == X.shape[1]`.
     out : np.float64_t pointer
         The pointer to the data array where the predictions are stored.
-        ``out`` is assumed to be a two-dimensional array of
-        shape ``(n_samples, K)``.
+        `out` is assumed to be a two-dimensional array of
+        shape `(n_samples, K)`.
     """
     cdef Py_ssize_t i
     cdef Node *node
@@ -102,9 +102,9 @@ cdef void _predict_regression_tree_inplace_fast_dense(DTYPE_t *X,
 def _predict_regression_tree_stages_sparse(np.ndarray[object, ndim=2] estimators,
                                            object X, double scale,
                                            np.ndarray[float64, ndim=2] out):
-    """Predicts output for regression tree inplace and adds scaled value to ``out[i, k]``.
+    """Predicts output for regression tree inplace and adds scaled value to `out[i, k]`.
 
-    The function assumes that the ndarray that wraps ``X`` is csr_matrix.
+    The function assumes that the ndarray that wraps `X` is csr_matrix.
     """
     cdef DTYPE_t* X_data = <DTYPE_t*>(<np.ndarray> X.data).data
     cdef INT32_t* X_indices = <INT32_t*>(<np.ndarray> X.indices).data
@@ -191,10 +191,10 @@ def _predict_regression_tree_stages_sparse(np.ndarray[object, ndim=2] estimators
 def predict_stages(np.ndarray[object, ndim=2] estimators,
                    object X, double scale,
                    np.ndarray[float64, ndim=2] out):
-    """Add predictions of ``estimators`` to ``out``.
+    """Add predictions of `estimators` to `out`.
 
-    Each estimator is scaled by ``scale`` before its prediction
-    is added to ``out``.
+    Each estimator is scaled by `scale` before its prediction
+    is added to `out`.
     """
     cdef Py_ssize_t i
     cdef Py_ssize_t k
@@ -231,17 +231,17 @@ def predict_stage(np.ndarray[object, ndim=2] estimators,
                   int stage,
                   object X, double scale,
                   np.ndarray[float64, ndim=2] out):
-    """Add predictions of ``estimators[stage]`` to ``out``.
+    """Add predictions of `estimators[stage]` to `out`.
 
-    Each estimator in the stage is scaled by ``scale`` before
-    its prediction is added to ``out``.
+    Each estimator in the stage is scaled by `scale` before
+    its prediction is added to `out`.
     """
     return predict_stages(estimators[stage:stage + 1], X, scale, out)
 
 
 def _random_sample_mask(np.npy_intp n_total_samples,
                         np.npy_intp n_total_in_bag, random_state):
-     """Create a random sample mask where ``n_total_in_bag`` elements are set.
+     """Create a random sample mask where `n_total_in_bag` elements are set.
 
      Parameters
      ----------
@@ -252,13 +252,13 @@ def _random_sample_mask(np.npy_intp n_total_samples,
          The number of elements in the sample mask which are set to 1.
 
      random_state : RandomState
-         A numpy ``RandomState`` object.
+         A numpy `RandomState` object.
 
      Returns
      -------
      sample_mask : np.ndarray, shape=[n_total_samples]
-         An ndarray where ``n_total_in_bag`` elements are set to ``True``
-         the others are ``False``.
+         An ndarray where `n_total_in_bag` elements are set to `True`
+         the others are `False`.
      """
      cdef np.ndarray[float64, ndim=1, mode="c"] rand = \
           random_state.rand(n_total_samples)

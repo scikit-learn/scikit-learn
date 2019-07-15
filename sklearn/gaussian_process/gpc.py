@@ -36,7 +36,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
     """Binary Gaussian process classification based on Laplace approximation.
 
     The implementation is based on Algorithm 3.1, 3.2, and 5.1 of
-    ``Gaussian Processes for Machine Learning'' (GPML) by Rasmussen and
+    `Gaussian Processes for Machine Learning'' (GPML) by Rasmussen and
     Williams.
 
     Internally, the Laplace approximation is used for approximating the
@@ -141,7 +141,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         of sqrt(W) is stored.
 
     log_marginal_likelihood_value_ : float
-        The log-marginal-likelihood of ``self.kernel_.theta``
+        The log-marginal-likelihood of `self.kernel_.theta`
 
     """
     def __init__(self, kernel=None, optimizer="fmin_l_bfgs_b",
@@ -252,7 +252,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         Returns
         -------
         C : array, shape = (n_samples,)
-            Predicted target values for X, values are from ``classes_``
+            Predicted target values for X, values are from `classes_`
         """
         check_is_fitted(self, ["X_train_", "y_train_", "pi_", "W_sr_", "L_"])
 
@@ -276,7 +276,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         C : array-like, shape = (n_samples, n_classes)
             Returns the probability of the samples for each class in
             the model. The columns correspond to the classes in sorted
-            order, as they appear in the attribute ``classes_``.
+            order, as they appear in the attribute `classes_`.
         """
         check_is_fitted(self, ["X_train_", "y_train_", "pi_", "W_sr_", "L_"])
 
@@ -311,7 +311,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         theta : array-like, shape = (n_kernel_params,) or None
             Kernel hyperparameters for which the log-marginal likelihood is
             evaluated. If None, the precomputed log_marginal_likelihood
-            of ``self.kernel_.theta`` is returned.
+            of `self.kernel_.theta` is returned.
 
         eval_gradient : bool, default: False
             If True, the gradient of the log-marginal likelihood with respect
@@ -534,8 +534,8 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     Attributes
@@ -548,7 +548,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         different kernels used in the one-versus-rest classifiers.
 
     log_marginal_likelihood_value_ : float
-        The log-marginal-likelihood of ``self.kernel_.theta``
+        The log-marginal-likelihood of `self.kernel_.theta`
 
     classes_ : array-like, shape = (n_classes,)
         Unique class labels.
@@ -651,7 +651,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         Returns
         -------
         C : array, shape = (n_samples,)
-            Predicted target values for X, values are from ``classes_``
+            Predicted target values for X, values are from `classes_`
         """
         check_is_fitted(self, ["classes_", "n_classes_"])
         X = check_array(X)
@@ -702,7 +702,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
             be the  hyperparameters of the compound kernel or of an individual
             kernel. In the latter case, all individual kernel get assigned the
             same theta values. If None, the precomputed log_marginal_likelihood
-            of ``self.kernel_.theta`` is returned.
+            of `self.kernel_.theta` is returned.
 
         eval_gradient : bool, default: False
             If True, the gradient of the log-marginal likelihood with respect

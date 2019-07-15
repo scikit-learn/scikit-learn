@@ -261,8 +261,8 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
         The number of jobs to use for the computation. This works by computing
         each of the n_init runs in parallel.
 
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     algorithm : "auto", "full" or "elkan", default="auto"
@@ -833,8 +833,8 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         The number of jobs to use for the computation. This works by computing
         each of the n_init runs in parallel.
 
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     algorithm : "auto", "full" or "elkan", default="auto"
@@ -847,8 +847,8 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     ----------
     cluster_centers_ : array, [n_clusters, n_features]
         Coordinates of cluster centers. If the algorithm stops before fully
-        converging (see ``tol`` and ``max_iter``), these will not be
-        consistent with ``labels_``.
+        converging (see `tol` and `max_iter`), these will not be
+        consistent with `labels_`.
 
     labels_ :
         Labels of each point
@@ -899,11 +899,11 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     clustering algorithms available), but it falls in local minima. That's why
     it can be useful to restart it several times.
 
-    If the algorithm stops before fully converging (because of ``tol`` or
-    ``max_iter``), ``labels_`` and ``cluster_centers_`` will not be consistent,
-    i.e. the ``cluster_centers_`` will not be the means of the points in each
-    cluster. Also, the estimator will reassign ``labels_`` after the last
-    iteration to make ``labels_`` consistent with ``predict`` on the training
+    If the algorithm stops before fully converging (because of `tol` or
+    `max_iter`), `labels_` and `cluster_centers_` will not be consistent,
+    i.e. the `cluster_centers_` will not be the means of the points in each
+    cluster. Also, the estimator will reassign `labels_` after the last
+    iteration to make `labels_` consistent with `predict` on the training
     set.
 
     """
@@ -1383,7 +1383,7 @@ class MiniBatchKMeans(KMeans):
     n_init : int, default=3
         Number of random initializations that are tried.
         In contrast to KMeans, the algorithm is only run once, using the
-        best of the ``n_init`` initializations as measured by inertia.
+        best of the `n_init` initializations as measured by inertia.
 
     reassignment_ratio : float, default: 0.01
         Control the fraction of the maximum number of counts for a

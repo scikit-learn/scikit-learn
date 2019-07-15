@@ -65,7 +65,7 @@ cdef class SequentialDataset{{name}}:
         Pointer to the index array.
 
     current_index : int
-        Index of current sample in ``index``.
+        Index of current sample in `index`.
         The index of current sample in the data is given by
         index_data_ptr[current_index].
 
@@ -79,10 +79,10 @@ cdef class SequentialDataset{{name}}:
 
     cdef void next(self, {{c_type}} **x_data_ptr, int **x_ind_ptr,
                    int *nnz, {{c_type}} *y, {{c_type}} *sample_weight) nogil:
-        """Get the next example ``x`` from the dataset.
+        """Get the next example `x` from the dataset.
 
         This method gets the next sample looping sequentially over all samples.
-        The order can be shuffled with the method ``shuffle``.
+        The order can be shuffled with the method `shuffle`.
         Shuffling once before iterating over all samples corresponds to a
         random draw without replacement. It is used for instance in SGD solver.
 
@@ -112,7 +112,7 @@ cdef class SequentialDataset{{name}}:
 
     cdef int random(self, {{c_type}} **x_data_ptr, int **x_ind_ptr,
                     int *nnz, {{c_type}} *y, {{c_type}} *sample_weight) nogil:
-        """Get a random example ``x`` from the dataset.
+        """Get a random example `x` from the dataset.
 
         This method gets next sample chosen randomly over a uniform
         distribution. It corresponds to a random draw with replacement.
@@ -222,7 +222,7 @@ cdef class SequentialDataset{{name}}:
 cdef class ArrayDataset{{name}}(SequentialDataset{{name}}):
     """Dataset backed by a two-dimensional numpy array.
 
-    The dtype of the numpy array is expected to be ``{{np_type}}`` ({{c_type}})
+    The dtype of the numpy array is expected to be `{{np_type}}` ({{c_type}})
     and C-style memory layout.
     """
 
@@ -230,7 +230,7 @@ cdef class ArrayDataset{{name}}(SequentialDataset{{name}}):
                   np.ndarray[{{c_type}}, ndim=1, mode='c'] Y,
                   np.ndarray[{{c_type}}, ndim=1, mode='c'] sample_weights,
                   np.uint32_t seed=1):
-        """A ``SequentialDataset`` backed by a two-dimensional numpy array.
+        """A `SequentialDataset` backed by a two-dimensional numpy array.
 
         Parameters
         ----------
@@ -289,7 +289,7 @@ cdef class ArrayDataset{{name}}(SequentialDataset{{name}}):
 
 
 cdef class CSRDataset{{name}}(SequentialDataset{{name}}):
-    """A ``SequentialDataset`` backed by a scipy sparse CSR matrix. """
+    """A `SequentialDataset` backed by a scipy sparse CSR matrix. """
 
     def __cinit__(self, np.ndarray[{{c_type}}, ndim=1, mode='c'] X_data,
                   np.ndarray[int, ndim=1, mode='c'] X_indptr,
@@ -299,7 +299,7 @@ cdef class CSRDataset{{name}}(SequentialDataset{{name}}):
                   np.uint32_t seed=1):
         """Dataset backed by a scipy sparse CSR matrix.
 
-        The feature indices of ``x`` are given by x_ind_ptr[0:nnz].
+        The feature indices of `x` are given by x_ind_ptr[0:nnz].
         The corresponding feature values are given by
         x_data_ptr[0:nnz].
 

@@ -664,8 +664,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     Parameters
     ----------
     n_clusters : int or None, optional (default=2)
-        The number of clusters to find. It must be ``None`` if
-        ``distance_threshold`` is not ``None``.
+        The number of clusters to find. It must be `None` if
+        `distance_threshold` is not `None`.
 
     affinity : string or callable, default: "euclidean"
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
@@ -693,8 +693,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         not small compared to the number of samples. This option is
         useful only when specifying a connectivity matrix. Note also that
         when varying the number of clusters and using caching, it may
-        be advantageous to compute the full tree. It must be ``True`` if
-        ``distance_threshold`` is not ``None``.
+        be advantageous to compute the full tree. It must be `True` if
+        `distance_threshold` is not `None`.
 
     linkage : {"ward", "complete", "average", "single"}, optional \
             (default="ward")
@@ -712,8 +712,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
 
     distance_threshold : float, optional (default=None)
         The linkage distance threshold above which, clusters will not be
-        merged. If not ``None``, ``n_clusters`` must be ``None`` and
-        ``compute_full_tree`` must be ``True``.
+        merged. If not `None`, `n_clusters` must be `None` and
+        `compute_full_tree` must be `True`.
 
         .. versionadded:: 0.21
 
@@ -721,8 +721,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     ----------
     n_clusters_ : int
         The number of clusters found by the algorithm. If
-        ``distance_threshold=None``, it will be equal to the given
-        ``n_clusters``.
+        `distance_threshold=None`, it will be equal to the given
+        `n_clusters`.
 
     labels_ : array [n_samples]
         cluster labels for each point
@@ -767,8 +767,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         self.linkage = linkage
         self.affinity = affinity
 
-    @deprecated("The ``n_components_`` attribute was deprecated "
-                "in favor of ``n_connected_components_`` in 0.21 "
+    @deprecated("The `n_components_` attribute was deprecated "
+                "in favor of `n_connected_components_` in 0.21 "
                 "and will be removed in 0.23.")
     @property
     def n_components_(self):
@@ -781,7 +781,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         ----------
         X : array-like, shape (n_samples, n_features) or (n_samples, n_samples)
             Training instances to cluster, or distances between instances if
-            ``affinity='precomputed'``.
+            `affinity='precomputed'`.
 
         y : Ignored
             Not used, present here for API consistency by convention.
@@ -886,7 +886,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         ----------
         X : array-like, shape (n_samples, n_features) or (n_samples, n_samples)
             Training instances to cluster, or distances between instances if
-            ``affinity='precomputed'``.
+            `affinity='precomputed'`.
 
         y : Ignored
             Not used, present here for API consistency by convention.
@@ -910,8 +910,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     Parameters
     ----------
     n_clusters : int or None, optional (default=2)
-        The number of clusters to find. It must be ``None`` if
-        ``distance_threshold`` is not ``None``.
+        The number of clusters to find. It must be `None` if
+        `distance_threshold` is not `None`.
 
     affinity : string or callable, default "euclidean"
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
@@ -937,8 +937,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         not small compared to the number of features. This option is
         useful only when specifying a connectivity matrix. Note also that
         when varying the number of clusters and using caching, it may
-        be advantageous to compute the full tree. It must be ``True`` if
-        ``distance_threshold`` is not ``None``.
+        be advantageous to compute the full tree. It must be `True` if
+        `distance_threshold` is not `None`.
 
     linkage : {"ward", "complete", "average", "single"}, optional\
             (default="ward")
@@ -961,8 +961,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
 
     distance_threshold : float, optional (default=None)
         The linkage distance threshold above which, clusters will not be
-        merged. If not ``None``, ``n_clusters`` must be ``None`` and
-        ``compute_full_tree`` must be ``True``.
+        merged. If not `None`, `n_clusters` must be `None` and
+        `compute_full_tree` must be `True`.
 
         .. versionadded:: 0.21
 
@@ -970,8 +970,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     ----------
     n_clusters_ : int
         The number of clusters found by the algorithm. If
-        ``distance_threshold=None``, it will be equal to the given
-        ``n_clusters``.
+        `distance_threshold=None`, it will be equal to the given
+        `n_clusters`.
 
     labels_ : array-like, (n_features,)
         cluster labels for each feature.

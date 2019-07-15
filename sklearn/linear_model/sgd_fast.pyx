@@ -358,7 +358,7 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     intercept : double
         The initial intercept.
     loss : LossFunction
-        A concrete ``LossFunction`` object.
+        A concrete `LossFunction` object.
     penalty_type : int
         The penalty 2 for L2, 1 for L1, and 3 for Elastic-Net.
     alpha : float
@@ -369,7 +369,7 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
     dataset : SequentialDataset
-        A concrete ``SequentialDataset`` object.
+        A concrete `SequentialDataset` object.
     validation_mask : ndarray[unsigned char, ndim=1]
         Equal to True on the validation set.
     early_stopping : boolean
@@ -482,7 +482,7 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     average_intercept : double
         The average intercept for ASGD
     loss : LossFunction
-        A concrete ``LossFunction`` object.
+        A concrete `LossFunction` object.
     penalty_type : int
         The penalty 2 for L2, 1 for L1, and 3 for Elastic-Net.
     alpha : float
@@ -493,7 +493,7 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
     dataset : SequentialDataset
-        A concrete ``SequentialDataset`` object.
+        A concrete `SequentialDataset` object.
     validation_mask : ndarray[unsigned char, ndim=1]
         Equal to True on the validation set.
     early_stopping : boolean
@@ -509,7 +509,7 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     tol: double
         The tolerance for the stopping criterion.
     dataset : SequentialDataset
-        A concrete ``SequentialDataset`` object.
+        A concrete `SequentialDataset` object.
     fit_intercept : int
         Whether or not to fit the intercept (1 or 0).
     verbose : int

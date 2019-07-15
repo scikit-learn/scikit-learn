@@ -3,16 +3,16 @@
 Demonstration of multi-metric evaluation on cross_val_score and GridSearchCV
 ============================================================================
 
-Multiple metric parameter search can be done by setting the ``scoring``
+Multiple metric parameter search can be done by setting the `scoring`
 parameter to a list of metric scorer names or a dict mapping the scorer names
 to the scorer callables.
 
-The scores of all the scorers are available in the ``cv_results_`` dict at keys
-ending in ``'_<scorer_name>'`` (``'mean_test_precision'``,
-``'rank_test_precision'``, etc...)
+The scores of all the scorers are available in the `cv_results_` dict at keys
+ending in `'_<scorer_name>'` (`'mean_test_precision'`,
+`'rank_test_precision'`, etc...)
 
-The ``best_estimator_``, ``best_index_``, ``best_score_`` and ``best_params_``
-correspond to the scorer (key) that is set to the ``refit`` attribute.
+The `best_estimator_`, `best_index_`, `best_score_` and `best_params_`
+correspond to the scorer (key) that is set to the `refit` attribute.
 """
 
 # Author: Raghav RV <rvraghav93@gmail.com>
@@ -30,7 +30,7 @@ from sklearn.tree import DecisionTreeClassifier
 print(__doc__)
 
 ###############################################################################
-# Running ``GridSearchCV`` using multiple evaluation metrics
+# Running `GridSearchCV` using multiple evaluation metrics
 # ----------------------------------------------------------
 #
 
@@ -42,9 +42,9 @@ scoring = {'AUC': 'roc_auc', 'Accuracy': make_scorer(accuracy_score)}
 
 # Setting refit='AUC', refits an estimator on the whole dataset with the
 # parameter setting that has the best cross-validated AUC score.
-# That estimator is made available at ``gs.best_estimator_`` along with
-# parameters like ``gs.best_score_``, ``gs.best_params_`` and
-# ``gs.best_index_``
+# That estimator is made available at `gs.best_estimator_` along with
+# parameters like `gs.best_score_`, `gs.best_params_` and
+# `gs.best_index_`
 gs = GridSearchCV(DecisionTreeClassifier(random_state=42),
                   param_grid={'min_samples_split': range(2, 403, 10)},
                   scoring=scoring, refit='AUC', return_train_score=True)

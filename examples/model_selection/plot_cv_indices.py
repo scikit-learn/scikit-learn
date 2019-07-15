@@ -112,7 +112,7 @@ plot_cv_indices(cv, X, y, groups, ax, n_splits)
 ###############################################################################
 # As you can see, by default the KFold cross-validation iterator does not
 # take either datapoint class or group into consideration. We can change this
-# by using the ``StratifiedKFold`` like so.
+# by using the `StratifiedKFold` like so.
 
 fig, ax = plt.subplots()
 cv = StratifiedKFold(n_splits)

@@ -22,8 +22,8 @@ MAX_RAND_SEED = np.iinfo(np.int32).max
 def _set_random_states(estimator, random_state=None):
     """Sets fixed random_state parameters for an estimator
 
-    Finds all parameters ending ``random_state`` and sets them to integers
-    derived from ``random_state``.
+    Finds all parameters ending `random_state` and sets them to integers
+    derived from `random_state`.
 
     Parameters
     ----------
@@ -40,13 +40,13 @@ def _set_random_states(estimator, random_state=None):
 
     Notes
     -----
-    This does not necessarily set *all* ``random_state`` attributes that
+    This does not necessarily set *all* `random_state` attributes that
     control an estimator's randomness, only those accessible through
-    ``estimator.get_params()``.  ``random_state``s not controlled include
+    `estimator.get_params()`.  `random_state`s not controlled include
     those belonging to:
 
         * cross-validation splitters
-        * ``scipy.stats`` rvs
+        * `scipy.stats` rvs
     """
     random_state = check_random_state(random_state)
     to_set = {}

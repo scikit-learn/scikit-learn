@@ -1,9 +1,9 @@
 """Metrics to assess performance on classification task given scores
 
-Functions named as ``*_score`` return a scalar value to maximize: the higher
+Functions named as `*_score` return a scalar value to maximize: the higher
 the better
 
-Function named as ``*_error`` or ``*_loss`` return a scalar value to minimize:
+Function named as `*_error` or `*_loss` return a scalar value to minimize:
 the lower the better
 """
 
@@ -133,26 +133,26 @@ def average_precision_score(y_true, y_score, average="macro", pos_label=1,
         (as returned by "decision_function" on some classifiers).
 
     average : string, [None, 'micro', 'macro' (default), 'samples', 'weighted']
-        If ``None``, the scores for each class are returned. Otherwise,
+        If `None`, the scores for each class are returned. Otherwise,
         this determines the type of averaging performed on the data:
 
-        ``'micro'``:
+        `'micro'`:
             Calculate metrics globally by considering each element of the label
             indicator matrix as a label.
-        ``'macro'``:
+        `'macro'`:
             Calculate metrics for each label, and find their unweighted
             mean.  This does not take label imbalance into account.
-        ``'weighted'``:
+        `'weighted'`:
             Calculate metrics for each label, and find their average, weighted
             by support (the number of true instances for each label).
-        ``'samples'``:
+        `'samples'`:
             Calculate metrics for each instance, and find their average.
 
-        Will be ignored when ``y_true`` is binary.
+        Will be ignored when `y_true` is binary.
 
     pos_label : int or str (default=1)
-        The label of the positive class. Only applied to binary ``y_true``.
-        For multilabel-indicator ``y_true``, ``pos_label`` is fixed to 1.
+        The label of the positive class. Only applied to binary `y_true`.
+        For multilabel-indicator `y_true`, `pos_label` is fixed to 1.
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
@@ -237,28 +237,28 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
         label.
 
     average : string, [None, 'micro', 'macro' (default), 'samples', 'weighted']
-        If ``None``, the scores for each class are returned. Otherwise,
+        If `None`, the scores for each class are returned. Otherwise,
         this determines the type of averaging performed on the data:
 
-        ``'micro'``:
+        `'micro'`:
             Calculate metrics globally by considering each element of the label
             indicator matrix as a label.
-        ``'macro'``:
+        `'macro'`:
             Calculate metrics for each label, and find their unweighted
             mean.  This does not take label imbalance into account.
-        ``'weighted'``:
+        `'weighted'`:
             Calculate metrics for each label, and find their average, weighted
             by support (the number of true instances for each label).
-        ``'samples'``:
+        `'samples'`:
             Calculate metrics for each instance, and find their average.
 
-        Will be ignored when ``y_true`` is binary.
+        Will be ignored when `y_true` is binary.
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
     max_fpr : float > 0 and <= 1, optional
-        If not ``None``, the standardized partial AUC [3]_ over the range
+        If not `None`, the standardized partial AUC [3]_ over the range
         [0, max_fpr] is returned.
 
     Returns
@@ -425,13 +425,13 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
 
     Note: this implementation is restricted to the binary classification task.
 
-    The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
-    true positives and ``fp`` the number of false positives. The precision is
+    The precision is the ratio `tp / (tp + fp)` where `tp` is the number of
+    true positives and `fp` the number of false positives. The precision is
     intuitively the ability of the classifier not to label as positive a sample
     that is negative.
 
-    The recall is the ratio ``tp / (tp + fn)`` where ``tp`` is the number of
-    true positives and ``fn`` the number of false negatives. The recall is
+    The recall is the ratio `tp / (tp + fn)` where `tp` is the number of
+    true positives and `fn` the number of false negatives. The recall is
     intuitively the ability of the classifier to find all the positive samples.
 
     The last precision and recall values are 1. and 0. respectively and do not
@@ -451,8 +451,8 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
 
     pos_label : int or str, default=None
         The label of the positive class.
-        When ``pos_label=None``, if y_true is in {-1, 1} or {0, 1},
-        ``pos_label`` is set to 1, otherwise an error will be raised.
+        When `pos_label=None`, if y_true is in {-1, 1} or {0, 1},
+        `pos_label` is set to 1, otherwise an error will be raised.
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
@@ -530,8 +530,8 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
 
     pos_label : int or str, default=None
         The label of the positive class.
-        When ``pos_label=None``, if y_true is in {-1, 1} or {0, 1},
-        ``pos_label`` is set to 1, otherwise an error will be raised.
+        When `pos_label=None`, if y_true is in {-1, 1} or {0, 1},
+        `pos_label` is set to 1, otherwise an error will be raised.
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
@@ -566,8 +566,8 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
     Notes
     -----
     Since the thresholds are sorted from low to high values, they
-    are reversed upon returning them to ensure they correspond to both ``fpr``
-    and ``tpr``, which are sorted in reversed order during their calculation.
+    are reversed upon returning them to ensure they correspond to both `fpr`
+    and `tpr`, which are sorted in reversed order during their calculation.
 
     References
     ----------
@@ -729,9 +729,9 @@ def coverage_error(y_true, y_score, sample_weight=None):
 
     Compute how far we need to go through the ranked scores to cover all
     true labels. The best value is equal to the average number
-    of labels in ``y_true`` per sample.
+    of labels in `y_true` per sample.
 
-    Ties in ``y_scores`` are broken by giving maximal rank that would have
+    Ties in `y_scores` are broken by giving maximal rank that would have
     been assigned to all tied values.
 
     Note: Our implementation's score is 1 greater than the one given in

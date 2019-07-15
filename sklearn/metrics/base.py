@@ -33,22 +33,22 @@ def _average_binary_score(binary_metric, y_true, y_score, average,
         class, confidence values, or binary decisions.
 
     average : string, [None, 'micro', 'macro' (default), 'samples', 'weighted']
-        If ``None``, the scores for each class are returned. Otherwise,
+        If `None`, the scores for each class are returned. Otherwise,
         this determines the type of averaging performed on the data:
 
-        ``'micro'``:
+        `'micro'`:
             Calculate metrics globally by considering each element of the label
             indicator matrix as a label.
-        ``'macro'``:
+        `'macro'`:
             Calculate metrics for each label, and find their unweighted
             mean.  This does not take label imbalance into account.
-        ``'weighted'``:
+        `'weighted'`:
             Calculate metrics for each label, and find their average, weighted
             by support (the number of true instances for each label).
-        ``'samples'``:
+        `'samples'`:
             Calculate metrics for each instance, and find their average.
 
-        Will be ignored when ``y_true`` is binary.
+        Will be ignored when `y_true` is binary.
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
@@ -59,7 +59,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average,
     Returns
     -------
     score : float or array of shape [n_classes]
-        If not ``None``, average the score, else return the score for each
+        If not `None`, average the score, else return the score for each
         classes.
 
     """

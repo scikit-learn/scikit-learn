@@ -44,12 +44,12 @@ to be sure) to unfold all such hidden discussions at once, so you can catch up.
 Checking out pull requests as remote-tracking branches
 ------------------------------------------------------
 
-In your local fork, add to your ``.git/config``, under the ``[remote
-"upstream"]`` heading, the line::
+In your local fork, add to your `.git/config`, under the `[remote
+"upstream"]` heading, the line::
 
   fetch = +refs/pull/*/head:refs/remotes/upstream/pr/*
 
-You may then use ``git checkout pr/PR_NUMBER`` to navigate to the code of the
+You may then use `git checkout pr/PR_NUMBER` to navigate to the code of the
 pull-request with the given number. (`Read more in this gist.
 <https://gist.github.com/piscisaureus/3342247>`_)
 
@@ -80,32 +80,32 @@ to select tests based on their name. For instance,::
 
   pytest sklearn/tests/test_common.py -v -k LogisticRegression
 
-will run all :term:`common tests` for the ``LogisticRegression`` estimator.
+will run all :term:`common tests` for the `LogisticRegression` estimator.
 
 When a unit test fails, the following tricks can make debugging easier:
 
-  1. The command line argument ``pytest -l`` instructs pytest to print the local
+  1. The command line argument `pytest -l` instructs pytest to print the local
      variables when a failure occurs.
 
-  2. The argument ``pytest --pdb`` drops into the Python debugger on failure. To
-     instead drop into the rich IPython debugger ``ipdb``, you may set up a
+  2. The argument `pytest --pdb` drops into the Python debugger on failure. To
+     instead drop into the rich IPython debugger `ipdb`, you may set up a
      shell alias to::
 
          pytest --pdbcls=IPython.terminal.debugger:TerminalPdb --capture no
 
 Other `pytest` options that may become useful include:
 
-  - ``-x`` which exits on the first failed test
-  - ``--lf`` to rerun the tests that failed on the previous run
-  - ``--ff`` to rerun all previous tests, running the ones that failed first
-  - ``-s`` so that pytest does not capture the output of ``print()``
+  - `-x` which exits on the first failed test
+  - `--lf` to rerun the tests that failed on the previous run
+  - `--ff` to rerun all previous tests, running the ones that failed first
+  - `-s` so that pytest does not capture the output of `print()`
     statements
-  - ``--tb=short`` or ``--tb=line`` to control the length of the logs
+  - `--tb=short` or `--tb=line` to control the length of the logs
 
-Since our continuous integration tests will error if ``DeprecationWarning``
-or ``FutureWarning`` aren't properly caught, it is also recommended to run
-``pytest`` along with the ``-Werror::DeprecationWarning`` and
-``-Werror::FutureWarning`` flags.
+Since our continuous integration tests will error if `DeprecationWarning`
+or `FutureWarning` aren't properly caught, it is also recommended to run
+`pytest` along with the `-Werror::DeprecationWarning` and
+`-Werror::FutureWarning` flags.
 
 .. _saved_replies:
 

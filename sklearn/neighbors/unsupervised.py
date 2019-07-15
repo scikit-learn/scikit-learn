@@ -76,8 +76,8 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
 
     n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     Examples
@@ -108,7 +108,7 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
     Notes
     -----
     See :ref:`Nearest Neighbors <neighbors>` in the online documentation
-    for a discussion of the choice of ``algorithm`` and ``leaf_size``.
+    for a discussion of the choice of `algorithm` and `leaf_size`.
 
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """

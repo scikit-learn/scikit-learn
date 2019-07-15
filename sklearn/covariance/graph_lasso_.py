@@ -526,7 +526,7 @@ class GraphicalLassoCV(GraphicalLasso):
         cross-validation strategies that can be used here.
 
         .. versionchanged:: 0.20
-            ``cv`` default value if None changed from 3-fold to 5-fold.
+            `cv` default value if None changed from 3-fold to 5-fold.
 
     tol : positive float, optional
         The tolerance to declare convergence: if the dual gap goes below
@@ -549,8 +549,8 @@ class GraphicalLassoCV(GraphicalLasso):
 
     n_jobs : int or None, optional (default=None)
         number of jobs to run in parallel.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     verbose : boolean, optional

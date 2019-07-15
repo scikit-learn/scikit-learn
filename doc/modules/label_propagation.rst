@@ -18,7 +18,7 @@ labeled points and a large amount of unlabeled points.
 .. topic:: Unlabeled entries in `y`
 
     It is important to assign an identifier to unlabeled points along with the
-    labeled data when training the model with the ``fit`` method. The identifier
+    labeled data when training the model with the `fit` method. The identifier
     that this implementation uses is the integer value :math:`-1`.
 
 .. _label_propagation:

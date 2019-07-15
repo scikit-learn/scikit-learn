@@ -10,8 +10,8 @@ Tuning the hyper-parameters of an estimator
 
 Hyper-parameters are parameters that are not directly learnt within estimators.
 In scikit-learn they are passed as arguments to the constructor of the
-estimator classes. Typical examples include ``C``, ``kernel`` and ``gamma``
-for Support Vector Classifier, ``alpha`` for Lasso, etc.
+estimator classes. Typical examples include `C`, `kernel` and `gamma`
+for Support Vector Classifier, `alpha` for Lasso, etc.
 
 It is possible and recommended to search the hyper-parameter space for the
 best :ref:`cross validation <cross_validation>` score.
@@ -24,7 +24,7 @@ for a given estimator, use::
 
 A search consists of:
 
-- an estimator (regressor or classifier such as ``sklearn.svm.SVC()``);
+- an estimator (regressor or classifier such as `sklearn.svm.SVC()`);
 - a parameter space;
 - a method for searching or sampling candidates;
 - a cross-validation scheme; and
@@ -49,8 +49,8 @@ Exhaustive Grid Search
 ======================
 
 The grid search provided by :class:`GridSearchCV` exhaustively generates
-candidates from a grid of parameter values specified with the ``param_grid``
-parameter. For instance, the following ``param_grid``::
+candidates from a grid of parameter values specified with the `param_grid`
+parameter. For instance, the following `param_grid`::
 
   param_grid = [
     {'C': [1, 10, 100, 1000], 'kernel': ['linear']},
@@ -89,7 +89,7 @@ evaluated and the best combination is retained.
       metrics simultaneously.
 
     - See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py`
-      for an example of using ``refit=callable`` interface in
+      for an example of using `refit=callable` interface in
       :class:`GridSearchCV`. The example shows how this interface adds certain
       amount of flexibility in identifying the "best" estimator. This interface
       can also be used in multiple metrics evaluation.
@@ -111,33 +111,33 @@ This has two main benefits over an exhaustive search:
 Specifying how parameters should be sampled is done using a dictionary, very
 similar to specifying parameters for :class:`GridSearchCV`. Additionally,
 a computation budget, being the number of sampled candidates or sampling
-iterations, is specified using the ``n_iter`` parameter.
+iterations, is specified using the `n_iter` parameter.
 For each parameter, either a distribution over possible values or a list of
 discrete choices (which will be sampled uniformly) can be specified::
 
   {'C': scipy.stats.expon(scale=100), 'gamma': scipy.stats.expon(scale=.1),
     'kernel': ['rbf'], 'class_weight':['balanced', None]}
 
-This example uses the ``scipy.stats`` module, which contains many useful
-distributions for sampling parameters, such as ``expon``, ``gamma``,
-``uniform`` or ``randint``.
-In principle, any function can be passed that provides a ``rvs`` (random
-variate sample) method to sample a value. A call to the ``rvs`` function should
+This example uses the `scipy.stats` module, which contains many useful
+distributions for sampling parameters, such as `expon`, `gamma`,
+`uniform` or `randint`.
+In principle, any function can be passed that provides a `rvs` (random
+variate sample) method to sample a value. A call to the `rvs` function should
 provide independent random samples from possible parameter values on
 consecutive calls.
 
     .. warning::
 
-        The distributions in ``scipy.stats`` prior to version scipy 0.16
+        The distributions in `scipy.stats` prior to version scipy 0.16
         do not allow specifying a random state. Instead, they use the global
-        numpy random state, that can be seeded via ``np.random.seed`` or set
-        using ``np.random.set_state``. However, beginning scikit-learn 0.18,
+        numpy random state, that can be seeded via `np.random.seed` or set
+        using `np.random.set_state`. However, beginning scikit-learn 0.18,
         the :mod:`sklearn.model_selection` module sets the random state provided
         by the user if scipy >= 0.16 is also available.
 
-For continuous parameters, such as ``C`` above, it is important to specify
+For continuous parameters, such as `C` above, it is important to specify
 a continuous distribution to take full advantage of the randomization. This way,
-increasing ``n_iter`` will always lead to a finer search.
+increasing `n_iter` will always lead to a finer search.
 
 .. topic:: Examples:
 
@@ -160,13 +160,13 @@ Tips for parameter search
 Specifying an objective metric
 ------------------------------
 
-By default, parameter search uses the ``score`` function of the estimator
+By default, parameter search uses the `score` function of the estimator
 to evaluate a parameter setting. These are the
 :func:`sklearn.metrics.accuracy_score` for classification and
 :func:`sklearn.metrics.r2_score` for regression.  For some applications,
 other scoring functions are better suited (for example in unbalanced
 classification, the accuracy score is often uninformative). An alternative
-scoring function can be specified via the ``scoring`` parameter to
+scoring function can be specified via the `scoring` parameter to
 :class:`GridSearchCV`, :class:`RandomizedSearchCV` and many of the
 specialized cross-validation tools described below.
 See :ref:`scoring_parameter` for more details.
@@ -176,17 +176,17 @@ See :ref:`scoring_parameter` for more details.
 Specifying multiple metrics for evaluation
 ------------------------------------------
 
-``GridSearchCV`` and ``RandomizedSearchCV`` allow specifying multiple metrics
-for the ``scoring`` parameter.
+`GridSearchCV` and `RandomizedSearchCV` allow specifying multiple metrics
+for the `scoring` parameter.
 
 Multimetric scoring can either be specified as a list of strings of predefined
 scores names or a dict mapping the scorer name to the scorer function and/or
 the predefined scorer name(s). See :ref:`multimetric_scoring` for more details.
 
-When specifying multiple metrics, the ``refit`` parameter must be set to the
-metric (string) for which the ``best_params_`` will be found and used to build
-the ``best_estimator_`` on the whole dataset. If the search should not be
-refit, set ``refit=False``. Leaving refit to the default value ``None`` will
+When specifying multiple metrics, the `refit` parameter must be set to the
+metric (string) for which the `best_params_` will be found and used to build
+the `best_estimator_` on the whole dataset. If the search should not be
+refit, set `refit=False`. Leaving refit to the default value `None` will
 result in an error when using multiple metrics.
 
 See :ref:`sphx_glr_auto_examples_model_selection_plot_multi_metric_evaluation.py`
@@ -207,7 +207,7 @@ to use the labeled data to "train" the parameters of the grid.
 When evaluating the resulting model it is important to do it on
 held-out samples that were not seen during the grid search process:
 it is recommended to split the data into a **development set** (to
-be fed to the ``GridSearchCV`` instance) and an **evaluation set**
+be fed to the `GridSearchCV` instance) and an **evaluation set**
 to compute performance metrics.
 
 This can be done by using the :func:`train_test_split`
@@ -218,15 +218,15 @@ Parallelism
 
 :class:`GridSearchCV` and :class:`RandomizedSearchCV` evaluate each parameter
 setting independently.  Computations can be run in parallel if your OS
-supports it, by using the keyword ``n_jobs=-1``. See function signature for
+supports it, by using the keyword `n_jobs=-1`. See function signature for
 more details.
 
 Robustness to failure
 ---------------------
 
-Some parameter settings may result in a failure to ``fit`` one or more folds
+Some parameter settings may result in a failure to `fit` one or more folds
 of the data.  By default, this will cause the entire search to fail, even if
-some parameter settings could be fully evaluated. Setting ``error_score=0``
+some parameter settings could be fully evaluated. Setting `error_score=0`
 (or `=np.NaN`) will make the procedure robust to such failure, issuing a
 warning and setting the score for that fold to 0 (or `NaN`), but completing
 the search.

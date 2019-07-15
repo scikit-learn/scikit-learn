@@ -10,7 +10,7 @@ general trend shown in these examples seems to carry over to larger datasets,
 however.
 
 Note that those results can be highly dependent on the value of
-``learning_rate_init``.
+`learning_rate_init`.
 """
 
 print(__doc__)

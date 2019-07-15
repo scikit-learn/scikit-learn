@@ -14,7 +14,7 @@ score but would fail to predict anything useful on yet-unseen data.
 This situation is called **overfitting**.
 To avoid it, it is common practice when performing
 a (supervised) machine learning experiment
-to hold out part of the available data as a **test set** ``X_test, y_test``.
+to hold out part of the available data as a **test set** `X_test, y_test`.
 Note that the word "experiment" is not intended
 to denote academic use only,
 because even in commercial settings
@@ -58,7 +58,7 @@ data for testing (evaluating) our classifier::
   0.96...
 
 When evaluating different settings ("hyperparameters") for estimators,
-such as the ``C`` setting that must be manually set for an SVM,
+such as the `C` setting that must be manually set for an SVM,
 there is still a risk of overfitting *on the test set*
 because the parameters can be tweaked until the estimator performs optimally.
 This way, knowledge about the test set can "leak" into the model
@@ -127,7 +127,7 @@ given by::
   >>> print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
   Accuracy: 0.98 (+/- 0.03)
 
-By default, the score computed at each CV iteration is the ``score``
+By default, the score computed at each CV iteration is the `score`
 method of the estimator. It is possible to change this by using the
 scoring parameter::
 
@@ -141,7 +141,7 @@ See :ref:`scoring_parameter` for details.
 In the case of the Iris dataset, the samples are balanced across target
 classes hence the accuracy and the F1-score are almost equal.
 
-When the ``cv`` argument is an integer, :func:`cross_val_score` uses the
+When the `cv` argument is an integer, :func:`cross_val_score` uses the
 :class:`KFold` or :class:`StratifiedKFold` strategies by default, the latter
 being used if the estimator derives from :class:`ClassifierMixin
 <sklearn.base.ClassifierMixin>`.
@@ -213,18 +213,18 @@ two ways:
   addition to the test score.
 
 For single metric evaluation, where the scoring parameter is a string,
-callable or None, the keys will be - ``['test_score', 'fit_time', 'score_time']``
+callable or None, the keys will be - `['test_score', 'fit_time', 'score_time']`
 
 And for multiple metric evaluation, the return value is a dict with the
 following keys -
-``['test_<scorer1_name>', 'test_<scorer2_name>', 'test_<scorer...>', 'fit_time', 'score_time']``
+`['test_<scorer1_name>', 'test_<scorer2_name>', 'test_<scorer...>', 'fit_time', 'score_time']`
 
-``return_train_score`` is set to ``False`` by default to save computation time.
+`return_train_score` is set to `False` by default to save computation time.
 To evaluate the scores on the training set as well you need to be set to
-``True``.
+`True`.
 
 You may also retain the estimator fitted on each training set by setting
-``return_estimator=True``.
+`return_estimator=True`.
 
 The multiple metrics can be specified either as a list, tuple or set of
 predefined scorer names::
@@ -252,7 +252,7 @@ Or as a dict mapping scorer name to a predefined or custom scoring function::
     >>> scores['train_rec_macro']
     array([0.97..., 0.97..., 0.99..., 0.98..., 0.98...])
 
-Here is an example of ``cross_validate`` using a single metric::
+Here is an example of `cross_validate` using a single metric::
 
     >>> scores = cross_validate(clf, iris.data, iris.target,
     ...                         scoring='precision_macro', cv=5,
@@ -489,7 +489,7 @@ independent train / test dataset splits. Samples are first shuffled and
 then split into a pair of train and test sets.
 
 It is possible to control the randomness for reproducibility of the
-results by explicitly seeding the ``random_state`` pseudo random number
+results by explicitly seeding the `random_state` pseudo random number
 generator.
 
 Here is a usage example::
@@ -592,7 +592,7 @@ ensure that all the samples in the validation fold come from groups that are
 not represented at all in the paired training fold.
 
 The following cross-validation splitters can be used to do that.
-The grouping identifier for the samples is specified via the ``groups``
+The grouping identifier for the samples is specified via the `groups`
 parameter.
 
 
@@ -730,7 +730,7 @@ validation fold or into several cross-validation folds already
 exists. Using :class:`PredefinedSplit` it is possible to use these folds
 e.g. when searching for hyperparameters.
 
-For example, when using a validation set, set the ``test_fold`` to 0 for all
+For example, when using a validation set, set the `test_fold` to 0 for all
 samples that are part of the validation set, and to -1 for all other samples.
 
 .. _timeseries_cv:
@@ -802,14 +802,14 @@ to shuffle the data indices before splitting them. Note that:
 
 * This consumes less memory than shuffling the data directly.
 * By default no shuffling occurs, including for the (stratified) K fold cross-
-  validation performed by specifying ``cv=some_integer`` to
+  validation performed by specifying `cv=some_integer` to
   :func:`cross_val_score`, grid search, etc. Keep in mind that
   :func:`train_test_split` still returns a random split.
-* The ``random_state`` parameter defaults to ``None``, meaning that the
-  shuffling will be different every time ``KFold(..., shuffle=True)`` is
-  iterated. However, ``GridSearchCV`` will use the same shuffling for each set
-  of parameters validated by a single call to its ``fit`` method.
-* To get identical results for each split, set ``random_state`` to an integer.
+* The `random_state` parameter defaults to `None`, meaning that the
+  shuffling will be different every time `KFold(..., shuffle=True)` is
+  iterated. However, `GridSearchCV` will use the same shuffling for each set
+  of parameters validated by a single call to its `fit` method.
+* To get identical results for each split, set `random_state` to an integer.
 
 Cross validation and model selection
 ====================================

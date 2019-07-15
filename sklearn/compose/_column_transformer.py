@@ -52,7 +52,7 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
 
         name : string
             Like in Pipeline and FeatureUnion, this allows the transformer and
-            its parameters to be set using ``set_params`` and searched in grid
+            its parameters to be set using `set_params` and searched in grid
             search.
         transformer : estimator or {'passthrough', 'drop'}
             Estimator must support `fit` and `transform`. Special-cased
@@ -64,7 +64,7 @@ boolean mask array or callable
             Indexes the data on its second axis. Integers are interpreted as
             positional columns, while strings can reference DataFrame columns
             by name.  A scalar string or int should be used where
-            ``transformer`` expects X to be a 1d array-like (vector),
+            `transformer` expects X to be a 1d array-like (vector),
             otherwise a 2d array will be passed to the transformer.
             A callable is passed the input data `X` and can return any of the
             above.
@@ -72,26 +72,26 @@ boolean mask array or callable
     remainder : {'drop', 'passthrough'} or estimator, default 'drop'
         By default, only the specified columns in `transformers` are
         transformed and combined in the output, and the non-specified
-        columns are dropped. (default of ``'drop'``).
-        By specifying ``remainder='passthrough'``, all remaining columns that
+        columns are dropped. (default of `'drop'`).
+        By specifying `remainder='passthrough'`, all remaining columns that
         were not specified in `transformers` will be automatically passed
         through. This subset of columns is concatenated with the output of
         the transformers.
-        By setting ``remainder`` to be an estimator, the remaining
-        non-specified columns will use the ``remainder`` estimator. The
+        By setting `remainder` to be an estimator, the remaining
+        non-specified columns will use the `remainder` estimator. The
         estimator must support :term:`fit` and :term:`transform`.
 
     sparse_threshold : float, default = 0.3
         If the output of the different transformers contains sparse matrices,
         these will be stacked as a sparse matrix if the overall density is
-        lower than this value. Use ``sparse_threshold=0`` to always return
+        lower than this value. Use `sparse_threshold=0` to always return
         dense.  When the transformed output consists of all dense data, the
         stacked result will be dense, and this keyword will be ignored.
 
     n_jobs : int or None, optional (default=None)
         Number of jobs to run in parallel.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     transformer_weights : dict, optional
@@ -113,9 +113,9 @@ boolean mask array or callable
         If there are remaining columns, the final element is a tuple of the
         form:
         ('remainder', transformer, remaining_columns) corresponding to the
-        ``remainder`` parameter. If there are remaining columns, then
-        ``len(transformers_)==len(transformers)+1``, otherwise
-        ``len(transformers_)==len(transformers)``.
+        `remainder` parameter. If there are remaining columns, then
+        `len(transformers_)==len(transformers)+1`, otherwise
+        `len(transformers_)==len(transformers)`.
 
     named_transformers_ : Bunch object, a dictionary with attribute access
         Read-only attribute to access any transformer by given name.
@@ -123,7 +123,7 @@ boolean mask array or callable
         objects.
 
     sparse_output_ : boolean
-        Boolean flag indicating wether the output of ``transform`` is a
+        Boolean flag indicating wether the output of `transform` is a
         sparse matrix or a dense numpy array, which depends on the output
         of the individual transformers and the `sparse_threshold` keyword.
 
@@ -211,7 +211,7 @@ boolean mask array or callable
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
 
-        Valid parameter keys can be listed with ``get_params()``.
+        Valid parameter keys can be listed with `get_params()`.
 
         Returns
         -------
@@ -290,7 +290,7 @@ boolean mask array or callable
 
     def _validate_remainder(self, X):
         """
-        Validates ``remainder`` and defines ``_remainder`` targeting
+        Validates `remainder` and defines `_remainder` targeting
         the remaining columns.
         """
         is_transformer = ((hasattr(self.remainder, "fit")
@@ -396,7 +396,7 @@ boolean mask array or callable
 
         Return value (transformers and/or transformed X data) depends
         on the passed function.
-        ``fitted=True`` ensures the fitted transformers are used.
+        `fitted=True` ensures the fitted transformers are used.
         """
         transformers = list(
             self._iter(fitted=fitted, replace_strings=True))
@@ -587,7 +587,7 @@ def make_column_transformer(*transformers, **kwargs):
     This is a shorthand for the ColumnTransformer constructor; it does not
     require, and does not permit, naming the transformers. Instead, they will
     be given names automatically based on their types. It also does not allow
-    weighting with ``transformer_weights``.
+    weighting with `transformer_weights`.
 
     Read more in the :ref:`User Guide <make_column_transformer>`.
 
@@ -607,7 +607,7 @@ boolean mask array or callable
             Indexes the data on its second axis. Integers are interpreted as
             positional columns, while strings can reference DataFrame columns
             by name. A scalar string or int should be used where
-            ``transformer`` expects X to be a 1d array-like (vector),
+            `transformer` expects X to be a 1d array-like (vector),
             otherwise a 2d array will be passed to the transformer.
             A callable is passed the input data `X` and can return any of the
             above.
@@ -615,27 +615,27 @@ boolean mask array or callable
     remainder : {'drop', 'passthrough'} or estimator, default 'drop'
         By default, only the specified columns in `transformers` are
         transformed and combined in the output, and the non-specified
-        columns are dropped. (default of ``'drop'``).
-        By specifying ``remainder='passthrough'``, all remaining columns that
+        columns are dropped. (default of `'drop'`).
+        By specifying `remainder='passthrough'`, all remaining columns that
         were not specified in `transformers` will be automatically passed
         through. This subset of columns is concatenated with the output of
         the transformers.
-        By setting ``remainder`` to be an estimator, the remaining
-        non-specified columns will use the ``remainder`` estimator. The
+        By setting `remainder` to be an estimator, the remaining
+        non-specified columns will use the `remainder` estimator. The
         estimator must support :term:`fit` and :term:`transform`.
 
     sparse_threshold : float, default = 0.3
         If the transformed output consists of a mix of sparse and dense data,
         it will be stacked as a sparse matrix if the density is lower than this
-        value. Use ``sparse_threshold=0`` to always return dense.
+        value. Use `sparse_threshold=0` to always return dense.
         When the transformed output consists of all sparse or all dense data,
         the stacked result will be sparse or dense, respectively, and this
         keyword will be ignored.
 
     n_jobs : int or None, optional (default=None)
         Number of jobs to run in parallel.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     verbose : boolean, optional(default=False)

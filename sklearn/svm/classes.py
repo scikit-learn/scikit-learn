@@ -28,7 +28,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     ----------
     penalty : string, 'l1' or 'l2' (default='l2')
         Specifies the norm used in the penalization. The 'l2'
-        penalty is the standard used in SVC. The 'l1' leads to ``coef_``
+        penalty is the standard used in SVC. The 'l1' leads to `coef_`
         vectors that are sparse.
 
     loss : string, 'hinge' or 'squared_hinge' (default='squared_hinge')
@@ -49,12 +49,12 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     multi_class : string, 'ovr' or 'crammer_singer' (default='ovr')
         Determines the multi-class strategy if `y` contains more than
         two classes.
-        ``"ovr"`` trains n_classes one-vs-rest classifiers, while
-        ``"crammer_singer"`` optimizes a joint objective over all classes.
+        `"ovr"` trains n_classes one-vs-rest classifiers, while
+        `"crammer_singer"` optimizes a joint objective over all classes.
         While `crammer_singer` is interesting from a theoretical perspective
         as it is consistent, it is seldom used in practice as it rarely leads
         to better accuracy and is more expensive to compute.
-        If ``"crammer_singer"`` is chosen, the options loss, penalty and dual
+        If `"crammer_singer"` is chosen, the options loss, penalty and dual
         will be ignored.
 
     fit_intercept : boolean, optional (default=True)
@@ -64,7 +64,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
     intercept_scaling : float, optional (default=1)
         When self.fit_intercept is True, instance vector x becomes
-        ``[x, self.intercept_scaling]``,
+        `[x, self.intercept_scaling]`,
         i.e. a "synthetic" feature with constant value equals to
         intercept_scaling is appended to the instance vector.
         The intercept becomes intercept_scaling * synthetic feature weight
@@ -74,12 +74,12 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         (and therefore on the intercept) intercept_scaling has to be increased.
 
     class_weight : {dict, 'balanced'}, optional
-        Set the parameter C of class i to ``class_weight[i]*C`` for
+        Set the parameter C of class i to `class_weight[i]*C` for
         SVC. If not given, all classes are supposed to have
         weight one.
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``
+        as `n_samples / (n_classes * np.bincount(y))`
 
     verbose : int, (default=0)
         Enable verbose output. Note that this setting takes advantage of a
@@ -88,9 +88,9 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator to use when shuffling
-        the data for the dual coordinate descent (if ``dual=True``). When
-        ``dual=False`` the underlying implementation of :class:`LinearSVC`
-        is not random and ``random_state`` has no effect on the results. If
+        the data for the dual coordinate descent (if `dual=True`). When
+        `dual=False` the underlying implementation of :class:`LinearSVC`
+        is not random and `random_state` has no effect on the results. If
         int, random_state is the seed used by the random number generator; If
         RandomState instance, random_state is the random number generator; If
         None, the random number generator is the RandomState instance used by
@@ -106,7 +106,7 @@ else [n_classes, n_features]
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
-        ``coef_`` is a readonly property derived from ``raw_coef_`` that
+        `coef_` is a readonly property derived from `raw_coef_` that
         follows the internal memory layout of liblinear.
 
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
@@ -135,7 +135,7 @@ else [n_classes, n_features]
     The underlying C implementation uses a random number generator to
     select features when fitting the model. It is thus not uncommon
     to have slightly different results for the same input data. If
-    that happens, try with a smaller ``tol`` parameter.
+    that happens, try with a smaller `tol` parameter.
 
     The underlying implementation, liblinear, uses a sparse internal
     representation for the data that will incur a memory copy.
@@ -264,7 +264,7 @@ class LinearSVR(LinearModel, RegressorMixin):
     epsilon : float, optional (default=0.0)
         Epsilon parameter in the epsilon-insensitive loss function. Note
         that the value of this parameter depends on the scale of the target
-        variable y. If unsure, set ``epsilon=0``.
+        variable y. If unsure, set `epsilon=0`.
 
     tol : float, optional (default=1e-4)
         Tolerance for stopping criteria.
@@ -459,7 +459,7 @@ class SVC(BaseSVC):
         a callable.
         If none is given, 'rbf' will be used. If a callable is given it is
         used to pre-compute the kernel matrix from data matrices; that matrix
-        should be an array of shape ``(n_samples, n_samples)``.
+        should be an array of shape `(n_samples, n_samples)`.
 
     degree : int, optional (default=3)
         Degree of the polynomial kernel function ('poly').
@@ -468,12 +468,12 @@ class SVC(BaseSVC):
     gamma : {'scale', 'auto'} or float, optional (default='scale')
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
-        - if ``gamma='scale'`` (default) is passed then it uses
+        - if `gamma='scale'` (default) is passed then it uses
           1 / (n_features * X.var()) as value of gamma,
         - if 'auto', uses 1 / n_features.
 
         .. versionchanged:: 0.22
-           The default value of ``gamma`` changed from 'auto' to 'scale'.
+           The default value of `gamma` changed from 'auto' to 'scale'.
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
@@ -498,7 +498,7 @@ class SVC(BaseSVC):
         weight one.
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``
+        as `n_samples / (n_classes * np.bincount(y))`
 
     verbose : bool, default: False
         Enable verbose output. Note that this setting takes advantage of a
@@ -525,7 +525,7 @@ class SVC(BaseSVC):
            Deprecated *decision_function_shape='ovo' and None*.
 
     break_ties : bool, optional (default=False)
-        If true, ``decision_function_shape='ovr'``, and number of classes > 2,
+        If true, `decision_function_shape='ovr'`, and number of classes > 2,
         :term:`predict` will break ties according to the confidence values of
         :term:`decision_function`; otherwise the first class among the tied
         classes is returned. Please note that breaking ties comes at a
@@ -577,8 +577,8 @@ class SVC(BaseSVC):
         produce probability estimates from decision values. If
         probability=False, an empty array. Platt scaling uses the logistic
         function
-        ``1 / (1 + exp(decision_value * probA_ + probB_))``
-        where ``probA_`` and ``probB_`` are learned from the dataset [2]_. For
+        `1 / (1 + exp(decision_value * probA_ + probB_))`
+        where `probA_` and `probB_` are learned from the dataset [2]_. For
         more information on the multiclass case and training procedure see
         section 8 of [1]_.
 
@@ -664,12 +664,12 @@ class NuSVC(BaseSVC):
     gamma : {'scale', 'auto'} or float, optional (default='scale')
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
-        - if ``gamma='scale'`` (default) is passed then it uses
+        - if `gamma='scale'` (default) is passed then it uses
           1 / (n_features * X.var()) as value of gamma,
         - if 'auto', uses 1 / n_features.
 
         .. versionchanged:: 0.22
-           The default value of ``gamma`` changed from 'auto' to 'scale'.
+           The default value of `gamma` changed from 'auto' to 'scale'.
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
@@ -693,7 +693,7 @@ class NuSVC(BaseSVC):
         SVC. If not given, all classes are supposed to have
         weight one. The "balanced" mode uses the values of y to automatically
         adjust weights inversely proportional to class frequencies as
-        ``n_samples / (n_classes * np.bincount(y))``
+        `n_samples / (n_classes * np.bincount(y))`
 
     verbose : bool, default: False
         Enable verbose output. Note that this setting takes advantage of a
@@ -719,7 +719,7 @@ class NuSVC(BaseSVC):
            Deprecated *decision_function_shape='ovo' and None*.
 
     break_ties : bool, optional (default=False)
-        If true, ``decision_function_shape='ovr'``, and number of classes > 2,
+        If true, `decision_function_shape='ovr'`, and number of classes > 2,
         :term:`predict` will break ties according to the confidence values of
         :term:`decision_function`; otherwise the first class among the tied
         classes is returned. Please note that breaking ties comes at a
@@ -838,12 +838,12 @@ class SVR(BaseLibSVM, RegressorMixin):
     gamma : {'scale', 'auto'} or float, optional (default='scale')
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
-        - if ``gamma='scale'`` (default) is passed then it uses
+        - if `gamma='scale'` (default) is passed then it uses
           1 / (n_features * X.var()) as value of gamma,
         - if 'auto', uses 1 / n_features.
 
         .. versionchanged:: 0.22
-           The default value of ``gamma`` changed from 'auto' to 'scale'.
+           The default value of `gamma` changed from 'auto' to 'scale'.
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
@@ -973,12 +973,12 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     gamma : {'scale', 'auto'} or float, optional (default='scale')
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
-        - if ``gamma='scale'`` (default) is passed then it uses
+        - if `gamma='scale'` (default) is passed then it uses
           1 / (n_features * X.var()) as value of gamma,
         - if 'auto', uses 1 / n_features.
 
         .. versionchanged:: 0.22
-           The default value of ``gamma`` changed from 'auto' to 'scale'.
+           The default value of `gamma` changed from 'auto' to 'scale'.
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
@@ -1088,12 +1088,12 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
     gamma : {'scale', 'auto'} or float, optional (default='scale')
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
-        - if ``gamma='scale'`` (default) is passed then it uses
+        - if `gamma='scale'` (default) is passed then it uses
           1 / (n_features * X.var()) as value of gamma,
         - if 'auto', uses 1 / n_features.
 
         .. versionchanged:: 0.22
-           The default value of ``gamma`` changed from 'auto' to 'scale'.
+           The default value of `gamma` changed from 'auto' to 'scale'.
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.

@@ -8,7 +8,7 @@ This example illustrates the :func:`datasets.make_classification`
 :func:`datasets.make_blobs` and :func:`datasets.make_gaussian_quantiles`
 functions.
 
-For ``make_classification``, three binary and two multi-class classification
+For `make_classification`, three binary and two multi-class classification
 datasets are generated, with different numbers of informative features and
 clusters per class.  """
 

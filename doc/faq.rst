@@ -33,15 +33,15 @@ of scikit-learn directly regarding contributing to scikit-learn.
 What's the best way to get help on scikit-learn usage?
 --------------------------------------------------------------
 **For general machine learning questions**, please use
-`Cross Validated <https://stats.stackexchange.com/>`_ with the ``[machine-learning]`` tag.
+`Cross Validated <https://stats.stackexchange.com/>`_ with the `[machine-learning]` tag.
 
 **For scikit-learn usage questions**, please use `Stack Overflow <https://stackoverflow.com/questions/tagged/scikit-learn>`_
-with the ``[scikit-learn]`` and ``[python]`` tags. You can alternatively use the `mailing list
+with the `[scikit-learn]` and `[python]` tags. You can alternatively use the `mailing list
 <https://mail.python.org/mailman/listinfo/scikit-learn>`_.
 
 Please make sure to include a minimal reproduction code snippet (ideally shorter
 than 10 lines) that highlights your problem on a toy dataset (for instance from
-``sklearn.datasets`` or randomly generated with functions of ``numpy.random`` with
+`sklearn.datasets` or randomly generated with functions of `numpy.random` with
 a fixed random seed). Please remove any line of code that is not necessary to
 reproduce your problem.
 
@@ -78,10 +78,10 @@ Don't make a bunch object! They are not part of the scikit-learn API. Bunch
 objects are just a way to package some numpy arrays. As a scikit-learn user you
 only ever need numpy arrays to feed your model with data.
 
-For instance to train a classifier, all you need is a 2D array ``X`` for the
-input variables and a 1D array ``y`` for the target variables. The array ``X``
-holds the features as columns and samples as rows . The array ``y`` contains
-integer values to encode the class membership of each sample in ``X``.
+For instance to train a classifier, all you need is a 2D array `X` for the
+input variables and a 1D array `y` for the target variables. The array `X`
+holds the features as columns and samples as rows . The array `y` contains
+integer values to encode the class membership of each sample in `X`.
 
 How can I load my own datasets into a format usable by scikit-learn?
 --------------------------------------------------------------------
@@ -105,8 +105,8 @@ enhanced data structure or a more efficient approximation technique) on
 a widely-used method will also be considered for inclusion.
 
 From the algorithms or techniques that meet the above criteria, only those
-which fit well within the current API of scikit-learn, that is a ``fit``,
-``predict/transform`` interface and ordinarily having input/output that is a
+which fit well within the current API of scikit-learn, that is a `fit`,
+`predict/transform` interface and ordinarily having input/output that is a
 numpy array or sparse matrix, are accepted.
 
 The contributor should support the importance of the proposed addition with
@@ -242,7 +242,7 @@ DBSCAN with Levenshtein distances::
     ... # doctest: +SKIP
     ([0, 1], array([ 0,  0, -1]))
 
-(This uses the third-party edit distance package ``leven``.)
+(This uses the third-party edit distance package `leven`.)
 
 Similar tricks can be used, with some care, for tree kernels, graph kernels,
 etc.
@@ -250,12 +250,12 @@ etc.
 Why do I sometime get a crash/freeze with n_jobs > 1 under OSX or Linux?
 ------------------------------------------------------------------------
 
-Several scikit-learn tools such as ``GridSearchCV`` and ``cross_val_score``
+Several scikit-learn tools such as `GridSearchCV` and `cross_val_score`
 rely internally on Python's `multiprocessing` module to parallelize execution
-onto several Python processes by passing ``n_jobs > 1`` as argument.
+onto several Python processes by passing `n_jobs > 1` as argument.
 
-The problem is that Python ``multiprocessing`` does a ``fork`` system call
-without following it with an ``exec`` system call for performance reasons. Many
+The problem is that Python `multiprocessing` does a `fork` system call
+without following it with an `exec` system call for performance reasons. Many
 libraries like (some versions of) Accelerate / vecLib under OSX, (some versions
 of) MKL, the OpenMP runtime of GCC, nvidia's Cuda (and probably many others),
 manage their own internal thread pool. Upon a call to `fork`, the thread pool
@@ -267,21 +267,21 @@ master since 0.2.10) and we contributed a `patch
 <https://gcc.gnu.org/bugzilla/show_bug.cgi?id=60035>`_ to GCC's OpenMP runtime
 (not yet reviewed).
 
-But in the end the real culprit is Python's ``multiprocessing`` that does
-``fork`` without ``exec`` to reduce the overhead of starting and using new
+But in the end the real culprit is Python's `multiprocessing` that does
+`fork` without `exec` to reduce the overhead of starting and using new
 Python processes for parallel computing. Unfortunately this is a violation of
 the POSIX standard and therefore some software editors like Apple refuse to
 consider the lack of fork-safety in Accelerate / vecLib as a bug.
 
-In Python 3.4+ it is now possible to configure ``multiprocessing`` to
+In Python 3.4+ it is now possible to configure `multiprocessing` to
 use the 'forkserver' or 'spawn' start methods (instead of the default
 'fork') to manage the process pools. To work around this issue when
-using scikit-learn, you can set the ``JOBLIB_START_METHOD`` environment
+using scikit-learn, you can set the `JOBLIB_START_METHOD` environment
 variable to 'forkserver'. However the user should be aware that using
 the 'forkserver' method prevents joblib.Parallel to call function
 interactively defined in a shell session.
 
-If you have custom code that uses ``multiprocessing`` directly instead of using
+If you have custom code that uses `multiprocessing` directly instead of using
 it via joblib you can enable the 'forkserver' mode globally for your
 program: Insert the following instructions in your main script::
 
@@ -305,17 +305,17 @@ Why does my job use more cores than specified with n_jobs under OSX or Linux?
 This happens when vectorized numpy operations are handled by libraries such
 as MKL or OpenBLAS.
 
-While scikit-learn adheres to the limit set by ``n_jobs``,
+While scikit-learn adheres to the limit set by `n_jobs`,
 numpy operations vectorized using MKL (or OpenBLAS) will make use of multiple
 threads within each scikit-learn job (thread or process).
 
 The number of threads used by the BLAS library can be set via an environment
 variable. For example, to set the maximum number of threads to some integer
-value ``N``, the following environment variables should be set:
+value `N`, the following environment variables should be set:
 
-* For MKL: ``export MKL_NUM_THREADS=N``
+* For MKL: `export MKL_NUM_THREADS=N`
 
-* For OpenBLAS: ``export OPENBLAS_NUM_THREADS=N``
+* For OpenBLAS: `export OPENBLAS_NUM_THREADS=N`
 
 
 Why is there no support for deep or reinforcement learning / Will there be support for deep or reinforcement learning in scikit-learn?
@@ -349,7 +349,7 @@ reviewers are busy. We ask for your understanding and request that you
 not close your pull request or discontinue your work solely because of
 this reason.
 
-How do I set a ``random_state`` for an entire execution?
+How do I set a `random_state` for an entire execution?
 ---------------------------------------------------------
 
 For testing and replicability, it is often important to have the entire execution
@@ -365,9 +365,9 @@ execute the following in his or her script::
     np.random.seed(42)
 
 However, a global random state is prone to modification by other code during
-execution. Thus, the only way to ensure replicability is to pass ``RandomState``
+execution. Thus, the only way to ensure replicability is to pass `RandomState`
 instances everywhere and ensure that both estimators and cross-validation
-splitters have their ``random_state`` parameter set.
+splitters have their `random_state` parameter set.
 
 Why do categorical variables need preprocessing in scikit-learn, compared to other tools?
 -----------------------------------------------------------------------------------------

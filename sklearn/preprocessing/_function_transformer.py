@@ -41,7 +41,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
 
     validate : bool, optional default=False
         Indicate that the input X array should be checked before calling
-        ``func``. The possibilities are:
+        `func`. The possibilities are:
 
         - If False, there is no input validation.
         - If True, then X will be converted to a 2-dimensional NumPy array or
@@ -49,7 +49,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
           raised.
 
         .. deprecated:: 0.22
-           The default of ``validate`` changed from True to False.
+           The default of `validate` changed from True to False.
 
     accept_sparse : boolean, optional
         Indicate that func accepts a sparse matrix as input. If validate is
@@ -57,7 +57,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         sparse matrix inputs will cause an exception to be raised.
 
     check_inverse : bool, default=True
-       Whether to check that or ``func`` followed by ``inverse_func`` leads to
+       Whether to check that or `func` followed by `inverse_func` leads to
        the original inputs. It can be used for a sanity check, raising a
        warning when the condition is not fulfilled.
 
@@ -102,7 +102,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         """Fit transformer by checking X.
 
-        If ``validate`` is ``True``, ``X`` will be checked.
+        If `validate` is `True`, `X` will be checked.
 
         Parameters
         ----------

@@ -43,13 +43,13 @@ Gaussian Process Regression (GPR)
 
 The :class:`GaussianProcessRegressor` implements Gaussian processes (GP) for
 regression purposes. For this, the prior of the GP needs to be specified. The
-prior mean is assumed to be constant and zero (for ``normalize_y=False``) or the
-training data's mean (for ``normalize_y=True``). The prior's
+prior mean is assumed to be constant and zero (for `normalize_y=False`) or the
+training data's mean (for `normalize_y=True`). The prior's
 covariance is specified by passing a :ref:`kernel <gp_kernels>` object. The
 hyperparameters of the kernel are optimized during fitting of
 GaussianProcessRegressor by maximizing the log-marginal-likelihood (LML) based
-on the passed ``optimizer``. As the LML may have multiple local optima, the
-optimizer can be started repeatedly by specifying ``n_restarts_optimizer``. The
+on the passed `optimizer`. As the LML may have multiple local optima, the
+optimizer can be started repeatedly by specifying `n_restarts_optimizer`. The
 first run is always conducted starting from the initial hyperparameter values
 of the kernel; subsequent runs are conducted from hyperparameter values
 that have been chosen randomly from the range of allowed values.
@@ -57,7 +57,7 @@ If the initial hyperparameters should be kept fixed, `None` can be passed as
 optimizer.
 
 The noise level in the targets can be specified by passing it via the
-parameter ``alpha``, either globally as a scalar or per datapoint.
+parameter `alpha`, either globally as a scalar or per datapoint.
 Note that a moderate noise level can also be helpful for dealing with numeric
 issues during fitting as it is effectively implemented as Tikhonov
 regularization, i.e., by adding it to the diagonal of the kernel matrix. An
@@ -70,10 +70,10 @@ the API of standard scikit-learn estimators, GaussianProcessRegressor:
 
 * allows prediction without prior fitting (based on the GP prior)
 
-* provides an additional method ``sample_y(X)``, which evaluates samples
+* provides an additional method `sample_y(X)`, which evaluates samples
   drawn from the GPR (prior or posterior) at given inputs
 
-* exposes a method ``log_marginal_likelihood(theta)``, which can be used
+* exposes a method `log_marginal_likelihood(theta)`, which can be used
   externally for other ways of selecting hyperparameters, e.g., via
   Markov chain Monte Carlo.
 
@@ -255,8 +255,8 @@ The GP prior mean is assumed to be zero. The prior's
 covariance is specified by passing a :ref:`kernel <gp_kernels>` object. The
 hyperparameters of the kernel are optimized during fitting of
 GaussianProcessRegressor by maximizing the log-marginal-likelihood (LML) based
-on the passed ``optimizer``. As the LML may have multiple local optima, the
-optimizer can be started repeatedly by specifying ``n_restarts_optimizer``. The
+on the passed `optimizer`. As the LML may have multiple local optima, the
+optimizer can be started repeatedly by specifying `n_restarts_optimizer`. The
 first run is always conducted starting from the initial hyperparameter values
 of the kernel; subsequent runs are conducted from hyperparameter values
 that have been chosen randomly from the range of allowed values.
@@ -369,30 +369,30 @@ Chapter 4 of [RW2006]_.
 Gaussian Process Kernel API
 ---------------------------
 The main usage of a :class:`Kernel` is to compute the GP's covariance between
-datapoints. For this, the method ``__call__`` of the kernel can be called. This
+datapoints. For this, the method `__call__` of the kernel can be called. This
 method can either be used to compute the "auto-covariance" of all pairs of
 datapoints in a 2d array X, or the "cross-covariance" of all combinations
 of datapoints of a 2d array X with datapoints in a 2d array Y. The following
 identity holds true for all kernels k (except for the :class:`WhiteKernel`):
-``k(X) == K(X, Y=X)``
+`k(X) == K(X, Y=X)`
 
-If only the diagonal of the auto-covariance is being used, the method ``diag()``
+If only the diagonal of the auto-covariance is being used, the method `diag()`
 of a kernel can be called, which is more computationally efficient than the
-equivalent call to ``__call__``: ``np.diag(k(X, X)) == k.diag(X)``
+equivalent call to `__call__`: `np.diag(k(X, X)) == k.diag(X)`
 
 Kernels are parameterized by a vector :math:`\theta` of hyperparameters. These
 hyperparameters can for instance control length-scales or periodicity of a
 kernel (see below). All kernels support computing analytic gradients 
 of the kernel's auto-covariance with respect to :math:`\theta` via setting
-``eval_gradient=True`` in the ``__call__`` method. This gradient is used by the
+`eval_gradient=True` in the `__call__` method. This gradient is used by the
 Gaussian process (both regressor and classifier) in computing the gradient
 of the log-marginal-likelihood, which in turn is used to determine the
 value of :math:`\theta`, which maximizes the log-marginal-likelihood,  via
 gradient ascent. For each hyperparameter, the initial value and the
 bounds need to be specified when creating an instance of the kernel. The
 current value of :math:`\theta` can be get and set via the property
-``theta`` of the kernel object. Moreover, the bounds of the hyperparameters can be
-accessed by the property ``bounds`` of the kernel. Note that both properties
+`theta` of the kernel object. Moreover, the bounds of the hyperparameters can be
+accessed by the property `bounds` of the kernel. Note that both properties
 (theta and bounds) return log-transformed values of the internally used values
 since those are typically more amenable to gradient-based optimization.
 The specification of each hyperparameter is stored in the form of an instance of
@@ -400,15 +400,15 @@ The specification of each hyperparameter is stored in the form of an instance of
 hyperparameter with name "x" must have the attributes self.x and self.x_bounds.
 
 The abstract base class for all kernels is :class:`Kernel`. Kernel implements a
-similar interface as :class:`Estimator`, providing the methods ``get_params()``,
-``set_params()``, and ``clone()``. This allows setting kernel values also via
+similar interface as :class:`Estimator`, providing the methods `get_params()`,
+`set_params()`, and `clone()`. This allows setting kernel values also via
 meta-estimators such as :class:`Pipeline` or :class:`GridSearch`. Note that due to the nested
 structure of kernels (by applying kernel operators, see below), the names of
 kernel parameters might become relatively complicated. In general, for a
-binary kernel operator, parameters of the left operand are prefixed with ``k1__``
-and parameters of the right operand with ``k2__``. An additional convenience
-method is ``clone_with_theta(theta)``, which returns a cloned version of the
-kernel but with the hyperparameters set to ``theta``. An illustrative example:
+binary kernel operator, parameters of the left operand are prefixed with `k1__`
+and parameters of the right operand with `k2__`. An additional convenience
+method is `clone_with_theta(theta)`, which returns a cloned version of the
+kernel but with the hyperparameters set to `theta`. An illustrative example:
 
     >>> from sklearn.gaussian_process.kernels import ConstantKernel, RBF
     >>> kernel = ConstantKernel(constant_value=1.0, constant_value_bounds=(0.0, 10.0)) * RBF(length_scale=0.5, length_scale_bounds=(0.0, 10.0)) + RBF(length_scale=2.0, length_scale_bounds=(0.0, 10.0))
@@ -438,11 +438,11 @@ kernel but with the hyperparameters set to ``theta``. An illustrative example:
 
 All Gaussian process kernels are interoperable with :mod:`sklearn.metrics.pairwise`
 and vice versa: instances of subclasses of :class:`Kernel` can be passed as
-``metric`` to ``pairwise_kernels`` from :mod:`sklearn.metrics.pairwise`. Moreover,
+`metric` to `pairwise_kernels` from :mod:`sklearn.metrics.pairwise`. Moreover,
 kernel functions from pairwise can be used as GP kernels by using the wrapper
 class :class:`PairwiseKernel`. The only caveat is that the gradient of
 the hyperparameters is not analytic but numeric and all those kernels support
-only isotropic distances. The parameter ``gamma`` is considered to be a
+only isotropic distances. The parameter `gamma` is considered to be a
 hyperparameter and may be optimized. The other kernel parameters are set
 directly at initialization and are kept fixed.
 

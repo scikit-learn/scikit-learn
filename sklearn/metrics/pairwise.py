@@ -178,7 +178,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
 
     However, this is not the most precise way of doing this computation, and
     the distance matrix returned by this function may not be exactly
-    symmetric as required by, e.g., ``scipy.spatial.distance`` functions.
+    symmetric as required by, e.g., `scipy.spatial.distance` functions.
 
     Read more in the :ref:`User Guide <metrics>`.
 
@@ -190,7 +190,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
 
     Y_norm_squared : array-like, shape (n_samples_2, ), optional
         Pre-computed dot-products of vectors in Y (e.g.,
-        ``(Y**2).sum(axis=1)``)
+        `(Y**2).sum(axis=1)`)
         May be ignored in some cases, see the note below.
 
     squared : boolean, optional
@@ -198,13 +198,13 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
 
     X_norm_squared : array-like, shape = [n_samples_1], optional
         Pre-computed dot-products of vectors in X (e.g.,
-        ``(X**2).sum(axis=1)``)
+        `(X**2).sum(axis=1)`)
         May be ignored in some cases, see the note below.
 
     Notes
     -----
     To achieve better accuracy, `X_norm_squared` and `Y_norm_squared` may be
-    unused if they are passed as ``float32``.
+    unused if they are passed as `float32`.
 
     Returns
     -------
@@ -822,7 +822,7 @@ def linear_kernel(X, Y=None, dense_output=True):
 
     dense_output : boolean (optional), default True
         Whether to return dense output even when the input is sparse. If
-        ``False``, the output is sparse if both input arrays are sparse.
+        `False`, the output is sparse if both input arrays are sparse.
 
         .. versionadded:: 0.20
 
@@ -989,15 +989,15 @@ def cosine_similarity(X, Y=None, dense_output=True):
         Input data.
 
     Y : ndarray or sparse array, shape: (n_samples_Y, n_features)
-        Input data. If ``None``, the output will be the pairwise
-        similarities between all samples in ``X``.
+        Input data. If `None`, the output will be the pairwise
+        similarities between all samples in `X`.
 
     dense_output : boolean (optional), default True
         Whether to return dense output even when the input is sparse. If
-        ``False``, the output is sparse if both input arrays are sparse.
+        `False`, the output is sparse if both input arrays are sparse.
 
         .. versionadded:: 0.17
-           parameter ``dense_output`` for dense output.
+           parameter `dense_output` for dense output.
 
     Returns
     -------
@@ -1287,7 +1287,7 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
 
     In cases where not all of a pairwise distance matrix needs to be stored at
     once, this is used to calculate pairwise distances in
-    ``working_memory``-sized chunks.  If ``reduce_func`` is given, it is run
+    `working_memory`-sized chunks.  If `reduce_func` is given, it is run
     on each chunk and its return values are concatenated into lists, arrays
     or sparse matrices.
 
@@ -1303,11 +1303,11 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
 
     reduce_func : callable, optional
         The function which is applied on each chunk of the distance matrix,
-        reducing it to needed values.  ``reduce_func(D_chunk, start)``
-        is called repeatedly, where ``D_chunk`` is a contiguous vertical
-        slice of the pairwise distance matrix, starting at row ``start``.
+        reducing it to needed values.  `reduce_func(D_chunk, start)`
+        is called repeatedly, where `D_chunk` is a contiguous vertical
+        slice of the pairwise distance matrix, starting at row `start`.
         It should return an array, a list, or a sparse matrix of length
-        ``D_chunk.shape[0]``, or a tuple of such objects.
+        `D_chunk.shape[0]`, or a tuple of such objects.
 
         If None, pairwise_distances_chunked returns a generator of vertical
         chunks of the distance matrix.
@@ -1328,14 +1328,14 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
         down the pairwise matrix into n_jobs even slices and computing them in
         parallel.
 
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     working_memory : int, optional
         The sought maximum memory for temporary distance matrix chunks.
         When None (default), the value of
-        ``sklearn.get_config()['working_memory']`` is used.
+        `sklearn.get_config()['working_memory']` is used.
 
     `**kwds` : optional keyword parameters
         Any further parameters are passed directly to the distance function.
@@ -1346,7 +1346,7 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
     ------
     D_chunk : array or sparse matrix
         A contiguous slice of distance matrix, optionally processed by
-        ``reduce_func``.
+        `reduce_func`.
 
     Examples
     --------
@@ -1377,7 +1377,7 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
     >>> avg_dist
     array([0.039..., 0.        , 0.        , 0.039..., 0.        ])
 
-    Where r is defined per sample, we need to make use of ``start``:
+    Where r is defined per sample, we need to make use of `start`:
 
     >>> r = [.2, .4, .4, .3, .1]
     >>> def reduce_func(D_chunk, start):
@@ -1388,7 +1388,7 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
     >>> neigh
     [array([0, 3]), array([0, 1]), array([2]), array([0, 3]), array([4])]
 
-    Force row-by-row generation by reducing ``working_memory``:
+    Force row-by-row generation by reducing `working_memory`:
 
     >>> gen = pairwise_distances_chunked(X, reduce_func=reduce_func,
     ...                                  working_memory=0)
@@ -1502,8 +1502,8 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
         down the pairwise matrix into n_jobs even slices and computing them in
         parallel.
 
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     **kwds : optional keyword parameters
@@ -1686,8 +1686,8 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
         down the pairwise matrix into n_jobs even slices and computing them in
         parallel.
 
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     **kwds : optional keyword parameters

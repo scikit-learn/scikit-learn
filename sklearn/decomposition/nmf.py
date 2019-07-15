@@ -284,7 +284,7 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``random`` == 'nndsvdar' or 'random'.
+        by `np.random`. Used when `random` == 'nndsvdar' or 'random'.
 
     Returns
     -------
@@ -1199,7 +1199,7 @@ class NMF(BaseEstimator, TransformerMixin):
 
     reconstruction_err_ : number
         Frobenius norm of the matrix difference, or beta-divergence, between
-        the training data ``X`` and the reconstructed data ``WH`` from
+        the training data `X` and the reconstructed data `WH` from
         the fitted model.
 
     n_iter_ : int

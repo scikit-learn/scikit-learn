@@ -221,9 +221,9 @@ transposed data.
    >>> X_approx = agglo.inverse_transform(X_reduced)
    >>> images_approx = np.reshape(X_approx, images.shape)
 
-.. topic:: ``transform`` and ``inverse_transform`` methods
+.. topic:: `transform` and `inverse_transform` methods
 
-   Some estimators expose a ``transform`` method, for instance to reduce
+   Some estimators expose a `transform` method, for instance to reduce
    the dimensionality of the dataset.
 
 Decompositions: from a signal to components and loadings

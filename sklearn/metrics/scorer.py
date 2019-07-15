@@ -5,12 +5,12 @@ arbitrary score functions.
 
 A scorer object is a callable that can be passed to
 :class:`sklearn.model_selection.GridSearchCV` or
-:func:`sklearn.model_selection.cross_val_score` as the ``scoring``
+:func:`sklearn.model_selection.cross_val_score` as the `scoring`
 parameter, to specify how a model should be evaluated.
 
-The signature of the call is ``(estimator, X, y)`` where ``estimator``
-is the model to be evaluated, ``X`` is the test data and ``y`` is the
-ground truth labeling (or ``None`` in the case of unsupervised models).
+The signature of the call is `(estimator, X, y)` where `estimator`
+is the model to be evaluated, `X` is the test data and `y` is the
+ground truth labeling (or `None` in the case of unsupervised models).
 """
 
 # Authors: Andreas Mueller <amueller@ais.uni-bonn.de>
@@ -253,7 +253,7 @@ def check_scoring(estimator, scoring=None, allow_none=False):
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
+        `scorer(estimator, X, y)`.
 
     allow_none : boolean, optional, default: False
         If no scoring is specified and the estimator has no score function, we
@@ -263,7 +263,7 @@ def check_scoring(estimator, scoring=None, allow_none=False):
     -------
     scoring : callable
         A scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
+        `scorer(estimator, X, y)`.
     """
     if not hasattr(estimator, 'fit'):
         raise TypeError("estimator should be an estimator implementing "
@@ -324,8 +324,8 @@ def _check_multimetric_scoring(estimator, scoring=None):
         See :ref:`multimetric_grid_search` for an example.
 
         If None the estimator's score method is used.
-        The return value in that case will be ``{'score': <default_scorer>}``.
-        If the estimator's score method is not available, a ``TypeError``
+        The return value in that case will be `{'score': <default_scorer>}`.
+        If the estimator's score method is not available, a `TypeError`
         is raised.
 
     Returns
@@ -402,8 +402,8 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
     """Make a scorer from a performance metric or loss function.
 
     This factory function wraps scoring functions for use in GridSearchCV
-    and cross_val_score. It takes a score function, such as ``accuracy_score``,
-    ``mean_squared_error``, ``adjusted_rand_index`` or ``average_precision``
+    and cross_val_score. It takes a score function, such as `accuracy_score`,
+    `mean_squared_error`, `adjusted_rand_index` or `average_precision`
     and returns a callable that scores an estimator's output.
 
     Read more in the :ref:`User Guide <scoring>`.
@@ -412,7 +412,7 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
     ----------
     score_func : callable,
         Score function (or loss function) with signature
-        ``score_func(y, y_pred, **kwargs)``.
+        `score_func(y, y_pred, **kwargs)`.
 
     greater_is_better : boolean, default=True
         Whether score_func is a score function (default), meaning high is good,
@@ -428,7 +428,7 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
         This only works for binary classification using estimators that
         have either a decision_function or predict_proba method.
 
-        For example ``average_precision`` or the area under the roc curve
+        For example `average_precision` or the area under the roc curve
         can not be computed using discrete predictions alone.
 
     **kwargs : additional arguments

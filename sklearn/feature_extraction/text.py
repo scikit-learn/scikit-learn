@@ -488,7 +488,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
     tokenizer : callable or None (default)
         Override the string tokenization step while preserving the
         preprocessing and n-grams generation steps.
-        Only applies if ``analyzer == 'word'``.
+        Only applies if `analyzer == 'word'`.
 
     stop_words : string {'english'}, list, or None (default)
         If 'english', a built-in stop word list for English is used.
@@ -497,11 +497,11 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
-        Only applies if ``analyzer == 'word'``.
+        Only applies if `analyzer == 'word'`.
 
     token_pattern : string
         Regular expression denoting what constitutes a "token", only used
-        if ``analyzer == 'word'``. The default regexp selects tokens of 2
+        if `analyzer == 'word'`. The default regexp selects tokens of 2
         or more alphanumeric characters (punctuation is completely ignored
         and always treated as a token separator).
 
@@ -519,7 +519,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         out of the raw, unprocessed input.
 
         .. versionchanged:: 0.21
-        Since v0.21, if ``input`` is ``filename`` or ``file``, the data is
+        Since v0.21, if `input` is `filename` or `file`, the data is
         first read from the file and then passed to the given callable
         analyzer.
 
@@ -744,7 +744,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     tokenizer : callable or None (default)
         Override the string tokenization step while preserving the
         preprocessing and n-grams generation steps.
-        Only applies if ``analyzer == 'word'``.
+        Only applies if `analyzer == 'word'`.
 
     stop_words : string {'english'}, list, or None (default)
         If 'english', a built-in stop word list for English is used.
@@ -753,7 +753,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
-        Only applies if ``analyzer == 'word'``.
+        Only applies if `analyzer == 'word'`.
 
         If None, no stop words will be used. max_df can be set to a value
         in the range [0.7, 1.0) to automatically detect and filter stop
@@ -761,7 +761,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
     token_pattern : string
         Regular expression denoting what constitutes a "token", only used
-        if ``analyzer == 'word'``. The default regexp select tokens of 2
+        if `analyzer == 'word'`. The default regexp select tokens of 2
         or more alphanumeric characters (punctuation is completely ignored
         and always treated as a token separator).
 
@@ -779,7 +779,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         out of the raw, unprocessed input.
 
         .. versionchanged:: 0.21
-        Since v0.21, if ``input`` is ``filename`` or ``file``, the data is
+        Since v0.21, if `input` is `filename` or `file`, the data is
         first read from the file and then passed to the given callable
         analyzer.
 
@@ -863,7 +863,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
     Notes
     -----
-    The ``stop_words_`` attribute can get large and increase the model size
+    The `stop_words_` attribute can get large and increase the model size
     when pickling. This attribute is provided only for introspection and can
     be safely removed using delattr or set to None before pickling.
     """
@@ -1185,7 +1185,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 
     The formula that is used to compute the tf-idf for a term t of a document d
     in a document set is tf-idf(t, d) = tf(t, d) * idf(t), and the idf is
-    computed as idf(t) = log [ n / df(t) ] + 1 (if ``smooth_idf=False``), where
+    computed as idf(t) = log [ n / df(t) ] + 1 (if `smooth_idf=False`), where
     n is the total number of documents in the document set and df(t) is the
     document frequency of t; the document frequency is the number of documents
     in the document set that contain the term t. The effect of adding "1" to
@@ -1196,7 +1196,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     notation that defines the idf as
     idf(t) = log [ n / (df(t) + 1) ]).
 
-    If ``smooth_idf=True`` (the default), the constant "1" is added to the
+    If `smooth_idf=True` (the default), the constant "1" is added to the
     numerator and denominator of the idf as if an extra document was seen
     containing every term in the collection exactly once, which prevents
     zero divisions: idf(d, t) = log [ (1 + n) / (1 + df(d, t)) ] + 1.
@@ -1206,10 +1206,10 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     as follows:
 
     Tf is "n" (natural) by default, "l" (logarithmic) when
-    ``sublinear_tf=True``.
+    `sublinear_tf=True`.
     Idf is "t" when use_idf is given, "n" (none) otherwise.
-    Normalization is "c" (cosine) when ``norm='l2'``, "n" (none)
-    when ``norm=None``.
+    Normalization is "c" (cosine) when `norm='l2'`, "n" (none)
+    when `norm=None`.
 
     Read more in the :ref:`User Guide <text_feature_extraction>`.
 
@@ -1238,7 +1238,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     ----------
     idf_ : array, shape (n_features)
         The inverse document frequency (IDF) vector; only defined
-        if  ``use_idf`` is True.
+        if  `use_idf` is True.
 
     References
     ----------
@@ -1401,7 +1401,7 @@ class TfidfVectorizer(CountVectorizer):
     tokenizer : callable or None (default=None)
         Override the string tokenization step while preserving the
         preprocessing and n-grams generation steps.
-        Only applies if ``analyzer == 'word'``.
+        Only applies if `analyzer == 'word'`.
 
     analyzer : string, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word or character n-grams.
@@ -1412,7 +1412,7 @@ class TfidfVectorizer(CountVectorizer):
         out of the raw, unprocessed input.
 
         .. versionchanged:: 0.21
-        Since v0.21, if ``input`` is ``filename`` or ``file``, the data is
+        Since v0.21, if `input` is `filename` or `file`, the data is
         first read from the file and then passed to the given callable
         analyzer.
 
@@ -1425,7 +1425,7 @@ class TfidfVectorizer(CountVectorizer):
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
-        Only applies if ``analyzer == 'word'``.
+        Only applies if `analyzer == 'word'`.
 
         If None, no stop words will be used. max_df can be set to a value
         in the range [0.7, 1.0) to automatically detect and filter stop
@@ -1433,7 +1433,7 @@ class TfidfVectorizer(CountVectorizer):
 
     token_pattern : string
         Regular expression denoting what constitutes a "token", only used
-        if ``analyzer == 'word'``. The default regexp selects tokens of 2
+        if `analyzer == 'word'`. The default regexp selects tokens of 2
         or more alphanumeric characters (punctuation is completely ignored
         and always treated as a token separator).
 
@@ -1507,7 +1507,7 @@ class TfidfVectorizer(CountVectorizer):
 
     idf_ : array, shape (n_features)
         The inverse document frequency (IDF) vector; only defined
-        if ``use_idf`` is True.
+        if `use_idf` is True.
 
     stop_words_ : set
         Terms that were ignored because they either:
@@ -1543,7 +1543,7 @@ class TfidfVectorizer(CountVectorizer):
 
     Notes
     -----
-    The ``stop_words_`` attribute can get large and increase the model size
+    The `stop_words_` attribute can get large and increase the model size
     when pickling. This attribute is provided only for introspection and can
     be safely removed using delattr or set to None before pickling.
     """

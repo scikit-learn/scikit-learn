@@ -7,14 +7,14 @@ Illustration of the effect of different regularization strategies
 for Gradient Boosting. The example is taken from Hastie et al 2009 [1]_.
 
 The loss function used is binomial deviance. Regularization via
-shrinkage (``learning_rate < 1.0``) improves performance considerably.
+shrinkage (`learning_rate < 1.0`) improves performance considerably.
 In combination with shrinkage, stochastic gradient boosting
-(``subsample < 1.0``) can produce more accurate models by reducing the
+(`subsample < 1.0`) can produce more accurate models by reducing the
 variance via bagging.
 Subsampling without shrinkage usually does poorly.
 Another strategy to reduce the variance is by subsampling the features
 analogous to the random splits in Random Forests
-(via the ``max_features`` parameter).
+(via the `max_features` parameter).
 
 .. [1] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical
     Learning Ed. 2", Springer, 2009.

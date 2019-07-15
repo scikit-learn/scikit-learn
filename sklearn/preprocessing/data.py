@@ -133,7 +133,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
 
     See also
     --------
-    StandardScaler: Performs scaling to unit variance using the``Transformer`` API
+    StandardScaler: Performs scaling to unit variance using the`Transformer` API
         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
 
     """  # noqa
@@ -233,11 +233,11 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     ----------
     min_ : ndarray, shape (n_features,)
         Per feature adjustment for minimum. Equivalent to
-        ``min - X.min(axis=0) * self.scale_``
+        `min - X.min(axis=0) * self.scale_`
 
     scale_ : ndarray, shape (n_features,)
         Per feature relative scaling of the data. Equivalent to
-        ``(max - min) / (X.max(axis=0) - X.min(axis=0))``
+        `(max - min) / (X.max(axis=0) - X.min(axis=0))`
 
         .. versionadded:: 0.17
            *scale_* attribute.
@@ -255,7 +255,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
            *data_max_*
 
     data_range_ : ndarray, shape (n_features,)
-        Per feature range ``(data_max_ - data_min_)`` seen in the data
+        Per feature range `(data_max_ - data_min_)` seen in the data
 
         .. versionadded:: 0.17
            *data_range_*
@@ -419,14 +419,14 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
     that it is in the given range on the training set, i.e. between
     zero and one.
 
-    The transformation is given by (when ``axis=0``)::
+    The transformation is given by (when `axis=0`)::
 
         X_std = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
         X_scaled = X_std * (max - min) + min
 
     where min, max = feature_range.
 
-    The transformation is calculated as (when ``axis=0``)::
+    The transformation is calculated as (when `axis=0`)::
 
        X_scaled = scale * X + min - X.min(axis=0) * scale
        where scale = (max - min) / (X.max(axis=0) - X.min(axis=0))
@@ -458,7 +458,7 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
 
     See also
     --------
-    MinMaxScaler: Performs scaling to a given range using the``Transformer`` API
+    MinMaxScaler: Performs scaling to a given range using the`Transformer` API
         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
 
     Notes
@@ -545,25 +545,25 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     ----------
     scale_ : ndarray or None, shape (n_features,)
         Per feature relative scaling of the data. This is calculated using
-        `np.sqrt(var_)`. Equal to ``None`` when ``with_std=False``.
+        `np.sqrt(var_)`. Equal to `None` when `with_std=False`.
 
         .. versionadded:: 0.17
            *scale_*
 
     mean_ : ndarray or None, shape (n_features,)
         The mean value for each feature in the training set.
-        Equal to ``None`` when ``with_mean=False``.
+        Equal to `None` when `with_mean=False`.
 
     var_ : ndarray or None, shape (n_features,)
         The variance for each feature in the training set. Used to compute
-        `scale_`. Equal to ``None`` when ``with_std=False``.
+        `scale_`. Equal to `None` when `with_std=False`.
 
     n_samples_seen_ : int or array, shape (n_features,)
         The number of samples processed by the estimator for each feature.
-        If there are not missing samples, the ``n_samples_seen`` will be an
+        If there are not missing samples, the `n_samples_seen` will be an
         integer, otherwise it will be an array.
         Will be reset on new calls to fit, but increments across
-        ``partial_fit`` calls.
+        `partial_fit` calls.
 
     Examples
     --------
@@ -847,7 +847,7 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
 
     n_samples_seen_ : int
         The number of samples processed by the estimator. Will be reset on
-        new calls to fit, but increments across ``partial_fit`` calls.
+        new calls to fit, but increments across `partial_fit` calls.
 
     Examples
     --------
@@ -1010,7 +1010,7 @@ def maxabs_scale(X, axis=0, copy=True):
 
     See also
     --------
-    MaxAbsScaler: Performs scaling to the [-1, 1] range using the``Transformer`` API
+    MaxAbsScaler: Performs scaling to the [-1, 1] range using the`Transformer` API
         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
 
     Notes
@@ -1056,7 +1056,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     Centering and scaling happen independently on each feature by
     computing the relevant statistics on the samples in the training
     set. Median and interquartile range are then stored to be used on
-    later data using the ``transform`` method.
+    later data using the `transform` method.
 
     Standardization of a dataset is a common requirement for many
     machine learning estimators. Typically this is done by removing the mean
@@ -1072,7 +1072,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     ----------
     with_centering : boolean, True by default
         If True, center the data before scaling.
-        This will cause ``transform`` to raise an exception when attempted on
+        This will cause `transform` to raise an exception when attempted on
         sparse matrices, because centering them entails building a dense
         matrix which in common use cases is likely to be too large to fit in
         memory.
@@ -1082,7 +1082,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
 
     quantile_range : tuple (q_min, q_max), 0.0 < q_min < q_max < 100.0
         Default: (25.0, 75.0) = (1st quantile, 3rd quantile) = IQR
-        Quantile range used to calculate ``scale_``.
+        Quantile range used to calculate `scale_`.
 
         .. versionadded:: 0.18
 
@@ -1271,7 +1271,7 @@ def robust_scale(X, axis=0, with_centering=True, with_scaling=True,
 
     quantile_range : tuple (q_min, q_max), 0.0 < q_min < q_max < 100.0
         Default: (25.0, 75.0) = (1st quantile, 3rd quantile) = IQR
-        Quantile range used to calculate ``scale_``.
+        Quantile range used to calculate `scale_`.
 
         .. versionadded:: 0.18
 
@@ -1299,7 +1299,7 @@ def robust_scale(X, axis=0, with_centering=True, with_scaling=True,
 
     See also
     --------
-    RobustScaler: Performs centering and scaling using the ``Transformer`` API
+    RobustScaler: Performs centering and scaling using the `Transformer` API
         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
     """
     X = check_array(X, accept_sparse=('csr', 'csc'), copy=False,
@@ -1338,8 +1338,8 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
 
     interaction_only : boolean, default = False
         If true, only interaction features are produced: features that are
-        products of at most ``degree`` *distinct* input features (so not
-        ``x[1] ** 2``, ``x[0] * x[2] ** 3``, etc.).
+        products of at most `degree` *distinct* input features (so not
+        `x[1] ** 2`, `x[0] * x[2] ** 3`, etc.).
 
     include_bias : boolean
         If True (default), then include a bias column, the feature in which
@@ -1590,7 +1590,7 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
 
     See also
     --------
-    Normalizer: Performs normalization using the ``Transformer`` API
+    Normalizer: Performs normalization using the `Transformer` API
         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
 
     Notes
@@ -1765,7 +1765,7 @@ def binarize(X, threshold=0.0, copy=True):
 
     See also
     --------
-    Binarizer: Performs binarization using the ``Transformer`` API
+    Binarizer: Performs binarization using the `Transformer` API
         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
     """
     X = check_array(X, accept_sparse=['csr', 'csc'], copy=copy)
@@ -2206,7 +2206,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         X : ndarray or sparse matrix, shape (n_samples, n_features)
             The data used to scale along the features axis. If a sparse
             matrix is provided, it will be converted into a sparse
-            ``csc_matrix``. Additionally, the sparse matrix needs to be
+            `csc_matrix`. Additionally, the sparse matrix needs to be
             nonnegative if `ignore_implicit_zeros` is False.
 
         Returns
@@ -2392,7 +2392,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         X : ndarray or sparse matrix, shape (n_samples, n_features)
             The data used to scale along the features axis. If a sparse
             matrix is provided, it will be converted into a sparse
-            ``csc_matrix``. Additionally, the sparse matrix needs to be
+            `csc_matrix`. Additionally, the sparse matrix needs to be
             nonnegative if `ignore_implicit_zeros` is False.
 
         Returns
@@ -2413,7 +2413,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         X : ndarray or sparse matrix, shape (n_samples, n_features)
             The data used to scale along the features axis. If a sparse
             matrix is provided, it will be converted into a sparse
-            ``csc_matrix``. Additionally, the sparse matrix needs to be
+            `csc_matrix`. Additionally, the sparse matrix needs to be
             nonnegative if `ignore_implicit_zeros` is False.
 
         Returns
@@ -2523,7 +2523,7 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
     See also
     --------
     QuantileTransformer : Performs quantile-based scaling using the
-        ``Transformer`` API (e.g. as part of a preprocessing
+        `Transformer` API (e.g. as part of a preprocessing
         :class:`sklearn.pipeline.Pipeline`).
     power_transform : Maps data to a normal distribution using a
         power transformation.
@@ -2631,8 +2631,8 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
 
     Notes
     -----
-    NaNs are treated as missing values: disregarded in ``fit``, and maintained
-    in ``transform``.
+    NaNs are treated as missing values: disregarded in `fit`, and maintained
+    in `transform`.
 
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
@@ -2880,7 +2880,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
 
         check_positive : bool
             If True, check that all data is positive and non-zero (only if
-            ``self.method=='box-cox'``).
+            `self.method=='box-cox'`).
 
         check_shape : bool
             If True, check that n_features matches the length of self.lambdas_
@@ -2975,7 +2975,7 @@ def power_transform(X, method='warn', standardize=True, copy=True):
     See also
     --------
     PowerTransformer : Equivalent transformation with the
-        ``Transformer`` API (e.g. as part of a preprocessing
+        `Transformer` API (e.g. as part of a preprocessing
         :class:`sklearn.pipeline.Pipeline`).
 
     quantile_transform : Maps data to a standard normal distribution with
@@ -2983,8 +2983,8 @@ def power_transform(X, method='warn', standardize=True, copy=True):
 
     Notes
     -----
-    NaNs are treated as missing values: disregarded in ``fit``, and maintained
-    in ``transform``.
+    NaNs are treated as missing values: disregarded in `fit`, and maintained
+    in `transform`.
 
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py

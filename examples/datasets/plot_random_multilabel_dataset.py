@@ -24,13 +24,13 @@ Points are labeled as follows, where Y means the class is present:
 A star marks the expected sample for each class; its size reflects the
 probability of selecting that class label.
 
-The left and right examples highlight the ``n_labels`` parameter:
+The left and right examples highlight the `n_labels` parameter:
 more of the samples in the right plot have 2 or 3 labels.
 
 Note that this two-dimensional example is very degenerate:
 generally the number of features would be much greater than the
 "document length", while here we have much larger documents than vocabulary.
-Similarly, with ``n_classes > n_features``, it is much less likely that a
+Similarly, with `n_classes > n_features`, it is much less likely that a
 feature distinguishes a particular class.
 """
 

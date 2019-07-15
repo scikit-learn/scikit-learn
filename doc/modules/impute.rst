@@ -39,7 +39,7 @@ missing values are located. This class also allows for different missing values
 encodings.
 
 The following snippet demonstrates how to replace missing values,
-encoded as ``np.nan``, using the mean value of the columns (axis 0)
+encoded as `np.nan`, using the mean value of the columns (axis 0)
 that contain the missing values::
 
     >>> import numpy as np
@@ -71,8 +71,8 @@ values in the matrix because it would densify it at transform time. Missing
 values encoded by 0 must be used with dense input.
 
 The :class:`SimpleImputer` class also supports categorical data represented as
-string values or pandas categoricals when using the ``'most_frequent'`` or
-``'constant'`` strategy::
+string values or pandas categoricals when using the `'most_frequent'` or
+`'constant'` strategy::
 
     >>> import pandas as pd
     >>> df = pd.DataFrame([["a", "x"],
@@ -96,18 +96,18 @@ Multivariate feature imputation
 A more sophisticated approach is to use the :class:`IterativeImputer` class,
 which models each feature with missing values as a function of other features,
 and uses that estimate for imputation. It does so in an iterated round-robin
-fashion: at each step, a feature column is designated as output ``y`` and the
-other feature columns are treated as inputs ``X``. A regressor is fit on ``(X,
-y)`` for known ``y``. Then, the regressor is used to predict the missing values
-of ``y``.  This is done for each feature in an iterative fashion, and then is
-repeated for ``max_iter`` imputation rounds. The results of the final
+fashion: at each step, a feature column is designated as output `y` and the
+other feature columns are treated as inputs `X`. A regressor is fit on `(X,
+y)` for known `y`. Then, the regressor is used to predict the missing values
+of `y`.  This is done for each feature in an iterative fashion, and then is
+repeated for `max_iter` imputation rounds. The results of the final
 imputation round are returned.
 
 .. note::
 
    This estimator is still **experimental** for now: the predictions
    and the API might change without any deprecation cycle. To use it,
-   you need to explicitly import ``enable_iterative_imputer``.
+   you need to explicitly import `enable_iterative_imputer`.
 
 ::
 
@@ -146,10 +146,10 @@ Multiple vs. Single Imputation
 ------------------------------
 
 In the statistics community, it is common practice to perform multiple
-imputations, generating, for example, ``m`` separate imputations for a single
-feature matrix. Each of these ``m`` imputations is then put through the
+imputations, generating, for example, `m` separate imputations for a single
+feature matrix. Each of these `m` imputations is then put through the
 subsequent analysis pipeline (e.g. feature engineering, clustering, regression,
-classification). The ``m`` final analysis results (e.g. held-out validation
+classification). The `m` final analysis results (e.g. held-out validation
 errors) allow the data scientist to obtain understanding of how analytic
 results may differ as a consequence of the inherent uncertainty caused by the
 missing values. The above practice is called multiple imputation.
@@ -159,16 +159,16 @@ package (Multivariate Imputation by Chained Equations) [1]_, but differs from
 it by returning a single imputation instead of multiple imputations.  However,
 :class:`IterativeImputer` can also be used for multiple imputations by applying
 it repeatedly to the same dataset with different random seeds when
-``sample_posterior=True``. See [2]_, chapter 4 for more discussion on multiple
+`sample_posterior=True`. See [2]_, chapter 4 for more discussion on multiple
 vs. single imputations.
 
 It is still an open problem as to how useful single vs. multiple imputation is
 in the context of prediction and classification when the user is not
 interested in measuring uncertainty due to missing values.
 
-Note that a call to the ``transform`` method of :class:`IterativeImputer` is
+Note that a call to the `transform` method of :class:`IterativeImputer` is
 not allowed to change the number of samples. Therefore multiple imputations
-cannot be achieved by a single call to ``transform``.
+cannot be achieved by a single call to `transform`.
 
 References
 ==========
@@ -190,15 +190,15 @@ corresponding binary matrix indicating the presence of missing values in the
 dataset. This transformation is useful in conjunction with imputation. When
 using imputation, preserving the information about which values had been
 missing can be informative. Note that both the :class:`SimpleImputer` and
-:class:`IterativeImputer` have the boolean parameter ``add_indicator``
-(``False`` by default) which when set to ``True`` provides a convenient way of
+:class:`IterativeImputer` have the boolean parameter `add_indicator`
+(`False` by default) which when set to `True` provides a convenient way of
 stacking the output of the :class:`MissingIndicator` transformer with the
 output of the imputer.
 
-``NaN`` is usually used as the placeholder for missing values. However, it
-enforces the data type to be float. The parameter ``missing_values`` allows to
+`NaN` is usually used as the placeholder for missing values. However, it
+enforces the data type to be float. The parameter `missing_values` allows to
 specify other placeholder such as integer. In the following example, we will
-use ``-1`` as missing values::
+use `-1` as missing values::
 
   >>> from sklearn.impute import MissingIndicator
   >>> X = np.array([[-1, -1, 1, 3],
@@ -211,14 +211,14 @@ use ``-1`` as missing values::
          [False,  True,  True],
          [False,  True, False]])
 
-The ``features`` parameter is used to choose the features for which the mask is
-constructed. By default, it is ``'missing-only'`` which returns the imputer
-mask of the features containing missing values at ``fit`` time::
+The `features` parameter is used to choose the features for which the mask is
+constructed. By default, it is `'missing-only'` which returns the imputer
+mask of the features containing missing values at `fit` time::
 
   >>> indicator.features_
   array([0, 1, 3])
 
-The ``features`` parameter can be set to ``'all'`` to returned all features
+The `features` parameter can be set to `'all'` to returned all features
 whether or not they contain missing values::
 
   >>> indicator = MissingIndicator(missing_values=-1, features="all")

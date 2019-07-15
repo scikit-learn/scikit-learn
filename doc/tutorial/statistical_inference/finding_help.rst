@@ -5,7 +5,7 @@ Finding help
 The project mailing list
 ------------------------
 
-If you encounter a bug with ``scikit-learn`` or something that needs
+If you encounter a bug with `scikit-learn` or something that needs
 clarification in the docstring or the online documentation, please feel free to
 ask on the `Mailing List <http://scikit-learn.org/stable/support.html>`_
 

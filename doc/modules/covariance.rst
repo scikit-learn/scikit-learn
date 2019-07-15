@@ -35,10 +35,10 @@ The empirical covariance matrix of a sample can be computed using the
 :class:`EmpiricalCovariance` object to the data sample with the
 :meth:`EmpiricalCovariance.fit` method. Be careful that results depend
 on whether the data are centered, so one may want to use the
-``assume_centered`` parameter accurately. More precisely, if
-``assume_centered=False``, then the test set is supposed to have the
+`assume_centered` parameter accurately. More precisely, if
+`assume_centered=False`, then the test set is supposed to have the
 same mean vector as the training set. If not, both should be centered
-by the user, and ``assume_centered=True`` should be used.
+by the user, and `assume_centered=True` should be used.
 
 .. topic:: Examples:
 
@@ -61,7 +61,7 @@ eigenvalues of the covariance matrix, so the precision matrix obtained
 from its inversion is not accurate. Sometimes, it even occurs that the
 empirical covariance matrix cannot be inverted for numerical
 reasons. To avoid such an inversion problem, a transformation of the
-empirical covariance matrix has been introduced: the ``shrinkage``.
+empirical covariance matrix has been introduced: the `shrinkage`.
 
 In scikit-learn, this transformation (with a user-defined shrinkage
 coefficient) can be directly applied to a pre-computed covariance with
@@ -69,7 +69,7 @@ the :func:`shrunk_covariance` method. Also, a shrunk estimator of the
 covariance can be fitted to data with a :class:`ShrunkCovariance` object
 and its :meth:`ShrunkCovariance.fit` method. Again, results depend on
 whether the data are centered, so one may want to use the
-``assume_centered`` parameter accurately.
+`assume_centered` parameter accurately.
 
 
 Mathematically, this shrinkage consists in reducing the ratio between the
@@ -194,17 +194,17 @@ estimate a sparse precision matrix: the estimation of the covariance
 matrix is better conditioned by learning independence relations from
 the data. This is known as *covariance selection*.
 
-In the small-samples situation, in which ``n_samples`` is on the order
-of ``n_features`` or smaller, sparse inverse covariance estimators tend to work
+In the small-samples situation, in which `n_samples` is on the order
+of `n_features` or smaller, sparse inverse covariance estimators tend to work
 better than shrunk covariance estimators. However, in the opposite
 situation, or for very correlated data, they can be numerically unstable.
 In addition, unlike shrinkage estimators, sparse estimators are able to
 recover off-diagonal structure.
 
 The :class:`GraphicalLasso` estimator uses an l1 penalty to enforce sparsity on
-the precision matrix: the higher its ``alpha`` parameter, the more sparse
+the precision matrix: the higher its `alpha` parameter, the more sparse
 the precision matrix. The corresponding :class:`GraphicalLassoCV` object uses
-cross-validation to automatically set the ``alpha`` parameter.
+cross-validation to automatically set the `alpha` parameter.
 
 .. figure:: ../auto_examples/covariance/images/sphx_glr_plot_sparse_cov_001.png
    :target: ../auto_examples/covariance/plot_sparse_cov.html
@@ -249,7 +249,7 @@ Where :math:`K` is the precision matrix to be estimated, and :math:`S` is the
 sample covariance matrix. :math:`\|K\|_1` is the sum of the absolute values of
 off-diagonal coefficients of :math:`K`. The algorithm employed to solve this
 problem is the GLasso algorithm, from the Friedman 2008 Biostatistics
-paper. It is the same algorithm as in the R ``glasso`` package.
+paper. It is the same algorithm as in the R `glasso` package.
 
 
 .. topic:: Examples:
@@ -284,7 +284,7 @@ sets. Alternatively, robust covariance estimators can be used to
 perform outlier detection and discard/downweight some observations
 according to further processing of the data.
 
-The ``sklearn.covariance`` package implements a robust estimator of covariance,
+The `sklearn.covariance` package implements a robust estimator of covariance,
 the Minimum Covariance Determinant [3]_.
 
 
@@ -308,7 +308,7 @@ in scikit-learn when fitting an MCD object to data. The FastMCD
 algorithm also computes a robust estimate of the data set location at
 the same time.
 
-Raw estimates can be accessed as ``raw_location_`` and ``raw_covariance_``
+Raw estimates can be accessed as `raw_location_` and `raw_covariance_`
 attributes of a :class:`MinCovDet` robust covariance estimator object.
 
 .. topic:: References:

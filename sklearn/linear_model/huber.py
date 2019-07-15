@@ -126,8 +126,8 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     """Linear regression model that is robust to outliers.
 
     The Huber Regressor optimizes the squared loss for the samples where
-    ``|(y - X'w) / sigma| < epsilon`` and the absolute loss for the samples
-    where ``|(y - X'w) / sigma| > epsilon``, where w and sigma are parameters
+    `|(y - X'w) / sigma| < epsilon` and the absolute loss for the samples
+    where `|(y - X'w) / sigma| > epsilon`, where w and sigma are parameters
     to be optimized. The parameter sigma makes sure that if y is scaled up
     or down by a certain factor, one does not need to rescale epsilon to
     achieve the same robustness. Note that this does not take into account
@@ -149,7 +149,7 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
     max_iter : int, default 100
         Maximum number of iterations that
-        ``scipy.optimize.minimize(method="L-BFGS-B")`` should run for.
+        `scipy.optimize.minimize(method="L-BFGS-B")` should run for.
 
     alpha : float, default 0.0001
         Regularization parameter.
@@ -166,7 +166,7 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
     tol : float, default 1e-5
         The iteration will stop when
-        ``max{|proj g_i | i = 1, ..., n}`` <= ``tol``
+        `max{|proj g_i | i = 1, ..., n}` <= `tol`
         where pg_i is the i-th component of the projected gradient.
 
     Attributes
@@ -178,16 +178,16 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         Bias.
 
     scale_ : float
-        The value by which ``|y - X'w - c|`` is scaled down.
+        The value by which `|y - X'w - c|` is scaled down.
 
     n_iter_ : int
         Number of iterations that
-        ``scipy.optimize.minimize(method="L-BFGS-B")`` has run for.
+        `scipy.optimize.minimize(method="L-BFGS-B")` has run for.
 
         .. versionchanged:: 0.20
 
             In SciPy <= 1.0.0 the number of lbfgs iterations may exceed
-            ``max_iter``. ``n_iter_`` will now report at most ``max_iter``.
+            `max_iter`. `n_iter_` will now report at most `max_iter`.
 
     outliers_ : array, shape (n_samples,)
         A boolean mask which is set to True where the samples are identified

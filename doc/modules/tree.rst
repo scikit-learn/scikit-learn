@@ -91,8 +91,8 @@ Classification
 classification on a dataset.
 
 As with other classifiers, :class:`DecisionTreeClassifier` takes as input two arrays:
-an array X, sparse or dense, of size ``[n_samples, n_features]``  holding the
-training samples, and an array Y of integer values, size ``[n_samples]``,
+an array X, sparse or dense, of size `[n_samples, n_features]`  holding the
+training samples, and an array Y of integer values, size `[n_samples]`,
 holding the class labels for the training samples::
 
     >>> from sklearn import tree
@@ -246,7 +246,7 @@ Multi-output problems
 =====================
 
 A multi-output problem is a supervised learning problem with several outputs
-to predict, that is when Y is a 2d array of size ``[n_samples, n_outputs]``.
+to predict, that is when Y is a 2d array of size `[n_samples, n_outputs]`.
 
 When there is no correlation between the outputs, a very simple way to solve
 this kind of problem is to build n independent models, i.e. one for each
@@ -267,12 +267,12 @@ multi-output problems. This requires the following changes:
 This module offers support for multi-output problems by implementing this
 strategy in both :class:`DecisionTreeClassifier` and
 :class:`DecisionTreeRegressor`. If a decision tree is fit on an output array Y
-of size ``[n_samples, n_outputs]`` then the resulting estimator will:
+of size `[n_samples, n_outputs]` then the resulting estimator will:
 
-  * Output n_output values upon ``predict``;
+  * Output n_output values upon `predict`;
 
   * Output a list of n_output arrays of class probabilities upon
-    ``predict_proba``.
+    `predict_proba`.
 
 
 The use of multi-output trees for regression is demonstrated in
@@ -349,45 +349,45 @@ Tips on practical use
     in gaining more insights about how the decision tree makes predictions, which is
     important for understanding the important features in the data.
 
-  * Visualise your tree as you are training by using the ``export``
-    function.  Use ``max_depth=3`` as an initial tree depth to get a feel for
+  * Visualise your tree as you are training by using the `export`
+    function.  Use `max_depth=3` as an initial tree depth to get a feel for
     how the tree is fitting to your data, and then increase the depth.
 
   * Remember that the number of samples required to populate the tree doubles
-    for each additional level the tree grows to.  Use ``max_depth`` to control
+    for each additional level the tree grows to.  Use `max_depth` to control
     the size of the tree to prevent overfitting.
 
-  * Use ``min_samples_split`` or ``min_samples_leaf`` to ensure that multiple
+  * Use `min_samples_split` or `min_samples_leaf` to ensure that multiple
     samples inform every decision in the tree, by controlling which splits will
     be considered. A very small number will usually mean the tree will overfit,
     whereas a large number will prevent the tree from learning the data. Try
-    ``min_samples_leaf=5`` as an initial value. If the sample size varies
+    `min_samples_leaf=5` as an initial value. If the sample size varies
     greatly, a float number can be used as percentage in these two parameters.
-    While ``min_samples_split`` can create arbitrarily small leaves,
-    ``min_samples_leaf`` guarantees that each leaf has a minimum size, avoiding
+    While `min_samples_split` can create arbitrarily small leaves,
+    `min_samples_leaf` guarantees that each leaf has a minimum size, avoiding
     low-variance, over-fit leaf nodes in regression problems.  For
-    classification with few classes, ``min_samples_leaf=1`` is often the best
+    classification with few classes, `min_samples_leaf=1` is often the best
     choice.
 
   * Balance your dataset before training to prevent the tree from being biased
     toward the classes that are dominant. Class balancing can be done by
     sampling an equal number of samples from each class, or preferably by
-    normalizing the sum of the sample weights (``sample_weight``) for each
+    normalizing the sum of the sample weights (`sample_weight`) for each
     class to the same value. Also note that weight-based pre-pruning criteria,
-    such as ``min_weight_fraction_leaf``, will then be less biased toward
+    such as `min_weight_fraction_leaf`, will then be less biased toward
     dominant classes than criteria that are not aware of the sample weights,
-    like ``min_samples_leaf``.
+    like `min_samples_leaf`.
 
   * If the samples are weighted, it will be easier to optimize the tree
     structure using weight-based pre-pruning criterion such as
-    ``min_weight_fraction_leaf``, which ensure that leaf nodes contain at least
+    `min_weight_fraction_leaf`, which ensure that leaf nodes contain at least
     a fraction of the overall sum of the sample weights.
 
-  * All decision trees use ``np.float32`` arrays internally.
+  * All decision trees use `np.float32` arrays internally.
     If training data is not in this format, a copy of the dataset will be made.
 
   * If the input matrix X is very sparse, it is recommended to convert to sparse
-    ``csc_matrix`` before calling fit and sparse ``csr_matrix`` before calling
+    `csc_matrix` before calling fit and sparse `csr_matrix` before calling
     predict. Training time can be orders of magnitude faster for a sparse
     matrix input compared to a dense matrix when features have zero values in
     most of the samples.

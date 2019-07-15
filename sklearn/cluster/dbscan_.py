@@ -32,7 +32,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
     X : array or sparse (CSR) matrix of shape (n_samples, n_features), or \
             array of shape (n_samples, n_samples)
         A feature array, or array of distances between samples if
-        ``metric='precomputed'``.
+        `metric='precomputed'`.
 
     eps : float, optional
         The maximum distance between two samples for one to be considered
@@ -76,14 +76,14 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
 
     sample_weight : array, shape (n_samples,), optional
         Weight of each sample, such that a sample with a weight of at least
-        ``min_samples`` is by itself a core sample; a sample with negative
+        `min_samples` is by itself a core sample; a sample with negative
         weight may inhibit its eps-neighbor from being core.
         Note that weights are absolute, and default to 1.
 
     n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     Returns
@@ -111,16 +111,16 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
     the memory complexity to O(n.d) where d is the average number of neighbors,
     while original DBSCAN had memory complexity O(n). It may attract a higher
     memory complexity when querying these nearest neighborhoods, depending
-    on the ``algorithm``.
+    on the `algorithm`.
 
     One way to avoid the query complexity is to pre-compute sparse
     neighborhoods in chunks using
     :func:`NearestNeighbors.radius_neighbors_graph
     <sklearn.neighbors.NearestNeighbors.radius_neighbors_graph>` with
-    ``mode='distance'``, then using ``metric='precomputed'`` here.
+    `mode='distance'`, then using `metric='precomputed'` here.
 
     Another way to reduce memory and computation time is to remove
-    (near-)duplicate points and use ``sample_weight`` instead.
+    (near-)duplicate points and use `sample_weight` instead.
 
     :func:`cluster.optics <sklearn.cluster.optics>` provides a similar
     clustering with lower memory usage.
@@ -246,8 +246,8 @@ class DBSCAN(BaseEstimator, ClusterMixin):
 
     n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     Attributes
@@ -289,16 +289,16 @@ class DBSCAN(BaseEstimator, ClusterMixin):
     the memory complexity to O(n.d) where d is the average number of neighbors,
     while original DBSCAN had memory complexity O(n). It may attract a higher
     memory complexity when querying these nearest neighborhoods, depending
-    on the ``algorithm``.
+    on the `algorithm`.
 
     One way to avoid the query complexity is to pre-compute sparse
     neighborhoods in chunks using
     :func:`NearestNeighbors.radius_neighbors_graph
     <sklearn.neighbors.NearestNeighbors.radius_neighbors_graph>` with
-    ``mode='distance'``, then using ``metric='precomputed'`` here.
+    `mode='distance'`, then using `metric='precomputed'` here.
 
     Another way to reduce memory and computation time is to remove
-    (near-)duplicate points and use ``sample_weight`` instead.
+    (near-)duplicate points and use `sample_weight` instead.
 
     :class:`cluster.OPTICS` provides a similar clustering with lower memory
     usage.
@@ -335,12 +335,12 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         X : array-like or sparse matrix, shape (n_samples, n_features), or \
             (n_samples, n_samples)
             Training instances to cluster, or distances between instances if
-            ``metric='precomputed'``. If a sparse matrix is provided, it will
-            be converted into a sparse ``csr_matrix``.
+            `metric='precomputed'`. If a sparse matrix is provided, it will
+            be converted into a sparse `csr_matrix`.
 
         sample_weight : array, shape (n_samples,), optional
             Weight of each sample, such that a sample with a weight of at least
-            ``min_samples`` is by itself a core sample; a sample with a
+            `min_samples` is by itself a core sample; a sample with a
             negative weight may inhibit its eps-neighbor from being core.
             Note that weights are absolute, and default to 1.
 
@@ -373,12 +373,12 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         X : array-like or sparse matrix, shape (n_samples, n_features), or \
             (n_samples, n_samples)
             Training instances to cluster, or distances between instances if
-            ``metric='precomputed'``. If a sparse matrix is provided, it will
-            be converted into a sparse ``csr_matrix``.
+            `metric='precomputed'`. If a sparse matrix is provided, it will
+            be converted into a sparse `csr_matrix`.
 
         sample_weight : array, shape (n_samples,), optional
             Weight of each sample, such that a sample with a weight of at least
-            ``min_samples`` is by itself a core sample; a sample with a
+            `min_samples` is by itself a core sample; a sample with a
             negative weight may inhibit its eps-neighbor from being core.
             Note that weights are absolute, and default to 1.
 

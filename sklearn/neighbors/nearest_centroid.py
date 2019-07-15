@@ -185,7 +185,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         -----
         If the metric constructor parameter is "precomputed", X is assumed to
         be the distance matrix between the data to be predicted and
-        ``self.centroids_``.
+        `self.centroids_`.
         """
         check_is_fitted(self, 'centroids_')
 

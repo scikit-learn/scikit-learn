@@ -142,7 +142,7 @@ def test_classifier_parameter_checks():
     assert_raises(ValueError,
                   lambda: GradientBoostingClassifier().feature_importances_)
 
-    # deviance requires ``n_classes >= 2``.
+    # deviance requires `n_classes >= 2`.
     assert_raises(ValueError,
                   lambda X, y: GradientBoostingClassifier(
                       loss='deviance').fit(X, y),
@@ -535,7 +535,7 @@ def test_staged_predict():
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
 
-    # test if prediction for last stage equals ``predict``
+    # test if prediction for last stage equals `predict`
     for y in clf.staged_predict(X_test):
         assert y.shape == y_pred.shape
 
@@ -556,13 +556,13 @@ def test_staged_predict_proba():
 
     clf.fit(X_train, y_train)
 
-    # test if prediction for last stage equals ``predict``
+    # test if prediction for last stage equals `predict`
     for y_pred in clf.staged_predict(X_test):
         assert y_test.shape == y_pred.shape
 
     assert_array_equal(clf.predict(X_test), y_pred)
 
-    # test if prediction for last stage equals ``predict_proba``
+    # test if prediction for last stage equals `predict_proba`
     for staged_proba in clf.staged_predict_proba(X_test):
         assert y_test.shape[0] == staged_proba.shape[0]
         assert 2 == staged_proba.shape[1]

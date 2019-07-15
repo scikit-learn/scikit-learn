@@ -251,7 +251,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     non-Gaussian (independent) components i.e. X = AS where columns of S
     contain the independent components and A is a linear mixing
     matrix. In short ICA attempts to `un-mix' the data by estimating an
-    un-mixing matrix W where ``S = W K X.``
+    un-mixing matrix W where `S = W K X.`
 
     This implementation was originally made for data of shape
     [n_features, n_samples]. Now the input is transposed

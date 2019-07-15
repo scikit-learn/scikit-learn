@@ -493,8 +493,8 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for both `fit` and `predict`.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     random_state : int, RandomState instance or None, optional (default=None)
@@ -633,7 +633,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
         The predicted class of an input sample is computed as the class with
         the highest mean predicted probability. If base estimators do not
-        implement a ``predict_proba`` method, then it resorts to voting.
+        implement a `predict_proba` method, then it resorts to voting.
 
         Parameters
         ----------
@@ -655,7 +655,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
         The predicted class probabilities of an input sample is computed as
         the mean predicted class probabilities of the base estimators in the
-        ensemble. If base estimators do not implement a ``predict_proba``
+        ensemble. If base estimators do not implement a `predict_proba`
         method, then it resorts to voting and the predicted class probabilities
         of an input sample represents the proportion of estimators predicting
         each class.
@@ -776,8 +776,8 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         score : array, shape = [n_samples, k]
             The decision function of the input samples. The columns correspond
             to the classes in sorted order, as they appear in the attribute
-            ``classes_``. Regression and binary classification are special
-            cases with ``k == 1``, otherwise ``k==n_classes``.
+            `classes_`. Regression and binary classification are special
+            cases with `k == 1`, otherwise `k==n_classes`.
 
         """
         check_is_fitted(self, "classes_")
@@ -872,8 +872,8 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for both `fit` and `predict`.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     random_state : int, RandomState instance or None, optional (default=None)

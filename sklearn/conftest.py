@@ -12,7 +12,7 @@ def pyplot():
     Returns
     -------
     pyplot : module
-        The ``matplotlib.pyplot`` module.
+        The `matplotlib.pyplot` module.
     """
     matplotlib = pytest.importorskip('matplotlib')
     matplotlib.use('agg', warn=False, force=True)

@@ -60,7 +60,7 @@ def _check_weights(weights):
 
 
 def _get_weights(dist, weights):
-    """Get the weights from an array of distances and a parameter ``weights``
+    """Get the weights from an array of distances and a parameter `weights`
 
     Parameters
     ----------
@@ -71,8 +71,8 @@ def _get_weights(dist, weights):
 
     Returns
     -------
-    weights_arr : array of the same shape as ``dist``
-        if ``weights == 'uniform'``, then returns None
+    weights_arr : array of the same shape as `dist`
+        if `weights == 'uniform'`, then returns None
     """
     if weights in (None, 'uniform'):
         return None
@@ -623,7 +623,7 @@ class RadiusNeighborsMixin:
         """Finds the neighbors within a given radius of a point or points.
 
         Return the indices and distances of each point from the dataset
-        lying in a ball with size ``radius`` around the points of the query
+        lying in a ball with size `radius` around the points of the query
         array. Points lying on the boundary are included in the results.
 
         The result points are *not* necessarily sorted by distance to their
@@ -648,12 +648,12 @@ class RadiusNeighborsMixin:
         dist : array, shape (n_samples,) of arrays
             Array representing the distances to each point, only present if
             return_distance=True. The distance values are computed according
-            to the ``metric`` constructor parameter.
+            to the `metric` constructor parameter.
 
         ind : array, shape (n_samples,) of arrays
             An array of arrays of indices of the approximate nearest points
             from the population matrix that lie within a ball of size
-            ``radius`` around the query points.
+            `radius` around the query points.
 
         Examples
         --------

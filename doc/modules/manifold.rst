@@ -124,15 +124,15 @@ The Isomap algorithm comprises three stages:
    for this are *Dijkstra's Algorithm*, which is approximately
    :math:`O[N^2(k + \log(N))]`, or the *Floyd-Warshall algorithm*, which
    is :math:`O[N^3]`.  The algorithm can be selected by the user with
-   the ``path_method`` keyword of ``Isomap``.  If unspecified, the code
+   the `path_method` keyword of `Isomap`.  If unspecified, the code
    attempts to choose the best algorithm for the input data.
 
 3. **Partial eigenvalue decomposition.**  The embedding is encoded in the
    eigenvectors corresponding to the :math:`d` largest eigenvalues of the
    :math:`N \times N` isomap kernel.  For a dense solver, the cost is
    approximately :math:`O[d N^2]`.  This cost can often be improved using
-   the ``ARPACK`` solver.  The eigensolver can be specified by the user
-   with the ``path_method`` keyword of ``Isomap``.  If unspecified, the
+   the `ARPACK` solver.  The eigensolver can be specified by the user
+   with the `path_method` keyword of `Isomap`.  If unspecified, the
    code attempts to choose the best algorithm for the input data.
 
 The overall complexity of Isomap is
@@ -214,8 +214,8 @@ One method to address the regularization problem is to use multiple weight
 vectors in each neighborhood.  This is the essence of *modified locally
 linear embedding* (MLLE).  MLLE can be  performed with function
 :func:`locally_linear_embedding` or its object-oriented counterpart
-:class:`LocallyLinearEmbedding`, with the keyword ``method = 'modified'``.
-It requires ``n_neighbors > n_components``.
+:class:`LocallyLinearEmbedding`, with the keyword `method = 'modified'`.
+It requires `n_neighbors > n_components`.
 
 .. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_007.png
    :target: ../auto_examples/manifold/plot_lle_digits.html
@@ -260,12 +260,12 @@ Hessian Eigenmapping (also known as Hessian-based LLE: HLLE) is another method
 of solving the regularization problem of LLE.  It revolves around a
 hessian-based quadratic form at each neighborhood which is used to recover
 the locally linear structure.  Though other implementations note its poor
-scaling with data size, ``sklearn`` implements some algorithmic
+scaling with data size, `sklearn` implements some algorithmic
 improvements which make its cost comparable to that of other LLE variants
 for small output dimension.  HLLE can be  performed with function
 :func:`locally_linear_embedding` or its object-oriented counterpart
-:class:`LocallyLinearEmbedding`, with the keyword ``method = 'hessian'``.
-It requires ``n_neighbors > n_components * (n_components + 3) / 2``.
+:class:`LocallyLinearEmbedding`, with the keyword `method = 'hessian'`.
+It requires `n_neighbors > n_components * (n_components + 3) / 2`.
 
 .. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_008.png
    :target: ../auto_examples/manifold/plot_lle_digits.html
@@ -357,7 +357,7 @@ seeks to characterize the local geometry at each neighborhood via its
 tangent space, and performs a global optimization to align these local
 tangent spaces to learn the embedding.  LTSA can be performed with function
 :func:`locally_linear_embedding` or its object-oriented counterpart
-:class:`LocallyLinearEmbedding`, with the keyword ``method = 'ltsa'``.
+:class:`LocallyLinearEmbedding`, with the keyword `method = 'ltsa'`.
 
 .. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_009.png
    :target: ../auto_examples/manifold/plot_lle_digits.html
@@ -629,7 +629,7 @@ Tips on practical use
 * The reconstruction error computed by each routine can be used to choose
   the optimal output dimension.  For a :math:`d`-dimensional manifold embedded
   in a :math:`D`-dimensional parameter space, the reconstruction error will
-  decrease as ``n_components`` is increased until ``n_components == d``.
+  decrease as `n_components` is increased until `n_components == d`.
 
 * Note that noisy data can "short-circuit" the manifold, in essence acting
   as a bridge between parts of the manifold that would otherwise be
@@ -638,12 +638,12 @@ Tips on practical use
 
 * Certain input configurations can lead to singular weight matrices, for
   example when more than two points in the dataset are identical, or when
-  the data is split into disjointed groups.  In this case, ``solver='arpack'``
+  the data is split into disjointed groups.  In this case, `solver='arpack'`
   will fail to find the null space.  The easiest way to address this is to
-  use ``solver='dense'`` which will work on a singular matrix, though it may
+  use `solver='dense'` which will work on a singular matrix, though it may
   be very slow depending on the number of input points.  Alternatively, one
   can attempt to understand the source of the singularity: if it is due to
-  disjoint sets, increasing ``n_neighbors`` may help.  If it is due to
+  disjoint sets, increasing `n_neighbors` may help.  If it is due to
   identical points in the dataset, removing these points may help.
 
 .. seealso::

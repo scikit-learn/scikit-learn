@@ -83,9 +83,9 @@ def _compute_partial_dependence(
     const X_DTYPE_C [:, ::1] X,
     int [:] target_features,
     Y_DTYPE_C [:] out):
-    """Partial dependence of the response on the ``target_features`` set.
+    """Partial dependence of the response on the `target_features` set.
 
-    For each sample in ``X`` a tree traversal is performed.
+    For each sample in `X` a tree traversal is performed.
     Each traversal starts from the root with weight 1.0.
 
     At each non-leaf node that splits on a target feature, either

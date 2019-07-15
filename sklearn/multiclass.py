@@ -159,8 +159,8 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     Attributes
@@ -458,21 +458,21 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     Attributes
     ----------
-    estimators_ : list of ``n_classes * (n_classes - 1) / 2`` estimators
+    estimators_ : list of `n_classes * (n_classes - 1) / 2` estimators
         Estimators used for predictions.
 
     classes_ : numpy array of shape [n_classes]
         Array containing labels.
 
-    pairwise_indices_ : list, length = ``len(estimators_)``, or ``None``
+    pairwise_indices_ : list, length = `len(estimators_)`, or `None`
         Indices of samples used when training the estimators.
-        ``None`` when ``estimator`` does not have ``_pairwise`` attribute.
+        `None` when `estimator` does not have `_pairwise` attribute.
     """
 
     def __init__(self, estimator, n_jobs=None):
@@ -568,7 +568,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     def predict(self, X):
         """Estimate the best class label for each sample in X.
 
-        This is implemented as ``argmax(decision_function(X), axis=1)`` which
+        This is implemented as `argmax(decision_function(X), axis=1)` which
         will return the label of the class with most votes by estimators
         predicting the outcome of a decision for each possible class pair.
 
@@ -665,8 +665,8 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     Attributes

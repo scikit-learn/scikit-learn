@@ -42,7 +42,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     (RFE) is to select features by recursively considering smaller and smaller
     sets of features. First, the estimator is trained on the initial set of
     features and the importance of each feature is obtained either through a
-    ``coef_`` attribute or through a ``feature_importances_`` attribute.
+    `coef_` attribute or through a `feature_importances_` attribute.
     Then, the least important features are pruned from current set of features.
     That procedure is recursively repeated on the pruned set until the desired
     number of features to select is eventually reached.
@@ -52,18 +52,18 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     Parameters
     ----------
     estimator : object
-        A supervised learning estimator with a ``fit`` method that provides
-        information about feature importance either through a ``coef_``
-        attribute or through a ``feature_importances_`` attribute.
+        A supervised learning estimator with a `fit` method that provides
+        information about feature importance either through a `coef_`
+        attribute or through a `feature_importances_` attribute.
 
     n_features_to_select : int or None (default=None)
         The number of features to select. If `None`, half of the features
         are selected.
 
     step : int or float, optional (default=1)
-        If greater than or equal to 1, then ``step`` corresponds to the
+        If greater than or equal to 1, then `step` corresponds to the
         (integer) number of features to remove at each iteration.
-        If within (0.0, 1.0), then ``step`` corresponds to the percentage
+        If within (0.0, 1.0), then `step` corresponds to the percentage
         (rounded down) of features to remove at each iteration.
 
     verbose : int, (default=0)
@@ -78,7 +78,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         The mask of selected features.
 
     ranking_ : array of shape [n_features]
-        The feature ranking, such that ``ranking_[i]`` corresponds to the
+        The feature ranking, such that `ranking_[i]` corresponds to the
         ranking position of the i-th feature. Selected (i.e., estimated
         best) features are assigned rank 1.
 
@@ -267,14 +267,14 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
     @if_delegate_has_method(delegate='estimator')
     def decision_function(self, X):
-        """Compute the decision function of ``X``.
+        """Compute the decision function of `X`.
 
         Parameters
         ----------
         X : array-like or sparse matrix, shape = [n_samples, n_features]
             The input samples. Internally, it will be converted to
-            ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
+            `dtype=np.float32` and if a sparse matrix is provided
+            to a sparse `csr_matrix`.
 
         Returns
         -------
@@ -295,8 +295,8 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         ----------
         X : array-like or sparse matrix, shape = [n_samples, n_features]
             The input samples. Internally, it will be converted to
-            ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
+            `dtype=np.float32` and if a sparse matrix is provided
+            to a sparse `csr_matrix`.
 
         Returns
         -------
@@ -340,23 +340,23 @@ class RFECV(RFE):
     Parameters
     ----------
     estimator : object
-        A supervised learning estimator with a ``fit`` method that provides
-        information about feature importance either through a ``coef_``
-        attribute or through a ``feature_importances_`` attribute.
+        A supervised learning estimator with a `fit` method that provides
+        information about feature importance either through a `coef_`
+        attribute or through a `feature_importances_` attribute.
 
     step : int or float, optional (default=1)
-        If greater than or equal to 1, then ``step`` corresponds to the
+        If greater than or equal to 1, then `step` corresponds to the
         (integer) number of features to remove at each iteration.
-        If within (0.0, 1.0), then ``step`` corresponds to the percentage
+        If within (0.0, 1.0), then `step` corresponds to the percentage
         (rounded down) of features to remove at each iteration.
-        Note that the last iteration may remove fewer than ``step`` features in
-        order to reach ``min_features_to_select``.
+        Note that the last iteration may remove fewer than `step` features in
+        order to reach `min_features_to_select`.
 
     min_features_to_select : int, (default=1)
         The minimum number of features to be selected. This number of features
         will always be scored, even if the difference between the original
-        feature count and ``min_features_to_select`` isn't divisible by
-        ``step``.
+        feature count and `min_features_to_select` isn't divisible by
+        `step`.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
@@ -367,29 +367,29 @@ class RFECV(RFE):
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
-        For integer/None inputs, if ``y`` is binary or multiclass,
+        For integer/None inputs, if `y` is binary or multiclass,
         :class:`sklearn.model_selection.StratifiedKFold` is used. If the
-        estimator is a classifier or if ``y`` is neither binary nor multiclass,
+        estimator is a classifier or if `y` is neither binary nor multiclass,
         :class:`sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
         .. versionchanged:: 0.22
-            ``cv`` default value of None changed from 3-fold to 5-fold.
+            `cv` default value of None changed from 3-fold to 5-fold.
 
     scoring : string, callable or None, optional, (default=None)
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
+        `scorer(estimator, X, y)`.
 
     verbose : int, (default=0)
         Controls verbosity of output.
 
     n_jobs : int or None, optional (default=None)
         Number of cores to run in parallel while fitting across folds.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     Attributes
@@ -409,7 +409,7 @@ class RFECV(RFE):
 
     grid_scores_ : array of shape [n_subsets_of_features]
         The cross-validation scores such that
-        ``grid_scores_[i]`` corresponds to
+        `grid_scores_[i]` corresponds to
         the CV score of the i-th subset of features.
 
     estimator_ : object
@@ -417,8 +417,8 @@ class RFECV(RFE):
 
     Notes
     -----
-    The size of ``grid_scores_`` is equal to
-    ``ceil((n_features - min_features_to_select) / step) + 1``,
+    The size of `grid_scores_` is equal to
+    `ceil((n_features - min_features_to_select) / step) + 1`,
     where step is the number of features removed at each iteration.
 
     Examples

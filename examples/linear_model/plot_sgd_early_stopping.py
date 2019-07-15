@@ -19,14 +19,14 @@ least number of iterations which is sufficient to build a model that
 generalizes well to unseen data and reduces the chance of over-fitting the
 training data.
 
-This early stopping strategy is activated if ``early_stopping=True``; otherwise
+This early stopping strategy is activated if `early_stopping=True`; otherwise
 the stopping criterion only uses the training loss on the entire input data. To
 better control the early stopping strategy, we can specify a parameter
-``validation_fraction`` which set the fraction of the input dataset that we
+`validation_fraction` which set the fraction of the input dataset that we
 keep aside to compute the validation score. The optimization will continue
-until the validation score did not improve by at least ``tol`` during the last
-``n_iter_no_change`` iterations. The actual number of iterations is available
-at the attribute ``n_iter_``.
+until the validation score did not improve by at least `tol` during the last
+`n_iter_no_change` iterations. The actual number of iterations is available
+at the attribute `n_iter_`.
 
 This example illustrates how the early stopping can used in the
 :class:`sklearn.linear_model.SGDClassifier` model to achieve almost the same

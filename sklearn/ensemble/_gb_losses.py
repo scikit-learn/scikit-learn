@@ -28,7 +28,7 @@ class LossFunction(metaclass=ABCMeta):
     K : int
         The number of regression trees to be induced;
         1 for regression and binary classification;
-        ``n_classes`` for multi-class classification.
+        `n_classes` for multi-class classification.
     """
 
     is_multi_class = False
@@ -37,7 +37,7 @@ class LossFunction(metaclass=ABCMeta):
         self.K = n_classes
 
     def init_estimator(self):
-        """Default ``init`` estimator for loss function. """
+        """Default `init` estimator for loss function. """
         raise NotImplementedError()
 
     @abstractmethod
@@ -67,7 +67,7 @@ class LossFunction(metaclass=ABCMeta):
 
         raw_predictions : 2d array, shape (n_samples, K)
             The raw predictions (i.e. values from the tree leaves) of the
-            tree ensemble at iteration ``i - 1``.
+            tree ensemble at iteration `i - 1`.
         """
 
     def update_terminal_regions(self, tree, X, y, residual, raw_predictions,
@@ -89,19 +89,19 @@ class LossFunction(metaclass=ABCMeta):
             The residuals (usually the negative gradient).
         raw_predictions : 2d array, shape (n_samples, K)
             The raw predictions (i.e. values from the tree leaves) of the
-            tree ensemble at iteration ``i - 1``.
+            tree ensemble at iteration `i - 1`.
         sample_weight : 1d array, shape (n,)
             The weight of each sample.
         sample_mask : 1d array, shape (n,)
             The sample mask to be used.
         learning_rate : float, default=0.1
             Learning rate shrinks the contribution of each tree by
-             ``learning_rate``.
+             `learning_rate`.
         k : int, default=0
             The index of the estimator being updated.
 
         """
-        # compute leaf for each sample in ``X``.
+        # compute leaf for each sample in `X`.
         terminal_regions = tree.apply(X)
 
         # mask all which are not in sample mask.
@@ -139,7 +139,7 @@ class LossFunction(metaclass=ABCMeta):
         raw_predictions : 2d array, shape (n_samples, K)
             The initial raw predictions. K is equal to 1 for binary
             classification and regression, and equal to the number of classes
-            for multiclass classification. ``raw_predictions`` is casted
+            for multiclass classification. `raw_predictions` is casted
             into float64.
         """
         pass
@@ -155,7 +155,7 @@ class RegressionLossFunction(LossFunction, metaclass=ABCMeta):
     """
     def __init__(self, n_classes):
         if n_classes != 1:
-            raise ValueError("``n_classes`` must be 1 for regression but "
+            raise ValueError("`n_classes` must be 1 for regression but "
                              "was %r" % n_classes)
         super().__init__(n_classes)
 
@@ -221,7 +221,7 @@ class LeastSquaresError(RegressionLossFunction):
 
         raw_predictions : 1d array, shape (n_samples,)
             The raw predictions (i.e. values from the tree leaves) of the
-            tree ensemble at iteration ``i - 1``.
+            tree ensemble at iteration `i - 1`.
         """
         return y - raw_predictions.ravel()
 
@@ -244,14 +244,14 @@ class LeastSquaresError(RegressionLossFunction):
             The residuals (usually the negative gradient).
         raw_predictions : 2d array, shape (n_samples, K)
             The raw predictions (i.e. values from the tree leaves) of the
-            tree ensemble at iteration ``i - 1``.
+            tree ensemble at iteration `i - 1`.
         sample_weight : 1d array, shape (n,)
             The weight of each sample.
         sample_mask : 1d array, shape (n,)
             The sample mask to be used.
         learning_rate : float, default=0.1
             Learning rate shrinks the contribution of each tree by
-             ``learning_rate``.
+             `learning_rate`.
         k : int, default=0
             The index of the estimator being updated.
         """
@@ -306,7 +306,7 @@ class LeastAbsoluteError(RegressionLossFunction):
 
         raw_predictions : array, shape (n_samples, K)
             The raw predictions (i.e. values from the tree leaves) of the
-            tree ensemble at iteration ``i - 1``.
+            tree ensemble at iteration `i - 1`.
         """
         raw_predictions = raw_predictions.ravel()
         return 2 * (y - raw_predictions > 0) - 1
@@ -399,7 +399,7 @@ class HuberLossFunction(RegressionLossFunction):
 
         raw_predictions : 2d array, shape (n_samples, K)
             The raw predictions (i.e. values from the tree leaves) of the
-            tree ensemble at iteration ``i - 1``.
+            tree ensemble at iteration `i - 1`.
 
         sample_weight : 1d array, shape (n_samples,), optional
             Sample weights.
@@ -493,7 +493,7 @@ class QuantileLossFunction(RegressionLossFunction):
 
         raw_predictions : 2d array, shape (n_samples, K)
             The raw_predictions (i.e. values from the tree leaves) of the
-            tree ensemble at iteration ``i - 1``.
+            tree ensemble at iteration `i - 1`.
         """
         alpha = self.alpha
         raw_predictions = raw_predictions.ravel()
@@ -565,7 +565,7 @@ class BinomialDeviance(ClassificationLossFunction):
     """Binomial deviance loss function for binary classification.
 
     Binary classification is a special case; here, we only need to
-    fit one tree instead of ``n_classes`` trees.
+    fit one tree instead of `n_classes` trees.
 
     Parameters
     ----------
@@ -619,7 +619,7 @@ class BinomialDeviance(ClassificationLossFunction):
 
         raw_predictions : 2d array, shape (n_samples, K)
             The raw_predictions (i.e. values from the tree leaves) of the
-            tree ensemble at iteration ``i - 1``.
+            tree ensemble at iteration `i - 1`.
         """
         return y - expit(raw_predictions.ravel())
 
@@ -671,7 +671,7 @@ class BinomialDeviance(ClassificationLossFunction):
 class MultinomialDeviance(ClassificationLossFunction):
     """Multinomial deviance loss function for multi-class classification.
 
-    For multi-class classification we need to fit ``n_classes`` trees at
+    For multi-class classification we need to fit `n_classes` trees at
     each stage.
 
     Parameters
@@ -720,7 +720,7 @@ class MultinomialDeviance(ClassificationLossFunction):
                 logsumexp(raw_predictions, axis=1))
 
     def negative_gradient(self, y, raw_predictions, k=0, **kwargs):
-        """Compute negative gradient for the ``k``-th class.
+        """Compute negative gradient for the `k`-th class.
 
         Parameters
         ----------
@@ -729,7 +729,7 @@ class MultinomialDeviance(ClassificationLossFunction):
 
         raw_predictions : 2d array, shape (n_samples, K)
             The raw_predictions (i.e. values from the tree leaves) of the
-            tree ensemble at iteration ``i - 1``.
+            tree ensemble at iteration `i - 1`.
 
         k : int, optional default=0
             The index of the class.
@@ -830,7 +830,7 @@ class ExponentialLoss(ClassificationLossFunction):
 
         raw_predictions : 2d array, shape (n_samples, K)
             The raw predictions (i.e. values from the tree leaves) of the
-            tree ensemble at iteration ``i - 1``.
+            tree ensemble at iteration `i - 1`.
         """
         y_ = -(2. * y - 1.)
         return y_ * np.exp(y_ * raw_predictions.ravel())

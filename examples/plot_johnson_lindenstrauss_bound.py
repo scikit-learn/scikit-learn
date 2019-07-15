@@ -32,13 +32,13 @@ given by:
    n\_components >= 4 log(n\_samples) / (eps^2 / 2 - eps^3 / 3)
 
 
-The first plot shows that with an increasing number of samples ``n_samples``,
-the minimal number of dimensions ``n_components`` increased logarithmically
-in order to guarantee an ``eps``-embedding.
+The first plot shows that with an increasing number of samples `n_samples`,
+the minimal number of dimensions `n_components` increased logarithmically
+in order to guarantee an `eps`-embedding.
 
 The second plot shows that an increase of the admissible
-distortion ``eps`` allows to reduce drastically the minimal number of
-dimensions ``n_components`` for a given number of samples ``n_samples``
+distortion `eps` allows to reduce drastically the minimal number of
+dimensions `n_components` for a given number of samples `n_samples`
 
 
 Empirical validation
@@ -49,25 +49,25 @@ text document (TF-IDF word frequencies) dataset:
 
 - for the digits dataset, some 8x8 gray level pixels data for 500
   handwritten digits pictures are randomly projected to spaces for various
-  larger number of dimensions ``n_components``.
+  larger number of dimensions `n_components`.
 
 - for the 20 newsgroups dataset some 500 documents with 100k
   features in total are projected using a sparse random matrix to smaller
   euclidean spaces with various values for the target number of dimensions
-  ``n_components``.
+  `n_components`.
 
 The default dataset is the digits dataset. To run the example on the twenty
 newsgroups dataset, pass the --twenty-newsgroups command line argument to this
 script.
 
-For each value of ``n_components``, we plot:
+For each value of `n_components`, we plot:
 
 - 2D distribution of sample pairs with pairwise distances in original
   and projected spaces as x and y axis respectively.
 
 - 1D histogram of the ratio of those distances (projected / original).
 
-We can see that for low values of ``n_components`` the distribution is wide
+We can see that for low values of `n_components` the distribution is wide
 with many distorted pairs and a skewed distribution (due to the hard
 limit of zero ratio on the left as distances are always positives)
 while for larger values of n_components the distortion is controlled

@@ -654,7 +654,7 @@ cdef class _QuadTree:
         assert np.isclose(node_dist, ds2c)
 
         # Summary should contain all 3 node with size 1 and distance to
-        # each point in X[1:] for ``angle=0``
+        # each point in X[1:] for `angle=0`
         idx = qt.summarize(query_pt, summary, 0)
 
         node_dist = summary[n_dimensions]

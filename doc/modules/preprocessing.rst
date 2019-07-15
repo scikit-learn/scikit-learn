@@ -6,7 +6,7 @@ Preprocessing data
 
 .. currentmodule:: sklearn.preprocessing
 
-The ``sklearn.preprocessing`` package provides several common
+The `sklearn.preprocessing` package provides several common
 utility functions and transformer classes to change raw feature vectors
 into a representation that is more suitable for the downstream estimators.
 
@@ -71,8 +71,8 @@ Scaled data has zero mean and unit variance::
 
 ..    >>> print_options = np.set_printoptions(print_options)
 
-The ``preprocessing`` module further provides a utility class
-:class:`StandardScaler` that implements the ``Transformer`` API to compute
+The `preprocessing` module further provides a utility class
+:class:`StandardScaler` that implements the `Transformer` API to compute
 the mean and standard deviation on a training set so as to be
 able to later reapply the same transformation on the testing set.
 This class is hence suitable for use in the early steps of a
@@ -102,7 +102,7 @@ same way it did on the training set::
   array([[-2.44...,  1.22..., -0.26...]])
 
 It is possible to disable either centering or scaling by either
-passing ``with_mean=False`` or ``with_std=False`` to the constructor
+passing `with_mean=False` or `with_std=False` to the constructor
 of :class:`StandardScaler`.
 
 
@@ -118,7 +118,7 @@ respectively.
 The motivation to use this scaling include robustness to very small
 standard deviations of features and preserving zero entries in sparse data.
 
-Here is an example to scale a toy data matrix to the ``[0, 1]`` range::
+Here is an example to scale a toy data matrix to the `[0, 1]` range::
 
   >>> X_train = np.array([[ 1., -1.,  2.],
   ...                     [ 2.,  0.,  0.],
@@ -149,7 +149,7 @@ nature of the transformation learned on the training data::
   >>> min_max_scaler.min_
   array([0.        , 0.5       , 0.33...])
 
-If :class:`MinMaxScaler` is given an explicit ``feature_range=(min, max)`` the
+If :class:`MinMaxScaler` is given an explicit `feature_range=(min, max)` the
 full formula is::
 
     X_std = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
@@ -157,7 +157,7 @@ full formula is::
     X_scaled = X_std * (max - min) + min
 
 :class:`MaxAbsScaler` works in a very similar fashion, but scales in a way
-that the training data lies within the range ``[-1, 1]`` by dividing through
+that the training data lies within the range `[-1, 1]` by dividing through
 the largest maximum value in each feature. It is meant for data
 that is already centered at zero or sparse data.
 
@@ -194,22 +194,22 @@ sparse inputs, especially if features are on different scales.
 
 :class:`MaxAbsScaler`  and :func:`maxabs_scale` were specifically designed
 for scaling sparse data, and are the recommended way to go about this.
-However, :func:`scale` and :class:`StandardScaler` can accept ``scipy.sparse``
-matrices  as input, as long as ``with_mean=False`` is explicitly passed
-to the constructor. Otherwise a ``ValueError`` will be raised as
+However, :func:`scale` and :class:`StandardScaler` can accept `scipy.sparse`
+matrices  as input, as long as `with_mean=False` is explicitly passed
+to the constructor. Otherwise a `ValueError` will be raised as
 silently centering would break the sparsity and would often crash the
 execution by allocating excessive amounts of memory unintentionally.
 :class:`RobustScaler` cannot be fitted to sparse inputs, but you can use
-the ``transform`` method on sparse inputs.
+the `transform` method on sparse inputs.
 
 Note that the scalers accept both Compressed Sparse Rows and Compressed
-Sparse Columns format (see ``scipy.sparse.csr_matrix`` and
-``scipy.sparse.csc_matrix``). Any other sparse input will be **converted to
+Sparse Columns format (see `scipy.sparse.csr_matrix` and
+`scipy.sparse.csc_matrix`). Any other sparse input will be **converted to
 the Compressed Sparse Rows representation**.  To avoid unnecessary memory
 copies, it is recommended to choose the CSR or CSC representation upstream.
 
 Finally, if the centered data is expected to be small enough, explicitly
-converting the input to an array using the ``toarray`` method of sparse matrices
+converting the input to an array using the `toarray` method of sparse matrices
 is another option.
 
 
@@ -236,7 +236,7 @@ data.
   on the linear independence of the features.
 
   To address this issue you can use :class:`sklearn.decomposition.PCA` with
-  ``whiten=True`` to further remove the linear correlation across features.
+  `whiten=True` to further remove the linear correlation across features.
 
 .. topic:: Scaling a 1D array
 
@@ -380,7 +380,7 @@ after transformation.
    :scale: 100
 
 It is also possible to map data to a normal distribution using
-:class:`QuantileTransformer` by setting ``output_distribution='normal'``.
+:class:`QuantileTransformer` by setting `output_distribution='normal'`.
 Using the earlier example with the iris dataset::
 
   >>> quantile_transformer = preprocessing.QuantileTransformer(
@@ -415,7 +415,7 @@ This assumption is the base of the `Vector Space Model
 classification and clustering contexts.
 
 The function :func:`normalize` provides a quick and easy way to perform this
-operation on a single array-like dataset, either using the ``l1`` or ``l2``
+operation on a single array-like dataset, either using the `l1` or `l2`
 norms::
 
   >>> X = [[ 1., -1.,  2.],
@@ -428,9 +428,9 @@ norms::
          [ 1.  ...,  0.  ...,  0.  ...],
          [ 0.  ...,  0.70..., -0.70...]])
 
-The ``preprocessing`` module further provides a utility class
+The `preprocessing` module further provides a utility class
 :class:`Normalizer` that implements the same operation using the
-``Transformer`` API (even though the ``fit`` method is useless in this case:
+`Transformer` API (even though the `fit` method is useless in this case:
 the class is stateless as this operation treats samples independently).
 
 This class is hence suitable for use in the early steps of a
@@ -460,7 +460,7 @@ Note: L2 normalization is also known as spatial sign preprocessing.
   and sparse matrices from scipy.sparse as input**.
 
   For sparse input the data is **converted to the Compressed Sparse Rows
-  representation** (see ``scipy.sparse.csr_matrix``) before being fed to
+  representation** (see `scipy.sparse.csr_matrix`) before being fed to
   efficient Cython routines. To avoid unnecessary memory copies, it is
   recommended to choose the CSR representation upstream.
 
@@ -469,13 +469,13 @@ Note: L2 normalization is also known as spatial sign preprocessing.
 Encoding categorical features
 =============================
 Often features are not given as continuous values but categorical.
-For example a person could have features ``["male", "female"]``,
-``["from Europe", "from US", "from Asia"]``,
-``["uses Firefox", "uses Chrome", "uses Safari", "uses Internet Explorer"]``.
+For example a person could have features `["male", "female"]`,
+`["from Europe", "from US", "from Asia"]`,
+`["uses Firefox", "uses Chrome", "uses Safari", "uses Internet Explorer"]`.
 Such features can be efficiently coded as integers, for instance
-``["male", "from US", "uses Internet Explorer"]`` could be expressed as
-``[0, 1, 3]`` while ``["female", "from Asia", "uses Chrome"]`` would be
-``[1, 2, 1]``.
+`["male", "from US", "uses Internet Explorer"]` could be expressed as
+`[0, 1, 3]` while `["female", "from Asia", "uses Chrome"]` would be
+`[1, 2, 1]`.
 
 To convert categorical features to such integer codes, we can use the
 :class:`OrdinalEncoder`. This estimator transforms each categorical feature to one
@@ -498,7 +498,7 @@ with scikit-learn estimators is to use a one-of-K, also known as one-hot or
 dummy encoding.
 This type of encoding can be obtained with the :class:`OneHotEncoder`,
 which transforms each categorical feature with
-``n_categories`` possible values into ``n_categories`` binary features, with
+`n_categories` possible values into `n_categories` binary features, with
 one of them 1, and all others 0.
 
 Continuing the example above::
@@ -513,12 +513,12 @@ Continuing the example above::
          [0., 1., 1., 0., 0., 1.]])
 
 By default, the values each feature can take is inferred automatically
-from the dataset and can be found in the ``categories_`` attribute::
+from the dataset and can be found in the `categories_` attribute::
 
     >>> enc.categories_
     [array(['female', 'male'], dtype=object), array(['from Europe', 'from US'], dtype=object), array(['uses Firefox', 'uses Safari'], dtype=object)]
 
-It is possible to specify this explicitly using the parameter ``categories``.
+It is possible to specify this explicitly using the parameter `categories`.
 There are two genders, four possible continents and four web browsers in our
 dataset::
 
@@ -539,12 +539,12 @@ dataset::
     array([[1., 0., 0., 1., 0., 0., 1., 0., 0., 0.]])
 
 If there is a possibility that the training data might have missing categorical
-features, it can often be better to specify ``handle_unknown='ignore'`` instead
-of setting the ``categories`` manually as above. When
-``handle_unknown='ignore'`` is specified and unknown categories are encountered
+features, it can often be better to specify `handle_unknown='ignore'` instead
+of setting the `categories` manually as above. When
+`handle_unknown='ignore'` is specified and unknown categories are encountered
 during transform, no error will be raised but the resulting one-hot encoded
 columns for this feature will be all zeros
-(``handle_unknown='ignore'`` is only supported for one-hot encoding)::
+(`handle_unknown='ignore'` is only supported for one-hot encoding)::
 
     >>> enc = preprocessing.OneHotEncoder(handle_unknown='ignore')
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
@@ -554,15 +554,15 @@ columns for this feature will be all zeros
     array([[1., 0., 0., 0., 0., 0.]])
 
 
-It is also possible to encode each column into ``n_categories - 1`` columns
-instead of ``n_categories`` columns by using the ``drop`` parameter. This
+It is also possible to encode each column into `n_categories - 1` columns
+instead of `n_categories` columns by using the `drop` parameter. This
 parameter allows the user to specify a category for each feature to be dropped.
 This is useful to avoid co-linearity in the input matrix in some classifiers.
 Such functionality is useful, for example, when using non-regularized
 regression (:class:`LinearRegression <sklearn.linear_model.LinearRegression>`),
 since co-linearity would cause the covariance matrix to be non-invertible. 
-When this paramenter is not None, ``handle_unknown`` must be set to 
-``error``::
+When this paramenter is not None, `handle_unknown` must be set to 
+`error`::
 
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
     >>> drop_enc = preprocessing.OneHotEncoder(drop='first').fit(X)
@@ -593,7 +593,7 @@ can introduce nonlinearity to linear models.
 K-bins discretization
 ---------------------
 
-:class:`KBinsDiscretizer` discretizes features into ``k`` bins::
+:class:`KBinsDiscretizer` discretizes features into `k` bins::
 
   >>> X = np.array([[ -3., 5., 15 ],
   ...               [  0., 6., 14 ],
@@ -602,8 +602,8 @@ K-bins discretization
 
 By default the output is one-hot encoded into a sparse matrix
 (See :ref:`preprocessing_categorical_features`)
-and this can be configured with the ``encode`` parameter.
-For each feature, the bin edges are computed during ``fit`` and together with
+and this can be configured with the `encode` parameter.
+For each feature, the bin edges are computed during `fit` and together with
 the number of bins, they will define the intervals. Therefore, for the current
 example, these intervals are defined as:
 
@@ -611,7 +611,7 @@ example, these intervals are defined as:
  - feature 2: :math:`{[-\infty, 5), [5, \infty)}`
  - feature 3: :math:`{[-\infty, 14), [14, \infty)}`
 
-Based on these bin intervals, ``X`` is transformed as follows::
+Based on these bin intervals, `X` is transformed as follows::
 
   >>> est.transform(X)                      # doctest: +SKIP
   array([[ 0., 1., 1.],
@@ -626,7 +626,7 @@ However, histograms focus on counting features which fall into particular
 bins, whereas discretization focuses on assigning feature values to these bins.
 
 :class:`KBinsDiscretizer` implements different binning strategies, which can be
-selected with the ``strategy`` parameter. The 'uniform' strategy uses
+selected with the `strategy` parameter. The 'uniform' strategy uses
 constant-width bins. The 'quantile' strategy uses the quantiles values to have
 equally populated bins in each feature. The 'kmeans' strategy defines bins based
 on a k-means clustering procedure performed on each feature independently.
@@ -656,7 +656,7 @@ often perform slightly better in practice.
 
 As for the :class:`Normalizer`, the utility class
 :class:`Binarizer` is meant to be used in the early stages of
-:class:`sklearn.pipeline.Pipeline`. The ``fit`` method does nothing
+:class:`sklearn.pipeline.Pipeline`. The `fit` method does nothing
 as each sample is treated independently of others::
 
   >>> X = [[ 1., -1.,  2.],
@@ -685,7 +685,7 @@ preprocessing module provides a companion function :func:`binarize`
 to be used when the transformer API is not necessary.
 
 Note that the :class:`Binarizer` is similar to the :class:`KBinsDiscretizer`
-when ``k = 2``, and when the bin edge is at the value ``threshold``.
+when `k = 2`, and when the bin edge is at the value `threshold`.
 
 .. topic:: Sparse input
 
@@ -693,7 +693,7 @@ when ``k = 2``, and when the bin edge is at the value ``threshold``.
   and sparse matrices from scipy.sparse as input**.
 
   For sparse input the data is **converted to the Compressed Sparse Rows
-  representation** (see ``scipy.sparse.csr_matrix``).
+  representation** (see `scipy.sparse.csr_matrix`).
   To avoid unnecessary memory copies, it is recommended to choose the CSR
   representation upstream.
 
@@ -726,7 +726,7 @@ Often it's useful to add complexity to the model by considering nonlinear featur
 
 The features of X have been transformed from :math:`(X_1, X_2)` to :math:`(1, X_1, X_2, X_1^2, X_1X_2, X_2^2)`.
 
-In some cases, only interaction terms among features are required, and it can be gotten with the setting ``interaction_only=True``::
+In some cases, only interaction terms among features are required, and it can be gotten with the setting `interaction_only=True`::
 
     >>> X = np.arange(9).reshape(3, 3)
     >>> X
@@ -763,10 +763,10 @@ a transformer that applies a log transformation in a pipeline, do::
     array([[0.        , 0.69314718],
            [1.09861229, 1.38629436]])
 
-You can ensure that ``func`` and ``inverse_func`` are the inverse of each other
-by setting ``check_inverse=True`` and calling ``fit`` before
-``transform``. Please note that a warning is raised and can be turned into an
-error with a ``filterwarnings``::
+You can ensure that `func` and `inverse_func` are the inverse of each other
+by setting `check_inverse=True` and calling `fit` before
+`transform`. Please note that a warning is raised and can be turned into an
+error with a `filterwarnings`::
 
   >>> import warnings
   >>> warnings.filterwarnings("error", message=".*check_inverse*.",

@@ -278,9 +278,9 @@ leaf_size : positive integer (default = 40)
     significantly impact the speed of a query and the memory required
     to store the constructed tree.  The amount of memory needed to
     store the tree scales as approximately n_samples / leaf_size.
-    For a specified ``leaf_size``, a leaf node is guaranteed to
-    satisfy ``leaf_size <= n_points <= 2 * leaf_size``, except in
-    the case that ``n_samples < leaf_size``.
+    For a specified `leaf_size`, a leaf node is guaranteed to
+    satisfy `leaf_size <= n_points <= 2 * leaf_size`, except in
+    the case that `n_samples < leaf_size`.
 
 metric : string or DistanceMetric object
     the distance metric to use for the tree.  Default='minkowski'
@@ -825,7 +825,7 @@ cdef int partition_node_indices(DTYPE_t* data,
         in-place.
     split_dim : int
         the dimension on which to split.  This will usually be computed via
-        the routine ``find_node_split_dim``
+        the routine `find_node_split_dim`
     split_index : int
         the index within node_indices around which to split the points.
 
@@ -1398,7 +1398,7 @@ cdef class BinaryTree:
             Note that unlike the query() method, setting return_distance=True
             here adds to the computation time.  Not all distances need to be
             calculated explicitly for return_distance=False.  Results are
-            not sorted by default: see ``sort_results`` keyword.
+            not sorted by default: see `sort_results` keyword.
         count_only : boolean (default = False)
             if True,  return only the count of points within distance r
             if False, return the indices of all points within distance r
@@ -1601,7 +1601,7 @@ cdef class BinaryTree:
         atol, rtol : float (default = 0)
             Specify the desired relative and absolute tolerance of the result.
             If the true result is K_true, then the returned result K_ret
-            satisfies ``abs(K_true - K_ret) < atol + rtol * K_ret``
+            satisfies `abs(K_true - K_ret) < atol + rtol * K_ret`
             The default is zero (i.e. machine precision) for both.
         breadth_first : boolean (default = False)
             if True, use a breadth-first search.  If False (default) use a

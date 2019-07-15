@@ -31,10 +31,10 @@ See the console's output for further details about each model.
 
 In this example you might try to:
 
-1) vary the ``max_depth`` for the ``DecisionTreeClassifier`` and
-   ``AdaBoostClassifier``, perhaps try ``max_depth=3`` for the
-   ``DecisionTreeClassifier`` or ``max_depth=None`` for ``AdaBoostClassifier``
-2) vary ``n_estimators``
+1) vary the `max_depth` for the `DecisionTreeClassifier` and
+   `AdaBoostClassifier`, perhaps try `max_depth=3` for the
+   `DecisionTreeClassifier` or `max_depth=None` for `AdaBoostClassifier`
+2) vary `n_estimators`
 
 It is worth noting that RandomForests and ExtraTrees can be fitted in parallel
 on many cores as each tree is built independently of the others. AdaBoost's

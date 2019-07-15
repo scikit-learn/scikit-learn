@@ -62,12 +62,12 @@ way they draw random subsets of the training set:
 In scikit-learn, bagging methods are offered as a unified
 :class:`BaggingClassifier` meta-estimator  (resp. :class:`BaggingRegressor`),
 taking as input a user-specified base estimator along with parameters
-specifying the strategy to draw random subsets. In particular, ``max_samples``
-and ``max_features`` control the size of the subsets (in terms of samples and
-features), while ``bootstrap`` and ``bootstrap_features`` control whether
+specifying the strategy to draw random subsets. In particular, `max_samples`
+and `max_features` control the size of the subsets (in terms of samples and
+features), while `bootstrap` and `bootstrap_features` control whether
 samples and features are drawn with or without replacement. When using a subset
 of the available samples the generalization accuracy can be estimated with the
-out-of-bag samples by setting ``oob_score=True``. As an example, the
+out-of-bag samples by setting `oob_score=True`. As an example, the
 snippet below illustrates how to instantiate a bagging ensemble of
 :class:`KNeighborsClassifier` base estimators, each built on random subsets of
 50% of the samples and 50% of the features.
@@ -110,8 +110,8 @@ construction.  The prediction of the ensemble is given as the averaged
 prediction of the individual classifiers.
 
 As other classifiers, forest classifiers have to be fitted with two
-arrays: a sparse or dense array X of size ``[n_samples, n_features]`` holding the
-training samples, and an array Y of size ``[n_samples]`` holding the
+arrays: a sparse or dense array X of size `[n_samples, n_features]` holding the
+training samples, and an array Y of size `[n_samples]` holding the
 target values (class labels) for the training samples::
 
     >>> from sklearn.ensemble import RandomForestClassifier
@@ -122,7 +122,7 @@ target values (class labels) for the training samples::
 
 Like :ref:`decision trees <tree>`, forests of trees also extend
 to :ref:`multi-output problems <tree_multioutput>`  (if Y is an array of size
-``[n_samples, n_outputs]``).
+`[n_samples, n_outputs]`).
 
 Random Forests
 --------------
@@ -134,7 +134,7 @@ training set.
 
 Furthermore, when splitting each node during the construction of a tree, the
 best split is found either from all input features or a random subset of size
-``max_features``. (See the :ref:`parameter tuning guidelines
+`max_features`. (See the :ref:`parameter tuning guidelines
 <random_forest_parameters>` for more details).
 
 The purpose of these two sources of randomness is to decrease the variance of
@@ -200,44 +200,44 @@ in bias::
 Parameters
 ----------
 
-The main parameters to adjust when using these methods is ``n_estimators`` and
-``max_features``. The former is the number of trees in the forest. The larger
+The main parameters to adjust when using these methods is `n_estimators` and
+`max_features`. The former is the number of trees in the forest. The larger
 the better, but also the longer it will take to compute. In addition, note that
 results will stop getting significantly better beyond a critical number of
 trees. The latter is the size of the random subsets of features to consider
 when splitting a node. The lower the greater the reduction of variance, but
 also the greater the increase in bias. Empirical good default values are
-``max_features=None`` (always considering all features instead of a random
-subset) for regression problems, and ``max_features="sqrt"`` (using a random
-subset of size ``sqrt(n_features)``) for classification tasks (where
-``n_features`` is the number of features in the data). Good results are often
-achieved when setting ``max_depth=None`` in combination with
-``min_samples_split=2`` (i.e., when fully developing the trees). Bear in mind
+`max_features=None` (always considering all features instead of a random
+subset) for regression problems, and `max_features="sqrt"` (using a random
+subset of size `sqrt(n_features)`) for classification tasks (where
+`n_features` is the number of features in the data). Good results are often
+achieved when setting `max_depth=None` in combination with
+`min_samples_split=2` (i.e., when fully developing the trees). Bear in mind
 though that these values are usually not optimal, and might result in models
 that consume a lot of RAM. The best parameter values should always be
 cross-validated. In addition, note that in random forests, bootstrap samples
-are used by default (``bootstrap=True``) while the default strategy for
-extra-trees is to use the whole dataset (``bootstrap=False``). When using
+are used by default (`bootstrap=True`) while the default strategy for
+extra-trees is to use the whole dataset (`bootstrap=False`). When using
 bootstrap sampling the generalization accuracy can be estimated on the left out
-or out-of-bag samples. This can be enabled by setting ``oob_score=True``.
+or out-of-bag samples. This can be enabled by setting `oob_score=True`.
 
 .. note::
 
     The size of the model with the default parameters is :math:`O( M * N * log (N) )`,
     where :math:`M` is the number of trees and :math:`N` is the number of samples.
     In order to reduce the size of the model, you can change these parameters:
-    ``min_samples_split``, ``max_leaf_nodes``, ``max_depth`` and ``min_samples_leaf``.
+    `min_samples_split`, `max_leaf_nodes`, `max_depth` and `min_samples_leaf`.
 
 Parallelization
 ---------------
 
 Finally, this module also features the parallel construction of the trees
-and the parallel computation of the predictions through the ``n_jobs``
-parameter. If ``n_jobs=k`` then computations are partitioned into
-``k`` jobs, and run on ``k`` cores of the machine. If ``n_jobs=-1``
+and the parallel computation of the predictions through the `n_jobs`
+parameter. If `n_jobs=k` then computations are partitioned into
+`k` jobs, and run on `k` cores of the machine. If `n_jobs=-1`
 then all cores available on the machine are used. Note that because of
 inter-process communication overhead, the speedup might not be linear
-(i.e., using ``k`` jobs will unfortunately not be ``k`` times as
+(i.e., using `k` jobs will unfortunately not be `k` times as
 fast). Significant speedup can still be achieved though when building
 a large number of trees, or when building a single tree requires a fair
 amount of time (e.g., on large datasets).
@@ -289,8 +289,8 @@ a :class:`ExtraTreesClassifier` model.
    :scale: 75
 
 In practice those estimates are stored as an attribute named
-``feature_importances_`` on the fitted model. This is an array with shape
-``(n_features,)`` whose values are positive and sum to 1.0. The higher
+`feature_importances_` on the fitted model. This is an array with shape
+`(n_features,)` whose values are positive and sum to 1.0. The higher
 the value, the more important is the contribution of the matching feature
 to the prediction function.
 
@@ -319,8 +319,8 @@ This coding can be computed very efficiently and can then be used as a basis
 for other learning tasks.
 The size and sparsity of the code can be influenced by choosing the number of
 trees and the maximum depth per tree. For each tree in the ensemble, the coding
-contains one entry of one. The size of the coding is at most ``n_estimators * 2
-** max_depth``, the maximum number of leaves in the forest.
+contains one entry of one. The size of the coding is at most `n_estimators * 2
+** max_depth`, the maximum number of leaves in the forest.
 
 As neighboring data points are more likely to lie within the same leaf of a tree,
 the transformation performs an implicit, non-parametric density estimation.
@@ -396,13 +396,13 @@ learners::
     >>> scores.mean()
     0.9...
 
-The number of weak learners is controlled by the parameter ``n_estimators``. The
-``learning_rate`` parameter controls the contribution of the weak learners in
+The number of weak learners is controlled by the parameter `n_estimators`. The
+`learning_rate` parameter controls the contribution of the weak learners in
 the final combination. By default, weak learners are decision stumps. Different
-weak learners can be specified through the ``base_estimator`` parameter.
-The main parameters to tune to obtain good results are ``n_estimators`` and
-the complexity of the base estimators (e.g., its depth ``max_depth`` or
-minimum required number of samples to consider a split ``min_samples_split``).
+weak learners can be specified through the `base_estimator` parameter.
+The main parameters to tune to obtain good results are `n_estimators` and
+the complexity of the base estimators (e.g., its depth `max_depth` or
+minimum required number of samples to consider a split `min_samples_split`).
 
 .. topic:: Examples:
 
@@ -471,7 +471,7 @@ trees.
   gradient boosting trees, namely :class:`HistGradientBoostingClassifier`
   and :class:`HistGradientBoostingRegressor`, inspired by
   `LightGBM <https://github.com/Microsoft/LightGBM>`_. These fast estimators
-  first bin the input samples ``X`` into integer-valued bins (typically 256
+  first bin the input samples `X` into integer-valued bins (typically 256
   bins) which tremendously reduces the number of splitting points to
   consider, and allow the algorithm to leverage integer-based data
   structures (histograms) instead of relying on sorted continuous values.
@@ -484,7 +484,7 @@ trees.
 
   These new estimators are still **experimental** for now: their predictions
   and their API might change without any deprecation cycle. To use them, you
-  need to explicitly import ``enable_hist_gradient_boosting``::
+  need to explicitly import `enable_hist_gradient_boosting`::
 
     >>> # explicitly require this experimental feature
     >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
@@ -517,14 +517,14 @@ with 100 decision stumps as weak learners::
     >>> clf.score(X_test, y_test)
     0.913...
 
-The number of weak learners (i.e. regression trees) is controlled by the parameter ``n_estimators``; :ref:`The size of each tree <gradient_boosting_tree_size>` can be controlled either by setting the tree depth via ``max_depth`` or by setting the number of leaf nodes via ``max_leaf_nodes``. The ``learning_rate`` is a hyper-parameter in the range (0.0, 1.0] that controls overfitting via :ref:`shrinkage <gradient_boosting_shrinkage>` .
+The number of weak learners (i.e. regression trees) is controlled by the parameter `n_estimators`; :ref:`The size of each tree <gradient_boosting_tree_size>` can be controlled either by setting the tree depth via `max_depth` or by setting the number of leaf nodes via `max_leaf_nodes`. The `learning_rate` is a hyper-parameter in the range (0.0, 1.0] that controls overfitting via :ref:`shrinkage <gradient_boosting_shrinkage>` .
 
 .. note::
 
    Classification with more than 2 classes requires the induction
-   of ``n_classes`` regression trees at each iteration,
+   of `n_classes` regression trees at each iteration,
    thus, the total number of induced trees equals
-   ``n_classes * n_estimators``. For datasets with a large number
+   `n_classes * n_estimators`. For datasets with a large number
    of classes we strongly recommend to use
    :class:`RandomForestClassifier` as an alternative to :class:`GradientBoostingClassifier` .
 
@@ -534,7 +534,7 @@ Regression
 :class:`GradientBoostingRegressor` supports a number of
 :ref:`different loss functions <gradient_boosting_loss>`
 for regression which can be specified via the argument
-``loss``; the default loss function for regression is least squares (``'ls'``).
+`loss`; the default loss function for regression is least squares (`'ls'`).
 
 ::
 
@@ -560,9 +560,9 @@ The train error at each iteration is stored in the
 of the gradient boosting model. The test error at each iterations can be obtained
 via the :meth:`~GradientBoostingRegressor.staged_predict` method which returns a
 generator that yields the predictions at each stage. Plots like these can be used
-to determine the optimal number of trees (i.e. ``n_estimators``) by early stopping.
+to determine the optimal number of trees (i.e. `n_estimators`) by early stopping.
 The plot on the right shows the feature importances which can be obtained via
-the ``feature_importances_`` property.
+the `feature_importances_` property.
 
 .. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_gradient_boosting_regression_001.png
    :target: ../auto_examples/ensemble/plot_gradient_boosting_regression.html
@@ -580,7 +580,7 @@ Fitting additional weak-learners
 --------------------------------
 
 Both :class:`GradientBoostingRegressor` and :class:`GradientBoostingClassifier`
-support ``warm_start=True`` which allows you to add more estimators to an already
+support `warm_start=True` which allows you to add more estimators to an already
 fitted model.
 
 ::
@@ -597,27 +597,27 @@ Controlling the tree size
 
 The size of the regression tree base learners defines the level of variable
 interactions that can be captured by the gradient boosting model. In general,
-a tree of depth ``h`` can capture interactions of order ``h`` .
+a tree of depth `h` can capture interactions of order `h` .
 There are two ways in which the size of the individual regression trees can
 be controlled.
 
-If you specify ``max_depth=h`` then complete binary trees
-of depth ``h`` will be grown. Such trees will have (at most) ``2**h`` leaf nodes
-and ``2**h - 1`` split nodes.
+If you specify `max_depth=h` then complete binary trees
+of depth `h` will be grown. Such trees will have (at most) `2**h` leaf nodes
+and `2**h - 1` split nodes.
 
 Alternatively, you can control the tree size by specifying the number of
-leaf nodes via the parameter ``max_leaf_nodes``. In this case,
+leaf nodes via the parameter `max_leaf_nodes`. In this case,
 trees will be grown using best-first search where nodes with the highest improvement
 in impurity will be expanded first.
-A tree with ``max_leaf_nodes=k`` has ``k - 1`` split nodes and thus can
-model interactions of up to order ``max_leaf_nodes - 1`` .
+A tree with `max_leaf_nodes=k` has `k - 1` split nodes and thus can
+model interactions of up to order `max_leaf_nodes - 1` .
 
-We found that ``max_leaf_nodes=k`` gives comparable results to ``max_depth=k-1``
+We found that `max_leaf_nodes=k` gives comparable results to `max_depth=k-1`
 but is significantly faster to train at the expense of a slightly higher
 training error.
-The parameter ``max_leaf_nodes`` corresponds to the variable ``J`` in the
+The parameter `max_leaf_nodes` corresponds to the variable `J` in the
 chapter on gradient boosting in [F2001]_ and is related to the parameter
-``interaction.depth`` in R's gbm package where ``max_leaf_nodes == interaction.depth + 1`` .
+`interaction.depth` in R's gbm package where `max_leaf_nodes == interaction.depth + 1` .
 
 Mathematical formulation
 -------------------------
@@ -653,8 +653,8 @@ given the previous ensemble :math:`F_{m-1}`:
 The initial model :math:`F_{0}` is problem specific, for least-squares
 regression one usually chooses the mean of the target values.
 
-.. note:: The initial model can also be specified via the ``init``
-          argument. The passed object has to implement ``fit`` and ``predict``.
+.. note:: The initial model can also be specified via the `init`
+          argument. The passed object has to implement `fit` and `predict`.
 
 Gradient Boosting attempts to solve this minimization problem
 numerically via steepest descent: The steepest descent direction is
@@ -683,41 +683,41 @@ Loss Functions
 ...............
 
 The following loss functions are supported and can be specified using
-the parameter ``loss``:
+the parameter `loss`:
 
   * Regression
 
-    * Least squares (``'ls'``): The natural choice for regression due
+    * Least squares (`'ls'`): The natural choice for regression due
       to its superior computational properties. The initial model is
       given by the mean of the target values.
-    * Least absolute deviation (``'lad'``): A robust loss function for
+    * Least absolute deviation (`'lad'`): A robust loss function for
       regression. The initial model is given by the median of the
       target values.
-    * Huber (``'huber'``): Another robust loss function that combines
-      least squares and least absolute deviation; use ``alpha`` to
+    * Huber (`'huber'`): Another robust loss function that combines
+      least squares and least absolute deviation; use `alpha` to
       control the sensitivity with regards to outliers (see [F2001]_ for
       more details).
-    * Quantile (``'quantile'``): A loss function for quantile regression.
-      Use ``0 < alpha < 1`` to specify the quantile. This loss function
+    * Quantile (`'quantile'`): A loss function for quantile regression.
+      Use `0 < alpha < 1` to specify the quantile. This loss function
       can be used to create prediction intervals
       (see :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`).
 
   * Classification
 
-    * Binomial deviance (``'deviance'``): The negative binomial
+    * Binomial deviance (`'deviance'`): The negative binomial
       log-likelihood loss function for binary classification (provides
       probability estimates).  The initial model is given by the
       log odds-ratio.
-    * Multinomial deviance (``'deviance'``): The negative multinomial
+    * Multinomial deviance (`'deviance'`): The negative multinomial
       log-likelihood loss function for multi-class classification with
-      ``n_classes`` mutually exclusive classes. It provides
+      `n_classes` mutually exclusive classes. It provides
       probability estimates.  The initial model is given by the
-      prior probability of each class. At each iteration ``n_classes``
+      prior probability of each class. At each iteration `n_classes`
       regression trees have to be constructed which makes GBRT rather
       inefficient for data sets with a large number of classes.
-    * Exponential loss (``'exponential'``): The same loss function
+    * Exponential loss (`'exponential'`): The same loss function
       as :class:`AdaBoostClassifier`. Less robust to mislabeled
-      examples than ``'deviance'``; can only be used for binary
+      examples than `'deviance'`; can only be used for binary
       classification.
 
 Regularization
@@ -737,26 +737,26 @@ the contribution of each weak learner by a factor :math:`\nu`:
 
 The parameter :math:`\nu` is also called the **learning rate** because
 it scales the step length the gradient descent procedure; it can
-be set via the ``learning_rate`` parameter.
+be set via the `learning_rate` parameter.
 
-The parameter ``learning_rate`` strongly interacts with the parameter
-``n_estimators``, the number of weak learners to fit. Smaller values
-of ``learning_rate`` require larger numbers of weak learners to maintain
+The parameter `learning_rate` strongly interacts with the parameter
+`n_estimators`, the number of weak learners to fit. Smaller values
+of `learning_rate` require larger numbers of weak learners to maintain
 a constant training error. Empirical evidence suggests that small
-values of ``learning_rate`` favor better test error. [HTF2009]_
+values of `learning_rate` favor better test error. [HTF2009]_
 recommend to set the learning rate to a small constant
-(e.g. ``learning_rate <= 0.1``) and choose ``n_estimators`` by early
+(e.g. `learning_rate <= 0.1`) and choose `n_estimators` by early
 stopping. For a more detailed discussion of the interaction between
-``learning_rate`` and ``n_estimators`` see [R2007]_.
+`learning_rate` and `n_estimators` see [R2007]_.
 
 Subsampling
 ............
 
 [F1999]_ proposed stochastic gradient boosting, which combines gradient
 boosting with bootstrap averaging (bagging). At each iteration
-the base classifier is trained on a fraction ``subsample`` of
+the base classifier is trained on a fraction `subsample` of
 the available training data. The subsample is drawn without replacement.
-A typical value of ``subsample`` is 0.5.
+A typical value of `subsample` is 0.5.
 
 The figure below illustrates the effect of shrinkage and subsampling
 on the goodness-of-fit of the model. We can clearly see that shrinkage
@@ -771,16 +771,16 @@ does poorly.
 
 Another strategy to reduce the variance is by subsampling the features
 analogous to the random splits in :class:`RandomForestClassifier` .
-The number of subsampled features can be controlled via the ``max_features``
+The number of subsampled features can be controlled via the `max_features`
 parameter.
 
-.. note:: Using a small ``max_features`` value can significantly decrease the runtime.
+.. note:: Using a small `max_features` value can significantly decrease the runtime.
 
 Stochastic gradient boosting allows to compute out-of-bag estimates of the
 test deviance by computing the improvement in deviance on the examples that are
 not included in the bootstrap sample (i.e. the out-of-bag examples).
 The improvements are stored in the attribute
-:attr:`~GradientBoostingRegressor.oob_improvement_`. ``oob_improvement_[i]`` holds
+:attr:`~GradientBoostingRegressor.oob_improvement_`. `oob_improvement_[i]` holds
 the improvement in terms of the loss on the OOB samples if you add the i-th stage
 to the current predictions.
 Out-of-bag estimates can be used for model selection, for example to determine
@@ -823,7 +823,7 @@ ensembles by simply averaging the feature importance of each tree (see
 :ref:`random_forest_feature_importance` for more details).
 
 The feature importance scores of a fit gradient boosting model can be
-accessed via the ``feature_importances_`` property::
+accessed via the `feature_importances_` property::
 
     >>> from sklearn.datasets import make_hastie_10_2
     >>> from sklearn.ensemble import GradientBoostingClassifier
@@ -863,7 +863,7 @@ E.g., if the prediction for a given sample is
 - classifier 2 -> class 1
 - classifier 3 -> class 2
 
-the VotingClassifier (with ``voting='hard'``) would classify the sample
+the VotingClassifier (with `voting='hard'`) would classify the sample
 as "class 1" based on the majority class label.
 
 In the cases of a tie, the `VotingClassifier` will select the class based
@@ -910,7 +910,7 @@ Weighted Average Probabilities (Soft Voting)
 In contrast to majority voting (hard voting), soft voting
 returns the class label as argmax of the sum of predicted probabilities.
 
-Specific weights can be assigned to each classifier via the ``weights``
+Specific weights can be assigned to each classifier via the `weights`
 parameter. When weights are provided, the predicted class probabilities
 for each classifier are collected, multiplied by the classifier weight,
 and averaged. The final class label is then derived from the class label
@@ -990,7 +990,7 @@ Usage
 
 In order to predict the class labels based on the predicted
 class-probabilities (scikit-learn estimators in the VotingClassifier
-must support ``predict_proba`` method)::
+must support `predict_proba` method)::
 
    >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='soft')
 

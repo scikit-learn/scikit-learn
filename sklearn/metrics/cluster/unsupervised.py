@@ -40,9 +40,9 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
     """Compute the mean Silhouette Coefficient of all samples.
 
     The Silhouette Coefficient is calculated using the mean intra-cluster
-    distance (``a``) and the mean nearest-cluster distance (``b``) for each
-    sample.  The Silhouette Coefficient for a sample is ``(b - a) / max(a,
-    b)``.  To clarify, ``b`` is the distance between a sample and the nearest
+    distance (`a`) and the mean nearest-cluster distance (`b`) for each
+    sample.  The Silhouette Coefficient for a sample is `(b - a) / max(a,
+    b)`.  To clarify, `b` is the distance between a sample and the nearest
     cluster that the sample is not a part of.
     Note that Silhouette Coefficient is only defined if number of labels
     is 2 <= n_labels <= n_samples - 1.
@@ -70,19 +70,19 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
         feature array. If metric is a string, it must be one of the options
         allowed by :func:`metrics.pairwise.pairwise_distances
         <sklearn.metrics.pairwise.pairwise_distances>`. If X is the distance
-        array itself, use ``metric="precomputed"``.
+        array itself, use `metric="precomputed"`.
 
     sample_size : int or None
         The size of the sample to use when computing the Silhouette Coefficient
         on a random subset of the data.
-        If ``sample_size is None``, no sampling is used.
+        If `sample_size is None`, no sampling is used.
 
     random_state : int, RandomState instance or None, optional (default=None)
         The generator used to randomly select a subset of samples.  If int,
         random_state is the seed used by the random number generator; If
         RandomState instance, random_state is the random number generator; If
         None, the random number generator is the RandomState instance used by
-        `np.random`. Used when ``sample_size is not None``.
+        `np.random`. Used when `sample_size is not None`.
 
     **kwds : optional keyword parameters
         Any further parameters are passed directly to the distance function.
@@ -129,7 +129,7 @@ def _silhouette_reduce(D_chunk, start, labels, label_freqs):
     labels : array, shape (n_samples,)
         corresponding cluster labels, encoded as {0, ..., n_clusters-1}
     label_freqs : array
-        distribution of cluster labels in ``labels``
+        distribution of cluster labels in `labels`
     """
     # accumulate distances from each sample to each cluster
     clust_dists = np.zeros((len(D_chunk), len(label_freqs)),
@@ -159,9 +159,9 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
     different clusters are not very similar to each other.
 
     The Silhouette Coefficient is calculated using the mean intra-cluster
-    distance (``a``) and the mean nearest-cluster distance (``b``) for each
-    sample.  The Silhouette Coefficient for a sample is ``(b - a) / max(a,
-    b)``.
+    distance (`a`) and the mean nearest-cluster distance (`b`) for each
+    sample.  The Silhouette Coefficient for a sample is `(b - a) / max(a,
+    b)`.
     Note that Silhouette Coefficient is only defined if number of labels
     is 2 <= n_labels <= n_samples - 1.
 
@@ -189,7 +189,7 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
 
     `**kwds` : optional keyword parameters
         Any further parameters are passed directly to the distance function.
-        If using a ``scipy.spatial.distance`` metric, the parameters are still
+        If using a `scipy.spatial.distance` metric, the parameters are still
         metric dependent. See the scipy docs for usage examples.
 
     Returns
@@ -248,11 +248,11 @@ def calinski_harabasz_score(X, labels):
 
     Parameters
     ----------
-    X : array-like, shape (``n_samples``, ``n_features``)
-        List of ``n_features``-dimensional data points. Each row corresponds
+    X : array-like, shape (`n_samples`, `n_features`)
+        List of `n_features`-dimensional data points. Each row corresponds
         to a single data point.
 
-    labels : array-like, shape (``n_samples``,)
+    labels : array-like, shape (`n_samples`,)
         Predicted labels for each sample.
 
     Returns
@@ -309,11 +309,11 @@ def davies_bouldin_score(X, labels):
 
     Parameters
     ----------
-    X : array-like, shape (``n_samples``, ``n_features``)
-        List of ``n_features``-dimensional data points. Each row corresponds
+    X : array-like, shape (`n_samples`, `n_features`)
+        List of `n_features`-dimensional data points. Each row corresponds
         to a single data point.
 
-    labels : array-like, shape (``n_samples``,)
+    labels : array-like, shape (`n_samples`,)
         Predicted labels for each sample.
 
     Returns

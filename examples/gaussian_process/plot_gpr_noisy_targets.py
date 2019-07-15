@@ -15,7 +15,7 @@ The figures illustrate the interpolating property of the Gaussian Process
 model as well as its probabilistic nature in the form of a pointwise 95%
 confidence interval.
 
-Note that the parameter ``alpha`` is applied as a Tikhonov
+Note that the parameter `alpha` is applied as a Tikhonov
 regularization of the assumed covariance between the training points.
 """
 print(__doc__)

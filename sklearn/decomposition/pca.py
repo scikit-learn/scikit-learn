@@ -28,10 +28,10 @@ from ..utils.validation import check_is_fitted
 
 
 def _assess_dimension_(spectrum, rank, n_samples, n_features):
-    """Compute the likelihood of a rank ``rank`` dataset
+    """Compute the likelihood of a rank `rank` dataset
 
     The dataset is assumed to be embedded in gaussian noise of shape(n,
-    dimf) having spectrum ``spectrum``.
+    dimf) having spectrum `spectrum`.
 
     Parameters
     ----------
@@ -128,15 +128,15 @@ class PCA(_BasePCA):
 
             n_components == min(n_samples, n_features)
 
-        If ``n_components == 'mle'`` and ``svd_solver == 'full'``, Minka's
-        MLE is used to guess the dimension. Use of ``n_components == 'mle'``
-        will interpret ``svd_solver == 'auto'`` as ``svd_solver == 'full'``.
+        If `n_components == 'mle'` and `svd_solver == 'full'`, Minka's
+        MLE is used to guess the dimension. Use of `n_components == 'mle'`
+        will interpret `svd_solver == 'auto'` as `svd_solver == 'full'`.
 
-        If ``0 < n_components < 1`` and ``svd_solver == 'full'``, select the
+        If `0 < n_components < 1` and `svd_solver == 'full'`, select the
         number of components such that the amount of variance that needs to be
         explained is greater than the percentage specified by n_components.
 
-        If ``svd_solver == 'arpack'``, the number of components must be
+        If `svd_solver == 'arpack'`, the number of components must be
         strictly less than the minimum of n_features and n_samples.
 
         Hence, the None case results in::
@@ -193,7 +193,7 @@ class PCA(_BasePCA):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``svd_solver`` == 'arpack' or 'randomized'.
+        by `np.random`. Used when `svd_solver` == 'arpack' or 'randomized'.
 
         .. versionadded:: 0.18.0
 
@@ -202,7 +202,7 @@ class PCA(_BasePCA):
     components_ : array, shape (n_components, n_features)
         Principal axes in feature space, representing the directions of
         maximum variance in the data. The components are sorted by
-        ``explained_variance_``.
+        `explained_variance_`.
 
     explained_variance_ : array, shape (n_components,)
         The amount of variance explained by each of the selected components.
@@ -215,12 +215,12 @@ class PCA(_BasePCA):
     explained_variance_ratio_ : array, shape (n_components,)
         Percentage of variance explained by each of the selected components.
 
-        If ``n_components`` is not set then all components are stored and the
+        If `n_components` is not set then all components are stored and the
         sum of the ratios is equal to 1.0.
 
     singular_values_ : array, shape (n_components,)
         The singular values corresponding to each of the selected components.
-        The singular values are equal to the 2-norms of the ``n_components``
+        The singular values are equal to the 2-norms of the `n_components`
         variables in the lower-dimensional space.
 
         .. versionadded:: 0.19

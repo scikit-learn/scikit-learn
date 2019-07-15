@@ -165,7 +165,7 @@ if np_version < (1, 12):
     class MaskedArray(np.ma.MaskedArray):
         # Before numpy 1.12, np.ma.MaskedArray object is not picklable
         # This fix is needed to make our model_selection.GridSearchCV
-        # picklable as the ``cv_results_`` param uses MaskedArray
+        # picklable as the `cv_results_` param uses MaskedArray
         def __getstate__(self):
             """Return the internal state of the masked array, for pickling
             purposes.
@@ -206,8 +206,8 @@ def _astype_copy_false(X):
 def _joblib_parallel_args(**kwargs):
     """Set joblib.Parallel arguments in a compatible way for 0.11 and 0.12+
 
-    For joblib 0.11 this maps both ``prefer`` and ``require`` parameters to
-    a specific ``backend``.
+    For joblib 0.11 this maps both `prefer` and `require` parameters to
+    a specific `backend`.
 
     Parameters
     ----------

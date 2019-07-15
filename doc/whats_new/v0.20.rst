@@ -72,18 +72,18 @@ Changelog
 
 - |Fix| Fixed a bug in :class:`linear_model.MultiTaskElasticNet` and
   :class:`linear_model.MultiTaskLasso` which were breaking when
-  ``warm_start = True``. :issue:`12360` by :user:`Aakanksha Joshi <joaak>`.
+  `warm_start = True`. :issue:`12360` by :user:`Aakanksha Joshi <joaak>`.
 
 :mod:`sklearn.preprocessing`
 ............................
 
 - |Fix| Fixed a bug in :class:`preprocessing.KBinsDiscretizer` where
-  ``strategy='kmeans'`` fails with an error during transformation due to unsorted
+  `strategy='kmeans'` fails with an error during transformation due to unsorted
   bin edges. :issue:`13134` by :user:`Sandro Casagrande <SandroCasagrande>`.
 
 - |Fix| Fixed a bug in :class:`preprocessing.OneHotEncoder` where the
-  deprecation of ``categorical_features`` was handled incorrectly in
-  combination with ``handle_unknown='ignore'``.
+  deprecation of `categorical_features` was handled incorrectly in
+  combination with `handle_unknown='ignore'`.
   :issue:`12881` by `Joris Van den Bossche`_.
 
 - |Fix| Bins whose width are too small (i.e., <= 1e-8) are removed
@@ -94,10 +94,10 @@ Changelog
 ..................
 
 - |FIX| Fixed a bug in :class:`svm.SVC`, :class:`svm.NuSVC`, :class:`svm.SVR`,
-  :class:`svm.NuSVR` and :class:`svm.OneClassSVM` where the ``scale`` option
-  of parameter ``gamma`` is erroneously defined as
-  ``1 / (n_features * X.std())``. It's now defined as
-  ``1 / (n_features * X.var())``.
+  :class:`svm.NuSVR` and :class:`svm.OneClassSVM` where the `scale` option
+  of parameter `gamma` is erroneously defined as
+  `1 / (n_features * X.std())`. It's now defined as
+  `1 / (n_features * X.var())`.
   :issue:`13221` by :user:`Hanmin Qin <qinhanmin2014>`.
 
 Code and Documentation Contributors
@@ -133,8 +133,8 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-- :mod:`sklearn.neighbors` when ``metric=='jaccard'`` (bug fix)
-- use of ``'seuclidean'`` or ``'mahalanobis'`` metrics in some cases (bug fix)
+- :mod:`sklearn.neighbors` when `metric=='jaccard'` (bug fix)
+- use of `'seuclidean'` or `'mahalanobis'` metrics in some cases (bug fix)
 
 Changelog
 ---------
@@ -150,8 +150,8 @@ Changelog
 ......................
 
 - |Fix| Fixed a bug in :func:`metrics.pairwise_distances` and
-  :func:`metrics.pairwise_distances_chunked` where parameters ``V`` of
-  ``"seuclidean"`` and ``VI`` of ``"mahalanobis"`` metrics were computed after
+  :func:`metrics.pairwise_distances_chunked` where parameters `V` of
+  `"seuclidean"` and `VI` of `"mahalanobis"` metrics were computed after
   the data was split into chunks instead of being pre-computed on whole data.
   :issue:`12701` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
@@ -211,7 +211,7 @@ Changelog
 
 - |Efficiency| make :class:`cluster.MeanShift` no longer try to do nested
   parallelism as the overhead would hurt performance significantly when
-  ``n_jobs > 1``.
+  `n_jobs > 1`.
   :issue:`12159` by :user:`Olivier Grisel <ogrisel>`.
 
 - |Fix| Fixed a bug in :class:`cluster.DBSCAN` with precomputed sparse neighbors
@@ -225,12 +225,12 @@ Changelog
   columns with types not convertible to a numeric.
   :issue:`11912` by :user:`Adrin Jalali <adrinjalali>`.
 
-- |API| :class:`compose.ColumnTransformer` now applies the ``sparse_threshold``
+- |API| :class:`compose.ColumnTransformer` now applies the `sparse_threshold`
   even if all transformation results are sparse. :issue:`12304` by `Andreas
   Müller`_.
 
 - |API| :func:`compose.make_column_transformer` now expects
-  ``(transformer, columns)`` instead of ``(columns, transformer)`` to keep
+  `(transformer, columns)` instead of `(columns, transformer)` to keep
   consistent with :class:`compose.ColumnTransformer`.
   :issue:`12339` by :user:`Adrin Jalali <adrinjalali>`.
 
@@ -244,10 +244,10 @@ Changelog
   row id attributes. :issue:`12330` by :user:`Jan N. van Rijn <janvanrijn>`.
 
 - |Fix| Fixed integer overflow in :func:`datasets.make_classification`
-  for values of ``n_informative`` parameter larger than 64.
+  for values of `n_informative` parameter larger than 64.
   :issue:`10811` by :user:`Roman Feldbauer <VarIr>`.
 
-- |Fix| Fixed olivetti faces dataset ``DESCR`` attribute to point to the right
+- |Fix| Fixed olivetti faces dataset `DESCR` attribute to point to the right
   location in :func:`datasets.fetch_olivetti_faces`. :issue:`12441` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`
 
@@ -266,12 +266,12 @@ Changelog
 .......................
 
 - |Fix| Fixed a bug mostly affecting :class:`ensemble.RandomForestClassifier`
-  where ``class_weight='balanced_subsample'`` failed with more than 32 classes.
+  where `class_weight='balanced_subsample'` failed with more than 32 classes.
   :issue:`12165` by `Joel Nothman`_.
 
 - |Fix| Fixed a bug affecting :class:`ensemble.BaggingClassifier`,
   :class:`ensemble.BaggingRegressor` and :class:`ensemble.IsolationForest`,
-  where ``max_features`` was sometimes rounded down to zero.
+  where `max_features` was sometimes rounded down to zero.
   :issue:`12388` by :user:`Connor Tann <Connossor>`.
 
 :mod:`sklearn.feature_extraction`
@@ -286,7 +286,7 @@ Changelog
 ...........................
 
 - |Fix| :class:`linear_model.SGDClassifier` and variants
-  with ``early_stopping=True`` would not use a consistent validation
+  with `early_stopping=True` would not use a consistent validation
   split in the multiclass case and this would cause a crash when using
   those estimators as part of parallel parameter search or cross-validation.
   :issue:`12122` by :user:`Olivier Grisel <ogrisel>`.
@@ -294,7 +294,7 @@ Changelog
 - |Fix| Fixed a bug affecting :class:`SGDClassifier` in the multiclass
   case. Each one-versus-all step is run in a :class:`joblib.Parallel` call and
   mutating a common parameter, causing a segmentation fault if called within a
-  backend using processes and not threads. We now use ``require=sharedmem``
+  backend using processes and not threads. We now use `require=sharedmem`
   at the :class:`joblib.Parallel` instance creation. :issue:`12518` by
   :user:`Pierre Glaser <pierreglaser>` and :user:`Olivier Grisel <ogrisel>`.
 
@@ -318,9 +318,9 @@ Changelog
 :mod:`sklearn.mixture`
 ........................
 
-- |Fix| Ensure that the ``fit_predict`` method of
+- |Fix| Ensure that the `fit_predict` method of
   :class:`mixture.GaussianMixture` and :class:`mixture.BayesianGaussianMixture`
-  always yield assignments consistent with ``fit`` followed by ``predict`` even
+  always yield assignments consistent with `fit` followed by `predict` even
   if the convergence criterion is too loose or not met. :issue:`12451`
   by :user:`Olivier Grisel <ogrisel>`.
 
@@ -339,7 +339,7 @@ Changelog
   manually specified categories. :issue:`12365` by `Joris Van den Bossche`_.
 
 - |Fix| Fixed bug in :class:`preprocessing.KBinsDiscretizer` where the
-  ``transform`` method mutates the ``_encoder`` attribute. The ``transform``
+  `transform` method mutates the `_encoder` attribute. The `transform`
   method is now thread safe. :issue:`12514` by
   :user:`Hanmin Qin <qinhanmin2014>`.
 
@@ -376,13 +376,13 @@ Miscellaneous
   `SKLEARN_SITE_JOBLIB`, added compatibility with joblib 0.11 in addition
   to 0.12+. :issue:`12350` by `Joel Nothman`_ and `Roman Yurchak`_.
 
-- |Fix| Make sure to avoid raising ``FutureWarning`` when calling
-  ``np.vstack`` with numpy 1.16 and later (use list comprehensions
+- |Fix| Make sure to avoid raising `FutureWarning` when calling
+  `np.vstack` with numpy 1.16 and later (use list comprehensions
   instead of generator expressions in many locations of the scikit-learn
   code base). :issue:`12467` by :user:`Olivier Grisel <ogrisel>`.
 
-- |API| Removed all mentions of ``sklearn.externals.joblib``, and deprecated
-  joblib methods exposed in ``sklearn.utils``, except for
+- |API| Removed all mentions of `sklearn.externals.joblib`, and deprecated
+  joblib methods exposed in `sklearn.utils`, except for
   :func:`utils.parallel_backend` and :func:`utils.register_parallel_backend`,
   which allow users to configure parallel computation in scikit-learn.
   Other functionalities are part of `joblib <https://joblib.readthedocs.io/>`_.
@@ -498,7 +498,7 @@ random sampling procedures.
 - :class:`neural_network.MLPClassifier` (bug fix)
 - :class:`neural_network.MLPRegressor` (bug fix)
 - The v0.19.0 release notes failed to mention a backwards incompatibility with
-  :class:`model_selection.StratifiedKFold` when ``shuffle=True`` due to
+  :class:`model_selection.StratifiedKFold` when `shuffle=True` due to
   :issue:`7823`.
 
 Details are listed in the changelog below.
@@ -531,29 +531,29 @@ Support for Python 3.3 has been officially dropped.
 ......................
 
 - |MajorFeature| :class:`cluster.AgglomerativeClustering` now supports Single
-  Linkage clustering via ``linkage='single'``. :issue:`9372` by :user:`Leland
+  Linkage clustering via `linkage='single'`. :issue:`9372` by :user:`Leland
   McInnes <lmcinnes>` and :user:`Steve Astels <sastels>`.
 
 - |Feature| :class:`cluster.KMeans` and :class:`cluster.MiniBatchKMeans` now support
-  sample weights via new parameter ``sample_weight`` in ``fit`` function.
+  sample weights via new parameter `sample_weight` in `fit` function.
   :issue:`10933` by :user:`Johannes Hansen <jnhansen>`.
 
 - |Efficiency| :class:`cluster.KMeans`, :class:`cluster.MiniBatchKMeans` and
-  :func:`cluster.k_means` passed with ``algorithm='full'`` now enforces
+  :func:`cluster.k_means` passed with `algorithm='full'` now enforces
   row-major ordering, improving runtime.
   :issue:`10471` by :user:`Gaurav Dhingra <gxyd>`.
 
-- |Efficiency| :class:`cluster.DBSCAN` now is parallelized according to ``n_jobs``
-  regardless of ``algorithm``.
+- |Efficiency| :class:`cluster.DBSCAN` now is parallelized according to `n_jobs`
+  regardless of `algorithm`.
   :issue:`8003` by :user:`Joël Billaud <recamshak>`.
 
 - |Enhancement| :class:`cluster.KMeans` now gives a warning if the number of
-  distinct clusters found is smaller than ``n_clusters``. This may occur when
+  distinct clusters found is smaller than `n_clusters`. This may occur when
   the number of distinct points in the data set is actually smaller than the
   number of cluster one is looking for.
   :issue:`10059` by :user:`Christian Braune <christianbraune79>`.
 
-- |Fix| Fixed a bug where the ``fit`` method of
+- |Fix| Fixed a bug where the `fit` method of
   :class:`cluster.AffinityPropagation` stored cluster
   centers as 3d array instead of 2d array in case of non-convergence. For the
   same class, fixed undefined and arbitrary behavior in case of training data
@@ -566,8 +566,8 @@ Support for Python 3.3 has been officially dropped.
   and :user:`Devansh D. <devanshdalal>`.
 
 - |Fix| Fixed a bug in :func:`cluster.k_means_elkan` where the returned
-  ``iteration`` was 1 less than the correct value. Also added the missing
-  ``n_iter_`` attribute in the docstring of :class:`cluster.KMeans`.
+  `iteration` was 1 less than the correct value. Also added the missing
+  `n_iter_` attribute in the docstring of :class:`cluster.KMeans`.
   :issue:`11353` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
 - |Fix| Fixed a bug in :func:`cluster.mean_shift` where the assigned labels
@@ -575,7 +575,7 @@ Support for Python 3.3 has been officially dropped.
   intensities.
   :issue:`11901` by :user:`Adrin Jalali <adrinjalali>`.
 
-- |API| Deprecate ``pooling_func`` unused parameter in
+- |API| Deprecate `pooling_func` unused parameter in
   :class:`cluster.AgglomerativeClustering`.
   :issue:`9875` by :user:`Kumar Ashutosh <thechargedneutron>`.
 
@@ -620,15 +620,15 @@ Support for Python 3.3 has been officially dropped.
   :issue:`9908` by `Andreas Müller`_ and :user:`Jan N. van Rijn <janvanrijn>`.
 
 - |Feature| In :func:`datasets.make_blobs`, one can now pass a list to the
-  ``n_samples`` parameter to indicate the number of samples to generate per
+  `n_samples` parameter to indicate the number of samples to generate per
   cluster. :issue:`8617` by :user:`Maskani Filali Mohamed <maskani-moh>` and
   :user:`Konstantinos Katrioplas <kkatrio>`.
 
-- |Feature| Add ``filename`` attribute to :mod:`datasets` that have a CSV file.
+- |Feature| Add `filename` attribute to :mod:`datasets` that have a CSV file.
   :issue:`9101` by :user:`alex-33 <alex-33>`
   and :user:`Maskani Filali Mohamed <maskani-moh>`.
 
-- |Feature| ``return_X_y`` parameter has been added to several dataset loaders.
+- |Feature| `return_X_y` parameter has been added to several dataset loaders.
   :issue:`10774` by :user:`Chris Catalfo <ccatalfo>`.
 
 - |Fix| Fixed a bug in :func:`datasets.load_boston` which had a wrong data
@@ -657,7 +657,7 @@ Support for Python 3.3 has been officially dropped.
   code. :issue:`6374` by :user:`John Kirkham <jakirkham>`.
 
 - |Feature| |Fix| :class:`decomposition.SparsePCA` now exposes
-  ``normalize_components``. When set to True, the train and test data are
+  `normalize_components`. When set to True, the train and test data are
   centered with the train mean repsectively during the fit phase and the
   transform phase. This fixes the behavior of SparsePCA. When set to False,
   which is the default, the previous abnormal behaviour still holds. The False
@@ -669,22 +669,22 @@ Support for Python 3.3 has been officially dropped.
 
 - |Fix| Fix for uninformative error in :class:`decomposition.IncrementalPCA`:
   now an error is raised if the number of components is larger than the
-  chosen batch size. The ``n_components=None`` case was adapted accordingly.
+  chosen batch size. The `n_components=None` case was adapted accordingly.
   :issue:`6452`. By :user:`Wally Gauze <wallygauze>`.
 
-- |Fix| Fixed a bug where the ``partial_fit`` method of
+- |Fix| Fixed a bug where the `partial_fit` method of
   :class:`decomposition.IncrementalPCA` used integer division instead of float
   division on Python 2.
   :issue:`9492` by :user:`James Bourbeau <jrbourbeau>`.
 
 - |Fix| In :class:`decomposition.PCA` selecting a n_components parameter greater
   than the number of samples now raises an error. Similarly, the
-  ``n_components=None`` case now selects the minimum of ``n_samples`` and
-  ``n_features``.
+  `n_components=None` case now selects the minimum of `n_samples` and
+  `n_features`.
   :issue:`8484` by :user:`Wally Gauze <wallygauze>`.
 
 - |Fix| Fixed a bug in :class:`decomposition.PCA` where users will get
-  unexpected error with large datasets when ``n_components='mle'`` on Python 3
+  unexpected error with large datasets when `n_components='mle'` on Python 3
   versions.
   :issue:`9886` by :user:`Hanmin Qin <qinhanmin2014>`.
 
@@ -708,8 +708,8 @@ Support for Python 3.3 has been officially dropped.
 :mod:`sklearn.dummy`
 ....................
 
-- |Feature| :class:`dummy.DummyRegressor` now has a ``return_std`` option in its
-  ``predict`` method. The returned standard deviations will be zeros.
+- |Feature| :class:`dummy.DummyRegressor` now has a `return_std` option in its
+  `predict` method. The returned standard deviations will be zeros.
 
 - |Feature| :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegressor` now
   only require X to be an object with finite length or shape. :issue:`9832` by
@@ -730,17 +730,17 @@ Support for Python 3.3 has been officially dropped.
 
 - |Feature| :class:`ensemble.GradientBoostingClassifier` and
   :class:`ensemble.GradientBoostingRegressor` now support early stopping
-  via ``n_iter_no_change``, ``validation_fraction`` and ``tol``. :issue:`7071`
+  via `n_iter_no_change`, `validation_fraction` and `tol`. :issue:`7071`
   by `Raghav RV`_
 
-- |Feature| Added ``named_estimators_`` parameter in
+- |Feature| Added `named_estimators_` parameter in
   :class:`ensemble.VotingClassifier` to access fitted estimators.
   :issue:`9157` by :user:`Herilalaina Rakotoarison <herilalaina>`.
 
 - |Fix| Fixed a bug when fitting :class:`ensemble.GradientBoostingClassifier` or
-  :class:`ensemble.GradientBoostingRegressor` with ``warm_start=True`` which
+  :class:`ensemble.GradientBoostingRegressor` with `warm_start=True` which
   previously raised a segmentation fault due to a non-conversion of CSC matrix
-  into CSR format expected by ``decision_function``. Similarly, Fortran-ordered
+  into CSR format expected by `decision_function`. Similarly, Fortran-ordered
   arrays are converted to C-ordered arrays in the dense case. :issue:`9991` by
   :user:`Guillaume Lemaitre <glemaitre>`.
 
@@ -751,7 +751,7 @@ Support for Python 3.3 has been officially dropped.
   features that appear in later stages. This issue only affected feature
   importances. :issue:`11176` by :user:`Gil Forsyth <gforsyth>`.
 
-- |API| The default value of the ``n_estimators`` parameter of
+- |API| The default value of the `n_estimators` parameter of
   :class:`ensemble.RandomForestClassifier`, :class:`ensemble.RandomForestRegressor`,
   :class:`ensemble.ExtraTreesClassifier`, :class:`ensemble.ExtraTreesRegressor`,
   and :class:`ensemble.RandomTreesEmbedding` will change from 10 in version 0.20
@@ -759,14 +759,14 @@ Support for Python 3.3 has been officially dropped.
   :issue:`11542` by :user:`Anna Ayzenshtat <annaayzenshtat>`.
 
 - |API| Classes derived from :class:`ensemble.BaseBagging`. The attribute
-  ``estimators_samples_`` will return a list of arrays containing the indices
+  `estimators_samples_` will return a list of arrays containing the indices
   selected for each bootstrap instead of a list of arrays containing the mask
   of the samples selected for each bootstrap. Indices allows to repeat samples
   while mask does not allow this functionality.
   :issue:`9524` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Fix| :class:`ensemble.BaseBagging` where one could not deterministically
-  reproduce ``fit`` result using the object attributes when ``random_state``
+  reproduce `fit` result using the object attributes when `random_state`
   is set. :issue:`9723` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 
@@ -777,12 +777,12 @@ Support for Python 3.3 has been officially dropped.
   :class:`feature_extraction.text.CountVectorizer` initialized with a
   vocabulary. :issue:`10908` by :user:`Mohamed Maskani <maskani-moh>`.
 
-- |Enhancement| ``idf_`` can now be set on a
+- |Enhancement| `idf_` can now be set on a
   :class:`feature_extraction.text.TfidfTransformer`.
   :issue:`10899` by :user:`Sergey Melderis <serega>`.
 
 - |Fix| Fixed a bug in :func:`feature_extraction.image.extract_patches_2d` which
-  would throw an exception if ``max_patches`` was greater than or equal to the
+  would throw an exception if `max_patches` was greater than or equal to the
   number of all possible patches rather than simply returning the number of
   possible patches. :issue:`10101` by :user:`Varun Agrawal <varunagrawal>`
 
@@ -794,9 +794,9 @@ Support for Python 3.3 has been officially dropped.
   and `Roman Yurchak`_.
 
 - |Fix| Fixed bug in :class:`feature_extraction.text.TfidfVectorizer` which
-  was ignoring the parameter ``dtype``. In addition,
-  :class:`feature_extraction.text.TfidfTransformer` will preserve ``dtype``
-  for floating and raise a warning if ``dtype`` requested is integer.
+  was ignoring the parameter `dtype`. In addition,
+  :class:`feature_extraction.text.TfidfTransformer` will preserve `dtype`
+  for floating and raise a warning if `dtype` requested is integer.
   :issue:`10441` by :user:`Mayur Kulkarni <maykulkarni>` and
   :user:`Guillaume Lemaitre <glemaitre>`.
 
@@ -809,14 +809,14 @@ Support for Python 3.3 has been officially dropped.
   :issue:`6689` by :user:`Nihar Sheth <nsheth12>` and
   :user:`Quazi Rahman <qmaruf>`.
 
-- |Feature| Added ``min_features_to_select`` parameter to
+- |Feature| Added `min_features_to_select` parameter to
   :class:`feature_selection.RFECV` to bound evaluated features counts.
   :issue:`11293` by :user:`Brent Yi <brentyi>`.
 
 - |Feature| :class:`feature_selection.RFECV`'s fit method now supports
   :term:`groups`.  :issue:`9656` by :user:`Adam Greenhall <adamgreenhall>`.
 
-- |Fix| Fixed computation of ``n_features_to_compute`` for edge case with tied
+- |Fix| Fixed computation of `n_features_to_compute` for edge case with tied
   CV scores in :class:`feature_selection.RFECV`.
   :issue:`9222` by :user:`Nick Hoh <nickypie>`.
 
@@ -824,7 +824,7 @@ Support for Python 3.3 has been officially dropped.
 ...............................
 
 - |Efficiency| In :class:`gaussian_process.GaussianProcessRegressor`, method
-  ``predict`` is faster when using ``return_std=True`` in particular more when
+  `predict` is faster when using `return_std=True` in particular more when
   called several times in a row. :issue:`9234` by :user:`andrewww <andrewww>`
   and :user:`Minghui Liu <minghui-liu>`.
 
@@ -832,7 +832,7 @@ Support for Python 3.3 has been officially dropped.
 :mod:`sklearn.impute`
 .....................
 
-- New module, adopting ``preprocessing.Imputer`` as
+- New module, adopting `preprocessing.Imputer` as
   :class:`impute.SimpleImputer` with minor changes (see under preprocessing
   below).
 
@@ -841,9 +841,9 @@ Support for Python 3.3 has been officially dropped.
   <maniteja123>` and :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Feature| The :class:`impute.SimpleImputer` has a new strategy,
-  ``'constant'``, to complete missing values with a fixed one, given by the
-  ``fill_value`` parameter. This strategy supports numeric and non-numeric
-  data, and so does the ``'most_frequent'`` strategy now. :issue:`11211` by
+  `'constant'`, to complete missing values with a fixed one, given by the
+  `fill_value` parameter. This strategy supports numeric and non-numeric
+  data, and so does the `'most_frequent'` strategy now. :issue:`11211` by
   :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
 
@@ -863,11 +863,11 @@ Support for Python 3.3 has been officially dropped.
   :class:`linear_model.SGDRegressor`,
   :class:`linear_model.PassiveAggressiveClassifier`,
   :class:`linear_model.PassiveAggressiveRegressor` and
-  :class:`linear_model.Perceptron` now expose ``early_stopping``,
-  ``validation_fraction`` and ``n_iter_no_change`` parameters, to stop
+  :class:`linear_model.Perceptron` now expose `early_stopping`,
+  `validation_fraction` and `n_iter_no_change` parameters, to stop
   optimization monitoring the score on a validation set. A new learning rate
-  ``"adaptive"`` strategy divides the learning rate by 5 each time
-  ``n_iter_no_change`` consecutive epochs fail to improve the model.
+  `"adaptive"` strategy divides the learning rate by 5 each time
+  `n_iter_no_change` consecutive epochs fail to improve the model.
   :issue:`9043` by `Tom Dupre la Tour`_.
 
 - |Feature| Add `sample_weight` parameter to the fit method of
@@ -875,28 +875,28 @@ Support for Python 3.3 has been officially dropped.
   :issue:`10112` by :user:`Peter St. John <pstjohn>`.
 
 - |Fix| Fixed a bug in :func:`logistic.logistic_regression_path` to ensure
-  that the returned coefficients are correct when ``multiclass='multinomial'``.
+  that the returned coefficients are correct when `multiclass='multinomial'`.
   Previously, some of the coefficients would override each other, leading to
   incorrect results in :class:`linear_model.LogisticRegressionCV`.
   :issue:`11724` by :user:`Nicolas Hug <NicolasHug>`.
 
 - |Fix| Fixed a bug in :class:`linear_model.LogisticRegression` where when using
-  the parameter ``multi_class='multinomial'``, the ``predict_proba`` method was
+  the parameter `multi_class='multinomial'`, the `predict_proba` method was
   returning incorrect probabilities in the case of binary outcomes.
   :issue:`9939` by :user:`Roger Westover <rwolst>`.
 
 - |Fix| Fixed a bug in :class:`linear_model.LogisticRegressionCV` where the
-  ``score`` method always computes accuracy, not the metric given by
-  the ``scoring`` parameter.
+  `score` method always computes accuracy, not the metric given by
+  the `scoring` parameter.
   :issue:`10998` by :user:`Thomas Fan <thomasjpfan>`.
 
 - |Fix| Fixed a bug in :class:`linear_model.LogisticRegressionCV` where the
   'ovr' strategy was always used to compute cross-validation scores in the
-  multiclass setting, even if ``'multinomial'`` was set.
+  multiclass setting, even if `'multinomial'` was set.
   :issue:`8720` by :user:`William de Vazelhes <wdevazelhes>`.
 
 - |Fix| Fixed a bug in :class:`linear_model.OrthogonalMatchingPursuit` that was
-  broken when setting ``normalize=False``.
+  broken when setting `normalize=False`.
   :issue:`10071` by `Alexandre Gramfort`_.
 
 - |Fix| Fixed a bug in :class:`linear_model.ARDRegression` which caused
@@ -909,25 +909,25 @@ Support for Python 3.3 has been officially dropped.
   :issue:`10095` by :user:`Jörg Döpfert <jdoepfert>`.
 
 - |Fix| Fixed a bug in :class:`linear_model.RidgeClassifierCV` where
-  the parameter ``store_cv_values`` was not implemented though
-  it was documented in ``cv_values`` as a way to set up the storage
+  the parameter `store_cv_values` was not implemented though
+  it was documented in `cv_values` as a way to set up the storage
   of cross-validation values for different alphas. :issue:`10297` by
   :user:`Mabel Villalba-Jiménez <mabelvj>`.
 
 - |Fix| Fixed a bug in :class:`linear_model.ElasticNet` which caused the input
-  to be overridden when using parameter ``copy_X=True`` and
-  ``check_input=False``. :issue:`10581` by :user:`Yacine Mazari <ymazari>`.
+  to be overridden when using parameter `copy_X=True` and
+  `check_input=False`. :issue:`10581` by :user:`Yacine Mazari <ymazari>`.
 
 - |Fix| Fixed a bug in :class:`sklearn.linear_model.Lasso`
-  where the coefficient had wrong shape when ``fit_intercept=False``.
+  where the coefficient had wrong shape when `fit_intercept=False`.
   :issue:`10687` by :user:`Martin Hahn <martin-hahn>`.
 
 - |Fix| Fixed a bug in :func:`sklearn.linear_model.LogisticRegression` where the
-  ``multi_class='multinomial'`` with binary output ``with warm_start=True``
+  `multi_class='multinomial'` with binary output `with warm_start=True`
   :issue:`10836` by :user:`Aishwarya Srinivasan <aishgrt1>`.
 
 - |Fix| Fixed a bug in :class:`linear_model.RidgeCV` where using integer
-  ``alphas`` raised an error.
+  `alphas` raised an error.
   :issue:`10397` by :user:`Mabel Villalba-Jiménez <mabelvj>`.
 
 - |Fix| Fixed condition triggering gap computation in
@@ -939,7 +939,7 @@ Support for Python 3.3 has been officially dropped.
   :class:`linear_model.PassiveAggressiveClassifier`,
   :class:`linear_model.PassiveAggressiveRegressor` and
   :class:`linear_model.Perceptron`, where the stopping criterion was stopping
-  the algorithm before convergence. A parameter ``n_iter_no_change`` was added
+  the algorithm before convergence. A parameter `n_iter_no_change` was added
   and set by default to 5. Previous behavior is equivalent to setting the
   parameter to 1. :issue:`9043` by `Tom Dupre la Tour`_.
 
@@ -948,21 +948,21 @@ Support for Python 3.3 has been officially dropped.
   ValueError.
   :issue:`11327` by :user:`Karan Dhingra <kdhingra307>` and `Joel Nothman`_.
 
-- |API| The default values of the ``solver`` and ``multi_class`` parameters of
+- |API| The default values of the `solver` and `multi_class` parameters of
   :class:`linear_model.LogisticRegression` will change respectively from
-  ``'liblinear'`` and ``'ovr'`` in version 0.20 to ``'lbfgs'`` and
-  ``'auto'`` in version 0.22. A FutureWarning is raised when the default
+  `'liblinear'` and `'ovr'` in version 0.20 to `'lbfgs'` and
+  `'auto'` in version 0.22. A FutureWarning is raised when the default
   values are used. :issue:`11905` by `Tom Dupre la Tour`_ and `Joel Nothman`_.
 
-- |API| Deprecate ``positive=True`` option in :class:`linear_model.Lars` as
+- |API| Deprecate `positive=True` option in :class:`linear_model.Lars` as
   the underlying implementation is broken. Use :class:`linear_model.Lasso`
   instead. :issue:`9837` by `Alexandre Gramfort`_.
 
-- |API| ``n_iter_`` may vary from previous releases in
-  :class:`linear_model.LogisticRegression` with ``solver='lbfgs'`` and
+- |API| `n_iter_` may vary from previous releases in
+  :class:`linear_model.LogisticRegression` with `solver='lbfgs'` and
   :class:`linear_model.HuberRegressor`. For Scipy <= 1.0.0, the optimizer could
   perform more than the requested maximum number of iterations. Now both
-  estimators will report at most ``max_iter`` iterations even if more were
+  estimators will report at most `max_iter` iterations even if more were
   performed. :issue:`10723` by `Joel Nothman`_.
 
 
@@ -985,17 +985,17 @@ Support for Python 3.3 has been officially dropped.
   :user:`Guillaume Lemaitre <glemaitre>`, and :user:`Devansh D.
   <devanshdalal>`.
 
-- |API| |Feature| Deprecate ``precomputed`` parameter in function
-  :func:`manifold.t_sne.trustworthiness`. Instead, the new parameter ``metric``
+- |API| |Feature| Deprecate `precomputed` parameter in function
+  :func:`manifold.t_sne.trustworthiness`. Instead, the new parameter `metric`
   should be used with any compatible metric including 'precomputed', in which
-  case the input matrix ``X`` should be a matrix of pairwise distances or
+  case the input matrix `X` should be a matrix of pairwise distances or
   squared distances. :issue:`9775` by :user:`William de Vazelhes
   <wdevazelhes>`.
 
-- |API| Deprecate ``precomputed`` parameter in function
+- |API| Deprecate `precomputed` parameter in function
   :func:`manifold.t_sne.trustworthiness`. Instead, the new parameter
-  ``metric`` should be used with any compatible metric including
-  'precomputed', in which case the input matrix ``X`` should be a matrix of
+  `metric` should be used with any compatible metric including
+  'precomputed', in which case the input matrix `X` should be a matrix of
   pairwise distances or squared distances. :issue:`9775` by
   :user:`William de Vazelhes <wdevazelhes>`.
 
@@ -1008,11 +1008,11 @@ Support for Python 3.3 has been officially dropped.
   :user:`Luis Osa <logc>`.
 
 - |MajorFeature| Added the :func:`metrics.balanced_accuracy_score` metric and
-  a corresponding ``'balanced_accuracy'`` scorer for binary and multiclass
+  a corresponding `'balanced_accuracy'` scorer for binary and multiclass
   classification. :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia
   <dalmia>`, and :issue:`10587` by `Joel Nothman`_.
 
-- |Feature| Partial AUC is available via ``max_fpr`` parameter in
+- |Feature| Partial AUC is available via `max_fpr` parameter in
   :func:`metrics.roc_auc_score`. :issue:`3840` by
   :user:`Alexander Niederbühl <Alexander-N>`.
 
@@ -1021,12 +1021,12 @@ Support for Python 3.3 has been officially dropped.
 
 - |Feature| Added control over the normalization in
   :func:`metrics.normalized_mutual_info_score` and
-  :func:`metrics.adjusted_mutual_info_score` via the ``average_method``
+  :func:`metrics.adjusted_mutual_info_score` via the `average_method`
   parameter. In version 0.22, the default normalizer for each will become
   the *arithmetic* mean of the entropies of each clustering. :issue:`11124` by
   :user:`Arya McCarthy <aryamccarthy>`.
 
-- |Feature| Added ``output_dict`` parameter in :func:`metrics.classification_report`
+- |Feature| Added `output_dict` parameter in :func:`metrics.classification_report`
   to return classification statistics as dictionary.
   :issue:`11160` by :user:`Dan Barkhorn <danielbarkhorn>`.
 
@@ -1035,14 +1035,14 @@ Support for Python 3.3 has been officially dropped.
   average for multilabel data. :issue:`11679` by :user:`Alexander Pacha <apacha>`.
 
 - |Feature| :func:`metrics.average_precision_score` now supports binary
-  ``y_true`` other than ``{0, 1}`` or ``{-1, 1}`` through ``pos_label``
+  `y_true` other than `{0, 1}` or `{-1, 1}` through `pos_label`
   parameter. :issue:`9980` by :user:`Hanmin Qin <qinhanmin2014>`.
 
 - |Feature| :func:`metrics.label_ranking_average_precision_score` now supports
-  ``sample_weight``.
+  `sample_weight`.
   :issue:`10845` by :user:`Jose Perez-Parras Toledano <jopepato>`.
 
-- |Feature| Add ``dense_output`` parameter to :func:`metrics.pairwise.linear_kernel`.
+- |Feature| Add `dense_output` parameter to :func:`metrics.pairwise.linear_kernel`.
   When False and both inputs are sparse, will return a sparse matrix.
   :issue:`10999` by :user:`Taylor G Smith <tgsmith61591>`.
 
@@ -1070,7 +1070,7 @@ Support for Python 3.3 has been officially dropped.
   :issue:`9772` by :user:`Kumar Ashutosh <thechargedneutron>`.
 
 - |Fix| Fixed a bug where :func:`metrics.average_precision_score` will sometimes return
-  ``nan`` when ``sample_weight`` contains 0.
+  `nan` when `sample_weight` contains 0.
   :issue:`9980` by :user:`Hanmin Qin <qinhanmin2014>`.
 
 - |Fix| Fixed a bug in :func:`metrics.fowlkes_mallows_score` to avoid integer
@@ -1079,26 +1079,26 @@ Support for Python 3.3 has been officially dropped.
   :issue:`9515` by :user:`Alan Liddell <aliddell>` and
   :user:`Manh Dao <manhdao>`.
 
-- |API| Deprecate ``reorder`` parameter in :func:`metrics.auc` as it's no
+- |API| Deprecate `reorder` parameter in :func:`metrics.auc` as it's no
   longer required for :func:`metrics.roc_auc_score`. Moreover using
-  ``reorder=True`` can hide bugs due to floating point error in the input.
+  `reorder=True` can hide bugs due to floating point error in the input.
   :issue:`9851` by :user:`Hanmin Qin <qinhanmin2014>`.
 
 - |API| In :func:`metrics.normalized_mutual_info_score` and
   :func:`metrics.adjusted_mutual_info_score`, warn that
-  ``average_method`` will have a new default value. In version 0.22, the
+  `average_method` will have a new default value. In version 0.22, the
   default normalizer for each will become the *arithmetic* mean of the
   entropies of each clustering. Currently,
   :func:`metrics.normalized_mutual_info_score` uses the default of
-  ``average_method='geometric'``, and
+  `average_method='geometric'`, and
   :func:`metrics.adjusted_mutual_info_score` uses the default of
-  ``average_method='max'`` to match their behaviors in version 0.19.
+  `average_method='max'` to match their behaviors in version 0.19.
   :issue:`11124` by :user:`Arya McCarthy <aryamccarthy>`.
 
-- |API| The ``batch_size`` parameter to :func:`metrics.pairwise_distances_argmin_min`
+- |API| The `batch_size` parameter to :func:`metrics.pairwise_distances_argmin_min`
   and :func:`metrics.pairwise_distances_argmin` is deprecated to be removed in
   v0.22. It no longer has any effect, as batch size is determined by global
-  ``working_memory`` config. See :ref:`working_memory`. :issue:`10280` by `Joel
+  `working_memory` config. See :ref:`working_memory`. :issue:`10280` by `Joel
   Nothman`_ and :user:`Aman Dalmia <dalmia>`.
 
 
@@ -1117,8 +1117,8 @@ Support for Python 3.3 has been officially dropped.
 
 - |Fix| Fixed a bug in :class:`mixture.BaseMixture` and its subclasses
   :class:`mixture.GaussianMixture` and :class:`mixture.BayesianGaussianMixture`
-  where the ``lower_bound_`` was not the max lower bound across all
-  initializations (when ``n_init > 1``), but just the lower bound of the last
+  where the `lower_bound_` was not the max lower bound across all
+  initializations (when `n_init > 1`), but just the lower bound of the last
   initialization. :issue:`10869` by :user:`Aurélien Géron <ageron>`.
 
 
@@ -1129,9 +1129,9 @@ Support for Python 3.3 has been officially dropped.
   :func:`model_selection.cross_validate` to return estimators fitted on each
   split. :issue:`9686` by :user:`Aurélien Bellet <bellet>`.
 
-- |Feature| New ``refit_time_`` attribute will be stored in
+- |Feature| New `refit_time_` attribute will be stored in
   :class:`model_selection.GridSearchCV` and
-  :class:`model_selection.RandomizedSearchCV` if ``refit`` is set to ``True``.
+  :class:`model_selection.RandomizedSearchCV` if `refit` is set to `True`.
   This will allow measuring the complete time it takes to perform
   hyperparameter optimization and refitting the best model on the whole
   dataset. :issue:`11310` by :user:`Matthias Feurer <mfeurer>`.
@@ -1145,7 +1145,7 @@ Support for Python 3.3 has been officially dropped.
   :issue:`11576` by :user:`Samuel O. Ronsin <samronsin>`.
 
 - |Feature| `BaseSearchCV` now has an experimental, private interface to
-  support customized parameter search strategies, through its ``_run_search``
+  support customized parameter search strategies, through its `_run_search`
   method. See the implementations in :class:`model_selection.GridSearchCV` and
   :class:`model_selection.RandomizedSearchCV` and please provide feedback if
   you use this. Note that we do not assure the stability of this API beyond
@@ -1153,31 +1153,31 @@ Support for Python 3.3 has been officially dropped.
 
 - |Enhancement| Add improved error message in
   :func:`model_selection.cross_val_score` when multiple metrics are passed in
-  ``scoring`` keyword. :issue:`11006` by :user:`Ming Li <minggli>`.
+  `scoring` keyword. :issue:`11006` by :user:`Ming Li <minggli>`.
 
-- |API| The default number of cross-validation folds ``cv`` and the default
-  number of splits ``n_splits`` in the :class:`model_selection.KFold`-like
+- |API| The default number of cross-validation folds `cv` and the default
+  number of splits `n_splits` in the :class:`model_selection.KFold`-like
   splitters will change from 3 to 5 in 0.22 as 3-fold has a lot of variance.
   :issue:`11557` by :user:`Alexandre Boucaud <aboucaud>`.
 
-- |API| The default of ``iid`` parameter of :class:`model_selection.GridSearchCV`
-  and :class:`model_selection.RandomizedSearchCV` will change from ``True`` to
-  ``False`` in version 0.22 to correspond to the standard definition of
+- |API| The default of `iid` parameter of :class:`model_selection.GridSearchCV`
+  and :class:`model_selection.RandomizedSearchCV` will change from `True` to
+  `False` in version 0.22 to correspond to the standard definition of
   cross-validation, and the parameter will be removed in version 0.24
   altogether. This parameter is of greatest practical significance where the
   sizes of different test sets in cross-validation were very unequal, i.e. in
   group-based CV strategies. :issue:`9085` by :user:`Laurent Direr <ldirer>`
   and `Andreas Müller`_.
 
-- |API| The default value of the ``error_score`` parameter in
+- |API| The default value of the `error_score` parameter in
   :class:`model_selection.GridSearchCV` and
-  :class:`model_selection.RandomizedSearchCV` will change to ``np.NaN`` in
+  :class:`model_selection.RandomizedSearchCV` will change to `np.NaN` in
   version 0.22. :issue:`10677` by :user:`Kirill Zhdanovich <Zhdanovich>`.
 
 - |API| Changed ValueError exception raised in
   :class:`model_selection.ParameterSampler` to a UserWarning for case where the
-  class is instantiated with a greater value of ``n_iter`` than the total space
-  of parameters in the parameter grid. ``n_iter`` now acts as an upper bound on
+  class is instantiated with a greater value of `n_iter` than the total space
+  of parameters in the parameter grid. `n_iter` now acts as an upper bound on
   iterations. :issue:`10982` by :user:`Juliet Lawton <julietcl>`
 
 - |API| Invalid input for :class:`model_selection.ParameterGrid` now
@@ -1217,25 +1217,25 @@ Support for Python 3.3 has been officially dropped.
 
 - |Efficiency| :class:`neighbors.RadiusNeighborsRegressor` and
   :class:`neighbors.RadiusNeighborsClassifier` are now
-  parallelized according to ``n_jobs`` regardless of ``algorithm``.
+  parallelized according to `n_jobs` regardless of `algorithm`.
   :issue:`10887` by :user:`Joël Billaud <recamshak>`.
 
 - |Efficiency| :mod:`Nearest neighbors <neighbors>` query methods are now more
-  memory efficient when ``algorithm='brute'``.
+  memory efficient when `algorithm='brute'`.
   :issue:`11136` by `Joel Nothman`_ and :user:`Aman Dalmia <dalmia>`.
 
-- |Feature| Add ``sample_weight`` parameter to the fit method of
+- |Feature| Add `sample_weight` parameter to the fit method of
   :class:`neighbors.KernelDensity` to enable weighting in kernel density
   estimation.
   :issue:`4394` by :user:`Samuel O. Ronsin <samronsin>`.
 
 - |Feature| Novelty detection with :class:`neighbors.LocalOutlierFactor`:
-  Add a ``novelty`` parameter to :class:`neighbors.LocalOutlierFactor`. When
-  ``novelty`` is set to True, :class:`neighbors.LocalOutlierFactor` can then
+  Add a `novelty` parameter to :class:`neighbors.LocalOutlierFactor`. When
+  `novelty` is set to True, :class:`neighbors.LocalOutlierFactor` can then
   be used for novelty detection, i.e. predict on new unseen data. Available
-  prediction methods are ``predict``, ``decision_function`` and
-  ``score_samples``. By default, ``novelty`` is set to ``False``, and only
-  the ``fit_predict`` method is avaiable.
+  prediction methods are `predict`, `decision_function` and
+  `score_samples`. By default, `novelty` is set to `False`, and only
+  the `fit_predict` method is avaiable.
   By :user:`Albert Thomas <albertcthomas>`.
 
 - |Fix| Fixed a bug in :class:`neighbors.NearestNeighbors` where fitting a
@@ -1243,13 +1243,13 @@ Support for Python 3.3 has been officially dropped.
   callable and b) the input to the NearestNeighbors model is sparse.
   :issue:`9579` by :user:`Thomas Kober <tttthomasssss>`.
 
-- |Fix| Fixed a bug so ``predict`` in
+- |Fix| Fixed a bug so `predict` in
   :class:`neighbors.RadiusNeighborsRegressor` can handle empty neighbor set
   when using non uniform weights. Also raises a new warning when no neighbors
   are found for samples. :issue:`9655` by :user:`Andreas Bjerre-Nielsen
   <abjer>`.
 
-- |Fix| |Efficiency| Fixed a bug in ``KDTree`` construction that results in
+- |Fix| |Efficiency| Fixed a bug in `KDTree` construction that results in
   faster construction and querying times.
   :issue:`11556` by :user:`Jake VanderPlas <jakevdp>`
 
@@ -1265,12 +1265,12 @@ Support for Python 3.3 has been officially dropped.
   :class:`neural_network.BaseMultilayerPerceptron`,
   :class:`neural_network.MLPRegressor`, and
   :class:`neural_network.MLPClassifier` to give control over
-  maximum number of epochs to not meet ``tol`` improvement.
+  maximum number of epochs to not meet `tol` improvement.
   :issue:`9456` by :user:`Nicholas Nadeau <nnadeau>`.
 
 - |Fix| Fixed a bug in :class:`neural_network.BaseMultilayerPerceptron`,
   :class:`neural_network.MLPRegressor`, and
-  :class:`neural_network.MLPClassifier` with new ``n_iter_no_change``
+  :class:`neural_network.MLPClassifier` with new `n_iter_no_change`
   parameter now at 10 from previously hardcoded 2.
   :issue:`9456` by :user:`Nicholas Nadeau <nnadeau>`.
 
@@ -1282,12 +1282,12 @@ Support for Python 3.3 has been officially dropped.
 :mod:`sklearn.pipeline`
 .......................
 
-- |Feature| The ``predict`` method of :class:`pipeline.Pipeline` now passes
+- |Feature| The `predict` method of :class:`pipeline.Pipeline` now passes
   keyword arguments on to the pipeline's last estimator, enabling the use of
-  parameters such as ``return_std`` in a pipeline with caution.
+  parameters such as `return_std` in a pipeline with caution.
   :issue:`9304` by :user:`Breno Freitas <brenolf>`.
 
-- |API| :class:`pipeline.FeatureUnion` now supports ``'drop'`` as a transformer
+- |API| :class:`pipeline.FeatureUnion` now supports `'drop'` as a transformer
   to drop features. :issue:`11144` by :user:`Thomas Fan <thomasjpfan>`.
 
 
@@ -1351,42 +1351,42 @@ Support for Python 3.3 has been officially dropped.
   :issue:`10181` by :user:`Nirvan Anjirbag <Nirvan101>` and
   `Joris Van den Bossche`_.
 
-- |Feature| A parameter ``check_inverse`` was added to
-  :class:`preprocessing.FunctionTransformer` to ensure that ``func`` and
-  ``inverse_func`` are the inverse of each other.
+- |Feature| A parameter `check_inverse` was added to
+  :class:`preprocessing.FunctionTransformer` to ensure that `func` and
+  `inverse_func` are the inverse of each other.
   :issue:`9399` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Feature| The ``transform`` method of :class:`sklearn.preprocessing.MultiLabelBinarizer`
+- |Feature| The `transform` method of :class:`sklearn.preprocessing.MultiLabelBinarizer`
   now ignores any unknown classes. A warning is raised stating the unknown classes
   classes found which are ignored.
   :issue:`10913` by :user:`Rodrigo Agundez <rragundez>`.
 
 - |Fix| Fixed bugs in :class:`preprocessing.LabelEncoder` which would
-  sometimes throw errors when ``transform`` or ``inverse_transform`` was called
+  sometimes throw errors when `transform` or `inverse_transform` was called
   with empty arrays. :issue:`10458` by :user:`Mayur Kulkarni <maykulkarni>`.
 
 - |Fix| Fix ValueError in :class:`preprocessing.LabelEncoder` when using
-  ``inverse_transform`` on unseen labels. :issue:`9816` by :user:`Charlie Newey
+  `inverse_transform` on unseen labels. :issue:`9816` by :user:`Charlie Newey
   <newey01c>`.
 
 - |Fix| Fix bug in :class:`preprocessing.OneHotEncoder` which discarded the
-  ``dtype`` when returning a sparse matrix output.
+  `dtype` when returning a sparse matrix output.
   :issue:`11042` by :user:`Daniel Morales <DanielMorales9>`.
 
-- |Fix| Fix ``fit`` and ``partial_fit`` in
-  :class:`preprocessing.StandardScaler` in the rare case when ``with_mean=False``
-  and `with_std=False` which was crashing by calling ``fit`` more than once and
-  giving inconsistent results for ``mean_`` whether the input was a sparse or a
-  dense matrix. ``mean_`` will be set to ``None`` with both sparse and dense
-  inputs. ``n_samples_seen_`` will be also reported for both input types.
+- |Fix| Fix `fit` and `partial_fit` in
+  :class:`preprocessing.StandardScaler` in the rare case when `with_mean=False`
+  and `with_std=False` which was crashing by calling `fit` more than once and
+  giving inconsistent results for `mean_` whether the input was a sparse or a
+  dense matrix. `mean_` will be set to `None` with both sparse and dense
+  inputs. `n_samples_seen_` will be also reported for both input types.
   :issue:`11235` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |API| Deprecate ``n_values`` and ``categorical_features`` parameters and
-  ``active_features_``, ``feature_indices_`` and ``n_values_`` attributes
-  of :class:`preprocessing.OneHotEncoder`. The ``n_values`` parameter can be
-  replaced with the new ``categories`` parameter, and the attributes with the
-  new ``categories_`` attribute. Selecting the categorical features with
-  the ``categorical_features`` parameter is now better supported using the
+- |API| Deprecate `n_values` and `categorical_features` parameters and
+  `active_features_`, `feature_indices_` and `n_values_` attributes
+  of :class:`preprocessing.OneHotEncoder`. The `n_values` parameter can be
+  replaced with the new `categories` parameter, and the attributes with the
+  new `categories_` attribute. Selecting the categorical features with
+  the `categorical_features` parameter is now better supported using the
   :class:`compose.ColumnTransformer`.
   :issue:`10521` by `Joris Van den Bossche`_.
 
@@ -1395,43 +1395,43 @@ Support for Python 3.3 has been officially dropped.
   :issue:`9726` by :user:`Kumar Ashutosh
   <thechargedneutron>`.
 
-- |API| The ``axis`` parameter that was in
+- |API| The `axis` parameter that was in
   :class:`preprocessing.Imputer` is no longer present in
   :class:`impute.SimpleImputer`. The behavior is equivalent
-  to ``axis=0`` (impute along columns). Row-wise
+  to `axis=0` (impute along columns). Row-wise
   imputation can be performed with FunctionTransformer
-  (e.g., ``FunctionTransformer(lambda X:
-  SimpleImputer().fit_transform(X.T).T)``). :issue:`10829`
+  (e.g., `FunctionTransformer(lambda X:
+  SimpleImputer().fit_transform(X.T).T)`). :issue:`10829`
   by :user:`Guillaume Lemaitre <glemaitre>` and
   :user:`Gilberto Olimpio <gilbertoolimpio>`.
 
 - |API| The NaN marker for the missing values has been changed
   between the :class:`preprocessing.Imputer` and the
   :class:`impute.SimpleImputer`.
-  ``missing_values='NaN'`` should now be
-  ``missing_values=np.nan``. :issue:`11211` by
+  `missing_values='NaN'` should now be
+  `missing_values=np.nan`. :issue:`11211` by
   :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
 - |API| In :class:`preprocessing.FunctionTransformer`, the default of
-  ``validate`` will be from ``True`` to ``False`` in 0.22.
+  `validate` will be from `True` to `False` in 0.22.
   :issue:`10655` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 
 :mod:`sklearn.svm`
 ..................
 
-- |Fix| Fixed a bug in :class:`svm.SVC` where when the argument ``kernel`` is
-  unicode in Python2, the ``predict_proba`` method was raising an
+- |Fix| Fixed a bug in :class:`svm.SVC` where when the argument `kernel` is
+  unicode in Python2, the `predict_proba` method was raising an
   unexpected TypeError given dense inputs.
   :issue:`10412` by :user:`Jiongyan Zhang <qmick>`.
 
-- |API| Deprecate ``random_state`` parameter in :class:`svm.OneClassSVM` as
+- |API| Deprecate `random_state` parameter in :class:`svm.OneClassSVM` as
   the underlying implementation is not random.
   :issue:`9497` by :user:`Albert Thomas <albertcthomas>`.
 
-- |API| The default value of ``gamma`` parameter of :class:`svm.SVC`,
+- |API| The default value of `gamma` parameter of :class:`svm.SVC`,
   :class:`~svm.NuSVC`, :class:`~svm.SVR`, :class:`~svm.NuSVR`,
-  :class:`~svm.OneClassSVM` will change from ``'auto'`` to ``'scale'`` in
+  :class:`~svm.OneClassSVM` will change from `'auto'` to `'scale'` in
   version 0.22 to account better for unscaled features. :issue:`8361` by
   :user:`Gaurav Dhingra <gxyd>` and :user:`Ting Neo <neokt>`.
 
@@ -1459,15 +1459,15 @@ Support for Python 3.3 has been officially dropped.
 ....................
 
 - |Feature| :func:`utils.check_array` and :func:`utils.check_X_y` now have
-  ``accept_large_sparse`` to control whether scipy.sparse matrices with 64-bit
+  `accept_large_sparse` to control whether scipy.sparse matrices with 64-bit
   indices should be rejected.
   :issue:`11327` by :user:`Karan Dhingra <kdhingra307>` and `Joel Nothman`_.
 
 - |Efficiency| |Fix| Avoid copying the data in :func:`utils.check_array` when
-  the input data is a memmap (and ``copy=False``). :issue:`10663` by
+  the input data is a memmap (and `copy=False`). :issue:`10663` by
   :user:`Arthur Mensch <arthurmensch>` and :user:`Loïc Estève <lesteve>`.
 
-- |API| :func:`utils.check_array` yield a ``FutureWarning`` indicating
+- |API| :func:`utils.check_array` yield a `FutureWarning` indicating
   that arrays of bytes/strings will be interpreted as decimal numbers
   beginning in version 0.22. :issue:`10229` by :user:`Ryan Lee <rtlee9>`
 
@@ -1476,34 +1476,34 @@ Multiple modules
 ................
 
 - |Feature| |API| More consistent outlier detection API:
-  Add a ``score_samples`` method in :class:`svm.OneClassSVM`,
+  Add a `score_samples` method in :class:`svm.OneClassSVM`,
   :class:`ensemble.IsolationForest`, :class:`neighbors.LocalOutlierFactor`,
   :class:`covariance.EllipticEnvelope`. It allows to access raw score
-  functions from original papers. A new ``offset_`` parameter allows to link
-  ``score_samples`` and ``decision_function`` methods.
-  The ``contamination`` parameter of :class:`ensemble.IsolationForest` and
-  :class:`neighbors.LocalOutlierFactor` ``decision_function`` methods is used
-  to define this ``offset_`` such that outliers (resp. inliers) have negative (resp.
-  positive) ``decision_function`` values. By default, ``contamination`` is
+  functions from original papers. A new `offset_` parameter allows to link
+  `score_samples` and `decision_function` methods.
+  The `contamination` parameter of :class:`ensemble.IsolationForest` and
+  :class:`neighbors.LocalOutlierFactor` `decision_function` methods is used
+  to define this `offset_` such that outliers (resp. inliers) have negative (resp.
+  positive) `decision_function` values. By default, `contamination` is
   kept unchanged to 0.1 for a deprecation period. In 0.22, it will be set to "auto",
   thus using method-specific score offsets.
-  In :class:`covariance.EllipticEnvelope` ``decision_function`` method, the
-  ``raw_values`` parameter is deprecated as the shifted Mahalanobis distance
+  In :class:`covariance.EllipticEnvelope` `decision_function` method, the
+  `raw_values` parameter is deprecated as the shifted Mahalanobis distance
   will be always returned in 0.22. :issue:`9015` by `Nicolas Goix`_.
 
-- |Feature| |API| A ``behaviour`` parameter has been introduced in :class:`ensemble.IsolationForest`
+- |Feature| |API| A `behaviour` parameter has been introduced in :class:`ensemble.IsolationForest`
   to ensure backward compatibility.
-  In the old behaviour, the ``decision_function`` is independent of the ``contamination``
-  parameter. A threshold attribute depending on the ``contamination`` parameter is thus
+  In the old behaviour, the `decision_function` is independent of the `contamination`
+  parameter. A threshold attribute depending on the `contamination` parameter is thus
   used.
-  In the new behaviour the ``decision_function`` is dependent on the ``contamination``
+  In the new behaviour the `decision_function` is dependent on the `contamination`
   parameter, in such a way that 0 becomes its natural threshold to detect outliers.
   Setting behaviour to "old" is deprecated and will not be possible in version 0.22.
   Beside, the behaviour parameter will be removed in 0.24.
   :issue:`11553` by `Nicolas Goix`_.
 
 - |API| Added convergence warning to :class:`svm.LinearSVC` and
-  :class:`linear_model.LogisticRegression` when ``verbose`` is set to 0.
+  :class:`linear_model.LogisticRegression` when `verbose` is set to 0.
   :issue:`10881` by :user:`Alexandre Sevin <AlexandreSev>`.
 
 - |API| Changed warning type from :class:`UserWarning` to
@@ -1520,7 +1520,7 @@ Multiple modules
 Miscellaneous
 .............
 
-- |MajorFeature| A new configuration parameter, ``working_memory`` was added
+- |MajorFeature| A new configuration parameter, `working_memory` was added
   to control memory consumption limits in chunked operations, such as the new
   :func:`metrics.pairwise_distances_chunked`. See :ref:`working_memory`.
   :issue:`10280` by `Joel Nothman`_ and :user:`Aman Dalmia <dalmia>`.
@@ -1558,10 +1558,10 @@ Miscellaneous
   safe and could result in a "pop from empty list" error. :issue:`9569`
   by `Andreas Müller`_.
 
-- |API| The default value of ``n_jobs`` is changed from ``1`` to ``None`` in
-  all related functions and classes. ``n_jobs=None`` means ``unset``. It will
-  generally be interpreted as ``n_jobs=1``, unless the current
-  ``joblib.Parallel`` backend context specifies otherwise (See
+- |API| The default value of `n_jobs` is changed from `1` to `None` in
+  all related functions and classes. `n_jobs=None` means `unset`. It will
+  generally be interpreted as `n_jobs=1`, unless the current
+  `joblib.Parallel` backend context specifies otherwise (See
   :term:`Glossary <n_jobs>` for additional information). Note that this change
   happens immediately (i.e., without a deprecation cycle).
   :issue:`11741` by `Olivier Grisel`_.
@@ -1591,14 +1591,14 @@ These changes mostly affect library developers.
   :issue:`9378` by :user:`Herilalaina Rakotoarison <herilalaina>`
 
 - The set of checks in :func:`utils.estimator_checks.check_estimator` now includes a
-  ``check_set_params`` test which checks that ``set_params`` is equivalent to
-  passing parameters in ``__init__`` and warns if it encounters parameter
+  `check_set_params` test which checks that `set_params` is equivalent to
+  passing parameters in `__init__` and warns if it encounters parameter
   validation. :issue:`7738` by :user:`Alvin Chiang <absolutelyNoWarranty>`
 
 - Add invariance tests for clustering metrics. :issue:`8102` by :user:`Ankita
   Sinha <anki08>` and :user:`Guillaume Lemaitre <glemaitre>`.
 
-- Add ``check_methods_subset_invariance`` to
+- Add `check_methods_subset_invariance` to
   :func:`~utils.estimator_checks.check_estimator`, which checks that
   estimator methods are invariant if applied to a data subset.
   :issue:`10428` by :user:`Jonathan Ohayon <Johayon>`
@@ -1607,12 +1607,12 @@ These changes mostly affect library developers.
   estimator can handle read-only memmap input data. :issue:`10663` by
   :user:`Arthur Mensch <arthurmensch>` and :user:`Loïc Estève <lesteve>`.
 
-- ``check_sample_weights_pandas_series`` now uses 8 rather than 6 samples
+- `check_sample_weights_pandas_series` now uses 8 rather than 6 samples
   to accommodate for the default number of clusters in :class:`cluster.KMeans`.
   :issue:`10933` by :user:`Johannes Hansen <jnhansen>`.
 
-- Estimators are now checked for whether ``sample_weight=None`` equates to
-  ``sample_weight=np.ones(...)``.
+- Estimators are now checked for whether `sample_weight=None` equates to
+  `sample_weight=np.ones(...)`.
   :issue:`11558` by :user:`Sergul Aydore <sergulaydore>`.
 
 

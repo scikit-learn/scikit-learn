@@ -252,8 +252,8 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
 
     n_jobs : int or None, optional (default=None)
         Number of parallel jobs to run.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     check_input : boolean, optional
@@ -466,8 +466,8 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
 
     n_jobs : int or None, optional (default=None)
         Number of parallel jobs to run.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     dict_init : array of shape (n_components, n_features),
@@ -674,8 +674,8 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
 
     n_jobs : int or None, optional (default=None)
         Number of parallel jobs to run.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     method : {'lars', 'cd'}
@@ -961,9 +961,9 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
         the estimated components are sparse.
         omp: uses orthogonal matching pursuit to estimate the sparse solution
         threshold: squashes to zero all coefficients less than alpha from
-        the projection ``dictionary * X'``
+        the projection `dictionary * X'`
 
-    transform_n_nonzero_coefs : int, ``0.1 * n_features`` by default
+    transform_n_nonzero_coefs : int, `0.1 * n_features` by default
         Number of nonzero coefficients to target in each column of the
         solution. This is only used by `algorithm='lars'` and `algorithm='omp'`
         and is overridden by `alpha` in the `omp` case.
@@ -984,8 +984,8 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
 
     n_jobs : int or None, optional (default=None)
         Number of parallel jobs to run.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     positive_code : bool
@@ -1093,12 +1093,12 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         the estimated components are sparse.
         omp: uses orthogonal matching pursuit to estimate the sparse solution
         threshold: squashes to zero all coefficients less than alpha from
-        the projection ``dictionary * X'``
+        the projection `dictionary * X'`
 
         .. versionadded:: 0.17
            *lasso_cd* coordinate descent method to improve speed.
 
-    transform_n_nonzero_coefs : int, ``0.1 * n_features`` by default
+    transform_n_nonzero_coefs : int, `0.1 * n_features` by default
         Number of nonzero coefficients to target in each column of the
         solution. This is only used by `algorithm='lars'` and `algorithm='omp'`
         and is overridden by `alpha` in the `omp` case.
@@ -1114,8 +1114,8 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
 
     n_jobs : int or None, optional (default=None)
         Number of parallel jobs to run.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     code_init : array of shape (n_samples, n_components),
@@ -1275,8 +1275,8 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
 
     n_jobs : int or None, optional (default=None)
         Number of parallel jobs to run.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     batch_size : int,
@@ -1300,7 +1300,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         threshold: squashes to zero all coefficients less than alpha from
         the projection dictionary * X'
 
-    transform_n_nonzero_coefs : int, ``0.1 * n_features`` by default
+    transform_n_nonzero_coefs : int, `0.1 * n_features` by default
         Number of nonzero coefficients to target in each column of the
         solution. This is only used by `algorithm='lars'` and `algorithm='omp'`
         and is overridden by `alpha` in the `omp` case.

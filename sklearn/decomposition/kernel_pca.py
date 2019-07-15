@@ -79,7 +79,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``eigen_solver`` == 'arpack'.
+        by `np.random`. Used when `eigen_solver` == 'arpack'.
 
         .. versionadded:: 0.18
 
@@ -92,8 +92,8 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
     n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
         .. versionadded:: 0.18
@@ -111,11 +111,11 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
     dual_coef_ : array, (n_samples, n_features)
         Inverse transform matrix. Only available when
-        ``fit_inverse_transform`` is True.
+        `fit_inverse_transform` is True.
 
     X_transformed_fit_ : array, (n_samples, n_components)
         Projection of the fitted data on the kernel principal components.
-        Only available when ``fit_inverse_transform`` is True.
+        Only available when `fit_inverse_transform` is True.
 
     X_fit_ : (n_samples, n_features)
         The data used to fit the model. If `copy_X=False`, then `X_fit_` is

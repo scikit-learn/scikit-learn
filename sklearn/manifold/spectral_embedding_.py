@@ -143,7 +143,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
     number of cuts necessary to split the graph into comparably sized
     components.
 
-    This embedding can also 'work' even if the ``adjacency`` variable is
+    This embedding can also 'work' even if the `adjacency` variable is
     not strictly the adjacency matrix of a graph but more generally
     an affinity or similarity matrix between samples (for instance the
     heat kernel of a euclidean distance matrix or a k-NN matrix).
@@ -174,7 +174,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         used by the random number generator; If RandomState instance,
         random_state is the random number generator; If None, the random number
         generator is the RandomState instance used by `np.random`. Used when
-        ``solver`` == 'amg'.
+        `solver` == 'amg'.
 
     eigen_tol : float, optional, default=0.0
         Stopping criterion for eigendecomposition of the Laplacian matrix
@@ -370,7 +370,7 @@ class SpectralEmbedding(BaseEstimator):
         lobpcg eigenvectors.  If int, random_state is the seed used by the
         random number generator; If RandomState instance, random_state is the
         random number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`. Used when ``solver`` ==
+        RandomState instance used by `np.random`. Used when `solver` ==
         'amg'.
 
     eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
@@ -383,8 +383,8 @@ class SpectralEmbedding(BaseEstimator):
 
     n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     Attributes

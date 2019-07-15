@@ -40,7 +40,7 @@ Classification
 .. warning::
 
   Make sure you permute (shuffle) your training data before fitting the
-  model or use ``shuffle=True`` to shuffle after each iteration.
+  model or use `shuffle=True` to shuffle after each iteration.
 
 The class :class:`SGDClassifier` implements a plain stochastic gradient
 descent learning routine which supports different loss functions and
@@ -69,31 +69,31 @@ After being fitted, the model can then be used to predict new values::
     >>> clf.predict([[2., 2.]])
     array([1])
 
-SGD fits a linear model to the training data. The member ``coef_`` holds
+SGD fits a linear model to the training data. The member `coef_` holds
 the model parameters::
 
     >>> clf.coef_
     array([[9.9..., 9.9...]])
 
-Member ``intercept_`` holds the intercept (aka offset or bias)::
+Member `intercept_` holds the intercept (aka offset or bias)::
 
     >>> clf.intercept_
     array([-9.9...])
 
 Whether or not the model should use an intercept, i.e. a biased
-hyperplane, is controlled by the parameter ``fit_intercept``.
+hyperplane, is controlled by the parameter `fit_intercept`.
 
 To get the signed distance to the hyperplane use :meth:`SGDClassifier.decision_function`::
 
     >>> clf.decision_function([[2., 2.]])
     array([29.6...])
 
-The concrete loss function can be set via the ``loss``
+The concrete loss function can be set via the `loss`
 parameter. :class:`SGDClassifier` supports the following loss functions:
 
-  * ``loss="hinge"``: (soft-margin) linear Support Vector Machine,
-  * ``loss="modified_huber"``: smoothed hinge loss,
-  * ``loss="log"``: logistic regression,
+  * `loss="hinge"`: (soft-margin) linear Support Vector Machine,
+  * `loss="modified_huber"`: smoothed hinge loss,
+  * `loss="log"`: logistic regression,
   * and all regression losses below.
 
 The first two loss functions are lazy, they only update the model
@@ -101,26 +101,26 @@ parameters if an example violates the margin constraint, which makes
 training very efficient and may result in sparser models, even when L2 penalty
 is used.
 
-Using ``loss="log"`` or ``loss="modified_huber"`` enables the
-``predict_proba`` method, which gives a vector of probability estimates
+Using `loss="log"` or `loss="modified_huber"` enables the
+`predict_proba` method, which gives a vector of probability estimates
 :math:`P(y|x)` per sample :math:`x`::
 
     >>> clf = SGDClassifier(loss="log", max_iter=5).fit(X, y)
     >>> clf.predict_proba([[1., 1.]])
     array([[0.00..., 0.99...]])
 
-The concrete penalty can be set via the ``penalty`` parameter.
+The concrete penalty can be set via the `penalty` parameter.
 SGD supports the following penalties:
 
-  * ``penalty="l2"``: L2 norm penalty on ``coef_``.
-  * ``penalty="l1"``: L1 norm penalty on ``coef_``.
-  * ``penalty="elasticnet"``: Convex combination of L2 and L1;
-    ``(1 - l1_ratio) * L2 + l1_ratio * L1``.
+  * `penalty="l2"`: L2 norm penalty on `coef_`.
+  * `penalty="l1"`: L1 norm penalty on `coef_`.
+  * `penalty="elasticnet"`: Convex combination of L2 and L1;
+    `(1 - l1_ratio) * L2 + l1_ratio * L1`.
 
-The default setting is ``penalty="l2"``. The L1 penalty leads to sparse
+The default setting is `penalty="l2"`. The L1 penalty leads to sparse
 solutions, driving most coefficients to zero. The Elastic Net solves
 some deficiencies of the L1 penalty in the presence of highly correlated
-attributes. The parameter ``l1_ratio`` controls the convex combination
+attributes. The parameter `l1_ratio` controls the convex combination
 of L1 and L2 penalty.
 
 :class:`SGDClassifier` supports multi-class classification by combining
@@ -138,17 +138,17 @@ the decision surface induced by the three classifiers.
    :align: center
    :scale: 75
 
-In the case of multi-class classification ``coef_`` is a two-dimensional
-array of ``shape=[n_classes, n_features]`` and ``intercept_`` is a
-one-dimensional array of ``shape=[n_classes]``. The i-th row of ``coef_`` holds
+In the case of multi-class classification `coef_` is a two-dimensional
+array of `shape=[n_classes, n_features]` and `intercept_` is a
+one-dimensional array of `shape=[n_classes]`. The i-th row of `coef_` holds
 the weight vector of the OVA classifier for the i-th class; classes are
-indexed in ascending order (see attribute ``classes_``).
+indexed in ascending order (see attribute `classes_`).
 Note that, in principle, since they allow to create a probability model,
-``loss="log"`` and ``loss="modified_huber"`` are more suitable for
+`loss="log"` and `loss="modified_huber"` are more suitable for
 one-vs-all classification.
 
 :class:`SGDClassifier` supports both weighted classes and weighted
-instances via the fit parameters ``class_weight`` and ``sample_weight``. See
+instances via the fit parameters `class_weight` and `sample_weight`. See
 the examples below and the docstring of :meth:`SGDClassifier.fit` for
 further information.
 
@@ -161,7 +161,7 @@ further information.
  - :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane_unbalanced.py` (See the `Note`)
 
 :class:`SGDClassifier` supports averaged SGD (ASGD). Averaging can be enabled
-by setting ```average=True```. ASGD works by averaging the coefficients
+by setting `average=True`. ASGD works by averaging the coefficients
 of the plain SGD over each iteration over a sample. When using ASGD
 the learning rate can be larger and even constant leading on some
 datasets to a speed up in training time.
@@ -180,20 +180,20 @@ well suited for regression problems with a large number of training
 samples (> 10.000), for other problems we recommend :class:`Ridge`,
 :class:`Lasso`, or :class:`ElasticNet`.
 
-The concrete loss function can be set via the ``loss``
+The concrete loss function can be set via the `loss`
 parameter. :class:`SGDRegressor` supports the following loss functions:
 
-  * ``loss="squared_loss"``: Ordinary least squares,
-  * ``loss="huber"``: Huber loss for robust regression,
-  * ``loss="epsilon_insensitive"``: linear Support Vector Regression.
+  * `loss="squared_loss"`: Ordinary least squares,
+  * `loss="huber"`: Huber loss for robust regression,
+  * `loss="epsilon_insensitive"`: linear Support Vector Regression.
 
 The Huber and epsilon-insensitive loss functions can be used for
 robust regression. The width of the insensitive region has to be
-specified via the parameter ``epsilon``. This parameter depends on the
+specified via the parameter `epsilon`. This parameter depends on the
 scale of the target variables.
 
 :class:`SGDRegressor` supports averaged SGD as :class:`SGDClassifier`.
-Averaging can be enabled by setting ```average=True```.
+Averaging can be enabled by setting `average=True`.
 
 For regression with a squared loss and a l2 penalty, another variant of
 SGD with an averaging strategy is available with Stochastic Average
@@ -234,19 +234,19 @@ Stopping criterion
 The classes :class:`SGDClassifier` and :class:`SGDRegressor` provide two
 criteria to stop the algorithm when a given level of convergence is reached:
 
-  * With ``early_stopping=True``, the input data is split into a training set
+  * With `early_stopping=True`, the input data is split into a training set
     and a validation set. The model is then fitted on the training set, and the
     stopping criterion is based on the prediction score computed on the
     validation set. The size of the validation set can be changed with the
-    parameter ``validation_fraction``.
-  * With ``early_stopping=False``, the model is fitted on the entire input data
+    parameter `validation_fraction`.
+  * With `early_stopping=False`, the model is fitted on the entire input data
     and the stopping criterion is based on the objective function computed on
     the input data.
 
 In both cases, the criterion is evaluated once by epoch, and the algorithm stops
-when the criterion does not improve ``n_iter_no_change`` times in a row. The
-improvement is evaluated with a tolerance ``tol``, and the algorithm stops in
-any case after a maximum number of iteration ``max_iter``.
+when the criterion does not improve `n_iter_no_change` times in a row. The
+improvement is evaluated with a tolerance `tol`, and the algorithm stops in
+any case after a maximum number of iteration `max_iter`.
 
 
 Tips on Practical Use
@@ -270,12 +270,12 @@ Tips on Practical Use
 
   * Finding a reasonable regularization term :math:`\alpha` is
     best done using :class:`GridSearchCV`, usually in the
-    range ``10.0**-np.arange(1,7)``.
+    range `10.0**-np.arange(1,7)`.
 
   * Empirically, we found that SGD converges after observing
     approx. 10^6 training samples. Thus, a reasonable first guess
-    for the number of iterations is ``max_iter = np.ceil(10**6 / n)``,
-    where ``n`` is the size of the training set.
+    for the number of iterations is `max_iter = np.ceil(10**6 / n)`,
+    where `n` is the size of the training set.
 
   * If you apply SGD to features extracted using PCA we found that
     it is often wise to scale the feature values by some constant `c`
@@ -331,7 +331,7 @@ Popular choices for the regularization term :math:`R` include:
    - L2 norm: :math:`R(w) := \frac{1}{2} \sum_{i=1}^{n} w_i^2`,
    - L1 norm: :math:`R(w) := \sum_{i=1}^{n} |w_i|`, which leads to sparse
      solutions.
-   - Elastic Net: :math:`R(w) := \frac{\rho}{2} \sum_{i=1}^{n} w_i^2 + (1-\rho) \sum_{i=1}^{n} |w_i|`, a convex combination of L2 and L1, where :math:`\rho` is given by ``1 - l1_ratio``.
+   - Elastic Net: :math:`R(w) := \frac{\rho}{2} \sum_{i=1}^{n} w_i^2 + (1-\rho) \sum_{i=1}^{n} |w_i|`, a convex combination of L2 and L1, where :math:`\rho` is given by `1 - l1_ratio`.
 
 The Figure below shows the contours of the different regularization terms
 in the parameter space when :math:`R(w) = 1`.
@@ -363,7 +363,7 @@ the parameter space.  The intercept :math:`b` is updated similarly but
 without regularization.
 
 The learning rate :math:`\eta` can be either constant or gradually decaying. For
-classification, the default learning rate schedule (``learning_rate='optimal'``)
+classification, the default learning rate schedule (`learning_rate='optimal'`)
 is given by
 
 .. math::
@@ -374,33 +374,33 @@ where :math:`t` is the time step (there are a total of `n_samples * n_iter`
 time steps), :math:`t_0` is determined based on a heuristic proposed by Léon Bottou
 such that the expected initial updates are comparable with the expected
 size of the weights (this assuming that the norm of the training samples is
-approx. 1). The exact definition can be found in ``_init_t`` in :class:`BaseSGD`.
+approx. 1). The exact definition can be found in `_init_t` in :class:`BaseSGD`.
 
 
 For regression the default learning rate schedule is inverse scaling
-(``learning_rate='invscaling'``), given by
+(`learning_rate='invscaling'`), given by
 
 .. math::
 
     \eta^{(t)} = \frac{eta_0}{t^{power\_t}}
 
 where :math:`eta_0` and :math:`power\_t` are hyperparameters chosen by the
-user via ``eta0`` and ``power_t``, resp.
+user via `eta0` and `power_t`, resp.
 
-For a constant learning rate use ``learning_rate='constant'`` and use ``eta0``
+For a constant learning rate use `learning_rate='constant'` and use `eta0`
 to specify the learning rate.
 
-For an adaptively decreasing learning rate, use ``learning_rate='adaptive'``
-and use ``eta0`` to specify the starting learning rate. When the stopping
+For an adaptively decreasing learning rate, use `learning_rate='adaptive'`
+and use `eta0` to specify the starting learning rate. When the stopping
 criterion is reached, the learning rate is divided by 5, and the algorithm
 does not stop. The algorithm stops when the learning rate goes below 1e-6.
 
-The model parameters can be accessed through the members ``coef_`` and
-``intercept_``:
+The model parameters can be accessed through the members `coef_` and
+`intercept_`:
 
-     - Member ``coef_`` holds the weights :math:`w`
+     - Member `coef_` holds the weights :math:`w`
 
-     - Member ``intercept_`` holds :math:`b`
+     - Member `intercept_` holds :math:`b`
 
 .. topic:: References:
 

@@ -463,7 +463,7 @@ def count_nonzero(X, axis=None, sample_weight=None):
     # We rely here on the fact that np.diff(Y.indptr) for a CSR
     # will return the number of nonzero entries in each row.
     # A bincount over Y.indices will return the number of nonzeros
-    # in each column. See ``csr_matrix.getnnz`` in scipy >= 0.14.
+    # in each column. See `csr_matrix.getnnz` in scipy >= 0.14.
     if axis is None:
         if sample_weight is None:
             return X.nnz

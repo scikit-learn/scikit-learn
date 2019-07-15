@@ -88,7 +88,7 @@ cdef class Stack:
     Attributes
     ----------
     capacity : SIZE_t
-        The elements the stack can hold; if more added then ``self.stack_``
+        The elements the stack can hold; if more added then `self.stack_`
         needs to be resized.
 
     top : SIZE_t
@@ -140,9 +140,9 @@ cdef class Stack:
         return 0
 
     cdef int pop(self, StackRecord* res) nogil:
-        """Remove the top element from the stack and copy to ``res``.
+        """Remove the top element from the stack and copy to `res`.
 
-        Returns 0 if pop was successful (and ``res`` is set); -1
+        Returns 0 if pop was successful (and `res` is set); -1
         otherwise.
         """
         cdef SIZE_t top = self.top
@@ -174,7 +174,7 @@ cdef class PriorityHeap:
 
     heap_ptr : SIZE_t
         The water mark of the heap; the heap grows from left to right in the
-        array ``heap_``. The following invariant holds ``heap_ptr < capacity``.
+        array `heap_`. The following invariant holds `heap_ptr < capacity`.
 
     heap_ : PriorityHeapRecord*
         The array of heap records. The maximum element is on the left;
@@ -194,7 +194,7 @@ cdef class PriorityHeap:
 
     cdef void heapify_up(self, PriorityHeapRecord* heap, SIZE_t pos) nogil:
         """Restore heap invariant parent.improvement > child.improvement from
-           ``pos`` upwards. """
+           `pos` upwards. """
         if pos == 0:
             return
 
@@ -207,7 +207,7 @@ cdef class PriorityHeap:
     cdef void heapify_down(self, PriorityHeapRecord* heap, SIZE_t pos,
                            SIZE_t heap_length) nogil:
         """Restore heap invariant parent.improvement > children.improvement from
-           ``pos`` downwards. """
+           `pos` downwards. """
         cdef SIZE_t left_pos = 2 * (pos + 1) - 1
         cdef SIZE_t right_pos = 2 * (pos + 1)
         cdef SIZE_t largest = pos
@@ -298,13 +298,13 @@ cdef class WeightedPQueue:
 
     array_ptr : SIZE_t
         The water mark of the priority queue; the priority queue grows from
-        left to right in the array ``array_``. ``array_ptr`` is always
-        less than ``capacity``.
+        left to right in the array `array_`. `array_ptr` is always
+        less than `capacity`.
 
     array_ : WeightedPQueueRecord*
         The array of priority queue records. The minimum element is on the
         left at index 0, and the maximum element is on the right at index
-        ``array_ptr-1``.
+        `array_ptr-1`.
     """
 
     def __cinit__(self, SIZE_t capacity):
@@ -446,12 +446,12 @@ cdef class WeightedPQueue:
 
 cdef class WeightedMedianCalculator:
     """A class to handle calculation of the weighted median from streams of
-    data. To do so, it maintains a parameter ``k`` such that the sum of the
+    data. To do so, it maintains a parameter `k` such that the sum of the
     weights in the range [0,k) is greater than or equal to half of the total
-    weight. By minimizing the value of ``k`` that fulfills this constraint,
+    weight. By minimizing the value of `k` that fulfills this constraint,
     calculating the median is done by either taking the value of the sample
-    at index ``k-1`` of ``samples`` (samples[k-1].data) or the average of
-    the samples at index ``k-1`` and ``k`` of ``samples``
+    at index `k-1` of `samples` (samples[k-1].data) or the average of
+    the samples at index `k-1` and `k` of `samples`
     ((samples[k-1] + samples[k]) / 2).
 
     Attributes
@@ -464,7 +464,7 @@ cdef class WeightedMedianCalculator:
         weighted median calculation.
 
     total_weight : DOUBLE_t
-        The sum of the weights of items in ``samples``. Represents the total
+        The sum of the weights of items in `samples`. Represents the total
         weight of all samples used in the median calculation.
 
     k : SIZE_t
@@ -472,8 +472,8 @@ cdef class WeightedMedianCalculator:
 
     sum_w_0_k : DOUBLE_t
         The sum of the weights from samples[0:k]. Used in the weighted
-        median calculation; minimizing the value of ``k`` such that
-        ``sum_w_0_k`` >= ``total_weight / 2`` provides a mechanism for
+        median calculation; minimizing the value of `k` such that
+        `sum_w_0_k` >= `total_weight / 2` provides a mechanism for
         calculating the median in constant time.
 
     """

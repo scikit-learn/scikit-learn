@@ -35,7 +35,7 @@ def uniform_labelings_scores(score_func, n_samples, n_clusters_range,
     """Compute score for 2 random uniform cluster labelings.
 
     Both random labelings have the same number of clusters for each value
-    possible value in ``n_clusters_range``.
+    possible value in `n_clusters_range`.
 
     When fixed_n_classes is not None the first labeling is considered a ground
     truth class assignment with fixed number of classes.

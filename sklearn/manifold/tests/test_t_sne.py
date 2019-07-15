@@ -405,7 +405,7 @@ def test_n_components_range():
 
 
 def test_early_exaggeration_used():
-    # check that the ``early_exaggeration`` parameter has an effect
+    # check that the `early_exaggeration` parameter has an effect
     random_state = check_random_state(0)
     n_components = 2
     methods = ['exact', 'barnes_hut']
@@ -424,7 +424,7 @@ def test_early_exaggeration_used():
 
 
 def test_n_iter_used():
-    # check that the ``n_iter`` parameter has an effect
+    # check that the `n_iter` parameter has an effect
     random_state = check_random_state(0)
     n_components = 2
     methods = ['exact', 'barnes_hut']
@@ -746,7 +746,7 @@ def test_uniform_grid(method):
     """Make sure that TSNE can approximately recover a uniform 2D grid
 
     Due to ties in distances between point in X_2d_grid, this test is platform
-    dependent for ``method='barnes_hut'`` due to numerical imprecision.
+    dependent for `method='barnes_hut'` due to numerical imprecision.
 
     Also, t-SNE is not assured to converge to the right solution because bad
     initialization can lead to convergence to bad local minimum (the
@@ -790,8 +790,8 @@ def assert_uniform_grid(Y, try_name=None):
 
 
 def test_bh_match_exact():
-    # check that the ``barnes_hut`` method match the exact one when
-    # ``angle = 0`` and ``perplexity > n_samples / 3``
+    # check that the `barnes_hut` method match the exact one when
+    # `angle = 0` and `perplexity > n_samples / 3`
     random_state = check_random_state(0)
     n_features = 10
     X = random_state.randn(30, n_features).astype(np.float32)

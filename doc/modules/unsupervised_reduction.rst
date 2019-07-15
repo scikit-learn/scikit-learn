@@ -7,7 +7,7 @@ Unsupervised dimensionality reduction
 
 If your number of features is high, it may be useful to reduce it with an
 unsupervised step prior to supervised steps. Many of the
-:ref:`unsupervised-learning` methods implement a ``transform`` method that
+:ref:`unsupervised-learning` methods implement a `transform` method that
 can be used to reduce the dimensionality. Below we discuss two specific
 example of this pattern that are heavily used.
 

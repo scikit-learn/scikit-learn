@@ -36,7 +36,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
 
       This estimator is still **experimental** for now: the predictions
       and the API might change without any deprecation cycle. To use it,
-      you need to explicitly import ``enable_iterative_imputer``::
+      you need to explicitly import `enable_iterative_imputer`::
 
         >>> # explicitly require this experimental feature
         >>> from sklearn.experimental import enable_iterative_imputer  # noqa
@@ -47,18 +47,18 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
     ----------
     estimator : estimator object, default=BayesianRidge()
         The estimator to use at each step of the round-robin imputation.
-        If ``sample_posterior`` is True, the estimator must support
-        ``return_std`` in its ``predict`` method.
+        If `sample_posterior` is True, the estimator must support
+        `return_std` in its `predict` method.
 
     missing_values : int, np.nan, optional (default=np.nan)
         The placeholder for the missing values. All occurrences of
-        ``missing_values`` will be imputed.
+        `missing_values` will be imputed.
 
     sample_posterior : boolean, default=False
         Whether to sample from the (Gaussian) predictive posterior of the
         fitted estimator for each imputation. Estimator must support
-        ``return_std`` in its ``predict`` method if set to ``True``. Set to
-        ``True`` if using ``IterativeImputer`` for multiple imputations.
+        `return_std` in its `predict` method if set to `True`. Set to
+        `True` if using `IterativeImputer` for multiple imputations.
 
     max_iter : int, optional (default=10)
         Maximum number of imputation rounds to perform before returning the
@@ -66,7 +66,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         imputation of each feature with missing values. The stopping criterion
         is met once `abs(max(X_t - X_{t-1}))/abs(max(X[known_vals]))` < tol,
         where `X_t` is `X` at iteration `t. Note that early stopping is only
-        applied if ``sample_posterior=False``.
+        applied if `sample_posterior=False`.
 
     tol : float, optional (default=1e-3)
         Tolerance of the stopping condition.
@@ -79,11 +79,11 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         imputation process, the neighbor features are not necessarily nearest,
         but are drawn with probability proportional to correlation for each
         imputed target feature. Can provide significant speed-up when the
-        number of features is huge. If ``None``, all features will be used.
+        number of features is huge. If `None`, all features will be used.
 
     initial_strategy : str, optional (default="mean")
         Which strategy to use to initialize the missing values. Same as the
-        ``strategy`` parameter in :class:`sklearn.impute.SimpleImputer`
+        `strategy` parameter in :class:`sklearn.impute.SimpleImputer`
         Valid values: {"mean", "median", "most_frequent", or "constant"}.
 
     imputation_order : str, optional (default="ascending")
@@ -101,11 +101,11 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
             A random order for each round.
 
     min_value : float, optional (default=None)
-        Minimum possible imputed value. Default of ``None`` will set minimum
+        Minimum possible imputed value. Default of `None` will set minimum
         to negative infinity.
 
     max_value : float, optional (default=None)
-        Maximum possible imputed value. Default of ``None`` will set maximum
+        Maximum possible imputed value. Default of `None` will set maximum
         to positive infinity.
 
     verbose : int, optional (default=0)
@@ -116,8 +116,8 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator to use. Randomizes
         selection of estimator features if n_nearest_features is not None, the
-        ``imputation_order`` if ``random``, and the sampling from posterior if
-        ``sample_posterior`` is True. Use an integer for determinism.
+        `imputation_order` if `random`, and the sampling from posterior if
+        `sample_posterior` is True. Use an integer for determinism.
         See :term:`the Glossary <random_state>`.
 
     add_indicator : boolean, optional (default=False)
@@ -134,23 +134,23 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         Imputer used to initialize the missing values.
 
     imputation_sequence_ : list of tuples
-        Each tuple has ``(feat_idx, neighbor_feat_idx, estimator)``, where
-        ``feat_idx`` is the current feature to be imputed,
-        ``neighbor_feat_idx`` is the array of other features used to impute the
-        current feature, and ``estimator`` is the trained estimator used for
-        the imputation. Length is ``self.n_features_with_missing_ *
-        self.n_iter_``.
+        Each tuple has `(feat_idx, neighbor_feat_idx, estimator)`, where
+        `feat_idx` is the current feature to be imputed,
+        `neighbor_feat_idx` is the array of other features used to impute the
+        current feature, and `estimator` is the trained estimator used for
+        the imputation. Length is `self.n_features_with_missing_ *
+        self.n_iter_`.
 
     n_iter_ : int
         Number of iteration rounds that occurred. Will be less than
-        ``self.max_iter`` if early stopping criterion was reached.
+        `self.max_iter` if early stopping criterion was reached.
 
     n_features_with_missing_ : int
         Number of features with missing values.
 
     indicator_ : :class:`sklearn.impute.MissingIndicator`
         Indicator used to add binary indicators for missing values.
-        ``None`` if add_indicator is False.
+        `None` if add_indicator is False.
 
     See also
     --------
@@ -159,14 +159,14 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
     Notes
     -----
     To support imputation in inductive mode we store each feature's estimator
-    during the ``fit`` phase, and predict without refitting (in order) during
-    the ``transform`` phase.
+    during the `fit` phase, and predict without refitting (in order) during
+    the `transform` phase.
 
-    Features which contain all missing values at ``fit`` are discarded upon
-    ``transform``.
+    Features which contain all missing values at `fit` are discarded upon
+    `transform`.
 
-    Features with missing values during ``transform`` which did not have any
-    missing values during ``fit`` will be imputed with the initial imputation
+    Features with missing values during `transform` which did not have any
+    missing values during `fit` will be imputed with the initial imputation
     method only.
 
     References
@@ -221,8 +221,8 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         """Impute a single feature from the others provided.
 
         This function predicts the missing values of one of the features using
-        the current estimates of all the other features. The ``estimator`` must
-        support ``return_std=True`` in its ``predict`` method for this function
+        the current estimates of all the other features. The `estimator` must
+        support `return_std=True` in its `predict` method for this function
         to work.
 
         Parameters
@@ -237,12 +237,12 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
             Index of the feature currently being imputed.
 
         neighbor_feat_idx : ndarray
-            Indices of the features to be used in imputing ``feat_idx``.
+            Indices of the features to be used in imputing `feat_idx`.
 
         estimator : object
             The estimator to use at this step of the round-robin imputation.
-            If ``sample_posterior`` is True, the estimator must support
-            ``return_std`` in its ``predict`` method.
+            If `sample_posterior` is True, the estimator must support
+            `return_std` in its `predict` method.
             If None, it will be cloned from self._estimator.
 
         fit_mode : boolean, default=True
@@ -251,11 +251,11 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         Returns
         -------
         X_filled : ndarray
-            Input data with ``X_filled[missing_row_mask, feat_idx]`` updated.
+            Input data with `X_filled[missing_row_mask, feat_idx]` updated.
 
         estimator : estimator with sklearn API
             The fitted estimator used to impute
-            ``X_filled[missing_row_mask, feat_idx]``.
+            `X_filled[missing_row_mask, feat_idx]`.
         """
 
         # if nothing is missing, just return the default
@@ -326,29 +326,29 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                                n_features,
                                feat_idx,
                                abs_corr_mat):
-        """Get a list of other features to predict ``feat_idx``.
+        """Get a list of other features to predict `feat_idx`.
 
         If self.n_nearest_features is less than or equal to the total
         number of features, then use a probability proportional to the absolute
-        correlation between ``feat_idx`` and each other feature to randomly
+        correlation between `feat_idx` and each other feature to randomly
         choose a subsample of the other features (without replacement).
 
         Parameters
         ----------
         n_features : int
-            Number of features in ``X``.
+            Number of features in `X`.
 
         feat_idx : int
             Index of the feature currently being imputed.
 
         abs_corr_mat : ndarray, shape (n_features, n_features)
-            Absolute correlation matrix of ``X``. The diagonal has been zeroed
+            Absolute correlation matrix of `X`. The diagonal has been zeroed
             out and each feature has been normalized to sum to 1. Can be None.
 
         Returns
         -------
         neighbor_feat_idx : array-like
-            The features to use to impute ``feat_idx``.
+            The features to use to impute `feat_idx`.
         """
         if (self.n_nearest_features is not None and
                 self.n_nearest_features < n_features):
@@ -415,13 +415,13 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
             Input data with the most recent imputations.
 
         tolerance : float, optional (default=1e-6)
-            ``abs_corr_mat`` can have nans, which will be replaced
-            with ``tolerance``.
+            `abs_corr_mat` can have nans, which will be replaced
+            with `tolerance`.
 
         Returns
         -------
         abs_corr_mat : ndarray, shape (n_features, n_features)
-            Absolute correlation matrix of ``X`` at the beginning of the
+            Absolute correlation matrix of `X` at the beginning of the
             current round. The diagonal has been zeroed out and each feature's
             absolute correlations with all others have been normalized to sum
             to 1.

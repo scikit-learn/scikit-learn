@@ -84,12 +84,12 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
         bigger sliced dataset: each subset might not have examples of
         every feature, hence the inferred shape might vary from one
         slice to another.
-        n_features is only required if ``offset`` or ``length`` are passed a
+        n_features is only required if `offset` or `length` are passed a
         non-default value.
 
     dtype : numpy data type, default np.float64
         Data type of dataset to be loaded. This will be the data type of the
-        output numpy arrays ``X`` and ``y``.
+        output numpy arrays `X` and `y`.
 
     multilabel : boolean, optional, default False
         Samples may have several labels each (see
@@ -102,9 +102,9 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
         If set to "auto", a heuristic check is applied to determine this from
         the file contents. Both kinds of files occur "in the wild", but they
         are unfortunately not self-identifying. Using "auto" or True should
-        always be safe when no ``offset`` or ``length`` is passed.
-        If ``offset`` or ``length`` are passed, the "auto" mode falls back
-        to ``zero_based=True`` to avoid having the heuristic check yield
+        always be safe when no `offset` or `length` is passed.
+        If `offset` or `length` are passed, the "auto" mode falls back
+        to `zero_based=True` to avoid having the heuristic check yield
         inconsistent results on different segments of the file.
 
     query_id : boolean, default False
@@ -233,7 +233,7 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
 
     dtype : numpy data type, default np.float64
         Data type of dataset to be loaded. This will be the data type of the
-        output numpy arrays ``X`` and ``y``.
+        output numpy arrays `X` and `y`.
 
     multilabel : boolean, optional
         Samples may have several labels each (see

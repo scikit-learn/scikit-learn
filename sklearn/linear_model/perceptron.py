@@ -25,7 +25,7 @@ class Perceptron(BaseSGDClassifier):
 
     max_iter : int, optional (default=1000)
         The maximum number of passes over the training data (aka epochs).
-        It only impacts the behavior in the ``fit`` method, and not the
+        It only impacts the behavior in the `fit` method, and not the
         `partial_fit`.
 
         .. versionadded:: 0.19
@@ -48,8 +48,8 @@ class Perceptron(BaseSGDClassifier):
     n_jobs : int or None, optional (default=None)
         The number of CPUs to use to do the OVA (One Versus All, for
         multi-class problems) computation.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     random_state : int, RandomState instance or None, optional, default None
@@ -88,7 +88,7 @@ class Perceptron(BaseSGDClassifier):
 
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``
+        as `n_samples / (n_classes * np.bincount(y))`
 
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
@@ -111,9 +111,9 @@ class Perceptron(BaseSGDClassifier):
     Notes
     -----
 
-    ``Perceptron`` is a classification algorithm which shares the same
-    underlying implementation with ``SGDClassifier``. In fact,
-    ``Perceptron()`` is equivalent to `SGDClassifier(loss="perceptron",
+    `Perceptron` is a classification algorithm which shares the same
+    underlying implementation with `SGDClassifier`. In fact,
+    `Perceptron()` is equivalent to `SGDClassifier(loss="perceptron",
     eta0=1, learning_rate="constant", penalty=None)`.
 
     Examples

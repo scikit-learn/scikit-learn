@@ -39,8 +39,8 @@ def _get_local_path(openml_path, data_home):
 
 def _retry_with_clean_cache(openml_path, data_home):
     """If the first call to the decorated function fails, the local cached
-    file is removed, and the function is called again. If ``data_home`` is
-    ``None``, then the function is called once.
+    file is removed, and the function is called again. If `data_home` is
+    `None`, then the function is called once.
     """
     def decorator(f):
         @wraps(f)
@@ -147,7 +147,7 @@ def _get_json_content_from_openml_api(url, error_message, raise_if_error,
     json_data : json or None
         the json result from the OpenML server if the call was successful;
         None otherwise iff raise_if_error was set to False and the error was
-        ``acceptable``
+        `acceptable`
     """
 
     @_retry_with_clean_cache(url, data_home)
@@ -527,7 +527,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         datasets with the same name.
 
     version : integer or 'active', default='active'
-        Version of the dataset. Can only be provided if also ``name`` is given.
+        Version of the dataset. Can only be provided if also `name` is given.
         If 'active' the oldest version that's still active is used. Since
         there may be more than one active version of a dataset, and those
         versions may fundamentally be different from one another, setting an
@@ -545,8 +545,8 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     target_column : string, list or None, default 'default-target'
         Specify the column name in the data to use as target. If
         'default-target', the standard target column a stored on the server
-        is used. If ``None``, all columns are returned as data and the
-        target is ``None``. If list (of strings), all columns with these names
+        is used. If `None`, all columns are returned as data and the
+        target is `None`. If list (of strings), all columns with these names
         are returned as multi-target (Note: not all scikit-learn classifiers
         can handle all types of multi-output combinations)
 
@@ -554,15 +554,15 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         Whether to cache downloaded datasets using joblib.
 
     return_X_y : boolean, default=False.
-        If True, returns ``(data, target)`` instead of a Bunch object. See
+        If True, returns `(data, target)` instead of a Bunch object. See
         below for more information about the `data` and `target` objects.
 
     as_frame : boolean, default=False
         If True, the data is a pandas DataFrame including columns with
         appropriate dtypes (numeric, string or categorical). The target is
         a pandas DataFrame or Series depending on the number of target_columns.
-        The Bunch will contain a ``frame`` attribute with the target and the
-        data. If ``return_X_y`` is True, then ``(data, target)`` will be pandas
+        The Bunch will contain a `frame` attribute with the target and the
+        data. If `return_X_y` is True, then `(data, target)` will be pandas
         DataFrames or Series as describe above.
 
     Returns
@@ -576,28 +576,28 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         target : np.array, pandas Series or DataFrame
             The regression target or classification labels, if applicable.
             Dtype is float if numeric, and object if categorical. If
-            ``as_frame`` is True, ``target`` is a pandas object.
+            `as_frame` is True, `target` is a pandas object.
         DESCR : str
             The full description of the dataset
         feature_names : list
             The names of the dataset columns
         categories : dict or None
             Maps each categorical feature name to a list of values, such
-            that the value encoded as i is ith in the list. If ``as_frame``
+            that the value encoded as i is ith in the list. If `as_frame`
             is True, this is None.
         details : dict
             More metadata from OpenML
         frame : pandas DataFrame
-            Only present when `as_frame=True`. DataFrame with ``data`` and
-            ``target``.
+            Only present when `as_frame=True`. DataFrame with `data` and
+            `target`.
 
-    (data, target) : tuple if ``return_X_y`` is True
+    (data, target) : tuple if `return_X_y` is True
 
         .. note:: EXPERIMENTAL
 
             This interface is **experimental** and subsequent releases may
             change attributes without notice (although there should only be
-            minor changes to ``data`` and ``target``).
+            minor changes to `data` and `target`).
 
         Missing values in the 'data' are represented as NaN's. Missing values
         in 'target' are represented as NaN's (numerical target) or None

@@ -29,8 +29,8 @@ Scalers are linear (or more precisely affine) transformers and differ from each
 other in the way to estimate the parameters used to shift and scale each
 feature.
 
-``QuantileTransformer`` provides non-linear transformations in which distances
-between marginal outliers and inliers are shrunk. ``PowerTransformer`` provides
+`QuantileTransformer` provides non-linear transformations in which distances
+between marginal outliers and inliers are shrunk. `PowerTransformer` provides
 non-linear transformations in which data is mapped to a normal distribution to
 stabilize variance and minimize skewness.
 
@@ -238,7 +238,7 @@ make_plot(0)
 # StandardScaler
 # --------------
 #
-# ``StandardScaler`` removes the mean and scales the data to unit variance.
+# `StandardScaler` removes the mean and scales the data to unit variance.
 # However, the outliers have an influence when computing the empirical mean and
 # standard deviation which shrink the range of the feature values as shown in
 # the left figure below. Note in particular that because the outliers on each
@@ -247,7 +247,7 @@ make_plot(0)
 # the transformed median income feature while the same data is squeezed in the
 # smaller [-0.2, 0.2] range for the transformed number of households.
 #
-# ``StandardScaler`` therefore cannot guarantee balanced feature scales in the
+# `StandardScaler` therefore cannot guarantee balanced feature scales in the
 # presence of outliers.
 
 make_plot(1)
@@ -256,12 +256,12 @@ make_plot(1)
 # MinMaxScaler
 # ------------
 #
-# ``MinMaxScaler`` rescales the data set such that all feature values are in
+# `MinMaxScaler` rescales the data set such that all feature values are in
 # the range [0, 1] as shown in the right panel below. However, this scaling
 # compress all inliers in the narrow range [0, 0.005] for the transformed
 # number of households.
 #
-# As ``StandardScaler``, ``MinMaxScaler`` is very sensitive to the presence of
+# As `StandardScaler`, `MinMaxScaler` is very sensitive to the presence of
 # outliers.
 
 make_plot(2)
@@ -270,9 +270,9 @@ make_plot(2)
 # MaxAbsScaler
 # ------------
 #
-# ``MaxAbsScaler`` differs from the previous scaler such that the absolute
+# `MaxAbsScaler` differs from the previous scaler such that the absolute
 # values are mapped in the range [0, 1]. On positive only data, this scaler
-# behaves similarly to ``MinMaxScaler`` and therefore also suffers from the
+# behaves similarly to `MinMaxScaler` and therefore also suffers from the
 # presence of large outliers.
 
 make_plot(3)
@@ -297,11 +297,11 @@ make_plot(4)
 # PowerTransformer
 # ----------------
 #
-# ``PowerTransformer`` applies a power transformation to each feature to make
-# the data more Gaussian-like. Currently, ``PowerTransformer`` implements the
+# `PowerTransformer` applies a power transformation to each feature to make
+# the data more Gaussian-like. Currently, `PowerTransformer` implements the
 # Yeo-Johnson and Box-Cox transforms. The power transform finds the optimal
 # scaling factor to stabilize variance and mimimize skewness through maximum
-# likelihood estimation. By default, ``PowerTransformer`` also applies
+# likelihood estimation. By default, `PowerTransformer` also applies
 # zero-mean, unit variance normalization to the transformed output. Note that
 # Box-Cox can only be applied to strictly positive data. Income and number of
 # households happen to be strictly positive, but if negative values are present
@@ -314,7 +314,7 @@ make_plot(6)
 # QuantileTransformer (Gaussian output)
 # -------------------------------------
 #
-# ``QuantileTransformer`` has an additional ``output_distribution`` parameter
+# `QuantileTransformer` has an additional `output_distribution` parameter
 # allowing to match a Gaussian distribution instead of a uniform distribution.
 # Note that this non-parametetric transformer introduces saturation artifacts
 # for extreme values.
@@ -325,15 +325,15 @@ make_plot(7)
 # QuantileTransformer (uniform output)
 # ------------------------------------
 #
-# ``QuantileTransformer`` applies a non-linear transformation such that the
+# `QuantileTransformer` applies a non-linear transformation such that the
 # probability density function of each feature will be mapped to a uniform
 # distribution. In this case, all the data will be mapped in the range [0, 1],
 # even the outliers which cannot be distinguished anymore from the inliers.
 #
-# As ``RobustScaler``, ``QuantileTransformer`` is robust to outliers in the
+# As `RobustScaler`, `QuantileTransformer` is robust to outliers in the
 # sense that adding or removing outliers in the training set will yield
 # approximately the same transformation on held out data. But contrary to
-# ``RobustScaler``, ``QuantileTransformer`` will also automatically collapse
+# `RobustScaler`, `QuantileTransformer` will also automatically collapse
 # any outlier by setting them to the a priori defined range boundaries (0 and
 # 1).
 
@@ -343,7 +343,7 @@ make_plot(8)
 # Normalizer
 # ----------
 #
-# The ``Normalizer`` rescales the vector for each sample to have unit norm,
+# The `Normalizer` rescales the vector for each sample to have unit norm,
 # independently of the distribution of the samples. It can be seen on both
 # figures below where all samples are mapped onto the unit circle. In our
 # example the two selected features have only positive values; therefore the

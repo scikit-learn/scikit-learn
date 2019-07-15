@@ -27,7 +27,7 @@ __all__ = ['SpectralCoclustering',
 
 
 def _scale_normalize(X):
-    """Normalize ``X`` by scaling rows and columns independently.
+    """Normalize `X` by scaling rows and columns independently.
 
     Returns the normalized matrix and the row and column scaling
     factors.
@@ -49,7 +49,7 @@ def _scale_normalize(X):
 
 
 def _bistochastic_normalize(X, max_iter=1000, tol=1e-5):
-    """Normalize rows and columns of ``X`` simultaneously so that all
+    """Normalize rows and columns of `X` simultaneously so that all
     rows sum to one constant and all columns sum to a different
     constant.
 
@@ -71,7 +71,7 @@ def _bistochastic_normalize(X, max_iter=1000, tol=1e-5):
 
 
 def _log_normalize(X):
-    """Normalize ``X`` according to Kluger's log-interactions scheme."""
+    """Normalize `X` according to Kluger's log-interactions scheme."""
     X = make_nonnegative(X, min_value=1)
     if issparse(X):
         raise ValueError("Cannot compute log of a sparse matrix,"
@@ -230,8 +230,8 @@ class SpectralCoclustering(BaseSpectral):
         down the pairwise matrix into n_jobs even slices and computing them in
         parallel.
 
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     random_state : int, RandomState instance or None (default)
@@ -243,7 +243,7 @@ class SpectralCoclustering(BaseSpectral):
     ----------
     rows_ : array-like, shape (n_row_clusters, n_rows)
         Results of the clustering. `rows[i, r]` is True if
-        cluster `i` contains row `r`. Available only after calling ``fit``.
+        cluster `i` contains row `r`. Available only after calling `fit`.
 
     columns_ : array-like, shape (n_column_clusters, n_columns)
         Results of the clustering, like `rows`.
@@ -374,8 +374,8 @@ class SpectralBiclustering(BaseSpectral):
         down the pairwise matrix into n_jobs even slices and computing them in
         parallel.
 
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     random_state : int, RandomState instance or None (default)
@@ -387,7 +387,7 @@ class SpectralBiclustering(BaseSpectral):
     ----------
     rows_ : array-like, shape (n_row_clusters, n_rows)
         Results of the clustering. `rows[i, r]` is True if
-        cluster `i` contains row `r`. Available only after calling ``fit``.
+        cluster `i` contains row `r`. Available only after calling `fit`.
 
     columns_ : array-like, shape (n_column_clusters, n_columns)
         Results of the clustering, like `rows`.
@@ -505,7 +505,7 @@ class SpectralBiclustering(BaseSpectral):
                                    for label in range(n_col_clusters)])
 
     def _fit_best_piecewise(self, vectors, n_best, n_clusters):
-        """Find the ``n_best`` vectors that are best approximated by piecewise
+        """Find the `n_best` vectors that are best approximated by piecewise
         constant vectors.
 
         The piecewise vectors are found by k-means; the best is chosen
@@ -523,7 +523,7 @@ class SpectralBiclustering(BaseSpectral):
         return result
 
     def _project_and_cluster(self, data, vectors, n_clusters):
-        """Project ``data`` to ``vectors`` and cluster the result."""
+        """Project `data` to `vectors` and cluster the result."""
         projected = safe_sparse_dot(data, vectors)
         _, labels = self._k_means(projected, n_clusters)
         return labels

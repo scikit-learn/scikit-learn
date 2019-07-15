@@ -38,10 +38,10 @@ Nystroem Method for Kernel Approximation
 The Nystroem method, as implemented in :class:`Nystroem` is a general method
 for low-rank approximations of kernels. It achieves this by essentially subsampling
 the data on which the kernel is evaluated.
-By default :class:`Nystroem` uses the ``rbf`` kernel, but it can use any
+By default :class:`Nystroem` uses the `rbf` kernel, but it can use any
 kernel function or a precomputed kernel matrix.
 The number of samples used - which is also the dimensionality of the features computed -
-is given by the parameter ``n_components``.
+is given by the parameter `n_components`.
 
 .. _rbf_kernel_approx:
 
@@ -66,21 +66,21 @@ a linear algorithm, for example a linear SVM::
     1.0
 
 The mapping relies on a Monte Carlo approximation to the
-kernel values. The ``fit`` function performs the Monte Carlo sampling, whereas
-the ``transform`` method performs the mapping of the data.  Because of the
+kernel values. The `fit` function performs the Monte Carlo sampling, whereas
+the `transform` method performs the mapping of the data.  Because of the
 inherent randomness of the process, results may vary between different calls to
-the ``fit`` function.
+the `fit` function.
 
-The ``fit`` function takes two arguments:
-``n_components``, which is the target dimensionality of the feature transform,
-and ``gamma``, the parameter of the RBF-kernel.  A higher ``n_components`` will
+The `fit` function takes two arguments:
+`n_components`, which is the target dimensionality of the feature transform,
+and `gamma`, the parameter of the RBF-kernel.  A higher `n_components` will
 result in a better approximation of the kernel and will yield results more
 similar to those produced by a kernel SVM. Note that "fitting" the feature
-function does not actually depend on the data given to the ``fit`` function.
+function does not actually depend on the data given to the `fit` function.
 Only the dimensionality of the data is used.
 Details on the method can be found in [RR2007]_.
 
-For a given value of ``n_components`` :class:`RBFSampler` is often less accurate
+For a given value of `n_components` :class:`RBFSampler` is often less accurate
 as :class:`Nystroem`. :class:`RBFSampler` is cheaper to compute, though, making
 use of larger feature spaces more efficient.
 
@@ -121,7 +121,7 @@ deterministic sampling. Each component is sampled :math:`n` times, yielding
 :math:`2n+1` dimensions per input dimension (the multiple of two stems
 from the real and complex part of the Fourier transform).
 In the literature, :math:`n` is usually chosen to be 1 or 2, transforming
-the dataset to size ``n_samples * 5 * n_features`` (in the case of :math:`n=2`).
+the dataset to size `n_samples * 5 * n_features` (in the case of :math:`n=2`).
 
 The approximate feature map provided by :class:`AdditiveChi2Sampler` can be combined
 with the approximate feature map provided by :class:`RBFSampler` to yield an approximate

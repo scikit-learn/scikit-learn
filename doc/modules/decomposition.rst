@@ -20,11 +20,11 @@ Exact PCA and probabilistic interpretation
 PCA is used to decompose a multivariate dataset in a set of successive
 orthogonal components that explain a maximum amount of the variance. In
 scikit-learn, :class:`PCA` is implemented as a *transformer* object
-that learns :math:`n` components in its ``fit`` method, and can be used on new
+that learns :math:`n` components in its `fit` method, and can be used on new
 data to project it on these components.
 
 PCA centers but does not scale the input data for each feature before
-applying the SVD. The optional parameter parameter ``whiten=True`` makes it
+applying the SVD. The optional parameter parameter `whiten=True` makes it
 possible to project the data onto the singular space while scaling each
 component to unit variance. This is often useful if the models down-stream make
 strong assumptions on the isotropy of the signal: this is for example the case
@@ -71,14 +71,14 @@ exactly match the results of :class:`PCA` while processing the data in a
 minibatch fashion. :class:`IncrementalPCA` makes it possible to implement
 out-of-core Principal Component Analysis either by:
 
- * Using its ``partial_fit`` method on chunks of data fetched sequentially
+ * Using its `partial_fit` method on chunks of data fetched sequentially
    from the local hard drive or a network database.
 
  * Calling its fit method on a sparse matrix or a memory mapped file using
-   ``numpy.memmap``.
+   `numpy.memmap`.
 
 :class:`IncrementalPCA` only stores estimates of component and noise variances,
-in order update ``explained_variance_ratio_`` incrementally. This is why
+in order update `explained_variance_ratio_` incrementally. This is why
 memory usage depends on the number of samples per batch, rather than the
 number of samples to be processed in the dataset.
 
@@ -122,7 +122,7 @@ to linearly transform the data while both reducing the dimensionality
 and preserve most of the explained variance at the same time.
 
 The class :class:`PCA` used with the optional parameter
-``svd_solver='randomized'`` is very useful in that case: since we are going
+`svd_solver='randomized'` is very useful in that case: since we are going
 to drop most of the singular vectors it is much more efficient to limit the
 computation to an approximated estimate of the singular vectors we will keep
 to actually perform the transform.
@@ -154,9 +154,9 @@ The memory footprint of randomized :class:`PCA` is also proportional to
 :math:`2 \cdot n_{\max} \cdot n_{\mathrm{components}}` instead of :math:`n_{\max}
 \cdot n_{\min}` for the exact method.
 
-Note: the implementation of ``inverse_transform`` in :class:`PCA` with
-``svd_solver='randomized'`` is not the exact inverse transform of
-``transform`` even when ``whiten=False`` (default).
+Note: the implementation of `inverse_transform` in :class:`PCA` with
+`svd_solver='randomized'` is not the exact inverse transform of
+`transform` even when `whiten=False` (default).
 
 
 .. topic:: Examples:
@@ -181,7 +181,7 @@ Kernel PCA
 dimensionality reduction through the use of kernels (see :ref:`metrics`). It
 has many applications including denoising, compression and structured
 prediction (kernel dependency estimation). :class:`KernelPCA` supports both
-``transform`` and ``inverse_transform``.
+`transform` and `inverse_transform`.
 
 .. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_kernel_pca_001.png
     :target: ../auto_examples/decomposition/plot_kernel_pca.html
@@ -254,13 +254,13 @@ problem solved is a PCA problem (dictionary learning) with an
 The sparsity-inducing :math:`\ell_1` norm also prevents learning
 components from noise when few training samples are available. The degree
 of penalization (and thus sparsity) can be adjusted through the
-hyperparameter ``alpha``. Small values lead to a gently regularized
+hyperparameter `alpha`. Small values lead to a gently regularized
 factorization, while larger values shrink many coefficients to zero.
 
 .. note::
 
   While in the spirit of an online algorithm, the class
-  :class:`MiniBatchSparsePCA` does not implement ``partial_fit`` because
+  :class:`MiniBatchSparsePCA` does not implement `partial_fit` because
   the algorithm is online along the features direction, not the samples
   direction.
 
@@ -288,7 +288,7 @@ Truncated singular value decomposition and latent semantic analysis
 where :math:`k` is a user-specified parameter.
 
 When truncated SVD is applied to term-document matrices
-(as returned by ``CountVectorizer`` or ``TfidfVectorizer``),
+(as returned by `CountVectorizer` or `TfidfVectorizer`),
 this transformation is known as
 `latent semantic analysis <https://nlp.stanford.edu/IR-book/pdf/18lsi.pdf>`_
 (LSA), because it transforms such matrices
@@ -311,7 +311,7 @@ produces a low-rank approximation :math:`X`:
 
 After this operation, :math:`U_k \Sigma_k^\top`
 is the transformed training set with :math:`k` features
-(called ``n_components`` in the API).
+(called `n_components` in the API).
 
 To also transform a test set :math:`X`, we multiply it with :math:`V_k`:
 
@@ -322,7 +322,7 @@ To also transform a test set :math:`X`, we multiply it with :math:`V_k`:
     Most treatments of LSA in the natural language processing (NLP)
     and information retrieval (IR) literature
     swap the axes of the matrix :math:`X` so that it has shape
-    ``n_features`` × ``n_samples``.
+    `n_features` × `n_samples`.
     We present LSA in a different way that matches the scikit-learn API better,
     but the singular values found are the same.
 
@@ -333,7 +333,7 @@ When the columnwise (per-feature) means of :math:`X`
 are subtracted from the feature values,
 truncated SVD on the resulting matrix is equivalent to PCA.
 In practical terms, this means
-that the :class:`TruncatedSVD` transformer accepts ``scipy.sparse``
+that the :class:`TruncatedSVD` transformer accepts `scipy.sparse`
 matrices without the need to densify them,
 as densifying may fill up memory even for medium-sized document collections.
 
@@ -342,7 +342,7 @@ works with any (sparse) feature matrix,
 using it on tf–idf matrices is recommended over raw frequency counts
 in an LSA/document processing setting.
 In particular, sublinear scaling and inverse document frequency
-should be turned on (``sublinear_tf=True, use_idf=True``)
+should be turned on (`sublinear_tf=True, use_idf=True`)
 to bring the feature values closer to a Gaussian distribution,
 compensating for LSA's erroneous assumptions about textual data.
 
@@ -371,11 +371,11 @@ Sparse coding with a precomputed dictionary
 The :class:`SparseCoder` object is an estimator that can be used to transform signals
 into sparse linear combination of atoms from a fixed, precomputed dictionary
 such as a discrete wavelet basis. This object therefore does not
-implement a ``fit`` method. The transformation amounts
+implement a `fit` method. The transformation amounts
 to a sparse coding problem: finding a representation of the data as a linear
 combination of as few dictionary atoms as possible. All variations of
 dictionary learning implement the following transform methods, controllable via
-the ``transform_method`` initialization parameter:
+the `transform_method` initialization parameter:
 
 * Orthogonal matching pursuit (:ref:`omp`)
 
@@ -392,17 +392,17 @@ They have been shown useful in literature for classification tasks. For image
 reconstruction tasks, orthogonal matching pursuit yields the most accurate,
 unbiased reconstruction.
 
-The dictionary learning objects offer, via the ``split_code`` parameter, the
+The dictionary learning objects offer, via the `split_code` parameter, the
 possibility to separate the positive and negative values in the results of
 sparse coding. This is useful when dictionary learning is used for extracting
 features that will be used for supervised learning, because it allows the
 learning algorithm to assign different weights to negative loadings of a
 particular atom, from to the corresponding positive loading.
 
-The split code for a single sample has length ``2 * n_components``
+The split code for a single sample has length `2 * n_components`
 and is constructed using the following rule: First, the regular code of length
-``n_components`` is computed. Then, the first ``n_components`` entries of the
-``split_code`` are
+`n_components` is computed. Then, the first `n_components` entries of the
+`split_code` are
 filled with the positive part of the regular code vector. The second half of
 the split code is filled with the negative part of the code vector, only with
 a positive sign. Therefore, the split_code is non-negative.
@@ -513,7 +513,7 @@ mini-batches and optimizes in an online manner by cycling over the mini-batches
 for the specified number of iterations. However, at the moment it does not
 implement a stopping condition.
 
-The estimator also implements ``partial_fit``, which updates the dictionary by
+The estimator also implements `partial_fit`, which updates the dictionary by
 iterating only once over a mini-batch. This can be used for online learning
 when the data is not readily available from the start, or for when the data
 does not fit into the memory.
@@ -531,7 +531,7 @@ does not fit into the memory.
    (e.g. for sparse coding) clustering can be a good proxy to learn the
    dictionary. For instance the :class:`MiniBatchKMeans` estimator is
    computationally efficient and implements on-line learning with a
-   ``partial_fit`` method.
+   `partial_fit` method.
 
     Example: :ref:`sphx_glr_auto_examples_cluster_plot_dict_face_patches.py`
 
@@ -729,7 +729,7 @@ NNDSVDar should be preferred.
 
 :class:`NMF` can also be initialized with correctly scaled random non-negative
 matrices by setting :attr:`init="random"`. An integer seed or a
-``RandomState`` can also be passed to :attr:`random_state` to control
+`RandomState` can also be passed to :attr:`random_state` to control
 reproducibility.
 
 In :class:`NMF`, L1 and L2 priors can be added to the loss function in order
@@ -806,9 +806,9 @@ The 'cd' solver can only optimize the Frobenius norm. Due to the
 underlying non-convexity of NMF, the different solvers may converge to
 different minima, even when optimizing the same distance function.
 
-NMF is best used with the ``fit_transform`` method, which returns the matrix W.
-The matrix H is stored into the fitted model in the ``components_`` attribute;
-the method ``transform`` will decompose a new matrix X_new based on these
+NMF is best used with the `fit_transform` method, which returns the matrix W.
+The matrix H is stored into the fitted model in the `components_` attribute;
+the method `transform` will decompose a new matrix X_new based on these
 stored components::
 
     >>> import numpy as np
@@ -936,9 +936,9 @@ points.
 When :class:`LatentDirichletAllocation` is applied on a "document-term" matrix, the matrix
 will be decomposed into a "topic-term" matrix and a "document-topic" matrix. While
 "topic-term" matrix is stored as :attr:`components_` in the model, "document-topic" matrix
-can be calculated from ``transform`` method.
+can be calculated from `transform` method.
 
-:class:`LatentDirichletAllocation` also implements ``partial_fit`` method. This is used
+:class:`LatentDirichletAllocation` also implements `partial_fit` method. This is used
 when data can be fetched sequentially.
 
 .. topic:: Examples:

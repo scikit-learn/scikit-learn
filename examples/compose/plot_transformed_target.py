@@ -43,7 +43,7 @@ else:
     density_param = {'normed': True}
 
 ###############################################################################
-# A synthetic random regression problem is generated. The targets ``y`` are
+# A synthetic random regression problem is generated. The targets `y` are
 # modified by: (i) translating all targets such that all entries are
 # non-negative and (ii) applying an exponential function to obtain non-linear
 # targets which cannot be fitted using a simple linear model.
