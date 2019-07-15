@@ -1286,7 +1286,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         - 'newton-cg', 'lbfgs', 'sag' and 'saga' handle L2 or no penalty
         - 'liblinear' and 'saga' also handle L1 penalty
         - 'saga' also supports 'elasticnet' penalty
-        - 'liblinear' does not support setting `penalty=None`
+        - 'liblinear' does not support setting ``penalty='None'``
 
         Note that 'sag' and 'saga' fast convergence is only guaranteed on
         features with approximately the same scale. You can
