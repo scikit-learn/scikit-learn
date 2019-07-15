@@ -455,7 +455,7 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
     If ``needs_proba is False`` and ``needs_threshold is False``, the score
     function is supposed to accept the output of ``predict``. If
     ``needs_proba is True``, the score function is supposed to accept the
-    output of ``predict_proba``(For binary y_true, the score function is
+    output of ``predict_proba`` (For binary y_true, the score function is
     supposed to accept probability of the positive class). If
     ``needs_threshold is True``, the score function is supposed to accept the
     output of ``decision_function``.
