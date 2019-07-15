@@ -36,9 +36,8 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 
 np.random.seed(0)
 
-# Read data from Titanic dataset.
-titanic = fetch_openml(data_id=40945, as_frame=True)
-X, y = titanic.data, titanic.target
+# Load data from https://www.openml.org/d/40945
+X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True)
 
 # Alternatively X and y can be obtained directly from the frame attribute:
 # X = titanic.frame.drop('survived', axis=1)

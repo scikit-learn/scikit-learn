@@ -111,6 +111,13 @@ This is a bug-fix release to primarily resolve some packaging issues in version
 Changelog
 ---------
 
+:mod:`sklearn.inspection`
+.........................
+
+- |Fix| Fixed a bug in :func:`inspection.partial_dependence` to only check
+  classifier and not regressor for the multiclass-multioutput case.
+  :pr:`14309` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -225,6 +232,11 @@ Support for Python 3.4 and below has been officially dropped.
 - |Enhancement| Allow n-dimensional arrays as input for
   `calibration.CalibratedClassifierCV`. :pr:`13485` by
   :user:`William de Vazelhes <wdevazelhes>`.
+
+- |Fix| Fixed a bug that made `calibration.CalibratedClassifierCV` fail when
+  given a `sample_weight` parameter of type `list` (in the case where
+  `sample_weights` are not supported by the wrapped estimator). :issue:`1375`
+  by :user:`William de Vazelhes <wdevazelhes>`.
 
 :mod:`sklearn.cluster`
 ......................
