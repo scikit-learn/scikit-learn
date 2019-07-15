@@ -4,6 +4,7 @@ from numpy.testing import assert_allclose
 from sklearn.datasets import make_classification, make_regression
 from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler
 from sklearn.model_selection import train_test_split
+from sklearn.base import clone
 
 # To use this experimental feature, we need to explicitly ask for it:
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
@@ -284,38 +285,57 @@ def test_missing_values_minmax_imputation():
     # Compare the buit-in missing value handling of Histogram GBC with an
     # a-priori missing value imputation strategy that should yield the same
     # results in terms of decision function.
+    #
+    # Assuming the data is such that there is never a tie to select the best
+    # feature to split on during training, the learned decision trees should be
+    # strictly equivalent (learn a sequence of splits that encode the same
+    # decision function).
     rng = np.random.RandomState(42)
-    X, y = make_regression(n_samples=int(1e3), n_features=4, random_state=rng)
+    X, y = make_regression(n_samples=int(1e4), n_features=4, random_state=rng)
 
     # Pre-bin the data to ensure a deterministic handling by the 2 strategies
     # and also make it easier to insert np.nan in a structured way:
     X = KBinsDiscretizer(n_bins=42, encode="ordinal").fit_transform(X)
 
     # First feature has missing values completely at random:
-    rnd_mask = rng.rand(X.shape[0]) > 0.6
+    rnd_mask = rng.rand(X.shape[0]) > 0.9
     X[rnd_mask, 0] = np.nan
 
     # Second and third features have missing values for extreme values
     # (censoring missingness).
-    low_mask = X[:, 1] <= 3
+    low_mask = X[:, 1] == 0
     X[low_mask, 1] = np.nan
 
-    high_mask = X[:, 2] >= 40
+    high_mask = X[:, 2] == X[:, 2].max()
     X[high_mask, 2] = np.nan
 
     # Last feature has a missing pattern that is highly predictive of the
     # target variable
-    target_mask = y > 0
+    target_mask = y > np.percentile(y, 90)
     X[target_mask, 3] = np.nan
 
+    # Check that there is at least one missing value in each feature:
+    for feature_idx in range(X.shape[1]):
+        assert any(np.isnan(X[:, feature_idx]))
+
+    # Let's use a test set to check that the learned decision function is the
+    # same as evaluated on unseen data. Otherwise it could just be the case
+    # that we find two independent ways to overfit the training set.
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
 
-    builtin_gbm = HistGradientBoostingRegressor(max_iter=10, random_state=0)
+    # Use a small number of leaf nodes and iterations so as to keep
+    # under-fitting models to minimize the likelihood of ties when training the
+    # model.
+    builtin_gbm = HistGradientBoostingRegressor(max_iter=10,
+                                                max_leaf_nodes=5,
+                                                random_state=0)
     builtin_gbm.fit(X_train, y_train)
     y_builtin_predict_train = builtin_gbm.predict(X_train)
     y_builtin_predict_test = builtin_gbm.predict(X_test)
 
-    # Implement min-max feature imputation
+    # Implement min-max feature imputation: we use MinMaxScaler to easily
+    # extract the min and max values of non-missing numerical data for each
+    # feature.
     mm = MinMaxScaler().fit(X_train)
     X_train_min, X_train_max = X_train.copy(), X_train.copy()
     X_test_min, X_test_max = X_test.copy(), X_test.copy()
@@ -331,7 +351,7 @@ def test_missing_values_minmax_imputation():
     X_train_imputed = np.concatenate([X_train_min, X_train_max], axis=1)
     X_test_imputed = np.concatenate([X_test_min, X_test_max], axis=1)
 
-    imputed_gbm = HistGradientBoostingRegressor(max_iter=10, random_state=0)
+    imputed_gbm = clone(builtin_gbm)
     imputed_gbm.fit(X_train_imputed, y_train)
     y_imputed_predict_train = imputed_gbm.predict(X_train_imputed)
     y_imputed_predict_test = imputed_gbm.predict(X_test_imputed)
