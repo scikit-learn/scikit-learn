@@ -200,10 +200,11 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
             def obj_func(theta, eval_gradient=True):
                 if eval_gradient:
                     lml, grad = self.log_marginal_likelihood(
-                        theta, eval_gradient=True)
+                        theta, eval_gradient=True, clone_kernel=False)
                     return -lml, -grad
                 else:
-                    return -self.log_marginal_likelihood(theta)
+                    return -self.log_marginal_likelihood(theta,
+                                                         clone_kernel=False)
 
             # First optimize starting from theta specified in kernel
             optima = [self._constrained_optimization(obj_func,
@@ -303,7 +304,8 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
         return np.vstack((1 - pi_star, pi_star)).T
 
-    def log_marginal_likelihood(self, theta=None, eval_gradient=False):
+    def log_marginal_likelihood(self, theta=None, eval_gradient=False,
+                                clone_kernel=True):
         """Returns log-marginal likelihood of theta for training data.
 
         Parameters
@@ -317,6 +319,10 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
             If True, the gradient of the log-marginal likelihood with respect
             to the kernel hyperparameters at position theta is returned
             additionally. If True, theta must not be None.
+
+        clone_kernel : bool, default: True
+            If True, the kernel attribute is copied. Please specify False if
+            you want to make this method call faster.
 
         Returns
         -------
@@ -334,7 +340,11 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
                     "Gradient can only be evaluated for theta!=None")
             return self.log_marginal_likelihood_value_
 
-        kernel = self.kernel_.clone_with_theta(theta)
+        if clone_kernel:
+            kernel = self.kernel_.clone_with_theta(theta)
+        else:
+            kernel = self.kernel_
+            kernel.theta = theta
 
         if eval_gradient:
             K, K_gradient = kernel(self.X_train_, eval_gradient=True)
@@ -688,7 +698,8 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
                 [estimator.kernel_
                  for estimator in self.base_estimator_.estimators_])
 
-    def log_marginal_likelihood(self, theta=None, eval_gradient=False):
+    def log_marginal_likelihood(self, theta=None, eval_gradient=False,
+                                clone_kernel=True):
         """Returns log-marginal likelihood of theta for training data.
 
         In the case of multi-class classification, the mean log-marginal
@@ -709,6 +720,10 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
             to the kernel hyperparameters at position theta is returned
             additionally. Note that gradient computation is not supported
             for non-binary classification. If True, theta must not be None.
+
+        clone_kernel : bool, default: True
+            If True, the kernel attribute is copied. Please specify False if
+            you want to make this method call faster.
 
         Returns
         -------
@@ -731,7 +746,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         theta = np.asarray(theta)
         if self.n_classes_ == 2:
             return self.base_estimator_.log_marginal_likelihood(
-                theta, eval_gradient)
+                theta, eval_gradient, clone_kernel=clone_kernel)
         else:
             if eval_gradient:
                 raise NotImplementedError(
@@ -741,13 +756,15 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
             n_dims = estimators[0].kernel_.n_dims
             if theta.shape[0] == n_dims:  # use same theta for all sub-kernels
                 return np.mean(
-                    [estimator.log_marginal_likelihood(theta)
+                    [estimator.log_marginal_likelihood(
+                        theta, clone_kernel=clone_kernel)
                      for i, estimator in enumerate(estimators)])
             elif theta.shape[0] == n_dims * self.classes_.shape[0]:
                 # theta for compound kernel
                 return np.mean(
                     [estimator.log_marginal_likelihood(
-                        theta[n_dims * i:n_dims * (i + 1)])
+                        theta[n_dims * i:n_dims * (i + 1)],
+                        clone_kernel=clone_kernel)
                      for i, estimator in enumerate(estimators)])
             else:
                 raise ValueError("Shape of theta must be either %d or %d. "
