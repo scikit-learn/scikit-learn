@@ -104,6 +104,7 @@ def _yield_checks(name, estimator):
     # Test that estimators can be pickled, and once pickled
     # give the same answer as before.
     yield check_estimators_pickle
+    yield check_constant_features
 
 
 def _yield_classifier_checks(name, classifier):
@@ -130,8 +131,6 @@ def _yield_classifier_checks(name, classifier):
     yield check_non_transformer_estimators_n_iter
     # test if predict_proba is a monotonic transformation of decision_function
     yield check_decision_proba_consistency
-    yield check_constant_features
-
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
@@ -179,7 +178,6 @@ def check_constant_features(name, estimator_orig):
     estimator.fit(X, y)
 
 
-
 def _yield_regressor_checks(name, regressor):
     tags = _safe_tags(regressor)
     # TODO: test with intercept
@@ -199,7 +197,6 @@ def _yield_regressor_checks(name, regressor):
     if tags["requires_fit"]:
         yield check_estimators_unfitted
     yield check_non_transformer_estimators_n_iter
-    yield check_constant_features
 
 
 def _yield_transformer_checks(name, transformer):
