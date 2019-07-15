@@ -858,7 +858,7 @@ def test_check_scalar_invalid(x, target_name, target_type, min_val, max_val,
 
 
 def test_check_sample_weight():
-    # check order="C" parameter
+    # check array order
     sample_weight = np.ones(10)[::2]
     assert not sample_weight.flags["C_CONTIGUOUS"]
     sample_weight = _check_sample_weight(sample_weight, X=np.ones((5, 1)))

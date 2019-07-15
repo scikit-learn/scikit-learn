@@ -827,7 +827,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     # and check length
     # Otherwise set them to 1 for all examples
     sample_weight = _check_sample_weight(sample_weight, X,
-                                         dtype=X.dtype, order='C')
+                                         dtype=X.dtype)
 
     # If class_weights is a dict (provided by the user), the weights
     # are assigned to the original labels. If it is "balanced", then
