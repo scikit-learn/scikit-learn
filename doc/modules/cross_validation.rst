@@ -806,7 +806,7 @@ Example of 3-split time series cross-validation on a dataset with 10 samples::
   >>> y = np.arange(10)
   >>> wf = WalkForward(n_splits=3, test_size=.25, gap_size=.2)
   >>> print(wf)
-  WalkForward(expanding=False, gap_size=0.25, n_splits=3, test_size=0.25)
+  WalkForward(expanding=False, gap_size=0.2, n_splits=3, test_size=0.25)
   >>> for train_index, test_index in wf.split(X):
   ...    print("TRAIN:", train_index, "TEST:", test_index)
   ...    X_train, X_test = X[train_index], X[test_index]
