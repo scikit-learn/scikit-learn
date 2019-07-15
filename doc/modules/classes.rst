@@ -1058,6 +1058,7 @@ Splitter Classes
    model_selection.StratifiedKFold
    model_selection.StratifiedShuffleSplit
    model_selection.TimeSeriesSplit
+   model_selection.WalkForward
 
 Splitter Functions
 ------------------

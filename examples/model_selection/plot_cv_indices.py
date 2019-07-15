@@ -13,7 +13,8 @@ for comparison.
 
 from sklearn.model_selection import (TimeSeriesSplit, KFold, ShuffleSplit,
                                      StratifiedKFold, GroupShuffleSplit,
-                                     GroupKFold, StratifiedShuffleSplit)
+                                     GroupKFold, StratifiedShuffleSplit,
+                                     WalkForward)
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
@@ -133,7 +134,10 @@ plot_cv_indices(cv, X, y, groups, ax, n_splits)
 # Note how some use the group/class information while others do not.
 
 cvs = [KFold, GroupKFold, ShuffleSplit, StratifiedKFold,
-       GroupShuffleSplit, StratifiedShuffleSplit, TimeSeriesSplit]
+       GroupShuffleSplit, StratifiedShuffleSplit, TimeSeriesSplit,
+
+       lambda n_splits: WalkForward(n_splits, test_size=0.25, gap_size=0.1),
+       lambda n_splits: WalkForward(n_splits, test_size=0.25, gap_size=0.1, expanding=True)]
 
 
 for cv in cvs:
@@ -146,4 +150,6 @@ for cv in cvs:
     # Make the legend fit
     plt.tight_layout()
     fig.subplots_adjust(right=.7)
+
+
 plt.show()

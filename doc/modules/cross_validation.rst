@@ -749,6 +749,10 @@ to evaluate our model for time series data on the "future" observations
 least like those that are used to train the model. To achieve this, one
 solution is provided by :class:`TimeSeriesSplit`.
 
+Another class for cross validation of time series is :class:`WalkForward`.
+This class is able to control the size of the test set as well as the size
+of the gap (between the training set and the test set) relative to the entire split.
+
 
 Time Series Split
 ^^^^^^^^^^^^^^^^^
@@ -784,6 +788,42 @@ Here is a visualization of the cross-validation behavior.
    :target: ../auto_examples/model_selection/plot_cv_indices.html
    :align: center
    :scale: 75%
+
+
+Walk forward
+^^^^^^^^^^^^
+
+:class:`TimeSeriesSplit` provides train/test indices to split time series data samples
+that are observed at fixed time intervals, in train/test sets with unique test set for each split.
+Cross-validator support gap between test and train set(by default it size is 0).
+Shuffling in cross validator is inappropriate, because the next train set contains current test set.
+
+Example of 3-split time series cross-validation on a dataset with 10 samples::
+
+  >>> import numpy as np
+  >>> from sklearn.model_selection import WalkForward
+  >>> X = np.arange(10)
+  >>> y = np.arange(10)
+  >>> wf = WalkForward(n_splits=3, test_size=.25, gap_size=.2)
+  >>> print(wf)
+  WalkForward(expanding=False, gap_size=0.25, n_splits=3, test_size=0.25)
+  >>> for train_index, test_index in wf.split(X):
+  ...    print("TRAIN:", train_index, "TEST:", test_index)
+  ...    X_train, X_test = X[train_index], X[test_index]
+  ...    y_train, y_test = y[train_index], y[test_index]
+  TRAIN: [0 1 2] TEST: [4 5]
+  TRAIN: [2 3 4] TEST: [6 7]
+  TRAIN: [4 5 6] TEST: [8 9]
+  >>> wfe = WalkForward(n_splits=3, test_size=.25, gap_size=.2, expanding=True)
+  >>> print(wfe)
+  WalkForward(expanding=True, gap_size=0.2, n_splits=3, test_size=0.25)
+  >>> for train_index, test_index in wfe.split(X):
+  ...    print("TRAIN:", train_index, "TEST:", test_index)
+  ...    X_train, X_test = X[train_index], X[test_index]
+  ...    y_train, y_test = y[train_index], y[test_index]
+  TRAIN: [0 1 2] TEST: [4 5]
+  TRAIN: [0 1 2 3 4] TEST: [6 7]
+  TRAIN: [0 1 2 3 4 5 6] TEST: [8 9]
 
 A note on shuffling
 ===================

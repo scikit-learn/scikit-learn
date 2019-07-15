@@ -36,6 +36,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RepeatedKFold
 from sklearn.model_selection import RepeatedStratifiedKFold
+from sklearn.model_selection import WalkForward
 
 from sklearn.linear_model import Ridge
 
@@ -1538,3 +1539,76 @@ def test_leave_p_out_empty_trainset():
             ValueError,
             match='p=2 must be strictly less than the number of samples=2'):
         next(cv.split(X, y, groups=[1, 2]))
+
+
+@pytest.fixture
+def walk_forward_cv():
+    return WalkForward(
+        n_splits=10,
+        test_size=0.3
+    )
+
+
+def test_walkforward_init(walk_forward_cv):
+    assert walk_forward_cv.n_splits is not None
+    assert walk_forward_cv.test_size is not None
+    assert walk_forward_cv.gap_size is not None
+    assert walk_forward_cv.expanding is not None
+
+
+@pytest.mark.parametrize(
+    "test_size, gap_size",
+    [
+        (0, 0.5),
+        (0.5, 0.5),
+        (0, 0),
+        (1, 1),
+    ]
+)
+def test_walkforward_init_wrong_sizes(test_size, gap_size):
+    with pytest.raises(ValueError):
+        WalkForward(
+            10,
+            test_size=test_size,
+            gap_size=gap_size
+        )
+
+
+def test_walkforward_get_n_split(walk_forward_cv):
+    assert walk_forward_cv.n_splits == walk_forward_cv.get_n_splits()
+
+
+@pytest.mark.parametrize(
+    "expanding",
+    [True, False]
+)
+def test_walkforward_split_expanding(
+        expanding, n_splits=10, test_X=range(100)):
+    cv = WalkForward(
+        n_splits=n_splits,
+        test_size=0.3,
+        expanding=expanding
+    )
+
+    splits = list(cv.split(test_X))
+    assert len(splits) == n_splits
+    assert splits[-1][-1][-1] == 99
+
+    if expanding:
+        assert all(split[0][0] == 0 for split in splits)
+    else:
+        assert splits[0][0][0] == 0
+        assert all(split[0][0] != 0 for split in splits[1:])
+
+
+def test_walkforward_split_not_enough_data(walk_forward_cv):
+    with pytest.raises(ValueError):
+        list(walk_forward_cv.split([]))
+
+
+def test_walkforward_split_to_many_splits():
+    with pytest.raises(ValueError):
+        cv = WalkForward(20, gap_size=0.3, test_size=0.5)
+        list(
+            cv.split(np.arange(25))
+        )

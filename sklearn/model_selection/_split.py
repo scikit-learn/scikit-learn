@@ -41,6 +41,7 @@ __all__ = ['BaseCrossValidator',
            'StratifiedKFold',
            'StratifiedShuffleSplit',
            'PredefinedSplit',
+           'WalkForward',
            'train_test_split',
            'check_cv']
 
@@ -1860,6 +1861,189 @@ class PredefinedSplit(BaseCrossValidator):
             Returns the number of splitting iterations in the cross-validator.
         """
         return len(self.unique_folds)
+
+
+class WalkForward(BaseCrossValidator):
+    """Walk forward cross-validator
+
+    Provides train/test indices to split time series data samples
+    that are observed at fixed time intervals, in train/test sets
+    with unique test set for each split. Cross-validator support gap
+    between test and train set(by default it size is 0).
+    Shuffling in cross validator is inappropriate,
+    because the next train set contains current test set.
+
+    Parameters
+    ----------
+    n_splits : int
+        Number of splits. Must be at least 1.
+
+    test_size : float
+        Size of test set.
+
+    gap_size : float, default=0.0
+        Size of gap between train set and test set
+
+    expanding : bool, default=False
+        If expanding is True then a train set contains
+        all previous data (train_set[:gap_start]).
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.model_selection import WalkForward
+    >>> X = np.arange(10)
+    >>> y = np.arange(10)
+    >>> wf = WalkForward(n_splits=3, test_size=.25, gap_size=.2)
+    >>> print(wf)
+    WalkForward(expanding=False, gap_size=0.25, n_splits=3, test_size=0.25)
+    >>> for train_index, test_index in wf.split(X):
+    ...    print("TRAIN:", train_index, "TEST:", test_index)
+    ...    X_train, X_test = X[train_index], X[test_index]
+    ...    y_train, y_test = y[train_index], y[test_index]
+    TRAIN: [0 1 2] TEST: [4 5]
+    TRAIN: [2 3 4] TEST: [6 7]
+    TRAIN: [4 5 6] TEST: [8 9]
+    >>> wfe = WalkForward(n_splits=3, test_size=.25,
+    ... gap_size=.2, expanding=True)
+    >>> print(wfe)
+    WalkForward(expanding=True, gap_size=0.2, n_splits=3, test_size=0.25)
+    >>> for train_index, test_index in wfe.split(X):
+    ...    print("TRAIN:", train_index, "TEST:", test_index)
+    ...    X_train, X_test = X[train_index], X[test_index]
+    ...    y_train, y_test = y[train_index], y[test_index]
+    TRAIN: [0 1 2] TEST: [4 5]
+    TRAIN: [0 1 2 3 4] TEST: [6 7]
+    TRAIN: [0 1 2 3 4 5 6] TEST: [8 9]
+    """
+    def __init__(self, n_splits, test_size, gap_size=.0, expanding=False):
+        if not (test_size > 0 and 0 < gap_size + test_size < 1):
+            raise ValueError("Not enough train part")
+
+        self.n_splits = int(n_splits)
+        self.test_size = test_size
+        self.gap_size = gap_size
+        self.expanding = expanding
+
+    def get_n_splits(self, X=None, y=None, groups=None):
+        """Returns the number of splitting iterations in the cross-validator
+
+        Parameters
+        ----------
+        X : object
+            Always ignored, exists for compatibility.
+
+        y : object
+            Always ignored, exists for compatibility.
+
+        groups : object
+            Always ignored, exists for compatibility.
+
+        Returns
+        -------
+        n_splits : int
+            Returns the number of splitting iterations in the cross-validator.
+                """
+        return self.n_splits
+
+    @staticmethod
+    def get_n_wf_split(n_samples, offset_pct, n_splits):
+        """Calculate observable data in split
+
+        Parameters
+        ----------
+        n_samples : int
+            Data size.
+
+        offset_pct : float
+            The percentage of non-overlapping data in each split.
+
+        n_splits : int
+            Number of splits.
+        """
+        a = offset_pct * (n_splits - 1)
+        return (n_samples / a) / (1.0 + 1.0 / a)
+
+    def split(self, X, y=None, groups=None):
+        """Generate indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like, shape (n_samples,), optional
+            The target variable for supervised learning problems.
+
+        groups : array-like, with shape (n_samples,)
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
+
+        Yields
+        ------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+        """
+        X, y, groups = indexable(X, y, groups)
+        n_samples = _num_samples(X)
+        if self.n_splits > n_samples:
+            raise ValueError(
+                f"Cannot have number of splits "
+                f"n_splits={self.n_splits} greater"
+                f" than the number of samples: n_samples={n_samples}."
+            )
+
+        indices = np.arange(n_samples)
+
+        if self.n_splits == 1:
+            n_wf_split = n_samples
+        else:
+            n_wf_split = self.get_n_wf_split(
+                n_samples, self.test_size, self.n_splits
+            )
+
+        raw_n_test = n_wf_split * self.test_size
+        raw_n_gap = n_wf_split * self.gap_size
+        raw_n_train = n_wf_split - raw_n_test - raw_n_gap
+
+        n_test = int(raw_n_test)
+        n_gap = int(raw_n_gap)
+        n_train = int(raw_n_train)
+
+        if not n_test or not n_train:
+            raise ValueError(
+                f"Couldn't build splits(n_train={n_train}, n_test={n_test}). "
+                f"Set less n_splits or provide much data"
+            )
+
+        rest = n_samples - int(n_wf_split) - (n_test * (self.n_splits - 1))
+
+        train_start = 0
+        for split_number in range(1, self.n_splits + 1):
+            train_end = train_start + n_train
+            test_start = train_end + n_gap
+
+            additional_train_start = 0
+            if split_number == self.n_splits:
+                test_end = n_samples
+            else:
+                test_end = test_start + n_test
+                if rest:
+                    test_end += 1
+                    rest -= 1
+                    additional_train_start = 1
+
+            train_set_slice_start = 0 if self.expanding else train_start
+            train_split = indices[train_set_slice_start:train_end]
+            test_split = indices[test_start:test_end]
+
+            yield train_split, test_split
+
+            train_start = train_start + n_test + additional_train_start
 
 
 class _CVIterableWrapper(BaseCrossValidator):
