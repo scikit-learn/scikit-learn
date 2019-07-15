@@ -321,7 +321,7 @@ def test_missing_values_minmax_imputation():
     # Use a small number of leaf nodes and iterations so as to keep
     # under-fitting models to minimize the likelihood of ties when training the
     # model.
-    builtin_gbm = HistGradientBoostingRegressor(max_iter=10,
+    builtin_gbm = HistGradientBoostingRegressor(max_iter=1,
                                                 max_leaf_nodes=5,
                                                 random_state=0)
     builtin_gbm.fit(X_train, y_train)
