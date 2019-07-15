@@ -1422,8 +1422,8 @@ class MiniBatchKMeans(KMeans):
     >>> kmeans = kmeans.partial_fit(X[0:6,:])
     >>> kmeans = kmeans.partial_fit(X[6:12,:])
     >>> kmeans.cluster_centers_
-    array([[1, 1],
-           [3, 4]])
+    array([[2. , 1. ],
+           [3.5, 4.5]])
     >>> kmeans.predict([[0, 0], [4, 4]])
     array([0, 1], dtype=int32)
     >>> # fit on the whole data
@@ -1667,7 +1667,8 @@ class MiniBatchKMeans(KMeans):
 
         """
 
-        X = check_array(X, accept_sparse="csr", order="C")
+        X = check_array(X, accept_sparse="csr", order="C",
+                        dtype=[np.float64, np.float32])
         n_samples, n_features = X.shape
         if hasattr(self.init, '__array__'):
             self.init = np.ascontiguousarray(self.init, dtype=X.dtype)
