@@ -81,6 +81,26 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
         Doesn't affect :meth:`fit` method.
+        
+    Attributes
+    ----------
+    classes_ : array of shape = (n_classes,)
+        Class labels known to the classifier
+        
+    effective_metric_ : string or callble
+        The distance metric to use. It will be same as
+        the `metric` parameter or a synonym of it, e.g.
+        'euclidean' if the `metric` parameter set to
+        'minkowski' and `p` parameter set to 2.
+        
+    effective_metric_params_ : dict
+        Additional keyword arguments for the metric function.
+        For most metrics will be same with `metric_params`
+        parameter, but may also contain the `p` parameter value
+        if the `effective_metric_` attribute is set to
+        'minkowski'. 
+        
+    outputs_2d_ : array of shape = (n_samples,1) or (n_samples,) 
 
     Examples
     --------
@@ -295,6 +315,26 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+        
+    Attributes
+    ----------
+    classes_ : array of shape = (n_classes,)
+        Class labels known to the classifier.
+        
+    effective_metric_ : string or callble
+        The distance metric to use. It will be same as
+        the `metric` parameter or a synonym of it, e.g.
+        'euclidean' if the `metric` parameter set to
+        'minkowski' and `p` parameter set to 2.
+        
+    effective_metric_params_ : dict
+        Additional keyword arguments for the metric function.
+        For most metrics will be same with `metric_params`
+        parameter, but may also contain the `p` parameter value
+        if the `effective_metric_` attribute is set to
+        'minkowski'.    
+        
+    outputs_2d_ : array of shape = (n_samples,1) or (n_samples,)    
 
     Examples
     --------
