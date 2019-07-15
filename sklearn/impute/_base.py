@@ -585,6 +585,34 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
                              "array instead.")
 
         return X
+    def _fit(self, X, y=None):
+        """Fit the transformer on X.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Input data, where ``n_samples`` is the number of samples and
+            ``n_features`` is the number of features.
+
+        Returns
+        -------
+        self : object
+            Returns missing_features_information.
+        """
+        X = self._validate_input(X)
+        self._n_features = X.shape[1]
+
+        if self.features not in ('missing-only', 'all'):
+            raise ValueError("'features' has to be either 'missing-only' or "
+                             "'all'. Got {} instead.".format(self.features))
+
+        if not ((isinstance(self.sparse, str) and
+                self.sparse == "auto") or isinstance(self.sparse, bool)):
+            raise ValueError("'sparse' has to be a boolean or 'auto'. "
+                             "Got {!r} instead.".format(self.sparse))
+
+        return self._get_missing_features_info(X)
+
 
     def fit(self, X, y=None):
         """Fit the transformer on X.
@@ -600,20 +628,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         self : object
             Returns self.
         """
-        X = self._validate_input(X)
-        self._n_features = X.shape[1]
-
-        if self.features not in ('missing-only', 'all'):
-            raise ValueError("'features' has to be either 'missing-only' or "
-                             "'all'. Got {} instead.".format(self.features))
-
-        if not ((isinstance(self.sparse, str) and
-                self.sparse == "auto") or isinstance(self.sparse, bool)):
-            raise ValueError("'sparse' has to be a boolean or 'auto'. "
-                             "Got {!r} instead.".format(self.sparse))
-
-        self.__missing_features_info = self._get_missing_features_info(X)
-        self.features_ = self.__missing_features_info[1]
+        self.features_ = self._fit(X, y)[1]
 
         return self
 
@@ -668,12 +683,8 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
             will be boolean.
 
         """
-
-        """fit"""
-        self.fit(X, y)
-
-        """transform"""
-        imputer_mask, features = self.__missing_features_info
+        imputer_mask, features = self._fit(X, y)
+        self.features_ = features
 
         if (self.features == "missing-only") and \
                 (self.features_.size < self._n_features):
