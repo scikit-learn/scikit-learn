@@ -281,7 +281,8 @@ def test_small_trainset():
     assert small_distrib == pytest.approx(original_distrib)
 
 
-def test_missing_values_minmax_imputation():
+@pytest.mark.parametrize('seed', range(100))
+def test_missing_values_minmax_imputation(seed=0):
     # Compare the buit-in missing value handling of Histogram GBC with an
     # a-priori missing value imputation strategy that should yield the same
     # results in terms of decision function.
@@ -290,8 +291,8 @@ def test_missing_values_minmax_imputation():
     # feature to split on during training, the learned decision trees should be
     # strictly equivalent (learn a sequence of splits that encode the same
     # decision function).
-    rng = np.random.RandomState(42)
-    X, y = make_regression(n_samples=int(1e4), n_features=4, random_state=rng)
+    rng = np.random.RandomState(seed)
+    X, y = make_regression(n_samples=int(1e4), n_features=3, random_state=rng)
 
     # Pre-bin the data to ensure a deterministic handling by the 2 strategies
     # and also make it easier to insert np.nan in a structured way:
@@ -308,11 +309,6 @@ def test_missing_values_minmax_imputation():
 
     high_mask = X[:, 2] == X[:, 2].max()
     X[high_mask, 2] = np.nan
-
-    # Last feature has a missing pattern that is highly predictive of the
-    # target variable
-    target_mask = y > np.percentile(y, 90)
-    X[target_mask, 3] = np.nan
 
     # Check that there is at least one missing value in each feature:
     for feature_idx in range(X.shape[1]):
