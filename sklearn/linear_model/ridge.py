@@ -429,7 +429,7 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                          " %d != %d" % (n_samples, n_samples_))
 
     if has_sw:
-        sample_weight = _check_sample_weight(sample_weight, X)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         if solver not in ['sag', 'saga']:
             # SAG supports sample_weight directly. For other solvers,
