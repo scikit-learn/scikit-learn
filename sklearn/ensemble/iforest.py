@@ -463,11 +463,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
                 _subsample_features=subsample_features)
             for i in range(n_jobs))
 
-        n_samples = X.shape[0]
-        depths = np.zeros(n_samples, order="f")
-
-        for result in par_results:
-            depths += result
+        depths = np.sum(par_results, axis=0)
 
         scores = 2 ** (-depths / (len(self.estimators_)
                                   * _average_path_length([self.max_samples_])))
