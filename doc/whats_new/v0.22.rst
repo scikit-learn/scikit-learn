@@ -43,6 +43,14 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.calibration`
+..........................
+
+- |Fix| Fixed a bug that made `calibration.CalibratedClassifierCV` fail when
+  given a `sample_weight` parameter of type `list` (in the case where
+  `sample_weights` are not supported by the wrapped estimator). :pr:`13575`
+  by :user:`William de Vazelhes <wdevazelhes>`.
+
 :mod:`sklearn.datasets`
 .......................
 
@@ -97,6 +105,11 @@ Changelog
   loss or score is now monitored on a class-wise stratified subsample to
   preserve the class balance of the original training set. :pr:`14194`
   by :user:`Johann Faouzi <johannfaouzi>`.
+
+- |Fix| :class:`ensemble.AdaBoostClassifier` computes probabilities based on
+  the decision function as in the literature. Thus, `predict` and
+  `predict_proba` give consistent results.
+  :pr:`14114` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.linear_model`
 ...........................

@@ -315,10 +315,12 @@ def test_fetch_openml_iris_pandas(monkeypatch):
     assert target.dtype == target_dtype
     assert target.shape == target_shape
     assert target.name == target_name
+    assert target.index.is_unique
 
     assert isinstance(frame, pd.DataFrame)
     assert frame.shape == frame_shape
     assert np.all(frame.dtypes == data_dtypes + [target_dtype])
+    assert frame.index.is_unique
 
 
 def test_fetch_openml_iris_pandas_equal_to_no_frame(monkeypatch):

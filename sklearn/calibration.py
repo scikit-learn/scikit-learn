@@ -18,7 +18,8 @@ from scipy.special import xlogy
 from scipy.optimize import fmin_bfgs
 from .preprocessing import LabelEncoder
 
-from .base import BaseEstimator, ClassifierMixin, RegressorMixin, clone
+from .base import (BaseEstimator, ClassifierMixin, RegressorMixin, clone,
+                   MetaEstimatorMixin)
 from .preprocessing import label_binarize, LabelBinarizer
 from .utils import check_X_y, check_array, indexable, column_or_1d
 from .utils.validation import check_is_fitted, check_consistent_length
@@ -27,7 +28,8 @@ from .svm import LinearSVC
 from .model_selection import check_cv
 
 
-class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
+class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
+                             MetaEstimatorMixin):
     """Probability calibration with isotonic regression or sigmoid.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -170,6 +172,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
                 warnings.warn("%s does not support sample_weight. Samples"
                               " weights are only used for the calibration"
                               " itself." % estimator_name)
+                sample_weight = check_array(sample_weight, ensure_2d=False)
                 base_estimator_sample_weight = None
             else:
                 if sample_weight is not None:
