@@ -81,13 +81,6 @@ def _tested_estimators():
         yield name, estimator
 
 
-def _generate_checks_per_estimator(check_generator, estimators):
-    with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
-        for name, estimator in estimators:
-            for check in check_generator(name, estimator):
-                yield estimator, check
-
-
 def _rename_partial(val):
     if isinstance(val, functools.partial):
         kwstring = "".join(["{}={}".format(k, v)
