@@ -176,6 +176,10 @@ Changelog
   NumPy array, SciPy sparse matrix, and Pandas DataFrame.
   :pr:`14035` by `Guillaume Lemaitre <glemaitre>`.
 
+- |Feature| :func:`utils.estimator_checks.check_estimator` can now generate
+  checks by setting `generate_only=True`. This allows libraries to call each
+  check separately in their test suite. :pr:`14381` by `Thomas Fan`_.
+
 :mod:`sklearn.neural_network`
 .............................
 
