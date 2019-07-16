@@ -80,16 +80,20 @@ def test_random_weights():
     assert_array_almost_equal(score.ravel(), w[:, :5].sum(1))
 
 
-@pytest.mark.parametrize('dtype', [np.int32, np.int64, np.float32, np.float64])
 @pytest.mark.parametrize('normalizer', ['auto', 'LU', 'QR'])
-@pytest.mark.parametrize('preconditioner', [None, 'lobpcg'])
+@pytest.mark.parametrize(
+    'dtype, preconditioner',
+    [(np.int32, None), (np.int64, None),  # no preconditioner
+     (np.float32, None), (np.float64, None), # no preconditioner
+     (np.float32, 'lobpcg'), (np.float64, 'lobpcg')]  # lobpcg preconditioner
+)
 def test_randomized_svd_low_rank(dtype, normalizer, preconditioner):
     # Check that extmath.randomized_svd is consistent with linalg.svd
     n_samples = 100
     n_features = 500
     rank = 5
     k = 10
-    decimal = 5 if dtype == np.float32 else 7
+    atol = 1e-3
     dtype = np.dtype(dtype)
 
     # generate a matrix X of approximate effective rank `rank` and no noise
@@ -127,11 +131,10 @@ def test_randomized_svd_low_rank(dtype, normalizer, preconditioner):
 
     # ensure that the singular values of both methods are equal up to the
     # real rank of the matrix
-    assert_almost_equal(s[:k], sa, decimal=decimal)
+    assert_allclose(s[:k], sa, atol=atol)
 
     # check the singular vectors too (while not checking the sign)
-    assert_almost_equal(np.dot(U[:, :k], V[:k, :]), np.dot(Ua, Va),
-                        decimal=decimal)
+    assert_allclose(np.dot(U[:, :k], V[:k, :]), np.dot(Ua, Va), atol=atol)
 
     # check the sparse matrix representation
     X = sparse.csr_matrix(X)
@@ -150,7 +153,16 @@ def test_randomized_svd_low_rank(dtype, normalizer, preconditioner):
         assert sa.dtype.kind == 'f'
         assert Va.dtype.kind == 'f'
 
-    assert_almost_equal(s[:rank], sa[:rank], decimal=decimal)
+    assert_allclose(s[:rank], sa[:rank], atol=atol)
+
+
+@pytest.mark.parametrize("dtype", [np.int32, np.int64])
+def test_randomized_svd_error_dtype(dtype):
+    rng = np.random.RandomState(0)
+    X = rng.randint(0, 1000, size=(100, 500), dtype=dtype)
+    err_msg = 'LOBPCG preconditioner is only supported for floating point'
+    with pytest.raises(ValueError, match=err_msg):
+        randomized_svd(X, n_components=5, preconditioner='lobpcg')
 
 
 @pytest.mark.parametrize('dtype',
