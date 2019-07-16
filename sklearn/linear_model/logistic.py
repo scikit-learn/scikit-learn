@@ -16,6 +16,7 @@ import warnings
 import numpy as np
 from scipy import optimize, sparse
 from scipy.special import expit
+from joblib import Parallel, delayed, effective_n_jobs
 
 from .base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from .sag import sag_solver
@@ -27,13 +28,12 @@ from ..utils.extmath import (log_logistic, safe_sparse_dot, softmax,
                              squared_norm)
 from ..utils.extmath import row_norms
 from ..utils.fixes import logsumexp
-from ..utils.optimize import newton_cg
+from ..utils.optimize import newton_cg, _check_optimize_result
 from ..utils.validation import check_X_y
 from ..utils.validation import check_is_fitted
 from ..utils import deprecated
-from ..exceptions import (ConvergenceWarning, ChangedBehaviorWarning)
+from ..exceptions import ChangedBehaviorWarning
 from ..utils.multiclass import check_classification_targets
-from ..utils._joblib import Parallel, delayed, effective_n_jobs
 from ..utils.fixes import _joblib_parallel_args
 from ..model_selection import check_cv
 from ..metrics import get_scorer
@@ -899,7 +899,8 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                 w0[:, :coef.shape[1]] = coef
 
     if multi_class == 'multinomial':
-        # fmin_l_bfgs_b and newton-cg accepts only ravelled parameters.
+        # scipy.optimize.minimize and newton-cg accepts only
+        # ravelled parameters.
         if solver in ['lbfgs', 'newton-cg']:
             w0 = w0.ravel()
         target = Y_multi
@@ -926,16 +927,13 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         if solver == 'lbfgs':
             iprint = [-1, 50, 1, 100, 101][
                 np.searchsorted(np.array([0, 1, 2, 3]), verbose)]
-            w0, loss, info = optimize.fmin_l_bfgs_b(
-                func, w0, fprime=None,
+            opt_res = optimize.minimize(
+                func, w0, method="L-BFGS-B", jac=True,
                 args=(X, target, 1. / C, sample_weight),
-                iprint=iprint, pgtol=tol, maxiter=max_iter)
-            if info["warnflag"] == 1:
-                warnings.warn("lbfgs failed to converge. Increase the number "
-                              "of iterations.", ConvergenceWarning)
-            # In scipy <= 1.0.0, nit may exceed maxiter.
-            # See https://github.com/scipy/scipy/issues/7854.
-            n_iter_i = min(info['nit'], max_iter)
+                options={"iprint": iprint, "gtol": tol, "maxiter": max_iter}
+            )
+            n_iter_i = _check_optimize_result(solver, opt_res, max_iter)
+            w0, loss = opt_res.x, opt_res.fun
         elif solver == 'newton-cg':
             args = (X, target, 1. / C, sample_weight)
             w0, n_iter_i = newton_cg(hess, func, grad, w0, args=args,
@@ -1288,7 +1286,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         - 'newton-cg', 'lbfgs', 'sag' and 'saga' handle L2 or no penalty
         - 'liblinear' and 'saga' also handle L1 penalty
         - 'saga' also supports 'elasticnet' penalty
-        - 'liblinear' does not handle no penalty
+        - 'liblinear' does not support setting ``penalty='none'``
 
         Note that 'sag' and 'saga' fast convergence is only guaranteed on
         features with approximately the same scale. You can
@@ -1409,6 +1407,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
     References
     ----------
+
+    L-BFGS-B -- Software for Large-scale Bound-constrained Optimization
+        Ciyou Zhu, Richard Byrd, Jorge Nocedal and Jose Luis Morales.
+        http://users.iems.northwestern.edu/~nocedal/lbfgsb.html
 
     LIBLINEAR -- A Library for Large Linear Classification
         https://www.csie.ntu.edu.tw/~cjlin/liblinear/
@@ -2170,7 +2172,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 # Take the best scores across every fold and the average of
                 # all coefficients corresponding to the best scores.
                 best_indices = np.argmax(scores, axis=1)
-                if self.multi_class == 'ovr':
+                if multi_class == 'ovr':
                     w = np.mean([coefs_paths[i, best_indices[i], :]
                                  for i in range(len(folds))], axis=0)
                 else:
@@ -2180,8 +2182,11 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 best_indices_C = best_indices % len(self.Cs_)
                 self.C_.append(np.mean(self.Cs_[best_indices_C]))
 
-                best_indices_l1 = best_indices // len(self.Cs_)
-                self.l1_ratio_.append(np.mean(l1_ratios_[best_indices_l1]))
+                if self.penalty == 'elasticnet':
+                    best_indices_l1 = best_indices // len(self.Cs_)
+                    self.l1_ratio_.append(np.mean(l1_ratios_[best_indices_l1]))
+                else:
+                    self.l1_ratio_.append(None)
 
             if multi_class == 'multinomial':
                 self.C_ = np.tile(self.C_, n_classes)

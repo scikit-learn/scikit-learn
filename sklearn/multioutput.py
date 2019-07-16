@@ -16,6 +16,8 @@ extends single output estimators to multioutput estimators.
 
 import numpy as np
 import scipy.sparse as sp
+from joblib import Parallel, delayed
+
 from abc import ABCMeta, abstractmethod
 from .base import BaseEstimator, clone, MetaEstimatorMixin
 from .base import RegressorMixin, ClassifierMixin, is_classifier
@@ -25,7 +27,6 @@ from .utils.fixes import parallel_helper
 from .utils.metaestimators import if_delegate_has_method
 from .utils.validation import check_is_fitted, has_fit_parameter
 from .utils.multiclass import check_classification_targets
-from .utils._joblib import Parallel, delayed
 
 __all__ = ["MultiOutputRegressor", "MultiOutputClassifier",
            "ClassifierChain", "RegressorChain"]

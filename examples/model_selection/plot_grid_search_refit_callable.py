@@ -86,8 +86,8 @@ param_grid = {
 
 grid = GridSearchCV(pipe, cv=10, n_jobs=1, param_grid=param_grid,
                     scoring='accuracy', refit=best_low_complexity)
-digits = load_digits()
-grid.fit(digits.data, digits.target)
+X, y = load_digits(return_X_y=True)
+grid.fit(X, y)
 
 n_components = grid.cv_results_['param_reduce_dim__n_components']
 test_scores = grid.cv_results_['mean_test_score']

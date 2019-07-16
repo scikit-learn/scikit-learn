@@ -38,6 +38,12 @@ try:  # SciPy >= 0.19
 except ImportError:
     from scipy.misc import comb, logsumexp  # noqa
 
+if sp_version >= (1, 3):
+    from scipy.sparse.linalg import lobpcg
+else:
+    # Backport of lobpcg functionality from scipy 1.3.0, can be removed
+    # once support for sp_version < (1, 3) is dropped
+    from ..externals._lobpcg import lobpcg  # noqa
 
 if sp_version >= (0, 19):
     def _argmax(arr_or_spmatrix, axis=None):
@@ -218,15 +224,15 @@ def _joblib_parallel_args(**kwargs):
 
     See joblib.Parallel documentation for more details
     """
-    from . import _joblib
+    import joblib
 
-    if _joblib.__version__ >= LooseVersion('0.12'):
+    if joblib.__version__ >= LooseVersion('0.12'):
         return kwargs
 
     extra_args = set(kwargs.keys()).difference({'prefer', 'require'})
     if extra_args:
         raise NotImplementedError('unhandled arguments %s with joblib %s'
-                                  % (list(extra_args), _joblib.__version__))
+                                  % (list(extra_args), joblib.__version__))
     args = {}
     if 'prefer' in kwargs:
         prefer = kwargs['prefer']
