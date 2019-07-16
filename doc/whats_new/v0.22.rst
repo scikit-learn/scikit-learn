@@ -101,6 +101,11 @@ Changelog
   preserve the class balance of the original training set. :pr:`14194`
   by :user:`Johann Faouzi <johannfaouzi>`.
 
+- |Fix| :class:`ensemble.AdaBoostClassifier` computes probabilities based on
+  the decision function as in the literature. Thus, `predict` and
+  `predict_proba` give consistent results.
+  :pr:`14114` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
