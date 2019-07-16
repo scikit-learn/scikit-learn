@@ -44,6 +44,7 @@ from sklearn.metrics import max_error
 from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_tweedie_deviance_error
 from sklearn.metrics import median_absolute_error
 from sklearn.metrics import multilabel_confusion_matrix
 from sklearn.metrics import precision_recall_curve
@@ -97,6 +98,11 @@ REGRESSION_METRICS = {
     "median_absolute_error": median_absolute_error,
     "explained_variance_score": explained_variance_score,
     "r2_score": partial(r2_score, multioutput='variance_weighted'),
+    "mean_normal_deviance_error": partial(mean_tweedie_deviance_error, p=0),
+    "mean_poisson_deviance_error": partial(mean_tweedie_deviance_error, p=1),
+    "mean_gamma_deviance_error": partial(mean_tweedie_deviance_error, p=2),
+    "mean_compound_poisson_deviance_error":
+    partial(mean_tweedie_deviance_error, p=1.4),
 }
 
 CLASSIFICATION_METRICS = {
@@ -460,6 +466,12 @@ METRICS_WITHOUT_SAMPLE_WEIGHT = {
     "max_error"
 }
 
+METRICS_REQUIRE_POSITIVE_Y = {
+    "mean_poisson_deviance_error",
+    "mean_gamma_deviance_error",
+    "mean_compound_poisson_deviance_error",
+}
+
 
 @ignore_warnings
 def test_symmetry():
@@ -513,6 +525,11 @@ def test_sample_order_invariance(name):
     random_state = check_random_state(0)
     y_true = random_state.randint(0, 2, size=(20, ))
     y_pred = random_state.randint(0, 2, size=(20, ))
+    if name in METRICS_REQUIRE_POSITIVE_Y:
+        offset = abs(min(y_true.min(), y_pred.min())) + 1
+        y_true += offset
+        y_pred += offset
+
     y_true_shuffle, y_pred_shuffle = shuffle(y_true, y_pred, random_state=0)
 
     with ignore_warnings():
@@ -565,6 +582,11 @@ def test_format_invariance_with_1d_vectors(name):
     random_state = check_random_state(0)
     y1 = random_state.randint(0, 2, size=(20, ))
     y2 = random_state.randint(0, 2, size=(20, ))
+
+    if name in METRICS_REQUIRE_POSITIVE_Y:
+        offset = abs(min(y1.min(), y2.min())) + 1
+        y1 += offset
+        y2 += offset
 
     y1_list = list(y1)
     y2_list = list(y2)
@@ -754,7 +776,11 @@ def check_single_sample(name):
     metric = ALL_METRICS[name]
 
     # assert that no exception is thrown
-    for i, j in product([0, 1], repeat=2):
+    if name in METRICS_REQUIRE_POSITIVE_Y:
+        values = [1, 2]
+    else:
+        values = [0, 1]
+    for i, j in product(values, repeat=2):
         metric([i], [j])
 
 
