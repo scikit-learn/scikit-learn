@@ -285,8 +285,7 @@ def check_estimator(Estimator, generate_only=True):
 
     generate_only : bool, optional (default=True)
         When `True`, checks are evaluated when `check_estimator` is called.
-        When `False`, `check_estimator` generates checks with the name and
-        estimator.
+        When `False`, `check_estimator` generates the checks and the estimator.
 
     Notes
     -----
