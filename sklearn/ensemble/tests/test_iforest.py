@@ -169,15 +169,20 @@ def test_iforest_parallel_regression():
 
     ensemble.set_params(n_jobs=1)
     y1 = ensemble.predict(X_test)
+    scores1 = ensemble.score_samples(X_test)
     ensemble.set_params(n_jobs=2)
     y2 = ensemble.predict(X_test)
+    scores2 = ensemble.score_samples(X_test)
     assert_array_almost_equal(y1, y2)
+    assert_array_almost_equal(scores1, scores2)
 
     ensemble = IsolationForest(n_jobs=1,
                                random_state=0).fit(X_train)
 
     y3 = ensemble.predict(X_test)
+    scores3 = ensemble.score_samples(X_test)
     assert_array_almost_equal(y1, y3)
+    assert_array_almost_equal(scores1, scores3)
 
 
 def test_iforest_performance():
