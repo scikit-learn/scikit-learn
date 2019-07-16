@@ -1920,11 +1920,15 @@ deviance error (D) estimated over :math:`n_{\text{samples}}` is defined as
   & \text{otherwise}
   \end{cases}
 
-The higher `p` the less weight is given to extreme deviations between true and
-predicted targets.
+Tweedie deviance is a homogeneous function of degree ``2-p``.
+Thus, Gamma distribution with `p=2` means that simultaneously scaling `y_true`
+and `y_pred` has no effect on the deviance. For Poisson distribution `p=1`
+the deviance scales linearly, and for Normal distribution (`p=0`),
+quadratically.  In general, the higher `p` the less weight is given to extreme
+deviations between true and predicted targets.
 
-For instance, let's consider two data samples: `[1.0]` and `[100]`,
-both predicted with a relative error of 50%.
+For instance, let's compare the two predictions 1.0 and 100 that are both
+50% of their corresponding true value.
 
 The mean squared error (``p=0``) is very sensitive to the
 prediction difference of the second point,::
@@ -1942,14 +1946,15 @@ If we increase ``p`` to 1,::
     >>> mean_tweedie_deviance_error([100.], [150.], p=1)
     18.9...
 
-the difference in errors decreases. Finally, by settting, ``p=2``::
+the difference in errors decreases. Finally, by setting, ``p=2``::
 
     >>> mean_tweedie_deviance_error([1.0], [1.5], p=2)
     0.14...
     >>> mean_tweedie_deviance_error([100.], [150.], p=2)
     0.14...
 
-we would get identical errors in this example.
+we would get identical errors. The deviance when `p=2` is thus only
+sensitive to relative errors.
 
 .. _clustering_metrics:
 

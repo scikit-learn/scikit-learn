@@ -623,16 +623,16 @@ def mean_tweedie_deviance_error(y_true, y_pred, sample_weight=None, p=0):
 
     Parameters
     ----------
-    y_true : array-like of shape = (n_samples)
+    y_true : array-like of shape (n_samples,)
         Ground truth (correct) target values.
 
-    y_pred : array-like of shape = (n_samples)
+    y_pred : array-like of shape (n_samples,)
         Estimated target values.
 
-    sample_weight : array-like of shape = (n_samples), optional
+    sample_weight : array-like, shape (n_samples,), optional
         Sample weights.
 
-    p : number, optional
+    p : float, optional
         Tweedie power parameter. Either p ≤ 0 or p ≥ 1.
 
         The higher `p` the less weight is given to extreme
