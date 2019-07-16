@@ -167,8 +167,7 @@ def check_constant_features(name, estimator_orig):
         X = np.abs(rng.randn(10, 10))
     else:
         X = np.abs(rng.randn(10, 5))
-    X[:, 1] = 0
-    X[:, 2] = 1
+    X[:, 1] = 1
 
     # create target
     y = np.arange(10) % 2
