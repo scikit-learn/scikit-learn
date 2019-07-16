@@ -8,11 +8,12 @@ import pytest
 
 from sklearn.datasets import make_regression
 from sklearn.linear_model import GeneralizedLinearRegressor
-from sklearn.linear_model._glm import (
-    Link,
+from sklearn.linear_model._glm.link import (
     IdentityLink,
     LogLink,
     LogitLink,
+)
+from sklearn.linear_model._glm.distribution import (
     TweedieDistribution,
     NormalDistribution, PoissonDistribution,
     GammaDistribution, InverseGaussianDistribution,
@@ -20,8 +21,6 @@ from sklearn.linear_model._glm import (
 from sklearn.linear_model import Ridge
 from sklearn.metrics import mean_absolute_error
 from sklearn.exceptions import ConvergenceWarning
-
-from sklearn.utils.testing import assert_array_equal
 
 GLM_SOLVERS = ['lbfgs']
 
@@ -33,77 +32,6 @@ def regression_data():
                            n_informative=80, noise=0.5,
                            random_state=2)
     return X, y
-
-
-@pytest.mark.parametrize('link', Link.__subclasses__())
-def test_link_properties(link):
-    """Test link inverse and derivative."""
-    rng = np.random.RandomState(42)
-    x = rng.rand(100)*100
-    link = link()  # instantiate object
-    if isinstance(link, LogitLink):
-        # careful for large x, note expit(36) = 1
-        # limit max eta to 15
-        x = x / 100 * 15
-    assert_allclose(link.link(link.inverse(x)), x)
-    # if f(g(x)) = x, then f'(g(x)) = 1/g'(x)
-    assert_allclose(link.derivative(link.inverse(x)),
-                    1./link.inverse_derivative(x))
-
-    assert (
-      link.inverse_derivative2(x).shape == link.inverse_derivative(x).shape)
-
-    # for LogitLink, in the following x should be between 0 and 1.
-    # assert_almost_equal(link.inverse_derivative(link.link(x)),
-    #                     1./link.derivative(x), decimal=decimal)
-
-
-@pytest.mark.parametrize(
-    'family, expected',
-    [(NormalDistribution(), [True, True, True]),
-     (PoissonDistribution(), [False, True, True]),
-     (TweedieDistribution(power=1.5), [False, True, True]),
-     (GammaDistribution(), [False, False, True]),
-     (InverseGaussianDistribution(), [False, False, True]),
-     (TweedieDistribution(power=4.5), [False, False, True])])
-def test_family_bounds(family, expected):
-    """Test the valid range of distributions at -1, 0, 1."""
-    result = family.in_y_range([-1, 0, 1])
-    assert_array_equal(result, expected)
-
-
-def test_tweedie_distribution_power():
-    with pytest.raises(ValueError, match="no distribution exists"):
-        TweedieDistribution(power=0.5)
-
-    with pytest.raises(TypeError, match="must be a real number"):
-        TweedieDistribution(power=1j)
-
-    with pytest.raises(TypeError, match="must be a real number"):
-        dist = TweedieDistribution()
-        dist.power = 1j
-
-    dist = TweedieDistribution()
-    assert dist._include_lower_bound is False
-    dist.power = 1
-    assert dist._include_lower_bound is True
-
-
-@pytest.mark.parametrize(
-    'family, chk_values',
-    [(NormalDistribution(), [-1.5, -0.1, 0.1, 2.5]),
-     (PoissonDistribution(), [0.1, 1.5]),
-     (GammaDistribution(), [0.1, 1.5]),
-     (InverseGaussianDistribution(), [0.1, 1.5]),
-     (TweedieDistribution(power=-2.5), [0.1, 1.5]),
-     (TweedieDistribution(power=-1), [0.1, 1.5]),
-     (TweedieDistribution(power=1.5), [0.1, 1.5]),
-     (TweedieDistribution(power=2.5), [0.1, 1.5]),
-     (TweedieDistribution(power=-4), [0.1, 1.5])])
-def test_deviance_zero(family, chk_values):
-    """Test deviance(y,y) = 0 for different families."""
-    for x in chk_values:
-        assert_allclose(family.deviance(x, x), 0, atol=1e-9)
 
 
 def test_sample_weights_validation():
