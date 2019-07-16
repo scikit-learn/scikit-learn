@@ -328,7 +328,10 @@ class VectorizerMixin:
             pass
 
     def build_analyzer(self):
-        """Return a callable that handles preprocessing and tokenization"""
+        """Return a callable that handles preprocessing, tokenization
+
+        and n-grams generation.
+        """
         if callable(self.analyzer):
             if self.input in ['file', 'filename']:
                 self._validate_custom_analyzer()
@@ -451,8 +454,8 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         If 'file', the sequence items must have a 'read' method (file-like
         object) that is called to fetch the bytes in memory.
 
-        Otherwise the input is expected to be the sequence strings or
-        bytes items are expected to be analyzed directly.
+        Otherwise the input is expected to be a sequence of items that
+        can be of type string or byte.
 
     encoding : string, default='utf-8'
         If bytes or files are given to analyze, this encoding is used to
@@ -707,8 +710,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         If 'file', the sequence items must have a 'read' method (file-like
         object) that is called to fetch the bytes in memory.
 
-        Otherwise the input is expected to be the sequence strings or
-        bytes items are expected to be analyzed directly.
+        Otherwise the input is expected to be a sequence of items that
+        can be of type string or byte.
 
     encoding : string, 'utf-8' by default.
         If bytes or files are given to analyze, this encoding is used to
@@ -822,6 +825,10 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     vocabulary_ : dict
         A mapping of terms to feature indices.
 
+    fixed_vocabulary_: boolean
+        True if a fixed vocabulary of term to indices mapping
+        is provided by the user
+
     stop_words_ : set
         Terms that were ignored because they either:
 
@@ -923,13 +930,13 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         # Calculate a mask based on document frequencies
         dfs = _document_frequency(X)
-        tfs = np.asarray(X.sum(axis=0)).ravel()
         mask = np.ones(len(dfs), dtype=bool)
         if high is not None:
             mask &= dfs <= high
         if low is not None:
             mask &= dfs >= low
         if limit is not None and mask.sum() > limit:
+            tfs = np.asarray(X.sum(axis=0)).ravel()
             mask_inds = (-tfs[mask]).argsort()[:limit]
             new_mask = np.zeros(len(dfs), dtype=bool)
             new_mask[np.where(mask)[0][mask_inds]] = True
@@ -1360,8 +1367,8 @@ class TfidfVectorizer(CountVectorizer):
         If 'file', the sequence items must have a 'read' method (file-like
         object) that is called to fetch the bytes in memory.
 
-        Otherwise the input is expected to be the sequence strings or
-        bytes items are expected to be analyzed directly.
+        Otherwise the input is expected to be a sequence of items that
+        can be of type string or byte.
 
     encoding : string, 'utf-8' by default.
         If bytes or files are given to analyze, this encoding is used to
@@ -1493,6 +1500,10 @@ class TfidfVectorizer(CountVectorizer):
     ----------
     vocabulary_ : dict
         A mapping of terms to feature indices.
+
+    fixed_vocabulary_: boolean
+        True if a fixed vocabulary of term to indices mapping
+        is provided by the user
 
     idf_ : array, shape (n_features)
         The inverse document frequency (IDF) vector; only defined

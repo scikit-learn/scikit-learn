@@ -38,16 +38,14 @@ logistic = SGDClassifier(loss='log', penalty='l2', early_stopping=True,
 pca = PCA()
 pipe = Pipeline(steps=[('pca', pca), ('logistic', logistic)])
 
-digits = datasets.load_digits()
-X_digits = digits.data
-y_digits = digits.target
+X_digits, y_digits = datasets.load_digits(return_X_y=True)
 
 # Parameters of pipelines can be set using ‘__’ separated parameter names:
 param_grid = {
     'pca__n_components': [5, 20, 30, 40, 50, 64],
     'logistic__alpha': np.logspace(-4, 4, 5),
 }
-search = GridSearchCV(pipe, param_grid, cv=5)
+search = GridSearchCV(pipe, param_grid)
 search.fit(X_digits, y_digits)
 print("Best parameter (CV score=%0.3f):" % search.best_score_)
 print(search.best_params_)
