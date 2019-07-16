@@ -1008,27 +1008,50 @@ def test_n_iter():
         assert reg.n_iter_ is None
 
 
-def test_ridge_fit_intercept_sparse():
+@pytest.mark.parametrize('solver', ['sparse_cg', 'auto'])
+def test_ridge_fit_intercept_sparse(solver):
     X, y = _make_sparse_offset_regression(n_features=20, random_state=0)
     X_csr = sp.csr_matrix(X)
 
-    # for now only sparse_cg can fit an intercept with sparse X
-    solver = 'sparse_cg'
-    dense_ridge = Ridge(alpha=1., solver=solver, fit_intercept=True)
+    # for now only sparse_cg can fit an intercept with sparse X with default
+    # tol and max_iter, sag should raise a warning and is handled in
+    # test_ridge_fit_intercept_sparse_sag
+    # "auto" should switch to "sparse_cg"
+    dense_ridge = Ridge(alpha=1., solver='sparse_cg', fit_intercept=True)
     sparse_ridge = Ridge(alpha=1., solver=solver, fit_intercept=True)
     dense_ridge.fit(X, y)
     with pytest.warns(None) as record:
         sparse_ridge.fit(X_csr, y)
     assert len(record) == 0
-    assert_almost_equal(dense_ridge.intercept_, sparse_ridge.intercept_)
-    assert_array_almost_equal(dense_ridge.coef_, sparse_ridge.coef_)
+    assert np.allclose(dense_ridge.intercept_, sparse_ridge.intercept_)
+    assert np.allclose(dense_ridge.coef_, sparse_ridge.coef_)
 
-    # test the solver switch and the corresponding warning
-    for solver in ['saga', 'lsqr', 'sag']:
-        sparse_ridge = Ridge(alpha=1., solver=solver, fit_intercept=True)
-        err_msg = "solver='{}' does not support".format(solver)
-        with pytest.raises(ValueError, match=err_msg):
-            sparse_ridge.fit(X_csr, y)
+
+@pytest.mark.parametrize('solver', ['saga', 'lsqr', 'svd', 'cholesky'])
+def test_ridge_fit_intercept_sparse_error(solver):
+    X, y = _make_sparse_offset_regression(n_features=20, random_state=0)
+    X_csr = sp.csr_matrix(X)
+    sparse_ridge = Ridge(alpha=1., solver=solver, fit_intercept=True)
+    err_msg = "solver='{}' does not support".format(solver)
+    with pytest.raises(ValueError, match=err_msg):
+        sparse_ridge.fit(X_csr, y)
+
+
+def test_ridge_fit_intercept_sparse_sag():
+    X, y = _make_sparse_offset_regression(
+        n_features=5, n_samples=20, random_state=0, X_offset=5.)
+    X_csr = sp.csr_matrix(X)
+
+    params = dict(alpha=1., solver='sag', fit_intercept=True,
+                  tol=1e-10, max_iter=100000)
+    dense_ridge = Ridge(**params)
+    sparse_ridge = Ridge(**params)
+    dense_ridge.fit(X, y)
+    with pytest.warns(UserWarning, match='"sag" solver requires.*'):
+        sparse_ridge.fit(X_csr, y)
+    assert np.allclose(dense_ridge.intercept_, sparse_ridge.intercept_,
+                       rtol=1e-4)
+    assert np.allclose(dense_ridge.coef_, sparse_ridge.coef_, rtol=1e-4)
 
 
 @pytest.mark.parametrize('return_intercept', [False, True])

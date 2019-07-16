@@ -114,9 +114,7 @@ Changelog
 - |Fix| :class:`linear_model.Ridge` now correctly fits an intercept when `X` is
   sparse, `solver="auto"` and `fit_intercept=True`, because the default solver
   in this configuration has changed to `sparse_cg`, which can fit an intercept
-  with sparse data. Setting the solver to "sag" in this configuration, which was
-  allowed before, now results in a `ValueError`. :pr:`13995` by :user:`Jérôme
-  Dockès <jeromedockes>`.
+  with sparse data. :pr:`13995` by :user:`Jérôme Dockès <jeromedockes>`.
 
 - |Efficiency| The 'liblinear' logistic regression solver is now faster and
   requires less memory.
