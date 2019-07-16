@@ -6,12 +6,11 @@ Permutation Importance with Multicollinear or Correlated Features
 In this example, we compute the permutation importance on the Wisconsin
 breast cancer dataset using :func:`~sklearn.inspection.permutation_importance`.
 The :class:`~sklearn.ensemble.RandomForestClassifier` can easily get about 97%
-accuracy on a test dataset with a unsurprising tree impurity based feature
-importance graph. Because this dataset contains multicollinear features, the
-permutation importance will show that none of the features are important.
-One approach to handling multicollinearity is by performing hierarchical
-clustering on the features' Spearman rank-order correlations, picking a
-threshold, and keeping a single feature from each cluster.
+accuracy on a test dataset. Because this dataset contains multicollinear
+features, the permutation importance will show that none of the features are
+important. One approach to handling multicollinearity is by performing
+hierarchical clustering on the features' Spearman rank-order correlations,
+picking a threshold, and keeping a single feature from each cluster.
 
 .. note::
     See also
@@ -92,11 +91,11 @@ fig.tight_layout()
 plt.show()
 
 ##############################################################################
-# Next, we pick a threshold to group our features into clusters and choose a
-# feature from each cluster to keep, select those features from our dataset,
-# and train a new random forest. The test accuracy of the new random forest did
-# not change much compared to the random forest trained on the complete
-# dataset.
+# Next, we manually pick a threshold by visual inspection of the dendrogram
+# to group our features into clusters and choose a feature from each cluster to
+# keep, select those features from our dataset, and train a new random forest.
+# The test accuracy of the new random forest did not change much compared to
+# the random forest trained on the complete dataset.
 cluster_ids = hierarchy.fcluster(corr_linkage, 1, criterion='distance')
 cluster_id_to_feature_ids = defaultdict(list)
 for idx, cluster_id in enumerate(cluster_ids):

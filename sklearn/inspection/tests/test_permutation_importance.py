@@ -16,6 +16,7 @@ from sklearn.inspection import permutation_importance
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import scale
 
 
 @pytest.mark.parametrize("n_jobs", [1, 2])
@@ -139,12 +140,12 @@ def test_permutation_importance_mixed_types_pandas():
 def test_permutation_importance_linear_regresssion():
     X, y = make_regression(n_samples=500, n_features=10, random_state=0)
 
-    y -= y.mean()
-    X_std = X.std(axis=0)
-    X -= X.mean(axis=0)
-    X /= X_std
+    X = scale(X)
+    y = scale(y)
 
     lr = LinearRegression().fit(X, y)
+
+    # this relationship can be computed in closed form
     expected_importances = 2 * lr.coef_**2
     results = permutation_importance(lr, X, y,
                                      n_repeats=50,

@@ -3,15 +3,15 @@
 Permutation Importance vs Random Forest Feature Importance (MDI)
 ================================================================
 
-In this example, we will compare the
-:class:`~sklearn.ensemble.RandomForestClassifier` feature importance with the
+In this example, we will compare the impurity-based feature importance of
+:class:`~sklearn.ensemble.RandomForestClassifier` with the
 permutation importance on the titanic dataset using
 :func:`~sklearn.inspection.permutation_importance`. We will show that the
-random forest feature importance can inflate the importance of numerical
+impurity-based feature importance can inflate the importance of numerical
 features.
 
-Furthermore, the built-in feature importance of random forests suffers from
-being computed on statistics derived from the training dataset: the
+Furthermore, the impurity-based feature importance of random forests suffers
+from being computed on statistics derived from the training dataset: the
 importances can be high even for features that are not predictive of the target
 variable, as long as the model has the capacity to use them to overfit.
 
@@ -28,6 +28,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
+from sklearn.datasets import fetch_openml
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.impute import SimpleImputer
 from sklearn.inspection import permutation_importance
@@ -50,20 +51,17 @@ from sklearn.preprocessing import OneHotEncoder
 #   values as records).
 # - ``random_cat`` is a low cardinality categorical variable (3 possible
 #   values).
-titanic_url = ('https://raw.githubusercontent.com/amueller/'
-               'scipy-2017-sklearn/091d371/notebooks/datasets/titanic3.csv')
-titanic = pd.read_csv(titanic_url)
-titanic['random_cat'] = np.random.randint(3, size=titanic.shape[0])
-titanic['random_num'] = np.random.randn(titanic.shape[0])
+X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True)
+X['random_cat'] = np.random.randint(3, size=X.shape[0])
+X['random_num'] = np.random.randn(X.shape[0])
 
 categorical_columns = ['pclass', 'sex', 'embarked', 'random_cat']
 numerical_columns = ['age', 'sibsp', 'parch', 'fare', 'random_num']
 
-data = titanic[categorical_columns + numerical_columns]
-labels = titanic['survived']
+X = X[categorical_columns + numerical_columns]
 
 X_train, X_test, y_train, y_test = train_test_split(
-    data, labels, stratify=labels, random_state=42)
+    X, y, stratify=y, random_state=42)
 
 categorical_pipe = Pipeline([
     ('imputer', SimpleImputer(strategy='constant', fill_value='missing')),
@@ -111,16 +109,18 @@ print("RF test accuracy: %0.3f" % rf.score(X_test, y_test))
 ##############################################################################
 # Tree's Feature Importance from Mean Decrease in Impurity (MDI)
 # --------------------------------------------------------------
-# The tree based feature importance ranks the numerical features to be the
+# The impurity-based feature importance ranks the numerical features to be the
 # most important features. As a result, the non-predictive ``random_num``
 # variable is ranked the most important!
 #
-# This problem stems from two limitations of RF feature importances:
+# This problem stems from two limitations of impurity-based feature
+# importances:
 #
-# - RF importances are biased towards high cardinality features;
-# - RF importances are computed on training set statistics and therefore do not
-#   reflect the ability of feature to be useful to make predictions that
-#   generalize to the test set (when the model has enough capacity).
+# - impurity-based importances are biased towards high cardinality features;
+# - impurity-based importances are computed on training set statistics and
+#   therefore do not reflect the ability of feature to be useful to make
+#   predictions that generalize to the test set (when the model has enough
+#   capacity).
 ohe = (rf.named_steps['preprocess']
          .named_transformers_['cat']
          .named_steps['onehot'])
