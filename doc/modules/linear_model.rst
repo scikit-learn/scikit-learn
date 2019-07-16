@@ -893,27 +893,23 @@ to warm-starting (see :term:`Glossary <warm_start>`).
 Generalized Linear Regression
 =============================
 
-:class:`GeneralizedLinearRegressor` generalizes the :ref:`elastic_net` in two
-ways [10]_. First, the predicted values :math:`\hat{y}` are linked to a linear
+:class:`GeneralizedLinearRegressor` generalizes linear models in two ways
+[10]_. First, the predicted values :math:`\hat{y}` are linked to a linear
 combination of the input variables :math:`X` via an inverse link function
 :math:`h` as
 
 .. math::    \hat{y}(w, x) = h(x^\top w) = h(w_0 + w_1 x_1 + ... + w_p x_p).
 
 Secondly, the squared loss function is replaced by the deviance :math:`D` of an
-exponential dispersion model (EDM) [11]_. The objective function being minimized
-becomes
+exponential dispersion model (EDM) [11]_. The objective function being
+minimized becomes
 
-.. math::    \frac{1}{2\mathrm{sum}(s)}D(y, \hat{y}; s) + \alpha \rho ||P_1w||_1
-            +\frac{\alpha(1-\rho)}{2} w^T P_2 w
+.. math::    \frac{1}{2 \sum s_i}D(y, \hat{y}; s) +\frac{\alpha}{2} ||w||_2
 
-with sample weights :math:`s`.
-:math:`P_1` (diagonal matrix) can be used to exclude some of the coefficients in
-the L1 penalty, the matrix :math:`P_2` (must be positive semi-definite) allows
-for a more versatile L2 penalty.
+with sample weights :math:`s`, and L2 regularization penalty :math:`\alpha`.
 
-Use cases, where a loss different from the squared loss might be appropriate,
-are the following:
+In the following use cases, a loss different from the squared loss might be
+appropriate,
 
   * If the target values :math:`y` are counts (non-negative integer valued) or
     frequencies (non-negative), you might use a Poisson deviance with log-link.
@@ -928,10 +924,10 @@ are the following:
 Since the linear predictor :math:`Xw` can be negative and
 Poisson, Gamma and Inverse Gaussian distributions don't support negative values,
 it is convenient to apply a link function different from the identity link
-:math:`h(x^\top w)=x^\top w` that guarantees the non-negativeness, e.g. the log-link with
-:math:`h(x^\top w)=\exp(x^\top w)`.
+:math:`h(x^\top w)=x^\top w` that guarantees the non-negativeness, e.g. the
+log-link with :math:`h(x^\top w)=\exp(x^\top w)`.
 
-Note that the feature matrix `X` should be standardized before fitting. This
+Note that the feature matrix ``X`` should be standardized before fitting. This
 ensures that the penalty treats features equally. The estimator can be used as
 follows:
 
@@ -947,7 +943,8 @@ follows:
 
 .. topic:: Examples:
 
-  * :ref:`sphx_glr_auto_examples_linear_model_plot_poisson_spline_regression.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_tweedie_regression_insurance_claims.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_poisson_regression_non_normal_loss.py`
 
 Mathematical formulation
 ------------------------
@@ -967,12 +964,9 @@ Note that the first assumption implies
 function :math:`v(\mu)`. Specifying a particular distribution of an EDM is the
 same as specifying a unit variance function (they are one-to-one).
 
-Including penalties helps to avoid overfitting or, in case of L1 penalty, to
-obtain sparse solutions. But there are also other motivations to include them,
-e.g. accounting for the dependence structure of :math:`y`.
-
-The objective function, which is independent of :math:`\phi`, is minimized with
-respect to the coefficients :math:`w`.
+The objective function (the penalized negative log likelihood) is
+independent of :math:`\phi` and is minimized with respect to the
+coefficients :math:`w`.
 
 The deviance is defined by the log of the :math:`\mathrm{EDM}(\mu, \phi)`
 likelihood as
@@ -1005,12 +999,16 @@ Two remarks:
 
 .. topic:: References:
 
-    .. [10] McCullagh, Peter; Nelder, John (1989). Generalized Linear Models, Second Edition. Boca Raton: Chapman and Hall/CRC. ISBN 0-412-31760-5.
+    .. [10] McCullagh, Peter; Nelder, John (1989). Generalized Linear Models,
+       Second Edition. Boca Raton: Chapman and Hall/CRC. ISBN 0-412-31760-5.
 
-    .. [11] Jørgensen, B. (1992). The theory of exponential dispersion models and analysis of deviance. Monografias de matemática, no. 51.
-           See also `Exponential dispersion model. <https://en.wikipedia.org/wiki/Exponential_dispersion_model>`_
+    .. [11] Jørgensen, B. (1992). The theory of exponential dispersion models
+       and analysis of deviance. Monografias de matemática, no. 51.  See also
+       `Exponential dispersion model.
+       <https://en.wikipedia.org/wiki/Exponential_dispersion_model>`_
 
-    .. [12] Gneiting, T. (2010). `Making and Evaluating Point Forecasts. <https://arxiv.org/pdf/0912.0902.pdf>`_
+    .. [12] Gneiting, T. (2010). `Making and Evaluating Point Forecasts.
+       <https://arxiv.org/pdf/0912.0902.pdf>`_
 
 Stochastic Gradient Descent - SGD
 =================================
