@@ -1,9 +1,12 @@
 # Authors: Christian Lorentzen <lorentzen.ch@gmail.com>
 #
 # License: BSD 3 clause
-
-from numpy.testing import assert_allclose
-from numpy.testing import assert_array_equal
+import numpy as np
+from numpy.testing import (
+    assert_allclose,
+    assert_array_equal,
+)
+from scipy.optimize import check_grad
 import pytest
 
 from sklearn.linear_model._glm.distribution import (
@@ -59,3 +62,38 @@ def test_deviance_zero(family, chk_values):
     """Test deviance(y,y) = 0 for different families."""
     for x in chk_values:
         assert_allclose(family.deviance(x, x), 0, atol=1e-9)
+
+
+@pytest.mark.parametrize(
+    'family',
+    [NormalDistribution(),
+     PoissonDistribution(),
+     GammaDistribution(),
+     InverseGaussianDistribution(),
+     TweedieDistribution(power=-2.5),
+     TweedieDistribution(power=-1),
+     TweedieDistribution(power=1.5),
+     TweedieDistribution(power=2.5),
+     TweedieDistribution(power=-4)],
+    ids=lambda x: x.__class__.__name__
+)
+def test_deviance_derivative(family):
+    """Test deviance derivative for different families."""
+    rng = np.random.RandomState(0)
+    y_true = rng.rand(10)
+    # make data positive
+    y_true += np.abs(y_true.min()) + 1e-2
+
+    y_pred = y_true + np.fmax(rng.rand(10), 0.)
+
+    dev = family.deviance(y_true, y_pred)
+    assert isinstance(dev, float)
+    dev_derivative = family.deviance_derivative(y_true, y_pred)
+    assert dev_derivative.shape == y_pred.shape
+
+    err = check_grad(
+            lambda mu: family.deviance(y_true, mu),
+            lambda mu: family.deviance_derivative(y_true, mu),
+            y_pred,
+    ) / np.linalg.norm(dev_derivative)
+    assert err < 1e-6

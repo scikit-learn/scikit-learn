@@ -1,5 +1,5 @@
 # License: BSD 3 clause
 
-from . import distribution
+from .glm import (GeneralizedLinearRegressor, PoissonRegressor)
 
-__all__ = ['distribution']
+__all__ = ['GeneralizedLinearRegressor', 'PoissonRegressor']
