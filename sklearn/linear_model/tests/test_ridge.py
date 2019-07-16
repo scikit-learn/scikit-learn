@@ -1025,10 +1025,10 @@ def test_ridge_fit_intercept_sparse():
 
     # test the solver switch and the corresponding warning
     for solver in ['saga', 'lsqr', 'sag']:
-        sparse = Ridge(alpha=1., solver=solver, fit_intercept=True)
+        sparse_ridge = Ridge(alpha=1., solver=solver, fit_intercept=True)
         err_msg = "solver='{}' does not support".format(solver)
         with pytest.raises(ValueError, match=err_msg):
-            sparse.fit(X_csr, y)
+            sparse_ridge.fit(X_csr, y)
 
 
 @pytest.mark.parametrize('return_intercept', [False, True])
