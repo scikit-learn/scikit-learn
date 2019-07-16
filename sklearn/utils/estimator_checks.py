@@ -265,7 +265,7 @@ def _yield_all_checks(name, estimator):
     yield check_fit_idempotent
 
 
-def check_estimator(Estimator):
+def check_estimator(Estimator, generate_only=True):
     """Check if estimator adheres to scikit-learn conventions.
 
     This estimator will run an extensive test-suite for input validation,
@@ -283,6 +283,26 @@ def check_estimator(Estimator):
     estimator : estimator object or class
         Estimator to check. Estimator is a class object or instance.
 
+    generate_only : bool, optional (default=True)
+        When `True`, checks are evaluated when `check_estimator` is called.
+        When `False`, `check_estimator` generates checks with the name and
+        estimator.
+
+    Notes
+    -----
+    Setting `generate_only=False` allows for checks to be disaseembled when
+    testing an estimator. To use this with pytest this can be done with:
+
+    .. code-block:: python
+
+        from itertools import chain
+
+        @pytest.mark.parameterize(
+            'estimator, check',
+            chain.from_iterable(check_estimator(est, generate_only=False)
+                                for est in estimators))
+        def test_sklearn_compatible_estimator(estimator, check):
+            check(estimator)
     """
     if isinstance(Estimator, type):
         # got a class
@@ -297,7 +317,10 @@ def check_estimator(Estimator):
 
     for check in _yield_all_checks(name, estimator):
         try:
-            check(name, estimator)
+            if generate_only:
+                check(name, estimator)
+            else:
+                yield estimator, partial(check, name)
         except SkipTest as exception:
             # the only SkipTest thrown currently results from not
             # being able to import pandas.

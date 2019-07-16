@@ -12,12 +12,14 @@ import sys
 import re
 import pkgutil
 import functools
+from itertools import chain
 
 import pytest
 
 from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning, SkipTestWarning
+from sklearn.utils.estimator_checks import check_estimator
 
 import sklearn
 from sklearn.base import RegressorMixin
@@ -98,17 +100,15 @@ def _rename_partial(val):
 
 @pytest.mark.parametrize(
         "estimator, check",
-        _generate_checks_per_estimator(_yield_all_checks,
-                                       _tested_estimators()),
-        ids=_rename_partial
-)
+        chain.from_iterable(check_estimator(estimator, generate_only=False)
+                            for _, estimator in _tested_estimators()),
+        ids=_rename_partial)
 def test_estimators(estimator, check):
     # Common tests for estimator instances
     with ignore_warnings(category=(DeprecationWarning, ConvergenceWarning,
                                    UserWarning, FutureWarning)):
         set_checking_parameters(estimator)
-        name = estimator.__class__.__name__
-        check(name, estimator)
+        check(estimator)
 
 
 @pytest.mark.parametrize("name, estimator",
