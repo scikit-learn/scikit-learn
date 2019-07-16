@@ -877,6 +877,12 @@ def test_check_sample_weight():
                        match="Sample weights must be 1D array or scalar"):
         _check_sample_weight(np.ones((2, 4)), X=np.ones((2, 2)))
 
+    # float32 dtype is preserved
+    X = np.ones((5, 2))
+    sample_weight = np.ones(5, dtype=np.float32)
+    sample_weight = _check_sample_weight(sample_weight, X)
+    assert sample_weight.dtype == np.float32
+
     # int dtype will be converted to float64 instead
     X = np.ones((5, 2), dtype=np.int)
     sample_weight = _check_sample_weight(None, X, dtype=X.dtype)
