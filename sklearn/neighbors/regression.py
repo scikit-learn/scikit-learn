@@ -263,7 +263,7 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
 
     Attributes
     ----------
-    effective_metric_ : string or callble
+    effective_metric_ : string or callable
         The distance metric to use. It will be same as
         the `metric` parameter or a synonym of it, e.g.
         'euclidean' if the `metric` parameter set to
