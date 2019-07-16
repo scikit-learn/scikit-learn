@@ -332,8 +332,7 @@ def test_check_array_on_mock_dataframe():
     arr = np.array([[0.2, 0.7], [0.6, 0.5], [0.4, 0.1], [0.7, 0.2]])
     mock_df = MockDataFrame(arr)
     checked_arr = check_array(mock_df)
-    assert (checked_arr.dtype ==
-                 arr.dtype)
+    assert (checked_arr.dtype == arr.dtype)
     checked_arr = check_array(mock_df, dtype=np.float32)
     assert checked_arr.dtype == np.dtype(np.float32)
 
@@ -674,8 +673,9 @@ def test_check_consistent_length():
 
     assert_raises(TypeError, check_consistent_length, [1, 2], np.array(1))
     # Despite ensembles having __len__ they must raise TypeError
-    assert_raises_regex(TypeError, 'Expected sequence or array-like', check_consistent_length,
-                        [1, 2], RandomForestRegressor())
+    assert_raises_regex(TypeError, 'Expected sequence or array-like',
+                        check_consistent_length, [1, 2],
+                        RandomForestRegressor())
     # XXX: We should have a test with a string, but what is correct behaviour?
 
 
@@ -822,6 +822,7 @@ def test_retrieve_samples_from_non_standard_shape():
 
     X = TestNonNumericShape()
     assert _num_samples(X) == len(X)
+
     # check that it gives a good error if there's no __len__
     class TestNoLenWeirdShape:
         def __init__(self):
@@ -829,8 +830,6 @@ def test_retrieve_samples_from_non_standard_shape():
 
     with pytest.raises(TypeError, match="Expected sequence or array-like"):
         _num_samples(TestNoLenWeirdShape())
-
-
 
 
 @pytest.mark.parametrize('x, target_type, min_val, max_val',
