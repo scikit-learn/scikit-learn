@@ -24,7 +24,8 @@ cdef bytes COLON = u':'.encode('ascii')
 
 
 def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
-                        bint query_id, long long offset, long long length):
+                        bint query_id, long long offset, long long length,
+                        long long start_feature, long long end_feature):
     cdef array.array data, indices, indptr
     cdef bytes line
     cdef char *hash_ptr
@@ -101,8 +102,14 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
                 raise ValueError("Feature indices in SVMlight/LibSVM data "
                                  "file should be sorted and unique.")
 
+            if idx < start_feature:
+                continue
+
+            if end_feature > start_feature and idx >= end_feature:
+                break
+
             array.resize_smart(indices, len(indices) + 1)
-            indices[len(indices) - 1] = idx
+            indices[len(indices) - 1] = idx - start_feature
 
             array.resize_smart(data, len(data) + 1)
             data[len(data) - 1] = float(value)
