@@ -674,7 +674,7 @@ def test_check_consistent_length():
 
     assert_raises(TypeError, check_consistent_length, [1, 2], np.array(1))
     # Despite ensembles having __len__ they must raise TypeError
-    assert_raises_regex(TypeError, 'estimator', check_consistent_length,
+    assert_raises_regex(TypeError, 'Expected sequence or array-like', check_consistent_length,
                         [1, 2], RandomForestRegressor())
     # XXX: We should have a test with a string, but what is correct behaviour?
 
