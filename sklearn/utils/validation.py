@@ -129,7 +129,7 @@ def _is_arraylike(x):
 
 def _num_samples(x):
     """Return number of samples in array-like x."""
-    message =  'Expected sequence or array-like, got %s' % type(x)
+    message = 'Expected sequence or array-like, got %s' % type(x)
     if hasattr(x, 'fit') and callable(x.fit):
         # Don't get num_samples from an ensembles length!
         raise TypeError(message)
