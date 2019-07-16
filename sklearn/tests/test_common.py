@@ -93,7 +93,7 @@ def _rename_partial(val):
 
 @pytest.mark.parametrize(
         "estimator, check",
-        chain.from_iterable(check_estimator(estimator, generate_only=False)
+        chain.from_iterable(check_estimator(estimator, generate_only=True)
                             for _, estimator in _tested_estimators()),
         ids=_rename_partial)
 def test_estimators(estimator, check):

@@ -265,7 +265,7 @@ def _yield_all_checks(name, estimator):
     yield check_fit_idempotent
 
 
-def check_estimator(Estimator, generate_only=True):
+def check_estimator(Estimator, generate_only=False):
     """Check if estimator adheres to scikit-learn conventions.
 
     This estimator will run an extensive test-suite for input validation,
@@ -283,9 +283,9 @@ def check_estimator(Estimator, generate_only=True):
     estimator : estimator object or class
         Estimator to check. Estimator is a class object or instance.
 
-    generate_only : bool, optional (default=True)
-        When `True`, checks are evaluated when `check_estimator` is called.
-        When `False`, `check_estimator` generates the checks and the estimator.
+    generate_only : bool, optional (default=False)
+        When `False`, checks are evaluated when `check_estimator` is called.
+        When `True`, `check_estimator` generates the checks and the estimator.
 
         .. versionadded:: 0.22
 
@@ -300,7 +300,7 @@ def check_estimator(Estimator, generate_only=True):
 
         @pytest.mark.parameterize(
             'estimator, check',
-            chain.from_iterable(check_estimator(est, generate_only=False)
+            chain.from_iterable(check_estimator(est, generate_only=True)
                                 for est in estimators))
         def test_sklearn_compatible_estimator(estimator, check):
             check(estimator)
@@ -318,7 +318,7 @@ def check_estimator(Estimator, generate_only=True):
 
     for check in _yield_all_checks(name, estimator):
         try:
-            if generate_only:
+            if not generate_only:
                 check(name, estimator)
             else:
                 yield estimator, partial(check, name)
