@@ -250,6 +250,12 @@ class PCA(_BasePCA):
         n_components, or the lesser value of n_features and n_samples
         if n_components is None.
 
+    n_features_ : int
+        Number of features in the training data.
+
+    n_samples_ : int
+        Number of samples in the training data.
+
     noise_variance_ : float
         The estimated noise covariance following the implementation [2].
         See Sect. 12.2.1, pp. 574 of [6] or [5]. It is required to

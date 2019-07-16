@@ -8,15 +8,10 @@ import pytest
 
 from sklearn.neighbors import BallTree
 from sklearn.neighbors import NearestNeighbors
-from sklearn.utils.testing import assert_less_equal
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_less
-from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises_regexp
-from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import skip_if_32bit
 from sklearn.utils import check_random_state
 from sklearn.manifold.t_sne import _joint_probabilities
@@ -70,8 +65,8 @@ def test_gradient_descent_stops():
         out = sys.stdout.getvalue()
         sys.stdout.close()
         sys.stdout = old_stdout
-    assert_equal(error, 1.0)
-    assert_equal(it, 0)
+    assert error == 1.0
+    assert it == 0
     assert("gradient norm" in out)
 
     # Maximum number of iterations without improvement
@@ -86,8 +81,8 @@ def test_gradient_descent_stops():
         out = sys.stdout.getvalue()
         sys.stdout.close()
         sys.stdout = old_stdout
-    assert_equal(error, 0.0)
-    assert_equal(it, 11)
+    assert error == 0.0
+    assert it == 11
     assert("did not make any progress" in out)
 
     # Maximum number of iterations
@@ -102,8 +97,8 @@ def test_gradient_descent_stops():
         out = sys.stdout.getvalue()
         sys.stdout.close()
         sys.stdout = old_stdout
-    assert_equal(error, 0.0)
-    assert_equal(it, 10)
+    assert error == 0.0
+    assert it == 10
     assert("Iteration 10" in out)
 
 
@@ -226,13 +221,13 @@ def test_trustworthiness():
 
     # Affine transformation
     X = random_state.randn(100, 2)
-    assert_equal(trustworthiness(X, 5.0 + X / 10.0), 1.0)
+    assert trustworthiness(X, 5.0 + X / 10.0) == 1.0
 
     # Randomly shuffled
     X = np.arange(100).reshape(-1, 1)
     X_embedded = X.copy()
     random_state.shuffle(X_embedded)
-    assert_less(trustworthiness(X, X_embedded), 0.6)
+    assert trustworthiness(X, X_embedded) < 0.6
 
     # Completely different
     X = np.arange(5).reshape(-1, 1)
@@ -264,8 +259,8 @@ def test_optimization_minimizes_kl_divergence():
                     n_iter=n_iter, random_state=0)
         tsne.fit_transform(X)
         kl_divergences.append(tsne.kl_divergence_)
-    assert_less_equal(kl_divergences[1], kl_divergences[0])
-    assert_less_equal(kl_divergences[2], kl_divergences[1])
+    assert kl_divergences[1] <= kl_divergences[0]
+    assert kl_divergences[2] <= kl_divergences[1]
 
 
 def test_fit_csr_matrix():
@@ -300,7 +295,7 @@ def test_trustworthiness_not_euclidean_metric():
     # 'precomputed'
     random_state = check_random_state(0)
     X = random_state.randn(100, 2)
-    assert_equal(trustworthiness(X, X, metric='cosine'),
+    assert (trustworthiness(X, X, metric='cosine') ==
                  trustworthiness(pairwise_distances(X, metric='cosine'), X,
                                  metric='precomputed'))
 
@@ -671,8 +666,8 @@ def test_n_iter_without_progress():
             sys.stdout = old_stdout
 
         # The output needs to contain the value of n_iter_without_progress
-        assert_in("did not make any progress during the "
-                  "last -1 episodes. Finished.", out)
+        assert ("did not make any progress during the "
+                "last -1 episodes. Finished." in out)
 
 
 def test_min_grad_norm():
@@ -715,7 +710,7 @@ def test_min_grad_norm():
 
     # The gradient norm can be smaller than min_grad_norm at most once,
     # because in the moment it becomes smaller the optimization stops
-    assert_less_equal(n_smaller_gradient_norms, 1)
+    assert n_smaller_gradient_norms <= 1
 
 
 def test_accessible_kl_divergence():
@@ -790,8 +785,8 @@ def assert_uniform_grid(Y, try_name=None):
     smallest_to_mean = dist_to_nn.min() / np.mean(dist_to_nn)
     largest_to_mean = dist_to_nn.max() / np.mean(dist_to_nn)
 
-    assert_greater(smallest_to_mean, .5, msg=try_name)
-    assert_less(largest_to_mean, 2, msg=try_name)
+    assert smallest_to_mean > .5, try_name
+    assert largest_to_mean < 2, try_name
 
 
 def test_bh_match_exact():

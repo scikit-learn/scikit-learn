@@ -5,7 +5,6 @@ from scipy.sparse import csr_matrix, issparse
 
 from sklearn.model_selection import ParameterGrid
 
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -58,8 +57,8 @@ def _test_shape_indices(model):
     for i in range(model.n_clusters):
         m, n = model.get_shape(i)
         i_ind, j_ind = model.get_indices(i)
-        assert_equal(len(i_ind), m)
-        assert_equal(len(j_ind), n)
+        assert len(i_ind) == m
+        assert len(j_ind) == n
 
 
 def test_spectral_coclustering():
@@ -82,11 +81,11 @@ def test_spectral_coclustering():
                                          **kwargs)
             model.fit(mat)
 
-            assert_equal(model.rows_.shape, (3, 30))
+            assert model.rows_.shape == (3, 30)
             assert_array_equal(model.rows_.sum(axis=0), np.ones(30))
             assert_array_equal(model.columns_.sum(axis=0), np.ones(30))
-            assert_equal(consensus_score(model.biclusters_,
-                                         (rows, cols)), 1)
+            assert consensus_score(model.biclusters_,
+                                   (rows, cols)) == 1
 
             _test_shape_indices(model)
 
@@ -120,14 +119,14 @@ def test_spectral_biclustering():
                 else:
                     model.fit(mat)
 
-                assert_equal(model.rows_.shape, (9, 30))
-                assert_equal(model.columns_.shape, (9, 30))
+                assert model.rows_.shape == (9, 30)
+                assert model.columns_.shape == (9, 30)
                 assert_array_equal(model.rows_.sum(axis=0),
                                    np.repeat(3, 30))
                 assert_array_equal(model.columns_.sum(axis=0),
                                    np.repeat(3, 30))
-                assert_equal(consensus_score(model.biclusters_,
-                                             (rows, cols)), 1)
+                assert consensus_score(model.biclusters_,
+                                       (rows, cols)) == 1
 
                 _test_shape_indices(model)
 
@@ -216,20 +215,20 @@ def test_perfect_checkerboard():
     S, rows, cols = make_checkerboard((30, 30), 3, noise=0,
                                       random_state=0)
     model.fit(S)
-    assert_equal(consensus_score(model.biclusters_,
-                                 (rows, cols)), 1)
+    assert consensus_score(model.biclusters_,
+                           (rows, cols)) == 1
 
     S, rows, cols = make_checkerboard((40, 30), 3, noise=0,
                                       random_state=0)
     model.fit(S)
-    assert_equal(consensus_score(model.biclusters_,
-                                 (rows, cols)), 1)
+    assert consensus_score(model.biclusters_,
+                           (rows, cols)) == 1
 
     S, rows, cols = make_checkerboard((30, 40), 3, noise=0,
                                       random_state=0)
     model.fit(S)
-    assert_equal(consensus_score(model.biclusters_,
-                                 (rows, cols)), 1)
+    assert consensus_score(model.biclusters_,
+                           (rows, cols)) == 1
 
 
 def test_errors():

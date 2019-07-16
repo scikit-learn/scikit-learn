@@ -17,6 +17,10 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
+- :class:`decomposition.SparseCoder`,
+  :class:`decomposition.DictionaryLearning`, and
+  :class:`decomposition.MiniBatchDictionaryLearning` |Fix|
+- :class:`decomposition.SparseCoder` with `algorithm='lasso_lars'` |Fix|
 - :class:`decomposition.SparsePCA` where `normalize_components` has no effect
   due to deprecation.
 
@@ -39,8 +43,37 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.calibration`
+..........................
+
+- |Fix| Fixed a bug that made `calibration.CalibratedClassifierCV` fail when
+  given a `sample_weight` parameter of type `list` (in the case where
+  `sample_weights` are not supported by the wrapped estimator). :pr:`13575`
+  by :user:`William de Vazelhes <wdevazelhes>`.
+
+:mod:`sklearn.datasets`
+.......................
+
+- |Feature| :func:`datasets.fetch_openml` now supports heterogeneous data using pandas 
+  by setting `as_frame=True`. :pr:`13902` by `Thomas Fan`_.
+
 :mod:`sklearn.decomposition`
 ............................
+
+- |Fix| :func:`decomposition.sparse_encode()` now passes the `max_iter` to the
+  underlying `LassoLars` when `algorithm='lasso_lars'`. :issue:`12650` by
+  `Adrin Jalali`_.
+
+- |Enhancement| :func:`decomposition.dict_learning()` and
+  :func:`decomposition.dict_learning_online()` now accept `method_max_iter` and
+  pass it to `sparse_encode`. :issue:`12650` by `Adrin Jalali`_.
+
+- |Enhancement| :class:`decomposition.SparseCoder`,
+  :class:`decomposition.DictionaryLearning`, and
+  :class:`decomposition.MiniBatchDictionaryLearning` now take a
+  `transform_max_iter` parameter and pass it to either
+  :func:`decomposition.dict_learning()` or
+  :func:`decomposition.sparse_encode()`. :issue:`12650` by `Adrin Jalali`_.
 
 - |Enhancement| :class:`decomposition.IncrementalPCA` now accepts sparse
   matrices as input, converting them to dense in batches thereby avoiding the
@@ -56,15 +89,23 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
+- |Feature| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` have an additional
+  parameter called `warm_start` that enables warm starting. :pr:`14012` by
+  :user:`Johann Faouzi <johannfaouzi>`.
+
 - |Fix| :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` now bin the training and
   validation data separately to avoid any data leak. :pr:`13933` by
   `Nicolas Hug`_.
 
-- |Feature| :class:`ensemble.HistGradientBoostingClassifier` and
-  :class:`ensemble.HistGradientBoostingRegressor` have an additional
-  parameter called `warm_start` that enables warm starting. :pr:`14012` by
-  :user:`Johann Faouzi <johannfaouzi>`.
+- |Fix| :func:`ensemble.VotingClassifier.predict_proba` will no longer be
+  present when `voting='hard'`. :pr:`14287` by `Thomas Fan`_.
+
+- |Enhancement| :class:`ensemble.HistGradientBoostingClassifier` the training
+  loss or score is now monitored on a class-wise stratified subsample to
+  preserve the class balance of the original training set. :pr:`14194`
+  by :user:`Johann Faouzi <johannfaouzi>`.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -74,9 +115,9 @@ Changelog
   of the maximization procedure in :term:`fit`.
   :pr:`13618` by :user:`Yoshihiro Uchida <c56pony>`.
 
-- |Efficiency| The 'liblinear' logistic regression solver now consumes less
-  memory if ``fit_intercept=False`` and ``X`` is a CSR sparse matrix.
-  :pr:`14108` by :user:`Alex Henrie <alexhenrie>`.
+- |Efficiency| The 'liblinear' logistic regression solver is now faster and
+  requires less memory.
+  :pr:`14108`, pr:`14170` by :user:`Alex Henrie <alexhenrie>`.
 
 :mod:`sklearn.model_selection`
 ..................
@@ -127,7 +168,26 @@ Changelog
   remove constant features due to numerical instability, by using range
   rather than variance in this case.
   :pr:`13704` by `Roddy MacSween <rlms>`.
-  
+
+:mod:`sklearn.utils`
+....................
+
+- |Enhancement| :func:`utils.safe_indexing` accepts an ``axis`` parameter to
+  index array-like across rows and columns. The column indexing can be done on
+  NumPy array, SciPy sparse matrix, and Pandas DataFrame.
+  :pr:`14035` by `Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.neural_network`
+.............................
+
+- |Feature| Add `max_fun` parameter in
+  :class:`neural_network.BaseMultilayerPerceptron`,
+  :class:`neural_network.MLPRegressor`, and
+  :class:`neural_network.MLPClassifier` to give control over
+  maximum number of function evaluation to not meet ``tol`` improvement.
+  :issue:`9274` by :user:`Daniel Perry <daniel-perry>`.
+
+
 Miscellaneous
 .............
 

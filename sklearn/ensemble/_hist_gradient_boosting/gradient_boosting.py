@@ -5,13 +5,14 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 from timeit import default_timer as time
-from sklearn.base import BaseEstimator, RegressorMixin, ClassifierMixin
-from sklearn.utils import check_X_y, check_random_state, check_array
-from sklearn.utils.validation import check_is_fitted
-from sklearn.utils.multiclass import check_classification_targets
-from sklearn.metrics import check_scoring
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
+from ...base import (BaseEstimator, RegressorMixin, ClassifierMixin,
+                     is_classifier)
+from ...utils import check_X_y, check_random_state, check_array, resample
+from ...utils.validation import check_is_fitted
+from ...utils.multiclass import check_classification_targets
+from ...metrics import check_scoring
+from ...model_selection import train_test_split
+from ...preprocessing import LabelEncoder
 from ._gradient_boosting import _update_raw_predictions
 from .types import Y_DTYPE, X_DTYPE, X_BINNED_DTYPE
 
@@ -386,15 +387,18 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         with scorers.
         """
         subsample_size = 10000
-        rng = check_random_state(seed)
-        indices = np.arange(X_binned_train.shape[0])
         if X_binned_train.shape[0] > subsample_size:
-            # TODO: not critical but stratify using resample()
-            indices = rng.choice(indices, subsample_size, replace=False)
-        X_binned_small_train = X_binned_train[indices]
-        y_small_train = y_train[indices]
-        X_binned_small_train = np.ascontiguousarray(X_binned_small_train)
-        return X_binned_small_train, y_small_train
+            indices = np.arange(X_binned_train.shape[0])
+            stratify = y_train if is_classifier(self) else None
+            indices = resample(indices, n_samples=subsample_size,
+                               replace=False, random_state=seed,
+                               stratify=stratify)
+            X_binned_small_train = X_binned_train[indices]
+            y_small_train = y_train[indices]
+            X_binned_small_train = np.ascontiguousarray(X_binned_small_train)
+            return X_binned_small_train, y_small_train
+        else:
+            return X_binned_train, y_train
 
     def _check_early_stopping_scorer(self, X_binned_small_train, y_small_train,
                                      X_binned_val, y_val):
@@ -556,6 +560,37 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 raw_predictions[k, :] += predict(X)
 
         return raw_predictions
+
+    def _compute_partial_dependence_recursion(self, grid, target_features):
+        """Fast partial dependence computation.
+
+        Parameters
+        ----------
+        grid : ndarray, shape (n_samples, n_target_features)
+            The grid points on which the partial dependence should be
+            evaluated.
+        target_features : ndarray, shape (n_target_features)
+            The set of target features for which the partial dependence
+            should be evaluated.
+
+        Returns
+        -------
+        averaged_predictions : ndarray, shape \
+                (n_trees_per_iteration, n_samples)
+            The value of the partial dependence function on each grid point.
+        """
+        grid = np.asarray(grid, dtype=X_DTYPE, order='C')
+        averaged_predictions = np.zeros(
+            (self.n_trees_per_iteration_, grid.shape[0]), dtype=Y_DTYPE)
+
+        for predictors_of_ith_iteration in self._predictors:
+            for k, predictor in enumerate(predictors_of_ith_iteration):
+                predictor.compute_partial_dependence(grid, target_features,
+                                                     averaged_predictions[k])
+        # Note that the learning rate is already accounted for in the leaves
+        # values.
+
+        return averaged_predictions
 
     @abstractmethod
     def _get_loss(self):

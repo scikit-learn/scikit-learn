@@ -329,7 +329,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         return {'poor_score': True}
 
 
-class RFECV(RFE, MetaEstimatorMixin):
+class RFECV(RFE):
     """Feature ranking with recursive feature elimination and cross-validated
     selection of the best number of features.
 
@@ -476,7 +476,8 @@ class RFECV(RFE, MetaEstimatorMixin):
 
         groups : array-like, shape = [n_samples], optional
             Group labels for the samples used while splitting the dataset into
-            train/test set.
+            train/test set. Only used in conjunction with a "Group" `cv`
+            instance (e.g., `GroupKFold`).
         """
         X, y = check_X_y(X, y, "csr", ensure_min_features=2)
 
