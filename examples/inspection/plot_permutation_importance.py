@@ -24,7 +24,6 @@ can mitigate those limitations.
        2001. https://doi.org/10.1023/A:1010933404324
 """
 print(__doc__)
-import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -124,11 +123,8 @@ print("RF test accuracy: %0.3f" % rf.score(X_test, y_test))
 ohe = (rf.named_steps['preprocess']
          .named_transformers_['cat']
          .named_steps['onehot'])
-feature_names = []
-for col, cats in zip(categorical_columns, ohe.categories_):
-    for cat in cats:
-        feature_names.append("{}_{}".format(col, cat))
-feature_names = np.array(feature_names + numerical_columns)
+feature_names = ohe.get_feature_names(input_features=categorical_columns)
+feature_names = np.r_[feature_names, numerical_columns]
 
 tree_feature_importances = (
     rf.named_steps['classifier'].feature_importances_)
@@ -152,7 +148,7 @@ plt.show()
 # Also note that both random features have very low importances (close to 0) as
 # expected.
 result = permutation_importance(rf, X_test, y_test, n_repeats=10,
-                                random_state=42)
+                                random_state=42, n_jobs=2)
 sorted_idx = result.importances_mean.argsort()
 
 fig, ax = plt.subplots()
@@ -170,7 +166,7 @@ plt.show()
 # random numerical feature to overfit. You can further confirm this by
 # re-running this example with constrained RF with min_samples_leaf=10.
 result = permutation_importance(rf, X_train, y_train, n_repeats=10,
-                                random_state=42)
+                                random_state=42, n_jobs=2)
 sorted_idx = result.importances_mean.argsort()
 
 fig, ax = plt.subplots()
