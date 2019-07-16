@@ -496,7 +496,7 @@ def test_symmetry_consistency():
         set())
 
 
-@pytest.mark.parametrize("name", SYMMETRIC_METRICS)
+@pytest.mark.parametrize("name", sorted(SYMMETRIC_METRICS))
 def test_symmetric_metric(name):
     # Test the symmetry of score and loss functions
     random_state = check_random_state(0)
@@ -523,7 +523,7 @@ def test_symmetric_metric(name):
                         err_msg="%s is not symmetric" % name)
 
 
-@pytest.mark.parametrize("name", NOT_SYMMETRIC_METRICS)
+@pytest.mark.parametrize("name", sorted(NOT_SYMMETRIC_METRICS))
 def test_not_symmetric_metric(name):
     # Test the symmetry of score and loss functions
     random_state = check_random_state(0)
