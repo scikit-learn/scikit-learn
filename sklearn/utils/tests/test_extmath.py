@@ -84,7 +84,7 @@ def test_random_weights():
 @pytest.mark.parametrize(
     'dtype, preconditioner',
     [(np.int32, None), (np.int64, None),  # no preconditioner
-     (np.float32, None), (np.float64, None), # no preconditioner
+     (np.float32, None), (np.float64, None),  # no preconditioner
      (np.float32, 'lobpcg'), (np.float64, 'lobpcg')]  # lobpcg preconditioner
 )
 def test_randomized_svd_low_rank(dtype, normalizer, preconditioner):
