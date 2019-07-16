@@ -294,7 +294,7 @@ def test_type_of_target():
         assert_raises_regex(ValueError, msg, type_of_target, example)
 
 
-def test_type_of_target_pandas_sparse(monkeypatch):
+def test_type_of_target_pandas_sparse():
     pd = pytest.importorskip("pandas")
 
     y = pd.SparseArray([1, np.nan, np.nan, 1, np.nan])
