@@ -96,4 +96,4 @@ def test_deviance_derivative(family):
             lambda mu: family.deviance_derivative(y_true, mu),
             y_pred,
     ) / np.linalg.norm(dev_derivative)
-    assert err < 1e-6
+    assert abs(err) < 1e-6

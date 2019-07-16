@@ -40,7 +40,7 @@ import pandas as pd
 
 from sklearn.compose import ColumnTransformer
 from sklearn.linear_model import GeneralizedLinearRegressor
-from sklearn.linear_model._glm import TweedieDistribution
+from sklearn.linear_model._glm.distribution import TweedieDistribution
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
