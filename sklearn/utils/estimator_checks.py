@@ -285,7 +285,8 @@ def check_estimator(Estimator, generate_only=False):
 
     generate_only : bool, optional (default=False)
         When `False`, checks are evaluated when `check_estimator` is called.
-        When `True`, `check_estimator` generates the checks and the estimator.
+        When `True`, `check_estimator` returns a list of checks for the
+        `estimator`.
 
         .. versionadded:: 0.22
 
@@ -316,12 +317,13 @@ def check_estimator(Estimator, generate_only=False):
         estimator = Estimator
         name = type(estimator).__name__
 
+    if generate_only:
+        return [(estimator, partial(check, name))
+                for check in _yield_all_checks(name, estimator)]
+
     for check in _yield_all_checks(name, estimator):
         try:
-            if not generate_only:
-                check(name, estimator)
-            else:
-                yield estimator, partial(check, name)
+            check(name, estimator)
         except SkipTest as exception:
             # the only SkipTest thrown currently results from not
             # being able to import pandas.
