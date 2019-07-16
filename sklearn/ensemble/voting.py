@@ -313,9 +313,6 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
 
     def _predict_proba(self, X):
         """Predict class probabilities for X in 'soft' voting """
-        if self.voting == 'hard':
-            raise AttributeError("predict_proba is not available when"
-                                 " voting=%r" % self.voting)
         check_is_fitted(self, 'estimators_')
         avg = np.average(self._collect_probas(X), axis=0,
                          weights=self._weights_not_none)
@@ -335,6 +332,9 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
         avg : array-like, shape (n_samples, n_classes)
             Weighted average probability for each class per sample.
         """
+        if self.voting == 'hard':
+            raise AttributeError("predict_proba is not available when"
+                                 " voting=%r" % self.voting)
         return self._predict_proba
 
     def transform(self, X):
