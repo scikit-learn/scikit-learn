@@ -612,7 +612,11 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
             raise ValueError("'sparse' has to be a boolean or 'auto'. "
                              "Got {!r} instead.".format(self.sparse))
 
-        return self._get_missing_features_info(X)
+        missing_features_info = self._get_missing_features_info(X)
+        self.features_ = missing_features_info[1]
+
+        return missing_features_info
+
 
     def fit(self, X, y=None):
         """Fit the transformer on X.
@@ -628,8 +632,8 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         self : object
             Returns self.
         """
-        self.features_ = self._fit(X, y)[1]
-
+        self._fit(X, y)
+        
         return self
 
     def transform(self, X):
@@ -684,7 +688,6 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
         """
         imputer_mask, features = self._fit(X, y)
-        self.features_ = features
 
         if (self.features == "missing-only") and \
                 (self.features_.size < self._n_features):
