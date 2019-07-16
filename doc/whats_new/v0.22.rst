@@ -111,10 +111,13 @@ Changelog
   of the maximization procedure in :term:`fit`.
   :pr:`13618` by :user:`Yoshihiro Uchida <c56pony>`.
 
-- |Fix| :class:`linear_model.Ridge` now correctly fits an intercept when
-  `X` is sparse, `solver="auto"` and `fit_intercept=True`. Setting the solver to
-  "sag" in this configuration, which was allowed before, now results in a
-  `ValueError`. :pr:`13995` by :user:`Jérôme Dockès <jeromedockes>`.
+- |Fix| :class:`linear_model.Ridge` now correctly fits an intercept when `X` is
+  sparse, `solver="auto"` and `fit_intercept=True`, because the default solver
+  in this configuration has changed to `sparse_cg`, which can fit an intercept
+  with sparse data. Setting the solver to "sag" in this configuration, which was
+  allowed before, now results in a `ValueError`. :pr:`13995` by :user:`Jérôme
+  Dockès <jeromedockes>`.
+
 - |Efficiency| The 'liblinear' logistic regression solver is now faster and
   requires less memory.
   :pr:`14108`, pr:`14170` by :user:`Alex Henrie <alexhenrie>`.
