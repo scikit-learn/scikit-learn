@@ -410,8 +410,9 @@ cdef class Splitter:
                 # from right to left.
 
                 self._find_best_bin_to_split_left_to_right(
-                    feature_idx, histograms, n_samples,
-                    sum_gradients, sum_hessians, &split_infos[feature_idx])
+                    feature_idx, has_missing_values[feature_idx],
+                    histograms, n_samples, sum_gradients, sum_hessians,
+                    &split_infos[feature_idx])
 
                 if (has_missing_values[feature_idx]
                         and not split_infos[feature_idx].split_on_nan):
@@ -457,6 +458,7 @@ cdef class Splitter:
     cdef void _find_best_bin_to_split_left_to_right(
             Splitter self,
             unsigned int feature_idx,
+            unsigned char has_missing_values,
             const hist_struct [:, ::1] histograms,  # IN
             unsigned int n_samples,
             Y_DTYPE_C sum_gradients,
@@ -476,7 +478,7 @@ cdef class Splitter:
             unsigned int n_samples_left
             unsigned int n_samples_right
             unsigned int n_samples_ = n_samples
-            unsigned int end = self.n_bins_non_missing[feature_idx]
+            unsigned int end = self.n_bins_non_missing[feature_idx] - 1 + has_missing_values
             Y_DTYPE_C sum_hessian_left
             Y_DTYPE_C sum_hessian_right
             Y_DTYPE_C sum_gradient_left
@@ -527,7 +529,7 @@ cdef class Splitter:
                 split_info.feature_idx = feature_idx
                 split_info.bin_idx = bin_idx
                 # the split is on NaN if bin_idx happens at the end
-                split_info.split_on_nan = bin_idx == end - 1
+                split_info.split_on_nan = has_missing_values and (bin_idx == end - 1)
                 # we scan from left to right so missing values go to the right
                 split_info.missing_go_to_left = False
                 split_info.sum_gradient_left = sum_gradient_left
