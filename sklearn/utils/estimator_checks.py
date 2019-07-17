@@ -1262,7 +1262,7 @@ def check_estimators_nan_inf(name, estimator_orig):
 @ignore_warnings
 def check_nonsquare_error(name, estimator_orig):
     """Test that error is thrown when non-square data provided"""
-    
+
     if name != "KernelCenterer":
         return
 
