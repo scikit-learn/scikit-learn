@@ -550,7 +550,7 @@ class _BaseRidge(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
                 raise ValueError(
                     "solver='{}' does not support fitting the intercept "
                     "on sparse data. Please set the solver to 'auto' or "
-                    "'sparse_cg', or set `fit_intercept=False`"
+                    "'sparse_cg', 'sag', or set `fit_intercept=False`"
                     .format(self.solver))
             if self.solver == 'sag':
                 warnings.warn(
