@@ -44,16 +44,13 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
 
     Methods
     -------
-    in_y_range
-    unit_variance
-    unit_variance_derivative
-    variance
-    variance_derivative
-    unit_deviance
-    unit_deviance_derivative
     deviance
     deviance_derivative
-    starting_mu
+    in_y_range
+    unit_deviance
+    unit_deviance_derivative
+    unit_variance
+    unit_variance_derivative
 
     _mu_deviance_derivative
 
@@ -139,47 +136,6 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         """
         pass
 
-    def variance(self, mu, phi=1, weights=1):
-        r"""Compute the variance function.
-
-        The variance of :math:`Y_i \sim \mathrm{EDM}(\mu_i,\phi/s_i)` is
-        :math:`\mathrm{Var}[Y_i]=\phi/s_i*v(\mu_i)`,
-        with unit variance :math:`v(\mu)` and weights :math:`s_i`.
-
-        Parameters
-        ----------
-        mu : array, shape (n_samples,)
-            Predicted mean.
-
-        phi : float (default=1)
-            Dispersion parameter.
-
-        weights : array, shape (n_samples,) (default=1)
-            Weights or exposure to which variance is inverse proportional.
-        """
-        return phi/weights * self.unit_variance(mu)
-
-    def variance_derivative(self, mu, phi=1, weights=1):
-        r"""Compute the derivative of the variance w.r.t. mu.
-
-        Returns
-        :math:`\frac{\partial}{\partial\mu}\mathrm{Var}[Y_i]
-        =phi/s_i*v'(\mu_i)`, with unit variance :math:`v(\mu)`
-        and weights :math:`s_i`.
-
-        Parameters
-        ----------
-        mu : array, shape (n_samples,)
-            Predicted mean.
-
-        phi : float (default=1)
-            Dispersion parameter.
-
-        weights : array, shape (n_samples,) (default=1)
-            Weights or exposure to which variance is inverse proportional.
-        """
-        return phi/weights * self.unit_variance_derivative(mu)
-
     @abstractmethod
     def unit_deviance(self, y, mu):
         r"""Compute the unit deviance.
@@ -256,26 +212,6 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
             Weights or exposure to which variance is inverse proportional.
         """
         return weights * self.unit_deviance_derivative(y, mu)
-
-    def starting_mu(self, y, weights=1, ind_weight=0.5):
-        """Set starting values for the mean mu.
-
-        These may be good starting points for the (unpenalized) IRLS solver.
-
-        Parameters
-        ----------
-        y : array, shape (n_samples,)
-            Target values.
-
-        weights : array, shape (n_samples,) (default=1)
-            Weights or exposure to which variance is inverse proportional.
-
-        ind_weight : float (default=0.5)
-            Must be between 0 and 1. Specifies how much weight is given to the
-            individual observations instead of the mean of y.
-        """
-        return (ind_weight * y +
-                (1. - ind_weight) * np.average(y, weights=weights))
 
     def _mu_deviance_derivative(self, coef, X, y, weights, link):
         """Compute mu and the derivative of the deviance w.r.t coef."""
