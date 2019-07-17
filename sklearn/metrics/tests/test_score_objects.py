@@ -72,10 +72,18 @@ REQUIRE_POSITIVE_Y_SCORERS = ['neg_mean_poisson_deviance',
                               'neg_mean_gamma_deviance']
 
 
+def _require_positive_y(y):
+    """Make targets strictly positive"""
+    offset = abs(y.min()) + 1
+    y = y + offset
+    return y
+
+
 def _make_estimators(X_train, y_train, y_ml_train):
     # Make estimators that make sense to test various scoring methods
     sensible_regr = DecisionTreeRegressor(random_state=0)
-    sensible_regr.fit(X_train, y_train)
+    # some of the regressions scorers require strictly positive input.
+    sensible_regr.fit(X_train, y_train + 1)
     sensible_clf = DecisionTreeClassifier(random_state=0)
     sensible_clf.fit(X_train, y_train)
     sensible_ml_clf = DecisionTreeClassifier(random_state=0)
@@ -481,6 +489,8 @@ def test_scorer_sample_weight():
             target = y_ml_test
         else:
             target = y_test
+        if name in REQUIRE_POSITIVE_Y_SCORERS:
+            target = _require_positive_y(target)
         try:
             weighted = scorer(estimator[name], X_test, target,
                               sample_weight=sample_weight)
@@ -508,13 +518,19 @@ def test_scorer_memmap_input(name):
     # return singleton memmap when computed on memmap data instead of scalar
     # float values.
 
+    if name in REQUIRE_POSITIVE_Y_SCORERS:
+        y_mm_1 = _require_positive_y(y_mm)
+        y_ml_mm_1 = _require_positive_y(y_ml_mm)
+    else:
+        y_mm_1, y_ml_mm_1 = y_mm, y_ml_mm
+
     # UndefinedMetricWarning for P / R scores
     with ignore_warnings():
         scorer, estimator = SCORERS[name], ESTIMATORS[name]
         if name in MULTILABEL_ONLY_SCORERS:
-            score = scorer(estimator, X_mm, y_ml_mm)
+            score = scorer(estimator, X_mm, y_ml_mm_1)
         else:
-            score = scorer(estimator, X_mm, y_mm)
+            score = scorer(estimator, X_mm, y_mm_1)
         assert isinstance(score, numbers.Number), name
 
 
