@@ -6,6 +6,7 @@ from sklearn.ensemble._hist_gradient_boosting.types import G_H_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.types import X_BINNED_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.splitting import Splitter
 from sklearn.ensemble._hist_gradient_boosting.histogram import HistogramBuilder
+from sklearn.utils.testing import skip_if_32bit
 
 
 @pytest.mark.parametrize('n_bins', [3, 32, 256])
@@ -49,7 +50,7 @@ def test_histogram_split(n_bins):
 
             histograms = builder.compute_histograms_brute(sample_indices)
             split_info = splitter.find_node_split(
-                sample_indices, histograms, sum_gradients,
+                sample_indices.shape[0], histograms, sum_gradients,
                 sum_hessians)
 
             assert split_info.bin_idx == true_bin
@@ -61,6 +62,7 @@ def test_histogram_split(n_bins):
             assert split_info.n_samples_left == split_info.sum_hessian_left
 
 
+@skip_if_32bit
 @pytest.mark.parametrize('constant_hessian', [True, False])
 def test_gradient_and_hessian_sanity(constant_hessian):
     # This test checks that the values of gradients and hessians are
@@ -103,17 +105,17 @@ def test_gradient_and_hessian_sanity(constant_hessian):
                         min_samples_leaf, min_gain_to_split, constant_hessian)
 
     hists_parent = builder.compute_histograms_brute(sample_indices)
-    si_parent = splitter.find_node_split(sample_indices, hists_parent,
+    si_parent = splitter.find_node_split(n_samples, hists_parent,
                                          sum_gradients, sum_hessians)
     sample_indices_left, sample_indices_right, _ = splitter.split_indices(
         si_parent, sample_indices)
 
     hists_left = builder.compute_histograms_brute(sample_indices_left)
     hists_right = builder.compute_histograms_brute(sample_indices_right)
-    si_left = splitter.find_node_split(sample_indices_left, hists_left,
+    si_left = splitter.find_node_split(n_samples, hists_left,
                                        si_parent.sum_gradient_left,
                                        si_parent.sum_hessian_left)
-    si_right = splitter.find_node_split(sample_indices_right, hists_right,
+    si_right = splitter.find_node_split(n_samples, hists_right,
                                         si_parent.sum_gradient_right,
                                         si_parent.sum_hessian_right)
 
@@ -203,7 +205,7 @@ def test_split_indices():
     assert np.all(sample_indices == splitter.partition)
 
     histograms = builder.compute_histograms_brute(sample_indices)
-    si_root = splitter.find_node_split(sample_indices, histograms,
+    si_root = splitter.find_node_split(n_samples, histograms,
                                        sum_gradients, sum_hessians)
 
     # sanity checks for best split
@@ -256,6 +258,6 @@ def test_min_gain_to_split():
                         hessians_are_constant)
 
     histograms = builder.compute_histograms_brute(sample_indices)
-    split_info = splitter.find_node_split(sample_indices, histograms,
+    split_info = splitter.find_node_split(n_samples, histograms,
                                           sum_gradients, sum_hessians)
     assert split_info.gain == -1

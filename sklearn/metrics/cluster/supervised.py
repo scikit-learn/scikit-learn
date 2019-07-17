@@ -16,7 +16,6 @@ better.
 
 
 from math import log
-import warnings
 
 import numpy as np
 from scipy import sparse as sp

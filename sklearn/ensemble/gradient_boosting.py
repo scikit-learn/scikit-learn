@@ -22,6 +22,7 @@ The module structure is the following:
 
 from abc import ABCMeta
 from abc import abstractmethod
+import warnings
 
 from .base import BaseEnsemble
 from ..base import ClassifierMixin
@@ -50,7 +51,6 @@ from . import _gb_losses
 
 from ..utils import check_random_state
 from ..utils import check_array
-from ..utils import check_X_y
 from ..utils import column_or_1d
 from ..utils import check_consistent_length
 from ..utils import deprecated
@@ -1317,7 +1317,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                                  "or 'log2'." % self.max_features)
         elif self.max_features is None:
             max_features = self.n_features_
-        elif isinstance(self.max_features, (numbers.Integral, np.integer)):
+        elif isinstance(self.max_features, numbers.Integral):
             max_features = self.max_features
         else:  # float
             if 0. < self.max_features <= 1.:
@@ -1329,7 +1329,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self.max_features_ = max_features
 
         if not isinstance(self.n_iter_no_change,
-                          (numbers.Integral, np.integer, type(None))):
+                          (numbers.Integral, type(None))):
             raise ValueError("n_iter_no_change should either be None or an "
                              "integer. %r was passed"
                              % self.n_iter_no_change)
@@ -1731,6 +1731,46 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         avg_feature_importances = np.mean(relevant_feature_importances,
                                           axis=0, dtype=np.float64)
         return avg_feature_importances / np.sum(avg_feature_importances)
+
+    def _compute_partial_dependence_recursion(self, grid, target_features):
+        """Fast partial dependence computation.
+
+        Parameters
+        ----------
+        grid : ndarray, shape (n_samples, n_target_features)
+            The grid points on which the partial dependence should be
+            evaluated.
+        target_features : ndarray, shape (n_target_features)
+            The set of target features for which the partial dependence
+            should be evaluated.
+
+        Returns
+        -------
+        averaged_predictions : ndarray, shape \
+                (n_trees_per_iteration, n_samples)
+            The value of the partial dependence function on each grid point.
+        """
+        check_is_fitted(self, 'estimators_',
+                        msg="'estimator' parameter must be a fitted estimator")
+        if self.init is not None:
+            warnings.warn(
+                'Using recursion method with a non-constant init predictor '
+                'will lead to incorrect partial dependence values. '
+                'Got init=%s.' % self.init,
+                UserWarning
+            )
+        grid = np.asarray(grid, dtype=DTYPE, order='C')
+        n_estimators, n_trees_per_stage = self.estimators_.shape
+        averaged_predictions = np.zeros((n_trees_per_stage, grid.shape[0]),
+                                        dtype=np.float64, order='C')
+        for stage in range(n_estimators):
+            for k in range(n_trees_per_stage):
+                tree = self.estimators_[stage, k].tree_
+                tree.compute_partial_dependence(grid, target_features,
+                                                averaged_predictions[k])
+        averaged_predictions *= self.learning_rate
+
+        return averaged_predictions
 
     def _validate_y(self, y, sample_weight):
         # 'sample_weight' is not utilised but is used for
