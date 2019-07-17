@@ -157,7 +157,7 @@ class OneHotEncoder(_BaseEncoder):
     encoding scheme. This creates a binary column for each category and
     returns a sparse matrix or dense array (depending on the sparse parameter,
     which by defaut is True and gives sparse matrix and when false dense array
-    returned).
+    is returned).
 
     By default, the encoder derives the categories based on the unique values
     in each feature. Alternatively, you can also specify the `categories`
