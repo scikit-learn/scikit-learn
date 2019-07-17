@@ -365,7 +365,7 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
         return _average_binary_score(
             _binary_roc_auc_score, y_true, y_score, average,
             sample_weight=sample_weight)
-    else:
+    else:  # multilabel-indicator
         return _average_binary_score(
             _binary_roc_auc_score, y_true, y_score, average,
             sample_weight=sample_weight)
@@ -395,7 +395,7 @@ def _multiclass_roc_auc_score(binary_metric, y_true, y_score, labels,
 
     labels : array, shape = [n_classes] or None, optional (default=None)
         List of labels to index ``y_score`` used for multiclass. If ``None``,
-        the lexicon order of ``y_true`` is used to index ``y_score``.
+        the lexical order of ``y_true`` is used to index ``y_score``.
 
     multi_class : string, 'ovr' or 'ovo'
         Determines the type of multiclass configuration to use.
