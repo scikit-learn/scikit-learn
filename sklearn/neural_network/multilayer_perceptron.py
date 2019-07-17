@@ -9,8 +9,9 @@
 import numpy as np
 
 from abc import ABCMeta, abstractmethod
-from scipy.optimize import fmin_l_bfgs_b
 import warnings
+
+import scipy.optimize
 
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..base import is_classifier
@@ -26,6 +27,7 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import _check_partial_fit_first_call, unique_labels
 from ..utils.multiclass import type_of_target
+from ..utils.optimize import _check_optimize_result
 
 
 _STOCHASTIC_SOLVERS = ['sgd', 'adam']
@@ -458,34 +460,19 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         else:
             iprint = -1
 
-        optimal_parameters, self.loss_, d = fmin_l_bfgs_b(
-            x0=packed_coef_inter,
-            func=self._loss_grad_lbfgs,
-            maxfun=self.max_fun,
-            maxiter=self.max_iter,
-            iprint=iprint,
-            pgtol=self.tol,
-            args=(X, y, activations, deltas, coef_grads, intercept_grads))
-        self.n_iter_ = d['nit']
-        if d['warnflag'] == 1:
-            if d['nit'] >= self.max_iter:
-                warnings.warn(
-                    "LBFGS Optimizer: Maximum iterations (%d) "
-                    "reached and the optimization hasn't converged yet."
-                    % self.max_iter, ConvergenceWarning)
-            if d['funcalls'] >= self.max_fun:
-                warnings.warn(
-                    "LBFGS Optimizer: Maximum function evaluations (%d) "
-                    "reached and the optimization hasn't converged yet."
-                    % self.max_fun, ConvergenceWarning)
-        elif d['warnflag'] == 2:
-            warnings.warn(
-                "LBFGS Optimizer: Optimization hasn't converged yet, "
-                "cause of LBFGS stopping: %s."
-                % d['task'], ConvergenceWarning)
-
-
-        self._unpack(optimal_parameters)
+        opt_res = scipy.optimize.minimize(
+                self._loss_grad_lbfgs, packed_coef_inter,
+                method="L-BFGS-B", jac=True,
+                options={
+                    "maxfun": self.max_fun,
+                    "maxiter": self.max_iter,
+                    "iprint": iprint,
+                    "gtol": self.tol
+                },
+                args=(X, y, activations, deltas, coef_grads, intercept_grads))
+        self.n_iter_ = _check_optimize_result("lbfgs", opt_res, self.max_iter)
+        self.loss_ = opt_res.fun
+        self._unpack(opt_res.x)
 
     def _fit_stochastic(self, X, y, activations, deltas, coef_grads,
                         intercept_grads, layer_units, incremental):
