@@ -22,6 +22,7 @@ from .base import get_data_home
 from .base import _pkl_filepath
 from .base import _fetch_remote
 from .base import RemoteFileMetadata
+from .base import _refresh_cache
 from .svmlight_format import load_svmlight_files
 from ..utils import shuffle as shuffle_
 from ..utils import Bunch
@@ -189,8 +190,10 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
             f.close()
             remove(f.name)
     else:
-        X = joblib.load(samples_path)
-        sample_id = joblib.load(sample_id_path)
+        X, sample_id = _refresh_cache([samples_path, sample_id_path], 9)
+        # TODO: Revert to the following two lines in v0.23
+        # X = joblib.load(samples_path)
+        # sample_id = joblib.load(sample_id_path)
 
     # load target (y), categories, and sample_id_bis
     if download_if_missing and (not exists(sample_topics_path) or
@@ -243,8 +246,10 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
         joblib.dump(y, sample_topics_path, compress=9)
         joblib.dump(categories, topics_path, compress=9)
     else:
-        y = joblib.load(sample_topics_path)
-        categories = joblib.load(topics_path)
+        y, categories = _refresh_cache([sample_topics_path, topics_path], 9)
+        # TODO: Revert to the following two lines in v0.23
+        # y = joblib.load(sample_topics_path)
+        # categories = joblib.load(topics_path)
 
     if subset == 'all':
         pass

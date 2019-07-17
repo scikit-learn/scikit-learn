@@ -7,6 +7,7 @@ from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
+from sklearn.utils import shuffle
 
 
 X_classification, y_classification = make_classification(random_state=0)
@@ -66,7 +67,7 @@ def test_early_stopping_regression(scoring, validation_fraction,
 
     max_iter = 200
 
-    X, y = make_regression(random_state=0)
+    X, y = make_regression(n_samples=50, random_state=0)
 
     gb = HistGradientBoostingRegressor(
         verbose=1,  # just for coverage
@@ -87,8 +88,9 @@ def test_early_stopping_regression(scoring, validation_fraction,
 
 
 @pytest.mark.parametrize('data', (
-    make_classification(random_state=0),
-    make_classification(n_classes=3, n_clusters_per_class=1, random_state=0)
+    make_classification(n_samples=30, random_state=0),
+    make_classification(n_samples=30, n_classes=3, n_clusters_per_class=1,
+                        random_state=0)
 ))
 @pytest.mark.parametrize(
     'scoring, validation_fraction, n_iter_no_change, tol', [
@@ -189,3 +191,32 @@ def test_zero_division_hessians(data):
     X, y = data
     gb = HistGradientBoostingClassifier(learning_rate=100, max_iter=10)
     gb.fit(X, y)
+
+
+def test_small_trainset():
+    # Make sure that the small trainset is stratified and has the expected
+    # length (10k samples)
+    n_samples = 20000
+    original_distrib = {0: 0.1, 1: 0.2, 2: 0.3, 3: 0.4}
+    rng = np.random.RandomState(42)
+    X = rng.randn(n_samples).reshape(n_samples, 1)
+    y = [[class_] * int(prop * n_samples) for (class_, prop)
+         in original_distrib.items()]
+    y = shuffle(np.concatenate(y))
+    gb = HistGradientBoostingClassifier()
+
+    # Compute the small training set
+    X_small, y_small = gb._get_small_trainset(X, y, seed=42)
+
+    # Compute the class distribution in the small training set
+    unique, counts = np.unique(y_small, return_counts=True)
+    small_distrib = {class_: count / 10000 for (class_, count)
+                     in zip(unique, counts)}
+
+    # Test that the small training set has the expected length
+    assert X_small.shape[0] == 10000
+    assert y_small.shape[0] == 10000
+
+    # Test that the class distributions in the whole dataset and in the small
+    # training set are identical
+    assert small_distrib == pytest.approx(original_distrib)

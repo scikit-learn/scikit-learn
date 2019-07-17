@@ -20,7 +20,6 @@ from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_less
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import ignore_warnings
@@ -473,13 +472,13 @@ def test_symmetry():
     y_pred_bin = random_state.randint(0, 2, size=(20, 25))
 
     # We shouldn't forget any metrics
-    assert_equal(SYMMETRIC_METRICS.union(
+    assert (SYMMETRIC_METRICS.union(
         NOT_SYMMETRIC_METRICS, set(THRESHOLDED_METRICS),
-        METRIC_UNDEFINED_BINARY_MULTICLASS),
+        METRIC_UNDEFINED_BINARY_MULTICLASS) ==
         set(ALL_METRICS))
 
-    assert_equal(
-        SYMMETRIC_METRICS.intersection(NOT_SYMMETRIC_METRICS),
+    assert (
+        SYMMETRIC_METRICS.intersection(NOT_SYMMETRIC_METRICS) ==
         set())
 
     # Symmetric metric
@@ -1197,11 +1196,11 @@ def test_multiclass_sample_weight_invariance(name):
 def test_multilabel_sample_weight_invariance(name):
     # multilabel indicator
     random_state = check_random_state(0)
-    _, ya = make_multilabel_classification(n_features=1, n_classes=20,
-                                           random_state=0, n_samples=100,
+    _, ya = make_multilabel_classification(n_features=1, n_classes=10,
+                                           random_state=0, n_samples=50,
                                            allow_unlabeled=False)
-    _, yb = make_multilabel_classification(n_features=1, n_classes=20,
-                                           random_state=1, n_samples=100,
+    _, yb = make_multilabel_classification(n_features=1, n_classes=10,
+                                           random_state=1, n_samples=50,
                                            allow_unlabeled=False)
     y_true = np.vstack([ya, yb])
     y_pred = np.vstack([ya, ya])

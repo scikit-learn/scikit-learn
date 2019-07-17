@@ -9,8 +9,9 @@
 import numpy as np
 
 from abc import ABCMeta, abstractmethod
-from scipy.optimize import fmin_l_bfgs_b
 import warnings
+
+import scipy.optimize
 
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..base import is_classifier
@@ -26,6 +27,7 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import _check_partial_fit_first_call, unique_labels
 from ..utils.multiclass import type_of_target
+from ..utils.optimize import _check_optimize_result
 
 
 _STOCHASTIC_SOLVERS = ['sgd', 'adam']
@@ -51,7 +53,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                  max_iter, loss, shuffle, random_state, tol, verbose,
                  warm_start, momentum, nesterovs_momentum, early_stopping,
                  validation_fraction, beta_1, beta_2, epsilon,
-                 n_iter_no_change):
+                 n_iter_no_change, max_fun):
         self.activation = activation
         self.solver = solver
         self.alpha = alpha
@@ -75,6 +77,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         self.beta_2 = beta_2
         self.epsilon = epsilon
         self.n_iter_no_change = n_iter_no_change
+        self.max_fun = max_fun
 
     def _unpack(self, packed_parameters):
         """Extract the coefficients and intercepts from packed_parameters."""
@@ -172,7 +175,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         self._unpack(packed_coef_inter)
         loss, coef_grads, intercept_grads = self._backprop(
             X, y, activations, deltas, coef_grads, intercept_grads)
-        self.n_iter_ += 1
         grad = _pack(coef_grads, intercept_grads)
         return loss, grad
 
@@ -381,6 +383,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                              self.shuffle)
         if self.max_iter <= 0:
             raise ValueError("max_iter must be > 0, got %s." % self.max_iter)
+        if self.max_fun <= 0:
+            raise ValueError("max_fun must be > 0, got %s." % self.max_fun)
         if self.alpha < 0.0:
             raise ValueError("alpha must be >= 0, got %s." % self.alpha)
         if (self.learning_rate in ["constant", "invscaling", "adaptive"] and
@@ -456,15 +460,19 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         else:
             iprint = -1
 
-        optimal_parameters, self.loss_, d = fmin_l_bfgs_b(
-            x0=packed_coef_inter,
-            func=self._loss_grad_lbfgs,
-            maxfun=self.max_iter,
-            iprint=iprint,
-            pgtol=self.tol,
-            args=(X, y, activations, deltas, coef_grads, intercept_grads))
-
-        self._unpack(optimal_parameters)
+        opt_res = scipy.optimize.minimize(
+                self._loss_grad_lbfgs, packed_coef_inter,
+                method="L-BFGS-B", jac=True,
+                options={
+                    "maxfun": self.max_fun,
+                    "maxiter": self.max_iter,
+                    "iprint": iprint,
+                    "gtol": self.tol
+                },
+                args=(X, y, activations, deltas, coef_grads, intercept_grads))
+        self.n_iter_ = _check_optimize_result("lbfgs", opt_res, self.max_iter)
+        self.loss_ = opt_res.fun
+        self._unpack(opt_res.x)
 
     def _fit_stochastic(self, X, y, activations, deltas, coef_grads,
                         intercept_grads, layer_units, incremental):
@@ -833,6 +841,15 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 
         .. versionadded:: 0.20
 
+    max_fun : int, optional, default 15000
+        Only used when solver='lbfgs'. Maximum number of loss function calls.
+        The solver iterates until convergence (determined by 'tol'), number
+        of iterations reaches max_iter, or this number of loss function calls.
+        Note that number of loss function calls will be greater than or equal
+        to the number of iterations for the `MLPClassifier`.
+
+        .. versionadded:: 0.22
+
     Attributes
     ----------
     classes_ : array or list of array of shape (n_classes,)
@@ -898,8 +915,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
                  verbose=False, warm_start=False, momentum=0.9,
                  nesterovs_momentum=True, early_stopping=False,
                  validation_fraction=0.1, beta_1=0.9, beta_2=0.999,
-                 epsilon=1e-8, n_iter_no_change=10):
-
+                 epsilon=1e-8, n_iter_no_change=10, max_fun=15000):
         super().__init__(
             hidden_layer_sizes=hidden_layer_sizes,
             activation=activation, solver=solver, alpha=alpha,
@@ -912,7 +928,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
             early_stopping=early_stopping,
             validation_fraction=validation_fraction,
             beta_1=beta_1, beta_2=beta_2, epsilon=epsilon,
-            n_iter_no_change=n_iter_no_change)
+            n_iter_no_change=n_iter_no_change, max_fun=max_fun)
 
     def _validate_input(self, X, y, incremental):
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
@@ -1216,6 +1232,15 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
 
         .. versionadded:: 0.20
 
+    max_fun : int, optional, default 15000
+        Only used when solver='lbfgs'. Maximum number of function calls.
+        The solver iterates until convergence (determined by 'tol'), number
+        of iterations reaches max_iter, or this number of function calls.
+        Note that number of function calls will be greater than or equal to
+        the number of iterations for the MLPRegressor.
+
+        .. versionadded:: 0.22
+
     Attributes
     ----------
     loss_ : float
@@ -1279,8 +1304,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
                  verbose=False, warm_start=False, momentum=0.9,
                  nesterovs_momentum=True, early_stopping=False,
                  validation_fraction=0.1, beta_1=0.9, beta_2=0.999,
-                 epsilon=1e-8, n_iter_no_change=10):
-
+                 epsilon=1e-8, n_iter_no_change=10, max_fun=15000):
         super().__init__(
             hidden_layer_sizes=hidden_layer_sizes,
             activation=activation, solver=solver, alpha=alpha,
@@ -1293,7 +1317,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
             early_stopping=early_stopping,
             validation_fraction=validation_fraction,
             beta_1=beta_1, beta_2=beta_2, epsilon=epsilon,
-            n_iter_no_change=n_iter_no_change)
+            n_iter_no_change=n_iter_no_change, max_fun=max_fun)
 
     def predict(self, X):
         """Predict using the multi-layer perceptron model.

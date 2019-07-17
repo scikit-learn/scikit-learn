@@ -9,9 +9,6 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn import datasets
 from sklearn.base import clone
@@ -130,7 +127,7 @@ def test_multi_target_sample_weight_partial_fit():
     rgr = MultiOutputRegressor(SGDRegressor(random_state=0, max_iter=5))
     rgr.partial_fit(X, y, w)
 
-    assert_not_equal(rgr.predict(X)[0][0], rgr_w.predict(X)[0][0])
+    assert rgr.predict(X)[0][0] != rgr_w.predict(X)[0][0]
 
 
 def test_multi_target_sample_weights():
@@ -220,11 +217,11 @@ def test_multi_output_classification_partial_fit():
         X[:half_index], y[:half_index], classes=classes)
 
     first_predictions = multi_target_linear.predict(X)
-    assert_equal((n_samples, n_outputs), first_predictions.shape)
+    assert (n_samples, n_outputs) == first_predictions.shape
 
     multi_target_linear.partial_fit(X[half_index:], y[half_index:])
     second_predictions = multi_target_linear.predict(X)
-    assert_equal((n_samples, n_outputs), second_predictions.shape)
+    assert (n_samples, n_outputs) == second_predictions.shape
 
     # train the linear classification with each column and assert that
     # predictions are equal after first partial_fit and second partial_fit
@@ -259,13 +256,13 @@ def test_multi_output_classification():
     multi_target_forest.fit(X, y)
 
     predictions = multi_target_forest.predict(X)
-    assert_equal((n_samples, n_outputs), predictions.shape)
+    assert (n_samples, n_outputs) == predictions.shape
 
     predict_proba = multi_target_forest.predict_proba(X)
 
     assert len(predict_proba) == n_outputs
     for class_probabilities in predict_proba:
-        assert_equal((n_samples, n_classes), class_probabilities.shape)
+        assert (n_samples, n_classes) == class_probabilities.shape
 
     assert_array_equal(np.argmax(np.dstack(predict_proba), axis=1),
                        predictions)
@@ -274,7 +271,7 @@ def test_multi_output_classification():
     for i in range(3):
         forest_ = clone(forest)  # create a clone with the same state
         forest_.fit(X, y[:, i])
-        assert_equal(list(forest_.predict(X)), list(predictions[:, i]))
+        assert list(forest_.predict(X)) == list(predictions[:, i])
         assert_array_equal(list(forest_.predict_proba(X)),
                            list(predict_proba[i]))
 
@@ -288,13 +285,13 @@ def test_multiclass_multioutput_estimator():
     multi_target_svc.fit(X, y)
 
     predictions = multi_target_svc.predict(X)
-    assert_equal((n_samples, n_outputs), predictions.shape)
+    assert (n_samples, n_outputs) == predictions.shape
 
     # train the forest with each column and assert that predictions are equal
     for i in range(3):
         multi_class_svc_ = clone(multi_class_svc)  # create a clone
         multi_class_svc_.fit(X, y[:, i])
-        assert_equal(list(multi_class_svc_.predict(X)),
+        assert (list(multi_class_svc_.predict(X)) ==
                      list(predictions[:, i]))
 
 
@@ -413,7 +410,7 @@ def test_classifier_chain_fit_and_predict_with_linear_svc():
     classifier_chain.fit(X, Y)
 
     Y_pred = classifier_chain.predict(X)
-    assert_equal(Y_pred.shape, Y.shape)
+    assert Y_pred.shape == Y.shape
 
     Y_decision = classifier_chain.decision_function(X)
 
@@ -456,7 +453,7 @@ def test_classifier_chain_vs_independent_models():
     chain.fit(X_train, Y_train)
     Y_pred_chain = chain.predict(X_test)
 
-    assert_greater(jaccard_score(Y_test, Y_pred_chain, average='samples'),
+    assert (jaccard_score(Y_test, Y_pred_chain, average='samples') >
                    jaccard_score(Y_test, Y_pred_ovr, average='samples'))
 
 
@@ -468,8 +465,8 @@ def test_base_chain_fit_and_predict():
     for chain in chains:
         chain.fit(X, Y)
         Y_pred = chain.predict(X)
-        assert_equal(Y_pred.shape, Y.shape)
-        assert_equal([c.coef_.size for c in chain.estimators_],
+        assert Y_pred.shape == Y.shape
+        assert ([c.coef_.size for c in chain.estimators_] ==
                      list(range(X.shape[1], X.shape[1] + Y.shape[1])))
 
     Y_prob = chains[1].predict_proba(X)
@@ -488,7 +485,7 @@ def test_base_chain_fit_and_predict_with_sparse_data_and_cv():
     for chain in base_chains:
         chain.fit(X_sparse, Y)
         Y_pred = chain.predict(X_sparse)
-        assert_equal(Y_pred.shape, Y.shape)
+        assert Y_pred.shape == Y.shape
 
 
 def test_base_chain_random_order():
@@ -501,9 +498,9 @@ def test_base_chain_random_order():
         chain_fixed = clone(chain).set_params(order=chain_random.order_)
         chain_fixed.fit(X, Y)
         assert_array_equal(chain_fixed.order_, chain_random.order_)
-        assert_not_equal(list(chain_random.order), list(range(4)))
-        assert_equal(len(chain_random.order_), 4)
-        assert_equal(len(set(chain_random.order_)), 4)
+        assert list(chain_random.order) != list(range(4))
+        assert len(chain_random.order_) == 4
+        assert len(set(chain_random.order_)) == 4
         # Randomly ordered chain should behave identically to a fixed order
         # chain with the same order.
         for est1, est2 in zip(chain_random.estimators_,

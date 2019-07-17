@@ -16,8 +16,6 @@ import functools
 import pytest
 
 from sklearn.utils.testing import all_estimators
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning, SkipTestWarning
 
@@ -217,7 +215,7 @@ def test_root_import_all_completeness():
                                                onerror=lambda _: None):
         if '.' in modname or modname.startswith('_') or modname in EXCEPTIONS:
             continue
-        assert_in(modname, sklearn.__all__)
+        assert modname in sklearn.__all__
 
 
 def test_all_tests_are_importable():
@@ -236,7 +234,8 @@ def test_all_tests_are_importable():
                      if ispkg
                      and not HAS_TESTS_EXCEPTIONS.search(name)
                      and name + '.tests' not in lookup]
-    assert_equal(missing_tests, [],
-                 '{0} do not have `tests` subpackages. Perhaps they require '
-                 '__init__.py or an add_subpackage directive in the parent '
-                 'setup.py'.format(missing_tests))
+    assert missing_tests == [], ('{0} do not have `tests` subpackages. '
+                                 'Perhaps they require '
+                                 '__init__.py or an add_subpackage directive '
+                                 'in the parent '
+                                 'setup.py'.format(missing_tests))
