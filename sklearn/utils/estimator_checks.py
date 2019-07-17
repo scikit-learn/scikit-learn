@@ -876,7 +876,7 @@ def check_fit2d_1sample(name, estimator_orig):
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(1, 10))
     X = pairwise_estimator_convert_X(X, estimator_orig)
-    
+
     y = X[:, 0].astype(np.int)
     estimator = clone(estimator_orig)
     y = enforce_estimator_tags_y(estimator, y)
@@ -980,7 +980,7 @@ def check_transformer_data_not_an_array(name, transformer):
     # We need to make sure that we have non negative data, for things
     # like NMF
     X -= X.min() - .1
-    X = pairwise_estimator_convert_X(X, transformer) 
+    X = pairwise_estimator_convert_X(X, transformer)
     this_X = NotAnArray(X)
     this_y = NotAnArray(np.asarray(y))
     _check_transformer(name, transformer, this_X, this_y)
@@ -1064,14 +1064,14 @@ def _check_transformer(name, transformer_orig, X, y):
 
         # raises error on malformed input for transform
         if hasattr(X, 'shape') and not _safe_tags(transformer, "stateless") \
-            and len(X.shape) == 2 and X.shape[1] > 1:
+          and len(X.shape) == 2 and X.shape[1] > 1:
             # If it's not an array, it does not have a 'T' property
             with assert_raises(ValueError, msg="The transformer {} does "
                                "not raise an error when the number of "
                                "features in transform is different from"
                                " the number of features in "
                                "fit.".format(name)):
-                transformer.transform(X[:,:-1])
+                transformer.transform(X[:, :-1])
 
 
 @ignore_warnings
