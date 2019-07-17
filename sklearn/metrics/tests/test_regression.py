@@ -16,7 +16,7 @@ from sklearn.metrics import mean_squared_log_error
 from sklearn.metrics import median_absolute_error
 from sklearn.metrics import max_error
 from sklearn.metrics import r2_score
-from sklearn.metrics import mean_tweedie_deviance_error
+from sklearn.metrics import mean_tweedie_deviance
 
 from sklearn.metrics.regression import _check_reg_targets
 
@@ -36,7 +36,7 @@ def test_regression_metrics(n_samples=50):
     assert_almost_equal(max_error(y_true, y_pred), 1.)
     assert_almost_equal(r2_score(y_true, y_pred),  0.995, 2)
     assert_almost_equal(explained_variance_score(y_true, y_pred), 1.)
-    assert_almost_equal(mean_tweedie_deviance_error(y_true, y_pred, p=0),
+    assert_almost_equal(mean_tweedie_deviance(y_true, y_pred, p=0),
                         mean_squared_error(y_true, y_pred))
 
     # Tweedie deviance needs positive y_pred, except for p=0,
@@ -45,15 +45,15 @@ def test_regression_metrics(n_samples=50):
     y_true = np.arange(1, 1 + n_samples)
     y_pred = 2 * y_true
     n = n_samples
-    assert_almost_equal(mean_tweedie_deviance_error(y_true, y_pred, p=-1),
+    assert_almost_equal(mean_tweedie_deviance(y_true, y_pred, p=-1),
                         5/12 * n * (n**2 + 2 * n + 1))
-    assert_almost_equal(mean_tweedie_deviance_error(y_true, y_pred, p=1),
+    assert_almost_equal(mean_tweedie_deviance(y_true, y_pred, p=1),
                         (n + 1) * (1 - np.log(2)))
-    assert_almost_equal(mean_tweedie_deviance_error(y_true, y_pred, p=2),
+    assert_almost_equal(mean_tweedie_deviance(y_true, y_pred, p=2),
                         2 * np.log(2) - 1)
-    assert_almost_equal(mean_tweedie_deviance_error(y_true, y_pred, p=3/2),
+    assert_almost_equal(mean_tweedie_deviance(y_true, y_pred, p=3/2),
                         (6 * np.sqrt(2) - 8)/n * np.sqrt(y_true).sum())
-    assert_almost_equal(mean_tweedie_deviance_error(y_true, y_pred, p=3),
+    assert_almost_equal(mean_tweedie_deviance(y_true, y_pred, p=3),
                         np.sum(1 / y_true) / (4 * n))
 
 
@@ -98,39 +98,39 @@ def test_regression_metrics_at_limits():
 
     # Tweedie deviance error
     p = -1.2
-    assert_allclose(mean_tweedie_deviance_error([0], [1.], p=p),
+    assert_allclose(mean_tweedie_deviance([0], [1.], p=p),
                     2./(2.-p), rtol=1e-3)
     with pytest.raises(ValueError,
                        match="can only be used on positive y_pred."):
-        mean_tweedie_deviance_error([0.], [0.], p=p)
-    assert_almost_equal(mean_tweedie_deviance_error([0.], [0.], p=0), 0.00, 2)
+        mean_tweedie_deviance([0.], [0.], p=p)
+    assert_almost_equal(mean_tweedie_deviance([0.], [0.], p=0), 0.00, 2)
 
     msg = "can only be used on non-negative y_true and positive y_pred."
     with pytest.raises(ValueError, match=msg):
-        mean_tweedie_deviance_error([0.], [0.], p=1.0)
+        mean_tweedie_deviance([0.], [0.], p=1.0)
 
     p = 1.5
-    assert_allclose(mean_tweedie_deviance_error([0.], [1.], p=p), 2./(2.-p))
+    assert_allclose(mean_tweedie_deviance([0.], [1.], p=p), 2./(2.-p))
     msg = "can only be used on non-negative y_true and positive y_pred."
     with pytest.raises(ValueError, match=msg):
-        mean_tweedie_deviance_error([0.], [0.], p=p)
+        mean_tweedie_deviance([0.], [0.], p=p)
     p = 2.
-    assert_allclose(mean_tweedie_deviance_error([1.], [1.], p=p), 0.00,
+    assert_allclose(mean_tweedie_deviance([1.], [1.], p=p), 0.00,
                     atol=1e-8)
     msg = "can only be used on positive y_true and y_pred."
     with pytest.raises(ValueError, match=msg):
-        mean_tweedie_deviance_error([0.], [0.], p=p)
+        mean_tweedie_deviance([0.], [0.], p=p)
     p = 3.
-    assert_allclose(mean_tweedie_deviance_error([1.], [1.], p=p),
+    assert_allclose(mean_tweedie_deviance([1.], [1.], p=p),
                     0.00, atol=1e-8)
 
     msg = "can only be used on positive y_true and y_pred."
     with pytest.raises(ValueError, match=msg):
-        mean_tweedie_deviance_error([0.], [0.], p=p)
+        mean_tweedie_deviance([0.], [0.], p=p)
 
     with pytest.raises(ValueError,
                        match="error exists only for p<=0 and p>=1"):
-        mean_tweedie_deviance_error([0.], [0.], p=0.5)
+        mean_tweedie_deviance([0.], [0.], p=0.5)
 
 
 def test__check_reg_targets():

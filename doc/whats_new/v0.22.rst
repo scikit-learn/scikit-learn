@@ -76,7 +76,7 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
-- |Feature| Add :class:`metrics.mean_tweedie_deviance_error` measuring the
+- |Feature| Add :class:`metrics.mean_tweedie_deviance` measuring the
   Tweedie deviance for a power parameter ``p``. Gaussian (``p=0``),
   Poisson (``p=1``), and Gamma (``p=2``) deviances are special cases of this
   metric. :pr:`13938` by :user:`Christian Lorentzen <lorentzenchr>` and

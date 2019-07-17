@@ -902,7 +902,7 @@ details.
    metrics.mean_squared_log_error
    metrics.median_absolute_error
    metrics.r2_score
-   metrics.mean_tweedie_deviance_error
+   metrics.mean_tweedie_deviance
 
 Multilabel ranking metrics
 --------------------------

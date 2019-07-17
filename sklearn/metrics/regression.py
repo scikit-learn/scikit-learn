@@ -41,7 +41,7 @@ __ALL__ = [
     "median_absolute_error",
     "r2_score",
     "explained_variance_score",
-    "mean_tweedie_deviance_score"
+    "mean_tweedie_deviance"
 ]
 
 
@@ -616,7 +616,7 @@ def max_error(y_true, y_pred):
     return np.max(np.abs(y_true - y_pred))
 
 
-def mean_tweedie_deviance_error(y_true, y_pred, sample_weight=None, p=0):
+def mean_tweedie_deviance(y_true, y_pred, sample_weight=None, p=0):
     """Mean Tweedie deviance regression loss.
 
     Read more in the :ref:`User Guide <mean_tweedie_deviance>`.
@@ -657,17 +657,16 @@ def mean_tweedie_deviance_error(y_true, y_pred, sample_weight=None, p=0):
 
     Examples
     --------
-    >>> from sklearn.metrics import mean_tweedie_deviance_error
+    >>> from sklearn.metrics import mean_tweedie_deviance
     >>> y_true = [2, 0, 1, 4]
     >>> y_pred = [0.5, 0.5, 2., 2.]
-    >>> mean_tweedie_deviance_error(y_true, y_pred, p=1)
+    >>> mean_tweedie_deviance(y_true, y_pred, p=1)
     1.4260...
     """
     y_type, y_true, y_pred, _ = _check_reg_targets(
         y_true, y_pred, None, dtype=[np.float64, np.float32])
     if y_type == 'continuous-multioutput':
-        raise ValueError("Multioutput not supported in "
-                         "mean_tweedie_deviance_score")
+        raise ValueError("Multioutput not supported in mean_tweedie_deviance")
     check_consistent_length(y_true, y_pred, sample_weight)
 
     if sample_weight is not None:

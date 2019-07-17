@@ -44,7 +44,7 @@ from sklearn.metrics import max_error
 from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
-from sklearn.metrics import mean_tweedie_deviance_error
+from sklearn.metrics import mean_tweedie_deviance
 from sklearn.metrics import median_absolute_error
 from sklearn.metrics import multilabel_confusion_matrix
 from sklearn.metrics import precision_recall_curve
@@ -98,11 +98,11 @@ REGRESSION_METRICS = {
     "median_absolute_error": median_absolute_error,
     "explained_variance_score": explained_variance_score,
     "r2_score": partial(r2_score, multioutput='variance_weighted'),
-    "mean_normal_deviance_error": partial(mean_tweedie_deviance_error, p=0),
-    "mean_poisson_deviance_error": partial(mean_tweedie_deviance_error, p=1),
-    "mean_gamma_deviance_error": partial(mean_tweedie_deviance_error, p=2),
-    "mean_compound_poisson_deviance_error":
-    partial(mean_tweedie_deviance_error, p=1.4),
+    "mean_normal_deviance": partial(mean_tweedie_deviance, p=0),
+    "mean_poisson_deviance": partial(mean_tweedie_deviance, p=1),
+    "mean_gamma_deviance": partial(mean_tweedie_deviance, p=2),
+    "mean_compound_poisson_deviance":
+    partial(mean_tweedie_deviance, p=1.4),
 }
 
 CLASSIFICATION_METRICS = {
@@ -434,7 +434,7 @@ SYMMETRIC_METRICS = {
     "matthews_corrcoef_score", "mean_absolute_error", "mean_squared_error",
     "median_absolute_error", "max_error",
 
-    "cohen_kappa_score", "mean_normal_deviance_error"
+    "cohen_kappa_score", "mean_normal_deviance"
 }
 
 # Asymmetric with respect to their input arguments y_true and y_pred
@@ -457,8 +457,8 @@ NOT_SYMMETRIC_METRICS = {
 
     "macro_f0.5_score", "macro_f2_score", "macro_precision_score",
     "macro_recall_score", "log_loss", "hinge_loss",
-    "mean_gamma_deviance_error", "mean_poisson_deviance_error",
-    "mean_compound_poisson_deviance_error"
+    "mean_gamma_deviance", "mean_poisson_deviance",
+    "mean_compound_poisson_deviance"
 }
 
 
@@ -469,9 +469,9 @@ METRICS_WITHOUT_SAMPLE_WEIGHT = {
 }
 
 METRICS_REQUIRE_POSITIVE_Y = {
-    "mean_poisson_deviance_error",
-    "mean_gamma_deviance_error",
-    "mean_compound_poisson_deviance_error",
+    "mean_poisson_deviance",
+    "mean_gamma_deviance",
+    "mean_compound_poisson_deviance",
 }
 
 

@@ -91,7 +91,7 @@ Scoring                              Function                                   
 'neg_mean_squared_log_error'         :func:`metrics.mean_squared_log_error`
 'neg_median_absolute_error'          :func:`metrics.median_absolute_error`
 'r2'                                 :func:`metrics.r2_score`
-'neg_mean_tweedie_deviance_error'    :func:`metrics.mean_tweedie_deviance_error`
+'neg_mean_tweedie_deviance'          :func:`metrics.mean_tweedie_deviance`
 =================================    =============================================     ==================================
 
 
@@ -1896,7 +1896,7 @@ Here is a small example of usage of the :func:`r2_score` function::
 
 Mean Tweedie deviance error
 ---------------------------
-The :func:`mean_tweedie_deviance_error` function computes the `mean Tweedie
+The :func:`mean_tweedie_deviance` function computes the `mean Tweedie
 deviance error
 <https://en.wikipedia.org/wiki/Tweedie_distribution#The_Tweedie_deviance>`_
 with power parameter `p`. This is a metric that elicits predicted expectation
@@ -1933,24 +1933,24 @@ For instance, let's compare the two predictions 1.0 and 100 that are both
 The mean squared error (``p=0``) is very sensitive to the
 prediction difference of the second point,::
 
-    >>> from sklearn.metrics import mean_tweedie_deviance_error
-    >>> mean_tweedie_deviance_error([1.0], [1.5], p=0)
+    >>> from sklearn.metrics import mean_tweedie_deviance
+    >>> mean_tweedie_deviance([1.0], [1.5], p=0)
     0.25
-    >>> mean_tweedie_deviance_error([100.], [150.], p=0)
+    >>> mean_tweedie_deviance([100.], [150.], p=0)
     2500.0
 
 If we increase ``p`` to 1,::
 
-    >>> mean_tweedie_deviance_error([1.0], [1.5], p=1)
+    >>> mean_tweedie_deviance([1.0], [1.5], p=1)
     0.18...
-    >>> mean_tweedie_deviance_error([100.], [150.], p=1)
+    >>> mean_tweedie_deviance([100.], [150.], p=1)
     18.9...
 
 the difference in errors decreases. Finally, by setting, ``p=2``::
 
-    >>> mean_tweedie_deviance_error([1.0], [1.5], p=2)
+    >>> mean_tweedie_deviance([1.0], [1.5], p=2)
     0.14...
-    >>> mean_tweedie_deviance_error([100.], [150.], p=2)
+    >>> mean_tweedie_deviance([100.], [150.], p=2)
     0.14...
 
 we would get identical errors. The deviance when `p=2` is thus only
