@@ -12,6 +12,14 @@ Version 0.21.3
 Changelog
 ---------
 
+
+:mod:`sklearn.inspection`
+.....................
+
+- |Fix| Fixed a bug in :func:`inspection.plot_partial_dependence` where 
+  ``target`` parameter was not being taken into account
+  :pr:`14393` by :user:`Guillem G. Subies <guillemgsubies>`.
+
 :mod:`sklearn.datasets`
 .......................
 
