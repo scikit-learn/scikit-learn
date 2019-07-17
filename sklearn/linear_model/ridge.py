@@ -552,12 +552,14 @@ class _BaseRidge(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
                     "on sparse data. Please set the solver to 'auto' or "
                     "'sparse_cg', or set `fit_intercept=False`"
                     .format(self.solver))
-            if self.solver == 'sag':
+            if (self.solver == 'sag') and (self.max_iter is None) and (
+                    self.tol > 1e-4):
                 warnings.warn(
                     '"sag" solver requires many iterations to fit '
                     'an intercept with sparse inputs. Either set the '
                     'solver to "auto" or "sparse_cg", or set a low '
-                    '"tol" and a high "max_iter".')
+                    '"tol" and a high "max_iter" (especially if inputs are '
+                    'not standardized).')
                 solver = 'sag'
             else:
                 solver = 'sparse_cg'

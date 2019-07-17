@@ -370,7 +370,7 @@ def test_sag_regressor_computed_correctly():
     n_samples = 40
     max_iter = 50
     tol = .000001
-    fit_intercept = False
+    fit_intercept = True
     rng = np.random.RandomState(0)
     X = rng.normal(size=(n_samples, n_features))
     w = rng.normal(size=n_features)
@@ -464,7 +464,6 @@ def test_sag_regressor():
     y = 0.5 * X.ravel()
 
     clf1 = Ridge(tol=tol, solver='sag', max_iter=max_iter,
-                 fit_intercept=False,
                  alpha=alpha * n_samples, random_state=rng)
     clf2 = clone(clf1)
     clf1.fit(X, y)
@@ -478,7 +477,7 @@ def test_sag_regressor():
     y = 0.5 * X.ravel() + rng.randn(n_samples, 1).ravel()
 
     clf1 = Ridge(tol=tol, solver='sag', max_iter=max_iter,
-                 alpha=alpha * n_samples, fit_intercept=False)
+                 alpha=alpha * n_samples)
     clf2 = clone(clf1)
     clf1.fit(X, y)
     clf2.fit(sp.csr_matrix(X), y)

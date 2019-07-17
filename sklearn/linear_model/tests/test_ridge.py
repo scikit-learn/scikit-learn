@@ -1047,11 +1047,14 @@ def test_ridge_fit_intercept_sparse_sag():
     dense_ridge = Ridge(**params)
     sparse_ridge = Ridge(**params)
     dense_ridge.fit(X, y)
-    with pytest.warns(UserWarning, match='"sag" solver requires.*'):
+    with pytest.warns(None) as record:
         sparse_ridge.fit(X_csr, y)
+    assert len(record) == 0
     assert np.allclose(dense_ridge.intercept_, sparse_ridge.intercept_,
                        rtol=1e-4)
     assert np.allclose(dense_ridge.coef_, sparse_ridge.coef_, rtol=1e-4)
+    with pytest.warns(UserWarning, match='"sag" solver requires.*'):
+        Ridge(solver='sag').fit(X_csr, y)
 
 
 @pytest.mark.parametrize('return_intercept', [False, True])
