@@ -942,3 +942,11 @@ def test_k_means_empty_cluster_relocated():
 
     assert len(set(km.labels_)) == 2
     assert_allclose(km.cluster_centers_, [[-1], [1]])
+
+
+def test_minibatch_kmeans_partial_fit_int_data():
+    # Issue GH #14314
+    X = np.array([[-1], [1]], dtype=np.int)
+    km = MiniBatchKMeans(n_clusters=2)
+    km.partial_fit(X)
+    assert km.cluster_centers_.dtype.kind == "f"
