@@ -36,10 +36,6 @@ class RocCurveVisualizer:
     default='auto'
         Method to call estimator to get target scores
 
-    name : str or None, default=None
-        Name of ROC Curve for labeling. If `None`, use the name of the
-        estimator.
-
     Attributes
     ----------
     fpr_ : ndarray
@@ -49,7 +45,7 @@ class RocCurveVisualizer:
     auc_ :
         Area under ROC curve.
     name_ : str
-        Name of ROC curve.
+        Name of estimator.
     line_ : matplotlib Artist
         ROC Curve.
     ax_ : matplotlib Axes
@@ -59,7 +55,7 @@ class RocCurveVisualizer:
     """
 
     def __init__(self, estimator, X, y, *, pos_label=None, sample_weight=None,
-                 drop_intermediate=True, response_method="auto", name=None):
+                 drop_intermediate=True, response_method="auto"):
         """Computes and stores values needed for visualization"""
 
         if response_method != "auto":
@@ -91,18 +87,22 @@ class RocCurveVisualizer:
         self.fpr_ = fpr
         self.tpr_ = tpr
         self.auc_ = auc(fpr, tpr)
-        self.name_ = estimator.__class__.__name__ if name is None else name
+        self.name_ = estimator.__class__.__name__
 
-    def plot(self, ax=None, line_kw=None):
+    def plot(self, ax=None, line_kw=None, name=None):
         """Plot visualization
 
         Parameters
         ----------
-        ax : Matplotlib Axes, optional (default=None)
+        ax : Matplotlib Axes, default=None
             Axes object to plot on.
 
-        line_kw : dict or None, optional (default=None)
+        line_kw : dict or None, default=None
             Keyword arguments to pass to.
+
+        name : str or None, default=None
+            Name of ROC Curve for labeling. If `None`, use the name of the
+            estimator.
         """
         check_matplotlib_support('plot_roc_curve')  # noqa
         import matplotlib.pyplot as plt  # noqa
@@ -110,8 +110,10 @@ class RocCurveVisualizer:
         if ax is None:
             fig, ax = plt.subplots()
 
-        label = "{} (AUC = {:0.2f})".format(self.name_,
-                                            self.auc_)
+        if name is None:
+            name = self.name_
+
+        label = "{} (AUC = {:0.2f})".format(name, self.auc_)
         line_kwargs = {"label": label}
         if line_kw is not None:
             line_kwargs.update(**line_kw)
@@ -184,7 +186,6 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
                              sample_weight=sample_weight,
                              pos_label=pos_label,
                              drop_intermediate=drop_intermediate,
-                             response_method=response_method,
-                             name=name)
-    viz.plot(ax=ax, line_kw=line_kw)
+                             response_method=response_method)
+    viz.plot(ax=ax, line_kw=line_kw, name=name)
     return viz

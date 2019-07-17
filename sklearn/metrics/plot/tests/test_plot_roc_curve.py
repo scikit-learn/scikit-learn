@@ -65,7 +65,6 @@ def test_plot_roc_curve(pyplot, response_method, data_binary,
     fpr, tpr, _ = roc_curve(y, y_pred, pos_label=pos_label,
                             drop_intermediate=drop_intermediate)
 
-    assert_allclose(viz.auc_, auc(fpr, tpr))
     assert_allclose(viz.fpr_, fpr)
     assert_allclose(viz.tpr_, tpr)
 
