@@ -12,7 +12,7 @@ import pytest
 from _pytest.doctest import DoctestItem
 
 from sklearn import set_config
-from sklearn.utils import _IS_32BIT
+from sklearn.utils import _IS_32BIT0
 
 PYTEST_MIN_VERSION = '3.3.0'
 
@@ -88,3 +88,5 @@ def pytest_runtest_setup(item):
 def pytest_runtest_teardown(item, nextitem):
     if isinstance(item, DoctestItem):
         set_config(print_changed_only=False)
+
+print("2")
