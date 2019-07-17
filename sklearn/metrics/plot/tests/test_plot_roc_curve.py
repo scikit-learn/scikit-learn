@@ -1,6 +1,7 @@
 import pytest
 from numpy.testing import assert_allclose
 
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import plot_roc_curve
 from sklearn.datasets import load_iris
 from sklearn.linear_model import LogisticRegression
@@ -13,25 +14,43 @@ def data():
     return X, y
 
 
-def test_plot_roc_curve_error_non_binary(pyplot, data):
+@pytest.fixture(scope="module")
+def data_binary(data):
     X, y = data
-    lr = LogisticRegression(solver="lbfgs",
-                            multi_class="multinomial")
-    lr.fit(X, y)
+    return X[y < 2], y[y < 2]
+
+
+def test_plot_roc_curve_error_non_binary(data):
+    X, y = data
+    clf = DecisionTreeClassifier()
+    clf.fit(X, y)
 
     msg = "Estimator must be a binary classifier"
     with pytest.raises(ValueError, match=msg):
-        plot_roc_curve(lr, X, y)
+        plot_roc_curve(clf, X, y)
+
+
+@pytest.mark.parametrize("response_method",
+                         ["predict_proba", "decision_function", "auto"])
+def test_plot_roc_curve_error_no_response(data_binary, response_method):
+    X, y = data_binary
+
+    class MyClassifier:
+        pass
+
+    clf = MyClassifier()
+
+    with pytest.raises(ValueError):
+        plot_roc_curve(clf, X, y, response_method=response_method)
 
 
 @pytest.mark.parametrize("response_method",
                          ["predict_proba", "decision_function"])
 @pytest.mark.parametrize("pos_label", [0, 1])
 @pytest.mark.parametrize("drop_intermediate", [True, False])
-def test_plot_roc_curve(pyplot, response_method, data,
+def test_plot_roc_curve(pyplot, response_method, data_binary,
                         pos_label, drop_intermediate):
-    X, y = data
-    X, y = X[y < 2], y[y < 2]
+    X, y = data_binary
 
     lr = LogisticRegression(solver="lbfgs")
     lr.fit(X, y)
