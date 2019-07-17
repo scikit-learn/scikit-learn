@@ -96,6 +96,10 @@ def _yield_checks(name, estimator):
         # Test that all estimators check their input for NaN's and infs
         yield check_estimators_nan_inf
 
+    if _is_pairwise(estimator):
+        # Check that KernelCenterer throws error on non-square input
+        yield check_nonsquare_error
+
     yield check_estimators_overwrite_params
     if hasattr(estimator, 'sparsify'):
         yield check_sparsify_coefficients
@@ -1253,6 +1257,18 @@ def check_estimators_nan_inf(name, estimator_orig):
                     traceback.print_exc(file=sys.stdout)
                 else:
                     raise AssertionError(error_string_transform, estimator)
+
+
+@ignore_warnings
+def check_nonsquare_error(name, estimator_orig):
+    """Test that error is thrown when non-square data provided"""
+    X, y = make_blobs(n_samples=20, n_features=10)
+    estimator = clone(estimator_orig)
+
+    with assert_raises(ValueError, msg="The pairwise estimator {}"
+                       " does not raise an error on non-square data"
+                       .format(name)):
+        estimator.fit(X)
 
 
 @ignore_warnings
