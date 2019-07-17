@@ -219,6 +219,37 @@ def test_glm_log_regression(family, solver, tol):
     assert_allclose(res.coef_, coef, rtol=5e-6)
 
 
+@pytest.mark.parametrize('fit_intercept', [True, False])
+def test_warm_start(fit_intercept):
+    n_samples, n_features = 100, 10
+    n_predict = 10
+    X, y, coef = make_regression(n_samples=n_samples+n_predict,
+                                 n_features=n_features,
+                                 n_informative=n_features-2, noise=0.5,
+                                 coef=True, random_state=42)
+
+    glm1 = GeneralizedLinearRegressor(
+        warm_start=False,
+        fit_intercept=fit_intercept,
+        max_iter=1000
+    )
+    glm1.fit(X, y)
+
+    glm2 = GeneralizedLinearRegressor(
+        warm_start=True,
+        fit_intercept=fit_intercept,
+        max_iter=1
+    )
+    glm2.fit(X, y)
+    assert glm1.score(X, y) > glm2.score(X, y)
+    glm2.set_params(max_iter=1000)
+    glm2.fit(X, y)
+    assert_allclose(glm1.coef_, glm2.coef_, rtol=1e-4, atol=1e-5)
+    assert_allclose(glm1.score(X, y), glm2.score(X, y), rtol=1e-4)
+    # TODO: investigate why this doesn't match
+    # assert glm1.n_iter_ == glm2.n_iter_ + 2
+
+
 @pytest.mark.parametrize('n_samples, n_features', [(100, 10), (10, 100)])
 @pytest.mark.parametrize('fit_intercept', [True, False])
 @pytest.mark.parametrize('solver', GLM_SOLVERS)

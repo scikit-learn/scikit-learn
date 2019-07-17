@@ -26,7 +26,7 @@ class Link(metaclass=ABCMeta):
         mu : array, shape (n_samples,)
             Usually the (predicted) mean.
         """
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def derivative(self, mu):
@@ -37,7 +37,7 @@ class Link(metaclass=ABCMeta):
         mu : array, shape (n_samples,)
             Usually the (predicted) mean.
         """
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def inverse(self, lin_pred):
@@ -51,7 +51,7 @@ class Link(metaclass=ABCMeta):
         lin_pred : array, shape (n_samples,)
             Usually the (fitted) linear predictor.
         """
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def inverse_derivative(self, lin_pred):
@@ -62,7 +62,7 @@ class Link(metaclass=ABCMeta):
         lin_pred : array, shape (n_samples,)
             Usually the (fitted) linear predictor.
         """
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def inverse_derivative2(self, lin_pred):
@@ -73,7 +73,7 @@ class Link(metaclass=ABCMeta):
         lin_pred : array, shape (n_samples,)
             Usually the (fitted) linear predictor.
         """
-        pass
+        pass  # pragma: no cover
 
 
 class IdentityLink(Link):

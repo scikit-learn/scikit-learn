@@ -121,7 +121,7 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         mu : array, shape (n_samples,)
             Predicted mean.
         """
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def unit_variance_derivative(self, mu):
@@ -134,7 +134,7 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         mu : array, shape (n_samples,)
             Target values.
         """
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def unit_deviance(self, y, mu):
@@ -153,7 +153,7 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         mu : array, shape (n_samples,)
             Predicted mean.
         """
-        pass
+        pass  # pragma: no cover
 
     def unit_deviance_derivative(self, y, mu):
         r"""Compute the derivative of the unit deviance w.r.t. mu.
