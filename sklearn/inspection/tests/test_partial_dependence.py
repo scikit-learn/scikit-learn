@@ -516,7 +516,7 @@ def test_plot_partial_dependence_multiclass(pyplot):
     plot_partial_dependence(clf, iris.data, [0, 1],
                             target=1,
                             grid_resolution=grid_resolution)
-    fig3 = plt.gcf()
+    fig3 = pyplot.gcf()
     axs3 = fig3.get_axes()
     assert any(axs[0].lines[0]._y != axs3[0].lines[0]._y)
 
