@@ -83,6 +83,7 @@ cdef class HistogramBuilder:
         G_H_DTYPE_C [::1] ordered_gradients
         G_H_DTYPE_C [::1] ordered_hessians
         unsigned char hessians_are_constant
+        list available_histograms
 
     def __init__(self, const X_BINNED_DTYPE_C [::1, :] X_binned,
                  unsigned int max_bins, G_H_DTYPE_C [::1] gradients,
@@ -100,6 +101,27 @@ cdef class HistogramBuilder:
         self.ordered_gradients = gradients.copy()
         self.ordered_hessians = hessians.copy()
         self.hessians_are_constant = hessians_are_constant
+
+        # list of histograms that can be re-used for other nodes. These are the
+        # histograms of the nodes whose both children's split_info have been
+        # computed.
+        self.available_histograms = []
+
+    def allocate_or_reuse_histograms(HistogramBuilder self):
+        """Return a non-initialized histograms array.
+
+        The array is allocated only if needed.
+        """
+        if self.available_histograms:
+            return self.available_histograms.pop()
+        else:
+            return np.empty(
+                shape=(self.n_features, self.max_bins),
+                dtype=HISTOGRAM_DTYPE
+            )
+
+    def mark_as_available(HistogramBuilder self, histograms):
+        self.available_histograms.append(histograms)
 
     def compute_histograms_brute(
             HistogramBuilder self,
@@ -130,10 +152,9 @@ cdef class HistogramBuilder:
             G_H_DTYPE_C [::1] gradients = self.gradients
             G_H_DTYPE_C [::1] ordered_hessians = self.ordered_hessians
             G_H_DTYPE_C [::1] hessians = self.hessians
-            hist_struct [:, ::1] histograms = np.zeros(
-                shape=(self.n_features, self.max_bins),
-                dtype=HISTOGRAM_DTYPE
-            )
+            hist_struct [:, ::1] histograms
+
+        histograms = self.allocate_or_reuse_histograms()
 
         with nogil:
             n_samples = sample_indices.shape[0]
@@ -175,6 +196,13 @@ cdef class HistogramBuilder:
                 self.ordered_hessians[:n_samples]
             unsigned char hessians_are_constant = \
                 self.hessians_are_constant
+            unsigned int bin_idx = 0
+
+        # Need to initialize histograms to 0 since all the helpers use +=
+        for bin_idx in range(self.max_bins):
+            histograms[feature_idx, bin_idx].sum_gradients = 0.
+            histograms[feature_idx, bin_idx].sum_hessians = 0.
+            histograms[feature_idx, bin_idx].count = 0
 
         if root_node:
             if hessians_are_constant:
@@ -225,10 +253,9 @@ cdef class HistogramBuilder:
         cdef:
             int feature_idx
             int n_features = self.n_features
-            hist_struct [:, ::1] histograms = np.zeros(
-                shape=(self.n_features, self.max_bins),
-                dtype=HISTOGRAM_DTYPE
-            )
+            hist_struct [:, ::1] histograms
+
+        histograms = self.allocate_or_reuse_histograms()
 
         for feature_idx in prange(n_features, schedule='static', nogil=True):
             # Compute histogram of each feature

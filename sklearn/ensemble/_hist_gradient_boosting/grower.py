@@ -389,6 +389,11 @@ class TreeGrower:
                 self._compute_best_split_and_push(right_child_node)
             self.total_find_split_time += time() - tic
 
+        # Both children now have their split_info computed. We don't need the
+        # histogram of the parent anymore, so we can reuse its allocated space
+        # for other histograms.
+        self.histogram_builder.mark_as_available(node.histograms)
+
         return left_child_node, right_child_node
 
     def _finalize_leaf(self, node):
