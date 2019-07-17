@@ -85,7 +85,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (X*coef+intercept).
 
-    family : {'normal', 'poisson', 'gamma', 'inverse.gaussian', 'binomial'} \
+    family : {'normal', 'poisson', 'gamma', 'inverse.gaussian'} \
             or an instance of class ExponentialDispersionModel, \
             optional(default='normal')
         The distributional assumption of the GLM, i.e. which distribution from
@@ -100,8 +100,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         - 'identity' for family 'normal'
 
         - 'log' for families 'poisson', 'gamma', 'inverse.gaussian'
-
-        - 'logit' for family 'binomial'
 
     fit_dispersion : {None, 'chisqr', 'deviance'}, optional (default=None)
         Method for estimation of the dispersion parameter phi. Whether to use
