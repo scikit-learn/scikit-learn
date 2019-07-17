@@ -131,6 +131,13 @@ Changelog
 - |API| Deprecate ``training_data_`` unused attribute in
   :class:`manifold.Isomap`. :issue:`10482` by `Tom Dupre la Tour`_.
 
+:mod:`sklearn.metrics`
+......................
+
+- |Feature| Added multiclass support to :func:`metrics.roc_auc_score`.
+  :issue:`12789` by :user:`Kathy Chen <kathyxchen>`,
+  :user:`Mohamed Maskani <maskani-moh>`, and :user:`Thomas Fan <thomasjpfan>`.
+
 :mod:`sklearn.model_selection`
 ..................
 
