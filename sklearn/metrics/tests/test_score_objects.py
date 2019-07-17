@@ -19,8 +19,7 @@ from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
                              log_loss, precision_score, recall_score,
                              jaccard_score)
 from sklearn.metrics import cluster as cluster_module
-from sklearn.metrics.scorer import (check_scoring, _PredictScorer,
-                                    _passthrough_scorer)
+from sklearn.metrics.scorer import check_scoring, _passthrough_scorer
 from sklearn.metrics import accuracy_score
 from sklearn.metrics.scorer import _check_multimetric_scoring
 from sklearn.metrics import make_scorer, get_scorer, SCORERS
@@ -175,7 +174,8 @@ def check_scoring_validator_for_single_metric_usecases(scoring_validator):
 
     estimator = EstimatorWithFit()
     scorer = scoring_validator(estimator, "accuracy")
-    assert isinstance(scorer, _PredictScorer)
+    assert scorer.needs_proba is False
+    assert scorer.needs_threshold is False
 
     # Test the allow_none parameter for check_scoring alone
     if scoring_validator is check_scoring:
@@ -223,7 +223,9 @@ def test_check_scoring_and_check_multimetric_scoring():
         assert is_multi
         assert isinstance(scorers, dict)
         assert sorted(scorers.keys()) == sorted(list(scoring))
-        assert all([isinstance(scorer, _PredictScorer)
+        assert all([scorer.needs_proba is False
+                    for scorer in list(scorers.values())])
+        assert all([scorer.needs_threshold is False
                     for scorer in list(scorers.values())])
 
         if 'acc' in scoring:
@@ -256,11 +258,13 @@ def test_check_scoring_gridsearchcv():
 
     grid = GridSearchCV(LinearSVC(), param_grid={'C': [.1, 1]}, cv=3)
     scorer = check_scoring(grid, "f1")
-    assert isinstance(scorer, _PredictScorer)
+    assert scorer.needs_proba is False
+    assert scorer.needs_threshold is False
 
     pipe = make_pipeline(LinearSVC())
     scorer = check_scoring(pipe, "f1")
-    assert isinstance(scorer, _PredictScorer)
+    assert scorer.needs_proba is False
+    assert scorer.needs_threshold is False
 
     # check that cross_val_score definitely calls the scorer
     # and doesn't make any assumptions about the estimator apart from having a
