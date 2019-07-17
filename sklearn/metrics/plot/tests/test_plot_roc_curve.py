@@ -5,7 +5,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import plot_roc_curve
 from sklearn.datasets import load_iris
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import roc_curve
+from sklearn.metrics import roc_curve, auc
 
 
 @pytest.fixture(scope="module")
@@ -65,11 +65,11 @@ def test_plot_roc_curve(pyplot, response_method, data_binary,
     fpr, tpr, _ = roc_curve(y, y_pred, pos_label=pos_label,
                             drop_intermediate=drop_intermediate)
 
-    assert viz.label_ == "LogisticRegression"
-
+    assert_allclose(viz.auc_, auc(fpr, tpr))
     assert_allclose(viz.fpr_, fpr)
     assert_allclose(viz.tpr_, tpr)
 
+    assert viz.name_ == "LogisticRegression"
     import matplotlib as mpl
     assert isinstance(viz.line_, mpl.lines.Line2D)
     assert isinstance(viz.ax_, mpl.axes.Axes)
