@@ -43,7 +43,8 @@ REGRESSION_SCORERS = ['explained_variance', 'r2',
                       'neg_mean_squared_log_error',
                       'neg_median_absolute_error', 'mean_absolute_error',
                       'mean_squared_error', 'median_absolute_error',
-                      'max_error', 'neg_mean_tweedie_deviance']
+                      'max_error', 'neg_mean_poisson_deviance',
+                      'neg_mean_gamma_deviance']
 
 CLF_SCORERS = ['accuracy', 'balanced_accuracy',
                'f1', 'f1_weighted', 'f1_macro', 'f1_micro',
@@ -66,6 +67,9 @@ CLUSTER_SCORERS = ["adjusted_rand_score",
 
 MULTILABEL_ONLY_SCORERS = ['precision_samples', 'recall_samples', 'f1_samples',
                            'jaccard_samples']
+
+REQUIRE_POSITIVE_Y_SCORERS = ['neg_mean_poisson_deviance',
+                              'neg_mean_gamma_deviance']
 
 
 def _make_estimators(X_train, y_train, y_ml_train):
@@ -498,22 +502,20 @@ def test_scorer_sample_weight():
                 "with sample weights: {1}".format(name, str(e)))
 
 
-@ignore_warnings  # UndefinedMetricWarning for P / R scores
-def check_scorer_memmap(scorer_name):
-    scorer, estimator = SCORERS[scorer_name], ESTIMATORS[scorer_name]
-    if scorer_name in MULTILABEL_ONLY_SCORERS:
-        score = scorer(estimator, X_mm, y_ml_mm)
-    else:
-        score = scorer(estimator, X_mm, y_mm)
-    assert isinstance(score, numbers.Number), scorer_name
-
-
 @pytest.mark.parametrize('name', SCORERS)
 def test_scorer_memmap_input(name):
     # Non-regression test for #6147: some score functions would
     # return singleton memmap when computed on memmap data instead of scalar
     # float values.
-    check_scorer_memmap(name)
+
+    # UndefinedMetricWarning for P / R scores
+    with ignore_warnings():
+        scorer, estimator = SCORERS[name], ESTIMATORS[name]
+        if name in MULTILABEL_ONLY_SCORERS:
+            score = scorer(estimator, X_mm, y_ml_mm)
+        else:
+            score = scorer(estimator, X_mm, y_mm)
+        assert isinstance(score, numbers.Number), name
 
 
 def test_scoring_is_not_metric():
