@@ -618,6 +618,49 @@ Kernels:
   gaussian_process.kernels.Sum
   gaussian_process.kernels.WhiteKernel
 
+
+.. _impute_ref:
+
+:mod:`sklearn.impute`: Impute
+=============================
+
+.. automodule:: sklearn.impute
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`Impute` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   impute.SimpleImputer
+   impute.IterativeImputer
+   impute.MissingIndicator
+
+
+.. _inspection_ref:
+
+:mod:`sklearn.inspection`: inspection
+=====================================
+
+.. automodule:: sklearn.inspection
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   inspection.partial_dependence
+   inspection.permutation_importance
+   inspection.plot_partial_dependence
+
+
 .. _isotonic_ref:
 
 :mod:`sklearn.isotonic`: Isotonic regression
@@ -644,27 +687,7 @@ Kernels:
    isotonic.check_increasing
    isotonic.isotonic_regression
 
-.. _impute_ref:
 
-:mod:`sklearn.impute`: Impute
-=============================
-
-.. automodule:: sklearn.impute
-   :no-members:
-   :no-inherited-members:
-
-**User guide:** See the :ref:`Impute` section for further details.
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   impute.SimpleImputer
-   impute.IterativeImputer
-   impute.MissingIndicator
-   
 .. _kernel_approximation_ref:
 
 :mod:`sklearn.kernel_approximation` Kernel Approximation
@@ -1234,26 +1257,6 @@ Model validation
 
    pipeline.make_pipeline
    pipeline.make_union
-
-
-.. _inspection_ref:
-
-:mod:`sklearn.inspection`: inspection
-=====================================
-
-.. automodule:: sklearn.inspection
-   :no-members:
-   :no-inherited-members:
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   inspection.partial_dependence
-   inspection.plot_partial_dependence
-
 
 .. _preprocessing_ref:
 
