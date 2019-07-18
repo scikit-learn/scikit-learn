@@ -11,8 +11,6 @@ from sklearn.datasets import load_boston
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_raise_message
@@ -169,7 +167,7 @@ def test_lasso_cv():
                                    clf.mse_path_[5].mean(), significant=2)
 
     # test set
-    assert_greater(clf.score(X_test, y_test), 0.99)
+    assert clf.score(X_test, y_test) > 0.99
 
 
 def test_lasso_cv_with_some_model_selection():
@@ -250,7 +248,7 @@ def test_enet_path():
     assert_almost_equal(clf.alpha_, min(clf.alphas_))
     # Non-sparse ground truth: we should have selected an elastic-net
     # that is closer to ridge than to lasso
-    assert_equal(clf.l1_ratio_, min(clf.l1_ratio))
+    assert clf.l1_ratio_ == min(clf.l1_ratio)
 
     clf = ElasticNetCV(alphas=[0.01, 0.05, 0.1], eps=2e-3,
                        l1_ratio=[0.5, 0.7], cv=3,
@@ -262,11 +260,11 @@ def test_enet_path():
     assert_almost_equal(clf.alpha_, min(clf.alphas_))
     # Non-sparse ground truth: we should have selected an elastic-net
     # that is closer to ridge than to lasso
-    assert_equal(clf.l1_ratio_, min(clf.l1_ratio))
+    assert clf.l1_ratio_ == min(clf.l1_ratio)
 
     # We are in well-conditioned settings with low noise: we should
     # have a good test-set performance
-    assert_greater(clf.score(X_test, y_test), 0.99)
+    assert clf.score(X_test, y_test) > 0.99
 
     # Multi-output/target case
     X, y, X_test, y_test = build_dataset(n_features=10, n_targets=3)
@@ -275,8 +273,8 @@ def test_enet_path():
     ignore_warnings(clf.fit)(X, y)
     # We are in well-conditioned settings with low noise: we should
     # have a good test-set performance
-    assert_greater(clf.score(X_test, y_test), 0.99)
-    assert_equal(clf.coef_.shape, (3, 10))
+    assert clf.score(X_test, y_test) > 0.99
+    assert clf.coef_.shape == (3, 10)
 
     # Mono-output should have same cross-validated alpha_ and l1_ratio_
     # in both cases.
@@ -297,8 +295,8 @@ def test_path_parameters():
                        l1_ratio=0.5, tol=1e-3)
     clf.fit(X, y)  # new params
     assert_almost_equal(0.5, clf.l1_ratio)
-    assert_equal(50, clf.n_alphas)
-    assert_equal(50, len(clf.alphas_))
+    assert 50 == clf.n_alphas
+    assert 50 == len(clf.alphas_)
 
 
 def test_warm_start():
@@ -465,19 +463,19 @@ def test_multitask_enet_and_lasso_cv():
     clf = MultiTaskElasticNetCV(n_alphas=10, eps=1e-3, max_iter=100,
                                 l1_ratio=[0.3, 0.5], tol=1e-3, cv=3)
     clf.fit(X, y)
-    assert_equal(0.5, clf.l1_ratio_)
-    assert_equal((3, X.shape[1]), clf.coef_.shape)
-    assert_equal((3, ), clf.intercept_.shape)
-    assert_equal((2, 10, 3), clf.mse_path_.shape)
-    assert_equal((2, 10), clf.alphas_.shape)
+    assert 0.5 == clf.l1_ratio_
+    assert (3, X.shape[1]) == clf.coef_.shape
+    assert (3, ) == clf.intercept_.shape
+    assert (2, 10, 3) == clf.mse_path_.shape
+    assert (2, 10) == clf.alphas_.shape
 
     X, y, _, _ = build_dataset(n_targets=3)
     clf = MultiTaskLassoCV(n_alphas=10, eps=1e-3, max_iter=100, tol=1e-3, cv=3)
     clf.fit(X, y)
-    assert_equal((3, X.shape[1]), clf.coef_.shape)
-    assert_equal((3, ), clf.intercept_.shape)
-    assert_equal((10, 3), clf.mse_path_.shape)
-    assert_equal(10, len(clf.alphas_))
+    assert (3, X.shape[1]) == clf.coef_.shape
+    assert (3, ) == clf.intercept_.shape
+    assert (10, 3) == clf.mse_path_.shape
+    assert 10 == len(clf.alphas_)
 
 
 def test_1d_multioutput_enet_and_multitask_enet_cv():
@@ -540,20 +538,20 @@ def test_warm_start_convergence():
     n_iter_reference = model.n_iter_
 
     # This dataset is not trivial enough for the model to converge in one pass.
-    assert_greater(n_iter_reference, 2)
+    assert n_iter_reference > 2
 
     # Check that n_iter_ is invariant to multiple calls to fit
     # when warm_start=False, all else being equal.
     model.fit(X, y)
     n_iter_cold_start = model.n_iter_
-    assert_equal(n_iter_cold_start, n_iter_reference)
+    assert n_iter_cold_start == n_iter_reference
 
     # Fit the same model again, using a warm start: the optimizer just performs
     # a single pass before checking that it has already converged
     model.set_params(warm_start=True)
     model.fit(X, y)
     n_iter_warm_start = model.n_iter_
-    assert_equal(n_iter_warm_start, 1)
+    assert n_iter_warm_start == 1
 
 
 def test_warm_start_convergence_with_regularizer_decrement():
@@ -568,7 +566,7 @@ def test_warm_start_convergence_with_regularizer_decrement():
     # Fitting with high regularization is easier it should converge faster
     # in general.
     high_reg_model = ElasticNet(alpha=final_alpha * 10).fit(X, y)
-    assert_greater(low_reg_model.n_iter_, high_reg_model.n_iter_)
+    assert low_reg_model.n_iter_ > high_reg_model.n_iter_
 
     # Fit the solution to the original, less regularized version of the
     # problem but from the solution of the highly regularized variant of
@@ -577,7 +575,7 @@ def test_warm_start_convergence_with_regularizer_decrement():
     warm_low_reg_model = deepcopy(high_reg_model)
     warm_low_reg_model.set_params(warm_start=True, alpha=final_alpha)
     warm_low_reg_model.fit(X, y)
-    assert_greater(low_reg_model.n_iter_, warm_low_reg_model.n_iter_)
+    assert low_reg_model.n_iter_ > warm_low_reg_model.n_iter_
 
 
 def test_random_descent():
@@ -741,7 +739,7 @@ def test_enet_float_precision():
                 coef[('simple', dtype)] = clf.coef_
                 intercept[('simple', dtype)] = clf.intercept_
 
-                assert_equal(clf.coef_.dtype, dtype)
+                assert clf.coef_.dtype == dtype
 
                 # test precompute Gram array
                 Gram = X.T.dot(X)
@@ -762,7 +760,7 @@ def test_enet_float_precision():
                 clf_multioutput.fit(X, multi_y)
                 coef[('multi', dtype)] = clf_multioutput.coef_
                 intercept[('multi', dtype)] = clf_multioutput.intercept_
-                assert_equal(clf.coef_.dtype, dtype)
+                assert clf.coef_.dtype == dtype
 
             for v in ['simple', 'multi']:
                 assert_array_almost_equal(coef[(v, np.float32)],

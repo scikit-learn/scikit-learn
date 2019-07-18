@@ -6,14 +6,13 @@ import numbers
 
 import numpy as np
 import pytest
+import joblib
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_not_equal
 
 from sklearn.base import BaseEstimator
 from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
@@ -37,7 +36,6 @@ from sklearn.datasets import load_diabetes
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.model_selection import GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
-from sklearn.utils import _joblib
 
 
 REGRESSION_SCORERS = ['explained_variance', 'r2',
@@ -54,7 +52,7 @@ CLF_SCORERS = ['accuracy', 'balanced_accuracy',
                'recall', 'recall_weighted', 'recall_macro', 'recall_micro',
                'neg_log_loss', 'log_loss', 'brier_score_loss',
                'jaccard', 'jaccard_weighted', 'jaccard_macro',
-               'jaccard_micro']
+               'jaccard_micro', 'roc_auc_ovr', 'roc_auc_ovo']
 
 # All supervised cluster scorers (They behave like classification metric)
 CLUSTER_SCORERS = ["adjusted_rand_score",
@@ -99,8 +97,8 @@ def setup_module():
     _, y_ml = make_multilabel_classification(n_samples=X.shape[0],
                                              random_state=0)
     filename = os.path.join(TEMP_FOLDER, 'test_data.pkl')
-    _joblib.dump((X, y, y_ml), filename)
-    X_mm, y_mm, y_ml_mm = _joblib.load(filename, mmap_mode='r')
+    joblib.dump((X, y, y_ml), filename)
+    X_mm, y_mm, y_ml_mm = joblib.load(filename, mmap_mode='r')
     ESTIMATORS = _make_estimators(X_mm, y_mm, y_ml_mm)
 
 
@@ -198,8 +196,8 @@ def check_multimetric_scoring_single_metric_wrapper(*args, **kwargs):
     if args[0] is not None:
         assert scorers is not None
         names, scorers = zip(*scorers.items())
-        assert_equal(len(scorers), 1)
-        assert_equal(names[0], 'score')
+        assert len(scorers) == 1
+        assert names[0] == 'score'
         scorers = scorers[0]
     return scorers
 
@@ -224,7 +222,7 @@ def test_check_scoring_and_check_multimetric_scoring():
         scorers, is_multi = _check_multimetric_scoring(estimator, scoring)
         assert is_multi
         assert isinstance(scorers, dict)
-        assert_equal(sorted(scorers.keys()), sorted(list(scoring)))
+        assert sorted(scorers.keys()) == sorted(list(scoring))
         assert all([isinstance(scorer, _PredictScorer)
                     for scorer in list(scorers.values())])
 
@@ -484,10 +482,10 @@ def test_scorer_sample_weight():
                               sample_weight=sample_weight)
             ignored = scorer(estimator[name], X_test[10:], target[10:])
             unweighted = scorer(estimator[name], X_test, target)
-            assert_not_equal(weighted, unweighted,
-                             msg="scorer {0} behaves identically when "
-                             "called with sample weights: {1} vs "
-                             "{2}".format(name, weighted, unweighted))
+            assert weighted != unweighted, (
+                "scorer {0} behaves identically when "
+                "called with sample weights: {1} vs "
+                "{2}".format(name, weighted, unweighted))
             assert_almost_equal(weighted, ignored,
                                 err_msg="scorer {0} behaves differently when "
                                 "ignoring samples and setting sample_weight to"

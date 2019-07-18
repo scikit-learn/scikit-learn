@@ -452,6 +452,8 @@ The normalizer instance can then be used on sample vectors as any transformer::
   array([[-0.70...,  0.70...,  0.  ...]])
 
 
+Note: L2 normalization is also known as spatial sign preprocessing.
+
 .. topic:: Sparse input
 
   :func:`normalize` and :class:`Normalizer` accept **both dense array-like

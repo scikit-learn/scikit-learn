@@ -3,10 +3,7 @@ import scipy.sparse as sp
 
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_less
 
-from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns
 from sklearn.exceptions import ConvergenceWarning
@@ -21,7 +18,7 @@ def test_sparse_coef():
     clf.coef_ = [1, 2, 3]
 
     assert sp.isspmatrix(clf.sparse_coef_)
-    assert_equal(clf.sparse_coef_.toarray().tolist()[0], clf.coef_)
+    assert clf.sparse_coef_.toarray().tolist()[0] == clf.coef_
 
 
 def test_normalize_option():
@@ -162,7 +159,7 @@ def _test_sparse_enet_not_as_toy_dataset(alpha, fit_intercept, positive):
     s_clf.fit(X_train, y_train)
 
     assert_almost_equal(s_clf.dual_gap_, 0, 4)
-    assert_greater(s_clf.score(X_test, y_test), 0.85)
+    assert s_clf.score(X_test, y_test) > 0.85
 
     # check the convergence is the same as the dense version
     d_clf = ElasticNet(alpha=alpha, l1_ratio=0.8, fit_intercept=fit_intercept,
@@ -171,13 +168,13 @@ def _test_sparse_enet_not_as_toy_dataset(alpha, fit_intercept, positive):
     d_clf.fit(X_train.toarray(), y_train)
 
     assert_almost_equal(d_clf.dual_gap_, 0, 4)
-    assert_greater(d_clf.score(X_test, y_test), 0.85)
+    assert d_clf.score(X_test, y_test) > 0.85
 
     assert_almost_equal(s_clf.coef_, d_clf.coef_, 5)
     assert_almost_equal(s_clf.intercept_, d_clf.intercept_, 5)
 
     # check that the coefs are sparse
-    assert_less(np.sum(s_clf.coef_ != 0.0), 2 * n_informative)
+    assert np.sum(s_clf.coef_ != 0.0) < 2 * n_informative
 
 
 def test_sparse_enet_not_as_toy_dataset():
@@ -203,16 +200,16 @@ def test_sparse_lasso_not_as_toy_dataset():
     s_clf = Lasso(alpha=0.1, fit_intercept=False, max_iter=max_iter, tol=1e-7)
     s_clf.fit(X_train, y_train)
     assert_almost_equal(s_clf.dual_gap_, 0, 4)
-    assert_greater(s_clf.score(X_test, y_test), 0.85)
+    assert s_clf.score(X_test, y_test) > 0.85
 
     # check the convergence is the same as the dense version
     d_clf = Lasso(alpha=0.1, fit_intercept=False, max_iter=max_iter, tol=1e-7)
     d_clf.fit(X_train.toarray(), y_train)
     assert_almost_equal(d_clf.dual_gap_, 0, 4)
-    assert_greater(d_clf.score(X_test, y_test), 0.85)
+    assert d_clf.score(X_test, y_test) > 0.85
 
     # check that the coefs are sparse
-    assert_equal(np.sum(s_clf.coef_ != 0.0), n_informative)
+    assert np.sum(s_clf.coef_ != 0.0) == n_informative
 
 
 def test_enet_multitarget():
@@ -241,8 +238,8 @@ def test_path_parameters():
                        l1_ratio=0.5, fit_intercept=False)
     ignore_warnings(clf.fit)(X, y)  # new params
     assert_almost_equal(0.5, clf.l1_ratio)
-    assert_equal(n_alphas, clf.n_alphas)
-    assert_equal(n_alphas, len(clf.alphas_))
+    assert n_alphas == clf.n_alphas
+    assert n_alphas == len(clf.alphas_)
     sparse_mse_path = clf.mse_path_
     ignore_warnings(clf.fit)(X.toarray(), y)  # compare with dense data
     assert_almost_equal(clf.mse_path_, sparse_mse_path)

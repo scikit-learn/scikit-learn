@@ -14,8 +14,6 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_allclose
 
@@ -137,22 +135,22 @@ def test_recalculate_max_depth():
     X = iris.data
     clf = IsolationForest().fit(X)
     for est in clf.estimators_:
-        assert_equal(est.max_depth, int(np.ceil(np.log2(X.shape[0]))))
+        assert est.max_depth == int(np.ceil(np.log2(X.shape[0])))
 
 
 def test_max_samples_attribute():
     X = iris.data
     clf = IsolationForest().fit(X)
-    assert_equal(clf.max_samples_, X.shape[0])
+    assert clf.max_samples_ == X.shape[0]
 
     clf = IsolationForest(max_samples=500)
     assert_warns_message(UserWarning,
                          "max_samples will be set to n_samples for estimation",
                          clf.fit, X)
-    assert_equal(clf.max_samples_, X.shape[0])
+    assert clf.max_samples_ == X.shape[0]
 
     clf = IsolationForest(max_samples=0.4).fit(X)
-    assert_equal(clf.max_samples_, 0.4*X.shape[0])
+    assert clf.max_samples_ == 0.4*X.shape[0]
 
 
 def test_iforest_parallel_regression():
@@ -200,7 +198,7 @@ def test_iforest_performance():
     y_pred = - clf.decision_function(X_test)
 
     # check that there is at most 6 errors (false positive or false negative)
-    assert_greater(roc_auc_score(y_test, y_pred), 0.98)
+    assert roc_auc_score(y_test, y_pred) > 0.98
 
 
 @pytest.mark.parametrize("contamination", [0.25, "auto"])
@@ -214,7 +212,7 @@ def test_iforest_works(contamination):
     decision_func = -clf.decision_function(X)
     pred = clf.predict(X)
     # assert detect outliers:
-    assert_greater(np.min(decision_func[-2:]), np.max(decision_func[:-2]))
+    assert np.min(decision_func[-2:]) > np.max(decision_func[:-2])
     assert_array_equal(pred, 6 * [1] + 2 * [-1])
 
 
@@ -222,7 +220,7 @@ def test_max_samples_consistency():
     # Make sure validated max_samples in iforest and BaseBagging are identical
     X = iris.data
     clf = IsolationForest().fit(X)
-    assert_equal(clf.max_samples_, clf._max_samples)
+    assert clf.max_samples_ == clf._max_samples
 
 
 def test_iforest_subsampled_features():
