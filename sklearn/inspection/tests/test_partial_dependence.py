@@ -507,9 +507,9 @@ def test_plot_partial_dependence_multiclass(pyplot):
     assert len(axs2) == 2
     assert all(ax.has_data for ax in axs2)
 
-    # 0 is setosa
+    # check that the pd plots are the same for 0 and "setosa"
     assert all(axs[0].lines[0]._y == axs2[0].lines[0]._y)
-    # 1 is not
+    # check that the pd plots are different for another target
     clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
     clf.fit(iris.data, iris.target)
     grid_resolution = 25
