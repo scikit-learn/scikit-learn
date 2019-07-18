@@ -983,7 +983,7 @@ def check_scalar(x, name, target_type, min_val=None, max_val=None):
 
 
 def _check_sample_weight(sample_weight, X, dtype=None):
-    """Validate sample weights. 
+    """Validate sample weights.
 
     Parameters
     ----------
