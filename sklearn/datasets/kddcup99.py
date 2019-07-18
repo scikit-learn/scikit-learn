@@ -15,13 +15,13 @@ import os
 from os.path import dirname, exists, join
 
 import numpy as np
-
+import joblib
 
 from .base import _fetch_remote
 from .base import get_data_home
 from .base import RemoteFileMetadata
+from .base import _refresh_cache
 from ..utils import Bunch
-from ..utils import _joblib
 from ..utils import check_random_state
 from ..utils import shuffle as shuffle_method
 
@@ -139,9 +139,9 @@ def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
         data = np.c_[data[s, :11], data[s, 12:]]
         target = target[s]
 
-        data[:, 0] = np.log((data[:, 0] + 0.1).astype(float))
-        data[:, 4] = np.log((data[:, 4] + 0.1).astype(float))
-        data[:, 5] = np.log((data[:, 5] + 0.1).astype(float))
+        data[:, 0] = np.log((data[:, 0] + 0.1).astype(float, copy=False))
+        data[:, 4] = np.log((data[:, 4] + 0.1).astype(float, copy=False))
+        data[:, 5] = np.log((data[:, 5] + 0.1).astype(float, copy=False))
 
         if subset == 'http':
             s = data[:, 2] == b'http'
@@ -284,8 +284,8 @@ def _fetch_brute_kddcup99(data_home=None,
         # (error: 'Incorrect data length while decompressing[...] the file
         #  could be corrupted.')
 
-        _joblib.dump(X, samples_path, compress=0)
-        _joblib.dump(y, targets_path, compress=0)
+        joblib.dump(X, samples_path, compress=0)
+        joblib.dump(y, targets_path, compress=0)
     elif not available:
         if not download_if_missing:
             raise IOError("Data not found and `download_if_missing` is False")
@@ -293,8 +293,10 @@ def _fetch_brute_kddcup99(data_home=None,
     try:
         X, y
     except NameError:
-        X = _joblib.load(samples_path)
-        y = _joblib.load(targets_path)
+        X, y = _refresh_cache([samples_path, targets_path], 0)
+        # TODO: Revert to the following two lines in v0.23
+        # X = joblib.load(samples_path)
+        # y = joblib.load(targets_path)
 
     return Bunch(data=X, target=y)
 

@@ -7,8 +7,6 @@ from time import time
 import numpy as np
 from collections import defaultdict
 
-import six
-
 from scipy.linalg import svd
 from sklearn.utils.extmath import randomized_svd
 from sklearn.datasets.samples_generator import make_low_rank_matrix

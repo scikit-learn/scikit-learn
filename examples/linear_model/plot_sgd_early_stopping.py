@@ -38,7 +38,6 @@ is held out with the validation stopping criterion.
 # Authors: Tom Dupre la Tour
 #
 # License: BSD 3 clause
-from __future__ import print_function
 import time
 import sys
 

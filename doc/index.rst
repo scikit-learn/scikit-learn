@@ -207,9 +207,13 @@
                     <li><em>On-going development:</em>
                     <a href="/dev/whats_new.html"><em>What's new</em> (Changelog)</a>
                     </li>
-                    <li><strong>Scikit-learn 0.21 will drop support for Python 2.7 and Python 3.4.</strong>
+                    <li><strong>Scikit-learn from 0.21 requires Python 3.5 or greater.</strong>
                     </li>
-                    <li><em>December 2018.</em> scikit-learn 0.20.2 is available for download (<a href="whats_new.html#version-0-20-2">Changelog</a>).
+                    <li><em>May 2019.</em> scikit-learn 0.21.0 to 0.21.2 are available for download (<a href="whats_new.html#version-0-21">Changelog</a>).
+                    </li>
+                    <li><em>March 2019.</em> scikit-learn 0.20.3 is available for download (<a href="whats_new.html#version-0-20-3">Changelog</a>).
+                    </li>
+                    <li><em>December 2018.</em> scikit-learn 0.20.2 is available for download (<a href="whats_new.html#version-0-20-2">Changelog</a>)
                     </li>
                     <li><em>November 2018.</em> scikit-learn 0.20.1 is available for download (<a href="whats_new.html#version-0-20-1">Changelog</a>).
                     </li>
@@ -218,8 +222,6 @@
                     <li><em>July 2018.</em> scikit-learn 0.19.2 is available for download (<a href="whats_new.html#version-0-19">Changelog</a>).
                     </li>
                     <li><em>July 2017.</em> scikit-learn 0.19.0 is available for download (<a href="whats_new/v0.19.html#version-0-19">Changelog</a>).
-                    </li>
-                    <li><em>June 2017.</em> scikit-learn 0.18.2 is available for download (<a href="whats_new/v0.18.html#version-0-18-2">Changelog</a>).
                     </li>
                     </ul>
                 </div>

@@ -4,13 +4,16 @@ Utilities useful during the build.
 # author: Andy Mueller, Gael Varoquaux
 # license: BSD
 
-from __future__ import division, print_function, absolute_import
 
 import os
 
 from distutils.version import LooseVersion
+import contextlib
 
 from numpy.distutils.system_info import get_info
+
+from .openmp_helpers import check_openmp_support
+
 
 DEFAULT_ROOT = 'sklearn'
 # on conda, this is the latest for python 3.5
@@ -63,6 +66,8 @@ def build_from_c_and_cpp_files(extensions):
 
 def maybe_cythonize_extensions(top_path, config):
     """Tweaks for building extensions between release and development mode."""
+    with_openmp = check_openmp_support()
+
     is_release = os.path.exists(os.path.join(top_path, 'PKG-INFO'))
 
     if is_release:
@@ -82,4 +87,17 @@ def maybe_cythonize_extensions(top_path, config):
             exc.args += (message,)
             raise
 
-        config.ext_modules = cythonize(config.ext_modules)
+        n_jobs = 1
+        with contextlib.suppress(ImportError):
+            import joblib
+            if LooseVersion(joblib.__version__) > LooseVersion("0.13.0"):
+                # earlier joblib versions don't account for CPU affinity
+                # constraints, and may over-estimate the number of available
+                # CPU particularly in CI (cf loky#114)
+                n_jobs = joblib.effective_n_jobs()
+
+        config.ext_modules = cythonize(
+            config.ext_modules,
+            nthreads=n_jobs,
+            compile_time_env={'SKLEARN_OPENMP_SUPPORTED': with_openmp},
+            compiler_directives={'language_level': 3})

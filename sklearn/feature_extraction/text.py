@@ -11,7 +11,6 @@
 The :mod:`sklearn.feature_extraction.text` submodule gathers utilities to
 build feature vectors from text documents.
 """
-from __future__ import unicode_literals, division
 
 import array
 from collections import defaultdict
@@ -30,7 +29,9 @@ from ..preprocessing import normalize
 from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
-from ..utils.fixes import sp_version
+from ..utils import _IS_32BIT
+from ..utils.fixes import _astype_copy_false
+from ..exceptions import ChangedBehaviorWarning
 
 
 __all__ = ['HashingVectorizer',
@@ -109,11 +110,11 @@ def _check_stop_list(stop):
         raise ValueError("not a built-in stop list: %s" % stop)
     elif stop is None:
         return None
-    else:               # assume it's a collection
+    else:  # assume it's a collection
         return frozenset(stop)
 
 
-class VectorizerMixin(object):
+class VectorizerMixin:
     """Provides common code for text vectorizers (tokenization logic)."""
 
     _white_spaces = re.compile(r"\s\s+")
@@ -304,10 +305,37 @@ class VectorizerMixin(object):
             self._stop_words_id = id(self.stop_words)
             return 'error'
 
+    def _validate_custom_analyzer(self):
+        # This is to check if the given custom analyzer expects file or a
+        # filename instead of data.
+        # Behavior changed in v0.21, function could be removed in v0.23
+        import tempfile
+        with tempfile.NamedTemporaryFile() as f:
+            fname = f.name
+        # now we're sure fname doesn't exist
+
+        msg = ("Since v0.21, vectorizers pass the data to the custom analyzer "
+               "and not the file names or the file objects. This warning "
+               "will be removed in v0.23.")
+        try:
+            self.analyzer(fname)
+        except FileNotFoundError:
+            warnings.warn(msg, ChangedBehaviorWarning)
+        except AttributeError as e:
+            if str(e) == "'str' object has no attribute 'read'":
+                warnings.warn(msg, ChangedBehaviorWarning)
+        except Exception:
+            pass
+
     def build_analyzer(self):
-        """Return a callable that handles preprocessing and tokenization"""
+        """Return a callable that handles preprocessing, tokenization
+
+        and n-grams generation.
+        """
         if callable(self.analyzer):
-            return self.analyzer
+            if self.input in ['file', 'filename']:
+                self._validate_custom_analyzer()
+            return lambda doc: self.analyzer(self.decode(doc))
 
         preprocess = self.build_preprocessor()
 
@@ -426,8 +454,8 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         If 'file', the sequence items must have a 'read' method (file-like
         object) that is called to fetch the bytes in memory.
 
-        Otherwise the input is expected to be the sequence strings or
-        bytes items are expected to be analyzed directly.
+        Otherwise the input is expected to be a sequence of items that
+        can be of type string or byte.
 
     encoding : string, default='utf-8'
         If bytes or files are given to analyze, this encoding is used to
@@ -490,6 +518,11 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
 
+        .. versionchanged:: 0.21
+        Since v0.21, if ``input`` is ``filename`` or ``file``, the data is
+        first read from the file and then passed to the given callable
+        analyzer.
+
     n_features : integer, default=(2 ** 20)
         The number of features (columns) in the output matrices. Small numbers
         of features are likely to cause hash collisions, but large numbers
@@ -510,13 +543,6 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
 
         .. versionadded:: 0.19
 
-    non_negative : boolean, optional, default False
-        When True, an absolute value is applied to the features matrix prior to
-        returning it. When used in conjunction with alternate_sign=True, this
-        significantly reduces the inner product preservation property.
-
-        .. deprecated:: 0.19
-            This option will be removed in 0.21.
     dtype : type, optional
         Type of the matrix returned by fit_transform() or transform().
 
@@ -545,7 +571,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), analyzer='word', n_features=(2 ** 20),
                  binary=False, norm='l2', alternate_sign=True,
-                 non_negative=False, dtype=np.float64):
+                 dtype=np.float64):
         self.input = input
         self.encoding = encoding
         self.decode_error = decode_error
@@ -561,7 +587,6 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         self.binary = binary
         self.norm = norm
         self.alternate_sign = alternate_sign
-        self.non_negative = non_negative
         self.dtype = dtype
 
     def partial_fit(self, X, y=None):
@@ -649,8 +674,10 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
     def _get_hasher(self):
         return FeatureHasher(n_features=self.n_features,
                              input_type='string', dtype=self.dtype,
-                             alternate_sign=self.alternate_sign,
-                             non_negative=self.non_negative)
+                             alternate_sign=self.alternate_sign)
+
+    def _more_tags(self):
+        return {'X_types': ['string']}
 
 
 def _document_frequency(X):
@@ -683,8 +710,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         If 'file', the sequence items must have a 'read' method (file-like
         object) that is called to fetch the bytes in memory.
 
-        Otherwise the input is expected to be the sequence strings or
-        bytes items are expected to be analyzed directly.
+        Otherwise the input is expected to be a sequence of items that
+        can be of type string or byte.
 
     encoding : string, 'utf-8' by default.
         If bytes or files are given to analyze, this encoding is used to
@@ -751,6 +778,11 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
 
+        .. versionchanged:: 0.21
+        Since v0.21, if ``input`` is ``filename`` or ``file``, the data is
+        first read from the file and then passed to the given callable
+        analyzer.
+
     max_df : float in range [0.0, 1.0] or int, default=1.0
         When building the vocabulary ignore terms that have a document
         frequency strictly higher than the given threshold (corpus-specific
@@ -793,6 +825,10 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     vocabulary_ : dict
         A mapping of terms to feature indices.
 
+    fixed_vocabulary_: boolean
+        True if a fixed vocabulary of term to indices mapping
+        is provided by the user
+
     stop_words_ : set
         Terms that were ignored because they either:
 
@@ -815,7 +851,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     >>> X = vectorizer.fit_transform(corpus)
     >>> print(vectorizer.get_feature_names())
     ['and', 'document', 'first', 'is', 'one', 'second', 'the', 'third', 'this']
-    >>> print(X.toarray())  # doctest: +NORMALIZE_WHITESPACE
+    >>> print(X.toarray())
     [[0 1 1 1 0 0 1 0 1]
      [0 2 0 1 0 1 1 0 1]
      [1 0 0 1 1 0 1 1 1]
@@ -871,7 +907,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         Returns a reordered matrix and modifies the vocabulary in place
         """
         sorted_features = sorted(vocabulary.items())
-        map_index = np.empty(len(sorted_features), dtype=np.int32)
+        map_index = np.empty(len(sorted_features), dtype=X.indices.dtype)
         for new_val, (term, old_val) in enumerate(sorted_features):
             vocabulary[term] = new_val
             map_index[old_val] = new_val
@@ -894,13 +930,13 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         # Calculate a mask based on document frequencies
         dfs = _document_frequency(X)
-        tfs = np.asarray(X.sum(axis=0)).ravel()
         mask = np.ones(len(dfs), dtype=bool)
         if high is not None:
             mask &= dfs <= high
         if low is not None:
             mask &= dfs >= low
         if limit is not None and mask.sum() > limit:
+            tfs = np.asarray(X.sum(axis=0)).ravel()
             mask_inds = (-tfs[mask]).argsort()[:limit]
             new_mask = np.zeros(len(dfs), dtype=bool)
             new_mask[np.where(mask)[0][mask_inds]] = True
@@ -961,14 +997,12 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                                  " contain stop words")
 
         if indptr[-1] > 2147483648:  # = 2**31 - 1
-            if sp_version >= (0, 14):
-                indices_dtype = np.int64
-            else:
+            if _IS_32BIT:
                 raise ValueError(('sparse CSR array has {} non-zero '
                                   'elements and requires 64 bit indexing, '
-                                  ' which is unsupported with scipy {}. '
-                                  'Please upgrade to scipy >=0.14')
-                                 .format(indptr[-1], '.'.join(sp_version)))
+                                  'which is unsupported with 32 bit Python.')
+                                 .format(indptr[-1]))
+            indices_dtype = np.int64
 
         else:
             indices_dtype = np.int32
@@ -1127,6 +1161,9 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         return [t for t, i in sorted(self.vocabulary_.items(),
                                      key=itemgetter(1))]
 
+    def _more_tags(self):
+        return {'X_types': ['string']}
+
 
 def _make_int_array():
     """Construct an array.array of a type suitable for scipy.sparse indices."""
@@ -1146,17 +1183,18 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     informative than features that occur in a small fraction of the training
     corpus.
 
-    The formula that is used to compute the tf-idf of term t is
-    tf-idf(d, t) = tf(t) * idf(d, t), and the idf is computed as
-    idf(d, t) = log [ n / df(d, t) ] + 1 (if ``smooth_idf=False``),
-    where n is the total number of documents and df(d, t) is the
-    document frequency; the document frequency is the number of documents d
-    that contain term t. The effect of adding "1" to the idf in the equation
-    above is that terms with zero idf, i.e., terms  that occur in all documents
-    in a training set, will not be entirely ignored.
-    (Note that the idf formula above differs from the standard
-    textbook notation that defines the idf as
-    idf(d, t) = log [ n / (df(d, t) + 1) ]).
+    The formula that is used to compute the tf-idf for a term t of a document d
+    in a document set is tf-idf(t, d) = tf(t, d) * idf(t), and the idf is
+    computed as idf(t) = log [ n / df(t) ] + 1 (if ``smooth_idf=False``), where
+    n is the total number of documents in the document set and df(t) is the
+    document frequency of t; the document frequency is the number of documents
+    in the document set that contain the term t. The effect of adding "1" to
+    the idf in the equation above is that terms with zero idf, i.e., terms
+    that occur in all documents in a training set, will not be entirely
+    ignored.
+    (Note that the idf formula above differs from the standard textbook
+    notation that defines the idf as
+    idf(t) = log [ n / (df(t) + 1) ]).
 
     If ``smooth_idf=True`` (the default), the constant "1" is added to the
     numerator and denominator of the idf as if an extra document was seen
@@ -1235,7 +1273,8 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 
         if self.use_idf:
             n_samples, n_features = X.shape
-            df = _document_frequency(X).astype(dtype)
+            df = _document_frequency(X)
+            df = df.astype(dtype, **_astype_copy_false(df))
 
             # perform idf smoothing if required
             df += int(self.smooth_idf)
@@ -1306,6 +1345,9 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         self._idf_diag = sp.spdiags(value, diags=0, m=n_features,
                                     n=n_features, format='csr')
 
+    def _more_tags(self):
+        return {'X_types': 'sparse'}
+
 
 class TfidfVectorizer(CountVectorizer):
     """Convert a collection of raw documents to a matrix of TF-IDF features.
@@ -1325,8 +1367,8 @@ class TfidfVectorizer(CountVectorizer):
         If 'file', the sequence items must have a 'read' method (file-like
         object) that is called to fetch the bytes in memory.
 
-        Otherwise the input is expected to be the sequence strings or
-        bytes items are expected to be analyzed directly.
+        Otherwise the input is expected to be a sequence of items that
+        can be of type string or byte.
 
     encoding : string, 'utf-8' by default.
         If bytes or files are given to analyze, this encoding is used to
@@ -1368,6 +1410,11 @@ class TfidfVectorizer(CountVectorizer):
 
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
+
+        .. versionchanged:: 0.21
+        Since v0.21, if ``input`` is ``filename`` or ``file``, the data is
+        first read from the file and then passed to the given callable
+        analyzer.
 
     stop_words : string {'english'}, list, or None (default=None)
         If a string, it is passed to _check_stop_list and the appropriate stop
@@ -1454,9 +1501,13 @@ class TfidfVectorizer(CountVectorizer):
     vocabulary_ : dict
         A mapping of terms to feature indices.
 
+    fixed_vocabulary_: boolean
+        True if a fixed vocabulary of term to indices mapping
+        is provided by the user
+
     idf_ : array, shape (n_features)
         The inverse document frequency (IDF) vector; only defined
-        if  ``use_idf`` is True.
+        if ``use_idf`` is True.
 
     stop_words_ : set
         Terms that were ignored because they either:
@@ -1639,3 +1690,6 @@ class TfidfVectorizer(CountVectorizer):
 
         X = super().transform(raw_documents)
         return self._tfidf.transform(X, copy=False)
+
+    def _more_tags(self):
+        return {'X_types': ['string'], '_skip_test': True}

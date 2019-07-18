@@ -12,8 +12,8 @@ implements Stochastic Gradient Descent related algorithms.
 from .base import LinearRegression
 
 from .bayes import BayesianRidge, ARDRegression
-from .least_angle import (Lars, LassoLars, lars_path, LarsCV, LassoLarsCV,
-                          LassoLarsIC)
+from .least_angle import (Lars, LassoLars, lars_path, lars_path_gram, LarsCV,
+                          LassoLarsCV, LassoLarsIC)
 from .coordinate_descent import (Lasso, ElasticNet, LassoCV, ElasticNetCV,
                                  lasso_path, enet_path, MultiTaskLasso,
                                  MultiTaskElasticNet, MultiTaskElasticNetCV,
@@ -72,6 +72,7 @@ __all__ = ['ARDRegression',
            'TheilSenRegressor',
            'enet_path',
            'lars_path',
+           'lars_path_gram',
            'lasso_path',
            'logistic_regression_path',
            'orthogonal_mp',

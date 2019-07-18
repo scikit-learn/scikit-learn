@@ -98,10 +98,10 @@ make_args="SPHINXOPTS=-T $make_args"  # show full traceback on exception
 # notation in the HTML documentation
 sudo -E apt-get -yq update
 sudo -E apt-get -yq remove texlive-binaries --purge
-sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes \
+sudo -E apt-get -yq --no-install-suggests --no-install-recommends \
     install dvipng texlive-latex-base texlive-latex-extra \
-    texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended\
-    latexmk
+    texlive-latex-recommended texlive-fonts-recommended \
+    latexmk gsfonts ccache
 
 # deactivate circleci virtualenv and setup a miniconda env instead
 if [[ `type -t deactivate` ]]; then
@@ -112,8 +112,10 @@ fi
 wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
    -O miniconda.sh
 chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
-export PATH="$MINICONDA_PATH/bin:$PATH"
-conda update --yes --quiet conda
+export PATH="/usr/lib/ccache:$MINICONDA_PATH/bin:$PATH"
+
+ccache -M 512M
+export CCACHE_COMPRESS=1
 
 # Configure the conda environment and put it in the path using the
 # provided versions
@@ -124,11 +126,13 @@ conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
   joblib
 
 source activate testenv
-pip install sphinx-gallery
-pip install numpydoc==0.8
+pip install "sphinx-gallery>=0.2,<0.3"
+pip install numpydoc==0.9
 
 # Build and install scikit-learn in dev mode
 python setup.py develop
+
+export OMP_NUM_THREADS=1
 
 if [[ "$CIRCLE_BRANCH" =~ ^master$ && -z "$CI_PULL_REQUEST" ]]
 then
@@ -160,7 +164,7 @@ then
     echo "$affected"
     (
     echo '<html><body><ul>'
-    echo "$affected" | sed 's|.*|<li><a href="&">&</a></li>|'
+    echo "$affected" | sed 's|.*|<li><a href="&">&</a> [<a href="https://scikit-learn.org/dev/&">dev</a>, <a href="https://scikit-learn.org/stable/&">stable</a>]</li>|'
     echo '</ul><p>General: <a href="index.html">Home</a> | <a href="modules/classes.html">API Reference</a> | <a href="auto_examples/index.html">Examples</a></p></body></html>'
     ) > 'doc/_build/html/stable/_changed.html'
 fi

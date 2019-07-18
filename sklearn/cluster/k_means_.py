@@ -11,11 +11,11 @@
 #          Robert Layton <robertlayton@gmail.com>
 # License: BSD 3 clause
 
-from __future__ import division
 import warnings
 
 import numpy as np
 import scipy.sparse as sp
+from joblib import Parallel, delayed, effective_n_jobs
 
 from ..base import BaseEstimator, ClusterMixin, TransformerMixin
 from ..metrics.pairwise import euclidean_distances
@@ -29,9 +29,6 @@ from ..utils import gen_batches
 from ..utils import check_random_state
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
-from ..utils._joblib import Parallel
-from ..utils._joblib import delayed
-from ..utils._joblib import effective_n_jobs
 from ..exceptions import ConvergenceWarning
 from . import _k_means
 from ._k_means_elkan import k_means_elkan
@@ -45,7 +42,7 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
     """Init n_clusters seeds according to k-means++
 
     Parameters
-    -----------
+    ----------
     X : array or sparse matrix, shape (n_samples, n_features)
         The data to pick seeds for. To avoid memory copy, the input data
         should be double precision (dtype=np.float64).
@@ -179,7 +176,7 @@ def _check_sample_weight(X, sample_weight):
                              % (n_samples, len(sample_weight)))
         # normalize the weights to sum up to n_samples
         scale = n_samples / sample_weight.sum()
-        return (sample_weight * scale).astype(X.dtype)
+        return (sample_weight * scale).astype(X.dtype, copy=False)
 
 
 def k_means(X, n_clusters, sample_weight=None, init='k-means++',
@@ -619,7 +616,7 @@ def _labels_inertia_precompute_dense(X, sample_weight, x_squared_norms,
     labels, mindist = pairwise_distances_argmin_min(
         X=X, Y=centers, metric='euclidean', metric_kwargs={'squared': True})
     # cython k-means code assumes int32 inputs
-    labels = labels.astype(np.int32)
+    labels = labels.astype(np.int32, copy=False)
     if n_samples == distances.shape[0]:
         # distances will be changed in-place
         distances[:] = mindist
@@ -707,7 +704,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
         an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
 
-    x_squared_norms :  array, shape (n_samples,), optional
+    x_squared_norms : array, shape (n_samples,), optional
         Squared euclidean norm of each data point. Pass it if you have it at
         hands already to avoid it being recomputed here. Default: None
 
@@ -888,7 +885,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         probably much faster than the default batch implementation.
 
     Notes
-    ------
+    -----
     The k-means problem is solved using either Lloyd's or Elkan's algorithm.
 
     The average complexity is given by O(k n T), were n is the number of
@@ -1195,9 +1192,10 @@ def _mini_batch_step(X, sample_weight, x_squared_norms, centers, weight_sums,
                       % n_reassigns)
 
             if sp.issparse(X) and not sp.issparse(centers):
-                assign_rows_csr(X, new_centers.astype(np.intp),
-                                np.where(to_reassign)[0].astype(np.intp),
-                                centers)
+                assign_rows_csr(
+                        X, new_centers.astype(np.intp, copy=False),
+                        np.where(to_reassign)[0].astype(np.intp, copy=False),
+                        centers)
             else:
                 centers[to_reassign] = X[new_centers]
         # reset counts of reassigned centers, but don't reset them too small
@@ -1419,20 +1417,20 @@ class MiniBatchKMeans(KMeans):
     ...               [3, 2], [5, 5], [1, -1]])
     >>> # manually fit on batches
     >>> kmeans = MiniBatchKMeans(n_clusters=2,
-    ...         random_state=0,
-    ...         batch_size=6)
+    ...                          random_state=0,
+    ...                          batch_size=6)
     >>> kmeans = kmeans.partial_fit(X[0:6,:])
     >>> kmeans = kmeans.partial_fit(X[6:12,:])
     >>> kmeans.cluster_centers_
-    array([[1, 1],
-           [3, 4]])
+    array([[2. , 1. ],
+           [3.5, 4.5]])
     >>> kmeans.predict([[0, 0], [4, 4]])
     array([0, 1], dtype=int32)
     >>> # fit on the whole data
     >>> kmeans = MiniBatchKMeans(n_clusters=2,
-    ...         random_state=0,
-    ...         batch_size=6,
-    ...         max_iter=10).fit(X)
+    ...                          random_state=0,
+    ...                          batch_size=6,
+    ...                          max_iter=10).fit(X)
     >>> kmeans.cluster_centers_
     array([[3.95918367, 2.40816327],
            [1.12195122, 1.3902439 ]])
@@ -1669,7 +1667,8 @@ class MiniBatchKMeans(KMeans):
 
         """
 
-        X = check_array(X, accept_sparse="csr", order="C")
+        X = check_array(X, accept_sparse="csr", order="C",
+                        dtype=[np.float64, np.float32])
         n_samples, n_features = X.shape
         if hasattr(self.init, '__array__'):
             self.init = np.ascontiguousarray(self.init, dtype=X.dtype)
