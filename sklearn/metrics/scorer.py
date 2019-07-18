@@ -487,6 +487,16 @@ roc_auc_scorer = make_scorer(roc_auc_score, greater_is_better=True,
                              needs_threshold=True)
 average_precision_scorer = make_scorer(average_precision_score,
                                        needs_threshold=True)
+roc_auc_ovo_scorer = make_scorer(roc_auc_score, needs_threshold=True,
+                                 multi_class='ovo')
+roc_auc_ovo_weighted_scorer = make_scorer(roc_auc_score, needs_threshold=True,
+                                          multi_class='ovo',
+                                          average='weighted')
+roc_auc_ovr_scorer = make_scorer(roc_auc_score, needs_threshold=True,
+                                 multi_class='ovr')
+roc_auc_ovr_weighted_scorer = make_scorer(roc_auc_score, needs_threshold=True,
+                                          multi_class='ovr',
+                                          average='weighted')
 
 # Score function for probabilistic classification
 neg_log_loss_scorer = make_scorer(log_loss, greater_is_better=False,
@@ -515,6 +525,8 @@ SCORERS = dict(explained_variance=explained_variance_scorer,
                neg_mean_squared_error=neg_mean_squared_error_scorer,
                neg_mean_squared_log_error=neg_mean_squared_log_error_scorer,
                accuracy=accuracy_scorer, roc_auc=roc_auc_scorer,
+               roc_auc_ovr=roc_auc_ovr_scorer,
+               roc_auc_ovo=roc_auc_ovo_scorer,
                balanced_accuracy=balanced_accuracy_scorer,
                average_precision=average_precision_scorer,
                neg_log_loss=neg_log_loss_scorer,
