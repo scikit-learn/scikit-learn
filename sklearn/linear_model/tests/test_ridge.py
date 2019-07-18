@@ -1013,10 +1013,18 @@ def test_ridge_fit_intercept_sparse(solver):
     X, y = _make_sparse_offset_regression(n_features=20, random_state=0)
     X_csr = sp.csr_matrix(X)
 
-    # for now only sparse_cg can fit an intercept with sparse X with default
-    # tol and max_iter, sag should raise a warning and is handled in
-    # test_ridge_fit_intercept_sparse_sag
-    # "auto" should switch to "sparse_cg"
+    # for now only sparse_cg can correctly fit an intercept with sparse X with
+    # default tol and max_iter.
+    # sag is tested separately in test_ridge_fit_intercept_sparse_sag
+    # because it requires more iterations and should raise a warning if default
+    # max_iter is used.
+    # other solvers raise an exception, as checked in
+    # test_ridge_fit_intercept_sparse_error
+    #
+    # "auto" should switch to "sparse_cg" when X is sparse
+    # so the reference we use for both ("auto" and "sparse_cg") is
+    # Ridge(solver="sparse_cg"), fitted using the dense representation (note
+    # that "sparse_cg" can fit sparse or dense data)
     dense_ridge = Ridge(alpha=1., solver='sparse_cg', fit_intercept=True)
     sparse_ridge = Ridge(alpha=1., solver=solver, fit_intercept=True)
     dense_ridge.fit(X, y)
