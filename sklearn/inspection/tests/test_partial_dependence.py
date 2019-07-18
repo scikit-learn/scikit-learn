@@ -30,11 +30,8 @@ from sklearn.metrics import r2_score
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.preprocessing import StandardScaler
-<<<<<<< HEAD
 from sklearn.preprocessing import RobustScaler
 from sklearn.pipeline import make_pipeline
-=======
->>>>>>> origin/master
 from sklearn.dummy import DummyClassifier
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.utils.testing import assert_allclose
