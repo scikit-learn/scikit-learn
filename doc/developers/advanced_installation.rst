@@ -220,6 +220,10 @@ On Red Hat and clones (e.g. CentOS), install the dependencies using::
 
     sudo yum -y install gcc gcc-c++ python-devel numpy scipy
 
+.. note::
+
+    To use a high performance BLAS library (e.g. OpenBlas) see 
+    `scipy installation instructions <https://docs.scipy.org/doc/scipy/reference/building/linux.html>`_.
 
 Windows
 -------
