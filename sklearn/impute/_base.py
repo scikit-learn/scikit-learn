@@ -344,11 +344,11 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
             # See https://github.com/scipy/scipy/issues/2636
 
             if np.issubdtype(X.dtype, np.number):
-                mode_masked, count_masked  = stats.mstats.mode(masked_X, axis=0)
+                mode_masked, count_masked = stats.mstats.mode(masked_X, axis=0)
                 most_frequent = mode_masked.data.flatten()
                 counts = count_masked.data.flatten().astype(int)
                 most_frequent[np.where(counts == 0)] = np.nan
-            
+
             # stats.mstats.mode requires that array elements are
             # able to be cast as to floats
             else:
@@ -356,10 +356,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
                 X = X.transpose()
                 mask = mask.transpose()
 
-                if X.dtype.kind == "O":
-                    most_frequent = np.empty(X.shape[0], dtype=object)
-                else:
-                    most_frequent = np.empty(X.shape[0])
+                most_frequent = np.empty(X.shape[0], dtype=object)
 
                 for i, (row, row_mask) in enumerate(zip(X[:], mask[:])):
                     row_mask = np.logical_not(row_mask).astype(np.bool)
