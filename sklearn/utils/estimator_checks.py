@@ -1263,9 +1263,6 @@ def check_estimators_nan_inf(name, estimator_orig):
 def check_nonsquare_error(name, estimator_orig):
     """Test that error is thrown when non-square data provided"""
 
-    if name != "KernelCenterer":
-        return
-
     X, y = make_blobs(n_samples=20, n_features=10)
     estimator = clone(estimator_orig)
 
