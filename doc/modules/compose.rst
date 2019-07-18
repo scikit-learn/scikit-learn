@@ -512,6 +512,46 @@ above example would be::
                                   ('countvectorizer', CountVectorizer(),
                                    'title')])
 
+.. _visualizing_composite_estimators:
+
+Visualizing Composite Estimators
+================================
+
+:func:`sklearn.inspection.display_estimator` outputs a html representation of
+composite estimators. This can be useful to diagnose or visualize a Pipeline
+with may estimators. For example, the estimator defined in 
+The composite estimator defined in 
+:ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`
+can be visualized as:
+
+.. display_html::
+
+   from sklearn.compose import ColumnTransformer
+   from sklearn.pipeline import Pipeline
+   from sklearn.impute import SimpleImputer
+   from sklearn.preprocessing import StandardScaler, OneHotEncoder
+   from sklearn.linear_model import LogisticRegression
+   from sklearn.inspection import display_estimator
+
+   numeric_features = ['age', 'fare']
+   numeric_transformer = Pipeline(steps=[
+       ('imputer', SimpleImputer(strategy='median')),
+       ('scaler', StandardScaler())])
+
+   categorical_features = ['embarked', 'sex', 'pclass']
+   categorical_transformer = Pipeline(steps=[
+       ('imputer', SimpleImputer(strategy='constant', fill_value='missing')),
+       ('onehot', OneHotEncoder(handle_unknown='ignore'))])
+
+   preprocessor = ColumnTransformer(
+       transformers=[
+           ('num', numeric_transformer, numeric_features),
+           ('cat', categorical_transformer, categorical_features)])
+
+   clf = Pipeline(steps=[('preprocessor', preprocessor),
+                          ('classifier', LogisticRegression())])
+   print(display_estimator(clf))
+
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_compose_plot_column_transformer.py`

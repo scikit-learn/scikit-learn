@@ -79,10 +79,13 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 clf.fit(X_train, y_train)
 print("model score: %.3f" % clf.score(X_test, y_test))
 
+###############################################################################
+# A HTML visualization of this classifier can be found in
+# :ref:`visualizing_composite_estimators`.
 
 ###############################################################################
 # Using the prediction pipeline in a grid search
-###############################################################################
+# ----------------------------------------------
 # Grid search can also be performed on the different preprocessing steps
 # defined in the ``ColumnTransformer`` object, together with the classifier's
 # hyperparameters as part of the ``Pipeline``.

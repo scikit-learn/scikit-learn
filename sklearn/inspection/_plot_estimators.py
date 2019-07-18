@@ -206,6 +206,9 @@ _STYLE = """
   opacity: 1;
   z-index: 2;
 }
+.sk-top-container {
+  display: flex;
+}
 """
 
 
@@ -232,31 +235,37 @@ def display_estimator(estimator, print_changed_only=True):
             closing(StringIO()) as out:
 
         if not isinstance(estimator, Pipeline):
-            estimator = Pipeline([('', estimator)])
+            estimator = Pipeline([(estimator.__class__.__name__, estimator)])
 
-        out.write('<html><head><style>')
+        out.write('<head><style>')
         out.write(_STYLE.replace('\n', ''))
         out.write('</style></head><body>')
 
-        out.write('<div class="sk-container">')
+        out.write('<div class="sk-top-container"><div class="sk-container">')
         _write_estimator_html(out, estimator, '')
-        out.write('</div>')  # sk-container
-
-        # Adds whitespace at the end to allow space for hover info
-        out.write('<div class="sk-final-spacer">')
-        out.write(_estimator_tool_tip(estimator.steps[-1]))
-        out.write('</div>')  # sk-final-spacer
-        out.write("</body></html>")
-
-        html_output = out.getvalue()
+        out.write('</div></div>')  # sk-top-container # sk-container
 
         # wrap in iPython HTML if in a notebook context
         try:
             cls_name = get_ipython().__class__.__name__
             if cls_name != 'ZMQInteractiveShell':
-                return html_output
+                out.write("</html>")
+                return out.getvalue()
+
+            # Adds whitespace at the end to allow space for hover info
+            # in jupyter notebook or lab
+            largest_est_repr = ""
+            for est in estimator.steps:
+                est_repr = _estimator_tool_tip(est)
+                if len(est_repr) > len(largest_est_repr):
+                    largest_est_repr = est_repr
+            out.write('<div class="sk-final-spacer">')
+            out.write(largest_est_repr)
+            out.write('</div>')  # sk-final-spacer
 
             from IPython.display import HTML
-            return HTML(html_output)
+            out.write("</html>")
+            return HTML(out.getvalue())
         except (ImportError, NameError):
-            return html_output
+            out.write("</html>")
+            return out.getvalue()

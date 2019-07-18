@@ -37,7 +37,8 @@ extensions = [
     'sphinx.ext.imgconverter',
     'sphinx_gallery.gen_gallery',
     'sphinx_issues',
-    'custom_references_resolver'
+    'custom_references_resolver',
+    'display_html'
 ]
 
 # this is needed for some reason...
