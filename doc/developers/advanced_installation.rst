@@ -223,7 +223,8 @@ On Red Hat and clones (e.g. CentOS), install the dependencies using::
 .. note::
 
     To use a high performance BLAS library (e.g. OpenBlas) see 
-    `scipy installation instructions <https://docs.scipy.org/doc/scipy/reference/building/linux.html>`_.
+    `scipy installation instructions
+    <https://docs.scipy.org/doc/scipy/reference/building/linux.html>`_.
 
 Windows
 -------
