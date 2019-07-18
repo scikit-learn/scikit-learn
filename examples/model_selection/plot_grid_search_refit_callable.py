@@ -8,7 +8,7 @@ finding a decent accuracy within 1 standard deviation of the best accuracy
 score while minimising the number of PCA components [1].
 
 The figure shows the trade-off between cross-validated score and the number
-of PCA components. The balanced case is when n_components=12 and accuracy=0.90,
+of PCA components. The balanced case is when n_components=10 and accuracy=0.88,
 which falls into the range within 1 standard deviation of the best accuracy
 score.
 
