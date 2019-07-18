@@ -49,7 +49,7 @@ def test_infinite_values_and_thresholds(threshold, expected_predictions):
     # In paticular, if a value is +inf and the threhsold is +inf, the sample
     # should go to the right child.
 
-    X = np.array([-np.inf, 10 , 20,  np.inf]).reshape(-1, 1)
+    X = np.array([-np.inf, 10, 20,  np.inf]).reshape(-1, 1)
     nodes = np.zeros(3, dtype=PREDICTOR_RECORD_DTYPE)
 
     # We just construct a simple tree with 1 root and 2 children

@@ -241,11 +241,12 @@ def test_subsample():
                                mapper_subsample.bin_thresholds_[feature],
                                rtol=1e-4)
 
+
 def test_infinite_values():
     # Make sure infinite values are properly handled.
     bin_mapper = _BinMapper()
 
-    X = np.array([-np.inf, 0 , 1,  np.inf]).reshape(-1, 1)
+    X = np.array([-np.inf, 0, 1,  np.inf]).reshape(-1, 1)
 
     bin_mapper.fit(X)
     assert_allclose(bin_mapper.bin_thresholds_[0], [-np.inf, .5, np.inf])
