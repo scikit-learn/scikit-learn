@@ -32,4 +32,3 @@ def test_show_versions_with_blas(capsys):
         out, err = capsys.readouterr()
         assert 'python' in out
         assert 'numpy' in out
-        assert 'BLAS' in out
