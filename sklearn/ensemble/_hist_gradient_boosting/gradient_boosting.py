@@ -607,6 +607,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         return len(self._predictors)
 
     def _more_tags(self):
+        # This is not strictly True, but it's needed since
+        # force_all_finite=False means accept both nans and infinite values.
+        # Without the tag, common checks would fail.
+        # This comment must be removed once we merge PR 13911
         return {'allow_nan': True}
 
 
