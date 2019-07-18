@@ -479,12 +479,12 @@ def test_plot_partial_dependence(pyplot):
 
 
 def test_plot_partial_dependence_multiclass(pyplot):
-    # Test partial dependence plot function on multi-class input.
-    iris = load_iris()
-    clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
-    clf.fit(iris.data, iris.target)
-
     grid_resolution = 25
+    clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
+    iris = load_iris()
+
+    # Test partial dependence plot function on multi-class input.
+    clf.fit(iris.data, iris.target)
     plot_partial_dependence(clf, iris.data, [0, 1],
                             target=0,
                             grid_resolution=grid_resolution)
@@ -495,10 +495,7 @@ def test_plot_partial_dependence_multiclass(pyplot):
 
     # now with symbol labels
     target = iris.target_names[iris.target]
-    clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
     clf.fit(iris.data, target)
-
-    grid_resolution = 25
     plot_partial_dependence(clf, iris.data, [0, 1],
                             target='setosa',
                             grid_resolution=grid_resolution)
@@ -510,9 +507,7 @@ def test_plot_partial_dependence_multiclass(pyplot):
     # check that the pd plots are the same for 0 and "setosa"
     assert all(axs[0].lines[0]._y == axs2[0].lines[0]._y)
     # check that the pd plots are different for another target
-    clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
     clf.fit(iris.data, iris.target)
-    grid_resolution = 25
     plot_partial_dependence(clf, iris.data, [0, 1],
                             target=1,
                             grid_resolution=grid_resolution)
