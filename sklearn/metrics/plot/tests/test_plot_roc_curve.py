@@ -46,30 +46,31 @@ def test_plot_roc_curve_error_no_response(data_binary, response_method):
 
 @pytest.mark.parametrize("response_method",
                          ["predict_proba", "decision_function"])
-@pytest.mark.parametrize("pos_label", [0, 1])
-@pytest.mark.parametrize("drop_intermediate", [True, False])
-def test_plot_roc_curve(pyplot, response_method, data_binary,
-                        pos_label, drop_intermediate):
+def test_plot_roc_curve(pyplot, response_method, data_binary):
     X, y = data_binary
 
-    lr = LogisticRegression(solver="lbfgs")
+    lr = LogisticRegression()
     lr.fit(X, y)
 
-    viz = plot_roc_curve(lr, X, y, pos_label=pos_label,
-                         drop_intermediate=drop_intermediate)
+    viz = plot_roc_curve(lr, X, y, alpha=0.8)
 
     y_pred = getattr(lr, response_method)(X)
     if y_pred.ndim == 2:
         y_pred = y_pred[:, 1]
 
-    fpr, tpr, _ = roc_curve(y, y_pred, pos_label=pos_label,
-                            drop_intermediate=drop_intermediate)
+    fpr, tpr, _ = roc_curve(y, y_pred)
 
+    assert_allclose(viz.auc_, auc(fpr, tpr))
     assert_allclose(viz.fpr_, fpr)
     assert_allclose(viz.tpr_, tpr)
 
-    assert viz.name_ == "LogisticRegression"
+    assert viz.estimator_name_ == "LogisticRegression"
+
     import matplotlib as mpl
     assert isinstance(viz.line_, mpl.lines.Line2D)
+    assert viz.line_.get_alpha() == 0.8
     assert isinstance(viz.ax_, mpl.axes.Axes)
     assert isinstance(viz.figure_, mpl.figure.Figure)
+
+    expected_label = "LogisticRegression (AUC = {:0.2f})".format(viz.auc_)
+    assert viz.line_.get_label() == expected_label

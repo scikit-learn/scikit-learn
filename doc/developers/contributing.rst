@@ -1667,20 +1667,23 @@ for style adjustments through the visualizer object. Along with the visualizer
 object, a ``plot_*`` helper function is defined to create, plot and return the
 object. This function will contain the parameters from both the ``__init__``
 and ``plot`` methods for the visualizer object and pass the parameters to the
-respective methods.
+respective methods. Note that the ``__init__`` method defines attributes that
+are going to be used for plotting and the ``plot`` method defines attributes
+that are related to the the matplotlib object itself. The line artist is stored
+as an attribute to allow for customizations after calling ``plot``.
 
 For example, the `RocCurveVisualizer` defines the following methods:
 
 .. code-block:: python
 
    class RocCurveVisualizer:
-       def __init__(self, estimator, X, y, *, pos_label=None,
-                   sample_weight=None, drop_intermediate=True,
-                   response_method="predict_proba", label=None):
+       def __init__(self, estimator, X, y, *, pos_label=None, sample_weight=None,
+                    drop_intermediate=True, response_method="auto"):
            ...
            self.fpr_ = ...
            self.tpr_ = ...
-           self.label_ = ...
+           self.auc_ = ...
+           self.name_ = ...
 
        def plot(self, ax=None):
            ...
@@ -1703,7 +1706,3 @@ For example, the `RocCurveVisualizer` defines the following methods:
        return viz
 ```
 
-Note that the ``__init__`` method defines attributes that are going to be used
-for plotting and the ``plot`` method defines attributes that are related to the
-the matplotlib object itself. The line artist is stored as an attribute to
-allow for customizations after calling ``plot``.

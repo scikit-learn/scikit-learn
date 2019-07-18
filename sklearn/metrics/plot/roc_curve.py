@@ -44,7 +44,7 @@ class RocCurveVisualizer:
         True positive rate.
     auc_ :
         Area under ROC curve.
-    name_ : str
+    estimator_name_ : str
         Name of estimator.
     line_ : matplotlib Artist
         ROC Curve.
@@ -54,7 +54,7 @@ class RocCurveVisualizer:
         Figure containing the curve
     """
 
-    def __init__(self, estimator, X, y, *, pos_label=None, sample_weight=None,
+    def __init__(self, estimator, X, y, pos_label=None, sample_weight=None,
                  drop_intermediate=True, response_method="auto"):
         """Computes and stores values needed for visualization"""
 
@@ -87,9 +87,9 @@ class RocCurveVisualizer:
         self.fpr_ = fpr
         self.tpr_ = tpr
         self.auc_ = auc(fpr, tpr)
-        self.name_ = estimator.__class__.__name__
+        self.estimator_name_ = estimator.__class__.__name__
 
-    def plot(self, ax=None, line_kw=None, name=None):
+    def plot(self, ax=None, name=None, **line_kw):
         """Plot visualization
 
         Parameters
@@ -97,12 +97,12 @@ class RocCurveVisualizer:
         ax : Matplotlib Axes, default=None
             Axes object to plot on.
 
-        line_kw : dict or None, default=None
-            Keyword arguments to pass to.
-
         name : str or None, default=None
             Name of ROC Curve for labeling. If `None`, use the name of the
             estimator.
+
+        line_kw : dict
+            Keyword arguments to pass to `plot`.
         """
         check_matplotlib_support('plot_roc_curve')  # noqa
         import matplotlib.pyplot as plt  # noqa
@@ -110,14 +110,12 @@ class RocCurveVisualizer:
         if ax is None:
             fig, ax = plt.subplots()
 
-        if name is None:
-            name = self.name_
+        name = self.estimator_name_ if name is None else name
 
-        label = "{} (AUC = {:0.2f})".format(name, self.auc_)
-        line_kwargs = {"label": label}
-        if line_kw is not None:
-            line_kwargs.update(**line_kw)
-        self.line_ = ax.plot(self.fpr_, self.tpr_, **line_kwargs)[0]
+        if 'label' not in line_kw:
+            label = "{} (AUC = {:0.2f})".format(name, self.auc_)
+            line_kw['label'] = label
+        self.line_ = ax.plot(self.fpr_, self.tpr_, **line_kw)[0]
         ax.set_xlabel("False Positive Rate")
         ax.set_ylabel("True Positive Rate")
         ax.legend()
@@ -129,7 +127,7 @@ class RocCurveVisualizer:
 
 def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
                    drop_intermediate=True, response_method="auto",
-                   name=None, ax=None, line_kw=None):
+                   name=None, ax=None, **line_kw):
     """Plot Receiver operating characteristic (ROC) curve
 
     Note: this implementation is restricted to the binary classification task.
@@ -172,8 +170,8 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
     ax : matplotlib axes, default=None
         axes object to plot on
 
-    line_kw : dict or None, default=None
-        Keyword arguments to pass to
+    line_kw : dict
+        Keyword arguments to pass to `plot`.
 
     Returns
     -------
@@ -187,5 +185,5 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
                              pos_label=pos_label,
                              drop_intermediate=drop_intermediate,
                              response_method=response_method)
-    viz.plot(ax=ax, line_kw=line_kw, name=name)
+    viz.plot(ax=ax, name=name, **line_kw)
     return viz
