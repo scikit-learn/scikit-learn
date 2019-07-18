@@ -507,6 +507,7 @@ def test_plot_partial_dependence_multiclass(pyplot):
     # check that the pd plots are the same for 0 and "setosa"
     assert all(axs[0].lines[0]._y == axs2[0].lines[0]._y)
     # check that the pd plots are different for another target
+    clf.fit(iris.data, iris.target)
     plot_partial_dependence(clf, iris.data, [0, 1],
                             target=1,
                             grid_resolution=grid_resolution)
