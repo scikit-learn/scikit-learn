@@ -386,9 +386,7 @@ cdef class BestSplitter(BaseDenseSplitter):
 
             if f_j < n_known_constants:
                 # f_j in the interval [n_drawn_constants, n_known_constants[
-                tmp = features[f_j]
-                features[f_j] = features[n_drawn_constants]
-                features[n_drawn_constants] = tmp
+                features[n_drawn_constants], features[f_j] = features[f_j], features[n_drawn_constants]
 
                 n_drawn_constants += 1
 
@@ -419,8 +417,7 @@ cdef class BestSplitter(BaseDenseSplitter):
                     sort(Xf + start, samples + start, end - start)
 
                 if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
-                    features[f_j] = features[n_total_constants]
-                    features[n_total_constants] = current.feature
+                    features[f_j], features[n_total_constants] = features[n_total_constants], current.feature
 
                     n_found_constants += 1
                     n_total_constants += 1
@@ -485,9 +482,7 @@ cdef class BestSplitter(BaseDenseSplitter):
                 else:
                     partition_end -= 1
 
-                    tmp = samples[partition_end]
-                    samples[partition_end] = samples[p]
-                    samples[p] = tmp
+                    samples[p], samples[partition_end] = samples[partition_end], samples[p]
 
             self.criterion.reset()
             self.criterion.update(best.pos)
@@ -719,10 +714,7 @@ cdef class RandomSplitter(BaseDenseSplitter):
 
             if f_j < n_known_constants:
                 # f_j in the interval [n_drawn_constants, n_known_constants[
-                tmp = features[f_j]
-                features[f_j] = features[n_drawn_constants]
-                features[n_drawn_constants] = tmp
-
+                features[n_drawn_constants], features[f_j] = features[f_j], features[n_drawn_constants]
                 n_drawn_constants += 1
 
             else:
@@ -747,8 +739,7 @@ cdef class RandomSplitter(BaseDenseSplitter):
                         max_feature_value = current_feature_value
 
                 if max_feature_value <= min_feature_value + FEATURE_THRESHOLD:
-                    features[f_j] = features[n_total_constants]
-                    features[n_total_constants] = current.feature
+                    features[f_j], features[n_total_constants] = features[n_total_constants], current.feature
 
                     n_found_constants += 1
                     n_total_constants += 1
@@ -775,12 +766,8 @@ cdef class RandomSplitter(BaseDenseSplitter):
                         else:
                             partition_end -= 1
 
-                            Xf[p] = Xf[partition_end]
-                            Xf[partition_end] = current_feature_value
-
-                            tmp = samples[partition_end]
-                            samples[partition_end] = samples[p]
-                            samples[p] = tmp
+                            Xf[p], Xf[partition_end] = Xf[partition_end], current_feature_value
+                            samples[p], samples[partition_end] = samples[partition_end], samples[p]
 
                     current.pos = partition_end
 
@@ -817,10 +804,7 @@ cdef class RandomSplitter(BaseDenseSplitter):
                     else:
                         partition_end -= 1
 
-                        tmp = samples[partition_end]
-                        samples[partition_end] = samples[p]
-                        samples[p] = tmp
-
+                        samples[p], samples[partition_end] = samples[partition_end], samples[p]
 
             self.criterion.reset()
             self.criterion.update(best.pos)
