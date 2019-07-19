@@ -746,9 +746,6 @@ Support for Python 3.4 and below has been officially dropped.
   ``fit.predict`` were not equivalent. :pr:`13142` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-- |Enhancement| The parameter ``beta`` in :func:`metrics.fbeta_score` is
-  updated to accept the zero value.
-  :issue:`13224` by :user:`Dong-hee Na <corona10>`.
 
 :mod:`sklearn.model_selection`
 ..............................

@@ -1067,7 +1067,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
 
     The `beta` parameter determines the weight of recall in the combined
     score. ``beta < 1`` lends more weight to precision, while ``beta > 1``
-    favors recall (``beta -> 0`` considers only precision, ``beta -> inf``
+    favors recall (``beta -> 0`` considers only precision, ``beta -> +inf``
     only recall).
 
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
@@ -1428,7 +1428,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                             'precision', 'predicted', average, warn_for)
     recall = _prf_divide(tp_sum, true_sum,
                          'recall', 'true', average, warn_for)
-    if np.isinf(beta):
+    if np.isposinf(beta):
         f_score = recall
     else:
         # Don't need to warn for F: either P or R warned, or tp == 0 where pos
