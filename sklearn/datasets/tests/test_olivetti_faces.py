@@ -8,6 +8,7 @@ from sklearn.datasets.tests.test_common import check_return_X_y
 
 from sklearn.utils.testing import assert_array_equal
 
+
 def _is_olivetti_faces_not_available():
     try:
         datasets.fetch_olivetti_faces(download_if_missing=False)
