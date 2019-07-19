@@ -1694,12 +1694,12 @@ actual usefulness scores (e.g. 0 for irrelevant, 1 for relevant, 2 for very
 relevant), NDCG can be used.
 
 For one sample, given the vector of continuous ground-truth values for each
-target :math:`y \in \mathbb{R}^{M}`, where :math:`M` the number of outputs, and
+target :math:`y \in \mathbb{R}^{M}`, where :math:`M` is the number of outputs, and
 the prediction :math:`\hat{y}`, which induces the ranking funtion :math:`f`, the
 DCG score is
 
 .. math::
-   \sum_{r=1}^{\min(K, M)}\frac{y_r^f}{\log(1 + r)}
+   \sum_{r=1}^{\min(K, M)}\frac{y_{f(r)}}{\log(1 + r)}
 
 and the NDCG score is the DCG score divided by the DCG score obtained for
 :math:`y`.
