@@ -414,8 +414,11 @@ cdef class Splitter:
                     histograms, n_samples, sum_gradients, sum_hessians,
                     &split_infos[feature_idx])
 
-                if (has_missing_values[feature_idx]
-                        and not split_infos[feature_idx].split_on_nan):
+                if has_missing_values[feature_idx]:
+                    # We need to explore both directions to check whether
+                    # sending the nans to the left child would lead to a higher
+                    # gain # numerical splits that all the splits explored when
+                    # sending the nans to the right (or to split them appart):
                     self._find_best_bin_to_split_right_to_left(
                         feature_idx, histograms, n_samples,
                         sum_gradients, sum_hessians, &split_infos[feature_idx])
