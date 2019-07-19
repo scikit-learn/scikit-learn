@@ -107,6 +107,9 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
         rand_vals = random_state.random_sample(n_local_trials) * current_pot
         candidate_ids = np.searchsorted(stable_cumsum(closest_dist_sq),
                                         rand_vals)
+        # XXX: numerical imprecision can result in a candidate_id out of range
+        np.clip(candidate_ids, None, closest_dist_sq.size - 1,
+                out=candidate_ids)
 
         # Compute distances to center candidates
         distance_to_candidates = euclidean_distances(
@@ -1422,8 +1425,8 @@ class MiniBatchKMeans(KMeans):
     >>> kmeans = kmeans.partial_fit(X[0:6,:])
     >>> kmeans = kmeans.partial_fit(X[6:12,:])
     >>> kmeans.cluster_centers_
-    array([[1, 1],
-           [3, 4]])
+    array([[2. , 1. ],
+           [3.5, 4.5]])
     >>> kmeans.predict([[0, 0], [4, 4]])
     array([0, 1], dtype=int32)
     >>> # fit on the whole data
@@ -1667,7 +1670,8 @@ class MiniBatchKMeans(KMeans):
 
         """
 
-        X = check_array(X, accept_sparse="csr", order="C")
+        X = check_array(X, accept_sparse="csr", order="C",
+                        dtype=[np.float64, np.float32])
         n_samples, n_features = X.shape
         if hasattr(self.init, '__array__'):
             self.init = np.ascontiguousarray(self.init, dtype=X.dtype)
