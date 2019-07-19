@@ -1024,6 +1024,6 @@ def _check_sample_weight(sample_weight, X, dtype=None):
             raise ValueError("Sample weights must be 1D array or scalar")
 
         if sample_weight.shape != (n_samples,):
-            raise ValueError("samples_weight.shape == {}, expected {}!"
+            raise ValueError("sample_weight.shape == {}, expected {}!"
                              .format(sample_weight.shape, (n_samples,)))
     return sample_weight
