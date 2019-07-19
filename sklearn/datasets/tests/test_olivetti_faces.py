@@ -22,9 +22,7 @@ def _is_olivetti_faces_not_available():
     reason='Download Olivetti faces dataset to run this test'
 )
 def test_olivetti_faces():
-    data = datasets.fetch_olivetti_faces(
-        shuffle=True, random_state=0
-    )
+    data = datasets.fetch_olivetti_faces(shuffle=True, random_state=0)
 
     assert isinstance(data, Bunch)
     for expected_keys in ('data', 'images', 'target', 'DESCR'):

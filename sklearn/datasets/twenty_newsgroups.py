@@ -215,11 +215,11 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
     Returns
     -------
     bunch : Bunch object with the following attribute:
-        - bunch.data: list, length [n_samples]
-        - bunch.target: array, shape [n_samples]
-        - bunch.filenames: list, length [n_samples]
-        - bunch.DESCR: a description of the dataset.
-        - bunch.target_names: a list of categories of the returned data,
+        - data: list, length [n_samples]
+        - target: array, shape [n_samples]
+        - filenames: list, length [n_samples]
+        - DESCR: a description of the dataset.
+        - target_names: a list of categories of the returned data,
           length [n_classes]. This depends on the `categories` parameter.
 
     (data, target) : tuple if `return_X_y=True`

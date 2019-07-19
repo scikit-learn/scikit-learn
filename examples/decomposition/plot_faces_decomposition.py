@@ -34,9 +34,8 @@ rng = RandomState(0)
 
 # #############################################################################
 # Load faces data
-faces, _ = fetch_olivetti_faces(
-    return_X_y=True, shuffle=True, random_state=rng
-)
+faces, _ = fetch_olivetti_faces(return_X_y=True, shuffle=True,
+                                random_state=rng)
 n_samples, n_features = faces.shape
 
 # global centering
