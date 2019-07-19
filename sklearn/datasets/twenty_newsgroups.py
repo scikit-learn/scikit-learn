@@ -205,9 +205,12 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
     download_if_missing : optional, True by default
         If False, raise an IOError if the data is not locally available
         instead of trying to download the data from the source site.
+
     return_X_y : boolean, default=False.
-        If True, returns ``(data.data, data.target)`` instead of a Bunch
+        If True, returns `(data.data, data.target)` instead of a Bunch
         object.
+
+        .. versionadded:: 0.22
 
     Returns
     -------
@@ -218,6 +221,9 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         - bunch.DESCR: a description of the dataset.
         - bunch.target_names: a list of categories of the returned data,
           length [n_classes]. This depends on the `categories` parameter.
+
+    (data, target) : tuple if `return_X_y=True`
+        .. versionadded:: 0.22
     """
 
     data_home = get_data_home(data_home=data_home)
