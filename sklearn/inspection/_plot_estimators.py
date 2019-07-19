@@ -208,6 +208,7 @@ _STYLE = """
 }
 .sk-top-container {
   display: flex;
+  color: black;
 }
 """
 
