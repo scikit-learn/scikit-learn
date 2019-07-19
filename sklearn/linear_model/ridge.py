@@ -628,7 +628,7 @@ class Ridge(_BaseRidge, RegressorMixin):
         assumed to be specific to the targets. Hence they must correspond in
         number.
 
-    fit_intercept : boolean, default True
+    fit_intercept : bool, default True
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
@@ -1596,7 +1596,7 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
         LogisticRegression or LinearSVC.
         If using generalized cross-validation, alphas must be positive.
 
-    fit_intercept : boolean, default True
+    fit_intercept : bool, default True
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
