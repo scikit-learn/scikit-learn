@@ -24,6 +24,8 @@ random sampling procedures.
 - :class:`decomposition.SparsePCA` where `normalize_components` has no effect
   due to deprecation.
 
+- :class:`linear_model.Ridge` when `X` is sparse. |Fix|
+
 Details are listed in the changelog below.
 
 (While we are trying to better inform users by providing this information, we
@@ -113,6 +115,11 @@ Changelog
   ``alpha_init`` and ``lambda_init`` which can be used to set the initial value
   of the maximization procedure in :term:`fit`.
   :pr:`13618` by :user:`Yoshihiro Uchida <c56pony>`.
+
+- |Fix| :class:`linear_model.Ridge` now correctly fits an intercept when `X` is
+  sparse, `solver="auto"` and `fit_intercept=True`, because the default solver
+  in this configuration has changed to `sparse_cg`, which can fit an intercept
+  with sparse data. :pr:`13995` by :user:`Jérôme Dockès <jeromedockes>`.
 
 - |Efficiency| The 'liblinear' logistic regression solver is now faster and
   requires less memory.
