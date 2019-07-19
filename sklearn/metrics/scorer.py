@@ -24,7 +24,8 @@ from collections.abc import Iterable
 import numpy as np
 
 from . import (r2_score, median_absolute_error, max_error, mean_absolute_error,
-               mean_squared_error, mean_squared_log_error, accuracy_score,
+               mean_squared_error, mean_squared_log_error,
+               mean_tweedie_deviance, accuracy_score,
                f1_score, roc_auc_score, average_precision_score,
                precision_score, recall_score, log_loss,
                balanced_accuracy_score, explained_variance_score,
@@ -492,9 +493,15 @@ neg_mean_squared_log_error_scorer = make_scorer(mean_squared_log_error,
                                                 greater_is_better=False)
 neg_mean_absolute_error_scorer = make_scorer(mean_absolute_error,
                                              greater_is_better=False)
-
 neg_median_absolute_error_scorer = make_scorer(median_absolute_error,
                                                greater_is_better=False)
+neg_mean_poisson_deviance_scorer = make_scorer(
+    mean_tweedie_deviance, p=1., greater_is_better=False
+)
+
+neg_mean_gamma_deviance_scorer = make_scorer(
+    mean_tweedie_deviance, p=2., greater_is_better=False
+)
 
 # Standard Classification Scores
 accuracy_scorer = make_scorer(accuracy_score)
@@ -542,6 +549,8 @@ SCORERS = dict(explained_variance=explained_variance_scorer,
                neg_mean_absolute_error=neg_mean_absolute_error_scorer,
                neg_mean_squared_error=neg_mean_squared_error_scorer,
                neg_mean_squared_log_error=neg_mean_squared_log_error_scorer,
+               neg_mean_poisson_deviance=neg_mean_poisson_deviance_scorer,
+               neg_mean_gamma_deviance=neg_mean_gamma_deviance_scorer,
                accuracy=accuracy_scorer, roc_auc=roc_auc_scorer,
                roc_auc_ovr=roc_auc_ovr_scorer,
                roc_auc_ovo=roc_auc_ovo_scorer,
