@@ -4,7 +4,8 @@ from numpy.testing import assert_allclose
 from sklearn.datasets import make_classification, make_regression
 from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler
 from sklearn.model_selection import train_test_split
-from sklearn.base import clone
+from sklearn.base import clone, BaseEstimator, TransformerMixin
+from sklearn.pipeline import make_pipeline
 
 # To use this experimental feature, we need to explicitly ask for it:
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
@@ -290,86 +291,92 @@ def test_missing_values_minmax_imputation():
     # feature to split on during training, the learned decision trees should be
     # strictly equivalent (learn a sequence of splits that encode the same
     # decision function).
-    rng = np.random.RandomState(0)
-    X, y = make_regression(n_samples=int(1e4), n_features=3, random_state=rng)
+    #
+    # The MinMaxImputer transformer is meant to be a toy implementation of the
+    # "Missing In Attributes" (MIA) missing value handling for decision trees
+    # https://www.sciencedirect.com/science/article/abs/pii/S0167865508000305
+    # The implementation of MIA as an imputation transformer was suggested by
+    # "Remark 3" in https://arxiv.org/abs/1902.06931
 
-    # Pre-bin the data to ensure a deterministic handling by the 2 strategies
-    # and also make it easier to insert np.nan in a structured way:
-    X = KBinsDiscretizer(n_bins=42, encode="ordinal").fit_transform(X)
+    class MinMaxImputer(BaseEstimator, TransformerMixin):
 
-    # First feature has missing values completely at random:
-    rnd_mask = rng.rand(X.shape[0]) > 0.9
-    X[rnd_mask, 0] = np.nan
+        def fit(self, X, y=None):
+            mm = MinMaxScaler().fit(X)
+            self.data_min_ = mm.data_min_
+            self.data_max_ = mm.data_max_
+            return self
 
-    # Second and third features have missing values for extreme values
-    # (censoring missingness).
-    low_mask = X[:, 1] == 0
-    X[low_mask, 1] = np.nan
+        def transform(self, X):
+            X_min, X_max = X.copy(), X.copy()
 
-    high_mask = X[:, 2] == X[:, 2].max()
-    X[high_mask, 2] = np.nan
+            for feature_idx in range(X.shape[1]):
+                nan_mask = np.isnan(X[:, feature_idx])
+                X_min[nan_mask, feature_idx] = self.data_min_[feature_idx] - 1
+                X_max[nan_mask, feature_idx] = self.data_max_[feature_idx] + 1
 
-    # Check that there is at least one missing value in each feature:
-    for feature_idx in range(X.shape[1]):
-        assert any(np.isnan(X[:, feature_idx]))
+            return np.concatenate([X_min, X_max], axis=1)
 
-    # Let's use a test set to check that the learned decision function is the
-    # same as evaluated on unseen data. Otherwise it could just be the case
-    # that we find two independent ways to overfit the training set.
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
+    def make_missing_value_data(n_samples=int(1e4), seed=0):
+        rng = np.random.RandomState(seed)
+        X, y = make_regression(n_samples=n_samples, n_features=4,
+                               random_state=rng)
+
+        # Pre-bin the data to ensure a deterministic handling by the 2
+        # strategies and also make it easier to insert np.nan in a structured
+        # way:
+        X = KBinsDiscretizer(n_bins=42, encode="ordinal").fit_transform(X)
+
+        # First feature has missing values completely at random:
+        rnd_mask = rng.rand(X.shape[0]) > 0.9
+        X[rnd_mask, 0] = np.nan
+
+        # Second and third features have missing values for extreme values
+        # (censoring missingness):
+        low_mask = X[:, 1] == 0
+        X[low_mask, 1] = np.nan
+
+        high_mask = X[:, 2] == X[:, 2].max()
+        X[high_mask, 2] = np.nan
+
+        # Make the last feature nan pattern very informative:
+        y_max = np.percentile(y, 70)
+        y_max_mask = y >= y_max
+        y[y_max_mask] = y_max
+        X[y_max_mask, 3] = np.nan
+
+        # Check that there is at least one missing value in each feature:
+        for feature_idx in range(X.shape[1]):
+            assert any(np.isnan(X[:, feature_idx]))
+
+        # Let's use a test set to check that the learned decision function is
+        # the same as evaluated on unseen data. Otherwise it could just be the
+        # case that we find two independent ways to overfit the training set.
+        return train_test_split(X, y, random_state=rng)
+
+    # n_samples need to be large enough to minimize the likelihood of having
+    # several candidate splits with the same gain value in a given tree.
+    X_train, X_test, y_train, y_test = make_missing_value_data(
+        n_samples=int(1e4), seed=0)
 
     # Use a small number of leaf nodes and iterations so as to keep
     # under-fitting models to minimize the likelihood of ties when training the
     # model.
-    builtin_gbm = HistGradientBoostingRegressor(max_iter=1,
-                                                max_leaf_nodes=5,
-                                                random_state=0)
-    builtin_gbm.fit(X_train, y_train)
-    assert_allclose(builtin_gbm.bin_mapper_.bin_thresholds_[0],
-                    np.arange(0, 41) + .5)
-    assert_allclose(builtin_gbm.bin_mapper_.bin_thresholds_[1],
-                    np.arange(1, 41) + .5)
-    assert_allclose(builtin_gbm.bin_mapper_.bin_thresholds_[2],
-                    np.arange(0, 40) + .5)
+    gbm1 = HistGradientBoostingRegressor(max_iter=100,
+                                         max_leaf_nodes=5,
+                                         random_state=0)
+    gbm1.fit(X_train, y_train)
 
-    y_builtin_predict_train = builtin_gbm.predict(X_train)
-    y_builtin_predict_test = builtin_gbm.predict(X_test)
+    gbm2 = make_pipeline(MinMaxImputer(), clone(gbm1))
+    gbm2.fit(X_train, y_train)
 
-    # Implement min-max feature imputation: we use MinMaxScaler to easily
-    # extract the min and max values of non-missing numerical data for each
-    # feature.
-    mm = MinMaxScaler().fit(X_train)
-    X_train_min, X_train_max = X_train.copy(), X_train.copy()
-    X_test_min, X_test_max = X_test.copy(), X_test.copy()
-    for feature_idx in range(X.shape[1]):
-        nan_mask = np.isnan(X_train[:, feature_idx])
-        X_train_min[nan_mask, feature_idx] = mm.data_min_[feature_idx] - 1
-        X_train_max[nan_mask, feature_idx] = mm.data_max_[feature_idx] + 1
+    # Check that the model reach the same score:
+    assert gbm1.score(X_train, y_train) == \
+        pytest.approx(gbm2.score(X_train, y_train))
 
-        nan_mask = np.isnan(X_test[:, feature_idx])
-        X_test_min[nan_mask, feature_idx] = mm.data_min_[feature_idx] - 1
-        X_test_max[nan_mask, feature_idx] = mm.data_max_[feature_idx] + 1
+    assert gbm1.score(X_test, y_test) == \
+        pytest.approx(gbm2.score(X_test, y_test))
 
-    X_train_imputed = np.concatenate([X_train_min, X_train_max], axis=1)
-    X_test_imputed = np.concatenate([X_test_min, X_test_max], axis=1)
-
-    imputed_gbm = clone(builtin_gbm)
-    imputed_gbm.fit(X_train_imputed, y_train)
-    assert_allclose(imputed_gbm.bin_mapper_.bin_thresholds_[0],
-                    np.arange(-1, 41) + .5)
-    assert_allclose(imputed_gbm.bin_mapper_.bin_thresholds_[1],
-                    np.arange(0, 41) + .5)
-    assert_allclose(imputed_gbm.bin_mapper_.bin_thresholds_[2],
-                    np.arange(-1, 40) + .5)
-    assert_allclose(imputed_gbm.bin_mapper_.bin_thresholds_[3],
-                    np.arange(0, 42) + .5)
-    assert_allclose(imputed_gbm.bin_mapper_.bin_thresholds_[4],
-                    np.arange(1, 42) + .5)
-    assert_allclose(imputed_gbm.bin_mapper_.bin_thresholds_[5],
-                    np.arange(0, 41) + .5)
-
-    y_imputed_predict_train = imputed_gbm.predict(X_train_imputed)
-    y_imputed_predict_test = imputed_gbm.predict(X_test_imputed)
-
-    assert_allclose(y_builtin_predict_train, y_imputed_predict_train)
-    assert_allclose(y_builtin_predict_test, y_imputed_predict_test)
+    # Check the individual prediction match as a finer grained
+    # decision function check.
+    assert_allclose(gbm1.predict(X_train), gbm2.predict(X_train))
+    assert_allclose(gbm1.predict(X_test), gbm2.predict(X_test))
