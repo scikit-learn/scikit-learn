@@ -869,8 +869,8 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
     ----------
     base_estimator : object, optional (default=None)
         The base estimator from which the boosted ensemble is built.
-        Support for sample weighting is required. If ``None``, then
-        the base estimator is ``DecisionTreeRegressor(max_depth=3)``
+        If ``None``, then the base estimator is
+        ``DecisionTreeRegressor(max_depth=3)``.
 
     n_estimators : integer, optional (default=50)
         The maximum number of estimators at which boosting is terminated.
