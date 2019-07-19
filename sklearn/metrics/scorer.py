@@ -423,18 +423,18 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
         Whether score_func requires predict_proba to get probability estimates
         out of a classifier.
 
-        If True, for binary y_true, the score function is supposed to accept
-        1d y_pred (i.e., probability of the positive class, shape
-        ``(n_samples,)``).
+        If True, for binary `y_true`, the score function is supposed to accept
+        a 1D `y_pred` (i.e., probability of the positive class, shape
+        `(n_samples,)`).
 
     needs_threshold : boolean, default=False
         Whether score_func takes a continuous decision certainty.
         This only works for binary classification using estimators that
         have either a decision_function or predict_proba method.
 
-        If True, for binary y_true, the score function is supposed to accept
-        1d y_pred (i.e., probability of the positive class or the decision
-        function, shape ``(n_samples,)``).
+        If True, for binary `y_true`, the score function is supposed to accept
+        a 1D `y_pred` (i.e., probability of the positive class or the decision
+        function, shape `(n_samples,)`).
 
         For example ``average_precision`` or the area under the roc curve
         can not be computed using discrete predictions alone.
