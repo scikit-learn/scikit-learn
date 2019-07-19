@@ -423,10 +423,18 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
         Whether score_func requires predict_proba to get probability estimates
         out of a classifier.
 
+        If True, for binary `y_true`, the score function is supposed to accept
+        a 1D `y_pred` (i.e., probability of the positive class, shape
+        `(n_samples,)`).
+
     needs_threshold : boolean, default=False
         Whether score_func takes a continuous decision certainty.
         This only works for binary classification using estimators that
         have either a decision_function or predict_proba method.
+
+        If True, for binary `y_true`, the score function is supposed to accept
+        a 1D `y_pred` (i.e., probability of the positive class or the decision
+        function, shape `(n_samples,)`).
 
         For example ``average_precision`` or the area under the roc curve
         can not be computed using discrete predictions alone.
@@ -449,6 +457,16 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
     >>> from sklearn.svm import LinearSVC
     >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]},
     ...                     scoring=ftwo_scorer)
+
+    Notes
+    -----
+    If `needs_proba=False` and `needs_threshold=False`, the score
+    function is supposed to accept the output of `predict`. If
+    `needs_proba=True`, the score function is supposed to accept the
+    output of `predict_proba` (For binary `y_true`, the score function is
+    supposed to accept probability of the positive class). If
+    `needs_threshold=True`, the score function is supposed to accept the
+    output of `decision_function`.
     """
     sign = 1 if greater_is_better else -1
     if needs_proba and needs_threshold:
@@ -487,6 +505,16 @@ roc_auc_scorer = make_scorer(roc_auc_score, greater_is_better=True,
                              needs_threshold=True)
 average_precision_scorer = make_scorer(average_precision_score,
                                        needs_threshold=True)
+roc_auc_ovo_scorer = make_scorer(roc_auc_score, needs_threshold=True,
+                                 multi_class='ovo')
+roc_auc_ovo_weighted_scorer = make_scorer(roc_auc_score, needs_threshold=True,
+                                          multi_class='ovo',
+                                          average='weighted')
+roc_auc_ovr_scorer = make_scorer(roc_auc_score, needs_threshold=True,
+                                 multi_class='ovr')
+roc_auc_ovr_weighted_scorer = make_scorer(roc_auc_score, needs_threshold=True,
+                                          multi_class='ovr',
+                                          average='weighted')
 
 # Score function for probabilistic classification
 neg_log_loss_scorer = make_scorer(log_loss, greater_is_better=False,
@@ -515,6 +543,8 @@ SCORERS = dict(explained_variance=explained_variance_scorer,
                neg_mean_squared_error=neg_mean_squared_error_scorer,
                neg_mean_squared_log_error=neg_mean_squared_log_error_scorer,
                accuracy=accuracy_scorer, roc_auc=roc_auc_scorer,
+               roc_auc_ovr=roc_auc_ovr_scorer,
+               roc_auc_ovo=roc_auc_ovo_scorer,
                balanced_accuracy=balanced_accuracy_scorer,
                average_precision=average_precision_scorer,
                neg_log_loss=neg_log_loss_scorer,

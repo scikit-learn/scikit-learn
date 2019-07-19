@@ -209,7 +209,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
     See also
     --------
     sklearn.preprocessing.OrdinalEncoder : encode categorical features
-        using a one-hot or ordinal encoding scheme.
+        using an ordinal encoding scheme.
     """
 
     def fit(self, y):

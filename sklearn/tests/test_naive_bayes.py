@@ -707,9 +707,8 @@ def test_check_accuracy_on_digits():
     # Non regression test to make sure that any further refactoring / optim
     # of the NB models do not harm the performance on a slightly non-linearly
     # separable dataset
-    digits = load_digits()
-    X, y = digits.data, digits.target
-    binary_3v8 = np.logical_or(digits.target == 3, digits.target == 8)
+    X, y = load_digits(return_X_y=True)
+    binary_3v8 = np.logical_or(y == 3, y == 8)
     X_3v8, y_3v8 = X[binary_3v8], y[binary_3v8]
 
     # Multinomial NB

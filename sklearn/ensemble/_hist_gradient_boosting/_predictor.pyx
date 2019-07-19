@@ -9,6 +9,7 @@ cimport cython
 from cython.parallel import prange
 import numpy as np
 cimport numpy as np
+from numpy.math cimport INFINITY
 
 from .types cimport X_DTYPE_C
 from .types cimport Y_DTYPE_C
@@ -42,10 +43,15 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
     while True:
         if node.is_leaf:
             return node.value
-        if numeric_data[row, node.feature_idx] <= node.threshold:
-            node = nodes[node.left]
-        else:
+        if numeric_data[row, node.feature_idx] == INFINITY:
+            # if data is +inf we always go to the right child, even when the
+            # threhsold is +inf
             node = nodes[node.right]
+        else:
+            if numeric_data[row, node.feature_idx] <= node.threshold:
+                node = nodes[node.left]
+            else:
+                node = nodes[node.right]
 
 
 def _predict_from_binned_data(
