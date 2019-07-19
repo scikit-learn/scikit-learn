@@ -1,5 +1,6 @@
 # Authors: Shane Grigsby <refuge@rocktalus.com>
 #          Adrin Jalali <adrin.jalali@gmail.com>
+#          Fabian Klopfer <fabian.klopfer@ieee.org>
 # License: BSD 3 clause
 
 import numpy as np
@@ -169,7 +170,8 @@ def test_correct_number_of_clusters():
 
 def test_minimum_number_of_sample_check():
     # test that we check a minimum number of samples
-    msg = "min_samples must be no greater than"
+    msg = "min_samples must be a positive integer smaller than the number" \
+            + " of samples"
 
     # Compute OPTICS
     X = [[1, 1]]
@@ -245,6 +247,40 @@ def test_dbscan_optics_parity(eps, min_samples):
     assert percent_mismatch <= 0.05
 
 
+def test_min_samples_min_clusters_float():
+    # check if OPTIICS is callable with float parameters for
+    # min_samples and min_cluster_size
+    rng = np.random.RandomState(0)
+    n_points_per_cluster = 5
+
+    C1 = [-5, -2] + .8 * rng.randn(n_points_per_cluster, 2)
+    C2 = [4, -1] + .1 * rng.randn(n_points_per_cluster, 2)
+    C3 = [1, -2] + .2 * rng.randn(n_points_per_cluster, 2)
+    C4 = [-2, 3] + .3 * rng.randn(n_points_per_cluster, 2)
+    C5 = [3, -2] + .6 * rng.randn(n_points_per_cluster, 2)
+    C6 = [5, 6] + .2 * rng.randn(n_points_per_cluster, 2)
+
+    X = np.vstack((C1, C2, C3, C4, C5, np.array([[100, 100]]), C6))
+    expected_labels = np.r_[[2] * 5, [0] * 5, [1] * 5, [3] * 5, [1] * 5,
+                            -1, [4] * 5]
+    X, expected_labels = shuffle(X, expected_labels, random_state=rng)
+
+    clust = OPTICS(min_samples=0.1, min_cluster_size=0.08,
+                   max_eps=20, cluster_method='xi',
+                   xi=0.4).fit(X)
+    assert_array_equal(clust.labels_, expected_labels)
+
+    X = np.vstack((C1, C2, C3, C4, C5, np.array([[100, 100]] * 2), C6))
+    expected_labels = np.r_[[1] * 5, [3] * 5, [2] * 5, [0] * 5, [2] * 5,
+                            -1, -1, [4] * 5]
+    X, expected_labels = shuffle(X, expected_labels, random_state=rng)
+
+    clust = OPTICS(min_samples=0.1, max_eps=20, cluster_method='xi',
+                   xi=0.3).fit(X)
+    # this may fail if the predecessor correction is not at work!
+    assert_array_equal(clust.labels_, expected_labels)
+
+
 def test_min_samples_edge_case():
     C1 = [[0, 0], [0, 0.1], [0, -.1]]
     C2 = [[10, 10], [10, 9], [10, 11]]
@@ -289,13 +325,14 @@ def test_min_cluster_size(min_cluster_size):
 @pytest.mark.parametrize('min_cluster_size', [0, -1, 1.1, 2.2])
 def test_min_cluster_size_invalid(min_cluster_size):
     clust = OPTICS(min_cluster_size=min_cluster_size)
-    with pytest.raises(ValueError, match="must be a positive integer or a "):
+    with pytest.raises(ValueError, match="must be a positive integer"):
         clust.fit(X)
 
 
 def test_min_cluster_size_invalid2():
     clust = OPTICS(min_cluster_size=len(X) + 1)
-    with pytest.raises(ValueError, match="must be no greater than the "):
+    with pytest.raises(ValueError, match="must be a positive integer smaller"
+                       + " than the"):
         clust.fit(X)
 
 
