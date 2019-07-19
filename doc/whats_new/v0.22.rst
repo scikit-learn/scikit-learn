@@ -39,6 +39,13 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.datasets`
+.......................
+
+- |Enhancement| The parameter `return_X_y` was added to
+  :func:`datasets.fetch_20newsgroups` and :func:`datasets.fetch_olivetti_faces`
+  . :pr:`14259` by :user:`Sourav Singh <souravsingh>`.
+
 :mod:`sklearn.decomposition`
 ..................
 
