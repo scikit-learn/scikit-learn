@@ -407,6 +407,12 @@ def _get_column_indices(X, key):
                 ) from e
             raise
 
+        return column_indices
+    else:
+        raise ValueError("No valid specification of the columns. Only a "
+                         "scalar, list or slice of all integers or all "
+                         "strings, or boolean mask is allowed")
+
 
 def resample(*arrays, **options):
     """Resample arrays or sparse matrices in a consistent way
