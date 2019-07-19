@@ -213,7 +213,7 @@ class NeighborsBase(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
             raise ValueError("n_samples must be greater than 0")
 
         # Precomputed matrix X must be squared
-        if X.shape[0] != X.shape[1]:
+        if self.metric == 'precomputed' and X.shape[0] != X.shape[1]:
             raise ValueError("Precomputed matrix must be a square matrix."
                              " Input is a {}x{} matrix."
                              .format(X.shape[0], X.shape[1]))

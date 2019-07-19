@@ -1913,12 +1913,8 @@ def check_regressors_no_decision_function(name, regressor_orig):
     rng = np.random.RandomState(0)
     regressor = clone(regressor_orig)
 
-    # Supply square input to pairwise regressors
-    if _is_pairwise(regressor_orig):
-        X = rng.normal(size=(10, 10))
-    else:
-        X = rng.normal(size=(10, 4))
-
+    X = rng.normal(size=(10, 4))
+    X = pairwise_estimator_convert_X(X, regressor_orig)
     y = enforce_estimator_tags_y(regressor, X[:, 0])
 
     if hasattr(regressor, "n_components"):
