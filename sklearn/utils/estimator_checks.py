@@ -97,7 +97,7 @@ def _yield_checks(name, estimator):
         yield check_estimators_nan_inf
 
     if _is_pairwise(estimator):
-        # Check that KernelCenterer throws error on non-square input
+        # Check that pairwise estimator throws error on non-square input
         yield check_nonsquare_error
 
     yield check_estimators_overwrite_params
@@ -1911,8 +1911,14 @@ def check_regressors_train(name, regressor_orig, readonly_memmap=False):
 def check_regressors_no_decision_function(name, regressor_orig):
     # checks whether regressors have decision_function or predict_proba
     rng = np.random.RandomState(0)
-    X = rng.normal(size=(10, 4))
     regressor = clone(regressor_orig)
+
+    # Supply square input to pairwise regressors
+    if _is_pairwise(regressor_orig):
+        X = rng.normal(size=(10, 10))
+    else:
+        X = rng.normal(size=(10, 4))
+
     y = enforce_estimator_tags_y(regressor, X[:, 0])
 
     if hasattr(regressor, "n_components"):
