@@ -1960,8 +1960,7 @@ Here is a small example of usage of the :func:`r2_score` function::
     evaluate Lasso and Elastic Net on sparse signals.
 
 
-.. _mean_poisson_deviance:
-
+.. _mean_tweedie_deviance:
 
 Mean Poisson, Gamma, and Tweedie deviances
 ------------------------------------------
