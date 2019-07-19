@@ -26,6 +26,14 @@ random sampling procedures.
 Changelog
 ---------
 
+
+:mod:`sklearn.inspection`
+.....................
+
+- |Fix| Fixed a bug in :func:`inspection.plot_partial_dependence` where 
+  ``target`` parameter was not being taken into account for multiclass problems.
+  :pr:`14393` by :user:`Guillem G. Subies <guillemgsubies>`.
+
 :mod:`sklearn.datasets`
 .......................
 
