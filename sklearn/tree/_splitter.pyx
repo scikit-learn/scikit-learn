@@ -51,6 +51,18 @@ cdef inline void _init_split(SplitRecord* self, SIZE_t start_pos) nogil:
     self.threshold = 0.
     self.improvement = -INFINITY
 
+cdef inline int _equals(DTYPE_t a, DTYPE_t b) nogil:
+    if a>b:
+        if a-b <= FEATURE_THRESHOLD:
+            return 1
+        else:
+            return 0
+    else:
+        if b-a <= FEATURE_THRESHOLD:
+            return 1
+        else:
+            return 0
+
 cdef class Splitter:
     """Abstract splitter class.
 
@@ -416,7 +428,7 @@ cdef class BestSplitter(BaseDenseSplitter):
 
                     sort(Xf + start, samples + start, end - start)
 
-                if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
+                if _equals(Xf[end - 1], Xf[start]):
                     features[f_j], features[n_total_constants] = features[n_total_constants], current.feature
 
                     n_found_constants += 1
@@ -432,7 +444,7 @@ cdef class BestSplitter(BaseDenseSplitter):
 
                     while p < end:
                         while (p + 1 < end and
-                               Xf[p + 1] <= Xf[p] + FEATURE_THRESHOLD):
+                               _equals(Xf[p + 1], Xf[p])):
                             p += 1
 
                         # (p + 1 >= end) or (X[samples[p + 1], current.feature] >
@@ -738,7 +750,7 @@ cdef class RandomSplitter(BaseDenseSplitter):
                     elif current_feature_value > max_feature_value:
                         max_feature_value = current_feature_value
 
-                if max_feature_value <= min_feature_value + FEATURE_THRESHOLD:
+                if _equals(max_feature_value, min_feature_value):
                     features[f_j], features[n_total_constants] = features[n_total_constants], current.feature
 
                     n_found_constants += 1
@@ -1288,7 +1300,7 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                         Xf[end_negative] = 0.
                         end_negative += 1
 
-                if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
+                if _equals(Xf[end - 1], Xf[start]):
                     features[f_j] = features[n_total_constants]
                     features[n_total_constants] = current.feature
 
@@ -1310,7 +1322,7 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                             p_next = start_positive
 
                         while (p_next < end and
-                               Xf[p_next] <= Xf[p] + FEATURE_THRESHOLD):
+                               _equals(Xf[p_next], Xf[p])):
                             p = p_next
                             if p + 1 != end_negative:
                                 p_next = p + 1
@@ -1535,7 +1547,7 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
                     elif current_feature_value > max_feature_value:
                         max_feature_value = current_feature_value
 
-                if max_feature_value <= min_feature_value + FEATURE_THRESHOLD:
+                if _equals(max_feature_value, min_feature_value):
                     features[f_j] = features[n_total_constants]
                     features[n_total_constants] = current.feature
 
