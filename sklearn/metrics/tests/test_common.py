@@ -45,6 +45,8 @@ from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_tweedie_deviance
+from sklearn.metrics import mean_poisson_deviance
+from sklearn.metrics import mean_gamma_deviance
 from sklearn.metrics import median_absolute_error
 from sklearn.metrics import multilabel_confusion_matrix
 from sklearn.metrics import precision_recall_curve
@@ -99,8 +101,8 @@ REGRESSION_METRICS = {
     "explained_variance_score": explained_variance_score,
     "r2_score": partial(r2_score, multioutput='variance_weighted'),
     "mean_normal_deviance": partial(mean_tweedie_deviance, p=0),
-    "mean_poisson_deviance": partial(mean_tweedie_deviance, p=1),
-    "mean_gamma_deviance": partial(mean_tweedie_deviance, p=2),
+    "mean_poisson_deviance": mean_poisson_deviance,
+    "mean_gamma_deviance": mean_gamma_deviance,
     "mean_compound_poisson_deviance":
     partial(mean_tweedie_deviance, p=1.4),
 }

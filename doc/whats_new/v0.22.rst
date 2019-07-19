@@ -126,9 +126,11 @@ Changelog
   :user:`Mohamed Maskani <maskani-moh>`, and :user:`Thomas Fan <thomasjpfan>`.
   
 - |Feature| Add :class:`metrics.mean_tweedie_deviance` measuring the
-  Tweedie deviance for a power parameter ``p``. Gaussian (``p=0``),
-  Poisson (``p=1``), and Gamma (``p=2``) deviances are special cases of this
-  metric. :pr:`13938` by :user:`Christian Lorentzen <lorentzenchr>` and
+  Tweedie deviance for a power parameter ``p``. Also add mean Poisson deviance
+  :class:`metrics.mean_poisson_deviance` and mean Gamma deviance
+  :class:`metrics.mean_gamma_deviance` that are special cases of the Tweedie
+  variance for `p=1` and `p=2` respectively.
+  :pr:`13938` by :user:`Christian Lorentzen <lorentzenchr>` and
   `Roman Yurchak`_.
 
 :mod:`sklearn.model_selection`

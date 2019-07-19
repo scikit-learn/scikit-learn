@@ -41,7 +41,9 @@ __ALL__ = [
     "median_absolute_error",
     "r2_score",
     "explained_variance_score",
-    "mean_tweedie_deviance"
+    "mean_tweedie_deviance",
+    "mean_poisson_deviance",
+    "mean_gamma_deviance",
 ]
 
 
@@ -715,3 +717,78 @@ def mean_tweedie_deviance(y_true, y_pred, sample_weight=None, p=0):
                    np.power(y_pred, 2-p)/(2-p))
 
     return np.average(dev, weights=sample_weight)
+
+
+def mean_poisson_deviance(y_true, y_pred, sample_weight=None):
+    """Mean Poisson deviance regression loss.
+
+    Poisson deviance is equivalent to the Tweedie deviance with
+    the power parameter `p=1`.
+
+    Read more in the :ref:`User Guide <mean_tweedie_deviance>`.
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,)
+        Ground truth (correct) target values. Requires y_true ≥ 0.
+
+    y_pred : array-like of shape (n_samples,)
+        Estimated target values. Requires y_pred > 0.
+
+    sample_weight : array-like, shape (n_samples,), optional
+        Sample weights.
+
+    Returns
+    -------
+    loss : float
+        A non-negative floating point value (the best value is 0.0).
+
+    Examples
+    --------
+    >>> from sklearn.metrics import mean_poisson_deviance
+    >>> y_true = [2, 0, 1, 4]
+    >>> y_pred = [0.5, 0.5, 2., 2.]
+    >>> mean_poisson_deviance(y_true, y_pred)
+    1.4260...
+    """
+    return mean_tweedie_deviance(
+        y_true, y_pred, sample_weight=sample_weight, p=1
+    )
+
+
+def mean_gamma_deviance(y_true, y_pred, sample_weight=None):
+    """Mean Gamma deviance regression loss.
+
+    Gamma deviance is equivalent to the Tweedie deviance with
+    the power parameter `p=2`. It is invariant to scaling of
+    the target variable, and mesures relative errors.
+
+    Read more in the :ref:`User Guide <mean_tweedie_deviance>`.
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,)
+        Ground truth (correct) target values. Requires y_true > 0.
+
+    y_pred : array-like of shape (n_samples,)
+        Estimated target values. Requires y_pred > 0.
+
+    sample_weight : array-like, shape (n_samples,), optional
+        Sample weights.
+
+    Returns
+    -------
+    loss : float
+        A non-negative floating point value (the best value is 0.0).
+
+    Examples
+    --------
+    >>> from sklearn.metrics import mean_gamma_deviance
+    >>> y_true = [2, 0.5, 1, 4]
+    >>> y_pred = [0.5, 0.5, 2., 2.]
+    >>> mean_gamma_deviance(y_true, y_pred)
+    1.0568...
+    """
+    return mean_tweedie_deviance(
+        y_true, y_pred, sample_weight=sample_weight, p=2
+    )
