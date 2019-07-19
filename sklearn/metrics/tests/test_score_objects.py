@@ -43,7 +43,8 @@ REGRESSION_SCORERS = ['explained_variance', 'r2',
                       'neg_mean_squared_log_error',
                       'neg_median_absolute_error', 'mean_absolute_error',
                       'mean_squared_error', 'median_absolute_error',
-                      'max_error']
+                      'max_error', 'neg_mean_poisson_deviance',
+                      'neg_mean_gamma_deviance']
 
 CLF_SCORERS = ['accuracy', 'balanced_accuracy',
                'f1', 'f1_weighted', 'f1_macro', 'f1_micro',
@@ -67,11 +68,22 @@ CLUSTER_SCORERS = ["adjusted_rand_score",
 MULTILABEL_ONLY_SCORERS = ['precision_samples', 'recall_samples', 'f1_samples',
                            'jaccard_samples']
 
+REQUIRE_POSITIVE_Y_SCORERS = ['neg_mean_poisson_deviance',
+                              'neg_mean_gamma_deviance']
+
+
+def _require_positive_y(y):
+    """Make targets strictly positive"""
+    offset = abs(y.min()) + 1
+    y = y + offset
+    return y
+
 
 def _make_estimators(X_train, y_train, y_ml_train):
     # Make estimators that make sense to test various scoring methods
     sensible_regr = DecisionTreeRegressor(random_state=0)
-    sensible_regr.fit(X_train, y_train)
+    # some of the regressions scorers require strictly positive input.
+    sensible_regr.fit(X_train, y_train + 1)
     sensible_clf = DecisionTreeClassifier(random_state=0)
     sensible_clf.fit(X_train, y_train)
     sensible_ml_clf = DecisionTreeClassifier(random_state=0)
@@ -477,6 +489,8 @@ def test_scorer_sample_weight():
             target = y_ml_test
         else:
             target = y_test
+        if name in REQUIRE_POSITIVE_Y_SCORERS:
+            target = _require_positive_y(target)
         try:
             weighted = scorer(estimator[name], X_test, target,
                               sample_weight=sample_weight)
@@ -498,22 +512,26 @@ def test_scorer_sample_weight():
                 "with sample weights: {1}".format(name, str(e)))
 
 
-@ignore_warnings  # UndefinedMetricWarning for P / R scores
-def check_scorer_memmap(scorer_name):
-    scorer, estimator = SCORERS[scorer_name], ESTIMATORS[scorer_name]
-    if scorer_name in MULTILABEL_ONLY_SCORERS:
-        score = scorer(estimator, X_mm, y_ml_mm)
-    else:
-        score = scorer(estimator, X_mm, y_mm)
-    assert isinstance(score, numbers.Number), scorer_name
-
-
 @pytest.mark.parametrize('name', SCORERS)
 def test_scorer_memmap_input(name):
     # Non-regression test for #6147: some score functions would
     # return singleton memmap when computed on memmap data instead of scalar
     # float values.
-    check_scorer_memmap(name)
+
+    if name in REQUIRE_POSITIVE_Y_SCORERS:
+        y_mm_1 = _require_positive_y(y_mm)
+        y_ml_mm_1 = _require_positive_y(y_ml_mm)
+    else:
+        y_mm_1, y_ml_mm_1 = y_mm, y_ml_mm
+
+    # UndefinedMetricWarning for P / R scores
+    with ignore_warnings():
+        scorer, estimator = SCORERS[name], ESTIMATORS[name]
+        if name in MULTILABEL_ONLY_SCORERS:
+            score = scorer(estimator, X_mm, y_ml_mm_1)
+        else:
+            score = scorer(estimator, X_mm, y_mm_1)
+        assert isinstance(score, numbers.Number), name
 
 
 def test_scoring_is_not_metric():

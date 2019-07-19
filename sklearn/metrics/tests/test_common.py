@@ -44,6 +44,9 @@ from sklearn.metrics import max_error
 from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_tweedie_deviance
+from sklearn.metrics import mean_poisson_deviance
+from sklearn.metrics import mean_gamma_deviance
 from sklearn.metrics import median_absolute_error
 from sklearn.metrics import multilabel_confusion_matrix
 from sklearn.metrics import precision_recall_curve
@@ -97,6 +100,11 @@ REGRESSION_METRICS = {
     "median_absolute_error": median_absolute_error,
     "explained_variance_score": explained_variance_score,
     "r2_score": partial(r2_score, multioutput='variance_weighted'),
+    "mean_normal_deviance": partial(mean_tweedie_deviance, p=0),
+    "mean_poisson_deviance": mean_poisson_deviance,
+    "mean_gamma_deviance": mean_gamma_deviance,
+    "mean_compound_poisson_deviance":
+    partial(mean_tweedie_deviance, p=1.4),
 }
 
 CLASSIFICATION_METRICS = {
@@ -434,7 +442,7 @@ SYMMETRIC_METRICS = {
     "matthews_corrcoef_score", "mean_absolute_error", "mean_squared_error",
     "median_absolute_error", "max_error",
 
-    "cohen_kappa_score",
+    "cohen_kappa_score", "mean_normal_deviance"
 }
 
 # Asymmetric with respect to their input arguments y_true and y_pred
@@ -456,7 +464,9 @@ NOT_SYMMETRIC_METRICS = {
     "unnormalized_multilabel_confusion_matrix",
 
     "macro_f0.5_score", "macro_f2_score", "macro_precision_score",
-    "macro_recall_score", "log_loss", "hinge_loss"
+    "macro_recall_score", "log_loss", "hinge_loss",
+    "mean_gamma_deviance", "mean_poisson_deviance",
+    "mean_compound_poisson_deviance"
 }
 
 
@@ -468,16 +478,22 @@ METRICS_WITHOUT_SAMPLE_WEIGHT = {
     "weighted_ovo_roc_auc"
 }
 
+METRICS_REQUIRE_POSITIVE_Y = {
+    "mean_poisson_deviance",
+    "mean_gamma_deviance",
+    "mean_compound_poisson_deviance",
+}
 
-@ignore_warnings
-def test_symmetry():
-    # Test the symmetry of score and loss functions
-    random_state = check_random_state(0)
-    y_true = random_state.randint(0, 2, size=(20, ))
-    y_pred = random_state.randint(0, 2, size=(20, ))
 
-    y_true_bin = random_state.randint(0, 2, size=(20, 25))
-    y_pred_bin = random_state.randint(0, 2, size=(20, 25))
+def _require_positive_targets(y1, y2):
+    """Make targets strictly positive"""
+    offset = abs(min(y1.min(), y2.min())) + 1
+    y1 += offset
+    y2 += offset
+    return y1, y2
+
+
+def test_symmetry_consistency():
 
     # We shouldn't forget any metrics
     assert (SYMMETRIC_METRICS.union(
@@ -489,29 +505,50 @@ def test_symmetry():
         SYMMETRIC_METRICS.intersection(NOT_SYMMETRIC_METRICS) ==
         set())
 
-    # Symmetric metric
-    for name in SYMMETRIC_METRICS:
-        metric = ALL_METRICS[name]
-        if name in METRIC_UNDEFINED_BINARY:
-            if name in MULTILABELS_METRICS:
-                assert_allclose(metric(y_true_bin, y_pred_bin),
-                                metric(y_pred_bin, y_true_bin),
-                                err_msg="%s is not symmetric" % name)
-            else:
-                assert False, "This case is currently unhandled"
-        else:
-            assert_allclose(metric(y_true, y_pred),
-                            metric(y_pred, y_true),
+
+@pytest.mark.parametrize("name", sorted(SYMMETRIC_METRICS))
+def test_symmetric_metric(name):
+    # Test the symmetry of score and loss functions
+    random_state = check_random_state(0)
+    y_true = random_state.randint(0, 2, size=(20, ))
+    y_pred = random_state.randint(0, 2, size=(20, ))
+
+    if name in METRICS_REQUIRE_POSITIVE_Y:
+        y_true, y_pred = _require_positive_targets(y_true, y_pred)
+
+    y_true_bin = random_state.randint(0, 2, size=(20, 25))
+    y_pred_bin = random_state.randint(0, 2, size=(20, 25))
+
+    metric = ALL_METRICS[name]
+    if name in METRIC_UNDEFINED_BINARY:
+        if name in MULTILABELS_METRICS:
+            assert_allclose(metric(y_true_bin, y_pred_bin),
+                            metric(y_pred_bin, y_true_bin),
                             err_msg="%s is not symmetric" % name)
+        else:
+            assert False, "This case is currently unhandled"
+    else:
+        assert_allclose(metric(y_true, y_pred),
+                        metric(y_pred, y_true),
+                        err_msg="%s is not symmetric" % name)
 
-    # Not symmetric metrics
-    for name in NOT_SYMMETRIC_METRICS:
-        metric = ALL_METRICS[name]
 
-        # use context manager to supply custom error message
-        with assert_raises(AssertionError) as cm:
-            assert_array_equal(metric(y_true, y_pred), metric(y_pred, y_true))
-            cm.msg = ("%s seems to be symmetric" % name)
+@pytest.mark.parametrize("name", sorted(NOT_SYMMETRIC_METRICS))
+def test_not_symmetric_metric(name):
+    # Test the symmetry of score and loss functions
+    random_state = check_random_state(0)
+    y_true = random_state.randint(0, 2, size=(20, ))
+    y_pred = random_state.randint(0, 2, size=(20, ))
+
+    if name in METRICS_REQUIRE_POSITIVE_Y:
+        y_true, y_pred = _require_positive_targets(y_true, y_pred)
+
+    metric = ALL_METRICS[name]
+
+    # use context manager to supply custom error message
+    with assert_raises(AssertionError) as cm:
+        assert_array_equal(metric(y_true, y_pred), metric(y_pred, y_true))
+        cm.msg = ("%s seems to be symmetric" % name)
 
 
 @pytest.mark.parametrize(
@@ -521,6 +558,9 @@ def test_sample_order_invariance(name):
     random_state = check_random_state(0)
     y_true = random_state.randint(0, 2, size=(20, ))
     y_pred = random_state.randint(0, 2, size=(20, ))
+    if name in METRICS_REQUIRE_POSITIVE_Y:
+        y_true, y_pred = _require_positive_targets(y_true, y_pred)
+
     y_true_shuffle, y_pred_shuffle = shuffle(y_true, y_pred, random_state=0)
 
     with ignore_warnings():
@@ -573,6 +613,9 @@ def test_format_invariance_with_1d_vectors(name):
     random_state = check_random_state(0)
     y1 = random_state.randint(0, 2, size=(20, ))
     y2 = random_state.randint(0, 2, size=(20, ))
+
+    if name in METRICS_REQUIRE_POSITIVE_Y:
+        y1, y2 = _require_positive_targets(y1, y2)
 
     y1_list = list(y1)
     y2_list = list(y2)
@@ -762,7 +805,11 @@ def check_single_sample(name):
     metric = ALL_METRICS[name]
 
     # assert that no exception is thrown
-    for i, j in product([0, 1], repeat=2):
+    if name in METRICS_REQUIRE_POSITIVE_Y:
+        values = [1, 2]
+    else:
+        values = [0, 1]
+    for i, j in product(values, repeat=2):
         metric([i], [j])
 
 

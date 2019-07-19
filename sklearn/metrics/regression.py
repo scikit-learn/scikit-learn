@@ -19,10 +19,12 @@ the lower the better
 #          Manoj Kumar <manojkumarsivaraj334@gmail.com>
 #          Michael Eickenberg <michael.eickenberg@gmail.com>
 #          Konstantin Shmelkov <konstantin.shmelkov@polytechnique.edu>
+#          Christian Lorentzen <lorentzen.ch@googlemail.com>
 # License: BSD 3 clause
 
 
 import numpy as np
+from scipy.special import xlogy
 import warnings
 
 from ..utils.validation import (check_array, check_consistent_length,
@@ -38,11 +40,14 @@ __ALL__ = [
     "mean_squared_log_error",
     "median_absolute_error",
     "r2_score",
-    "explained_variance_score"
+    "explained_variance_score",
+    "mean_tweedie_deviance",
+    "mean_poisson_deviance",
+    "mean_gamma_deviance",
 ]
 
 
-def _check_reg_targets(y_true, y_pred, multioutput):
+def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
     """Check that y_true and y_pred belong to the same regression task
 
     Parameters
@@ -72,11 +77,13 @@ def _check_reg_targets(y_true, y_pred, multioutput):
         Custom output weights if ``multioutput`` is array-like or
         just the corresponding argument if ``multioutput`` is a
         correct keyword.
+    dtype: str or list, default="numeric"
+        the dtype argument passed to check_array
 
     """
     check_consistent_length(y_true, y_pred)
-    y_true = check_array(y_true, ensure_2d=False)
-    y_pred = check_array(y_pred, ensure_2d=False)
+    y_true = check_array(y_true, ensure_2d=False, dtype=dtype)
+    y_pred = check_array(y_pred, ensure_2d=False, dtype=dtype)
 
     if y_true.ndim == 1:
         y_true = y_true.reshape((-1, 1))
@@ -609,3 +616,179 @@ def max_error(y_true, y_pred):
     if y_type == 'continuous-multioutput':
         raise ValueError("Multioutput not supported in max_error")
     return np.max(np.abs(y_true - y_pred))
+
+
+def mean_tweedie_deviance(y_true, y_pred, sample_weight=None, p=0):
+    """Mean Tweedie deviance regression loss.
+
+    Read more in the :ref:`User Guide <mean_tweedie_deviance>`.
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,)
+        Ground truth (correct) target values.
+
+    y_pred : array-like of shape (n_samples,)
+        Estimated target values.
+
+    sample_weight : array-like, shape (n_samples,), optional
+        Sample weights.
+
+    p : float, optional
+        Tweedie power parameter. Either p ≤ 0 or p ≥ 1.
+
+        The higher `p` the less weight is given to extreme
+        deviations between true and predicted targets.
+
+        - p < 0: Extreme stable distribution. Requires: y_pred > 0.
+        - p = 0 : Normal distribution, output corresponds to
+          mean_squared_error. y_true and y_pred can be any real numbers.
+        - p = 1 : Poisson distribution. Requires: y_true ≥ 0 and y_pred > 0.
+        - 1 < p < 2 : Compound Poisson distribution. Requires: y_true ≥ 0
+          and y_pred > 0.
+        - p = 2 : Gamma distribution. Requires: y_true > 0 and y_pred > 0.
+        - p = 3 : Inverse Gaussian distribution. Requires: y_true > 0
+          and y_pred > 0.
+        - otherwise : Positive stable distribution. Requires: y_true > 0
+          and y_pred > 0.
+
+    Returns
+    -------
+    loss : float
+        A non-negative floating point value (the best value is 0.0).
+
+    Examples
+    --------
+    >>> from sklearn.metrics import mean_tweedie_deviance
+    >>> y_true = [2, 0, 1, 4]
+    >>> y_pred = [0.5, 0.5, 2., 2.]
+    >>> mean_tweedie_deviance(y_true, y_pred, p=1)
+    1.4260...
+    """
+    y_type, y_true, y_pred, _ = _check_reg_targets(
+        y_true, y_pred, None, dtype=[np.float64, np.float32])
+    if y_type == 'continuous-multioutput':
+        raise ValueError("Multioutput not supported in mean_tweedie_deviance")
+    check_consistent_length(y_true, y_pred, sample_weight)
+
+    if sample_weight is not None:
+        sample_weight = column_or_1d(sample_weight)
+        sample_weight = sample_weight[:, np.newaxis]
+
+    message = ("Mean Tweedie deviance error with p={} can only be used on "
+               .format(p))
+    if p < 0:
+        # 'Extreme stable', y_true any realy number, y_pred > 0
+        if (y_pred <= 0).any():
+            raise ValueError(message + "strictly positive y_pred.")
+        dev = 2 * (np.power(np.maximum(y_true, 0), 2-p)/((1-p) * (2-p)) -
+                   y_true * np.power(y_pred, 1-p)/(1-p) +
+                   np.power(y_pred, 2-p)/(2-p))
+    elif p == 0:
+        # Normal distribution, y_true and y_pred any real number
+        dev = (y_true - y_pred)**2
+    elif p < 1:
+        raise ValueError("Tweedie deviance is only defined for p<=0 and "
+                         "p>=1.")
+    elif p == 1:
+        # Poisson distribution, y_true >= 0, y_pred > 0
+        if (y_true < 0).any() or (y_pred <= 0).any():
+            raise ValueError(message + "non-negative y_true and strictly "
+                             "positive y_pred.")
+        dev = 2 * (xlogy(y_true, y_true/y_pred) - y_true + y_pred)
+    elif p == 2:
+        # Gamma distribution, y_true and y_pred > 0
+        if (y_true <= 0).any() or (y_pred <= 0).any():
+            raise ValueError(message + "strictly positive y_true and y_pred.")
+        dev = 2 * (np.log(y_pred/y_true) + y_true/y_pred - 1)
+    else:
+        if p < 2:
+            # 1 < p < 2 is Compound Poisson, y_true >= 0, y_pred > 0
+            if (y_true < 0).any() or (y_pred <= 0).any():
+                raise ValueError(message + "non-negative y_true and strictly "
+                                           "positive y_pred.")
+        else:
+            if (y_true <= 0).any() or (y_pred <= 0).any():
+                raise ValueError(message + "strictly positive y_true and "
+                                           "y_pred.")
+
+        dev = 2 * (np.power(y_true, 2-p)/((1-p) * (2-p)) -
+                   y_true * np.power(y_pred, 1-p)/(1-p) +
+                   np.power(y_pred, 2-p)/(2-p))
+
+    return np.average(dev, weights=sample_weight)
+
+
+def mean_poisson_deviance(y_true, y_pred, sample_weight=None):
+    """Mean Poisson deviance regression loss.
+
+    Poisson deviance is equivalent to the Tweedie deviance with
+    the power parameter `p=1`.
+
+    Read more in the :ref:`User Guide <mean_tweedie_deviance>`.
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,)
+        Ground truth (correct) target values. Requires y_true ≥ 0.
+
+    y_pred : array-like of shape (n_samples,)
+        Estimated target values. Requires y_pred > 0.
+
+    sample_weight : array-like, shape (n_samples,), optional
+        Sample weights.
+
+    Returns
+    -------
+    loss : float
+        A non-negative floating point value (the best value is 0.0).
+
+    Examples
+    --------
+    >>> from sklearn.metrics import mean_poisson_deviance
+    >>> y_true = [2, 0, 1, 4]
+    >>> y_pred = [0.5, 0.5, 2., 2.]
+    >>> mean_poisson_deviance(y_true, y_pred)
+    1.4260...
+    """
+    return mean_tweedie_deviance(
+        y_true, y_pred, sample_weight=sample_weight, p=1
+    )
+
+
+def mean_gamma_deviance(y_true, y_pred, sample_weight=None):
+    """Mean Gamma deviance regression loss.
+
+    Gamma deviance is equivalent to the Tweedie deviance with
+    the power parameter `p=2`. It is invariant to scaling of
+    the target variable, and mesures relative errors.
+
+    Read more in the :ref:`User Guide <mean_tweedie_deviance>`.
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,)
+        Ground truth (correct) target values. Requires y_true > 0.
+
+    y_pred : array-like of shape (n_samples,)
+        Estimated target values. Requires y_pred > 0.
+
+    sample_weight : array-like, shape (n_samples,), optional
+        Sample weights.
+
+    Returns
+    -------
+    loss : float
+        A non-negative floating point value (the best value is 0.0).
+
+    Examples
+    --------
+    >>> from sklearn.metrics import mean_gamma_deviance
+    >>> y_true = [2, 0.5, 1, 4]
+    >>> y_pred = [0.5, 0.5, 2., 2.]
+    >>> mean_gamma_deviance(y_true, y_pred)
+    1.0568...
+    """
+    return mean_tweedie_deviance(
+        y_true, y_pred, sample_weight=sample_weight, p=2
+    )

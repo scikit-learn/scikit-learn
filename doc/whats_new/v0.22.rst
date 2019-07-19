@@ -131,6 +131,14 @@ Changelog
 - |Feature| Added multiclass support to :func:`metrics.roc_auc_score`.
   :issue:`12789` by :user:`Kathy Chen <kathyxchen>`,
   :user:`Mohamed Maskani <maskani-moh>`, and :user:`Thomas Fan <thomasjpfan>`.
+  
+- |Feature| Add :class:`metrics.mean_tweedie_deviance` measuring the
+  Tweedie deviance for a power parameter ``p``. Also add mean Poisson deviance
+  :class:`metrics.mean_poisson_deviance` and mean Gamma deviance
+  :class:`metrics.mean_gamma_deviance` that are special cases of the Tweedie
+  deviance for `p=1` and `p=2` respectively.
+  :pr:`13938` by :user:`Christian Lorentzen <lorentzenchr>` and
+  `Roman Yurchak`_.
 
 - |Enhancement| The parameter ``beta`` in :func:`metrics.fbeta_score` is
   updated to accept the zero and `float('+inf')` value.
