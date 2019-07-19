@@ -870,12 +870,17 @@ def test_check_sample_weight():
 
     # check numbers input
     sample_weight = _check_sample_weight(2.0, X=np.ones((5, 2)))
-    assert_allclose(sample_weight, 2*np.ones(5))
+    assert_allclose(sample_weight, 2 * np.ones(5))
 
     # check wrong number of dimensions
     with pytest.raises(ValueError,
                        match="Sample weights must be 1D array or scalar"):
         _check_sample_weight(np.ones((2, 4)), X=np.ones((2, 2)))
+
+    # check incorrect n_samples
+    msg = r"sample_weight.shape == \(4,\), expected \(2,\)!"
+    with pytest.raises(ValueError, match=msg):
+        _check_sample_weight(np.ones(4), X=np.ones((2, 2)))
 
     # float32 dtype is preserved
     X = np.ones((5, 2))
