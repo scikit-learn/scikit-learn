@@ -1269,7 +1269,7 @@ def check_nonsquare_error(name, estimator_orig):
     with assert_raises(ValueError, msg="The pairwise estimator {}"
                        " does not raise an error on non-square data"
                        .format(name)):
-        estimator.fit(X)
+        estimator.fit(X, y)
 
 
 @ignore_warnings
