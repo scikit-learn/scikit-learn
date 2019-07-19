@@ -33,8 +33,9 @@ from ..utils.extmath import stable_cumsum
 from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
+from ..preprocessing.label import _encode
 
-from .base import _average_binary_score
+from .base import _average_binary_score, _average_multiclass_ovo_score
 
 
 def auc(x, y):
@@ -214,8 +215,36 @@ def average_precision_score(y_true, y_score, average="macro", pos_label=1,
                                  average, sample_weight=sample_weight)
 
 
+def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
+    """Binary roc auc score"""
+    if len(np.unique(y_true)) != 2:
+        raise ValueError("Only one class present in y_true. ROC AUC score "
+                         "is not defined in that case.")
+
+    fpr, tpr, _ = roc_curve(y_true, y_score,
+                            sample_weight=sample_weight)
+    if max_fpr is None or max_fpr == 1:
+        return auc(fpr, tpr)
+    if max_fpr <= 0 or max_fpr > 1:
+        raise ValueError("Expected max_fpr in range (0, 1], got: %r" % max_fpr)
+
+    # Add a single point at max_fpr by linear interpolation
+    stop = np.searchsorted(fpr, max_fpr, 'right')
+    x_interp = [fpr[stop - 1], fpr[stop]]
+    y_interp = [tpr[stop - 1], tpr[stop]]
+    tpr = np.append(tpr[:stop], np.interp(max_fpr, x_interp, y_interp))
+    fpr = np.append(fpr[:stop], max_fpr)
+    partial_auc = auc(fpr, tpr)
+
+    # McClish correction: standardize result to be 0.5 if non-discriminant
+    # and 1 if maximal
+    min_area = 0.5 * max_fpr**2
+    max_area = max_fpr
+    return 0.5 * (1 + (partial_auc - min_area) / (max_area - min_area))
+
+
 def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
-                  max_fpr=None):
+                  max_fpr=None, multi_class="raise", labels=None):
     """Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC)
     from prediction scores.
 
@@ -228,17 +257,22 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
     ----------
     y_true : array, shape = [n_samples] or [n_samples, n_classes]
         True binary labels or binary label indicators.
+        The multiclass case expects shape = [n_samples] and labels
+        with values in ``range(n_classes)``.
 
     y_score : array, shape = [n_samples] or [n_samples, n_classes]
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers). For binary
         y_true, y_score is supposed to be the score of the class with greater
-        label.
+        label. The multiclass case expects shape = [n_samples, n_classes]
+        where the scores correspond to probability estimates.
 
     average : string, [None, 'micro', 'macro' (default), 'samples', 'weighted']
         If ``None``, the scores for each class are returned. Otherwise,
         this determines the type of averaging performed on the data:
+        Note: multiclass ROC AUC currently only handles the 'macro' and
+        'weighted' averages.
 
         ``'micro'``:
             Calculate metrics globally by considering each element of the label
@@ -259,7 +293,23 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
 
     max_fpr : float > 0 and <= 1, optional
         If not ``None``, the standardized partial AUC [3]_ over the range
-        [0, max_fpr] is returned.
+        [0, max_fpr] is returned. For the multiclass case, ``max_fpr``,
+        should be either equal to ``None`` or ``1.0`` as AUC ROC partial
+        computation currently is not supported for multiclass.
+
+    multi_class : string, 'ovr' or 'ovo', optional(default='raise')
+        Determines the type of multiclass configuration to use.
+        ``multi_class`` must be provided when ``y_true`` is multiclass.
+        ``'ovr'``:
+            Calculate metrics for the multiclass case using the one-vs-rest
+            approach.
+        ``'ovo'``:
+            Calculate metrics for the multiclass case using the one-vs-one
+            approach.
+
+    labels : array, shape = [n_classes] or None, optional (default=None)
+        List of labels to index ``y_score`` used for multiclass. If ``None``,
+        the lexicon order of ``y_true`` is used to index ``y_score``.
 
     Returns
     -------
@@ -292,41 +342,136 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
     0.75
 
     """
-    def _binary_roc_auc_score(y_true, y_score, sample_weight=None):
-        if len(np.unique(y_true)) != 2:
-            raise ValueError("Only one class present in y_true. ROC AUC score "
-                             "is not defined in that case.")
-
-        fpr, tpr, _ = roc_curve(y_true, y_score,
-                                sample_weight=sample_weight)
-        if max_fpr is None or max_fpr == 1:
-            return auc(fpr, tpr)
-        if max_fpr <= 0 or max_fpr > 1:
-            raise ValueError("Expected max_fpr in range (0, 1], got: %r"
-                             % max_fpr)
-
-        # Add a single point at max_fpr by linear interpolation
-        stop = np.searchsorted(fpr, max_fpr, 'right')
-        x_interp = [fpr[stop - 1], fpr[stop]]
-        y_interp = [tpr[stop - 1], tpr[stop]]
-        tpr = np.append(tpr[:stop], np.interp(max_fpr, x_interp, y_interp))
-        fpr = np.append(fpr[:stop], max_fpr)
-        partial_auc = auc(fpr, tpr)
-
-        # McClish correction: standardize result to be 0.5 if non-discriminant
-        # and 1 if maximal
-        min_area = 0.5 * max_fpr**2
-        max_area = max_fpr
-        return 0.5 * (1 + (partial_auc - min_area) / (max_area - min_area))
 
     y_type = type_of_target(y_true)
-    if y_type == "binary":
+    y_true = check_array(y_true, ensure_2d=False, dtype=None)
+    y_score = check_array(y_score, ensure_2d=False)
+
+    if y_type == "multiclass" or (y_type == "binary" and
+                                  y_score.ndim == 2 and
+                                  y_score.shape[1] > 2):
+        # do not support partial ROC computation for multiclass
+        if max_fpr is not None and max_fpr != 1.:
+            raise ValueError("Partial AUC computation not available in "
+                             "multiclass setting, 'max_fpr' must be"
+                             " set to `None`, received `max_fpr={0}` "
+                             "instead".format(max_fpr))
+        if multi_class == 'raise':
+            raise ValueError("multi_class must be in ('ovo', 'ovr')")
+        return _multiclass_roc_auc_score(y_true, y_score, labels,
+                                         multi_class, average, sample_weight)
+    elif y_type == "binary":
         labels = np.unique(y_true)
         y_true = label_binarize(y_true, labels)[:, 0]
+        return _average_binary_score(partial(_binary_roc_auc_score,
+                                             max_fpr=max_fpr),
+                                     y_true, y_score, average,
+                                     sample_weight=sample_weight)
+    else:  # multilabel-indicator
+        return _average_binary_score(partial(_binary_roc_auc_score,
+                                             max_fpr=max_fpr),
+                                     y_true, y_score, average,
+                                     sample_weight=sample_weight)
 
-    return _average_binary_score(
-        _binary_roc_auc_score, y_true, y_score, average,
-        sample_weight=sample_weight)
+
+def _multiclass_roc_auc_score(y_true, y_score, labels,
+                              multi_class, average, sample_weight):
+    """Multiclass roc auc score
+
+    Parameters
+    ----------
+    y_true : array-like, shape = (n_samples, )
+        True multiclass labels.
+
+    y_score : array-like, shape = (n_samples, n_classes)
+        Target scores corresponding to probability estimates of a sample
+        belonging to a particular class
+
+    labels : array, shape = [n_classes] or None, optional (default=None)
+        List of labels to index ``y_score`` used for multiclass. If ``None``,
+        the lexical order of ``y_true`` is used to index ``y_score``.
+
+    multi_class : string, 'ovr' or 'ovo'
+        Determines the type of multiclass configuration to use.
+        ``'ovr'``:
+            Calculate metrics for the multiclass case using the one-vs-rest
+            approach.
+        ``'ovo'``:
+            Calculate metrics for the multiclass case using the one-vs-one
+            approach.
+
+    average : 'macro' or 'weighted', optional (default='macro')
+        Determines the type of averaging performed on the pairwise binary
+        metric scores
+        ``'macro'``:
+            Calculate metrics for each label, and find their unweighted
+            mean. This does not take label imbalance into account. Classes
+            are assumed to be uniformly distributed.
+        ``'weighted'``:
+            Calculate metrics for each label, taking into account the
+            prevalence of the classes.
+
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
+
+    """
+    # validation of the input y_score
+    if not np.allclose(1, y_score.sum(axis=1)):
+        raise ValueError(
+            "Target scores need to be probabilities for multiclass "
+            "roc_auc, i.e. they should sum up to 1.0 over classes")
+
+    # validation for multiclass parameter specifications
+    average_options = ("macro", "weighted")
+    if average not in average_options:
+        raise ValueError("average must be one of {0} for "
+                         "multiclass problems".format(average_options))
+
+    multiclass_options = ("ovo", "ovr")
+    if multi_class not in multiclass_options:
+        raise ValueError("multi_class='{0}' is not supported "
+                         "for multiclass ROC AUC, multi_class must be "
+                         "in {1}".format(
+                                multi_class, multiclass_options))
+
+    if labels is not None:
+        labels = column_or_1d(labels)
+        classes = _encode(labels)
+        if len(classes) != len(labels):
+            raise ValueError("Parameter 'labels' must be unique")
+        if not np.array_equal(classes, labels):
+            raise ValueError("Parameter 'labels' must be ordered")
+        if len(classes) != y_score.shape[1]:
+            raise ValueError(
+                "Number of given labels, {0}, not equal to the number "
+                "of columns in 'y_score', {1}".format(
+                    len(classes), y_score.shape[1]))
+        if len(np.setdiff1d(y_true, classes)):
+            raise ValueError(
+                "'y_true' contains labels not in parameter 'labels'")
+    else:
+        classes = _encode(y_true)
+        if len(classes) != y_score.shape[1]:
+            raise ValueError(
+                "Number of classes in y_true not equal to the number of "
+                "columns in 'y_score'")
+
+    if multi_class == "ovo":
+        if sample_weight is not None:
+            raise ValueError("sample_weight is not supported "
+                             "for multiclass one-vs-one ROC AUC, "
+                             "'sample_weight' must be None in this case.")
+        _, y_true_encoded = _encode(y_true, uniques=classes, encode=True)
+        # Hand & Till (2001) implementation (ovo)
+        return _average_multiclass_ovo_score(_binary_roc_auc_score,
+                                             y_true_encoded,
+                                             y_score, average=average)
+    else:
+        # ovr is same as multi-label
+        y_true_multilabel = label_binarize(y_true, classes)
+        return _average_binary_score(_binary_roc_auc_score, y_true_multilabel,
+                                     y_score, average,
+                                     sample_weight=sample_weight)
 
 
 def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):

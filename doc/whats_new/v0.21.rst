@@ -9,8 +9,30 @@ Version 0.21.3
 
 **In development**
 
+Changed models
+--------------
+
+The following estimators and functions, when fit with the same data and
+parameters, may produce different models from the previous version. This often
+occurs due to changes in the modelling logic (bug fixes or enhancements), or in
+random sampling procedures.
+
+- The v0.20.0 release notes failed to mention a backwards incompatibility in
+  :func:`metrics.make_scorer` when `needs_proba=True` and `y_true` is binary.
+  Now, the scorer function is supposed to accept a 1D `y_pred` (i.e.,
+  probability of the positive class, shape `(n_samples,)`), instead of a 2D
+  `y_pred` (i.e., shape `(n_samples, 2)`).
+
 Changelog
 ---------
+
+
+:mod:`sklearn.inspection`
+.....................
+
+- |Fix| Fixed a bug in :func:`inspection.plot_partial_dependence` where 
+  ``target`` parameter was not being taken into account for multiclass problems.
+  :pr:`14393` by :user:`Guillem G. Subies <guillemgsubies>`.
 
 :mod:`sklearn.datasets`
 .......................

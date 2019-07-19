@@ -213,6 +213,12 @@ THRESHOLDED_METRICS = {
     "weighted_roc_auc": partial(roc_auc_score, average="weighted"),
     "samples_roc_auc": partial(roc_auc_score, average="samples"),
     "micro_roc_auc": partial(roc_auc_score, average="micro"),
+    "ovr_roc_auc": partial(roc_auc_score, average="macro", multi_class='ovr'),
+    "weighted_ovr_roc_auc": partial(roc_auc_score, average="weighted",
+                                    multi_class='ovr'),
+    "ovo_roc_auc": partial(roc_auc_score, average="macro", multi_class='ovo'),
+    "weighted_ovo_roc_auc": partial(roc_auc_score, average="weighted",
+                                    multi_class='ovo'),
     "partial_roc_auc": partial(roc_auc_score, max_fpr=0.5),
 
     "average_precision_score":
@@ -264,11 +270,11 @@ METRIC_UNDEFINED_BINARY = {
 METRIC_UNDEFINED_MULTICLASS = {
     "brier_score_loss",
 
-    "roc_auc_score",
     "micro_roc_auc",
-    "weighted_roc_auc",
     "samples_roc_auc",
     "partial_roc_auc",
+    "roc_auc_score",
+    "weighted_roc_auc",
 
     "average_precision_score",
     "weighted_average_precision_score",
@@ -467,7 +473,9 @@ NOT_SYMMETRIC_METRICS = {
 # No Sample weight support
 METRICS_WITHOUT_SAMPLE_WEIGHT = {
     "median_absolute_error",
-    "max_error"
+    "max_error",
+    "ovo_roc_auc",
+    "weighted_ovo_roc_auc"
 }
 
 
@@ -1194,7 +1202,10 @@ def test_multiclass_sample_weight_invariance(name):
     y_score = random_state.random_sample(size=(n_samples, 5))
     metric = ALL_METRICS[name]
     if name in THRESHOLDED_METRICS:
-        check_sample_weight_invariance(name, metric, y_true, y_score)
+        # softmax
+        temp = np.exp(-y_score)
+        y_score_norm = temp / temp.sum(axis=-1).reshape(-1, 1)
+        check_sample_weight_invariance(name, metric, y_true, y_score_norm)
     else:
         check_sample_weight_invariance(name, metric, y_true, y_pred)
 
@@ -1287,6 +1298,30 @@ def test_thresholded_multilabel_multioutput_permutations_invariance(name):
     for perm in permutations(range(n_classes), n_classes):
         y_score_perm = y_score[:, perm]
         y_true_perm = y_true[:, perm]
+
+        current_score = metric(y_true_perm, y_score_perm)
+        assert_almost_equal(score, current_score)
+
+
+@pytest.mark.parametrize(
+    'name',
+    sorted(set(THRESHOLDED_METRICS) - METRIC_UNDEFINED_BINARY_MULTICLASS))
+def test_thresholded_metric_permutation_invariance(name):
+    n_samples, n_classes = 100, 3
+    random_state = check_random_state(0)
+
+    y_score = random_state.rand(n_samples, n_classes)
+    temp = np.exp(-y_score)
+    y_score = temp / temp.sum(axis=-1).reshape(-1, 1)
+    y_true = random_state.randint(0, n_classes, size=n_samples)
+
+    metric = ALL_METRICS[name]
+    score = metric(y_true, y_score)
+    for perm in permutations(range(n_classes), n_classes):
+        inverse_perm = np.zeros(n_classes, dtype=int)
+        inverse_perm[list(perm)] = np.arange(n_classes)
+        y_score_perm = y_score[:, inverse_perm]
+        y_true_perm = np.take(perm, y_true)
 
         current_score = metric(y_true_perm, y_score_perm)
         assert_almost_equal(score, current_score)
