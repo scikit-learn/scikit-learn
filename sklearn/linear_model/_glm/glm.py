@@ -14,7 +14,7 @@ import scipy.optimize
 from ...base import BaseEstimator, RegressorMixin
 from ...utils import check_array, check_X_y
 from ...utils.optimize import _check_optimize_result
-from ...utils.validation import check_is_fitted
+from ...utils.validation import check_is_fitted, _check_sample_weight
 from .distribution import (
         ExponentialDispersionModel,
         TweedieDistribution,
@@ -26,33 +26,6 @@ from .link import (
         LogLink,
         LogitLink,
 )
-
-
-def _check_weights(sample_weight, n_samples):
-    """Check that sample weights are non-negative and have the right shape."""
-    if sample_weight is None:
-        weights = np.ones(n_samples)
-    elif np.isscalar(sample_weight):
-        if sample_weight <= 0:
-            raise ValueError("Sample weights must be non-negative.")
-        weights = sample_weight * np.ones(n_samples)
-    else:
-        _dtype = [np.float64, np.float32]
-        weights = check_array(sample_weight, accept_sparse=False,
-                              force_all_finite=True, ensure_2d=False,
-                              dtype=_dtype)
-        if weights.ndim > 1:
-            raise ValueError("Sample weight must be 1D array or scalar")
-        elif weights.shape[0] != n_samples:
-            raise ValueError("Sample weights must have the same length as "
-                             "y")
-        if not np.all(weights >= 0):
-            raise ValueError("Sample weights must be non-negative.")
-        elif not np.sum(weights) > 0:
-            raise ValueError("Sample weights must have at least one positive "
-                             "element.")
-
-    return weights
 
 
 class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
@@ -323,7 +296,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                          copy=self.copy_X)
         y = np.asarray(y, dtype=np.float64)
 
-        weights = _check_weights(sample_weight, y.shape[0])
+        weights = _check_sample_weight(sample_weight, X)
 
         n_samples, n_features = X.shape
 
@@ -458,7 +431,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                         allow_nd=False)
         eta = self._linear_predictor(X)
         mu = self._link_instance.inverse(eta)
-        weights = _check_weights(sample_weight, X.shape[0])
+        weights = _check_sample_weight(sample_weight, X)
 
         return mu*weights
 
@@ -487,7 +460,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
                          dtype=_dtype, y_numeric=True, multi_output=False)
         n_samples, n_features = X.shape
-        weights = _check_weights(sample_weight, n_samples)
+        weights = _check_sample_weight(sample_weight, X)
         eta = X @ self.coef_
         if self.fit_intercept is True:
             eta += self.intercept_
@@ -542,7 +515,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         # Note, default score defined in RegressorMixin is R^2 score.
         # TODO: make D^2 a score function in module metrics (and thereby get
         #       input validation and so on)
-        weights = _check_weights(sample_weight, y.shape[0])
+        weights = _check_sample_weight(sample_weight, X)
         mu = self.predict(X)
         dev = self._family_instance.deviance(y, mu, weights=weights)
         y_mean = np.average(y, weights=weights)

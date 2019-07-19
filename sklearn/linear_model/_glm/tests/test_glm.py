@@ -41,8 +41,6 @@ def test_sample_weights_validation():
     y = [1]
     weights = 0
     glm = GeneralizedLinearRegressor(fit_intercept=False)
-    with pytest.raises(ValueError, match="weights must be non-negative"):
-        glm.fit(X, y, weights)
 
     # Positive weights are accepted
     glm.fit(X, y, sample_weight=1)
@@ -54,21 +52,8 @@ def test_sample_weights_validation():
 
     # 1d but wrong length
     weights = [1, 0]
-    with pytest.raises(ValueError,
-                       match="weights must have the same length as y"):
-        glm.fit(X, y, weights)
-
-    # 1d but only zeros (sum not greater than 0)
-    weights = [0, 0]
-    X = [[0], [1]]
-    y = [1, 2]
-    with pytest.raises(ValueError,
-                       match="must have at least one positive element"):
-        glm.fit(X, y, weights)
-
-    # 5. 1d but with a negative value
-    weights = [2, -1]
-    with pytest.raises(ValueError, match="weights must be non-negative"):
+    msg = r"sample_weight.shape == \(2,\), expected \(1,\)!"
+    with pytest.raises(ValueError, match=msg):
         glm.fit(X, y, weights)
 
 
