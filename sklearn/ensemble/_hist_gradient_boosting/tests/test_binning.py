@@ -297,3 +297,17 @@ def test_missing_values_support(n_bins, n_bins_non_missing, X_trans_expected):
 
     X_trans = mapper.transform(X)
     assert_array_equal(X_trans, X_trans_expected)
+
+
+def test_infinite_values():
+    # Make sure infinite values are properly handled.
+    bin_mapper = _BinMapper()
+
+    X = np.array([-np.inf, 0, 1,  np.inf]).reshape(-1, 1)
+
+    bin_mapper.fit(X)
+    assert_allclose(bin_mapper.bin_thresholds_[0], [-np.inf, .5, np.inf])
+    assert bin_mapper.n_bins_non_missing_ == [4]
+
+    expected_binned_X = np.array([0, 1, 2, 3]).reshape(-1, 1)
+    assert_array_equal(bin_mapper.transform(X), expected_binned_X)

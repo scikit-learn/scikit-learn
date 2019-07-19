@@ -545,6 +545,26 @@ class _BaseRidge(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
                          accept_sparse=_accept_sparse,
                          dtype=_dtype,
                          multi_output=True, y_numeric=True)
+        if sparse.issparse(X) and self.fit_intercept:
+            if self.solver not in ['auto', 'sparse_cg', 'sag']:
+                raise ValueError(
+                    "solver='{}' does not support fitting the intercept "
+                    "on sparse data. Please set the solver to 'auto' or "
+                    "'sparse_cg', 'sag', or set `fit_intercept=False`"
+                    .format(self.solver))
+            if (self.solver == 'sag' and self.max_iter is None and
+                    self.tol > 1e-4):
+                warnings.warn(
+                    '"sag" solver requires many iterations to fit '
+                    'an intercept with sparse inputs. Either set the '
+                    'solver to "auto" or "sparse_cg", or set a low '
+                    '"tol" and a high "max_iter" (especially if inputs are '
+                    'not standardized).')
+                solver = 'sag'
+            else:
+                solver = 'sparse_cg'
+        else:
+            solver = self.solver
 
         if ((sample_weight is not None) and
                 np.atleast_1d(sample_weight).ndim > 1):
@@ -555,9 +575,7 @@ class _BaseRidge(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
             X, y, self.fit_intercept, self.normalize, self.copy_X,
             sample_weight=sample_weight, return_mean=True)
 
-        # temporary fix for fitting the intercept with sparse data using 'sag'
-        if (sparse.issparse(X) and self.fit_intercept and
-           self.solver != 'sparse_cg'):
+        if solver == 'sag' and sparse.issparse(X) and self.fit_intercept:
             self.coef_, self.n_iter_, self.intercept_ = _ridge_regression(
                 X, y, alpha=self.alpha, sample_weight=sample_weight,
                 max_iter=self.max_iter, tol=self.tol, solver=self.solver,
@@ -565,8 +583,9 @@ class _BaseRidge(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
                 return_intercept=True, check_input=False)
             # add the offset which was subtracted by _preprocess_data
             self.intercept_ += y_offset
+
         else:
-            if sparse.issparse(X) and self.solver == 'sparse_cg':
+            if sparse.issparse(X) and self.fit_intercept:
                 # required to fit intercept with sparse_cg solver
                 params = {'X_offset': X_offset, 'X_scale': X_scale}
             else:
@@ -575,7 +594,7 @@ class _BaseRidge(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
 
             self.coef_, self.n_iter_ = _ridge_regression(
                 X, y, alpha=self.alpha, sample_weight=sample_weight,
-                max_iter=self.max_iter, tol=self.tol, solver=self.solver,
+                max_iter=self.max_iter, tol=self.tol, solver=solver,
                 random_state=self.random_state, return_n_iter=True,
                 return_intercept=False, check_input=False, **params)
             self._set_intercept(X_offset, y_offset, X_scale)
@@ -663,8 +682,7 @@ class Ridge(_BaseRidge, RegressorMixin):
           scaler from sklearn.preprocessing.
 
         All last five solvers support both dense and sparse data. However, only
-        'sag' and 'sparse_cg' supports sparse input when `fit_intercept` is
-        True.
+        'sparse_cg' supports sparse input when `fit_intercept` is True.
 
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.

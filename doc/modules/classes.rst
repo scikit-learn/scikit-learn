@@ -657,6 +657,7 @@ Kernels:
    :template: function.rst
 
    inspection.partial_dependence
+   inspection.permutation_importance
    inspection.plot_partial_dependence
 
 
@@ -1256,7 +1257,6 @@ Model validation
 
    pipeline.make_pipeline
    pipeline.make_union
-
 
 .. _preprocessing_ref:
 

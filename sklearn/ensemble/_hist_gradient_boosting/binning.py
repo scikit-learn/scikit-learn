@@ -153,7 +153,7 @@ class _BinMapper(BaseEstimator, TransformerMixin):
             raise ValueError('n_bins={} should be no smaller than 3 '
                              'and no larger than 256.'.format(self.n_bins))
 
-        X = check_array(X, dtype=[X_DTYPE], force_all_finite='allow-nan')
+        X = check_array(X, dtype=[X_DTYPE], force_all_finite=False)
         max_bins = self.n_bins - 1
         self.bin_thresholds_ = _find_binning_thresholds(
             X, max_bins, subsample=self.subsample,
@@ -182,7 +182,7 @@ class _BinMapper(BaseEstimator, TransformerMixin):
         X_binned : array-like, shape (n_samples, n_features)
             The binned data (fortran-aligned).
         """
-        X = check_array(X, dtype=[X_DTYPE], force_all_finite='allow-nan')
+        X = check_array(X, dtype=[X_DTYPE], force_all_finite=False)
         check_is_fitted(self, ['bin_thresholds_', 'n_bins_non_missing_'])
         if X.shape[1] != self.n_bins_non_missing_.shape[0]:
             raise ValueError(

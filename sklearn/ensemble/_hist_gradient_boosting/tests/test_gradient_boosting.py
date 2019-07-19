@@ -380,3 +380,13 @@ def test_missing_values_minmax_imputation():
     # decision function check.
     assert_allclose(gbm1.predict(X_train), gbm2.predict(X_train))
     assert_allclose(gbm1.predict(X_test), gbm2.predict(X_test))
+
+
+def test_infinite_values():
+
+    X = np.array([-np.inf, 0, 1, np.inf]).reshape(-1, 1)
+    y = np.array([0, 0, 1, 1])
+
+    gbdt = HistGradientBoostingRegressor(min_samples_leaf=1)
+    gbdt.fit(X, y)
+    np.testing.assert_allclose(gbdt.predict(X), y, atol=1e-4)
