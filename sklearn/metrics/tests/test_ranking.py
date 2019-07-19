@@ -1389,6 +1389,6 @@ def test_partial_roc_auc_score():
 
     y_true, y_pred, _ = make_prediction(binary=True)
     for max_fpr in np.linspace(1e-4, 1, 5):
-        assert roc_auc_score(
-            y_true, y_pred, max_fpr=max_fpr) == pytest.approx(
-                _partial_roc_auc_score(y_true, y_pred, max_fpr))
+        assert_almost_equal(
+            roc_auc_score(y_true, y_pred, max_fpr=max_fpr),
+            _partial_roc_auc_score(y_true, y_pred, max_fpr))
