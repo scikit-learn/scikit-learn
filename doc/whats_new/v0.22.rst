@@ -47,6 +47,10 @@ Changelog
   validation data separately to avoid any data leak. :pr:`13933` by
   `NicolasHug`_.
 
+- |Fix| :class:`ensemble.IsolationForest` now runs parallel jobs
+  during :term:`predict`. :pr:`14001` by :user:`Sérgio Pereira
+  <sergiormpereira>`.
+
 :mod:`sklearn.linear_model`
 ..................
 
