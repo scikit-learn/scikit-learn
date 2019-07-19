@@ -909,7 +909,7 @@ def test_sample_weight_length():
     # check that an error is raised when passing sample weights
     # with an incompatible shape
     km = KMeans(n_clusters=n_clusters, random_state=42)
-    msg = r'samples_weight.shape == \(2,\), expected \(100,\)'
+    msg = r'sample_weight.shape == \(2,\), expected \(100,\)'
     with pytest.raises(ValueError, match=msg):
         km.fit(X, sample_weight=np.ones(2))
 
