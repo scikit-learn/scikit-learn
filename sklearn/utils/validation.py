@@ -994,8 +994,11 @@ def _check_sample_weight(sample_weight, X, dtype=None):
         Input data.
 
     dtype: dtype
-       dtype of the validated `sample_weight`. Note that if `dtype` is not
-       one of `float32`, `float64`, the output will be of dtype `float64`.
+       dtype of the validated `sample_weight`.
+       If None, and the input `sample_weight` is an array, the dtype of the
+       input is preserved; otherwise an array with the default numpy dtype
+       is be allocated.  If `dtype` is not one of `float32`, `float64`,
+       `None`, the output will be of dtype `float64`.
 
     Returns
     -------
