@@ -768,6 +768,7 @@ Support for Python 3.4 and below has been officially dropped.
   ``fit.predict`` were not equivalent. :pr:`13142` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+
 :mod:`sklearn.model_selection`
 ..............................
 
