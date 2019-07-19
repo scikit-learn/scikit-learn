@@ -8,8 +8,8 @@ cdef extern from "math.h":
 
 
 cdef class WeightVector(object):
-    cdef np.ndarray w
-    cdef np.ndarray aw
+    cdef double[:] w
+    cdef double[:] aw
     cdef double *w_data_ptr
     cdef double *aw_data_ptr
     cdef double wscale

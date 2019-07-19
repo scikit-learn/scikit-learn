@@ -30,9 +30,9 @@ cdef class WeightVector(object):
 
     Attributes
     ----------
-    w : ndarray, dtype=double, order='C'
+    w : ndarray, dtype=double
         The numpy array which backs the weight vector.
-    aw : ndarray, dtype=double, order='C'
+    aw : ndarray, dtype=double
         The numpy array which backs the average_weight vector.
     w_data_ptr : double*
         A pointer to the data of the numpy array.
@@ -44,10 +44,8 @@ cdef class WeightVector(object):
         The squared norm of ``w``.
     """
 
-    def __cinit__(self,
-                  np.ndarray[double, ndim=1, mode='c'] w,
-                  np.ndarray[double, ndim=1, mode='c'] aw):
-        cdef double *wdata = <double *>w.data
+    def __cinit__(self, double [:] w, double [:] aw):
+        cdef double *wdata = &w[0]
 
         if w.shape[0] > INT_MAX:
             raise ValueError("More than %d features not supported; got %d."
@@ -60,7 +58,7 @@ cdef class WeightVector(object):
 
         self.aw = aw
         if self.aw is not None:
-            self.aw_data_ptr = <double *>aw.data
+            self.aw_data_ptr = &aw[0]
             self.average_a = 0.0
             self.average_b = 1.0
 
@@ -181,13 +179,12 @@ cdef class WeightVector(object):
         """Scales each coef of ``w`` by ``wscale`` and resets it to 1. """
         if self.aw is not None:
             _axpy(<int>self.aw.shape[0], self.average_a,
-                  <double *>self.w.data, 1, <double *>self.aw.data, 1)
-            _scal(<int>self.aw.shape[0], 1.0 / self.average_b,
-                  <double *>self.aw.data, 1)
+                  &self.w[0], 1, &self.aw[0], 1)
+            _scal(<int>self.aw.shape[0], 1.0 / self.average_b, &self.aw[0], 1)
             self.average_a = 0.0
             self.average_b = 1.0
 
-        _scal(<int>self.w.shape[0], self.wscale, <double *>self.w.data, 1)
+        _scal(<int>self.w.shape[0], self.wscale, &self.w[0], 1)
         self.wscale = 1.0
 
     cdef double norm(self) nogil:

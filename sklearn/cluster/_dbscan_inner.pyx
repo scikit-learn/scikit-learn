@@ -16,11 +16,10 @@ cdef inline void push(vector[np.npy_intp] &stack, np.npy_intp i) except +:
     stack.push_back(i)
 
 
-def dbscan_inner(np.ndarray[np.uint8_t, ndim=1, mode='c'] is_core,
-                 np.ndarray[object, ndim=1] neighborhoods,
-                 np.ndarray[np.npy_intp, ndim=1, mode='c'] labels):
+def dbscan_inner(np.uint8_t [:] is_core, object [:] neighborhoods, 
+                 np.npy_intp [:] labels):
     cdef np.npy_intp i, label_num = 0, v
-    cdef np.ndarray[np.npy_intp, ndim=1] neighb
+    cdef np.npy_intp [:] neighb
     cdef vector[np.npy_intp] stack
 
     for i in range(labels.shape[0]):
