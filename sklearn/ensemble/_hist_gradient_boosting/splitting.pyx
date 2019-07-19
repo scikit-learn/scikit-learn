@@ -405,9 +405,6 @@ cdef class Splitter:
                 # (left to right scan) or to the left (right to left case).
                 # See algo 3 from the XGBoost paper
                 # https://arxiv.org/abs/1603.02754
-                # If we know that the right child only contains nans
-                # (split_on_nan is True), then there is no need to scan nodes
-                # from right to left.
 
                 self._find_best_bin_to_split_left_to_right(
                     feature_idx, has_missing_values[feature_idx],
@@ -417,8 +414,7 @@ cdef class Splitter:
                 if has_missing_values[feature_idx]:
                     # We need to explore both directions to check whether
                     # sending the nans to the left child would lead to a higher
-                    # gain # numerical splits that all the splits explored when
-                    # sending the nans to the right (or to split them appart):
+                    # gain
                     self._find_best_bin_to_split_right_to_left(
                         feature_idx, histograms, n_samples,
                         sum_gradients, sum_hessians, &split_infos[feature_idx])
@@ -481,7 +477,12 @@ cdef class Splitter:
             unsigned int n_samples_left
             unsigned int n_samples_right
             unsigned int n_samples_ = n_samples
-            unsigned int end = self.n_bins_non_missing[feature_idx] - 1 + has_missing_values
+            # We set the 'end' variable such that the last non-missing bin
+            # never goes to the left child (which would result in and empty
+            # right child), unless there are missing values, since these would
+            # go to the right child.
+            unsigned int end = \
+                self.n_bins_non_missing[feature_idx] - 1 + has_missing_values
             Y_DTYPE_C sum_hessian_left
             Y_DTYPE_C sum_hessian_right
             Y_DTYPE_C sum_gradient_left

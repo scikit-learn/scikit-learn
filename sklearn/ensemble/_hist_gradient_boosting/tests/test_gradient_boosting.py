@@ -287,6 +287,13 @@ def test_missing_values_minmax_imputation():
     # a-priori missing value imputation strategy that should yield the same
     # results in terms of decision function.
     #
+    # Each feature (containing NaNs) is replaced by 2 features:
+    # - one where the nans are replaced by min(feature) - 1
+    # - one where the nans are replaced by max(feature) + 1
+    # A split where nans go to the left has an equivalent split in the
+    # first (min) feature, and a split where nans go to the right has an
+    # equivalent split in the second (max) feature.
+    #
     # Assuming the data is such that there is never a tie to select the best
     # feature to split on during training, the learned decision trees should be
     # strictly equivalent (learn a sequence of splits that encode the same
