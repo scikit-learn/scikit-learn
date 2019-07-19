@@ -11,8 +11,6 @@ how extremely randomized trees, k nearest neighbors, linear
 regression and ridge regression complete the lower half of those faces.
 
 """
-print(__doc__)
-
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -24,11 +22,11 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import RidgeCV
 
-# Load the faces datasets
-data = fetch_olivetti_faces()
-targets = data.target
+print(__doc__)
 
-data = data.images.reshape((len(data.images), -1))
+# Load the faces datasets
+data, targets = fetch_olivetti_faces(return_X_y=True)
+
 train = data[targets < 30]
 test = data[targets >= 30]  # Test on independent people
 

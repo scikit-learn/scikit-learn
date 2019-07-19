@@ -68,7 +68,7 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
     download_if_missing : optional, True by default
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
-        
+
     return_X_y : boolean, default=False.
         If True, returns ``(data, target)`` instead of a Bunch object. See
         below for more information about the `data` and `target` object.
@@ -126,15 +126,16 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         order = random_state.permutation(len(faces))
         faces = faces[order]
         target = target[order]
+    faces_vectorized = faces.reshape(len(faces), -1)
 
     module_path = dirname(__file__)
     with open(join(module_path, 'descr', 'olivetti_faces.rst')) as rst_file:
         fdescr = rst_file.read()
-        
-    if return_X_y:
-        return faces.reshape(len(faces), -1), target
 
-    return Bunch(data=faces.reshape(len(faces), -1),
+    if return_X_y:
+        return faces_vectorized, target
+
+    return Bunch(data=faces_vectorized,
                  images=faces,
                  target=target,
                  DESCR=fdescr)

@@ -304,11 +304,10 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         data_lst = np.array(data.data, dtype=object)
         data_lst = data_lst[indices]
         data.data = data_lst.tolist()
-        
+
     if return_X_y:
         return data.data, data.target
-    else:
-        return data
+    return data
 
 
 def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
