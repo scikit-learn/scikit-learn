@@ -27,7 +27,6 @@ from sklearn.datasets import make_classification, make_regression
 from sklearn.cluster import KMeans
 from sklearn.compose import make_column_transformer
 from sklearn.metrics import r2_score
-from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import RobustScaler

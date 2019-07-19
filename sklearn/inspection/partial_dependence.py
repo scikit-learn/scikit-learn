@@ -362,7 +362,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
 
     grid, values = _grid_from_X(
         safe_indexing(X, features_indices, axis=1), percentiles,
-         grid_resolution
+        grid_resolution
     )
 
     if method == 'brute':
