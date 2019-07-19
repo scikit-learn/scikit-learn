@@ -825,6 +825,10 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     vocabulary_ : dict
         A mapping of terms to feature indices.
 
+    fixed_vocabulary_: boolean
+        True if a fixed vocabulary of term to indices mapping
+        is provided by the user
+
     stop_words_ : set
         Terms that were ignored because they either:
 
@@ -926,13 +930,13 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         # Calculate a mask based on document frequencies
         dfs = _document_frequency(X)
-        tfs = np.asarray(X.sum(axis=0)).ravel()
         mask = np.ones(len(dfs), dtype=bool)
         if high is not None:
             mask &= dfs <= high
         if low is not None:
             mask &= dfs >= low
         if limit is not None and mask.sum() > limit:
+            tfs = np.asarray(X.sum(axis=0)).ravel()
             mask_inds = (-tfs[mask]).argsort()[:limit]
             new_mask = np.zeros(len(dfs), dtype=bool)
             new_mask[np.where(mask)[0][mask_inds]] = True
@@ -1496,6 +1500,10 @@ class TfidfVectorizer(CountVectorizer):
     ----------
     vocabulary_ : dict
         A mapping of terms to feature indices.
+
+    fixed_vocabulary_: boolean
+        True if a fixed vocabulary of term to indices mapping
+        is provided by the user
 
     idf_ : array, shape (n_features)
         The inverse document frequency (IDF) vector; only defined

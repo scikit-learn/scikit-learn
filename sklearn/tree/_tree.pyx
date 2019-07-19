@@ -1127,7 +1127,7 @@ cdef class Tree:
 
 
     def compute_partial_dependence(self, DTYPE_t[:, ::1] X,
-                                   int[::1] target_feature,
+                                   int[::1] target_features,
                                    double[::1] out):
         """Partial dependence of the response on the ``target_feature`` set.
 
@@ -1149,7 +1149,7 @@ cdef class Tree:
         X : view on 2d ndarray, shape (n_samples, n_target_features)
             The grid points on which the partial dependence should be
             evaluated.
-        target_feature : view on 1d ndarray, shape (n_target_features)
+        target_features : view on 1d ndarray, shape (n_target_features)
             The set of target features for which the partial dependence
             should be evaluated.
         out : view on 1d ndarray, shape (n_samples)
@@ -1195,8 +1195,8 @@ cdef class Tree:
 
                     # determine if the split feature is a target feature
                     is_target_feature = False
-                    for feature_idx in range(target_feature.shape[0]):
-                        if target_feature[feature_idx] == current_node.feature:
+                    for feature_idx in range(target_features.shape[0]):
+                        if target_features[feature_idx] == current_node.feature:
                             is_target_feature = True
                             break
 

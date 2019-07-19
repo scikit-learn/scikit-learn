@@ -329,7 +329,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         return {'poor_score': True}
 
 
-class RFECV(RFE, MetaEstimatorMixin):
+class RFECV(RFE):
     """Feature ranking with recursive feature elimination and cross-validated
     selection of the best number of features.
 
