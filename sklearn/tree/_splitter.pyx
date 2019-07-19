@@ -328,7 +328,6 @@ cdef class BestSplitter(BaseDenseSplitter):
 
         cdef SIZE_t f_i = n_features
         cdef SIZE_t f_j
-        cdef SIZE_t tmp
         cdef SIZE_t p
         cdef SIZE_t feature_idx_offset
         cdef SIZE_t feature_offset
@@ -664,7 +663,6 @@ cdef class RandomSplitter(BaseDenseSplitter):
         cdef SIZE_t f_i = n_features
         cdef SIZE_t f_j
         cdef SIZE_t p
-        cdef SIZE_t tmp
         cdef SIZE_t feature_stride
         # Number of features discovered to be constant during the split search
         cdef SIZE_t n_found_constants = 0
