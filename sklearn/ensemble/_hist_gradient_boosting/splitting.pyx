@@ -32,7 +32,6 @@ cdef struct split_info_struct:
     Y_DTYPE_C gain
     int feature_idx
     unsigned int bin_idx
-    unsigned char split_on_nan
     unsigned char missing_go_to_left
     Y_DTYPE_C sum_gradient_left
     Y_DTYPE_C sum_gradient_right
@@ -53,8 +52,6 @@ class SplitInfo:
         The index of the feature to be split.
     bin_idx : int
         The index of the bin on which the split is made.
-    split_on_nan : bool
-        Whether the split has only NaN on one side.
     missing_go_to_left : bool
         Whether missing values should go to the left child.
     sum_gradient_left : float
@@ -70,14 +67,13 @@ class SplitInfo:
     n_samples_right : int
         The number of samples in the right child.
     """
-    def __init__(self, gain, feature_idx, bin_idx, split_on_nan,
+    def __init__(self, gain, feature_idx, bin_idx,
                  missing_go_to_left, sum_gradient_left, sum_hessian_left,
                  sum_gradient_right, sum_hessian_right, n_samples_left,
                  n_samples_right):
         self.gain = gain
         self.feature_idx = feature_idx
         self.bin_idx = bin_idx
-        self.split_on_nan = split_on_nan
         self.missing_go_to_left = missing_go_to_left
         self.sum_gradient_left = sum_gradient_left
         self.sum_hessian_left = sum_hessian_left
@@ -253,7 +249,6 @@ cdef class Splitter:
             int n_samples = sample_indices.shape[0]
             X_BINNED_DTYPE_C bin_idx = split_info.bin_idx
             unsigned char missing_go_to_left = split_info.missing_go_to_left
-            unsigned char split_on_nan = split_info.split_on_nan
             unsigned char missing_values_bin_idx = self.missing_values_bin_idx
             int feature_idx = split_info.feature_idx
             const X_BINNED_DTYPE_C [::1] X_binned = \
@@ -302,7 +297,7 @@ cdef class Splitter:
                 for i in range(start, stop):
                     sample_idx = sample_indices[i]
                     turn_left = sample_goes_left(
-                        split_on_nan, missing_go_to_left,
+                        missing_go_to_left,
                         missing_values_bin_idx, bin_idx,
                         X_binned[sample_idx])
 
@@ -428,7 +423,6 @@ cdef class Splitter:
             split_info.gain,
             split_info.feature_idx,
             split_info.bin_idx,
-            split_info.split_on_nan,
             split_info.missing_go_to_left,
             split_info.sum_gradient_left,
             split_info.sum_hessian_left,
@@ -532,8 +526,6 @@ cdef class Splitter:
                 split_info.gain = gain
                 split_info.feature_idx = feature_idx
                 split_info.bin_idx = bin_idx
-                # the split is on NaN if bin_idx happens at the end
-                split_info.split_on_nan = has_missing_values and (bin_idx == end - 1)
                 # we scan from left to right so missing values go to the right
                 split_info.missing_go_to_left = False
                 split_info.sum_gradient_left = sum_gradient_left
@@ -617,8 +609,6 @@ cdef class Splitter:
                 split_info.gain = gain
                 split_info.feature_idx = feature_idx
                 split_info.bin_idx = bin_idx
-                # split_on_nan is only possible when we go from left to right
-                split_info.split_on_nan = False
                 # we scan from right to left so missing values go to the left
                 split_info.missing_go_to_left = True
                 split_info.sum_gradient_left = sum_gradient_left
@@ -660,7 +650,6 @@ cdef inline Y_DTYPE_C negative_loss(
     return (gradient * gradient) / (hessian + l2_regularization)
 
 cdef inline unsigned char sample_goes_left(
-        unsigned char split_on_nan,
         unsigned char missing_go_to_left,
         unsigned char missing_values_bin_idx,
         X_BINNED_DTYPE_C split_bin_idx,
@@ -669,11 +658,6 @@ cdef inline unsigned char sample_goes_left(
 
     return (
         (
-            # if we split on nan, nans always go to right child.
-            split_on_nan and
-            bin_value != missing_values_bin_idx
-        )
-        or (
             missing_go_to_left and
             bin_value == missing_values_bin_idx
         )

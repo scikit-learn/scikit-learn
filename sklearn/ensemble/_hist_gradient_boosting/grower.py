@@ -196,6 +196,7 @@ class TreeGrower:
             X_binned, n_bins_non_missing, missing_values_bin_idx,
             has_missing_values, l2_regularization, min_hessian_to_split,
             min_samples_leaf, min_gain_to_split, hessians_are_constant)
+        self.n_bins_non_missing = n_bins_non_missing
         self.max_leaf_nodes = max_leaf_nodes
         self.has_missing_values = has_missing_values
         self.n_features = X_binned.shape[1]
@@ -446,12 +447,13 @@ class TreeGrower:
         """
         predictor_nodes = np.zeros(self.n_nodes, dtype=PREDICTOR_RECORD_DTYPE)
         _fill_predictor_node_array(predictor_nodes, self.root,
-                                   bin_thresholds=bin_thresholds)
+                                   bin_thresholds, self.n_bins_non_missing)
         return TreePredictor(predictor_nodes)
 
 
 def _fill_predictor_node_array(predictor_nodes, grower_node,
-                               bin_thresholds, next_free_idx=0):
+                               bin_thresholds, n_bins_non_missing,
+                               next_free_idx=0):
     """Helper used in make_predictor to set the TreePredictor fields."""
     node = predictor_nodes[next_free_idx]
     node['count'] = grower_node.n_samples
@@ -473,7 +475,9 @@ def _fill_predictor_node_array(predictor_nodes, grower_node,
         node['feature_idx'] = feature_idx
         node['bin_threshold'] = bin_idx
         node['missing_go_to_left'] = split_info.missing_go_to_left
-        if split_info.split_on_nan:
+        if split_info.bin_idx == n_bins_non_missing[feature_idx] - 1:
+            # Split is on the last non-missing bin: it's a "split on nans". All
+            # nans go to the right, the rest go to the left.
             node['threshold'] = np.nan
         elif bin_thresholds is not None:
             threshold = bin_thresholds[feature_idx][bin_idx]
@@ -483,9 +487,13 @@ def _fill_predictor_node_array(predictor_nodes, grower_node,
         node['left'] = next_free_idx
         next_free_idx = _fill_predictor_node_array(
             predictor_nodes, grower_node.left_child,
-            bin_thresholds=bin_thresholds, next_free_idx=next_free_idx)
+            bin_thresholds=bin_thresholds,
+            n_bins_non_missing=n_bins_non_missing,
+            next_free_idx=next_free_idx)
 
         node['right'] = next_free_idx
         return _fill_predictor_node_array(
             predictor_nodes, grower_node.right_child,
-            bin_thresholds=bin_thresholds, next_free_idx=next_free_idx)
+            bin_thresholds=bin_thresholds,
+            n_bins_non_missing=n_bins_non_missing,
+            next_free_idx=next_free_idx)

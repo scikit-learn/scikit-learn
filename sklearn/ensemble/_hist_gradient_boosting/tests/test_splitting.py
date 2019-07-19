@@ -415,7 +415,8 @@ def test_splitting_missing_values(X_binned, all_gradients,
     if has_missing_values:
         assert split_info.missing_go_to_left == expected_go_to_left
 
-    assert split_info.split_on_nan == expected_split_on_nan
+    split_on_nan = split_info.bin_idx == n_bins_non_missing[0] - 1
+    assert split_on_nan == expected_split_on_nan
 
     # Make sure the split is properly computed.
     # This also make sure missing values are properly assigned to the correct
