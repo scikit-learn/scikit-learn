@@ -208,12 +208,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        #######################################################################
-        # 1. input validation                                                 #
-        #######################################################################
-        # 1.1 validate arguments of __init__
-        # Guarantee that self._family_instance is an instance of class
-        # ExponentialDispersionModel
         if isinstance(self.family, ExponentialDispersionModel):
             self._family_instance = self.family
         elif self.family in EDM_DISTRIBUTIONS:
@@ -288,7 +282,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         family = self._family_instance
         link = self._link_instance
 
-        # 1.2 validate arguments of fit #######################################
         _dtype = [np.float64, np.float32]
         _stype = ['csc', 'csr']
         X, y = check_X_y(X, y, accept_sparse=_stype,
@@ -300,7 +293,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         n_samples, n_features = X.shape
 
-        # 1.4 additional validations ##########################################
         if self.check_input:
             if not np.all(family.in_y_range(y)):
                 raise ValueError("Some value(s) of y are out of the valid "
@@ -308,9 +300,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                                  .format(family.__class__.__name__))
             # TODO: if alpha=0 check that X is not rank deficient
 
-        #######################################################################
-        # 2. rescaling of weights (sample_weight)                             #
-        #######################################################################
+        # rescaling of sample_weight
+        #
         # IMPORTANT NOTE: Since we want to minimize
         # 1/(2*sum(sample_weight)) * deviance + L2,
         # deviance = sum(sample_weight * unit_deviance),
@@ -319,9 +310,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         weights_sum = np.sum(weights)
         weights = weights/weights_sum
 
-        #######################################################################
-        # 3. initialization of coef = (intercept_, coef_)                     #
-        #######################################################################
+        # initialization of coef = (intercept_, coef)
         # Note: Since phi=self.dispersion_ does not enter the estimation
         #       of mu_i=E[y_i], set it to 1.
 
@@ -338,12 +327,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             else:
                 coef = np.zeros(n_features)
 
-        #######################################################################
-        # 4. fit                                                              #
-        #######################################################################
         # algorithms for optimization
 
-        # 4.1 L-BFGS ##########################################################
         if solver == 'lbfgs':
             def func(coef, X, y, weights, alpha, family, link):
                 mu, devp = \
@@ -371,9 +356,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             self.n_iter_ = _check_optimize_result("lbfgs", opt_res)
             coef = opt_res.x
 
-        #######################################################################
-        # 5. postprocessing                                                   #
-        #######################################################################
         if self.fit_intercept:
             self.intercept_ = coef[0]
             self.coef_ = coef[1:]
@@ -425,9 +407,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         C : array, shape (n_samples,)
             Returns predicted values times sample_weight.
         """
-        # TODO: Is copy=True necessary?
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                        dtype='numeric', copy=True, ensure_2d=True,
+                        dtype='numeric', ensure_2d=True,
                         allow_nd=False)
         eta = self._linear_predictor(X)
         mu = self._link_instance.inverse(eta)
