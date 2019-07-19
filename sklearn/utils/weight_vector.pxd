@@ -8,10 +8,8 @@ cdef extern from "math.h":
 
 
 cdef class WeightVector(object):
-    cdef double[:] w
-    cdef double[:] aw
-    cdef double *w_data_ptr
-    cdef double *aw_data_ptr
+    cdef double[::1] w
+    cdef double[::1] aw
     cdef double wscale
     cdef double average_a
     cdef double average_b

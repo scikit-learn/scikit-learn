@@ -30,12 +30,10 @@ cdef class WeightVector(object):
 
     Attributes
     ----------
-    w : ndarray, dtype=double
+    w : ndarray, dtype=double, order='C'
         The numpy array which backs the weight vector.
-    aw : ndarray, dtype=double
+    aw : ndarray, dtype=double, order='C'
         The numpy array which backs the average_weight vector.
-    w_data_ptr : double*
-        A pointer to the data of the numpy array.
     wscale : double
         The scale of the vector.
     n_features : int
@@ -44,21 +42,19 @@ cdef class WeightVector(object):
         The squared norm of ``w``.
     """
 
-    def __cinit__(self, double [:] w, double [:] aw):
+    def __cinit__(self, double [::1] w, double [::1] aw):
         cdef double *wdata = &w[0]
 
         if w.shape[0] > INT_MAX:
             raise ValueError("More than %d features not supported; got %d."
                              % (INT_MAX, w.shape[0]))
         self.w = w
-        self.w_data_ptr = wdata
         self.wscale = 1.0
         self.n_features = w.shape[0]
         self.sq_norm = _dot(<int>w.shape[0], wdata, 1, wdata, 1)
 
         self.aw = aw
         if self.aw is not None:
-            self.aw_data_ptr = &aw[0]
             self.average_a = 0.0
             self.average_b = 1.0
 
@@ -87,14 +83,14 @@ cdef class WeightVector(object):
 
         # the next two lines save a factor of 2!
         cdef double wscale = self.wscale
-        cdef double* w_data_ptr = self.w_data_ptr
+        cdef double[::1] w = self.w
 
         for j in range(xnnz):
             idx = x_ind_ptr[j]
             val = x_data_ptr[j]
-            innerprod += (w_data_ptr[idx] * val)
+            innerprod += (w[idx] * val)
             xsqnorm += (val * val)
-            w_data_ptr[idx] += val * (c / wscale)
+            w[idx] += val * (c / wscale)
 
         self.sq_norm += (xsqnorm * c * c) + (2.0 * innerprod * wscale * c)
 
@@ -124,12 +120,12 @@ cdef class WeightVector(object):
         cdef double mu = 1.0 / num_iter
         cdef double average_a = self.average_a
         cdef double wscale = self.wscale
-        cdef double* aw_data_ptr = self.aw_data_ptr
+        cdef double [::1] aw = self.aw
 
         for j in range(xnnz):
             idx = x_ind_ptr[j]
             val = x_data_ptr[j]
-            aw_data_ptr[idx] += (self.average_a * val * (-c / wscale))
+            aw[idx] += (self.average_a * val * (-c / wscale))
 
         # Once the sample has been processed
         # update the average_a and average_b
@@ -158,10 +154,10 @@ cdef class WeightVector(object):
         cdef int j
         cdef int idx
         cdef double innerprod = 0.0
-        cdef double* w_data_ptr = self.w_data_ptr
+        cdef double [::1] w = self.w
         for j in range(xnnz):
             idx = x_ind_ptr[j]
-            innerprod += w_data_ptr[idx] * x_data_ptr[j]
+            innerprod += w[idx] * x_data_ptr[j]
         innerprod *= self.wscale
         return innerprod
 
