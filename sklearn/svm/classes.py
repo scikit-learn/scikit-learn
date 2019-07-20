@@ -594,6 +594,9 @@ class SVC(BaseSVC):
         Multipliers of parameter C of class i (class_weight_[i]*C).
         Computed based on the ``class_weight`` parameter.
 
+    shape_fit_: tuple, shape = [n_dimensions_of_X]
+        Array dimensions of training vector ``X``.
+
     Examples
     --------
     >>> import numpy as np
@@ -784,6 +787,9 @@ class NuSVC(BaseSVC):
     class_weight_: array, shape = [n_class]
         Multipliers of parameter C of class i (class_weight_[i]*C).
         Computed based on the ``class_weight`` parameter.
+
+    shape_fit_: tuple, shape = [n_dimensions_of_X]
+        Array dimensions of training vector ``X``.
 
     Examples
     --------
