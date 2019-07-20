@@ -53,7 +53,8 @@ CLF_SCORERS = ['accuracy', 'balanced_accuracy',
                'recall', 'recall_weighted', 'recall_macro', 'recall_micro',
                'neg_log_loss', 'log_loss', 'brier_score_loss',
                'jaccard', 'jaccard_weighted', 'jaccard_macro',
-               'jaccard_micro', 'roc_auc_ovr', 'roc_auc_ovo']
+               'jaccard_micro', 'roc_auc_ovr', 'roc_auc_ovo',
+               'roc_auc_ovr_weighted', 'roc_auc_ovo_weighted']
 
 # All supervised cluster scorers (They behave like classification metric)
 CLUSTER_SCORERS = ["adjusted_rand_score",
