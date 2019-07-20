@@ -780,6 +780,17 @@ class NuSVC(BaseSVC):
     fit_status_ : int
         0 if correctly fitted, 1 otherwise (will raise warning)
 
+    probA_ : array, shape = [n_class * (n_class-1) / 2]
+    probB_ : array, shape = [n_class * (n_class-1) / 2]
+        If probability=True, the parameters learned in Platt scaling to
+        produce probability estimates from decision values. If
+        probability=False, an empty array. Platt scaling uses the logistic
+        function
+        ``1 / (1 + exp(decision_value * probA_ + probB_))``
+        where ``probA_`` and ``probB_`` are learned from the dataset [2]_. For
+        more information on the multiclass case and training procedure see
+        section 8 of [1]_.
+
     classes_ : array, shape = [n_class]
         Sorted unique classes as provided in the target vector ``y`` in the
         ``fit`` method.
