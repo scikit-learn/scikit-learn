@@ -101,7 +101,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         'minkowski'. 
         
     outputs_2d_ : boolean depending on y in fit,
-        True if the output at fit is 2d, else false.
+        True if the output 'y' at fit is 2d, else false.
 
     Examples
     --------
@@ -336,7 +336,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         'minkowski'.    
         
     outputs_2d_ : boolean depending on y in fit,
-        True if the output at fit is 2d, else false.
+        True if the output 'y' at fit is 2d, else false.
 
     Examples
     --------
