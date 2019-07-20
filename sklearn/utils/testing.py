@@ -881,6 +881,7 @@ def assert_run_python_script(source_code, timeout=60):
             'cwd': cwd,
             'stderr': STDOUT,
             'env': env,
+            'shell': True
         }
         # If coverage is running, pass the config file to the subprocess
         coverage_rc = os.environ.get("COVERAGE_PROCESS_START")
