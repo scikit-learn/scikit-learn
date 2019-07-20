@@ -335,7 +335,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         if the `effective_metric_` attribute is set to
         'minkowski'.    
         
-    outputs_2d_ : boolean depending on y in fit   
+    outputs_2d_ : boolean depending on y in fit,
+        True if the output at fit is 2d, else false.
 
     Examples
     --------
