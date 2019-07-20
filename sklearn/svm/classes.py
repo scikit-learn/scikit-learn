@@ -590,6 +590,10 @@ class SVC(BaseSVC):
         Sorted unique classes as provided in the target vector ``y`` in the
         ``fit`` method.
 
+    class_weight_: array, shape = [n_class]
+        Multipliers of parameter C of class i (class_weight_[i]*C).
+        Computed based on the ``class_weight`` parameter.
+
     Examples
     --------
     >>> import numpy as np
@@ -773,6 +777,10 @@ class NuSVC(BaseSVC):
     classes_ : array, shape = [n_class]
         Sorted unique classes as provided in the target vector ``y`` in the
         ``fit`` method.
+
+    class_weight_: array, shape = [n_class]
+        Multipliers of parameter C of class i (class_weight_[i]*C).
+        Computed based on the ``class_weight`` parameter.
 
     Examples
     --------
