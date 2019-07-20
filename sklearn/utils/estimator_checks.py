@@ -298,8 +298,9 @@ def check_estimator(Estimator, generate_only=False):
     .. code-block:: python
 
         from itertools import chain
+        import pytest
 
-        @pytest.mark.parameterize(
+        @pytest.mark.parametrize(
             'estimator, check',
             chain.from_iterable(check_estimator(est, generate_only=True)
                                 for est in estimators))
