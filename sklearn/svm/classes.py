@@ -115,6 +115,10 @@ else [n_classes, n_features]
     n_iter_ : int
         Maximum number of iterations run across all classes.
 
+    classes_ : array, shape = [n_classes]
+        Sorted unique classes as provided in the target vector ``y`` in the
+        ``fit`` method.
+
     Examples
     --------
     >>> from sklearn.svm import LinearSVC
@@ -582,6 +586,10 @@ class SVC(BaseSVC):
         more information on the multiclass case and training procedure see
         section 8 of [1]_.
 
+    classes_ : array, shape = [n_class]
+        Sorted unique classes as provided in the target vector ``y`` in the
+        ``fit`` method.
+
     Examples
     --------
     >>> import numpy as np
@@ -761,6 +769,10 @@ class NuSVC(BaseSVC):
 
     intercept_ : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
+
+    classes_ : array, shape = [n_class]
+        Sorted unique classes as provided in the target vector ``y`` in the
+        ``fit`` method.
 
     Examples
     --------
