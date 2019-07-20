@@ -100,7 +100,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         if the `effective_metric_` attribute is set to
         'minkowski'. 
         
-    outputs_2d_ : array of shape = (n_samples,1) or (n_samples,) 
+    outputs_2d_ : boolean depending on y in fit 
 
     Examples
     --------
@@ -334,7 +334,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         if the `effective_metric_` attribute is set to
         'minkowski'.    
         
-    outputs_2d_ : array of shape = (n_samples,1) or (n_samples,)    
+    outputs_2d_ : boolean depending on y in fit   
 
     Examples
     --------
