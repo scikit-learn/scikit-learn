@@ -88,7 +88,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         Class labels known to the classifier
         
     effective_metric_ : string or callble
-        The distance metric to use. It will be same as
+        The distance metric used. It will be same as
         the `metric` parameter or a synonym of it, e.g.
         'euclidean' if the `metric` parameter set to
         'minkowski' and `p` parameter set to 2.
