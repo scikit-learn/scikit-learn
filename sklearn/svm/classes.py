@@ -774,6 +774,9 @@ class NuSVC(BaseSVC):
     intercept_ : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
+    fit_status_ : int
+        0 if correctly fitted, 1 otherwise (will raise warning)
+
     classes_ : array, shape = [n_class]
         Sorted unique classes as provided in the target vector ``y`` in the
         ``fit`` method.
