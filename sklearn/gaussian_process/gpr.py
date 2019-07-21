@@ -9,14 +9,14 @@ from operator import itemgetter
 
 import numpy as np
 from scipy.linalg import cholesky, cho_solve, solve_triangular
-from scipy.optimize import fmin_l_bfgs_b
+import scipy.optimize
 
 from ..base import BaseEstimator, RegressorMixin, clone
 from ..base import MultiOutputMixin
 from .kernels import RBF, ConstantKernel as C
 from ..utils import check_random_state
 from ..utils.validation import check_X_y, check_array
-from ..exceptions import ConvergenceWarning
+from ..utils.optimize import _check_optimize_result
 
 
 class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
@@ -77,7 +77,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
                 # the corresponding value of the target function.
                 return theta_opt, func_min
 
-        Per default, the 'fmin_l_bfgs_b' algorithm from scipy.optimize
+        Per default, the 'L-BGFS-B' algorithm from scipy.optimize.minimize
         is used. If None is passed, the kernel's parameters are kept fixed.
         Available internal optimizers are::
 
@@ -461,12 +461,11 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
 
     def _constrained_optimization(self, obj_func, initial_theta, bounds):
         if self.optimizer == "fmin_l_bfgs_b":
-            theta_opt, func_min, convergence_dict = \
-                fmin_l_bfgs_b(obj_func, initial_theta, bounds=bounds)
-            if convergence_dict["warnflag"] != 0:
-                warnings.warn("fmin_l_bfgs_b terminated abnormally with the "
-                              " state: %s" % convergence_dict,
-                              ConvergenceWarning)
+            opt_res = scipy.optimize.minimize(
+                obj_func, initial_theta, method="L-BFGS-B", jac=True,
+                bounds=bounds)
+            _check_optimize_result("lbfgs", opt_res)
+            theta_opt, func_min = opt_res.x, opt_res.fun
         elif callable(self.optimizer):
             theta_opt, func_min = \
                 self.optimizer(obj_func, initial_theta, bounds=bounds)

@@ -1,4 +1,3 @@
-
 import pytest
 import numpy as np
 import warnings
@@ -7,6 +6,7 @@ from scipy.sparse import csr_matrix
 from sklearn import datasets
 from sklearn import svm
 
+from sklearn.utils.extmath import softmax
 from sklearn.datasets import make_multilabel_classification
 from sklearn.random_projection import sparse_random_matrix
 from sklearn.utils.validation import check_array, check_consistent_length
@@ -440,6 +440,185 @@ def test_auc_errors():
     assert_raise_message(ValueError, error_message, auc, x, y)
 
 
+@pytest.mark.parametrize(
+    "y_true, labels",
+    [(np.array([0, 1, 0, 2]), [0, 1, 2]),
+     (np.array([0, 1, 0, 2]), None),
+     (["a", "b", "a", "c"], ["a", "b", "c"]),
+     (["a", "b", "a", "c"], None)]
+)
+def test_multiclass_ovo_roc_auc_toydata(y_true, labels):
+    # Tests the one-vs-one multiclass ROC AUC algorithm
+    # on a small example, representative of an expected use case.
+    y_scores = np.array(
+        [[0.1, 0.8, 0.1], [0.3, 0.4, 0.3], [0.35, 0.5, 0.15], [0, 0.2, 0.8]])
+
+    # Used to compute the expected output.
+    # Consider labels 0 and 1:
+    # positive label is 0, negative label is 1
+    score_01 = roc_auc_score([1, 0, 1], [0.1, 0.3, 0.35])
+    # positive label is 1, negative label is 0
+    score_10 = roc_auc_score([0, 1, 0], [0.8, 0.4, 0.5])
+    average_score_01 = (score_01 + score_10) / 2
+
+    # Consider labels 0 and 2:
+    score_02 = roc_auc_score([1, 1, 0], [0.1, 0.35, 0])
+    score_20 = roc_auc_score([0, 0, 1], [0.1, 0.15, 0.8])
+    average_score_02 = (score_02 + score_20) / 2
+
+    # Consider labels 1 and 2:
+    score_12 = roc_auc_score([1, 0], [0.4, 0.2])
+    score_21 = roc_auc_score([0, 1], [0.3, 0.8])
+    average_score_12 = (score_12 + score_21) / 2
+
+    # Unweighted, one-vs-one multiclass ROC AUC algorithm
+    ovo_unweighted_score = (
+        average_score_01 + average_score_02 + average_score_12) / 3
+    assert_almost_equal(
+        roc_auc_score(y_true, y_scores, labels=labels, multi_class="ovo"),
+        ovo_unweighted_score)
+
+    # Weighted, one-vs-one multiclass ROC AUC algorithm
+    # Each term is weighted by the prevalence for the positive label.
+    pair_scores = [average_score_01, average_score_02, average_score_12]
+    prevalence = [0.75, 0.75, 0.50]
+    ovo_weighted_score = np.average(pair_scores, weights=prevalence)
+    assert_almost_equal(
+        roc_auc_score(
+            y_true,
+            y_scores,
+            labels=labels,
+            multi_class="ovo",
+            average="weighted"), ovo_weighted_score)
+
+
+@pytest.mark.parametrize("y_true, labels",
+                         [(np.array([0, 2, 0, 2]), [0, 1, 2]),
+                          (np.array(['a', 'd', 'a', 'd']), ['a', 'b', 'd'])])
+def test_multiclass_ovo_roc_auc_toydata_binary(y_true, labels):
+    # Tests the one-vs-one multiclass ROC AUC algorithm for binary y_true
+    #
+    # on a small example, representative of an expected use case.
+    y_scores = np.array(
+        [[0.2, 0.0, 0.8], [0.6, 0.0, 0.4], [0.55, 0.0, 0.45], [0.4, 0.0, 0.6]])
+
+    # Used to compute the expected output.
+    # Consider labels 0 and 1:
+    # positive label is 0, negative label is 1
+    score_01 = roc_auc_score([1, 0, 1, 0], [0.2, 0.6, 0.55, 0.4])
+    # positive label is 1, negative label is 0
+    score_10 = roc_auc_score([0, 1, 0, 1], [0.8, 0.4, 0.45, 0.6])
+    ovo_score = (score_01 + score_10) / 2
+
+    assert_almost_equal(
+        roc_auc_score(y_true, y_scores, labels=labels, multi_class='ovo'),
+        ovo_score)
+
+    # Weighted, one-vs-one multiclass ROC AUC algorithm
+    assert_almost_equal(
+        roc_auc_score(y_true, y_scores, labels=labels, multi_class='ovo',
+                      average="weighted"), ovo_score)
+
+
+@pytest.mark.parametrize(
+    "y_true, labels",
+    [(np.array([0, 1, 2, 2]), None),
+     (["a", "b", "c", "c"], None),
+     ([0, 1, 2, 2], [0, 1, 2]),
+     (["a", "b", "c", "c"], ["a", "b", "c"])])
+def test_multiclass_ovr_roc_auc_toydata(y_true, labels):
+    # Tests the unweighted, one-vs-rest multiclass ROC AUC algorithm
+    # on a small example, representative of an expected use case.
+    y_scores = np.array(
+        [[1.0, 0.0, 0.0], [0.1, 0.5, 0.4], [0.1, 0.1, 0.8], [0.3, 0.3, 0.4]])
+    # Compute the expected result by individually computing the 'one-vs-rest'
+    # ROC AUC scores for classes 0, 1, and 2.
+    out_0 = roc_auc_score([1, 0, 0, 0], y_scores[:, 0])
+    out_1 = roc_auc_score([0, 1, 0, 0], y_scores[:, 1])
+    out_2 = roc_auc_score([0, 0, 1, 1], y_scores[:, 2])
+    result_unweighted = (out_0 + out_1 + out_2) / 3.
+
+    assert_almost_equal(
+        roc_auc_score(y_true, y_scores, multi_class="ovr", labels=labels),
+        result_unweighted)
+
+    # Tests the weighted, one-vs-rest multiclass ROC AUC algorithm
+    # on the same input (Provost & Domingos, 2001)
+    result_weighted = out_0 * 0.25 + out_1 * 0.25 + out_2 * 0.5
+    assert_almost_equal(
+        roc_auc_score(
+            y_true,
+            y_scores,
+            multi_class="ovr",
+            labels=labels,
+            average="weighted"), result_weighted)
+
+
+@pytest.mark.parametrize(
+    "msg, y_true, labels",
+    [("Parameter 'labels' must be unique", np.array([0, 1, 2, 2]), [0, 2, 0]),
+     ("Parameter 'labels' must be unique", np.array(["a", "b", "c", "c"]),
+      ["a", "a", "b"]),
+     ("Number of classes in y_true not equal to the number of columns "
+      "in 'y_score'", np.array([0, 2, 0, 2]), None),
+     ("Parameter 'labels' must be ordered", np.array(["a", "b", "c", "c"]),
+      ["a", "c", "b"]),
+     ("Number of given labels, 2, not equal to the number of columns in "
+      "'y_score', 3",
+      np.array([0, 1, 2, 2]), [0, 1]),
+     ("Number of given labels, 2, not equal to the number of columns in "
+      "'y_score', 3",
+      np.array(["a", "b", "c", "c"]), ["a", "b"]),
+     ("Number of given labels, 4, not equal to the number of columns in "
+      "'y_score', 3",
+      np.array([0, 1, 2, 2]), [0, 1, 2, 3]),
+     ("Number of given labels, 4, not equal to the number of columns in "
+      "'y_score', 3",
+      np.array(["a", "b", "c", "c"]), ["a", "b", "c", "d"]),
+     ("'y_true' contains labels not in parameter 'labels'",
+      np.array(["a", "b", "c", "e"]), ["a", "b", "c"]),
+     ("'y_true' contains labels not in parameter 'labels'",
+      np.array(["a", "b", "c", "d"]), ["a", "b", "c"]),
+     ("'y_true' contains labels not in parameter 'labels'",
+      np.array([0, 1, 2, 3]), [0, 1, 2])])
+@pytest.mark.parametrize("multi_class", ["ovo", "ovr"])
+def test_roc_auc_score_multiclass_labels_error(
+        msg, y_true, labels, multi_class):
+    y_scores = np.array(
+        [[0.1, 0.8, 0.1], [0.3, 0.4, 0.3], [0.35, 0.5, 0.15], [0, 0.2, 0.8]])
+
+    with pytest.raises(ValueError, match=msg):
+        roc_auc_score(y_true, y_scores, labels=labels, multi_class=multi_class)
+
+
+@pytest.mark.parametrize("msg, kwargs", [
+    ((r"average must be one of \('macro', 'weighted'\) for "
+      r"multiclass problems"), {"average": "samples", "multi_class": "ovo"}),
+    ((r"average must be one of \('macro', 'weighted'\) for "
+      r"multiclass problems"), {"average": "micro", "multi_class": "ovr"}),
+    ((r"sample_weight is not supported for multiclass one-vs-one "
+      r"ROC AUC, 'sample_weight' must be None in this case"),
+     {"multi_class": "ovo", "sample_weight": []}),
+    ((r"Partial AUC computation not available in multiclass setting, "
+      r"'max_fpr' must be set to `None`, received `max_fpr=0.5` "
+      r"instead"), {"multi_class": "ovo", "max_fpr": 0.5}),
+    ((r"multi_class='ovp' is not supported for multiclass ROC AUC, "
+      r"multi_class must be in \('ovo', 'ovr'\)"),
+     {"multi_class": "ovp"}),
+    (r"multi_class must be in \('ovo', 'ovr'\)", {})
+])
+def test_roc_auc_score_multiclass_error(msg, kwargs):
+    # Test that roc_auc_score function returns an error when trying
+    # to compute multiclass AUC for parameters where an output
+    # is not defined.
+    rng = check_random_state(404)
+    y_score = rng.rand(20, 3)
+    y_prob = softmax(y_score)
+    y_true = rng.randint(0, 3, size=20)
+    with pytest.raises(ValueError, match=msg):
+        roc_auc_score(y_true, y_prob, **kwargs)
+
+
 def test_auc_score_non_binary_class():
     # Test that roc_auc_score function returns an error when trying
     # to compute AUC for non-binary class values.
@@ -455,10 +634,6 @@ def test_auc_score_non_binary_class():
     y_true = np.full(10, -1, dtype="int")
     assert_raise_message(ValueError, "ROC AUC score is not defined",
                          roc_auc_score, y_true, y_pred)
-    # y_true contains three different class values
-    y_true = rng.randint(0, 3, size=10)
-    assert_raise_message(ValueError, "multiclass format is not supported",
-                         roc_auc_score, y_true, y_pred)
 
     with warnings.catch_warnings(record=True):
         rng = check_random_state(404)
@@ -472,11 +647,6 @@ def test_auc_score_non_binary_class():
                              roc_auc_score, y_true, y_pred)
         y_true = np.full(10, -1, dtype="int")
         assert_raise_message(ValueError, "ROC AUC score is not defined",
-                             roc_auc_score, y_true, y_pred)
-
-        # y_true contains three different class values
-        y_true = rng.randint(0, 3, size=10)
-        assert_raise_message(ValueError, "multiclass format is not supported",
                              roc_auc_score, y_true, y_pred)
 
 
