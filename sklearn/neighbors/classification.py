@@ -10,9 +10,9 @@
 
 import numpy as np
 from scipy import stats
+from six import string_types
 from ..utils.extmath import weighted_mode
 from ..utils.validation import _is_arraylike, _num_samples
-from ..externals.six import string_types
 
 import warnings
 from .base import \
