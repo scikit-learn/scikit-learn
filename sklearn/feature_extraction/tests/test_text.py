@@ -480,7 +480,12 @@ def test_vectorizer():
 
     # ascii preprocessor?
     v3.set_params(strip_accents='ascii', lowercase=False)
-    assert v3.build_preprocessor() == strip_accents_ascii
+    processor = v3.build_preprocessor()
+    text = ("J'ai mangé du kangourou  ce midi, "
+            "c'était pas très bon.")
+    expected = strip_accents_ascii(text)
+    result = processor(text)
+    assert expected == result
 
     # error on bad strip_accents param
     v3.set_params(strip_accents='_gabbledegook_', preprocessor=None)
