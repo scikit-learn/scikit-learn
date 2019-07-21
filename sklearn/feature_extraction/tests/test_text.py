@@ -884,6 +884,25 @@ def test_pickling_vectorizer():
                 orig.fit_transform(JUNK_FOOD_DOCS).toarray())
 
 
+@pytest.mark.parametrize('factory', [
+    CountVectorizer.build_analyzer,
+    CountVectorizer.build_preprocessor,
+    CountVectorizer.build_tokenizer,
+])
+def test_pickling_built_processors(factory):
+    """Tokenizers cannot be pickled
+    https://github.com/scikit-learn/scikit-learn/issues/12833
+    """
+    vec = CountVectorizer()
+    function = factory(vec)
+    text = ("J'ai mangé du kangourou  ce midi, "
+            "c'était pas très bon.")
+    roundtripped_function = pickle.loads(pickle.dumps(function))
+    expected = function(text)
+    result = roundtripped_function(text)
+    assert result == expected
+
+
 def test_countvectorizer_vocab_sets_when_pickling():
     # ensure that vocabulary of type set is coerced to a list to
     # preserve iteration ordering after deserialization
