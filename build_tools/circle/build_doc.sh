@@ -130,6 +130,7 @@ pip install "sphinx-gallery>=0.2,<0.3"
 pip install numpydoc==0.9
 
 # Build and install scikit-learn in dev mode
+python setup.py build_ext --inplace -j 3
 python setup.py develop
 
 export OMP_NUM_THREADS=1

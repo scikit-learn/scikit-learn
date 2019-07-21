@@ -10,6 +10,7 @@ cimport cython
 
 import numpy as np
 cimport numpy as np
+from numpy.math cimport INFINITY
 from cython.parallel import prange
 
 from .types cimport X_DTYPE_C, X_BINNED_DTYPE_C
@@ -48,11 +49,16 @@ cdef void _map_num_col_to_bins(const X_DTYPE_C [:] data,
         int middle
 
     for i in prange(data.shape[0], schedule='static', nogil=True):
-        left, right = 0, binning_thresholds.shape[0]
-        while left < right:
-            middle = (right + left - 1) // 2
-            if data[i] <= binning_thresholds[middle]:
-                right = middle
-            else:
-                left = middle + 1
-        binned[i] = left
+        if data[i] == INFINITY:
+            # Special case for +inf.
+            # -inf is handled properly by binary search.
+            binned[i] = binning_thresholds.shape[0]
+        else:
+            left, right = 0, binning_thresholds.shape[0]
+            while left < right:
+                middle = (right + left - 1) // 2
+                if data[i] <= binning_thresholds[middle]:
+                    right = middle
+                else:
+                    left = middle + 1
+            binned[i] = left

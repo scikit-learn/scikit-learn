@@ -88,9 +88,9 @@ def plot_on_dataset(X, y, ax, name):
 fig, axes = plt.subplots(2, 2, figsize=(15, 10))
 # load / generate some toy datasets
 iris = datasets.load_iris()
-digits = datasets.load_digits()
+X_digits, y_digits = datasets.load_digits(return_X_y=True)
 data_sets = [(iris.data, iris.target),
-             (digits.data, digits.target),
+             (X_digits, y_digits),
              datasets.make_circles(noise=0.2, factor=0.5, random_state=1),
              datasets.make_moons(noise=0.3, random_state=0)]
 

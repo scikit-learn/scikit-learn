@@ -22,6 +22,7 @@ The module structure is the following:
 
 from abc import ABCMeta
 from abc import abstractmethod
+import warnings
 
 from .base import BaseEnsemble
 from ..base import ClassifierMixin
@@ -1570,13 +1571,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         n_inbag = max(1, int(self.subsample * n_samples))
         loss_ = self.loss_
 
-        # Set min_weight_leaf from min_weight_fraction_leaf
-        if self.min_weight_fraction_leaf != 0. and sample_weight is not None:
-            min_weight_leaf = (self.min_weight_fraction_leaf *
-                               np.sum(sample_weight))
-        else:
-            min_weight_leaf = 0.
-
         if self.verbose:
             verbose_reporter = VerboseReporter(self.verbose)
             verbose_reporter.init(self, begin_at_stage)
@@ -1728,6 +1722,46 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         avg_feature_importances = np.mean(relevant_feature_importances,
                                           axis=0, dtype=np.float64)
         return avg_feature_importances / np.sum(avg_feature_importances)
+
+    def _compute_partial_dependence_recursion(self, grid, target_features):
+        """Fast partial dependence computation.
+
+        Parameters
+        ----------
+        grid : ndarray, shape (n_samples, n_target_features)
+            The grid points on which the partial dependence should be
+            evaluated.
+        target_features : ndarray, shape (n_target_features)
+            The set of target features for which the partial dependence
+            should be evaluated.
+
+        Returns
+        -------
+        averaged_predictions : ndarray, shape \
+                (n_trees_per_iteration, n_samples)
+            The value of the partial dependence function on each grid point.
+        """
+        check_is_fitted(self, 'estimators_',
+                        msg="'estimator' parameter must be a fitted estimator")
+        if self.init is not None:
+            warnings.warn(
+                'Using recursion method with a non-constant init predictor '
+                'will lead to incorrect partial dependence values. '
+                'Got init=%s.' % self.init,
+                UserWarning
+            )
+        grid = np.asarray(grid, dtype=DTYPE, order='C')
+        n_estimators, n_trees_per_stage = self.estimators_.shape
+        averaged_predictions = np.zeros((n_trees_per_stage, grid.shape[0]),
+                                        dtype=np.float64, order='C')
+        for stage in range(n_estimators):
+            for k in range(n_trees_per_stage):
+                tree = self.estimators_[stage, k].tree_
+                tree.compute_partial_dependence(grid, target_features,
+                                                averaged_predictions[k])
+        averaged_predictions *= self.learning_rate
+
+        return averaged_predictions
 
     def _validate_y(self, y, sample_weight):
         # 'sample_weight' is not utilised but is used for

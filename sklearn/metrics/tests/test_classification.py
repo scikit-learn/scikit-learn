@@ -199,16 +199,20 @@ def test_precision_recall_f1_score_binary():
 
 @ignore_warnings
 def test_precision_recall_f_binary_single_class():
-    # Test precision, recall and F1 score behave with a single positive or
+    # Test precision, recall and F-scores behave with a single positive or
     # negative class
     # Such a case may occur with non-stratified cross-validation
     assert 1. == precision_score([1, 1], [1, 1])
     assert 1. == recall_score([1, 1], [1, 1])
     assert 1. == f1_score([1, 1], [1, 1])
+    assert 1. == fbeta_score([1, 1], [1, 1], 0)
 
     assert 0. == precision_score([-1, -1], [-1, -1])
     assert 0. == recall_score([-1, -1], [-1, -1])
     assert 0. == f1_score([-1, -1], [-1, -1])
+    assert 0. == fbeta_score([-1, -1], [-1, -1], float('inf'))
+    assert fbeta_score([-1, -1], [-1, -1], float('inf')) == pytest.approx(
+        fbeta_score([-1, -1], [-1, -1], beta=1e5))
 
 
 @ignore_warnings
@@ -327,7 +331,7 @@ def test_precision_recall_fscore_support_errors():
 
     # Bad beta
     assert_raises(ValueError, precision_recall_fscore_support,
-                  y_true, y_pred, beta=0.0)
+                  y_true, y_pred, beta=-0.1)
 
     # Bad pos_label
     assert_raises(ValueError, precision_recall_fscore_support,
