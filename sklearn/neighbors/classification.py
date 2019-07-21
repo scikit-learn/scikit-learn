@@ -86,14 +86,14 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
     classes_ : array of shape = (n_classes,)
         Class labels known to the classifier
     effective_metric_ : string or callble
-        The distance metric used. It will be same as the `metric` parameter 
+        The distance metric used. It will be same as the `metric` parameter
         or a synonym of it, e.g. 'euclidean' if the `metric` parameter set to
         'minkowski' and `p` parameter set to 2.
     effective_metric_params_ : dict
-        Additional keyword arguments for the metric function. For most metrics 
+        Additional keyword arguments for the metric function. For most metrics
         will be same with `metric_params` parameter, but may also contain the
         `p` parameter value if the `effective_metric_` attribute is set to
-        'minkowski'. 
+        'minkowski'.
     outputs_2d_ : bool
         False when `y`'s shape is (n_samples, ) or (n_samples, 1) during fit
         otherwise True.
@@ -316,14 +316,14 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     classes_ : array of shape = (n_classes,)
         Class labels known to the classifier.
     effective_metric_ : string or callble
-        The distance metric used. It will be same as the `metric` parameter 
+        The distance metric used. It will be same as the `metric` parameter
         or a synonym of it, e.g. 'euclidean' if the `metric` parameter set to
         'minkowski' and `p` parameter set to 2.
     effective_metric_params_ : dict
         Additional keyword arguments for the metric function. For most metrics
         will be same with `metric_params` parameter, but may also contain the
         `p` parameter value if the `effective_metric_` attribute is set to
-        'minkowski'.    
+        'minkowski'.
     outputs_2d_ : bool
         False when `y`'s shape is (n_samples, ) or (n_samples, 1) during fit
         otherwise True.
