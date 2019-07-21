@@ -325,7 +325,6 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         will be same with `metric_params` parameter, but may also contain the
         `p` parameter value if the `effective_metric_` attribute is set to
         'minkowski'.    
-        
     outputs_2d_ : bool
         False when `y`'s shape is (n_samples, ) or (n_samples, 1) during fit
         otherwise True.
