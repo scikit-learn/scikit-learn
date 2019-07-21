@@ -185,7 +185,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         Returns
         -------
-        p : array of shape = [n_samples, n_classes], or a list with n_outputs
+        p : array of shape = [n_samples, n_classes], or a list of n_outputs
             of such arrays if n_outputs > 1.
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.
@@ -402,7 +402,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         Returns
         -------
-        p : array of shape = [n_samples, n_classes], or a list with n_outputs
+        p : array of shape = [n_samples, n_classes], or a list of n_outputs
             of such arrays if n_outputs > 1.
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.
@@ -425,9 +425,9 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         if self.outlier_label_ is None and outliers.size > 0:
             raise ValueError('No neighbors found for test samples %r, '
-                             'you can try to use larger radius, '
-                             'give a label for outliers, '
-                             'or consider removing them from your dataset.'
+                             'you can try using larger radius, '
+                             'giving a label for outliers, '
+                             'or considering removing them from your dataset.'
                              % outliers)
 
         weights = _get_weights(neigh_dist, self.weights)
