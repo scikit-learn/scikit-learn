@@ -292,7 +292,6 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         - 'most_frequent' : assign the most frequent label of y to outliers.
         - None : when any outlier is detected, ValueError will be raised.
 
-
     metric_params : dict, optional (default = None)
         Additional keyword arguments for the metric function.
 
@@ -392,70 +391,6 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         self.outlier_label_ = outlier_label_
         return self
 
-    def predict(self, X):
-        """Predict the class labels for the provided data
-
-        Parameters
-        ----------
-        X : array-like, shape (n_query, n_features), \
-                or (n_query, n_indexed) if metric == 'precomputed'
-            Test samples.
-
-        Returns
-        -------
-        y : array of shape [n_samples] or [n_samples, n_outputs]
-            Class labels for each data sample.
-
-        """
-        X = check_array(X, accept_sparse='csr')
-        n_samples = _num_samples(X)
-
-        neigh_dist, neigh_ind = self.radius_neighbors(X)
-        outlier_mask = np.zeros(n_samples, dtype=np.bool)
-        outlier_mask[:] = [len(nind) == 0 for nind in neigh_ind]
-        outliers = np.flatnonzero(outlier_mask)
-        inliers = np.flatnonzero(~outlier_mask)
-
-        classes_ = self.classes_
-        _y = self._y
-        if not self.outputs_2d_:
-            _y = self._y.reshape((-1, 1))
-            classes_ = [self.classes_]
-        n_outputs = len(classes_)
-
-        if self.outlier_label_ is None and outliers.size > 0:
-            raise ValueError('No neighbors found for test samples %r, '
-                             'you can try to use larger radius, '
-                             'give a label for outliers, '
-                             'or consider removing them from your dataset.'
-                             % outliers)
-
-        weights = _get_weights(neigh_dist, self.weights)
-
-        y_pred = np.empty((n_samples, n_outputs), dtype=classes_[0].dtype)
-        for k, classes_k in enumerate(classes_):
-            pred_labels = np.zeros(len(neigh_ind), dtype=object)
-            pred_labels[:] = [_y[ind, k] for ind in neigh_ind]
-            if weights is None:
-                mode = np.array([stats.mode(pl)[0]
-                                 for pl in pred_labels[inliers]], dtype=np.int)
-            else:
-                mode = np.array(
-                    [weighted_mode(pl, w)[0]
-                     for (pl, w) in zip(pred_labels[inliers], weights[inliers])
-                     ], dtype=np.int)
-
-            mode = mode.ravel()
-
-            y_pred[inliers, k] = classes_k.take(mode)
-            if outliers.size > 0:
-                y_pred[outliers, k] = self.outlier_label_[k]
-
-        if not self.outputs_2d_:
-            y_pred = y_pred.ravel()
-
-        return y_pred
-
     def predict_proba(self, X):
         """Return probability estimates for the test data X.
 
@@ -540,3 +475,42 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             probabilities = probabilities[0]
 
         return probabilities
+
+    def predict(self, X):
+        """Predict the class labels for the provided data
+        Parameters
+        ----------
+        X : array-like, shape (n_query, n_features), \
+                or (n_query, n_indexed) if metric == 'precomputed'
+            Test samples.
+        Returns
+        -------
+        y : array of shape [n_samples] or [n_samples, n_outputs]
+            Class labels for each data sample.
+        """
+
+        probs = self.predict_proba(X)
+        classes_ = self.classes_
+
+        if not self.outputs_2d_:
+            probs = [probs]
+            classes_ = [self.classes_]
+
+        n_outputs = len(classes_)
+        n_samples = probs[0].shape[0]
+        y_pred = np.empty((n_samples, n_outputs),
+                          dtype=classes_[0].dtype)
+
+        for k, prob in enumerate(probs):
+            max_prob_index = prob.argmax(axis=1)
+            y_pred[:, k] = classes_[k].take(max_prob_index)
+
+            outlier_zero_probs = (prob == 0).all(axis=1)
+            if outlier_zero_probs.any():
+                zero_prob_index = np.flatnonzero(outlier_zero_probs)
+                y_pred[zero_prob_index, k] = self.outlier_label_[k]
+
+        if not self.outputs_2d_:
+            y_pred = y_pred.ravel()
+
+        return y_pred

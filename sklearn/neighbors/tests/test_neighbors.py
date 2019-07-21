@@ -1477,12 +1477,12 @@ def test_pairwise_boolean_distance():
 
 
 def test_radius_neighbors_predidct_proba():
-    for i in range(5):
+    for seed in range(5):
         X, y = datasets.make_classification(n_samples=50, n_features=5,
                                             n_informative=3, n_redundant=0,
-                                            n_classes=3, random_state=i)
+                                            n_classes=3, random_state=seed)
         X_tr, X_te, y_tr, y_te = train_test_split(X, y, random_state=0)
-        outlier_label = int(2 - i)
+        outlier_label = int(2 - seed)
         clf = neighbors.RadiusNeighborsClassifier(radius=2,
                                                   outlier_label=outlier_label)
         clf.fit(X_tr, y_tr)
