@@ -100,7 +100,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         if the `effective_metric_` attribute is set to
         'minkowski'. 
         
-    outputs_2d_ : boolean depending on y in fit,
+    outputs_2d_ : bool
         True if the output 'y' at fit is 2d, else false.
 
     Examples
