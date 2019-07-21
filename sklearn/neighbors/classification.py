@@ -133,7 +133,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         self.weights = _check_weights(weights)
 
     def predict(self, X):
-        """Predict the class labels for the provided data
+        """Predict the class labels for the provided data.
 
         Parameters
         ----------
@@ -477,12 +477,14 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         return probabilities
 
     def predict(self, X):
-        """Predict the class labels for the provided data
+        """Predict the class labels for the provided data.
+
         Parameters
         ----------
         X : array-like, shape (n_query, n_features), \
                 or (n_query, n_indexed) if metric == 'precomputed'
             Test samples.
+
         Returns
         -------
         y : array of shape [n_samples] or [n_samples, n_outputs]
