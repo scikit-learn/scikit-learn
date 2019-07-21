@@ -610,7 +610,6 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         For each class k an array of shape [n_k]. It contains the scaling
         of the Gaussian distributions along its principal axes, i.e. the
         variance in the rotated coordinate system.
-        
     classes_ : array-like, shape (n_classes,)
         Unique class labels.    
 
