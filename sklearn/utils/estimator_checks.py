@@ -165,22 +165,19 @@ def check_constant_features(name, estimator_orig):
     X = np.abs(rng.randn(10, 5))
     X[:, 1] = 1
     X = pairwise_estimator_convert_X(X, estimator_orig)
-
     # create target
     y = np.arange(10) % 2
     estimator = clone(estimator_orig)
     y = enforce_estimator_tags_y(estimator, y)
 
-    errmsg = 'The system is too ill-conditioned for this solver'
     try:
         estimator.fit(X, y)
     except FloatingPointError as e:
+        errmsg = 'The system is too ill-conditioned for this solver'
         if errmsg not in str(e):
             raise ValueError("Estimator {0} raised error as expected, but "
                              "does not match expected error message"
-                             .format(name, str(e)))
-
-
+                             .format(name))
 
 
 def _yield_regressor_checks(name, regressor):
