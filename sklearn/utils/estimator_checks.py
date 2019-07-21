@@ -159,18 +159,16 @@ def check_supervised_y_no_nan(name, estimator_orig):
 def check_constant_features(name, estimator_orig):
     # Checks that estimators work with constant features
     # or raise a reasonable error message
-    estimator = clone(estimator_orig)
 
     # create features with a constant column
     rng = np.random.RandomState(888)
-    if name == 'SVC':
-        X = np.abs(rng.randn(10, 10))
-    else:
-        X = np.abs(rng.randn(10, 5))
+    X = np.abs(rng.randn(10, 5))
     X[:, 1] = 1
+    X = pairwise_estimator_convert_X(X, estimator_orig)
 
     # create target
     y = np.arange(10) % 2
+    estimator = clone(estimator_orig)
     y = enforce_estimator_tags_y(estimator, y)
 
     # Test that estimators don't raise any exception
