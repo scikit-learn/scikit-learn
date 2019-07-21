@@ -171,8 +171,16 @@ def check_constant_features(name, estimator_orig):
     estimator = clone(estimator_orig)
     y = enforce_estimator_tags_y(estimator, y)
 
-    # Test that estimators don't raise any exception
-    estimator.fit(X, y)
+    errmsg = 'The system is too ill-conditioned for this solver'
+    try:
+        estimator.fit(X, y)
+    except FloatingPointError as e:
+        if errmsg not in str(e):
+            raise ValueError("Estimator {0} raised error as expected, but "
+                             "does not match expected error message"
+                             .format(name, str(e)))
+
+
 
 
 def _yield_regressor_checks(name, regressor):
