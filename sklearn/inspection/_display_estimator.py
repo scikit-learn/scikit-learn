@@ -19,8 +19,9 @@ def _estimator_tool_tip(estimator):
 
 def _write_label_html(out, name, tool_tip):
     """Write label to html"""
-    out.write('<div class="sk-label" sk-data-tooltip="{}">'
-              '{}</div>'.format(tool_tip, name))
+    out.write('<div class="sk-label-container">'
+              '<div class="sk-label" sk-data-tooltip="{}">'
+              '{}</div></div>'.format(tool_tip, name))
 
 
 _EstHTMLInfo = namedtuple('_EstHTMLInfo',
@@ -113,6 +114,7 @@ _STYLE = """
   padding: 0.5em;
   margin: 0.25em 0.25em;
   border: 1px dotted black;
+  border-radius: 0.25em;
   text-align: center;
 }
 .sk-parallel-item::after {
@@ -144,6 +146,7 @@ _STYLE = """
   display: flex;
   flex-direction: column;
   position: relative;
+  background: white;
 }
 .sk-parallel-item:first-child::after {
   align-self: flex-end;
@@ -153,11 +156,6 @@ _STYLE = """
   align-self: flex-start;
   width: 50%;
 }
-.sk-final-spacer {
-  visibility: hidden;
-  font-family: monospace;
-  white-space: pre;
-}
 .sk-dashed-wrapped {
   border: 1px dashed gray;
   padding: 0.25em;
@@ -166,11 +164,20 @@ _STYLE = """
   text-align: center;
   font-family: monospace;
   font-weight: bold;
-  margin: 0;
   background: white;
+  display: inline-block;
+  border: 1px dotted rgb(171, 171, 171);
+  border-radius: 0.25em;
+  padding: 0.2em 0.5em;
+  margin: 0.1em;
+}
+.sk-label-container {
+  text-align: center;
+  border: #f0f8ff solid red;
 }
 .sk-serial-item {
   margin-bottom: 0.25em;
+  background: white;
 }
 .sk-container {
   display: flex;
@@ -186,12 +193,9 @@ _STYLE = """
 [sk-data-tooltip]:before {
   visibility: hidden;
   opacity: 0;
-  pointer-events: none;
   font-weight: 400;
-}
-[sk-data-tooltip]:before {
   position: absolute;
-  top: 0;
+  top: 100%;
   left: 0;
   padding: 0.5em;
   overflow: hidden;
@@ -238,35 +242,22 @@ def display_estimator(estimator, print_changed_only=True):
         if not isinstance(estimator, Pipeline):
             estimator = Pipeline([(estimator.__class__.__name__, estimator)])
 
-        out.write('<head><style>')
+        out.write('<html><head><style>')
         out.write(_STYLE.replace('\n', ''))
         out.write('</style></head><body>')
 
         out.write('<div class="sk-top-container"><div class="sk-container">')
         _write_estimator_html(out, estimator, '')
         out.write('</div></div>')  # sk-top-container # sk-container
+        out.write('</body></html>')
 
+        html_output = out.getvalue()
         # wrap in iPython HTML if in a notebook context
         try:
             cls_name = get_ipython().__class__.__name__
             if cls_name != 'ZMQInteractiveShell':
-                out.write("</html>")
-                return out.getvalue()
-
-            # Adds whitespace at the end to allow space for hover info
-            # in jupyter notebook or lab
-            largest_est_repr = ""
-            for est in estimator.steps:
-                est_repr = _estimator_tool_tip(est)
-                if len(est_repr) > len(largest_est_repr):
-                    largest_est_repr = est_repr
-            out.write('<div class="sk-final-spacer">')
-            out.write(largest_est_repr)
-            out.write('</div>')  # sk-final-spacer
-
+                return html_output
             from IPython.display import HTML
-            out.write("</html>")
-            return HTML(out.getvalue())
+            return HTML(html_output)
         except (ImportError, NameError):
-            out.write("</html>")
-            return out.getvalue()
+            return html_output
