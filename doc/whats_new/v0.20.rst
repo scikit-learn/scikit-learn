@@ -1224,12 +1224,6 @@ Support for Python 3.3 has been officially dropped.
   memory efficient when ``algorithm='brute'``.
   :issue:`11136` by `Joel Nothman`_ and :user:`Aman Dalmia <dalmia>`.
 
-- |Feature| :class:`neighbors.RadiusNeighborsClassifier` now supports
-  predicting probabilities by using predict_proba() and supports more
-  outlier_label options: 'most_frequent', different oulier_labels
-  for multi-outputs.
-  :issue:`9629` by :user:`Wenbo Zhao <webber26232>`.
-
 - |Feature| Add ``sample_weight`` parameter to the fit method of
   :class:`neighbors.KernelDensity` to enable weighting in kernel density
   estimation.
