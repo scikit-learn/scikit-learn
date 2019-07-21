@@ -336,7 +336,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         'minkowski'.    
         
     outputs_2d_ : boolean depending on y in fit,
-        True if the output 'y' at fit is 2d, else false.
+        False when `y`'s shape is (n_samples, ) or (n_samples, 1) during fit
+        otherwise True.
 
     Examples
     --------
