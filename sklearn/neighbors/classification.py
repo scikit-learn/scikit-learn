@@ -81,7 +81,6 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
         Doesn't affect :meth:`fit` method.
-        
     Attributes
     ----------
     classes_ : array of shape = (n_classes,)
