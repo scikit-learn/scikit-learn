@@ -630,7 +630,6 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
     sklearn.discriminant_analysis.LinearDiscriminantAnalysis: Linear
         Discriminant Analysis
     """
-
     def __init__(self, priors=None, reg_param=0., store_covariance=False,
                  tol=1.0e-4):
         self.priors = np.asarray(priors) if priors is not None else None
