@@ -611,7 +611,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         of the Gaussian distributions along its principal axes, i.e. the
         variance in the rotated coordinate system.
     classes_ : array-like, shape (n_classes,)
-        Unique class labels.    
+        Unique class labels.
 
     Examples
     --------
@@ -630,6 +630,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
     sklearn.discriminant_analysis.LinearDiscriminantAnalysis: Linear
         Discriminant Analysis
     """
+    
     def __init__(self, priors=None, reg_param=0., store_covariance=False,
                  tol=1.0e-4):
         self.priors = np.asarray(priors) if priors is not None else None
