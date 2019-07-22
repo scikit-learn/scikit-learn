@@ -11,7 +11,6 @@ from pytest import importorskip
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_no_warnings
@@ -21,6 +20,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose_dense_sparse
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y
 from sklearn.utils import deprecated
@@ -40,7 +40,8 @@ from sklearn.utils.validation import (
     check_memory,
     check_non_negative,
     _num_samples,
-    check_scalar)
+    check_scalar,
+    _check_sample_weight)
 import sklearn
 
 from sklearn.exceptions import NotFittedError
@@ -55,13 +56,13 @@ def test_as_float_array():
     X = np.ones((3, 10), dtype=np.int32)
     X = X + np.arange(10, dtype=np.int32)
     X2 = as_float_array(X, copy=False)
-    assert_equal(X2.dtype, np.float32)
+    assert X2.dtype == np.float32
     # Another test
     X = X.astype(np.int64)
     X2 = as_float_array(X, copy=True)
     # Checking that the array wasn't overwritten
     assert as_float_array(X, False) is not X
-    assert_equal(X2.dtype, np.float64)
+    assert X2.dtype == np.float64
     # Test int dtypes <= 32bit
     tested_dtypes = [np.bool,
                      np.int8, np.int16, np.int32,
@@ -69,12 +70,12 @@ def test_as_float_array():
     for dtype in tested_dtypes:
         X = X.astype(dtype)
         X2 = as_float_array(X)
-        assert_equal(X2.dtype, np.float32)
+        assert X2.dtype == np.float32
 
     # Test object dtype
     X = X.astype(object)
     X2 = as_float_array(X, copy=True)
-    assert_equal(X2.dtype, np.float64)
+    assert X2.dtype == np.float64
 
     # Here, X is of the right type, it shouldn't be modified
     X = np.ones((3, 2), dtype=np.float32)
@@ -209,7 +210,7 @@ def test_check_array():
     assert_raises(TypeError, check_array, X_csr)
     # ensure_2d=False
     X_array = check_array([0, 1, 2], ensure_2d=False)
-    assert_equal(X_array.ndim, 1)
+    assert X_array.ndim == 1
     # ensure_2d=True with 1d array
     assert_raise_message(ValueError, 'Expected 2D array, got 1D array instead',
                          check_array, [0, 1, 2], ensure_2d=True)
@@ -235,9 +236,9 @@ def test_check_array():
     for X, dtype, order, copy in product(Xs, dtypes, orders, copys):
         X_checked = check_array(X, dtype=dtype, order=order, copy=copy)
         if dtype is not None:
-            assert_equal(X_checked.dtype, dtype)
+            assert X_checked.dtype == dtype
         else:
-            assert_equal(X_checked.dtype, X.dtype)
+            assert X_checked.dtype == X.dtype
         if order == 'C':
             assert X_checked.flags['C_CONTIGUOUS']
             assert not X_checked.flags['F_CONTIGUOUS']
@@ -273,17 +274,17 @@ def test_check_array():
                         "Can't check dok sparse matrix for nan or inf."]
             assert message in messages
         else:
-            assert_equal(len(w), 0)
+            assert len(w) == 0
         if dtype is not None:
-            assert_equal(X_checked.dtype, dtype)
+            assert X_checked.dtype == dtype
         else:
-            assert_equal(X_checked.dtype, X.dtype)
+            assert X_checked.dtype == X.dtype
         if X.format in accept_sparse:
             # no change if allowed
-            assert_equal(X.format, X_checked.format)
+            assert X.format == X_checked.format
         else:
             # got converted
-            assert_equal(X_checked.format, accept_sparse[0])
+            assert X_checked.format == accept_sparse[0]
         if copy:
             assert X is not X_checked
         else:
@@ -322,28 +323,28 @@ def test_check_array_pandas_dtype_object_conversion():
     # get converted
     X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.object)
     X_df = MockDataFrame(X)
-    assert_equal(check_array(X_df).dtype.kind, "f")
-    assert_equal(check_array(X_df, ensure_2d=False).dtype.kind, "f")
+    assert check_array(X_df).dtype.kind == "f"
+    assert check_array(X_df, ensure_2d=False).dtype.kind == "f"
     # smoke-test against dataframes with column named "dtype"
     X_df.dtype = "Hans"
-    assert_equal(check_array(X_df, ensure_2d=False).dtype.kind, "f")
+    assert check_array(X_df, ensure_2d=False).dtype.kind == "f"
 
 
 def test_check_array_on_mock_dataframe():
     arr = np.array([[0.2, 0.7], [0.6, 0.5], [0.4, 0.1], [0.7, 0.2]])
     mock_df = MockDataFrame(arr)
     checked_arr = check_array(mock_df)
-    assert_equal(checked_arr.dtype,
+    assert (checked_arr.dtype ==
                  arr.dtype)
     checked_arr = check_array(mock_df, dtype=np.float32)
-    assert_equal(checked_arr.dtype, np.dtype(np.float32))
+    assert checked_arr.dtype == np.dtype(np.float32)
 
 
 def test_check_array_dtype_stability():
     # test that lists with ints don't get converted to floats
     X = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    assert_equal(check_array(X).dtype.kind, "i")
-    assert_equal(check_array(X, ensure_2d=False).dtype.kind, "i")
+    assert check_array(X).dtype.kind == "i"
+    assert check_array(X, ensure_2d=False).dtype.kind == "i"
 
 
 def test_check_array_dtype_warning():
@@ -362,12 +363,12 @@ def test_check_array_dtype_warning():
     for X in integer_data:
         X_checked = assert_no_warnings(check_array, X, dtype=np.float64,
                                        accept_sparse=True)
-        assert_equal(X_checked.dtype, np.float64)
+        assert X_checked.dtype == np.float64
 
         X_checked = assert_warns(DataConversionWarning, check_array, X,
                                  dtype=np.float64,
                                  accept_sparse=True, warn_on_dtype=True)
-        assert_equal(X_checked.dtype, np.float64)
+        assert X_checked.dtype == np.float64
 
         # Check that the warning message includes the name of the Estimator
         X_checked = assert_warns_message(DataConversionWarning,
@@ -377,47 +378,47 @@ def test_check_array_dtype_warning():
                                          accept_sparse=True,
                                          warn_on_dtype=True,
                                          estimator='SomeEstimator')
-        assert_equal(X_checked.dtype, np.float64)
+        assert X_checked.dtype == np.float64
 
         X_checked, y_checked = assert_warns_message(
             DataConversionWarning, 'KNeighborsClassifier',
             check_X_y, X, y, dtype=np.float64, accept_sparse=True,
             warn_on_dtype=True, estimator=KNeighborsClassifier())
 
-        assert_equal(X_checked.dtype, np.float64)
+        assert X_checked.dtype == np.float64
 
     for X in float64_data:
         with pytest.warns(None) as record:
             warnings.simplefilter("ignore", DeprecationWarning)  # 0.23
             X_checked = check_array(X, dtype=np.float64,
                                     accept_sparse=True, warn_on_dtype=True)
-            assert_equal(X_checked.dtype, np.float64)
+            assert X_checked.dtype == np.float64
             X_checked = check_array(X, dtype=np.float64,
                                     accept_sparse=True, warn_on_dtype=False)
-            assert_equal(X_checked.dtype, np.float64)
+            assert X_checked.dtype == np.float64
         assert len(record) == 0
 
     for X in float32_data:
         X_checked = assert_no_warnings(check_array, X,
                                        dtype=[np.float64, np.float32],
                                        accept_sparse=True)
-        assert_equal(X_checked.dtype, np.float32)
+        assert X_checked.dtype == np.float32
         assert X_checked is X
 
         X_checked = assert_no_warnings(check_array, X,
                                        dtype=[np.float64, np.float32],
                                        accept_sparse=['csr', 'dok'],
                                        copy=True)
-        assert_equal(X_checked.dtype, np.float32)
+        assert X_checked.dtype == np.float32
         assert X_checked is not X
 
     X_checked = assert_no_warnings(check_array, X_csc_float32,
                                    dtype=[np.float64, np.float32],
                                    accept_sparse=['csr', 'dok'],
                                    copy=False)
-    assert_equal(X_checked.dtype, np.float32)
+    assert X_checked.dtype == np.float32
     assert X_checked is not X_csc_float32
-    assert_equal(X_checked.format, 'csr')
+    assert X_checked.format == 'csr'
 
 
 def test_check_array_warn_on_dtype_deprecation():
@@ -624,7 +625,7 @@ def test_check_symmetric():
 
         output = check_symmetric(arr, raise_warning=False)
         if sp.issparse(output):
-            assert_equal(output.format, arr_format)
+            assert output.format == arr_format
             assert_array_equal(output.toarray(), arr_sym)
         else:
             assert_array_equal(output, arr_sym)
@@ -648,18 +649,18 @@ def test_check_is_fitted():
     try:
         check_is_fitted(ard, "coef_", "Random message %(name)s, %(name)s")
     except ValueError as e:
-        assert_equal(str(e), "Random message ARDRegression, ARDRegression")
+        assert str(e) == "Random message ARDRegression, ARDRegression"
 
     try:
         check_is_fitted(svr, "support_", "Another message %(name)s, %(name)s")
     except AttributeError as e:
-        assert_equal(str(e), "Another message SVR, SVR")
+        assert str(e) == "Another message SVR, SVR"
 
     ard.fit(*make_blobs())
     svr.fit(*make_blobs())
 
-    assert_equal(None, check_is_fitted(ard, "coef_"))
-    assert_equal(None, check_is_fitted(svr, "support_"))
+    assert check_is_fitted(ard, "coef_") is None
+    assert check_is_fitted(svr, "support_") is None
 
 
 def test_check_consistent_length():
@@ -763,9 +764,9 @@ class WrongDummyMemory:
 @pytest.mark.filterwarnings("ignore:The 'cachedir' attribute")
 def test_check_memory():
     memory = check_memory("cache_directory")
-    assert_equal(memory.cachedir, os.path.join('cache_directory', 'joblib'))
+    assert memory.cachedir == os.path.join('cache_directory', 'joblib')
     memory = check_memory(None)
-    assert_equal(memory.cachedir, None)
+    assert memory.cachedir is None
     dummy = DummyMemory()
     memory = check_memory(dummy)
     assert memory is dummy
@@ -854,3 +855,40 @@ def test_check_scalar_invalid(x, target_name, target_type, min_val, max_val,
                      min_val=min_val, max_val=max_val)
     assert str(raised_error.value) == str(err_msg)
     assert type(raised_error.value) == type(err_msg)
+
+
+def test_check_sample_weight():
+    # check array order
+    sample_weight = np.ones(10)[::2]
+    assert not sample_weight.flags["C_CONTIGUOUS"]
+    sample_weight = _check_sample_weight(sample_weight, X=np.ones((5, 1)))
+    assert sample_weight.flags["C_CONTIGUOUS"]
+
+    # check None input
+    sample_weight = _check_sample_weight(None, X=np.ones((5, 2)))
+    assert_allclose(sample_weight, np.ones(5))
+
+    # check numbers input
+    sample_weight = _check_sample_weight(2.0, X=np.ones((5, 2)))
+    assert_allclose(sample_weight, 2 * np.ones(5))
+
+    # check wrong number of dimensions
+    with pytest.raises(ValueError,
+                       match="Sample weights must be 1D array or scalar"):
+        _check_sample_weight(np.ones((2, 4)), X=np.ones((2, 2)))
+
+    # check incorrect n_samples
+    msg = r"sample_weight.shape == \(4,\), expected \(2,\)!"
+    with pytest.raises(ValueError, match=msg):
+        _check_sample_weight(np.ones(4), X=np.ones((2, 2)))
+
+    # float32 dtype is preserved
+    X = np.ones((5, 2))
+    sample_weight = np.ones(5, dtype=np.float32)
+    sample_weight = _check_sample_weight(sample_weight, X)
+    assert sample_weight.dtype == np.float32
+
+    # int dtype will be converted to float64 instead
+    X = np.ones((5, 2), dtype=np.int)
+    sample_weight = _check_sample_weight(None, X, dtype=X.dtype)
+    assert sample_weight.dtype == np.float64

@@ -9,6 +9,9 @@ contribute.
 
 The project is hosted on https://github.com/scikit-learn/scikit-learn
 
+The decision making process and governance structure of scikit-learn is laid
+out in the governance document: :ref:`governance`.
+
 Scikit-learn is somewhat :ref:`selective <selectiveness>` when it comes to
 adding new algorithms, and the best way to contribute and to help the project
 is to start working on known issues.
@@ -32,18 +35,12 @@ See :ref:`new_contributors` to get started.
     others of the Python Software Foundation:
     https://www.python.org/psf/codeofconduct/
 
-|
-
 
 In case you experience issues using this package, do not hesitate to submit a
 ticket to the
-`GitHub issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_. You are
-also welcome to post feature requests or pull requests.
-
-Governance
-==========
-The decision making process and governance structure of scikit-learn is laid
-out in the governance document: :ref:`governance`.
+`GitHub issue tracker
+<https://github.com/scikit-learn/scikit-learn/issues>`_. You are also
+welcome to post feature requests or pull requests.
 
 Ways to contribute
 ==================
@@ -210,37 +207,33 @@ then submit a "pull request" (PR):
        $ git clone git@github.com:YourLogin/scikit-learn.git
        $ cd scikit-learn
 
-4. Install library in editable mode::
+4. Install the development dependencies::
+
+       $ pip install cython pytest flake8
+
+5. Install scikit-learn in editable mode::
 
        $ pip install --editable .
 
    for more details about advanced installation, see the
    :ref:`install_bleeding_edge` section.
 
-5. Create a branch to hold your development changes::
+6. Add the ``upstream`` remote. This saves a reference to the main
+   scikit-learn repository, which you can use to keep your repository
+   synchronized with the latest changes::
 
-       $ git checkout -b my-feature
+    $ git remote add upstream https://github.com/scikit-learn/scikit-learn.git
 
-   and start making changes. Always use a ``feature`` branch. It's good practice to
-   never work on the ``master`` branch!
+7. Fetch the ``upstream`` and then create a branch to hold your development
+   changes::
 
-   .. note::
+       $ git fetch upstream
+       $ git checkout -b my-feature upstream/master
 
-     In the above setup, your ``origin`` remote repository points to
-     ``YourLogin/scikit-learn.git``. If you wish to fetch/merge from the main
-     repository instead of your forked one, you will need to add another remote
-     to use instead of ``origin``. If we choose the name ``upstream`` for it, the
-     command will be::
+   and start making changes. Always use a ``feature`` branch. It's good
+   practice to never work on the ``master`` branch!
 
-         $ git remote add upstream https://github.com/scikit-learn/scikit-learn.git
-
-     And in order to fetch the new remote and base your work on the latest changes
-     of it you can::
-
-         $ git fetch upstream
-         $ git checkout -b my-feature upstream/master
-
-6. Develop the feature on your feature branch on your computer, using Git to do the
+8. Develop the feature on your feature branch on your computer, using Git to do the
    version control. When you're done editing, add changed files using ``git add``
    and then ``git commit`` files::
 
@@ -251,7 +244,7 @@ then submit a "pull request" (PR):
 
        $ git push -u origin my-feature
 
-7. Follow `these
+9. Follow `these
    <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
    instructions to create a pull request from your fork. This will send an
    email to the committers. You may want to consider sending an email to the
@@ -259,111 +252,131 @@ then submit a "pull request" (PR):
 
 .. note::
 
-  If you are modifying a Cython module, you have to re-run step 4 after modifications
+  If you are modifying a Cython module, you have to re-run step 5 after modifications
   and before testing them.
 
+It is often helpful to keep your local branch synchronized with the latest
+changes of the main scikit-learn repository::
 
-If any of the above seems like magic to you, then look up the `Git documentation
-<https://git-scm.com/documentation>`_ and the `Git development workflow
-<http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ on the
-web, or ask a friend or another contributor for help.
+    $ git fetch upstream
+    $ git merge upstream/master
 
-If some conflicts arise between your branch and the ``master`` branch, you need
-to merge ``master``. For that, you first need to fetch the ``upstream``, and
-then merge its ``master`` into your branch::
-
-  $ git fetch upstream
-  $ git merge upstream/master
-
-Subsequently, you need to solve the conflicts. You can refer to the `Git
-documentation related to resolving merge conflict using the command line
+Subsequently, you might need to solve the conflicts. You can refer to the
+`Git documentation related to resolving merge conflict using the command
+line
 <https://help.github.com/articles/resolving-a-merge-conflict-using-the-command-line/>`_.
 
-.. note::
+.. topic:: Learning git:
 
-   In the past, the policy to resolve conflicts was to rebase your branch on
-   ``master``. GitHub interface deals with merging ``master`` better than in
-   the past.
+    The `Git documentation <https://git-scm.com/documentation>`_ and
+    http://try.github.io are excellent resources to get started with git,
+    and understanding all of the commands shown here.
 
+Pull request checklist
+----------------------
 
-Contributing pull requests
---------------------------
+Before a PR can be merged, it needs to be approved by two core developers.
+Please prefix the title of your pull request with ``[MRG]`` if the
+contribution is complete and should be subjected to a detailed review. An
+incomplete contribution -- where you expect to do more work before receiving
+a full review -- should be prefixed ``[WIP]`` (to indicate a work in
+progress) and changed to ``[MRG]`` when it matures. WIPs may be useful to:
+indicate you are working on something to avoid duplicated work, request
+broad review of functionality or API, or seek collaborators. WIPs often
+benefit from the inclusion of a `task list
+<https://github.com/blog/1375-task-lists-in-gfm-issues-pulls-comments>`_ in
+the PR description.
 
-We recommend that your contribution complies with the following
-rules before submitting a pull request:
+In order to ease the reviewing process, we recommend that your contribution
+complies with the following rules before marking a PR as ``[MRG]``. The
+**bolded** ones are especially important:
 
-* Follow the `coding-guidelines`_ (see below). To make sure that
-  your PR does not add PEP8 violations you can run
-  `./build_tools/circle/flake8_diff.sh` or `make flake8-diff` on a
-  Unix-like system.
+1. **Give your pull request a helpful title** that summarises what your
+   contribution does. This title will often become the commit message once
+   merged so it should summarise your contribution for posterity. In some
+   cases "Fix <ISSUE TITLE>" is enough. "Fix #<ISSUE NUMBER>" is never a
+   good title.
 
-* When applicable, use the validation tools and scripts in the
-  ``sklearn.utils`` submodule.  A list of utility routines available
-  for developers can be found in the :ref:`developers-utils` page.
+2. **Make sure your code passes the tests**. The whole test suite can be run
+   with `pytest`, but it is usually not recommended since it takes a long
+   time. It is often enough to only run the test related to your changes:
+   for example, if you changed something in
+   `sklearn/linear_model/logistic.py`, running the following commands will
+   usually be enough:
 
-* Give your pull request a helpful title that summarises what your
-  contribution does. In some cases "Fix <ISSUE TITLE>" is enough.
-  "Fix #<ISSUE NUMBER>" is not enough.
+   - `pytest sklearn/linear_model/logistic.py` to make sure the doctest
+     examples are correct
+   - `pytest sklearn/linear_model/tests/test_logistic.py` to run the tests
+     specific to the file
+   - `pytest sklearn/linear_model` to test the whole `linear_model` module
+   - `pytest sklearn/doc/linear_model.rst` to make sure the user guide
+     examples are correct.
+   - `pytest sklearn/tests/test_common.py -k LogisticRegression` to run all our
+     estimator checks (specifically for `LogisticRegression`, if that's the
+     estimator you changed).
 
-* Often pull requests resolve one or more other issues (or pull requests).
-  If merging your pull request means that some other issues/PRs should
-  be closed, you should `use keywords to create link to them
-  <https://github.com/blog/1506-closing-issues-via-pull-requests/>`_
-  (e.g., ``Fixes #1234``; multiple issues/PRs are allowed as long as each
-  one is preceded by a keyword). Upon merging, those issues/PRs will
-  automatically be closed by GitHub. If your pull request is simply
-  related to some other issues/PRs, create a link to them without using
-  the keywords (e.g., ``See also #1234``).
+   There may be other failing tests, but they will be caught by the CI so
+   you don't need to run the whole test suite locally. You can read more in
+   :ref:`testing_coverage`.
 
-* All public methods should have informative docstrings with sample
-  usage presented as doctests when appropriate.
+3. **Make sure your code is properly commented and documented**, and **make
+   sure the documentation renders properly**. To build the documentation, please
+   refer to our :ref:`contribute_documentation` guidelines. The CI will also
+   build the docs: please refer to :ref:`generated_doc_CI`.
 
-* Please prefix the title of your pull request with ``[MRG]`` if the
-  contribution is complete and should be subjected to a detailed review.
-  Two core developers will review your code and change the prefix of the pull
-  request to ``[MRG + 1]`` and ``[MRG + 2]`` on approval, making it eligible
-  for merging. An incomplete contribution -- where you expect to do more
-  work before receiving a full review -- should be prefixed ``[WIP]`` (to
-  indicate a work in progress) and changed to ``[MRG]`` when it matures.
-  WIPs may be useful to: indicate you are working on something to avoid
-  duplicated work, request broad review of functionality or API, or seek
-  collaborators. WIPs often benefit from the inclusion of a
-  `task list
-  <https://github.com/blog/1375-task-lists-in-gfm-issues-pulls-comments>`_
-  in the PR description.
+4. **Tests are necessary for enhancements to be
+   accepted**. Bug-fixes or new features should be provided with
+   `non-regression tests
+   <https://en.wikipedia.org/wiki/Non-regression_testing>`_. These tests
+   verify the correct behavior of the fix or feature. In this manner, further
+   modifications on the code base are granted to be consistent with the
+   desired behavior. In the case of bug fixes, at the time of the PR, the
+   non-regression tests should fail for the code base in the master branch
+   and pass for the PR code.
 
-* All other tests pass when everything is rebuilt from scratch. On
-  Unix-like systems, check with (from the toplevel source folder)::
+5. **Make sure that your PR does not add PEP8 violations**. On a Unix-like
+   system, you can run `make flake8-diff`. `flake8 path_to_file`, would work
+   for any system, but please avoid reformatting parts of the file that your
+   pull request doesn't change, as it distracts from code review.
 
-    $ make
+6. Follow the `coding-guidelines`_ (see below).
 
-* When adding additional functionality, provide at least one example script
-  in the ``examples/`` folder. Have a look at other examples for reference.
-  Examples should demonstrate why the new functionality is useful in
-  practice and, if possible, compare it to other methods available in
-  scikit-learn.
+7. When applicable, use the validation tools and scripts in the
+   ``sklearn.utils`` submodule.  A list of utility routines available
+   for developers can be found in the :ref:`developers-utils` page.
 
-* Documentation and high-coverage tests are necessary for enhancements to be
-  accepted. Bug-fixes or new features should be provided with
-  `non-regression tests
-  <https://en.wikipedia.org/wiki/Non-regression_testing>`_. These tests
-  verify the correct behavior of the fix or feature. In this manner, further
-  modifications on the code base are granted to be consistent with the
-  desired behavior. For the case of bug fixes, at the time of the PR, the
-  non-regression tests should fail for the code base in the master branch
-  and pass for the PR code.
+8. Often pull requests resolve one or more other issues (or pull requests).
+   If merging your pull request means that some other issues/PRs should
+   be closed, you should `use keywords to create link to them
+   <https://github.com/blog/1506-closing-issues-via-pull-requests/>`_
+   (e.g., ``Fixes #1234``; multiple issues/PRs are allowed as long as each
+   one is preceded by a keyword). Upon merging, those issues/PRs will
+   automatically be closed by GitHub. If your pull request is simply
+   related to some other issues/PRs, create a link to them without using
+   the keywords (e.g., ``See also #1234``).
 
-* At least one paragraph of narrative documentation with links to
-  references in the literature (with PDF links when possible) and
-  the example. For more details on writing and building the
-  documentation, see the :ref:`contribute_documentation` section.
+9. PRs should often substantiate the change, through benchmarks of
+   performance and efficiency or through examples of usage. Examples also
+   illustrate the features and intricacies of the library to users. Have a
+   look at other examples in the `examples/
+   <https://github.com/scikit-learn/scikit-learn/tree/master/examples>`_
+   directory for reference. Examples should demonstrate why the new
+   functionality is useful in practice and, if possible, compare it to other
+   methods available in scikit-learn.
 
-* The documentation should also include expected time and space complexity
-  of the algorithm and scalability, e.g. "this algorithm can scale to a
-  large number of samples > 100000, but does not scale in dimensionality:
-  n_features is expected to be lower than 100".
+10. New features often need to be illustrated with narrative documentation in
+    the user guide, with small code snipets. If relevant, please also add
+    references in the literature, with PDF links when possible.
 
-You can also check for common programming errors with the following tools:
+11. The user guide should also include expected time and space complexity
+    of the algorithm and scalability, e.g. "this algorithm can scale to a
+    large number of samples > 100000, but does not scale in dimensionality:
+    n_features is expected to be lower than 100".
+
+You can also check our :ref:`code_review` to get an idea of what reviewers
+will expect.
+
+You can check for common programming errors with the following tools:
 
 * Code with a good unittest coverage (at least 80%, better 100%), check
   with::
@@ -373,17 +386,12 @@ You can also check for common programming errors with the following tools:
 
   see also :ref:`testing_coverage`
 
-* No flake8 warnings, check with::
-
-    $ pip install flake8
-    $ flake8 path/to/module.py
-
 Bonus points for contributions that include a performance analysis with
 a benchmark script and profiling output (please report on the mailing
 list or on the GitHub issue).
 
-Also check out the :ref:`performance-howto` guide for more details on profiling
-and Cython optimizations.
+Also check out the :ref:`performance-howto` guide for more details on
+profiling and Cython optimizations.
 
 .. note::
 
@@ -404,10 +412,10 @@ and Cython optimizations.
 Continuous Integration (CI)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* Travis is used for testing on Linux platforms
-* Appveyor is used for testing on Windows platforms
+* Azure pipelines are used for testing scikit-learn on Linux, Mac and Windows,
+  with different dependencies and settings.
 * CircleCI is used to build the docs for viewing, for linting with flake8, and
-    for testing with PyPy on Linux
+  for testing with PyPy on Linux
 
 Please note that if one of the following markers appear in the latest commit
 message, the following actions are taken.
@@ -498,50 +506,51 @@ underestimate how easy an issue is to solve!
 .. _contribute_documentation:
 
 Documentation
--------------
+=============
 
 We are glad to accept any sort of documentation: function docstrings,
 reStructuredText documents (like this one), tutorials, etc. reStructuredText
 documents live in the source code repository under the ``doc/`` directory.
 
 You can edit the documentation using any text editor, and then generate the
-HTML output by typing ``make html`` from the ``doc/`` directory. Alternatively,
-``make`` can be used to quickly generate the documentation without the example
-gallery. The resulting HTML files will be placed in ``_build/html/stable`` and are viewable
-in a web browser. See the ``README`` file in the ``doc/`` directory for more information.
+HTML output by typing ``make`` from the ``doc/`` directory. Alternatively,
+``make html`` may be used to generate the documentation **with** the example
+gallery (which takes quite some time). The resulting HTML files will be
+placed in ``_build/html/stable`` and are viewable in a web browser.
 
 
 Building the documentation
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+--------------------------
+
+First, make sure you have :ref:`properly installed <install_bleeding_edge>`
+the development version.
 
 Building the documentation requires installing some additional packages::
 
-    pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas scikit-image joblib
+    pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas scikit-image
 
 To build the documentation, you need to be in the ``doc`` folder::
 
     cd doc
 
-It also requires having the version of scikit-learn installed that corresponds
-to the documentation, e.g.::
+In the vast majority of cases, you only need to generate the full web site,
+without the example gallery::
 
-    pip install --editable ..
+    make
 
-To generate the full web site, including the example gallery::
+The documentation will be generated in the ``_build/html/stable`` directory.
+To also generate the example gallery you can use::
 
     make html
 
-Generating the example gallery will run all our examples which takes a
-while. To save some time, you can use:
+This will run all the examples, which takes a while. If you only want to
+generate a few examples, you can use::
 
-- ``make html-noplot``: this will generate the documentation without the
-  example gallery. This is useful when changing a docstring for example.
-- ``EXAMPLES_PATTERN=your_regex_goes_here make html``: only the examples
-  matching ``your_regex_goes_here`` will be run. This is particularly
-  useful if you are modifying a few examples.
+    EXAMPLES_PATTERN=your_regex_goes_here make html
 
-That should create all the documentation in the ``_build/html/stable``
-directory.  Set the environment variable `NO_MATHJAX=1` if you intend to view
+This is particularly useful if you are modifying a few examples.
+
+Set the environment variable `NO_MATHJAX=1` if you intend to view
 the documentation in an offline setting.
 
 To build the PDF manual, run::
@@ -558,7 +567,7 @@ To build the PDF manual, run::
    to know the exact version.
 
 Guidelines for writing documentation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------------------
 
 It is important to keep a good compromise between mathematical and algorithmic
 details, and give intuition to the reader on what the algorithm does.
@@ -602,8 +611,10 @@ Finally, follow the formatting rules below to make it consistently good:
 * When editing reStructuredText (``.rst``) files, try to keep line length under
   80 characters when possible (exceptions include links and tables).
 
+.. _generated_doc_CI:
+
 Generated documentation on CircleCI
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------------
 
 When you change the documentation in a pull request, CircleCI automatically
 builds it. To view the documentation generated by CircleCI:
@@ -626,7 +637,7 @@ reviewing pull requests, you may find :ref:`this tip
 .. _testing_coverage:
 
 Testing and improving test coverage
------------------------------------
+===================================
 
 High-quality `unit testing <https://en.wikipedia.org/wiki/Unit_testing>`_
 is a corner-stone of the scikit-learn development process. For this
@@ -645,7 +656,7 @@ For guidelines on how to use ``pytest`` efficiently, see the
 :ref:`pytest_tips`.
 
 Writing matplotlib related tests
-................................
+--------------------------------
 
 Test fixtures ensure that a set of tests will be executing with the appropriate
 initialization and cleanup. The scikit-learn test suite implements a fixture
@@ -665,7 +676,7 @@ argument::
         # you can now safely use matplotlib
 
 Workflow to improve test coverage
-.................................
+---------------------------------
 
 To test code coverage, you need to install the `coverage
 <https://pypi.org/project/coverage/>`_ package in addition to pytest.
@@ -677,12 +688,6 @@ To test code coverage, you need to install the `coverage
     write or adapt a test specifically for these lines.
 
 3. Loop.
-
-Developers web site
--------------------
-
-More information can be found on the `developer's wiki
-<https://github.com/scikit-learn/scikit-learn/wiki>`_.
 
 
 Issue Tracker Tags
@@ -1451,13 +1456,6 @@ will set the attribute automatically.  When a meta-estimator needs to distinguis
 among estimator types, instead of checking ``_estimator_type`` directly, helpers
 like :func:`base.is_classifier` should be used.
 
-Working notes
--------------
-
-For unresolved issues, TODOs, and remarks on ongoing work, developers are
-advised to maintain notes on the `GitHub wiki
-<https://github.com/scikit-learn/scikit-learn/wiki>`__.
-
 Specific models
 ---------------
 
@@ -1516,8 +1514,11 @@ The current set of estimator tags are:
 non_deterministic
     whether the estimator is not deterministic given a fixed ``random_state``
 
-requires_positive_data - unused for now
+requires_positive_X - unused for now
     whether the estimator requires positive X.
+
+requires_positive_y
+    whether the estimator requires a positive y (only applicable for regression).
 
 no_validation
     whether the estimator skips input-validation. This is only meant for stateless and dummy transformers!
