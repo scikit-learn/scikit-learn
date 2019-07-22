@@ -74,6 +74,10 @@ def _find_binning_thresholds(data, max_bins, subsample, random_state):
                                       interpolation='midpoint').astype(X_DTYPE)
             assert midpoints.shape[0] == max_bins - 1
 
+        # We avoid having +inf thresholds: +inf thresholds are only allowed in
+        # a "split on nan" situation.
+        np.clip(midpoints, a_min=None, a_max=1e300, out=midpoints)
+
         binning_thresholds.append(midpoints)
 
     return binning_thresholds

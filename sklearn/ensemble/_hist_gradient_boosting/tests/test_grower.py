@@ -343,3 +343,44 @@ def test_missing_value_predict_only():
     # to prediction_main_path
     all_nans = np.full(shape=(n_samples, 1), fill_value=np.nan)
     assert np.all(predictor.predict(all_nans) == prediction_main_path)
+
+
+def test_split_on_nan_with_infinite_values():
+    # Make sure the split on nan situations are respected even when there are
+    # samples with +inf values (we set the threshold to +inf when we have a
+    # split on nan so this test make sure this does not introduce edge-case
+    # bugs)
+
+    X = np.array([0, 1, np.inf, np.nan, np.nan]).reshape(-1, 1)
+    # the gradient values will force a split on nan situation
+    gradients = np.array([0, 0, 0, 100, 100], dtype=G_H_DTYPE)
+    hessians = np.ones(shape=1, dtype=G_H_DTYPE)
+
+    bin_mapper = _BinMapper()
+    X_binned = bin_mapper.fit_transform(X)
+
+    n_bins_non_missing = 3
+    has_missing_values = True
+    grower = TreeGrower(X_binned, gradients, hessians,
+                        n_bins_non_missing=n_bins_non_missing,
+                        has_missing_values=has_missing_values,
+                        min_samples_leaf=1)
+
+    grower.grow()
+
+    predictor = grower.make_predictor(
+        bin_thresholds=bin_mapper.bin_thresholds_
+    )
+
+    # sanity check: this was a split on nan
+    assert predictor.nodes[0]['threshold'] == np.inf
+    assert predictor.nodes[0]['bin_threshold'] == n_bins_non_missing - 1
+
+    # Make sure in particular that the +inf sample is mapped to the left child
+    # Note that lightgbm "fails" here and will assign the inf sample to the
+    # right child, even though it's a "split on nan" situation.
+    predictions = predictor.predict(X)
+    predictions_binned = predictor.predict_binned(
+        X_binned, missing_values_bin_idx=bin_mapper.missing_values_bin_idx_)
+    assert np.all(predictions == -gradients)
+    assert np.all(predictions_binned == -gradients)

@@ -306,7 +306,7 @@ def test_infinite_values():
     X = np.array([-np.inf, 0, 1,  np.inf]).reshape(-1, 1)
 
     bin_mapper.fit(X)
-    assert_allclose(bin_mapper.bin_thresholds_[0], [-np.inf, .5, np.inf])
+    assert_allclose(bin_mapper.bin_thresholds_[0], [-np.inf, .5, 1e300])
     assert bin_mapper.n_bins_non_missing_ == [4]
 
     expected_binned_X = np.array([0, 1, 2, 3]).reshape(-1, 1)

@@ -42,12 +42,12 @@ def test_boston_dataset(n_bins):
     (-np.inf, [0, 1, 1, 1]),
     (10, [0, 0, 1, 1]),
     (20, [0, 0, 0, 1]),
-    (np.inf, [0, 0, 0, 1]),
+    (1e300, [0, 0, 0, 1]),
 ])
 def test_infinite_values_and_thresholds(threshold, expected_predictions):
     # Make sure infinite values and infinite thresholds are handled properly.
-    # In paticular, if a value is +inf and the threhsold is +inf, the sample
-    # should go to the right child.
+    # In particular, if a value is +inf and the threshold is +inf (1e300), the
+    # sample should go to the right child.
 
     X = np.array([-np.inf, 10, 20,  np.inf]).reshape(-1, 1)
     nodes = np.zeros(3, dtype=PREDICTOR_RECORD_DTYPE)
