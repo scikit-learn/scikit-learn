@@ -267,7 +267,7 @@ def _yield_all_checks(name, estimator):
     yield check_fit_idempotent
 
 
-def check_estimator_ids(val):
+def id_for_check_estimator(val):
     """Create readable pytest ids for `check_estimator` when
     `generate_only=True`.
 
