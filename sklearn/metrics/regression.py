@@ -665,6 +665,7 @@ def mean_tweedie_deviance(y_true, y_pred, sample_weight=None, p=0):
     >>> mean_tweedie_deviance(y_true, y_pred, p=1)
     1.4260...
     """
+    from ..linear_model._glm.distribution import TweedieDistribution
     y_type, y_true, y_pred, _ = _check_reg_targets(
         y_true, y_pred, None, dtype=[np.float64, np.float32])
     if y_type == 'continuous-multioutput':
@@ -681,12 +682,8 @@ def mean_tweedie_deviance(y_true, y_pred, sample_weight=None, p=0):
         # 'Extreme stable', y_true any realy number, y_pred > 0
         if (y_pred <= 0).any():
             raise ValueError(message + "strictly positive y_pred.")
-        dev = 2 * (np.power(np.maximum(y_true, 0), 2-p)/((1-p) * (2-p)) -
-                   y_true * np.power(y_pred, 1-p)/(1-p) +
-                   np.power(y_pred, 2-p)/(2-p))
     elif p == 0:
-        # Normal distribution, y_true and y_pred any real number
-        dev = (y_true - y_pred)**2
+        pass
     elif p < 1:
         raise ValueError("Tweedie deviance is only defined for p<=0 and "
                          "p>=1.")
@@ -695,12 +692,10 @@ def mean_tweedie_deviance(y_true, y_pred, sample_weight=None, p=0):
         if (y_true < 0).any() or (y_pred <= 0).any():
             raise ValueError(message + "non-negative y_true and strictly "
                              "positive y_pred.")
-        dev = 2 * (xlogy(y_true, y_true/y_pred) - y_true + y_pred)
     elif p == 2:
         # Gamma distribution, y_true and y_pred > 0
         if (y_true <= 0).any() or (y_pred <= 0).any():
             raise ValueError(message + "strictly positive y_true and y_pred.")
-        dev = 2 * (np.log(y_pred/y_true) + y_true/y_pred - 1)
     else:
         if p < 2:
             # 1 < p < 2 is Compound Poisson, y_true >= 0, y_pred > 0
@@ -712,9 +707,8 @@ def mean_tweedie_deviance(y_true, y_pred, sample_weight=None, p=0):
                 raise ValueError(message + "strictly positive y_true and "
                                            "y_pred.")
 
-        dev = 2 * (np.power(y_true, 2-p)/((1-p) * (2-p)) -
-                   y_true * np.power(y_pred, 1-p)/(1-p) +
-                   np.power(y_pred, 2-p)/(2-p))
+    dist = TweedieDistribution(power=p)
+    dev = dist.unit_deviance(y_true, y_pred)
 
     return np.average(dev, weights=sample_weight)
 

@@ -330,21 +330,28 @@ class TweedieDistribution(ExponentialDispersionModel):
 
     def unit_deviance(self, y, mu):
         p = self.power
-        if p == 0:
-            # NormalDistribution
-            return (y - mu)**2
-        if p == 1:
-            # PoissonDistribution
-            # 2 * (y*log(y/mu) - y + mu), with y*log(y/mu)=0 if y=0
-            return 2 * (xlogy(y, y/mu) - y + mu)
+        if p < 0:
+            # 'Extreme stable', y_true any realy number, y_pred > 0
+            dev = 2 * (np.power(np.maximum(y, 0), 2-p)/((1-p) * (2-p)) -
+                       y * np.power(mu, 1-p)/(1-p) +
+                       np.power(mu, 2-p)/(2-p))
+        elif p == 0:
+            # Normal distribution, y_true and y_pred any real number
+            dev = (y - mu)**2
+        elif p < 1:
+            raise ValueError("Tweedie deviance is only defined for p<=0 and "
+                             "p>=1.")
+        elif p == 1:
+            # Poisson distribution
+            dev = 2 * (xlogy(y, y/mu) - y + mu)
         elif p == 2:
-            # GammaDistribution
-            return 2 * (np.log(mu/y) + y/mu - 1)
+            # Gamma distribution
+            dev = 2 * (np.log(mu/y) + y/mu - 1)
         else:
-            # return 2 * (np.maximum(y,0)**(2-p)/((1-p)*(2-p))
-            #    - y*mu**(1-p)/(1-p) + mu**(2-p)/(2-p))
-            return 2 * (np.power(np.maximum(y, 0), 2-p)/((1-p)*(2-p)) -
-                        y*np.power(mu, 1-p)/(1-p) + np.power(mu, 2-p)/(2-p))
+            dev = 2 * (np.power(y, 2-p)/((1-p) * (2-p)) -
+                       y * np.power(mu, 1-p)/(1-p) +
+                       np.power(mu, 2-p)/(2-p))
+        return dev
 
 
 class NormalDistribution(TweedieDistribution):
