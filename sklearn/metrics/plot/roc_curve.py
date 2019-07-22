@@ -9,7 +9,6 @@ class RocCurveVisualizer:
 
     Parameters
     ----------
-
     estimator : estimator instance
         Trained classifier.
 
@@ -92,6 +91,8 @@ class RocCurveVisualizer:
     def plot(self, ax=None, name=None, **line_kw):
         """Plot visualization
 
+        Extra keyword arguments will be passed to matplotlib's `plot`.
+
         Parameters
         ----------
         ax : Matplotlib Axes, default=None
@@ -100,9 +101,6 @@ class RocCurveVisualizer:
         name : str or None, default=None
             Name of ROC Curve for labeling. If `None`, use the name of the
             estimator.
-
-        line_kw : dict
-            Keyword arguments to pass to `plot`.
         """
         check_matplotlib_support('plot_roc_curve')  # noqa
         import matplotlib.pyplot as plt  # noqa
@@ -130,13 +128,10 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
                    name=None, ax=None, **line_kw):
     """Plot Receiver operating characteristic (ROC) curve
 
-    Note: this implementation is restricted to the binary classification task.
-
-    Read more in the :ref:`User Guide <roc_metrics>`.
+    Extra keyword arguments will be passed to matplotlib's `plot`.
 
     Parameters
     ----------
-
     estimator : estimator instance
         Trained classifier.
 
@@ -169,9 +164,6 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
 
     ax : matplotlib axes, default=None
         axes object to plot on
-
-    line_kw : dict
-        Keyword arguments to pass to `plot`.
 
     Returns
     -------
