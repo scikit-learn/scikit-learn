@@ -36,7 +36,7 @@ from scipy import interp
 import matplotlib.pyplot as plt
 
 from sklearn import svm, datasets
-from sklearn.metrics import roc_curve, auc
+from sklearn.metrics import auc
 from sklearn.metrics import plot_roc_curve
 from sklearn.model_selection import StratifiedKFold
 
