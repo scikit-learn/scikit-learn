@@ -11,7 +11,8 @@ import warnings
 import sys
 import re
 import pkgutil
-from itertools import chain, partial
+from itertools import chain
+from functools import partial
 
 import pytest
 
