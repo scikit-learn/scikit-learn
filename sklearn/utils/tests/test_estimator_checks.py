@@ -547,13 +547,14 @@ def test_check_class_weight_balanced_linear_classifier():
                         BadBalancedWeightsClassifier)
 
 
-def _sample_func(x=1):
+def _sample_func(x, y=1):
     pass
 
 
 @pytest.mark.parametrize("val, expected", [
-    (partial(_sample_func, x=1), "_sample_func(x=1)"),
+    (partial(_sample_func, y=1), "_sample_func(y=1)"),
     (_sample_func, "_sample_func"),
+    (partial(_sample_func, 'world'), "_sample_func"),
     (LogisticRegression(C=2.0), "LogisticRegression(C=2.0)"),
     (LogisticRegression(random_state=1, solver='newton-cg',
                         class_weight='balanced', warm_start=True),
