@@ -5,7 +5,6 @@ from functools import partial
 import numpy as np
 import scipy.sparse as sp
 import joblib
-import pytest
 
 from io import StringIO
 
@@ -17,7 +16,6 @@ from sklearn.utils.testing import (assert_raises_regex,
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks \
     import check_class_weight_balanced_linear_classifier
-from sklearn.utils.estimator_checks import readable_check_estimator_ids
 from sklearn.utils.estimator_checks import set_random_state
 from sklearn.utils.estimator_checks import set_checking_parameters
 from sklearn.utils.estimator_checks import check_estimators_unfitted
@@ -545,24 +543,6 @@ def test_check_class_weight_balanced_linear_classifier():
                         check_class_weight_balanced_linear_classifier,
                         'estimator_name',
                         BadBalancedWeightsClassifier)
-
-
-def _sample_func(x, y=1):
-    pass
-
-
-@pytest.mark.parametrize("val, expected", [
-    (partial(_sample_func, y=1), "_sample_func(y=1)"),
-    (_sample_func, "_sample_func"),
-    (partial(_sample_func, 'world'), "_sample_func"),
-    (LogisticRegression(C=2.0), "LogisticRegression(C=2.0)"),
-    (LogisticRegression(random_state=1, solver='newton-cg',
-                        class_weight='balanced', warm_start=True),
-     "LogisticRegression(class_weight='balanced',random_state=1,"
-     "solver='newton-cg',warm_start=True)")
-])
-def test_readable_check_estimator_ids(val, expected):
-    assert readable_check_estimator_ids(val) == expected
 
 
 if __name__ == '__main__':

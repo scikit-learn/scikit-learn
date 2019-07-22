@@ -11,7 +11,7 @@ import warnings
 import sys
 import re
 import pkgutil
-from itertools import chain
+from itertools import chain, partial
 
 import pytest
 
@@ -25,7 +25,7 @@ from sklearn.base import RegressorMixin
 from sklearn.cluster.bicluster import BiclusterMixin
 
 from sklearn.linear_model.base import LinearClassifierMixin
-from sklearn.linear_model import Ridge
+from sklearn.linear_model import Ridge, LogisticRegression
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.utils import IS_PYPY
 from sklearn.utils.estimator_checks import (
@@ -52,6 +52,24 @@ def test_all_estimator_no_base_class():
 def test_parameters_default_constructible(name, Estimator):
     # Test that estimators are default-constructible
     check_parameters_default_constructible(name, Estimator)
+
+
+def _sample_func(x, y=1):
+    pass
+
+
+@pytest.mark.parametrize("val, expected", [
+    (partial(_sample_func, y=1), "_sample_func(y=1)"),
+    (_sample_func, "_sample_func"),
+    (partial(_sample_func, 'world'), "_sample_func"),
+    (LogisticRegression(C=2.0), "LogisticRegression(C=2.0)"),
+    (LogisticRegression(random_state=1, solver='newton-cg',
+                        class_weight='balanced', warm_start=True),
+     "LogisticRegression(class_weight='balanced',random_state=1,"
+     "solver='newton-cg',warm_start=True)")
+])
+def test_readable_check_estimator_ids(val, expected):
+    assert readable_check_estimator_ids(val) == expected
 
 
 def _tested_estimators():
