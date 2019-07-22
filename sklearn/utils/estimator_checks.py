@@ -3,6 +3,7 @@ import warnings
 import sys
 import traceback
 import pickle
+import re
 from copy import deepcopy
 from functools import partial
 from inspect import signature
@@ -13,6 +14,7 @@ from scipy.stats import rankdata
 import joblib
 
 from . import IS_PYPY
+from .. import config_context
 from .testing import assert_raises, _get_args
 from .testing import assert_raises_regex
 from .testing import assert_raise_message
@@ -278,15 +280,19 @@ def readable_check_estimator_ids(val):
     --------
     check_estimator
     """
-    if isinstance(val, partial):
+    if callable(val):
+        if not isinstance(val, partial):
+            return val.__name__
+
+        if not val.keywords:
+            return val.func.__name__
+
         kwstring = "".join(["{}={}".format(k, v)
                             for k, v in val.keywords.items()])
-        if kwstring:
-            return "{}({})".format(val.func.__name__, kwstring)
-        return val.func.__name__
-    # FIXME once we have short reprs we can use them here!
-    if hasattr(val, "get_params") and not isinstance(val, type):
-        return type(val).__name__
+        return "{}({})".format(val.func.__name__, kwstring)
+    if hasattr(val, "get_params"):
+        with config_context(print_changed_only=True):
+            return re.sub(r"\s", "", str(val))
 
 
 def check_estimator(Estimator, generate_only=False):

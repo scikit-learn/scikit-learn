@@ -11,7 +11,6 @@ import warnings
 import sys
 import re
 import pkgutil
-import functools
 from itertools import chain
 
 import pytest
