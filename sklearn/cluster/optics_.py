@@ -222,8 +222,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
         Parameters
         ----------
-        X : array, shape (n_samples, n_features), or (n_samples, n_samples)  \
-if metric=’precomputed’.
+        X : array, shape (n_samples, n_features), or (n_samples, n_samples)
+            if metric=’precomputed’.
             A feature array, or array of distances between samples if
             metric='precomputed'.
 
@@ -279,10 +279,10 @@ if metric=’precomputed’.
 
 
 def _validate_size(size, n_samples, param_name):
-    if isinstance(size, int) and size > 1 and size < n_samples:
+    if isinstance(size, int) and 1 < size < n_samples:
         return size
-    elif size <= 1 and size > 0:
-        return int(max(2, size * n_samples))
+    elif 1 >= size > 0:
+        return max(2, int(size * n_samples))
     else:
         raise ValueError('%s must be a positive integer smaller than'
                          ' the number of samples or a float between 0 and 1. '
@@ -335,8 +335,8 @@ def compute_optics_graph(X, min_samples, max_eps, metric, p, metric_params,
 
     Parameters
     ----------
-    X : array, shape (n_samples, n_features), or (n_samples, n_samples)  \
-if metric=’precomputed’.
+    X : array, shape (n_samples, n_features), or (n_samples, n_samples) if
+        metric=’precomputed’.
         A feature array, or array of distances between samples if
         metric='precomputed'
 
@@ -749,10 +749,9 @@ def _xi_cluster(reachability_plot, predecessor_plot, ordering, xi, min_samples,
         successor being at most 1-xi.
 
     min_samples : int > 1 (default=None)
-        The same as the min_samples given to OPTICS when it was an int. In case
-        a float was given to OPTICS it's the same but scaled. Up and down steep
-        regions can't have more then ``min_samples`` consecutive non-steep
-        points. Expressed as an absolute number (rounded to be at least 2).
+        The same as given to OPTICS as int. Up and down steep regions can't
+         have more then ``min_samples`` consecutive non-steep points.
+          Expressed as an absolute number (rounded to be at least 2).
 
     min_cluster_size : int > 1 (default=None)
         Minimum number of samples in an OPTICS cluster, expressed as an

@@ -20,7 +20,6 @@ from sklearn.utils.testing import assert_allclose
 
 from sklearn.cluster.tests.common import generate_clustered_data
 
-
 rng = np.random.RandomState(0)
 n_points_per_cluster = 10
 C1 = [-5, -2] + .8 * rng.randn(n_points_per_cluster, 2)
@@ -110,7 +109,7 @@ def test_extract_xi():
     clust = OPTICS(min_samples=3, min_cluster_size=3,
                    max_eps=20, cluster_method='xi',
                    xi=0.3).fit(X)
-    # this may fail if the predecessor correction is not at work!
+    # check that predecessor correction is enabled
     assert_array_equal(clust.labels_, expected_labels)
 
     C1 = [[0, 0], [0, 0.1], [0, -.1], [0.1, 0]]
@@ -170,8 +169,8 @@ def test_correct_number_of_clusters():
 
 def test_minimum_number_of_sample_check():
     # test that we check a minimum number of samples
-    msg = "min_samples must be a positive integer smaller than the number" \
-            + " of samples"
+    msg = ("min_samples must be a positive integer smaller than the number "
+           "of samples")
 
     # Compute OPTICS
     X = [[1, 1]]
@@ -277,7 +276,7 @@ def test_min_samples_min_clusters_float():
 
     clust = OPTICS(min_samples=0.1, max_eps=20, cluster_method='xi',
                    xi=0.3).fit(X)
-    # this may fail if the predecessor correction is not at work!
+    # check that predecessor correction is enabled
     assert_array_equal(clust.labels_, expected_labels)
 
 
@@ -331,8 +330,8 @@ def test_min_cluster_size_invalid(min_cluster_size):
 
 def test_min_cluster_size_invalid2():
     clust = OPTICS(min_cluster_size=len(X) + 1)
-    with pytest.raises(ValueError, match="must be a positive integer smaller"
-                       + " than the"):
+    msg = "must be a positive integer smaller than the"
+    with pytest.raises(ValueError, match=msg):
         clust.fit(X)
 
 
