@@ -281,7 +281,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
 def _validate_size(size, n_samples, param_name):
     if isinstance(size, int) and 1 < size < n_samples:
         return size
-    elif 1 >= size > 0:
+    elif 0 < size <= 1:
         return max(2, int(size * n_samples))
     else:
         raise ValueError('%s must be a positive integer smaller than'
