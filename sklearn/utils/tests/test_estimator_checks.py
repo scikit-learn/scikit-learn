@@ -1,6 +1,5 @@
 import unittest
 import sys
-from functools import partial
 
 import numpy as np
 import scipy.sparse as sp
