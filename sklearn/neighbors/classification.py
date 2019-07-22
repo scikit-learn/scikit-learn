@@ -391,6 +391,47 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         self.outlier_label_ = outlier_label_
         return self
 
+    def predict(self, X):
+        """Predict the class labels for the provided data.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_query, n_features), \
+                or (n_query, n_indexed) if metric == 'precomputed'
+            Test samples.
+
+        Returns
+        -------
+        y : array of shape [n_samples] or [n_samples, n_outputs]
+            Class labels for each data sample.
+        """
+
+        probs = self.predict_proba(X)
+        classes_ = self.classes_
+
+        if not self.outputs_2d_:
+            probs = [probs]
+            classes_ = [self.classes_]
+
+        n_outputs = len(classes_)
+        n_samples = probs[0].shape[0]
+        y_pred = np.empty((n_samples, n_outputs),
+                          dtype=classes_[0].dtype)
+
+        for k, prob in enumerate(probs):
+            max_prob_index = prob.argmax(axis=1)
+            y_pred[:, k] = classes_[k].take(max_prob_index)
+
+            outlier_zero_probs = (prob == 0).all(axis=1)
+            if outlier_zero_probs.any():
+                zero_prob_index = np.flatnonzero(outlier_zero_probs)
+                y_pred[zero_prob_index, k] = self.outlier_label_[k]
+
+        if not self.outputs_2d_:
+            y_pred = y_pred.ravel()
+
+        return y_pred
+
     def predict_proba(self, X):
         """Return probability estimates for the test data X.
 
@@ -475,44 +516,3 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             probabilities = probabilities[0]
 
         return probabilities
-
-    def predict(self, X):
-        """Predict the class labels for the provided data.
-
-        Parameters
-        ----------
-        X : array-like, shape (n_query, n_features), \
-                or (n_query, n_indexed) if metric == 'precomputed'
-            Test samples.
-
-        Returns
-        -------
-        y : array of shape [n_samples] or [n_samples, n_outputs]
-            Class labels for each data sample.
-        """
-
-        probs = self.predict_proba(X)
-        classes_ = self.classes_
-
-        if not self.outputs_2d_:
-            probs = [probs]
-            classes_ = [self.classes_]
-
-        n_outputs = len(classes_)
-        n_samples = probs[0].shape[0]
-        y_pred = np.empty((n_samples, n_outputs),
-                          dtype=classes_[0].dtype)
-
-        for k, prob in enumerate(probs):
-            max_prob_index = prob.argmax(axis=1)
-            y_pred[:, k] = classes_[k].take(max_prob_index)
-
-            outlier_zero_probs = (prob == 0).all(axis=1)
-            if outlier_zero_probs.any():
-                zero_prob_index = np.flatnonzero(outlier_zero_probs)
-                y_pred[zero_prob_index, k] = self.outlier_label_[k]
-
-        if not self.outputs_2d_:
-            y_pred = y_pred.ravel()
-
-        return y_pred
