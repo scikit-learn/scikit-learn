@@ -72,7 +72,7 @@ for i, (train, test) in enumerate(cv.split(X, y)):
     classifier.fit(X[train], y[train])
     viz = plot_roc_curve(classifier, X[test], y[test],
                          name='ROC fold {}'.format(i),
-                         line_kw={'alpha': 0.3, 'lw': 1}, ax=ax)
+                         alpha=0.3, lw=1, ax=ax)
     visualizers.append(viz)
 
     interp_tpr = interp(mean_fpr, viz.fpr_, viz.tpr_)
