@@ -17,14 +17,13 @@ from distutils.version import LooseVersion
 from inspect import signature
 
 from numpy.core.numeric import ComplexWarning
+import joblib
 
 from .fixes import _object_dtype_isnan
 from .. import get_config as _get_config
 from ..exceptions import NonBLASDotWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
-from ._joblib import Memory
-from ._joblib import __version__ as joblib_version
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
@@ -176,10 +175,10 @@ def check_memory(memory):
     """
 
     if memory is None or isinstance(memory, str):
-        if LooseVersion(joblib_version) < '0.12':
-            memory = Memory(cachedir=memory, verbose=0)
+        if LooseVersion(joblib.__version__) < '0.12':
+            memory = joblib.Memory(cachedir=memory, verbose=0)
         else:
-            memory = Memory(location=memory, verbose=0)
+            memory = joblib.Memory(location=memory, verbose=0)
     elif not hasattr(memory, 'cache'):
         raise ValueError("'memory' should be None, a string or have the same"
                          " interface as joblib.Memory."
@@ -981,3 +980,53 @@ def check_scalar(x, name, target_type, min_val=None, max_val=None):
 
     if max_val is not None and x > max_val:
         raise ValueError('`{}`= {}, must be <= {}.'.format(name, x, max_val))
+
+
+def _check_sample_weight(sample_weight, X, dtype=None):
+    """Validate sample weights.
+
+    Parameters
+    ----------
+    sample_weight : {ndarray, Number or None}, shape (n_samples,)
+       Input sample weights.
+
+    X : nd-array, list or sparse matrix
+        Input data.
+
+    dtype: dtype
+       dtype of the validated `sample_weight`.
+       If None, and the input `sample_weight` is an array, the dtype of the
+       input is preserved; otherwise an array with the default numpy dtype
+       is be allocated.  If `dtype` is not one of `float32`, `float64`,
+       `None`, the output will be of dtype `float64`.
+
+    Returns
+    -------
+    sample_weight : ndarray, shape (n_samples,)
+       Validated sample weight. It is guaranteed to be "C" contiguous.
+    """
+    n_samples = _num_samples(X)
+
+    if dtype is not None and dtype not in [np.float32, np.float64]:
+        dtype = np.float64
+
+    if sample_weight is None or isinstance(sample_weight, numbers.Number):
+        if sample_weight is None:
+            sample_weight = np.ones(n_samples, dtype=dtype)
+        else:
+            sample_weight = np.full(n_samples, sample_weight,
+                                    dtype=dtype)
+    else:
+        if dtype is None:
+            dtype = [np.float64, np.float32]
+        sample_weight = check_array(
+                sample_weight, accept_sparse=False,
+                ensure_2d=False, dtype=dtype, order="C"
+        )
+        if sample_weight.ndim != 1:
+            raise ValueError("Sample weights must be 1D array or scalar")
+
+        if sample_weight.shape != (n_samples,):
+            raise ValueError("sample_weight.shape == {}, expected {}!"
+                             .format(sample_weight.shape, (n_samples,)))
+    return sample_weight

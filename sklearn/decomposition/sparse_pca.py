@@ -224,17 +224,10 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         check_is_fitted(self, 'components_')
 
         X = check_array(X)
-
-        if self.normalize_components:
-            X = X - self.mean_
+        X = X - self.mean_
 
         U = ridge_regression(self.components_.T, X.T, self.ridge_alpha,
                              solver='cholesky')
-
-        if not self.normalize_components:
-            s = np.sqrt((U ** 2).sum(axis=0))
-            s[s == 0] = 1
-            U /= s
 
         return U
 

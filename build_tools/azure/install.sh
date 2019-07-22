@@ -25,7 +25,7 @@ make_conda() {
 }
 
 if [[ "$DISTRIB" == "conda" ]]; then
-    TO_INSTALL="python=$PYTHON_VERSION pip pytest pytest-cov \
+    TO_INSTALL="python=$PYTHON_VERSION pip pytest=$PYTEST_VERSION pytest-cov \
                 numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
                 cython=$CYTHON_VERSION joblib=$JOBLIB_VERSION"
 
@@ -62,7 +62,13 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     sudo apt-get install python3-scipy python3-matplotlib libatlas3-base libatlas-base-dev libatlas-dev python3-virtualenv
     python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
     source $VIRTUALENV/bin/activate
-    python -m pip install pytest pytest-cov cython joblib==$JOBLIB_VERSION
+    python -m pip install pytest==$PYTEST_VERSION pytest-cov cython joblib==$JOBLIB_VERSION
+elif [[ "$DISTRIB" == "ubuntu-32" ]]; then
+    apt-get update
+    apt-get install -y python3-dev python3-scipy python3-matplotlib libatlas3-base libatlas-base-dev libatlas-dev python3-virtualenv
+    python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
+    source $VIRTUALENV/bin/activate
+    python -m pip install pytest==$PYTEST_VERSION pytest-cov cython joblib==$JOBLIB_VERSION
 fi
 
 if [[ "$COVERAGE" == "true" ]]; then
@@ -84,4 +90,5 @@ except ImportError:
     print('pandas not installed')
 "
 pip list
+python setup.py build_ext --inplace -j 3
 python setup.py develop

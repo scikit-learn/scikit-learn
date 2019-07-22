@@ -22,8 +22,8 @@ import scipy.sparse as sp
 from scipy import linalg
 from scipy import sparse
 from scipy.special import expit
+from joblib import Parallel, delayed
 
-from ..utils._joblib import Parallel, delayed
 from ..base import (BaseEstimator, ClassifierMixin, RegressorMixin,
                     MultiOutputMixin)
 from ..utils import check_array, check_X_y
@@ -397,6 +397,12 @@ class LinearRegression(LinearModel, RegressorMixin, MultiOutputMixin):
         If multiple targets are passed during the fit (y 2D), this
         is a 2D array of shape (n_targets, n_features), while if only
         one target is passed, this is a 1D array of length n_features.
+
+    rank_ : int
+        Rank of matrix `X`. Only available when `X` is dense.
+
+    singular_ : array, shape (min(X, y),)
+        Singular values of `X`. Only available when `X` is dense.
 
     intercept_ : array
         Independent term in the linear model.

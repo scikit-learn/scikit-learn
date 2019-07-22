@@ -43,9 +43,7 @@ solver = 'saga'
 n_samples = 10000
 
 # Memorized fetch_rcv1 for faster access
-dataset = fetch_20newsgroups_vectorized('all')
-X = dataset.data
-y = dataset.target
+X, y = fetch_20newsgroups_vectorized('all', return_X_y=True)
 X = X[:n_samples]
 y = y[:n_samples]
 

@@ -17,13 +17,13 @@ from traceback import format_exception_only
 
 import numpy as np
 import scipy.sparse as sp
+from joblib import Parallel, delayed
 
 from ..base import is_classifier, clone
 from ..utils import (indexable, check_random_state, safe_indexing,
                      _message_with_time)
 from ..utils.validation import _is_arraylike, _num_samples
 from ..utils.metaestimators import _safe_split
-from ..utils._joblib import Parallel, delayed
 from ..metrics.scorer import check_scoring, _check_multimetric_scoring
 from ..exceptions import FitFailedWarning
 from ._split import check_cv
@@ -56,7 +56,8 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
     groups : array-like, with shape (n_samples,), optional
         Group labels for the samples used while splitting the dataset into
-        train/test set.
+        train/test set. Only used in conjunction with a "Group" `cv` instance
+        (e.g., `GroupKFold`).
 
     scoring : string, callable, list/tuple, dict or None, default: None
         A single string (see :ref:`scoring_parameter`) or a callable
@@ -271,7 +272,8 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
     groups : array-like, with shape (n_samples,), optional
         Group labels for the samples used while splitting the dataset into
-        train/test set.
+        train/test set. Only used in conjunction with a "Group" `cv` instance
+        (e.g., `GroupKFold`).
 
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
@@ -644,7 +646,8 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None,
 
     groups : array-like, with shape (n_samples,), optional
         Group labels for the samples used while splitting the dataset into
-        train/test set.
+        train/test set. Only used in conjunction with a "Group" `cv` instance
+        (e.g., `GroupKFold`).
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
@@ -1123,7 +1126,8 @@ def learning_curve(estimator, X, y, groups=None,
 
     groups : array-like, with shape (n_samples,), optional
         Group labels for the samples used while splitting the dataset into
-        train/test set.
+        train/test set. Only used in conjunction with a "Group" `cv` instance
+        (e.g., `GroupKFold`).
 
     train_sizes : array-like, shape (n_ticks,), dtype float or int
         Relative or absolute numbers of training examples that will be used to
@@ -1210,10 +1214,12 @@ def learning_curve(estimator, X, y, groups=None,
         Scores on test set.
 
     fit_times : array, shape (n_ticks, n_cv_folds)
-        Times spent for fitting in seconds.
+        Times spent for fitting in seconds. Only present if ``return_times``
+        is True.
 
     score_times : array, shape (n_ticks, n_cv_folds)
-        Times spent for scoring in seconds.
+        Times spent for scoring in seconds. Only present if ``return_times``
+        is True.
 
     Notes
     -----
@@ -1407,7 +1413,8 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
 
     groups : array-like, with shape (n_samples,), optional
         Group labels for the samples used while splitting the dataset into
-        train/test set.
+        train/test set. Only used in conjunction with a "Group" `cv` instance
+        (e.g., `GroupKFold`).
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.

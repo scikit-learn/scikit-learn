@@ -1,10 +1,10 @@
 
 import numpy as np
+from numpy.testing import assert_allclose
 from itertools import product
 import pytest
 
 from sklearn.utils.testing import assert_raises, assert_raises_regex
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -16,6 +16,7 @@ from sklearn.metrics import mean_squared_log_error
 from sklearn.metrics import median_absolute_error
 from sklearn.metrics import max_error
 from sklearn.metrics import r2_score
+from sklearn.metrics import mean_tweedie_deviance
 
 from sklearn.metrics.regression import _check_reg_targets
 
@@ -35,6 +36,25 @@ def test_regression_metrics(n_samples=50):
     assert_almost_equal(max_error(y_true, y_pred), 1.)
     assert_almost_equal(r2_score(y_true, y_pred),  0.995, 2)
     assert_almost_equal(explained_variance_score(y_true, y_pred), 1.)
+    assert_almost_equal(mean_tweedie_deviance(y_true, y_pred, p=0),
+                        mean_squared_error(y_true, y_pred))
+
+    # Tweedie deviance needs positive y_pred, except for p=0,
+    # p>=2 needs positive y_true
+    # results evaluated by sympy
+    y_true = np.arange(1, 1 + n_samples)
+    y_pred = 2 * y_true
+    n = n_samples
+    assert_almost_equal(mean_tweedie_deviance(y_true, y_pred, p=-1),
+                        5/12 * n * (n**2 + 2 * n + 1))
+    assert_almost_equal(mean_tweedie_deviance(y_true, y_pred, p=1),
+                        (n + 1) * (1 - np.log(2)))
+    assert_almost_equal(mean_tweedie_deviance(y_true, y_pred, p=2),
+                        2 * np.log(2) - 1)
+    assert_almost_equal(mean_tweedie_deviance(y_true, y_pred, p=3/2),
+                        ((6 * np.sqrt(2) - 8) / n) * np.sqrt(y_true).sum())
+    assert_almost_equal(mean_tweedie_deviance(y_true, y_pred, p=3),
+                        np.sum(1 / y_true) / (4 * n))
 
 
 def test_multioutput_regression():
@@ -76,6 +96,42 @@ def test_regression_metrics_at_limits():
                         "used when targets contain negative values.",
                         mean_squared_log_error, [1., -2., 3.], [1., 2., 3.])
 
+    # Tweedie deviance error
+    p = -1.2
+    assert_allclose(mean_tweedie_deviance([0], [1.], p=p),
+                    2./(2.-p), rtol=1e-3)
+    with pytest.raises(ValueError,
+                       match="can only be used on strictly positive y_pred."):
+        mean_tweedie_deviance([0.], [0.], p=p)
+    assert_almost_equal(mean_tweedie_deviance([0.], [0.], p=0), 0.00, 2)
+
+    msg = "only be used on non-negative y_true and strictly positive y_pred."
+    with pytest.raises(ValueError, match=msg):
+        mean_tweedie_deviance([0.], [0.], p=1.0)
+
+    p = 1.5
+    assert_allclose(mean_tweedie_deviance([0.], [1.], p=p), 2./(2.-p))
+    msg = "only be used on non-negative y_true and strictly positive y_pred."
+    with pytest.raises(ValueError, match=msg):
+        mean_tweedie_deviance([0.], [0.], p=p)
+    p = 2.
+    assert_allclose(mean_tweedie_deviance([1.], [1.], p=p), 0.00,
+                    atol=1e-8)
+    msg = "can only be used on strictly positive y_true and y_pred."
+    with pytest.raises(ValueError, match=msg):
+        mean_tweedie_deviance([0.], [0.], p=p)
+    p = 3.
+    assert_allclose(mean_tweedie_deviance([1.], [1.], p=p),
+                    0.00, atol=1e-8)
+
+    msg = "can only be used on strictly positive y_true and y_pred."
+    with pytest.raises(ValueError, match=msg):
+        mean_tweedie_deviance([0.], [0.], p=p)
+
+    with pytest.raises(ValueError,
+                       match="deviance is only defined for p<=0 and p>=1."):
+        mean_tweedie_deviance([0.], [0.], p=0.5)
+
 
 def test__check_reg_targets():
     # All of length 3
@@ -93,7 +149,7 @@ def test__check_reg_targets():
         if type1 == type2 and n_out1 == n_out2:
             y_type, y_check1, y_check2, multioutput = _check_reg_targets(
                 y1, y2, None)
-            assert_equal(type1, y_type)
+            assert type1 == y_type
             if type1 == 'continuous':
                 assert_array_equal(y_check1, np.reshape(y1, (-1, 1)))
                 assert_array_equal(y_check2, np.reshape(y2, (-1, 1)))
@@ -143,8 +199,8 @@ def test_regression_multioutput_array():
 
     r = r2_score([[0, -1], [0, 1]], [[2, 2], [1, 1]], multioutput='raw_values')
     assert_array_almost_equal(r, [0, -3.5], decimal=2)
-    assert_equal(np.mean(r), r2_score([[0, -1], [0, 1]], [[2, 2], [1, 1]],
-                 multioutput='uniform_average'))
+    assert np.mean(r) == r2_score([[0, -1], [0, 1]], [[2, 2], [1, 1]],
+                                  multioutput='uniform_average')
     evs = explained_variance_score([[0, -1], [0, 1]], [[2, 2], [1, 1]],
                                    multioutput='raw_values')
     assert_array_almost_equal(evs, [0, -1.25], decimal=2)
@@ -155,11 +211,11 @@ def test_regression_multioutput_array():
     y_pred = [[1, 4], [-1, 1]]
     r2 = r2_score(y_true, y_pred, multioutput='raw_values')
     assert_array_almost_equal(r2, [1., -3.], decimal=2)
-    assert_equal(np.mean(r2), r2_score(y_true, y_pred,
-                 multioutput='uniform_average'))
+    assert np.mean(r2) == r2_score(y_true, y_pred,
+                                   multioutput='uniform_average')
     evs = explained_variance_score(y_true, y_pred, multioutput='raw_values')
     assert_array_almost_equal(evs, [1., -3.], decimal=2)
-    assert_equal(np.mean(evs), explained_variance_score(y_true, y_pred))
+    assert np.mean(evs) == explained_variance_score(y_true, y_pred)
 
     # Handling msle separately as it does not accept negative inputs.
     y_true = np.array([[0.5, 1], [1, 2], [7, 6]])
@@ -203,3 +259,29 @@ def test_regression_single_sample(metric):
     with pytest.warns(UndefinedMetricWarning, match=warning_msg):
         score = metric(y_true, y_pred)
         assert np.isnan(score)
+
+
+def test_tweedie_deviance_continuity():
+    n_samples = 100
+
+    y_true = np.random.RandomState(0).rand(n_samples) + 0.1
+    y_pred = np.random.RandomState(1).rand(n_samples) + 0.1
+
+    assert_allclose(mean_tweedie_deviance(y_true, y_pred, p=0 - 1e-10),
+                    mean_tweedie_deviance(y_true, y_pred, p=0))
+
+    # Ws we get closer to the limit, with 1e-12 difference the absolute
+    # tolerance to pass the below check increases. There are likely
+    # numerical precision issues on the edges of different definition
+    # regions.
+    assert_allclose(mean_tweedie_deviance(y_true, y_pred, p=1 + 1e-10),
+                    mean_tweedie_deviance(y_true, y_pred, p=1),
+                    atol=1e-6)
+
+    assert_allclose(mean_tweedie_deviance(y_true, y_pred, p=2 - 1e-10),
+                    mean_tweedie_deviance(y_true, y_pred, p=2),
+                    atol=1e-6)
+
+    assert_allclose(mean_tweedie_deviance(y_true, y_pred, p=2 + 1e-10),
+                    mean_tweedie_deviance(y_true, y_pred, p=2),
+                    atol=1e-6)
