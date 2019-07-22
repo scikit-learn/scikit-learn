@@ -30,12 +30,12 @@ from sklearn.linear_model import Ridge
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.utils import IS_PYPY
 from sklearn.utils.estimator_checks import (
-    _yield_all_checks,
     _safe_tags,
     set_checking_parameters,
     check_parameters_default_constructible,
     check_no_attributes_set_in_init,
-    check_class_weight_balanced_linear_classifier)
+    check_class_weight_balanced_linear_classifier,
+    readable_check_estimator_ids)
 
 
 def test_all_estimator_no_base_class():
@@ -81,21 +81,11 @@ def _tested_estimators():
         yield name, estimator
 
 
-def _rename_partial(val):
-    if isinstance(val, functools.partial):
-        kwstring = "".join(["{}={}".format(k, v)
-                            for k, v in val.keywords.items()])
-        return "{}({})".format(val.func.__name__, kwstring)
-    # FIXME once we have short reprs we can use them here!
-    if hasattr(val, "get_params") and not isinstance(val, type):
-        return type(val).__name__
-
-
 @pytest.mark.parametrize(
         "estimator, check",
         chain.from_iterable(check_estimator(estimator, generate_only=True)
                             for _, estimator in _tested_estimators()),
-        ids=_rename_partial)
+        ids=readable_check_estimator_ids)
 def test_estimators(estimator, check):
     # Common tests for estimator instances
     with ignore_warnings(category=(DeprecationWarning, ConvergenceWarning,
