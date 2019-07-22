@@ -61,6 +61,18 @@ def _type_of_html_estimator(estimator):
         name_tips = [_estimator_tool_tip(est) for est in estimators]
         return _EstHTMLInfo('parallel', estimators, names, name_tips)
 
+    elif hasattr(estimator, "estimator"):
+        name = estimator.__class__.__name__
+        name_tip = _estimator_tool_tip(estimator)
+        inner_estimator = estimator.estimator
+        return _EstHTMLInfo('single-meta', inner_estimator, name, name_tip)
+
+    elif hasattr(estimator, "base_estimator"):
+        name = estimator.__class__.__name__
+        name_tip = _estimator_tool_tip(estimator)
+        inner_estimator = estimator.base_estimator
+        return _EstHTMLInfo('single-meta', inner_estimator, name, name_tip)
+
     elif isinstance(estimator, BaseEstimator):
         name = estimator.__class__.__name__
         tool_tip = _estimator_tool_tip(estimator)
@@ -99,7 +111,12 @@ def _write_estimator_html(out, estimator, name):
             _write_estimator_html(out, est, name)
             out.write('</div></div>')  # sk-parallel-item sk-serial
         out.write('</div></div>')  # sk-parallel sk-serial-item
-
+    elif est_html_info.type == 'single-meta':
+        out.write('<div class="sk-serial-item sk-dashed-wrapped">')
+        _write_label_html(out, est_html_info.names, est_html_info.name_tips)
+        _write_estimator_html(out, est_html_info.estimators,
+                              est_html_info.estimators.__class__.__name__)
+        out.write('</div>')  # sk-serial-item # sk-serial
     elif est_html_info.type == 'single':
         out.write('<div class="sk-serial-item">'
                   '<div class="sk-estimator" sk-data-tooltip="{}">'
@@ -158,7 +175,7 @@ _STYLE = """
 }
 .sk-dashed-wrapped {
   border: 1px dashed gray;
-  padding: 0.25em;
+  padding: 0 0.25em 0.25em 0.25em;
 }
 .sk-label {
   text-align: center;
@@ -166,10 +183,8 @@ _STYLE = """
   font-weight: bold;
   background: white;
   display: inline-block;
-  border: 1px dotted rgb(171, 171, 171);
-  border-radius: 0.25em;
-  padding: 0.2em 0.5em;
-  margin: 0.1em;
+  text-decoration: underline;
+  margin: 0 0.5em;
 }
 .sk-label-container {
   text-align: center;
@@ -213,6 +228,7 @@ _STYLE = """
 .sk-top-container {
   display: flex;
   color: black;
+  padding-bottom: 1em;
 }
 """
 
