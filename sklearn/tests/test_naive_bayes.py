@@ -18,7 +18,6 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_no_warnings
 
 from sklearn.naive_bayes import GaussianNB, BernoulliNB
@@ -671,8 +670,13 @@ def test_catnb():
 
     # Check that unexpected parameters throw an error
     clf.handle_unknown = 'asdf'
-    assert_raises(ValueError, clf.fit, X3, y3)
-    assert_raises(ValueError, clf.partial_fit, X3, y3)
+    error_msg = ("The attribute 'handle_unknown' is '{}' and "
+                 "should be one of 'ignore', 'warn' or 'raise'").format('asdf')
+    with pytest.raises(ValueError, match=error_msg):
+        clf.fit(X3, y3)
+
+    with pytest.raises(ValueError, match=error_msg):
+        clf.partial_fit(X3, y3)
 
     clf.handle_unknown = 'warn'
     clf.fit(X3, y3)
@@ -712,10 +716,11 @@ def test_catnb():
     error_msg = ("Category {} not expected for feature {} "
                  "of features 0 - {}.".format(0, 0, 1))
     clf.handle_unknown = 'error'
-    # assert_raises_message(KeyError, clf.predict, X3_test)
-    assert_raise_message(KeyError, error_msg, clf.predict, X3_test)
+    with pytest.raises(KeyError, match=error_msg):
+        clf.predict(X3_test)
     clf.handle_unknown = 'warn'
-    assert_warns_message(UserWarning, error_msg, clf.predict, X3_test)
+    with pytest.warns(UserWarning, match=error_msg):
+        clf.predict(X3_test)
 
     # Check sample_weight
     X = np.array([[1, 3], [1, 3], [2, 4]])

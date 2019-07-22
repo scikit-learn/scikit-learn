@@ -55,7 +55,7 @@ class BaseNB(BaseEstimator, ClassifierMixin, metaclass=ABCMeta):
     def _check_X(self, X):
         """Validate input X
         """
-        return check_array(X)
+        pass
 
     def predict(self, X):
         """
@@ -711,6 +711,7 @@ class MultinomialNB(BaseDiscreteNB):
     Examples
     --------
     >>> import numpy as np
+    >>> np.random.seed(1)
     >>> X = np.random.randint(5, size=(6, 100))
     >>> y = np.array([1, 2, 3, 4, 5, 6])
     >>> from sklearn.naive_bayes import MultinomialNB
@@ -812,6 +813,7 @@ class ComplementNB(BaseDiscreteNB):
     Examples
     --------
     >>> import numpy as np
+    >>> np.random.seed(1)
     >>> X = np.random.randint(5, size=(6, 100))
     >>> y = np.array([1, 2, 3, 4, 5, 6])
     >>> from sklearn.naive_bayes import ComplementNB
@@ -914,6 +916,7 @@ class BernoulliNB(BaseDiscreteNB):
     Examples
     --------
     >>> import numpy as np
+    >>> np.random.seed(1)
     >>> X = np.random.randint(2, size=(6, 100))
     >>> Y = np.array([1, 2, 3, 4, 4, 5])
     >>> from sklearn.naive_bayes import BernoulliNB
@@ -946,13 +949,13 @@ class BernoulliNB(BaseDiscreteNB):
         self.class_prior = class_prior
 
     def _check_X(self, X):
-        X = super(BernoulliNB, self)._check_X(X)
+        X = super()._check_X(X)
         if self.binarize is not None:
             X = binarize(X, threshold=self.binarize)
         return X
 
     def _check_X_y(self, X, y):
-        X, y = super(BernoulliNB, self)._check_X_y(X, y)
+        X, y = super()._check_X_y(X, y)
         if self.binarize is not None:
             X = binarize(X, threshold=self.binarize)
         return X, y
@@ -1046,6 +1049,7 @@ class CategoricalNB(BaseDiscreteNB):
     Examples
     --------
     >>> import numpy as np
+    >>> np.random.seed(1)
     >>> X = np.random.randint(5, size=(6, 100))
     >>> y = np.array([1, 2, 3, 4, 5, 6])
     >>> from sklearn.naive_bayes import CategoricalNB
@@ -1084,8 +1088,7 @@ class CategoricalNB(BaseDiscreteNB):
         self : object
         """
         self._check_settings()
-        return super(CategoricalNB, self).fit(X, y,
-                                              sample_weight=sample_weight)
+        return super().fit(X, y, sample_weight=sample_weight)
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Incremental fit on a batch of samples.
@@ -1125,8 +1128,7 @@ class CategoricalNB(BaseDiscreteNB):
         self : object
         """
         self._check_settings()
-        return (super(CategoricalNB, self)
-                .partial_fit(X, y, classes, sample_weight=sample_weight))
+        return super().partial_fit(X, y, classes, sample_weight=sample_weight)
 
     def _check_X(self, X):
         return check_array(X, accept_sparse=False)
@@ -1161,10 +1163,8 @@ class CategoricalNB(BaseDiscreteNB):
         def _update_cat_count(X_feature, Y, cat_count, cat_mapping, n_classes):
             for j in range(n_classes):
                 mask = Y[:, j].astype(bool)
-                X_feature_class = X_feature[mask]
-                Y_class = Y[mask, j]
-                class_cats, n_feature_class = _unique_sums(X_feature_class,
-                                                           Y_class)
+                class_cats, n_feature_class = _unique_sums(X_feature[mask],
+                                                           Y[mask, j])
                 indices = [cat_mapping[cat] for cat in class_cats]
                 cat_count[j, indices] += n_feature_class
 
