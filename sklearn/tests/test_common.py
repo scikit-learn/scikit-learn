@@ -34,7 +34,7 @@ from sklearn.utils.estimator_checks import (
     check_parameters_default_constructible,
     check_no_attributes_set_in_init,
     check_class_weight_balanced_linear_classifier,
-    readable_check_estimator_ids)
+    check_estimator_ids)
 
 
 def test_all_estimator_no_base_class():
@@ -68,8 +68,8 @@ def _sample_func(x, y=1):
      "LogisticRegression(class_weight='balanced',random_state=1,"
      "solver='newton-cg',warm_start=True)")
 ])
-def test_readable_check_estimator_ids(val, expected):
-    assert readable_check_estimator_ids(val) == expected
+def test_check_estimator_ids(val, expected):
+    assert check_estimator_ids(val) == expected
 
 
 def _tested_estimators():
@@ -102,7 +102,7 @@ def _tested_estimators():
         "estimator, check",
         chain.from_iterable(check_estimator(estimator, generate_only=True)
                             for _, estimator in _tested_estimators()),
-        ids=readable_check_estimator_ids)
+        ids=check_estimator_ids)
 def test_estimators(estimator, check):
     # Common tests for estimator instances
     with ignore_warnings(category=(DeprecationWarning, ConvergenceWarning,

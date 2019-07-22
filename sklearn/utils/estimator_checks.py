@@ -267,7 +267,7 @@ def _yield_all_checks(name, estimator):
     yield check_fit_idempotent
 
 
-def readable_check_estimator_ids(val):
+def check_estimator_ids(val):
     """Create readable pytest ids for `check_estimator` when
     `generate_only=True`.
 
@@ -330,13 +330,13 @@ def check_estimator(Estimator, generate_only=False):
         from itertools import chain
         import pytest
         from sklearn.utils.estimator_checks import check_estimator
-        from sklearn.utils.estimator_checks import readable_check_estimator_ids
+        from sklearn.utils.estimator_checks import check_estimator_ids
 
         @pytest.mark.parametrize(
             'estimator, check',
             chain.from_iterable(check_estimator(est, generate_only=True)
                                 for est in estimators),
-            ids=readable_check_estimator_ids)
+            ids=check_estimator_ids)
         def test_sklearn_compatible_estimator(estimator, check):
             check(estimator)
     """
