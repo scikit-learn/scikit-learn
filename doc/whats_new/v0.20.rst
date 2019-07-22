@@ -20,6 +20,15 @@ Changelog
 - |Fix| Fixed a bug in :class:`cluster.KMeans` where KMeans++ initialisation
   could rarely result in an IndexError. :issue:`11756` by `Joel Nothman`_.
 
+:mod:`sklearn.compose`
+.....................
+
+- |Fix| Fixed an issue in :class:`compose.ColumnTransformer` where using
+  DataFrames whose column order differs between :func:``fit`` and
+  :func:``transform`` could lead to silently passing incorrect columns to the
+  ``remainder`` transformer.
+  :pr:`14237` by `Andreas Schuderer <schuderer>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
