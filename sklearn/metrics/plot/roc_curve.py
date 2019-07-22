@@ -88,7 +88,7 @@ class RocCurveVisualizer:
         self.auc_ = auc(fpr, tpr)
         self.estimator_name_ = estimator.__class__.__name__
 
-    def plot(self, ax=None, name=None, **line_kw):
+    def plot(self, ax=None, name=None, **kwargs):
         """Plot visualization
 
         Extra keyword arguments will be passed to matplotlib's `plot`.
@@ -110,10 +110,10 @@ class RocCurveVisualizer:
 
         name = self.estimator_name_ if name is None else name
 
-        if 'label' not in line_kw:
+        if 'label' not in kwargs:
             label = "{} (AUC = {:0.2f})".format(name, self.auc_)
-            line_kw['label'] = label
-        self.line_ = ax.plot(self.fpr_, self.tpr_, **line_kw)[0]
+            kwargs['label'] = label
+        self.line_ = ax.plot(self.fpr_, self.tpr_, **kwargs)[0]
         ax.set_xlabel("False Positive Rate")
         ax.set_ylabel("True Positive Rate")
         ax.legend()
@@ -125,7 +125,7 @@ class RocCurveVisualizer:
 
 def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
                    drop_intermediate=True, response_method="auto",
-                   name=None, ax=None, **line_kw):
+                   name=None, ax=None, **kwargs):
     """Plot Receiver operating characteristic (ROC) curve
 
     Extra keyword arguments will be passed to matplotlib's `plot`.
@@ -177,5 +177,5 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
                              pos_label=pos_label,
                              drop_intermediate=drop_intermediate,
                              response_method=response_method)
-    viz.plot(ax=ax, name=name, **line_kw)
+    viz.plot(ax=ax, name=name, **kwargs)
     return viz
