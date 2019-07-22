@@ -353,7 +353,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
                 "With the 'recursion' method, the response_method must be "
                 "'decision_function'. Got {}.".format(response_method)
             )
-        msg="'estimator' parameter must be a fitted estimator"
+        msg ="'estimator' parameter must be a fitted estimator"
         if isinstance(estimator, BaseGradientBoosting):
             fitted_attribute = 'estimators_'
         else:
