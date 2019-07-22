@@ -1075,6 +1075,42 @@ def _dcg_sample_scores(y_true, y_score, k=None,
 
 
 def _tie_averaged_dcg(y_true, y_score, discount_cumsum):
+    """
+    Compute DCG by averaging over possible permutations of ties.
+
+    The gain (`y_true`) of an index falling inside a tied group (in the order
+    induced by `y_score`) is replaced by the average gain within this group.
+    The discounted gain for a tied group is then the average `y_true` within
+    this group times the sum of discounts of the corresponding ranks.
+
+    This amounts to averaging scores for all possible orderings of the tied
+    groups.
+
+    (note in the case of dcg@k the discount is 0 after index k)
+
+    Parameters
+    ----------
+    y_true : ndarray
+        The true relevance scores
+
+    y_score : ndarray
+        Predicted scores
+
+    discount_cumsum : ndarray
+        Precomputed cumulative sum of the discounts.
+
+    Returns
+    -------
+    The discounted cumulative gain.
+
+    References
+    ----------
+    McSherry, F., & Najork, M. (2008, March). Computing information retrieval
+    performance measures efficiently in the presence of tied scores. In
+    European conference on information retrieval (pp. 414-421). Springer,
+    Berlin, Heidelberg.
+
+    """
     _, inv, counts = np.unique(
         - y_score, return_inverse=True, return_counts=True)
     ranked = np.zeros(len(counts))
