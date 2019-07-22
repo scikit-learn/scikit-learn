@@ -568,4 +568,3 @@ if __name__ == '__main__':
     # This module is run as a script to check that we have no dependency on
     # pytest for estimator checks.
     run_tests_without_pytest()
-
