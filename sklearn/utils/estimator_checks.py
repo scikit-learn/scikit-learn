@@ -329,8 +329,8 @@ def check_estimator(Estimator, generate_only=False):
 
         from itertools import chain
         import pytest
-        from sklearn.utils.estimator_check import check_estimator
-        from sklearn.utils.estimator_check import readable_check_estimator_ids
+        from sklearn.utils.estimator_checks import check_estimator
+        from sklearn.utils.estimator_checks import readable_check_estimator_ids
 
         @pytest.mark.parametrize(
             'estimator, check',
