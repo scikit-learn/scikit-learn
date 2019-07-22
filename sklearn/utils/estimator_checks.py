@@ -3,6 +3,7 @@ import warnings
 import sys
 import traceback
 import pickle
+import pytest
 from copy import deepcopy
 from functools import partial
 from inspect import signature
@@ -1266,9 +1267,8 @@ def check_nonsquare_error(name, estimator_orig):
     X, y = make_blobs(n_samples=20, n_features=10)
     estimator = clone(estimator_orig)
 
-    with assert_raises(ValueError, msg="The pairwise estimator {}"
-                       " does not raise an error on non-square data"
-                       .format(name)):
+    with pytest.raises(ValueError):
+
         estimator.fit(X, y)
 
 
