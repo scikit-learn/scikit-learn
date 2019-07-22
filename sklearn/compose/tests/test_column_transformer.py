@@ -9,8 +9,6 @@ import pytest
 
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_dict_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose_dense_sparse
 from sklearn.utils.testing import assert_almost_equal
@@ -241,8 +239,8 @@ def test_column_transformer_dataframe():
     X_df2 = X_df.copy()
     X_df2.columns = [1, 0]
     ct = ColumnTransformer([('trans', Trans(), 0)], remainder='drop')
-    assert_array_equal(ct.fit_transform(X_df), X_res_first)
-    assert_array_equal(ct.fit(X_df).transform(X_df), X_res_first)
+    assert_array_equal(ct.fit_transform(X_df2), X_res_first)
+    assert_array_equal(ct.fit(X_df2).transform(X_df2), X_res_first)
 
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] == 'remainder'
@@ -349,7 +347,7 @@ def test_column_transformer_sparse_stacking():
     col_trans.fit(X_array)
     X_trans = col_trans.transform(X_array)
     assert sparse.issparse(X_trans)
-    assert_equal(X_trans.shape, (X_trans.shape[0], X_trans.shape[0] + 1))
+    assert X_trans.shape == (X_trans.shape[0], X_trans.shape[0] + 1)
     assert_array_equal(X_trans.toarray()[:, 1:], np.eye(X_trans.shape[0]))
     assert len(col_trans.transformers_) == 2
     assert col_trans.transformers_[-1][0] != 'remainder'
@@ -494,6 +492,17 @@ def test_column_transformer_invalid_columns(remainder):
         assert_raise_message(ValueError, "Specifying the columns",
                              ct.fit, X_array)
 
+    # transformed n_features does not match fitted n_features
+    col = [0, 1]
+    ct = ColumnTransformer([('trans', Trans(), col)], remainder=remainder)
+    ct.fit(X_array)
+    X_array_more = np.array([[0, 1, 2], [2, 4, 6], [3, 6, 9]]).T
+    ct.transform(X_array_more)  # Should accept added columns
+    X_array_fewer = np.array([[0, 1, 2], ]).T
+    err_msg = 'Number of features'
+    with pytest.raises(ValueError, match=err_msg):
+        ct.transform(X_array_fewer)
+
 
 def test_column_transformer_invalid_transformer():
 
@@ -515,9 +524,9 @@ def test_make_column_transformer():
     norm = Normalizer()
     ct = make_column_transformer((scaler, 'first'), (norm, ['second']))
     names, transformers, columns = zip(*ct.transformers)
-    assert_equal(names, ("standardscaler", "normalizer"))
-    assert_equal(transformers, (scaler, norm))
-    assert_equal(columns, ('first', ['second']))
+    assert names == ("standardscaler", "normalizer")
+    assert transformers == (scaler, norm)
+    assert columns == ('first', ['second'])
 
 
 def test_make_column_transformer_pandas():
@@ -537,11 +546,11 @@ def test_make_column_transformer_kwargs():
     ct = make_column_transformer((scaler, 'first'), (norm, ['second']),
                                  n_jobs=3, remainder='drop',
                                  sparse_threshold=0.5)
-    assert_equal(ct.transformers, make_column_transformer(
-        (scaler, 'first'), (norm, ['second'])).transformers)
-    assert_equal(ct.n_jobs, 3)
-    assert_equal(ct.remainder, 'drop')
-    assert_equal(ct.sparse_threshold, 0.5)
+    assert ct.transformers == make_column_transformer(
+        (scaler, 'first'), (norm, ['second'])).transformers
+    assert ct.n_jobs == 3
+    assert ct.remainder == 'drop'
+    assert ct.sparse_threshold == 0.5
     # invalid keyword parameters should raise an error message
     assert_raise_message(
         TypeError,
@@ -579,7 +588,7 @@ def test_column_transformer_get_set_params():
            'transformer_weights': None,
            'verbose': False}
 
-    assert_dict_equal(ct.get_params(), exp)
+    assert ct.get_params() == exp
 
     ct.set_params(trans1__with_mean=False)
     assert not ct.get_params()['trans1__with_mean']
@@ -597,7 +606,7 @@ def test_column_transformer_get_set_params():
            'transformer_weights': None,
            'verbose': False}
 
-    assert_dict_equal(ct.get_params(), exp)
+    assert ct.get_params() == exp
 
 
 def test_column_transformer_named_estimators():
@@ -613,7 +622,7 @@ def test_column_transformer_named_estimators():
     assert isinstance(ct.named_transformers_.trans2, StandardScaler)
     assert not ct.named_transformers_.trans2.with_std
     # check it are fitted transformers
-    assert_equal(ct.named_transformers_.trans1.mean_, 1.)
+    assert ct.named_transformers_.trans1.mean_ == 1.
 
 
 def test_column_transformer_cloning():
@@ -647,7 +656,7 @@ def test_column_transformer_get_feature_names():
     ct = ColumnTransformer(
         [('col' + str(i), DictVectorizer(), i) for i in range(2)])
     ct.fit(X)
-    assert_equal(ct.get_feature_names(), ['col0__a', 'col0__b', 'col1__c'])
+    assert ct.get_feature_names() == ['col0__a', 'col0__b', 'col1__c']
 
     # passthrough transformers not supported
     ct = ColumnTransformer([('trans', 'passthrough', [0, 1])])
@@ -667,7 +676,7 @@ def test_column_transformer_get_feature_names():
     ct = ColumnTransformer(
         [('col0', DictVectorizer(), 0), ('col1', 'drop', 1)])
     ct.fit(X)
-    assert_equal(ct.get_feature_names(), ['col0__a', 'col0__b'])
+    assert ct.get_feature_names() == ['col0__a', 'col0__b']
 
 
 def test_column_transformer_special_strings():
@@ -1062,3 +1071,40 @@ def test_column_transformer_negative_column_indexes():
     tf_1 = ColumnTransformer([('ohe', ohe, [-1])], remainder='passthrough')
     tf_2 = ColumnTransformer([('ohe', ohe,  [2])], remainder='passthrough')
     assert_array_equal(tf_1.fit_transform(X), tf_2.fit_transform(X))
+
+
+@pytest.mark.parametrize("explicit_colname", ['first', 'second'])
+def test_column_transformer_reordered_column_names_remainder(explicit_colname):
+    """Regression test for issue #14223: 'Named col indexing fails with
+       ColumnTransformer remainder on changing DataFrame column ordering'
+
+       Should raise error on changed order combined with remainder.
+       Should allow for added columns in `transform` input DataFrame
+       as long as all preceding columns match.
+    """
+    pd = pytest.importorskip('pandas')
+
+    X_fit_array = np.array([[0, 1, 2], [2, 4, 6]]).T
+    X_fit_df = pd.DataFrame(X_fit_array, columns=['first', 'second'])
+
+    X_trans_array = np.array([[2, 4, 6], [0, 1, 2]]).T
+    X_trans_df = pd.DataFrame(X_trans_array, columns=['second', 'first'])
+
+    tf = ColumnTransformer([('bycol', Trans(), explicit_colname)],
+                           remainder=Trans())
+
+    tf.fit(X_fit_df)
+    err_msg = 'Column ordering must be equal'
+    with pytest.raises(ValueError, match=err_msg):
+        tf.transform(X_trans_df)
+
+    # No error for added columns if ordering is identical
+    X_extended_df = X_fit_df.copy()
+    X_extended_df['third'] = [3, 6, 9]
+    tf.transform(X_extended_df)  # No error should be raised
+
+    # No 'columns' AttributeError when transform input is a numpy array
+    X_array = X_fit_array.copy()
+    err_msg = 'Specifying the columns'
+    with pytest.raises(ValueError, match=err_msg):
+        tf.transform(X_array)

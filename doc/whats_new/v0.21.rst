@@ -9,9 +9,79 @@ Version 0.21.3
 
 **In development**
 
+Changed models
+--------------
+
+The following estimators and functions, when fit with the same data and
+parameters, may produce different models from the previous version. This often
+occurs due to changes in the modelling logic (bug fixes or enhancements), or in
+random sampling procedures.
+
+- The v0.20.0 release notes failed to mention a backwards incompatibility in
+  :func:`metrics.make_scorer` when `needs_proba=True` and `y_true` is binary.
+  Now, the scorer function is supposed to accept a 1D `y_pred` (i.e.,
+  probability of the positive class, shape `(n_samples,)`), instead of a 2D
+  `y_pred` (i.e., shape `(n_samples, 2)`).
+
 Changelog
 ---------
 
+
+:mod:`sklearn.inspection`
+.....................
+
+- |Fix| Fixed a bug in :func:`inspection.plot_partial_dependence` where 
+  ``target`` parameter was not being taken into account for multiclass problems.
+  :pr:`14393` by :user:`Guillem G. Subies <guillemgsubies>`.
+
+:mod:`sklearn.datasets`
+.......................
+
+- |Fix| :func:`datasets.fetch_california_housing`,
+  :func:`datasets.fetch_covtype`,
+  :func:`datasets.fetch_kddcup99`, :func:`datasets.fetch_olivetti_faces`,
+  :func:`datasets.fetch_rcv1`, and :func:`datasets.fetch_species_distributions`
+  try to persist the previously cache using the new ``joblib`` if the cahced
+  data was persisted using the deprecated ``sklearn.externals.joblib``. This
+  behavior is set to be deprecated and removed in v0.23.
+  :pr:`14197` by `Adrin Jalali`_.
+
+:mod:`sklearn.impute`
+.....................
+
+- |Fix| Fixed a bug in :class:`SimpleImputer` and :class:`IterativeImputer`
+  so that no errors are thrown when there are missing values in training data.
+  :pr:`13974` by `Frank Hoang <fhoang7>`.
+
+:mod:`sklearn.linear_model`
+...........................
+- |Fix| Fixed a bug in :class:`linear_model.LogisticRegressionCV` where
+  ``refit=False`` would fail depending on the ``'multiclass'`` and
+  ``'penalty'`` parameters (regression introduced in 0.21). :pr:`14087` by
+  `Nicolas Hug`_.
+
+:mod:`sklearn.tree`
+...................
+
+- |Fix| Fixed bug in :func:`tree.export_text` when the tree has one feature and 
+  a single feature name is passed in. :pr:`14053` by `Thomas Fan`
+
+:mod:`sklearn.neighbors`
+........................
+
+- |Fix| Fixed a bug in :class:`neighbors.NeighborhoodComponentsAnalysis` where
+  the validation of initial parameters ``n_components``, ``max_iter`` and
+  ``tol`` required too strict types. :pr:`14092` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.compose`
+.....................
+
+- |Fix| Fixed an issue in :class:`compose.ColumnTransformer` where using
+  DataFrames whose column order differs between :func:``fit`` and
+  :func:``transform`` could lead to silently passing incorrect columns to the
+  ``remainder`` transformer.
+  :pr:`14237` by `Andreas Schuderer <schuderer>`.
 
 .. _changes_0_21_2:
 
@@ -45,7 +115,7 @@ Changelog
   by :user:`James Myatt <jamesmyatt>`.
 
 :mod:`sklearn.tree`
-................................
+...................
 
 - |Fix| Fixed an issue with :func:`plot_tree` where it display
   entropy calculations even for `gini` criterion in DecisionTreeClassifiers.
@@ -72,6 +142,13 @@ This is a bug-fix release to primarily resolve some packaging issues in version
 Changelog
 ---------
 
+:mod:`sklearn.inspection`
+.........................
+
+- |Fix| Fixed a bug in :func:`inspection.partial_dependence` to only check
+  classifier and not regressor for the multiclass-multioutput case.
+  :pr:`14309` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -87,7 +164,7 @@ Changelog
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.neighbors`
-......................
+........................
 
 - |Fix| Fixed a bug in :class:`neighbors.KernelDensity` which could not be
   restored from a pickle if ``sample_weight`` had been used.
@@ -366,6 +443,7 @@ Support for Python 3.4 and below has been officially dropped.
   - all the single node trees in feature importance calculation are ignored
   - in case all trees have only one single node (i.e. a root node),
     feature importances will be an array of all zeros.
+
   :pr:`13636` and :pr:`13620` by `Adrin Jalali`_.
 
 - |Fix| Fixed a bug in :class:`ensemble.GradientBoostingClassifier` and
@@ -505,7 +583,7 @@ Support for Python 3.4 and below has been officially dropped.
 ...........................
 
 - |Enhancement| :class:`linear_model.Ridge` now preserves ``float32`` and
-  ``float64`` dtypes. :issues:`8769` and :issues:`11000` by
+  ``float64`` dtypes. :issue:`8769` and :issue:`11000` by
   :user:`Guillaume Lemaitre <glemaitre>`, and :user:`Joan Massich <massich>`
 
 - |Feature| :class:`linear_model.LogisticRegression` and
@@ -698,6 +776,7 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`mixture.BayesianGaussianMixture`, where ``fit_predict`` and
   ``fit.predict`` were not equivalent. :pr:`13142` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 
 :mod:`sklearn.model_selection`
 ..............................

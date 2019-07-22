@@ -34,6 +34,7 @@ from ..base import ClassifierMixin, RegressorMixin, is_classifier, is_regressor
 
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_array, check_random_state, check_X_y, safe_indexing
+from ..utils.extmath import softmax
 from ..utils.extmath import stable_cumsum
 from ..metrics import accuracy_score, r2_score
 from ..utils.validation import check_is_fitted
@@ -361,14 +362,13 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
     ...                            n_informative=2, n_redundant=0,
     ...                            random_state=0, shuffle=False)
     >>> clf = AdaBoostClassifier(n_estimators=100, random_state=0)
-    >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-    AdaBoostClassifier(algorithm='SAMME.R', base_estimator=None,
-            learning_rate=1.0, n_estimators=100, random_state=0)
-    >>> clf.feature_importances_  # doctest: +ELLIPSIS
+    >>> clf.fit(X, y)
+    AdaBoostClassifier(n_estimators=100, random_state=0)
+    >>> clf.feature_importances_
     array([0.28..., 0.42..., 0.14..., 0.16...])
     >>> clf.predict([[0, 0, 0, 0]])
     array([1])
-    >>> clf.score(X, y)  # doctest: +ELLIPSIS
+    >>> clf.score(X, y)
     0.983...
 
     See also
@@ -749,6 +749,25 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             else:
                 yield pred / norm
 
+    @staticmethod
+    def _compute_proba_from_decision(decision, n_classes):
+        """Compute probabilities from the decision function.
+
+        This is based eq. (4) of [1] where:
+            p(y=c|X) = exp((1 / K-1) f_c(X)) / sum_k(exp((1 / K-1) f_k(X)))
+                     = softmax((1 / K-1) * f(X))
+
+        References
+        ----------
+        .. [1] J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost",
+               2009.
+        """
+        if n_classes == 2:
+            decision = np.vstack([-decision, decision]).T / 2
+        else:
+            decision /= (n_classes - 1)
+        return softmax(decision, copy=False)
+
     def predict_proba(self, X):
         """Predict class probabilities for X.
 
@@ -776,22 +795,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         if n_classes == 1:
             return np.ones((_num_samples(X), 1))
 
-        if self.algorithm == 'SAMME.R':
-            # The weights are all 1. for SAMME.R
-            proba = sum(_samme_proba(estimator, n_classes, X)
-                        for estimator in self.estimators_)
-        else:  # self.algorithm == "SAMME"
-            proba = sum(estimator.predict_proba(X) * w
-                        for estimator, w in zip(self.estimators_,
-                                                self.estimator_weights_))
-
-        proba /= self.estimator_weights_.sum()
-        proba = np.exp((1. / (n_classes - 1)) * proba)
-        normalizer = proba.sum(axis=1)[:, np.newaxis]
-        normalizer[normalizer == 0.0] = 1.0
-        proba /= normalizer
-
-        return proba
+        decision = self.decision_function(X)
+        return self._compute_proba_from_decision(decision, n_classes)
 
     def staged_predict_proba(self, X):
         """Predict class probabilities for X.
@@ -820,30 +825,9 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         X = self._validate_data(X)
 
         n_classes = self.n_classes_
-        proba = None
-        norm = 0.
 
-        for weight, estimator in zip(self.estimator_weights_,
-                                     self.estimators_):
-            norm += weight
-
-            if self.algorithm == 'SAMME.R':
-                # The weights are all 1. for SAMME.R
-                current_proba = _samme_proba(estimator, n_classes, X)
-            else:  # elif self.algorithm == "SAMME":
-                current_proba = estimator.predict_proba(X) * weight
-
-            if proba is None:
-                proba = current_proba
-            else:
-                proba += current_proba
-
-            real_proba = np.exp((1. / (n_classes - 1)) * (proba / norm))
-            normalizer = real_proba.sum(axis=1)[:, np.newaxis]
-            normalizer[normalizer == 0.0] = 1.0
-            real_proba /= normalizer
-
-            yield real_proba
+        for decision in self.staged_decision_function(X):
+            yield self._compute_proba_from_decision(decision, n_classes)
 
     def predict_log_proba(self, X):
         """Predict class log-probabilities for X.
@@ -885,8 +869,8 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
     ----------
     base_estimator : object, optional (default=None)
         The base estimator from which the boosted ensemble is built.
-        Support for sample weighting is required. If ``None``, then
-        the base estimator is ``DecisionTreeRegressor(max_depth=3)``
+        If ``None``, then the base estimator is
+        ``DecisionTreeRegressor(max_depth=3)``.
 
     n_estimators : integer, optional (default=50)
         The maximum number of estimators at which boosting is terminated.
@@ -928,14 +912,13 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
     >>> X, y = make_regression(n_features=4, n_informative=2,
     ...                        random_state=0, shuffle=False)
     >>> regr = AdaBoostRegressor(random_state=0, n_estimators=100)
-    >>> regr.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-    AdaBoostRegressor(base_estimator=None, learning_rate=1.0, loss='linear',
-            n_estimators=100, random_state=0)
-    >>> regr.feature_importances_  # doctest: +ELLIPSIS
+    >>> regr.fit(X, y)
+    AdaBoostRegressor(n_estimators=100, random_state=0)
+    >>> regr.feature_importances_
     array([0.2788..., 0.7109..., 0.0065..., 0.0036...])
-    >>> regr.predict([[0, 0, 0, 0]])  # doctest: +ELLIPSIS
+    >>> regr.predict([[0, 0, 0, 0]])
     array([4.7972...])
-    >>> regr.score(X, y)  # doctest: +ELLIPSIS
+    >>> regr.score(X, y)
     0.9771...
 
     See also

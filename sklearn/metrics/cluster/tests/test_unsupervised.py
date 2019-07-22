@@ -5,10 +5,8 @@ from scipy.sparse import csr_matrix
 
 from sklearn import datasets
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_warns_message
 from sklearn.metrics.cluster import silhouette_score
 from sklearn.metrics.cluster import silhouette_samples
@@ -32,7 +30,7 @@ def test_silhouette():
         # Given that the actual labels are used, we can assume that S would be
         # positive.
         score_precomputed = silhouette_score(D, y, metric='precomputed')
-        assert_greater(score_precomputed, 0)
+        assert score_precomputed > 0
         # Test without calculating D
         score_euclidean = silhouette_score(X, y, metric='euclidean')
         pytest.approx(score_precomputed, score_euclidean)
@@ -50,8 +48,8 @@ def test_silhouette():
         score_euclidean = silhouette_score(X, y, metric='euclidean',
                                            sample_size=int(X.shape[0] / 2),
                                            random_state=0)
-        assert_greater(score_precomputed, 0)
-        assert_greater(score_euclidean, 0)
+        assert score_precomputed > 0
+        assert score_euclidean > 0
         pytest.approx(score_euclidean, score_precomputed)
 
         if X is X_dense:
@@ -156,8 +154,8 @@ def test_non_encoded_labels():
     dataset = datasets.load_iris()
     X = dataset.data
     labels = dataset.target
-    assert_equal(
-        silhouette_score(X, labels * 2 + 10), silhouette_score(X, labels))
+    assert (
+        silhouette_score(X, labels * 2 + 10) == silhouette_score(X, labels))
     assert_array_equal(
         silhouette_samples(X, labels * 2 + 10), silhouette_samples(X, labels))
 
@@ -166,8 +164,8 @@ def test_non_numpy_labels():
     dataset = datasets.load_iris()
     X = dataset.data
     y = dataset.target
-    assert_equal(
-        silhouette_score(list(X), list(y)), silhouette_score(X, y))
+    assert (
+        silhouette_score(list(X), list(y)) == silhouette_score(X, y))
 
 
 def assert_raises_on_only_one_label(func):
@@ -192,12 +190,12 @@ def test_calinski_harabasz_score():
     assert_raises_on_all_points_same_cluster(calinski_harabasz_score)
 
     # Assert the value is 1. when all samples are equals
-    assert_equal(1., calinski_harabasz_score(np.ones((10, 2)),
-                                             [0] * 5 + [1] * 5))
+    assert 1. == calinski_harabasz_score(np.ones((10, 2)),
+                                         [0] * 5 + [1] * 5)
 
     # Assert the value is 0. when all the mean cluster are equal
-    assert_equal(0., calinski_harabasz_score([[-1, -1], [1, 1]] * 10,
-                                             [0] * 10 + [1] * 10))
+    assert 0. == calinski_harabasz_score([[-1, -1], [1, 1]] * 10,
+                                         [0] * 10 + [1] * 10)
 
     # General case (with non numpy arrays)
     X = ([[0, 0], [1, 1]] * 5 + [[3, 3], [4, 4]] * 5 +
