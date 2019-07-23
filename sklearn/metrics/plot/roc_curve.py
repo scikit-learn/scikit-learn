@@ -13,7 +13,7 @@ class RocCurveVisualizer:
         False positive rate.
     tpr : ndarray
         True positive rate.
-    auc_roc :
+    auc_roc : float
         Area under ROC curve.
     estimator_name : str
         Name of estimator.
