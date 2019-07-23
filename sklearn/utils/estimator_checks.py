@@ -2275,10 +2275,8 @@ def check_non_transformer_estimators_n_iter(name, estimator_orig):
         y_ = enforce_estimator_tags_y(estimator, y_)
 
         set_random_state(estimator, 0)
-        if name == 'AffinityPropagation':
-            estimator.fit(X)
-        else:
-            estimator.fit(X, y_)
+
+        estimator.fit(X, y_)
 
         assert estimator.n_iter_ >= 1
 
