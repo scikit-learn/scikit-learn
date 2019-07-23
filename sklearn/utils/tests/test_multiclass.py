@@ -22,6 +22,7 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import SkipTest
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn.utils.multiclass import unique_labels
 from sklearn.utils.multiclass import is_multilabel
@@ -278,7 +279,6 @@ def test_check_classification_targets():
             for example in EXAMPLES[y_type]:
                 check_classification_targets(example)
 
-# @ignore_warnings
 def test_type_of_target():
     for group, group_examples in iteritems(EXAMPLES):
         for example in group_examples:
@@ -301,7 +301,8 @@ def test_type_of_target():
     except ImportError:
         raise SkipTest("Pandas not found")
 
-    y = SparseSeries([1, 0, 0, 1, 0])
+    with ignore_warnings():
+        y = SparseSeries([1, 0, 0, 1, 0])
     msg = "y cannot be class 'SparseSeries'."
     assert_raises_regex(ValueError, msg, type_of_target, y)
 
