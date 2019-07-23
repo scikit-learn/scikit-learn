@@ -11,7 +11,7 @@
 # matrix entry) from which we pull from local Travis repository. This allows
 # us to keep build artefact for gcc + cython, and gain time
 
-set -e
+set -ex
 
 echo 'List files from cached directories'
 echo 'pip:'
@@ -38,7 +38,7 @@ make_conda() {
     export PATH=$MINICONDA_PATH/bin:$PATH
     conda update --yes conda
 
-    conda create -n testenv --yes -c conda-forge $TO_INSTALL
+    conda create -c conda-forge -n testenv --yes $TO_INSTALL
     source activate testenv
 }
 
