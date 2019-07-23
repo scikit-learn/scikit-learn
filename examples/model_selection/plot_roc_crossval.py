@@ -75,13 +75,13 @@ for i, (train, test) in enumerate(cv.split(X, y)):
                          alpha=0.3, lw=1, ax=ax)
     visualizers.append(viz)
 
-    interp_tpr = interp(mean_fpr, viz.fpr_, viz.tpr_)
+    interp_tpr = interp(mean_fpr, viz.fpr, viz.tpr)
     interp_tpr[0] = 0.0
     tprs.append(interp_tpr)
-    aucs.append(viz.auc_)
+    aucs.append(viz.auc_roc)
 
-plt.plot([0, 1], [0, 1], linestyle='--', lw=2, color='r',
-         label='Chance', alpha=.8)
+ax.plot([0, 1], [0, 1], linestyle='--', lw=2, color='r',
+        label='Chance', alpha=.8)
 
 mean_tpr = np.mean(tprs, axis=0)
 mean_tpr[-1] = 1.0
