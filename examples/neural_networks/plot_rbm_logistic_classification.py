@@ -76,9 +76,9 @@ def nudge_dataset(X, Y):
 
 
 # Load Data
-digits = datasets.load_digits()
-X = np.asarray(digits.data, 'float32')
-X, Y = nudge_dataset(X, digits.target)
+X, y = datasets.load_digits(return_X_y=True)
+X = np.asarray(X, 'float32')
+X, Y = nudge_dataset(X, y)
 X = (X - np.min(X, 0)) / (np.max(X, 0) + 0.0001)  # 0-1 scaling
 
 X_train, X_test, Y_train, Y_test = train_test_split(
