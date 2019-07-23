@@ -22,7 +22,9 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 from sklearn.discriminant_analysis import _cov
 
-from sklearn.covariance import LedoitWolf, ShrunkCovariance, EmpiricalCovariance
+from sklearn.covariance import ShrunkCovariance
+from sklearn.covariance import LedoitWolf
+from sklearn.covariance import EmpiricalCovariance
 
 # Data is just 6 separable points in the plane
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]], dtype='f')
@@ -95,7 +97,9 @@ def test_lda_predict():
     # Test unknown solver
     clf = LinearDiscriminantAnalysis(solver="dummy")
     assert_raises(ValueError, clf.fit, X, y)
-    clf = LinearDiscriminantAnalysis(solver="svd", covariance_estimator=LedoitWolf())
+    clf = LinearDiscriminantAnalysis(
+            solver="svd",
+            covariance_estimator=LedoitWolf())
     assert_raises(NotImplementedError, clf.fit, X, y)
 
 
@@ -335,32 +339,50 @@ def test_lda_store_covariance():
 
 def test_lda_shrinkage():
     """
-    Test that shrunk covariance estimator and shrinkage parameter behave the same
+    Test that shrunk covariance estimator and
+    shrinkage parameter behave the same
     """
     X = np.random.rand(100, 10)
     Y = np.random.randint(3, size=(100))
-    c1 = LinearDiscriminantAnalysis(store_covariance=True, shrinkage=0.5, solver="lsqr")
-    c2 = LinearDiscriminantAnalysis(store_covariance=True, covariance_estimator=ShrunkCovariance(shrinkage=0.5), solver="lsqr")
+    c1 = LinearDiscriminantAnalysis(
+            store_covariance=True,
+            shrinkage=0.5,
+            solver="lsqr")
+    c2 = LinearDiscriminantAnalysis(
+            store_covariance=True,
+            covariance_estimator=ShrunkCovariance(shrinkage=0.5),
+            solver="lsqr")
     c1.fit(X, Y)
     c2.fit(X, Y)
     for i in range(2):
         assert_array_almost_equal(c1.means_[i], c2.means_[i])
     assert_array_almost_equal(c1.covariance_, c2.covariance_)
 
+
 def test_lda_ledoitwolf():
     """
-    When shrinkage="auto" current implementation uses ledoitwolf estimation of covariance after standardizing the data.
+    When shrinkage="auto" current implementation
+    uses ledoitwolf estimation of
+    covariance after standardizing the data.
     This checks that it is indeed the case
     """
     X = np.random.rand(100, 10)
     Y = np.random.randint(3, size=(100,))
-    c1 = LinearDiscriminantAnalysis(store_covariance=True, shrinkage="auto", solver="lsqr")
-    c2 = LinearDiscriminantAnalysis(store_covariance=True, covariance_estimator=LedoitWolf(), solver="lsqr", standardize=True)
+    c1 = LinearDiscriminantAnalysis(
+            store_covariance=True,
+            shrinkage="auto",
+            solver="lsqr")
+    c2 = LinearDiscriminantAnalysis(
+            store_covariance=True,
+            covariance_estimator=LedoitWolf(),
+            solver="lsqr",
+            standardize=True)
     c1.fit(X, Y)
     c2.fit(X, Y)
     for i in range(2):
         assert_array_almost_equal(c1.means_[i], c2.means_[i])
     assert_array_almost_equal(c1.covariance_, c2.covariance_)
+
 
 @pytest.mark.parametrize('n_features', [3, 5])
 @pytest.mark.parametrize('n_classes', [5, 3])
@@ -458,7 +480,10 @@ def test_qda_priors(solver):
     n_pos = np.sum(y_pred == 2)
 
     neg = 1e-15
-    clf = QuadraticDiscriminantAnalysis(solver=solver, priors=np.array([neg, 1 - neg]))
+    clf = QuadraticDiscriminantAnalysis(
+            solver=solver,
+            priors=np.array([neg, 1 - neg])
+    )
     y_pred = clf.fit(X6, y6).predict(X6)
     n_pos2 = np.sum(y_pred == 2)
 
@@ -472,7 +497,10 @@ def test_qda_store_covariance(solver):
     assert not hasattr(clf, 'covariance_')
 
     # Test the actual attribute:
-    clf = QuadraticDiscriminantAnalysis(solver=solver, store_covariance=True).fit(X6, y6)
+    clf = QuadraticDiscriminantAnalysis(
+            solver=solver,
+            store_covariance=True
+    ).fit(X6, y6)
     assert hasattr(clf, 'covariance_')
 
     assert_array_almost_equal(
@@ -509,15 +537,22 @@ def test_qda_regularization(solver):
     y_pred5 = clf.predict(X5)
     assert_array_equal(y_pred5, y5)
 
+
 def test_qda_ledoitwolf():
-    clf = QuadraticDiscriminantAnalysis(solver="lsqr", covariance_estimator=LedoitWolf())
+    clf = QuadraticDiscriminantAnalysis(
+            solver="lsqr",
+            covariance_estimator=LedoitWolf()
+    )
     with ignore_warnings():
         clf.fit(X2, y6)
     y_pred = clf.predict(X2)
     assert_array_equal(y_pred, y6)
-    
+
     # Case n_samples_in_a_class < n_features
-    clf = QuadraticDiscriminantAnalysis(solver="lsqr", covariance_estimator=LedoitWolf())
+    clf = QuadraticDiscriminantAnalysis(
+            solver="lsqr",
+            covariance_estimator=LedoitWolf()
+    )
     with ignore_warnings():
         clf.fit(X5, y5)
     y_pred5 = clf.predict(X5)
@@ -527,13 +562,20 @@ def test_qda_ledoitwolf():
 def test_qda_covariance_sample_estimate():
     X = np.random.rand(100, 10)
     Y = np.random.randint(3, size=(100))
-    c1 = QuadraticDiscriminantAnalysis(solver="lsqr", covariance_estimator=EmpiricalCovariance())
-    c2 = QuadraticDiscriminantAnalysis(solver="lsqr", store_covariance=True)
+    c1 = QuadraticDiscriminantAnalysis(
+            solver="lsqr",
+            covariance_estimator=EmpiricalCovariance()
+    )
+    c2 = QuadraticDiscriminantAnalysis(
+            solver="lsqr",
+            store_covariance=True
+    )
     c1.fit(X, Y)
     c2.fit(X, Y)
     for i in range(2):
         assert_array_almost_equal(c1.means_[i], c2.means_[i])
     assert_array_almost_equal(c1.covariance_, c2.covariance_)
+
 
 def test_covariance():
     x, y = make_blobs(n_samples=100, n_features=5,
