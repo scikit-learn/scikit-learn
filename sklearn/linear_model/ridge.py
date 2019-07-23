@@ -314,10 +314,10 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         by scipy.sparse.linalg. For 'sag' and saga solver, the default value is
         1000.
 
-    tol : float
+    tol : float, default 1e-3
         Precision of the solution.
 
-    verbose : int
+    verbose : int, default 0
         Verbosity level. Setting verbose > 0 will display additional
         information depending on the solver used.
 
@@ -619,7 +619,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
 
     Parameters
     ----------
-    alpha : {float, array-like}, shape (n_targets)
+    alpha : {float, array-like}, shape (n_targets), default 1.0
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
@@ -649,7 +649,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         For 'sparse_cg' and 'lsqr' solvers, the default value is determined
         by scipy.sparse.linalg. For 'sag' solver, the default value is 1000.
 
-    tol : float
+    tol : float, default 1e-3
         Precision of the solution.
 
     solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga'}
@@ -771,14 +771,14 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
     Parameters
     ----------
-    alpha : float
+    alpha : float, default 1.0
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
         Alpha corresponds to ``C^-1`` in other linear models such as
         LogisticRegression or LinearSVC.
 
-    fit_intercept : boolean
+    fit_intercept : boolean, default True
         Whether to calculate the intercept for this model. If set to false, no
         intercept will be used in calculations (e.g. data is expected to be
         already centered).
@@ -798,7 +798,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         Maximum number of iterations for conjugate gradient solver.
         The default value is determined by scipy.sparse.linalg.
 
-    tol : float
+    tol : float, default 1e-3
         Precision of the solution.
 
     class_weight : dict or 'balanced', optional
@@ -1590,14 +1590,17 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
 
     Parameters
     ----------
-    alphas : numpy array of shape [n_alphas]
+    alphas : numpy array of shape [n_alphas], list or tuple
         Array of alpha values to try.
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
         Alpha corresponds to ``C^-1`` in other linear models such as
         LogisticRegression or LinearSVC.
+        Default value is (0.1, 1.0, 10.0)
         If using generalized cross-validation, alphas must be positive.
+        Note: the `alphas` feature will be of `np.ndarray` type even if the
+        constructor parameter was a list or a tuple.
 
     fit_intercept : bool, default True
         Whether to calculate the intercept for this model. If set
@@ -1704,15 +1707,18 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     Parameters
     ----------
-    alphas : numpy array of shape [n_alphas]
+    alphas : numpy array of shape [n_alphas], list or tuple
         Array of alpha values to try.
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
         Alpha corresponds to ``C^-1`` in other linear models such as
         LogisticRegression or LinearSVC.
+        Default value is (0.1, 1.0, 10.0)
+        Note: the `alphas` feature will be of `np.ndarray` type even if the
+        constructor parameter was a list or a tuple.
 
-    fit_intercept : boolean
+    fit_intercept : boolean, default True
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
