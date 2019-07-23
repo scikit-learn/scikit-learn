@@ -65,7 +65,7 @@ def _register_dask():
     except ImportError:
         msg = ("To use the dask.distributed backend you must install both "
                "the `dask` and distributed modules.\n\n"
-               "See http://dask.pydata.org/en/latest/install.html for more "
+               "See https://dask.pydata.org/en/latest/install.html for more "
                "information.")
         raise ImportError(msg)
 
@@ -874,8 +874,12 @@ class Parallel(Logger):
             n_jobs = self._initialize_backend()
         else:
             n_jobs = self._effective_n_jobs()
+        backend_name = self._backend.__class__.__name__
+        if n_jobs == 0:
+            raise RuntimeError("%s has no active worker." % backend_name)
+
         self._print("Using backend %s with %d concurrent workers.",
-                    (self._backend.__class__.__name__, n_jobs))
+                    (backend_name, n_jobs))
         if hasattr(self._backend, 'start_call'):
             self._backend.start_call()
         iterator = iter(iterable)
