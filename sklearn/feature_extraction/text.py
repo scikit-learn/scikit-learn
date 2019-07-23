@@ -76,8 +76,8 @@ def _analyze(doc, analyzer=None, tokenizer=None, ngrams=None,
     """Chain together an optional series of text processing steps to go from
     a single document to ngrams, with or without tokenizing or preprocessing.
 
-    If analyzer is used, it happens at the very end, and in this codebase is
-    intended to replace the preprocessor, tokenizer, and ngrams step.
+    If analyzer is used, only the decoder argument is used, as the analyzer is
+    intended to replace the preprocessor, tokenizer, and ngrams steps.
 
     Parameters
     ----------
@@ -93,19 +93,21 @@ def _analyze(doc, analyzer=None, tokenizer=None, ngrams=None,
     ngrams: list
         A sequence of tokens, possibly with pairs, triples, etc.
     """
+
     if decoder is not None:
         doc = decoder(doc)
-    if preprocessor is not None:
-        doc = preprocessor(doc)
-    if tokenizer is not None:
-        doc = tokenizer(doc)
-    if ngrams is not None:
-        if stop_words is not None:
-            doc = ngrams(doc, stop_words)
-        else:
-            doc = ngrams(doc)
     if analyzer is not None:
         doc = analyzer(doc)
+    else:
+        if preprocessor is not None:
+            doc = preprocessor(doc)
+        if tokenizer is not None:
+            doc = tokenizer(doc)
+        if ngrams is not None:
+            if stop_words is not None:
+                doc = ngrams(doc, stop_words)
+            else:
+                doc = ngrams(doc)
     return doc
 
 
