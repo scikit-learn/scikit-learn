@@ -14,6 +14,12 @@ This is a bug-fix release with some bug fixes applied to version 0.20.3.
 Changelog
 ---------
 
+:mod:`sklearn.cluster`
+..............................
+
+- |Fix| Fixed a bug in :class:`cluster.KMeans` where KMeans++ initialisation
+  could rarely result in an IndexError. :issue:`11756` by `Joel Nothman`_.
+
 :mod:`sklearn.model_selection`
 ..............................
 
