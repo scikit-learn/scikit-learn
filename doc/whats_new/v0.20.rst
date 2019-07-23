@@ -14,6 +14,8 @@ This is a bug-fix release with some bug fixes applied to version 0.20.3.
 Changelog
 ---------
 
+The bundled version of joblib was upgraded from 0.13.0 to 0.13.2.
+
 :mod:`sklearn.cluster`
 ..............................
 
