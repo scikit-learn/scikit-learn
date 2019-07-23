@@ -20,10 +20,10 @@ IF SKLEARN_OPENMP_SUPPORTED:
 from libc.stdlib cimport malloc, free
 from libc.string cimport memcpy
 
-from .types cimport X_BINNED_DTYPE_C
-from .types cimport Y_DTYPE_C
-from .types cimport hist_struct
-from .types import HISTOGRAM_DTYPE
+from .common cimport X_BINNED_DTYPE_C
+from .common cimport Y_DTYPE_C
+from .common cimport hist_struct
+from .common import HISTOGRAM_DTYPE
 
 
 cdef struct split_info_struct:

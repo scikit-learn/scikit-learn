@@ -15,7 +15,7 @@ from ...metrics import check_scoring
 from ...model_selection import train_test_split
 from ...preprocessing import LabelEncoder
 from ._gradient_boosting import _update_raw_predictions
-from .types import Y_DTYPE, X_DTYPE, X_BINNED_DTYPE
+from .common import Y_DTYPE, X_DTYPE, X_BINNED_DTYPE
 
 from .binning import _BinMapper
 from .grower import TreeGrower

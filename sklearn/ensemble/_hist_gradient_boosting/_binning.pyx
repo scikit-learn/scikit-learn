@@ -14,7 +14,7 @@ from numpy.math cimport INFINITY
 from cython.parallel import prange
 from libc.math cimport isnan
 
-from .types cimport X_DTYPE_C, X_BINNED_DTYPE_C
+from .common cimport X_DTYPE_C, X_BINNED_DTYPE_C
 
 def _map_to_bins(const X_DTYPE_C [:, :] data,
                  list binning_thresholds,

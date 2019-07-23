@@ -7,7 +7,7 @@ import pytest
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.ensemble._hist_gradient_boosting.predictor import TreePredictor
-from sklearn.ensemble._hist_gradient_boosting.types import (
+from sklearn.ensemble._hist_gradient_boosting.common import (
     G_H_DTYPE, PREDICTOR_RECORD_DTYPE)
 
 

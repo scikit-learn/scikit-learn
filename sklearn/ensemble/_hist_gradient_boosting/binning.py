@@ -13,7 +13,7 @@ from ...utils import check_random_state, check_array
 from ...base import BaseEstimator, TransformerMixin
 from ...utils.validation import check_is_fitted
 from ._binning import _map_to_bins
-from .types import X_DTYPE, X_BINNED_DTYPE
+from .common import X_DTYPE, X_BINNED_DTYPE
 
 
 def _find_binning_thresholds(data, max_bins, subsample, random_state):

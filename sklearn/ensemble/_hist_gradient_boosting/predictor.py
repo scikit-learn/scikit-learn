@@ -5,7 +5,7 @@ This module contains the TreePredictor class which is used for prediction.
 
 import numpy as np
 
-from .types import Y_DTYPE
+from .common import Y_DTYPE
 from ._predictor import _predict_from_numeric_data
 from ._predictor import _predict_from_binned_data
 from ._predictor import _compute_partial_dependence

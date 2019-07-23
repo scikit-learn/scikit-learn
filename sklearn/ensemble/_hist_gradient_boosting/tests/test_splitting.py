@@ -1,9 +1,9 @@
 import numpy as np
 import pytest
 
-from sklearn.ensemble._hist_gradient_boosting.types import HISTOGRAM_DTYPE
-from sklearn.ensemble._hist_gradient_boosting.types import G_H_DTYPE
-from sklearn.ensemble._hist_gradient_boosting.types import X_BINNED_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.common import HISTOGRAM_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.common import X_BINNED_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.splitting import Splitter
 from sklearn.ensemble._hist_gradient_boosting.histogram import HistogramBuilder
 from sklearn.utils.testing import skip_if_32bit

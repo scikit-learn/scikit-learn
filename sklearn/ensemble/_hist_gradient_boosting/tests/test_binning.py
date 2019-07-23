@@ -7,8 +7,8 @@ from sklearn.ensemble._hist_gradient_boosting.binning import (
     _find_binning_thresholds as _find_binning_thresholds_orig,
     _map_to_bins
 )
-from sklearn.ensemble._hist_gradient_boosting.types import X_DTYPE
-from sklearn.ensemble._hist_gradient_boosting.types import X_BINNED_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.common import X_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.common import X_BINNED_DTYPE
 
 
 DATA = np.random.RandomState(42).normal(

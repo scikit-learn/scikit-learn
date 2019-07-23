@@ -12,11 +12,11 @@ import numpy as np
 cimport numpy as np
 from numpy.math cimport INFINITY
 
-from .types cimport X_DTYPE_C
-from .types cimport Y_DTYPE_C
-from .types import Y_DTYPE
-from .types cimport X_BINNED_DTYPE_C
-from .types cimport node_struct
+from .common cimport X_DTYPE_C
+from .common cimport Y_DTYPE_C
+from .common import Y_DTYPE
+from .common cimport X_BINNED_DTYPE_C
+from .common cimport node_struct
 
 
 def _predict_from_numeric_data(

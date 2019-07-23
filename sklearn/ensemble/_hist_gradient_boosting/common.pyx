@@ -6,7 +6,7 @@ import numpy as np
 Y_DTYPE = np.float64
 X_DTYPE = np.float64
 X_BINNED_DTYPE = np.uint8  # hence max_bins == 256
-# dtypes for gradients and hessians arrays
+# dtype for gradients and hessians arrays
 G_H_DTYPE = np.float32
 
 HISTOGRAM_DTYPE = np.dtype([

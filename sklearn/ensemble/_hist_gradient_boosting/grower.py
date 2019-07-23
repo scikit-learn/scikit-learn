@@ -15,8 +15,8 @@ from .splitting import Splitter
 from .histogram import HistogramBuilder
 from .predictor import TreePredictor
 from .utils import sum_parallel
-from .types import PREDICTOR_RECORD_DTYPE
-from .types import Y_DTYPE
+from .common import PREDICTOR_RECORD_DTYPE
+from .common import Y_DTYPE
 
 
 EPS = np.finfo(Y_DTYPE).eps  # to avoid zero division errors
