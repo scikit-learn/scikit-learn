@@ -26,6 +26,12 @@ random sampling procedures.
 Changelog
 ---------
 
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| Fixed a bug in :class:`cluster.KMeans` where computation was single
+  threaded when `n_jobs > 1` or `n_jobs = -1`.
+  :issue:`12949` by :user:`Prabakaran Kumaresshan <nixphix>`.
 
 :mod:`sklearn.inspection`
 .....................
