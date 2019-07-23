@@ -649,12 +649,12 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
     approximate in this setting.
 
     This estimator has native support for missing values (NaNs). During
-    training, the tree grower learns at each split point whether nodes with
-    missing values should go to the left or right child, based on the
-    potential gain. When predicting, nodes with missing values are assigned to
-    the left or right child consequently. If no missing values were encountered
-    for a given feature during training, then nodes with missing values are
-    mapped to whichever child has the most samples.
+    training, the tree grower learns at each split point whether samples
+    with missing values should go to the left or right child, based on the
+    potential gain. When predicting, samples with missing values are
+    assigned to the left or right child consequently. If no missing values
+    were encountered for a given feature during training, then samples with
+    missing values are mapped to whichever child has the most samples.
 
     This implementation is inspired by
     `LightGBM <https://github.com/Microsoft/LightGBM>`_.
@@ -700,7 +700,7 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
         (default).
     max_bins : int, optional (default=255)
         The maximum number of bins to use for non-missing values. Before
-        training, each feature of the input array ``X`` is binned into
+        training, each feature of the input array `X` is binned into
         integer-valued bins, which allows for a much faster training stage.
         Features with a small number of unique values may use less than
         ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
@@ -831,12 +831,12 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
     approximate in this setting.
 
     This estimator has native support for missing values (NaNs). During
-    training, the tree grower learns at each split point whether nodes with
-    missing values should go to the left or right child, based on the
-    potential gain. When predicting, nodes with missing values are assigned to
-    the left or right child consequently. If no missing values were encountered
-    for a given feature during training, then nodes with missing values are
-    mapped to whichever child has the most samples.
+    training, the tree grower learns at each split point whether samples
+    with missing values should go to the left or right child, based on the
+    potential gain. When predicting, samples with missing values are
+    assigned to the left or right child consequently. If no missing values
+    were encountered for a given feature during training, then samples with
+    missing values are mapped to whichever child has the most samples.
 
     This implementation is inspired by
     `LightGBM <https://github.com/Microsoft/LightGBM>`_.
@@ -884,7 +884,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         The L2 regularization parameter. Use 0 for no regularization.
     max_bins : int, optional (default=255)
         The maximum number of bins to use for non-missing values. Before
-        training, each feature of the input array ``X`` is binned into
+        training, each feature of the input array `X` is binned into
         integer-valued bins, which allows for a much faster training stage.
         Features with a small number of unique values may use less than
         ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin

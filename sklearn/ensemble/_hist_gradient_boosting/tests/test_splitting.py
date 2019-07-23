@@ -328,27 +328,10 @@ def test_min_gain_to_split():
          3,  # cut on bin_idx=3 (like in first case)
          False),  # missing values go to right
 
-        # For the following case, split_on_nans is True (we replace all of the
-        # samples with nans, instead of just 2).
-        ([0, 1, 2, 3, 4, 5, 6, 6, 6, 6],  # 6 <=> missing
-         [1, 1, 1, 1, 1, 1, 5, 5, 5, 5],
-         True,  # missing values
-         6,  # n_bins_non_missing
-         True,  # split on nans
-         5,  # cut on bin_idx=5
-         False),  # missing values go to right
-
-        # same as above, but with non-consecutive missing_values_bin
-        ([0, 1, 2, 3, 4, 5, 9, 9, 9, 9],  # 9 <=> missing
-         [1, 1, 1, 1, 1, 1, 5, 5, 5, 5],
-         True,  # missing values
-         6,  # n_bins_non_missing
-         True,  # split on nans
-         5,  # cut on bin_idx=5
-         False),  # missing values go to right
-
-        ([4, 4, 4, 4, 4, 4, 0, 1, 2, 3],  # 4 <=> missing
-         [1, 1, 1, 1, 1, 1, 5, 5, 5, 5],
+        # For the following cases, split_on_nans is True (we replace all of
+        # the samples with nans, instead of just 2).
+        ([0, 1, 2, 3, 4, 4, 4, 4, 4, 4],  # 4 <=> missing
+         [1, 1, 1, 1, 5, 5, 5, 5, 5, 5],
          True,  # missing values
          4,  # n_bins_non_missing
          True,  # split on nans
@@ -356,12 +339,29 @@ def test_min_gain_to_split():
          False),  # missing values go to right
 
         # same as above, but with non-consecutive missing_values_bin
-        ([9, 9, 9, 9, 9, 9, 0, 1, 2, 3],  # 9 <=> missing
+        ([0, 1, 2, 3, 9, 9, 9, 9, 9, 9],  # 9 <=> missing
          [1, 1, 1, 1, 1, 1, 5, 5, 5, 5],
          True,  # missing values
          4,  # n_bins_non_missing
          True,  # split on nans
          3,  # cut on bin_idx=3
+         False),  # missing values go to right
+
+        ([6, 6, 6, 6, 0, 1, 2, 3, 4, 5],  # 4 <=> missing
+         [1, 1, 1, 1, 5, 5, 5, 5, 5, 5],
+         True,  # missing values
+         6,  # n_bins_non_missing
+         True,  # split on nans
+         5,  # cut on bin_idx=5
+         False),  # missing values go to right
+
+        # same as above, but with non-consecutive missing_values_bin
+        ([9, 9, 9, 9, 0, 1, 2, 3, 4, 5],  # 9 <=> missing
+         [1, 1, 1, 1, 5, 5, 5, 5, 5, 5],
+         True,  # missing values
+         6,  # n_bins_non_missing
+         True,  # split on nans
+         5,  # cut on bin_idx=5
          False),  # missing values go to right
     ]
 )

@@ -129,7 +129,7 @@ class _BinMapper(BaseEstimator, TransformerMixin):
         constant accross all features. This corresponds to the last bin, and
         it is always equal to ``n_bins - 1``. Note that if ``n_bins_missing_``
         is less than ``n_bins - 1`` for a given feature, then there are
-        empty (an unused) bins.
+        empty (and unused) bins.
     """
     def __init__(self, n_bins=256, subsample=int(2e5), random_state=None):
         self.n_bins = n_bins
@@ -139,8 +139,8 @@ class _BinMapper(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         """Fit data X by computing the binning thresholds.
 
-        The last bin is reserved for missing values, whether there are
-        missing values present in the data or not.
+        The last bin is reserved for missing values, whether missing values
+        are present in the data or not.
 
         Parameters
         ----------
@@ -154,6 +154,7 @@ class _BinMapper(BaseEstimator, TransformerMixin):
         self : object
         """
         if not (3 <= self.n_bins <= 256):
+            # min is 3: at least 2 distinct bins and a missing values bin
             raise ValueError('n_bins={} should be no smaller than 3 '
                              'and no larger than 256.'.format(self.n_bins))
 

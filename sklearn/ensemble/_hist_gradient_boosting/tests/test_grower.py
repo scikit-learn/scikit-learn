@@ -348,7 +348,7 @@ def test_missing_value_predict_only():
 def test_split_on_nan_with_infinite_values():
     # Make sure the split on nan situations are respected even when there are
     # samples with +inf values (we set the threshold to +inf when we have a
-    # split on nan so this test make sure this does not introduce edge-case
+    # split on nan so this test makes sure this does not introduce edge-case
     # bugs)
 
     X = np.array([0, 1, np.inf, np.nan, np.nan]).reshape(-1, 1)
