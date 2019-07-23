@@ -31,7 +31,11 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
     similar to the Power method for determining the eigenvectors and
     eigenvalues of a X'Y.
     """
-    y_score = Y[:, [0]]
+    for col in Y.T:
+        if np.any(np.abs(col) > np.finfo(np.double).eps):
+            y_score = col.reshape(len(col), 1)
+            break
+
     x_weights_old = 0
     ite = 1
     X_pinv = Y_pinv = None
