@@ -38,7 +38,7 @@ make_conda() {
     export PATH=$MINICONDA_PATH/bin:$PATH
     conda update --yes conda
 
-    conda create -n testenv --yes $TO_INSTALL
+    conda create -n testenv --yes -c conda-forge $TO_INSTALL
     source activate testenv
 }
 
