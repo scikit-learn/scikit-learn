@@ -35,7 +35,7 @@ from sklearn.utils.estimator_checks import (
     check_parameters_default_constructible,
     check_no_attributes_set_in_init,
     check_class_weight_balanced_linear_classifier,
-    id_for_check_estimator)
+    get_id_for_check_estimator)
 
 
 def test_all_estimator_no_base_class():
@@ -69,8 +69,8 @@ def _sample_func(x, y=1):
      "LogisticRegression(class_weight='balanced',random_state=1,"
      "solver='newton-cg',warm_start=True)")
 ])
-def test_id_for_check_estimator(val, expected):
-    assert id_for_check_estimator(val) == expected
+def test_get_id_for_check_estimator(val, expected):
+    assert get_id_for_check_estimator(val) == expected
 
 
 def _tested_estimators():
@@ -103,13 +103,21 @@ def _tested_estimators():
         "estimator, check",
         chain.from_iterable(check_estimator(estimator, generate_only=True)
                             for _, estimator in _tested_estimators()),
-        ids=id_for_check_estimator)
+        ids=get_id_for_check_estimator)
 def test_estimators(estimator, check):
     # Common tests for estimator instances
     with ignore_warnings(category=(DeprecationWarning, ConvergenceWarning,
                                    UserWarning, FutureWarning)):
         set_checking_parameters(estimator)
         check(estimator)
+
+
+def test_check_estimator_class():
+    checks = check_estimator(LogisticRegression, generate_only=True)
+    assert len(checks) == 1
+    with pytest.warns(SkipTestWarning):
+        Estimator, check = checks[0]
+        check(Estimator)
 
 
 @pytest.mark.parametrize("name, estimator",

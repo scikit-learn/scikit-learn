@@ -267,8 +267,8 @@ def _yield_all_checks(name, estimator):
     yield check_fit_idempotent
 
 
-def id_for_check_estimator(val):
-    """Create readable pytest ids for `check_estimator` when
+def get_id_for_check_estimator(val):
+    """Create pytest ids for `check_estimator` when
     `generate_only=True`.
 
     Parameters
@@ -293,6 +293,13 @@ def id_for_check_estimator(val):
     if hasattr(val, "get_params"):
         with config_context(print_changed_only=True):
             return re.sub(r"\s", "", str(val))
+
+
+def _check_warning(Estimator):
+    warnings.warn("check_estimator with generate_only=True only"
+                  "supports estimator instances, "
+                  "got: {}".format(Estimator.__name__),
+                  SkipTestWarning)
 
 
 def check_estimator(Estimator, generate_only=False):
@@ -330,17 +337,20 @@ def check_estimator(Estimator, generate_only=False):
         from itertools import chain
         import pytest
         from sklearn.utils.estimator_checks import check_estimator
-        from sklearn.utils.estimator_checks import check_estimator_ids
+        from sklearn.utils.estimator_checks import get_id_for_check_estimator
 
         @pytest.mark.parametrize(
             'estimator, check',
             chain.from_iterable(check_estimator(est, generate_only=True)
                                 for est in estimators),
-            ids=check_estimator_ids)
+            ids=get_id_for_check_estimator)
         def test_sklearn_compatible_estimator(estimator, check):
             check(estimator)
     """
     if isinstance(Estimator, type):
+        if generate_only:
+            return [(Estimator, _check_warning)]
+
         # got a class
         name = Estimator.__name__
         estimator = Estimator()
