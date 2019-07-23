@@ -113,12 +113,12 @@ def test_unsorted_indices():
 
     # reverse each row's indices
     def scramble_indices(X):
-        new_data = []
-        new_indices = []
+        new_data = np.empty_like(X.data)
+        new_indices = np.empty_like(X.indices)
         for i in range(1, len(X.indptr)):
             row_slice = slice(*X.indptr[i - 1: i + 1])
-            new_data.extend(X.data[row_slice][::-1])
-            new_indices.extend(X.indices[row_slice][::-1])
+            new_data[row_slice] = X.data[row_slice][::-1]
+            new_indices[row_slice] = X.indices[row_slice][::-1]
         return sparse.csr_matrix((new_data, new_indices, X.indptr),
                                  shape=X.shape)
 
