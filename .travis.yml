@@ -36,7 +36,7 @@ matrix:
     # Python 3.4 build
     - env: DISTRIB="conda" PYTHON_VERSION="3.4" INSTALL_MKL="false"
            NUMPY_VERSION="1.10.4" SCIPY_VERSION="0.17" CYTHON_VERSION="0.25.2"
-           PILLOW_VERSION="4.0.0" COVERAGE=true
+           PILLOW_VERSION="4.0.0" COVERAGE=
       if: type != cron
     # Python 3.5 build
     - env: DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="false"
