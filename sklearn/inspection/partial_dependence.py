@@ -186,11 +186,10 @@ def partial_dependence(estimator, X, features, response_method='auto',
         A fitted estimator object implementing `predict`, `predict_proba`,
         or `decision_function`. Multioutput-multiclass classifiers are not
         supported.
-    X : array-like, shape (n_samples, n_features)
+    X : array-like or DataFrame, shape (n_samples, n_features)
         ``X`` is used both to generate a grid of values for the
         ``features``, and to compute the averaged predictions when
         method is 'brute'.
-    # TODO: update the type accepted
     features : list or array-like of int
         The target features for which the partial dependency should be
         computed.
@@ -404,7 +403,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         A fitted estimator object implementing `predict`, `predict_proba`,
         or `decision_function`. Multioutput-multiclass classifiers are not
         supported.
-    X : array-like, shape (n_samples, n_features)
+    X : array-like or DataFrame, shape (n_samples, n_features)
         The data to use to build the grid of values on which the dependence
         will be evaluated. This is usually the training data.
     features : list of {int, str, pair of int, pair of str}
