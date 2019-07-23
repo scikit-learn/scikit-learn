@@ -877,7 +877,10 @@ def assert_run_python_script(source_code, timeout=60):
         cmd = [sys.executable, source_file]
         cwd = op.normpath(op.join(op.dirname(sklearn.__file__), '..'))
         env = os.environ.copy()
-        env["PYTHONPATH"] = cwd
+        try:
+            env["PYTHONPATH"] = ":".join([cwd, env["PYTHONPATH"]])
+        except KeyError:
+            env["PYTHONPATH"] = cwd
         kwargs = {
             'cwd': cwd,
             'stderr': STDOUT,
