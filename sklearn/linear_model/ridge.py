@@ -778,7 +778,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         Alpha corresponds to ``C^-1`` in other linear models such as
         LogisticRegression or LinearSVC.
 
-    fit_intercept : boolean, default True
+    fit_intercept : bool, default True
         Whether to calculate the intercept for this model. If set to false, no
         intercept will be used in calculations (e.g. data is expected to be
         already centered).
@@ -1718,7 +1718,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         Note: the `alphas` feature will be of `np.ndarray` type even if the
         constructor parameter was a list or a tuple.
 
-    fit_intercept : boolean, default True
+    fit_intercept : bool, default True
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
