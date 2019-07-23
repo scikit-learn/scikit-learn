@@ -9,6 +9,7 @@ from sklearn.ensemble._hist_gradient_boosting.binning import (
 )
 from sklearn.ensemble._hist_gradient_boosting.common import X_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import X_BINNED_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.common import ALMOST_INF
 
 
 DATA = np.random.RandomState(42).normal(
@@ -306,7 +307,7 @@ def test_infinite_values():
     X = np.array([-np.inf, 0, 1,  np.inf]).reshape(-1, 1)
 
     bin_mapper.fit(X)
-    assert_allclose(bin_mapper.bin_thresholds_[0], [-np.inf, .5, 1e300])
+    assert_allclose(bin_mapper.bin_thresholds_[0], [-np.inf, .5, ALMOST_INF])
     assert bin_mapper.n_bins_non_missing_ == [4]
 
     expected_binned_X = np.array([0, 1, 2, 3]).reshape(-1, 1)

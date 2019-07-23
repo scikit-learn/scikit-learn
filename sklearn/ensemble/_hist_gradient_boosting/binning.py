@@ -13,7 +13,7 @@ from ...utils import check_random_state, check_array
 from ...base import BaseEstimator, TransformerMixin
 from ...utils.validation import check_is_fitted
 from ._binning import _map_to_bins
-from .common import X_DTYPE, X_BINNED_DTYPE
+from .common import X_DTYPE, X_BINNED_DTYPE, ALMOST_INF
 
 
 def _find_binning_thresholds(data, max_bins, subsample, random_state):
@@ -76,7 +76,7 @@ def _find_binning_thresholds(data, max_bins, subsample, random_state):
 
         # We avoid having +inf thresholds: +inf thresholds are only allowed in
         # a "split on nan" situation.
-        np.clip(midpoints, a_min=None, a_max=1e300, out=midpoints)
+        np.clip(midpoints, a_min=None, a_max=ALMOST_INF, out=midpoints)
 
         binning_thresholds.append(midpoints)
 

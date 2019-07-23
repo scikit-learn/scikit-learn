@@ -28,3 +28,5 @@ PREDICTOR_RECORD_DTYPE = np.dtype([
     ('is_leaf', np.uint8),
     ('bin_threshold', X_BINNED_DTYPE),
 ])
+
+ALMOST_INF = 1e300  # see LightGBM AvoidInf()

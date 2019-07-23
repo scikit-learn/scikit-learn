@@ -8,7 +8,7 @@ from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.ensemble._hist_gradient_boosting.predictor import TreePredictor
 from sklearn.ensemble._hist_gradient_boosting.common import (
-    G_H_DTYPE, PREDICTOR_RECORD_DTYPE)
+    G_H_DTYPE, PREDICTOR_RECORD_DTYPE, ALMOST_INF)
 
 
 @pytest.mark.parametrize('n_bins', [200, 256])
@@ -42,12 +42,14 @@ def test_boston_dataset(n_bins):
     (-np.inf, [0, 1, 1, 1]),
     (10, [0, 0, 1, 1]),
     (20, [0, 0, 0, 1]),
-    (1e300, [0, 0, 0, 1]),
+    (ALMOST_INF, [0, 0, 0, 1]),
+    (np.inf, [0, 0, 0, 0]),
 ])
 def test_infinite_values_and_thresholds(threshold, expected_predictions):
     # Make sure infinite values and infinite thresholds are handled properly.
-    # In particular, if a value is +inf and the threshold is +inf (1e300), the
-    # sample should go to the right child.
+    # In particular, if a value is +inf and the threshold is ALMOST_INF the
+    # sample should go to the right child. If the threshold is inf (split on
+    # nan), the +inf sample will go to the left child.
 
     X = np.array([-np.inf, 10, 20,  np.inf]).reshape(-1, 1)
     nodes = np.zeros(3, dtype=PREDICTOR_RECORD_DTYPE)
