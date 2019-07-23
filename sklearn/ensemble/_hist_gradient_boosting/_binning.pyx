@@ -57,10 +57,6 @@ cdef void _map_num_col_to_bins(const X_DTYPE_C [:] data,
 
         if isnan(data[i]):
             binned[i] = missing_values_bin_idx
-        elif data[i] == INFINITY:
-            # Special case for +inf.
-            # -inf is handled properly by binary search.
-            binned[i] = binning_thresholds.shape[0]
         else:
             # for known values, use binary search
             left, right = 0, binning_thresholds.shape[0]
