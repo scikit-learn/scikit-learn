@@ -23,8 +23,9 @@ Scikit-learn requires:
 - joblib (>= 0.11)
 
 Scikit-learn plotting capabilities (i.e., functions start with "plot_") require
-Matplotlib (>= 1.5.1). Some of the scikit-learn examples might require one or
-more extra dependencies: scikit-image (>= 0.12.3), pandas (>= 0.18.0).
+Matplotlib (>= 1.5.1). For running the examples Matplotlib >= 1.5.1 is
+required. A few examples require scikit-image >= 0.12.3, a few examples require
+pandas >= 0.18.0.
 
 .. warning::
 
