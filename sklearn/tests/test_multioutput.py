@@ -166,6 +166,8 @@ n_classes = len(np.unique(y1))
 classes = list(map(np.unique, (y1, y2, y3)))
 
 
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_multi_output_classification_partial_fit_parallelism():
     sgd_linear_clf = SGDClassifier(loss='log', random_state=1, max_iter=5)
     mor = MultiOutputClassifier(sgd_linear_clf, n_jobs=-1)

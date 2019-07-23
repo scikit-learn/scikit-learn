@@ -544,7 +544,7 @@ def cosine_distances(X, Y=None):
     See also
     --------
     sklearn.metrics.pairwise.cosine_similarity
-    scipy.spatial.distance.cosine (dense matrices only)
+    scipy.spatial.distance.cosine : dense matrices only
     """
     # 1.0 - cosine_similarity(X, Y) without copy
     S = cosine_similarity(X, Y)
