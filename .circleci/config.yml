@@ -42,11 +42,11 @@ jobs:
       - MINICONDA_PATH: ~/miniconda
       - CONDA_ENV_NAME: testenv
       - PYTHON_VERSION: "2"
-      - NUMPY_VERSION: "1.10"
-      - SCIPY_VERSION: "0.16"
-      - MATPLOTLIB_VERSION: "1.4"
+      - NUMPY_VERSION: "1.14"
+      - SCIPY_VERSION: "0.*"
+      - MATPLOTLIB_VERSION: "1.*"
       - SCIKIT_IMAGE_VERSION: "0.11"
-      - PANDAS_VERSION: "0.17.1"
+      - PANDAS_VERSION: "0.20.*"
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
