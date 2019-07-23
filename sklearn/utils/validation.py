@@ -149,9 +149,9 @@ def _num_samples(x):
         if isinstance(x.shape[0], numbers.Integral):
             return x.shape[0]
 
-    if hasattr(x, '__len__'):
+    try:
         return len(x)
-    else:
+    except TypeError:
         raise TypeError(message)
 
 

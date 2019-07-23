@@ -332,7 +332,7 @@ def test_check_array_on_mock_dataframe():
     arr = np.array([[0.2, 0.7], [0.6, 0.5], [0.4, 0.1], [0.7, 0.2]])
     mock_df = MockDataFrame(arr)
     checked_arr = check_array(mock_df)
-    assert (checked_arr.dtype == arr.dtype)
+    assert checked_arr.dtype == arr.dtype
     checked_arr = check_array(mock_df, dtype=np.float32)
     assert checked_arr.dtype == np.dtype(np.float32)
 
