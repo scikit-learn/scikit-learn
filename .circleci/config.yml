@@ -44,7 +44,7 @@ jobs:
       - PYTHON_VERSION: "2"
       - NUMPY_VERSION: "1.*"
       - SCIPY_VERSION: "0.*"
-      - MATPLOTLIB_VERSION: "1.*"
+      - MATPLOTLIB_VERSION: "*"
       - SCIKIT_IMAGE_VERSION: "0.*"
       - PANDAS_VERSION: "0.*"
     steps:
