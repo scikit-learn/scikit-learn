@@ -84,7 +84,7 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
     ----------
     effective_metric_ : string
         Metric used to compute distances to neighbors.
-    
+
     effective_metric_params_ : dict
         Parameters for the metric used to compute distances to neighbors.
 

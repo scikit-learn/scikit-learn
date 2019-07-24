@@ -109,7 +109,7 @@ class Perceptron(BaseSGDClassifier):
         For multiclass fits, it is the maximum over every binary fit.
 
     classes_ : array of shape = (n_classes,)
-        The unique classes labels.   
+        The unique classes labels.
 
     t_ : int
         Number of weight updates performed during training.
