@@ -5,25 +5,10 @@ This module contains the TreePredictor class which is used for prediction.
 
 import numpy as np
 
-from .types import X_DTYPE
 from .types import Y_DTYPE
-from .types import X_BINNED_DTYPE
 from ._predictor import _predict_from_numeric_data
 from ._predictor import _predict_from_binned_data
-
-
-PREDICTOR_RECORD_DTYPE = np.dtype([
-    ('value', Y_DTYPE),
-    ('count', np.uint32),
-    ('feature_idx', np.uint32),
-    ('threshold', X_DTYPE),
-    ('left', np.uint32),
-    ('right', np.uint32),
-    ('gain', Y_DTYPE),
-    ('depth', np.uint32),
-    ('is_leaf', np.uint8),
-    ('bin_threshold', X_BINNED_DTYPE),
-])
+from ._predictor import _compute_partial_dependence
 
 
 class TreePredictor:
@@ -31,7 +16,7 @@ class TreePredictor:
 
     Parameters
     ----------
-    nodes : list of PREDICTOR_RECORD_DTYPE
+    nodes : ndarray of PREDICTOR_RECORD_DTYPE
         The nodes of the tree.
     """
     def __init__(self, nodes):
@@ -78,3 +63,20 @@ class TreePredictor:
         out = np.empty(X.shape[0], dtype=Y_DTYPE)
         _predict_from_binned_data(self.nodes, X, out)
         return out
+
+    def compute_partial_dependence(self, grid, target_features, out):
+        """Fast partial dependence computation.
+
+        Parameters
+        ----------
+        grid : ndarray, shape (n_samples, n_target_features)
+            The grid points on which the partial dependence should be
+            evaluated.
+        target_features : ndarray, shape (n_target_features)
+            The set of target features for which the partial dependence
+            should be evaluated.
+        out : ndarray, shape (n_samples)
+            The value of the partial dependence function on each grid
+            point.
+        """
+        _compute_partial_dependence(self.nodes, grid, target_features, out)

@@ -8,11 +8,12 @@ from . import libsvm_sparse
 from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
 from ..utils.multiclass import _ovr_decision_function
-from ..utils import check_array, check_consistent_length, check_random_state
+from ..utils import check_array, check_random_state
 from ..utils import column_or_1d, check_X_y
 from ..utils import compute_class_weight
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted, _check_large_sparse
+from ..utils.validation import _check_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..exceptions import ConvergenceWarning
 from ..exceptions import NotFittedError
@@ -906,11 +907,9 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     # LibLinear wants targets as doubles, even for classification
     y_ind = np.asarray(y_ind, dtype=np.float64).ravel()
     y_ind = np.require(y_ind, requirements="W")
-    if sample_weight is None:
-        sample_weight = np.ones(X.shape[0])
-    else:
-        sample_weight = np.array(sample_weight, dtype=np.float64, order='C')
-        check_consistent_length(sample_weight, X)
+
+    sample_weight = _check_sample_weight(sample_weight, X,
+                                         dtype=np.float64)
 
     solver_type = _get_liblinear_solver_type(multi_class, penalty, loss, dual)
     raw_coef_, n_iter_ = liblinear.train_wrap(
