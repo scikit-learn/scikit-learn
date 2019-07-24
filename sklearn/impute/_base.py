@@ -615,7 +615,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         missing_features_info = self._get_missing_features_info(X)
         self.features_ = missing_features_info[1]
 
-        return missing_features_info
+        return missing_features_info[0]
 
     def fit(self, X, y=None):
         """Fit the transformer on X.
@@ -686,7 +686,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
             will be boolean.
 
         """
-        imputer_mask, features = self._fit(X, y)
+        imputer_mask = self._fit(X, y)
 
         if (self.features == "missing-only") and \
                 (self.features_.size < self._n_features):
