@@ -115,7 +115,7 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
-- |Enhancement| :class:`linearmodel.BayesianRidge` now accepts hyperparameters
+- |Enhancement| :class:`linear_model.BayesianRidge` now accepts hyperparameters
   ``alpha_init`` and ``lambda_init`` which can be used to set the initial value
   of the maximization procedure in :term:`fit`.
   :pr:`13618` by :user:`Yoshihiro Uchida <c56pony>`.
@@ -127,7 +127,11 @@ Changelog
 
 - |Efficiency| The 'liblinear' logistic regression solver is now faster and
   requires less memory.
-  :pr:`14108`, pr:`14170` by :user:`Alex Henrie <alexhenrie>`.
+  :pr:`14108`, :pr:`14170` by :user:`Alex Henrie <alexhenrie>`.
+
+- |Fix| :class:`linear_model.Ridge` now accepts Fortran arrays and make a
+  conversion instead of failing.
+  :pr:`xx` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.metrics`
 ......................
