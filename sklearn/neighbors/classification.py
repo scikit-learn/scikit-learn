@@ -318,20 +318,6 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
     Attributes
     ----------
-    classes_ : array, shape (n_classes,)
-        The unique classes labels.
-
-    effective_metric_ : string
-        Metric used to compute distances to neighbors.
-
-    effective_metric_params_ : dict
-        Parameters for the metric used to compute distances to neighbors.
-
-    outputs_2d_ : boolean
-        True when fitted on a multiclass target.
-
-    Attributes
-    ----------
     classes_ : array of shape = (n_classes,)
         Class labels known to the classifier.
 
