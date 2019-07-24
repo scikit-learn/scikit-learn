@@ -41,7 +41,7 @@ jobs:
         PYAMG_VERSION: '*'
         PILLOW_VERSION: '*'
         JOBLIB_VERSION: '*'
-        PYTEST_VERSION: '*'
+        PYTEST_VERSION: '4.6.2'
         MATPLOTLIB_VERSION: '*'
         COVERAGE: 'true'
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
