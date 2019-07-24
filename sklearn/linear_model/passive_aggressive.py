@@ -124,6 +124,13 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         The actual number of iterations to reach the stopping criterion.
         For multiclass fits, it is the maximum over every binary fit.
 
+    classes_ : array of shape = (n_classes,)
+        The unique classes labels.
+
+    t_ : int
+        Number of weight updates performed during training.
+        Same as ``(n_iter_ * n_samples)``.
+
     Examples
     --------
     >>> from sklearn.linear_model import PassiveAggressiveClassifier
@@ -348,6 +355,10 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
 
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
+
+    t_ : int
+        Number of weight updates performed during training.
+        Same as ``(n_iter_ * n_samples)``.
 
     Examples
     --------

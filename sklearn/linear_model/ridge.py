@@ -865,6 +865,9 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         Actual number of iterations for each target. Available only for
         sag and lsqr solvers. Other solvers will return None.
 
+    classes_ : array of shape = [n_classes]
+        The classes labels.
+
     Examples
     --------
     >>> from sklearn.datasets import load_breast_cancer
@@ -1771,6 +1774,9 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     alpha_ : float
         Estimated regularization parameter
+
+    classes_ : array of shape = [n_classes]
+        The classes labels.
 
     Examples
     --------

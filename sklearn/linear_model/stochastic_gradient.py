@@ -895,6 +895,12 @@ class SGDClassifier(BaseSGDClassifier):
 
     loss_function_ : concrete ``LossFunction``
 
+    classes_ : array of shape = [n_classes]
+
+    t_ : int
+        Number of weight updates performed during training.
+        Same as ``(n_iter_ * n_samples)``.
+
     Examples
     --------
     >>> import numpy as np
@@ -1484,6 +1490,10 @@ class SGDRegressor(BaseSGDRegressor):
 
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
+
+    t_ : int
+        Number of weight updates performed during training.
+        Same as ``(n_iter_ * n_samples)``.
 
     Examples
     --------

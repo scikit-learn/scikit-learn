@@ -853,7 +853,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         converging (see ``tol`` and ``max_iter``), these will not be
         consistent with ``labels_``.
 
-    labels_ :
+    labels_ : array, shape (n_samples,)
         Labels of each point
 
     inertia_ : float
