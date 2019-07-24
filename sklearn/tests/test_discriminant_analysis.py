@@ -51,6 +51,10 @@ X2 = np.array([[-3, 0], [-2, 0], [-1, 0], [-1, 0], [0, 0], [1, 0], [1, 0],
 # One element class
 y4 = np.array([1, 1, 1, 1, 1, 1, 1, 1, 2])
 
+# n_samples == n_classes
+X8 = np.random.rand(5, 2)
+y8 = np.array([0, 1, 2, 3, 4])
+
 # Data with less samples in a class than n_features
 X5 = np.c_[np.arange(8), np.zeros((8, 3))]
 y5 = np.array([0, 0, 0, 0, 0, 1, 1, 1])
@@ -94,6 +98,8 @@ def test_lda_predict():
     assert_raises(ValueError, clf.fit, X, y)
     clf = LinearDiscriminantAnalysis(solver="svd", shrinkage="auto")
     assert_raises(NotImplementedError, clf.fit, X, y)
+    clf = LinearDiscriminantAnalysis(solver="lsqr", shrinkage=np.array([1, 2]))
+    assert_raises(TypeError, clf.fit, X, y)
     # Test unknown solver
     clf = LinearDiscriminantAnalysis(solver="dummy")
     assert_raises(ValueError, clf.fit, X, y)
@@ -472,6 +478,9 @@ def test_qda(solver):
     # Classes should have at least 2 elements
     assert_raises(ValueError, clf.fit, X6, y4)
 
+    # Number of sample should be bigger than number of classes
+    assert_raises(ValueError, clf.fit, X8, y8)
+
 
 @pytest.mark.parametrize("solver", ["svd", "lsqr"])
 def test_qda_priors(solver):
@@ -488,6 +497,24 @@ def test_qda_priors(solver):
     n_pos2 = np.sum(y_pred == 2)
 
     assert n_pos2 > n_pos
+
+    # Test that negative priors raise an error
+    priors = np.array([0.5, -0.5])
+    clf = QuadraticDiscriminantAnalysis(solver=solver, priors=priors)
+    msg = "priors must be non-negative"
+    assert_raise_message(ValueError, msg, clf.fit, X, y)
+
+    # Test that priors passed as a list are correctly handled (run to see if
+    # failure)
+    clf = QuadraticDiscriminantAnalysis(solver=solver, priors=[0.5, 0.5])
+    clf.fit(X, y)
+
+    # Test that priors always sum to 1
+    priors = np.array([0.5, 0.6])
+    prior_norm = np.array([0.45, 0.55])
+    clf = QuadraticDiscriminantAnalysis(solver=solver, priors=priors)
+    assert_warns(UserWarning, clf.fit, X, y)
+    assert_array_almost_equal(clf.priors_, prior_norm, 2)
 
 
 @pytest.mark.parametrize("solver", ["svd"])
@@ -539,6 +566,20 @@ def test_qda_regularization(solver):
 
 
 def test_qda_ledoitwolf():
+    # test bad solver
+    clf = QuadraticDiscriminantAnalysis(
+            solver="svd",
+            covariance_estimator=LedoitWolf()
+    )
+    assert_raises(NotImplementedError, clf.fit, X, y)
+
+    # test with unkwown solver
+    clf = QuadraticDiscriminantAnalysis(
+            solver="dummy",
+            covariance_estimator=LedoitWolf()
+    )
+    assert_raises(ValueError, clf.fit, X, y)
+
     clf = QuadraticDiscriminantAnalysis(
             solver="lsqr",
             covariance_estimator=LedoitWolf()
@@ -560,6 +601,15 @@ def test_qda_ledoitwolf():
 
 
 def test_qda_covariance_sample_estimate():
+
+    # Bug with lsqr solver if covariance is degenerate
+    clf = QuadraticDiscriminantAnalysis(
+            solver="lsqr",
+            covariance_estimator=EmpiricalCovariance()
+    )
+    clf.fit(X2, y6)
+    assert_raises(ValueError, clf.predict, X2)
+
     X = np.random.rand(100, 10)
     Y = np.random.randint(3, size=(100))
     c1 = QuadraticDiscriminantAnalysis(

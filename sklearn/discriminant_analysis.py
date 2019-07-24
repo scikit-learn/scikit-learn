@@ -34,13 +34,13 @@ def _cov(X, shrinkage=None, covariance_estimator=None, standardize=False):
     ----------
     X : array-like, shape (n_samples, n_features)
         Input data.
-    covariance_estimator: BaseEstimator
+    covariance_estimator : BaseEstimator
         A covariance estimator, possible values
             - None: shrinkage parameter drives the estimate
             - BaseEstimator with a fit method and
             a .covariance_ attribute like the estimators
             in sklearn.covariance
-    standardize: bool
+    standardize : bool
         if True standardize the data before applying the covariance estimator
         Note: only used when covariance_estimator is not None
     shrinkage : string or float, optional
@@ -126,13 +126,13 @@ def _class_cov(
         Target values.
     priors : array-like, shape (n_classes,)
         Class priors.
-    covariance_estimator: BaseEstimator
+    covariance_estimator : BaseEstimator
         A covariance estimator, possible values
             - None: shrinkage parameter drives the estimate
             - BaseEstimator with a fit method and
             a .covariance_ attribute like the estimators
             in sklearn.covariance
-    standardize: bool
+    standardize : bool
         if True standardize the data before applying the covariance estimator
         Note: only used when covariance_estimator is not None
     shrinkage : string or float, optional
@@ -171,13 +171,13 @@ def _classes_cov(
         Input data.
     y : array-like, shape (n_samples,) or (n_samples, n_targets)
         Target values.
-    covariance_estimator: BaseEstimator
+    covariance_estimator : BaseEstimator
         A covariance estimator, possible values
             - None: shrinkage parameter drives the estimate
             - BaseEstimator with a fit method and
             a .covariance_ attribute like the estimators
             in sklearn.covariance
-    standardize: bool
+    standardize : bool
         if True standardize the data before applying the covariance estimator
         Note: only used when covariance_estimator is not None
     shrinkage : string or float, optional
@@ -243,14 +243,14 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
 
         Note that shrinkage works only with 'lsqr' and 'eigen' solvers.
 
-    covariance_estimator: BaseEstimator
+    covariance_estimator : BaseEstimator
         A covariance estimator, possible values
             - None: shrinkage parameter drives the estimate
             - BaseEstimator with a fit method and
             a .covariance_ attribute like the estimators
             in sklearn.covariance
 
-    standardize: bool
+    standardize : bool
         if True standardize the data before applying the covariance estimator
         Note: only used when covariance_estimator is not None
 
@@ -374,14 +374,14 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
               - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
               - float between 0 and 1: fixed shrinkage parameter.
 
-        covariance_estimator: BaseEstimator
+        covariance_estimator : BaseEstimator
             A covariance estimator, possible values
                 - None: shrinkage parameter drives the estimate
                 - BaseEstimator with a fit method and
                 a .covariance_ attribute like the estimators
                 in sklearn.covariance
 
-        standardize: bool
+        standardize : bool
             if True standardize the data before applying the
             covariance estimator
             Note: only used when covariance_estimator is not None
@@ -432,14 +432,14 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
               - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
               - float between 0 and 1: fixed shrinkage constant.
 
-        covariance_estimator: BaseEstimator
+        covariance_estimator : BaseEstimator
             A covariance estimator, possible values
                 - None: shrinkage parameter drives the estimate
                 - BaseEstimator with a fit method and
                 a .covariance_ attribute like the estimators
                 in sklearn.covariance
 
-        standardize: bool
+        standardize : bool
             if True standardize the data before applying
             the covariance estimator
             Note: only used when covariance_estimator is not None
@@ -731,7 +731,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
           - 'lsqr': Least squares solution, can be combined with
           custom covariance estimator.
 
-    covariance_estimator: BaseEstimator
+    covariance_estimator : BaseEstimator
         A covariance estimator, possible values
             - None: shrinkage parameter drives the estimate
             - BaseEstimator with a fit method and
@@ -739,7 +739,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
             in sklearn.covariance
         Note: does not work when solver='svd'
 
-    standardize: bool
+    standardize : bool
         if True standardize the data before applying the covariance estimator
         Note: only used when covariance_estimator is not None
 
@@ -834,10 +834,6 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         """
         n_samples, n_features = X.shape
         n_classes = len(self.classes_)
-        if self.priors is None:
-            self.priors_ = np.bincount(y) / float(n_samples)
-        else:
-            self.priors_ = self.priors
 
         cov = None
         store_covariance = self.store_covariance
@@ -898,7 +894,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
             Regularizes the covariance estimate as
             ``(1-reg_param)*Sigma + reg_param*np.eye(n_features)``
 
-        covariance_estimator: BaseEstimator
+        covariance_estimator : BaseEstimator
             A covariance estimator, possible values
                 - None: shrinkage parameter drives the estimate
                 - BaseEstimator with a fit method and
@@ -906,7 +902,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
                 in sklearn.covariance
             Note: does not work when solver='svd'
 
-        standardize: bool
+        standardize : bool
             if True standardize the data before applying
             the covariance estimator
             Note: only used when covariance_estimator is not None
@@ -1022,7 +1018,8 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
                 if sign <= 0:
                     raise ValueError(
                         "Determinant of covariance matrix"
-                        "of class %s was negative" % self.classes_[k])
+                        " corresponding to class %s was"
+                        " <= 0" % self.classes_[k])
                 log_prior = np.log(self.priors_[k])
                 quadratic_part = np.sum(centeredX * linalg.lstsq(
                     covariance,
