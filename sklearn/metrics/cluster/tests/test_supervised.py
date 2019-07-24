@@ -146,15 +146,18 @@ def test_nmi_between_0_1():
     x = [0] * 469
     y = [1] + x[1:]
 
-    np.finfo('float64').eps
-    assert 0 <= normalized_mutual_info_score(x, y) <= 1
+    assert (0 <= normalized_mutual_info_score(x, y)
+            and normalized_mutual_info_score(x, y) <= 1)
 
 
 def test_low_nmi_normalizer_val():
     # test to handle very low values
     # for normalizer lower than numpy
     # 64-bit float datatype
-    return None
+    # sample peaked distribution
+    x = [0] * 20
+    y = [1] * 20
+    assert normalized_mutual_info_score(x, y) > np.finfo('float64').eps
 
 def test_non_consecutive_labels():
     # regression tests for labels with gaps
