@@ -96,7 +96,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         acc_compute_hist_time = 0.  # time spent computing histograms
         # time spent predicting X for gradient and hessians update
         acc_prediction_time = 0.
-        X, y = check_X_y(X, y, dtype=[X_DTYPE])
+        X, y = check_X_y(X, y, dtype=[X_DTYPE], force_all_finite=False)
         y = self._encode_y(y)
 
         # The rng state must be preserved if warm_start is True
@@ -539,7 +539,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         raw_predictions : array, shape (n_samples * n_trees_per_iteration,)
             The raw predicted values.
         """
-        X = check_array(X, dtype=[X_DTYPE, X_BINNED_DTYPE])
+        X = check_array(X, dtype=[X_DTYPE, X_BINNED_DTYPE],
+                        force_all_finite=False)
         check_is_fitted(self, '_predictors')
         if X.shape[1] != self.n_features_:
             raise ValueError(
@@ -561,6 +562,37 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         return raw_predictions
 
+    def _compute_partial_dependence_recursion(self, grid, target_features):
+        """Fast partial dependence computation.
+
+        Parameters
+        ----------
+        grid : ndarray, shape (n_samples, n_target_features)
+            The grid points on which the partial dependence should be
+            evaluated.
+        target_features : ndarray, shape (n_target_features)
+            The set of target features for which the partial dependence
+            should be evaluated.
+
+        Returns
+        -------
+        averaged_predictions : ndarray, shape \
+                (n_trees_per_iteration, n_samples)
+            The value of the partial dependence function on each grid point.
+        """
+        grid = np.asarray(grid, dtype=X_DTYPE, order='C')
+        averaged_predictions = np.zeros(
+            (self.n_trees_per_iteration_, grid.shape[0]), dtype=Y_DTYPE)
+
+        for predictors_of_ith_iteration in self._predictors:
+            for k, predictor in enumerate(predictors_of_ith_iteration):
+                predictor.compute_partial_dependence(grid, target_features,
+                                                     averaged_predictions[k])
+        # Note that the learning rate is already accounted for in the leaves
+        # values.
+
+        return averaged_predictions
+
     @abstractmethod
     def _get_loss(self):
         pass
@@ -573,6 +605,13 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
     def n_iter_(self):
         check_is_fitted(self, '_predictors')
         return len(self._predictors)
+
+    def _more_tags(self):
+        # This is not strictly True, but it's needed since
+        # force_all_finite=False means accept both nans and infinite values.
+        # Without the tag, common checks would fail.
+        # This comment must be removed once we merge PR 13911
+        return {'allow_nan': True}
 
 
 class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):

@@ -40,41 +40,11 @@ in the FAQ.
 
 Emeritus Core Developers
 ------------------------
-The following people have been active contributors in the past, but are no longer active in the project
+The following people have been active contributors in the past, but are no
+longer active in the project:
 
+.. include:: authors_emeritus.rst
 
-- Alexander Fabisch
-- Alexandre Passos
-- Angel Soler Gollonet
-- Arnaud Joly
-- Chris Gorgolewski
-- David Cournapeau
-- David Warde-Farley
-- Eduard Duchesnay
-- Fabian Pedragosa
-- Gilles Louppe
-- Jacob Schreiber
-- Jake Vanderplas
-- Jaques Grobler
-- Jarrod Millman
-- Kyle Kastner
-- Lars Buitinck
-- Manoj Kumar
-- Mathieu Blondel
-- Matthieu Brucher
-- Noel Dawe
-- Paolo Losi
-- Peter Prettenhofer
-- Raghav Rajagopalan
-- Robert Layton
-- Ron Weiss
-- Satrajit Ghosh
-- Shiqiao Du
-- Thouis (Ray) Jones
-- Vincent Dubourg
-- Vincent Michel
-- Virgile Fritsch
-- Wei Li
 
 .. _citing-scikit-learn:
 

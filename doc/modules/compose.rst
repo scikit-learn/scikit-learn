@@ -200,11 +200,11 @@ object::
    inspect the original instance such as::
 
      >>> from sklearn.datasets import load_digits
-     >>> digits = load_digits()
+     >>> X_digits, y_digits = load_digits(return_X_y=True)
      >>> pca1 = PCA()
      >>> svm1 = SVC()
      >>> pipe = Pipeline([('reduce_dim', pca1), ('clf', svm1)])
-     >>> pipe.fit(digits.data, digits.target)
+     >>> pipe.fit(X_digits, y_digits)
      Pipeline(steps=[('reduce_dim', PCA()), ('clf', SVC())])
      >>> # The pca instance can be inspected directly
      >>> print(pca1.components_)
@@ -224,7 +224,7 @@ object::
      >>> svm2 = SVC()
      >>> cached_pipe = Pipeline([('reduce_dim', pca2), ('clf', svm2)],
      ...                        memory=cachedir)
-     >>> cached_pipe.fit(digits.data, digits.target)
+     >>> cached_pipe.fit(X_digits, y_digits)
      Pipeline(memory=...,
              steps=[('reduce_dim', PCA()), ('clf', SVC())])
      >>> print(cached_pipe.named_steps['reduce_dim'].components_)
@@ -495,6 +495,8 @@ the transformation::
          [0. , 1. ],
          [0.5, 0.5],
          [1. , 0. ]])
+
+.. _make_column_transformer:
 
 The :func:`~sklearn.compose.make_column_transformer` function is available
 to more easily create a :class:`~sklearn.compose.ColumnTransformer` object.
