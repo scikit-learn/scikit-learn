@@ -1,7 +1,8 @@
+import pytest
 import numpy as np
 from numpy.testing import assert_approx_equal
 
-from sklearn.utils.testing import (assert_equal, assert_array_almost_equal,
+from sklearn.utils.testing import (assert_array_almost_equal,
                                    assert_array_equal, assert_raise_message,
                                    assert_warns)
 from sklearn.datasets import load_linnerud
@@ -280,7 +281,7 @@ def test_PLSSVD():
     for clf in [pls_.PLSSVD, pls_.PLSRegression, pls_.PLSCanonical]:
         pls = clf(n_components=n_components)
         pls.fit(X, Y)
-        assert_equal(n_components, pls.y_scores_.shape[1])
+        assert n_components == pls.y_scores_.shape[1]
 
 
 def test_univariate_pls_regression():
@@ -377,6 +378,7 @@ def test_pls_errors():
                              clf.fit, X, Y)
 
 
+@pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
 def test_pls_scaling():
     # sanity check for scale=True
     n_samples = 1000

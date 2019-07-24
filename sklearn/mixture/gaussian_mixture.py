@@ -309,7 +309,7 @@ def _compute_precision_cholesky(covariances, covariance_type):
         "or collapsed samples). Try to decrease the number of components, "
         "or increase reg_covar.")
 
-    if covariance_type in 'full':
+    if covariance_type == 'full':
         n_components, n_features, _ = covariances.shape
         precisions_chol = np.empty((n_components, n_features, n_features))
         for k, covariance in enumerate(covariances):

@@ -133,6 +133,9 @@ class GaussianNB(BaseNB):
     class_count_ : array, shape (n_classes,)
         number of training samples observed in each class.
 
+    classes_ : array, shape (n_classes,)
+        class labels known to the classifier
+
     theta_ : array, shape (n_classes, n_features)
         mean of each feature per class
 
@@ -153,12 +156,12 @@ class GaussianNB(BaseNB):
     >>> from sklearn.naive_bayes import GaussianNB
     >>> clf = GaussianNB()
     >>> clf.fit(X, Y)
-    GaussianNB(priors=None, var_smoothing=1e-09)
+    GaussianNB()
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
     >>> clf_pf = GaussianNB()
     >>> clf_pf.partial_fit(X, Y, np.unique(Y))
-    GaussianNB(priors=None, var_smoothing=1e-09)
+    GaussianNB()
     >>> print(clf_pf.predict([[-0.8, -1]]))
     [1]
     """
@@ -682,6 +685,9 @@ class MultinomialNB(BaseDiscreteNB):
         Number of samples encountered for each class during fitting. This
         value is weighted by the sample weight when provided.
 
+    classes_ : array, shape (n_classes,)
+        Class labels known to the classifier
+
     feature_count_ : array, shape (n_classes, n_features)
         Number of samples encountered for each (class, feature)
         during fitting. This value is weighted by the sample weight when
@@ -698,7 +704,7 @@ class MultinomialNB(BaseDiscreteNB):
     >>> from sklearn.naive_bayes import MultinomialNB
     >>> clf = MultinomialNB()
     >>> clf.fit(X, y)
-    MultinomialNB(alpha=1.0, class_prior=None, fit_prior=True)
+    MultinomialNB()
     >>> print(clf.predict(X[2:3]))
     [3]
 
@@ -783,6 +789,9 @@ class ComplementNB(BaseDiscreteNB):
         Number of samples encountered for each class during fitting. This
         value is weighted by the sample weight when provided.
 
+    classes_ : array, shape (n_classes,)
+        Class labels known to the classifier
+
     feature_count_ : array, shape (n_classes, n_features)
         Number of samples encountered for each (class, feature) during fitting.
         This value is weighted by the sample weight when provided.
@@ -802,7 +811,7 @@ class ComplementNB(BaseDiscreteNB):
     >>> from sklearn.naive_bayes import ComplementNB
     >>> clf = ComplementNB()
     >>> clf.fit(X, y)
-    ComplementNB(alpha=1.0, class_prior=None, fit_prior=True, norm=False)
+    ComplementNB()
     >>> print(clf.predict(X[2:3]))
     [3]
 
@@ -891,6 +900,9 @@ class BernoulliNB(BaseDiscreteNB):
         Number of samples encountered for each class during fitting. This
         value is weighted by the sample weight when provided.
 
+    classes_ : array, shape (n_classes,)
+        Class labels known to the classifier
+
     feature_count_ : array, shape = [n_classes, n_features]
         Number of samples encountered for each (class, feature)
         during fitting. This value is weighted by the sample weight when
@@ -908,7 +920,7 @@ class BernoulliNB(BaseDiscreteNB):
     >>> from sklearn.naive_bayes import BernoulliNB
     >>> clf = BernoulliNB()
     >>> clf.fit(X, Y)
-    BernoulliNB(alpha=1.0, binarize=0.0, class_prior=None, fit_prior=True)
+    BernoulliNB()
     >>> print(clf.predict(X[2:3]))
     [3]
 

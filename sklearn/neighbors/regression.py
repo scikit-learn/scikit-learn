@@ -91,11 +91,16 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
 
     Attributes
     ----------
-    effective_metric_ : string
-        Metric used to compute distances to neighbors.
-    
+    effective_metric_ : string or callable
+        The distance metric to use. It will be same as the `metric` parameter
+        or a synonym of it, e.g. 'euclidean' if the `metric` parameter set to
+        'minkowski' and `p` parameter set to 2.
+
     effective_metric_params_ : dict
-        Parameters for the metric used to compute distances to neighbors.
+        Additional keyword arguments for the metric function. For most metrics
+        will be same with `metric_params` parameter, but may also contain the
+        `p` parameter value if the `effective_metric_` attribute is set to
+        'minkowski'.
 
     Examples
     --------
@@ -103,7 +108,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
     >>> y = [0, 0, 1, 1]
     >>> from sklearn.neighbors import KNeighborsRegressor
     >>> neigh = KNeighborsRegressor(n_neighbors=2)
-    >>> neigh.fit(X, y) # doctest: +ELLIPSIS
+    >>> neigh.fit(X, y)
     KNeighborsRegressor(...)
     >>> print(neigh.predict([[1.5]]))
     [0.5]
@@ -256,11 +261,16 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
 
     Attributes
     ----------
-    effective_metric_ : string
-        Metric used to compute distances to neighbors.
-    
+    effective_metric_ : string or callable
+        The distance metric to use. It will be same as the `metric` parameter
+        or a synonym of it, e.g. 'euclidean' if the `metric` parameter set to
+        'minkowski' and `p` parameter set to 2.
+
     effective_metric_params_ : dict
-        Parameters for the metric used to compute distances to neighbors.
+        Additional keyword arguments for the metric function. For most metrics
+        will be same with `metric_params` parameter, but may also contain the
+        `p` parameter value if the `effective_metric_` attribute is set to
+        'minkowski'.
 
     Examples
     --------
@@ -268,7 +278,7 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
     >>> y = [0, 0, 1, 1]
     >>> from sklearn.neighbors import RadiusNeighborsRegressor
     >>> neigh = RadiusNeighborsRegressor(radius=1.0)
-    >>> neigh.fit(X, y) # doctest: +ELLIPSIS
+    >>> neigh.fit(X, y)
     RadiusNeighborsRegressor(...)
     >>> print(neigh.predict([[1.5]]))
     [0.5]

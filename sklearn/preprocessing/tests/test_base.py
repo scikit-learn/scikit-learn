@@ -4,7 +4,7 @@ from scipy import sparse
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raise_message
-from sklearn.preprocessing._encoders import _transform_selected
+from sklearn.preprocessing.base import _transform_selected
 from sklearn.preprocessing.data import Binarizer
 
 

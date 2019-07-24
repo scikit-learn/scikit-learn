@@ -22,6 +22,7 @@ from .utils.multiclass import unique_labels
 from .utils import check_array, check_X_y
 from .utils.validation import check_is_fitted
 from .utils.multiclass import check_classification_targets
+from .utils.extmath import softmax
 from .preprocessing import StandardScaler
 
 
@@ -240,9 +241,8 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = LinearDiscriminantAnalysis()
-    >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-    LinearDiscriminantAnalysis(n_components=None, priors=None, shrinkage=None,
-                  solver='svd', store_covariance=False, tol=0.0001)
+    >>> clf.fit(X, y)
+    LinearDiscriminantAnalysis()
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
     """
@@ -338,7 +338,6 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         self.explained_variance_ratio_ = np.sort(evals / np.sum(evals)
                                                  )[::-1][:self._max_components]
         evecs = evecs[:, np.argsort(evals)[::-1]]  # sort eigenvectors
-        evecs /= np.linalg.norm(evecs, axis=0)
 
         self.scalings_ = evecs
         self.coef_ = np.dot(self.means_, evecs).dot(evecs.T)
@@ -531,14 +530,14 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         C : array, shape (n_samples, n_classes)
             Estimated probabilities.
         """
-        prob = self.decision_function(X)
-        expit(prob, out=prob)
-        if len(self.classes_) == 2:  # binary case
-            return np.column_stack([1 - prob, prob])
+        check_is_fitted(self, 'classes_')
+
+        decision = self.decision_function(X)
+        if self.classes_.size == 2:
+            proba = expit(decision)
+            return np.vstack([1-proba, proba]).T
         else:
-            # OvR normalization, like LibLinear's predict_probability
-            prob /= prob.sum(axis=1).reshape((prob.shape[0], -1))
-            return prob
+            return softmax(decision)
 
     def predict_log_proba(self, X):
         """Estimate log probability.
@@ -623,9 +622,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
     >>> y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = QuadraticDiscriminantAnalysis()
     >>> clf.fit(X, y)
-    ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    QuadraticDiscriminantAnalysis(priors=None, reg_param=0.0,
-                                  store_covariance=False, tol=0.0001)
+    QuadraticDiscriminantAnalysis()
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -719,7 +716,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
             Xm = X - self.means_[i]
             X2 = np.dot(Xm, R * (S ** (-0.5)))
             norm2.append(np.sum(X2 ** 2, 1))
-        norm2 = np.array(norm2).T   # shape = [len(X), n_classes]
+        norm2 = np.array(norm2).T  # shape = [len(X), n_classes]
         u = np.asarray([np.sum(np.log(s)) for s in self.scalings_])
         return (-0.5 * (norm2 + u) + np.log(self.priors_))
 

@@ -33,12 +33,12 @@ kernels = [1.0 * RBF(length_scale=1.0, length_scale_bounds=(1e-1, 10.0)),
            1.0 * Matern(length_scale=1.0, length_scale_bounds=(1e-1, 10.0),
                         nu=1.5)]
 
-for fig_index, kernel in enumerate(kernels):
+for kernel in kernels:
     # Specify Gaussian Process
     gp = GaussianProcessRegressor(kernel=kernel)
 
     # Plot prior
-    plt.figure(fig_index, figsize=(8, 8))
+    plt.figure(figsize=(8, 8))
     plt.subplot(2, 1, 1)
     X_ = np.linspace(0, 5, 100)
     y_mean, y_std = gp.predict(X_[:, np.newaxis], return_std=True)

@@ -10,7 +10,7 @@ from ..neighbors import NearestNeighbors
 from ..preprocessing import scale
 from ..utils import check_random_state
 from ..utils.fixes import _astype_copy_false
-from ..utils.validation import check_X_y
+from ..utils.validation import check_array, check_X_y
 from ..utils.multiclass import check_classification_targets
 
 
@@ -247,14 +247,16 @@ def _estimate_mi(X, y, discrete_features='auto', discrete_target=False,
     X, y = check_X_y(X, y, accept_sparse='csc', y_numeric=not discrete_target)
     n_samples, n_features = X.shape
 
-    if discrete_features == 'auto':
-        discrete_features = issparse(X)
-
-    if isinstance(discrete_features, bool):
+    if isinstance(discrete_features, (str, bool)):
+        if isinstance(discrete_features, str):
+            if discrete_features == 'auto':
+                discrete_features = issparse(X)
+            else:
+                raise ValueError("Invalid string value for discrete_features.")
         discrete_mask = np.empty(n_features, dtype=bool)
         discrete_mask.fill(discrete_features)
     else:
-        discrete_features = np.asarray(discrete_features)
+        discrete_features = check_array(discrete_features, ensure_2d=False)
         if discrete_features.dtype != 'bool':
             discrete_mask = np.zeros(n_features, dtype=bool)
             discrete_mask[discrete_features] = True

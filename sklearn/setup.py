@@ -5,11 +5,7 @@ from sklearn._build_utils import maybe_cythonize_extensions
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
-    from numpy.distutils.system_info import get_info
     import numpy
-
-    # needs to be called during build otherwise show_version may fail sometimes
-    get_info('blas_opt', 0)
 
     libraries = []
     if os.name == 'posix':
@@ -33,6 +29,10 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('feature_selection/tests')
     config.add_subpackage('gaussian_process')
     config.add_subpackage('gaussian_process/tests')
+    config.add_subpackage('impute')
+    config.add_subpackage('impute/tests')
+    config.add_subpackage('inspection')
+    config.add_subpackage('inspection/tests')
     config.add_subpackage('mixture')
     config.add_subpackage('mixture/tests')
     config.add_subpackage('model_selection')
@@ -43,6 +43,10 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('preprocessing/tests')
     config.add_subpackage('semi_supervised')
     config.add_subpackage('semi_supervised/tests')
+    config.add_subpackage('experimental')
+    config.add_subpackage('experimental/tests')
+    config.add_subpackage('ensemble/_hist_gradient_boosting')
+    config.add_subpackage('ensemble/_hist_gradient_boosting/tests')
 
     # submodules which have their own setup.py
     config.add_subpackage('cluster')

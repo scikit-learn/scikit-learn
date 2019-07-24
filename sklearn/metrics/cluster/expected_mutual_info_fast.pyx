@@ -1,7 +1,6 @@
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
-# cython: language_level=3
 #
 # Authors: Robert Layton <robertlayton@gmail.com>
 #           Corey Lynch <coreylynch9@gmail.com>
@@ -12,7 +11,7 @@ from scipy.special import gammaln
 import numpy as np
 cimport numpy as np
 cimport cython
-from sklearn.utils.lgamma cimport lgamma
+from ...utils.lgamma cimport lgamma
 
 np.import_array()
 ctypedef np.float64_t DOUBLE

@@ -82,21 +82,25 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         for more details.
         Doesn't affect :meth:`fit` method.
 
-
     Attributes
     ----------
+    classes_ : array of shape = (n_classes,)
+        Class labels known to the classifier
 
-    classes_ : array, shape (n_classes,)
-        The unique classes labels.
+    effective_metric_ : string or callble
+        The distance metric used. It will be same as the `metric` parameter
+        or a synonym of it, e.g. 'euclidean' if the `metric` parameter set to
+        'minkowski' and `p` parameter set to 2.
 
-    effective_metric_ : string
-        Metric used to compute distances to neighbors.
-    
     effective_metric_params_ : dict
-        Parameters for the metric used to compute distances to neighbors.
-    
-    outputs_2d_ : boolean
-        True when fitted on a multiclass target.
+        Additional keyword arguments for the metric function. For most metrics
+        will be same with `metric_params` parameter, but may also contain the
+        `p` parameter value if the `effective_metric_` attribute is set to
+        'minkowski'.
+
+    outputs_2d_ : bool
+        False when `y`'s shape is (n_samples, ) or (n_samples, 1) during fit
+        otherwise True.
 
     Examples
     --------
@@ -104,7 +108,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
     >>> y = [0, 0, 1, 1]
     >>> from sklearn.neighbors import KNeighborsClassifier
     >>> neigh = KNeighborsClassifier(n_neighbors=3)
-    >>> neigh.fit(X, y) # doctest: +ELLIPSIS
+    >>> neigh.fit(X, y)
     KNeighborsClassifier(...)
     >>> print(neigh.predict([[1.1]]))
     [0]
@@ -311,7 +315,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
-    
+
     Attributes
     ----------
     classes_ : array, shape (n_classes,)
@@ -319,12 +323,32 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
     effective_metric_ : string
         Metric used to compute distances to neighbors.
-    
+
     effective_metric_params_ : dict
         Parameters for the metric used to compute distances to neighbors.
-    
+
     outputs_2d_ : boolean
         True when fitted on a multiclass target.
+
+    Attributes
+    ----------
+    classes_ : array of shape = (n_classes,)
+        Class labels known to the classifier.
+
+    effective_metric_ : string or callble
+        The distance metric used. It will be same as the `metric` parameter
+        or a synonym of it, e.g. 'euclidean' if the `metric` parameter set to
+        'minkowski' and `p` parameter set to 2.
+
+    effective_metric_params_ : dict
+        Additional keyword arguments for the metric function. For most metrics
+        will be same with `metric_params` parameter, but may also contain the
+        `p` parameter value if the `effective_metric_` attribute is set to
+        'minkowski'.
+
+    outputs_2d_ : bool
+        False when `y`'s shape is (n_samples, ) or (n_samples, 1) during fit
+        otherwise True.
 
     Examples
     --------
@@ -332,7 +356,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     >>> y = [0, 0, 1, 1]
     >>> from sklearn.neighbors import RadiusNeighborsClassifier
     >>> neigh = RadiusNeighborsClassifier(radius=1.0)
-    >>> neigh.fit(X, y) # doctest: +ELLIPSIS
+    >>> neigh.fit(X, y)
     RadiusNeighborsClassifier(...)
     >>> print(neigh.predict([[1.5]]))
     [0]

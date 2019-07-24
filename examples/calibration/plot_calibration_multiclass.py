@@ -64,7 +64,7 @@ sig_clf_probs = sig_clf.predict_proba(X_test)
 sig_score = log_loss(y_test, sig_clf_probs)
 
 # Plot changes in predicted probabilities via arrows
-plt.figure(0)
+plt.figure()
 colors = ["r", "g", "b"]
 for i in range(clf_probs.shape[0]):
     plt.arrow(clf_probs[i, 0], clf_probs[i, 1],
@@ -131,7 +131,7 @@ print(" * classifier trained on 600 datapoints and calibrated on "
       "200 datapoint: %.3f" % sig_score)
 
 # Illustrate calibrator
-plt.figure(1)
+plt.figure()
 # generate grid over 2-simplex
 p1d = np.linspace(0, 1, 20)
 p0, p1 = np.meshgrid(p1d, p1d)
