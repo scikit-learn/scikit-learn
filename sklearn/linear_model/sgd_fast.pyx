@@ -833,11 +833,11 @@ cdef void l1penalty(WeightVector w, double * q_data_ptr,
     for j in range(xnnz):
         idx = x_ind_ptr[j]
         z = weight[idx]
-        if wscale * weight[idx] > 0.0:
+        if wscale * z > 0.0:
             weight[idx] = max(
                 0.0, weight[idx] - ((u + q_data_ptr[idx]) / wscale))
 
-        elif wscale * weight[idx] < 0.0:
+        elif wscale * z < 0.0:
             weight[idx] = min(
                 0.0, weight[idx] + ((u - q_data_ptr[idx]) / wscale))
 

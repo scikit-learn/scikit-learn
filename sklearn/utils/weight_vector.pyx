@@ -43,15 +43,13 @@ cdef class WeightVector(object):
     """
 
     def __cinit__(self, double [::1] w, double [::1] aw):
-        cdef double *wdata = &w[0]
-
         if w.shape[0] > INT_MAX:
             raise ValueError("More than %d features not supported; got %d."
                              % (INT_MAX, w.shape[0]))
         self.w = w
         self.wscale = 1.0
         self.n_features = w.shape[0]
-        self.sq_norm = _dot(<int>w.shape[0], wdata, 1, wdata, 1)
+        self.sq_norm = _dot(<int>w.shape[0], &w[0], 1, &w[0], 1)
 
         self.aw = aw
         if self.aw is not None:
