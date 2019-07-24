@@ -1590,17 +1590,14 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
 
     Parameters
     ----------
-    alphas : numpy array of shape [n_alphas], list or tuple
+    alphas : numpy array of shape [n_alphas], default (0.1, 1.0, 10.0)
         Array of alpha values to try.
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
         Alpha corresponds to ``C^-1`` in other linear models such as
         LogisticRegression or LinearSVC.
-        Default value is (0.1, 1.0, 10.0)
         If using generalized cross-validation, alphas must be positive.
-        Note: the `alphas` feature will be of `np.ndarray` type even if the
-        constructor parameter was a list or a tuple.
 
     fit_intercept : bool, default True
         Whether to calculate the intercept for this model. If set
@@ -1707,16 +1704,13 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     Parameters
     ----------
-    alphas : numpy array of shape [n_alphas], list or tuple
+    alphas : numpy array of shape [n_alphas], default (0.1, 1.0, 10.0)
         Array of alpha values to try.
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
         Alpha corresponds to ``C^-1`` in other linear models such as
         LogisticRegression or LinearSVC.
-        Default value is (0.1, 1.0, 10.0)
-        Note: the `alphas` feature will be of `np.ndarray` type even if the
-        constructor parameter was a list or a tuple.
 
     fit_intercept : bool, default True
         Whether to calculate the intercept for this model. If set
