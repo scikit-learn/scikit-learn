@@ -517,9 +517,6 @@ def test_check_estimator_pairwise():
     est = SVC(kernel='precomputed')
     check_estimator(est)
 
-    est = KernelCenterer
-    check_estimator(KernelCenterer)
-
     # test precomputed metric
     est = KNeighborsRegressor(metric='precomputed')
     check_estimator(est)
