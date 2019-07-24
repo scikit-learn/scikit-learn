@@ -1070,7 +1070,7 @@ def _check_transformer(name, transformer_orig, X, y):
         # raises error on malformed input for transform
         if hasattr(X, 'shape') and \
            not _safe_tags(transformer, "stateless") and \
-           len(X.shape) == 2 and X.shape[1] > 1:
+           X.ndim == 2 and X.shape[1] > 1:
 
             # If it's not an array, it does not have a 'T' property
             with assert_raises(ValueError, msg="The transformer {} does "
