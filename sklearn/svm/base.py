@@ -158,7 +158,9 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                              (X.shape[0], y.shape[0]))
 
         if self.kernel == "precomputed" and X.shape[0] != X.shape[1]:
-            raise ValueError("X.shape[0] should be equal to X.shape[1]")
+            raise ValueError("Precomputed matrix must be a square matrix."
+                             " Input is a {}x{} matrix."
+                             .format(X.shape[0], X.shape[1]))
 
         if sample_weight.shape[0] > 0 and sample_weight.shape[0] != X.shape[0]:
             raise ValueError("sample_weight and X have incompatible shapes: "
