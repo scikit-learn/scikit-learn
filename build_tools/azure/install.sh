@@ -89,4 +89,5 @@ except ImportError:
     print('pandas not installed')
 "
 pip list
+python setup.py build_ext --inplace -j 3
 python setup.py develop

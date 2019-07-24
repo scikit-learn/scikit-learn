@@ -20,6 +20,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose_dense_sparse
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y
 from sklearn.utils import deprecated
@@ -39,7 +40,8 @@ from sklearn.utils.validation import (
     check_memory,
     check_non_negative,
     _num_samples,
-    check_scalar)
+    check_scalar,
+    _check_sample_weight)
 import sklearn
 
 from sklearn.exceptions import NotFittedError
@@ -332,8 +334,7 @@ def test_check_array_on_mock_dataframe():
     arr = np.array([[0.2, 0.7], [0.6, 0.5], [0.4, 0.1], [0.7, 0.2]])
     mock_df = MockDataFrame(arr)
     checked_arr = check_array(mock_df)
-    assert (checked_arr.dtype ==
-                 arr.dtype)
+    assert checked_arr.dtype == arr.dtype
     checked_arr = check_array(mock_df, dtype=np.float32)
     assert checked_arr.dtype == np.dtype(np.float32)
 
@@ -674,8 +675,9 @@ def test_check_consistent_length():
 
     assert_raises(TypeError, check_consistent_length, [1, 2], np.array(1))
     # Despite ensembles having __len__ they must raise TypeError
-    assert_raises_regex(TypeError, 'estimator', check_consistent_length,
-                        [1, 2], RandomForestRegressor())
+    assert_raises_regex(TypeError, 'Expected sequence or array-like',
+                        check_consistent_length, [1, 2],
+                        RandomForestRegressor())
     # XXX: We should have a test with a string, but what is correct behaviour?
 
 
@@ -823,6 +825,14 @@ def test_retrieve_samples_from_non_standard_shape():
     X = TestNonNumericShape()
     assert _num_samples(X) == len(X)
 
+    # check that it gives a good error if there's no __len__
+    class TestNoLenWeirdShape:
+        def __init__(self):
+            self.shape = ("not numeric",)
+
+    with pytest.raises(TypeError, match="Expected sequence or array-like"):
+        _num_samples(TestNoLenWeirdShape())
+
 
 @pytest.mark.parametrize('x, target_type, min_val, max_val',
                          [(3, int, 2, 5),
@@ -853,3 +863,40 @@ def test_check_scalar_invalid(x, target_name, target_type, min_val, max_val,
                      min_val=min_val, max_val=max_val)
     assert str(raised_error.value) == str(err_msg)
     assert type(raised_error.value) == type(err_msg)
+
+
+def test_check_sample_weight():
+    # check array order
+    sample_weight = np.ones(10)[::2]
+    assert not sample_weight.flags["C_CONTIGUOUS"]
+    sample_weight = _check_sample_weight(sample_weight, X=np.ones((5, 1)))
+    assert sample_weight.flags["C_CONTIGUOUS"]
+
+    # check None input
+    sample_weight = _check_sample_weight(None, X=np.ones((5, 2)))
+    assert_allclose(sample_weight, np.ones(5))
+
+    # check numbers input
+    sample_weight = _check_sample_weight(2.0, X=np.ones((5, 2)))
+    assert_allclose(sample_weight, 2 * np.ones(5))
+
+    # check wrong number of dimensions
+    with pytest.raises(ValueError,
+                       match="Sample weights must be 1D array or scalar"):
+        _check_sample_weight(np.ones((2, 4)), X=np.ones((2, 2)))
+
+    # check incorrect n_samples
+    msg = r"sample_weight.shape == \(4,\), expected \(2,\)!"
+    with pytest.raises(ValueError, match=msg):
+        _check_sample_weight(np.ones(4), X=np.ones((2, 2)))
+
+    # float32 dtype is preserved
+    X = np.ones((5, 2))
+    sample_weight = np.ones(5, dtype=np.float32)
+    sample_weight = _check_sample_weight(sample_weight, X)
+    assert sample_weight.dtype == np.float32
+
+    # int dtype will be converted to float64 instead
+    X = np.ones((5, 2), dtype=np.int)
+    sample_weight = _check_sample_weight(None, X, dtype=X.dtype)
+    assert sample_weight.dtype == np.float64
