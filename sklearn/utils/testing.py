@@ -878,7 +878,7 @@ def assert_run_python_script(source_code, timeout=60):
         cwd = op.normpath(op.join(op.dirname(sklearn.__file__), '..'))
         env = os.environ.copy()
         try:
-            env["PYTHONPATH"] = ":".join([cwd, env["PYTHONPATH"]])
+            env["PYTHONPATH"] = os.pathsep.join([cwd, env["PYTHONPATH"]])
         except KeyError:
             env["PYTHONPATH"] = cwd
         kwargs = {
