@@ -131,7 +131,7 @@ Changelog
 
 - |Fix| :class:`linear_model.Ridge` now accepts Fortran arrays and make a
   conversion instead of failing.
-  :pr:`xx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`14458` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.metrics`
 ......................
