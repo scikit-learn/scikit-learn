@@ -339,9 +339,17 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
     [1]
     """
 
-    def __init__(self, solver='svd', shrinkage=None, priors=None,
-                 n_components=None, store_covariance=False, tol=1e-4,
-                 covariance_estimator=None, standardize=False):
+    def __init__(
+            self,
+            solver='svd',
+            shrinkage=None,
+            covariance_estimator=None,
+            standardize=False,
+            priors=None,
+            n_components=None,
+            store_covariance=False,
+            tol=1e-4
+    ):
         self.solver = solver
         self.shrinkage = shrinkage
         self.priors = priors
