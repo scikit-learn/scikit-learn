@@ -551,7 +551,7 @@ class ElasticNet(LinearModel, RegressorMixin, MultiOutputMixin):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    precompute : boolean, optional, default False
+    precompute : True | False | array-like, optional, default False
         Whether to use a precomputed Gram matrix to speed up
         calculations. The Gram matrix can also be passed as argument.
         For sparse input this option is always ``True`` to preserve sparsity.
@@ -830,7 +830,7 @@ class Lasso(ElasticNet):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    precompute : boolean, optional, default False
+    precompute : True | False | array-like, optional, default False
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument. For sparse input
@@ -1302,10 +1302,10 @@ class LassoCV(LinearModelCV, RegressorMixin):
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    verbose : boolean or integer, optional, default False 
+    verbose : boolean or integer, optional, default False
         Amount of verbosity.
 
-    n_jobs : int or None, optional, default None 
+    n_jobs : int or None, optional, default None
         Number of CPUs to use during the cross validation.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
