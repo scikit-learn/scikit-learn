@@ -262,7 +262,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         assumed to be specific to the targets. Hence they must correspond in
         number.
 
-    sample_weight : float or numpy array of shape [n_samples]
+    sample_weight : float or numpy array of shape [n_samples], default None
         Individual weights for each sample. If sample_weight is not None and
         solver='auto', the solver will be set to 'cholesky'.
 
@@ -909,7 +909,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         y : array-like of shape (n_samples,)
             Target values
 
-        sample_weight : float or numpy array of shape (n_samples,)
+        sample_weight : float or numpy array of shape (n_samples,), default None
             Sample weight.
 
             .. versionadded:: 0.17
@@ -1823,7 +1823,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         y : array-like, shape (n_samples,)
             Target values. Will be cast to X's dtype if necessary
 
-        sample_weight : float or numpy array of shape (n_samples,)
+        sample_weight : float or numpy array of shape (n_samples,), default None
             Sample weight.
 
         Returns
