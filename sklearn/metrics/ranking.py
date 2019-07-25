@@ -1014,7 +1014,7 @@ def label_ranking_loss(y_true, y_score, sample_weight=None):
 
 
 def _dcg_sample_scores(y_true, y_score, k=None,
-                       log_basis=2, ignore_ties=False):
+                       log_base=2, ignore_ties=False):
     """Compute Discounted Cumulative Gain.
 
     Sum the true scores ranked in the order induced by the predicted scores,
@@ -1038,8 +1038,8 @@ def _dcg_sample_scores(y_true, y_score, k=None,
         Only consider the highest k scores in the ranking. If None, use all
         outputs.
 
-    log_basis : float, optional (default=2)
-        Basis of the logarithm used for the discount. A low value means a
+    log_base : float, optional (default=2)
+        Base of the logarithm used for the discount. A low value means a
         sharper discount (top results are more important).
 
     ignore_ties : bool, optional (default=False)
@@ -1059,7 +1059,7 @@ def _dcg_sample_scores(y_true, y_score, k=None,
         have a score between 0 and 1.
 
     """
-    discount = 1 / (np.log(np.arange(y_true.shape[1]) + 2) / np.log(log_basis))
+    discount = 1 / (np.log(np.arange(y_true.shape[1]) + 2) / np.log(log_base))
     if k is not None:
         discount[k:] = 0
     if ignore_ties:
@@ -1134,7 +1134,7 @@ def _check_dcg_target_type(y_true):
 
 
 def dcg_score(y_true, y_score, k=None,
-              log_basis=2, sample_weight=None, ignore_ties=False):
+              log_base=2, sample_weight=None, ignore_ties=False):
     """Compute Discounted Cumulative Gain.
 
     Sum the true scores ranked in the order induced by the predicted scores,
@@ -1161,8 +1161,8 @@ def dcg_score(y_true, y_score, k=None,
         Only consider the highest k scores in the ranking. If None, use all
         outputs.
 
-    log_basis : float, optional (default=2)
-        Basis of the logarithm used for the discount. A low value means a
+    log_base : float, optional (default=2)
+        Base of the logarithm used for the discount. A low value means a
         sharper discount (top results are more important).
 
     sample_weight : ndarray, shape (n_samples,), optional (default=None)
@@ -1234,7 +1234,7 @@ def dcg_score(y_true, y_score, k=None,
     _check_dcg_target_type(y_true)
     return np.average(
         _dcg_sample_scores(
-            y_true, y_score, k=k, log_basis=log_basis,
+            y_true, y_score, k=k, log_base=log_base,
             ignore_ties=ignore_ties),
         weights=sample_weight)
 

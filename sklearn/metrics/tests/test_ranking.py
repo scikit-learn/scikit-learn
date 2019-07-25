@@ -1328,7 +1328,7 @@ def test_ndcg_toy_examples():
         _dcg_sample_scores(y_true, y_score_noisy, ignore_ties=True))
     assert _ndcg_sample_scores(y_true, y_score) == pytest.approx(
         1 / np.log2(np.arange(2, 7)))
-    assert _dcg_sample_scores(y_true, y_score, log_basis=10) == pytest.approx(
+    assert _dcg_sample_scores(y_true, y_score, log_base=10) == pytest.approx(
         3 / np.log10(np.arange(2, 7)))
     assert ndcg_score(y_true, y_score) == pytest.approx(
         (1 / np.log2(np.arange(2, 7))).mean())
