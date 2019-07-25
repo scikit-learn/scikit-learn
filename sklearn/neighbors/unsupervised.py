@@ -62,6 +62,14 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+    Attributes
+    ----------
+    effective_metric_ : string
+        Metric used to compute distances to neighbors.
+
+    effective_metric_params_ : dict
+        Parameters for the metric used to compute distances to neighbors.
+
     Examples
     --------
       >>> import numpy as np

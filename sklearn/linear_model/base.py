@@ -404,8 +404,9 @@ class LinearRegression(LinearModel, RegressorMixin, MultiOutputMixin):
     singular_ : array, shape (min(X, y),)
         Singular values of `X`. Only available when `X` is dense.
 
-    intercept_ : array
-        Independent term in the linear model.
+    intercept_ : float | array, shape = (n_targets,)
+        Independent term in the linear model. Set to 0.0 if
+        `fit_intercept = False`.
 
     Examples
     --------

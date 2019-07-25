@@ -112,6 +112,9 @@ else [n_classes, n_features]
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
 
+    classes_ : array of shape = (n_classes,)
+        The unique classes labels.
+
     n_iter_ : int
         Maximum number of iterations run across all classes.
 
@@ -210,7 +213,7 @@ else [n_classes, n_features]
         -------
         self : object
         """
-        # FIXME Remove l1/l2 support in 1.0 -----------------------------------
+        # FIXME Remove l1/l2 support in 0.23 ----------------------------------
         msg = ("loss='%s' has been deprecated in favor of "
                "loss='%s' as of 0.16. Backward compatibility"
                " for the loss='%s' will be removed in %s")
@@ -218,7 +221,7 @@ else [n_classes, n_features]
         if self.loss in ('l1', 'l2'):
             old_loss = self.loss
             self.loss = {'l1': 'hinge', 'l2': 'squared_hinge'}.get(self.loss)
-            warnings.warn(msg % (old_loss, self.loss, old_loss, '1.0'),
+            warnings.warn(msg % (old_loss, self.loss, old_loss, '0.23'),
                           DeprecationWarning)
         # ---------------------------------------------------------------------
 
@@ -397,7 +400,7 @@ class LinearSVR(LinearModel, RegressorMixin):
         -------
         self : object
         """
-        # FIXME Remove l1/l2 support in 1.0 -----------------------------------
+        # FIXME Remove l1/l2 support in 0.23 ----------------------------------
         msg = ("loss='%s' has been deprecated in favor of "
                "loss='%s' as of 0.16. Backward compatibility"
                " for the loss='%s' will be removed in %s")
@@ -407,7 +410,7 @@ class LinearSVR(LinearModel, RegressorMixin):
             self.loss = {'l1': 'epsilon_insensitive',
                          'l2': 'squared_epsilon_insensitive'
                          }.get(self.loss)
-            warnings.warn(msg % (old_loss, self.loss, old_loss, '1.0'),
+            warnings.warn(msg % (old_loss, self.loss, old_loss, '0.23'),
                           DeprecationWarning)
         # ---------------------------------------------------------------------
 
@@ -570,6 +573,9 @@ class SVC(BaseSVC):
 
     fit_status_ : int
         0 if correctly fitted, 1 otherwise (will raise warning)
+
+    classes_ : array of shape = [n_classes]
+        The classes labels.
 
     probA_ : array, shape = [n_class * (n_class-1) / 2]
     probB_ : array, shape = [n_class * (n_class-1) / 2]
@@ -761,6 +767,9 @@ class NuSVC(BaseSVC):
 
     intercept_ : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
+
+    classes_ : array of shape = (n_classes,)
+        The unique classes labels.
 
     Examples
     --------

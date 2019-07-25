@@ -401,6 +401,9 @@ class SpectralEmbedding(BaseEstimator):
     affinity_matrix_ : array, shape = (n_samples, n_samples)
         Affinity_matrix constructed from samples or precomputed.
 
+    n_neighbors_ : int
+        Number of nearest neighbors effectively used.
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits
