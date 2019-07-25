@@ -1044,7 +1044,7 @@ def _dcg_sample_scores(y_true, y_score, k=None,
 
     ignore_ties : bool, optional (default=False)
         Assume that there are no ties in y_score (which is likely to be the
-        case if y_score is continuous) for performance gains.
+        case if y_score is continuous) for efficiency gains.
 
     Returns
     -------
@@ -1170,7 +1170,7 @@ def dcg_score(y_true, y_score, k=None,
 
     ignore_ties : bool, optional (default=False)
         Assume that there are no ties in y_score (which is likely to be the
-        case if y_score is continuous) for performance gains.
+        case if y_score is continuous) for efficiency gains.
 
     Returns
     -------
@@ -1267,7 +1267,7 @@ def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
 
     ignore_ties : bool, optional (default=False)
         Assume that there are no ties in y_score (which is likely to be the
-        case if y_score is continuous) for performance gains.
+        case if y_score is continuous) for efficiency gains.
 
     Returns
     -------
@@ -1318,7 +1318,7 @@ def ndcg_score(y_true, y_score, k=None, sample_weight=None, ignore_ties=False):
 
     ignore_ties : bool, optional (default=False)
         Assume that there are no ties in y_score (which is likely to be the
-        case if y_score is continuous) for performance gains.
+        case if y_score is continuous) for efficiency gains.
 
     Returns
     -------
