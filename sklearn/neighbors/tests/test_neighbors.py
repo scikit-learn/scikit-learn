@@ -234,7 +234,10 @@ def test_precomputed_sparse_radius(fmt):
 
 
 def test_is_sorted_by_data():
-    # Test the helper function _is_sorted_by_data
+    # Test that _is_sorted_by_data works as expected. In CSR sparse matrix,
+    # entries in each row can be sorted by indices, by data, or unsorted.
+    # _is_sorted_by_data should return True when entries are sorted by data,
+    # and False in all other cases.
 
     # Test with sorted 1D array
     X = csr_matrix(np.arange(10))

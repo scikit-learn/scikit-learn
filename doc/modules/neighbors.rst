@@ -560,8 +560,8 @@ implementation with special data types. The precomputed neighbors
 * each row's `data` should store the distance in increasing order (optional.
   Unsorted data will be stable-sorted, adding a computational overhead).
 * all values in data should be non-negative.
-* (there should be no duplicate `indices` in any row; but if you don't get what
-  this means, you're probably fine).
+* there should be no duplicate `indices` in any row
+  (see https://github.com/scipy/scipy/issues/5807).
 * if the algorithm being passed the precomputed matrix uses k nearest neighbors
   (as opposed to radius neighborhood), at least k neighbors must be stored in
   each row.

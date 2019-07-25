@@ -190,9 +190,6 @@ Changelog
   :class:`neighbors.LocalOutlierFactor` now accept precomputed sparse
   neighbors graph as input. :issue:`10482` by `Tom Dupre la Tour`_ and
   :user:`Kumar Ashutosh <thechargedneutron>`.
-- |Efficiency| The 'liblinear' logistic regression solver now consumes less
-  memory if ``fit_intercept=False`` and ``X`` is a CSR sparse matrix.
-  :pr:`14108` by :user:`Alex Henrie <alexhenrie>`.
 
 :mod:`sklearn.pipeline`
 .......................

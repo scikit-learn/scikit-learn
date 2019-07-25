@@ -84,7 +84,7 @@ class NMSlibTransformer(BaseEstimator, TransformerMixin):
         self.n_samples_fit = X.shape[0]
 
         # see more metric in the manual
-        # https://github.com/nmslib/nmslib/blob/master/manual/manual.pdf
+        # https://github.com/nmslib/nmslib/tree/master/manual
         space = {
             'sqeuclidean': 'l2',
             'euclidean': 'l2',
