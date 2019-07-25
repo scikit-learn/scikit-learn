@@ -1202,9 +1202,6 @@ class NMF(BaseEstimator, TransformerMixin):
         the training data ``X`` and the reconstructed data ``WH`` from
         the fitted model.
 
-    n_components_ : int
-        Number of components effectively used during the fit.
-
     n_iter_ : int
         Actual number of iterations.
 
