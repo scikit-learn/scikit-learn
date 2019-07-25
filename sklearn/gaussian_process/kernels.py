@@ -161,9 +161,10 @@ class Kernel(metaclass=ABCMeta):
             try:
                 value = getattr(self, arg)
             except AttributeError:
-                warnings.warn('From version 0.24, get_params will not return '
-                              'None for parameters not available as '
-                              'attribues. An AttributeError will be raised.',
+                warnings.warn('From version 0.24, get_params will raise an '
+                              'AttributeError if a parameter cannot be '
+                              'retrieved as an instance attribute. Previously '
+                              'it would return None.',
                               FutureWarning)
                 value = None
             params[arg] = value
