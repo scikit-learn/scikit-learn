@@ -1267,7 +1267,9 @@ def check_nonsquare_error(name, estimator_orig):
     X, y = make_blobs(n_samples=20, n_features=10)
     estimator = clone(estimator_orig)
 
-    with pytest.raises(ValueError, match="must be a square matrix"):
+    with assert_raises(ValueError, msg="The pairwise estimator {}"
+                       " does not raise an error on non-square data"
+                       .format(name)):
         estimator.fit(X, y)
 
 
