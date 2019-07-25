@@ -247,7 +247,9 @@ def _safe_indexing_row(X, indices):
     CSR, CSC, and LIL sparse matrices are supported. COO sparse matrices are
     not supported.
     """
-    if not isinstance(indices, slice):
+    if indices is None:
+        return X
+    elif not isinstance(indices, slice):
         indices = np.asarray(indices)
     if hasattr(X, "iloc"):
         if not isinstance(indices, slice):
