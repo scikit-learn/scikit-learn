@@ -16,7 +16,6 @@ better.
 
 
 from math import log
-import warnings
 
 import numpy as np
 from scipy import sparse as sp
@@ -186,13 +185,13 @@ def adjusted_rand_score(labels_true, labels_pred):
     Labelings that assign all classes members to the same clusters
     are complete be not always pure, hence penalized::
 
-      >>> adjusted_rand_score([0, 0, 1, 2], [0, 0, 1, 1])  # doctest: +ELLIPSIS
+      >>> adjusted_rand_score([0, 0, 1, 2], [0, 0, 1, 1])
       0.57...
 
     ARI is symmetric, so labelings that have pure clusters with members
     coming from the same classes but unnecessary splits are penalized::
 
-      >>> adjusted_rand_score([0, 0, 1, 1], [0, 0, 1, 2])  # doctest: +ELLIPSIS
+      >>> adjusted_rand_score([0, 0, 1, 1], [0, 0, 1, 2])
       0.57...
 
     If classes members are completely split across different clusters, the
@@ -375,20 +374,16 @@ def homogeneity_score(labels_true, labels_pred):
     perfectly homogeneous::
 
       >>> print("%.6f" % homogeneity_score([0, 0, 1, 1], [0, 0, 1, 2]))
-      ...                                                  # doctest: +ELLIPSIS
       1.000000
       >>> print("%.6f" % homogeneity_score([0, 0, 1, 1], [0, 1, 2, 3]))
-      ...                                                  # doctest: +ELLIPSIS
       1.000000
 
     Clusters that include samples from different classes do not make for an
     homogeneous labeling::
 
       >>> print("%.6f" % homogeneity_score([0, 0, 1, 1], [0, 1, 0, 1]))
-      ...                                                  # doctest: +ELLIPSIS
       0.0...
       >>> print("%.6f" % homogeneity_score([0, 0, 1, 1], [0, 0, 0, 0]))
-      ...                                                  # doctest: +ELLIPSIS
       0.0...
 
     """
@@ -535,10 +530,8 @@ def v_measure_score(labels_true, labels_pred, beta=1.0):
     are complete be not homogeneous, hence penalized::
 
       >>> print("%.6f" % v_measure_score([0, 0, 1, 2], [0, 0, 1, 1]))
-      ...                                                  # doctest: +ELLIPSIS
       0.8...
       >>> print("%.6f" % v_measure_score([0, 1, 2, 3], [0, 0, 1, 1]))
-      ...                                                  # doctest: +ELLIPSIS
       0.66...
 
     Labelings that have pure clusters with members coming from the same
@@ -546,24 +539,20 @@ def v_measure_score(labels_true, labels_pred, beta=1.0):
     and thus penalize V-measure as well::
 
       >>> print("%.6f" % v_measure_score([0, 0, 1, 1], [0, 0, 1, 2]))
-      ...                                                  # doctest: +ELLIPSIS
       0.8...
       >>> print("%.6f" % v_measure_score([0, 0, 1, 1], [0, 1, 2, 3]))
-      ...                                                  # doctest: +ELLIPSIS
       0.66...
 
     If classes members are completely split across different clusters,
     the assignment is totally incomplete, hence the V-Measure is null::
 
       >>> print("%.6f" % v_measure_score([0, 0, 0, 0], [0, 1, 2, 3]))
-      ...                                                  # doctest: +ELLIPSIS
       0.0...
 
     Clusters that include samples from totally different classes totally
     destroy the homogeneity of the labeling, hence::
 
       >>> print("%.6f" % v_measure_score([0, 0, 1, 1], [0, 0, 0, 0]))
-      ...                                                  # doctest: +ELLIPSIS
       0.0...
 
     """

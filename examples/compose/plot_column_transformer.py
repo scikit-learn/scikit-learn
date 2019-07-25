@@ -116,20 +116,20 @@ pipeline = Pipeline([
     )),
 
     # Use a SVC classifier on the combined features
-    ('svc', LinearSVC()),
+    ('svc', LinearSVC(dual=False)),
 ], verbose=True)
 
 # limit the list of categories to make running this example faster.
 categories = ['alt.atheism', 'talk.religion.misc']
-train = fetch_20newsgroups(random_state=1,
-                           subset='train',
-                           categories=categories,
-                           )
-test = fetch_20newsgroups(random_state=1,
-                          subset='test',
-                          categories=categories,
-                          )
+X_train, y_train = fetch_20newsgroups(random_state=1,
+                                      subset='train',
+                                      categories=categories,
+                                      return_X_y=True)
+X_test, y_test = fetch_20newsgroups(random_state=1,
+                                    subset='test',
+                                    categories=categories,
+                                    return_X_y=True)
 
-pipeline.fit(train.data, train.target)
-y = pipeline.predict(test.data)
-print(classification_report(y, test.target))
+pipeline.fit(X_train, y_train)
+y_pred = pipeline.predict(X_test)
+print(classification_report(y_pred, y_test))
