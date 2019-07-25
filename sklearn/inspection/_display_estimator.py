@@ -183,7 +183,6 @@ _STYLE = """
   font-weight: bold;
   background: white;
   display: inline-block;
-  text-decoration: underline;
   margin: 0 0.5em;
 }
 .sk-label-container {
