@@ -193,7 +193,14 @@ class BaseEstimator:
         """
         out = dict()
         for key in self._get_param_names():
-            value = getattr(self, key, None)
+            try:
+                value = getattr(self, key)
+            except AttributeError:
+                warnings.warn('From version 0.24, get_params will not return '
+                              'None for parameters not available as '
+                              'attribues. An AttributeError will be raised.',
+                              FutureWarning)
+                value = None
             if deep and hasattr(value, 'get_params'):
                 deep_items = value.get_params().items()
                 out.update((key + '__' + k, val) for k, val in deep_items)

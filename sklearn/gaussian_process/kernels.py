@@ -23,6 +23,7 @@ from abc import ABCMeta, abstractmethod
 from collections import namedtuple
 import math
 from inspect import signature
+import warnings
 
 import numpy as np
 from scipy.special import kv, gamma
@@ -157,7 +158,15 @@ class Kernel(metaclass=ABCMeta):
                                " %s doesn't follow this convention."
                                % (cls, ))
         for arg in args:
-            params[arg] = getattr(self, arg, None)
+            try:
+                value = getattr(self, arg)
+            except AttributeError:
+                warnings.warn('From version 0.24, get_params will not return '
+                              'None for parameters not available as '
+                              'attribues. An AttributeError will be raised.',
+                              FutureWarning)
+                value = None
+            params[arg] = value
         return params
 
     def set_params(self, **params):
