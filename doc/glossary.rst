@@ -344,11 +344,11 @@ General Concepts
         likelihoods.
 
     estimator tags
-        A proposed feature (e.g. :issue:`8022`) by which the capabilities of an
-        estimator are described through a set of semantic tags.  This would
-        enable some runtime behaviors based on estimator inspection, but it
-        also allows each estimator to be tested for appropriate invariances
-        while being excepted from other :term:`common tests`.
+    	Estimator tags are tags that show the capabilities of an estimator.
+    	They were proposed in :issue:`8022`. From the tags, runtime behaviors can
+    	be enabled based on estimator inspection. Each estimator can also be 
+    	tested for appropriate invariances while being excepted from other 
+    	:term:`common tests`.
 
         Some aspects of estimator tags are currently determined through
         the :term:`duck typing` of methods like ``predict_proba`` and through
@@ -373,6 +373,8 @@ General Concepts
                 extracts a sub-sample of data intended for a pairwise estimator,
                 the data needs to be indexed on both axes, while other data is
                 indexed only on the first axis.
+        The detailed explanation of each estimator tag can be found at 
+        `estimator tags <https://scikit-learn.org/dev/developers/contributing.html#estimator-tags>`_.
 
     feature
     features
