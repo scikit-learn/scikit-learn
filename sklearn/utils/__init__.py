@@ -1,6 +1,7 @@
 """
 The :mod:`sklearn.utils` module includes various utilities.
 """
+from collections.abc import Iterable
 from collections.abc import Sequence
 from contextlib import contextmanager
 from itertools import islice
@@ -188,6 +189,10 @@ def safe_indexing(X, indices, axis=0):
         Data from which to sample rows, items or columns.
     indices : array-like
         - When ``axis=0``, indices need to be an array of integer.
+            - container: lists, slices, boolean masks: output is 2D.
+              Supported data types for containers:
+                - integer or boolean (positional): supported for arrays, sparse
+                  and dataframes
         - When ``axis=1``, indices can be one of:
             - scalar: output is 1D, unless `X` is sparse.
               Supported data types for scalars:
@@ -247,10 +252,12 @@ def _safe_indexing_row(X, indices):
     CSR, CSC, and LIL sparse matrices are supported. COO sparse matrices are
     not supported.
     """
-    if hasattr(X, "iloc"):
-        # Work-around for indexing with read-only indices in pandas
+    if not isinstance(indices, slice):
         indices = np.asarray(indices)
-        indices = indices if indices.flags.writeable else indices.copy()
+    if hasattr(X, "iloc"):
+        if not isinstance(indices, slice):
+            # Work-around for indexing with read-only indices in pandas
+            indices = indices if indices.flags.writeable else indices.copy()
         # Pandas Dataframes and Series
         try:
             return X.iloc[indices]
@@ -268,7 +275,13 @@ def _safe_indexing_row(X, indices):
         else:
             return X[indices]
     else:
-        return [X[idx] for idx in indices]
+        # In the case of a slice or a scalar
+        if not isinstance(indices, Iterable) or indices.ndim == 0:
+            return X[indices]
+        else:
+            if np.issubdtype(indices.dtype, np.bool_):
+                indices = np.flatnonzero(indices)
+            return [X[idx] for idx in indices]
 
 
 def _check_key_type(key, superclass):

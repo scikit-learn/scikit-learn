@@ -10,6 +10,7 @@ import scipy.sparse as sp
 
 from sklearn.utils.testing import (assert_raises,
                                    assert_array_equal,
+                                   assert_allclose_dense_sparse,
                                    assert_raises_regex,
                                    assert_warns_message, assert_no_warnings)
 from sklearn.utils import check_random_state
@@ -219,14 +220,51 @@ def test_check_key_type(key, clazz, is_expected_type):
     assert _check_key_type(key, clazz) is is_expected_type
 
 
-@pytest.mark.parametrize("asarray", [True, False], ids=["array-like", "array"])
-def test_safe_indexing_axis_0(asarray):
+@pytest.mark.parametrize(
+    "idx",
+    [[0, 2], [True, False, True],  # array-like
+     np.array([0, 2]), np.array([True, False, True])],  # numpy array
+    ids=['list-indices', 'list-mask', 'array-indices', 'array-mask']
+)
+@pytest.mark.parametrize(
+    "array_type", [None, np.asarray, sp.csr_matrix],
+    ids=["list", "array", "sparse"]
+)
+def test_safe_indexing_axis_0_container(idx, array_type):
     X = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    inds = np.array([1, 2]) if asarray else [1, 2]
-    X_inds = safe_indexing(X, inds)
-    X_arrays = safe_indexing(np.array(X), inds)
-    assert_array_equal(np.array(X_inds), X_arrays)
-    assert_array_equal(np.array(X_inds), np.array(X)[inds])
+    X = array_type(X) if array_type is not None else X
+    X_subset = safe_indexing(X, idx, axis=0)
+    X_expect = [[1, 2, 3], [7, 8, 9]]
+    X_expect = array_type(X_expect) if array_type is not None else X_expect
+    assert_allclose_dense_sparse(X_subset, X_expect)
+
+
+@pytest.mark.parametrize(
+    "array_type", [None, np.asarray, sp.csr_matrix],
+    ids=["list", "array", "sparse"]
+)
+def test_safe_indexing_axis_0_slice(array_type):
+    X = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    X = array_type(X) if array_type is not None else X
+    idx = slice(0, 2)
+    X_subset = safe_indexing(X, idx, axis=0)
+    X_expect = [[1, 2, 3], [4, 5, 6]]
+    X_expect = array_type(X_expect) if array_type is not None else X_expect
+    assert_allclose_dense_sparse(X_subset, X_expect)
+
+
+@pytest.mark.parametrize(
+    "array_type", [None, np.asarray, sp.csr_matrix],
+    ids=["list", "array", "sparse"]
+)
+def test_safe_indexing_axis_0_scalar(array_type):
+    X = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    X = array_type(X) if array_type is not None else X
+    idx = 1  # scalar indexing
+    X_subset = safe_indexing(X, idx, axis=0)
+    X_expect = [4, 5, 6]
+    X_expect = array_type(X_expect) if array_type is not None else X_expect
+    assert_allclose_dense_sparse(X_subset, X_expect)
 
 
 @pytest.mark.parametrize("idx", [0, [0, 1]], ids=['scalar', 'list'])
@@ -355,11 +393,15 @@ def test_safe_indexing_pandas_series(idx, asarray):
     assert_array_equal(safe_indexing(serie, idx).values, [0, 1])
 
 
-@pytest.mark.parametrize("asarray", [True, False], ids=["array-like", "array"])
-def test_safe_indexing_mock_pandas(asarray):
+@pytest.mark.parametrize(
+    "inds",
+    [[1, 2], [False, True, True],
+     np.array([1, 2]), np.array([False, True, True]),
+     slice(1, None)]
+)
+def test_safe_indexing_mock_pandas(inds):
     X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
     X_df = MockDataFrame(X)
-    inds = np.array([1, 2]) if asarray else [1, 2]
     X_df_indexed = safe_indexing(X_df, inds)
     X_indexed = safe_indexing(X_df, inds)
     assert_array_equal(np.array(X_df_indexed), X_indexed)

@@ -206,6 +206,10 @@ Changelog
   NumPy array, SciPy sparse matrix, and Pandas DataFrame.
   :pr:`14035` by `Guillaume Lemaitre <glemaitre>`.
 
+- |Enhancement| :func:`utils.safe_indexing` becomes more consistent and support
+  scalar, slice, mask indexing for both `axis=0` and `axis=1`.
+  :pr:`xx` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.neural_network`
 .............................
 
