@@ -1425,7 +1425,7 @@ class SGDRegressor(BaseSGDRegressor):
         'adaptive' schedules. The default value is 0.01.
 
     power_t : double
-        The exponent for inverse scaling learning rate [default 0.5].
+        The exponent for inverse scaling learning rate [default 0.25].
 
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
