@@ -780,7 +780,7 @@ class SGDClassifier(BaseSGDClassifier):
         Whether or not the training data should be shuffled after each epoch.
         Defaults to True.
 
-    verbose : integer,default=0
+    verbose : integer, default=0
         The verbosity level
 
     epsilon : float, default=0.1
