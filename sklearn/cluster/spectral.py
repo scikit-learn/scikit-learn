@@ -18,8 +18,8 @@ from ..manifold import spectral_embedding
 from .k_means_ import k_means
 
 
-def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
-               random_state=None):
+def discretize(vectors, max_svd_restarts=30, n_iter_max=20,
+               random_state=None, copy=True):
     """Search for a partition matrix (clustering) which is closest to the
     eigenvector embedding.
 
@@ -27,9 +27,6 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
     ----------
     vectors : array-like, shape: (n_samples, n_clusters)
         The embedding space of the samples.
-
-    copy : boolean, optional, default: True
-        Whether to copy vectors, or perform in-place normalization.
 
     max_svd_restarts : int, optional, default: 30
         Maximum number of attempts to restart SVD if convergence fails
@@ -42,6 +39,8 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
         Determines random number generation for rotation matrix initialization.
         Use an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
+    copy : boolean, optional, default: True
+        Whether to copy vectors, or perform in-place normalization.
 
     Returns
     -------
