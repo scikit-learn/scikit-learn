@@ -184,7 +184,7 @@ print('Number Negatives: %s / total: %s' % (
 #
 # Next we fit the Poisson regressor on the target variable,
 
-glm_freq = GeneralizedLinearRegressor(family="poisson", alpha=0)
+glm_freq = GeneralizedLinearRegressor(family="poisson", alpha=0, max_iter=1000)
 glm_freq.fit(X_train, df_train.Frequency, sample_weight=df_train.Exposure)
 
 print("PoissonRegressor")
@@ -215,7 +215,8 @@ print("MSE: %.3f" % mean_squared_error(
 print("MAE: %.3f" % mean_absolute_error(
       df_test.Frequency.values, gbr.predict(X_test), df_test.Exposure.values))
 print("mean Poisson deviance: %.3f" % mean_poisson_deviance(
-      df_test.Frequency.values, gbr.predict(X_test), df_test.Exposure.values))
+      df_test.Frequency.values, np.fmax(gbr.predict(X_test), eps),
+      df_test.Exposure.values))
 
 ##############################################################################
 #
