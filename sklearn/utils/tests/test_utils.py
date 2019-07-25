@@ -410,7 +410,7 @@ def test_safe_indexing_pandas_series(idx, asarray):
      [1, 2], [False, True, True],
      np.array([1, 2]), np.array([False, True, True]),
      slice(1, None)],
-     ids=['None', 'list-int', 'list-mask', 'array-int', 'array-mask', 'slice']
+    ids=['None', 'list-int', 'list-mask', 'array-int', 'array-mask', 'slice']
 )
 def test_safe_indexing_mock_pandas(inds):
     X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
