@@ -1031,7 +1031,7 @@ class GridSearchCV(BaseSearchCV):
         scorer's name (`'_<scorer_name>'`) instead of `'_score'` shown
         above. ('split0_test_precision', 'mean_train_precision' etc.)
 
-    best_estimator_ : estimator or dict
+    best_estimator_ : estimator
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
         on the left out data. Not available if `refit=False`.

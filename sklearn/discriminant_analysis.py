@@ -611,6 +611,9 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         of the Gaussian distributions along its principal axes, i.e. the
         variance in the rotated coordinate system.
 
+    classes_ : array-like, shape (n_classes,)
+        Unique class labels.
+
     Examples
     --------
     >>> from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis

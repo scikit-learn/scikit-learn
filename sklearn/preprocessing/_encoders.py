@@ -155,7 +155,8 @@ class OneHotEncoder(_BaseEncoder):
     strings, denoting the values taken on by categorical (discrete) features.
     The features are encoded using a one-hot (aka 'one-of-K' or 'dummy')
     encoding scheme. This creates a binary column for each category and
-    returns a sparse matrix or dense array.
+    returns a sparse matrix or dense array (depending on the ``sparse``
+    parameter)
 
     By default, the encoder derives the categories based on the unique values
     in each feature. Alternatively, you can also specify the `categories`

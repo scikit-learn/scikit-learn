@@ -193,56 +193,38 @@ Installing build dependencies
 Linux
 -----
 
-Installing from source requires you to have installed the scikit-learn runtime
-dependencies, Python development headers and a working C/C++ compiler.
-Under Debian-based operating systems, which include Ubuntu::
+Installing from source without conda requires you to have installed the
+scikit-learn runtime dependencies, Python development headers and a working
+C/C++ compiler. Under Debian-based operating systems, which include Ubuntu::
 
     sudo apt-get install build-essential python3-dev python3-setuptools \
-                     python3-numpy python3-scipy \
-                     libatlas-dev libatlas3-base
+                     python3-pip
+    
+and then::
 
-On recent Debian and Ubuntu (e.g. Ubuntu 14.04 or later) make sure that ATLAS
-is used to provide the implementation of the BLAS and LAPACK linear algebra
-routines::
-
-    sudo update-alternatives --set libblas.so.3 \
-        /usr/lib/atlas-base/atlas/libblas.so.3
-    sudo update-alternatives --set liblapack.so.3 \
-        /usr/lib/atlas-base/atlas/liblapack.so.3
+    pip3 install numpy scipy cython
 
 .. note::
 
     In order to build the documentation and run the example code contains in
     this documentation you will need matplotlib::
 
-        sudo apt-get install python-matplotlib
+        pip3 install matplotlib
 
-.. note::
+When precompiled wheels are not avalaible for your architecture, you can
+install the system versions::
 
-    The above installs the ATLAS implementation of BLAS
-    (the Basic Linear Algebra Subprograms library).
-    Ubuntu 11.10 and later, and recent (testing) versions of Debian,
-    offer an alternative implementation called OpenBLAS.
-
-    Using OpenBLAS can give speedups in some scikit-learn modules,
-    but can freeze joblib/multiprocessing prior to OpenBLAS version 0.2.8-4,
-    so using it is not recommended unless you know what you're doing.
-
-    If you do want to use OpenBLAS, then replacing ATLAS only requires a couple
-    of commands. ATLAS has to be removed, otherwise NumPy may not work::
-
-        sudo apt-get remove libatlas3gf-base libatlas-dev
-        sudo apt-get install libopenblas-dev
-
-        sudo update-alternatives  --set libblas.so.3 \
-            /usr/lib/openblas-base/libopenblas.so.0
-        sudo update-alternatives --set liblapack.so.3 \
-            /usr/lib/lapack/liblapack.so.3
+    sudo apt-get install cython3 python3-numpy python3-scipy python3-matplotlib
 
 On Red Hat and clones (e.g. CentOS), install the dependencies using::
 
-    sudo yum -y install gcc gcc-c++ numpy python-devel scipy
+    sudo yum -y install gcc gcc-c++ python-devel numpy scipy
 
+.. note::
+
+    To use a high performance BLAS library (e.g. OpenBlas) see 
+    `scipy installation instructions
+    <https://docs.scipy.org/doc/scipy/reference/building/linux.html>`_.
 
 Windows
 -------

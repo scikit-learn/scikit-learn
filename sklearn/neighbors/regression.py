@@ -89,6 +89,19 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         for more details.
         Doesn't affect :meth:`fit` method.
 
+    Attributes
+    ----------
+    effective_metric_ : string or callable
+        The distance metric to use. It will be same as the `metric` parameter
+        or a synonym of it, e.g. 'euclidean' if the `metric` parameter set to
+        'minkowski' and `p` parameter set to 2.
+
+    effective_metric_params_ : dict
+        Additional keyword arguments for the metric function. For most metrics
+        will be same with `metric_params` parameter, but may also contain the
+        `p` parameter value if the `effective_metric_` attribute is set to
+        'minkowski'.
+
     Examples
     --------
     >>> X = [[0], [1], [2], [3]]
@@ -245,6 +258,19 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
          `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
         `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+
+    Attributes
+    ----------
+    effective_metric_ : string or callable
+        The distance metric to use. It will be same as the `metric` parameter
+        or a synonym of it, e.g. 'euclidean' if the `metric` parameter set to
+        'minkowski' and `p` parameter set to 2.
+
+    effective_metric_params_ : dict
+        Additional keyword arguments for the metric function. For most metrics
+        will be same with `metric_params` parameter, but may also contain the
+        `p` parameter value if the `effective_metric_` attribute is set to
+        'minkowski'.
 
     Examples
     --------

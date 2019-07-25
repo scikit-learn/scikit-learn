@@ -149,7 +149,7 @@ def strip_newsgroup_footer(text):
 def fetch_20newsgroups(data_home=None, subset='train', categories=None,
                        shuffle=True, random_state=42,
                        remove=(),
-                       download_if_missing=True):
+                       download_if_missing=True, return_X_y=False):
     """Load the filenames and data from the 20 newsgroups dataset \
 (classification).
 
@@ -206,15 +206,24 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         If False, raise an IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
+    return_X_y : boolean, default=False.
+        If True, returns `(data.data, data.target)` instead of a Bunch
+        object.
+
+        .. versionadded:: 0.22
+
     Returns
     -------
     bunch : Bunch object with the following attribute:
-        - bunch.data: list, length [n_samples]
-        - bunch.target: array, shape [n_samples]
-        - bunch.filenames: list, length [n_samples]
-        - bunch.DESCR: a description of the dataset.
-        - bunch.target_names: a list of categories of the returned data,
+        - data: list, length [n_samples]
+        - target: array, shape [n_samples]
+        - filenames: list, length [n_samples]
+        - DESCR: a description of the dataset.
+        - target_names: a list of categories of the returned data,
           length [n_classes]. This depends on the `categories` parameter.
+
+    (data, target) : tuple if `return_X_y=True`
+        .. versionadded:: 0.22
     """
 
     data_home = get_data_home(data_home=data_home)
@@ -302,6 +311,8 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         data_lst = data_lst[indices]
         data.data = data_lst.tolist()
 
+    if return_X_y:
+        return data.data, data.target
     return data
 
 

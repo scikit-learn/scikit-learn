@@ -1067,7 +1067,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
 
     The `beta` parameter determines the weight of recall in the combined
     score. `beta < 1` lends more weight to precision, while `beta > 1`
-    favors recall (`beta -> 0` considers only precision, `beta -> inf`
+    favors recall (`beta -> 0` considers only precision, `beta -> +inf`
     only recall).
 
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
@@ -1400,8 +1400,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     In such cases, the metric will be set to 0, as will f-score, and
     `UndefinedMetricWarning` will be raised.
     """
-    if beta <= 0:
-        raise ValueError("beta should be >0 in the F-beta score")
+    if beta < 0:
+        raise ValueError("beta should be >=0 in the F-beta score")
     labels = _check_set_wise_labels(y_true, y_pred, average, labels,
                                     pos_label)
 
@@ -1428,11 +1428,14 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                             'precision', 'predicted', average, warn_for)
     recall = _prf_divide(tp_sum, true_sum,
                          'recall', 'true', average, warn_for)
-    # Don't need to warn for F: either P or R warned, or tp == 0 where pos
-    # and true are nonzero, in which case, F is well-defined and zero
-    denom = beta2 * precision + recall
-    denom[denom == 0.] = 1  # avoid division by 0
-    f_score = (1 + beta2) * precision * recall / denom
+    if np.isposinf(beta):
+        f_score = recall
+    else:
+        # Don't need to warn for F: either P or R warned, or tp == 0 where pos
+        # and true are nonzero, in which case, F is well-defined and zero
+        denom = beta2 * precision + recall
+        denom[denom == 0.] = 1  # avoid division by 0
+        f_score = (1 + beta2) * precision * recall / denom
 
     # Average the results
     if average == 'weighted':

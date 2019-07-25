@@ -286,11 +286,6 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
             Predicted multi-class targets.
         """
         check_is_fitted(self, 'estimators_')
-        if (hasattr(self.estimators_[0], "decision_function") and
-                is_classifier(self.estimators_[0])):
-            thresh = 0
-        else:
-            thresh = .5
 
         n_samples = _num_samples(X)
         if self.label_binarizer_.y_type_ == "multiclass":
@@ -303,6 +298,11 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
                 argmaxima[maxima == pred] = i
             return self.classes_[argmaxima]
         else:
+            if (hasattr(self.estimators_[0], "decision_function") and
+                    is_classifier(self.estimators_[0])):
+                thresh = 0
+            else:
+                thresh = .5
             indices = array.array('i')
             indptr = array.array('i', [0])
             for e in self.estimators_:

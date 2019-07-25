@@ -121,7 +121,7 @@ export CCACHE_COMPRESS=1
 # provided versions
 conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
   numpy="${NUMPY_VERSION:-*}" scipy="${SCIPY_VERSION:-*}" cython \
-  pytest coverage matplotlib="${MATPLOTLIB_VERSION:-*}" sphinx=1.6.2 pillow \
+  pytest coverage matplotlib="${MATPLOTLIB_VERSION:-*}" sphinx=2.1.2 pillow \
   scikit-image="${SCIKIT_IMAGE_VERSION:-*}" pandas="${PANDAS_VERSION:-*}" \
   joblib
 
@@ -130,6 +130,7 @@ pip install "sphinx-gallery>=0.2,<0.3"
 pip install numpydoc==0.9
 
 # Build and install scikit-learn in dev mode
+python setup.py build_ext --inplace -j 3
 python setup.py develop
 
 export OMP_NUM_THREADS=1

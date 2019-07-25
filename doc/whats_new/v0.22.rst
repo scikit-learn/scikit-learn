@@ -24,6 +24,8 @@ random sampling procedures.
 - :class:`decomposition.SparsePCA` where `normalize_components` has no effect
   due to deprecation.
 
+- :class:`linear_model.Ridge` when `X` is sparse. |Fix|
+
 Details are listed in the changelog below.
 
 (While we are trying to better inform users by providing this information, we
@@ -56,6 +58,10 @@ Changelog
 
 - |Feature| :func:`datasets.fetch_openml` now supports heterogeneous data using pandas 
   by setting `as_frame=True`. :pr:`13902` by `Thomas Fan`_.
+
+- |Enhancement| The parameter `return_X_y` was added to
+  :func:`datasets.fetch_20newsgroups` and :func:`datasets.fetch_olivetti_faces`
+  . :pr:`14259` by :user:`Sourav Singh <souravsingh>`.
 
 :mod:`sklearn.decomposition`
 ............................
@@ -101,6 +107,11 @@ Changelog
   preserve the class balance of the original training set. :pr:`14194`
   by :user:`Johann Faouzi <johannfaouzi>`.
 
+- |Fix| :class:`ensemble.AdaBoostClassifier` computes probabilities based on
+  the decision function as in the literature. Thus, `predict` and
+  `predict_proba` give consistent results.
+  :pr:`14114` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
@@ -109,9 +120,33 @@ Changelog
   of the maximization procedure in :term:`fit`.
   :pr:`13618` by :user:`Yoshihiro Uchida <c56pony>`.
 
+- |Fix| :class:`linear_model.Ridge` now correctly fits an intercept when `X` is
+  sparse, `solver="auto"` and `fit_intercept=True`, because the default solver
+  in this configuration has changed to `sparse_cg`, which can fit an intercept
+  with sparse data. :pr:`13995` by :user:`Jérôme Dockès <jeromedockes>`.
+
 - |Efficiency| The 'liblinear' logistic regression solver is now faster and
   requires less memory.
   :pr:`14108`, pr:`14170` by :user:`Alex Henrie <alexhenrie>`.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Feature| Added multiclass support to :func:`metrics.roc_auc_score`.
+  :issue:`12789` by :user:`Kathy Chen <kathyxchen>`,
+  :user:`Mohamed Maskani <maskani-moh>`, and :user:`Thomas Fan <thomasjpfan>`.
+  
+- |Feature| Add :class:`metrics.mean_tweedie_deviance` measuring the
+  Tweedie deviance for a power parameter ``p``. Also add mean Poisson deviance
+  :class:`metrics.mean_poisson_deviance` and mean Gamma deviance
+  :class:`metrics.mean_gamma_deviance` that are special cases of the Tweedie
+  deviance for `p=1` and `p=2` respectively.
+  :pr:`13938` by :user:`Christian Lorentzen <lorentzenchr>` and
+  `Roman Yurchak`_.
+
+- |Enhancement| The parameter ``beta`` in :func:`metrics.fbeta_score` is
+  updated to accept the zero and `float('+inf')` value.
+  :pr:`13231` by :user:`Dong-hee Na <corona10>`.
 
 :mod:`sklearn.model_selection`
 ..................

@@ -90,6 +90,13 @@ def config_context(**new_config):
         computation time and memory on expensive operations that can be
         performed in chunks. Global default: 1024.
 
+    print_changed_only : bool, optional
+        If True, only the parameters that were set to non-default
+        values will be printed when printing an estimator. For example,
+        ``print(SVC())`` while True will only print 'SVC()' while the default
+        behaviour would be to print 'SVC(C=1.0, cache_size=200, ...)' with
+        all the non-changed parameters.
+
     Notes
     -----
     All settings, not just those presently modified, will be returned to

@@ -18,7 +18,7 @@ from ..base import BaseEstimator, RegressorMixin
 from ..utils import check_array, check_random_state, check_X_y
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..exceptions import ConvergenceWarning
 from ..model_selection import StratifiedShuffleSplit, ShuffleSplit
 
@@ -168,19 +168,6 @@ class BaseSGD(BaseEstimator, SparseCoefMixin, metaclass=ABCMeta):
             return PENALTY_TYPES[penalty]
         except KeyError:
             raise ValueError("Penalty %s is not supported. " % penalty)
-
-    def _validate_sample_weight(self, sample_weight, n_samples):
-        """Set the sample weight array."""
-        if sample_weight is None:
-            # uniform sample weights
-            sample_weight = np.ones(n_samples, dtype=np.float64, order='C')
-        else:
-            # user-provided array
-            sample_weight = np.asarray(sample_weight, dtype=np.float64,
-                                       order="C")
-        if sample_weight.shape[0] != n_samples:
-            raise ValueError("Shapes of X and sample_weight do not match.")
-        return sample_weight
 
     def _allocate_parameter_mem(self, n_classes, n_features, coef_init=None,
                                 intercept_init=None):
@@ -488,7 +475,7 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin, metaclass=ABCMeta):
         # Allocate datastructures from input arguments
         self._expanded_class_weight = compute_class_weight(self.class_weight,
                                                            self.classes_, y)
-        sample_weight = self._validate_sample_weight(sample_weight, n_samples)
+        sample_weight = _check_sample_weight(sample_weight, X)
 
         if getattr(self, "coef_", None) is None or coef_init is not None:
             self._allocate_parameter_mem(n_classes, n_features,
@@ -1095,9 +1082,9 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
         n_samples, n_features = X.shape
 
-        # Allocate datastructures from input arguments
-        sample_weight = self._validate_sample_weight(sample_weight, n_samples)
+        sample_weight = _check_sample_weight(sample_weight, X)
 
+        # Allocate datastructures from input arguments
         if getattr(self, "coef_", None) is None:
             self._allocate_parameter_mem(1, n_features, coef_init,
                                          intercept_init)
@@ -1438,7 +1425,7 @@ class SGDRegressor(BaseSGDRegressor):
         'adaptive' schedules. The default value is 0.01.
 
     power_t : double
-        The exponent for inverse scaling learning rate [default 0.5].
+        The exponent for inverse scaling learning rate [default 0.25].
 
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
