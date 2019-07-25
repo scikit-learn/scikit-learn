@@ -80,6 +80,7 @@ def _yield_checks(name, estimator):
     yield check_sample_weights_invariance
     yield check_estimators_fit_returns_self
     yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
+
     # Check that all estimator yield informative messages when
     # trained on empty datasets
     if not tags["no_validation"]:
@@ -156,6 +157,7 @@ def check_supervised_y_no_nan(name, estimator_orig):
                          "array y with NaN value.".format(name))
 
 
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_constant_features(name, estimator_orig):
     # Checks that estimators work with constant features
     # or raise a reasonable error message
