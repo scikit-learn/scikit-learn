@@ -208,7 +208,7 @@ Changelog
 
 - |Enhancement| :func:`utils.safe_indexing` becomes more consistent and support
   scalar, slice, mask indexing for both `axis=0` and `axis=1`.
-  :pr:`xx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`14475` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.neural_network`
 .............................

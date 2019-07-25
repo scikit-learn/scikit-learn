@@ -188,23 +188,18 @@ def safe_indexing(X, indices, axis=0):
     X : array-like, sparse-matrix, list, pandas.DataFrame, pandas.Series
         Data from which to sample rows, items or columns.
     indices : array-like
-        - When ``axis=0``, indices need to be an array of integer.
-            - container: lists, slices, boolean masks: output is 2D.
-              Supported data types for containers:
-                - integer or boolean (positional): supported for arrays, sparse
-                  and dataframes
-        - When ``axis=1``, indices can be one of:
+        - For both `axis=0` and `axis=1`, indices can be one of:
             - scalar: output is 1D, unless `X` is sparse.
               Supported data types for scalars:
                 - integer: supported for arrays, sparse matrices and
                   dataframes.
-                - string (key-based): only supported for dataframes.
             - container: lists, slices, boolean masks: output is 2D.
               Supported data types for containers:
-                - integer or boolean (positional): supported for
-                  arrays, sparse matrices and dataframes
-                - string (key-based): only supported for dataframes. No keys
-                  other than strings are allowed.
+                - integer or boolean (positional): supported for arrays, sparse
+                  and dataframes
+        - If `X` is a dataframe and `axis=1`, indices support string data type
+          (key-based) as a scalar or a container. The output dimension will be
+          identical to the above case.
     axis : int, default=0
         The axis along which `X` will be subsampled. ``axis=0`` will select
         rows while ``axis=1`` will select columns.
