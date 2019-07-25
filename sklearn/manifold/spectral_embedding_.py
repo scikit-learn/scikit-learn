@@ -238,7 +238,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     # When norm_laplacian=True csgraph_laplacian returns the symmetric
     # normalized laplacian and dd then contains the square roots of vertex
-    # degrees. 
+    # degrees.
     laplacian, dd = csgraph_laplacian(adjacency, normed=norm_laplacian,
                                       return_diag=True)
     if (eigen_solver == 'arpack' or eigen_solver != 'lobpcg' and
@@ -325,7 +325,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         else:
             laplacian = _set_diag(laplacian, 1, norm_laplacian)
             # We increase the number of eigenvectors requested, as lobpcg
-            # doesn't behave well in low dimension and create initial 
+            # doesn't behave well in low dimension and create initial
             # approximation X to eigenvectors
             X = random_state.rand(laplacian.shape[0], n_components + 1)
             X[:, 0] = dd.ravel()
