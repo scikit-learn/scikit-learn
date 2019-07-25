@@ -211,7 +211,7 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
         neighbor, one extra neighbor will be computed when mode == 'distance'.
         In this case, the sparse graph contains (n_neighbors + 1) neighbors.
 
-    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
+    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         Algorithm used to compute the nearest neighbors:
 
         - 'ball_tree' will use :class:`BallTree`
