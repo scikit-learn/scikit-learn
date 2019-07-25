@@ -51,7 +51,7 @@ print()
 ROOT_URL = 'https://api.github.com/repos/scikit-learn/scikit-learn.github.io/contents/'  # noqa
 RAW_FMT = 'https://raw.githubusercontent.com/scikit-learn/scikit-learn.github.io/master/%s/documentation.html'  # noqa
 VERSION_RE = re.compile(r"\bVERSION:\s*'([^']+)'")
-NAMED_DIRS = ['dev', 'stable', 'circle']
+NAMED_DIRS = ['dev', 'stable']
 
 # Gather data for each version directory, including symlinks
 dirs = {}
