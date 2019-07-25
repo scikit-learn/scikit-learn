@@ -1280,6 +1280,9 @@ def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
 
     """
     gain = _dcg_sample_scores(y_true, y_score, k, ignore_ties=ignore_ties)
+    # Here we use the order induced by y_true so we can ignore ties since
+    # the gain associated to tied indices is the same (permuting ties doesn't
+    # change the value of the re-ordered y_true)
     normalizing_gain = _dcg_sample_scores(y_true, y_true, k, ignore_ties=True)
     all_irrelevant = normalizing_gain == 0
     gain[all_irrelevant] = 0
