@@ -1117,7 +1117,7 @@ def _tie_averaged_dcg(y_true, y_score, discount_cumsum):
     np.add.at(ranked, inv, y_true)
     ranked /= counts
     groups = np.cumsum(counts) - 1
-    discount_sums = np.zeros(len(counts))
+    discount_sums = np.empty(len(counts))
     discount_sums[0] = discount_cumsum[groups[0]]
     discount_sums[1:] = np.diff(discount_cumsum[groups])
     return (ranked * discount_sums).sum()
