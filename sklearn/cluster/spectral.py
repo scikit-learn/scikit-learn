@@ -440,7 +440,8 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
     def __init__(self, n_clusters=8, eigen_solver=None, n_components=None,
                  random_state=None, n_init=10, gamma=1., affinity='rbf',
                  n_neighbors=10, eigen_tol=0.0, assign_labels='kmeans',
-                 degree=3, coef0=1, kernel_params=None, n_jobs=None, copy=True):
+                 degree=3, coef0=1, kernel_params=None, n_jobs=None, 
+                 copy=True):
         self.n_clusters = n_clusters
         self.eigen_solver = eigen_solver
         self.n_components = n_components
