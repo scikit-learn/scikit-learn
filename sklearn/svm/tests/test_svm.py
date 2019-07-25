@@ -369,7 +369,7 @@ def test_svdd():
     pred = clf.predict(T)
 
     assert_array_equal(pred, [+1, -1, -1])
-    assert_equal(pred.dtype, np.dtype('intp'))
+    assert pred.dtype == np.dtype('intp')
     assert_array_almost_equal(clf.intercept_, [0.2817], decimal=3)
     assert_array_almost_equal(clf.dual_coef_,
                               [[0.7500, 0.7499, 0.7499, 0.7500]],
@@ -402,10 +402,10 @@ def test_svdd_decision_function():
 
     # predict and validate things
     y_pred_test = clf.predict(X_test)
-    assert_greater(np.mean(y_pred_test == 1), .9)
+    assert np.mean(y_pred_test == 1) > .9
 
     y_pred_outliers = clf.predict(X_outliers)
-    assert_greater(np.mean(y_pred_outliers == -1), .65)
+    assert np.mean(y_pred_outliers == -1) > .65
 
     dec_func_test = clf.decision_function(X_test)
     assert_array_equal((dec_func_test > 0).ravel(), y_pred_test == 1)
