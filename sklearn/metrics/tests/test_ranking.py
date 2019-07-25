@@ -1335,8 +1335,9 @@ def test_ndcg_toy_examples(ignore_ties):
     assert ndcg_score(
         y_true, y_score, ignore_ties=ignore_ties) == pytest.approx(
             (1 / np.log2(np.arange(2, 7))).mean())
-    assert dcg_score(y_true, y_score, ignore_ties=ignore_ties) == pytest.approx(
-        (3 / np.log2(np.arange(2, 7))).mean())
+    assert dcg_score(
+        y_true, y_score, ignore_ties=ignore_ties) == pytest.approx(
+            (3 / np.log2(np.arange(2, 7))).mean())
     y_true = 3 * np.ones((5, 7))
     expected_dcg_score = (3 / np.log2(np.arange(2, 9))).sum()
     assert _dcg_sample_scores(
