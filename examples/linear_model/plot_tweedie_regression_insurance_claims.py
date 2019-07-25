@@ -39,7 +39,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from sklearn.compose import ColumnTransformer
-from sklearn.linear_model import GeneralizedLinearRegressor
+from sklearn.linear_model import PoissonRegressor, GammaRegressor
+from sklearn.linear_model._glm import GeneralizedLinearRegressor
 from sklearn.linear_model._glm.distribution import TweedieDistribution
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
@@ -192,7 +193,7 @@ df_train, df_test, X_train, X_test = train_test_split(df, X, random_state=2)
 
 # Some of the features are colinear, we use a weak penalization to avoid
 # numerical issues.
-glm_freq = GeneralizedLinearRegressor(family="poisson", alpha=1e-2)
+glm_freq = PoissonRegressor(alpha=1e-2)
 glm_freq.fit(X_train, df_train.Frequency, sample_weight=df_train.Exposure)
 
 
@@ -330,7 +331,7 @@ plot_obs_pred(
 mask_train = df_train["ClaimAmount"] > 0
 mask_test = df_test["ClaimAmount"] > 0
 
-glm_sev = GeneralizedLinearRegressor(family="gamma")
+glm_sev = GammaRegressor()
 
 glm_sev.fit(
     X_train[mask_train.values],
@@ -464,12 +465,16 @@ from sklearn.model_selection import GridSearchCV
 # this takes a while
 params = {
     "family": [
-        TweedieDistribution(power=power) for power in np.linspace(1, 2, 8)
+        TweedieDistribution(power=power)
+        # exclude upper bound as power=2 does not support null y samples.
+        for power in np.linspace(1 + 1e-4, 2 - 1e-4, 8)
     ]
 }
 
+
 glm_total = GridSearchCV(
-    GeneralizedLinearRegressor(), cv=3, param_grid=params, n_jobs=-1
+    GeneralizedLinearRegressor(tol=1e-3, max_iter=500), cv=3,
+    param_grid=params, n_jobs=-1
 )
 glm_total.fit(
     X_train, df_train["ClaimAmount"], sample_weight=df_train["Exposure"]

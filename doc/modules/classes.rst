@@ -750,6 +750,7 @@ Kernels:
    linear_model.BayesianRidge
    linear_model.ElasticNet
    linear_model.ElasticNetCV
+   linear_model.GammaRegressor
    linear_model.GeneralizedLinearRegressor
    linear_model.HuberRegressor
    linear_model.Lars
@@ -771,6 +772,7 @@ Kernels:
    linear_model.PassiveAggressiveClassifier
    linear_model.PassiveAggressiveRegressor
    linear_model.Perceptron
+   linear_model.PoissonRegressor
    linear_model.RANSACRegressor
    linear_model.Ridge
    linear_model.RidgeClassifier

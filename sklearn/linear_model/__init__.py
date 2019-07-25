@@ -18,7 +18,7 @@ from .coordinate_descent import (Lasso, ElasticNet, LassoCV, ElasticNetCV,
                                  lasso_path, enet_path, MultiTaskLasso,
                                  MultiTaskElasticNet, MultiTaskElasticNetCV,
                                  MultiTaskLassoCV)
-from ._glm import (GeneralizedLinearRegressor, PoissonRegressor)
+from ._glm import (GeneralizedLinearRegressor, PoissonRegressor, GammaRegressor)
 from .huber import HuberRegressor
 from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
 from .stochastic_gradient import SGDClassifier, SGDRegressor

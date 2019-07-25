@@ -27,7 +27,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from sklearn.compose import ColumnTransformer
-from sklearn.linear_model import GeneralizedLinearRegressor, LinearRegression
+from sklearn.linear_model import PoissonRegressor, LinearRegression
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
@@ -184,7 +184,7 @@ print('Number Negatives: %s / total: %s' % (
 #
 # Next we fit the Poisson regressor on the target variable,
 
-glm_freq = GeneralizedLinearRegressor(family="poisson", alpha=0, max_iter=1000)
+glm_freq = PoissonRegressor(alpha=0, max_iter=1000)
 glm_freq.fit(X_train, df_train.Frequency, sample_weight=df_train.Exposure)
 
 print("PoissonRegressor")

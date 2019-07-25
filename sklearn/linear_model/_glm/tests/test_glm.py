@@ -77,8 +77,7 @@ def test_glm_family_argument(f, fam):
 
 @pytest.mark.parametrize('l, link',
                          [('identity', IdentityLink()),
-                          ('log', LogLink()),
-                          ('logit', LogitLink())])
+                          ('log', LogLink())])
 def test_glm_link_argument(l, link):
     """Test GLM link argument set as string."""
     y = np.array([0.1, 0.5])  # in range of all distributions
