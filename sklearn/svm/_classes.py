@@ -1837,8 +1837,8 @@ class SVDD(BaseLibSVM, OutlierMixin):
     ----------
     kernel : string, optional (default='rbf')
          Specifies the kernel type to be used in the algorithm.
-         It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'
-         or a callable.
+         It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
+         a callable.
          If none is given, 'rbf' will be used. If a callable is given it is
          used to precompute the kernel matrix.
 
@@ -1846,15 +1846,15 @@ class SVDD(BaseLibSVM, OutlierMixin):
         Degree of the polynomial kernel function ('poly').
         Ignored by all other kernels.
 
-    gamma : float, optional (default='auto')
+    gamma : {'scale', 'auto'} or float, optional (default='scale')
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
-        Current default is 'auto' which uses 1 / n_features,
-        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.std())
-        as value of gamma. The current default of gamma, 'auto', will change
-        to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
-        'auto' is used as a default indicating that no explicit value of gamma
-        was passed.
+        - if ``gamma='scale'`` (default) is passed then it uses
+          1 / (n_features * X.var()) as value of gamma,
+        - if 'auto', uses 1 / n_features.
+
+        .. versionchanged:: 0.22
+           The default value of ``gamma`` changed from 'auto' to 'scale'.
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
@@ -1864,9 +1864,10 @@ class SVDD(BaseLibSVM, OutlierMixin):
         Tolerance for stopping criterion.
 
     nu : float, optional
-        An upper bound on the fraction of training errors and a lower bound
-        on the fraction of support vectors. Should be in the interval (0, 1].
-        By default 0.5 will be taken.
+        An upper bound on the fraction of training
+        errors and a lower bound of the fraction of support
+        vectors. Should be in the interval (0, 1]. By default 0.5
+        will be taken.
 
     shrinking : boolean, optional
         Whether to use the shrinking heuristic.
@@ -1905,9 +1906,19 @@ class SVDD(BaseLibSVM, OutlierMixin):
 
     offset_ : float
         Offset used to define the decision function from the raw scores.
-        We have the relation: decision_function = score_samples - offset_.
-        The offset is the opposite of intercept_ and is provided for
+        We have the relation: decision_function = score_samples - `offset_`.
+        The offset is the opposite of `intercept_` and is provided for
         consistency with other outlier detection algorithms.
+
+    Examples
+    --------
+    >>> from sklearn.svm import SVDD
+    >>> X = [[0], [0.44], [0.45], [0.46], [1]]
+    >>> clf = OneClassSVM(gamma='auto').fit(X)
+    >>> clf.predict(X)
+    array([-1,  1,  1,  1, -1])
+    >>> clf.score_samples(X)  # doctest: +ELLIPSIS
+    array([1.7798..., 2.0547..., 2.0556..., 2.0561..., 1.7332...])
 
     References
     ----------
@@ -1923,11 +1934,11 @@ class SVDD(BaseLibSVM, OutlierMixin):
 
     _impl = 'svdd_l1'
 
-    def __init__(self, kernel='rbf', degree=3, gamma='auto_deprecated',
+    def __init__(self, kernel='rbf', degree=3, gamma='scale',
                  coef0=0.0, tol=1e-3, nu=0.5, shrinking=True, cache_size=200,
                  verbose=False, max_iter=-1):
 
-        super(SVDD, self).__init__(
+        super().__init__(
             kernel=kernel, degree=degree, gamma=gamma, coef0=coef0,
             tol=tol, C=0., nu=nu, epsilon=0., shrinking=shrinking,
             probability=False, cache_size=cache_size, class_weight=None,
