@@ -25,7 +25,6 @@ print(__doc__)
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-from scipy.special import xlogy
 
 from sklearn.compose import ColumnTransformer
 from sklearn.linear_model import GeneralizedLinearRegressor, LinearRegression
@@ -36,6 +35,7 @@ from sklearn.preprocessing import StandardScaler, KBinsDiscretizer
 from sklearn.ensemble import GradientBoostingRegressor
 
 from sklearn.metrics import mean_squared_error, mean_absolute_error
+from sklearn.metrics import mean_poisson_deviance
 
 
 def load_mtpl2(n_samples=100000):
@@ -140,13 +140,6 @@ print(
 df_train, df_test, X_train, X_test = train_test_split(df, X, random_state=2)
 
 
-def mean_poisson_deviance_score(y_true, y_pred, sample_weights=None):
-    y_true = np.atleast_1d(y_true)
-    y_pred = np.atleast_1d(y_pred)
-    dev = 2 * (xlogy(y_true, y_true/y_pred) - y_true + y_pred)
-    return np.average(dev, weights=sample_weights)
-
-
 eps = 1e-5
 print("MSE: %.3f" % mean_squared_error(
         df_test.Frequency.values, np.zeros(len(df_test)),
@@ -154,7 +147,7 @@ print("MSE: %.3f" % mean_squared_error(
 print("MAE: %.3f" % mean_absolute_error(
         df_test.Frequency.values, np.zeros(len(df_test)),
         df_test.Exposure.values))
-print("mean Poisson deviance: %.3f" % mean_poisson_deviance_score(
+print("mean Poisson deviance: %.3f" % mean_poisson_deviance(
         df_test.Frequency.values, eps + np.zeros(len(df_test)),
         df_test.Exposure.values))
 
@@ -175,7 +168,7 @@ print("MSE: %.3f" % mean_squared_error(
 print("MSE: %.3f" % mean_absolute_error(
           df_test.Frequency.values, linregr.predict(X_test),
           df_test.Exposure.values))
-print("mean Poisson deviance: %.3f" % mean_poisson_deviance_score(
+print("mean Poisson deviance: %.3f" % mean_poisson_deviance(
         df_test.Frequency.values, np.fmax(linregr.predict(X_test), eps),
         df_test.Exposure.values))
 
@@ -201,7 +194,7 @@ print("MSE: %.3f" % mean_squared_error(
 print("MAE: %.3f" % mean_absolute_error(
         df_test.Frequency.values, glm_freq.predict(X_test),
         df_test.Exposure.values))
-print("mean Poisson deviance: %.3f" % mean_poisson_deviance_score(
+print("mean Poisson deviance: %.3f" % mean_poisson_deviance(
         df_test.Frequency.values, glm_freq.predict(X_test),
         df_test.Exposure.values))
 
@@ -221,7 +214,7 @@ print("MSE: %.3f" % mean_squared_error(
       df_test.Frequency.values, gbr.predict(X_test), df_test.Exposure.values))
 print("MAE: %.3f" % mean_absolute_error(
       df_test.Frequency.values, gbr.predict(X_test), df_test.Exposure.values))
-print("mean Poisson deviance: %.3f" % mean_poisson_deviance_score(
+print("mean Poisson deviance: %.3f" % mean_poisson_deviance(
       df_test.Frequency.values, gbr.predict(X_test), df_test.Exposure.values))
 
 ##############################################################################
