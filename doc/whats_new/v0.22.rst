@@ -130,7 +130,7 @@ Changelog
   :pr:`14108`, :pr:`14170` by :user:`Alex Henrie <alexhenrie>`.
 
 - |Fix| :class:`linear_model.Ridge` with `solver='sag'` now accepts F-ordered
-  arrays and make a conversion instead of failing.
+  and noon-contiguous arrays and make a conversion instead of failing.
   :pr:`14458` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.metrics`
