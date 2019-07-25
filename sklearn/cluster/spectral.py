@@ -218,7 +218,6 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
         approach which is less sensitive to random initialization. See
         the 'Multiclass spectral clustering' paper referenced below for
         more details on the discretization approach.
-    
     copy : bool, optional, default: True
         Parameter to opt whether memory optimization needs to be done in
         the graph_laplacian function. If False, the values in affinity
