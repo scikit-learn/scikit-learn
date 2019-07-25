@@ -127,7 +127,8 @@ def test_spectral_embedding_two_components(seed=36):
     assert normalized_mutual_info_score(true_label, label_) == 1.0
 
 
-@pytest.mark.parametrize("X", [S, sparse.csr_matrix(S)], ids=["dense", "sparse"])
+@pytest.mark.parametrize("X", [S, sparse.csr_matrix(S)],
+                         ids=["dense", "sparse"])
 def test_spectral_embedding_precomputed_affinity(X, seed=36):
     # Test spectral embedding with precomputed kernel
     gamma = 1.0
@@ -160,7 +161,8 @@ def test_precomputed_nearest_neighbors_filtering():
     assert_array_equal(results[0], results[1])
 
 
-@pytest.mark.parametrize("X", [S, sparse.csr_matrix(S)], ids=["dense", "sparse"])
+@pytest.mark.parametrize("X", [S, sparse.csr_matrix(S)],
+                         ids=["dense", "sparse"])
 def test_spectral_embedding_callable_affinity(X, seed=36):
     # Test spectral embedding with callable affinity
     gamma = 0.9
