@@ -39,7 +39,7 @@ class Perceptron(BaseSGDClassifier):
     shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
 
-    verbose : integer default=0
+    verbose : integer, default=0
         The verbosity level
 
     eta0 : double
