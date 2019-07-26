@@ -4,9 +4,8 @@ Poisson regression and non-normal loss
 ======================================
 
 This example illustrates the use of linear Poisson regression
-on the French Motor Third-Party Liability Claims dataset [1] and compare
-it with learning models with least squared error.
-
+on the French Motor Third-Party Liability Claims dataset [1] and compares
+it with models learned with least squared error.
 
 We start by defining a few helper functions for loading the data and
 visualizing results.

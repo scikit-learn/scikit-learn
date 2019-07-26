@@ -11,7 +11,6 @@ from sklearn.linear_model import GeneralizedLinearRegressor
 from sklearn.linear_model._glm.link import (
     IdentityLink,
     LogLink,
-    LogitLink,
 )
 from sklearn.linear_model._glm.distribution import (
     TweedieDistribution,

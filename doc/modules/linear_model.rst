@@ -893,7 +893,7 @@ to warm-starting (see :term:`Glossary <warm_start>`).
 Generalized Linear Regression
 =============================
 
-:class:`GeneralizedLinearRegressor` generalizes linear models in two ways
+Generalized Linear Models (GLM) extend linear models in two ways
 [10]_. First, the predicted values :math:`\hat{y}` are linked to a linear
 combination of the input variables :math:`X` via an inverse link function
 :math:`h` as
@@ -901,12 +901,30 @@ combination of the input variables :math:`X` via an inverse link function
 .. math::    \hat{y}(w, x) = h(x^\top w) = h(w_0 + w_1 x_1 + ... + w_p x_p).
 
 Secondly, the squared loss function is replaced by the deviance :math:`D` of an
-exponential dispersion model (EDM) [11]_. The objective function being
-minimized becomes
+exponential dispersion model (EDM) [11]_. The minimized objective function is
+the penalized negative log likelihood,
 
 .. math::    \frac{1}{2 \sum s_i}D(y, \hat{y}; s) +\frac{\alpha}{2} ||w||_2
 
 with sample weights :math:`s`, and L2 regularization penalty :math:`\alpha`.
+
+The deviance is defined by the log of the :math:`\mathrm{EDM}(\mu, \phi)`
+likelihood as
+
+.. math::     d(y, \mu) = -2\phi\cdot
+              \left(loglike(y,\mu,\phi)
+              - loglike(y,y,\phi)\right) \\
+              D(y, \mu; s) = \sum_i s_i \cdot d(y_i, \mu_i)
+
+===================================== ===============================  ================================= ============================================
+Distribution                          Target Domain                    Variance Function :math:`v(\mu)`  Unit Deviance :math:`d(y, \mu)`
+===================================== ===============================  ================================= ============================================
+Normal ("normal")                     :math:`y \in (-\infty, \infty)`  :math:`1`                         :math:`(y-\mu)^2`
+Poisson ("poisson")                   :math:`y \in [0, \infty)`        :math:`\mu`                       :math:`2(y\log\frac{y}{\mu}-y+\mu)`
+Gamma ("gamma")                       :math:`y \in (0, \infty)`        :math:`\mu^2`                     :math:`2(\log\frac{\mu}{y}+\frac{y}{\mu}-1)`
+Inverse Gaussian ("inverse.gaussian") :math:`y \in (0, \infty)`        :math:`\mu^3`                     :math:`\frac{(y-\mu)^2}{y\mu^2}`
+===================================== ===============================  ================================= ============================================
+
 
 In the following use cases, a loss different from the squared loss might be
 appropriate,
@@ -967,23 +985,6 @@ same as specifying a unit variance function (they are one-to-one).
 The objective function (the penalized negative log likelihood) is
 independent of :math:`\phi` and is minimized with respect to the
 coefficients :math:`w`.
-
-The deviance is defined by the log of the :math:`\mathrm{EDM}(\mu, \phi)`
-likelihood as
-
-.. math::     d(y, \mu) = -2\phi\cdot
-              \left(loglike(y,\mu,\phi)
-              - loglike(y,y,\phi)\right) \\
-              D(y, \mu; s) = \sum_i s_i \cdot d(y_i, \mu_i)
-
-===================================== ===============================  ================================= ============================================
-Distribution                          Target Domain                    Variance Function :math:`v(\mu)`  Unit Deviance :math:`d(y, \mu)`
-===================================== ===============================  ================================= ============================================
-Normal ("normal")                     :math:`y \in (-\infty, \infty)`  :math:`1`                         :math:`(y-\mu)^2`
-Poisson ("poisson")                   :math:`y \in [0, \infty)`        :math:`\mu`                       :math:`2(y\log\frac{y}{\mu}-y+\mu)`
-Gamma ("gamma")                       :math:`y \in (0, \infty)`        :math:`\mu^2`                     :math:`2(\log\frac{\mu}{y}+\frac{y}{\mu}-1)`
-Inverse Gaussian ("inverse.gaussian") :math:`y \in (0, \infty)`        :math:`\mu^3`                     :math:`\frac{(y-\mu)^2}{y\mu^2}`
-===================================== ===============================  ================================= ============================================
 
 Two remarks:
 
