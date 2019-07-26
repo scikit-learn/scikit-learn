@@ -13,6 +13,7 @@ from sklearn.linear_model._glm.distribution import (
     TweedieDistribution,
     NormalDistribution, PoissonDistribution,
     GammaDistribution, InverseGaussianDistribution,
+    DistributionBoundary
 )
 
 
@@ -30,6 +31,19 @@ def test_family_bounds(family, expected):
     assert_array_equal(result, expected)
 
 
+def test_invalid_distribution_bound():
+    dist = TweedieDistribution()
+    dist._lower_bound = 0
+    with pytest.raises(TypeError,
+                       match="must be of type DistributionBoundary"):
+        dist.in_y_range([-1, 0, 1])
+
+    dist = TweedieDistribution()
+    dist._upper_bound = None
+    with pytest.raises(NotImplementedError):
+        dist.in_y_range([-1, 0, 1])
+
+
 def test_tweedie_distribution_power():
     with pytest.raises(ValueError, match="no distribution exists"):
         TweedieDistribution(power=0.5)
@@ -42,9 +56,12 @@ def test_tweedie_distribution_power():
         dist.power = 1j
 
     dist = TweedieDistribution()
-    assert dist._include_lower_bound is False
+    assert isinstance(dist._lower_bound, DistributionBoundary)
+
+    assert dist._lower_bound.inclusive is False
     dist.power = 1
-    assert dist._include_lower_bound is True
+    assert dist._lower_bound.value == 0.0
+    assert dist._lower_bound.inclusive is True
 
 
 @pytest.mark.parametrize(

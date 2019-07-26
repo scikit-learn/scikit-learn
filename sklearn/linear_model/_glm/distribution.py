@@ -6,6 +6,7 @@ Distribution functions used in GLM
 # License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
+from collections import namedtuple
 import numbers
 
 import numpy as np
@@ -18,6 +19,10 @@ def _safe_lin_pred(X, coef):
         return X @ coef[1:] + coef[0]
     else:
         return X @ coef
+
+
+DistributionBoundary = namedtuple("DistributionBoundary",
+                                  ("value", "inclusive"))
 
 
 class ExponentialDispersionModel(metaclass=ABCMeta):
@@ -35,13 +40,6 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
     unit variance :math:`v(\mu)` and
     unit deviance :math:`d(y,\mu)`.
 
-    Attributes
-    ----------
-    lower_bound
-    upper_bound
-    include_lower_bound
-    include_upper_bound
-
     Methods
     -------
     deviance
@@ -52,55 +50,33 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
     unit_variance
     unit_variance_derivative
 
-    _mu_deviance_derivative
-
     References
     ----------
-
     https://en.wikipedia.org/wiki/Exponential_dispersion_model.
     """
-    @property
-    def lower_bound(self):
-        """Get the lower bound of values for Y~EDM."""
-        return self._lower_bound
 
-    @property
-    def upper_bound(self):
-        """Get the upper bound of values for Y~EDM."""
-        return self._upper_bound
-
-    @property
-    def include_lower_bound(self):
-        """Get True if lower bound for y is included: y >= lower_bound."""
-        return self._include_lower_bound
-
-    @property
-    def include_upper_bound(self):
-        """Get True if upper bound for y is included: y <= upper_bound."""
-        return self._include_upper_bound
-
-    def in_y_range(self, x):
-        """Returns ``True`` if x is in the valid range of Y~EDM.
+    def in_y_range(self, y):
+        """Returns ``True`` if y is in the valid range of Y~EDM.
 
         Parameters
         ----------
-        x : array, shape (n_samples,)
+        y : array, shape (n_samples,)
             Target values.
         """
-        if self.include_lower_bound:
-            if self.include_upper_bound:
-                return np.logical_and(np.greater_equal(x, self.lower_bound),
-                                      np.less_equal(x, self.upper_bound))
-            else:
-                return np.logical_and(np.greater_equal(x, self.lower_bound),
-                                      np.less(x, self.upper_bound))
+        if hasattr(self, '_upper_bound'):
+            # All currently supported distributions have an upper bound at
+            # +inf, however this may need to be implemented for other
+            # distributions
+            raise NotImplementedError
+
+        if not isinstance(self._lower_bound, DistributionBoundary):
+            raise TypeError('_lower_bound attribute must be of type '
+                            'DistributionBoundary')
+
+        if self._lower_bound.inclusive:
+            return np.greater_equal(y, self._lower_bound.value)
         else:
-            if self.include_upper_bound:
-                return np.logical_and(np.greater(x, self.lower_bound),
-                                      np.less_equal(x, self.upper_bound))
-            else:
-                return np.logical_and(np.greater(x, self.lower_bound),
-                                      np.less(x, self.upper_bound))
+            return np.greater(y, self._lower_bound.value)
 
     @abstractmethod
     def unit_variance(self, mu):
@@ -265,42 +241,17 @@ class TweedieDistribution(ExponentialDispersionModel):
             raise TypeError('power must be a real number, input was {0}'
                             .format(power))
 
-        self._upper_bound = np.Inf
-        self._include_upper_bound = False
-        if power < 0:
-            # Extreme Stable
-            self._lower_bound = -np.Inf
-            self._include_lower_bound = False
-        elif power == 0:
-            # NormalDistribution
-            self._lower_bound = -np.Inf
-            self._include_lower_bound = False
-        elif (power > 0) and (power < 1):
+        if power <= 0:
+            # Extreme Stable or Normal distribution
+            self._lower_bound = DistributionBoundary(-np.Inf, inclusive=False)
+        elif 0 < power < 1:
             raise ValueError('For 0<power<1, no distribution exists.')
-        elif power == 1:
-            # PoissonDistribution
-            self._lower_bound = 0
-            self._include_lower_bound = True
-        elif (power > 1) and (power < 2):
-            # Compound Poisson
-            self._lower_bound = 0
-            self._include_lower_bound = True
-        elif power == 2:
-            # GammaDistribution
-            self._lower_bound = 0
-            self._include_lower_bound = False
-        elif (power > 2) and (power < 3):
-            # Positive Stable
-            self._lower_bound = 0
-            self._include_lower_bound = False
-        elif power == 3:
-            # InverseGaussianDistribution
-            self._lower_bound = 0
-            self._include_lower_bound = False
-        elif power > 3:
-            # Positive Stable
-            self._lower_bound = 0
-            self._include_lower_bound = False
+        elif 1 <= power < 2:
+            # Poisson or Compound Poisson distribution
+            self._lower_bound = DistributionBoundary(0, inclusive=True)
+        elif power >= 2:
+            # Gamma, Positive Stable, Inverse Gaussian distributions
+            self._lower_bound = DistributionBoundary(0, inclusive=False)
         else:  # pragma: no cover
             # this branch should be unreachable.
             raise ValueError
