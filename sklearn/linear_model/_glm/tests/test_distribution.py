@@ -45,7 +45,8 @@ def test_invalid_distribution_bound():
 
 
 def test_tweedie_distribution_power():
-    with pytest.raises(ValueError, match="no distribution exists"):
+    msg = "distribution is only defined for p<=0 and p>=1"
+    with pytest.raises(ValueError, match=msg):
         TweedieDistribution(power=0.5)
 
     with pytest.raises(TypeError, match="must be a real number"):

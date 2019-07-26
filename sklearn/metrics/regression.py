@@ -22,9 +22,7 @@ the lower the better
 #          Christian Lorentzen <lorentzen.ch@googlemail.com>
 # License: BSD 3 clause
 
-
 import numpy as np
-from scipy.special import xlogy
 import warnings
 
 from ..utils.validation import (check_array, check_consistent_length,
@@ -676,39 +674,8 @@ def mean_tweedie_deviance(y_true, y_pred, sample_weight=None, p=0):
         sample_weight = column_or_1d(sample_weight)
         sample_weight = sample_weight[:, np.newaxis]
 
-    message = ("Mean Tweedie deviance error with p={} can only be used on "
-               .format(p))
-    if p < 0:
-        # 'Extreme stable', y_true any realy number, y_pred > 0
-        if (y_pred <= 0).any():
-            raise ValueError(message + "strictly positive y_pred.")
-    elif p == 0:
-        pass
-    elif p < 1:
-        raise ValueError("Tweedie deviance is only defined for p<=0 and "
-                         "p>=1.")
-    elif p == 1:
-        # Poisson distribution, y_true >= 0, y_pred > 0
-        if (y_true < 0).any() or (y_pred <= 0).any():
-            raise ValueError(message + "non-negative y_true and strictly "
-                             "positive y_pred.")
-    elif p == 2:
-        # Gamma distribution, y_true and y_pred > 0
-        if (y_true <= 0).any() or (y_pred <= 0).any():
-            raise ValueError(message + "strictly positive y_true and y_pred.")
-    else:
-        if p < 2:
-            # 1 < p < 2 is Compound Poisson, y_true >= 0, y_pred > 0
-            if (y_true < 0).any() or (y_pred <= 0).any():
-                raise ValueError(message + "non-negative y_true and strictly "
-                                           "positive y_pred.")
-        else:
-            if (y_true <= 0).any() or (y_pred <= 0).any():
-                raise ValueError(message + "strictly positive y_true and "
-                                           "y_pred.")
-
     dist = TweedieDistribution(power=p)
-    dev = dist.unit_deviance(y_true, y_pred)
+    dev = dist.unit_deviance(y_true, y_pred, check_input=True)
 
     return np.average(dev, weights=sample_weight)
 

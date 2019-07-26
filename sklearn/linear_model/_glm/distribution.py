@@ -113,7 +113,7 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         pass  # pragma: no cover
 
     @abstractmethod
-    def unit_deviance(self, y, mu):
+    def unit_deviance(self, y, mu, check_input=False):
         r"""Compute the unit deviance.
 
         The unit_deviance :math:`d(y,\mu)` can be defined by the
@@ -128,6 +128,14 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
 
         mu : array, shape (n_samples,)
             Predicted mean.
+
+        check_input : bool, default=False
+            If True raise an exception on invalid y or mu values, otherwise
+            they will be propagated as NaN.
+        Returns
+        -------
+        deviance: array, shape (n_samples,)
+            Computed deviance
         """
         pass  # pragma: no cover
 
@@ -245,7 +253,8 @@ class TweedieDistribution(ExponentialDispersionModel):
             # Extreme Stable or Normal distribution
             self._lower_bound = DistributionBoundary(-np.Inf, inclusive=False)
         elif 0 < power < 1:
-            raise ValueError('For 0<power<1, no distribution exists.')
+            raise ValueError('Tweedie distribution is only defined for p<=0 '
+                             'and p>=1.')
         elif 1 <= power < 2:
             # Poisson or Compound Poisson distribution
             self._lower_bound = DistributionBoundary(0, inclusive=True)
@@ -279,15 +288,66 @@ class TweedieDistribution(ExponentialDispersionModel):
         """
         return self.power * np.power(mu, self.power - 1)
 
-    def unit_deviance(self, y, mu):
+    def unit_deviance(self, y, mu, check_input=False):
+        r"""Compute the unit deviance.
+
+        The unit_deviance :math:`d(y,\mu)` can be defined by the
+        log-likelihood as
+        :math:`d(y,\mu) = -2\phi\cdot
+        \left(loglike(y,\mu,\phi) - loglike(y,y,\phi)\right).`
+
+        Parameters
+        ----------
+        y : array, shape (n_samples,)
+            Target values.
+
+        mu : array, shape (n_samples,)
+            Predicted mean.
+
+        check_input : bool, default=False
+            If True raise an exception on invalid y or mu values, otherwise
+            they will be propagated as NaN.
+        Returns
+        -------
+        deviance: array, shape (n_samples,)
+            Computed deviance
+        """
         p = self.power
+
+        if check_input:
+            message = ("Mean Tweedie deviance error with p={} can only be "
+                       "used on ".format(p))
+            if p < 0:
+                # 'Extreme stable', y any realy number, mu > 0
+                if (mu <= 0).any():
+                    raise ValueError(message + "strictly positive mu.")
+            elif p == 0:
+                # Normal, y and mu can be any real number
+                pass
+            elif 0 < p < 1:
+                raise ValueError("Tweedie deviance is only defined for p<=0 "
+                                 "and p>=1.")
+            elif 1 <= p < 2:
+                # Poisson and Compount poisson distribution, y >= 0, mu > 0
+                if (y < 0).any() or (mu <= 0).any():
+                    raise ValueError(message + "non-negative y and strictly "
+                                     "positive mu.")
+            elif p >= 2:
+                # Gamma and Extreme stable distribution, y and mu > 0
+                if (y <= 0).any() or (mu <= 0).any():
+                    raise ValueError(message + "strictly positive y and mu.")
+            else:  # pragma: nocover
+                # Unreachable statement
+                raise ValueError
+
         if p < 0:
-            # 'Extreme stable', y_true any realy number, y_pred > 0
+            # 'Extreme stable', y any realy number, mu > 0
             dev = 2 * (np.power(np.maximum(y, 0), 2-p)/((1-p) * (2-p)) -
                        y * np.power(mu, 1-p)/(1-p) +
                        np.power(mu, 2-p)/(2-p))
+
         elif p == 0:
-            # Normal distribution, y_true and y_pred any real number
+            # Normal distribution, y and mu any real number
             dev = (y - mu)**2
         elif p < 1:
             raise ValueError("Tweedie deviance is only defined for p<=0 and "

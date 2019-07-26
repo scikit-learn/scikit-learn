@@ -101,35 +101,35 @@ def test_regression_metrics_at_limits():
     assert_allclose(mean_tweedie_deviance([0], [1.], p=p),
                     2./(2.-p), rtol=1e-3)
     with pytest.raises(ValueError,
-                       match="can only be used on strictly positive y_pred."):
+                       match="can only be used on strictly positive mu."):
         mean_tweedie_deviance([0.], [0.], p=p)
     assert_almost_equal(mean_tweedie_deviance([0.], [0.], p=0), 0.00, 2)
 
-    msg = "only be used on non-negative y_true and strictly positive y_pred."
+    msg = "only be used on non-negative y and strictly positive mu."
     with pytest.raises(ValueError, match=msg):
         mean_tweedie_deviance([0.], [0.], p=1.0)
 
     p = 1.5
     assert_allclose(mean_tweedie_deviance([0.], [1.], p=p), 2./(2.-p))
-    msg = "only be used on non-negative y_true and strictly positive y_pred."
+    msg = "only be used on non-negative y and strictly positive mu."
     with pytest.raises(ValueError, match=msg):
         mean_tweedie_deviance([0.], [0.], p=p)
     p = 2.
     assert_allclose(mean_tweedie_deviance([1.], [1.], p=p), 0.00,
                     atol=1e-8)
-    msg = "can only be used on strictly positive y_true and y_pred."
+    msg = "can only be used on strictly positive y and mu."
     with pytest.raises(ValueError, match=msg):
         mean_tweedie_deviance([0.], [0.], p=p)
     p = 3.
     assert_allclose(mean_tweedie_deviance([1.], [1.], p=p),
                     0.00, atol=1e-8)
 
-    msg = "can only be used on strictly positive y_true and y_pred."
+    msg = "can only be used on strictly positive y and mu."
     with pytest.raises(ValueError, match=msg):
         mean_tweedie_deviance([0.], [0.], p=p)
 
     with pytest.raises(ValueError,
-                       match="deviance is only defined for p<=0 and p>=1."):
+                       match="is only defined for p<=0 and p>=1"):
         mean_tweedie_deviance([0.], [0.], p=0.5)
 
 
