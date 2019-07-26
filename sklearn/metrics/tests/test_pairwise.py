@@ -3,7 +3,7 @@ from types import GeneratorType
 import numpy as np
 from numpy import linalg
 
-from scipy.sparse import dok_matrix, csr_matrix, issparse, csc_matrix
+from scipy.sparse import dok_matrix, csr_matrix, issparse
 from scipy.spatial.distance import cosine, cityblock, minkowski, wminkowski
 from scipy.spatial.distance import cdist, pdist, squareform
 
