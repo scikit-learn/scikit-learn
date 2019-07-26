@@ -184,7 +184,7 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
     return _weighted_sum(score, sample_weight, normalize)
 
 
-def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
+def confusion_matrix(y_true, y_pred, labels=None, normalize=False, sample_weight=None):
     """Compute confusion matrix to evaluate the accuracy of a classification
 
     By definition a confusion matrix :math:`C` is such that :math:`C_{i, j}`
@@ -210,6 +210,10 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
         or select a subset of labels.
         If none is given, those that appear at least once
         in ``y_true`` or ``y_pred`` are used in sorted order.
+
+    normalize : bool, optional (default=False)
+        If True, , return the fraction of classified samples (float),
+        else returns the number of classified samples (int).
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
@@ -290,6 +294,10 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
     CM = coo_matrix((sample_weight, (y_true, y_pred)),
                     shape=(n_labels, n_labels), dtype=dtype,
                     ).toarray()
+
+    # Normalize matrix if normalize=True
+    if normalize:
+        CM = CM.astype('float') / CM.sum(axis=1)[:, np.newaxis]
 
     return CM
 
