@@ -46,7 +46,7 @@ Changelog
 :mod:`sklearn.datasets`
 .......................
 
-- |Feature| :func:`datasets.fetch_openml` now supports heterogeneous data using pandas 
+- |Feature| :func:`datasets.fetch_openml` now supports heterogeneous data using pandas
   by setting `as_frame=True`. :pr:`13902` by `Thomas Fan`_.
 
 :mod:`sklearn.decomposition`
@@ -92,6 +92,11 @@ Changelog
   loss or score is now monitored on a class-wise stratified subsample to
   preserve the class balance of the original training set. :pr:`14194`
   by :user:`Johann Faouzi <johannfaouzi>`.
+
+- |Efficiency| :func:`ensemble.MissingIndicator.fit_transform` the
+  _get_missing_features_info function is now called once when calling
+  fit_transform for MissingIndicator class. :pr:`14356` by :user:
+  `Harsh Soni <harsh020>`.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -143,7 +148,7 @@ Changelog
 :mod:`sklearn.cluster`
 ......................
 
-- |Enhancement| :class:`cluster.SpectralClustering` now accepts a ``n_components`` 
+- |Enhancement| :class:`cluster.SpectralClustering` now accepts a ``n_components``
   parameter. This parameter extends `SpectralClustering` class functionality to
   match `spectral_clustering`.
   :pr:`13726` by :user:`Shuzhe Xiao <fdas3213>`.

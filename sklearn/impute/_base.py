@@ -688,8 +688,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         """
         imputer_mask = self._fit(X, y)
 
-        if (self.features == "missing-only") and \
-                (self.features_.size < self._n_features):
+        if (self.features_.size < self._n_features):
             imputer_mask = imputer_mask[:, self.features_]
 
         return imputer_mask
