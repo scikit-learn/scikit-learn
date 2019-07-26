@@ -120,7 +120,7 @@ x_labels = ['Full data',
             'Zero imputation',
             'Mean Imputation',
             'KNN Imputation',
-            'Multivariate Imputation']
+            'Iterative Imputation']
 colors = ['r', 'g', 'b', 'orange', 'black']
 
 # plot diabetes results

@@ -25,6 +25,8 @@ class KNNImputer(TransformerMixin, BaseEstimator):
     sample has more than a ``feature_max_missing`` fraction of its features
     missing, then it is excluded from being a neighbor for imputation.
 
+    .. versionadded:: 0.22
+
     Parameters
     ----------
     missing_values : number, string, np.nan, None (default=np.nan)
@@ -226,7 +228,8 @@ class KNNImputer(TransformerMixin, BaseEstimator):
         dist = pairwise_distances(X[row_missing_idx, :], self._fit_X,
                                   metric=self.metric,
                                   squared=False,
-                                  missing_values=self.missing_values)
+                                  missing_values=self.missing_values,
+                                  force_all_finite=False)
 
         # Maps from indices from X to indices in dist matrix
         dist_idx_map = np.zeros(X.shape[0], dtype=np.int)

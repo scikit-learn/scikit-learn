@@ -113,6 +113,8 @@ def check_pairwise_arrays(X, Y, precomputed=False, dtype=None,
         Whether a forced copy will be triggered. If copy=False, a copy might
         be triggered by a conversion.
 
+        .. versionadded:: 0.22
+
     Returns
     -------
     safe_X : {array-like, sparse matrix}, shape (n_samples_a, n_features)
@@ -335,6 +337,8 @@ def nan_euclidean_distances(X, Y=None, squared=False,
     coordinates then NaN is returned for that pair.
 
     Read more in the :ref:`User Guide <metrics>`.
+
+    .. versionadded:: 0.22
 
     Parameters
     ----------
@@ -1356,10 +1360,9 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     return ret
 
 
-def _pairwise_callable(X, Y, metric, **kwds):
+def _pairwise_callable(X, Y, metric, force_all_finite=True, **kwds):
     """Handle the callable case for pairwise_{distances,kernels}
     """
-    force_all_finite = False if callable(metric) else True
     X, Y = check_pairwise_arrays(X, Y, force_all_finite=force_all_finite)
 
     if X is Y:
@@ -1598,7 +1601,8 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
         yield D_chunk
 
 
-def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
+def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None,
+                       force_all_finite=True, **kwds):
     """ Compute the distance matrix from a vector array X and optional Y.
 
     This method takes either a vector array or a distance matrix, and returns
@@ -1665,6 +1669,17 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+    force_all_finite : boolean or 'allow-nan', (default=True)
+        Whether to raise an error on np.inf and np.nan in array. The
+        possibilities are:
+
+        - True: Force all values of array to be finite.
+        - False: accept both np.inf and np.nan in array.
+        - 'allow-nan': accept only np.nan values in array. Values cannot
+          be infinite.
+
+        .. versionadded:: 0.22
+
     **kwds : optional keyword parameters
         Any further parameters are passed directly to the distance function.
         If using a scipy.spatial.distance metric, the parameters are still
@@ -1702,7 +1717,8 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
                 "One or more samples(s) only have missing values.")
 
     if metric == "precomputed":
-        X, _ = check_pairwise_arrays(X, Y, precomputed=True)
+        X, _ = check_pairwise_arrays(X, Y, precomputed=True,
+                                     force_all_finite=force_all_finite)
 
         whom = ("`pairwise_distances`. Precomputed distance "
                 " need to have non-negative values.")
@@ -1711,7 +1727,8 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
     elif metric in PAIRWISE_DISTANCE_FUNCTIONS:
         func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
     elif callable(metric):
-        func = partial(_pairwise_callable, metric=metric, **kwds)
+        func = partial(_pairwise_callable, metric=metric,
+                       force_all_finite=force_all_finite, **kwds)
     else:
         if issparse(X) or issparse(Y):
             raise TypeError("scipy distance metrics do not"
@@ -1724,7 +1741,8 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
             msg = "Data was converted to boolean for metric %s" % metric
             warnings.warn(msg, DataConversionWarning)
 
-        X, Y = check_pairwise_arrays(X, Y, dtype=dtype)
+        X, Y = check_pairwise_arrays(X, Y, dtype=dtype,
+                                     force_all_finite=force_all_finite)
 
         # precompute data-derived metric params
         params = _precompute_metric_params(X, Y, metric=metric, **kwds)
