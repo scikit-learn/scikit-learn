@@ -977,6 +977,10 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
     y_train = y[train]
     X_test = X[test]
     y_test = y[test]
+    if not sparse.issparse(X):
+        # fancy indexing of read-only memmap creates a read-only copy.
+        for array in (X_train, y_train, X_test, y_test):
+            array.setflags(write=True)
     fit_intercept = path_params['fit_intercept']
     normalize = path_params['normalize']
 
@@ -1188,7 +1192,7 @@ class LinearModelCV(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
                 for train, test in folds)
         mse_paths = Parallel(
             n_jobs=self.n_jobs, verbose=self.verbose,
-            **_joblib_parallel_args(require="sharedmem"))(jobs)
+            **_joblib_parallel_args(prefer="threads"))(jobs)
         mse_paths = np.reshape(mse_paths, (n_l1_ratio, len(folds), -1))
         mean_mse = np.mean(mse_paths, axis=1)
         self.mse_path_ = np.squeeze(np.rollaxis(mse_paths, 2, 1))
