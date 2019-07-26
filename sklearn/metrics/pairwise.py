@@ -342,17 +342,17 @@ def nan_euclidean_distances(X, Y=None, squared=False,
 
     Parameters
     ----------
-    X : {array-like, sparse matrix}, shape (n_samples_1, n_features)
+    X : array-like, shape=(n_samples_1, n_features)
 
-    Y : {array-like, sparse matrix}, shape (n_samples_2, n_features)
+    Y : array-like, shape=(n_samples_2, n_features)
 
-    squared : boolean, optional (default=False)
+    squared : bool, default=False
         Return squared Euclidean distances.
 
-    missing_values : np.nan or integer, optional (default=np.nan)
+    missing_values : np.nan or int, default=np.nan
         Representation of missing value
 
-    copy : boolean, optional (default=True)
+    copy : boolean, default=True
         Make and use a deep copy of X and Y (if Y exists)
 
     Returns
@@ -389,24 +389,10 @@ def nan_euclidean_distances(X, Y=None, squared=False,
     X, Y = check_pairwise_arrays(X, Y,
                                  force_all_finite=force_all_finite, copy=copy)
     # Get missing mask for X
-    if issparse(X):
-        missing_X = csr_matrix(
-            (_get_missing_mask(X.data, missing_values), X.indices, X.indptr),
-            shape=X.shape, dtype=np.bool).toarray()
-    else:
-        missing_X = _get_missing_mask(X, missing_values)
+    missing_X = _get_missing_mask(X, missing_values)
 
     # Get missing mask for Y
-    if Y is X:
-        missing_Y = missing_X
-    else:
-        if issparse(Y):
-            missing_Y = csr_matrix((
-                _get_missing_mask(Y.data, missing_values),
-                Y.indices, Y.indptr),
-                shape=Y.shape, dtype=np.bool).toarray()
-        else:
-            missing_Y = _get_missing_mask(Y, missing_values)
+    missing_Y = missing_X if Y is X else _get_missing_mask(Y, missing_values)
 
     # set missing values to zero
     X[missing_X] = 0

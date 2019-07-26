@@ -774,9 +774,7 @@ def test_nan_euclidean_distances_equal_to_euclidean_distance(squared):
     "X", [np.array([[np.inf, 0]]), np.array([[0, -np.inf]])])
 @pytest.mark.parametrize(
     "Y", [np.array([[np.inf, 0]]), np.array([[0, -np.inf]]), None])
-@pytest.mark.parametrize('to_matrix', [np.asarray, csr_matrix, csc_matrix])
-def test_nan_euclidean_distances_infinite_values(X, Y, to_matrix):
-    X = to_matrix(X)
+def test_nan_euclidean_distances_infinite_values(X, Y):
 
     with pytest.raises(ValueError) as excinfo:
         nan_euclidean_distances(X, Y=Y)
@@ -798,9 +796,7 @@ def test_nan_euclidean_distances_infinite_values(X, Y, to_matrix):
     (np.array([[-1, 1], [-1, 0]]), np.sqrt(2), -1),
     (np.array([[0, -1], [1, -1]]), np.sqrt(2), -1)
 ])
-@pytest.mark.parametrize('to_matrix', [np.asarray, csr_matrix, csc_matrix])
-def test_nan_euclidean_distances_2x2(X, X_diag, missing_value, to_matrix):
-    X = to_matrix(X)
+def test_nan_euclidean_distances_2x2(X, X_diag, missing_value):
 
     exp_dist = np.array([[0., X_diag], [X_diag, 0]])
 
@@ -820,10 +816,8 @@ def test_nan_euclidean_distances_2x2(X, X_diag, missing_value, to_matrix):
 
 
 @pytest.mark.parametrize("missing_value", [np.nan, -1])
-@pytest.mark.parametrize('to_matrix', [np.asarray, csr_matrix, csc_matrix])
-def test_nan_euclidean_distances_complete_nan(missing_value, to_matrix):
+def test_nan_euclidean_distances_complete_nan(missing_value):
     X = np.array([[missing_value, missing_value], [0, 1]])
-    X = to_matrix(X)
 
     exp_dist = np.array([[np.nan, np.nan], [np.nan, 0]])
 
@@ -836,8 +830,7 @@ def test_nan_euclidean_distances_complete_nan(missing_value, to_matrix):
 
 
 @pytest.mark.parametrize("missing_value", [np.nan, -1])
-@pytest.mark.parametrize('to_matrix', [np.asarray, csr_matrix, csc_matrix])
-def test_nan_euclidean_distances_not_trival(missing_value, to_matrix):
+def test_nan_euclidean_distances_not_trival(missing_value):
     X = np.array([[1., missing_value, 3., 4., 2.],
                   [missing_value, 4., 6., 1., missing_value],
                   [3., missing_value, missing_value, missing_value, 1.]])
@@ -845,9 +838,6 @@ def test_nan_euclidean_distances_not_trival(missing_value, to_matrix):
     Y = np.array([[missing_value, 7., 7., missing_value, 2.],
                   [missing_value, missing_value, 5., 4., 7.],
                   [missing_value, missing_value, missing_value, 4., 5.]])
-
-    X = to_matrix(X)
-    Y = to_matrix(Y)
 
     # Check for symmetry
     D1 = nan_euclidean_distances(X, Y,  missing_values=missing_value)

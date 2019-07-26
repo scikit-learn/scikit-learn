@@ -61,7 +61,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-    statistics_ : array, shape (n_features, )
+    statistics_ : array, shape (n_features,)
         The 1-D array contains the mean of each feature calculated using
         observed (i.e. non-missing) values. This is used for imputing
         missing values in samples that are either excluded from nearest
@@ -123,7 +123,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        imputed_values: array, shape=(n_receivers, )
+        imputed_values: array, shape=(n_receivers,)
             imputed values for receiver
         """
         # Get distance from potential donors
@@ -249,7 +249,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
 
             receivers_idx = np.where(mask[:, col])[0]
 
-            # Row index for receivers and potential donors (pdonors)
+            # Row index for receivers and potential donors
             potential_donors_idx = np.flatnonzero(non_missing_fix_X[:, col])
 
             # Use statistics if not enough donors are available
