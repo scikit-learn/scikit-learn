@@ -184,7 +184,8 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
     return _weighted_sum(score, sample_weight, normalize)
 
 
-def confusion_matrix(y_true, y_pred, labels=None, normalize=False, sample_weight=None):
+def confusion_matrix(y_true, y_pred, labels=None,
+                     normalize=False, sample_weight=None):
     """Compute confusion matrix to evaluate the accuracy of a classification
 
     By definition a confusion matrix :math:`C` is such that :math:`C_{i, j}`
