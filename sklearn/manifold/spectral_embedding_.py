@@ -240,9 +240,15 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
     if not _graph_is_connected(adjacency):
         warnings.warn("Graph is not fully connected, spectral embedding"
                       " may not work as expected.")
+    if copy==Flase:
+        G, dd = csgraph_laplacian(adjacency, normed=norm_laplacian,
+                                      return_diag=True)
+        laplacian = G
+        del G
+    else:
+        laplacian, dd = csgraph_laplacian(adjacency, normed=norm_laplacian,
+                                      return_diag=True)
 
-    laplacian, dd = csgraph_laplacian(adjacency, normed=norm_laplacian,
-                                      return_diag=True, copy=copy)
     if (eigen_solver == 'arpack' or eigen_solver != 'lobpcg' and
        (not sparse.isspmatrix(laplacian) or n_nodes < 5 * n_components)):
         # lobpcg used with eigen_solver='amg' has bugs for low number of nodes
