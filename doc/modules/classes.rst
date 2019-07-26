@@ -751,7 +751,6 @@ Kernels:
    linear_model.ElasticNet
    linear_model.ElasticNetCV
    linear_model.GammaRegressor
-   linear_model.GeneralizedLinearRegressor
    linear_model.HuberRegressor
    linear_model.Lars
    linear_model.LarsCV
@@ -781,6 +780,7 @@ Kernels:
    linear_model.SGDClassifier
    linear_model.SGDRegressor
    linear_model.TheilSenRegressor
+   linear_model.TweedieRegressor
 
 .. autosummary::
    :toctree: generated/

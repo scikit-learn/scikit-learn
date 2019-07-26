@@ -916,14 +916,14 @@ likelihood as
               - loglike(y,y,\phi)\right) \\
               D(y, \mu; s) = \sum_i s_i \cdot d(y_i, \mu_i)
 
-===================================== ===============================  ================================= ============================================
-Distribution                          Target Domain                    Variance Function :math:`v(\mu)`  Unit Deviance :math:`d(y, \mu)`
-===================================== ===============================  ================================= ============================================
-Normal ("normal")                     :math:`y \in (-\infty, \infty)`  :math:`1`                         :math:`(y-\mu)^2`
-Poisson ("poisson")                   :math:`y \in [0, \infty)`        :math:`\mu`                       :math:`2(y\log\frac{y}{\mu}-y+\mu)`
-Gamma ("gamma")                       :math:`y \in (0, \infty)`        :math:`\mu^2`                     :math:`2(\log\frac{\mu}{y}+\frac{y}{\mu}-1)`
-Inverse Gaussian ("inverse.gaussian") :math:`y \in (0, \infty)`        :math:`\mu^3`                     :math:`\frac{(y-\mu)^2}{y\mu^2}`
-===================================== ===============================  ================================= ============================================
+================= ===============================  ================================= ============================================
+Distribution       Target Domain                    Variance Function :math:`v(\mu)`  Unit Deviance :math:`d(y, \mu)`
+================= ===============================  ================================= ============================================
+Normal            :math:`y \in (-\infty, \infty)`  :math:`1`                         :math:`(y-\mu)^2`
+Poisson           :math:`y \in [0, \infty)`        :math:`\mu`                       :math:`2(y\log\frac{y}{\mu}-y+\mu)`
+Gamma             :math:`y \in (0, \infty)`        :math:`\mu^2`                     :math:`2(\log\frac{\mu}{y}+\frac{y}{\mu}-1)`
+Inverse Gaussian  :math:`y \in (0, \infty)`        :math:`\mu^3`                     :math:`\frac{(y-\mu)^2}{y\mu^2}`
+================= ===============================  ================================= ============================================
 
 
 In the following use cases, a loss different from the squared loss might be
@@ -945,14 +945,32 @@ it is convenient to apply a link function different from the identity link
 :math:`h(x^\top w)=x^\top w` that guarantees the non-negativeness, e.g. the
 log-link with :math:`h(x^\top w)=\exp(x^\top w)`.
 
+:class:`linear_model.TweedieRegressor` implements a generalized linear model
+for the Tweedie distribution, that allows to model any of the above mentionned
+distribution using the appropriate power parameter `p`,
+
+ - `p = 0`: Normal distribution. Specialized solvers such as
+   :class:`linear_model.Ridge`, :class:`linear_model.ElasticNet` are generally
+   more appropriate in this case.
+
+ - `p = 1`: Poisson distribution. :class:`PoissonRegressor` is exposed for
+   convinience however it is strictly equivalent to `TweedieRegressor(power=1)`.
+
+ - `p = 2`: Gamma distribution. :class:`GammaRegressor` is exposed for
+   convinience however it is also strictly equivalent to
+   `TweedieRegressor(power=2)`.
+
+ - `p = 3`: Inverse Gamma distribution.
+
+
 Note that the feature matrix ``X`` should be standardized before fitting. This
 ensures that the penalty treats features equally. The estimator can be used as
 follows:
 
     >>> from sklearn.linear_model import TweedieRegressor
-    >>> reg = TweedieRegressor(alpha=0.5, family='poisson', link='log')
+    >>> reg = TweedieRegressor(power=1, alpha=0.5, link='log')
     >>> reg.fit([[0, 0], [0, 1], [2, 2]], [0, 1, 2])
-    TweedieRegressor(alpha=0.5, family='poisson', link='log')
+    TweedieRegressor(alpha=0.5, power=1)
     >>> reg.coef_
     array([0.2463..., 0.4337...])
     >>> reg.intercept_
