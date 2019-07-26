@@ -242,12 +242,12 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
                       " may not work as expected.")
     if not copy:
         G, dd = csgraph_laplacian(adjacency, normed=norm_laplacian,
-                                return_diag=True)
+                                    return_diag=True)
         laplacian = G
         del G
     else:
         laplacian, dd = csgraph_laplacian(adjacency, normed=norm_laplacian,
-                                        return_diag=True)
+                                            return_diag=True)
 
     if (eigen_solver == 'arpack' or eigen_solver != 'lobpcg' and
        (not sparse.isspmatrix(laplacian) or n_nodes < 5 * n_components)):
