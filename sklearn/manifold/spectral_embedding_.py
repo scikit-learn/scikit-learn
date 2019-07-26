@@ -240,14 +240,14 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
     if not _graph_is_connected(adjacency):
         warnings.warn("Graph is not fully connected, spectral embedding"
                       " may not work as expected.")
-    if copy==Flase:
+    if copy == False:
         G, dd = csgraph_laplacian(adjacency, normed=norm_laplacian,
-                                      return_diag=True)
+                return_diag=True)
         laplacian = G
         del G
     else:
         laplacian, dd = csgraph_laplacian(adjacency, normed=norm_laplacian,
-                                      return_diag=True)
+                        return_diag=True)
 
     if (eigen_solver == 'arpack' or eigen_solver != 'lobpcg' and
        (not sparse.isspmatrix(laplacian) or n_nodes < 5 * n_components)):
