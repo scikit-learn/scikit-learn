@@ -21,6 +21,7 @@ from .testing import assert_array_almost_equal
 from .testing import assert_allclose
 from .testing import assert_allclose_dense_sparse
 from .testing import assert_warns_message
+from .testing import set_copy
 from .testing import set_random_state
 from .testing import SkipTest
 from .testing import ignore_warnings
@@ -965,6 +966,7 @@ def check_transformer_general(name, transformer, readonly_memmap=False):
 
     if readonly_memmap:
         X, y = create_memmap_backed_data([X, y])
+        set_copy(transformer, False)
 
     _check_transformer(name, transformer, X, y)
 
@@ -1334,6 +1336,7 @@ def check_clustering(name, clusterer_orig, readonly_memmap=False):
 
     if readonly_memmap:
         X, y, X_noise = create_memmap_backed_data([X, y, X_noise])
+        set_copy(clusterer, False)
 
     n_samples, n_features = X.shape
     # catch deprecation and neighbors warnings
@@ -1460,6 +1463,9 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False):
         X = pairwise_estimator_convert_X(X, classifier)
         y = enforce_estimator_tags_y(classifier, y)
 
+        if readonly_memmap:
+            set_copy(classifier, False)
+
         set_random_state(classifier)
         # raises error on malformed input for fit
         if not tags["no_validation"]:
@@ -1585,6 +1591,9 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True):
     n_samples, n_features = X.shape
     estimator = clone(estimator_orig)
     set_random_state(estimator)
+
+    if readonly_memmap:
+        set_copy(estimator, False)
 
     # fit
     estimator.fit(X)
@@ -1855,6 +1864,7 @@ def check_regressors_train(name, regressor_orig, readonly_memmap=False):
 
     if readonly_memmap:
         X, y, y_ = create_memmap_backed_data([X, y, y_])
+        set_copy(regressor, False)
 
     if not hasattr(regressor, 'alphas') and hasattr(regressor, 'alpha'):
         # linear regressors need to set alpha, but not generalized CV ones

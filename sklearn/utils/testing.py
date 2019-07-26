@@ -568,6 +568,24 @@ def set_random_state(estimator, random_state=0):
         estimator.set_params(random_state=random_state)
 
 
+def set_copy(estimator, copy):
+    """Set copy or equivalent parameter of an estimator if it has one.
+
+    It can be copy, copy_x, copy_X, ...
+
+    Parameters
+    ----------
+    estimator : object
+        The estimator
+
+    copy : bool
+    """
+    copy_attrs = [attr for attr in estimator.get_params().keys()
+                  if 'copy' in attr]
+    if copy_attrs:
+        estimator.set_params(**{attr: copy for attr in copy_attrs})
+
+
 try:
     import pytest
 
