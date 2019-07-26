@@ -111,7 +111,11 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
     fit_params : dict, default=None
         Parameters to pass to the fit method of the estimator.
 
+<<<<<<< HEAD
     pre_dispatch : int or str, default='2*n_jobs'
+=======
+    pre_dispatch : int, or str, default='2*n_jobs'
+>>>>>>> More parameter documentation improved in model_selection._validation submodule.
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
         explosion of memory consumption when more jobs get dispatched
@@ -382,7 +386,11 @@ def cross_val_score(estimator, X, y=None, *, groups=None, scoring=None,
     fit_params : dict, default=None
         Parameters to pass to the fit method of the estimator.
 
+<<<<<<< HEAD
     pre_dispatch : int or str, default='2*n_jobs'
+=======
+    pre_dispatch : int, or str, default='2*n_jobs'
+>>>>>>> More parameter documentation improved in model_selection._validation submodule.
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
         explosion of memory consumption when more jobs get dispatched
