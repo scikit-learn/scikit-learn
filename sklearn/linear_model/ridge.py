@@ -328,13 +328,13 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         generator; If None, the random number generator is the RandomState
         instance used by `np.random`. Used when ``solver`` == 'sag'.
 
-    return_n_iter : boolean, default=False
+    return_n_iter : bool, default=False
         If True, the method also returns `n_iter`, the actual number of
         iteration performed by the solver.
 
         .. versionadded:: 0.17
 
-    return_intercept : boolean, default=False
+    return_intercept : bool, default=False
         If True and if X is sparse, the method also returns the intercept,
         and the solver is automatically changed to 'sag'. This is only a
         temporary fix for fitting the intercept with sparse data. For dense
@@ -342,7 +342,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
         .. versionadded:: 0.17
 
-    check_input : boolean, default=True
+    check_input : bool, default=True
         If False, the input arrays X and y will not be checked.
 
         .. versionadded:: 0.21
