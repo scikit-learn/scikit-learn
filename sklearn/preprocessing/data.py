@@ -2738,20 +2738,20 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
 
         The inverse of the Box-Cox transformation is given by::
 
-            if lambda == 0:
+            if lambda_ == 0:
                 X = exp(X_trans)
             else:
-                X = (X_trans * lambda + 1) ** (1 / lambda)
+                X = (X_trans * lambda_ + 1) ** (1 / lambda_)
 
         The inverse of the Yeo-Johnson transformation is given by::
 
-            if X >= 0 and lambda == 0:
+            if X >= 0 and lambda_ == 0:
                 X = exp(X_trans) - 1
-            elif X >= 0 and lambda != 0:
-                X = (X_trans * lambda + 1) ** (1 / lambda) - 1
-            elif X < 0 and lambda != 2:
-                X = 1 - (-(2 - lambda) * X_trans + 1) ** (1 / (2 - lambda))
-            elif X < 0 and lambda == 2:
+            elif X >= 0 and lambda_ != 0:
+                X = (X_trans * lambda_ + 1) ** (1 / lambda_) - 1
+            elif X < 0 and lambda_ != 2:
+                X = 1 - (-(2 - lambda_) * X_trans + 1) ** (1 / (2 - lambda_))
+            elif X < 0 and lambda_ == 2:
                 X = 1 - exp(-X_trans)
 
         Parameters
