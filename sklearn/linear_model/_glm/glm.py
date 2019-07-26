@@ -766,7 +766,7 @@ class TweedieRegressor(GeneralizedLinearRegressor):
     Parameters
     ----------
     power : float (default=0)
-            The variance power: :math:`v(\mu) = \mu^{power}`.
+            The variance power: :math:`v(\\mu) = \\mu^{power}`.
             For ``0<power<1``, no distribution exists.
 
             Special cases are:
