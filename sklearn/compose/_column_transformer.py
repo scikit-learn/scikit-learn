@@ -19,6 +19,7 @@ from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
 from ..utils import safe_indexing
 from ..utils import _get_column_indices
+from ..utils import _check_key_type
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted
 
@@ -80,6 +81,8 @@ boolean mask array or callable
         By setting ``remainder`` to be an estimator, the remaining
         non-specified columns will use the ``remainder`` estimator. The
         estimator must support :term:`fit` and :term:`transform`.
+        Note that using this feature requires that the DataFrame columns
+        input at :term:`fit` and :term:`transform` have identical order.
 
     sparse_threshold : float, default = 0.3
         If the output of the different transformers contains sparse matrices,
@@ -303,11 +306,17 @@ boolean mask array or callable
                 "'passthrough', or estimator. '%s' was passed instead" %
                 self.remainder)
 
-        n_columns = X.shape[1]
+        # Make it possible to check for reordered named columns on transform
+        if (hasattr(X, 'columns') and
+                any(_check_key_type(cols, str) for cols in self._columns)):
+            self._df_columns = X.columns
+
+        self._n_features = X.shape[1]
         cols = []
         for columns in self._columns:
             cols.extend(_get_column_indices(X, columns))
-        remaining_idx = sorted(list(set(range(n_columns)) - set(cols))) or None
+        remaining_idx = list(set(range(self._n_features)) - set(cols))
+        remaining_idx = sorted(remaining_idx) or None
 
         self._remainder = ('remainder', self.remainder, remaining_idx)
 
@@ -508,8 +517,27 @@ boolean mask array or callable
 
         """
         check_is_fitted(self, 'transformers_')
-
         X = _check_X(X)
+
+        if self._n_features > X.shape[1]:
+            raise ValueError('Number of features of the input must be equal '
+                             'to or greater than that of the fitted '
+                             'transformer. Transformer n_features is {0} '
+                             'and input n_features is {1}.'
+                             .format(self._n_features, X.shape[1]))
+
+        # No column reordering allowed for named cols combined with remainder
+        if (self._remainder[2] is not None and
+                hasattr(self, '_df_columns') and
+                hasattr(X, 'columns')):
+            n_cols_fit = len(self._df_columns)
+            n_cols_transform = len(X.columns)
+            if (n_cols_transform >= n_cols_fit and
+                    any(X.columns[:n_cols_fit] != self._df_columns)):
+                raise ValueError('Column ordering must be equal for fit '
+                                 'and for transform when using the '
+                                 'remainder keyword')
+
         Xs = self._fit_transform(X, None, _transform_one, fitted=True)
         self._validate_output(Xs)
 
@@ -589,9 +617,28 @@ def make_column_transformer(*transformers, **kwargs):
     be given names automatically based on their types. It also does not allow
     weighting with ``transformer_weights``.
 
+    Read more in the :ref:`User Guide <make_column_transformer>`.
+
     Parameters
     ----------
-    *transformers : tuples of transformers and column selections
+    *transformers : tuples
+        Tuples of the form (transformer, column(s)) specifying the
+        transformer objects to be applied to subsets of the data.
+
+        transformer : estimator or {'passthrough', 'drop'}
+            Estimator must support `fit` and `transform`. Special-cased
+            strings 'drop' and 'passthrough' are accepted as well, to
+            indicate to drop the columns or to pass them through untransformed,
+            respectively.
+        column(s) : string or int, array-like of string or int, slice, \
+boolean mask array or callable
+            Indexes the data on its second axis. Integers are interpreted as
+            positional columns, while strings can reference DataFrame columns
+            by name. A scalar string or int should be used where
+            ``transformer`` expects X to be a 1d array-like (vector),
+            otherwise a 2d array will be passed to the transformer.
+            A callable is passed the input data `X` and can return any of the
+            above.
 
     remainder : {'drop', 'passthrough'} or estimator, default 'drop'
         By default, only the specified columns in `transformers` are

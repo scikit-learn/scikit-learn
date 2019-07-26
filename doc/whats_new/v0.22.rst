@@ -24,6 +24,8 @@ random sampling procedures.
 - :class:`decomposition.SparsePCA` where `normalize_components` has no effect
   due to deprecation.
 
+- :class:`linear_model.Ridge` when `X` is sparse. |Fix|
+
 Details are listed in the changelog below.
 
 (While we are trying to better inform users by providing this information, we
@@ -42,6 +44,24 @@ Changelog
     Entries should end with:
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
+
+:mod:`sklearn.calibration`
+..........................
+
+- |Fix| Fixed a bug that made `calibration.CalibratedClassifierCV` fail when
+  given a `sample_weight` parameter of type `list` (in the case where
+  `sample_weights` are not supported by the wrapped estimator). :pr:`13575`
+  by :user:`William de Vazelhes <wdevazelhes>`.
+
+:mod:`sklearn.datasets`
+.......................
+
+- |Feature| :func:`datasets.fetch_openml` now supports heterogeneous data using pandas 
+  by setting `as_frame=True`. :pr:`13902` by `Thomas Fan`_.
+
+- |Enhancement| The parameter `return_X_y` was added to
+  :func:`datasets.fetch_20newsgroups` and :func:`datasets.fetch_olivetti_faces`
+  . :pr:`14259` by :user:`Sourav Singh <souravsingh>`.
 
 :mod:`sklearn.decomposition`
 ............................
@@ -69,15 +89,18 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
+- |Feature| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` have an additional
+  parameter called `warm_start` that enables warm starting. :pr:`14012` by
+  :user:`Johann Faouzi <johannfaouzi>`.
+
 - |Fix| :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` now bin the training and
   validation data separately to avoid any data leak. :pr:`13933` by
   `Nicolas Hug`_.
 
-- |Feature| :class:`ensemble.HistGradientBoostingClassifier` and
-  :class:`ensemble.HistGradientBoostingRegressor` have an additional
-  parameter called `warm_start` that enables warm starting. :pr:`14012` by
-  :user:`Johann Faouzi <johannfaouzi>`.
+- |Fix| :func:`ensemble.VotingClassifier.predict_proba` will no longer be
+  present when `voting='hard'`. :pr:`14287` by `Thomas Fan`_.
 
 - |Enhancement| :class:`ensemble.HistGradientBoostingClassifier` the training
   loss or score is now monitored on a class-wise stratified subsample to
@@ -91,6 +114,11 @@ Changelog
   array dimensions.
   :pr:`14305` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| :class:`ensemble.AdaBoostClassifier` computes probabilities based on
+  the decision function as in the literature. Thus, `predict` and
+  `predict_proba` give consistent results.
+  :pr:`14114` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
@@ -99,9 +127,33 @@ Changelog
   of the maximization procedure in :term:`fit`.
   :pr:`13618` by :user:`Yoshihiro Uchida <c56pony>`.
 
+- |Fix| :class:`linear_model.Ridge` now correctly fits an intercept when `X` is
+  sparse, `solver="auto"` and `fit_intercept=True`, because the default solver
+  in this configuration has changed to `sparse_cg`, which can fit an intercept
+  with sparse data. :pr:`13995` by :user:`Jérôme Dockès <jeromedockes>`.
+
 - |Efficiency| The 'liblinear' logistic regression solver is now faster and
   requires less memory.
   :pr:`14108`, pr:`14170` by :user:`Alex Henrie <alexhenrie>`.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Feature| Added multiclass support to :func:`metrics.roc_auc_score`.
+  :issue:`12789` by :user:`Kathy Chen <kathyxchen>`,
+  :user:`Mohamed Maskani <maskani-moh>`, and :user:`Thomas Fan <thomasjpfan>`.
+  
+- |Feature| Add :class:`metrics.mean_tweedie_deviance` measuring the
+  Tweedie deviance for a power parameter ``p``. Also add mean Poisson deviance
+  :class:`metrics.mean_poisson_deviance` and mean Gamma deviance
+  :class:`metrics.mean_gamma_deviance` that are special cases of the Tweedie
+  deviance for `p=1` and `p=2` respectively.
+  :pr:`13938` by :user:`Christian Lorentzen <lorentzenchr>` and
+  `Roman Yurchak`_.
+
+- |Enhancement| The parameter ``beta`` in :func:`metrics.fbeta_score` is
+  updated to accept the zero and `float('+inf')` value.
+  :pr:`13231` by :user:`Dong-hee Na <corona10>`.
 
 :mod:`sklearn.model_selection`
 ..................

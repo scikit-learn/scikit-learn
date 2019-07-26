@@ -21,6 +21,7 @@ from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import MultiTaskLasso
+from sklearn.tree import DecisionTreeRegressor
 from sklearn.datasets import load_boston, load_iris
 from sklearn.datasets import make_classification, make_regression
 from sklearn.cluster import KMeans
@@ -58,6 +59,7 @@ multioutput_regression_data = (make_regression(n_samples=50, n_targets=2,
     (GradientBoostingClassifier, 'brute', multiclass_classification_data),
     (GradientBoostingRegressor, 'recursion', regression_data),
     (GradientBoostingRegressor, 'brute', regression_data),
+    (DecisionTreeRegressor, 'brute', regression_data),
     (LinearRegression, 'brute', regression_data),
     (LinearRegression, 'brute', multioutput_regression_data),
     (LogisticRegression, 'brute', binary_classification_data),
@@ -261,7 +263,6 @@ def test_partial_dependence_easy_target(est, power):
     assert r2 > .99
 
 
-@pytest.mark.filterwarnings('ignore:The default value of ')  # 0.22
 @pytest.mark.parametrize('Estimator',
                          (sklearn.tree.DecisionTreeClassifier,
                           sklearn.tree.ExtraTreeClassifier,
@@ -288,6 +289,8 @@ def test_multiclass_multioutput(Estimator):
 
 class NoPredictProbaNoDecisionFunction(BaseEstimator, ClassifierMixin):
     def fit(self, X, y):
+        # simulate that we have some classes
+        self.classes_ = [0, 1]
         return self
 
 
@@ -476,12 +479,12 @@ def test_plot_partial_dependence(pyplot):
 
 
 def test_plot_partial_dependence_multiclass(pyplot):
-    # Test partial dependence plot function on multi-class input.
-    iris = load_iris()
-    clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
-    clf.fit(iris.data, iris.target)
-
     grid_resolution = 25
+    clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
+    iris = load_iris()
+
+    # Test partial dependence plot function on multi-class input.
+    clf.fit(iris.data, iris.target)
     plot_partial_dependence(clf, iris.data, [0, 1],
                             target=0,
                             grid_resolution=grid_resolution)
@@ -492,17 +495,25 @@ def test_plot_partial_dependence_multiclass(pyplot):
 
     # now with symbol labels
     target = iris.target_names[iris.target]
-    clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
     clf.fit(iris.data, target)
-
-    grid_resolution = 25
     plot_partial_dependence(clf, iris.data, [0, 1],
                             target='setosa',
                             grid_resolution=grid_resolution)
-    fig = pyplot.gcf()
-    axs = fig.get_axes()
-    assert len(axs) == 2
-    assert all(ax.has_data for ax in axs)
+    fig2 = pyplot.gcf()
+    axs2 = fig2.get_axes()
+    assert len(axs2) == 2
+    assert all(ax.has_data for ax in axs2)
+
+    # check that the pd plots are the same for 0 and "setosa"
+    assert all(axs[0].lines[0]._y == axs2[0].lines[0]._y)
+    # check that the pd plots are different for another target
+    clf.fit(iris.data, iris.target)
+    plot_partial_dependence(clf, iris.data, [0, 1],
+                            target=1,
+                            grid_resolution=grid_resolution)
+    fig3 = pyplot.gcf()
+    axs3 = fig3.get_axes()
+    assert any(axs[0].lines[0]._y != axs3[0].lines[0]._y)
 
 
 def test_plot_partial_dependence_multioutput(pyplot):

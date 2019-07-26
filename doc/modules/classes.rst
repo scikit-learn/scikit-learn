@@ -657,6 +657,7 @@ Kernels:
    :template: function.rst
 
    inspection.partial_dependence
+   inspection.permutation_importance
    inspection.plot_partial_dependence
 
 
@@ -902,6 +903,9 @@ details.
    metrics.mean_squared_log_error
    metrics.median_absolute_error
    metrics.r2_score
+   metrics.mean_poisson_deviance
+   metrics.mean_gamma_deviance
+   metrics.mean_tweedie_deviance
 
 Multilabel ranking metrics
 --------------------------
@@ -1256,7 +1260,6 @@ Model validation
 
    pipeline.make_pipeline
    pipeline.make_union
-
 
 .. _preprocessing_ref:
 
