@@ -236,9 +236,6 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         warnings.warn("Graph is not fully connected, spectral embedding"
                       " may not work as expected.")
 
-    # When norm_laplacian=True csgraph_laplacian returns the symmetric
-    # normalized laplacian and dd then contains the square roots of vertex
-    # degrees.
     laplacian, dd = csgraph_laplacian(adjacency, normed=norm_laplacian,
                                       return_diag=True)
     if (eigen_solver == 'arpack' or eigen_solver != 'lobpcg' and
