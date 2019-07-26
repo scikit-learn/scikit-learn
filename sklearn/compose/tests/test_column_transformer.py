@@ -662,23 +662,23 @@ def test_column_transformer_get_feature_names():
     ct = ColumnTransformer(
         [('col0', DictVectorizer(), 0), ('col1', 'drop', 1)])
     ct.fit(X)
-    assert_equal(ct.get_feature_names(), ['col0__a', 'col0__b'])
+    assert ct.get_feature_names() == ['col0__a', 'col0__b']
 
     # passthrough transformer
     ct = ColumnTransformer([('trans', 'passthrough', [0, 1])])
     ct.fit(X)
-    assert_equal(ct.get_feature_names(), ['trans__0', 'trans__1'])
+    assert ct.get_feature_names() == ['trans__0', 'trans__1']
 
     ct = ColumnTransformer([('trans', DictVectorizer(), 0)],
                            remainder='passthrough')
     ct.fit(X)
-    assert_equal(ct.get_feature_names(), ['trans__a', 'trans__b', 'x1'])
+    assert ct.get_feature_names() == ['trans__a', 'trans__b', 'x1']
 
     ct = ColumnTransformer([('trans', 'passthrough', [1])],
                            remainder='passthrough')
     ct.fit(X)
 
-    assert_equal(ct.get_feature_names(), ['trans__1', 'x0'])
+    assert ct.get_feature_names() == ['trans__1', 'x0']
 
     # passthough transformer with a dataframe
     pd = pytest.importorskip('pandas')
@@ -686,26 +686,26 @@ def test_column_transformer_get_feature_names():
 
     ct = ColumnTransformer([('trans', 'passthrough', ['col0', 'col1'])])
     ct.fit(X_df)
-    assert_equal(ct.get_feature_names(), ['trans__col0', 'trans__col1'])
+    assert ct.get_feature_names() == ['trans__col0', 'trans__col1']
 
     ct = ColumnTransformer([('trans', 'passthrough', [0, 1])])
     ct.fit(X_df)
-    assert_equal(ct.get_feature_names(), ['trans__0', 'trans__1'])
+    assert ct.get_feature_names() == ['trans__0', 'trans__1']
 
     ct = ColumnTransformer([('col0', DictVectorizer(), 0)],
                            remainder='passthrough')
     ct.fit(X_df)
-    assert_equal(ct.get_feature_names(), ['col0__a', 'col0__b', 'col1'])
+    assert ct.get_feature_names() == ['col0__a', 'col0__b', 'col1']
 
     ct = ColumnTransformer([('trans', 'passthrough', ['col1'])],
                            remainder='passthrough')
     ct.fit(X_df)
-    assert_equal(ct.get_feature_names(), ['trans__col1', 'col0'])
+    assert ct.get_feature_names() == ['trans__col1', 'col0']
 
     ct = ColumnTransformer([('trans', 'passthrough', [1])],
                            remainder='passthrough')
     ct.fit(X_df)
-    assert_equal(ct.get_feature_names(), ['trans__1', 'col0'])
+    assert ct.get_feature_names() == ['trans__1', 'col0']
 
 
 def test_column_transformer_special_strings():
