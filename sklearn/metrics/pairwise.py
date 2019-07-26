@@ -1707,15 +1707,6 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None,
                          "Valid metrics are %s, or 'precomputed', or a "
                          "callable" % (metric, _VALID_METRICS))
 
-    if metric in _NAN_METRICS or callable(metric):
-        missing_values = kwds.get("missing_values") if kwds.get(
-            "missing_values") is not None else np.nan
-
-        if np.all(_get_missing_mask(X.data if issparse(X)
-                                    else np.array(X), missing_values)):
-            raise ValueError(
-                "One or more samples(s) only have missing values.")
-
     if metric == "precomputed":
         X, _ = check_pairwise_arrays(X, Y, precomputed=True,
                                      force_all_finite=force_all_finite)
