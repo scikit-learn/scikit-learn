@@ -399,6 +399,7 @@ def set_checking_parameters(estimator):
     if name == 'OneHotEncoder':
         estimator.set_params(handle_unknown='ignore')
 
+    # set voting='soft' to be able to use predict_proba
     if name == 'VotingClassifier':
         estimator.set_params(voting='soft')
 
@@ -1728,8 +1729,6 @@ def check_supervised_y_2d(name, estimator_orig):
         assert len(w) > 0, msg
         assert "DataConversionWarning('A column-vector y" \
                " was passed when a 1d array was expected" in msg
-    else:
-        print(estimator.__class__.__name__)
     assert_allclose(y_pred.ravel(), y_pred_2d.ravel())
 
 
@@ -2225,7 +2224,7 @@ def check_parameters_default_constructible(name, Estimator):
             # true for mixins
             return
         params = estimator.get_params()
-        if required_parameters or (["estimator"], ["estimators"]):
+        if required_parameters in (["estimator"], ["estimators"]):
             # they can need a non-default argument
             init_params = init_params[1:]
 
