@@ -227,7 +227,7 @@ def _check_optimize_result(solver, result, max_iter=None):
             warnings.warn("{} failed to converge (status={}): {}. "
                           "Increase the number of iterations."
                           .format(solver, result.status, result.message),
-                          ConvergenceWarning)
+                          ConvergenceWarning, stacklevel=2)
         if max_iter is not None:
             # In scipy <= 1.0.0, nit may exceed maxiter for lbfgs.
             # See https://github.com/scipy/scipy/issues/7854
