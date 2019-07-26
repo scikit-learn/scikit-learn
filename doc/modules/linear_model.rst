@@ -949,10 +949,10 @@ Note that the feature matrix ``X`` should be standardized before fitting. This
 ensures that the penalty treats features equally. The estimator can be used as
 follows:
 
-    >>> from sklearn.linear_model import GeneralizedLinearRegressor
-    >>> reg = GeneralizedLinearRegressor(alpha=0.5, family='poisson', link='log')
+    >>> from sklearn.linear_model import TweedieRegressor
+    >>> reg = TweedieRegressor(alpha=0.5, family='poisson', link='log')
     >>> reg.fit([[0, 0], [0, 1], [2, 2]], [0, 1, 2])
-    GeneralizedLinearRegressor(alpha=0.5, family='poisson', link='log')
+    TweedieRegressor(alpha=0.5, family='poisson', link='log')
     >>> reg.coef_
     array([0.2463..., 0.4337...])
     >>> reg.intercept_

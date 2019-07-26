@@ -41,8 +41,7 @@ import pandas as pd
 from sklearn.datasets import fetch_openml
 from sklearn.compose import ColumnTransformer
 from sklearn.linear_model import PoissonRegressor, GammaRegressor
-from sklearn.linear_model._glm import GeneralizedLinearRegressor
-from sklearn.linear_model._glm.distribution import TweedieDistribution
+from sklearn.linear_model import TweedieRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
@@ -418,7 +417,6 @@ class ClaimProdEstimator:
     def __init__(self, est_freq, est_sev):
         self.est_freq = est_freq
         self.est_sev = est_sev
-        self._family_instance = TweedieDistribution(power=1.5)
 
     def predict(self, X, exposure):
         """Predict the total claim amount.
@@ -429,11 +427,14 @@ class ClaimProdEstimator:
 
     def score(self, X, y, sample_weight=None):
         """Compute D², the percentage of deviance explained."""
+        # TODO: remove this private import once d2_score is available
+        from sklearn.linear_model._glm.distribution import TweedieDistribution
+
         mu = self.predict(X, exposure=sample_weight)
-        dev = self._family_instance.deviance(y, mu, weights=sample_weight)
+        family = TweedieDistribution(power=1.5)
+        dev = family.deviance(y, mu, weights=sample_weight)
         y_mean = np.average(y, weights=sample_weight)
-        dev_null = self._family_instance.deviance(y, y_mean,
-                                                  weights=sample_weight)
+        dev_null = family.deviance(y, y_mean, weights=sample_weight)
         return 1. - dev / dev_null
 
 
@@ -459,18 +460,13 @@ print(scores)
 
 from sklearn.model_selection import GridSearchCV
 
+# exclude upper bound as power=2 does not support null y values.
+params = {"power": np.linspace(1 + 1e-4, 2 - 1e-4, 8)}
+
+
 # this takes a while
-params = {
-    "family": [
-        TweedieDistribution(power=power)
-        # exclude upper bound as power=2 does not support null y samples.
-        for power in np.linspace(1 + 1e-4, 2 - 1e-4, 8)
-    ]
-}
-
-
 glm_total = GridSearchCV(
-    GeneralizedLinearRegressor(tol=1e-3, max_iter=500), cv=3,
+    TweedieRegressor(tol=1e-3, max_iter=500), cv=3,
     param_grid=params, n_jobs=-1
 )
 glm_total.fit(

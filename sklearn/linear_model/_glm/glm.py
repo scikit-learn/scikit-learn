@@ -623,6 +623,15 @@ class PoissonRegressor(GeneralizedLinearRegressor):
                          max_iter=max_iter, tol=tol, warm_start=warm_start,
                          copy_X=copy_X, verbose=verbose)
 
+    @property
+    def family(self):
+        return "poisson"
+
+    @family.setter
+    def family(self, value):
+        if value != "poisson":
+            raise ValueError("PoissonRegressor.family must be 'poisson'!")
+
 
 class GammaRegressor(GeneralizedLinearRegressor):
     """Regression with the response variable y following a Gamma distribution
@@ -729,3 +738,148 @@ class GammaRegressor(GeneralizedLinearRegressor):
                          fit_dispersion=fit_dispersion, solver=solver,
                          max_iter=max_iter, tol=tol, warm_start=warm_start,
                          copy_X=copy_X, verbose=verbose)
+
+    @property
+    def family(self):
+        return "gamma"
+
+    @family.setter
+    def family(self, value):
+        if value != "gamma":
+            raise ValueError("GammaRegressor.family must be 'gamma'!")
+
+
+class TweedieRegressor(GeneralizedLinearRegressor):
+    """Regression with the response variable y following a Tweedie distribution
+
+    GLMs based on a reproductive Exponential Dispersion Model (EDM) aim at
+    fitting and predicting the mean of the target y as mu=h(X*w).
+    The fit minimizes the following objective function with L2 regularization::
+
+            1/(2*sum(s)) * deviance(y, h(X*w); s) + 1/2 * alpha * ||w||_2^2
+
+    with inverse link function h and s=sample_weight. Note that for
+    ``sample_weight=None``, one has s_i=1 and sum(s)=n_samples).
+
+    Read more in the :ref:`User Guide <Generalized_linear_regression>`.
+
+    Parameters
+    ----------
+    power : float (default=0)
+            The variance power: :math:`v(\mu) = \mu^{power}`.
+            For ``0<power<1``, no distribution exists.
+
+            Special cases are:
+
+            ===== ================
+            Power Distribution
+            ===== ================
+            0     Normal
+            1     Poisson
+            (0,1) Compound Poisson
+            2     Gamma
+            3     Inverse Gaussian
+
+    alpha : float, optional (default=1)
+        Constant that multiplies the penalty terms and thus determines the
+        regularization strength.
+        See the notes for the exact mathematical meaning of this
+        parameter.``alpha = 0`` is equivalent to unpenalized GLMs. In this
+        case, the design matrix X must have full column rank
+        (no collinearities).
+
+    fit_intercept : boolean, optional (default=True)
+        Specifies if a constant (a.k.a. bias or intercept) should be
+        added to the linear predictor (X*coef+intercept).
+
+    fit_dispersion : {None, 'chisqr', 'deviance'}, optional (default=None)
+        Method for estimation of the dispersion parameter phi. Whether to use
+        the chi squared statistic or the deviance statistic. If None, the
+        dispersion is not estimated.
+
+    solver : {'lbfgs'}, optional (default='lbfgs')
+        Algorithm to use in the optimization problem:
+
+        'lbfgs'
+            Calls scipy's L-BFGS-B optimizer.
+
+    max_iter : int, optional (default=100)
+        The maximal number of iterations for solver algorithms.
+
+    tol : float, optional (default=1e-4)
+        Stopping criterion. For the lbfgs solver,
+        the iteration will stop when ``max{|g_i|, i = 1, ..., n} <= tol``
+        where ``g_i`` is the i-th component of the gradient (derivative) of
+        the objective function.
+
+    warm_start : boolean, optional (default=False)
+        If set to ``True``, reuse the solution of the previous call to ``fit``
+        as initialization for ``coef_`` and ``intercept_`` .
+
+    copy_X : boolean, optional, (default=True)
+        If ``True``, X will be copied; else, it may be overwritten.
+
+    verbose : int, optional (default=0)
+        For the lbfgs solver set verbose to any positive number for verbosity.
+
+    Attributes
+    ----------
+    coef_ : array, shape (n_features,)
+        Estimated coefficients for the linear predictor (X*coef_+intercept_) in
+        the GLM.
+
+    intercept_ : float
+        Intercept (a.k.a. bias) added to linear predictor.
+
+    dispersion_ : float
+        The dispersion parameter :math:`\\phi` if ``fit_dispersion`` was set.
+
+    n_iter_ : int
+        Actual number of iterations used in solver.
+
+    Notes
+    -----
+    The fit itself does not need Y to be from an EDM, but only assumes
+    the first two moments to be :math:`E[Y_i]=\\mu_i=h((Xw)_i)` and
+    :math:`Var[Y_i]=\\frac{\\phi}{s_i} v(\\mu_i)`. The unit variance function
+    :math:`v(\\mu_i)` is a property of and given by the specific EDM, see
+    :ref:`User Guide <Generalized_linear_regression>`.
+
+    The parameters :math:`w` (`coef_` and `intercept_`) are estimated by
+    minimizing the deviance plus penalty term, which is equivalent to
+    (penalized) maximum likelihood estimation.
+
+
+    References
+    ----------
+    .. McCullagh, Peter; Nelder, John (1989). Generalized Linear Models,
+       Second Edition. Boca Raton: Chapman and Hall/CRC. ISBN 0-412-31760-5.
+
+    .. Jørgensen, B. (1992). The theory of exponential dispersion models
+       and analysis of deviance. Monografias de matemática, no. 51.  See also
+       `Exponential dispersion model.
+       <https://en.wikipedia.org/wiki/Exponential_dispersion_model>`_
+    """
+    def __init__(self, power=0.0, alpha=1.0, fit_intercept=True, link='log',
+                 fit_dispersion=None, solver='lbfgs', max_iter=100, tol=1e-4,
+                 warm_start=False, copy_X=True, check_input=True, verbose=0):
+
+        super().__init__(alpha=alpha, fit_intercept=fit_intercept,
+                         family=TweedieDistribution(power=power), link=link,
+                         fit_dispersion=fit_dispersion, solver=solver,
+                         max_iter=max_iter, tol=tol, warm_start=warm_start,
+                         copy_X=copy_X, verbose=verbose)
+
+    @property
+    def family(self):
+        dist = TweedieDistribution(power=self.power)
+        # TODO: make the returned object immutable
+        return dist
+
+    @family.setter
+    def family(self, value):
+        if isinstance(value, TweedieDistribution):
+            self.power = value.power
+        else:
+            raise TypeError("TweedieRegressor.family must be of type "
+                            "TweedieDistribution!")

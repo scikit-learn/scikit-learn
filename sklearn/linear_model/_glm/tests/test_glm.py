@@ -7,7 +7,12 @@ from numpy.testing import assert_allclose
 import pytest
 
 from sklearn.datasets import make_regression
-from sklearn.linear_model import GeneralizedLinearRegressor
+from sklearn.linear_model._glm import GeneralizedLinearRegressor
+from sklearn.linear_model import (
+    TweedieRegressor,
+    PoissonRegressor,
+    GammaRegressor
+)
 from sklearn.linear_model._glm.link import (
     IdentityLink,
     LogLink,
@@ -353,3 +358,34 @@ def test_convergence_warning(solver, regression_data):
                                      max_iter=1, tol=1e-20)
     with pytest.warns(ConvergenceWarning):
         est.fit(X, y)
+
+
+def test_poisson_regression_family(regression_data):
+    est = PoissonRegressor()
+    est.family == "poisson"
+
+    msg = "PoissonRegressor.family must be 'poisson'!"
+    with pytest.raises(ValueError, match=msg):
+        est.family = 0
+
+
+def test_gamma_regression_family(regression_data):
+    est = GammaRegressor()
+    est.family == "gamma"
+
+    msg = "GammaRegressor.family must be 'gamma'!"
+    with pytest.raises(ValueError, match=msg):
+        est.family = 0
+
+
+def test_tweedie_regression_family(regression_data):
+    power = 2.0
+    est = TweedieRegressor(power=power)
+    assert isinstance(est.family, TweedieDistribution)
+    assert est.family.power == power
+    msg = "TweedieRegressor.family must be of type TweedieDistribution!"
+    with pytest.raises(TypeError, match=msg):
+        est.family = None
+
+    # TODO: the following should not be allowed
+    # est.family.power = 2
