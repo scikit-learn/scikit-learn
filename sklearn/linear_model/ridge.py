@@ -409,7 +409,7 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), solver)
         X = check_array(X, accept_sparse=_accept_sparse, dtype=_dtype,
                         order="C")
-        y = check_array(y, dtype=X.dtype, ensure_2d=False, order="C")
+        y = check_array(y, dtype=X.dtype, ensure_2d=False, order=None)
     check_consistent_length(X, y)
 
     n_samples, n_features = X.shape
