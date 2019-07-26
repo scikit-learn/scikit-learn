@@ -312,12 +312,9 @@ class VectorizerMixin:
             raise ValueError('Invalid value for "strip_accents": %s' %
                              self.strip_accents)
 
-        if self.lowercase:
-            return partial(
-                _preprocess, accent_function=strip_accents, lower=True
-            )
-        else:
-            return partial(_preprocess, accent_function=strip_accents)
+        return partial(
+            _preprocess, accent_function=strip_accents, lower=self.lowercase
+        )
 
     def build_tokenizer(self):
         """Return a function that splits a string into a sequence of tokens"""
