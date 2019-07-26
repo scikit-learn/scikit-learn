@@ -633,7 +633,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
-    normalize : boolean, optional, default=False
+    normalize : bool, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -641,7 +641,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    copy_X : boolean, optional, default=True
+    copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
     max_iter : int, optional
@@ -783,7 +783,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         intercept will be used in calculations (e.g. data is expected to be
         already centered).
 
-    normalize : boolean, optional, default=False
+    normalize : bool, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -791,7 +791,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    copy_X : boolean, optional, default=True
+    copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
     max_iter : int, optional
@@ -843,7 +843,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
           .. versionadded:: 0.19
            SAGA solver.
 
-    random_state : int, RandomState instance or None, optional, default=None
+    random_state : int, RandomState instance or None, default=None
         The seed of the pseudo random number generator to use when shuffling
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
@@ -1604,7 +1604,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
-    normalize : boolean, optional, default=False
+    normalize : bool, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -1612,7 +1612,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    scoring : string, callable or None, optional, default=None
+    scoring : string, callable or None, default=None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
@@ -1717,7 +1717,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
-    normalize : boolean, optional, default=False
+    normalize : bool, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -1725,7 +1725,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    scoring : string, callable or None, optional, default=None
+    scoring : string, callable or None, default=None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
