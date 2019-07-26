@@ -265,7 +265,7 @@ def yield_all_checks(name, estimator):
     yield check_fit_idempotent
 
 
-def check_estimator(Estimator):
+def check_estimator(Estimator, evaluate=True):
     """Check if estimator adheres to scikit-learn conventions.
 
     This estimator will run an extensive test-suite for input validation,
@@ -282,18 +282,23 @@ def check_estimator(Estimator):
     ----------
     estimator : estimator object or class
         Estimator to check. Estimator is a class object or instance.
+
+    evaluate : bool
+        Flag to indicate whether or not to evaluate the passed
+        estimator.
     """
-    if isinstance(Estimator, type):
-        # got a class
-        name = Estimator.__name__
-        estimator = Estimator()
-        # Generate tests for pytest hooks collector
-        check_parameters_default_constructible(name, Estimator)
-        check_no_attributes_set_in_init(name, estimator)
-    else:
-        # got an instance
-        estimator = Estimator
-        name = type(estimator).__name__
+    if evaluate:
+        if isinstance(Estimator, type):
+            # got a class
+            name = Estimator.__name__
+            estimator = Estimator()
+            # Generate tests for pytest hooks collector
+            check_parameters_default_constructible(name, Estimator)
+            check_no_attributes_set_in_init(name, estimator)
+        else:
+            # got an instance
+            estimator = Estimator
+            name = type(estimator).__name__
 
     for check in yield_all_checks(name, estimator):
         try:

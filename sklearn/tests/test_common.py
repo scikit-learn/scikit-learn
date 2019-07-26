@@ -12,6 +12,7 @@ import sys
 import re
 import pkgutil
 import functools
+import itertools
 
 import pytest
 
@@ -28,6 +29,7 @@ from sklearn.linear_model import Ridge
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.utils import IS_PYPY
 from sklearn.utils.estimator_checks import (
+    check_estimator,
     yield_all_checks,
     _safe_tags,
     set_checking_parameters,
@@ -95,8 +97,15 @@ def _rename_partial(val):
     if hasattr(val, "get_params") and not isinstance(val, type):
         return type(val).__name__
 
+ALL_ESTIMATORS = all_estimators()
 
-@pytest.mark.estimator_checks(_tested_estimators())
+@pytest.mark.parametrize(
+    "check, name, estimator",
+    itertools.chain.from_iterable(
+         check_estimator(Estimator, evaluate=False)
+         for Estimator in ALL_ESTIMATORS
+    )
+)
 def test_estimators(estimator, check):
     # Common tests for estimator instances
     with ignore_warnings(category=(DeprecationWarning, ConvergenceWarning,
