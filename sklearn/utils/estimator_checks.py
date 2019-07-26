@@ -176,10 +176,9 @@ def check_constant_features(name, estimator_orig):
         estimator.fit(X, y)
     except FloatingPointError as e:
         errmsg = 'The system is too ill-conditioned for this solver'
-        if errmsg not in str(e):
-            raise ValueError("Estimator {0} raised error as expected, but "
-                             "does not match expected error message"
-                             .format(name))
+        msg = ("Estimator {0} raised an error due to constant features, "
+               "but does not match expected error message".format(name))
+        assert errmsg in str(e), msg
 
 
 def _yield_regressor_checks(name, regressor):
