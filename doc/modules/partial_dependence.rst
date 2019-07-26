@@ -80,9 +80,9 @@ the plots, you can use the
     >>> from sklearn.inspection import partial_dependence
 
     >>> pdp, axes = partial_dependence(clf, X, [0])
-    >>> pdp  # doctest: +ELLIPSIS
+    >>> pdp
     array([[ 2.466...,  2.466..., ...
-    >>> axes  # doctest: +ELLIPSIS
+    >>> axes
     [array([-1.624..., -1.592..., ...
 
 The values at which the partial dependence should be evaluated are directly

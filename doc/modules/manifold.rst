@@ -509,7 +509,7 @@ The disadvantages to using t-SNE are roughly:
 * The algorithm is stochastic and multiple restarts with different seeds can
   yield different embeddings. However, it is perfectly legitimate to pick the
   embedding with the least error.
-* Global structure is not explicitly preserved. This is problem is mitigated by
+* Global structure is not explicitly preserved. This problem is mitigated by
   initializing points with PCA (using `init='pca'`).
 
 

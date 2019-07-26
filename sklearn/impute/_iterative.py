@@ -430,7 +430,11 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         if (self.n_nearest_features is None or
                 self.n_nearest_features >= n_features):
             return None
-        abs_corr_mat = np.abs(np.corrcoef(X_filled.T))
+        with np.errstate(invalid='ignore'):
+            # if a feature in the neighboorhood has only a single value
+            # (e.g., categorical feature), the std. dev. will be null and
+            # np.corrcoef will raise a warning due to a division by zero
+            abs_corr_mat = np.abs(np.corrcoef(X_filled.T))
         # np.corrcoef is not defined for features with zero std
         abs_corr_mat[np.isnan(abs_corr_mat)] = tolerance
         # ensures exploration, i.e. at least some probability of sampling
@@ -520,7 +524,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
 
         if self.add_indicator:
             self.indicator_ = MissingIndicator(
-                missing_values=self.missing_values)
+                missing_values=self.missing_values, error_on_new=False)
             X_trans_indicator = self.indicator_.fit_transform(X)
         else:
             self.indicator_ = None
@@ -587,6 +591,10 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
             if not self.sample_posterior:
                 inf_norm = np.linalg.norm(Xt - Xt_previous, ord=np.inf,
                                           axis=None)
+                if self.verbose > 0:
+                    print('[IterativeImputer] '
+                          'Change: {}, scaled tolerance: {} '.format(
+                            inf_norm, normalized_tol))
                 if inf_norm < normalized_tol:
                     if self.verbose > 0:
                         print('[IterativeImputer] Early stopping criterion '

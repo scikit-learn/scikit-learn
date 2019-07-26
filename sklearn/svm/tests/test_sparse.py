@@ -1,8 +1,7 @@
 import pytest
 
 import numpy as np
-from numpy.testing import (assert_array_almost_equal, assert_array_equal,
-                           assert_equal)
+from numpy.testing import assert_array_almost_equal, assert_array_equal
 from scipy import sparse
 
 from sklearn import datasets, svm, linear_model, base
@@ -98,9 +97,9 @@ def test_unsorted_indices():
     # test that the result with sorted and unsorted indices in csr is the same
     # we use a subset of digits as iris, blobs or make_classification didn't
     # show the problem
-    digits = load_digits()
-    X, y = digits.data[:50], digits.target[:50]
-    X_test = sparse.csr_matrix(digits.data[50:100])
+    X, y = load_digits(return_X_y=True)
+    X_test = sparse.csr_matrix(X[50:100])
+    X, y = X[:50], y[:50]
 
     X_sparse = sparse.csr_matrix(X)
     coef_dense = svm.SVC(kernel='linear', probability=True,
@@ -229,7 +228,7 @@ def test_linearsvc_iris():
     sp_clf = svm.LinearSVC(random_state=0).fit(iris.data, iris.target)
     clf = svm.LinearSVC(random_state=0).fit(iris.data.toarray(), iris.target)
 
-    assert_equal(clf.fit_intercept, sp_clf.fit_intercept)
+    assert clf.fit_intercept == sp_clf.fit_intercept
 
     assert_array_almost_equal(clf.coef_, sp_clf.coef_, decimal=1)
     assert_array_almost_equal(clf.intercept_, sp_clf.intercept_, decimal=1)
