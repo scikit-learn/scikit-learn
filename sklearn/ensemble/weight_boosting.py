@@ -335,6 +335,9 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
     Attributes
     ----------
+    base_estimator_ : estimator
+        The base estimator from which the ensemble is grown.
+
     estimators_ : list of classifiers
         The collection of fitted sub-estimators.
 
@@ -893,6 +896,9 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
     Attributes
     ----------
+    base_estimator_ : estimator
+        The base estimator from which the ensemble is grown.
+
     estimators_ : list of classifiers
         The collection of fitted sub-estimators.
 
