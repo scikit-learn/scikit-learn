@@ -15,28 +15,27 @@ from ..utils.validation import check_is_fitted
 class KNNImputer(TransformerMixin, BaseEstimator):
     """Imputation for completing missing values using k-Nearest Neighbors.
 
-    Each sample's missing values are imputed using values from ``n_neighbors``
+    Each sample's missing values are imputed using values from `n_neighbors`
     nearest neighbors found in the training set. Each missing feature is then
     imputed as the average, either weighted or unweighted, of these neighbors.
     If a sample has more than one feature missing, then the neighbors for that
     sample can be different depending on the particular feature being imputed.
-    When the number of available neighbors is less than ``n_neighbors``, the
-    training set average for that feature is used during imputation. When a
-    sample has more than a ``feature_max_missing`` fraction of its features
-    missing, then it is excluded from being a neighbor for imputation.
+    When the number of available neighbors is less than `n_neighbors`, the
+    training set average for that feature is used during imputation. If a
+    feature is always missing, it is removed during `transform`.
 
     .. versionadded:: 0.22
 
     Parameters
     ----------
-    missing_values : number, string, np.nan, None (default=np.nan)
+    missing_values : number, string, np.nan or None, default=`np.nan`
         The placeholder for the missing values. All occurrences of
         `missing_values` will be imputed.
 
-    n_neighbors : int, optional (default=5)
+    n_neighbors : int, default=5
         Number of neighboring samples to use for imputation.
 
-    weights : str or callable, optional (default="uniform")
+    weights : str or callable, default='uniform'
         Weight function used in prediction.  Possible values:
 
         - 'uniform' : uniform weights. All points in each neighborhood are
@@ -48,15 +47,15 @@ class KNNImputer(TransformerMixin, BaseEstimator):
           array of distances, and returns an array of the same shape
           containing the weights.
 
-    metric : str or callable, optional (default="nan_euclidean")
+    metric : str or callable, default='nan_euclidean'
         Distance metric for searching neighbors. Possible values:
         - 'nan_euclidean'
         - callable : a user-defined function which conforms to the
           definition of _pairwise_callable(X, Y, metric, **kwds). The function
-          accepts two arrays, X and Y, and a ``missing_values`` keyword in
-          ``kwds`` and returns a scalar distance value.
+          accepts two arrays, X and Y, and a `missing_values` keyword in
+          `kwds` and returns a scalar distance value.
 
-    copy : boolean, optional(default=True)
+    copy : boolean, default=True
         If True, a copy of X will be created. If False, imputation will
         be done in-place whenever possible.
 
@@ -68,7 +67,9 @@ class KNNImputer(TransformerMixin, BaseEstimator):
         missing values in samples that are either excluded from nearest
         neighbors search because they have too many missing features or
         all of the sample's k-nearest neighbors (i.e., the potential donors)
-        also have the relevant feature value missing.
+        also have the relevant feature value missing. If a feature is always
+        missing, the `mean_` will be `np.nan`, andt that feature will be
+        dropped during `transform`.
 
     References
     ----------
@@ -100,37 +101,31 @@ class KNNImputer(TransformerMixin, BaseEstimator):
         self.copy = copy
 
     def _calc_impute(self, dist, receivers_idx, X_col, fit_X_col,
-                     non_missing_fix_X_col, statistic):
-        """Helper function to calculate the imputation value of a single
-        column.
+                     potential_donors_idx):
+        """Hellper function to impute a single column.
 
         Parameters
         ----------
-        dist : array-like, shape = (n_receivers, n_train_samples, )
+        dist : array-like, shape=(n_receivers, n_train_samples)
             distance matrix between the receivers and the train samples
 
-        receivers_idx : array-like, shape = (n_receivers, )
+        receivers_idx : array-like, shape=(n_receivers,)
             indices of X_col to be imputed
 
-        X_col : array-like, shape = (n_samples, )
+        X_col : array-like, shape=(n_samples,)
             column to be imputed
 
-        fit_X_col : array-like, shape = (n_train_samples, )
+        fit_X_col : array-like, shape=(n_train_samples,)
             column from training
 
-        non_missing_fix_X_col : array-like, shape = (n_train_samples, )
-            mask for missing values corresponding to ``fit_X_col``
+        potential_donors_idx : array-like, shape=(n_donors,)
+            row index for receivers and potential donors
 
-        statistic : float
-            statistic for column generated from fitting ``fit_X_col``
+        Returns
+        -------
+        imputed_values: array, shape=(n_receivers, )
+            imputed values for receiver
         """
-        # Row index for receivers and potential donors (pdonors)
-        potential_donors_idx = np.flatnonzero(non_missing_fix_X_col)
-
-        # Use statistics if not enough donors are available
-        if len(potential_donors_idx) < self.n_neighbors:
-            return statistic
-
         # Get distance from potential donors
         dist_potential_donors = dist[:, potential_donors_idx]
 
@@ -146,9 +141,8 @@ class KNNImputer(TransformerMixin, BaseEstimator):
 
         # Retrieve donor values and calculate kNN score
         donors = fit_X_col[potential_donors_idx].take(donors_idx)
-        donors = np.ma.array(donors,
-                             mask=_get_missing_mask(donors,
-                                                    self.missing_values))
+        donors_missing_mask = _get_missing_mask(donors, self.missing_values)
+        donors = np.ma.array(donors, mask=donors_missing_mask)
 
         return np.ma.average(donors, axis=1, weights=weight_matrix).data
 
@@ -202,8 +196,9 @@ class KNNImputer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X : array-like, shape = (n_samples, n_features)
-            The imputed dataset.
+        X : array-like, shape = (n_samples, n_output_features)
+            The imputed dataset. `n_output_features` is the number of features
+            that is not always missing during `fit`.
         """
 
         check_is_fitted(self, ["statistics_"])
@@ -253,11 +248,19 @@ class KNNImputer(TransformerMixin, BaseEstimator):
                 continue
 
             receivers_idx = np.where(mask[:, col])[0]
+
+            # Row index for receivers and potential donors (pdonors)
+            potential_donors_idx = np.flatnonzero(non_missing_fix_X[:, col])
+
+            # Use statistics if not enough donors are available
+            if len(potential_donors_idx) < self.n_neighbors:
+                X[receivers_idx, col] = self.statistics_[col]
+                continue
+
             dist_subset = dist[dist_idx_map[receivers_idx]]
             value = self._calc_impute(dist_subset, receivers_idx, X[:, col],
                                       self._fit_X[:, col],
-                                      non_missing_fix_X[:, col],
-                                      self.statistics_[col])
+                                      potential_donors_idx)
             X[receivers_idx, col] = value
 
         X = X[:, valid_statistics_indexes]

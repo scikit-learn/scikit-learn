@@ -67,8 +67,9 @@ def test_knn_imputer_default_with_invalid_input(na):
         [na, 7, 0, 7, 8],
         [6, 6, 2, 5, 7],
     ])
+    imputer = KNNImputer(missing_values=na).fit(X_fit)
     with pytest.raises(ValueError, match="Input contains (infinity|NaN)"):
-        KNNImputer(missing_values=na).fit(X_fit).transform(X)
+        imputer.transform(X)
 
     # negative n_neighbors
     with pytest.raises(ValueError, match="Expected n_neighbors > 0"):
@@ -111,7 +112,7 @@ def test_knn_imputer_removes_all_na_features(na):
     assert np.isnan(knn.statistics_[2])
 
     X_transform = knn.transform(X)
-    assert X_transform.shape == (4, 5)
+    assert not np.isnan(X_transform).any()
 
 
 @pytest.mark.parametrize("na", [np.nan, -1])
@@ -179,7 +180,7 @@ def test_knn_imputer_verify(na):
     assert_allclose(imputer.fit_transform(X), X_imputed)
     assert_allclose(imputer.statistics_, statistics_mean)
 
-    # Test with all neighboring donors also having missing feature values
+    # Test when there is not enough neighbors
     X = np.array([
         [1, 0, 0, na],
         [2, 1, 2, na],
