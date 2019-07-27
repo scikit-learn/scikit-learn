@@ -550,8 +550,10 @@ class ARDRegression(LinearModel, RegressorMixin):
         self.scores_ = list()
         coef_old_ = None
 
-        # calcuate condition for pinvh to match scipy < 1.3
-        pinvh_cond = 1E6 * np.finfo(X.dtype).eps
+        # calcuate condition for pinvh to match scipy < 1.3, scipy#10067
+        t = X.dtype.char.lower()
+        factor = {'f': 1E3, 'd': 1E6}
+        pinvh_cond = factor[t] * np.finfo(t).eps
 
         # Compute sigma and mu (using Woodbury matrix identity)
         def update_sigma(X, alpha_, lambda_, keep_lambda, n_samples):

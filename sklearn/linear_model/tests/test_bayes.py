@@ -234,8 +234,7 @@ def test_return_std():
 
 def test_ard_accuracy_on_easy_problem():
     # Check that ARD converges with reasonable accuracy on an easy problem
-    seed = 45
-    X = np.random.RandomState(seed=seed).normal(size=(250, 3))
+    X = np.random.RandomState(seed=45).normal(size=(250, 3))
     y = X[:, 1]
 
     regressor = ARDRegression()
