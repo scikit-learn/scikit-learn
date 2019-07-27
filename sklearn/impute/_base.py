@@ -597,8 +597,10 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        self : object
-            Returns missing_features_information.
+        Xt : {ndarray or sparse matrix}, shape (n_samples, n_features)
+            The missing indicator for input data. The data type of ``Xt``
+            will be boolean.
+
         """
         X = self._validate_input(X)
         self._n_features = X.shape[1]
