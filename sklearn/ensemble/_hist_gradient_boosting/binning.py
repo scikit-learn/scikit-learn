@@ -118,7 +118,7 @@ class _BinMapper(BaseEstimator, TransformerMixin):
         -------
         self : object
         """
-        X = check_array(X, dtype=[X_DTYPE])
+        X = check_array(X, dtype=[X_DTYPE], force_all_finite=False)
         self.bin_thresholds_ = _find_binning_thresholds(
             X, self.max_bins, subsample=self.subsample,
             random_state=self.random_state)
@@ -142,7 +142,7 @@ class _BinMapper(BaseEstimator, TransformerMixin):
         X_binned : array-like, shape (n_samples, n_features)
             The binned data (fortran-aligned).
         """
-        X = check_array(X, dtype=[X_DTYPE])
+        X = check_array(X, dtype=[X_DTYPE], force_all_finite=False)
         check_is_fitted(self, ['bin_thresholds_', 'actual_n_bins_'])
         if X.shape[1] != self.actual_n_bins_.shape[0]:
             raise ValueError(
