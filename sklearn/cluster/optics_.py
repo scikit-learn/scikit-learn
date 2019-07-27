@@ -222,8 +222,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
         Parameters
         ----------
-        X : array, shape (n_samples, n_features), or (n_samples, n_samples)
-            if metric=’precomputed’.
+        X : array, shape (n_samples, n_features), or (n_samples, n_samples)  \
+if metric=’precomputed’.
             A feature array, or array of distances between samples if
             metric='precomputed'.
 
@@ -285,8 +285,8 @@ def _validate_size(size, n_samples, param_name):
         return max(2, int(size * n_samples))
     else:
         raise ValueError('%s must be a positive integer smaller than'
-                         ' the number of samples or a float between 0 and 1. '
-                         'Got %r' % (param_name, size))
+                         ' the number of samples (%d) or a float between'
+                         ' 0 and 1. Got %d' % (param_name, n_samples, size))
 
 
 # OPTICS helper functions
@@ -335,8 +335,8 @@ def compute_optics_graph(X, min_samples, max_eps, metric, p, metric_params,
 
     Parameters
     ----------
-    X : array, shape (n_samples, n_features), or (n_samples, n_samples) if
-        metric=’precomputed’.
+    X : array, shape (n_samples, n_features), or (n_samples, n_samples)  \
+if metric=’precomputed’.
         A feature array, or array of distances between samples if
         metric='precomputed'
 
@@ -750,8 +750,8 @@ def _xi_cluster(reachability_plot, predecessor_plot, ordering, xi, min_samples,
 
     min_samples : int > 1 (default=None)
         The same as given to OPTICS as int. Up and down steep regions can't
-         have more then ``min_samples`` consecutive non-steep points.
-          Expressed as an absolute number (rounded to be at least 2).
+        have more then ``min_samples`` consecutive non-steep points.
+        Expressed as an absolute number (rounded to be at least 2).
 
     min_cluster_size : int > 1 (default=None)
         Minimum number of samples in an OPTICS cluster, expressed as an

@@ -247,36 +247,18 @@ def test_dbscan_optics_parity(eps, min_samples):
 
 
 def test_min_samples_min_clusters_float():
-    # check if OPTIICS is callable with float parameters for
+    # check if OPTICS is callable with float parameters for
     # min_samples and min_cluster_size
-    rng = np.random.RandomState(0)
-    n_points_per_cluster = 5
+    C1 = [[0, 0], [0, 0.1], [0, -.1]]
+    C2 = [[10, 10], [10, 9], [10, 11]]
+    C3 = [[100, 100], [100, 96], [100, 106]]
+    X = np.vstack((C1, C2, C3))
 
-    C1 = [-5, -2] + .8 * rng.randn(n_points_per_cluster, 2)
-    C2 = [4, -1] + .1 * rng.randn(n_points_per_cluster, 2)
-    C3 = [1, -2] + .2 * rng.randn(n_points_per_cluster, 2)
-    C4 = [-2, 3] + .3 * rng.randn(n_points_per_cluster, 2)
-    C5 = [3, -2] + .6 * rng.randn(n_points_per_cluster, 2)
-    C6 = [5, 6] + .2 * rng.randn(n_points_per_cluster, 2)
-
-    X = np.vstack((C1, C2, C3, C4, C5, np.array([[100, 100]]), C6))
-    expected_labels = np.r_[[2] * 5, [0] * 5, [1] * 5, [3] * 5, [1] * 5,
-                            -1, [4] * 5]
-    X, expected_labels = shuffle(X, expected_labels, random_state=rng)
+    expected_labels = np.r_[[0] * 3, [1] * 3, [2] * 3]
 
     clust = OPTICS(min_samples=0.1, min_cluster_size=0.08,
                    max_eps=20, cluster_method='xi',
                    xi=0.4).fit(X)
-    assert_array_equal(clust.labels_, expected_labels)
-
-    X = np.vstack((C1, C2, C3, C4, C5, np.array([[100, 100]] * 2), C6))
-    expected_labels = np.r_[[1] * 5, [3] * 5, [2] * 5, [0] * 5, [2] * 5,
-                            -1, -1, [4] * 5]
-    X, expected_labels = shuffle(X, expected_labels, random_state=rng)
-
-    clust = OPTICS(min_samples=0.1, max_eps=20, cluster_method='xi',
-                   xi=0.3).fit(X)
-    # check that predecessor correction is enabled
     assert_array_equal(clust.labels_, expected_labels)
 
 
