@@ -230,3 +230,18 @@ def test_return_std():
         m2.fit(X, y)
         y_mean2, y_std2 = m2.predict(X_test, return_std=True)
         assert_array_almost_equal(y_std2, noise_mult, decimal=decimal)
+
+
+def test_ard_accuracy_on_easy_problem():
+    # Check that ARD converges with reasonable accuracy on an easy problem
+    seed = 45
+    X = np.random.RandomState(seed=seed).normal(size=(250, 3))
+    y = X[:, 1]
+
+    regressor = ARDRegression()
+    regressor.fit(X, y)
+
+    abs_coef_error = np.abs(1 - regressor.coef_[1])
+    # Expect an accuracy of better than 1E-4 in most cases -
+    # Failure-case produces 0.16!
+    assert abs_coef_error < 0.01

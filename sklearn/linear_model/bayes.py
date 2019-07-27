@@ -550,12 +550,15 @@ class ARDRegression(LinearModel, RegressorMixin):
         self.scores_ = list()
         coef_old_ = None
 
+        # calcuate condition for pinvh
+        pinvh_cond = 1E6 * np.finfo(X.dtype).eps
+
         # Compute sigma and mu (using Woodbury matrix identity)
         def update_sigma(X, alpha_, lambda_, keep_lambda, n_samples):
             sigma_ = pinvh(np.eye(n_samples) / alpha_ +
                            np.dot(X[:, keep_lambda] *
                            np.reshape(1. / lambda_[keep_lambda], [1, -1]),
-                           X[:, keep_lambda].T))
+                           X[:, keep_lambda].T), cond=pinvh_cond)
             sigma_ = np.dot(sigma_, X[:, keep_lambda] *
                             np.reshape(1. / lambda_[keep_lambda], [1, -1]))
             sigma_ = - np.dot(np.reshape(1. / lambda_[keep_lambda], [-1, 1]) *
