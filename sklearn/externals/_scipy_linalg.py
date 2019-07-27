@@ -1,3 +1,5 @@
+# This should remained pinned to version 1.2 and not updated like other
+# externals.
 """Copyright (c) 2001-2002 Enthought, Inc.  2003-2019, SciPy Developers.
 All rights reserved.
 
