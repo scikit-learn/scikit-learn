@@ -8,12 +8,12 @@ Various bayesian regression
 from math import log
 import numpy as np
 from scipy import linalg
-from scipy.linalg import pinvh
 
 from .base import LinearModel, _rescale_data
 from ..base import RegressorMixin
 from ..utils.extmath import fast_logdet
 from ..utils import check_X_y
+from ..utils.fixes import pinvh
 
 
 ###############################################################################
