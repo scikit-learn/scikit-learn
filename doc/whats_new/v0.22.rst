@@ -59,6 +59,10 @@ Changelog
 - |Feature| :func:`datasets.fetch_openml` now supports heterogeneous data using pandas 
   by setting `as_frame=True`. :pr:`13902` by `Thomas Fan`_.
 
+- |Enhancement| The parameter `return_X_y` was added to
+  :func:`datasets.fetch_20newsgroups` and :func:`datasets.fetch_olivetti_faces`
+  . :pr:`14259` by :user:`Sourav Singh <souravsingh>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
@@ -111,7 +115,7 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
-- |Enhancement| :class:`linearmodel.BayesianRidge` now accepts hyperparameters
+- |Enhancement| :class:`linear_model.BayesianRidge` now accepts hyperparameters
   ``alpha_init`` and ``lambda_init`` which can be used to set the initial value
   of the maximization procedure in :term:`fit`.
   :pr:`13618` by :user:`Yoshihiro Uchida <c56pony>`.
@@ -123,7 +127,11 @@ Changelog
 
 - |Efficiency| The 'liblinear' logistic regression solver is now faster and
   requires less memory.
-  :pr:`14108`, pr:`14170` by :user:`Alex Henrie <alexhenrie>`.
+  :pr:`14108`, :pr:`14170` by :user:`Alex Henrie <alexhenrie>`.
+
+- |Fix| :class:`linear_model.Ridge` with `solver='sag'` now accepts F-ordered
+  and non-contiguous arrays and makes a conversion instead of failing.
+  :pr:`14458` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.metrics`
 ......................

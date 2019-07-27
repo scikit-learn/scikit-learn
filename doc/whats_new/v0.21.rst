@@ -26,6 +26,12 @@ random sampling procedures.
 Changelog
 ---------
 
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| Fixed a bug in :class:`cluster.KMeans` where computation was single
+  threaded when `n_jobs > 1` or `n_jobs = -1`.
+  :issue:`12949` by :user:`Prabakaran Kumaresshan <nixphix>`.
 
 :mod:`sklearn.inspection`
 .....................
@@ -80,6 +86,15 @@ Changelog
 - |Fix| fixed a bug in :class:`cluster.OPTICS` where floating point arguments
   for ``min_samples`` and ``min_cluster_size`` were not converted to int.
   :pr:`14421` by :user:`Fabian Klopfer <someusername1>`
+
+:mod:`sklearn.compose`
+.....................
+
+- |Fix| Fixed an issue in :class:`compose.ColumnTransformer` where using
+  DataFrames whose column order differs between :func:``fit`` and
+  :func:``transform`` could lead to silently passing incorrect columns to the
+  ``remainder`` transformer.
+  :pr:`14237` by `Andreas Schuderer <schuderer>`.
 
 .. _changes_0_21_2:
 

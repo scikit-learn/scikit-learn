@@ -260,6 +260,11 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         .. versionadded:: 0.17
            *data_range_*
 
+    n_samples_seen_ : int
+        The number of samples processed by the estimator.
+        It will be reset on new calls to fit, but increments across
+        ``partial_fit`` calls.
+
     Examples
     --------
     >>> from sklearn.preprocessing import MinMaxScaler
@@ -1888,6 +1893,14 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
 
     Read more in the :ref:`User Guide <kernel_centering>`.
 
+    Attributes
+    ----------
+    K_fit_rows_ : array, shape (n_samples,)
+        Average of each column of kernel matrix
+
+    K_fit_all_ : float
+        Average of kernel matrix
+
     Examples
     --------
     >>> from sklearn.preprocessing import KernelCenterer
@@ -2738,20 +2751,20 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
 
         The inverse of the Box-Cox transformation is given by::
 
-            if lambda == 0:
+            if lambda_ == 0:
                 X = exp(X_trans)
             else:
-                X = (X_trans * lambda + 1) ** (1 / lambda)
+                X = (X_trans * lambda_ + 1) ** (1 / lambda_)
 
         The inverse of the Yeo-Johnson transformation is given by::
 
-            if X >= 0 and lambda == 0:
+            if X >= 0 and lambda_ == 0:
                 X = exp(X_trans) - 1
-            elif X >= 0 and lambda != 0:
-                X = (X_trans * lambda + 1) ** (1 / lambda) - 1
-            elif X < 0 and lambda != 2:
-                X = 1 - (-(2 - lambda) * X_trans + 1) ** (1 / (2 - lambda))
-            elif X < 0 and lambda == 2:
+            elif X >= 0 and lambda_ != 0:
+                X = (X_trans * lambda_ + 1) ** (1 / lambda_) - 1
+            elif X < 0 and lambda_ != 2:
+                X = 1 - (-(2 - lambda_) * X_trans + 1) ** (1 / (2 - lambda_))
+            elif X < 0 and lambda_ == 2:
                 X = 1 - exp(-X_trans)
 
         Parameters
