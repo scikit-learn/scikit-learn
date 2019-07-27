@@ -66,6 +66,10 @@ Changelog
   ``'penalty'`` parameters (regression introduced in 0.21). :pr:`14087` by
   `Nicolas Hug`_.
 
+- |Fix| Compatibility fix for :class:`ARDRegression` and Scipy>=1.3.0 by
+  setting cutoff threshold. :pr:`14067` by :user:`Tim Staley
+  <timstaley>` and :pr:`14489` `Thomas Fan`_.
+
 :mod:`sklearn.tree`
 ...................
 
