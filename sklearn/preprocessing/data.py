@@ -261,7 +261,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
            *data_range_*
 
     n_samples_seen_ : int
-        The number of samples processed by the estimator for each feature.
+        The number of samples processed by the estimator.
         It will be reset on new calls to fit, but increments across
         ``partial_fit`` calls.
 
@@ -1893,13 +1893,13 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
 
     Read more in the :ref:`User Guide <kernel_centering>`.
 
-    Parameters
+    Attributes
     ----------
-    K_fit_rows_ : numpy array of shape [1, n_samples]
-        Average of each column of Kernel matrix
+    K_fit_rows_ : array, shape (n_samples,)
+        Average of each column of kernel matrix
 
     K_fit_all_ : float
-        Average of Kernel matrix
+        Average of kernel matrix
 
     Examples
     --------
