@@ -1,8 +1,9 @@
 import warnings
 
+
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
-from ..utils.testing import assert_allclose_dense_sparse
+from ..utils.validation import _allclose_dense_sparse
 
 
 def _identity(X):
@@ -89,11 +90,8 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
     def _check_inverse_transform(self, X):
         """Check that func and inverse_func are the inverse."""
         idx_selected = slice(None, None, max(1, X.shape[0] // 100))
-        try:
-            assert_allclose_dense_sparse(
-                X[idx_selected],
-                self.inverse_transform(self.transform(X[idx_selected])))
-        except AssertionError:
+        X_round_trip = self.inverse_transform(self.transform(X[idx_selected]))
+        if not _allclose_dense_sparse(X[idx_selected], X_round_trip):
             warnings.warn("The provided functions are not strictly"
                           " inverse of each other. If you are sure you"
                           " want to proceed regardless, set"
