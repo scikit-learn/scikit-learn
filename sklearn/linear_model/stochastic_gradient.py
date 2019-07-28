@@ -780,10 +780,10 @@ class SGDClassifier(BaseSGDClassifier):
         Whether or not the training data should be shuffled after each epoch.
         Defaults to True.
 
-    verbose : integer, optional
+    verbose : integer, default=0
         The verbosity level
 
-    epsilon : float
+    epsilon : float, default=0.1
         Epsilon in the epsilon-insensitive loss functions; only if `loss` is
         'huber', 'epsilon_insensitive', or 'squared_epsilon_insensitive'.
         For 'huber', determines the threshold at which it becomes less
@@ -860,7 +860,7 @@ class SGDClassifier(BaseSGDClassifier):
         weights inversely proportional to class frequencies in the input data
         as `n_samples / (n_classes * np.bincount(y))`
 
-    warm_start : bool, optional
+    warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
         See :term:`the Glossary <warm_start>`.
@@ -873,7 +873,7 @@ class SGDClassifier(BaseSGDClassifier):
         this counter, while `partial_fit` will result in increasing the
         existing counter.
 
-    average : bool or int, optional
+    average : bool or int, default=False
         When set to True, computes the averaged SGD weights and stores the
         result in the `coef_` attribute. If set to an int greater than 1,
         averaging will begin once the total number of samples seen reaches
@@ -894,6 +894,12 @@ class SGDClassifier(BaseSGDClassifier):
         For multiclass fits, it is the maximum over every binary fit.
 
     loss_function_ : concrete `LossFunction`
+
+    classes_ : array of shape = [n_classes]
+
+    t_ : int
+        Number of weight updates performed during training.
+        Same as ``(n_iter_ * n_samples)``.
 
     Examples
     --------
@@ -1386,10 +1392,10 @@ class SGDRegressor(BaseSGDRegressor):
         Whether or not the training data should be shuffled after each epoch.
         Defaults to True.
 
-    verbose : integer, optional
+    verbose : integer, default=0
         The verbosity level.
 
-    epsilon : float
+    epsilon : float, default=0.1
         Epsilon in the epsilon-insensitive loss functions; only if `loss` is
         'huber', 'epsilon_insensitive', or 'squared_epsilon_insensitive'.
         For 'huber', determines the threshold at which it becomes less
@@ -1448,7 +1454,7 @@ class SGDRegressor(BaseSGDRegressor):
 
         .. versionadded:: 0.20
 
-    warm_start : bool, optional
+    warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
         See :term:`the Glossary <warm_start>`.
@@ -1461,7 +1467,7 @@ class SGDRegressor(BaseSGDRegressor):
         this counter, while `partial_fit`  will result in increasing the
         existing counter.
 
-    average : bool or int, optional
+    average : bool or int, default=False
         When set to True, computes the averaged SGD weights and stores the
         result in the `coef_` attribute. If set to an int greater than 1,
         averaging will begin once the total number of samples seen reaches
@@ -1484,6 +1490,10 @@ class SGDRegressor(BaseSGDRegressor):
 
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
+
+    t_ : int
+        Number of weight updates performed during training.
+        Same as ``(n_iter_ * n_samples)``.
 
     Examples
     --------

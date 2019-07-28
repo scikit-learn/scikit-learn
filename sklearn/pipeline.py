@@ -127,9 +127,9 @@ class Pipeline(_BaseComposition):
 
     def __init__(self, steps, memory=None, verbose=False):
         self.steps = steps
-        self._validate_steps()
         self.memory = memory
         self.verbose = verbose
+        self._validate_steps()
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.

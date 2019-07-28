@@ -260,6 +260,11 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         .. versionadded:: 0.17
            *data_range_*
 
+    n_samples_seen_ : int
+        The number of samples processed by the estimator.
+        It will be reset on new calls to fit, but increments across
+        ``partial_fit`` calls.
+
     Examples
     --------
     >>> from sklearn.preprocessing import MinMaxScaler
@@ -1887,6 +1892,14 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
     sklearn.preprocessing.StandardScaler(with_std=False).
 
     Read more in the :ref:`User Guide <kernel_centering>`.
+
+    Attributes
+    ----------
+    K_fit_rows_ : array, shape (n_samples,)
+        Average of each column of kernel matrix
+
+    K_fit_all_ : float
+        Average of kernel matrix
 
     Examples
     --------

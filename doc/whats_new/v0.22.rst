@@ -45,6 +45,14 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.base`
+...................
+
+- |API| From version 0.24 :meth:`BaseEstimator.get_params` will raise an
+  AttributeError rather than return None for parameters that are in the
+  estimator's constructor but not stored as attributes on the instance.
+  :pr:`14464` by `Joel Nothman`_.
+
 :mod:`sklearn.calibration`
 ..........................
 
@@ -56,7 +64,7 @@ Changelog
 :mod:`sklearn.datasets`
 .......................
 
-- |Feature| :func:`datasets.fetch_openml` now supports heterogeneous data using pandas 
+- |Feature| :func:`datasets.fetch_openml` now supports heterogeneous data using pandas
   by setting `as_frame=True`. :pr:`13902` by `Thomas Fan`_.
 
 - |Enhancement| The parameter `return_X_y` was added to
@@ -107,15 +115,28 @@ Changelog
   preserve the class balance of the original training set. :pr:`14194`
   by :user:`Johann Faouzi <johannfaouzi>`.
 
+- |Efficiency| :func:`ensemble.MissingIndicator.fit_transform` the
+  _get_missing_features_info function is now called once when calling
+  fit_transform for MissingIndicator class. :pr:`14356` by :user:
+  `Harsh Soni <harsh020>`.
+
 - |Fix| :class:`ensemble.AdaBoostClassifier` computes probabilities based on
   the decision function as in the literature. Thus, `predict` and
   `predict_proba` give consistent results.
   :pr:`14114` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.gaussian_process`
+...............................
+
+- |API| From version 0.24 :meth:`Kernel.get_params` will raise an
+  AttributeError rather than return None for parameters that are in the
+  estimator's constructor but not stored as attributes on the instance.
+  :pr:`14464` by `Joel Nothman`_.
+
 :mod:`sklearn.linear_model`
 ...........................
 
-- |Enhancement| :class:`linearmodel.BayesianRidge` now accepts hyperparameters
+- |Enhancement| :class:`linear_model.BayesianRidge` now accepts hyperparameters
   `alpha_init` and `lambda_init` which can be used to set the initial value
   of the maximization procedure in :term:`fit`.
   :pr:`13618` by :user:`Yoshihiro Uchida <c56pony>`.
@@ -127,7 +148,11 @@ Changelog
 
 - |Efficiency| The 'liblinear' logistic regression solver is now faster and
   requires less memory.
-  :pr:`14108`, pr:`14170` by :user:`Alex Henrie <alexhenrie>`.
+  :pr:`14108`, :pr:`14170` by :user:`Alex Henrie <alexhenrie>`.
+
+- |Fix| :class:`linear_model.Ridge` with `solver='sag'` now accepts F-ordered
+  and non-contiguous arrays and makes a conversion instead of failing.
+  :pr:`14458` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.metrics`
 ......................
@@ -135,7 +160,7 @@ Changelog
 - |Feature| Added multiclass support to :func:`metrics.roc_auc_score`.
   :issue:`12789` by :user:`Kathy Chen <kathyxchen>`,
   :user:`Mohamed Maskani <maskani-moh>`, and :user:`Thomas Fan <thomasjpfan>`.
-  
+
 - |Feature| Add :class:`metrics.mean_tweedie_deviance` measuring the
   Tweedie deviance for a power parameter ``p``. Also add mean Poisson deviance
   :class:`metrics.mean_poisson_deviance` and mean Gamma deviance
@@ -186,7 +211,7 @@ Changelog
 :mod:`sklearn.cluster`
 ......................
 
-- |Enhancement| :class:`cluster.SpectralClustering` now accepts a `n_components` 
+- |Enhancement| :class:`cluster.SpectralClustering` now accepts a `n_components`
   parameter. This parameter extends `SpectralClustering` class functionality to
   match `spectral_clustering`.
   :pr:`13726` by :user:`Shuzhe Xiao <fdas3213>`.

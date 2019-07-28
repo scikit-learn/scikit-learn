@@ -409,7 +409,7 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), solver)
         X = check_array(X, accept_sparse=_accept_sparse, dtype=_dtype,
                         order="C")
-        y = check_array(y, dtype=X.dtype, ensure_2d=False, order="C")
+        y = check_array(y, dtype=X.dtype, ensure_2d=False, order=None)
     check_consistent_length(X, y)
 
     n_samples, n_features = X.shape
@@ -864,6 +864,9 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     n_iter_ : array or None, shape (n_targets,)
         Actual number of iterations for each target. Available only for
         sag and lsqr solvers. Other solvers will return None.
+
+    classes_ : array of shape = [n_classes]
+        The classes labels.
 
     Examples
     --------
@@ -1771,6 +1774,9 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     alpha_ : float
         Estimated regularization parameter
+
+    classes_ : array of shape = [n_classes]
+        The classes labels.
 
     Examples
     --------

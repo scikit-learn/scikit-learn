@@ -1272,6 +1272,8 @@ Methods
         To clear the model, a new estimator should be constructed, for instance
         with :func:`base.clone`.
 
+        NOTE: Using `partial_fit` after `fit` results in undefined behavior.
+
     `predict`
         Makes a prediction for each sample, usually only taking :term:`X` as
         input (but see under regressor output conventions below). In a

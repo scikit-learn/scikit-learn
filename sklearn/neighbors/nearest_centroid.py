@@ -19,6 +19,7 @@ from ..utils.validation import check_array, check_X_y, check_is_fitted
 from ..utils.sparsefuncs import csc_median_axis_0
 from ..utils.multiclass import check_classification_targets
 
+
 class NearestCentroid(BaseEstimator, ClassifierMixin):
     """Nearest centroid classifier.
 
@@ -46,7 +47,10 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
     Attributes
     ----------
     centroids_ : array-like, shape = [n_classes, n_features]
-        Centroid of each class
+        Centroid of each class.
+
+    classes_ : array of shape = (n_classes,)
+        The unique classes labels.
 
     Examples
     --------
