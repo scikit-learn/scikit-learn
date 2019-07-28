@@ -530,7 +530,7 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None):
         ``y1`` or ``y2`` are used.
 
     weights : str, optional
-        List of weighting type to calculate the score. None means no weighted;
+        Weighting type to calculate the score. None means no weighted;
         "linear" means linear weighted; "quadratic" means quadratic weighted.
 
     sample_weight : array-like of shape = [n_samples], optional
@@ -741,7 +741,7 @@ def jaccard_score(y_true, y_pred, labels=None, pos_label=1,
 
     In the binary case:
 
-    >>> jaccard_score(y_true[0], y_pred[0])  # doctest: +ELLIPSIS
+    >>> jaccard_score(y_true[0], y_pred[0])
     0.6666...
 
     In the multilabel case:
@@ -758,7 +758,6 @@ def jaccard_score(y_true, y_pred, labels=None, pos_label=1,
     >>> y_pred = [0, 2, 1, 2]
     >>> y_true = [0, 1, 2, 2]
     >>> jaccard_score(y_true, y_pred, average=None)
-    ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     array([1. , 0. , 0.33...])
     """
     labels = _check_set_wise_labels(y_true, y_pred, average, labels,
@@ -848,7 +847,7 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
     >>> from sklearn.metrics import matthews_corrcoef
     >>> y_true = [+1, +1, +1, -1]
     >>> y_pred = [+1, -1, +1, +1]
-    >>> matthews_corrcoef(y_true, y_pred)  # doctest: +ELLIPSIS
+    >>> matthews_corrcoef(y_true, y_pred)
     -0.33...
     """
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
@@ -1039,11 +1038,11 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     >>> from sklearn.metrics import f1_score
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
-    >>> f1_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
+    >>> f1_score(y_true, y_pred, average='macro')
     0.26...
-    >>> f1_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
+    >>> f1_score(y_true, y_pred, average='micro')
     0.33...
-    >>> f1_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
+    >>> f1_score(y_true, y_pred, average='weighted')
     0.26...
     >>> f1_score(y_true, y_pred, average=None)
     array([0.8, 0. , 0. ])
@@ -1068,7 +1067,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
 
     The `beta` parameter determines the weight of recall in the combined
     score. ``beta < 1`` lends more weight to precision, while ``beta > 1``
-    favors recall (``beta -> 0`` considers only precision, ``beta -> inf``
+    favors recall (``beta -> 0`` considers only precision, ``beta -> +inf``
     only recall).
 
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
@@ -1155,16 +1154,12 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
     >>> fbeta_score(y_true, y_pred, average='macro', beta=0.5)
-    ... # doctest: +ELLIPSIS
     0.23...
     >>> fbeta_score(y_true, y_pred, average='micro', beta=0.5)
-    ... # doctest: +ELLIPSIS
     0.33...
     >>> fbeta_score(y_true, y_pred, average='weighted', beta=0.5)
-    ... # doctest: +ELLIPSIS
     0.23...
     >>> fbeta_score(y_true, y_pred, average=None, beta=0.5)
-    ... # doctest: +ELLIPSIS
     array([0.71..., 0.        , 0.        ])
 
     Notes
@@ -1383,13 +1378,10 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     >>> y_true = np.array(['cat', 'dog', 'pig', 'cat', 'dog', 'pig'])
     >>> y_pred = np.array(['cat', 'pig', 'dog', 'cat', 'cat', 'dog'])
     >>> precision_recall_fscore_support(y_true, y_pred, average='macro')
-    ... # doctest: +ELLIPSIS
     (0.22..., 0.33..., 0.26..., None)
     >>> precision_recall_fscore_support(y_true, y_pred, average='micro')
-    ... # doctest: +ELLIPSIS
     (0.33..., 0.33..., 0.33..., None)
     >>> precision_recall_fscore_support(y_true, y_pred, average='weighted')
-    ... # doctest: +ELLIPSIS
     (0.22..., 0.33..., 0.26..., None)
 
     It is possible to compute per-label precisions, recalls, F1-scores and
@@ -1397,7 +1389,6 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     >>> precision_recall_fscore_support(y_true, y_pred, average=None,
     ... labels=['pig', 'dog', 'cat'])
-    ... # doctest: +ELLIPSIS,+NORMALIZE_WHITESPACE
     (array([0.        , 0.        , 0.66...]),
      array([0., 0., 1.]), array([0. , 0. , 0.8]),
      array([2, 2, 2]))
@@ -1409,8 +1400,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     In such cases, the metric will be set to 0, as will f-score, and
     ``UndefinedMetricWarning`` will be raised.
     """
-    if beta <= 0:
-        raise ValueError("beta should be >0 in the F-beta score")
+    if beta < 0:
+        raise ValueError("beta should be >=0 in the F-beta score")
     labels = _check_set_wise_labels(y_true, y_pred, average, labels,
                                     pos_label)
 
@@ -1437,11 +1428,14 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                             'precision', 'predicted', average, warn_for)
     recall = _prf_divide(tp_sum, true_sum,
                          'recall', 'true', average, warn_for)
-    # Don't need to warn for F: either P or R warned, or tp == 0 where pos
-    # and true are nonzero, in which case, F is well-defined and zero
-    denom = beta2 * precision + recall
-    denom[denom == 0.] = 1  # avoid division by 0
-    f_score = (1 + beta2) * precision * recall / denom
+    if np.isposinf(beta):
+        f_score = recall
+    else:
+        # Don't need to warn for F: either P or R warned, or tp == 0 where pos
+        # and true are nonzero, in which case, F is well-defined and zero
+        denom = beta2 * precision + recall
+        denom[denom == 0.] = 1  # avoid division by 0
+        f_score = (1 + beta2) * precision * recall / denom
 
     # Average the results
     if average == 'weighted':
@@ -1546,14 +1540,13 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     >>> from sklearn.metrics import precision_score
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
-    >>> precision_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
+    >>> precision_score(y_true, y_pred, average='macro')
     0.22...
-    >>> precision_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
+    >>> precision_score(y_true, y_pred, average='micro')
     0.33...
     >>> precision_score(y_true, y_pred, average='weighted')
-    ... # doctest: +ELLIPSIS
     0.22...
-    >>> precision_score(y_true, y_pred, average=None)  # doctest: +ELLIPSIS
+    >>> precision_score(y_true, y_pred, average=None)
     array([0.66..., 0.        , 0.        ])
 
     Notes
@@ -1653,11 +1646,11 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     >>> from sklearn.metrics import recall_score
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
-    >>> recall_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
+    >>> recall_score(y_true, y_pred, average='macro')
     0.33...
-    >>> recall_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
+    >>> recall_score(y_true, y_pred, average='micro')
     0.33...
-    >>> recall_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
+    >>> recall_score(y_true, y_pred, average='weighted')
     0.33...
     >>> recall_score(y_true, y_pred, average=None)
     array([1., 0., 0.])
@@ -2104,7 +2097,7 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
     Examples
     --------
     >>> from sklearn.metrics import log_loss
-    >>> log_loss(["spam", "ham", "ham", "spam"],  # doctest: +ELLIPSIS
+    >>> log_loss(["spam", "ham", "ham", "spam"],
     ...          [[.1, .9], [.9, .1], [.8, .2], [.35, .65]])
     0.21616...
 
@@ -2234,15 +2227,12 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
     >>> X = [[0], [1]]
     >>> y = [-1, 1]
     >>> est = svm.LinearSVC(random_state=0)
-    >>> est.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-    LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
-         intercept_scaling=1, loss='squared_hinge', max_iter=1000,
-         multi_class='ovr', penalty='l2', random_state=0, tol=0.0001,
-         verbose=0)
+    >>> est.fit(X, y)
+    LinearSVC(random_state=0)
     >>> pred_decision = est.decision_function([[-2], [3], [0.5]])
-    >>> pred_decision  # doctest: +ELLIPSIS
+    >>> pred_decision
     array([-2.18...,  2.36...,  0.09...])
-    >>> hinge_loss([-1, 1, 1], pred_decision)  # doctest: +ELLIPSIS
+    >>> hinge_loss([-1, 1, 1], pred_decision)
     0.30...
 
     In the multiclass case:
@@ -2252,14 +2242,11 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
     >>> Y = np.array([0, 1, 2, 3])
     >>> labels = np.array([0, 1, 2, 3])
     >>> est = svm.LinearSVC()
-    >>> est.fit(X, Y)  # doctest: +NORMALIZE_WHITESPACE
-    LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
-         intercept_scaling=1, loss='squared_hinge', max_iter=1000,
-         multi_class='ovr', penalty='l2', random_state=None, tol=0.0001,
-         verbose=0)
+    >>> est.fit(X, Y)
+    LinearSVC()
     >>> pred_decision = est.decision_function([[-1], [2], [3]])
     >>> y_true = [0, 2, 3]
-    >>> hinge_loss(y_true, pred_decision, labels)  #doctest: +ELLIPSIS
+    >>> hinge_loss(y_true, pred_decision, labels)
     0.56...
     """
     check_consistent_length(y_true, pred_decision, sample_weight)
@@ -2352,12 +2339,11 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     >>> y_true = np.array([0, 1, 1, 0])
     >>> y_true_categorical = np.array(["spam", "ham", "ham", "spam"])
     >>> y_prob = np.array([0.1, 0.9, 0.8, 0.3])
-    >>> brier_score_loss(y_true, y_prob)  # doctest: +ELLIPSIS
+    >>> brier_score_loss(y_true, y_prob)
     0.037...
-    >>> brier_score_loss(y_true, 1-y_prob, pos_label=0)  # doctest: +ELLIPSIS
+    >>> brier_score_loss(y_true, 1-y_prob, pos_label=0)
     0.037...
-    >>> brier_score_loss(y_true_categorical, y_prob, \
-                         pos_label="ham")  # doctest: +ELLIPSIS
+    >>> brier_score_loss(y_true_categorical, y_prob, pos_label="ham")
     0.037...
     >>> brier_score_loss(y_true, np.array(y_prob) > 0.5)
     0.0

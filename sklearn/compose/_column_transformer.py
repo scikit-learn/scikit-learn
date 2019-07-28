@@ -11,12 +11,15 @@ from itertools import chain
 
 import numpy as np
 from scipy import sparse
+from joblib import Parallel, delayed
 
 from ..base import clone, TransformerMixin
-from ..utils._joblib import Parallel, delayed
 from ..pipeline import _fit_transform_one, _transform_one, _name_estimators
 from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
+from ..utils import safe_indexing
+from ..utils import _get_column_indices
+from ..utils import _check_key_type
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted
 
@@ -78,6 +81,8 @@ boolean mask array or callable
         By setting ``remainder`` to be an estimator, the remaining
         non-specified columns will use the ``remainder`` estimator. The
         estimator must support :term:`fit` and :term:`transform`.
+        Note that using this feature requires that the DataFrame columns
+        input at :term:`fit` and :term:`transform` have identical order.
 
     sparse_threshold : float, default = 0.3
         If the output of the different transformers contains sparse matrices,
@@ -153,7 +158,7 @@ boolean mask array or callable
     >>> # Normalizer scales each row of X to unit norm. A separate scaling
     >>> # is applied for the two first and two last elements of each
     >>> # row independently.
-    >>> ct.fit_transform(X)    # doctest: +NORMALIZE_WHITESPACE
+    >>> ct.fit_transform(X)
     array([[0. , 1. , 0.5, 0.5],
            [0.5, 0.5, 0. , 1. ]])
 
@@ -246,8 +251,7 @@ boolean mask array or callable
                 # skip in case of 'drop'
                 if trans == 'passthrough':
                     trans = FunctionTransformer(func=_passthrough_func,
-                        validate=False, accept_sparse=True,
-                        check_inverse=False)
+                        accept_sparse=True, check_inverse=False)
                 elif trans == 'drop':
                     continue
                 elif _is_empty_column_selection(column):
@@ -301,11 +305,17 @@ boolean mask array or callable
                 "'passthrough', or estimator. '%s' was passed instead" %
                 self.remainder)
 
-        n_columns = X.shape[1]
+        # Make it possible to check for reordered named columns on transform
+        if (hasattr(X, 'columns') and
+                any(_check_key_type(cols, str) for cols in self._columns)):
+            self._df_columns = X.columns
+
+        self._n_features = X.shape[1]
         cols = []
         for columns in self._columns:
             cols.extend(_get_column_indices(X, columns))
-        remaining_idx = sorted(list(set(range(n_columns)) - set(cols))) or None
+        remaining_idx = list(set(range(self._n_features)) - set(cols))
+        remaining_idx = sorted(remaining_idx) or None
 
         self._remainder = ('remainder', self.remainder, remaining_idx)
 
@@ -402,7 +412,7 @@ boolean mask array or callable
             return Parallel(n_jobs=self.n_jobs)(
                 delayed(func)(
                     transformer=clone(trans) if not fitted else trans,
-                    X=_get_column(X, column),
+                    X=safe_indexing(X, column, axis=1),
                     y=y,
                     weight=weight,
                     message_clsname='ColumnTransformer',
@@ -506,8 +516,27 @@ boolean mask array or callable
 
         """
         check_is_fitted(self, 'transformers_')
-
         X = _check_X(X)
+
+        if self._n_features > X.shape[1]:
+            raise ValueError('Number of features of the input must be equal '
+                             'to or greater than that of the fitted '
+                             'transformer. Transformer n_features is {0} '
+                             'and input n_features is {1}.'
+                             .format(self._n_features, X.shape[1]))
+
+        # No column reordering allowed for named cols combined with remainder
+        if (self._remainder[2] is not None and
+                hasattr(self, '_df_columns') and
+                hasattr(X, 'columns')):
+            n_cols_fit = len(self._df_columns)
+            n_cols_transform = len(X.columns)
+            if (n_cols_transform >= n_cols_fit and
+                    any(X.columns[:n_cols_fit] != self._df_columns)):
+                raise ValueError('Column ordering must be equal for fit '
+                                 'and for transform when using the '
+                                 'remainder keyword')
+
         Xs = self._fit_transform(X, None, _transform_one, fitted=True)
         self._validate_output(Xs)
 
@@ -553,132 +582,6 @@ def _check_X(X):
     return check_array(X, force_all_finite='allow-nan', dtype=np.object)
 
 
-def _check_key_type(key, superclass):
-    """
-    Check that scalar, list or slice is of a certain type.
-
-    This is only used in _get_column and _get_column_indices to check
-    if the `key` (column specification) is fully integer or fully string-like.
-
-    Parameters
-    ----------
-    key : scalar, list, slice, array-like
-        The column specification to check
-    superclass : int or str
-        The type for which to check the `key`
-
-    """
-    if isinstance(key, superclass):
-        return True
-    if isinstance(key, slice):
-        return (isinstance(key.start, (superclass, type(None))) and
-                isinstance(key.stop, (superclass, type(None))))
-    if isinstance(key, list):
-        return all(isinstance(x, superclass) for x in key)
-    if hasattr(key, 'dtype'):
-        if superclass is int:
-            return key.dtype.kind == 'i'
-        else:
-            # superclass = str
-            return key.dtype.kind in ('O', 'U', 'S')
-    return False
-
-
-def _get_column(X, key):
-    """
-    Get feature column(s) from input data X.
-
-    Supported input types (X): numpy arrays, sparse arrays and DataFrames
-
-    Supported key types (key):
-    - scalar: output is 1D
-    - lists, slices, boolean masks: output is 2D
-    - callable that returns any of the above
-
-    Supported key data types:
-
-    - integer or boolean mask (positional):
-        - supported for arrays, sparse matrices and dataframes
-    - string (key-based):
-        - only supported for dataframes
-        - So no keys other than strings are allowed (while in principle you
-          can use any hashable object as key).
-
-    """
-    # check whether we have string column names or integers
-    if _check_key_type(key, int):
-        column_names = False
-    elif _check_key_type(key, str):
-        column_names = True
-    elif hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_):
-        # boolean mask
-        column_names = False
-        if hasattr(X, 'loc'):
-            # pandas boolean masks don't work with iloc, so take loc path
-            column_names = True
-    else:
-        raise ValueError("No valid specification of the columns. Only a "
-                         "scalar, list or slice of all integers or all "
-                         "strings, or boolean mask is allowed")
-
-    if column_names:
-        if hasattr(X, 'loc'):
-            # pandas dataframes
-            return X.loc[:, key]
-        else:
-            raise ValueError("Specifying the columns using strings is only "
-                             "supported for pandas DataFrames")
-    else:
-        if hasattr(X, 'iloc'):
-            # pandas dataframes
-            return X.iloc[:, key]
-        else:
-            # numpy arrays, sparse arrays
-            return X[:, key]
-
-
-def _get_column_indices(X, key):
-    """
-    Get feature column indices for input data X and key.
-
-    For accepted values of `key`, see the docstring of _get_column
-
-    """
-    n_columns = X.shape[1]
-
-    if (_check_key_type(key, int)
-            or hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_)):
-        # Convert key into positive indexes
-        idx = np.arange(n_columns)[key]
-        return np.atleast_1d(idx).tolist()
-    elif _check_key_type(key, str):
-        try:
-            all_columns = list(X.columns)
-        except AttributeError:
-            raise ValueError("Specifying the columns using strings is only "
-                             "supported for pandas DataFrames")
-        if isinstance(key, str):
-            columns = [key]
-        elif isinstance(key, slice):
-            start, stop = key.start, key.stop
-            if start is not None:
-                start = all_columns.index(start)
-            if stop is not None:
-                # pandas indexing with strings is endpoint included
-                stop = all_columns.index(stop) + 1
-            else:
-                stop = n_columns + 1
-            return list(range(n_columns)[slice(start, stop)])
-        else:
-            columns = list(key)
-
-        return [all_columns.index(col) for col in columns]
-    else:
-        raise ValueError("No valid specification of the columns. Only a "
-                         "scalar, list or slice of all integers or all "
-                         "strings, or boolean mask is allowed")
-
-
 def _is_empty_column_selection(column):
     """
     Return True if the column selection is empty (empty list or all-False
@@ -713,9 +616,28 @@ def make_column_transformer(*transformers, **kwargs):
     be given names automatically based on their types. It also does not allow
     weighting with ``transformer_weights``.
 
+    Read more in the :ref:`User Guide <make_column_transformer>`.
+
     Parameters
     ----------
-    *transformers : tuples of transformers and column selections
+    *transformers : tuples
+        Tuples of the form (transformer, column(s)) specifying the
+        transformer objects to be applied to subsets of the data.
+
+        transformer : estimator or {'passthrough', 'drop'}
+            Estimator must support `fit` and `transform`. Special-cased
+            strings 'drop' and 'passthrough' are accepted as well, to
+            indicate to drop the columns or to pass them through untransformed,
+            respectively.
+        column(s) : string or int, array-like of string or int, slice, \
+boolean mask array or callable
+            Indexes the data on its second axis. Integers are interpreted as
+            positional columns, while strings can reference DataFrame columns
+            by name. A scalar string or int should be used where
+            ``transformer`` expects X to be a 1d array-like (vector),
+            otherwise a 2d array will be passed to the transformer.
+            A callable is passed the input data `X` and can return any of the
+            above.
 
     remainder : {'drop', 'passthrough'} or estimator, default 'drop'
         By default, only the specified columns in `transformers` are
@@ -764,15 +686,10 @@ def make_column_transformer(*transformers, **kwargs):
     >>> make_column_transformer(
     ...     (StandardScaler(), ['numerical_column']),
     ...     (OneHotEncoder(), ['categorical_column']))
-    ...     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    ColumnTransformer(n_jobs=None, remainder='drop', sparse_threshold=0.3,
-             transformer_weights=None,
-             transformers=[('standardscaler',
-                            StandardScaler(...),
-                            ['numerical_column']),
-                           ('onehotencoder',
-                            OneHotEncoder(...),
-                            ['categorical_column'])], verbose=False)
+    ColumnTransformer(transformers=[('standardscaler', StandardScaler(...),
+                                     ['numerical_column']),
+                                    ('onehotencoder', OneHotEncoder(...),
+                                     ['categorical_column'])])
 
     """
     # transformer_weights keyword is not passed through because the user

@@ -47,9 +47,9 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 from scipy.sparse import issparse
 from scipy.sparse import hstack as sparse_hstack
+from joblib import Parallel, delayed
 
 from ..base import ClassifierMixin, RegressorMixin, MultiOutputMixin
-from ..utils._joblib import Parallel, delayed
 from ..metrics import r2_score
 from ..preprocessing import OneHotEncoder
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
@@ -915,6 +915,10 @@ class RandomForestClassifier(ForestClassifier):
 
     Attributes
     ----------
+    base_estimator_ : DecisionTreeClassifier
+        The child estimator template used to create the collection of fitted
+        sub-estimators.
+
     estimators_ : list of DecisionTreeClassifier
         The collection of fitted sub-estimators.
 
@@ -953,13 +957,8 @@ class RandomForestClassifier(ForestClassifier):
     ...                            n_informative=2, n_redundant=0,
     ...                            random_state=0, shuffle=False)
     >>> clf = RandomForestClassifier(max_depth=2, random_state=0)
-    >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-    RandomForestClassifier(bootstrap=True, class_weight=None, criterion='gini',
-                max_depth=2, max_features='auto', max_leaf_nodes=None,
-                min_impurity_decrease=0.0, min_impurity_split=None,
-                min_samples_leaf=1, min_samples_split=2,
-                min_weight_fraction_leaf=0.0, n_estimators=100, n_jobs=None,
-                oob_score=False, random_state=0, verbose=0, warm_start=False)
+    >>> clf.fit(X, y)
+    RandomForestClassifier(max_depth=2, random_state=0)
     >>> print(clf.feature_importances_)
     [0.14205973 0.76664038 0.0282433  0.06305659]
     >>> print(clf.predict([[0, 0, 0, 0]]))
@@ -1179,6 +1178,10 @@ class RandomForestRegressor(ForestRegressor):
 
     Attributes
     ----------
+    base_estimator_ : DecisionTreeRegressor
+        The child estimator template used to create the collection of fitted
+        sub-estimators.
+
     estimators_ : list of DecisionTreeRegressor
         The collection of fitted sub-estimators.
 
@@ -1205,13 +1208,8 @@ class RandomForestRegressor(ForestRegressor):
     >>> X, y = make_regression(n_features=4, n_informative=2,
     ...                        random_state=0, shuffle=False)
     >>> regr = RandomForestRegressor(max_depth=2, random_state=0)
-    >>> regr.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-    RandomForestRegressor(bootstrap=True, criterion='mse', max_depth=2,
-               max_features='auto', max_leaf_nodes=None,
-               min_impurity_decrease=0.0, min_impurity_split=None,
-               min_samples_leaf=1, min_samples_split=2,
-               min_weight_fraction_leaf=0.0, n_estimators=100, n_jobs=None,
-               oob_score=False, random_state=0, verbose=0, warm_start=False)
+    >>> regr.fit(X, y)
+    RandomForestRegressor(max_depth=2, random_state=0)
     >>> print(regr.feature_importances_)
     [0.18146984 0.81473937 0.00145312 0.00233767]
     >>> print(regr.predict([[0, 0, 0, 0]]))
@@ -1454,6 +1452,10 @@ class ExtraTreesClassifier(ForestClassifier):
 
     Attributes
     ----------
+    base_estimator_ : ExtraTreeClassifier
+        The child estimator template used to create the collection of fitted
+        sub-estimators.
+
     estimators_ : list of DecisionTreeClassifier
         The collection of fitted sub-estimators.
 
@@ -1690,6 +1692,10 @@ class ExtraTreesRegressor(ForestRegressor):
 
     Attributes
     ----------
+    base_estimator_ : ExtraTreeRegressor
+        The child estimator template used to create the collection of fitted
+        sub-estimators.
+
     estimators_ : list of DecisionTreeRegressor
         The collection of fitted sub-estimators.
 
@@ -2002,8 +2008,7 @@ class RandomTreesEmbedding(BaseForest):
         y = rnd.uniform(size=X.shape[0])
         super().fit(X, y, sample_weight=sample_weight)
 
-        self.one_hot_encoder_ = OneHotEncoder(sparse=self.sparse_output,
-                                              categories='auto')
+        self.one_hot_encoder_ = OneHotEncoder(sparse=self.sparse_output)
         return self.one_hot_encoder_.fit_transform(self.apply(X))
 
     def transform(self, X):

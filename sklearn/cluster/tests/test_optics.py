@@ -13,7 +13,6 @@ from sklearn.metrics.cluster import contingency_matrix
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.cluster.dbscan_ import DBSCAN
 from sklearn.utils import shuffle
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_allclose
@@ -109,7 +108,7 @@ def test_extract_xi():
 
     clust = OPTICS(min_samples=3, min_cluster_size=3,
                    max_eps=20, cluster_method='xi',
-                   xi=0.1).fit(X)
+                   xi=0.3).fit(X)
     # this may fail if the predecessor correction is not at work!
     assert_array_equal(clust.labels_, expected_labels)
 
@@ -151,7 +150,7 @@ def test_correct_number_of_clusters():
     clust.fit(X)
     # number of clusters, ignoring noise if present
     n_clusters_1 = len(set(clust.labels_)) - int(-1 in clust.labels_)
-    assert_equal(n_clusters_1, n_clusters)
+    assert n_clusters_1 == n_clusters
 
     # check attribute types and sizes
     assert clust.labels_.shape == (len(X),)
@@ -216,7 +215,7 @@ def test_close_extract():
     clust = OPTICS(max_eps=1.0, cluster_method='dbscan',
                    eps=0.3, min_samples=10).fit(X)
     # Cluster ordering starts at 0; max cluster label = 2 is 3 clusters
-    assert_equal(max(clust.labels_), 2)
+    assert max(clust.labels_) == 2
 
 
 @pytest.mark.parametrize('eps', [0.1, .3, .5])
