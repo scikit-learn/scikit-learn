@@ -45,6 +45,14 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.base`
+...................
+
+- |API| From version 0.24 :meth:`BaseEstimator.get_params` will raise an
+  AttributeError rather than return None for parameters that are in the
+  estimator's constructor but not stored as attributes on the instance.
+  :pr:`14464` by `Joel Nothman`_.
+
 :mod:`sklearn.calibration`
 ..........................
 
@@ -116,6 +124,14 @@ Changelog
   the decision function as in the literature. Thus, `predict` and
   `predict_proba` give consistent results.
   :pr:`14114` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.gaussian_process`
+...............................
+
+- |API| From version 0.24 :meth:`Kernel.get_params` will raise an
+  AttributeError rather than return None for parameters that are in the
+  estimator's constructor but not stored as attributes on the instance.
+  :pr:`14464` by `Joel Nothman`_.
 
 :mod:`sklearn.linear_model`
 ...........................
