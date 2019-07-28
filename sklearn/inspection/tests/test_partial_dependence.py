@@ -28,6 +28,7 @@ from sklearn.dummy import DummyClassifier
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import ignore_warnings
 
 
 # toy sample
@@ -262,7 +263,8 @@ def test_multiclass_multioutput(Estimator):
     y = np.array([y, y]).T
 
     est = Estimator()
-    est.fit(X, y)
+    with ignore_warnings(DeprecationWarning):
+        est.fit(X, y)
 
     with pytest.raises(
             ValueError,
