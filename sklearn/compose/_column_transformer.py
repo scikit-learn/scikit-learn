@@ -307,9 +307,10 @@ boolean mask array or callable
                 self.remainder)
 
         # Make it possible to check for reordered named columns on transform
-        if (hasattr(X, 'columns') and
-                any(_check_key_type(cols, str) for cols in self._columns)):
+        if hasattr(X, 'columns'):
             self._df_columns = X.columns
+        self._has_str_cols = any(_check_key_type(cols, str)
+                                 for cols in self._columns)
 
         self._n_features = X.shape[1]
         cols = []
@@ -317,11 +318,6 @@ boolean mask array or callable
             cols.extend(_get_column_indices(X, columns))
 
         remaining_idx = sorted(list(set(range(self._n_features)) - set(cols)))
-        if hasattr(X, 'columns'):
-            columns = X.columns
-            self._remainder_names = [columns[idx] for idx in remaining_idx]
-        else:
-            self._remainder_names = ['x%d' % i for i in remaining_idx]
         self._remainder = ('remainder', self.remainder, remaining_idx or None)
 
     @property
@@ -350,14 +346,17 @@ boolean mask array or callable
         for name, trans, column, _ in self._iter(fitted=True):
             if trans == 'drop':
                 continue
-            elif trans == 'passthrough':
-                if name == 'remainder':
-                    feature_names.extend(self._remainder_names)
+            if trans == 'passthrough':
+                if isinstance(column, (str, int)):
+                    column = [column]
+                if hasattr(self, '_df_columns'):
+                    feature_names.extend([self._df_columns[c]
+                                          if isinstance(c, int)
+                                          else c for c in column])
                 else:
-                    feature_names.extend([name + "__" + str(c)
-                                          for c in column])
+                    feature_names.extend(['x%d' % i for i in column])
                 continue
-            elif not hasattr(trans, 'get_feature_names'):
+            if not hasattr(trans, 'get_feature_names'):
                 raise AttributeError("Transformer %s (type %s) does not "
                                      "provide get_feature_names."
                                      % (str(name), type(trans).__name__))
@@ -537,6 +536,7 @@ boolean mask array or callable
         # No column reordering allowed for named cols combined with remainder
         if (self._remainder[2] is not None and
                 hasattr(self, '_df_columns') and
+                self._has_str_cols and
                 hasattr(X, 'columns')):
             n_cols_fit = len(self._df_columns)
             n_cols_transform = len(X.columns)
