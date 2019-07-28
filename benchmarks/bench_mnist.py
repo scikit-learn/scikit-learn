@@ -25,7 +25,6 @@ Example of output :
     CART                         20.69s       0.02s       0.1219
     dummy                         0.00s       0.01s       0.8973
 """
-from __future__ import division, print_function
 
 # Author: Issam H. Laradji
 #         Arnaud Joly <arnaud.v.joly@gmail.com>
@@ -35,13 +34,13 @@ import os
 from time import time
 import argparse
 import numpy as np
+from joblib import Memory
 
-from sklearn.datasets import fetch_mldata
+from sklearn.datasets import fetch_openml
 from sklearn.datasets import get_data_home
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.dummy import DummyClassifier
-from sklearn.utils import Memory
 from sklearn.kernel_approximation import Nystroem
 from sklearn.kernel_approximation import RBFSampler
 from sklearn.metrics import zero_one_loss
@@ -64,7 +63,7 @@ def load_data(dtype=np.float32, order='F'):
     ######################################################################
     # Load dataset
     print("Loading dataset...")
-    data = fetch_mldata('MNIST original')
+    data = fetch_openml('mnist_784')
     X = check_array(data['data'], dtype=dtype, order=order)
     y = data["target"]
 
@@ -85,8 +84,8 @@ def load_data(dtype=np.float32, order='F'):
 ESTIMATORS = {
     "dummy": DummyClassifier(),
     'CART': DecisionTreeClassifier(),
-    'ExtraTrees': ExtraTreesClassifier(n_estimators=100),
-    'RandomForest': RandomForestClassifier(n_estimators=100),
+    'ExtraTrees': ExtraTreesClassifier(),
+    'RandomForest': RandomForestClassifier(),
     'Nystroem-SVM': make_pipeline(
         Nystroem(gamma=0.015, n_components=1000), LinearSVC(C=100)),
     'SampledRBF-SVM': make_pipeline(

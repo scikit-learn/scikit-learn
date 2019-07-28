@@ -14,32 +14,34 @@ Decision boundaries between inliers and outliers are displayed in black
 except for Local Outlier Factor (LOF) as it has no predict method to be applied
 on new data when it is used for outlier detection.
 
-The :class:`svm.OneClassSVM` is known to be sensitive to outliers and thus does
-not perform very well for outlier detection. This estimator is best suited for
-novelty detection when the training set is not contaminated by outliers.
-That said, outlier detection in high-dimension, or without any assumptions on
-the distribution of the inlying data is very challenging, and a One-class SVM
-might give useful results in these situations depending on the value of its
-hyperparameters.
+The :class:`sklearn.svm.OneClassSVM` is known to be sensitive to outliers and
+thus does not perform very well for outlier detection. This estimator is best
+suited for novelty detection when the training set is not contaminated by
+outliers. That said, outlier detection in high-dimension, or without any
+assumptions on the distribution of the inlying data is very challenging, and a
+One-class SVM might give useful results in these situations depending on the
+value of its hyperparameters.
 
-:class:`covariance.EllipticEnvelope` assumes the data is Gaussian and learns
-an ellipse. It thus degrades when the data is not unimodal. Notice however
-that this estimator is robust to outliers.
+:class:`sklearn.covariance.EllipticEnvelope` assumes the data is Gaussian and
+learns an ellipse. It thus degrades when the data is not unimodal. Notice
+however that this estimator is robust to outliers.
 
-:class:`ensemble.IsolationForest` and :class:`neighbors.LocalOutlierFactor`
-seem to perform reasonably well for multi-modal data sets. The advantage of
-:class:`neighbors.LocalOutlierFactor` over the other estimators is shown for
-the third data set, where the two modes have different densities. This
-advantage is explained by the local aspect of LOF, meaning that it only
+:class:`sklearn.ensemble.IsolationForest` and
+:class:`sklearn.neighbors.LocalOutlierFactor` seem to perform reasonably well
+for multi-modal data sets. The advantage of
+:class:`sklearn.neighbors.LocalOutlierFactor` over the other estimators is
+shown for the third data set, where the two modes have different densities.
+This advantage is explained by the local aspect of LOF, meaning that it only
 compares the score of abnormality of one sample with the scores of its
 neighbors.
 
 Finally, for the last data set, it is hard to say that one sample is more
 abnormal than another sample as they are uniformly distributed in a
-hypercube. Except for the :class:`svm.OneClassSVM` which overfits a little, all
-estimators present decent solutions for this situation. In such a case, it
-would be wise to look more closely at the scores of abnormality of the samples
-as a good estimator should assign similar scores to all the samples.
+hypercube. Except for the :class:`sklearn.svm.OneClassSVM` which overfits a
+little, all estimators present decent solutions for this situation. In such a
+case, it would be wise to look more closely at the scores of abnormality of
+the samples as a good estimator should assign similar scores to all the
+samples.
 
 While these examples give some intuition about the algorithms, this
 intuition might not apply to very high dimensional data.
@@ -80,8 +82,7 @@ anomaly_algorithms = [
     ("Robust covariance", EllipticEnvelope(contamination=outliers_fraction)),
     ("One-Class SVM", svm.OneClassSVM(nu=outliers_fraction, kernel="rbf",
                                       gamma=0.1)),
-    ("Isolation Forest", IsolationForest(behaviour='new',
-                                         contamination=outliers_fraction,
+    ("Isolation Forest", IsolationForest(contamination=outliers_fraction,
                                          random_state=42)),
     ("Local Outlier Factor", LocalOutlierFactor(
         n_neighbors=35, contamination=outliers_fraction))]

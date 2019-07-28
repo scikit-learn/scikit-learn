@@ -17,12 +17,10 @@ from .base import get_data_home
 from .base import clear_data_home
 from .covtype import fetch_covtype
 from .kddcup99 import fetch_kddcup99
-from .mlcomp import load_mlcomp
 from .lfw import fetch_lfw_pairs
 from .lfw import fetch_lfw_people
 from .twenty_newsgroups import fetch_20newsgroups
 from .twenty_newsgroups import fetch_20newsgroups_vectorized
-from .mldata import fetch_mldata, mldata_filename
 from .openml import fetch_openml
 from .samples_generator import make_classification
 from .samples_generator import make_multilabel_classification
@@ -59,7 +57,6 @@ __all__ = ['clear_data_home',
            'fetch_20newsgroups_vectorized',
            'fetch_lfw_pairs',
            'fetch_lfw_people',
-           'fetch_mldata',
            'fetch_olivetti_faces',
            'fetch_species_distributions',
            'fetch_california_housing',
@@ -75,7 +72,6 @@ __all__ = ['clear_data_home',
            'load_iris',
            'load_breast_cancer',
            'load_linnerud',
-           'load_mlcomp',
            'load_sample_image',
            'load_sample_images',
            'load_svmlight_file',
@@ -100,5 +96,4 @@ __all__ = ['clear_data_home',
            'make_sparse_spd_matrix',
            'make_sparse_uncorrelated',
            'make_spd_matrix',
-           'make_swiss_roll',
-           'mldata_filename']
+           'make_swiss_roll']

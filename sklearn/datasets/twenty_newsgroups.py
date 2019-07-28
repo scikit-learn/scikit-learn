@@ -35,17 +35,16 @@ import codecs
 
 import numpy as np
 import scipy.sparse as sp
+import joblib
 
 from .base import get_data_home
 from .base import load_files
 from .base import _pkl_filepath
 from .base import _fetch_remote
 from .base import RemoteFileMetadata
-from ..utils import check_random_state, Bunch
-from ..utils import deprecated
 from ..feature_extraction.text import CountVectorizer
 from ..preprocessing import normalize
-from ..externals import joblib
+from ..utils import check_random_state, Bunch
 
 logger = logging.getLogger(__name__)
 
@@ -60,13 +59,6 @@ ARCHIVE = RemoteFileMetadata(
 CACHE_NAME = "20news-bydate.pkz"
 TRAIN_FOLDER = "20news-bydate-train"
 TEST_FOLDER = "20news-bydate-test"
-
-
-@deprecated("Function 'download_20newsgroups' was renamed to "
-            "'_download_20newsgroups' in version 0.20 and will be removed in "
-            "release 0.22.")
-def download_20newsgroups(target_dir, cache_path):
-    return _download_20newsgroups(target_dir, cache_path)
 
 
 def _download_20newsgroups(target_dir, cache_path):
@@ -157,7 +149,7 @@ def strip_newsgroup_footer(text):
 def fetch_20newsgroups(data_home=None, subset='train', categories=None,
                        shuffle=True, random_state=42,
                        remove=(),
-                       download_if_missing=True):
+                       download_if_missing=True, return_X_y=False):
     """Load the filenames and data from the 20 newsgroups dataset \
 (classification).
 
@@ -214,13 +206,24 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         If False, raise an IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
+    return_X_y : boolean, default=False.
+        If True, returns `(data.data, data.target)` instead of a Bunch
+        object.
+
+        .. versionadded:: 0.22
+
     Returns
     -------
-    bunch : Bunch object
-        bunch.data: list, length [n_samples]
-        bunch.target: array, shape [n_samples]
-        bunch.filenames: list, length [n_classes]
-        bunch.DESCR: a description of the dataset.
+    bunch : Bunch object with the following attribute:
+        - data: list, length [n_samples]
+        - target: array, shape [n_samples]
+        - filenames: list, length [n_samples]
+        - DESCR: a description of the dataset.
+        - target_names: a list of categories of the returned data,
+          length [n_classes]. This depends on the `categories` parameter.
+
+    (data, target) : tuple if `return_X_y=True`
+        .. versionadded:: 0.22
     """
 
     data_home = get_data_home(data_home=data_home)
@@ -308,6 +311,8 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         data_lst = data_lst[indices]
         data.data = data_lst.tolist()
 
+    if return_X_y:
+        return data.data, data.target
     return data
 
 
@@ -369,11 +374,12 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
 
     Returns
     -------
-    bunch : Bunch object
-        bunch.data: sparse matrix, shape [n_samples, n_features]
-        bunch.target: array, shape [n_samples]
-        bunch.target_names: list, length [n_classes]
-        bunch.DESCR: a description of the dataset.
+    bunch : Bunch object with the following attribute:
+        - bunch.data: sparse matrix, shape [n_samples, n_features]
+        - bunch.target: array, shape [n_samples]
+        - bunch.target_names: a list of categories of the returned data,
+          length [n_classes].
+        - bunch.DESCR: a description of the dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
 

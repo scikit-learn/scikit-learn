@@ -4,9 +4,8 @@
 #         Giorgio Patrini
 # License: BSD 3 clause
 
-from __future__ import division
 import numpy as np
-from scipy import linalg
+from scipy import linalg, sparse
 
 from .base import _BasePCA
 from ..utils import check_array, gen_batches
@@ -17,15 +16,18 @@ class IncrementalPCA(_BasePCA):
     """Incremental principal components analysis (IPCA).
 
     Linear dimensionality reduction using Singular Value Decomposition of
-    centered data, keeping only the most significant singular vectors to
-    project the data to a lower dimensional space.
+    the data, keeping only the most significant singular vectors to
+    project the data to a lower dimensional space. The input data is centered
+    but not scaled for each feature before applying the SVD.
 
     Depending on the size of the input data, this algorithm can be much more
-    memory efficient than a PCA.
+    memory efficient than a PCA, and allows sparse input.
 
     This algorithm has constant memory complexity, on the order
-    of ``batch_size``, enabling use of np.memmap files without loading the
-    entire file into memory.
+    of ``batch_size * n_features``, enabling use of np.memmap files without
+    loading the entire file into memory. For sparse matrices, the input
+    is converted to dense in batches (in order to be able to subtract the
+    mean) which avoids storing the entire dense matrix at any one time.
 
     The computational overhead of each SVD is
     ``O(batch_size * n_features ** 2)``, but only 2 * batch_size samples
@@ -104,35 +106,37 @@ class IncrementalPCA(_BasePCA):
     --------
     >>> from sklearn.datasets import load_digits
     >>> from sklearn.decomposition import IncrementalPCA
+    >>> from scipy import sparse
     >>> X, _ = load_digits(return_X_y=True)
     >>> transformer = IncrementalPCA(n_components=7, batch_size=200)
     >>> # either partially fit on smaller batches of data
     >>> transformer.partial_fit(X[:100, :])
-    IncrementalPCA(batch_size=200, copy=True, n_components=7, whiten=False)
+    IncrementalPCA(batch_size=200, n_components=7)
     >>> # or let the fit function itself divide the data into batches
-    >>> X_transformed = transformer.fit_transform(X)
+    >>> X_sparse = sparse.csr_matrix(X)
+    >>> X_transformed = transformer.fit_transform(X_sparse)
     >>> X_transformed.shape
     (1797, 7)
 
     Notes
     -----
     Implements the incremental PCA model from:
-    `D. Ross, J. Lim, R. Lin, M. Yang, Incremental Learning for Robust Visual
+    *D. Ross, J. Lim, R. Lin, M. Yang, Incremental Learning for Robust Visual
     Tracking, International Journal of Computer Vision, Volume 77, Issue 1-3,
-    pp. 125-141, May 2008.`
+    pp. 125-141, May 2008.*
     See https://www.cs.toronto.edu/~dross/ivt/RossLimLinYang_ijcv.pdf
 
     This model is an extension of the Sequential Karhunen-Loeve Transform from:
-    `A. Levy and M. Lindenbaum, Sequential Karhunen-Loeve Basis Extraction and
+    *A. Levy and M. Lindenbaum, Sequential Karhunen-Loeve Basis Extraction and
     its Application to Images, IEEE Transactions on Image Processing, Volume 9,
-    Number 8, pp. 1371-1374, August 2000.`
+    Number 8, pp. 1371-1374, August 2000.*
     See https://www.cs.technion.ac.il/~mic/doc/skl-ip.pdf
 
     We have specifically abstained from an optimization used by authors of both
     papers, a QR decomposition used in specific situations to reduce the
     algorithmic complexity of the SVD. The source for this technique is
-    `Matrix Computations, Third Edition, G. Holub and C. Van Loan, Chapter 5,
-    section 5.4.4, pp 252-253.`. This technique has been omitted because it is
+    *Matrix Computations, Third Edition, G. Holub and C. Van Loan, Chapter 5,
+    section 5.4.4, pp 252-253.*. This technique has been omitted because it is
     advantageous only when decomposing a matrix with ``n_samples`` (rows)
     >= 5/3 * ``n_features`` (columns), and hurts the readability of the
     implemented algorithm. This would be a good opportunity for future
@@ -141,11 +145,11 @@ class IncrementalPCA(_BasePCA):
     References
     ----------
     D. Ross, J. Lim, R. Lin, M. Yang. Incremental Learning for Robust Visual
-        Tracking, International Journal of Computer Vision, Volume 77,
-        Issue 1-3, pp. 125-141, May 2008.
+    Tracking, International Journal of Computer Vision, Volume 77,
+    Issue 1-3, pp. 125-141, May 2008.
 
     G. Golub and C. Van Loan. Matrix Computations, Third Edition, Chapter 5,
-        Section 5.4.4, pp. 252-253.
+    Section 5.4.4, pp. 252-253.
 
     See also
     --------
@@ -167,7 +171,7 @@ class IncrementalPCA(_BasePCA):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like or sparse matrix, shape (n_samples, n_features)
             Training data, where n_samples is the number of samples and
             n_features is the number of features.
 
@@ -188,7 +192,8 @@ class IncrementalPCA(_BasePCA):
         self.singular_values_ = None
         self.noise_variance_ = None
 
-        X = check_array(X, copy=self.copy, dtype=[np.float64, np.float32])
+        X = check_array(X, accept_sparse=['csr', 'csc', 'lil'],
+                        copy=self.copy, dtype=[np.float64, np.float32])
         n_samples, n_features = X.shape
 
         if self.batch_size is None:
@@ -196,8 +201,12 @@ class IncrementalPCA(_BasePCA):
         else:
             self.batch_size_ = self.batch_size
 
-        for batch in gen_batches(n_samples, self.batch_size_):
-            self.partial_fit(X[batch], check_input=False)
+        for batch in gen_batches(n_samples, self.batch_size_,
+                                 min_batch_size=self.n_components or 0):
+            X_batch = X[batch]
+            if sparse.issparse(X_batch):
+                X_batch = X_batch.toarray()
+            self.partial_fit(X_batch, check_input=False)
 
         return self
 
@@ -220,6 +229,11 @@ class IncrementalPCA(_BasePCA):
             Returns the instance itself.
         """
         if check_input:
+            if sparse.issparse(X):
+                raise TypeError(
+                    "IncrementalPCA.partial_fit does not support "
+                    "sparse input. Either convert data to dense "
+                    "or use IncrementalPCA.fit to do so in batches.")
             X = check_array(X, copy=self.copy, dtype=[np.float64, np.float32])
         n_samples, n_features = X.shape
         if not hasattr(self, 'components_'):
@@ -273,7 +287,7 @@ class IncrementalPCA(_BasePCA):
                 np.sqrt((self.n_samples_seen_ * n_samples) /
                         n_total_samples) * (self.mean_ - col_batch_mean)
             X = np.vstack((self.singular_values_.reshape((-1, 1)) *
-                          self.components_, X, mean_correction))
+                           self.components_, X, mean_correction))
 
         U, S, V = linalg.svd(X, full_matrices=False)
         U, V = svd_flip(U, V, u_based_decision=False)
@@ -294,3 +308,42 @@ class IncrementalPCA(_BasePCA):
         else:
             self.noise_variance_ = 0.
         return self
+
+    def transform(self, X):
+        """Apply dimensionality reduction to X.
+
+        X is projected on the first principal components previously extracted
+        from a training set, using minibatches of size batch_size if X is
+        sparse.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            New data, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        Returns
+        -------
+        X_new : array-like, shape (n_samples, n_components)
+
+        Examples
+        --------
+
+        >>> import numpy as np
+        >>> from sklearn.decomposition import IncrementalPCA
+        >>> X = np.array([[-1, -1], [-2, -1], [-3, -2],
+        ...               [1, 1], [2, 1], [3, 2]])
+        >>> ipca = IncrementalPCA(n_components=2, batch_size=3)
+        >>> ipca.fit(X)
+        IncrementalPCA(batch_size=3, n_components=2)
+        >>> ipca.transform(X) # doctest: +SKIP
+        """
+        if sparse.issparse(X):
+            n_samples = X.shape[0]
+            output = []
+            for batch in gen_batches(n_samples, self.batch_size_,
+                                     min_batch_size=self.n_components or 0):
+                output.append(super().transform(X[batch].toarray()))
+            return np.vstack(output)
+        else:
+            return super().transform(X)
