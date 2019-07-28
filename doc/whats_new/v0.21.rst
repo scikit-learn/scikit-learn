@@ -34,7 +34,7 @@ Changelog
   :pr:`12955` by :user:`Prabakaran Kumaresshan <nixphix>`.
 
 :mod:`sklearn.compose`
-.....................
+......................
 
 - |Fix| Fixed an issue in :class:`compose.ColumnTransformer` where using
   DataFrames whose column order differs between :func:``fit`` and
@@ -62,7 +62,7 @@ Changelog
   missing values in training data. :pr:`13974` by `Frank Hoang <fhoang7>`.
 
 :mod:`sklearn.inspection`
-.....................
+.........................
 
 - |Fix| Fixed a bug in :func:`inspection.plot_partial_dependence` where 
   ``target`` parameter was not being taken into account for multiclass problems.
