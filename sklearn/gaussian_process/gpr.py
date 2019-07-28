@@ -405,8 +405,8 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
             additionally. If True, theta must not be None.
 
         clone_kernel : bool, default=True
-            If True, the kernel attribute is copied. Please specify False if
-            you want to make this method call faster.
+            If True, the kernel attribute is copied. If False, the kernel
+            attribute is modified, but may result in a performance improvement.
 
         Returns
         -------
