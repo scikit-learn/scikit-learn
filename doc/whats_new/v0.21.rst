@@ -33,9 +33,10 @@ Changelog
   threaded when `n_jobs > 1` or `n_jobs = -1`.
   :pr:`12955` by :user:`Prabakaran Kumaresshan <nixphix>`.
 
-- |Fix| Fixed a bug in :class:`cluster.OPTICS` where users were unable to
-  pass float `min_samples` and `min_cluster_size`.
-  :pr:`14496` by :user:`Fabian Klopfer <someusername1>`
+- |Fix| Fixed a bug in :class:`cluster.OPTICS` where users were unable to pass
+  float `min_samples` and `min_cluster_size`. :pr:`14496` by
+  :user:`Fabian Klopfer <someusername1>`
+  and :user:`Hanmin Qin <qinhanmin2014>`.
 
 :mod:`sklearn.compose`
 .....................
