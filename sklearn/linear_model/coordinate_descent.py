@@ -1972,7 +1972,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    max_iter : int,default=1000
+    max_iter : int, default=1000
         The maximum number of iterations
 
     tol : float, default=1e-4
