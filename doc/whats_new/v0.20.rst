@@ -30,7 +30,7 @@ Changelog
   :issue:`12946` by :user:`Pierre Tallotte <pierretallotte>`.
 
 :mod:`sklearn.covariance`
-......................
+.........................
 
 - |Fix| Fixed a regression in :func:`covariance.graphical_lasso` so that
   the case `n_features=2` is handled correctly. :issue:`13276` by

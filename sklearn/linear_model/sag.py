@@ -12,6 +12,7 @@ from .base import make_dataset
 from .sag_fast import sag32, sag64
 from ..exceptions import ConvergenceWarning
 from ..utils import check_array
+from ..utils.validation import _check_sample_weight
 from ..utils.extmath import row_norms
 
 
@@ -206,21 +207,14 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
     >>> y = rng.randn(n_samples)
     >>> clf = linear_model.Ridge(solver='sag')
     >>> clf.fit(X, y)
-    ... #doctest: +NORMALIZE_WHITESPACE
-    Ridge(alpha=1.0, copy_X=True, fit_intercept=True, max_iter=None,
-          normalize=False, random_state=None, solver='sag', tol=0.001)
+    Ridge(solver='sag')
 
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     >>> y = np.array([1, 1, 2, 2])
     >>> clf = linear_model.LogisticRegression(
     ...     solver='sag', multi_class='multinomial')
     >>> clf.fit(X, y)
-    ... #doctest: +NORMALIZE_WHITESPACE
-    LogisticRegression(C=1.0, class_weight=None, dual=False,
-        fit_intercept=True, intercept_scaling=1, l1_ratio=None, max_iter=100,
-        multi_class='multinomial', n_jobs=None, penalty='l2',
-        random_state=None, solver='sag', tol=0.0001, verbose=0,
-        warm_start=False)
+    LogisticRegression(multi_class='multinomial', solver='sag')
 
     References
     ----------
@@ -258,8 +252,7 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
     n_classes = int(y.max()) + 1 if loss == 'multinomial' else 1
 
     # initialization
-    if sample_weight is None:
-        sample_weight = np.ones(n_samples, dtype=X.dtype, order='C')
+    sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
     if 'coef' in warm_start_mem.keys():
         coef_init = warm_start_mem['coef']
