@@ -9,6 +9,7 @@ from sklearn.model_selection import KFold
 
 class OneTimeSplitter:
     """A wrapper to make KFold single entry cv iterator"""
+
     def __init__(self, n_splits=4, n_samples=99):
         self.n_splits = n_splits
         self.n_samples = n_samples
