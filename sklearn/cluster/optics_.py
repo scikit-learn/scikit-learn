@@ -341,7 +341,7 @@ if metric=’precomputed’.
         A feature array, or array of distances between samples if
         metric='precomputed'
 
-    min_samples : int > 1 or float between 0 and 1 (default=5)
+    min_samples : int > 1 or float between 0 and 1
         The number of samples in a neighborhood for a point to be considered
         as a core point. Expressed as an absolute number or a fraction of the
         number of samples (rounded to be at least 2).
