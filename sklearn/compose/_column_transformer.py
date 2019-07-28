@@ -245,7 +245,7 @@ boolean mask array or callable
                 # replace 'passthrough' with identity transformer and
                 # skip in case of 'drop'
                 if trans == 'passthrough':
-                    trans = FunctionTransformer(
+                    trans = FunctionTransformer(func=_passthrough_func,
                         validate=False, accept_sparse=True,
                         check_inverse=False)
                 elif trans == 'drop':
@@ -789,3 +789,15 @@ def make_column_transformer(*transformers, **kwargs):
                              remainder=remainder,
                              sparse_threshold=sparse_threshold,
                              verbose=verbose)
+
+
+def _passthrough_func(X):
+    """
+    Function used in the FunctionTransformer for 'passthrough' columns
+    to ensure the correct shape.
+    """
+    if not getattr(X, 'ndim', 0) == 2:
+        if hasattr(X, 'values'):
+            X = X.values
+        return X.reshape(-1, 1)
+    return X

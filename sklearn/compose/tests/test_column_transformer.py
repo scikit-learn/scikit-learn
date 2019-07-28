@@ -710,6 +710,48 @@ def test_column_transformer_special_strings():
                              ct.fit, X_array)
 
 
+def test_column_transformer_passthrough_transform():
+    # check that when trans='passthrough', both lists and scalars can be passed
+    X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
+    ct = ColumnTransformer([('pass', 'passthrough', 0)], remainder='passthrough')
+    X_pass = ct.fit_transform(X_array)
+    assert_array_equal(X_pass, X_array)
+
+    ct = ColumnTransformer([('pass', 'passthrough', [0])],
+                           remainder='passthrough')
+    X_pass = ct.fit_transform(X_array)
+    assert_array_equal(X_pass, X_array)
+
+    ct = ColumnTransformer([('pass', 'passthrough', [0, 1])])
+    X_pass = ct.fit_transform(X_array)
+    assert_array_equal(X_pass, X_array)
+
+    pd = pytest.importorskip('pandas')
+    df = pd.DataFrame(X_array, columns=['col0', 'col1'])
+
+    ct = ColumnTransformer([('pass', 'passthrough', 0)],
+                           remainder='passthrough')
+    X_pass = ct.fit_transform(df)
+    assert_array_equal(X_pass, df.values)
+
+    ct = ColumnTransformer([('pass', 'passthrough', [0])],
+                           remainder='passthrough')
+    X_pass = ct.fit_transform(df)
+    assert_array_equal(X_pass, df.values)
+
+    ct = ColumnTransformer([('pass', 'passthrough', [0, 1])])
+    X_pass = ct.fit_transform(df)
+    assert_array_equal(X_pass, df.values)
+
+    ct = ColumnTransformer([('pass', 'passthrough', 'col0')])
+    X_pass = ct.fit_transform(df)
+    assert_array_equal(X_pass, df[['col0']].values)
+
+    ct = ColumnTransformer([('pass', 'passthrough', ['col1', 'col0'])])
+    X_pass = ct.fit_transform(df)
+    assert_array_equal(X_pass, df[['col1', 'col0']].values)
+
+
 def test_column_transformer_remainder():
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
 
