@@ -53,11 +53,11 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
         Input targets.
 
     Xy : array-like, shape (n_samples,) or (n_samples, n_targets), \
-            optional
+            default=None
         Xy = np.dot(X.T, y) that can be precomputed. It is useful
         only when the Gram matrix is precomputed.
 
-    Gram : None, 'auto', array, shape: (n_features, n_features), optional
+    Gram : None, 'auto', array, shape: (n_features, n_features), default=None
         Precomputed Gram matrix (X' * X), if ``'auto'``, the Gram
         matrix is precomputed from the given X, if there are more samples
         than features.
@@ -496,15 +496,15 @@ class Lars(LinearModel, RegressorMixin):
 
     Parameters
     ----------
-    fit_intercept : boolean
+    fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
-    verbose : boolean or integer, optional
+    verbose : bool or int, default=False
         Sets the verbosity amount
 
-    normalize : boolean, optional, default True
+    normalize : bool, default=True
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -512,31 +512,31 @@ class Lars(LinearModel, RegressorMixin):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    precompute : True | False | 'auto' | array-like
+    precompute : True | False | 'auto' | array-like , default='auto'
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
 
-    n_nonzero_coefs : int, optional
+    n_nonzero_coefs : int, default=500
         Target number of non-zero coefficients. Use ``np.inf`` for no limit.
 
-    eps : float, optional
+    eps : float, default=np.finfo(np.float).eps
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems. Unlike the ``tol`` parameter in some iterative
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
 
-    copy_X : boolean, optional, default True
+    copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
 
-    fit_path : boolean
+    fit_path : bool, default=True
         If True the full path is stored in the ``coef_path_`` attribute.
         If you compute the solution for a large problem or many targets,
         setting ``fit_path`` to ``False`` will lead to a speedup, especially
         with a small alpha.
 
-    positive : boolean (default=False)
+    positive : bool, default=False
         Restrict coefficients to be >= 0. Be aware that you might want to
         remove fit_intercept which is set True by default.
 
@@ -683,7 +683,7 @@ class Lars(LinearModel, RegressorMixin):
             Target values.
 
         Xy : array-like, shape (n_samples,) or (n_samples, n_targets), \
-                optional
+                default=None
             Xy = np.dot(X.T, y) that can be precomputed. It is useful
             only when the Gram matrix is precomputed.
 
@@ -720,22 +720,22 @@ class LassoLars(Lars):
 
     Parameters
     ----------
-    alpha : float
+    alpha : float, default=1.0
         Constant that multiplies the penalty term. Defaults to 1.0.
         ``alpha = 0`` is equivalent to an ordinary least square, solved
         by :class:`LinearRegression`. For numerical reasons, using
         ``alpha = 0`` with the LassoLars object is not advised and you
         should prefer the LinearRegression object.
 
-    fit_intercept : boolean
+    fit_intercept : bool, default=True
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
-    verbose : boolean or integer, optional
+    verbose : bool or int, default=False
         Sets the verbosity amount
 
-    normalize : boolean, optional, default True
+    normalize : bool, default=True
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -743,31 +743,31 @@ class LassoLars(Lars):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    precompute : True | False | 'auto' | array-like
+    precompute : True | False | 'auto' | array-like , default='auto'
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
 
-    max_iter : integer, optional
+    max_iter : int, default=500
         Maximum number of iterations to perform.
 
-    eps : float, optional
+    eps : float, default=np.finfo(np.float).eps
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems. Unlike the ``tol`` parameter in some iterative
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
 
-    copy_X : boolean, optional, default True
+    copy_X : bool default=True
         If True, X will be copied; else, it may be overwritten.
 
-    fit_path : boolean
+    fit_path : bool, default=True
         If ``True`` the full path is stored in the ``coef_path_`` attribute.
         If you compute the solution for a large problem or many targets,
         setting ``fit_path`` to ``False`` will lead to a speedup, especially
         with a small alpha.
 
-    positive : boolean (default=False)
+    positive : bool, default=False
         Restrict coefficients to be >= 0. Be aware that you might want to
         remove fit_intercept which is set True by default.
         Under the positive restriction the model coefficients will not converge
@@ -873,35 +873,35 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
     y_test : array, shape (n_samples)
         The target variable to compute the residues on
 
-    Gram : None, 'auto', array, shape: (n_features, n_features), optional
+    Gram : None, 'auto', array, shape: (n_features, n_features), default=None
         Precomputed Gram matrix (X' * X), if ``'auto'``, the Gram
         matrix is precomputed from the given X, if there are more samples
         than features
 
-    copy : boolean, optional
+    copy : bool, default=True
         Whether X_train, X_test, y_train and y_test should be copied;
         if False, they may be overwritten.
 
-    method : 'lar' | 'lasso'
+    method : {'lar' , 'lasso'}, default='lars'
         Specifies the returned model. Select ``'lar'`` for Least Angle
         Regression, ``'lasso'`` for the Lasso.
 
-    verbose : integer, optional
+    verbose : bool or int, default=False
         Sets the amount of verbosity
 
-    fit_intercept : boolean
+    fit_intercept : bool, default=True
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
-    positive : boolean (default=False)
+    positive : bool, default=False
         Restrict coefficients to be >= 0. Be aware that you might want to
         remove fit_intercept which is set True by default.
         See reservations for using this option in combination with method
         'lasso' for expected small values of alpha in the doc of LassoLarsCV
         and LassoLarsIC.
 
-    normalize : boolean, optional, default True
+    normalize : bool, default=True
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -909,10 +909,10 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    max_iter : integer, optional
+    max_iter : int, default=500
         Maximum number of iterations to perform.
 
-    eps : float, optional
+    eps : float, default=np.finfo(np.float).eps
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems. Unlike the ``tol`` parameter in some iterative
@@ -975,18 +975,18 @@ class LarsCV(Lars):
 
     Parameters
     ----------
-    fit_intercept : boolean
+    fit_intercept : bool, default=True
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
-    verbose : boolean or integer, optional
+    verbose : bool or int, default=False
         Sets the verbosity amount
 
-    max_iter : integer, optional
+    max_iter : int, default=500
         Maximum number of iterations to perform.
 
-    normalize : boolean, optional, default True
+    normalize : bool, default=True
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -994,12 +994,12 @@ class LarsCV(Lars):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    precompute : True | False | 'auto' | array-like
+    precompute : True | False | 'auto' | array-like , default='auto'
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram matrix
         cannot be passed as argument since we will use only subsets of X.
 
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or an iterable, default='warn'
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
@@ -1017,25 +1017,25 @@ class LarsCV(Lars):
             ``cv`` default value if None will change from 3-fold to 5-fold
             in v0.22.
 
-    max_n_alphas : integer, optional
+    max_n_alphas : int, default=1000
         The maximum number of points on the path used to compute the
         residuals in the cross-validation
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         Number of CPUs to use during the cross validation.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    eps : float, optional
+    eps : float, default=np.finfo(np.float).eps
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems.
 
-    copy_X : boolean, optional, default True
+    copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
 
-    positive : boolean (default=False)
+    positive : boolean, default=False
         Restrict coefficients to be >= 0. Be aware that you might want to
         remove fit_intercept which is set True by default.
 
@@ -1198,18 +1198,18 @@ class LassoLarsCV(LarsCV):
 
     Parameters
     ----------
-    fit_intercept : boolean
+    fit_intercept : bool, default=True
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
-    verbose : boolean or integer, optional
+    verbose : bool or int, default=False
         Sets the verbosity amount
 
-    max_iter : integer, optional
+    max_iter : int, default=500
         Maximum number of iterations to perform.
 
-    normalize : boolean, optional, default True
+    normalize : bool, default=True
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -1217,12 +1217,12 @@ class LassoLarsCV(LarsCV):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    precompute : True | False | 'auto'
+    precompute : True | False | 'auto' , default='auto'
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram matrix
         cannot be passed as argument since we will use only subsets of X.
 
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or an iterable, default='warn'
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
@@ -1240,25 +1240,25 @@ class LassoLarsCV(LarsCV):
             ``cv`` default value if None will change from 3-fold to 5-fold
             in v0.22.
 
-    max_n_alphas : integer, optional
+    max_n_alphas : int, default=1000
         The maximum number of points on the path used to compute the
         residuals in the cross-validation
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         Number of CPUs to use during the cross validation.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    eps : float, optional
+    eps : float, default=np.finfo(np.float).eps
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems.
 
-    copy_X : boolean, optional, default True
+    copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
-    positive : boolean (default=False)
+    positive : bool, default=False
         Restrict coefficients to be >= 0. Be aware that you might want to
         remove fit_intercept which is set True by default.
         Under the positive restriction the model coefficients do not converge
@@ -1365,18 +1365,18 @@ class LassoLarsIC(LassoLars):
 
     Parameters
     ----------
-    criterion : 'bic' | 'aic'
+    criterion : {'bic' , 'aic'}, default='aic'
         The type of criterion to use.
 
-    fit_intercept : boolean
+    fit_intercept : bool, default=True
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
-    verbose : boolean or integer, optional
+    verbose : bool or int, default=False
         Sets the verbosity amount
 
-    normalize : boolean, optional, default True
+    normalize : bool, default=True
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -1384,26 +1384,26 @@ class LassoLarsIC(LassoLars):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    precompute : True | False | 'auto' | array-like
+    precompute : True | False | 'auto' | array-like , default='auto'
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
 
-    max_iter : integer, optional
+    max_iter : int, default=500
         Maximum number of iterations to perform. Can be used for
         early stopping.
 
-    eps : float, optional
+    eps : float, default=np.finfo(np.float).eps
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems. Unlike the ``tol`` parameter in some iterative
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
 
-    copy_X : boolean, optional, default True
+    copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
-    positive : boolean (default=False)
+    positive : bool, default=False
         Restrict coefficients to be >= 0. Be aware that you might want to
         remove fit_intercept which is set True by default.
         Under the positive restriction the model coefficients do not converge
@@ -1490,7 +1490,7 @@ class LassoLarsIC(LassoLars):
         y : array-like, shape (n_samples,)
             target values. Will be cast to X's dtype if necessary
 
-        copy_X : boolean, optional, default True
+        copy_X : bool, default=True
             If ``True``, X will be copied; else, it may be overwritten.
 
         Returns
