@@ -263,7 +263,7 @@ def test_multiclass_multioutput(Estimator):
     y = np.array([y, y]).T
 
     est = Estimator()
-    with ignore_warnings(category=DeprecationWarning):
+    with ignore_warnings(category=FutureWarning):
         est.fit(X, y)
 
     with pytest.raises(
