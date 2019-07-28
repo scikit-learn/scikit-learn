@@ -245,8 +245,9 @@ boolean mask array or callable
                 # replace 'passthrough' with identity transformer and
                 # skip in case of 'drop'
                 if trans == 'passthrough':
-                    trans = FunctionTransformer(func=_passthrough_func,
-                        validate=False, accept_sparse=True,
+                    trans = FunctionTransformer(
+                        func=_passthrough_func,
+                        accept_sparse=True,
                         check_inverse=False)
                 elif trans == 'drop':
                     continue

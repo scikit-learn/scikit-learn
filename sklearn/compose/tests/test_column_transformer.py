@@ -713,7 +713,8 @@ def test_column_transformer_special_strings():
 def test_column_transformer_passthrough_transform():
     # check that when trans='passthrough', both lists and scalars can be passed
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
-    ct = ColumnTransformer([('pass', 'passthrough', 0)], remainder='passthrough')
+    ct = ColumnTransformer([('pass', 'passthrough', 0)],
+                           remainder='passthrough')
     X_pass = ct.fit_transform(X_array)
     assert_array_equal(X_pass, X_array)
 
