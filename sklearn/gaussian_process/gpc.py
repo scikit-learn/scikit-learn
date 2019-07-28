@@ -320,7 +320,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
             to the kernel hyperparameters at position theta is returned
             additionally. If True, theta must not be None.
 
-        clone_kernel : bool, default: True
+        clone_kernel : bool, default=True
             If True, the kernel attribute is copied. Please specify False if
             you want to make this method call faster.
 
@@ -721,7 +721,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
             additionally. Note that gradient computation is not supported
             for non-binary classification. If True, theta must not be None.
 
-        clone_kernel : bool, default: True
+        clone_kernel : bool, default=True
             If True, the kernel attribute is copied. Please specify False if
             you want to make this method call faster.
 
