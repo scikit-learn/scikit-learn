@@ -29,8 +29,8 @@ Changelog
 :mod:`sklearn.cluster`
 ......................
 
-- |Fix| Fixed a bug in :class:`cluster.KMeans` where computation was single
-  threaded when `n_jobs > 1` or `n_jobs = -1`.
+- |Fix| Fixed a bug in :class:`cluster.KMeans` where computation with
+  `init='random'` was single threaded for `n_jobs > 1` or `n_jobs = -1`.
   :pr:`12955` by :user:`Prabakaran Kumaresshan <nixphix>`.
 
 - |Fix| Fixed a bug in :class:`cluster.OPTICS` where users were unable to pass
@@ -54,7 +54,7 @@ Changelog
   :func:`datasets.fetch_covtype`,
   :func:`datasets.fetch_kddcup99`, :func:`datasets.fetch_olivetti_faces`,
   :func:`datasets.fetch_rcv1`, and :func:`datasets.fetch_species_distributions`
-  try to persist the previously cache using the new ``joblib`` if the cahced
+  try to persist the previously cache using the new ``joblib`` if the cached
   data was persisted using the deprecated ``sklearn.externals.joblib``. This
   behavior is set to be deprecated and removed in v0.23.
   :pr:`14197` by `Adrin Jalali`_.
