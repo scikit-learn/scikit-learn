@@ -16,6 +16,23 @@ from .validation import check_array, column_or_1d
 
 
 class NamedArray(NDArrayOperatorsMixin):
+    """A wrapper to a numpy ndarray holding some metadata about the data.
+
+    Instances of this object behave like a numpy array, and loose all metadata
+    information in numerical operations.
+
+    Parameters
+    ----------
+    data: array-like
+        A one or two dimensional array like data.
+
+    feature_names: list or array of strings, or None, default=None
+        Feature names associated with the columns of the data. The number of
+        columns should always be the same as the number of feature names.
+        Setting the `data` of an instance, would result in `feature_names` to
+        be `None` if the number of columns do not match the number of stored
+        feature names.
+    """
     _feature_names = None
     _data = None
 
