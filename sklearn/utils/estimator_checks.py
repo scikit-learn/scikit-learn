@@ -2057,6 +2057,7 @@ def check_estimators_overwrite_params(name, estimator_orig):
             % (name, param_name, original_value, new_value))
 
 
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_no_attributes_set_in_init(name, estimator_orig):
     """Check setting during init. """
     estimator = clone(estimator_orig)
