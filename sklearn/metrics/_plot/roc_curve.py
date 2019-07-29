@@ -62,7 +62,7 @@ class RocCurveVisualizer:
         self.line_ = ax.plot(self.fpr, self.tpr, **kwargs)[0]
         ax.set_xlabel("False Positive Rate")
         ax.set_ylabel("True Positive Rate")
-        ax.legend()
+        ax.legend(loc='lower right')
 
         self.ax_ = ax
         self.figure_ = ax.figure

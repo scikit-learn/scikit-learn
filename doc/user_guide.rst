@@ -19,6 +19,7 @@ User Guide
    unsupervised_learning.rst
    model_selection.rst
    inspection.rst
+   visualizers.rst
    data_transforms.rst
    Dataset loading utilities <datasets/index.rst>
    modules/computing.rst
