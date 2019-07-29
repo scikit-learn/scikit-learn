@@ -157,7 +157,7 @@ Changelog
 
 - |Efficiency| The 'liblinear' logistic regression solver is now faster and
   requires less memory.
-  :pr:`14108`, :pr:`14170` by :user:`Alex Henrie <alexhenrie>`.
+  :pr:`14108`, pr:`14170`, pr:`14296` by :user:`Alex Henrie <alexhenrie>`.
 
 - |Fix| :class:`linear_model.Ridge` with `solver='sag'` now accepts F-ordered
   and non-contiguous arrays and makes a conversion instead of failing.
