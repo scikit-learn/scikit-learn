@@ -864,7 +864,7 @@ class Lasso(ElasticNet):
         RandomState instance used by `np.random`. Used when ``selection`` ==
         'random'.
 
-    selection : str, default='cyclic'
+    selection : {'cyclic', 'random'}, default='cyclic'
         If set to 'random', a random coefficient is updated every iteration
         rather than looping over features sequentially by default. This
         (setting to 'random') often leads to significantly faster convergence
