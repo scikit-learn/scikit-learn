@@ -753,122 +753,74 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
     if X is None or len(X) == 0:
         raise ValueError("X can not be None or empty")
 
-    y_is_not_none = Y is not None
-
     # It is necessary to convert to ndarray in advance to define the dtype
     # as np.object, otherwise numeric columns will be converted to string
     # if there are other string columns.
     if not isinstance(X, np.ndarray):
         X = np.asarray(X, dtype=np.object)
 
-    if y_is_not_none and not isinstance(Y, np.ndarray):
+    if Y is not None and not isinstance(Y, np.ndarray):
         Y = np.asarray(Y, dtype=np.object)
 
     X, Y = check_pairwise_arrays(X, Y, precomputed=False, dtype=X.dtype,
                                  force_all_finite=False)
 
-    n_rows, n_cols = X.shape
-
-    categorical_features_obj, categorical_features_num, numerical_features = \
+    cat_obj_mask, cat_num_mask, num_mask = \
         _detect_categorical_features(X, categorical_features)
-
-    # Categorical columns
-    X_cat_obj = X[:, categorical_features_obj].astype(np.object)
-    X_cat_num = X[:, categorical_features_num].astype(np.float)
-
-    # Numerical columns
-    X_num = X[:, numerical_features].astype(np.float)
-
-    Y_cat_obj = None
-    Y_cat_num = None
-    Y_num = None
-    if y_is_not_none:
-        Y_cat_obj = Y[:, categorical_features_obj].astype(np.object)
-        Y_cat_num = Y[:, categorical_features_num].astype(np.float)
-        Y_num = Y[:, numerical_features].astype(np.float)
-    else:
-        Y_cat_obj = X_cat_obj
-        Y_cat_num = X_cat_num
-        Y_num = X_num
-
-    num_cols = X_num.shape[1]
-    n_col_num_present = num_cols > 0
-    n_col_cat_obj_present = X_cat_obj.shape[1] > 0
-    n_col_cat_num_present = X_cat_num.shape[1] > 0
 
     # Calculates the min and max values, and if requested, scale the
     # input values in order to obtain the distances between 0 and 1,
     # as proposed by the Gower's paper.
-    ranges = None
-    if n_col_num_present:
+    ranges = 1
+    if X[:, num_mask].shape[1] > 0:
         process_scale = False
         if isinstance(scale, bool):
             process_scale = scale
         else:
-            if (isinstance(scale, list) and len(scale) != X_num.shape[1]) or\
-               (isinstance(scale, np.ndarray) and
-                    len(scale.flat) != X_num.shape[1]):
+            if len(np.asarray(scale).flatten()) != X[:, num_mask].shape[1]:
                 raise ValueError("Length of scale parameter must be equal "
                                  "to the number of numerical columns.")
             process_scale = True
 
-        ranges, min, max = _precompute_gower_params(X_num, Y_num, scale)
+        ranges, min, max = _precompute_gower_params(X[:, num_mask].astype(np.float32),
+                                                    Y[:, num_mask].astype(np.float32),
+                                                    scale)
 
+        # avoid division by zero when all values in the column are he same
+        ranges[ranges==0] = 1
+
+        # check if the data is pre-scaled when scale=False
         if not process_scale and (np.min(min) < 0 or np.max(max) > 1):
             raise ValueError("Input data is not scaled between 0 and 1.")
 
-    y_n_rows = Y.shape[0]
-    D = np.zeros((n_rows, y_n_rows), dtype=np.float)
+    D = np.zeros((X.shape[0], Y.shape[0]), dtype=np.float)
 
-    for i in range(n_rows):
+    for i in range(X.shape[0]):
         j_start = i
 
-        # for non square results
-        if n_rows != y_n_rows or y_is_not_none:
+        # For non square results
+        if X.shape[0] != Y.shape[0] or X is not Y:
             j_start = 0
-        sum_s = 0
-        n_cols_not_missing = 0
 
-        # sum and missing values treatment for each type of data, if available
-        if n_col_cat_obj_present:
-            row_cat_none = ~(np.equal(X_cat_obj[i, :], None) |
-                             np.equal(Y_cat_obj[j_start:n_rows, :], None))
+        # Calculates the similarities for categorical columns
+        cat_obj_dists = X[i, cat_obj_mask] != Y[j_start:, cat_obj_mask]
+        # Calculates the similarities for numerical categorical columns
+        cat_num_dists = X[i, cat_num_mask] != Y[j_start:, cat_num_mask]
+        # Calculates the Manhattan distances for numerical columns
+        num_dists = abs(X[i, num_mask].astype(np.float32) - Y[j_start:, num_mask].astype(np.float32)) / ranges
+        # Calculates the number of non missing columns
+        non_missing = X.shape[1] - (np.isnan(cat_obj_dists).sum(axis=1) + np.isnan(cat_num_dists).sum(axis=1) + np.isnan(num_dists).sum(axis=1))
+        # Gets the final results
+        results = (np.sum(cat_obj_dists, axis=1) + np.sum(cat_num_dists, axis=1) + np.sum(num_dists, axis=1)) / non_missing
 
-            n_cols_not_missing = np.sum(row_cat_none.astype(np.int), axis=1)
-            sum_s = (~np.equal(X_cat_obj[i, :], Y_cat_obj[j_start:n_rows, :])
-                     & row_cat_none).astype(np.int).sum(axis=1)
-
-        if n_col_cat_num_present:
-            row_cat_nan = ~(np.isnan(X_cat_num[i, :]) |
-                            np.isnan(Y_cat_num[j_start:n_rows, :]))
-
-            n_cols_not_missing = \
-                n_cols_not_missing + \
-                np.sum(row_cat_nan.astype(np.int), axis=1)
-
-            sum_s = sum_s + (~np.equal(X_cat_num[i, :],
-                                       Y_cat_num[j_start:n_rows, :])
-                             & row_cat_nan).astype(np.int).sum(axis=1)
-
-        if n_col_num_present:
-            n_cols_not_missing = n_cols_not_missing + \
-                                 np.sum((~(np.isnan(X_num[i, :]) |
-                                           np.isnan(Y_num[j_start:n_rows, :])))
-                                        .astype(np.int), axis=1)
-
-            sum_s = sum_s + (np.nansum(
-                    np.absolute(X_num[i, :] - Y_num[j_start:n_rows, :])
-                    / ranges, axis=1))
-
-        result = np.divide(sum_s, n_cols_not_missing,
-                           out=np.full(n_cols_not_missing.shape, np.nan),
-                           where=n_cols_not_missing != 0)
-
-        D[i, j_start:] = result
-        if not y_is_not_none:
-            D[i:, j_start] = result
+        D[i, j_start:] = results
+        if X is Y:
+            D[i:, j_start] = results
 
     return D
+
+    cat_obj_mask, cat_num_mask, num_mask = \
+        _detect_categorical_features(X, categorical_features)
 
 
 def _detect_categorical_features(X, categorical_features=None):
@@ -901,9 +853,9 @@ def _detect_categorical_features(X, categorical_features=None):
         if not np.issubdtype(type(X[0][col]), np.number):
             categorical_features_detected[col] = True
 
-    categorical_features_obj = categorical_features_detected
+    cat_obj_mask = categorical_features_detected
     # Numerical categorical features can't be automatically detected
-    categorical_features_num = np.zeros(n_cols, dtype=bool)
+    cat_num_mask = np.zeros(n_cols, dtype=bool)
 
     if categorical_features is not None:
         categorical_features = np.asarray(categorical_features)
@@ -913,29 +865,28 @@ def _detect_categorical_features(X, categorical_features=None):
             categorical_features = new_categorical_features
 
         # Identifies categorical values represented by objects or numbers
-        categorical_features_num = \
+        cat_num_mask = \
             categorical_features_detected != categorical_features
-        categorical_features_obj = \
+        cat_obj_mask = \
             categorical_features_detected & categorical_features
 
-    return categorical_features_obj, categorical_features_num, \
-        ~(categorical_features_obj | categorical_features_num)
+    return cat_obj_mask, cat_num_mask, ~(cat_obj_mask | cat_num_mask)
 
 
 def _precompute_gower_params(X, Y, scale):
     """Precompute data-derived metric parameters for gower distances
     """
     min = np.nanmin(X, axis=0)
-    compute_y = Y is not None and X is not Y
-    if compute_y:
-        min = np.minimum(np.nanmin(Y, axis=0), min)
-
     max = np.nanmax(X, axis=0)
-    if compute_y:
+
+    if X is not Y and Y is not None:
+        min = np.minimum(np.nanmin(Y, axis=0), min)
         max = np.maximum(np.nanmax(Y, axis=0), max)
 
     if scale is None or type(scale) is bool:
         scale = np.abs(max - min)
+    elif isinstance(scale, list):
+        scale = np.asarray(scale)
 
     return scale, min, max
 

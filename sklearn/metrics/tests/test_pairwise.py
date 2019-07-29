@@ -791,7 +791,7 @@ def test_gower_distances():
     X = [['M', False, 222.22, 1],
          ['F', True, 333.22, 2],
          ['M', True, 1934.0, 4],
-         [None, None, np.nan, np.nan]]
+         [np.nan, np.nan, np.nan, np.nan]]
 
     with pytest.raises(TypeError):
         gower_distances(X, scale=1)
@@ -809,7 +809,7 @@ def test_gower_distances():
     X = [['M', False, 0.0, 0.0],
          ['F', True, 0.06484477, 0.33333333],
          ['M', True, 1.0, 1.0],
-         [None, None, np.nan, np.nan]]
+         [np.nan, np.nan, np.nan, np.nan]]
 
     # Simplified calculation of Gower distance for expected values
     n_rows, n_cols = np.shape(X)
@@ -842,7 +842,7 @@ def test_gower_distances():
     X = [['M', False, 0.0, 1],
          ['F', True, 0.06484477, 2],
          ['M', True, 1.0, 4],
-         [None, None, np.nan, np.nan]]
+         [np.nan, np.nan, np.nan, np.nan]]
 
     # Simplified calculation of Gower distance for expected values
     n_rows, n_cols = np.shape(X)
@@ -913,7 +913,7 @@ def test_gower_distances():
     X = [['M', 0],
          ['F', 1],
          ['M', 1],
-         [None, np.nan]]
+         [np.nan, np.nan]]
 
     D = gower_distances(X, categorical_features=[True, True])
 
@@ -923,11 +923,6 @@ def test_gower_distances():
         for j in range(0, n_rows):
             D_expected[i][j] = ([1, 0][X[i][0] == X[j][0]] +
                                 [1, 0][X[i][1] == X[j][1]]) / n_cols
-
-    # Expected nans need to be put manually, because there is no missing
-    # value treatment in the simplied Gower calculation above.
-    D_expected[:, 3] = [np.nan, np.nan, np.nan, np.nan]
-    D_expected[3, :] = [np.nan, np.nan, np.nan, np.nan]
 
     assert_array_almost_equal(D_expected, D)
 
