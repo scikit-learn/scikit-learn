@@ -2,9 +2,9 @@
 
 .. currentmodule:: sklearn
 
- .. _changes_0_20_3:
+ .. _changes_0_20_4:
 
-Version 0.20.3
+Version 0.20.4
 ==============
 
 **July 30, 2019**
