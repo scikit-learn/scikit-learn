@@ -30,6 +30,14 @@ def is_weakrefable(obj):
         return False
 
 
+try:
+    TimeoutError = TimeoutError
+except NameError:
+    # Python 2 backward compat
+    class TimeoutError(OSError):
+        pass
+
+
 class _WeakKeyDictionary:
     """A variant of weakref.WeakKeyDictionary for unhashable objects.
 
@@ -102,12 +110,24 @@ class Batch(object):
         return Batch, (self.tasks,)
 
 
+def _joblib_probe_task():
+    # Noop used by the joblib connector to probe when workers are ready.
+    pass
+
+
 class DaskDistributedBackend(ParallelBackendBase, AutoBatchingMixin):
     MIN_IDEAL_BATCH_DURATION = 0.2
     MAX_IDEAL_BATCH_DURATION = 1.0
 
     def __init__(self, scheduler_host=None, scatter=None,
-                 client=None, loop=None, **submit_kwargs):
+                 client=None, loop=None, wait_for_workers_timeout=10,
+                 **submit_kwargs):
+        if distributed is None:
+            msg = ("You are trying to use 'dask' as a joblib parallel backend "
+                   "but dask is not installed. Please install dask "
+                   "to fix this error.")
+            raise ValueError(msg)
+
         if client is None:
             if scheduler_host:
                 client = Client(scheduler_host, loop=loop,
@@ -139,6 +159,7 @@ class DaskDistributedBackend(ParallelBackendBase, AutoBatchingMixin):
             self._scatter = []
             self.data_futures = {}
         self.task_futures = set()
+        self.wait_for_workers_timeout = wait_for_workers_timeout
         self.submit_kwargs = submit_kwargs
 
     def __reduce__(self):
@@ -159,6 +180,26 @@ class DaskDistributedBackend(ParallelBackendBase, AutoBatchingMixin):
         self.call_data_futures.clear()
 
     def effective_n_jobs(self, n_jobs):
+        effective_n_jobs = sum(self.client.ncores().values())
+        if effective_n_jobs != 0 or not self.wait_for_workers_timeout:
+            return effective_n_jobs
+
+        # If there is no worker, schedule a probe task to wait for the workers
+        # to come up and be available. If the dask cluster is in adaptive mode
+        # task might cause the cluster to provision some workers.
+        try:
+            self.client.submit(_joblib_probe_task).result(
+                timeout=self.wait_for_workers_timeout)
+        except gen.TimeoutError:
+            error_msg = (
+                "DaskDistributedBackend has no worker after {} seconds. "
+                "Make sure that workers are started and can properly connect "
+                "to the scheduler and increase the joblib/dask connection "
+                "timeout with:\n\n"
+                "parallel_backend('dask', wait_for_workers_timeout={})"
+            ).format(self.wait_for_workers_timeout,
+                     max(10, 2 * self.wait_for_workers_timeout))
+            raise TimeoutError(error_msg)
         return sum(self.client.ncores().values())
 
     def _to_func_args(self, func):

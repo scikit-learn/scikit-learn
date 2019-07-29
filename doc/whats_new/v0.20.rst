@@ -2,6 +2,50 @@
 
 .. currentmodule:: sklearn
 
+ .. _changes_0_20_4:
+
+Version 0.20.4
+==============
+
+**July 30, 2019**
+
+This is a bug-fix release with some bug fixes applied to version 0.20.3.
+
+Changelog
+---------
+
+The bundled version of joblib was upgraded from 0.13.0 to 0.13.2.
+
+:mod:`sklearn.cluster`
+..............................
+
+- |Fix| Fixed a bug in :class:`cluster.KMeans` where KMeans++ initialisation
+  could rarely result in an IndexError. :issue:`11756` by `Joel Nothman`_.
+
+:mod:`sklearn.compose`
+.....................
+
+- |Fix| Fixed an issue in :class:`compose.ColumnTransformer` where using
+  DataFrames whose column order differs between :func:``fit`` and
+  :func:``transform`` could lead to silently passing incorrect columns to the
+  ``remainder`` transformer.
+  :pr:`14237` by `Andreas Schuderer <schuderer>`.
+
+:mod:`sklearn.model_selection`
+..............................
+
+- |Fix| Fixed a bug where :class:`model_selection.StratifiedKFold`
+  shuffles each class's samples with the same ``random_state``,
+  making ``shuffle=True`` ineffective.
+  :issue:`13124` by :user:`Hanmin Qin <qinhanmin2014>`.
+
+:mod:`sklearn.neighbors`
+......................
+
+- |Fix| Fixed a bug in :class:`neighbors.KernelDensity` which could not be
+  restored from a pickle if ``sample_weight`` had been used.
+  :issue:`13772` by :user:`Aditya Vyas <aditya1702>`.
+
  .. _changes_0_20_3:
 
 Version 0.20.3
@@ -30,7 +74,7 @@ Changelog
   :issue:`12946` by :user:`Pierre Tallotte <pierretallotte>`.
 
 :mod:`sklearn.covariance`
-......................
+.........................
 
 - |Fix| Fixed a regression in :func:`covariance.graphical_lasso` so that
   the case `n_features=2` is handled correctly. :issue:`13276` by

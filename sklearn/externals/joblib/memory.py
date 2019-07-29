@@ -18,6 +18,7 @@ import functools
 import traceback
 import warnings
 import inspect
+import sys
 import weakref
 
 # Local imports
@@ -29,6 +30,9 @@ from ._memory_helpers import open_py_source
 from .logger import Logger, format_time, pformat
 from ._compat import _basestring, PY3_OR_LATER
 from ._store_backends import StoreBackendBase, FileSystemStoreBackend
+
+if sys.version_info[:2] >= (3, 4):
+    import pathlib
 
 
 FIRST_LINE_TEXT = "# first line:"
@@ -101,6 +105,9 @@ def _store_backend_factory(backend, location, verbose=0, backend_options=None):
     if backend_options is None:
         backend_options = {}
 
+    if (sys.version_info[:2] >= (3, 4) and isinstance(location, pathlib.Path)):
+        location = str(location)
+
     if isinstance(location, StoreBackendBase):
         return location
     elif isinstance(location, _basestring):
@@ -124,6 +131,12 @@ def _store_backend_factory(backend, location, verbose=0, backend_options=None):
         obj.configure(location, verbose=verbose,
                       backend_options=backend_options)
         return obj
+    elif location is not None:
+        warnings.warn(
+            "Instanciating a backend using a {} as a location is not "
+            "supported by joblib. Returning None instead.".format(
+                location.__class__.__name__), UserWarning)
+
 
     return None
 

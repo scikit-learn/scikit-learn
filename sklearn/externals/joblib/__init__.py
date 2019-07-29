@@ -14,7 +14,7 @@ data and has specific optimizations for `numpy` arrays. It is
     ==================== ===============================================
     **Documentation:**       https://joblib.readthedocs.io
 
-    **Download:**            http://pypi.python.org/pypi/joblib#downloads
+    **Download:**            https://pypi.python.org/pypi/joblib#downloads
 
     **Source code:**         https://github.com/joblib/joblib
 
@@ -106,7 +106,7 @@ Main features
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = '0.13.0'
+__version__ = '0.13.2'
 
 
 from .memory import Memory, MemorizedResult, register_store_backend
