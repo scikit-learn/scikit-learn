@@ -338,30 +338,19 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
         # Most frequent
         elif strategy == "most_frequent":
-            # scipy.stats.mstats.mode cannot be used because it will no work
-            # properly if the first element is masked and if its frequency
-            # is equal to the frequency of the most frequent valid element
-            # See https://github.com/scipy/scipy/issues/2636
+            # To be able access the elements by columns
+            X = X.transpose()
+            mask = mask.transpose()
 
-            if np.issubdtype(X.dtype, np.number):
-                mode_masked, count_masked = stats.mstats.mode(masked_X, axis=0)
-                most_frequent = mode_masked.data.flatten()
-                counts = count_masked.data.flatten().astype(int)
-                most_frequent[np.where(counts == 0)] = np.nan
-
-            # stats.mstats.mode requires that array elements are
-            # able to be cast as to floats
-            else:
-                # To be able access the elements by columns
-                X = X.transpose()
-                mask = mask.transpose()
-
+            if X.dtype.kind == "O":
                 most_frequent = np.empty(X.shape[0], dtype=object)
+            else:
+                most_frequent = np.empty(X.shape[0])
 
-                for i, (row, row_mask) in enumerate(zip(X[:], mask[:])):
-                    row_mask = np.logical_not(row_mask).astype(np.bool)
-                    row = row[row_mask]
-                    most_frequent[i] = _most_frequent(row, np.nan, 0)
+            for i, (row, row_mask) in enumerate(zip(X[:], mask[:])):
+                row_mask = np.logical_not(row_mask).astype(np.bool)
+                row = row[row_mask]
+                most_frequent[i] = _most_frequent(row, np.nan, 0)
 
             return most_frequent
 
