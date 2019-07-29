@@ -1454,7 +1454,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         dual gap for optimality and continues until it is smaller
         than ``tol``.
 
-    cv : int, cross-validation generator or an iterable, default=None
+    cv : int, cross-validation generator, iterable or None, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
