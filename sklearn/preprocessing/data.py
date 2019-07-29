@@ -1548,7 +1548,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
                 # What follows is a faster implementation of:
                 # for i, comb in enumerate(combinations):
                 #     XP[:, i] = X[:, comb].prod(1)
-                # This new implementation uses two optimisations.
+                # This implementation uses two optimisations.
                 # First one is broadcasting,
                 # multiply ([X1, ..., Xn], X1) -> [X1 X1, ..., Xn X1]
                 # multiply ([X2, ..., Xn], X2) -> [X2 X2, ..., Xn X2]
