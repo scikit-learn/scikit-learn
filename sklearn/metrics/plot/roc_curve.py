@@ -1,11 +1,11 @@
 from .. import auc
 from .. import roc_curve
 
-from ...utils import check_matplotlib_support  # noqa
+from ...utils import check_matplotlib_support
 
 
 class RocCurveVisualizer:
-    """ROC Curve visualization
+    """ROC Curve visualization.
 
     Parameters
     ----------
@@ -23,7 +23,7 @@ class RocCurveVisualizer:
     line_ : matplotlib Artist
         ROC Curve.
     ax_ : matplotlib Axes
-        Axes with ROC curv
+        Axes with ROC Curve
     figure_ : matplotlib Figure
         Figure containing the curve
     """
@@ -48,8 +48,8 @@ class RocCurveVisualizer:
             Name of ROC Curve for labeling. If `None`, use the name of the
             estimator.
         """
-        check_matplotlib_support('plot_roc_curve')  # noqa
-        import matplotlib.pyplot as plt  # noqa
+        check_matplotlib_support('plot_roc_curve')
+        import matplotlib.pyplot as plt
 
         if ax is None:
             fig, ax = plt.subplots()
@@ -102,7 +102,9 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
 
     response_method : 'predict_proba', 'decision_function', or 'auto' \
     default='auto'
-        Method to call estimator to get target scores
+        Specifies whether to use `predict_proba` or `decision_function` as the
+        target response. If set to 'auto', `predict_proba` is tried first
+        and if it does not exist `decision_function` is tried next.
 
     name : str or None, default=None
         Name of ROC Curve for labeling. If `None`, use the name of the

@@ -1007,8 +1007,8 @@ See the :ref:`metrics` section of the user guide for further details.
    metrics.pairwise_distances_chunked
 
 
-Plotting metrics
-----------------
+Plotting tools
+--------------
 
 .. automodule:: sklearn.metrics.plot
    :no-members:

@@ -62,7 +62,6 @@ cv = StratifiedKFold(n_splits=6)
 classifier = svm.SVC(kernel='linear', probability=True,
                      random_state=random_state)
 
-visualizers = []
 tprs = []
 aucs = []
 mean_fpr = np.linspace(0, 1, 100)
@@ -73,8 +72,6 @@ for i, (train, test) in enumerate(cv.split(X, y)):
     viz = plot_roc_curve(classifier, X[test], y[test],
                          name='ROC fold {}'.format(i),
                          alpha=0.3, lw=1, ax=ax)
-    visualizers.append(viz)
-
     interp_tpr = interp(mean_fpr, viz.fpr, viz.tpr)
     interp_tpr[0] = 0.0
     tprs.append(interp_tpr)
