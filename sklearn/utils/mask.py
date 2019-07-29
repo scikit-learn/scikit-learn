@@ -4,7 +4,7 @@ from . import is_scalar_nan
 from .fixes import _object_dtype_isnan
 
 
-def _get_missing_mask(X, value_to_mask):
+def _get_mask(X, value_to_mask):
     """Compute the boolean mask X == missing_values."""
     if is_scalar_nan(value_to_mask):
         if X.dtype.kind == "f":

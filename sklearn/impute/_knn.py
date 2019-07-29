@@ -8,7 +8,7 @@ from ..neighbors.base import _get_weights
 from ..neighbors.base import _check_weights
 from ..utils import check_array
 from ..utils import is_scalar_nan
-from ..utils.mask import _get_missing_mask
+from ..utils.mask import _get_mask
 from ..utils.validation import check_is_fitted
 
 
@@ -141,7 +141,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
 
         # Retrieve donor values and calculate kNN score
         donors = fit_X_col[potential_donors_idx].take(donors_idx)
-        donors_missing_mask = _get_missing_mask(donors, self.missing_values)
+        donors_missing_mask = _get_mask(donors, self.missing_values)
         donors = np.ma.array(donors, mask=donors_missing_mask)
 
         return np.ma.average(donors, axis=1, weights=weight_matrix).data
@@ -175,7 +175,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
         X = check_array(X, accept_sparse=False, dtype=FLOAT_DTYPES,
                         force_all_finite=force_all_finite, copy=self.copy)
 
-        mask = _get_missing_mask(X, self.missing_values)
+        mask = _get_mask(X, self.missing_values)
         self.weights = _check_weights(self.weights)
         self._fit_X = X
 
@@ -213,7 +213,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
             raise ValueError("Incompatible dimension between the fitted "
                              "dataset and the one to be transformed")
 
-        mask = _get_missing_mask(X, self.missing_values)
+        mask = _get_mask(X, self.missing_values)
         if not np.any(mask):
             return X
 
@@ -230,11 +230,11 @@ class KNNImputer(TransformerMixin, BaseEstimator):
         dist_idx_map = np.zeros(X.shape[0], dtype=np.int)
         dist_idx_map[row_missing_idx] = np.arange(0, row_missing_idx.shape[0])
 
-        invalid_mask = _get_missing_mask(self.statistics_, np.nan)
+        invalid_mask = _get_mask(self.statistics_, np.nan)
         valid_mask = np.logical_not(invalid_mask)
         valid_statistics_indexes = np.flatnonzero(valid_mask)
 
-        mask_fit_X = _get_missing_mask(self._fit_X, self.missing_values)
+        mask_fit_X = _get_mask(self._fit_X, self.missing_values)
         non_missing_fix_X = np.logical_not(mask_fit_X)
         # Find and impute missing
         for col in range(X.shape[1]):

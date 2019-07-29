@@ -5,12 +5,12 @@ from sklearn.impute import KNNImputer
 from sklearn.metrics.pairwise import nan_euclidean_distances
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.neighbors import KNeighborsRegressor
-from sklearn.utils.mask import _get_missing_mask
+from sklearn.utils.mask import _get_mask
 from sklearn.utils.testing import assert_allclose
 
 
 def _missing_mean(X, missing_value):
-    masked_X = np.ma.array(X, mask=_get_missing_mask(X, missing_value))
+    masked_X = np.ma.array(X, mask=_get_mask(X, missing_value))
     masked_X_mean = masked_X.mean(axis=0)
     output = masked_X_mean.data
     output[masked_X_mean.mask] = np.nan
