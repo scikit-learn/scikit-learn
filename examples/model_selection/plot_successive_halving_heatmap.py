@@ -11,7 +11,7 @@ import pandas as pd
 from sklearn.svm import SVC
 from sklearn import datasets
 from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import GridSuccessiveHalving
+from sklearn.model_selection import GridHalvingSearchCV
 
 
 rng = np.random.RandomState(0)
@@ -23,7 +23,7 @@ param_grid = {'gamma': gammas, 'C': Cs}
 
 clf = SVC(random_state=rng)
 tic = time()
-gsh = GridSuccessiveHalving(
+gsh = GridHalvingSearchCV(
     estimator=clf,
     param_grid=param_grid,
     budget_on='n_samples',  # budget is the number of samples

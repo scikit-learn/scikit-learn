@@ -9,7 +9,7 @@ from scipy.stats import randint
 import numpy as np
 
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import RandomSuccessiveHalving
+from sklearn.model_selection import RandomHalvingSearchCV
 
 
 rng = np.random.RandomState(0)
@@ -24,7 +24,7 @@ param_dist = {"max_depth": [3, None],
               "bootstrap": [True, False],
               "criterion": ["gini", "entropy"]}
 
-rsh = RandomSuccessiveHalving(
+rsh = RandomHalvingSearchCV(
     estimator=clf,
     param_distributions=param_dist,
     budget_on='n_samples',  # budget is the number of samples

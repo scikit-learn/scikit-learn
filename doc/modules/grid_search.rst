@@ -237,8 +237,8 @@ the search.
 Searching optimal parameters with successive halving
 ====================================================
 
-Scikit-learn also provides the :class:`GridSuccessiveHalving` and
-:class:`RandomSuccessiveHalving` estimators that can be used to
+Scikit-learn also provides the :class:`GridHalvingSearchCV` and
+:class:`RandomHalvingSearchCV` estimators that can be used to
 search a parameter space using successive halving [1]_ [2]_. Successive
 halving is an iterative selection process where all candidates are evaluated
 with a small amount of resources at the first iteration. Only a subset of
@@ -279,14 +279,14 @@ iterations of a random forest::
 
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.ensemble import RandomForestClassifier
-    >>> from sklearn.model_selection import GridSuccessiveHalving
+    >>> from sklearn.model_selection import GridHalvingSearchCV
     >>> import pandas as pd
     >>>
     >>> parameters = {'max_depth': [3, 5, 10],
     ...               'min_samples_split': [2, 5, 10]}
     >>> base_estimator = RandomForestClassifier(random_state=0)
     >>> X, y = make_classification(n_samples=1000, random_state=0)
-    >>> sh = GridSuccessiveHalving(base_estimator, parameters, cv=5,
+    >>> sh = GridHalvingSearchCV(base_estimator, parameters, cv=5,
     ...                            ratio=2,
     ...                            budget_on='n_estimators',
     ...                            max_budget=30,
@@ -312,13 +312,13 @@ a big budget, this may be a waste of resource::
 
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.svm import SVC
-    >>> from sklearn.model_selection import GridSuccessiveHalving
+    >>> from sklearn.model_selection import GridHalvingSearchCV
     >>> import pandas as pd
     >>> parameters = {'kernel': ('linear', 'rbf'),
     ...               'C': [1, 10, 100]}
     >>> base_estimator = SVC(gamma='scale')
     >>> X, y = make_classification(n_samples=1000)
-    >>> sh = GridSuccessiveHalving(base_estimator, parameters, cv=5,
+    >>> sh = GridHalvingSearchCV(base_estimator, parameters, cv=5,
     ...                            ratio=2).fit(X, y)
     >>> results = pd.DataFrame.from_dict(sh.cv_results_)
     >>> results.groupby('iter').r_i.unique()
@@ -333,7 +333,7 @@ is ``n_samples=1000``. Note in this case that ``r_min = r_0 = 20``. In order
 for the last iteration to use as many resources as possible, you can use the
 ``force_exhaust_budget`` parameter::
 
-    >>> sh = GridSuccessiveHalving(base_estimator, parameters, cv=5,
+    >>> sh = GridHalvingSearchCV(base_estimator, parameters, cv=5,
     ...                            ratio=2, force_exhaust_budget=True,
     ...                            ).fit(X, y)
     >>> results = pd.DataFrame.from_dict(sh.cv_results_)
@@ -357,7 +357,7 @@ the number of candidates, the last iteration may have to evaluate more than
 ``ratio`` candidates.::
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.svm import SVC
-    >>> from sklearn.model_selection import GridSuccessiveHalving
+    >>> from sklearn.model_selection import GridHalvingSearchCV
     >>> import pandas as pd
     >>>
     >>>
@@ -365,7 +365,7 @@ the number of candidates, the last iteration may have to evaluate more than
     ...               'C': [1, 10, 100]}
     >>> base_estimator = SVC(gamma='scale')
     >>> X, y = make_classification(n_samples=1000)
-    >>> sh = GridSuccessiveHalving(base_estimator, parameters, cv=5,
+    >>> sh = GridHalvingSearchCV(base_estimator, parameters, cv=5,
     ...                            ratio=2,
     ...                            max_budget=40,
     ...                            aggressive_elimination=False,
@@ -390,7 +390,7 @@ process to end up with less than ``ratio`` candidates at the last
 iteration. To do this, the process will eliminate as many candidates as
 necessary using ``r_min`` resources::
 
-    >>> sh = GridSuccessiveHalving(base_estimator, parameters, cv=5,
+    >>> sh = GridHalvingSearchCV(base_estimator, parameters, cv=5,
     ...                            ratio=2,
     ...                            max_budget=40,
     ...                            aggressive_elimination=True,

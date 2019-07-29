@@ -12,7 +12,7 @@ from ._split import check_cv
 from ..utils import resample
 
 
-__all__ = ['GridSuccessiveHalving', 'RandomSuccessiveHalving']
+__all__ = ['GridHalvingSearchCV', 'RandomHalvingSearchCV']
 
 
 def _refit_callable(results):
@@ -259,7 +259,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
         pass
 
 
-class GridSuccessiveHalving(BaseSuccessiveHalving):
+class GridHalvingSearchCV(BaseSuccessiveHalving):
     """Search over specified parameter values with successive halving.
 
     The search strategy starts evaluating all the candidates with a small
@@ -528,7 +528,7 @@ class GridSuccessiveHalving(BaseSuccessiveHalving):
 
     See Also
     --------
-    :class:`RandomSuccessiveHalving`:
+    :class:`RandomHalvingSearchCV`:
         Random search over a set of parameters using successive halving.
     """
     _required_parameters = ["estimator", "param_grid"]
@@ -556,7 +556,7 @@ class GridSuccessiveHalving(BaseSuccessiveHalving):
         return ParameterGrid(self.param_grid)
 
 
-class RandomSuccessiveHalving(BaseSuccessiveHalving):
+class RandomHalvingSearchCV(BaseSuccessiveHalving):
     """Randomized search on hyper parameters.
 
     The search strategy starts evaluating all the candidates with a small
@@ -830,7 +830,7 @@ class RandomSuccessiveHalving(BaseSuccessiveHalving):
 
     See Also
     --------
-    :class:`GridSuccessiveHalving`:
+    :class:`GridHalvingSearchCV`:
         Search over a grid of parameters using successive halving.
     """
     _required_parameters = ["estimator", "param_distributions"]

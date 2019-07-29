@@ -29,12 +29,12 @@ from ._search import ParameterGrid
 from ._search import ParameterSampler
 from ._search import fit_grid_point
 
-from ._search_successive_halving import GridSuccessiveHalving
-from ._search_successive_halving import RandomSuccessiveHalving
+from ._search_successive_halving import GridHalvingSearchCV
+from ._search_successive_halving import RandomHalvingSearchCV
 
 __all__ = ('BaseCrossValidator',
            'GridSearchCV',
-           'GridSuccessiveHalving',
+           'GridHalvingSearchCV',
            'TimeSeriesSplit',
            'KFold',
            'GroupKFold',
@@ -49,7 +49,7 @@ __all__ = ('BaseCrossValidator',
            'ParameterSampler',
            'PredefinedSplit',
            'RandomizedSearchCV',
-           'RandomSuccessiveHalving',
+           'RandomHalvingSearchCV',
            'ShuffleSplit',
            'StratifiedKFold',
            'StratifiedShuffleSplit',
