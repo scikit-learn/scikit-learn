@@ -240,12 +240,12 @@ def test_safe_indexing_axis_0_container(idx, array_type):
 
 
 @pytest.mark.parametrize(
-    "array_type", [None, np.asarray, sp.csr_matrix],
+    "array_type", [list, np.asarray, sp.csr_matrix],
     ids=["list", "array", "sparse"]
 )
 def test_safe_indexing_axis_0_slice(array_type):
     X = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    X = array_type(X) if array_type is not None else X
+    X = array_type(X)
     idx = slice(0, 2)
     X_subset = safe_indexing(X, idx, axis=0)
     X_expect = [[1, 2, 3], [4, 5, 6]]
@@ -254,12 +254,12 @@ def test_safe_indexing_axis_0_slice(array_type):
 
 
 @pytest.mark.parametrize(
-    "array_type", [None, np.asarray, sp.csr_matrix],
+    "array_type", [list, np.asarray, sp.csr_matrix],
     ids=["list", "array", "sparse"]
 )
 def test_safe_indexing_axis_0_scalar(array_type):
     X = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    X = array_type(X) if array_type is not None else X
+    X = array_type(X)
     idx = 1  # scalar indexing
     X_subset = safe_indexing(X, idx, axis=0)
     X_expect = [4, 5, 6]

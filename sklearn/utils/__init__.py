@@ -196,7 +196,7 @@ def safe_indexing(X, indices, axis=0):
             - container: lists, slices, boolean masks: output is 2D.
               Supported data types for containers:
                 - integer or boolean (positional): supported for arrays, sparse
-                  and dataframes
+                  matrices and dataframes
         - If `X` is a dataframe and `axis=1`, indices support string data type
           (key-based) as a scalar or a container. The output dimension will be
           identical to the above case.
