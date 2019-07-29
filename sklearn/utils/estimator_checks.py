@@ -399,10 +399,6 @@ def set_checking_parameters(estimator):
     if name == 'OneHotEncoder':
         estimator.set_params(handle_unknown='ignore')
 
-    # set voting='soft' to be able to use predict_proba
-    if name == 'VotingClassifier':
-        estimator.set_params(voting='soft')
-
 
 class NotAnArray:
     """An object that is convertible to an array
