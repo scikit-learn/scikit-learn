@@ -4,7 +4,14 @@
 # License: BSD 3 clause
 
 import numpy as np
-from numpy.lib.mixins import NDArrayOperatorsMixin
+
+# NDArrayOperatorsMixin was added in numpy 1.13
+# TODO: cleanup once we support numpy 1.13+
+try:
+    from numpy.lib.mixins import NDArrayOperatorsMixin
+except ImportError:
+    from .mixins import NDArrayOperatorsMixin
+
 from .validation import check_array, column_or_1d
 
 
