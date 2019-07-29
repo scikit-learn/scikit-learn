@@ -7,7 +7,7 @@
 Version 0.20.3
 ==============
 
-**July 29, 2019**
+**July 30, 2019**
 
 This is a bug-fix release with some bug fixes applied to version 0.20.3.
 
