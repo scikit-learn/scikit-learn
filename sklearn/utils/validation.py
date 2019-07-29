@@ -15,7 +15,6 @@ import numpy as np
 import scipy.sparse as sp
 from distutils.version import LooseVersion
 from inspect import signature
-
 from numpy.core.numeric import ComplexWarning
 import joblib
 
@@ -316,7 +315,7 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
     if force_all_finite:
         if not hasattr(spmatrix, "data"):
             warnings.warn("Can't check %s sparse matrix for nan or inf."
-                          % spmatrix.format)
+                          % spmatrix.format, stacklevel=2)
         else:
             _assert_all_finite(spmatrix.data,
                                allow_nan=force_all_finite == 'allow-nan')
@@ -431,7 +430,11 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
             "'warn_on_dtype' is deprecated in version 0.21 and will be "
             "removed in 0.23. Don't set `warn_on_dtype` to remove this "
             "warning.",
-            DeprecationWarning)
+            DeprecationWarning, stacklevel=2)
+
+    # duck-typing to avoid a circular import
+    if hasattr(array, "_data") and hasattr(array, "_feature_names"):
+        array = array._data
 
     # store reference to original array to check if copy is needed when
     # function returns
@@ -531,7 +534,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
                 "a float dtype before using it in scikit-learn, "
                 "for example by using "
                 "your_array = your_array.astype(np.float64).",
-                FutureWarning)
+                FutureWarning, stacklevel=2)
 
         # make sure we actually converted to numeric:
         if dtype_numeric and array.dtype.kind == "O":
@@ -562,7 +565,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     if warn_on_dtype and dtype_orig is not None and array.dtype != dtype_orig:
         msg = ("Data with input dtype %s was converted to %s%s."
                % (dtype_orig, array.dtype, context))
-        warnings.warn(msg, DataConversionWarning)
+        warnings.warn(msg, DataConversionWarning, stacklevel=2)
 
     if copy and np.may_share_memory(array, array_orig):
         array = np.array(array, dtype=dtype, order=order)
@@ -855,7 +858,8 @@ def check_symmetric(array, tol=1E-10, raise_warning=True,
             raise ValueError("Array must be symmetric")
         if raise_warning:
             warnings.warn("Array is not symmetric, and will be converted "
-                          "to symmetric by average with its transpose.")
+                          "to symmetric by average with its transpose.",
+                          stacklevel=2)
         if sp.issparse(array):
             conversion = 'to' + array.format
             array = getattr(0.5 * (array + array.T), conversion)()
@@ -983,6 +987,44 @@ def check_scalar(x, name, target_type, min_val=None, max_val=None):
 
     if max_val is not None and x > max_val:
         raise ValueError('`{}`= {}, must be <= {}.'.format(name, x, max_val))
+
+
+def _feature_names(X):
+    if isinstance(X, NamedArray):
+        return X.features
+    elif hasattr(X, 'columns'):
+        return X.columns
+    else:
+        return None
+
+
+def _check_NamedArray(X, feature_names):
+    # need to ignore feature names on a bunch of input types
+    # not sure how to handle this.
+    if feature_names is None and (
+            isinstance(X, list) or
+            isinstance(X, tuple) or
+            isinstance(X, dict)):
+        print("returning input")
+        return X
+
+    if feature_names is None:
+        feature_names = ['x%s' % i for i in range(X.shape[1])]
+
+    if isinstance(X, NamedArray):
+        X.features = feature_names
+    else:
+        X = NamedArray(X, feature_names)
+
+    return X
+
+
+def _check_feature_names(X, fitted_estimator):
+    if not hasattr(fitted_estimator, 'feature_names_out_'):
+        return X
+
+    return _check_NamedArray(
+        X, fitted_estimator.feature_names_out_)
 
 
 def _check_sample_weight(sample_weight, X, dtype=None):
