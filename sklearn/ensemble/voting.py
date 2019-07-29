@@ -13,18 +13,22 @@ This module contains:
 #
 # License: BSD 3 clause
 
-import numpy as np
 from abc import abstractmethod
+
+import numpy as np
+
+from joblib import Parallel, delayed
 
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import TransformerMixin
 from ..base import clone
 from ..preprocessing import LabelEncoder
-from ..utils._joblib import Parallel, delayed
-from ..utils.validation import has_fit_parameter, check_is_fitted
-from ..utils.metaestimators import _BaseComposition
 from ..utils import Bunch
+from ..utils.validation import check_is_fitted
+from ..utils.metaestimators import _BaseComposition
+from ..utils.multiclass import check_classification_targets
+from ..utils.validation import column_or_1d
 
 
 def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
@@ -66,7 +70,7 @@ class _BaseVoting(_BaseComposition, TransformerMixin):
 
     def _predict(self, X):
         """Collect results from clf.predict calls. """
-        return np.asarray([clf.predict(X) for clf in self.estimators_]).T
+        return np.asarray([est.predict(X) for est in self.estimators_]).T
 
     @abstractmethod
     def fit(self, X, y, sample_weight=None):
@@ -263,6 +267,7 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
         -------
         self : object
         """
+        check_classification_targets(y)
         if isinstance(y, np.ndarray) and len(y.shape) > 1 and y.shape[1] > 1:
             raise NotImplementedError('Multilabel and multi-output'
                                       ' classification is not supported.')
@@ -312,9 +317,6 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
 
     def _predict_proba(self, X):
         """Predict class probabilities for X in 'soft' voting """
-        if self.voting == 'hard':
-            raise AttributeError("predict_proba is not available when"
-                                 " voting=%r" % self.voting)
         check_is_fitted(self, 'estimators_')
         avg = np.average(self._collect_probas(X), axis=0,
                          weights=self._weights_not_none)
@@ -334,6 +336,9 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
         avg : array-like, shape (n_samples, n_classes)
             Weighted average probability for each class per sample.
         """
+        if self.voting == 'hard':
+            raise AttributeError("predict_proba is not available when"
+                                 " voting=%r" % self.voting)
         return self._predict_proba
 
     def transform(self, X):
@@ -453,6 +458,7 @@ class VotingRegressor(_BaseVoting, RegressorMixin):
         -------
         self : object
         """
+        y = column_or_1d(y, warn=True)
         return super().fit(X, y, sample_weight)
 
     def predict(self, X):

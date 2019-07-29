@@ -101,7 +101,8 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
     Attributes
     ----------
-    coef_ : array, shape = [n_features] if n_classes == 2 else [n_classes, n_features]
+    coef_ : array, shape = [1, n_features] if n_classes == 2 \
+else [n_classes, n_features]
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
@@ -111,16 +112,20 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
 
+    classes_ : array of shape = (n_classes,)
+        The unique classes labels.
+
+    n_iter_ : int
+        Maximum number of iterations run across all classes.
+
     Examples
     --------
     >>> from sklearn.svm import LinearSVC
     >>> from sklearn.datasets import make_classification
     >>> X, y = make_classification(n_features=4, random_state=0)
     >>> clf = LinearSVC(random_state=0, tol=1e-5)
-    >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-    LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
-         intercept_scaling=1, loss='squared_hinge', max_iter=1000,
-         multi_class='ovr', penalty='l2', random_state=0, tol=1e-05, verbose=0)
+    >>> clf.fit(X, y)
+    LinearSVC(random_state=0, tol=1e-05)
     >>> print(clf.coef_)
     [[0.085... 0.394... 0.498... 0.375...]]
     >>> print(clf.intercept_)
@@ -208,7 +213,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         -------
         self : object
         """
-        # FIXME Remove l1/l2 support in 1.0 -----------------------------------
+        # FIXME Remove l1/l2 support in 0.23 ----------------------------------
         msg = ("loss='%s' has been deprecated in favor of "
                "loss='%s' as of 0.16. Backward compatibility"
                " for the loss='%s' will be removed in %s")
@@ -216,7 +221,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         if self.loss in ('l1', 'l2'):
             old_loss = self.loss
             self.loss = {'l1': 'hinge', 'l2': 'squared_hinge'}.get(self.loss)
-            warnings.warn(msg % (old_loss, self.loss, old_loss, '1.0'),
+            warnings.warn(msg % (old_loss, self.loss, old_loss, '0.23'),
                           DeprecationWarning)
         # ---------------------------------------------------------------------
 
@@ -323,16 +328,17 @@ class LinearSVR(LinearModel, RegressorMixin):
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
 
+    n_iter_ : int
+        Maximum number of iterations run across all classes.
+
     Examples
     --------
     >>> from sklearn.svm import LinearSVR
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(n_features=4, random_state=0)
     >>> regr = LinearSVR(random_state=0, tol=1e-5)
-    >>> regr.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-    LinearSVR(C=1.0, dual=True, epsilon=0.0, fit_intercept=True,
-         intercept_scaling=1.0, loss='epsilon_insensitive', max_iter=1000,
-         random_state=0, tol=1e-05, verbose=0)
+    >>> regr.fit(X, y)
+    LinearSVR(random_state=0, tol=1e-05)
     >>> print(regr.coef_)
     [16.35... 26.91... 42.30... 60.47...]
     >>> print(regr.intercept_)
@@ -394,7 +400,7 @@ class LinearSVR(LinearModel, RegressorMixin):
         -------
         self : object
         """
-        # FIXME Remove l1/l2 support in 1.0 -----------------------------------
+        # FIXME Remove l1/l2 support in 0.23 ----------------------------------
         msg = ("loss='%s' has been deprecated in favor of "
                "loss='%s' as of 0.16. Backward compatibility"
                " for the loss='%s' will be removed in %s")
@@ -404,7 +410,7 @@ class LinearSVR(LinearModel, RegressorMixin):
             self.loss = {'l1': 'epsilon_insensitive',
                          'l2': 'squared_epsilon_insensitive'
                          }.get(self.loss)
-            warnings.warn(msg % (old_loss, self.loss, old_loss, '1.0'),
+            warnings.warn(msg % (old_loss, self.loss, old_loss, '0.23'),
                           DeprecationWarning)
         # ---------------------------------------------------------------------
 
@@ -568,6 +574,9 @@ class SVC(BaseSVC):
     fit_status_ : int
         0 if correctly fitted, 1 otherwise (will raise warning)
 
+    classes_ : array of shape = [n_classes]
+        The classes labels.
+
     probA_ : array, shape = [n_class * (n_class-1) / 2]
     probB_ : array, shape = [n_class * (n_class-1) / 2]
         If probability=True, the parameters learned in Platt scaling to
@@ -586,11 +595,8 @@ class SVC(BaseSVC):
     >>> y = np.array([1, 1, 2, 2])
     >>> from sklearn.svm import SVC
     >>> clf = SVC(gamma='auto')
-    >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
-    SVC(C=1.0, break_ties=False, cache_size=200, class_weight=None, coef0=0.0,
-        decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
-        max_iter=-1, probability=False,
-        random_state=None, shrinking=True, tol=0.001, verbose=False)
+    >>> clf.fit(X, y)
+    SVC(gamma='auto')
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -762,6 +768,9 @@ class NuSVC(BaseSVC):
     intercept_ : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
+    classes_ : array of shape = (n_classes,)
+        The unique classes labels.
+
     Examples
     --------
     >>> import numpy as np
@@ -769,11 +778,8 @@ class NuSVC(BaseSVC):
     >>> y = np.array([1, 1, 2, 2])
     >>> from sklearn.svm import NuSVC
     >>> clf = NuSVC()
-    >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
-    NuSVC(break_ties=False, cache_size=200, class_weight=None, coef0=0.0,
-          decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
-          max_iter=-1, nu=0.5, probability=False,
-          random_state=None, shrinking=True, tol=0.001, verbose=False)
+    >>> clf.fit(X, y)
+    NuSVC()
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -908,9 +914,8 @@ class SVR(BaseLibSVM, RegressorMixin):
     >>> y = rng.randn(n_samples)
     >>> X = rng.randn(n_samples, n_features)
     >>> clf = SVR(C=1.0, epsilon=0.2)
-    >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
-    SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.2, gamma='scale',
-        kernel='rbf', max_iter=-1, shrinking=True, tol=0.001, verbose=False)
+    >>> clf.fit(X, y)
+    SVR(epsilon=0.2)
 
     See also
     --------
@@ -1035,10 +1040,8 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     >>> y = np.random.randn(n_samples)
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = NuSVR(C=1.0, nu=0.1)
-    >>> clf.fit(X, y)  #doctest: +NORMALIZE_WHITESPACE
-    NuSVR(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma='scale',
-          kernel='rbf', max_iter=-1, nu=0.1, shrinking=True, tol=0.001,
-          verbose=False)
+    >>> clf.fit(X, y)
+    NuSVR(nu=0.1)
 
     See also
     --------
@@ -1155,6 +1158,15 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
         The offset is the opposite of `intercept_` and is provided for
         consistency with other outlier detection algorithms.
 
+    Examples
+    --------
+    >>> from sklearn.svm import OneClassSVM
+    >>> X = [[0], [0.44], [0.45], [0.46], [1]]
+    >>> clf = OneClassSVM(gamma='auto').fit(X)
+    >>> clf.predict(X)
+    array([-1,  1,  1,  1, -1])
+    >>> clf.score_samples(X)  # doctest: +ELLIPSIS
+    array([1.7798..., 2.0547..., 2.0556..., 2.0561..., 1.7332...])
     """
 
     _impl = 'one_class'

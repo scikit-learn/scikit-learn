@@ -17,14 +17,13 @@ from distutils.version import LooseVersion
 from inspect import signature
 
 from numpy.core.numeric import ComplexWarning
+import joblib
 
 from .fixes import _object_dtype_isnan
 from .. import get_config as _get_config
 from ..exceptions import NonBLASDotWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
-from ._joblib import Memory
-from ._joblib import __version__ as joblib_version
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
@@ -130,17 +129,18 @@ def _is_arraylike(x):
 
 def _num_samples(x):
     """Return number of samples in array-like x."""
+    message = 'Expected sequence or array-like, got %s' % type(x)
     if hasattr(x, 'fit') and callable(x.fit):
         # Don't get num_samples from an ensembles length!
-        raise TypeError('Expected sequence or array-like, got '
-                        'estimator %s' % x)
+        raise TypeError(message)
+
     if not hasattr(x, '__len__') and not hasattr(x, 'shape'):
         if hasattr(x, '__array__'):
             x = np.asarray(x)
         else:
-            raise TypeError("Expected sequence or array-like, got %s" %
-                            type(x))
-    if hasattr(x, 'shape'):
+            raise TypeError(message)
+
+    if hasattr(x, 'shape') and x.shape is not None:
         if len(x.shape) == 0:
             raise TypeError("Singleton array %r cannot be considered"
                             " a valid collection." % x)
@@ -148,10 +148,12 @@ def _num_samples(x):
         # Dask dataframes may not return numeric shape[0] value
         if isinstance(x.shape[0], numbers.Integral):
             return x.shape[0]
-        else:
-            return len(x)
-    else:
+
+    try:
         return len(x)
+    except TypeError:
+        raise TypeError(message)
+
 
 
 def check_memory(memory):
@@ -176,10 +178,10 @@ def check_memory(memory):
     """
 
     if memory is None or isinstance(memory, str):
-        if LooseVersion(joblib_version) < '0.12':
-            memory = Memory(cachedir=memory, verbose=0)
+        if LooseVersion(joblib.__version__) < '0.12':
+            memory = joblib.Memory(cachedir=memory, verbose=0)
         else:
-            memory = Memory(location=memory, verbose=0)
+            memory = joblib.Memory(location=memory, verbose=0)
     elif not hasattr(memory, 'cache'):
         raise ValueError("'memory' should be None, a string or have the same"
                          " interface as joblib.Memory."
@@ -314,7 +316,7 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
     if force_all_finite:
         if not hasattr(spmatrix, "data"):
             warnings.warn("Can't check %s sparse matrix for nan or inf."
-                          % spmatrix.format)
+                          % spmatrix.format, stacklevel=2)
         else:
             _assert_all_finite(spmatrix.data,
                                allow_nan=force_all_finite == 'allow-nan')
@@ -429,7 +431,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
             "'warn_on_dtype' is deprecated in version 0.21 and will be "
             "removed in 0.23. Don't set `warn_on_dtype` to remove this "
             "warning.",
-            DeprecationWarning)
+            DeprecationWarning, stacklevel=2)
 
     # store reference to original array to check if copy is needed when
     # function returns
@@ -529,7 +531,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
                 "a float dtype before using it in scikit-learn, "
                 "for example by using "
                 "your_array = your_array.astype(np.float64).",
-                FutureWarning)
+                FutureWarning, stacklevel=2)
 
         # make sure we actually converted to numeric:
         if dtype_numeric and array.dtype.kind == "O":
@@ -560,7 +562,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     if warn_on_dtype and dtype_orig is not None and array.dtype != dtype_orig:
         msg = ("Data with input dtype %s was converted to %s%s."
                % (dtype_orig, array.dtype, context))
-        warnings.warn(msg, DataConversionWarning)
+        warnings.warn(msg, DataConversionWarning, stacklevel=2)
 
     if copy and np.may_share_memory(array, array_orig):
         array = np.array(array, dtype=dtype, order=order)
@@ -773,7 +775,7 @@ def check_random_state(seed):
     """
     if seed is None or seed is np.random:
         return np.random.mtrand._rand
-    if isinstance(seed, (numbers.Integral, np.integer)):
+    if isinstance(seed, numbers.Integral):
         return np.random.RandomState(seed)
     if isinstance(seed, np.random.RandomState):
         return seed
@@ -853,7 +855,8 @@ def check_symmetric(array, tol=1E-10, raise_warning=True,
             raise ValueError("Array must be symmetric")
         if raise_warning:
             warnings.warn("Array is not symmetric, and will be converted "
-                          "to symmetric by average with its transpose.")
+                          "to symmetric by average with its transpose.",
+                          stacklevel=2)
         if sp.issparse(array):
             conversion = 'to' + array.format
             array = getattr(0.5 * (array + array.T), conversion)()
@@ -981,3 +984,53 @@ def check_scalar(x, name, target_type, min_val=None, max_val=None):
 
     if max_val is not None and x > max_val:
         raise ValueError('`{}`= {}, must be <= {}.'.format(name, x, max_val))
+
+
+def _check_sample_weight(sample_weight, X, dtype=None):
+    """Validate sample weights.
+
+    Parameters
+    ----------
+    sample_weight : {ndarray, Number or None}, shape (n_samples,)
+       Input sample weights.
+
+    X : nd-array, list or sparse matrix
+        Input data.
+
+    dtype: dtype
+       dtype of the validated `sample_weight`.
+       If None, and the input `sample_weight` is an array, the dtype of the
+       input is preserved; otherwise an array with the default numpy dtype
+       is be allocated.  If `dtype` is not one of `float32`, `float64`,
+       `None`, the output will be of dtype `float64`.
+
+    Returns
+    -------
+    sample_weight : ndarray, shape (n_samples,)
+       Validated sample weight. It is guaranteed to be "C" contiguous.
+    """
+    n_samples = _num_samples(X)
+
+    if dtype is not None and dtype not in [np.float32, np.float64]:
+        dtype = np.float64
+
+    if sample_weight is None or isinstance(sample_weight, numbers.Number):
+        if sample_weight is None:
+            sample_weight = np.ones(n_samples, dtype=dtype)
+        else:
+            sample_weight = np.full(n_samples, sample_weight,
+                                    dtype=dtype)
+    else:
+        if dtype is None:
+            dtype = [np.float64, np.float32]
+        sample_weight = check_array(
+                sample_weight, accept_sparse=False,
+                ensure_2d=False, dtype=dtype, order="C"
+        )
+        if sample_weight.ndim != 1:
+            raise ValueError("Sample weights must be 1D array or scalar")
+
+        if sample_weight.shape != (n_samples,):
+            raise ValueError("sample_weight.shape == {}, expected {}!"
+                             .format(sample_weight.shape, (n_samples,)))
+    return sample_weight
