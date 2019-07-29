@@ -362,10 +362,7 @@ class PCA(_BasePCA):
         Notes
         -----
         This method returns a Fortran-ordered array.To convert it to a
-        C-ordered array, use 'np.ascontiguousarray' e.g
-
-        >>> y = PCA().fit_transform(x)
-        >>> y = np.ascontiguousarray(y, dtype=np.float32)
+        C-ordered array, use 'np.ascontiguousarray'
         """
 
         U, S, V = self._fit(X)
