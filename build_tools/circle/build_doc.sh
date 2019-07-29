@@ -121,7 +121,7 @@ export CCACHE_COMPRESS=1
 # provided versions
 
 # Adds older packages for python 3.5
-if [ $PYTHON_VERSION = "3.5"]; then
+if [[ "$PYTHON_VERSION" == "3.5" ]]; then
     conda config --set restore_free_channel true
 fi
 
