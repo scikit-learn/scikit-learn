@@ -361,10 +361,9 @@ class PCA(_BasePCA):
 
         Notes
         -----
-        This method returns a Fortran-ordered array.To convert it to a
-        C-ordered array, use 'np.ascontiguousarray'
+        This method returns a Fortran-ordered array. To convert it to a
+        C-ordered array, use 'np.ascontiguousarray'.
         """
-
         U, S, V = self._fit(X)
         U = U[:, :self.n_components_]
 
