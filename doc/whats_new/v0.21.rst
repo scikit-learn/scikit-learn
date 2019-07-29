@@ -27,82 +27,6 @@ Changelog
 ---------
 
 :mod:`sklearn.cluster`
-.....................
-
-- |Fix| Fixed a bug in :class:`cluster.KMeans` where computation was single
-  threaded when `n_jobs > 1` or `n_jobs = -1`.
-  :pr:`12955` by :user:`Prabakaran Kumaresshan <nixphix>`.
-
-- |Fix| Fixed a bug in :class:`cluster.OPTICS` where users were unable to pass
-  float `min_samples` and `min_cluster_size`. :pr:`14496` by
-  :user:`Fabian Klopfer <someusername1>`
-  and :user:`Hanmin Qin <qinhanmin2014>`.
-
-:mod:`sklearn.inspection`
-.....................
-
-- |Fix| Fixed a bug in :func:`inspection.plot_partial_dependence` where 
-  ``target`` parameter was not being taken into account for multiclass problems.
-  :pr:`14393` by :user:`Guillem G. Subies <guillemgsubies>`.
-
-:mod:`sklearn.datasets`
-.......................
-
-- |Fix| :func:`datasets.fetch_california_housing`,
-  :func:`datasets.fetch_covtype`,
-  :func:`datasets.fetch_kddcup99`, :func:`datasets.fetch_olivetti_faces`,
-  :func:`datasets.fetch_rcv1`, and :func:`datasets.fetch_species_distributions`
-  try to persist the previously cache using the new ``joblib`` if the cahced
-  data was persisted using the deprecated ``sklearn.externals.joblib``. This
-  behavior is set to be deprecated and removed in v0.23.
-  :pr:`14197` by `Adrin Jalali`_.
-
-:mod:`sklearn.impute`
-.....................
-
-- |Fix| Fixed a bug in :class:`impute.SimpleImputer` and
-  :class:`impute.IterativeImputer` so that no errors are thrown when there are
-  missing values in training data. :pr:`13974` by `Frank Hoang <fhoang7>`.
-
-:mod:`sklearn.linear_model`
-...........................
-- |Fix| Fixed a bug in :class:`linear_model.LogisticRegressionCV` where
-  ``refit=False`` would fail depending on the ``'multiclass'`` and
-  ``'penalty'`` parameters (regression introduced in 0.21). :pr:`14087` by
-  `Nicolas Hug`_.
-- |Fix| Compatibility fix for :class:`linear_model.ARDRegression` and
-  Scipy>=1.3.0. Adapts to upstream changes to the default `pinvh` cutoff
-  threshold which otherwise results in poor accuracy in some cases.
-  :pr:`14067` by :user:`Tim Staley <timstaley>`.
-
-:mod:`sklearn.tree`
-...................
-
-- |Fix| Fixed bug in :func:`tree.export_text` when the tree has one feature and 
-  a single feature name is passed in. :pr:`14053` by `Thomas Fan`
-
-- |Fix| Fixed an issue with :func:`plot_tree` where it display
-  entropy calculations even for `gini` criterion in DecisionTreeClassifiers.
-  :pr:`13947` by :user:`Frank Hoang <fhoang7>`.
-
-:mod:`sklearn.neighbors`
-........................
-
-- |Fix| Fixed a bug in :class:`neighbors.NeighborhoodComponentsAnalysis` where
-  the validation of initial parameters ``n_components``, ``max_iter`` and
-  ``tol`` required too strict types. :pr:`14092` by
-  :user:`Jérémie du Boisberranger <jeremiedbb>`.
-
-:mod:`sklearn.compose`
-.....................
-
-- |Fix| Fixed an issue in :class:`compose.ColumnTransformer` where using
-  DataFrames whose column order differs between :func:``fit`` and
-  :func:``transform`` could lead to silently passing incorrect columns to the
-  ``remainder`` transformer.
-  :pr:`14237` by `Andreas Schuderer <schuderer>`.
-
-:mod:`sklearn.cluster`
 ......................
 
 - |Fix| Fixed a bug in :class:`cluster.KMeans` where computation was single
@@ -145,7 +69,7 @@ Changelog
 :mod:`sklearn.inspection`
 .........................
 
-- |Fix| Fixed a bug in :func:`inspection.plot_partial_dependence` where
+- |Fix| Fixed a bug in :func:`inspection.plot_partial_dependence` where 
   ``target`` parameter was not being taken into account for multiclass problems.
   :pr:`14393` by :user:`Guillem G. Subies <guillemgsubies>`.
 
@@ -173,7 +97,7 @@ Changelog
 :mod:`sklearn.tree`
 ...................
 
-- |Fix| Fixed bug in :func:`tree.export_text` when the tree has one feature and
+- |Fix| Fixed bug in :func:`tree.export_text` when the tree has one feature and 
   a single feature name is passed in. :pr:`14053` by `Thomas Fan`.
 
 .. _changes_0_21_2:
@@ -206,6 +130,13 @@ Changelog
 - |Fix| Fixed a bug in :class:`preprocessing.OneHotEncoder` where the new
   `drop` parameter was not reflected in `get_feature_names`. :pr:`13894`
   by :user:`James Myatt <jamesmyatt>`.
+
+:mod:`sklearn.tree`
+...................
+
+- |Fix| Fixed an issue with :func:`plot_tree` where it display
+  entropy calculations even for `gini` criterion in DecisionTreeClassifiers.
+  :pr:`13947` by :user:`Frank Hoang <fhoang7>`.
 
 :mod:`sklearn.utils.sparsefuncs`
 ................................
@@ -262,7 +193,7 @@ Changelog
 Version 0.21.0
 ==============
 
-**10 May 2019**
+**May 2019**
 
 Changed models
 --------------
@@ -863,6 +794,7 @@ Support for Python 3.4 and below has been officially dropped.
   ``fit.predict`` were not equivalent. :pr:`13142` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -1102,7 +1034,7 @@ Miscellaneous
 
 - |Enhancement| Joblib is no longer vendored in scikit-learn, and becomes a
   dependency. Minimal supported version is joblib 0.11, however using
-  version >= 0.13 is strongly recommended. 
+  version >= 0.13 is strongly recommended.
   :pr:`13531` by :user:`Roman Yurchak <rth>`.
 
 
