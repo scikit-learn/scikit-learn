@@ -2004,7 +2004,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
     verbose : bool or integer, default=0
         Amount of verbosity.
 
-    n_jobs : int or None,default=None
+    n_jobs : int or None, default=None
         Number of CPUs to use during the cross validation. Note that this is
         used only if multiple values for l1_ratio are given.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
