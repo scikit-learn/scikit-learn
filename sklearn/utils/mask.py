@@ -16,6 +16,6 @@ def _get_mask(X, value_to_mask):
             # np.isnan does not work on object dtypes.
             return _object_dtype_isnan(X)
     else:
-        # X == value_to_mask with object dytpes does not always perform
+        # X == value_to_mask with object dtypes does not always perform
         # element-wise for old versions of numpy
         return np.equal(X, value_to_mask)

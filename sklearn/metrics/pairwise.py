@@ -386,7 +386,7 @@ def nan_euclidean_distances(X, Y=None, squared=False,
     """
 
     force_all_finite = 'allow-nan' if is_scalar_nan(missing_values) else True
-    X, Y = check_pairwise_arrays(X, Y,
+    X, Y = check_pairwise_arrays(X, Y, accept_sparse=False,
                                  force_all_finite=force_all_finite, copy=copy)
     # Get missing mask for X
     missing_X = _get_mask(X, missing_values)
@@ -401,10 +401,10 @@ def nan_euclidean_distances(X, Y=None, squared=False,
     distances = euclidean_distances(X, Y, squared=True)
 
     # Adjust distances for missing values
-    XX = X.multiply(X) if issparse(X) else X * X
-    YY = Y.multiply(Y) if issparse(Y) else Y * Y
-    distances -= safe_sparse_dot(XX, missing_Y.T, dense_output=False)
-    distances -= safe_sparse_dot(missing_X, YY.T, dense_output=False)
+    XX = X * X
+    YY = Y * Y
+    distances -= np.dot(XX, missing_Y.T)
+    distances -= np.dot(missing_X, YY.T)
 
     present_coords_cnt = np.dot(1 - missing_X, 1 - missing_Y.T)
     present_mask = (present_coords_cnt != 0)
