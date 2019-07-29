@@ -290,7 +290,6 @@ def check_estimator(Estimator):
         name = Estimator.__name__
         estimator = Estimator()
         check_parameters_default_constructible(name, Estimator)
-        check_no_attributes_set_in_init(name, estimator)
     else:
         # got an instance
         estimator = Estimator
