@@ -782,12 +782,13 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
                                  "to the number of numerical columns.")
             process_scale = True
 
-        ranges, min, max = _precompute_gower_params(X[:, num_mask].astype(np.float32),
-                                                    Y[:, num_mask].astype(np.float32),
-                                                    scale)
+        ranges, min, max = \
+        _precompute_gower_params(X[:, num_mask].astype(np.float32),
+                                 Y[:, num_mask].astype(np.float32),
+                                 scale)
 
         # avoid division by zero when all values in the column are he same
-        ranges[ranges==0] = 1
+        ranges[ranges == 0] = 1
 
         # check if the data is pre-scaled when scale=False
         if not process_scale and (np.min(min) < 0 or np.max(max) > 1):
@@ -807,11 +808,15 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
         # Calculates the similarities for numerical categorical columns
         cat_num_dists = X[i, cat_num_mask] != Y[j_start:, cat_num_mask]
         # Calculates the Manhattan distances for numerical columns
-        num_dists = abs(X[i, num_mask].astype(np.float32) - Y[j_start:, num_mask].astype(np.float32)) / ranges
+        num_dists = abs(X[i, num_mask].astype(np.float32) - Y[j_start:, 
+        num_mask].astype(np.float32)) / ranges
         # Calculates the number of non missing columns
-        non_missing = X.shape[1] - (np.isnan(cat_obj_dists).sum(axis=1) + np.isnan(cat_num_dists).sum(axis=1) + np.isnan(num_dists).sum(axis=1))
+        non_missing = X.shape[1] - (np.isnan(cat_obj_dists).sum(axis=1) + 
+        np.isnan(cat_num_dists).sum(axis=1) + np.isnan(num_dists).sum(axis=1))
         # Gets the final results
-        results = (np.sum(cat_obj_dists, axis=1) + np.sum(cat_num_dists, axis=1) + np.sum(num_dists, axis=1)) / non_missing
+        results = (np.sum(cat_obj_dists, axis=1) +
+        np.sum(cat_num_dists, axis=1) + 
+        np.sum(num_dists, axis=1)) / non_missing
 
         D[i, j_start:] = results
         if X is Y:
