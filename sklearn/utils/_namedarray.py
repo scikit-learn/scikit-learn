@@ -69,4 +69,5 @@ class NamedArray(NDArrayOperatorsMixin):
         base_repr = np.array2string(self.data,
                                     prefix=prefix)
         return (prefix + base_repr
-                + f',\n           feature_names={self.feature_names!r})')
+                + ',\n           feature_names={})'.format(
+                    str(self.feature_names)))
