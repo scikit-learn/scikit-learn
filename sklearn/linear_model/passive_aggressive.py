@@ -61,7 +61,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     verbose : integer, optional
         The verbosity level
 
-    loss : string, optional
+    loss : string, optional (default="hinge")
         The loss function to be used:
         hinge: equivalent to PA-I in the reference paper.
         squared_hinge: equivalent to PA-II in the reference paper.
@@ -80,7 +80,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         generator; If None, the random number generator is the RandomState
         instance used by `np.random`.
 
-    warm_start : bool, optional
+    warm_start : bool, optional (default=False)
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
         See :term:`the Glossary <warm_start>`.
@@ -90,7 +90,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         because of the way the data is shuffled.
 
     class_weight : dict, {class_label: weight} or "balanced" or None, optional
-        Preset for the class_weight fit parameter.
+        Preset for the class_weight fit parameter. (default=None)
 
         Weights associated with classes. If not given, all classes
         are supposed to have weight one.
@@ -102,7 +102,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         .. versionadded:: 0.17
            parameter *class_weight* to automatically weight samples.
 
-    average : bool or int, optional
+    average : bool or int, optional (default=False)
         When set to True, computes the averaged SGD weights and stores the
         result in the ``coef_`` attribute. If set to an int greater than 1,
         averaging will begin once the total number of samples seen reaches
