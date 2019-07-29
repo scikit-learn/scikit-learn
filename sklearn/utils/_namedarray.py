@@ -34,27 +34,11 @@ class NamedArray(NDArrayOperatorsMixin):
         be `None` if the number of columns do not match the number of stored
         feature names.
     """
-    _feature_names = None
-    _data = None
 
     def __init__(self, data, feature_names=None):
-        self.data = data
+        data = check_array(data, ensure_2d=False)
+        self._data = data
         self.feature_names = feature_names
-
-    @property
-    def data(self):
-        return self._data
-
-    @data.setter
-    def data(self, value):
-        value = check_array(value)
-        self._data = value
-
-        if self.feature_names is None:
-            return
-
-        if len(self.feature_names) != self._col_count(value):
-            self._feature_names = None
 
     @property
     def feature_names(self):
@@ -66,8 +50,10 @@ class NamedArray(NDArrayOperatorsMixin):
             self._feature_names = None
             return
 
+        if np.isscalar(value):
+            value = [value]
         value = column_or_1d(value)
-        col_count = self._col_count(self.data)
+        col_count = self._col_count(self._data)
         if len(value) != col_count:
             raise ValueError("{} column names provided, but data has {} "
                              "columns".format(len(value), col_count))
@@ -84,14 +70,11 @@ class NamedArray(NDArrayOperatorsMixin):
         return getattr(self._data, name)
 
     def __getitem__(self, slice):
-        return self.data[slice]
-
-    def __array__(self, *args, **kwargs):
-        return self.data.__array__(*args, **kwargs)
+        return self._data[slice]
 
     def __repr__(self):
         prefix = self.__class__.__name__ + '('
-        base_repr = np.array2string(self.data,
+        base_repr = np.array2string(self._data,
                                     prefix=prefix)
         return (prefix + base_repr
                 + ',\n           feature_names={})'.format(
