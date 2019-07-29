@@ -519,7 +519,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         Returns
         -------
         imputer_mask : {ndarray or sparse matrix}, shape (n_samples, \
-n_features)
+        n_features)
             The imputer mask of the original data.
 
         features_with_missing : ndarray, shape (n_features_with_missing)
