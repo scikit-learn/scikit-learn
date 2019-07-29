@@ -1302,7 +1302,7 @@ class LassoCV(LinearModelCV, RegressorMixin):
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    verbose : bool or integer, default=False
+    verbose : bool or int, default=False
         Amount of verbosity.
 
     n_jobs : int or None, default=None
