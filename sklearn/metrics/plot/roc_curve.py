@@ -122,18 +122,14 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
         prediction_method = getattr(estimator, response_method, None)
         if prediction_method is None:
             raise ValueError(
-                "response method {} not defined".format(response_method))
+                "response method {} is not defined".format(response_method))
     else:
         predict_proba = getattr(estimator, 'predict_proba', None)
         decision_function = getattr(estimator, 'decision_function', None)
         prediction_method = predict_proba or decision_function
 
-    if prediction_method is None:
-        if response_method == 'predict_proba':
-            raise ValueError('The estimator has no predict_proba method')
-        else:
-            raise ValueError(
-                'The estimator has no decision_function method')
+        if prediction_method is None:
+            raise ValueError('response methods not defined')
 
     y_pred = prediction_method(X)
 
