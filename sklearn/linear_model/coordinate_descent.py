@@ -2158,7 +2158,7 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
 
-    cv : int, cross-validation generator or an iterable, default=None
+    cv : int, cross-validation generator, iterable or None, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
