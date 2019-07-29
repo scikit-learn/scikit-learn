@@ -30,7 +30,6 @@ from . import is_scalar_nan
 from ..discriminant_analysis import LinearDiscriminantAnalysis
 from ..linear_model import Ridge
 
-
 from ..base import (clone, ClusterMixin, is_classifier, is_regressor,
                     _DEFAULT_TAGS, RegressorMixin, is_outlier_detector)
 
@@ -2274,10 +2273,8 @@ def check_non_transformer_estimators_n_iter(name, estimator_orig):
         y_ = enforce_estimator_tags_y(estimator, y_)
 
         set_random_state(estimator, 0)
-        if name == 'AffinityPropagation':
-            estimator.fit(X)
-        else:
-            estimator.fit(X, y_)
+
+        estimator.fit(X, y_)
 
         assert estimator.n_iter_ >= 1
 

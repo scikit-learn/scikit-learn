@@ -12,7 +12,7 @@ important features.
 
 This example shows how to obtain partial dependence plots from a
 :class:`~sklearn.neural_network.MLPRegressor` and a
-:class:`~sklearn.ensemble.GradientBoostingRegressor` trained on the
+:class:`~sklearn.ensemble.HistGradientBoostingRegressor` trained on the
 California housing dataset. The example is taken from [1]_.
 
 The plots show four 1-way and two 1-way partial dependence plots (ommitted for
@@ -20,35 +20,6 @@ The plots show four 1-way and two 1-way partial dependence plots (ommitted for
 The target variables for the one-way PDP are: median income (`MedInc`),
 average occupants per household (`AvgOccup`), median house age (`HouseAge`),
 and average rooms per household (`AveRooms`).
-
-We can clearly see that the median house price shows a linear relationship
-with the median income (top left) and that the house price drops when the
-average occupants per household increases (top middle).
-The top right plot shows that the house age in a district does not have
-a strong influence on the (median) house price; so does the average rooms
-per household.
-The tick marks on the x-axis represent the deciles of the feature values
-in the training data.
-
-We also observe that :class:`~sklearn.neural_network.MLPRegressor` has much
-smoother predictions than
-:class:`~sklearn.ensemble.GradientBoostingRegressor`. For the plots to be
-comparable, it is necessary to subtract the average value of the target
-``y``: The 'recursion' method, used by default for
-:class:`~sklearn.ensemble.GradientBoostingRegressor`, does not account for
-the initial predictor (in our case the average target). Setting the target
-average to 0 avoids this bias.
-
-Partial dependence plots with two target features enable us to visualize
-interactions among them. The two-way partial dependence plot shows the
-dependence of median house price on joint values of house age and average
-occupants per household. We can clearly see an interaction between the
-two features: for an average occupancy greater than two, the house price is
-nearly independent of the house age, whereas for values less than two there
-is a strong dependence on age.
-
-On a third figure, we have plotted the same partial dependence plot, this time
-in 3 dimensions.
 
 .. [1] T. Hastie, R. Tibshirani and J. Friedman,
     "Elements of Statistical Learning Ed. 2", Springer, 2009.
@@ -58,80 +29,154 @@ in 3 dimensions.
 """
 print(__doc__)
 
+from time import time
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import QuantileTransformer
+from sklearn.pipeline import make_pipeline
+
 from sklearn.inspection import partial_dependence
 from sklearn.inspection import plot_partial_dependence
-from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.neural_network import MLPRegressor
 from sklearn.datasets.california_housing import fetch_california_housing
 
 
-def main():
-    cal_housing = fetch_california_housing()
+##############################################################################
+# California Housing data preprocessing
+# -------------------------------------
+#
+# Center target to avoid gradient boosting init bias: gradient boosting
+# with the 'recursion' method does not account for the initial estimator
+# (here the average target, by default)
+#
+cal_housing = fetch_california_housing()
+names = cal_housing.feature_names
+X, y = cal_housing.data, cal_housing.target
 
-    X, y = cal_housing.data, cal_housing.target
-    names = cal_housing.feature_names
+y -= y.mean()
 
-    # Center target to avoid gradient boosting init bias: gradient boosting
-    # with the 'recursion' method does not account for the initial estimator
-    # (here the average target, by default)
-    y -= y.mean()
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1,
+                                                    random_state=0)
 
-    print("Training MLPRegressor...")
-    est = MLPRegressor(activation='logistic')
-    est.fit(X, y)
-    print('Computing partial dependence plots...')
-    # We don't compute the 2-way PDP (5, 1) here, because it is a lot slower
-    # with the brute method.
-    features = [0, 5, 1, 2]
-    plot_partial_dependence(est, X, features, feature_names=names,
-                            n_jobs=3, grid_resolution=50)
-    fig = plt.gcf()
-    fig.suptitle('Partial dependence of house value on non-location features\n'
-                 'for the California housing dataset, with MLPRegressor')
-    plt.subplots_adjust(top=0.9)  # tight_layout causes overlap with suptitle
+##############################################################################
+# Partial Dependence computation for multi-layer perceptron
+# ---------------------------------------------------------
+#
+# Let's fit a MLPRegressor and compute single-variable partial dependence
+# plots
 
-    print("Training GradientBoostingRegressor...")
-    est = GradientBoostingRegressor(n_estimators=100, max_depth=4,
-                                    learning_rate=0.1, loss='huber',
-                                    random_state=1)
-    est.fit(X, y)
-    print('Computing partial dependence plots...')
-    features = [0, 5, 1, 2, (5, 1)]
-    plot_partial_dependence(est, X, features, feature_names=names,
-                            n_jobs=3, grid_resolution=50)
-    fig = plt.gcf()
-    fig.suptitle('Partial dependence of house value on non-location features\n'
-                 'for the California housing dataset, with Gradient Boosting')
-    plt.subplots_adjust(top=0.9)
+print("Training MLPRegressor...")
+tic = time()
+est = make_pipeline(QuantileTransformer(),
+                    MLPRegressor(hidden_layer_sizes=(50, 50),
+                                 learning_rate_init=0.01,
+                                 max_iter=200,
+                                 early_stopping=True,
+                                 n_iter_no_change=10,
+                                 validation_fraction=0.1))
+est.fit(X_train, y_train)
+print("done in {:.3f}s".format(time() - tic))
+print("Test R2 score: {:.2f}".format(est.score(X_test, y_test)))
 
-    print('Custom 3d plot via ``partial_dependence``')
-    fig = plt.figure()
+print('Computing partial dependence plots...')
+tic = time()
+# We don't compute the 2-way PDP (5, 1) here, because it is a lot slower
+# with the brute method.
+features = [0, 5, 1, 2]
+plot_partial_dependence(est, X_train, features, feature_names=names,
+                        n_jobs=3, grid_resolution=20)
+print("done in {:.3f}s".format(time() - tic))
+fig = plt.gcf()
+fig.suptitle('Partial dependence of house value on non-location features\n'
+             'for the California housing dataset, with MLPRegressor')
+fig.tight_layout(rect=[0, 0.03, 1, 0.95])
 
-    target_feature = (1, 5)
-    pdp, axes = partial_dependence(est, X, target_feature,
-                                   grid_resolution=50)
-    XX, YY = np.meshgrid(axes[0], axes[1])
-    Z = pdp[0].T
-    ax = Axes3D(fig)
-    surf = ax.plot_surface(XX, YY, Z, rstride=1, cstride=1,
-                           cmap=plt.cm.BuPu, edgecolor='k')
-    ax.set_xlabel(names[target_feature[0]])
-    ax.set_ylabel(names[target_feature[1]])
-    ax.set_zlabel('Partial dependence')
-    #  pretty init view
-    ax.view_init(elev=22, azim=122)
-    plt.colorbar(surf)
-    plt.suptitle('Partial dependence of house value on median\n'
-                 'age and average occupancy, with Gradient Boosting')
-    plt.subplots_adjust(top=0.9)
+##############################################################################
+# Partial Dependence computation for Gradient Boosting
+# ----------------------------------------------------
+#
+# Let's now fit a GradientBoostingRegressor and compute the partial dependence
+# plots either or one or two variables at a time.
 
-    plt.show()
+print("Training GradientBoostingRegressor...")
+tic = time()
+est = HistGradientBoostingRegressor(max_iter=100, max_leaf_nodes=64,
+                                    learning_rate=0.1, random_state=1)
+est.fit(X_train, y_train)
+print("done in {:.3f}s".format(time() - tic))
+print("Test R2 score: {:.2f}".format(est.score(X_test, y_test)))
 
+print('Computing partial dependence plots...')
+tic = time()
+features = [0, 5, 1, 2, (5, 1)]
+plot_partial_dependence(est, X_train, features, feature_names=names,
+                        n_jobs=3, grid_resolution=20)
+print("done in {:.3f}s".format(time() - tic))
+fig = plt.gcf()
+fig.suptitle('Partial dependence of house value on non-location features\n'
+             'for the California housing dataset, with Gradient Boosting')
+fig.tight_layout(rect=[0, 0.03, 1, 0.95])
 
-# Needed on Windows because plot_partial_dependence uses multiprocessing
-if __name__ == '__main__':
-    main()
+##############################################################################
+# Analysis of the plots
+# ---------------------
+#
+# We can clearly see that the median house price shows a linear relationship
+# with the median income (top left) and that the house price drops when the
+# average occupants per household increases (top middle).
+# The top right plot shows that the house age in a district does not have
+# a strong influence on the (median) house price; so does the average rooms
+# per household.
+# The tick marks on the x-axis represent the deciles of the feature values
+# in the training data.
+#
+# We also observe that :class:`~sklearn.neural_network.MLPRegressor` has much
+# smoother predictions than
+# :class:`~sklearn.ensemble.HistGradientBoostingRegressor`. For the plots to be
+# comparable, it is necessary to subtract the average value of the target
+# ``y``: The 'recursion' method, used by default for
+# :class:`~sklearn.ensemble.HistGradientBoostingRegressor`, does not account
+# for the initial predictor (in our case the average target). Setting the
+# target average to 0 avoids this bias.
+#
+# Partial dependence plots with two target features enable us to visualize
+# interactions among them. The two-way partial dependence plot shows the
+# dependence of median house price on joint values of house age and average
+# occupants per household. We can clearly see an interaction between the
+# two features: for an average occupancy greater than two, the house price is
+# nearly independent of the house age, whereas for values less than two there
+# is a strong dependence on age.
+
+##############################################################################
+# 3D interaction plots
+# --------------------
+#
+# Let's make the same partial dependence plot for the 2 features interaction,
+# this time in 3 dimensions.
+
+fig = plt.figure()
+
+target_feature = (1, 5)
+pdp, axes = partial_dependence(est, X_train, target_feature,
+                               grid_resolution=20)
+XX, YY = np.meshgrid(axes[0], axes[1])
+Z = pdp[0].T
+ax = Axes3D(fig)
+surf = ax.plot_surface(XX, YY, Z, rstride=1, cstride=1,
+                       cmap=plt.cm.BuPu, edgecolor='k')
+ax.set_xlabel(names[target_feature[0]])
+ax.set_ylabel(names[target_feature[1]])
+ax.set_zlabel('Partial dependence')
+#  pretty init view
+ax.view_init(elev=22, azim=122)
+plt.colorbar(surf)
+plt.suptitle('Partial dependence of house value on median\n'
+             'age and average occupancy, with Gradient Boosting')
+plt.subplots_adjust(top=0.9)
+
+plt.show()

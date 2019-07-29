@@ -23,9 +23,9 @@ import sklearn
 from sklearn.base import RegressorMixin
 from sklearn.cluster.bicluster import BiclusterMixin
 
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.linear_model import Ridge
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.utils import IS_PYPY
 from sklearn.utils.estimator_checks import (
     _yield_all_checks,
