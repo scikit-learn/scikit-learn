@@ -24,6 +24,8 @@ from sklearn.base import RegressorMixin
 from sklearn.cluster.bicluster import BiclusterMixin
 
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.ensemble import VotingClassifier
+from sklearn.ensemble import VotingRegressor
 from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import LogisticRegression
@@ -72,21 +74,6 @@ def _tested_estimators():
                     estimator = Estimator(Ridge())
                 else:
                     estimator = Estimator(LinearDiscriminantAnalysis())
-            elif "estimators" in required_parameters:
-                if issubclass(Estimator, RegressorMixin):
-                    estimator = Estimator(
-                        estimators=[
-                            ('lr', LinearRegression()),
-                            ('tree', DecisionTreeRegressor(random_state=0))
-                        ]
-                    )
-                else:
-                    estimator = Estimator(
-                        estimators=[
-                            ('lr', LogisticRegression(random_state=0)),
-                            ('tree', DecisionTreeClassifier(random_state=0))
-                        ]
-                    )
             else:
                 warnings.warn("Can't instantiate estimator {} which requires "
                               "parameters {}".format(name,

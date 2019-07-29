@@ -2168,21 +2168,6 @@ def check_parameters_default_constructible(name, Estimator):
                     estimator = Estimator(Ridge())
                 else:
                     estimator = Estimator(LinearDiscriminantAnalysis())
-            elif "estimators" in required_parameters:
-                if issubclass(Estimator, RegressorMixin):
-                    estimator = Estimator(
-                        estimators=[
-                            ('lr', LinearRegression()),
-                            ('tree', DecisionTreeRegressor(random_state=0))
-                        ]
-                    )
-                else:
-                    estimator = Estimator(
-                        estimators=[
-                            ('lr', LogisticRegression(random_state=0)),
-                            ('tree', DecisionTreeClassifier(random_state=0))
-                        ]
-                    )
             else:
                 raise SkipTest("Can't instantiate estimator {} which"
                                " requires parameters {}".format(
@@ -2220,7 +2205,7 @@ def check_parameters_default_constructible(name, Estimator):
             # true for mixins
             return
         params = estimator.get_params()
-        if required_parameters in (["estimator"], ["estimators"]):
+        if required_parameters == ["estimator"]:
             # they can need a non-default argument
             init_params = init_params[1:]
 
