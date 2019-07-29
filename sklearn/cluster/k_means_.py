@@ -115,29 +115,22 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
         distance_to_candidates = euclidean_distances(
             X[candidate_ids], X, Y_norm_squared=x_squared_norms, squared=True)
 
-        # Decide which candidate is the best
-        best_candidate = None
-        best_pot = None
-        best_dist_sq = None
-        for trial in range(n_local_trials):
-            # Compute potential when including center candidate
-            new_dist_sq = np.minimum(closest_dist_sq,
-                                     distance_to_candidates[trial])
-            new_pot = new_dist_sq.sum()
+        # update closest distances squared and potential for each candidate
+        np.minimum(closest_dist_sq, distance_to_candidates,
+                   out=distance_to_candidates)
+        candidates_pot = distance_to_candidates.sum(axis=1)
 
-            # Store result if it is the best local trial so far
-            if (best_candidate is None) or (new_pot < best_pot):
-                best_candidate = candidate_ids[trial]
-                best_pot = new_pot
-                best_dist_sq = new_dist_sq
+        # Decide which candidate is the best
+        best_candidate = np.argmin(candidates_pot)
+        current_pot = candidates_pot[best_candidate]
+        closest_dist_sq = distance_to_candidates[best_candidate]
+        best_candidate = candidate_ids[best_candidate]
 
         # Permanently add best center candidate found in local tries
         if sp.issparse(X):
             centers[c] = X[best_candidate].toarray()
         else:
             centers[c] = X[best_candidate]
-        current_pot = best_pot
-        closest_dist_sq = best_dist_sq
 
     return centers
 
