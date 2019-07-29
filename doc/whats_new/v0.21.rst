@@ -59,6 +59,13 @@ Changelog
   behavior is set to be deprecated and removed in v0.23.
   :pr:`14197` by `Adrin Jalali`_.
 
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| Fix zero division error in :func:`HistGradientBoostingClassifier` and
+  :func:`HistGradientBoostingRegressor`.
+  :pr:`14024` by `Nicolas Hug <NicolasHug>`.
+
 :mod:`sklearn.impute`
 .....................
 
@@ -100,6 +107,10 @@ Changelog
 - |Fix| Fixed bug in :func:`tree.export_text` when the tree has one feature and 
   a single feature name is passed in. :pr:`14053` by `Thomas Fan`.
 
+- |Fix| Fixed an issue with :func:`plot_tree` where it display
+  entropy calculations even for `gini` criterion in DecisionTreeClassifiers.
+  :pr:`13947` by :user:`Frank Hoang <fhoang7>`.
+
 .. _changes_0_21_2:
 
 Version 0.21.2
@@ -131,12 +142,6 @@ Changelog
   `drop` parameter was not reflected in `get_feature_names`. :pr:`13894`
   by :user:`James Myatt <jamesmyatt>`.
 
-:mod:`sklearn.tree`
-...................
-
-- |Fix| Fixed an issue with :func:`plot_tree` where it display
-  entropy calculations even for `gini` criterion in DecisionTreeClassifiers.
-  :pr:`13947` by :user:`Frank Hoang <fhoang7>`.
 
 :mod:`sklearn.utils.sparsefuncs`
 ................................
