@@ -167,7 +167,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
             self.r_min_ = max(self.r_min_,
                               self.max_budget_ // self.ratio**last_iteration)
 
-        # n_possible iterations is the number of iterations that we can
+        # n_possible_iterations is the number of iterations that we can
         # actually do starting from r_min and without exceeding the budget.
         # Depending on budget size the number of candidates, this may be higher
         # or smaller than n_required_iterations.

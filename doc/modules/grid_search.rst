@@ -331,7 +331,7 @@ a big budget, this may be a waste of resource::
 The search process will only use 80 resources at most, while our maximum budget
 is ``n_samples=1000``. Note in this case that ``r_min = r_0 = 20``. In order
 for the last iteration to use as many resources as possible, you can use the
-``force_exhaust_budget`` parameter::
+``force_exhaust_budget`` parameter.::
 
     >>> sh = GridHalvingSearchCV(base_estimator, parameters, cv=5,
     ...                            ratio=2, force_exhaust_budget=True,
@@ -345,16 +345,17 @@ for the last iteration to use as many resources as possible, you can use the
     Name: r_i, dtype: object
 
 
-Since ``force_exhaust_budget`` chooses an appropriate ``r_min`` to start
-with, ``r_min`` must be set to 'auto'.
+`r_min` was here automatically set to 250, which results in the last
+iteration using all the budget. Since ``force_exhaust_budget`` chooses an
+appropriate ``r_min`` to start with, ``r_min`` must be set to 'auto' (default).
 
 Aggressive elimination of candidates
 ------------------------------------
 
 Ideally, we want the last iteration to evaluate ``ratio`` candidates. We then
-just have to pick the best one. When the number budget is small with respect to
+just have to pick the best one. When the budget is small with respect to
 the number of candidates, the last iteration may have to evaluate more than
-``ratio`` candidates.::
+``ratio`` candidates::
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.svm import SVC
     >>> from sklearn.model_selection import GridHalvingSearchCV
