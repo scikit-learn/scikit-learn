@@ -55,6 +55,9 @@ class NamedArray(NDArrayOperatorsMixin):
         else:
             return value.shape[1]
 
+    def __getattr__(self, name):
+        return getattr(self._data, name)
+
     def __getitem__(self, slice):
         return self.data[slice]
 

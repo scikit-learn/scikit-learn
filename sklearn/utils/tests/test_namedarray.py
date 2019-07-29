@@ -25,3 +25,10 @@ def test_validation():
     assert x.feature_names is not None
     x.data = np.ones(shape=(4, 4))
     assert x.feature_names is None
+
+
+def test_getattr():
+    x = NamedArray(np.random.rand(5, 3), feature_names=['a', 'b', 'c'])
+    # these would fail if __getattr__ doesn't work
+    x.ndim
+    x.shape
