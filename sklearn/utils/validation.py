@@ -15,6 +15,7 @@ import numpy as np
 import scipy.sparse as sp
 from distutils.version import LooseVersion
 from inspect import signature
+
 from numpy.core.numeric import ComplexWarning
 import joblib
 
@@ -431,10 +432,6 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
             "removed in 0.23. Don't set `warn_on_dtype` to remove this "
             "warning.",
             DeprecationWarning, stacklevel=2)
-
-    # duck-typing to avoid a circular import
-    if hasattr(array, "_data") and hasattr(array, "_feature_names"):
-        array = array._data
 
     # store reference to original array to check if copy is needed when
     # function returns
@@ -987,44 +984,6 @@ def check_scalar(x, name, target_type, min_val=None, max_val=None):
 
     if max_val is not None and x > max_val:
         raise ValueError('`{}`= {}, must be <= {}.'.format(name, x, max_val))
-
-
-def _feature_names(X):
-    if isinstance(X, NamedArray):
-        return X.features
-    elif hasattr(X, 'columns'):
-        return X.columns
-    else:
-        return None
-
-
-def _check_NamedArray(X, feature_names):
-    # need to ignore feature names on a bunch of input types
-    # not sure how to handle this.
-    if feature_names is None and (
-            isinstance(X, list) or
-            isinstance(X, tuple) or
-            isinstance(X, dict)):
-        print("returning input")
-        return X
-
-    if feature_names is None:
-        feature_names = ['x%s' % i for i in range(X.shape[1])]
-
-    if isinstance(X, NamedArray):
-        X.features = feature_names
-    else:
-        X = NamedArray(X, feature_names)
-
-    return X
-
-
-def _check_feature_names(X, fitted_estimator):
-    if not hasattr(fitted_estimator, 'feature_names_out_'):
-        return X
-
-    return _check_NamedArray(
-        X, fitted_estimator.feature_names_out_)
 
 
 def _check_sample_weight(sample_weight, X, dtype=None):
