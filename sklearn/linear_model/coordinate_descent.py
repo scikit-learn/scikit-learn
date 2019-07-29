@@ -1474,7 +1474,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
 
-    verbose : bool or integer, default=0
+    verbose : bool or int, default=0
         Amount of verbosity.
 
     n_jobs : int or None, default=None
