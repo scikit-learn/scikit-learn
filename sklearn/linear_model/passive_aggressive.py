@@ -306,10 +306,10 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
 
-    verbose : integer, optional
+    verbose : integer, optional (default=0)
         The verbosity level
 
-    loss : string, optional
+    loss : string, optional (default='epsilon_insensitive')
         The loss function to be used:
         epsilon_insensitive: equivalent to PA-I in the reference paper.
         squared_epsilon_insensitive: equivalent to PA-II in the reference
@@ -326,7 +326,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         generator; If None, the random number generator is the RandomState
         instance used by `np.random`.
 
-    warm_start : bool, optional
+    warm_start : bool, optional (default=False)
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
         See :term:`the Glossary <warm_start>`.
@@ -335,7 +335,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         result in a different solution than when calling fit a single time
         because of the way the data is shuffled.
 
-    average : bool or int, optional
+    average : bool or int, optional (default=False)
         When set to True, computes the averaged SGD weights and stores the
         result in the ``coef_`` attribute. If set to an int greater than 1,
         averaging will begin once the total number of samples seen reaches
