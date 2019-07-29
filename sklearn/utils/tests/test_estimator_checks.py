@@ -414,7 +414,7 @@ def test_check_estimator():
 
     # doesn't error on actual estimator
     check_estimator(LogisticRegression)
-    check_estimator(LogisticRegression())
+    check_estimator(LogisticRegression(C=0.01))
     check_estimator(MultiTaskElasticNet)
     check_estimator(MultiTaskElasticNet())
 
