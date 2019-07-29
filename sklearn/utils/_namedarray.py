@@ -69,6 +69,9 @@ class NamedArray(NDArrayOperatorsMixin):
     def __getattr__(self, name):
         return getattr(self._data, name)
 
+    def __dir__(self):
+        return list(set(dir(NamedArray)).union(set(dir(self._data))))
+
     def __getitem__(self, slice):
         return self._data[slice]
 

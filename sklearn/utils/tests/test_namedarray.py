@@ -48,3 +48,9 @@ def test_repr():
              "           feature_names=['a' 'b'])")
     x = NamedArray([[1, 2], [3, 4]], feature_names=['a', 'b'])
     assert repr(x) == repr_
+
+
+def test_numpy_attrs():
+    a = np.ones(shape=(1))
+    x = NamedArray(a, feature_names='a')
+    assert set(dir(a)) < set(dir(x))
