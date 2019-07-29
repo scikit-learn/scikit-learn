@@ -32,3 +32,9 @@ def test_getattr():
     # these would fail if __getattr__ doesn't work
     x.ndim
     x.shape
+
+
+def test_pandas():
+    _ = pytest.importorskip("pandas")
+    x = NamedArray(np.random.rand(5, 3), feature_names=['a', 'b', 'c'])
+    assert all(x.todataframe().columns == ['a', 'b', 'c'])

@@ -10,7 +10,8 @@ import numpy as np
 try:
     from numpy.lib.mixins import NDArrayOperatorsMixin
 except ImportError:
-    from .mixins import NDArrayOperatorsMixin
+    raise NotImplementedError("In order to use NamedAraay, please upgrade your "
+                              "numpy to 1.13+!")
 
 from .validation import check_array, column_or_1d
 
@@ -95,3 +96,8 @@ class NamedArray(NDArrayOperatorsMixin):
         return (prefix + base_repr
                 + ',\n           feature_names={})'.format(
                     str(self.feature_names)))
+
+    def todataframe(self):
+        """Returns a `pandas.DataFrame` with set column names."""
+        import pandas as pd
+        return pd.DataFrame(self._data, columns=self.feature_names)
