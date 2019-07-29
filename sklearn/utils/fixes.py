@@ -39,6 +39,13 @@ except ImportError:
     from scipy.misc import comb, logsumexp  # noqa
 
 
+if sp_version >= (1, 3):
+    # Preserves earlier default choice of pinvh cutoff `cond` value.
+    # Can be removed once issue #14055 is fully addressed.
+    from ..externals._scipy_linalg import pinvh
+else:
+    from scipy.linalg import pinvh # noqa
+
 if sp_version >= (0, 19):
     def _argmax(arr_or_spmatrix, axis=None):
         return arr_or_spmatrix.argmax(axis=axis)

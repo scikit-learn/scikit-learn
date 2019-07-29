@@ -1745,7 +1745,7 @@ def test_empty_cv_iterator_error():
 
     train_size = 100
     ridge = RandomizedSearchCV(Ridge(), {'alpha': [1e-3, 1e-2, 1e-1]},
-                               cv=cv, n_jobs=-1)
+                               cv=cv, n_jobs=4)
 
     # assert that this raises an error
     with pytest.raises(ValueError,
@@ -1767,7 +1767,7 @@ def test_random_search_bad_cv():
 
     train_size = 100
     ridge = RandomizedSearchCV(Ridge(), {'alpha': [1e-3, 1e-2, 1e-1]},
-                               cv=cv, n_jobs=-1)
+                               cv=cv, n_jobs=4)
 
     # assert that this raises an error
     with pytest.raises(ValueError,

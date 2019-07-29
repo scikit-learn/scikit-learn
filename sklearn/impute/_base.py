@@ -269,7 +269,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
         if self.add_indicator:
             self.indicator_ = MissingIndicator(
-                missing_values=self.missing_values)
+                missing_values=self.missing_values, error_on_new=False)
             self.indicator_.fit(X)
         else:
             self.indicator_ = None
@@ -672,4 +672,4 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
     def _more_tags(self):
         return {'allow_nan': True,
-                'X_types': ['2darray', 'str']}
+                'X_types': ['2darray', 'string']}

@@ -17,6 +17,11 @@ def get_config():
     -------
     config : dict
         Keys are parameter names that can be passed to :func:`set_config`.
+
+    See Also
+    --------
+    config_context: Context manager for global scikit-learn configuration
+    set_config: Set global scikit-learn configuration
     """
     return _global_config.copy()
 
@@ -53,6 +58,11 @@ def set_config(assume_finite=None, working_memory=None,
         all the non-changed parameters.
 
         .. versionadded:: 0.21
+
+    See Also
+    --------
+    config_context: Context manager for global scikit-learn configuration
+    get_config: Retrieve current values of the global configuration
     """
     if assume_finite is not None:
         _global_config['assume_finite'] = assume_finite
@@ -99,6 +109,11 @@ def config_context(**new_config):
     Traceback (most recent call last):
     ...
     ValueError: Input contains NaN, ...
+
+    See Also
+    --------
+    set_config: Set global scikit-learn configuration
+    get_config: Retrieve current values of the global configuration
     """
     old_config = get_config().copy()
     set_config(**new_config)

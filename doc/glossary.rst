@@ -1412,7 +1412,12 @@ functions or non-estimator constructors.
         ``class_weight='balanced'`` can be used to give all classes
         equal weight by giving each sample a weight inversely related
         to its class's prevalence in the training data:
-        ``n_samples / (n_classes * np.bincount(y))``.
+        ``n_samples / (n_classes * np.bincount(y))``. Class weights will be
+        used differently depending on the algorithm: for linear models (such
+        as linear SVM or logistic regression), the class weights will alter the
+        loss function by weighting the loss of each sample by its class weight.
+        For tree-based algorithms, the class weights will be used for
+        reweighting the splitting criterion.
         **Note** however that this rebalancing does not take the weight of
         samples in each class into account.
 

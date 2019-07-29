@@ -71,7 +71,7 @@ The least squares solution is computed using the singular value
 decomposition of X. If X is a matrix of shape `(n_samples, n_features)`
 this method has a cost of 
 :math:`O(n_{\text{samples}} n_{\text{features}}^2)`, assuming that
-:math:`n_{\text{samples} \geq n_{\text{features}}}`.
+:math:`n_{\text{samples}} \geq n_{\text{features}}`.
 
 .. _ridge_regression:
 
@@ -744,7 +744,14 @@ of a single trial are modeled using a
 Logistic regression is implemented in :class:`LogisticRegression`. 
 This implementation can fit binary, One-vs-Rest, or multinomial logistic 
 regression with optional :math:`\ell_1`, :math:`\ell_2` or Elastic-Net 
-regularization. Note that regularization is applied by default.
+regularization.
+
+.. note::
+
+    Regularization is applied by default, which is common in machine
+    learning but not in statistics. Another advantage of regularization is
+    that it improves numerical stability. No regularization amounts to
+    setting C to a very high value.
 
 As an optimization problem, binary class :math:`\ell_2` penalized logistic
 regression minimizes the following cost function:
