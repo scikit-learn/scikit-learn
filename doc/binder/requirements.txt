@@ -1,7 +1,4 @@
-# Requirements for running the examples
-numpy
-scipy
-scikit-learn
-matplotlib
-pandas
-scikit-image
+# This is required by sphinx-gallery 0.4 but not needed since the examples are
+# not in the scikit-learn.github.io repo that comes from the scikit-learn doc
+# build but on a separate repo. This file can be removed if 'dependencies' key
+# is made an optional key for binder in sphinx-gallery.

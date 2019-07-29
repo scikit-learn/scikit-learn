@@ -60,13 +60,6 @@ git config user.email "olivier.grisel+sklearn-ci@gmail.com"
 git config user.name $USERNAME
 git config push.default matching
 
-# binder folder for requirements needs to be at the root of the repo
-if [ -d dev/binder ]; then
-    rm -f binder
-    ln -s dev/binder
-    git add binder
-fi
-
 git commit -m "$MSG" $dir
 git push
 echo $MSG
