@@ -126,8 +126,9 @@ if [[ "$PYTHON_VERSION" == "3.5" ]]; then
 fi
 
 conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
-  numpy="${NUMPY_VERSION:-*}" scipy="${SCIPY_VERSION:-*}" cython \
-  pytest coverage matplotlib="${MATPLOTLIB_VERSION:-*}" sphinx=2.1.2 pillow \
+  numpy="${NUMPY_VERSION:-*}" scipy="${SCIPY_VERSION:-*}" \
+  cython="${CYTHON_VERSION:-*}" pytest coverage \
+  matplotlib="${MATPLOTLIB_VERSION:-*}" sphinx=2.1.2 pillow \
   scikit-image="${SCIKIT_IMAGE_VERSION:-*}" pandas="${PANDAS_VERSION:-*}" \
   joblib
 
