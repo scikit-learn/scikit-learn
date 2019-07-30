@@ -552,6 +552,11 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         """
         return np.log(self.predict_proba(X))
 
+    @property
+    def n_features_out_(self):
+        n_components = self.n_components or np.inf
+        n_features = min(self._max_components, n_components)
+
 
 class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
     """Quadratic Discriminant Analysis
