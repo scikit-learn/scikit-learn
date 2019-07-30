@@ -279,7 +279,9 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
         self.le_ = LabelEncoder().fit(y)
         self.classes_ = self.le_.classes_
         transformed_y = self.le_.transform(y)
-
+        self.n_features_out_ = len(self.estimators)
+        if self.voting == 'soft':
+            self.n_features_out_ *= len(self.classes_)
         return super().fit(X, transformed_y, sample_weight)
 
     def predict(self, X):
@@ -459,6 +461,7 @@ class VotingRegressor(_BaseVoting, RegressorMixin):
         self : object
         """
         y = column_or_1d(y, warn=True)
+        self.n_features_out_ = len(self.estimators)
         return super().fit(X, y, sample_weight)
 
     def predict(self, X):
