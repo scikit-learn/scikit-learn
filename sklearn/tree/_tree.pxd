@@ -103,16 +103,3 @@ cdef class TreeBuilder:
                 np.ndarray sample_weight=*,
                 np.ndarray X_idx_sorted=*)
     cdef _check_input(self, object X, np.ndarray y, np.ndarray sample_weight)
-
-
-# =============================================================================
-# Build Pruned Tree
-# =============================================================================
-
-cpdef build_pruned_tree_ccp(
-    Tree tree, # OUT
-    Tree orig_tree,
-    double ccp_alpha)
-
-
-cpdef ccp_pruning_path(Tree orig_tree)

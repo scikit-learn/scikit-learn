@@ -2004,7 +2004,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     ccp_alpha : non-negative float, optional (default=0.0)
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
-        ``ccp_alpha`` will be chosen. By default, no pruning is performed.
+        ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
+        :ref:`minimal_cost_complexity_pruning` for details.
 
         .. versionadded:: 0.22
 
@@ -2483,7 +2484,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     ccp_alpha : non-negative float, optional (default=0.0)
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
-        ``ccp_alpha`` will be chosen. By default, no pruning is performed.
+        ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
+        :ref:`minimal_cost_complexity_pruning` for details.
 
         .. versionadded:: 0.22
 

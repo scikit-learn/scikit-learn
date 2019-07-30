@@ -534,7 +534,8 @@ Mean Absolute Error:
 
 where :math:`X_m` is the training data in node :math:`m`
 
-.. _minimal_cost_complexity_pruning
+
+.. _minimal_cost_complexity_pruning:
 
 Minimal Cost-Complexity Pruning
 ===============================

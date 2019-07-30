@@ -41,7 +41,7 @@ from ._splitter import Splitter
 from ._tree import DepthFirstTreeBuilder
 from ._tree import BestFirstTreeBuilder
 from ._tree import Tree
-from ._tree import build_pruned_tree_ccp
+from ._tree import _build_pruned_tree_ccp
 from ._tree import ccp_pruning_path
 from . import _tree, _splitter, _criterion
 
@@ -521,7 +521,7 @@ class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
         return self.tree_.decision_path(X)
 
     def _prune_tree(self):
-        """Prunes tree using Minimal Cost-Complexity Pruning."""
+        """Prune tree using Minimal Cost-Complexity Pruning."""
         check_is_fitted(self, 'tree_')
 
         if self.ccp_alpha < 0.0:
@@ -533,12 +533,15 @@ class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
         # build pruned treee
         n_classes = np.atleast_1d(self.n_classes_)
         pruned_tree = Tree(self.n_features_, n_classes, self.n_outputs_)
-        build_pruned_tree_ccp(pruned_tree, self.tree_, self.ccp_alpha)
+        _build_pruned_tree_ccp(pruned_tree, self.tree_, self.ccp_alpha)
 
         self.tree_ = pruned_tree
 
     def cost_complexity_pruning_path(self, X, y, sample_weight=None):
-        """Prune tree using Minimal Cost-Complexity Pruning.
+        """Compute the pruning path during Minimal Cost-Complexity Pruning.
+
+        See `ref`:minimal_cost_complexity_pruning` for details on the pruning
+        process.
 
         Parameters
         ----------
@@ -729,7 +732,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     ccp_alpha : non-negative float, optional (default=0.0)
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
-        ``ccp_alpha`` will be chosen. By default, no pruning is performed.
+        ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
+        :ref:`minimal_cost_complexity_pruning` for details.
 
         .. versionadded:: 0.22
 
@@ -1090,7 +1094,8 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     ccp_alpha : non-negative float, optional (default=0.0)
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
-        ``ccp_alpha`` will be chosen. By default, no pruning is performed.
+        ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
+        :ref:`minimal_cost_complexity_pruning` for details.
 
         .. versionadded:: 0.22
 
@@ -1376,7 +1381,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     ccp_alpha : non-negative float, optional (default=0.0)
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
-        ``ccp_alpha`` will be chosen. By default, no pruning is performed.
+        ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
+        :ref:`minimal_cost_complexity_pruning` for details.
 
         .. versionadded:: 0.22
 
@@ -1579,7 +1585,8 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     ccp_alpha : non-negative float, optional (default=0.0)
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
-        ``ccp_alpha`` will be chosen. By default, no pruning is performed.
+        ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
+        :ref:`minimal_cost_complexity_pruning` for details.
 
         .. versionadded:: 0.22
 
