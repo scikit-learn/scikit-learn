@@ -555,7 +555,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
     @property
     def n_features_out_(self):
         n_components = self.n_components or np.inf
-        n_features = min(self._max_components, n_components)
+        return min(self._max_components, n_components)
 
 
 class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
