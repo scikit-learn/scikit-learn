@@ -30,14 +30,18 @@ A search consists of:
 - a cross-validation scheme; and
 - a :ref:`score function <gridsearch_scoring>`.
 
-Some models allow for specialized, efficient parameter search strategies,
-:ref:`outlined below <alternative_cv>`.
-Two generic approaches to sampling search candidates are provided in
+Two generic approaches to parameter search are provided in
 scikit-learn: for given values, :class:`GridSearchCV` exhaustively considers
 all parameter combinations, while :class:`RandomizedSearchCV` can sample a
 given number of candidates from a parameter space with a specified
-distribution. After describing these tools we detail
-:ref:`best practice <grid_search_tips>` applicable to both approaches.
+distribution. Both these tools have successive halving counterparts
+:class:`GridHalvingSearchCV` and :class:`RandomHalvingSearchCV`, which can be
+much faster at finding a good parameter combination.
+
+After describing these tools we detail, :ref:`best practices
+<grid_search_tips>` applicable to these approaches. Some models allow for
+specialized, efficient parameter search strategies, outlined in
+:ref:`alternative_cv`.
 
 Note that it is common that a small subset of those parameters can have a large
 impact on the predictive or computation performance of the model while others
@@ -149,88 +153,6 @@ increasing ``n_iter`` will always lead to a finer search.
     * Bergstra, J. and Bengio, Y.,
       Random search for hyper-parameter optimization,
       The Journal of Machine Learning Research (2012)
-
-.. _grid_search_tips:
-
-Tips for parameter search
-=========================
-
-.. _gridsearch_scoring:
-
-Specifying an objective metric
-------------------------------
-
-By default, parameter search uses the ``score`` function of the estimator
-to evaluate a parameter setting. These are the
-:func:`sklearn.metrics.accuracy_score` for classification and
-:func:`sklearn.metrics.r2_score` for regression.  For some applications,
-other scoring functions are better suited (for example in unbalanced
-classification, the accuracy score is often uninformative). An alternative
-scoring function can be specified via the ``scoring`` parameter to
-:class:`GridSearchCV`, :class:`RandomizedSearchCV` and many of the
-specialized cross-validation tools described below.
-See :ref:`scoring_parameter` for more details.
-
-.. _multimetric_grid_search:
-
-Specifying multiple metrics for evaluation
-------------------------------------------
-
-``GridSearchCV`` and ``RandomizedSearchCV`` allow specifying multiple metrics
-for the ``scoring`` parameter.
-
-Multimetric scoring can either be specified as a list of strings of predefined
-scores names or a dict mapping the scorer name to the scorer function and/or
-the predefined scorer name(s). See :ref:`multimetric_scoring` for more details.
-
-When specifying multiple metrics, the ``refit`` parameter must be set to the
-metric (string) for which the ``best_params_`` will be found and used to build
-the ``best_estimator_`` on the whole dataset. If the search should not be
-refit, set ``refit=False``. Leaving refit to the default value ``None`` will
-result in an error when using multiple metrics.
-
-See :ref:`sphx_glr_auto_examples_model_selection_plot_multi_metric_evaluation.py`
-for an example usage.
-
-Composite estimators and parameter spaces
------------------------------------------
-
-:ref:`pipeline` describes building composite estimators whose
-parameter space can be searched with these tools.
-
-Model selection: development and evaluation
--------------------------------------------
-
-Model selection by evaluating various parameter settings can be seen as a way
-to use the labeled data to "train" the parameters of the grid.
-
-When evaluating the resulting model it is important to do it on
-held-out samples that were not seen during the grid search process:
-it is recommended to split the data into a **development set** (to
-be fed to the ``GridSearchCV`` instance) and an **evaluation set**
-to compute performance metrics.
-
-This can be done by using the :func:`train_test_split`
-utility function.
-
-Parallelism
------------
-
-:class:`GridSearchCV` and :class:`RandomizedSearchCV` evaluate each parameter
-setting independently.  Computations can be run in parallel if your OS
-supports it, by using the keyword ``n_jobs=-1``. See function signature for
-more details.
-
-Robustness to failure
----------------------
-
-Some parameter settings may result in a failure to ``fit`` one or more folds
-of the data.  By default, this will cause the entire search to fail, even if
-some parameter settings could be fully evaluated. Setting ``error_score=0``
-(or `=np.NaN`) will make the procedure robust to such failure, issuing a
-warning and setting the score for that fold to 0 (or `NaN`), but completing
-the search.
-
 
 .. _successive_halving_user_guide:
 
@@ -443,6 +365,83 @@ eliminated enough candidates during the first iterations, using ``r_i = r_min =
        <https://arxiv.org/abs/1603.06560>`_, in Machine Learning Research
        18, 2018.
 
+.. _grid_search_tips:
+
+Tips for parameter search
+=========================
+
+.. _gridsearch_scoring:
+
+Specifying an objective metric
+------------------------------
+
+By default, parameter search uses the ``score`` function of the estimator
+to evaluate a parameter setting. These are the
+:func:`sklearn.metrics.accuracy_score` for classification and
+:func:`sklearn.metrics.r2_score` for regression.  For some applications,
+other scoring functions are better suited (for example in unbalanced
+classification, the accuracy score is often uninformative). An alternative
+scoring function can be specified via the ``scoring`` parameter of most
+parameter search tools. See :ref:`scoring_parameter` for more details.
+
+.. _multimetric_grid_search:
+
+Specifying multiple metrics for evaluation
+------------------------------------------
+
+:class:`GridSearchCV` and :class:`RandomizedSearchCV` allow specifying
+multiple metrics for the ``scoring`` parameter.
+
+Multimetric scoring can either be specified as a list of strings of predefined
+scores names or a dict mapping the scorer name to the scorer function and/or
+the predefined scorer name(s). See :ref:`multimetric_scoring` for more details.
+
+When specifying multiple metrics, the ``refit`` parameter must be set to the
+metric (string) for which the ``best_params_`` will be found and used to build
+the ``best_estimator_`` on the whole dataset. If the search should not be
+refit, set ``refit=False``. Leaving refit to the default value ``None`` will
+result in an error when using multiple metrics.
+
+See :ref:`sphx_glr_auto_examples_model_selection_plot_multi_metric_evaluation.py`
+for an example usage.
+
+Composite estimators and parameter spaces
+-----------------------------------------
+
+Please refer to :ref:`pipeline` for performing parameter searches over
+pipelines.
+
+Model selection: development and evaluation
+-------------------------------------------
+
+Model selection by evaluating various parameter settings can be seen as a way
+to use the labeled data to "train" the parameters of the grid.
+
+When evaluating the resulting model it is important to do it on
+held-out samples that were not seen during the grid search process:
+it is recommended to split the data into a **development set** (to
+be fed to the :class:`GridSearchCV` instance) and an **evaluation set**
+to compute performance metrics.
+
+This can be done by using the :func:`train_test_split`
+utility function.
+
+Parallelism
+-----------
+
+The parameter search tools evaluate each parameter setting independently.
+Computations can be run in parallel if your OS supports it, by using the
+keyword ``n_jobs=-1``. See function signature for more details.
+
+Robustness to failure
+---------------------
+
+Some parameter settings may result in a failure to ``fit`` one or more folds
+of the data.  By default, this will cause the entire search to fail, even if
+some parameter settings could be fully evaluated. Setting ``error_score=0``
+(or `=np.NaN`) will make the procedure robust to such failure, issuing a
+warning and setting the score for that fold to 0 (or `NaN`), but completing
+the search.
 
 .. _alternative_cv:
 
