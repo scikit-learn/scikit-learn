@@ -505,3 +505,18 @@ def test_regressormixin_score_multioutput():
            "built-in scorer 'r2' uses "
            "multioutput='uniform_average').")
     assert_warns_message(FutureWarning, msg, reg.score, X, y)
+
+
+def test_warns_on_get_params_non_attribute():
+    class MyEstimator(BaseEstimator):
+        def __init__(self, param=5):
+            pass
+
+        def fit(self, X, y=None):
+            return self
+
+    est = MyEstimator()
+    with pytest.warns(FutureWarning, match='AttributeError'):
+        params = est.get_params()
+
+    assert params['param'] is None

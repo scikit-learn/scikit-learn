@@ -204,3 +204,6 @@ For the docs to render properly, please also import
 ``enable_my_experimental_feature`` in ``doc/conf.py``, else sphinx won't be
 able to import the corresponding modules. Note that using ``from
 sklearn.experimental import *`` **does not work**.
+
+Note that some experimental classes / functions are not included in the
+:mod:`sklearn.experimental` module: ``sklearn.datasets.fetch_openml``.
