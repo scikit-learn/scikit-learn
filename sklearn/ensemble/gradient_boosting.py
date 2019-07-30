@@ -1573,13 +1573,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         n_inbag = max(1, int(self.subsample * n_samples))
         loss_ = self.loss_
 
-        # Set min_weight_leaf from min_weight_fraction_leaf
-        if self.min_weight_fraction_leaf != 0. and sample_weight is not None:
-            min_weight_leaf = (self.min_weight_fraction_leaf *
-                               np.sum(sample_weight))
-        else:
-            min_weight_leaf = 0.
-
         if self.verbose:
             verbose_reporter = VerboseReporter(self.verbose)
             verbose_reporter.init(self, begin_at_stage)
@@ -2049,6 +2042,9 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 shape (n_estimators, ``loss_.K``)
         The collection of fitted sub-estimators. ``loss_.K`` is 1 for binary
         classification, otherwise n_classes.
+
+    classes_ : array of shape = [n_classes]
+        The classes labels.
 
     Notes
     -----

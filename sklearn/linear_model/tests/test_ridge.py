@@ -1008,26 +1008,61 @@ def test_n_iter():
         assert reg.n_iter_ is None
 
 
-def test_ridge_fit_intercept_sparse():
-    X, y = make_regression(n_samples=1000, n_features=2, n_informative=2,
-                           bias=10., random_state=42)
-
+@pytest.mark.parametrize('solver', ['sparse_cg', 'auto'])
+def test_ridge_fit_intercept_sparse(solver):
+    X, y = _make_sparse_offset_regression(n_features=20, random_state=0)
     X_csr = sp.csr_matrix(X)
 
-    for solver in ['sag', 'sparse_cg']:
-        dense = Ridge(alpha=1., tol=1.e-15, solver=solver, fit_intercept=True)
-        sparse = Ridge(alpha=1., tol=1.e-15, solver=solver, fit_intercept=True)
-        dense.fit(X, y)
-        with pytest.warns(None) as record:
-            sparse.fit(X_csr, y)
-        assert len(record) == 0
-        assert_almost_equal(dense.intercept_, sparse.intercept_)
-        assert_array_almost_equal(dense.coef_, sparse.coef_)
+    # for now only sparse_cg can correctly fit an intercept with sparse X with
+    # default tol and max_iter.
+    # sag is tested separately in test_ridge_fit_intercept_sparse_sag
+    # because it requires more iterations and should raise a warning if default
+    # max_iter is used.
+    # other solvers raise an exception, as checked in
+    # test_ridge_fit_intercept_sparse_error
+    #
+    # "auto" should switch to "sparse_cg" when X is sparse
+    # so the reference we use for both ("auto" and "sparse_cg") is
+    # Ridge(solver="sparse_cg"), fitted using the dense representation (note
+    # that "sparse_cg" can fit sparse or dense data)
+    dense_ridge = Ridge(alpha=1., solver='sparse_cg', fit_intercept=True)
+    sparse_ridge = Ridge(alpha=1., solver=solver, fit_intercept=True)
+    dense_ridge.fit(X, y)
+    with pytest.warns(None) as record:
+        sparse_ridge.fit(X_csr, y)
+    assert len(record) == 0
+    assert np.allclose(dense_ridge.intercept_, sparse_ridge.intercept_)
+    assert np.allclose(dense_ridge.coef_, sparse_ridge.coef_)
 
-    # test the solver switch and the corresponding warning
-    for solver in ['saga', 'lsqr']:
-        sparse = Ridge(alpha=1., tol=1.e-15, solver=solver, fit_intercept=True)
-        assert_raises_regex(ValueError, "In Ridge,", sparse.fit, X_csr, y)
+
+@pytest.mark.parametrize('solver', ['saga', 'lsqr', 'svd', 'cholesky'])
+def test_ridge_fit_intercept_sparse_error(solver):
+    X, y = _make_sparse_offset_regression(n_features=20, random_state=0)
+    X_csr = sp.csr_matrix(X)
+    sparse_ridge = Ridge(alpha=1., solver=solver, fit_intercept=True)
+    err_msg = "solver='{}' does not support".format(solver)
+    with pytest.raises(ValueError, match=err_msg):
+        sparse_ridge.fit(X_csr, y)
+
+
+def test_ridge_fit_intercept_sparse_sag():
+    X, y = _make_sparse_offset_regression(
+        n_features=5, n_samples=20, random_state=0, X_offset=5.)
+    X_csr = sp.csr_matrix(X)
+
+    params = dict(alpha=1., solver='sag', fit_intercept=True,
+                  tol=1e-10, max_iter=100000)
+    dense_ridge = Ridge(**params)
+    sparse_ridge = Ridge(**params)
+    dense_ridge.fit(X, y)
+    with pytest.warns(None) as record:
+        sparse_ridge.fit(X_csr, y)
+    assert len(record) == 0
+    assert np.allclose(dense_ridge.intercept_, sparse_ridge.intercept_,
+                       rtol=1e-4)
+    assert np.allclose(dense_ridge.coef_, sparse_ridge.coef_, rtol=1e-4)
+    with pytest.warns(UserWarning, match='"sag" solver requires.*'):
+        Ridge(solver='sag').fit(X_csr, y)
 
 
 @pytest.mark.parametrize('return_intercept', [False, True])
@@ -1175,3 +1210,13 @@ def test_ridge_regression_dtype_stability(solver, seed):
     assert results[np.float32].dtype == np.float32
     assert results[np.float64].dtype == np.float64
     assert_allclose(results[np.float32], results[np.float64], atol=atol)
+
+
+def test_ridge_sag_with_X_fortran():
+    # check that Fortran array are converted when using SAG solver
+    X, y = make_regression(random_state=42)
+    # for the order of X and y to not be C-ordered arrays
+    X = np.asfortranarray(X)
+    X = X[::2, :]
+    y = y[::2]
+    Ridge(solver='sag').fit(X, y)
