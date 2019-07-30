@@ -282,12 +282,12 @@ class GridHalvingSearchCV(BaseSuccessiveHalving):
         in the list are explored. This enables searching over any sequence
         of parameter settings.
 
-    scoring : string, callable, or None, default: None
+    scoring : string, callable, or None, default=None
         A single string (see :ref:`scoring_parameter`) or a callable
         (see :ref:`scoring`) to evaluate the predictions on the test set.
         If None, the estimator's score method is used.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -308,9 +308,9 @@ class GridHalvingSearchCV(BaseSuccessiveHalving):
               spawned
 
             - A string, giving an expression as a function of n_jobs,
-              as in '2*n_jobs'
+              as in '2*n_jobs' (default)
 
-    cv : int, cross-validation generator or an iterable, optional (default=5)
+    cv : int, cross-validation generator or iterable, default=5
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
@@ -351,24 +351,24 @@ class GridHalvingSearchCV(BaseSuccessiveHalving):
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
 
-    max_budget : int, optional(default='auto')
+    max_budget : int, default='auto'
         The maximum number of resources that any candidate is allowed to use
         for a given iteration. By default, this is set ``n_samples`` when
         ``budget_on='n_samples'`` (default), else an error is raised.
 
-    budget_on : `n_samples` or str, optional(default='n_samples')
+    budget_on : `'n_samples'` or str, default='n_samples'
         Defines the nature of the budget. By default, the budget is the number
         of samples. It can also be set to any parameter of the base estimator
         that accepts positive integer values, e.g. 'n_iterations' or
         'n_estimators' for a gradient boosting estimator. In this case
         ``max_budget`` cannot be 'auto'.
 
-    ratio : int or float, optional(default=3)
+    ratio : int or float, default=3
         The 'halving' parameter, which determines the proportion of candidates
         that are selected for the next iteration. For example, ``ratio=3``
         means that only one third of the candidates are selected.
 
-    r_min : int, optional(default='auto')
+    r_min : int, default='auto'
         The minimum amount of resource that any candidate is allowed to use for
         a given iteration. Equivalently, this defines the amount of resources
         that are allocated for each candidate at the first iteration. By
@@ -385,7 +385,7 @@ class GridHalvingSearchCV(BaseSuccessiveHalving):
         Note that the amount of resources used at each iteration is always a
         multiple of ``r_min``.
 
-    aggressive_elimination : bool, optional(default=False)
+    aggressive_elimination : bool, default=False
         This is only relevant in cases where there isn't enough budget to
         eliminate enough candidates at the last iteration. If ``True``, then
         the search process will 'replay' the first iteration for as long as
@@ -393,7 +393,7 @@ class GridHalvingSearchCV(BaseSuccessiveHalving):
         ``False`` by default, which means that the last iteration may evaluate
         more than ``ratio`` candidates.
 
-    force_exhaust_budget : bool, optional(default=False)
+    force_exhaust_budget : bool, default=False
         If True, then ``r_min`` is set to a specific value such that the
         last iteration uses as much budget as possible. Namely, the last
         iteration uses the highest value smaller than ``max_budget`` that is a
@@ -578,18 +578,18 @@ class RandomHalvingSearchCV(BaseSuccessiveHalving):
         method for sampling (such as those from scipy.stats.distributions).
         If a list is given, it is sampled uniformly.
 
-    n_candidates: int, optional(default='auto')
+    n_candidates: int, default='auto'
         The number of candidate parameters to sample. By default this will
         sample enough candidates so that the last iteration uses as many
         resources as possible. Note that ``force_exhaust_budget`` has no
         effect in this case.
 
-    scoring : string, callable, or None, default: None
+    scoring : string, callable, or None, default=None
         A single string (see :ref:`scoring_parameter`) or a callable
         (see :ref:`scoring`) to evaluate the predictions on the test set.
         If None, the estimator's score method is used.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -610,9 +610,9 @@ class RandomHalvingSearchCV(BaseSuccessiveHalving):
               spawned
 
             - A string, giving an expression as a function of n_jobs,
-              as in '2*n_jobs'
+              as in '2*n_jobs' (default)
 
-    cv : int, cross-validation generator or an iterable, optional (default=5)
+    cv : int, cross-validation generator or an iterable, default=5
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
@@ -653,24 +653,24 @@ class RandomHalvingSearchCV(BaseSuccessiveHalving):
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
 
-    max_budget : int, optional(default='auto')
+    max_budget : int, default='auto'
         The maximum number of resources that any candidate is allowed to use
         for a given iteration. By default, this is set ``n_samples`` when
         ``budget_on='n_samples'`` (default), else an error is raised.
 
-    budget_on : `n_samples` or str, optional(default='n_samples')
+    budget_on : ``'n_samples'`` or str, default='n_samples'
         Defines the nature of the budget. By default, the budget is the number
         of samples. It can also be set to any parameter of the base estimator
         that accepts positive integer values, e.g. 'n_iterations' or
         'n_estimators' for a gradient boosting estimator. In this case
         ``max_budget`` cannot be 'auto'.
 
-    ratio : int or float, optional(default=3)
+    ratio : int or float, default=3
         The 'halving' parameter, which determines the proportion of candidates
         that are selected for the next iteration. For example, ``ratio=3``
         means that only one third of the candidates are selected.
 
-    r_min : int, optional(default='auto')
+    r_min : int, default='auto'
         The minimum amount of resource that any candidate is allowed to use for
         a given iteration. Equivalently, this defines the amount of resources
         that are allocated for each candidate at the first iteration. By
@@ -687,7 +687,7 @@ class RandomHalvingSearchCV(BaseSuccessiveHalving):
         Note that the amount of resources used at each iteration is always a
         multiple of ``r_min``.
 
-    aggressive_elimination : bool, optional(default=False)
+    aggressive_elimination : bool, default=False
         This is only relevant in cases where there isn't enough budget to
         eliminate enough candidates at the last iteration. If ``True``, then
         the search process will 'replay' the first iteration for as long as
@@ -695,7 +695,7 @@ class RandomHalvingSearchCV(BaseSuccessiveHalving):
         ``False`` by default, which means that the last iteration may evaluate
         more than ``ratio`` candidates.
 
-    force_exhaust_budget : bool, optional(default=False)
+    force_exhaust_budget : bool, default=False
         If True, then ``r_min`` is set to a specific value such that the
         last iteration uses as much budget as possible. Namely, the last
         iteration uses the highest value smaller than ``max_budget`` that is a

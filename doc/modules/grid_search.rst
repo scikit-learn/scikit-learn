@@ -241,7 +241,7 @@ Scikit-learn also provides the :class:`GridHalvingSearchCV` and
 :class:`RandomHalvingSearchCV` estimators that can be used to
 search a parameter space using successive halving [1]_ [2]_. Successive
 halving is an iterative selection process where all candidates are evaluated
-with a small amount of resources at the first iteration. Only a subset of
+with a small amount of resources at the first iteration. Only some of
 these candidates are selected for the next iteration, which will be
 allocated more resources. What defines a resource is typically the number of
 samples to train on, or the number of trees for a gradient boosting /
@@ -266,7 +266,35 @@ the next iteration::
 
     n_candidates_to_keep = n_candidates_at_i // ratio
 
-Note that each ``r_i`` is a multiple of both ``ratio`` and ``r_min``.
+So in the first iteration, we use ``r_min`` resources ``n_candidates``
+times. In the second iteration, we use ``r_min * ratio`` resources
+``n_candidates // ratio`` times. The third again multiplies the resources
+per candidate and divides the number of candidates. This process stops when
+the maximum budget per candidate is reached, or when less than ``ratio``
+candidates are left.
+
+Here is an example with ``r_min=3`` and ``ratio=2``, starting with 70
+candidates:
+
++-------------+-----------------------+
+| ``r_i``     | ``n_candidates_at_i`` |
++=============+=======================+
+| 3 (=r_min)  | 70 (=n_candidates)    |
++-------------+-----------------------+
+| 3 * 2 = 6   | 70 // 2 = 35          |
++-------------+-----------------------+
+| 6 * 2 = 12  | 35 // 2 = 17          |
++-------------+-----------------------+
+| 12 * 2 = 24 | 17 // 2 = 8           |
++-------------+-----------------------+
+| 24 * 2 = 48 | 8 // 2 = 4            |
++-------------+-----------------------+
+| 48 * 2 = 96 | 4 // 2 = 2            |
++-------------+-----------------------+
+
+At the last iteration, ``ratio`` candidates are evaluated, and we can pick
+the best one. Note that each ``r_i`` is a multiple of both ``ratio`` and
+``r_min``.
 
 Choosing the budget
 -------------------
@@ -282,40 +310,37 @@ iterations of a random forest::
     >>> from sklearn.model_selection import GridHalvingSearchCV
     >>> import pandas as pd
     >>>
-    >>> parameters = {'max_depth': [3, 5, 10],
+    >>> param_grid = {'max_depth': [3, 5, 10],
     ...               'min_samples_split': [2, 5, 10]}
     >>> base_estimator = RandomForestClassifier(random_state=0)
     >>> X, y = make_classification(n_samples=1000, random_state=0)
-    >>> sh = GridHalvingSearchCV(base_estimator, parameters, cv=5,
-    ...                            ratio=2,
-    ...                            budget_on='n_estimators',
-    ...                            max_budget=30,
-    ...                            random_state=0,
-    ...                            ).fit(X, y)
+    >>> sh = GridHalvingSearchCV(base_estimator, param_grid, cv=5,
+    ...                          ratio=2, budget_on='n_estimators',
+    ...                          max_budget=30, random_state=0).fit(X, y)
     >>> sh.best_estimator_
     RandomForestClassifier(max_depth=5, n_estimators=8, random_state=0)
 
 Note that it is not possible to budget on a parameter that is part of the
-parameter space.
+parameter grid.
 
 Exhausting the budget
 ---------------------
 
 As mentioned above, the first iteration uses ``r_min`` resources. If you have
-a big budget, this may be a waste of resource::
+a big budget, this may be a waste of resources::
 
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.svm import SVC
     >>> from sklearn.model_selection import GridHalvingSearchCV
     >>> import pandas as pd
-    >>> parameters = {'kernel': ('linear', 'rbf'),
-    ...               'C': [1, 10, 100]}
+    >>> param_grid= {'kernel': ('linear', 'rbf'),
+    ...              'C': [1, 10, 100]}
     >>> base_estimator = SVC(gamma='scale')
     >>> X, y = make_classification(n_samples=1000)
-    >>> sh = GridHalvingSearchCV(base_estimator, parameters, cv=5,
-    ...                            ratio=2).fit(X, y)
-    >>> results = pd.DataFrame.from_dict(sh.cv_results_)
-    >>> results.groupby('iter').r_i.unique()
+    >>> sh = GridHalvingSearchCV(base_estimator, param_grid, cv=5,
+    ...                          ratio=2).fit(X, y)
+    >>> results = pd.DataFrame(sh.cv_results_)
+    >>> results.groupby('iter')['r_i'].unique()
     iter
     0    [20]
     1    [40]
@@ -327,11 +352,11 @@ is ``n_samples=1000``. Note in this case that ``r_min = r_0 = 20``. In order
 for the last iteration to use as many resources as possible, you can use the
 ``force_exhaust_budget`` parameter.::
 
-    >>> sh = GridHalvingSearchCV(base_estimator, parameters, cv=5,
+    >>> sh = GridHalvingSearchCV(base_estimator, param_grid, cv=5,
     ...                            ratio=2, force_exhaust_budget=True,
     ...                            ).fit(X, y)
     >>> results = pd.DataFrame.from_dict(sh.cv_results_)
-    >>> results.groupby('iter').r_i.unique()
+    >>> results.groupby('iter')['r_i'].unique()
     iter
     0     [250]
     1     [500]
@@ -356,15 +381,13 @@ the number of candidates, the last iteration may have to evaluate more than
     >>> import pandas as pd
     >>>
     >>>
-    >>> parameters = {'kernel': ('linear', 'rbf'),
+    >>> param_grid = {'kernel': ('linear', 'rbf'),
     ...               'C': [1, 10, 100]}
     >>> base_estimator = SVC(gamma='scale')
     >>> X, y = make_classification(n_samples=1000)
-    >>> sh = GridHalvingSearchCV(base_estimator, parameters, cv=5,
-    ...                            ratio=2,
-    ...                            max_budget=40,
-    ...                            aggressive_elimination=False,
-    ...                            ).fit(X, y)
+    >>> sh = GridHalvingSearchCV(base_estimator, param_grid, cv=5,
+    ...                          ratio=2, max_budget=40,
+    ...                          aggressive_elimination=False).fit(X, y)
     >>> results = pd.DataFrame.from_dict(sh.cv_results_)
     >>> results.groupby('iter').r_i.unique()
     iter
@@ -385,7 +408,7 @@ process to end up with less than ``ratio`` candidates at the last
 iteration. To do this, the process will eliminate as many candidates as
 necessary using ``r_min`` resources::
 
-    >>> sh = GridHalvingSearchCV(base_estimator, parameters, cv=5,
+    >>> sh = GridHalvingSearchCV(base_estimator, param_grid, cv=5,
     ...                            ratio=2,
     ...                            max_budget=40,
     ...                            aggressive_elimination=True,
