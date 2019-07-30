@@ -458,6 +458,14 @@ class ClusterMixin:
         self.fit(X)
         return self.labels_
 
+    @property
+    def n_features_out_(self):
+        if not hasattr(self, 'transform'):
+            raise AttributeError("{} doesn't have n_features_out_"
+                                 " as it doesn't define transform.".format(
+                                     self.__class__.__name__))
+        return self.n_clusters
+
 
 class BiclusterMixin:
     """Mixin class for all bicluster estimators in scikit-learn"""
@@ -570,12 +578,6 @@ class TransformerMixin:
     def n_features_out_(self):
         if hasattr(self, '_n_features_out'):
             return self._n_features_out
-        # Ideally this would be done in each class.
-        if hasattr(self, 'n_clusters'):
-            # this is before n_components_
-            # because n_components_ means something else
-            # in agglomerative clustering
-            n_features = self.n_clusters
         elif hasattr(self, 'n_components_'):
             # n_components could be auto or None
             # this is more likely to be an int
