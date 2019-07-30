@@ -45,6 +45,14 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.base`
+...................
+
+- |API| From version 0.24 :meth:`BaseEstimator.get_params` will raise an
+  AttributeError rather than return None for parameters that are in the
+  estimator's constructor but not stored as attributes on the instance.
+  :pr:`14464` by `Joel Nothman`_.
+
 :mod:`sklearn.calibration`
 ..........................
 
@@ -56,7 +64,7 @@ Changelog
 :mod:`sklearn.datasets`
 .......................
 
-- |Feature| :func:`datasets.fetch_openml` now supports heterogeneous data using pandas 
+- |Feature| :func:`datasets.fetch_openml` now supports heterogeneous data using pandas
   by setting `as_frame=True`. :pr:`13902` by `Thomas Fan`_.
 
 - |Enhancement| The parameter `return_X_y` was added to
@@ -107,15 +115,44 @@ Changelog
   preserve the class balance of the original training set. :pr:`14194`
   by :user:`Johann Faouzi <johannfaouzi>`.
 
+- |Fix| Run by default
+  :func:`utils.estimator_checks.check_estimator` on both
+  :class:`ensemble.VotingClassifier` and :class:`ensemble.VotingRegressor`. It
+  leads to solve issues regarding shape consistency during `predict` which was
+  failing when the underlying estimators were not outputting consistent array
+  dimensions. Note that it should be replaced by refactoring the common tests
+  in the future.
+  :pr:`14305` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Efficiency| :func:`ensemble.MissingIndicator.fit_transform` the
+  _get_missing_features_info function is now called once when calling
+  fit_transform for MissingIndicator class. :pr:`14356` by :user:
+  `Harsh Soni <harsh020>`.
+
 - |Fix| :class:`ensemble.AdaBoostClassifier` computes probabilities based on
   the decision function as in the literature. Thus, `predict` and
   `predict_proba` give consistent results.
   :pr:`14114` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.gaussian_process`
+...............................
+
+- |API| From version 0.24 :meth:`Kernel.get_params` will raise an
+  AttributeError rather than return None for parameters that are in the
+  estimator's constructor but not stored as attributes on the instance.
+  :pr:`14464` by `Joel Nothman`_.
+
+:mod:`sklearn.inspection`
+.........................
+
+- |MajorFeature| :func:`inspection.permutation_importance` has been added to
+  measure the importance of each feature in an arbitrary trained model with
+  respect to a given scoring function. :issue:`13146` by `Thomas Fan`_.
+
 :mod:`sklearn.linear_model`
 ...........................
 
-- |Enhancement| :class:`linearmodel.BayesianRidge` now accepts hyperparameters
+- |Enhancement| :class:`linear_model.BayesianRidge` now accepts hyperparameters
   ``alpha_init`` and ``lambda_init`` which can be used to set the initial value
   of the maximization procedure in :term:`fit`.
   :pr:`13618` by :user:`Yoshihiro Uchida <c56pony>`.
@@ -127,7 +164,11 @@ Changelog
 
 - |Efficiency| The 'liblinear' logistic regression solver is now faster and
   requires less memory.
-  :pr:`14108`, pr:`14170` by :user:`Alex Henrie <alexhenrie>`.
+  :pr:`14108`, :pr:`14170` by :user:`Alex Henrie <alexhenrie>`.
+
+- |Fix| :class:`linear_model.Ridge` with `solver='sag'` now accepts F-ordered
+  and non-contiguous arrays and makes a conversion instead of failing.
+  :pr:`14458` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.metrics`
 ......................
@@ -135,7 +176,7 @@ Changelog
 - |Feature| Added multiclass support to :func:`metrics.roc_auc_score`.
   :issue:`12789` by :user:`Kathy Chen <kathyxchen>`,
   :user:`Mohamed Maskani <maskani-moh>`, and :user:`Thomas Fan <thomasjpfan>`.
-  
+
 - |Feature| Add :class:`metrics.mean_tweedie_deviance` measuring the
   Tweedie deviance for a power parameter ``p``. Also add mean Poisson deviance
   :class:`metrics.mean_poisson_deviance` and mean Gamma deviance
@@ -180,7 +221,10 @@ Changelog
   ``decision_function_shape='ovr'``, and the number of target classes > 2.
   :pr:`12557` by `Adrin Jalali`_.
 
-
+- |Enhancement| SVM now throws more specific error when fit on non-square data
+  and kernel = precomputed.  :class:`svm.BaseLibSVM`
+  :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
+  
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -189,12 +233,15 @@ Changelog
   :class:`preprocessing.MaxAbsScaler`, :class:`preprocessing.RobustScaler`
   and :class:`preprocessing.QuantileTransformer` which results in a slight
   performance improvement. :pr:`13987` by `Roman Yurchak`_.
-
+ 
+- |Fix| KernelCenterer now throws error when fit on non-square 
+  class:`preprocessing.KernelCenterer`
+  :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
 
 :mod:`sklearn.cluster`
 ......................
 
-- |Enhancement| :class:`cluster.SpectralClustering` now accepts a ``n_components`` 
+- |Enhancement| :class:`cluster.SpectralClustering` now accepts a ``n_components``
   parameter. This parameter extends `SpectralClustering` class functionality to
   match `spectral_clustering`.
   :pr:`13726` by :user:`Shuzhe Xiao <fdas3213>`.
@@ -214,6 +261,13 @@ Changelog
   NumPy array, SciPy sparse matrix, and Pandas DataFrame.
   :pr:`14035` by `Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.neighbors`
+.............................
+
+- |Fix| KNearestRegressor now throws error when fit on non-square data and
+  metric = precomputed.  :class:`neighbors.NeighborsBase`
+  :pr:`14336` by :user:`Gregory Dexter <gdex1>`.  
+
 :mod:`sklearn.neural_network`
 .............................
 
@@ -223,7 +277,7 @@ Changelog
   :class:`neural_network.MLPClassifier` to give control over
   maximum number of function evaluation to not meet ``tol`` improvement.
   :issue:`9274` by :user:`Daniel Perry <daniel-perry>`.
-
+  
 
 Miscellaneous
 .............
@@ -245,6 +299,10 @@ These changes mostly affect library developers.
   ``transform`` is called before ``fit``; previously an ``AttributeError`` or
   ``ValueError`` was acceptable.
   :pr:`13013` by by :user:`Agamemnon Krasoulis <agamemnonc>`.
+
+- |Fix| Added check_transformer_data_not_an_array to checks where missing
+  |Fix| Added check that pairwise estimators raise error on non-square data
+  :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
 
 - |Enhancement| Binary only classifiers are now supported in estimator checks.
   Such classifiers need to have the `binary_only=True` estimator tag.

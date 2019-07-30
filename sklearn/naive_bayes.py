@@ -157,6 +157,9 @@ class GaussianNB(BaseNB):
     epsilon_ : float
         absolute additive value to variances
 
+    classes_ : array-like, shape (n_classes,)
+        Unique class labels.
+
     Examples
     --------
     >>> import numpy as np
@@ -714,6 +717,9 @@ class MultinomialNB(BaseDiscreteNB):
     n_features_ : int
         Number of features of each sample.
 
+    classes_ : array-like, shape (n_classes,)
+        Unique class labels.
+
     Examples
     --------
     >>> import numpy as np
@@ -818,6 +824,9 @@ class ComplementNB(BaseDiscreteNB):
     feature_all_ : array, shape (n_features,)
         Number of samples encountered for each feature during fitting. This
         value is weighted by the sample weight when provided.
+
+    classes_ : array of shape = [n_classes]
+        The classes labels.
 
     Examples
     --------
@@ -924,6 +933,9 @@ class BernoulliNB(BaseDiscreteNB):
 
     n_features_ : int
         Number of features of each sample.
+
+    classes_ : array of shape = [n_classes]
+        The classes labels.
 
     Examples
     --------
