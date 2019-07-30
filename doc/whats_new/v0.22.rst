@@ -213,7 +213,10 @@ Changelog
   ``decision_function_shape='ovr'``, and the number of target classes > 2.
   :pr:`12557` by `Adrin Jalali`_.
 
-
+- |Enhancement| SVM now throws more specific error when fit on non-square data
+  and kernel = precomputed.  :class:`svm.BaseLibSVM`
+  :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
+  
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -222,7 +225,10 @@ Changelog
   :class:`preprocessing.MaxAbsScaler`, :class:`preprocessing.RobustScaler`
   and :class:`preprocessing.QuantileTransformer` which results in a slight
   performance improvement. :pr:`13987` by `Roman Yurchak`_.
-
+ 
+- |Fix| KernelCenterer now throws error when fit on non-square 
+  class:`preprocessing.KernelCenterer`
+  :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
 
 :mod:`sklearn.cluster`
 ......................
@@ -247,6 +253,13 @@ Changelog
   NumPy array, SciPy sparse matrix, and Pandas DataFrame.
   :pr:`14035` by `Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.neighbors`
+.............................
+
+- |Fix| KNearestRegressor now throws error when fit on non-square data and
+  metric = precomputed.  :class:`neighbors.NeighborsBase`
+  :pr:`14336` by :user:`Gregory Dexter <gdex1>`.  
+
 :mod:`sklearn.neural_network`
 .............................
 
@@ -256,7 +269,7 @@ Changelog
   :class:`neural_network.MLPClassifier` to give control over
   maximum number of function evaluation to not meet ``tol`` improvement.
   :issue:`9274` by :user:`Daniel Perry <daniel-perry>`.
-
+  
 
 Miscellaneous
 .............
@@ -278,6 +291,10 @@ These changes mostly affect library developers.
   ``transform`` is called before ``fit``; previously an ``AttributeError`` or
   ``ValueError`` was acceptable.
   :pr:`13013` by by :user:`Agamemnon Krasoulis <agamemnonc>`.
+
+- |Fix| Added check_transformer_data_not_an_array to checks where missing
+  |Fix| Added check that pairwise estimators raise error on non-square data
+  :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
 
 - |Enhancement| Binary only classifiers are now supported in estimator checks.
   Such classifiers need to have the `binary_only=True` estimator tag.
