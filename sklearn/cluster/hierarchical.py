@@ -990,6 +990,10 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         at the i-th iteration, children[i][0] and children[i][1]
         are merged to form node `n_features + i`
 
+    distances_ : array-like, shape (n_nodes-1,)
+        Distances between nodes in the corresponding place in `children_`.
+        Only computed if distance_threshold is not None.
+
     Examples
     --------
     >>> import numpy as np
