@@ -80,6 +80,14 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+    Attributes
+    ----------
+    effective_metric_ : string
+        Metric used to compute distances to neighbors.
+
+    effective_metric_params_ : dict
+        Parameters for the metric used to compute distances to neighbors.
+
     Examples
     --------
       >>> import numpy as np
@@ -87,11 +95,10 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
       >>> samples = [[0, 0, 2], [1, 0, 0], [0, 0, 1]]
 
       >>> neigh = NearestNeighbors(2, 0.4)
-      >>> neigh.fit(samples)  #doctest: +ELLIPSIS
+      >>> neigh.fit(samples)
       NearestNeighbors(...)
 
       >>> neigh.kneighbors([[0, 0, 1.3]], 2, return_distance=False)
-      ... #doctest: +ELLIPSIS
       array([[2, 0]]...)
 
       >>> nbrs = neigh.radius_neighbors([[0, 0, 1.3]], 0.4, return_distance=False)
@@ -117,7 +124,7 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
     def __init__(self, n_neighbors=5, radius=1.0,
                  algorithm='auto', leaf_size=30, metric='minkowski',
                  p=2, metric_params=None, n_jobs=None, **kwargs):
-        super(NearestNeighbors, self).__init__(
+        super().__init__(
               n_neighbors=n_neighbors,
               radius=radius,
               algorithm=algorithm,

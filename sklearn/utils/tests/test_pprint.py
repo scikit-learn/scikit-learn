@@ -1,23 +1,178 @@
 import re
+from pprint import PrettyPrinter
+
+import numpy as np
 
 from sklearn.utils._pprint import _EstimatorPrettyPrinter
-from sklearn.pipeline import make_pipeline, Pipeline
-from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegression
-from sklearn.feature_selection import RFE
-from sklearn.model_selection import GridSearchCV
+from sklearn.linear_model import LogisticRegressionCV
+from sklearn.pipeline import make_pipeline
+from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.feature_selection import SelectKBest, chi2
-from sklearn.svm import SVC
-from sklearn.svm import LinearSVC
-from sklearn.decomposition import PCA
-from sklearn.decomposition import NMF
-from sklearn.impute import SimpleImputer
-from sklearn.feature_extraction.text import CountVectorizer
 from sklearn import set_config
 
 
 # Ignore flake8 (lots of line too long issues)
 # flake8: noqa
+
+# Constructors excerpted to test pprinting
+class LogisticRegression(BaseEstimator):
+    def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
+                 fit_intercept=True, intercept_scaling=1, class_weight=None,
+                 random_state=None, solver='warn', max_iter=100,
+                 multi_class='warn', verbose=0, warm_start=False, n_jobs=None,
+                 l1_ratio=None):
+        self.penalty = penalty
+        self.dual = dual
+        self.tol = tol
+        self.C = C
+        self.fit_intercept = fit_intercept
+        self.intercept_scaling = intercept_scaling
+        self.class_weight = class_weight
+        self.random_state = random_state
+        self.solver = solver
+        self.max_iter = max_iter
+        self.multi_class = multi_class
+        self.verbose = verbose
+        self.warm_start = warm_start
+        self.n_jobs = n_jobs
+        self.l1_ratio = l1_ratio
+
+    def fit(self, X, y):
+        return self
+
+
+class StandardScaler(BaseEstimator, TransformerMixin):
+    def __init__(self, copy=True, with_mean=True, with_std=True):
+        self.with_mean = with_mean
+        self.with_std = with_std
+        self.copy = copy
+
+    def transform(self, X, copy=None):
+        return self
+
+
+class RFE(BaseEstimator):
+    def __init__(self, estimator, n_features_to_select=None, step=1,
+                 verbose=0):
+        self.estimator = estimator
+        self.n_features_to_select = n_features_to_select
+        self.step = step
+        self.verbose = verbose
+
+
+class GridSearchCV(BaseEstimator):
+    def __init__(self, estimator, param_grid, scoring=None,
+                 n_jobs=None, iid='warn', refit=True, cv='warn', verbose=0,
+                 pre_dispatch='2*n_jobs', error_score='raise-deprecating',
+                 return_train_score=False):
+        self.estimator = estimator
+        self.param_grid = param_grid
+        self.scoring = scoring
+        self.n_jobs = n_jobs
+        self.iid = iid
+        self.refit = refit
+        self.cv = cv
+        self.verbose = verbose
+        self.pre_dispatch = pre_dispatch
+        self.error_score = error_score
+        self.return_train_score = return_train_score
+
+
+class CountVectorizer(BaseEstimator):
+    def __init__(self, input='content', encoding='utf-8',
+                 decode_error='strict', strip_accents=None,
+                 lowercase=True, preprocessor=None, tokenizer=None,
+                 stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
+                 ngram_range=(1, 1), analyzer='word',
+                 max_df=1.0, min_df=1, max_features=None,
+                 vocabulary=None, binary=False, dtype=np.int64):
+        self.input = input
+        self.encoding = encoding
+        self.decode_error = decode_error
+        self.strip_accents = strip_accents
+        self.preprocessor = preprocessor
+        self.tokenizer = tokenizer
+        self.analyzer = analyzer
+        self.lowercase = lowercase
+        self.token_pattern = token_pattern
+        self.stop_words = stop_words
+        self.max_df = max_df
+        self.min_df = min_df
+        self.max_features = max_features
+        self.ngram_range = ngram_range
+        self.vocabulary = vocabulary
+        self.binary = binary
+        self.dtype = dtype
+
+
+class Pipeline(BaseEstimator):
+    def __init__(self, steps, memory=None):
+        self.steps = steps
+        self.memory = memory
+
+
+class SVC(BaseEstimator):
+    def __init__(self, C=1.0, kernel='rbf', degree=3, gamma='auto_deprecated',
+                 coef0=0.0, shrinking=True, probability=False,
+                 tol=1e-3, cache_size=200, class_weight=None,
+                 verbose=False, max_iter=-1, decision_function_shape='ovr',
+                 random_state=None):
+        self.kernel = kernel
+        self.degree = degree
+        self.gamma = gamma
+        self.coef0 = coef0
+        self.tol = tol
+        self.C = C
+        self.shrinking = shrinking
+        self.probability = probability
+        self.cache_size = cache_size
+        self.class_weight = class_weight
+        self.verbose = verbose
+        self.max_iter = max_iter
+        self.decision_function_shape = decision_function_shape
+        self.random_state = random_state
+
+
+class PCA(BaseEstimator):
+    def __init__(self, n_components=None, copy=True, whiten=False,
+                 svd_solver='auto', tol=0.0, iterated_power='auto',
+                 random_state=None):
+        self.n_components = n_components
+        self.copy = copy
+        self.whiten = whiten
+        self.svd_solver = svd_solver
+        self.tol = tol
+        self.iterated_power = iterated_power
+        self.random_state = random_state
+
+
+class NMF(BaseEstimator):
+    def __init__(self, n_components=None, init=None, solver='cd',
+                 beta_loss='frobenius', tol=1e-4, max_iter=200,
+                 random_state=None, alpha=0., l1_ratio=0., verbose=0,
+                 shuffle=False):
+        self.n_components = n_components
+        self.init = init
+        self.solver = solver
+        self.beta_loss = beta_loss
+        self.tol = tol
+        self.max_iter = max_iter
+        self.random_state = random_state
+        self.alpha = alpha
+        self.l1_ratio = l1_ratio
+        self.verbose = verbose
+        self.shuffle = shuffle
+
+
+class SimpleImputer(BaseEstimator):
+    def __init__(self, missing_values=np.nan, strategy="mean",
+                 fill_value=None, verbose=0, copy=True):
+        self.missing_values = missing_values
+        self.strategy = strategy
+        self.fill_value = fill_value
+        self.verbose = verbose
+        self.copy = copy
+
 
 def test_basic():
     # Basic pprint test
@@ -58,6 +213,9 @@ LogisticRegression(C=99, class_weight=0.4, fit_intercept=False, tol=1234,
     expected = """SimpleImputer()"""
     assert imputer.__repr__() == expected
 
+    # make sure array parameters don't throw error (see #13583)
+    repr(LogisticRegressionCV(Cs=np.array([0.1, 1])))
+
     set_config(print_changed_only=False)
 
 
@@ -75,7 +233,8 @@ Pipeline(memory=None,
                                     multi_class='warn', n_jobs=None,
                                     penalty='l2', random_state=None,
                                     solver='warn', tol=0.0001, verbose=0,
-                                    warm_start=False))])"""
+                                    warm_start=False))],
+         verbose=False)"""
 
     expected = expected[1:]  # remove first \n
     assert pipeline.__repr__() == expected
@@ -149,7 +308,7 @@ def test_gridsearch_pipeline():
 
     pipeline = Pipeline([
         ('reduce_dim', PCA()),
-        ('classify', LinearSVC())
+        ('classify', SVC())
     ])
     N_FEATURES_OPTIONS = [2, 4, 8]
     C_OPTIONS = [1, 10, 100, 1000]
@@ -176,15 +335,14 @@ GridSearchCV(cv=3, error_score='raise-deprecating',
                                             svd_solver='auto', tol=0.0,
                                             whiten=False)),
                                        ('classify',
-                                        LinearSVC(C=1.0, class_weight=None,
-                                                  dual=True, fit_intercept=True,
-                                                  intercept_scaling=1,
-                                                  loss='squared_hinge',
-                                                  max_iter=1000,
-                                                  multi_class='ovr',
-                                                  penalty='l2',
-                                                  random_state=None, tol=0.0001,
-                                                  verbose=0))]),
+                                        SVC(C=1.0, cache_size=200,
+                                            class_weight=None, coef0=0.0,
+                                            decision_function_shape='ovr',
+                                            degree=3, gamma='auto_deprecated',
+                                            kernel='rbf', max_iter=-1,
+                                            probability=False,
+                                            random_state=None, shrinking=True,
+                                            tol=0.001, verbose=False))]),
              iid='warn', n_jobs=1,
              param_grid=[{'classify__C': [1, 10, 100, 1000],
                           'reduce_dim': [PCA(copy=True, iterated_power=7,
@@ -302,12 +460,82 @@ GridSearchCV(cv='warn', error_score='raise-deprecating',
     assert  pp.pformat(gs) == expected
 
 
-def test_length_constraint():
-    # When repr is still too long, use bruteforce ellipsis
-    # repr is a very long line so we don't check for equality here, just that
-    # ellipsis has been done. It's not the ellipsis from before because the
-    # number of elements in the dict is only 1.
-    vocabulary = {0: 'hello' * 1000}
-    vectorizer = CountVectorizer(vocabulary=vocabulary)
-    repr_ = vectorizer.__repr__()
-    assert '...' in repr_
+def test_bruteforce_ellipsis():
+    # Check that the bruteforce ellipsis (used when the number of non-blank
+    # characters exceeds N_CHAR_MAX) renders correctly.
+
+    lr = LogisticRegression()
+
+    # test when the left and right side of the ellipsis aren't on the same
+    # line.
+    expected = """
+LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
+                   in...
+                   multi_class='warn', n_jobs=None, penalty='l2',
+                   random_state=None, solver='warn', tol=0.0001, verbose=0,
+                   warm_start=False)"""
+
+    expected = expected[1:]  # remove first \n
+    assert expected == lr.__repr__(N_CHAR_MAX=150)
+
+    # test with very small N_CHAR_MAX
+    # Note that N_CHAR_MAX is not strictly enforced, but it's normal: to avoid
+    # weird reprs we still keep the whole line of the right part (after the
+    # ellipsis).
+    expected = """
+Lo...
+                   warm_start=False)"""
+
+    expected = expected[1:]  # remove first \n
+    assert expected == lr.__repr__(N_CHAR_MAX=4)
+
+    # test with N_CHAR_MAX == number of non-blank characters: In this case we
+    # don't want ellipsis
+    full_repr = lr.__repr__(N_CHAR_MAX=float('inf'))
+    n_nonblank = len(''.join(full_repr.split()))
+    assert lr.__repr__(N_CHAR_MAX=n_nonblank) == full_repr
+    assert '...' not in full_repr
+
+    # test with N_CHAR_MAX == number of non-blank characters - 10: the left and
+    # right side of the ellispsis are on different lines. In this case we
+    # want to expend the whole line of the right side
+    expected = """
+LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
+                   intercept_scaling=1, l1_ratio=None, max_i...
+                   multi_class='warn', n_jobs=None, penalty='l2',
+                   random_state=None, solver='warn', tol=0.0001, verbose=0,
+                   warm_start=False)"""
+    expected = expected[1:]  # remove first \n
+    assert expected == lr.__repr__(N_CHAR_MAX=n_nonblank - 10)
+
+    # test with N_CHAR_MAX == number of non-blank characters - 10: the left and
+    # right side of the ellispsis are on the same line. In this case we don't
+    # want to expend the whole line of the right side, just add the ellispsis
+    # between the 2 sides.
+    expected = """
+LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
+                   intercept_scaling=1, l1_ratio=None, max_iter...,
+                   multi_class='warn', n_jobs=None, penalty='l2',
+                   random_state=None, solver='warn', tol=0.0001, verbose=0,
+                   warm_start=False)"""
+    expected = expected[1:]  # remove first \n
+    assert expected == lr.__repr__(N_CHAR_MAX=n_nonblank - 4)
+
+    # test with N_CHAR_MAX == number of non-blank characters - 2: the left and
+    # right side of the ellispsis are on the same line, but adding the ellipsis
+    # would actually make the repr longer. So we don't add the ellipsis.
+    expected = """
+LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
+                   intercept_scaling=1, l1_ratio=None, max_iter=100,
+                   multi_class='warn', n_jobs=None, penalty='l2',
+                   random_state=None, solver='warn', tol=0.0001, verbose=0,
+                   warm_start=False)"""
+    expected = expected[1:]  # remove first \n
+    assert expected == lr.__repr__(N_CHAR_MAX=n_nonblank - 2)
+
+def test_builtin_prettyprinter():
+    # non regression test than ensures we can still use the builtin
+    # PrettyPrinter class for estimators (as done e.g. by joblib).
+    # Used to be a bug
+
+    PrettyPrinter().pprint(LogisticRegression())

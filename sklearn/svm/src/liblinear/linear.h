@@ -5,6 +5,8 @@
 extern "C" {
 #endif
 
+#include "_cython_blas_helpers.h"
+
 struct feature_node
 {
 	int index;
@@ -47,7 +49,7 @@ struct model
 	int *n_iter;    /* no. of iterations of each class */
 };
 
-struct model* train(const struct problem *prob, const struct parameter *param);
+struct model* train(const struct problem *prob, const struct parameter *param, BlasFunctions *blas_functions);
 void cross_validation(const struct problem *prob, const struct parameter *param, int nr_fold, double *target);
 
 double predict_values(const struct model *model_, const struct feature_node *x, double* dec_values);

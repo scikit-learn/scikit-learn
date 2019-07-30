@@ -11,7 +11,6 @@ Extended math utilities.
 #          Giorgio Patrini
 # License: BSD 3 clause
 
-from __future__ import division
 import warnings
 
 import numpy as np
@@ -393,12 +392,12 @@ def weighted_mode(a, w, axis=0):
     The value 4 appears three times: with uniform weights, the result is
     simply the mode of the distribution.
 
-    >>> weights = [1, 3, 0.5, 1.5, 1, 2] # deweight the 4's
+    >>> weights = [1, 3, 0.5, 1.5, 1, 2]  # deweight the 4's
     >>> weighted_mode(x, weights)
     (array([2.]), array([3.5]))
 
     The value 2 has the highest score: it appears twice with weights of
-    1.5 and 2: the sum of these is 3.
+    1.5 and 2: the sum of these is 3.5.
 
     See Also
     --------
@@ -658,6 +657,38 @@ def make_nonnegative(X, min_value=0):
     return X
 
 
+# Use at least float64 for the accumulating functions to avoid precision issue
+# see https://github.com/numpy/numpy/issues/9393. The float64 is also retained
+# as it is in case the float overflows
+def _safe_accumulator_op(op, x, *args, **kwargs):
+    """
+    This function provides numpy accumulator functions with a float64 dtype
+    when used on a floating point input. This prevents accumulator overflow on
+    smaller floating point dtypes.
+
+    Parameters
+    ----------
+    op : function
+        A numpy accumulator function such as np.mean or np.sum
+    x : numpy array
+        A numpy array to apply the accumulator function
+    *args : positional arguments
+        Positional arguments passed to the accumulator function after the
+        input x
+    **kwargs : keyword arguments
+        Keyword arguments passed to the accumulator function
+
+    Returns
+    -------
+    result : The output of the accumulator function passed to this function
+    """
+    if np.issubdtype(x.dtype, np.floating) and x.dtype.itemsize < 8:
+        result = op(x, *args, **kwargs, dtype=np.float64)
+    else:
+        result = op(x, *args, **kwargs)
+    return result
+
+
 def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count):
     """Calculate mean update and a Youngs and Cramer variance update.
 
@@ -708,12 +739,7 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count):
     # new = the current increment
     # updated = the aggregated stats
     last_sum = last_mean * last_sample_count
-    if np.issubdtype(X.dtype, np.floating) and X.dtype.itemsize < 8:
-        # Use at least float64 for the accumulator to avoid precision issues;
-        # see https://github.com/numpy/numpy/issues/9393
-        new_sum = np.nansum(X, axis=0, dtype=np.float64).astype(X.dtype)
-    else:
-        new_sum = np.nansum(X, axis=0)
+    new_sum = _safe_accumulator_op(np.nansum, X, axis=0)
 
     new_sample_count = np.sum(~np.isnan(X), axis=0)
     updated_sample_count = last_sample_count + new_sample_count
@@ -723,7 +749,8 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count):
     if last_variance is None:
         updated_variance = None
     else:
-        new_unnormalized_variance = np.nanvar(X, axis=0) * new_sample_count
+        new_unnormalized_variance = (
+            _safe_accumulator_op(np.nanvar, X, axis=0) * new_sample_count)
         last_unnormalized_variance = last_variance * last_sample_count
 
         with np.errstate(divide='ignore', invalid='ignore'):

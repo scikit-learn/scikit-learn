@@ -12,18 +12,10 @@ at which the fixe is no longer needed.
 
 from distutils.version import LooseVersion
 
-from collections.abc import Sequence as _Sequence  # noqa
-from collections.abc import Iterable as _Iterable  # noqa
-from collections.abc import Mapping as _Mapping  # noqa
-from collections.abc import Sized as _Sized  # noqa
-
 import numpy as np
 import scipy.sparse as sp
 import scipy
-from scipy.special import boxcox  # noqa
 from scipy.sparse.linalg import lsqr as sparse_lsqr  # noqa
-from numpy import nanpercentile  # noqa
-from numpy import nanmedian  # noqa
 
 
 def _parse_version(version_string):
@@ -37,10 +29,6 @@ def _parse_version(version_string):
     return tuple(version)
 
 
-# < numpy 1.8.0
-euler_gamma = getattr(np, 'euler_gamma',
-                      0.577215664901532860606512090082402431)
-
 np_version = _parse_version(np.__version__)
 sp_version = _parse_version(scipy.__version__)
 
@@ -50,6 +38,19 @@ try:  # SciPy >= 0.19
 except ImportError:
     from scipy.misc import comb, logsumexp  # noqa
 
+if sp_version >= (1, 3):
+    from scipy.sparse.linalg import lobpcg
+else:
+    # Backport of lobpcg functionality from scipy 1.3.0, can be removed
+    # once support for sp_version < (1, 3) is dropped
+    from ..externals._lobpcg import lobpcg  # noqa
+
+if sp_version >= (1, 3):
+    # Preserves earlier default choice of pinvh cutoff `cond` value.
+    # Can be removed once issue #14055 is fully addressed.
+    from ..externals._scipy_linalg import pinvh
+else:
+    from scipy.linalg import pinvh # noqa
 
 if sp_version >= (0, 19):
     def _argmax(arr_or_spmatrix, axis=None):
@@ -197,6 +198,18 @@ else:
         return X != X
 
 
+# TODO: replace by copy=False, when only scipy > 1.1 is supported.
+def _astype_copy_false(X):
+    """Returns the copy=False parameter for
+    {ndarray, csr_matrix, csc_matrix}.astype when possible,
+    otherwise don't specify
+    """
+    if sp_version >= (1, 1) or not sp.issparse(X):
+        return {'copy': False}
+    else:
+        return {}
+
+
 def _joblib_parallel_args(**kwargs):
     """Set joblib.Parallel arguments in a compatible way for 0.11 and 0.12+
 
@@ -218,15 +231,15 @@ def _joblib_parallel_args(**kwargs):
 
     See joblib.Parallel documentation for more details
     """
-    from . import _joblib
+    import joblib
 
-    if _joblib.__version__ >= LooseVersion('0.12'):
+    if joblib.__version__ >= LooseVersion('0.12'):
         return kwargs
 
     extra_args = set(kwargs.keys()).difference({'prefer', 'require'})
     if extra_args:
         raise NotImplementedError('unhandled arguments %s with joblib %s'
-                                  % (list(extra_args), _joblib.__version__))
+                                  % (list(extra_args), joblib.__version__))
     args = {}
     if 'prefer' in kwargs:
         prefer = kwargs['prefer']

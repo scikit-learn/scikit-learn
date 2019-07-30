@@ -24,9 +24,6 @@ Logistic regression on raw pixel values is presented for comparison. The
 example shows that the features extracted by the BernoulliRBM help improve the
 classification accuracy.
 """
-
-from __future__ import print_function
-
 print(__doc__)
 
 # Authors: Yann N. Dauphin, Vlad Niculae, Gabriel Synnaeve
@@ -79,17 +76,16 @@ def nudge_dataset(X, Y):
 
 
 # Load Data
-digits = datasets.load_digits()
-X = np.asarray(digits.data, 'float32')
-X, Y = nudge_dataset(X, digits.target)
+X, y = datasets.load_digits(return_X_y=True)
+X = np.asarray(X, 'float32')
+X, Y = nudge_dataset(X, y)
 X = (X - np.min(X, 0)) / (np.max(X, 0) + 0.0001)  # 0-1 scaling
 
 X_train, X_test, Y_train, Y_test = train_test_split(
     X, Y, test_size=0.2, random_state=0)
 
 # Models we will use
-logistic = linear_model.LogisticRegression(solver='lbfgs', max_iter=10000,
-                                           multi_class='multinomial')
+logistic = linear_model.LogisticRegression(solver='newton-cg', tol=1)
 rbm = BernoulliRBM(random_state=0, verbose=True)
 
 rbm_features_classifier = Pipeline(
@@ -102,7 +98,7 @@ rbm_features_classifier = Pipeline(
 # using a GridSearchCV. Here we are not performing cross-validation to
 # save time.
 rbm.learning_rate = 0.06
-rbm.n_iter = 20
+rbm.n_iter = 10
 # More components tend to give better prediction performance, but larger
 # fitting time
 rbm.n_components = 100

@@ -133,14 +133,15 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
     See also
     --------
     load_svmlight_files: similar function for loading multiple files in this
-    format, enforcing the same number of features/columns on all of them.
+                         format, enforcing the same number of features/columns
+                         on all of them.
 
     Examples
     --------
     To use joblib.Memory to cache the svmlight file::
 
         from joblib import Memory
-        from sklearn.datasets import load_svmlight_file
+        from .datasets import load_svmlight_file
         mem = Memory("./mycache")
 
         @mem.cache
@@ -187,8 +188,8 @@ def _open_and_load(f, dtype, multilabel, zero_based, query_id,
     if not multilabel:
         labels = np.frombuffer(labels, np.float64)
     data = np.frombuffer(data, actual_dtype)
-    indices = np.frombuffer(ind, np.intc)
-    indptr = np.frombuffer(indptr, dtype=np.intc)   # never empty
+    indices = np.frombuffer(ind, np.longlong)
+    indptr = np.frombuffer(indptr, dtype=np.longlong)   # never empty
     query = np.frombuffer(query, np.int64)
 
     data = np.asarray(data, dtype=dtype)    # no-op for float{32,64}
@@ -434,7 +435,7 @@ def dump_svmlight_file(X, y, f,  zero_based=True, comment=None, query_id=None,
         # if a user wants to get fancy, they'll have to decode themselves.
         # Avoid mention of str and unicode types for Python 3.x compat.
         if isinstance(comment, bytes):
-            comment.decode("ascii")     # just for the exception
+            comment.decode("ascii")  # just for the exception
         else:
             comment = comment.encode("utf-8")
         if b"\0" in comment:

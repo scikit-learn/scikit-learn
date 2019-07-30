@@ -1,9 +1,6 @@
 This directory contains bundled external dependencies that are updated
 every once in a while.
 
-Note to developers and advanced users: setting the SKLEARN_SITE_JOBLIB to
-a non null value will force scikit-learn to use the site joblib.
-
 Note for distribution packagers: if you want to remove the duplicated
 code and depend on a packaged version, we suggest that you simply do a
 symbolic link in this directory.

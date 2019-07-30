@@ -3,11 +3,7 @@
 import os
 import tarfile
 from contextlib import closing
-
-try:
-    from urllib import urlopen
-except ImportError:
-    from urllib.request import urlopen
+from urllib.request import urlopen
 
 URL = ("http://people.csail.mit.edu/jrennie/"
        "20Newsgroups/20news-bydate.tar.gz")

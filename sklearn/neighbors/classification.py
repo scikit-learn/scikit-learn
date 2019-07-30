@@ -82,13 +82,33 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         for more details.
         Doesn't affect :meth:`fit` method.
 
+    Attributes
+    ----------
+    classes_ : array of shape = (n_classes,)
+        Class labels known to the classifier
+
+    effective_metric_ : string or callble
+        The distance metric used. It will be same as the `metric` parameter
+        or a synonym of it, e.g. 'euclidean' if the `metric` parameter set to
+        'minkowski' and `p` parameter set to 2.
+
+    effective_metric_params_ : dict
+        Additional keyword arguments for the metric function. For most metrics
+        will be same with `metric_params` parameter, but may also contain the
+        `p` parameter value if the `effective_metric_` attribute is set to
+        'minkowski'.
+
+    outputs_2d_ : bool
+        False when `y`'s shape is (n_samples, ) or (n_samples, 1) during fit
+        otherwise True.
+
     Examples
     --------
     >>> X = [[0], [1], [2], [3]]
     >>> y = [0, 0, 1, 1]
     >>> from sklearn.neighbors import KNeighborsClassifier
     >>> neigh = KNeighborsClassifier(n_neighbors=3)
-    >>> neigh.fit(X, y) # doctest: +ELLIPSIS
+    >>> neigh.fit(X, y)
     KNeighborsClassifier(...)
     >>> print(neigh.predict([[1.1]]))
     [0]
@@ -122,7 +142,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
                  p=2, metric='minkowski', metric_params=None, n_jobs=None,
                  **kwargs):
 
-        super(KNeighborsClassifier, self).__init__(
+        super().__init__(
             n_neighbors=n_neighbors,
             algorithm=algorithm,
             leaf_size=leaf_size, metric=metric, p=p,
@@ -296,13 +316,33 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+    Attributes
+    ----------
+    classes_ : array of shape = (n_classes,)
+        Class labels known to the classifier.
+
+    effective_metric_ : string or callble
+        The distance metric used. It will be same as the `metric` parameter
+        or a synonym of it, e.g. 'euclidean' if the `metric` parameter set to
+        'minkowski' and `p` parameter set to 2.
+
+    effective_metric_params_ : dict
+        Additional keyword arguments for the metric function. For most metrics
+        will be same with `metric_params` parameter, but may also contain the
+        `p` parameter value if the `effective_metric_` attribute is set to
+        'minkowski'.
+
+    outputs_2d_ : bool
+        False when `y`'s shape is (n_samples, ) or (n_samples, 1) during fit
+        otherwise True.
+
     Examples
     --------
     >>> X = [[0], [1], [2], [3]]
     >>> y = [0, 0, 1, 1]
     >>> from sklearn.neighbors import RadiusNeighborsClassifier
     >>> neigh = RadiusNeighborsClassifier(radius=1.0)
-    >>> neigh.fit(X, y) # doctest: +ELLIPSIS
+    >>> neigh.fit(X, y)
     RadiusNeighborsClassifier(...)
     >>> print(neigh.predict([[1.5]]))
     [0]
@@ -326,7 +366,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                  algorithm='auto', leaf_size=30, p=2, metric='minkowski',
                  outlier_label=None, metric_params=None, n_jobs=None,
                  **kwargs):
-        super(RadiusNeighborsClassifier, self).__init__(
+        super().__init__(
               radius=radius,
               algorithm=algorithm,
               leaf_size=leaf_size,

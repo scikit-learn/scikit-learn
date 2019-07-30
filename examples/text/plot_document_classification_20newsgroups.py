@@ -21,9 +21,6 @@ The bar plot indicates the accuracy, training time (normalized) and test time
 #         Mathieu Blondel <mathieu@mblondel.org>
 #         Lars Buitinck
 # License: BSD 3 clause
-
-from __future__ import print_function
-
 import logging
 import numpy as np
 from optparse import OptionParser
@@ -254,7 +251,7 @@ for clf, name in (
         (PassiveAggressiveClassifier(max_iter=50, tol=1e-3),
          "Passive-Aggressive"),
         (KNeighborsClassifier(n_neighbors=10), "kNN"),
-        (RandomForestClassifier(n_estimators=100), "Random forest")):
+        (RandomForestClassifier(), "Random forest")):
     print('=' * 80)
     print(name)
     results.append(benchmark(clf))
