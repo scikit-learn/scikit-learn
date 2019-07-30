@@ -1774,7 +1774,7 @@ class Normalizer(BaseEstimator, TransformerMixin):
         ----------
         X : array-like
         """
-        check_array(X, accept_sparse='csr')
+        X = check_array(X, accept_sparse='csr')
         self.n_features_out_ = X.shape[1]
         return self
 
@@ -1909,7 +1909,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
         ----------
         X : array-like
         """
-        check_array(X, accept_sparse='csr')
+        X = check_array(X, accept_sparse='csr')
         self.n_features_out_ = X.shape[1]
         return self
 
