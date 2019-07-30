@@ -150,7 +150,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
         y : numpy array of shape [n_samples]
             Target values. Will be cast to X's dtype if necessary
 
-        sample_weight : numpy array of shape [n_samples]
+        sample_weight : numpy array of shape [n_samples], default=None
             Individual weights for each sample
 
             .. versionadded:: 0.20
@@ -269,7 +269,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
         X : {array-like, sparse matrix}, shape = (n_samples, n_features)
             Samples.
 
-        return_std : boolean, optional
+        return_std : bool, default=False
             Whether to return the standard deviation of posterior prediction.
 
         Returns
@@ -544,7 +544,7 @@ class ARDRegression(LinearModel, RegressorMixin):
         X : {array-like, sparse matrix}, shape = (n_samples, n_features)
             Samples.
 
-        return_std : boolean, optional
+        return_std : bool, default=False
             Whether to return the standard deviation of posterior prediction.
 
         Returns
