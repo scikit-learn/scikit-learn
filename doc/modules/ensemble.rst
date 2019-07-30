@@ -453,7 +453,7 @@ trees.
 
 .. note::
 
-  Scikit-learn 0.21 introduces two new experimental implementation of
+  Scikit-learn 0.21 introduces two new experimental implementations of
   gradient boosting trees, namely :class:`HistGradientBoostingClassifier`
   and :class:`HistGradientBoostingRegressor`, inspired by
   `LightGBM <https://github.com/Microsoft/LightGBM>`_.
@@ -822,7 +822,7 @@ accessed via the ``feature_importances_`` property::
 Histogram-Based Gradient Boosting
 =================================
 
-Scikit-learn 0.21 introduces two new experimental implementation of
+Scikit-learn 0.21 introduces two new experimental implementations of
 gradient boosting trees, namely :class:`HistGradientBoostingClassifier`
 and :class:`HistGradientBoostingRegressor`, inspired by
 `LightGBM <https://github.com/Microsoft/LightGBM>`_.
