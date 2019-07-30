@@ -293,13 +293,7 @@ iterations of a random forest::
     ...                            random_state=0,
     ...                            ).fit(X, y)
     >>> sh.best_estimator_
-    RandomForestClassifier(bootstrap=True, class_weight=None, criterion='gini',
-                           max_depth=5, max_features='auto', max_leaf_nodes=None,
-                           min_impurity_decrease=0.0, min_impurity_split=None,
-                           min_samples_leaf=1, min_samples_split=2,
-                           min_weight_fraction_leaf=0.0, n_estimators=8,
-                           n_jobs=None, oob_score=False, random_state=0, verbose=0,
-                           warm_start=False)
+    RandomForestClassifier(max_depth=5, n_estimators=8, random_state=0)
 
 Note that it is not possible to budget on a parameter that is part of the
 parameter space.
