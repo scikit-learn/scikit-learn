@@ -587,6 +587,9 @@ class TransformerMixin:
             n_features = self.scale_.shape[0]
         return n_features
 
+    @n_features_out_.setter
+    def n_features_out_(self, val):
+        self._n_features_out = val
 
 class DensityMixin:
     """Mixin class for all density estimators in scikit-learn."""

@@ -1468,7 +1468,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
                                           self.include_bias)
         self.n_input_features_ = n_features
         self.n_output_features_ = sum(1 for _ in combinations)
-        self._n_features_out = self.n_output_features_
+        self.n_features_out = self.n_output_features_
         return self
 
     def transform(self, X):
@@ -1722,7 +1722,7 @@ class Normalizer(BaseEstimator, TransformerMixin):
         X : array-like
         """
         check_array(X, accept_sparse='csr')
-        self._n_features_out = X.shape[1]
+        self.n_features_out = X.shape[1]
         return self
 
     def transform(self, X, copy=None):
@@ -1857,7 +1857,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
         X : array-like
         """
         check_array(X, accept_sparse='csr')
-        self._n_features_out = X.shape[1]
+        self.n_features_out = X.shape[1]
         return self
 
     def transform(self, X, copy=None):
@@ -1936,7 +1936,7 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
                 "matrix for training, got kernel of shape {}".format(K.shape))
         self.K_fit_rows_ = np.sum(K, axis=0) / n_samples
         self.K_fit_all_ = self.K_fit_rows_.sum() / n_samples
-        self._n_features_out = n_samples
+        self.n_features_out = n_samples
         return self
 
     def transform(self, K, copy=True):
@@ -2256,7 +2256,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             self._sparse_fit(X, rng)
         else:
             self._dense_fit(X, rng)
-        self._n_features_out = X.shape[1]
+        self.n_features_out = X.shape[1]
         return self
 
     def _transform_col(self, X_col, quantiles, inverse):
@@ -2710,7 +2710,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
                 X = self._scaler.fit_transform(X)
             else:
                 self._scaler.fit(X)
-        self._n_features_out = X.shape[1]
+        self.n_features_out = X.shape[1]
         return X
 
     def transform(self, X):
