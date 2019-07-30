@@ -203,9 +203,9 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
             # Fit the OneHotEncoder with toy datasets
             # so that it's ready for use after the KBinsDiscretizer is fitted
             self._encoder.fit(np.zeros((1, len(self.n_bins_)), dtype=int))
-            self.n_features_out = np.sum(self.n_bins_)
+            self.n_features_out_ = np.sum(self.n_bins_)
         else:
-            self.n_features_out = n_features
+            self.n_features_out_ = n_features
         return self
 
     def _validate_n_bins(self, n_features):

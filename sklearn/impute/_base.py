@@ -267,12 +267,12 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
                                                self.missing_values,
                                                fill_value)
 
-        self.n_features_out = np.sum(~np.isnan(self.statistics_))
+        self.n_features_out_ = np.sum(~np.isnan(self.statistics_))
         if self.add_indicator:
             self.indicator_ = MissingIndicator(
                 missing_values=self.missing_values, error_on_new=False)
             self.indicator_.fit(X)
-            self.n_features_out += self.indicator.n_features_out
+            self.n_features_out_ += self.indicator.n_features_out
         else:
             self.indicator_ = None
 
@@ -618,7 +618,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
         missing_features_info = self._get_missing_features_info(X)
         self.features_ = missing_features_info[1]
-        self.n_features_out = len(self.features_)
+        self.n_features_out_ = len(self.features_)
 
         return missing_features_info[0]
 

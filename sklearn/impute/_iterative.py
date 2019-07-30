@@ -610,7 +610,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         if self.add_indicator:
             Xt = np.hstack((Xt, X_trans_indicator))
 
-        self.n_features_out = Xt.shape[1]
+        self.n_features_out_ = Xt.shape[1]
         return Xt
 
     def transform(self, X):

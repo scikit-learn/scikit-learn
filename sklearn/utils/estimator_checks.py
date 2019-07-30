@@ -1026,8 +1026,8 @@ def _check_transformer(name, transformer_orig, X, y):
     else:
         # check for consistent n_samples
         assert X_pred.shape[0] == n_samples
-        n_features_out = getattr(transformer_clone, 'n_features_out_', None)
-        if n_features_out is not None:
+        n_features_out_ = getattr(transformer_clone, 'n_features_out_', None)
+        if n_features_out_ is not None:
             assert X_pred.shape[1] == n_features_out
 
     if hasattr(transformer, 'transform'):

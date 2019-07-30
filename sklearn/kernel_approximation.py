@@ -332,7 +332,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
                                  " you need to provide sample_interval")
         else:
             self.sample_interval_ = self.sample_interval
-        self.n_features_out = (self.sample_steps + 1) * X.shape[1]
+        self.n_features_out_ = (self.sample_steps + 1) * X.shape[1]
         return self
 
     def transform(self, X):
