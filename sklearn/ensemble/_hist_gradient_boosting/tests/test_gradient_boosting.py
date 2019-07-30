@@ -44,7 +44,8 @@ def test_init_parameters_validation(GradientBoosting, X, y, params, err_msg):
 
 
 def test_invalid_classification_loss():
-    binary_clf = HistGradientBoostingClassifier(loss="binary_crossentropy")
+    binary_clf = HistGradientBoostingClassifier(
+        loss="binary_crossentropy", n_iter_no_change=None)
     err_msg = ("loss='binary_crossentropy' is not defined for multiclass "
                "classification with n_classes=3, use "
                "loss='categorical_crossentropy' instead")
@@ -227,6 +228,18 @@ def test_infinite_values():
     X = np.array([-np.inf, 0, 1, np.inf]).reshape(-1, 1)
     y = np.array([0, 0, 1, 1])
 
-    gbdt = HistGradientBoostingRegressor(min_samples_leaf=1)
+    gbdt = HistGradientBoostingRegressor(min_samples_leaf=1,
+                                         n_iter_no_change=None)
     gbdt.fit(X, y)
     np.testing.assert_allclose(gbdt.predict(X), y, atol=1e-4)
+
+
+@pytest.mark.parametrize('GradientBoosting, X, y', [
+    (HistGradientBoostingClassifier, X_classification, y_classification),
+    (HistGradientBoostingRegressor, X_regression, y_regression)
+])
+def test_early_stopping_default(GradientBoosting, X, y):
+    # Test that early stopping is enabled by default
+    gb = GradientBoosting(max_iter=200)
+    gb.fit(X, y)
+    assert gb.n_iter_ < gb.max_iter
