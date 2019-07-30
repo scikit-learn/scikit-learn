@@ -738,9 +738,9 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
     >>> from sklearn.ensemble import HistGradientBoostingRegressor
     >>> from sklearn.datasets import load_boston
     >>> X, y = load_boston(return_X_y=True)
-    >>> est = HistGradientBoostingRegressor().fit(X, y)
+    >>> est = HistGradientBoostingRegressor(random_state=42).fit(X, y)
     >>> est.score(X, y)
-    0.98...
+    0.95...
     """
 
     _VALID_LOSSES = ('least_squares',)
@@ -916,9 +916,9 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
     >>> from sklearn.ensemble import HistGradientBoostingRegressor
     >>> from sklearn.datasets import load_iris
     >>> X, y = load_iris(return_X_y=True)
-    >>> clf = HistGradientBoostingClassifier().fit(X, y)
+    >>> clf = HistGradientBoostingClassifier(random_state=42).fit(X, y)
     >>> clf.score(X, y)
-    1.0
+    0.98...
     """
 
     _VALID_LOSSES = ('binary_crossentropy', 'categorical_crossentropy',
