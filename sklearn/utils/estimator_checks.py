@@ -2390,12 +2390,12 @@ def check_estimator_sparse_dense(name, estimator_orig):
     estimator = clone(estimator_orig)
     estimator_sp = clone(estimator_orig)
     tags = _safe_tags(estimator_orig)
-    centers = 2 if "binary_only" in tags else None
+    centers = 2 if tags["binary_only"] else None
     X, y = make_blobs(random_state=rng, cluster_std=0.5, centers=centers)
     # for put some points to zero to have a little bit of sparsity
     X -= np.min(X) - 1.  # we need positive data for ComplementNB for instance
     X_csr = sparse.csr_matrix(X)
-    if "multioutput" in tags:
+    if tags["multioutput"] or tags["multioutput_only"]:
         y = y[:, np.newaxis]
 
     for sparse_format in ['csr', 'csc', 'dok', 'lil', 'coo', 'dia', 'bsr']:
