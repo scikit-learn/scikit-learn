@@ -205,7 +205,7 @@ Changelog
 - |API| :class:`naive_bayes.ComplementNB` now uses estimated class priors
   in ``_joint_log_likelihood`` to provide consistency with other
   naive bayes algorithms.
-  :pr:`x` by :user:`Sergey Kojoian <heckeop>`.
+  :pr:`14523` by :user:`Sergey Kojoian <heckeop>`.
 
 :mod:`sklearn.pipeline`
 .......................
