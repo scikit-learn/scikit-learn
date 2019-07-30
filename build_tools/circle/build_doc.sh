@@ -117,10 +117,18 @@ export PATH="/usr/lib/ccache:$MINICONDA_PATH/bin:$PATH"
 ccache -M 512M
 export CCACHE_COMPRESS=1
 
+# Old packages coming from the 'free' conda channel have been removed but we
+# are using them for our min-dependencies doc generation. See
+# https://www.anaconda.com/why-we-removed-the-free-channel-in-conda-4-7/ for
+# more details.
+if [[ "$CIRCLE_JOB" == "doc-min-dependencies" ]]; then
+    conda config --set restore_free_channel true
+fi
+
 # Configure the conda environment and put it in the path using the
 # provided versions
 conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
-  numpy="${NUMPY_VERSION:-*}" scipy="${SCIPY_VERSION:-*}" cython \
+  numpy="${NUMPY_VERSION:-*}" scipy="${SCIPY_VERSION:-*}" "cython>=0.28.5" \
   pytest coverage matplotlib="${MATPLOTLIB_VERSION:-*}" sphinx=2.1.2 pillow \
   scikit-image="${SCIKIT_IMAGE_VERSION:-*}" pandas="${PANDAS_VERSION:-*}" \
   joblib
