@@ -26,6 +26,8 @@ random sampling procedures.
 
 - :class:`linear_model.Ridge` when `X` is sparse. |Fix|
 
+- :class:`naive_bayes.ComplementNB` when `fit_prior` is set, or when `class_prior` is provided. |API|
+
 Details are listed in the changelog below.
 
 (While we are trying to better inform users by providing this information, we
@@ -196,6 +198,14 @@ Changelog
   ``return_times`` which can be used to retrieve computation times in order to
   plot model scalability (see learning_curve example).
   :pr:`13938` by :user:`Hadrien Reboul <H4dr1en>`.
+
+:mod:`sklearn.naive_bayes`
+..........................
+
+- |API| :class:`naive_bayes.ComplementNB` now uses estimated class priors
+  in ``_joint_log_likelihood`` to provide consistency with other
+  naive bayes algorithms.
+  :pr:`x` by :user:`Sergey Kojoian <heckeop>`.
 
 :mod:`sklearn.pipeline`
 .......................

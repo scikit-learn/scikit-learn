@@ -168,7 +168,7 @@ classification rule is:
 
 .. math::
 
-    \hat{c} = \arg\min_c \sum_{i} t_i w_{ci}
+    \hat{c} = \arg\max_c \left(\log(P(c)) - \sum_{i} t_i w_{ci}\right)
 
 i.e., a document is assigned to the class that is the *poorest* complement
 match.

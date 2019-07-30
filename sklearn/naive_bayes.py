@@ -765,10 +765,12 @@ class ComplementNB(BaseDiscreteNB):
         Additive (Laplace/Lidstone) smoothing parameter (0 for no smoothing).
 
     fit_prior : boolean, optional (default=True)
-        Only used in edge case with a single class in the training set.
+        Whether to learn class prior probabilities or not.
+        If false, a uniform prior will be used.
 
     class_prior : array-like, size (n_classes,), optional (default=None)
-        Prior probabilities of the classes. Not used.
+        Prior probabilities of the classes. If specified the priors are not
+        adjusted according to the data.
 
     norm : boolean, optional (default=False)
         Whether or not a second normalization of the weights is performed. The
@@ -779,8 +781,7 @@ class ComplementNB(BaseDiscreteNB):
     Attributes
     ----------
     class_log_prior_ : array, shape (n_classes, )
-        Smoothed empirical log probability for each class. Only used in edge
-        case with a single class in the training set.
+        Smoothed empirical log probability for each class.
 
     feature_log_prob_ : array, shape (n_classes, n_features)
         Empirical weights for class complements.
@@ -855,10 +856,8 @@ class ComplementNB(BaseDiscreteNB):
         check_is_fitted(self, "classes_")
 
         X = check_array(X, accept_sparse="csr")
-        jll = safe_sparse_dot(X, self.feature_log_prob_.T)
-        if len(self.classes_) == 1:
-            jll += self.class_log_prior_
-        return jll
+        return (safe_sparse_dot(X, self.feature_log_prob_.T) +
+                self.class_log_prior_)
 
 
 class BernoulliNB(BaseDiscreteNB):
