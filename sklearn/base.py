@@ -588,9 +588,6 @@ class TransformerMixin:
             n_features = self.n_components
         elif hasattr(self, 'components_'):
             n_features = self.components_.shape[0]
-        elif hasattr(self, 'get_support'):
-            # that should only be done in the OneToOneMixin really
-            n_features = self.get_support().sum()
         elif hasattr(self, 'scale_'):
             n_features = self.scale_.shape[0]
         return n_features

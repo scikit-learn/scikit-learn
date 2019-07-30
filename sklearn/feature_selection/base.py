@@ -46,6 +46,10 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         mask = self._get_support_mask()
         return mask if not indices else np.where(mask)[0]
 
+    @property
+    def n_features_out_(self):
+        return self.get_support().sum()
+
     @abstractmethod
     def _get_support_mask(self):
         """
