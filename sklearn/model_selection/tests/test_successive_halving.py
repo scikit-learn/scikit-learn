@@ -41,8 +41,8 @@ def test_aggressive_elimination():
     # aggressive_elimination=True
     # In this case, the first iterations only use r_min_ resources
     sh = GridHalvingSearchCV(base_estimator, parameters, cv=5,
-                               aggressive_elimination=True,
-                               max_budget=max_budget, ratio=ratio)
+                             aggressive_elimination=True,
+                             max_budget=max_budget, ratio=ratio)
     sh.fit(X, y)
     assert sh.n_iterations_ == 4
     assert sh.n_required_iterations_ == 4
@@ -52,9 +52,9 @@ def test_aggressive_elimination():
 
     # Make sure we get the same results with randomized search
     sh = RandomHalvingSearchCV(base_estimator, parameters,
-                                 n_candidates=60, cv=5,
-                                 aggressive_elimination=True,
-                                 max_budget=max_budget, ratio=ratio)
+                               n_candidates=60, cv=5,
+                               aggressive_elimination=True,
+                               max_budget=max_budget, ratio=ratio)
     sh.fit(X, y)
     assert sh.n_iterations_ == 4
     assert sh.n_required_iterations_ == 4
@@ -66,8 +66,8 @@ def test_aggressive_elimination():
     # In this case we don't loop at the start, and might end up with a lot of
     # candidates at the last iteration
     sh = GridHalvingSearchCV(base_estimator, parameters, cv=5,
-                               aggressive_elimination=False,
-                               max_budget=max_budget, ratio=ratio)
+                             aggressive_elimination=False,
+                             max_budget=max_budget, ratio=ratio)
     sh.fit(X, y)
 
     assert sh.n_iterations_ == 3
@@ -82,8 +82,8 @@ def test_aggressive_elimination():
 
     # aggressive_elimination=True
     sh = GridHalvingSearchCV(base_estimator, parameters, cv=5,
-                               aggressive_elimination=True,
-                               max_budget=max_budget, ratio=ratio)
+                             aggressive_elimination=True,
+                             max_budget=max_budget, ratio=ratio)
     sh.fit(X, y)
 
     assert sh.n_iterations_ == 4
@@ -94,8 +94,8 @@ def test_aggressive_elimination():
 
     # aggressive_elimination=False
     sh = GridHalvingSearchCV(base_estimator, parameters, cv=5,
-                               aggressive_elimination=False,
-                               max_budget=max_budget, ratio=ratio)
+                             aggressive_elimination=False,
+                             max_budget=max_budget, ratio=ratio)
     sh.fit(X, y)
 
     assert sh.n_iterations_ == 4
@@ -118,7 +118,7 @@ def test_force_exhaust_budget_false():
 
     # with enough budget
     sh = GridHalvingSearchCV(base_estimator, parameters, cv=5,
-                               force_exhaust_budget=False, ratio=ratio)
+                             force_exhaust_budget=False, ratio=ratio)
     sh.fit(X, y)
     assert sh.n_iterations_ == 2
     assert sh.n_required_iterations_ == 2
@@ -127,8 +127,8 @@ def test_force_exhaust_budget_false():
 
     # with enough budget but r_min!='auto': ignored
     sh = GridHalvingSearchCV(base_estimator, parameters, cv=5,
-                               force_exhaust_budget=False, ratio=ratio,
-                               r_min=50)
+                             force_exhaust_budget=False, ratio=ratio,
+                             r_min=50)
     sh.fit(X, y)
     assert sh.n_iterations_ == 2
     assert sh.n_required_iterations_ == 2
@@ -137,8 +137,8 @@ def test_force_exhaust_budget_false():
 
     # without enough budget (budget is exhausted anyway)
     sh = GridHalvingSearchCV(base_estimator, parameters, cv=5,
-                               force_exhaust_budget=False, ratio=ratio,
-                               max_budget=30)
+                             force_exhaust_budget=False, ratio=ratio,
+                             max_budget=30)
     sh.fit(X, y)
     assert sh.n_iterations_ == 1
     assert sh.n_required_iterations_ == 2
@@ -168,8 +168,8 @@ def test_force_exhaust_budget_true(max_budget, r_i_list):
     base_estimator = FastClassifier()
     ratio = 3
     sh = GridHalvingSearchCV(base_estimator, parameters, cv=5,
-                               force_exhaust_budget=True, ratio=ratio,
-                               max_budget=max_budget)
+                             force_exhaust_budget=True, ratio=ratio,
+                             max_budget=max_budget)
     sh.fit(X, y)
 
     assert sh.n_possible_iterations_ == sh.n_iterations_ == len(sh._r_i_list)
@@ -177,8 +177,8 @@ def test_force_exhaust_budget_true(max_budget, r_i_list):
 
     # Test same for randomized search
     sh = RandomHalvingSearchCV(base_estimator, parameters, n_candidates=6,
-                                 cv=5, force_exhaust_budget=True,
-                                 ratio=ratio, max_budget=max_budget)
+                               cv=5, force_exhaust_budget=True,
+                               ratio=ratio, max_budget=max_budget)
     sh.fit(X, y)
 
     assert sh.n_possible_iterations_ == sh.n_iterations_ == len(sh._r_i_list)
@@ -208,7 +208,7 @@ def test_n_iterations(max_budget, n_iterations, n_possible_iterations):
     ratio = 2
 
     sh = GridHalvingSearchCV(base_estimator, parameters, cv=2, ratio=ratio,
-                               max_budget=max_budget, r_min=4)
+                             max_budget=max_budget, r_min=4)
     sh.fit(X, y)
     assert sh.n_required_iterations_ == 5
     assert sh.n_iterations_ == n_iterations
@@ -223,7 +223,7 @@ def test_budget_on():
     parameters = {'a': [1, 2], 'b': list(range(10))}
     base_estimator = FastClassifier()
     sh = GridHalvingSearchCV(base_estimator, parameters, cv=2,
-                               budget_on='c', max_budget=10, ratio=3)
+                             budget_on='c', max_budget=10, ratio=3)
     sh.fit(X, y)
     assert set(sh._r_i_list) == set([1, 3, 9])
     for r_i, params, param_c in zip(sh.cv_results_['r_i'],
@@ -235,7 +235,7 @@ def test_budget_on():
             ValueError,
             match='Cannot budget on parameter 1234 which is not supported '):
         sh = GridHalvingSearchCV(base_estimator, parameters, cv=2,
-                                   budget_on='1234', max_budget=10)
+                                 budget_on='1234', max_budget=10)
         sh.fit(X, y)
 
     with pytest.raises(
@@ -244,7 +244,7 @@ def test_budget_on():
                   'searched parameters.'):
         parameters = {'a': [1, 2], 'b': [1, 2], 'c': [1, 3]}
         sh = GridHalvingSearchCV(base_estimator, parameters, cv=2,
-                                   budget_on='c', max_budget=10)
+                                 budget_on='c', max_budget=10)
         sh.fit(X, y)
 
 
@@ -265,9 +265,9 @@ def test_random_search(max_budget, n_candidates, expected_n_candidates_):
     parameters = {'a': norm, 'b': norm}
     base_estimator = FastClassifier()
     sh = RandomHalvingSearchCV(base_estimator, parameters,
-                                 n_candidates=n_candidates,
-                                 cv=2,
-                                 max_budget=max_budget, ratio=2, r_min=4)
+                               n_candidates=n_candidates,
+                               cv=2,
+                               max_budget=max_budget, ratio=2, r_min=4)
     sh.fit(X, y)
     assert sh.n_candidates_ == expected_n_candidates_
     if n_candidates == 'auto':
