@@ -1112,8 +1112,8 @@ def test_column_transformer_reordered_column_names_remainder(explicit_colname):
 
 
 def test_column_transformer_mask_indexing():
-    # Regression test for #xxxxx
-    # Boolean mask indexing with NumPy < 1.13
+    # Regression test for #14510
+    # Boolean array-like does not behave as boolean array with NumPy < 1.13
     X = np.transpose([[1, 2, 3], [4, 5, 6], [5, 6, 7], [8, 9, 10]])
     column_transformer = ColumnTransformer(
         [('identity', FunctionTransformer(), [False, True, False, True])]
