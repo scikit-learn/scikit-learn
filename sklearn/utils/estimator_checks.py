@@ -291,8 +291,7 @@ def check_estimator(Estimator):
     if isinstance(Estimator, type):
         # got a class
         name = Estimator.__name__
-        estimator = Estimator()
-        check_parameters_default_constructible(name, Estimator)
+        estimator = check_parameters_default_constructible(name, Estimator)
     else:
         # got an instance
         estimator = Estimator
@@ -2256,6 +2255,7 @@ def check_parameters_default_constructible(name, Estimator):
                     assert param_value is init_param.default, init_param.name
                 else:
                     assert param_value == init_param.default, init_param.name
+    return clone(estimator)
 
 
 def enforce_estimator_tags_y(estimator, y):
