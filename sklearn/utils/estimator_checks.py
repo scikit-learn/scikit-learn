@@ -2262,7 +2262,6 @@ def check_parameters_default_constructible(name, Estimator):
                     assert param_value is init_param.default, init_param.name
                 else:
                     assert param_value == init_param.default, init_param.name
-    return clone(estimator)
 
 
 def enforce_estimator_tags_y(estimator, y):
