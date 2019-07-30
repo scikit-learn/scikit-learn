@@ -258,7 +258,7 @@ sphinx_gallery_conf = {
     'binder': {
         'org': 'lesteve',
         'repo': 'test-binder-scikit-learn',
-        'binderhub_url': 'https://mybinder.org',
+        'url': 'https://mybinder.org',
         'branch': 'master',
         'dependencies': './binder/requirements.txt',
         'use_jupyter_lab': True
