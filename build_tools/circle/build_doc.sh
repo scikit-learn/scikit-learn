@@ -117,11 +117,11 @@ export PATH="/usr/lib/ccache:$MINICONDA_PATH/bin:$PATH"
 ccache -M 512M
 export CCACHE_COMPRESS=1
 
-# Configure the conda environment and put it in the path using the
-# provided versions
-
-# Adds older packages for python 3.5
-if [[ "$PYTHON_VERSION" == "3.5" ]]; then
+# Old packages coming from the 'free' conda channel have been removed but we
+# are using them for our min-dependencies doc generation. See
+# https://www.anaconda.com/why-we-removed-the-free-channel-in-conda-4-7/ for
+# more details.
+if [[ "$CIRCLE_JOB" == "doc-min-dependencies" ]]; then
     conda config --set restore_free_channel true
 fi
 
