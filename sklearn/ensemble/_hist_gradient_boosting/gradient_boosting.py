@@ -622,7 +622,9 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
     for big datasets (n_samples >= 10 000). The input data ``X`` is pre-binned
     into integer-valued bins, which considerably reduces the number of
     splitting points to consider, and allows the algorithm to leverage
-    integer-based data structures. For small sample sizes,
+    integer-based data structures. Early stopping is the default behavior, as
+    it usually makes the fitting process much faster without a substantial
+    difference in terms of predictive performance. For small sample sizes,
     :class:`GradientBoostingRegressor<sklearn.ensemble.GradientBoostingRegressor>`
     might be preferred since binning may lead to split points that are too
     approximate in this setting.
@@ -690,7 +692,7 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
         Proportion (or absolute size) of training data to set aside as
         validation data for early stopping. If None, early stopping is done on
         the training data. Only used if ``n_iter_no_change`` is not None.
-    n_iter_no_change : int or None, optional (default=None)
+    n_iter_no_change : int or None, optional (default=10)
         Used to determine when to "early stop". The fitting process is
         stopped when none of the last ``n_iter_no_change`` scores are better
         than the ``n_iter_no_change - 1`` -th-to-last one, up to some
@@ -747,7 +749,7 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
                  max_iter=100, max_leaf_nodes=31, max_depth=None,
                  min_samples_leaf=20, l2_regularization=0., max_bins=256,
                  warm_start=False, scoring=None, validation_fraction=0.1,
-                 n_iter_no_change=None, tol=1e-7, verbose=0,
+                 n_iter_no_change=10, tol=1e-7, verbose=0,
                  random_state=None):
         super(HistGradientBoostingRegressor, self).__init__(
             loss=loss, learning_rate=learning_rate, max_iter=max_iter,
@@ -795,7 +797,9 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
     for big datasets (n_samples >= 10 000). The input data ``X`` is pre-binned
     into integer-valued bins, which considerably reduces the number of
     splitting points to consider, and allows the algorithm to leverage
-    integer-based data structures. For small sample sizes,
+    integer-based data structures. Early stopping is the default behavior, as
+    it usually makes the fitting process much faster without a substantial
+    difference in terms of predictive performance. For small sample sizes,
     :class:`GradientBoostingClassifier<sklearn.ensemble.GradientBoostingClassifier>`
     might be preferred since binning may lead to split points that are too
     approximate in this setting.
@@ -865,7 +869,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         Proportion (or absolute size) of training data to set aside as
         validation data for early stopping. If None, early stopping is done on
         the training data.
-    n_iter_no_change : int or None, optional (default=None)
+    n_iter_no_change : int or None, optional (default=10)
         Used to determine when to "early stop". The fitting process is
         stopped when none of the last ``n_iter_no_change`` scores are better
         than the ``n_iter_no_change - 1`` -th-to-last one, up to some
@@ -923,7 +927,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
     def __init__(self, loss='auto', learning_rate=0.1, max_iter=100,
                  max_leaf_nodes=31, max_depth=None, min_samples_leaf=20,
                  l2_regularization=0., max_bins=256, warm_start=False,
-                 scoring=None, validation_fraction=0.1, n_iter_no_change=None,
+                 scoring=None, validation_fraction=0.1, n_iter_no_change=10,
                  tol=1e-7, verbose=0, random_state=None):
         super(HistGradientBoostingClassifier, self).__init__(
             loss=loss, learning_rate=learning_rate, max_iter=max_iter,
