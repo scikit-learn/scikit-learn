@@ -137,7 +137,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
             self.cv_results_['mean_test_score'][self.best_index_])
         return self
 
-    def _run_search(self, evaluate_candidates, X, y, groups):
+    def _run_search(self, evaluate_candidates, X, y):
         rng = check_random_state(self.random_state)
 
         candidate_params = self._generate_candidate_params()
@@ -231,7 +231,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
             more_results = {'iter': [iter_i] * n_candidates,
                             'r_i': [r_i] * n_candidates}
             results = evaluate_candidates(candidate_params, X_iter, y_iter,
-                                          groups, more_results=more_results)
+                                          more_results=more_results)
 
             n_candidates_to_keep = ceil(n_candidates / self.ratio)
             candidate_params = self._top_k(results,
