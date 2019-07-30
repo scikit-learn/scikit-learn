@@ -30,7 +30,6 @@ from . import is_scalar_nan
 from ..discriminant_analysis import LinearDiscriminantAnalysis
 from ..linear_model import Ridge
 
-
 from ..base import (clone, ClusterMixin, is_classifier, is_regressor,
                     _DEFAULT_TAGS, RegressorMixin, is_outlier_detector)
 
@@ -73,6 +72,7 @@ def _safe_tags(estimator, key=None):
 
 def _yield_checks(name, estimator):
     tags = _safe_tags(estimator)
+    yield check_no_attributes_set_in_init
     yield check_estimators_dtypes
     yield check_fit_score_takes_y
     yield check_sample_weights_pandas_series
@@ -289,7 +289,6 @@ def check_estimator(Estimator):
         name = Estimator.__name__
         estimator = Estimator()
         check_parameters_default_constructible(name, Estimator)
-        check_no_attributes_set_in_init(name, estimator)
     else:
         # got an instance
         estimator = Estimator
@@ -2057,9 +2056,10 @@ def check_estimators_overwrite_params(name, estimator_orig):
             % (name, param_name, original_value, new_value))
 
 
-def check_no_attributes_set_in_init(name, estimator):
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
+def check_no_attributes_set_in_init(name, estimator_orig):
     """Check setting during init. """
-
+    estimator = clone(estimator_orig)
     if hasattr(type(estimator).__init__, "deprecated_original"):
         return
 

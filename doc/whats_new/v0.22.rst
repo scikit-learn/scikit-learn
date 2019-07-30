@@ -115,6 +115,15 @@ Changelog
   preserve the class balance of the original training set. :pr:`14194`
   by :user:`Johann Faouzi <johannfaouzi>`.
 
+- |Fix| Run by default
+  :func:`utils.estimator_checks.check_estimator` on both
+  :class:`ensemble.VotingClassifier` and :class:`ensemble.VotingRegressor`. It
+  leads to solve issues regarding shape consistency during `predict` which was
+  failing when the underlying estimators were not outputting consistent array
+  dimensions. Note that it should be replaced by refactoring the common tests
+  in the future.
+  :pr:`14305` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 - |Efficiency| :func:`ensemble.MissingIndicator.fit_transform` the
   _get_missing_features_info function is now called once when calling
   fit_transform for MissingIndicator class. :pr:`14356` by :user:
@@ -139,6 +148,13 @@ Changelog
   AttributeError rather than return None for parameters that are in the
   estimator's constructor but not stored as attributes on the instance.
   :pr:`14464` by `Joel Nothman`_.
+
+:mod:`sklearn.inspection`
+.........................
+
+- |MajorFeature| :func:`inspection.permutation_importance` has been added to
+  measure the importance of each feature in an arbitrary trained model with
+  respect to a given scoring function. :issue:`13146` by `Thomas Fan`_.
 
 :mod:`sklearn.linear_model`
 ...........................
