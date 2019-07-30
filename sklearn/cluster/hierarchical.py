@@ -859,10 +859,10 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
          self.n_leaves_,
          parents) = out[:4]
 
-        if distance_threshold is not None:
-            distances = out[-1]
+        if return_distance:
+            self.distances_ = out[-1]
             self.n_clusters_ = np.count_nonzero(
-                distances >= distance_threshold) + 1
+                self.distances_ >= distance_threshold) + 1
         else:
             self.n_clusters_ = self.n_clusters
 
