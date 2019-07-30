@@ -115,8 +115,7 @@ def test_transform_target_regressor_1d_transformer(X, y):
     # 2D vector. We check the consistency of the data shape using a 1D and 2D y
     # array.
     transformer = FunctionTransformer(func=lambda x: x + 1,
-                                      inverse_func=lambda x: x - 1,
-                                      validate=False)
+                                      inverse_func=lambda x: x - 1)
     regr = TransformedTargetRegressor(regressor=LinearRegression(),
                                       transformer=transformer)
     y_pred = regr.fit(X, y).predict(X)
@@ -246,11 +245,11 @@ class DummyCheckerListRegressor(DummyRegressor):
 
     def fit(self, X, y, sample_weight=None):
         assert isinstance(X, list)
-        return super(DummyCheckerListRegressor, self).fit(X, y, sample_weight)
+        return super().fit(X, y, sample_weight)
 
     def predict(self, X):
         assert isinstance(X, list)
-        return super(DummyCheckerListRegressor, self).predict(X)
+        return super().predict(X)
 
 
 def test_transform_target_regressor_ensure_y_array():
@@ -265,3 +264,31 @@ def test_transform_target_regressor_ensure_y_array():
     tt.predict(X.tolist())
     assert_raises(AssertionError, tt.fit, X, y.tolist())
     assert_raises(AssertionError, tt.predict, X)
+
+
+class DummyTransformer(BaseEstimator, TransformerMixin):
+    """Dummy transformer which count how many time fit was called."""
+    def __init__(self, fit_counter=0):
+        self.fit_counter = fit_counter
+
+    def fit(self, X, y=None):
+        self.fit_counter += 1
+        return self
+
+    def transform(self, X):
+        return X
+
+    def inverse_transform(self, X):
+        return X
+
+
+@pytest.mark.parametrize("check_inverse", [False, True])
+def test_transform_target_regressor_count_fit(check_inverse):
+    # regression test for gh-issue #11618
+    # check that we only call a single time fit for the transformer
+    X, y = friedman
+    ttr = TransformedTargetRegressor(
+        transformer=DummyTransformer(), check_inverse=check_inverse
+    )
+    ttr.fit(X, y)
+    assert ttr.transformer_.fit_counter == 1

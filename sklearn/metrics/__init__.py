@@ -23,6 +23,7 @@ from .classification import fbeta_score
 from .classification import hamming_loss
 from .classification import hinge_loss
 from .classification import jaccard_similarity_score
+from .classification import jaccard_score
 from .classification import log_loss
 from .classification import matthews_corrcoef
 from .classification import precision_recall_fscore_support
@@ -63,6 +64,9 @@ from .regression import mean_squared_error
 from .regression import mean_squared_log_error
 from .regression import median_absolute_error
 from .regression import r2_score
+from .regression import mean_tweedie_deviance
+from .regression import mean_poisson_deviance
+from .regression import mean_gamma_deviance
 
 
 from .scorer import check_scoring
@@ -98,6 +102,7 @@ __all__ = [
     'hinge_loss',
     'homogeneity_completeness_v_measure',
     'homogeneity_score',
+    'jaccard_score',
     'jaccard_similarity_score',
     'label_ranking_average_precision_score',
     'label_ranking_loss',
@@ -108,6 +113,9 @@ __all__ = [
     'mean_absolute_error',
     'mean_squared_error',
     'mean_squared_log_error',
+    'mean_poisson_deviance',
+    'mean_gamma_deviance',
+    'mean_tweedie_deviance',
     'median_absolute_error',
     'multilabel_confusion_matrix',
     'mutual_info_score',

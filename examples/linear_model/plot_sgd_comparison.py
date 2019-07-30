@@ -21,12 +21,11 @@ from sklearn.linear_model import LogisticRegression
 
 heldout = [0.95, 0.90, 0.75, 0.50, 0.01]
 rounds = 20
-digits = datasets.load_digits()
-X, y = digits.data, digits.target
+X, y = datasets.load_digits(return_X_y=True)
 
 classifiers = [
-    ("SGD", SGDClassifier(max_iter=100)),
-    ("ASGD", SGDClassifier(average=True, max_iter=100)),
+    ("SGD", SGDClassifier(max_iter=100, tol=1e-3)),
+    ("ASGD", SGDClassifier(average=True, max_iter=1000, tol=1e-3)),
     ("Perceptron", Perceptron(tol=1e-3)),
     ("Passive-Aggressive I", PassiveAggressiveClassifier(loss='hinge',
                                                          C=1.0, tol=1e-4)),

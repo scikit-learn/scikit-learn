@@ -133,6 +133,9 @@ class GaussianNB(BaseNB):
     class_count_ : array, shape (n_classes,)
         number of training samples observed in each class.
 
+    classes_ : array, shape (n_classes,)
+        class labels known to the classifier
+
     theta_ : array, shape (n_classes, n_features)
         mean of each feature per class
 
@@ -142,6 +145,9 @@ class GaussianNB(BaseNB):
     epsilon_ : float
         absolute additive value to variances
 
+    classes_ : array-like, shape (n_classes,)
+        Unique class labels.
+
     Examples
     --------
     >>> import numpy as np
@@ -150,12 +156,12 @@ class GaussianNB(BaseNB):
     >>> from sklearn.naive_bayes import GaussianNB
     >>> clf = GaussianNB()
     >>> clf.fit(X, Y)
-    GaussianNB(priors=None, var_smoothing=1e-09)
+    GaussianNB()
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
     >>> clf_pf = GaussianNB()
     >>> clf_pf.partial_fit(X, Y, np.unique(Y))
-    GaussianNB(priors=None, var_smoothing=1e-09)
+    GaussianNB()
     >>> print(clf_pf.predict([[-0.8, -1]]))
     [1]
     """
@@ -236,9 +242,9 @@ class GaussianNB(BaseNB):
         # Compute (potentially weighted) mean and variance of new datapoints
         if sample_weight is not None:
             n_new = float(sample_weight.sum())
-            new_mu = np.average(X, axis=0, weights=sample_weight / n_new)
+            new_mu = np.average(X, axis=0, weights=sample_weight)
             new_var = np.average((X - new_mu) ** 2, axis=0,
-                                 weights=sample_weight / n_new)
+                                 weights=sample_weight)
         else:
             n_new = X.shape[0]
             new_var = np.var(X, axis=0)
@@ -259,8 +265,7 @@ class GaussianNB(BaseNB):
         old_ssd = n_past * var
         new_ssd = n_new * new_var
         total_ssd = (old_ssd + new_ssd +
-                     (n_past / float(n_new * n_total)) *
-                     (n_new * mu - n_new * new_mu) ** 2)
+                     (n_new * n_past / n_total) * (mu - new_mu) ** 2)
         total_var = total_ssd / n_total
 
         return total_mu, total_var
@@ -440,6 +445,7 @@ class GaussianNB(BaseNB):
         joint_log_likelihood = np.array(joint_log_likelihood).T
         return joint_log_likelihood
 
+
 _ALPHA_MIN = 1e-10
 
 
@@ -460,8 +466,14 @@ class BaseDiscreteNB(BaseNB):
                                  " classes.")
             self.class_log_prior_ = np.log(class_prior)
         elif self.fit_prior:
+            with warnings.catch_warnings():
+                # silence the warning when count is 0 because class was not yet
+                # observed
+                warnings.simplefilter("ignore", RuntimeWarning)
+                log_class_count = np.log(self.class_count_)
+
             # empirical prior, with sample_weight taken into account
-            self.class_log_prior_ = (np.log(self.class_count_) -
+            self.class_log_prior_ = (log_class_count -
                                      np.log(self.class_count_.sum()))
         else:
             self.class_log_prior_ = np.full(n_classes, -np.log(n_classes))
@@ -540,7 +552,7 @@ class BaseDiscreteNB(BaseNB):
 
         # label_binarize() returns arrays with dtype=np.int64.
         # We convert it to np.float64 to support sample_weight consistently
-        Y = Y.astype(np.float64)
+        Y = Y.astype(np.float64, copy=False)
         if sample_weight is not None:
             sample_weight = np.atleast_2d(sample_weight)
             Y *= check_array(sample_weight).T
@@ -591,7 +603,7 @@ class BaseDiscreteNB(BaseNB):
         # LabelBinarizer().fit_transform() returns arrays with dtype=np.int64.
         # We convert it to np.float64 to support sample_weight consistently;
         # this means we also don't have to cast X to floating point
-        Y = Y.astype(np.float64)
+        Y = Y.astype(np.float64, copy=False)
         if sample_weight is not None:
             sample_weight = np.atleast_2d(sample_weight)
             Y *= check_array(sample_weight).T
@@ -622,6 +634,9 @@ class BaseDiscreteNB(BaseNB):
 
     coef_ = property(_get_coef)
     intercept_ = property(_get_intercept)
+
+    def _more_tags(self):
+        return {'poor_score': True}
 
 
 class MultinomialNB(BaseDiscreteNB):
@@ -670,10 +685,16 @@ class MultinomialNB(BaseDiscreteNB):
         Number of samples encountered for each class during fitting. This
         value is weighted by the sample weight when provided.
 
+    classes_ : array, shape (n_classes,)
+        Class labels known to the classifier
+
     feature_count_ : array, shape (n_classes, n_features)
         Number of samples encountered for each (class, feature)
         during fitting. This value is weighted by the sample weight when
         provided.
+
+    classes_ : array-like, shape (n_classes,)
+        Unique class labels.
 
     Examples
     --------
@@ -683,7 +704,7 @@ class MultinomialNB(BaseDiscreteNB):
     >>> from sklearn.naive_bayes import MultinomialNB
     >>> clf = MultinomialNB()
     >>> clf.fit(X, y)
-    MultinomialNB(alpha=1.0, class_prior=None, fit_prior=True)
+    MultinomialNB()
     >>> print(clf.predict(X[2:3]))
     [3]
 
@@ -768,6 +789,9 @@ class ComplementNB(BaseDiscreteNB):
         Number of samples encountered for each class during fitting. This
         value is weighted by the sample weight when provided.
 
+    classes_ : array, shape (n_classes,)
+        Class labels known to the classifier
+
     feature_count_ : array, shape (n_classes, n_features)
         Number of samples encountered for each (class, feature) during fitting.
         This value is weighted by the sample weight when provided.
@@ -775,6 +799,9 @@ class ComplementNB(BaseDiscreteNB):
     feature_all_ : array, shape (n_features,)
         Number of samples encountered for each feature during fitting. This
         value is weighted by the sample weight when provided.
+
+    classes_ : array of shape = [n_classes]
+        The classes labels.
 
     Examples
     --------
@@ -784,7 +811,7 @@ class ComplementNB(BaseDiscreteNB):
     >>> from sklearn.naive_bayes import ComplementNB
     >>> clf = ComplementNB()
     >>> clf.fit(X, y)
-    ComplementNB(alpha=1.0, class_prior=None, fit_prior=True, norm=False)
+    ComplementNB()
     >>> print(clf.predict(X[2:3]))
     [3]
 
@@ -816,10 +843,11 @@ class ComplementNB(BaseDiscreteNB):
         comp_count = self.feature_all_ + alpha - self.feature_count_
         logged = np.log(comp_count / comp_count.sum(axis=1, keepdims=True))
         # BaseNB.predict uses argmax, but ComplementNB operates with argmin.
-        feature_log_prob = -logged
         if self.norm:
             summed = logged.sum(axis=1, keepdims=True)
-            feature_log_prob = -feature_log_prob / summed
+            feature_log_prob = logged / summed
+        else:
+            feature_log_prob = -logged
         self.feature_log_prob_ = feature_log_prob
 
     def _joint_log_likelihood(self, X):
@@ -872,10 +900,17 @@ class BernoulliNB(BaseDiscreteNB):
         Number of samples encountered for each class during fitting. This
         value is weighted by the sample weight when provided.
 
+    classes_ : array, shape (n_classes,)
+        Class labels known to the classifier
+
     feature_count_ : array, shape = [n_classes, n_features]
         Number of samples encountered for each (class, feature)
         during fitting. This value is weighted by the sample weight when
         provided.
+
+    classes_ : array of shape = [n_classes]
+        The classes labels.
+
 
     Examples
     --------
@@ -885,7 +920,7 @@ class BernoulliNB(BaseDiscreteNB):
     >>> from sklearn.naive_bayes import BernoulliNB
     >>> clf = BernoulliNB()
     >>> clf.fit(X, Y)
-    BernoulliNB(alpha=1.0, binarize=0.0, class_prior=None, fit_prior=True)
+    BernoulliNB()
     >>> print(clf.predict(X[2:3]))
     [3]
 
