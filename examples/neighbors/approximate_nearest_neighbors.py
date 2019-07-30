@@ -81,7 +81,7 @@ class NMSlibTransformer(BaseEstimator, TransformerMixin):
         self.n_jobs = n_jobs
 
     def fit(self, X):
-        self.n_samples_fit = X.shape[0]
+        self.n_samples_fit_ = X.shape[0]
 
         # see more metric in the manual
         # https://github.com/nmslib/nmslib/tree/master/manual
@@ -117,12 +117,9 @@ class NMSlibTransformer(BaseEstimator, TransformerMixin):
                            n_neighbors)
         kneighbors_graph = csr_matrix((distances.ravel(), indices.ravel(),
                                        indptr), shape=(n_samples_transform,
-                                                       self.n_samples_fit))
+                                                       self.n_samples_fit_))
 
         return kneighbors_graph
-
-    def fit_transform(self, X, y=None):
-        return self.fit(X).transform(X)
 
 
 class AnnoyTransformer(BaseEstimator, TransformerMixin):
@@ -136,7 +133,7 @@ class AnnoyTransformer(BaseEstimator, TransformerMixin):
         self.metric = metric
 
     def fit(self, X):
-        self.n_samples_fit = X.shape[0]
+        self.n_samples_fit_ = X.shape[0]
         metric = self.metric if self.metric != 'sqeuclidean' else 'euclidean'
         self.annoy_ = annoy.AnnoyIndex(X.shape[1], metric=metric)
         for i, x in enumerate(X):
@@ -145,10 +142,15 @@ class AnnoyTransformer(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        if X is None:
-            n_samples_transform = self.n_samples_fit
-        else:
-            n_samples_transform = X.shape[0]
+        return self._transform(X)
+
+    def fit_transform(self, X, y=None):
+        return self.fit(X)._transform(X=None)
+
+    def _transform(self, X):
+        """As `transform`, but handles X is None for faster `fit_transform`."""
+
+        n_samples_transform = self.n_samples_fit_ if X is None else X.shape[0]
 
         # For compatibility reasons, as each sample is considered as its own
         # neighbor, one extra neighbor will be computed.
@@ -177,12 +179,9 @@ class AnnoyTransformer(BaseEstimator, TransformerMixin):
                            n_neighbors)
         kneighbors_graph = csr_matrix((distances.ravel(), indices.ravel(),
                                        indptr), shape=(n_samples_transform,
-                                                       self.n_samples_fit))
+                                                       self.n_samples_fit_))
 
         return kneighbors_graph
-
-    def fit_transform(self, X, y=None):
-        return self.fit(X).transform(X=None)
 
 
 def test_transformers():
@@ -219,7 +218,7 @@ def run_benchmark():
     n_iter = 500
     perplexity = 30
     # TSNE requires a certain number of neighbors which depends on the
-    # perplexity parameter
+    # perplexity parameter.
     # Add one since we include each sample as its own neighbor.
     n_neighbors = int(3. * perplexity + 1) + 1
 
@@ -281,7 +280,7 @@ def run_benchmark():
                 axes[i_ax].axis('tight')
                 i_ax += 1
 
-    plt.tight_layout()
+    fig.tight_layout()
     plt.show()
 
 
