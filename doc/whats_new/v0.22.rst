@@ -142,6 +142,13 @@ Changelog
   estimator's constructor but not stored as attributes on the instance.
   :pr:`14464` by `Joel Nothman`_.
 
+:mod:`sklearn.inspection`
+.........................
+
+- |MajorFeature| :func:`inspection.permutation_importance` has been added to
+  measure the importance of each feature in an arbitrary trained model with
+  respect to a given scoring function. :issue:`13146` by `Thomas Fan`_.
+
 :mod:`sklearn.linear_model`
 ...........................
 
