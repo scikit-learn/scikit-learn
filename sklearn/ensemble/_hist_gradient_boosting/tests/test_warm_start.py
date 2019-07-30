@@ -37,7 +37,8 @@ def test_max_iter_with_warm_start_validation(GradientBoosting, X, y):
     # is smaller than the number of iterations from the previous fit when warm
     # start is True.
 
-    estimator = GradientBoosting(max_iter=50, warm_start=True)
+    estimator = GradientBoosting(max_iter=50, warm_start=True,
+                                 n_iter_no_change=None)
     estimator.fit(X, y)
     estimator.set_params(max_iter=25)
     err_msg = ('max_iter=25 must be larger than or equal to n_iter_=50 '
@@ -76,7 +77,7 @@ def test_warm_start_yields_identical_results(GradientBoosting, X, y):
 def test_warm_start_max_depth(GradientBoosting, X, y):
     # Test if possible to fit trees of different depth in ensemble.
     gb = GradientBoosting(max_iter=100, min_samples_leaf=1,
-                          warm_start=True, max_depth=2)
+                          warm_start=True, max_depth=2, n_iter_no_change=None)
     gb.fit(X, y)
     gb.set_params(max_iter=110, max_depth=3)
     gb.fit(X, y)
@@ -115,11 +116,12 @@ def test_warm_start_early_stopping(GradientBoosting, X, y):
 ])
 def test_warm_start_equal_n_estimators(GradientBoosting, X, y):
     # Test if warm start with equal n_estimators does nothing
-    gb_1 = GradientBoosting(max_depth=2)
+    gb_1 = GradientBoosting(max_depth=2, n_iter_no_change=None)
     gb_1.fit(X, y)
 
     gb_2 = clone(gb_1)
-    gb_2.set_params(max_iter=gb_1.max_iter, warm_start=True)
+    gb_2.set_params(max_iter=gb_1.max_iter, warm_start=True,
+                    n_iter_no_change=None)
     gb_2.fit(X, y)
 
     # Check that both predictors are equal
