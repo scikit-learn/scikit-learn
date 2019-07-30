@@ -7,6 +7,11 @@ from ...utils import check_matplotlib_support
 class RocCurveVisualizer:
     """ROC Curve visualization.
 
+    It is recommend to use `sklearn.metrics.plot_roc_curve` to create this
+    object.
+
+    Read more in the :ref:`User Guide <visualizations>`.
+
     Parameters
     ----------
     fpr : ndarray
@@ -72,9 +77,11 @@ class RocCurveVisualizer:
 def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
                    drop_intermediate=True, response_method="auto",
                    name=None, ax=None, **kwargs):
-    """Plot Receiver operating characteristic (ROC) curve
+    """Plot Receiver operating characteristic (ROC) curve.
 
     Extra keyword arguments will be passed to matplotlib's `plot`.
+
+    Read more in the :ref:`User Guide <visualizations>`.
 
     Parameters
     ----------
@@ -100,7 +107,7 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
         on a plotted ROC curve. This is useful in order to create lighter
         ROC curves.
 
-    response_method : 'predict_proba', 'decision_function', or 'auto' \
+    response_method : {'predict_proba', 'decision_function', 'auto'} \
     default='auto'
         Specifies whether to use `predict_proba` or `decision_function` as the
         target response. If set to 'auto', `predict_proba` is tried first

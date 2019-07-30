@@ -1007,12 +1007,10 @@ See the :ref:`metrics` section of the user guide for further details.
    metrics.pairwise_distances_chunked
 
 
-Plotting tools
---------------
+Plotting
+--------
 
-.. automodule:: sklearn.metrics.plot
-   :no-members:
-   :no-inherited-members:
+See the :ref:`visualizations` section of the user guide for further details.
 
 .. currentmodule:: sklearn
 
@@ -1024,9 +1022,9 @@ Plotting tools
 
 .. autosummary::
    :toctree: generated/
-   :template: class_without_init.rst
+   :template: class.rst
 
-   metrics.plot.RocCurveVisualizer
+   metrics.RocCurveVisualizer
 
 
 .. _mixture_ref:
