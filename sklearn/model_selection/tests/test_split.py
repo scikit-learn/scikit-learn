@@ -29,6 +29,7 @@ from sklearn.model_selection import LeavePOut
 from sklearn.model_selection import LeavePGroupsOut
 from sklearn.model_selection import ShuffleSplit
 from sklearn.model_selection import GroupShuffleSplit
+from sklearn.model_selection import StratifiedGroupKfold
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.model_selection import PredefinedSplit
 from sklearn.model_selection import check_cv
@@ -651,10 +652,10 @@ def test_stratified_shuffle_split_iter():
             assert_array_equal(np.unique(y[train]), np.unique(y[test]))
             # Checks if folds keep classes proportions
             p_train = (np.bincount(np.unique(y[train],
-                                   return_inverse=True)[1]) /
+                                             return_inverse=True)[1]) /
                        float(len(y[train])))
             p_test = (np.bincount(np.unique(y[test],
-                                  return_inverse=True)[1]) /
+                                            return_inverse=True)[1]) /
                       float(len(y[test])))
             assert_array_almost_equal(p_train, p_test, 1)
             assert len(train) + len(test) == y.size
@@ -841,7 +842,7 @@ def test_leave_one_p_group_out():
     assert repr(lpgo_1) == 'LeavePGroupsOut(n_groups=1)'
     assert repr(lpgo_2) == 'LeavePGroupsOut(n_groups=2)'
     assert (repr(LeavePGroupsOut(n_groups=3)) ==
-                 'LeavePGroupsOut(n_groups=3)')
+            'LeavePGroupsOut(n_groups=3)')
 
     for j, (cv, p_groups_out) in enumerate(((logo, 1), (lpgo_1, 1),
                                             (lpgo_2, 2))):
@@ -908,7 +909,7 @@ def test_leave_group_out_changing_groups():
     # n_splits = no of 2 (p) group combinations of the unique groups = 3C2 = 3
     assert (
         3 == LeavePGroupsOut(n_groups=2).get_n_splits(X, y=X,
-                                                    groups=groups))
+                                                      groups=groups))
     # n_splits = no of unique groups (C(uniq_lbls, 1) = n_unique_groups)
     assert 3 == LeaveOneGroupOut().get_n_splits(X, y=X,
                                                 groups=groups)
@@ -1336,7 +1337,7 @@ def test_group_kfold():
     assert len(folds) == len(groups)
     for i in np.unique(folds):
         assert (tolerance >=
-                             abs(sum(folds == i) - ideal_n_groups_per_fold))
+                abs(sum(folds == i) - ideal_n_groups_per_fold))
 
     # Check that each group appears only in 1 fold
     for group in np.unique(groups):
@@ -1373,7 +1374,7 @@ def test_group_kfold():
     assert len(folds) == len(groups)
     for i in np.unique(folds):
         assert (tolerance >=
-                             abs(sum(folds == i) - ideal_n_groups_per_fold))
+                abs(sum(folds == i) - ideal_n_groups_per_fold))
 
     # Check that each group appears only in 1 fold
     with warnings.catch_warnings():
@@ -1398,6 +1399,175 @@ def test_group_kfold():
     X = y = np.ones(len(groups))
     assert_raises_regexp(ValueError, "Cannot have number of splits.*greater",
                          next, GroupKFold(n_splits=3).split(X, y, groups))
+
+
+def test_stratified_group_kfold():
+    rng = np.random.RandomState(0)
+
+    # Parameters of the test
+    n_groups = 15
+    n_samples = 1000
+    n_splits = 5
+    n_classes = 5
+
+    X = np.ones(n_samples)
+
+    # Construct the test data
+    tolerance = 0.05 * n_samples  # 5 percent error allowed
+    groups = rng.randint(0, n_groups, n_samples)
+    y = np.array(rng.randint(0, n_classes, n_samples))
+
+    ideal_n_groups_per_fold = n_samples // n_splits
+    ideal_n_labels_per_fold = n_samples // n_splits // n_classes
+
+    len(np.unique(groups))
+    # Get the test fold indices from the test set indices of each fold
+    folds = np.zeros(n_samples)
+    lkf = StratifiedGroupKfold(n_splits=n_splits)
+    for i, (_, test) in enumerate(lkf.split(X, y, groups)):
+        folds[test] = i
+
+    # Check that folds have approximately the same size
+    assert len(folds) == len(groups)
+    for i in np.unique(folds):
+        assert (tolerance >=
+                abs(sum(folds == i) - ideal_n_groups_per_fold))
+
+    # Check that labels are  approximately distributed
+    assert len(folds) == len(groups)
+    for i in np.unique(y):
+        for f in np.unique(folds):
+            indicies = np.argwhere(folds == f)
+            assert (tolerance >=
+                    abs(sum(y[indicies] == i) - ideal_n_labels_per_fold))
+
+    # Check that each group appears only in 1 fold
+    for group in np.unique(groups):
+        assert len(np.unique(folds[groups == group])) == 1
+
+    # Check that no group is on both sides of the split
+    groups = np.asarray(groups, dtype=object)
+    for train, test in lkf.split(X, y, groups):
+        assert len(np.intersect1d(groups[train], groups[test])) == 0
+
+    groups = rng.randint(0, n_groups, n_samples)
+    lkf = StratifiedGroupKfold(n_splits=n_splits, constrain_groups=False)
+    for i, (_, test) in enumerate(lkf.split(X, y, groups)):
+        folds[test] = i
+    
+    # Check that folds have approximately the same size
+    assert len(folds) == len(groups)
+    for i in np.unique(folds):
+        assert (tolerance >=
+                abs(sum(folds == i) - ideal_n_groups_per_fold))
+
+
+def test_stratified_group_kfold_simple():
+    groups = np.array([3, 0, 3, 0, 3, 3, 2, 0, 1])
+
+    y = np.array([1, 1, 1, 1, 1, 2, 2, 2, 2])
+
+    X = np.array([1, 2, 3, 4, 5, 6, 6, 6, 7])
+
+    lkf = StratifiedGroupKfold(n_splits=2, constrain_groups=False)
+
+    splits = lkf.split(X, y, groups)
+
+    train_index, test_index = next(splits)
+
+    assert_array_equal(train_index, [1, 3, 6, 7])
+    assert_array_equal(test_index, [0, 2, 4, 5, 8])
+
+    train_index, test_index = next(splits)
+
+    assert_array_equal(train_index, [0, 2, 4, 5, 8])
+    assert_array_equal(test_index, [1, 3, 6, 7])
+
+    groups = np.array([3, 0, 3, 0, 3, 3, 2, 0, 1, 4, 4, 4, 4])
+    y = np.array([1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3])
+    X = np.array([1, 2, 3, 4, 5, 6, 6, 6, 7, 8, 9, 10, 11])
+
+    splits = lkf.split(X, y, groups)
+
+    train_index, test_index = next(splits)
+
+    assert_array_equal(train_index, [1, 3, 6, 7])
+    assert_array_equal(test_index, [0,  2,  4,  5,  8,  9, 10, 11, 12])
+
+    train_index, test_index = next(splits)
+
+    assert_array_equal(train_index, [0,  2,  4,  5,  8,  9, 10, 11, 12])
+    assert_array_equal(test_index, [1, 3, 6, 7])
+
+
+def test_stratified_group_kfold_weighted_vs_not_weighted():
+
+    lkf = StratifiedGroupKfold(n_splits=2, weighted=False, constrain_groups=False)
+
+    g = np.array([0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 2])
+    y = np.array([1, 1, 1, 2, 1, 1, 1, 2, 1, 1, 1, 1, 2])
+    X = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+
+    splits = lkf.split(X, y, g)
+
+    train_index, test_index = next(splits)
+
+    assert_array_equal(train_index, [4, 5, 6, 7])
+    assert_array_equal(test_index,  [0,  1,  2,  3,  8,  9, 10, 11, 12])
+
+    train_index, test_index = next(splits)
+
+    assert_array_equal(train_index, [0,  1,  2,  3,  8,  9, 10, 11, 12])
+    assert_array_equal(test_index, [4, 5, 6, 7])
+
+    lkf = StratifiedGroupKfold(n_splits=2, weighted=True, constrain_groups=False)
+
+    splits = lkf.split(X, y, g)
+
+    train_index, test_index = next(splits)
+
+    assert_array_equal(train_index, [0, 1, 2, 4, 5, 6, 7])
+    assert_array_equal(test_index,  [3,  8,  9, 10, 11, 12])
+
+    train_index, test_index = next(splits)
+
+    assert_array_equal(train_index, [3,  8,  9, 10, 11, 12])
+    assert_array_equal(test_index, [0, 1, 2, 4, 5, 6, 7])
+
+
+def test_stratified_group_kfold_weighted_vs_not_weighted_constrain_groups():
+
+    lkf = StratifiedGroupKfold(n_splits=2, weighted=False)
+
+    g = np.array([0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 2])
+    y = np.array([1, 1, 1, 2, 1, 1, 1, 2, 1, 1, 1, 1, 2])
+    X = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+
+    splits = lkf.split(X, y, g)
+
+    train_index, test_index = next(splits)
+
+    assert_array_equal(train_index, [4, 5, 6, 7])
+    assert_array_equal(test_index,  [0,  1,  2,  3,  8,  9, 10, 11, 12])
+
+    train_index, test_index = next(splits)
+
+    assert_array_equal(train_index, [0,  1,  2,  3,  8,  9, 10, 11, 12])
+    assert_array_equal(test_index, [4, 5, 6, 7])
+
+    lkf = StratifiedGroupKfold(n_splits=2, weighted=True)
+
+    splits = lkf.split(X, y, g)
+
+    train_index, test_index = next(splits)
+
+    assert_array_equal(train_index, [0, 1, 2, 3, 4, 5, 6, 7])
+    assert_array_equal(test_index,  [8,  9, 10, 11, 12])
+
+    train_index, test_index = next(splits)
+
+    assert_array_equal(train_index, [8,  9, 10, 11, 12])
+    assert_array_equal(test_index, [0, 1, 2, 3, 4, 5, 6, 7])
 
 
 def test_time_series_cv():
