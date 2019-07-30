@@ -81,7 +81,6 @@ __all__ = ['ARDRegression',
            'orthogonal_mp_gram',
            'ridge_regression',
            'RANSACRegressor',
-           'GeneralizedLinearRegressor',
            'PoissonRegressor',
            'GammaRegressor',
            'TweedieRegressor']
