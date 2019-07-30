@@ -226,7 +226,6 @@ def safe_indexing(X, indices, axis=0):
         )
 
 
-# FIXME: to be removed once NumPy 1.13 is the minimum version required
 def _array_indexing(array, key, axis=0):
     """Index an array consistently across NumPy version."""
     if np_version < (1, 13) or issparse(array):
