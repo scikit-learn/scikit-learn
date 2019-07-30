@@ -60,7 +60,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
         Xy = np.dot(X.T, y) that can be precomputed. It is useful
         only when the Gram matrix is precomputed.
 
-    Gram : None, 'auto', array-like shape=(n_features, n_features), default=None
+    Gram : None, 'auto', array-like shape=(n_features, n_features), \
+            default=None
         Precomputed Gram matrix (X' * X), if ``'auto'``, the Gram
         matrix is precomputed from the given X, if there are more samples
         than features.
@@ -308,7 +309,8 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
         Xy = np.dot(X.T, y) that can be precomputed. It is useful
         only when the Gram matrix is precomputed.
 
-    Gram : None, 'auto' or array-like shape=(n_features, n_features), default=None
+    Gram : None, 'auto' or array-like shape=(n_features, n_features), \
+            default=None
         Precomputed Gram matrix (X' * X), if ``'auto'``, the Gram
         matrix is precomputed from the given X, if there are more samples
         than features.
@@ -1127,7 +1129,8 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
     y_test : array-like shape=(n_samples,)
         The target variable to compute the residues on
 
-    Gram : None, 'auto' or array-like shape=(n_features, n_features), default=None
+    Gram : None, 'auto' or array-like shape=(n_features, n_features), \
+            default=None
         Precomputed Gram matrix (X' * X), if ``'auto'``, the Gram
         matrix is precomputed from the given X, if there are more samples
         than features
