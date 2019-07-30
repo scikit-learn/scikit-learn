@@ -440,61 +440,39 @@ Gradient Tree Boosting
 ======================
 
 `Gradient Tree Boosting <https://en.wikipedia.org/wiki/Gradient_boosting>`_
-or Gradient Boosted Regression Trees (GBRT) is a generalization
+or Gradient Boosted Degression Trees (GBDT) is a generalization
 of boosting to arbitrary
-differentiable loss functions. GBRT is an accurate and effective
+differentiable loss functions. GBDT is an accurate and effective
 off-the-shelf procedure that can be used for both regression and
-classification problems.  Gradient Tree Boosting models are used in a
+classification problems in a
 variety of areas including Web search ranking and ecology.
 
-The advantages of GBRT are:
-
-  + Natural handling of data of mixed type (= heterogeneous features)
-
-  + Predictive power
-
-  + Robustness to outliers in output space (via robust loss functions)
-
-The disadvantages of GBRT are:
-
-  + Scalability, due to the sequential nature of boosting it can
-    hardly be parallelized.
-
 The module :mod:`sklearn.ensemble` provides methods
-for both classification and regression via gradient boosted regression
+for both classification and regression via gradient boosted decision
 trees.
-
 
 .. note::
 
   Scikit-learn 0.21 introduces two new experimental implementation of
   gradient boosting trees, namely :class:`HistGradientBoostingClassifier`
   and :class:`HistGradientBoostingRegressor`, inspired by
-  `LightGBM <https://github.com/Microsoft/LightGBM>`_. These fast estimators
-  first bin the input samples ``X`` into integer-valued bins (typically 256
-  bins) which tremendously reduces the number of splitting points to
-  consider, and allow the algorithm to leverage integer-based data
-  structures (histograms) instead of relying on sorted continuous values.
+  `LightGBM <https://github.com/Microsoft/LightGBM>`_.
 
-  The new histogram-based estimators can be orders of magnitude faster than
-  their continuous counterparts when the number of samples is larger than
-  tens of thousands of samples. The API of these new estimators is slightly
-  different, and some of the features from :class:`GradientBoostingClassifier`
-  and :class:`GradientBoostingRegressor` are not yet supported.
+  These new histogram-based estimators can be **orders of magnitude faster**
+  than :class:`GradientBoostingClassifier` and
+  :class:`GradientBoostingRegressor` when the number of samples is larger
+  than tens of thousands of samples.
 
-  These new estimators are still **experimental** for now: their predictions
-  and their API might change without any deprecation cycle. To use them, you
-  need to explicitly import ``enable_hist_gradient_boosting``::
+  They also have built-in support for missing values, which avoids the need
+  for an imputer. Support for categorical features is also part of the
+  roadmap.
 
-    >>> # explicitly require this experimental feature
-    >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
-    >>> # now you can import normally from ensemble
-    >>> from sklearn.ensemble import HistGradientBoostingClassifier
+  These estimators are described in more detail below in
+  :ref:`histogram_based_gradient_boosting`.
 
   The following guide focuses on :class:`GradientBoostingClassifier` and
-  :class:`GradientBoostingRegressor` only, which might be preferred for small
-  sample sizes since binning may lead to split points that are too approximate
-  in this setting.
+  :class:`GradientBoostingRegressor`, which might be preferred for small
+  sample sizes.
 
 
 Classification
@@ -526,7 +504,8 @@ The number of weak learners (i.e. regression trees) is controlled by the paramet
    thus, the total number of induced trees equals
    ``n_classes * n_estimators``. For datasets with a large number
    of classes we strongly recommend to use
-   :class:`RandomForestClassifier` as an alternative to :class:`GradientBoostingClassifier` .
+   :class:`HistGradientBoostingClassifier` as an alternative to
+   :class:`GradientBoostingClassifier` .
 
 Regression
 ----------
@@ -838,7 +817,131 @@ accessed via the ``feature_importances_`` property::
 
  * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regression.py`
 
- .. _voting_classifier:
+.. _histogram_based_gradient_boosting:
+
+Histogram-Based Gradient Boosting
+=================================
+
+Scikit-learn 0.21 introduces two new experimental implementation of
+gradient boosting trees, namely :class:`HistGradientBoostingClassifier`
+and :class:`HistGradientBoostingRegressor`, inspired by
+`LightGBM <https://github.com/Microsoft/LightGBM>`_.
+
+These new histogram-based estimators can be **orders of magnitude faster**
+than :class:`GradientBoostingClassifier` and
+:class:`GradientBoostingRegressor` when the number of samples is larger
+than tens of thousands of samples.
+
+They also have built-in support for missing values, which avoids the need
+for an imputer. Support for categorical features is also part of the
+roadmap. Moreover, early-stopping is enabled by default.
+
+These fast estimators first bin the input samples ``X`` into
+integer-valued bins (typically 256 bins) which tremendously reduces the
+number of splitting points to consider, and allow the algorithm to
+leverage integer-based data structures (histograms) instead of relying on
+sorted continuous values when building the trees. The API of these new
+estimators is slightly different, and some of the features from
+:class:`GradientBoostingClassifier` and :class:`GradientBoostingRegressor`
+are not yet supported: in particular sample weights, and some loss
+functions.
+
+These new estimators are still **experimental** for now: their predictions
+and their API might change without any deprecation cycle. To use them, you
+need to explicitly import ``enable_hist_gradient_boosting``::
+
+  >>> # explicitly require this experimental feature
+  >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+  >>> # now you can import normally from ensemble
+  >>> from sklearn.ensemble import HistGradientBoostingClassifier
+
+.. topic:: Examples:
+
+ * :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
+
+Usage
+-----
+
+Most of the parameters are unchanged from
+:class:`GradientBoostingClassifier` and :class:`GradientBoostingRegressor`.
+One exception is the ``max_iter`` parameter that replaces ``n_estimators``.:
+
+  >>> from sklearn.experimental import enable_hist_gradient_boosting
+  >>> from sklearn.ensemble import HistGradientBoostingClassifier
+  >>> from sklearn.datasets import make_hastie_10_2
+
+  >>> X, y = make_hastie_10_2(random_state=0)
+  >>> X_train, X_test = X[:2000], X[2000:]
+  >>> y_train, y_test = y[:2000], y[2000:]
+  >>> clf = HistGradientBoostingClassifier(max_iter=100).fit(X_train, y_train)
+
+  >>> clf.score(X_test, y_test)
+  0.8998
+
+The size of the trees can be controlled through the ``max_lead_nodees``,
+``max_depth``, and ``min_samples_leaf`` parameters.
+
+The number of bins used to bin the data is controlled with the ``max_bins``
+parameter. Using less bins acts as some sort of regularization. It is
+generally recommended to use as many bins as possible.
+
+The ``l2_regularization`` parameter is a regularizer on the loss function and
+corresponds to :math:`\lambda` in equation (2) of [XGBoost]_.
+
+Note that unlike most estimators, **early-stopping is enabled by default**.
+The early-stopping behaviour is controlled via the ``scoring``,
+``validation_fraction``, ``n_iter_no_change``, and ``tol`` parameters. It is
+possible to early-stop using an arbitrary :term:`scorer`, or just the
+training or validation loss.
+
+Missing values support
+----------------------
+
+:class:`HistGradientBoostingClassifier` and
+:class:`HistGradientBoostingRegressor` have built-in support for missing
+values (NaNs).
+
+During training, the tree grower learns at each split point whether samples
+with missing values should go to the left or right child, based on the
+potential gain. When predicting, samples with missing values are assigned to
+the left or right child consequently.
+
+
+.. TODO: Add this example when missing values PR is merged (results are
+.. wrong for now)
+
+.. from sklearn.experimental import enable_hist_gradient_boosting
+.. from sklearn.ensemble import HistGradientBoostingRegressor
+.. import numpy as np
+
+.. X = np.array([0, 1, 2, np.nan]).reshape(-1, 1)
+.. y = [0, 0, 1, 1]
+.. gbdt = HistGradientBoostingRegressor().fit(X, y)
+.. gbdt.predict(X)
+
+If no missing values were encountered for a given feature during training,
+then samples with missing values are mapped to whichever child has the most
+samples.
+
+
+Low-level parallelism
+---------------------
+
+:class:`HistGradientBoostingClassifier` and
+:class:`HistGradientBoostingRegressor` have parallel implementations that
+use OpenMP through Cython. The number of threads that is used can be changed
+using the ``OMP_NUM_THREADS`` environment variable. Please refer to the
+OpenMP documentation for details. We are planning on adding a ``n_jobs``
+parameter (or equivalent) in a future version.
+
+.. topic:: References
+
+  .. [XGBoost] Tianqi Chen, Carlos Guestrin, "XGBoost: A Scalable Tree
+     Boosting System". https://arxiv.org/abs/1603.02754
+  .. [LightGBM] Ke et. al. "LightGBM: A Highly Efficient Gradient
+     BoostingDecision Tree"
+
+.. _voting_classifier:
 
 Voting Classifier
 ========================
