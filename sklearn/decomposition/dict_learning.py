@@ -13,7 +13,7 @@ import numpy as np
 from scipy import linalg
 from joblib import Parallel, delayed, effective_n_jobs
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, ComponentsMixin
 from ..utils import (check_array, check_random_state, gen_even_slices,
                      gen_batches)
 from ..utils.extmath import randomized_svd, row_norms
@@ -875,7 +875,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
         return dictionary.T
 
 
-class SparseCodingMixin(TransformerMixin):
+class SparseCodingMixin(ComponentsMixin, TransformerMixin):
     """Sparse coding mixin"""
 
     def _set_sparse_coding_params(self, n_components,

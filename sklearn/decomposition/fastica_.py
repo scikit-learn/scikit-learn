@@ -14,7 +14,7 @@ import warnings
 import numpy as np
 from scipy import linalg
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, ComponentsMixin
 from ..exceptions import ConvergenceWarning
 
 from ..utils import check_array, as_float_array, check_random_state
@@ -380,7 +380,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
                 return None, W, S
 
 
-class FastICA(BaseEstimator, TransformerMixin):
+class FastICA(BaseEstimator, ComponentsMixin, TransformerMixin):
     """FastICA: a fast algorithm for Independent Component Analysis.
 
     Read more in the :ref:`User Guide <ICA>`.

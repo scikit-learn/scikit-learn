@@ -9,7 +9,7 @@ import numpy as np
 from ..utils import check_random_state, check_array
 from ..utils.validation import check_is_fitted
 from ..linear_model import ridge_regression
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, ComponentsMixin
 from .dict_learning import dict_learning, dict_learning_online
 
 
@@ -29,7 +29,7 @@ def _check_normalize_components(normalize_components, estimator_name):
             )
 
 
-class SparsePCA(BaseEstimator, TransformerMixin):
+class SparsePCA(BaseEstimator, ComponentsMixin, TransformerMixin):
     """Sparse Principal Components Analysis (SparsePCA)
 
     Finds the set of sparse components that can optimally reconstruct

@@ -9,7 +9,8 @@ from scipy.linalg import eigh, svd, qr, solve
 from scipy.sparse import eye, csr_matrix
 from scipy.sparse.linalg import eigsh
 
-from ..base import BaseEstimator, TransformerMixin, _UnstableArchMixin
+from ..base import (BaseEstimator, TransformerMixin,
+                    ComponentsMixin, _UnstableArchMixin)
 from ..utils import check_random_state, check_array
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
@@ -518,7 +519,7 @@ def locally_linear_embedding(
                       tol=tol, max_iter=max_iter, random_state=random_state)
 
 
-class LocallyLinearEmbedding(BaseEstimator, TransformerMixin,
+class LocallyLinearEmbedding(BaseEstimator, ComponentsMixin, TransformerMixin,
                              _UnstableArchMixin):
     """Locally Linear Embedding
 

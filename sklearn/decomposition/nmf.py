@@ -14,7 +14,7 @@ import time
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, ComponentsMixin
 from ..utils import check_random_state, check_array
 from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
 from ..utils.extmath import safe_min
@@ -1069,7 +1069,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     return W, H, n_iter
 
 
-class NMF(BaseEstimator, TransformerMixin):
+class NMF(BaseEstimator, ComponentsMixin, TransformerMixin):
     r"""Non-Negative Matrix Factorization (NMF)
 
     Find two non-negative matrices (W, H) whose product approximates the non-

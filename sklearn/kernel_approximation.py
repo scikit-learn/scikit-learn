@@ -14,14 +14,14 @@ import scipy.sparse as sp
 from scipy.linalg import svd
 
 from .base import BaseEstimator
-from .base import TransformerMixin
+from .base import TransformerMixin, ComponentsMixin
 from .utils import check_array, check_random_state, as_float_array
 from .utils.extmath import safe_sparse_dot
 from .utils.validation import check_is_fitted
 from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
 
 
-class RBFSampler(BaseEstimator, TransformerMixin):
+class RBFSampler(BaseEstimator, ComponentsMixin, TransformerMixin):
     """Approximates feature map of an RBF kernel by Monte Carlo approximation
     of its Fourier transform.
 
@@ -125,7 +125,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         return projection
 
 
-class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
+class SkewedChi2Sampler(BaseEstimator, ComponentsMixin, TransformerMixin):
     """Approximates feature map of the "skewed chi-squared" kernel by Monte
     Carlo approximation of its Fourier transform.
 
@@ -424,7 +424,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         return {'stateless': True}
 
 
-class Nystroem(BaseEstimator, TransformerMixin):
+class Nystroem(BaseEstimator, ComponentsMixin, TransformerMixin):
     """Approximate a kernel map using a subset of the training data.
 
     Constructs an approximate feature map for an arbitrary kernel

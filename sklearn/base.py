@@ -576,9 +576,17 @@ class TransformerMixin:
 
     @property
     def n_features_out_(self):
-        if hasattr(self, '_n_features_out'):
-            return self._n_features_out
-        elif hasattr(self, 'n_components_'):
+        return self._n_features_out
+
+    @n_features_out_.setter
+    def n_features_out_(self, val):
+        self._n_features_out = val
+
+
+class ComponentsMixin:
+    @property
+    def n_features_out_(self):
+        if hasattr(self, 'n_components_'):
             # n_components could be auto or None
             # this is more likely to be an int
             n_features = self.n_components_
@@ -588,9 +596,6 @@ class TransformerMixin:
             n_features = self.components_.shape[0]
         return n_features
 
-    @n_features_out_.setter
-    def n_features_out_(self, val):
-        self._n_features_out = val
 
 class DensityMixin:
     """Mixin class for all density estimators in scikit-learn."""

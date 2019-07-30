@@ -25,14 +25,14 @@ import numpy as np
 from scipy import linalg
 
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, ComponentsMixin, TransformerMixin
 from ..utils import check_array, check_random_state
 from ..utils.extmath import fast_logdet, randomized_svd, squared_norm
 from ..utils.validation import check_is_fitted
 from ..exceptions import ConvergenceWarning
 
 
-class FactorAnalysis(BaseEstimator, TransformerMixin):
+class FactorAnalysis(BaseEstimator, ComponentsMixin, TransformerMixin):
     """Factor Analysis (FA)
 
     A simple linear generative model with Gaussian latent variables.

@@ -16,7 +16,7 @@ import scipy.sparse as sp
 from scipy.special import gammaln
 from joblib import Parallel, delayed, effective_n_jobs
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, ComponentsMixin
 from ..utils import (check_random_state, check_array,
                      gen_batches, gen_even_slices)
 from ..utils.fixes import logsumexp
@@ -132,7 +132,7 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
     return (doc_topic_distr, suff_stats)
 
 
-class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
+class LatentDirichletAllocation(BaseEstimator, ComponentsMixin, TransformerMixin):
     """Latent Dirichlet Allocation with online variational Bayes algorithm
 
     .. versionadded:: 0.17

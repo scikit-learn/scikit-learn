@@ -10,7 +10,7 @@ import numpy as np
 import scipy.sparse as sp
 from scipy.sparse.linalg import svds
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, ComponentsMixin
 from ..utils import check_array, check_random_state
 from ..utils.extmath import randomized_svd, safe_sparse_dot, svd_flip
 from ..utils.sparsefuncs import mean_variance_axis
@@ -18,7 +18,7 @@ from ..utils.sparsefuncs import mean_variance_axis
 __all__ = ["TruncatedSVD"]
 
 
-class TruncatedSVD(BaseEstimator, TransformerMixin):
+class TruncatedSVD(BaseEstimator, ComponentsMixin, TransformerMixin):
     """Dimensionality reduction using truncated SVD (aka LSA).
 
     This transformer performs linear dimensionality reduction by means of
