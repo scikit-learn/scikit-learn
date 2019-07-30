@@ -27,7 +27,8 @@ from ..utils.validation import (check_is_fitted, check_array, check_X_y,
 from ..exceptions import ConvergenceWarning
 
 
-class NeighborhoodComponentsAnalysis(BaseEstimator, ComponentsMixin, TransformerMixin):
+class NeighborhoodComponentsAnalysis(BaseEstimator, ComponentsMixin,
+                                     TransformerMixin):
     """Neighborhood Components Analysis
 
     Neighborhood Component Analysis (NCA) is a machine learning algorithm for

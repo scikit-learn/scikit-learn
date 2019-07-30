@@ -17,7 +17,8 @@ from ..utils.validation import check_is_fitted
 from abc import ABCMeta, abstractmethod
 
 
-class _BasePCA(BaseEstimator, ComponentsMixin, TransformerMixin, metaclass=ABCMeta):
+class _BasePCA(BaseEstimator, ComponentsMixin, TransformerMixin,
+               metaclass=ABCMeta):
     """Base class for PCA methods.
 
     Warning: This class should not be used directly.
@@ -154,6 +155,6 @@ class _BasePCA(BaseEstimator, ComponentsMixin, TransformerMixin, metaclass=ABCMe
         """
         if self.whiten:
             return np.dot(X, np.sqrt(self.explained_variance_[:, np.newaxis]) *
-                            self.components_) + self.mean_
+                          self.components_) + self.mean_
         else:
             return np.dot(X, self.components_) + self.mean_
