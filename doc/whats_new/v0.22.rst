@@ -117,6 +117,18 @@ Changelog
   `predict_proba` give consistent results.
   :pr:`14114` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.gaussian_process`
+...............................
+
+- |Feature| :func:`gaussian_process.GaussianProcessClassifier.log_marginal_likelihood`
+  and :func:`gaussian_process.GaussianProcessRegressor.log_marginal_likelihood` now
+  accept a ``clone_kernel=True`` keyword argument. When set to ``False``,
+  the kernel attribute is modified, but may result in a performance improvement.
+  :func:`gaussian_process.GaussianProcessClassifier.fit` and
+  :func:`gaussian_process.GaussianProcessRegressor.fit` call
+  ``log_marginal_likelihood`` method with ``clone_kernel=False`` now.
+  :pr:`14378` by :user:`Masashi Shibata <c-bata>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
