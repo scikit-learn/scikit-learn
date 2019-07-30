@@ -38,6 +38,9 @@ Changelog
   :user:`Fabian Klopfer <someusername1>`
   and :user:`Hanmin Qin <qinhanmin2014>`.
 
+- |Fix| Fixed a bug in :class:`cluster.KMeans` where KMeans++ initialisation
+  could rarely result in an IndexError. :issue:`11756` by `Joel Nothman`_.
+
 :mod:`sklearn.compose`
 ......................
 
