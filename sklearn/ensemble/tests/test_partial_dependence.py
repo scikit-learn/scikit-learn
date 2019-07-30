@@ -7,14 +7,12 @@ import numpy as np
 from numpy.testing import assert_array_equal, assert_allclose
 
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import if_matplotlib
 from sklearn.ensemble.partial_dependence import partial_dependence
 from sklearn.ensemble.partial_dependence import plot_partial_dependence
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn import datasets
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_warns_message
 
 
 # toy sample
@@ -156,8 +154,7 @@ def test_partial_dependecy_input():
 @ignore_warnings(category=DeprecationWarning)
 @pytest.mark.filterwarnings('ignore: Using or importing the ABCs from')
 # matplotlib Python3.7 warning
-@if_matplotlib
-def test_plot_partial_dependence():
+def test_plot_partial_dependence(pyplot):
     # Test partial dependence plot function.
     clf = GradientBoostingRegressor(n_estimators=10, random_state=1)
     clf.fit(boston.data, boston.target)
@@ -190,9 +187,8 @@ def test_plot_partial_dependence():
 
 @pytest.mark.filterwarnings('ignore: Using or importing the ABCs from')
 # matplotlib Python3.7 warning
-@if_matplotlib
 @ignore_warnings(category=DeprecationWarning)
-def test_plot_partial_dependence_input():
+def test_plot_partial_dependence_input(pyplot):
     # Test partial dependence plot function input checks.
     clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
 
@@ -228,9 +224,8 @@ def test_plot_partial_dependence_input():
 
 @pytest.mark.filterwarnings('ignore: Using or importing the ABCs from')
 # matplotlib Python3.7 warning
-@if_matplotlib
 @ignore_warnings(category=DeprecationWarning)
-def test_plot_partial_dependence_multiclass():
+def test_plot_partial_dependence_multiclass(pyplot):
     # Test partial dependence plot function on multi-class input.
     clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
     clf.fit(iris.data, iris.target)
@@ -265,30 +260,18 @@ def test_plot_partial_dependence_multiclass():
                   grid_resolution=grid_resolution)
 
 
-def test_warning_raised_partial_dependence():
-    # Test that deprecation warning is raised
-
+@pytest.mark.parametrize(
+    "func, params",
+    [(partial_dependence, {'target_variables': [0], 'X': boston.data}),
+     (plot_partial_dependence, {'X': boston.data, 'features': [0, 1, (0, 1)]})]
+)
+def test_raise_deprecation_warning(pyplot, func, params):
     clf = GradientBoostingRegressor(n_estimators=10, random_state=1)
     clf.fit(boston.data, boston.target)
     grid_resolution = 25
 
-    assert_warns_message(DeprecationWarning, "The function "
-                         "ensemble.partial_dependence has been deprecated ",
-                         partial_dependence, clf, [0], X=boston.data,
-                         grid_resolution=grid_resolution)
-
-
-@if_matplotlib
-def test_warning_raised_partial_dependence_plot():
-    # Test that deprecation warning is raised
-
-    clf = GradientBoostingRegressor(n_estimators=10, random_state=1)
-    clf.fit(boston.data, boston.target)
-    grid_resolution = 25
-
-    assert_warns_message(DeprecationWarning, "The function "
-                         "ensemble.plot_partial_dependence has been "
-                         "deprecated",
-                         plot_partial_dependence, clf, boston.data,
-                         [0, 1, (0, 1)], grid_resolution=grid_resolution,
-                         feature_names=boston.feature_names)
+    warn_msg = "The function ensemble.{} has been deprecated".format(
+        func.__name__
+    )
+    with pytest.warns(DeprecationWarning, match=warn_msg):
+        func(clf, **params, grid_resolution=grid_resolution)

@@ -56,7 +56,10 @@ else:
                     'MathJax.js?config=TeX-AMS_SVG')
 
 
-autodoc_default_flags = ['members', 'inherited-members']
+autodoc_default_options = {
+    'members': True,
+    'inherited-members': True
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['templates']
@@ -138,7 +141,7 @@ html_theme = 'scikit-learn'
 # documentation.
 html_theme_options = {'oldversion': False, 'collapsiblesidebar': True,
                       'google_analytics': True, 'surveybanner': False,
-                      'sprintbanner': True}
+                      'sprintbanner': True, 'body_max_width': None}
 
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = ['themes']
@@ -263,9 +266,10 @@ carousel_thumbs = {'sphx_glr_plot_classifier_comparison_001.png': 600,
                    'sphx_glr_plot_compare_methods_001.png': 349}
 
 
-# enable experimental module so that the new GBDTs estimators can be
+# enable experimental module so that experimental estimators can be
 # discovered properly by sphinx
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+from sklearn.experimental import enable_iterative_imputer  # noqa
 
 
 def make_carousel_thumbs(app, exception):
@@ -302,6 +306,8 @@ linkcode_resolve = make_linkcode_resolve('sklearn',
                                          '{package}/{path}#L{lineno}')
 
 warnings.filterwarnings("ignore", category=UserWarning,
-                        module="matplotlib",
                         message='Matplotlib is currently using agg, which is a'
                                 ' non-GUI backend, so cannot show the figure.')
+
+# Reduces the output of estimators
+sklearn.set_config(print_changed_only=True)

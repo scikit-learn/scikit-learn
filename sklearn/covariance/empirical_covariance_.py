@@ -122,10 +122,10 @@ class EmpiricalCovariance(BaseEstimator):
     ...                      [.3, .4]])
     >>> rng = np.random.RandomState(0)
     >>> X = rng.multivariate_normal(mean=[0, 0],
-    ...                                   cov=real_cov,
-    ...                                   size=500)
+    ...                             cov=real_cov,
+    ...                             size=500)
     >>> cov = EmpiricalCovariance().fit(X)
-    >>> cov.covariance_ # doctest: +ELLIPSIS
+    >>> cov.covariance_
     array([[0.7569..., 0.2818...],
            [0.2818..., 0.3928...]])
     >>> cov.location_

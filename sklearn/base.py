@@ -17,7 +17,8 @@ from .utils import _IS_32BIT
 
 _DEFAULT_TAGS = {
     'non_deterministic': False,
-    'requires_positive_data': False,
+    'requires_positive_X': False,
+    'requires_positive_y': False,
     'X_types': ['2darray'],
     'poor_score': False,
     'no_validation': False,
@@ -26,7 +27,9 @@ _DEFAULT_TAGS = {
     'stateless': False,
     'multilabel': False,
     '_skip_test': False,
-    'multioutput_only': False}
+    'multioutput_only': False,
+    'binary_only': False,
+    'requires_fit': True}
 
 
 def clone(estimator, safe=True):
@@ -190,7 +193,15 @@ class BaseEstimator:
         """
         out = dict()
         for key in self._get_param_names():
-            value = getattr(self, key, None)
+            try:
+                value = getattr(self, key)
+            except AttributeError:
+                warnings.warn('From version 0.24, get_params will raise an '
+                              'AttributeError if a parameter cannot be '
+                              'retrieved as an instance attribute. Previously '
+                              'it would return None.',
+                              FutureWarning)
+                value = None
             if deep and hasattr(value, 'get_params'):
                 deep_items = value.get_params().items()
                 out.update((key + '__' + k, val) for k, val in deep_items)

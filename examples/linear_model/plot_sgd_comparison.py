@@ -21,8 +21,7 @@ from sklearn.linear_model import LogisticRegression
 
 heldout = [0.95, 0.90, 0.75, 0.50, 0.01]
 rounds = 20
-digits = datasets.load_digits()
-X, y = digits.data, digits.target
+X, y = datasets.load_digits(return_X_y=True)
 
 classifiers = [
     ("SGD", SGDClassifier(max_iter=100, tol=1e-3)),
@@ -32,8 +31,7 @@ classifiers = [
                                                          C=1.0, tol=1e-4)),
     ("Passive-Aggressive II", PassiveAggressiveClassifier(loss='squared_hinge',
                                                           C=1.0, tol=1e-4)),
-    ("SAG", LogisticRegression(solver='sag', tol=1e-1, C=1.e4 / X.shape[0],
-                               multi_class='auto'))
+    ("SAG", LogisticRegression(solver='sag', tol=1e-1, C=1.e4 / X.shape[0]))
 ]
 
 xx = 1. - np.array(heldout)
