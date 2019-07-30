@@ -13,6 +13,7 @@ from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.feature_selection import RFE, RFECV
 from sklearn.ensemble import BaggingClassifier
 from sklearn.exceptions import NotFittedError
+from sklearn.compose import ResampledTrainer
 
 
 class DelegatorData:
@@ -22,6 +23,12 @@ class DelegatorData:
         self.construct = construct
         self.fit_args = fit_args
         self.skip_methods = skip_methods
+
+
+class DummyResampler(BaseEstimator):
+    "does nothing"
+    def fit_resample(self, X, y):
+        return X, y
 
 
 DELEGATING_METAESTIMATORS = [
@@ -41,7 +48,10 @@ DELEGATING_METAESTIMATORS = [
     DelegatorData('BaggingClassifier', BaggingClassifier,
                   skip_methods=['transform', 'inverse_transform', 'score',
                                 'predict_proba', 'predict_log_proba',
-                                'predict'])
+                                'predict']),
+    DelegatorData('ResampledTrainer',
+                  lambda est: ResampledTrainer(DummyResampler(), est),
+                  skip_methods=['inverse_transform'])
 ]
 
 
@@ -62,7 +72,7 @@ def test_metaestimator_delegation():
 
         def fit(self, X, y=None, *args, **kwargs):
             self.coef_ = np.arange(X.shape[1])
-            return True
+            return self
 
         def _check_fit(self):
             check_is_fitted(self, 'coef_')

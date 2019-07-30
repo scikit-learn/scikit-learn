@@ -918,6 +918,19 @@ Class APIs and Estimator Types
         outliers have score below 0.  :term:`score_samples` may provide an
         unnormalized score per sample.
 
+    outlier rejector
+    outlier rejectors
+        An :term:`outlier detector` which is a resampler. It will remove
+        outliers from a passed dataset when :term:`fit_resample` is called.
+
+        Outlier detectors must implement:
+
+        * :term:`fit_resample`
+
+        If the estimator implements :term:`fit_predict` according to the
+        :class:`OutlierMixin` API, :class:`OutlierRejectorMixin` should be used
+        to automatically implement correct :term:`fit_resample` behavior.
+
     predictor
     predictors
         An :term:`estimator` supporting :term:`predict` and/or
@@ -948,6 +961,10 @@ Class APIs and Estimator Types
         An estimator supporting :term:`transform` and/or :term:`fit_transform`.
         A purely :term:`transductive` transformer, such as
         :class:`manifold.TSNE`, may not implement ``transform``.
+
+    resampler
+    resamplers
+        An estimator supporting :term:`fit_resample`.
 
     vectorizer
     vectorizers
@@ -1217,6 +1234,11 @@ Methods
         careful not to apply ``fit_transform`` to the entirety of a dataset
         (i.e. training and test data together) before further modelling, as
         this results in :term:`data leakage`.
+
+    ``fit_resample``
+        A method on :term:`resamplers` which fits the estimator on a passed
+        dataset, and returns a new dataset. In the new dataset, samples may be
+        removed or added.
 
     ``get_feature_names``
         Primarily for :term:`feature extractors`, but also used for other

@@ -13,7 +13,8 @@ import re
 import numpy as np
 
 from . import __version__
-from .utils import _IS_32BIT
+from sklearn.utils import _IS_32BIT
+from sklearn.utils import safe_indexing, check_X_y_kwargs
 
 _DEFAULT_TAGS = {
     'non_deterministic': False,
@@ -609,6 +610,45 @@ class OutlierMixin:
         """
         # override for transductive outlier detectors like LocalOulierFactor
         return self.fit(X).predict(X)
+
+
+class OutlierRejectionMixin:
+    """Mixin class for all outlier detection resamplers in scikit-learn. Child
+    classes remove outliers from the dataset.
+    """
+    _estimator_type = "outlier_rejector"
+
+    def fit_resample(self, X, y, **kws):
+        """Performs fit on X and returns a new X and y consisting of only the
+        inliers.
+
+        Parameters
+        ----------
+        X : ndarray, shape (n_samples, n_features)
+            Input data X.
+
+        y : ndarray, shape (n_samples,)
+            Input data y.
+
+        Returns
+        -------
+        X : ndarray, shape (n_samples, n_features)
+            The original X with outlier samples removed.
+
+        y : ndarray, shape (n_samples,)
+            The original y with outlier samples removed.
+
+        kws : dict of ndarray
+             dict of keyword arguments, with all outlier samples removed.
+        """
+
+        check_X_y_kwargs(X, y, kws)
+        inliers = self.fit_predict(X) == 1
+        kwsr = {
+            kw: safe_indexing(kws[kw], inliers)
+            for kw in kws
+        }
+        return safe_indexing(X, inliers), safe_indexing(y, inliers), kwsr
 
 
 class MetaEstimatorMixin:

@@ -49,7 +49,7 @@ from ..metrics.pairwise import (rbf_kernel, linear_kernel, pairwise_distances)
 from .import shuffle
 from .validation import has_fit_parameter, _num_samples
 from ..preprocessing import StandardScaler
-from ..datasets import load_iris, load_boston, make_blobs
+from ..datasets import load_iris, load_boston, make_blobs, make_classification
 
 
 BOSTON = None
@@ -74,11 +74,12 @@ def _yield_checks(name, estimator):
     tags = _safe_tags(estimator)
     yield check_estimators_dtypes
     yield check_fit_score_takes_y
-    yield check_sample_weights_pandas_series
-    yield check_sample_weights_list
-    yield check_sample_weights_invariance
-    yield check_estimators_fit_returns_self
-    yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
+    if not hasattr(estimator, 'fit_resample') or hasattr(estimator, 'fit'):
+        yield check_sample_weights_pandas_series
+        yield check_sample_weights_list
+        yield check_sample_weights_invariance
+        yield check_estimators_fit_returns_self
+        yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
 
     # Check that all estimator yield informative messages when
     # trained on empty datasets
@@ -87,7 +88,11 @@ def _yield_checks(name, estimator):
         yield check_dtype_object
         yield check_estimators_empty_data_messages
 
-    if name not in CROSS_DECOMPOSITION:
+    if (name not in CROSS_DECOMPOSITION
+       and not hasattr(estimator, 'fit_resample')):
+        # TODO potentially readd fit_resample tests after SLEP has
+        # been clarified.
+
         # cross-decomposition's "transform" returns X and Y
         yield check_pipeline_consistency
 
@@ -101,9 +106,10 @@ def _yield_checks(name, estimator):
 
     yield check_estimator_sparse_data
 
-    # Test that estimators can be pickled, and once pickled
-    # give the same answer as before.
-    yield check_estimators_pickle
+    if not hasattr(estimator, 'fit_resample') or hasattr(estimator, 'fit'):
+        # Test that estimators can be pickled, and once pickled
+        # give the same answer as before.
+        yield check_estimators_pickle
 
 
 def _yield_classifier_checks(name, classifier):
@@ -211,6 +217,9 @@ def _yield_outliers_checks(name, estimator):
     if hasattr(estimator, 'fit_predict'):
         yield check_outliers_fit_predict
 
+    if hasattr(estimator, 'fit_resample'):
+        yield check_outlier_rejectors
+
     # checks for estimators that can be used on a test set
     if hasattr(estimator, 'predict'):
         yield check_outliers_train
@@ -220,6 +229,13 @@ def _yield_outliers_checks(name, estimator):
         # test if NotFittedError is raised
         if _safe_tags(estimator, "requires_fit"):
             yield check_estimators_unfitted
+
+
+def _yield_resamplers_checks(name, estimator):
+    yield check_resampler_structure
+    yield check_resamplers_have_no_transform
+    yield check_resample_repeated
+    yield check_fit_resample2d
 
 
 def _yield_all_checks(name, estimator):
@@ -246,22 +262,27 @@ def _yield_all_checks(name, estimator):
     if hasattr(estimator, 'transform'):
         for check in _yield_transformer_checks(name, estimator):
             yield check
+    if hasattr(estimator, 'fit_resample'):
+        for check in _yield_resamplers_checks(name, estimator):
+            yield check
     if isinstance(estimator, ClusterMixin):
         for check in _yield_clustering_checks(name, estimator):
             yield check
     if is_outlier_detector(estimator):
         for check in _yield_outliers_checks(name, estimator):
             yield check
-    yield check_fit2d_predict1d
-    yield check_methods_subset_invariance
     yield check_fit2d_1sample
     yield check_fit2d_1feature
     yield check_fit1d
     yield check_get_params_invariance
-    yield check_set_params
-    yield check_dict_unchanged
     yield check_dont_overwrite_parameters
-    yield check_fit_idempotent
+    yield check_set_params
+
+    if not hasattr(estimator, 'fit_resample') or hasattr(estimator, 'fit'):
+        yield check_fit2d_predict1d
+        yield check_methods_subset_invariance
+        yield check_dict_unchanged
+        yield check_fit_idempotent
 
 
 def check_estimator(Estimator):
@@ -513,7 +534,10 @@ def check_estimator_sparse_data(name, estimator_orig):
         # fit and predict
         try:
             with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
-                estimator.fit(X, y)
+                if hasattr(estimator, "fit"):
+                    estimator.fit(X, y)
+                if hasattr(estimator, "fit_resample"):
+                    estimator.fit_resample(X, y)
             if hasattr(estimator, "predict"):
                 pred = estimator.predict(X)
                 if tags['multioutput_only']:
@@ -633,50 +657,58 @@ def check_sample_weights_invariance(name, estimator_orig):
 @ignore_warnings(category=(DeprecationWarning, FutureWarning, UserWarning))
 def check_dtype_object(name, estimator_orig):
     # check that estimators treat dtype object as numeric if possible
-    rng = np.random.RandomState(0)
-    X = pairwise_estimator_convert_X(rng.rand(40, 10), estimator_orig)
-    X = X.astype(object)
-    tags = _safe_tags(estimator_orig)
-    if tags['binary_only']:
-        y = (X[:, 0] * 2).astype(np.int)
-    else:
-        y = (X[:, 0] * 4).astype(np.int)
-    estimator = clone(estimator_orig)
-    y = enforce_estimator_tags_y(estimator, y)
+    methods = ['fit', 'fit_resample', 'fit_transform']
+    methods = filter(lambda method: hasattr(estimator_orig, method), methods)
+    for method in methods:
+        rng = np.random.RandomState(0)
+        X = pairwise_estimator_convert_X(rng.rand(40, 10), estimator_orig)
+        X = X.astype(object)
+        tags = _safe_tags(estimator_orig)
+        if tags['binary_only']:
+            y = (X[:, 0] * 2).astype(np.int)
+        else:
+            y = (X[:, 0] * 4).astype(np.int)
+        estimator = clone(estimator_orig)
+        y = enforce_estimator_tags_y(estimator, y)
 
-    estimator.fit(X, y)
-    if hasattr(estimator, "predict"):
-        estimator.predict(X)
+        getattr(estimator, method)(X, y)
+        if hasattr(estimator, "predict"):
+            estimator.predict(X)
 
-    if hasattr(estimator, "transform"):
-        estimator.transform(X)
+        if hasattr(estimator, "transform"):
+            estimator.transform(X)
 
-    try:
-        estimator.fit(X, y.astype(object))
-    except Exception as e:
-        if "Unknown label type" not in str(e):
-            raise
+        try:
+            getattr(estimator, method)(X, y.astype(object))
+        except Exception as e:
+            if "Unknown label type" not in str(e):
+                raise
 
-    if 'string' not in tags['X_types']:
-        X[0, 0] = {'foo': 'bar'}
-        msg = "argument must be a string.* number"
-        assert_raises_regex(TypeError, msg, estimator.fit, X, y)
-    else:
-        # Estimators supporting string will not call np.asarray to convert the
-        # data to numeric and therefore, the error will not be raised.
-        # Checking for each element dtype in the input array will be costly.
-        # Refer to #11401 for full discussion.
-        estimator.fit(X, y)
+        if 'string' not in tags['X_types']:
+            X[0, 0] = {'foo': 'bar'}
+            msg = "argument must be a string.* number"
+            assert_raises_regex(
+                TypeError, msg, getattr(estimator, method), X, y)
+        else:
+            # Estimators supporting string will not call np.asarray to convert
+            # the data to numeric and therefore, the error will not be raised.
+            # Checking for each element dtype in the input array will be
+            # costly.
+            # Refer to #11401 for full discussion.
+            getattr(estimator, method)(X, y)
 
 
 def check_complex_data(name, estimator_orig):
     # check that estimators raise an exception on providing complex data
-    X = np.random.sample(10) + 1j * np.random.sample(10)
-    X = X.reshape(-1, 1)
-    y = np.random.sample(10) + 1j * np.random.sample(10)
-    estimator = clone(estimator_orig)
-    assert_raises_regex(ValueError, "Complex data not supported",
-                        estimator.fit, X, y)
+    methods = ['fit', 'fit_resample', 'fit_transform']
+    methods = filter(lambda method: hasattr(estimator_orig, method), methods)
+    for method in methods:
+        X = np.random.sample(10) + 1j * np.random.sample(10)
+        X = X.reshape(-1, 1)
+        y = np.random.sample(10) + 1j * np.random.sample(10)
+        estimator = clone(estimator_orig)
+        assert_raises_regex(ValueError, "Complex data not supported",
+                            getattr(estimator, method), X, y)
 
 
 @ignore_warnings
@@ -725,57 +757,62 @@ def is_public_parameter(attr):
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_dont_overwrite_parameters(name, estimator_orig):
-    # check that fit method only changes or sets private attributes
-    if hasattr(estimator_orig.__init__, "deprecated_original"):
-        # to not check deprecated classes
-        return
-    estimator = clone(estimator_orig)
-    rnd = np.random.RandomState(0)
-    X = 3 * rnd.uniform(size=(20, 3))
-    X = pairwise_estimator_convert_X(X, estimator_orig)
-    y = X[:, 0].astype(np.int)
-    if _safe_tags(estimator, 'binary_only'):
-        y[y == 2] = 1
-    y = enforce_estimator_tags_y(estimator, y)
+    # check that fit methods only change or set private attributes
+    methods = ['fit', 'fit_resample', 'fit_transform', 'fit_predict']
+    methods = filter(lambda method: hasattr(estimator_orig, method), methods)
+    for method in methods:
+        if hasattr(estimator_orig.__init__, "deprecated_original"):
+            # to not check deprecated classes
+            return
+        estimator = clone(estimator_orig)
+        rnd = np.random.RandomState(0)
+        X = 3 * rnd.uniform(size=(20, 3))
+        X = pairwise_estimator_convert_X(X, estimator_orig)
+        y = X[:, 0].astype(np.int)
+        if _safe_tags(estimator, 'binary_only'):
+            y[y == 2] = 1
+        y = enforce_estimator_tags_y(estimator, y)
 
-    if hasattr(estimator, "n_components"):
-        estimator.n_components = 1
-    if hasattr(estimator, "n_clusters"):
-        estimator.n_clusters = 1
+        if hasattr(estimator, "n_components"):
+            estimator.n_components = 1
+        if hasattr(estimator, "n_clusters"):
+            estimator.n_clusters = 1
 
-    set_random_state(estimator, 1)
-    dict_before_fit = estimator.__dict__.copy()
-    estimator.fit(X, y)
+        set_random_state(estimator, 1)
+        dict_before_fit = estimator.__dict__.copy()
 
-    dict_after_fit = estimator.__dict__
+        method = getattr(estimator, method)
+        method(X, y)
 
-    public_keys_after_fit = [key for key in dict_after_fit.keys()
-                             if is_public_parameter(key)]
+        dict_after_fit = estimator.__dict__
 
-    attrs_added_by_fit = [key for key in public_keys_after_fit
-                          if key not in dict_before_fit.keys()]
+        public_keys_after_fit = [key for key in dict_after_fit.keys()
+                                 if is_public_parameter(key)]
 
-    # check that fit doesn't add any public attribute
-    assert not attrs_added_by_fit, (
-            'Estimator adds public attribute(s) during'
-            ' the fit method.'
-            ' Estimators are only allowed to add private attributes'
-            ' either started with _ or ended'
-            ' with _ but %s added'
-            % ', '.join(attrs_added_by_fit))
+        attrs_added_by_fit = [key for key in public_keys_after_fit
+                              if key not in dict_before_fit.keys()]
 
-    # check that fit doesn't change any public attribute
-    attrs_changed_by_fit = [key for key in public_keys_after_fit
-                            if (dict_before_fit[key]
-                                is not dict_after_fit[key])]
+        # check that fit doesn't add any public attribute
+        assert not attrs_added_by_fit, (
+                'Estimator adds public attribute(s) during'
+                ' the fit method.'
+                ' Estimators are only allowed to add private attributes'
+                ' either started with _ or ended'
+                ' with _ but %s added'
+                % ', '.join(attrs_added_by_fit))
 
-    assert not attrs_changed_by_fit, (
-            'Estimator changes public attribute(s) during'
-            ' the fit method. Estimators are only allowed'
-            ' to change attributes started'
-            ' or ended with _, but'
-            ' %s changed'
-            % ', '.join(attrs_changed_by_fit))
+        # check that fit doesn't change any public attribute
+        attrs_changed_by_fit = [key for key in public_keys_after_fit
+                                if (dict_before_fit[key]
+                                    is not dict_after_fit[key])]
+
+        assert not attrs_changed_by_fit, (
+                'Estimator changes public attribute(s) during'
+                ' the fit method. Estimators are only allowed'
+                ' to change attributes started'
+                ' or ended with _, but'
+                ' %s changed'
+                % ', '.join(attrs_changed_by_fit))
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
@@ -807,6 +844,27 @@ def check_fit2d_predict1d(name, estimator_orig):
         if hasattr(estimator, method):
             assert_raise_message(ValueError, "Reshape your data",
                                  getattr(estimator, method), X[0])
+
+
+def check_fit_resample2d(name, estimator_orig):
+    # check by fit resampling a 2d array
+    rnd = np.random.RandomState(0)
+    X = 3 * rnd.uniform(size=(20, 3))
+    X = pairwise_estimator_convert_X(X, estimator_orig)
+    y = X[:, 0].astype(np.int)
+    tags = _safe_tags(estimator_orig)
+    if tags['binary_only']:
+        y[y == 2] = 1
+    estimator = clone(estimator_orig)
+    y = enforce_estimator_tags_y(estimator, y)
+
+    if hasattr(estimator, "n_components"):
+        estimator.n_components = 1
+    if hasattr(estimator, "n_clusters"):
+        estimator.n_clusters = 1
+
+    set_random_state(estimator, 1)
+    X, y, kw = estimator.fit_resample(X, y)
 
 
 def _apply_on_subsets(func, X):
@@ -872,87 +930,96 @@ def check_fit2d_1sample(name, estimator_orig):
     # Check that fitting a 2d array with only one sample either works or
     # returns an informative message. The error message should either mention
     # the number of samples or the number of classes.
-    rnd = np.random.RandomState(0)
-    X = 3 * rnd.uniform(size=(1, 10))
-    y = X[:, 0].astype(np.int)
-    estimator = clone(estimator_orig)
-    y = enforce_estimator_tags_y(estimator, y)
+    methods = ['fit', 'fit_resample', 'fit_transform', 'fit_predict']
+    methods = filter(lambda method: hasattr(estimator_orig, method), methods)
+    for method in methods:
+        rnd = np.random.RandomState(0)
+        X = 3 * rnd.uniform(size=(1, 10))
+        y = X[:, 0].astype(np.int)
+        estimator = clone(estimator_orig)
+        y = enforce_estimator_tags_y(estimator, y)
 
-    if hasattr(estimator, "n_components"):
-        estimator.n_components = 1
-    if hasattr(estimator, "n_clusters"):
-        estimator.n_clusters = 1
+        if hasattr(estimator, "n_components"):
+            estimator.n_components = 1
+        if hasattr(estimator, "n_clusters"):
+            estimator.n_clusters = 1
 
-    set_random_state(estimator, 1)
+        set_random_state(estimator, 1)
 
-    # min_cluster_size cannot be less than the data size for OPTICS.
-    if name == 'OPTICS':
-        estimator.set_params(min_samples=1)
+        # min_cluster_size cannot be less than the data size for OPTICS.
+        if name == 'OPTICS':
+            estimator.set_params(min_samples=1)
 
-    msgs = ["1 sample", "n_samples = 1", "n_samples=1", "one sample",
-            "1 class", "one class"]
+        msgs = ["1 sample", "n_samples = 1", "n_samples=1", "one sample",
+                "1 class", "one class"]
 
-    try:
-        estimator.fit(X, y)
-    except ValueError as e:
-        if all(msg not in repr(e) for msg in msgs):
-            raise e
+        try:
+            getattr(estimator, method)(X, y)
+        except ValueError as e:
+            if all(msg not in repr(e) for msg in msgs):
+                raise e
 
 
 @ignore_warnings
 def check_fit2d_1feature(name, estimator_orig):
     # check fitting a 2d array with only 1 feature either works or returns
     # informative message
-    rnd = np.random.RandomState(0)
-    X = 3 * rnd.uniform(size=(10, 1))
-    X = pairwise_estimator_convert_X(X, estimator_orig)
-    y = X[:, 0].astype(np.int)
-    estimator = clone(estimator_orig)
-    y = enforce_estimator_tags_y(estimator, y)
+    methods = ['fit', 'fit_resample', 'fit_transform', 'fit_predict']
+    methods = filter(lambda method: hasattr(estimator_orig, method), methods)
+    for method in methods:
+        rnd = np.random.RandomState(0)
+        X = 3 * rnd.uniform(size=(10, 1))
+        X = pairwise_estimator_convert_X(X, estimator_orig)
+        y = X[:, 0].astype(np.int)
+        estimator = clone(estimator_orig)
+        y = enforce_estimator_tags_y(estimator, y)
 
-    if hasattr(estimator, "n_components"):
-        estimator.n_components = 1
-    if hasattr(estimator, "n_clusters"):
-        estimator.n_clusters = 1
-    # ensure two labels in subsample for RandomizedLogisticRegression
-    if name == 'RandomizedLogisticRegression':
-        estimator.sample_fraction = 1
-    # ensure non skipped trials for RANSACRegressor
-    if name == 'RANSACRegressor':
-        estimator.residual_threshold = 0.5
+        if hasattr(estimator, "n_components"):
+            estimator.n_components = 1
+        if hasattr(estimator, "n_clusters"):
+            estimator.n_clusters = 1
+        # ensure two labels in subsample for RandomizedLogisticRegression
+        if name == 'RandomizedLogisticRegression':
+            estimator.sample_fraction = 1
+        # ensure non skipped trials for RANSACRegressor
+        if name == 'RANSACRegressor':
+            estimator.residual_threshold = 0.5
 
-    y = enforce_estimator_tags_y(estimator, y)
-    set_random_state(estimator, 1)
+        y = enforce_estimator_tags_y(estimator, y)
+        set_random_state(estimator, 1)
 
-    msgs = ["1 feature(s)", "n_features = 1", "n_features=1"]
+        msgs = ["1 feature(s)", "n_features = 1", "n_features=1"]
 
-    try:
-        estimator.fit(X, y)
-    except ValueError as e:
-        if all(msg not in repr(e) for msg in msgs):
-            raise e
+        try:
+            getattr(estimator, method)(X, y)
+        except ValueError as e:
+            if all(msg not in repr(e) for msg in msgs):
+                raise e
 
 
 @ignore_warnings
 def check_fit1d(name, estimator_orig):
     # check fitting 1d X array raises a ValueError
-    rnd = np.random.RandomState(0)
-    X = 3 * rnd.uniform(size=(20))
-    y = X.astype(np.int)
-    estimator = clone(estimator_orig)
-    tags = _safe_tags(estimator)
-    if tags["no_validation"]:
-        # FIXME this is a bit loose
-        return
-    y = enforce_estimator_tags_y(estimator, y)
+    methods = ['fit', 'fit_resample', 'fit_transform', 'fit_predict']
+    methods = filter(lambda method: hasattr(estimator_orig, method), methods)
+    for method in methods:
+        rnd = np.random.RandomState(0)
+        X = 3 * rnd.uniform(size=(20))
+        y = X.astype(np.int)
+        estimator = clone(estimator_orig)
+        tags = _safe_tags(estimator)
+        if tags["no_validation"]:
+            # FIXME this is a bit loose
+            return
+        y = enforce_estimator_tags_y(estimator, y)
 
-    if hasattr(estimator, "n_components"):
-        estimator.n_components = 1
-    if hasattr(estimator, "n_clusters"):
-        estimator.n_clusters = 1
+        if hasattr(estimator, "n_components"):
+            estimator.n_components = 1
+        if hasattr(estimator, "n_clusters"):
+            estimator.n_clusters = 1
 
-    set_random_state(estimator, 1)
-    assert_raises(ValueError, estimator.fit, X, y)
+        set_random_state(estimator, 1)
+        assert_raises(ValueError, getattr(estimator, method), X, y)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
@@ -1146,34 +1213,42 @@ def check_estimators_dtypes(name, estimator_orig):
     for X_train in [X_train_32, X_train_64, X_train_int_64, X_train_int_32]:
         estimator = clone(estimator_orig)
         set_random_state(estimator, 1)
-        estimator.fit(X_train, y)
+        if hasattr(estimator, "fit"):
+            estimator.fit(X_train, y)
 
         for method in methods:
             if hasattr(estimator, method):
                 getattr(estimator, method)(X_train)
+        if hasattr(estimator, "fit_resample"):
+            getattr(estimator, "fit_resample")(X_train, y)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_estimators_empty_data_messages(name, estimator_orig):
-    e = clone(estimator_orig)
-    set_random_state(e, 1)
+    methods = ['fit', 'fit_resample', 'fit_transform']
+    methods = filter(lambda method: hasattr(estimator_orig, method), methods)
+    for method in methods:
+        e = clone(estimator_orig)
+        set_random_state(e, 1)
 
-    X_zero_samples = np.empty(0).reshape(0, 3)
-    # The precise message can change depending on whether X or y is
-    # validated first. Let us test the type of exception only:
-    with assert_raises(ValueError, msg="The estimator {} does not"
-                       " raise an error when an empty data is used "
-                       "to train. Perhaps use "
-                       "check_array in train.".format(name)):
-        e.fit(X_zero_samples, [])
+        X_zero_samples = np.empty(0).reshape(0, 3)
+        # The precise message can change depending on whether X or y is
+        # validated first. Let us test the type of exception only:
+        with assert_raises(ValueError, msg="The estimator {} does not"
+                           " raise an error when an empty data is used "
+                           "to train. Perhaps use "
+                           "check_array in train.".format(name)):
+            getattr(e, method)(X_zero_samples, [])
 
-    X_zero_features = np.empty(0).reshape(3, 0)
-    # the following y should be accepted by both classifiers and regressors
-    # and ignored by unsupervised models
-    y = enforce_estimator_tags_y(e, np.array([1, 0, 1]))
-    msg = (r"0 feature\(s\) \(shape=\(3, 0\)\) while a minimum of \d* "
-           "is required.")
-    assert_raises_regex(ValueError, msg, e.fit, X_zero_features, y)
+        X_zero_features = np.empty(0).reshape(3, 0)
+        # the following y should be accepted by both classifiers and regressors
+        # and ignored by unsupervised models
+        y = enforce_estimator_tags_y(e, np.array([1, 0, 1]))
+        msg = (r"0 feature\(s\) \(shape=\(\d*, 0\)\) while a minimum of \d* "
+               "is required.")
+        assert_raises_regex(
+            ValueError, msg, getattr(e, method), X_zero_features, y
+        )
 
 
 @ignore_warnings(category=DeprecationWarning)
@@ -1190,6 +1265,8 @@ def check_estimators_nan_inf(name, estimator_orig):
     y[:5] = 0
     y = enforce_estimator_tags_y(estimator_orig, y)
     error_string_fit = "Estimator doesn't check for NaN and inf in fit."
+    error_string_fit_resample = ("Estimator doesn't check for NaN and inf in"
+                                 " fit_resample.")
     error_string_predict = ("Estimator doesn't check for NaN and inf in"
                             " predict.")
     error_string_transform = ("Estimator doesn't check for NaN and inf in"
@@ -1199,22 +1276,40 @@ def check_estimators_nan_inf(name, estimator_orig):
         with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
             estimator = clone(estimator_orig)
             set_random_state(estimator, 1)
-            # try to fit
-            try:
-                estimator.fit(X_train, y)
-            except ValueError as e:
-                if 'inf' not in repr(e) and 'NaN' not in repr(e):
-                    print(error_string_fit, estimator, e)
+
+            if (not hasattr(estimator, 'fit_resample')
+               or hasattr(estimator, 'fit')):
+                # try to fit
+                try:
+                    estimator.fit(X_train, y)
+                except ValueError as e:
+                    if 'inf' not in repr(e) and 'NaN' not in repr(e):
+                        print(error_string_fit, estimator, e)
+                        traceback.print_exc(file=sys.stdout)
+                        raise e
+                except Exception as exc:
+                    print(error_string_fit, estimator, exc)
                     traceback.print_exc(file=sys.stdout)
-                    raise e
-            except Exception as exc:
-                print(error_string_fit, estimator, exc)
-                traceback.print_exc(file=sys.stdout)
-                raise exc
-            else:
-                raise AssertionError(error_string_fit, estimator)
-            # actually fit
-            estimator.fit(X_train_finite, y)
+                    raise exc
+                else:
+                    raise AssertionError(error_string_fit, estimator)
+                # actually fit
+                estimator.fit(X_train_finite, y)
+
+            # fit_resample
+            if hasattr(estimator, "fit_resample"):
+                try:
+                    estimator.fit_resample(X_train, y)
+                except ValueError as e:
+                    if 'inf' not in repr(e) and 'NaN' not in repr(e):
+                        print(error_string_predict, estimator, e)
+                        traceback.print_exc(file=sys.stdout)
+                        raise e
+                except Exception as exc:
+                    print(error_string_predict, estimator, exc)
+                    traceback.print_exc(file=sys.stdout)
+                else:
+                    raise AssertionError(error_string_fit_resample, estimator)
 
             # predict
             if hasattr(estimator, "predict"):
@@ -2019,41 +2114,47 @@ def check_class_weight_balanced_linear_classifier(name, Classifier):
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_estimators_overwrite_params(name, estimator_orig):
-    if _safe_tags(estimator_orig, 'binary_only'):
-        n_centers = 2
-    else:
-        n_centers = 3
-    X, y = make_blobs(random_state=0, n_samples=9, centers=n_centers)
-    # some want non-negative input
-    X -= X.min()
-    X = pairwise_estimator_convert_X(X, estimator_orig, kernel=rbf_kernel)
-    estimator = clone(estimator_orig)
-    y = enforce_estimator_tags_y(estimator, y)
+    methods = ['fit', 'fit_resample', 'fit_transform']
+    methods = filter(lambda method: hasattr(estimator_orig, method), methods)
+    for method in methods:
+        if _safe_tags(estimator_orig, 'binary_only'):
+            n_centers = 2
+        else:
+            n_centers = 3
+        X, y = make_blobs(random_state=0, n_samples=9, centers=n_centers)
+        # some want non-negative input
+        X -= X.min()
+        X = pairwise_estimator_convert_X(X, estimator_orig, kernel=rbf_kernel)
+        estimator = clone(estimator_orig)
+        y = enforce_estimator_tags_y(estimator, y)
 
-    set_random_state(estimator)
+        set_random_state(estimator)
 
-    # Make a physical copy of the original estimator parameters before fitting.
-    params = estimator.get_params()
-    original_params = deepcopy(params)
+        # Make a physical copy of the original estimator parameters before
+        # fitting.
+        params = estimator.get_params()
+        original_params = deepcopy(params)
 
-    # Fit the model
-    estimator.fit(X, y)
+        # Fit the model
+        getattr(estimator, method)(X, y)
 
-    # Compare the state of the model parameters with the original parameters
-    new_params = estimator.get_params()
-    for param_name, original_value in original_params.items():
-        new_value = new_params[param_name]
+        # Compare the state of the model parameters with the original
+        # parameters
+        new_params = estimator.get_params()
+        for param_name, original_value in original_params.items():
+            new_value = new_params[param_name]
 
-        # We should never change or mutate the internal state of input
-        # parameters by default. To check this we use the joblib.hash function
-        # that introspects recursively any subobjects to compute a checksum.
-        # The only exception to this rule of immutable constructor parameters
-        # is possible RandomState instance but in this check we explicitly
-        # fixed the random_state params recursively to be integer seeds.
-        assert joblib.hash(new_value) == joblib.hash(original_value), (
-            "Estimator %s should not change or mutate "
-            " the parameter %s from %s to %s during fit."
-            % (name, param_name, original_value, new_value))
+            # We should never change or mutate the internal state of input
+            # parameters by default. To check this we use the joblib.hash
+            # function that introspects recursively any subobjects to compute a
+            # checksum. The only exception to this rule of immutable
+            # constructor parameters is possible RandomState instance but in
+            # this check we explicitly fixed the random_state params
+            # recursively to be integer seeds.
+            assert joblib.hash(new_value) == joblib.hash(original_value), (
+                         "Estimator %s should not change or mutate "
+                         " the parameter %s from %s to %s during fit."
+                         % (name, param_name, original_value, new_value))
 
 
 def check_no_attributes_set_in_init(name, estimator):
@@ -2497,6 +2598,7 @@ def check_fit_idempotent(name, estimator_orig):
     for method in check_methods:
         if hasattr(estimator, method):
             new_result = getattr(estimator, method)(X_test)
+
             if np.issubdtype(new_result.dtype, np.floating):
                 tol = 2*np.finfo(new_result.dtype).eps
             else:
@@ -2506,3 +2608,51 @@ def check_fit_idempotent(name, estimator_orig):
                 atol=max(tol, 1e-9), rtol=max(tol, 1e-7),
                 err_msg="Idempotency check failed for method {}".format(method)
             )
+
+
+def check_outlier_rejectors(name, estimator_orig):
+    X, y = make_blobs(random_state=0)
+    outliers = estimator_orig.fit_predict(X, y) == -1
+    n_outliers = np.sum(outliers)
+
+    X_new, y_new, kws = estimator_orig.fit_resample(X, y)
+
+    assert X_new.shape[0] == X.shape[0] - n_outliers
+    assert y_new.shape[0] == y.shape[0] - n_outliers
+
+
+def check_resampler_structure(name, estimator_orig):
+    X, y = make_blobs(n_samples=10)
+    X_new, y_new, kw = estimator_orig.fit_resample(X, y)
+
+
+def check_resample_fails_on_non_matching_shapes():
+    # check that resamplers enforce matching shapes between kwargs, X and y
+    pass
+
+
+def check_resample_resamples_kwargs():
+    pass
+
+
+def check_resample_repeated(name, estimator_orig):
+    X, y = make_classification(
+        n_classes=2,
+        weights=[0.1, 0.9],
+        n_features=20,
+        n_clusters_per_class=1,
+        n_samples=50,
+        random_state=0)
+
+    set_random_state(estimator_orig, random_state=0)
+    X_new, y_new, kw = estimator_orig.fit_resample(X, y)
+    set_random_state(estimator_orig, random_state=0)
+    X_new2, y_new2, kw = estimator_orig.fit_resample(X, y)
+
+    assert_array_equal(X_new, X_new2)
+    assert_array_equal(y_new, y_new2)
+
+
+def check_resamplers_have_no_transform(name, estimator_orig):
+    assert not hasattr(estimator_orig, 'transform')
+    assert not hasattr(estimator_orig, 'fit_transform')

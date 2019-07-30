@@ -18,13 +18,14 @@ from ..utils import (
 from ..utils.fixes import _joblib_parallel_args
 from ..utils.validation import check_is_fitted, _num_samples
 from ..base import OutlierMixin
+from ..base import OutlierRejectionMixin
 
 from .bagging import BaseBagging
 
 __all__ = ["IsolationForest"]
 
 
-class IsolationForest(BaseBagging, OutlierMixin):
+class IsolationForest(BaseBagging, OutlierMixin, OutlierRejectionMixin):
     """Isolation Forest Algorithm
 
     Return the anomaly score of each sample using the IsolationForest algorithm

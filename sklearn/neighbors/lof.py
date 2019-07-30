@@ -9,15 +9,16 @@ from .base import NeighborsBase
 from .base import KNeighborsMixin
 from .base import UnsupervisedMixin
 from ..base import OutlierMixin
+from ..base import OutlierRejectionMixin
 
 from ..utils.validation import check_is_fitted
-from ..utils import check_array
+from ..utils import check_array, safe_indexing, check_X_y
 
 __all__ = ["LocalOutlierFactor"]
 
 
 class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
-                         OutlierMixin):
+                         OutlierMixin, OutlierRejectionMixin):
     """Unsupervised Outlier Detection using Local Outlier Factor (LOF)
 
     The anomaly score of each sample is called Local Outlier Factor.
@@ -192,6 +193,51 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
             raise AttributeError(msg)
 
         return self._fit_predict
+
+    @property
+    def fit_resample(self):
+        """Performs fit on X and returns new X and y consisting of only the
+        inliers.
+
+        Parameters
+        ----------
+        X : ndarray, shape (n_samples, n_features)
+            Input data X.
+
+        y : ndarray, shape (n_samples,)
+            Input data y.
+
+        Returns
+        -------
+        X : ndarray, shape (n_samples, n_features)
+            The input X with outlier samples removed.
+
+        y : ndarray, shape (n_samples,)
+            The input y with outlier samples removed.
+
+        kws : dict of ndarray
+             dict of keyword arguments, with all outlier samples removed.
+        """
+        # fit_resample requires fit_predict
+        if self.novelty:
+            msg = ('fit_resample is not available when novelty=True. Use '
+                   'novelty=False if you want to use outlier rejection')
+            raise AttributeError(msg)
+
+        return self._fit_resample
+
+    def _fit_resample(self, X, y, **kws):
+        check_X_y(X, y)
+        kws = {
+            kw: check_X_y(X, kws[kw], force_all_finite='allow-nan')[1]
+            for kw in kws
+        }
+        inliers = self.fit_predict(X) == 1
+        kwsr = {
+            kw: safe_indexing(kws[kw], inliers)
+            for kw in kws
+        }
+        return safe_indexing(X, inliers), safe_indexing(y, inliers), kwsr
 
     def _fit_predict(self, X, y=None):
         """"Fits the model to the training set X and returns the labels.

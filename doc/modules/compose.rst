@@ -5,14 +5,16 @@
 Pipelines and composite estimators
 ==================================
 
-Transformers are usually combined with classifiers, regressors or other
+Transformers and resamplers are usually combined with classifiers, regressors
+or other
 estimators to build a composite estimator.  The most common tool is a
 :ref:`Pipeline <pipeline>`. Pipeline is often used in combination with
 :ref:`FeatureUnion <feature_union>` which concatenates the output of
 transformers into a composite feature space.  :ref:`TransformedTargetRegressor
 <transformed_target_regressor>` deals with transforming the :term:`target`
 (i.e. log-transform :term:`y`). In contrast, Pipelines only transform the
-observed data (:term:`X`).
+observed data (:term:`X`). Additionally, pipelines support :term:`resamplers` to
+resample the dataset on fit (see :ref:`_pipeline_resamplers`).
 
 .. _pipeline:
 
@@ -236,6 +238,46 @@ object::
 
  * :ref:`sphx_glr_auto_examples_compose_plot_compare_reduction.py`
 
+.. _pipeline_resamplers:
+
+Resampling or modifying samples in training
+===========================================
+
+All transformers in a Pipeline must output a dataset with samples corresponding
+to their input.  Sometimes you want a process to modify the set of samples
+used in training, such as balanced resampling, outlier remover, or data
+augmentation/perturbation.  Such processes are called Resamplers, rather than
+Transformers, in Scikit-learn, and should be composed with a predictor using
+a :class:`compose.ResampledTrainer` rather than a Pipeline. Resamplers provide
+a `fit_resample` method which is called by the ``ResampledTrainer`` when
+fitting, so that the resampled data is used to train the subsequent predictor.
+
+:ref:`outlier rejectors` provide `fit_resample` methods that remove samples
+from the dataset if they classified as outliers.  Consider the following::
+
+    >>> from sklearn.compose import ResampledTrainer
+    >>> from sklearn.covariance import EllipticEnvelope
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> resampled = ResampledTrainer(EllipticEnvelope(), LogisticRegression())
+    >>> from sklearn.datasets import load_iris
+    >>> X, y = load_iris(return_X_y=True)
+    >>> resampled.fit(X, y)
+    ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    ResampledTrainer(...)
+
+
+In ``pipe``, we remove outliers before fitting our `LogisticRegression`
+model, so that the samples passed to fit come from the same distribution. We do
+this to improve the quality of the fit (see :ref:`_outlier_detection`).
+Therefore, during ``fit``, we want our resampler to be applied.
+
+Now assume that we would like to make predictions on some new data ``X_test``::
+
+    >>> predictions = pipe.predict(X_test)
+
+This does not apply resampling, but provides predictions for all samples in
+``X_test``.
+
 .. _transformed_target_regressor:
 
 Transforming target in regression
@@ -327,8 +369,7 @@ is fit to the data independently. The transformers are applied in parallel,
 and the feature matrices they output are concatenated side-by-side into a
 larger matrix.
 
-When you want to apply different transformations to each field of the data,
-see the related class :class:`sklearn.compose.ColumnTransformer`
+When you want to apply different transformations to each field of the data, see the related class :class:`sklearn.compose.ColumnTransformer`
 (see :ref:`user guide <column_transformer>`).
 
 :class:`FeatureUnion` serves the same purposes as :class:`Pipeline` -

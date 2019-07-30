@@ -21,8 +21,8 @@ from .deprecation import deprecated
 from .validation import (as_float_array,
                          assert_all_finite,
                          check_random_state, column_or_1d, check_array,
-                         check_consistent_length, check_X_y, indexable,
-                         check_symmetric, check_scalar)
+                         check_consistent_length, check_X_y, check_X_y_kwargs,
+                         indexable, check_symmetric, check_scalar)
 from .. import get_config
 
 
@@ -265,6 +265,8 @@ def _safe_indexing_row(X, indices):
                                    indices.dtype.kind == 'i'):
             # This is often substantially faster than X[indices]
             return X.take(indices, axis=0)
+        elif getattr(X, 'format', None) in {'dia', 'bsr', 'coo'}:
+            return X.tocsr()[indices]
         else:
             return X[indices]
     else:

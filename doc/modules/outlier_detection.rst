@@ -349,6 +349,16 @@ This strategy is illustrated below.
       <http://www.dbs.ifi.lmu.de/Publikationen/Papers/LOF.pdf>`_
       Proc. ACM SIGMOD
 
+.. _outlier_rejectors
+
+Outlier Rejectors
+-----------------
+All :term:`outlier detectors` can be used as :term:`outlier rejectors`, a form
+of :term:`resampler` that takes in a dataset, and returns a new dataset that is
+the same dataset, but with the outliers removed. This is especially useful for
+pipelines. See :ref:`pipeline_resamplers` and the examples.
+
+.. topic:: Examples:
 .. _novelty_with_lof:
 
 Novelty detection with Local Outlier Factor

@@ -50,6 +50,7 @@ from sklearn.preprocessing.data import PolynomialFeatures
 from sklearn.preprocessing.data import PowerTransformer
 from sklearn.preprocessing.data import power_transform
 from sklearn.preprocessing.data import BOUNDS_THRESHOLD
+from sklearn.preprocessing.data import NaNFilter
 from sklearn.exceptions import NotFittedError
 
 from sklearn.base import clone
@@ -2463,3 +2464,53 @@ def test_power_transform_default_method():
 
     X_trans_boxcox = power_transform(X, method='box-cox')
     assert_array_equal(X_trans_boxcox, X_trans_default)
+
+
+def test_nanfilter():
+    nan = float('nan')
+    data = [[1, 2], [1, nan], [nan, nan]]
+    y = [0, 1, 2]
+    sample_weights = np.array([0.1, 0.4, 0.5])
+    other_sample_prop = [0.3, 0.4, 0.5]
+    Xr, yr, kws = NaNFilter().fit_resample(
+        data, y)
+
+    assert_array_equal(
+        Xr,
+        np.array([[1, 2]])
+    )
+    assert_array_equal(
+        yr,
+        np.array([0])
+    )
+
+    Xr, yr, kws = NaNFilter(count=2).fit_resample(
+        data, y)
+    assert_array_equal(
+        Xr,
+        np.array([[1, 2], [1, nan]])
+    )
+    assert_array_equal(
+        yr,
+        np.array([0, 1])
+    )
+
+    Xr, yr, kws = NaNFilter().fit_resample(
+        data, y,
+        sample_weights=sample_weights,
+        other_sample_prop=other_sample_prop
+    )
+
+    assert_array_equal(
+        Xr,
+        np.array([[1, 2]])
+    )
+
+    assert_array_equal(
+        kws['sample_weights'],
+        np.array([0.1])
+    )
+    assert_array_equal(
+        kws['other_sample_prop'],
+        np.array([0.3])
+    )
