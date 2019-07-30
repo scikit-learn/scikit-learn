@@ -25,15 +25,14 @@ import sklearn
 from sklearn.base import RegressorMixin
 from sklearn.cluster.bicluster import BiclusterMixin
 
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.linear_model import Ridge, LogisticRegression
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.utils import IS_PYPY
 from sklearn.utils.estimator_checks import (
     _safe_tags,
     set_checking_parameters,
     check_parameters_default_constructible,
-    check_no_attributes_set_in_init,
     check_class_weight_balanced_linear_classifier,
     set_check_estimator_ids)
 
@@ -118,22 +117,6 @@ def test_check_estimator_class():
     with pytest.warns(SkipTestWarning):
         Estimator, check = checks[0]
         check(Estimator)
-
-
-@pytest.mark.parametrize("name, estimator",
-                         _tested_estimators())
-def test_no_attributes_set_in_init(name, estimator):
-    # input validation etc for all estimators
-    with ignore_warnings(category=(DeprecationWarning, ConvergenceWarning,
-                                   UserWarning, FutureWarning)):
-        tags = _safe_tags(estimator)
-        if tags['_skip_test']:
-            warnings.warn("Explicit SKIP via _skip_test tag for "
-                          "{}.".format(name),
-                          SkipTestWarning)
-            return
-        # check this on class
-        check_no_attributes_set_in_init(name, estimator)
 
 
 @ignore_warnings(category=DeprecationWarning)
