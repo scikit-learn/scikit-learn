@@ -586,8 +586,6 @@ class TransformerMixin:
             n_features = self.n_components
         elif hasattr(self, 'components_'):
             n_features = self.components_.shape[0]
-        elif hasattr(self, 'scale_'):
-            n_features = self.scale_.shape[0]
         return n_features
 
     @n_features_out_.setter

@@ -196,7 +196,13 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     return X
 
 
-class MinMaxScaler(BaseEstimator, TransformerMixin):
+class _BaseScaler(BaseEstimator, TransformerMixin):
+    @property
+    def n_features_out_(self):
+        return self.scale_.shape[0]
+
+
+class MinMaxScaler(_BaseScaler):
     """Transforms features by scaling each feature to a given range.
 
     This estimator scales and translates each feature individually such
@@ -493,7 +499,7 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
     return X
 
 
-class StandardScaler(BaseEstimator, TransformerMixin):
+class StandardScaler(_BaseScaler):
     """Standardize features by removing the mean and scaling to unit variance
 
     The standard score of a sample `x` is calculated as:
@@ -821,7 +827,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         return {'allow_nan': True}
 
 
-class MaxAbsScaler(BaseEstimator, TransformerMixin):
+class MaxAbsScaler(_BaseScaler):
     """Scale each feature by its maximum absolute value.
 
     This estimator scales and translates each feature individually such
@@ -1050,7 +1056,7 @@ def maxabs_scale(X, axis=0, copy=True):
     return X
 
 
-class RobustScaler(BaseEstimator, TransformerMixin):
+class RobustScaler(_BaseScaler):
     """Scale features using statistics that are robust to outliers.
 
     This Scaler removes the median and scales the data according to
