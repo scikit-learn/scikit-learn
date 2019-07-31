@@ -622,12 +622,12 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
     for big datasets (n_samples >= 10 000). The input data ``X`` is pre-binned
     into integer-valued bins, which considerably reduces the number of
     splitting points to consider, and allows the algorithm to leverage
-    integer-based data structures. Early stopping is the default behavior, as
-    it usually makes the fitting process much faster without a substantial
-    difference in terms of predictive performance. For small sample sizes,
+    integer-based data structures. For small sample sizes,
     :class:`GradientBoostingRegressor<sklearn.ensemble.GradientBoostingRegressor>`
     might be preferred since binning may lead to split points that are too
-    approximate in this setting.
+    approximate in this setting. Early stopping is the default behavior, as
+    it usually makes the fitting process much faster without a substantial
+    difference in terms of predictive performance.
 
     This implementation is inspired by
     `LightGBM <https://github.com/Microsoft/LightGBM>`_.
@@ -797,12 +797,12 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
     for big datasets (n_samples >= 10 000). The input data ``X`` is pre-binned
     into integer-valued bins, which considerably reduces the number of
     splitting points to consider, and allows the algorithm to leverage
-    integer-based data structures. Early stopping is the default behavior, as
-    it usually makes the fitting process much faster without a substantial
-    difference in terms of predictive performance. For small sample sizes,
+    integer-based data structures. For small sample sizes,
     :class:`GradientBoostingClassifier<sklearn.ensemble.GradientBoostingClassifier>`
     might be preferred since binning may lead to split points that are too
-    approximate in this setting.
+    approximate in this setting. Early stopping is the default behavior, as
+    it usually makes the fitting process much faster without a substantial
+    difference in terms of predictive performance.
 
     This implementation is inspired by
     `LightGBM <https://github.com/Microsoft/LightGBM>`_.
