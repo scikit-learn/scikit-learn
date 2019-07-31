@@ -440,7 +440,7 @@ Gradient Tree Boosting
 ======================
 
 `Gradient Tree Boosting <https://en.wikipedia.org/wiki/Gradient_boosting>`_
-or Gradient Boosted Degression Trees (GBDT) is a generalization
+or Gradient Boosted Decision Trees (GBDT) is a generalization
 of boosting to arbitrary
 differentiable loss functions. GBDT is an accurate and effective
 off-the-shelf procedure that can be used for both regression and
@@ -458,7 +458,7 @@ trees.
   and :class:`HistGradientBoostingRegressor`, inspired by
   `LightGBM <https://github.com/Microsoft/LightGBM>`_.
 
-  These new histogram-based estimators can be **orders of magnitude faster**
+  These histogram-based estimators can be **orders of magnitude faster**
   than :class:`GradientBoostingClassifier` and
   :class:`GradientBoostingRegressor` when the number of samples is larger
   than tens of thousands of samples.
@@ -472,7 +472,8 @@ trees.
 
   The following guide focuses on :class:`GradientBoostingClassifier` and
   :class:`GradientBoostingRegressor`, which might be preferred for small
-  sample sizes.
+  sample sizes, since binning may lead to split points that are too
+  approximate.
 
 
 Classification
@@ -827,7 +828,7 @@ gradient boosting trees, namely :class:`HistGradientBoostingClassifier`
 and :class:`HistGradientBoostingRegressor`, inspired by
 `LightGBM <https://github.com/Microsoft/LightGBM>`_.
 
-These new histogram-based estimators can be **orders of magnitude faster**
+These histogram-based estimators can be **orders of magnitude faster**
 than :class:`GradientBoostingClassifier` and
 :class:`GradientBoostingRegressor` when the number of samples is larger
 than tens of thousands of samples.
@@ -838,15 +839,15 @@ roadmap. Moreover, early-stopping is enabled by default.
 
 These fast estimators first bin the input samples ``X`` into
 integer-valued bins (typically 256 bins) which tremendously reduces the
-number of splitting points to consider, and allow the algorithm to
+number of splitting points to consider, and allows the algorithm to
 leverage integer-based data structures (histograms) instead of relying on
-sorted continuous values when building the trees. The API of these new
+sorted continuous values when building the trees. The API of these
 estimators is slightly different, and some of the features from
 :class:`GradientBoostingClassifier` and :class:`GradientBoostingRegressor`
 are not yet supported: in particular sample weights, and some loss
 functions.
 
-These new estimators are still **experimental** for now: their predictions
+These estimators are still **experimental**: their predictions
 and their API might change without any deprecation cycle. To use them, you
 need to explicitly import ``enable_hist_gradient_boosting``::
 
@@ -864,7 +865,8 @@ Usage
 
 Most of the parameters are unchanged from
 :class:`GradientBoostingClassifier` and :class:`GradientBoostingRegressor`.
-One exception is the ``max_iter`` parameter that replaces ``n_estimators``.:
+One exception is the ``max_iter`` parameter that replaces ``n_estimators``, and
+controls the number of iterations of the boosting process:
 
   >>> from sklearn.experimental import enable_hist_gradient_boosting
   >>> from sklearn.ensemble import HistGradientBoostingClassifier
@@ -882,17 +884,19 @@ The size of the trees can be controlled through the ``max_lead_nodees``,
 ``max_depth``, and ``min_samples_leaf`` parameters.
 
 The number of bins used to bin the data is controlled with the ``max_bins``
-parameter. Using less bins acts as some sort of regularization. It is
-generally recommended to use as many bins as possible.
+parameter. Using less bins acts as a form of regularization. It is
+generally recommended to use as many bins as possible, which is the default:
+255 bins for non-missing values.
 
 The ``l2_regularization`` parameter is a regularizer on the loss function and
 corresponds to :math:`\lambda` in equation (2) of [XGBoost]_.
 
-Note that unlike most estimators, **early-stopping is enabled by default**.
-The early-stopping behaviour is controlled via the ``scoring``,
-``validation_fraction``, ``n_iter_no_change``, and ``tol`` parameters. It is
-possible to early-stop using an arbitrary :term:`scorer`, or just the
-training or validation loss.
+Note that **early-stopping is enabled by default**. The early-stopping
+behaviour is controlled via the ``scoring``, ``validation_fraction``,
+``n_iter_no_change``, and ``tol`` parameters. It is possible to early-stop
+using an arbitrary :term:`scorer`, or just the training or validation loss. By
+default, early-stopping is performed using the the default :term:`scorer` of
+the estimator on a validation set.
 
 Missing values support
 ----------------------
@@ -930,9 +934,10 @@ Low-level parallelism
 :class:`HistGradientBoostingClassifier` and
 :class:`HistGradientBoostingRegressor` have parallel implementations that
 use OpenMP through Cython. The number of threads that is used can be changed
-using the ``OMP_NUM_THREADS`` environment variable. Please refer to the
-OpenMP documentation for details. We are planning on adding a ``n_jobs``
-parameter (or equivalent) in a future version.
+using the ``OMP_NUM_THREADS`` environment variable. By default, all available
+cores are used. Please refer to the OpenMP documentation for details. We are
+planning on adding a ``n_jobs`` parameter (or equivalent) in a future
+version.
 
 .. topic:: References
 
