@@ -27,9 +27,9 @@ param_dist = {"max_depth": [3, None],
 rsh = HalvingRandomSearchCV(
     estimator=clf,
     param_distributions=param_dist,
-    budget_on='n_samples',  # budget is the number of samples
-    max_budget='auto',  # max_budget=n_samples
-    n_candidates='auto',  # choose n_cdts so that last iter exhausts budget
+    resource='n_samples',
+    max_resources='auto',  # max_resources=n_samples
+    n_candidates='auto',  # choose n_cdts so that last iter exhausts resources
     cv=5,
     ratio=2,
     random_state=rng)

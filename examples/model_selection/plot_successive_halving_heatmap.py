@@ -26,9 +26,9 @@ tic = time()
 gsh = HalvingGridSearchCV(
     estimator=clf,
     param_grid=param_grid,
-    budget_on='n_samples',  # budget is the number of samples
-    max_budget='auto',  # max_budget=n_samples
-    force_exhaust_budget=True,
+    resource='n_samples',
+    max_resources='auto',  # max_resources=n_samples
+    force_exhaust_resources=True,
     cv=5,
     ratio=2,
     random_state=rng)

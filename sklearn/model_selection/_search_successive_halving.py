@@ -39,9 +39,9 @@ class BaseSuccessiveHalving(BaseSearchCV):
                  n_jobs=None, refit=True, cv=5, verbose=0,
                  pre_dispatch='2*n_jobs', random_state=None,
                  error_score=np.nan, return_train_score=True,
-                 max_budget='auto', budget_on='n_samples', ratio=3,
-                 r_min='auto', aggressive_elimination=False,
-                 force_exhaust_budget=False):
+                 max_resources='auto', min_resources='auto',
+                 resource='n_samples', ratio=3, aggressive_elimination=False,
+                 force_exhaust_resources=False):
 
         refit = _refit_callable if refit else False
         super().__init__(estimator, scoring=scoring,
@@ -51,12 +51,12 @@ class BaseSuccessiveHalving(BaseSearchCV):
                          return_train_score=return_train_score)
 
         self.random_state = random_state
-        self.max_budget = max_budget
-        self.budget_on = budget_on
+        self.max_resources = max_resources
+        self.resource = resource
         self.ratio = ratio
-        self.r_min = r_min
+        self.min_resources = min_resources
         self.aggressive_elimination = aggressive_elimination
-        self.force_exhaust_budget = force_exhaust_budget
+        self.force_exhaust_resources = force_exhaust_resources
 
     def _check_input_parameters(self, X, y, groups):
 
@@ -68,65 +68,65 @@ class BaseSuccessiveHalving(BaseSearchCV):
             raise ValueError('scoring parameter must be a string, '
                              'a callable or None.')
 
-        if (self.budget_on != 'n_samples'
-                and self.budget_on not in self.estimator.get_params()):
+        if (self.resource != 'n_samples'
+                and self.resource not in self.estimator.get_params()):
             raise ValueError(
-                'Cannot budget on parameter {} which is not supported '
-                'by estimator {}'.format(self.budget_on,
+                'Cannot use resource={} which is not supported '
+                'by estimator {}'.format(self.resource,
                                          self.estimator.__class__.__name__))
 
-        if isinstance(self.max_budget, str) and self.max_budget != 'auto':
+        if isinstance(self.max_resources, str) and self.max_resources != 'auto':
             raise ValueError(
-                "max_budget must be either 'auto' or a positive number"
+                "max_resources must be either 'auto' or a positive number"
             )
-        if self.max_budget != 'auto' and self.max_budget <= 0:
+        if self.max_resources != 'auto' and self.max_resources <= 0:
             raise ValueError(
-                "max_budget must be either 'auto' or a positive number"
-            )
-
-        if isinstance(self.r_min, str) and self.r_min != 'auto':
-            raise ValueError(
-                "r_min must be either 'auto' or a positive number no greater "
-                "than max_budget."
-            )
-        if self.r_min != 'auto' and self.r_min <= 0:
-            raise ValueError(
-                "r_min must be either 'auto' or a positive number no greater "
-                "than max_budget."
+                "max_resources must be either 'auto' or a positive number"
             )
 
-        if self.force_exhaust_budget and self.r_min != 'auto':
+        if isinstance(self.min_resources, str) and self.min_resources != 'auto':
             raise ValueError(
-                'r_min must be set to auto if force_exhaust_budget is True.'
+                "min_resources must be either 'auto' or a positive number no greater "
+                "than max_resources."
+            )
+        if self.min_resources != 'auto' and self.min_resources <= 0:
+            raise ValueError(
+                "min_resources must be either 'auto' or a positive number no greater "
+                "than max_resources."
             )
 
-        self.r_min_ = self.r_min
-        if self.r_min_ == 'auto':
-            if self.budget_on == 'n_samples':
+        if self.force_exhaust_resources and self.min_resources != 'auto':
+            raise ValueError(
+                'min_resources must be set to auto if force_exhaust_resources is True.'
+            )
+
+        self.min_resources_ = self.min_resources
+        if self.min_resources_ == 'auto':
+            if self.resource == 'n_samples':
                 cv = check_cv(self.cv, y,
                               classifier=is_classifier(self.estimator))
                 n_splits = cv.get_n_splits(X, y, groups)
 
                 # please see https://gph.is/1KjihQe for a justification
                 magic_factor = 2
-                self.r_min_ = n_splits * magic_factor
+                self.min_resources_ = n_splits * magic_factor
                 if is_classifier(self.estimator):
                     n_classes = np.unique(y).shape[0]
-                    self.r_min_ *= n_classes
+                    self.min_resources_ *= n_classes
             else:
-                self.r_min_ = 1
+                self.min_resources_ = 1
 
-        self.max_budget_ = self.max_budget
-        if self.max_budget_ == 'auto':
-            if not self.budget_on == 'n_samples':
+        self.max_resources_ = self.max_resources
+        if self.max_resources_ == 'auto':
+            if not self.resource == 'n_samples':
                 raise ValueError(
-                    "max_budget can only be 'auto' if budget_on='n_samples'")
-            self.max_budget_ = _num_samples(X)
+                    "max_resources can only be 'auto' if resource='n_samples'")
+            self.max_resources_ = _num_samples(X)
 
-        if self.r_min_ > self.max_budget_:
+        if self.min_resources_ > self.max_resources_:
             raise ValueError(
-                'r_min_={} is greater than max_budget_={}.'
-                .format(self.r_min_, self.max_budget_)
+                'min_resources_={} is greater than max_resources_={}.'
+                .format(self.min_resources_, self.max_resources_)
             )
 
     def fit(self, X, y=None, groups=None, **fit_params):
@@ -169,32 +169,32 @@ class BaseSuccessiveHalving(BaseSearchCV):
         candidate_params = [dict(t) for t in candidate_params]
         self.n_candidates_ = len(candidate_params)
 
-        if self.budget_on != 'n_samples' and any(
-                self.budget_on in candidate for candidate in candidate_params):
+        if self.resource != 'n_samples' and any(
+                self.resource in candidate for candidate in candidate_params):
             # Can only check this now since we need the candidates list
             raise ValueError(
                 "Cannot budget on parameter {} since it is part of "
-                "the searched parameters.".format(self.budget_on))
+                "the searched parameters.".format(self.resource))
 
         # n_required_iterations is the number of iterations needed so that the
         # last iterations evaluates less than `ratio` candidates.
         n_required_iterations = 1 + floor(log(self.n_candidates_, self.ratio))
 
-        if self.force_exhaust_budget:
-            # To exhaust the budget, we want to start with the biggest r_min
+        if self.force_exhaust_resources:
+            # To exhaust the budget, we want to start with the biggest min_resources
             # possible so that the last (required) iteration uses as many
             # resources as possible
-            # We only force exhausting the budget if r_min wasn't specified by
+            # We only force exhausting the budget if min_resources wasn't specified by
             # the user.
             last_iteration = n_required_iterations - 1
-            self.r_min_ = max(self.r_min_,
-                              self.max_budget_ // self.ratio**last_iteration)
+            self.min_resources_ = max(self.min_resources_,
+                              self.max_resources_ // self.ratio**last_iteration)
 
         # n_possible_iterations is the number of iterations that we can
-        # actually do starting from r_min and without exceeding the budget.
+        # actually do starting from min_resources and without exceeding the budget.
         # Depending on budget size the number of candidates, this may be higher
         # or smaller than n_required_iterations.
-        n_possible_iterations = 1 + floor(log(self.max_budget_ // self.r_min_,
+        n_possible_iterations = 1 + floor(log(self.max_resources_ // self.min_resources_,
                                               self.ratio))
 
         if self.aggressive_elimination:
@@ -206,11 +206,11 @@ class BaseSuccessiveHalving(BaseSearchCV):
             print('n_iterations: {}'.format(n_iterations))
             print('n_required_iterations: {}'.format(n_required_iterations))
             print('n_possible_iterations: {}'.format(n_possible_iterations))
-            print('r_min_: {}'.format(self.r_min_))
-            print('max_budget_: {}'.format(self.max_budget_))
+            print('min_resources_: {}'.format(self.min_resources_))
+            print('max_resources_: {}'.format(self.max_resources_))
             print('aggressive_elimination: {}'.format(
                 self.aggressive_elimination))
-            print('force_exhaust_budget: {}'.format(self.force_exhaust_budget))
+            print('force_exhaust_resources: {}'.format(self.force_exhaust_resources))
             print('ratio: {}'.format(self.ratio))
 
         self._r_i_list = []  # list of r_i for each iteration, used in tests
@@ -228,8 +228,8 @@ class BaseSuccessiveHalving(BaseSearchCV):
                     iter_i - n_required_iterations + n_possible_iterations
                 )
 
-            r_i = int(self.ratio**power * self.r_min_)
-            r_i = min(r_i, self.max_budget_)  # guard, probably not needed
+            r_i = int(self.ratio**power * self.min_resources_)
+            r_i = min(r_i, self.max_resources_)  # guard, probably not needed
             self._r_i_list.append(r_i)
 
             n_candidates = len(candidate_params)
@@ -240,7 +240,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 print('n_candidates: {}'.format(n_candidates))
                 print('r_i: {}'.format(r_i))
 
-            if self.budget_on == 'n_samples':
+            if self.resource == 'n_samples':
                 # Subsample X and y as well as fit_params
                 stratify = y if is_classifier(self.estimator) else None
                 fit_params = OrderedDict(fit_params)
@@ -255,7 +255,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 # Need copy so that r_i of next iteration does not overwrite
                 candidate_params = [c.copy() for c in candidate_params]
                 for candidate in candidate_params:
-                    candidate[self.budget_on] = r_i
+                    candidate[self.resource] = r_i
                 X_iter, y_iter = X, y
                 fit_params_iter = fit_params
 
@@ -383,39 +383,39 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
 
-    max_budget : int, default='auto'
+    max_resources : int, default='auto'
         The maximum number of resources that any candidate is allowed to use
         for a given iteration. By default, this is set ``n_samples`` when
-        ``budget_on='n_samples'`` (default), else an error is raised.
+        ``resource='n_samples'`` (default), else an error is raised.
 
-    budget_on : ``'n_samples'`` or str, default='n_samples'
-        Defines the nature of the budget. By default, the budget is the number
-        of samples. It can also be set to any parameter of the base estimator
-        that accepts positive integer values, e.g. 'n_iterations' or
-        'n_estimators' for a gradient boosting estimator. In this case
-        ``max_budget`` cannot be 'auto'.
-
-    ratio : int or float, default=3
-        The 'halving' parameter, which determines the proportion of candidates
-        that are selected for the next iteration. For example, ``ratio=3``
-        means that only one third of the candidates are selected.
-
-    r_min : int, default='auto'
+    min_resources : int, default='auto'
         The minimum amount of resource that any candidate is allowed to use for
         a given iteration. Equivalently, this defines the amount of resources
         that are allocated for each candidate at the first iteration. By
         default, this is set to:
 
-        - ``n_splits * 2`` when ``budget_on='n_samples'`` for a regression
+        - ``n_splits * 2`` when ``resource='n_samples'`` for a regression
           problem
-        - ``n_classes * n_splits * 2`` when ``budget_on='n_samples'`` for a
+        - ``n_classes * n_splits * 2`` when ``resource='n_samples'`` for a
           regression problem
         - The highest possible value satisfying the constraint
-          ``force_exhaust_budget=True``.
-        - ``1`` when ``budget_on!='n_samples'``
+          ``force_exhaust_resources=True``.
+        - ``1`` when ``resource!='n_samples'``
 
         Note that the amount of resources used at each iteration is always a
-        multiple of ``r_min``.
+        multiple of ``min_resources``.
+
+    resource : ``'n_samples'`` or str, default='n_samples'
+        Defines the resource that increases with each iteration. By default,
+        the resource is the number of samples. It can also be set to any
+        parameter of the base estimator that accepts positive integer
+        values, e.g. 'n_iterations' or 'n_estimators' for a gradient
+        boosting estimator. In this case ``max_resources`` cannot be 'auto'.
+
+    ratio : int or float, default=3
+        The 'halving' parameter, which determines the proportion of candidates
+        that are selected for the next iteration. For example, ``ratio=3``
+        means that only one third of the candidates are selected.
 
     aggressive_elimination : bool, default=False
         This is only relevant in cases where there isn't enough budget to
@@ -425,11 +425,11 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         ``False`` by default, which means that the last iteration may evaluate
         more than ``ratio`` candidates.
 
-    force_exhaust_budget : bool, default=False
-        If True, then ``r_min`` is set to a specific value such that the
+    force_exhaust_resources : bool, default=False
+        If True, then ``min_resources`` is set to a specific value such that the
         last iteration uses as much budget as possible. Namely, the last
-        iteration uses the highest value smaller than ``max_budget`` that is a
-        multiple of both ``r_min`` and ``ratio``.
+        iteration uses the highest value smaller than ``max_resources`` that is a
+        multiple of both ``min_resources`` and ``ratio``.
 
     Attributes
     ----------
@@ -441,14 +441,14 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         The number of candidate parameters that are left after the last
         iteration.
 
-    max_budget_ : int
+    max_resources_ : int
         The maximum number of resources that any candidate is allowed to use
         for a given iteration. Note that since the number of resources used at
-        each iteration must be a multiple of ``r_min_``, the actual number of
+        each iteration must be a multiple of ``min_resources_``, the actual number of
         resources used at the last iteartion may be smaller than
-        ``max_budget_``.
+        ``max_resources_``.
 
-    r_min_ : int
+    min_resources_ : int
         The amount of resources that are allocated for each candidate at the
         first iteration.
 
@@ -459,12 +459,12 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         n_required_iterations_)``.
 
     n_possible_iterations_ : int
-        The number of iterations that are possible starting with ``r_min_``
-        resources and without exceeding ``max_budget_``.
+        The number of iterations that are possible starting with ``min_resources_``
+        resources and without exceeding ``max_resources_``.
 
     n_required_iterations_ : int
         The number of iterations that are required to end up with less than
-        ``ratio`` candidates at the last iteration, starting with ``r_min_``
+        ``ratio`` candidates at the last iteration, starting with ``min_resources_``
         resources. This will be smaller than ``n_possible_iterations_`` when
         there isn't enough budget.
 
@@ -560,7 +560,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
     See Also
     --------
-    :class:`RandomHalvingSearchCV`:
+    :class:`HalvingRandomSearchCV`:
         Random search over a set of parameters using successive halving.
     """
     _required_parameters = ["estimator", "param_grid"]
@@ -569,18 +569,18 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
                  n_jobs=None, refit=True, verbose=0, cv=5,
                  pre_dispatch='2*n_jobs', random_state=None,
                  error_score=np.nan, return_train_score=True,
-                 max_budget='auto', budget_on='n_samples', ratio=3,
-                 r_min='auto', aggressive_elimination=False,
-                 force_exhaust_budget=False):
+                 max_resources='auto', min_resources='auto',
+                 resource='n_samples', ratio=3, aggressive_elimination=False,
+                 force_exhaust_resources=False):
         super().__init__(estimator, scoring=scoring,
                          n_jobs=n_jobs, refit=refit, verbose=verbose, cv=cv,
                          pre_dispatch=pre_dispatch,
                          random_state=random_state, error_score=error_score,
                          return_train_score=return_train_score,
-                         max_budget=max_budget, budget_on=budget_on,
-                         ratio=ratio, r_min=r_min,
+                         max_resources=max_resources, resource=resource,
+                         ratio=ratio, min_resources=min_resources,
                          aggressive_elimination=aggressive_elimination,
-                         force_exhaust_budget=force_exhaust_budget)
+                         force_exhaust_resources=force_exhaust_resources)
         self.param_grid = param_grid
         _check_param_grid(self.param_grid)
 
@@ -613,7 +613,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
     n_candidates: int, default='auto'
         The number of candidate parameters to sample. By default this will
         sample enough candidates so that the last iteration uses as many
-        resources as possible. Note that ``force_exhaust_budget`` has no
+        resources as possible. Note that ``force_exhaust_resources`` has no
         effect in this case.
 
     scoring : string, callable, or None, default=None
@@ -685,39 +685,39 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
 
-    max_budget : int, default='auto'
+    max_resources : int, default='auto'
         The maximum number of resources that any candidate is allowed to use
         for a given iteration. By default, this is set ``n_samples`` when
-        ``budget_on='n_samples'`` (default), else an error is raised.
+        ``resource='n_samples'`` (default), else an error is raised.
 
-    budget_on : ``'n_samples'`` or str, default='n_samples'
-        Defines the nature of the budget. By default, the budget is the number
-        of samples. It can also be set to any parameter of the base estimator
-        that accepts positive integer values, e.g. 'n_iterations' or
-        'n_estimators' for a gradient boosting estimator. In this case
-        ``max_budget`` cannot be 'auto'.
-
-    ratio : int or float, default=3
-        The 'halving' parameter, which determines the proportion of candidates
-        that are selected for the next iteration. For example, ``ratio=3``
-        means that only one third of the candidates are selected.
-
-    r_min : int, default='auto'
+    min_resources : int, default='auto'
         The minimum amount of resource that any candidate is allowed to use for
         a given iteration. Equivalently, this defines the amount of resources
         that are allocated for each candidate at the first iteration. By
         default, this is set to:
 
-        - ``n_splits * 2`` when ``budget_on='n_samples'`` for a regression
+        - ``n_splits * 2`` when ``resource='n_samples'`` for a regression
           problem
-        - ``n_classes * n_splits * 2`` when ``budget_on='n_samples'`` for a
+        - ``n_classes * n_splits * 2`` when ``resource='n_samples'`` for a
           regression problem
         - The highest possible value satisfying the constraint
-          ``force_exhaust_budget=True``.
-        - ``1`` when ``budget_on!='n_samples'``
+          ``force_exhaust_resources=True``.
+        - ``1`` when ``resource!='n_samples'``
 
         Note that the amount of resources used at each iteration is always a
-        multiple of ``r_min``.
+        multiple of ``min_resources``.
+
+    resource : ``'n_samples'`` or str, default='n_samples'
+        Defines the resource that increases with each iteration. By default,
+        the resource is the number of samples. It can also be set to any
+        parameter of the base estimator that accepts positive integer
+        values, e.g. 'n_iterations' or 'n_estimators' for a gradient
+        boosting estimator. In this case ``max_resources`` cannot be 'auto'.
+
+    ratio : int or float, default=3
+        The 'halving' parameter, which determines the proportion of candidates
+        that are selected for the next iteration. For example, ``ratio=3``
+        means that only one third of the candidates are selected.
 
     aggressive_elimination : bool, default=False
         This is only relevant in cases where there isn't enough budget to
@@ -727,11 +727,11 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         ``False`` by default, which means that the last iteration may evaluate
         more than ``ratio`` candidates.
 
-    force_exhaust_budget : bool, default=False
-        If True, then ``r_min`` is set to a specific value such that the
+    force_exhaust_resources : bool, default=False
+        If True, then ``min_resources`` is set to a specific value such that the
         last iteration uses as much budget as possible. Namely, the last
-        iteration uses the highest value smaller than ``max_budget`` that is a
-        multiple of both ``r_min`` and ``ratio``.
+        iteration uses the highest value smaller than ``max_resources`` that is a
+        multiple of both ``min_resources`` and ``ratio``.
 
     Attributes
     ----------
@@ -743,14 +743,14 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         The number of candidate parameters that are left after the last
         iteration.
 
-    max_budget_ : int
+    max_resources_ : int
         The maximum number of resources that any candidate is allowed to use
         for a given iteration. Note that since the number of resources used at
-        each iteration must be a multiple of ``r_min_``, the actual number of
+        each iteration must be a multiple of ``min_resources_``, the actual number of
         resources used at the last iteartion may be smaller than
-        ``max_budget_``.
+        ``max_resources_``.
 
-    r_min_ : int
+    min_resources_ : int
         The amount of resources that are allocated for each candidate at the
         first iteration.
 
@@ -761,12 +761,12 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         n_required_iterations_)``.
 
     n_possible_iterations_ : int
-        The number of iterations that are possible starting with ``r_min_``
-        resources and without exceeding ``max_budget_``.
+        The number of iterations that are possible starting with ``min_resources_``
+        resources and without exceeding ``max_resources_``.
 
     n_required_iterations_ : int
         The number of iterations that are required to end up with less than
-        ``ratio`` candidates at the last iteration, starting with ``r_min_``
+        ``ratio`` candidates at the last iteration, starting with ``min_resources_``
         resources. This will be smaller than ``n_possible_iterations_`` when
         there isn't enough budget.
 
@@ -862,7 +862,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
     See Also
     --------
-    :class:`GridHalvingSearchCV`:
+    :class:`HalvingGridSearchCV`:
         Search over a grid of parameters using successive halving.
     """
     _required_parameters = ["estimator", "param_distributions"]
@@ -871,17 +871,17 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
                  n_candidates='auto', scoring=None, n_jobs=None, refit=True,
                  verbose=0, cv=5, pre_dispatch='2*n_jobs',
                  random_state=None, error_score=np.nan,
-                 return_train_score=True, max_budget='auto',
-                 budget_on='n_samples', ratio=3, r_min='auto',
-                 aggressive_elimination=False, force_exhaust_budget=False):
+                 return_train_score=True, max_resources='auto',
+                 min_resources='auto', resource='n_samples', ratio=3, 
+                 aggressive_elimination=False, force_exhaust_resources=False):
         super().__init__(estimator, scoring=scoring,
                          n_jobs=n_jobs, refit=refit, verbose=verbose, cv=cv,
                          random_state=random_state, error_score=error_score,
                          return_train_score=return_train_score,
-                         max_budget=max_budget, budget_on=budget_on,
-                         ratio=ratio, r_min=r_min,
+                         max_resources=max_resources, resource=resource,
+                         ratio=ratio, min_resources=min_resources,
                          aggressive_elimination=aggressive_elimination,
-                         force_exhaust_budget=force_exhaust_budget)
+                         force_exhaust_resources=force_exhaust_resources)
         self.param_distributions = param_distributions
         self.n_candidates = n_candidates
 
@@ -890,6 +890,6 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         if n_candidates_ == 'auto':
             # This will generate enough candidate so that the last iteration
             # uses as much budget as possible
-            n_candidates_ = self.max_budget_ // self.r_min_
+            n_candidates_ = self.max_resources_ // self.min_resources_
         return ParameterSampler(self.param_distributions, n_candidates_,
                                 self.random_state)

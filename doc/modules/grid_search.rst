@@ -183,18 +183,18 @@ the rate at which the number of candidate decreases (more details in
 :ref:`amount_of_resource_and_number_of_candidates`)
 
 
-Choosing ``r_min`` and the number of candidates
------------------------------------------------
+Choosing ``min_resources`` and the number of candidates
+-------------------------------------------------------
 
 Beside ``ratio``, the two main parameters that influence the behaviour of a
-successive halving search are the ``r_min`` parameter, and the number of
-candidates (or parameter combinations) that are evaluated. ``r_min`` is the
-amount of resources allocated at the first iteration for each candidate. The
-number of candidates is specified directly in
-:class:`HalvingRandomSearchCV`, and is determined from the ``param_grid``
+successive halving search are the ``min_resources`` parameter, and the
+number of candidates (or parameter combinations) that are evaluated.
+``min_resources`` is the amount of resources allocated at the first
+iteration for each candidate. The number of candidates is specified directly
+in :class:`HalvingRandomSearchCV`, and is determined from the ``param_grid``
 parameter of :class:`HalvingGridSearchCV`.
 
-Consider a case where we have 1000 samples. With ``r_min=10`` and
+Consider a case where we have 1000 samples. With ``min_resources=10`` and
 ``ratio=2`` we are able to run 7 iterations, with the following number of
 samples: ``[10, 20, 40, 80, 160, 320, 640]``.
 
@@ -207,29 +207,30 @@ In the case of :class:`HalvingGridSearchCV`, the number of candidates is set
 by default such that the maximum amount of resources is used at the last
 iteration.
 
-Changing the value of ``r_min`` will impact the number of possible
+Changing the value of ``min_resources`` will impact the number of possible
 iterations, and as a result will also have an effect on the ideal number of
 candidates.
 
-Another consideration when choosing ``r_min`` is whether or not it is easy
-to discriminate between good and bad candidates with a small amount of
-resources. For example, if you need a lot of samples to distinguish between
-good and bad parameters, a high ``r_min`` (possibly with the use of
-``aggressive_elimination=True``) is recommended. On the other hand if the
-distinction is clear even with a small amount of samples, then a small
-``r_min`` may be preferable since it would speed up the computation.
+Another consideration when choosing ``min_resources`` is whether or not it
+is easy to discriminate between good and bad candidates with a small amount
+of resources. For example, if you need a lot of samples to distinguish
+between good and bad parameters, a high ``min_resources`` (possibly with the
+use of ``aggressive_elimination=True``) is recommended. On the other hand if
+the distinction is clear even with a small amount of samples, then a small
+``min_resources`` may be preferable since it would speed up the computation.
 
-By default, ``r_min`` is set to a small value (see docstrings for details)
-that depends on the number of folds, and the number of classes for
+By default, ``min_resources`` is set to a small value (see docstrings for
+details) that depends on the number of folds, and the number of classes for
 classification problems. Depending on the setting, the default valueof
-``r_min`` might not be ideal.
+``min_resources`` might not be ideal.
 
 .. note::
   Notice in the example above that the last iteration does not use the
   maximum amount of resources available: 1000 samples are available, yet
-  only 640 are used. Using ``force_exhaust_budget=True`` will set ``r_min``
-  to a specific value such that the last iteration uses as many samples as
-  possible. Please see :ref:`exhausting_the_budget` for details.
+  only 640 are used. Using ``force_exhaust_resources=True`` will set
+  ``min_resources`` to a specific value such that the last iteration uses as
+  many samples as possible. Please see :ref:`exhausting_the_resources` for
+  details.
 
 .. _amount_of_resource_and_number_of_candidates:
 
@@ -238,30 +239,30 @@ Amount of resource and number of candidates at each iteration
 
 The amount of resources ``r_i`` (e.g. the number of samples) allocated for
 each candidate at iteration ``i`` is controlled by the parameters ``ratio``
-and ``r_min`` as follows::
+and ``min_resources`` as follows::
 
-    r_i = ratio**i * r_min
+    r_i = ratio**i * min_resources
 
-``r_min`` is the amount of resources used at the first iteration and
+``min_resources`` is the amount of resources used at the first iteration and
 ``ratio`` defines the proportions of candidates that will be selected for
 the next iteration::
 
     n_candidates_to_keep = n_candidates_at_i // ratio
 
-So in the first iteration, we use ``r_min`` resources ``n_candidates``
-times. In the second iteration, we use ``r_min * ratio`` resources
+So in the first iteration, we use ``min_resources`` resources ``n_candidates``
+times. In the second iteration, we use ``min_resources * ratio`` resources
 ``n_candidates // ratio`` times. The third again multiplies the resources
 per candidate and divides the number of candidates. This process stops when
 the maximum amount of resource per candidate is reached, or when less than
 ``ratio`` candidates are left.
 
-Here is an example with ``r_min=3`` and ``ratio=2``, starting with 70
+Here is an example with ``min_resources=3`` and ``ratio=2``, starting with 70
 candidates:
 
 +-------------+-----------------------+
 | ``r_i``     | ``n_candidates_at_i`` |
 +=============+=======================+
-| 3 (=r_min)  | 70 (=n_candidates)    |
+| 3 (=min_resources)  | 70 (=n_candidates)    |
 +-------------+-----------------------+
 | 3 * 2 = 6   | 70 // 2 = 35          |
 +-------------+-----------------------+
@@ -276,7 +277,7 @@ candidates:
 
 Ideally, at the last iteration, ``ratio`` candidates are evaluated, and we
 can pick the best one. Note that each ``r_i`` is a multiple of both
-``ratio`` and ``r_min``.
+``ratio`` and ``min_resources``.
 
 The amount of resource that is used at each iteration can be found using the
 `cv_results_` after converting it to a dataframe:
@@ -288,7 +289,7 @@ Choosing a resource to budget
 By default, the budget is defined in terms of number of samples. That is,
 each iteration will use an increasing amount of samples to train on. You can
 however manually specify a parameter to use as the budget with the
-``budget_on`` parameter. Here is an example where the budget is defined in
+``resource`` parameter. Here is an example where the budget is defined in
 terms of the number of estimators of a random forest::
 
     >>> from sklearn.datasets import make_classification
@@ -301,21 +302,22 @@ terms of the number of estimators of a random forest::
     >>> base_estimator = RandomForestClassifier(random_state=0)
     >>> X, y = make_classification(n_samples=1000, random_state=0)
     >>> sh = HalvingGridSearchCV(base_estimator, param_grid, cv=5,
-    ...                          ratio=2, budget_on='n_estimators',
-    ...                          max_budget=30, random_state=0).fit(X, y)
+    ...                          ratio=2, resource='n_estimators',
+    ...                          max_resources=30, random_state=0).fit(X, y)
     >>> sh.best_estimator_
     RandomForestClassifier(max_depth=5, n_estimators=8, random_state=0)
 
 Note that it is not possible to budget on a parameter that is part of the
 parameter grid.
 
-.. _exhausting_the_budget:
+.. _exhausting_the_resources:
 
-Exhausting the budget
----------------------
+Exhausting the available resources
+----------------------------------
 
-As mentioned above, the first iteration uses ``r_min`` resources. If you have
-a big budget, this may be a waste of resources::
+As mentioned above, the first iteration uses ``min_resources`` resources. If
+you have a lots of resources available, some of them might be wasted (not
+used)::
 
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.svm import SVC
@@ -335,13 +337,14 @@ a big budget, this may be a waste of resources::
     2    [80]
     Name: r_i, dtype: object
 
-The search process will only use 80 resources at most, while our maximum budget
-is ``n_samples=1000``. Note in this case that ``r_min = r_0 = 20``. In order
-for the last iteration to use as many resources as possible, you can use the
-``force_exhaust_budget`` parameter.::
+The search process will only use 80 resources at most, while our maximum
+amount of available resources is ``n_samples=1000``. Note in this case that
+``min_resources = r_0 = 20``. In order for the last iteration to use as many
+resources as possible, you can use the ``force_exhaust_resources``
+parameter.::
 
     >>> sh = HalvingGridSearchCV(base_estimator, param_grid, cv=5,
-    ...                            ratio=2, force_exhaust_budget=True,
+    ...                            ratio=2, force_exhaust_resources=True,
     ...                            ).fit(X, y)
     >>> results = pd.DataFrame.from_dict(sh.cv_results_)
     >>> results.groupby('iter')['r_i'].unique()
@@ -351,18 +354,19 @@ for the last iteration to use as many resources as possible, you can use the
     2    [1000]
     Name: r_i, dtype: object
 
-
-`r_min` was here automatically set to 250, which results in the last
-iteration using all the budget. Since ``force_exhaust_budget`` chooses an
-appropriate ``r_min`` to start with, ``r_min`` must be set to 'auto' (default).
+`min_resources` was here automatically set to 250, which results in the last
+iteration using all the resources. Since ``force_exhaust_resources`` chooses an
+appropriate ``min_resources`` to start with, ``min_resources`` must be set
+to 'auto' (default).
 
 Aggressive elimination of candidates
 ------------------------------------
 
 Ideally, we want the last iteration to evaluate ``ratio`` candidates. We then
-just have to pick the best one. When the budget is small with respect to
-the number of candidates, the last iteration may have to evaluate more than
-``ratio`` candidates::
+just have to pick the best one. When the number of available resources is
+small with respect to the number of candidates, the last iteration may have
+to evaluate more than ``ratio`` candidates::
+
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.svm import SVC
     >>> from sklearn.model_selection import HalvingGridSearchCV
@@ -374,7 +378,7 @@ the number of candidates, the last iteration may have to evaluate more than
     >>> base_estimator = SVC(gamma='scale')
     >>> X, y = make_classification(n_samples=1000)
     >>> sh = HalvingGridSearchCV(base_estimator, param_grid, cv=5,
-    ...                          ratio=2, max_budget=40,
+    ...                          ratio=2, max_resources=40,
     ...                          aggressive_elimination=False).fit(X, y)
     >>> results = pd.DataFrame.from_dict(sh.cv_results_)
     >>> results.groupby('iter').r_i.unique()
@@ -388,17 +392,17 @@ the number of candidates, the last iteration may have to evaluate more than
     1    3
     Name: r_i, dtype: int64
 
-Since we cannot use more than ``max_budget=40`` resources, the process has to
+Since we cannot use more than ``max_resources=40`` resources, the process has to
 stop at the second iteration which evaluates more than ``ratio=2`` candidates.
 
 Using the ``aggressive_elimination`` parameter, you can force the search
 process to end up with less than ``ratio`` candidates at the last
 iteration. To do this, the process will eliminate as many candidates as
-necessary using ``r_min`` resources::
+necessary using ``min_resources`` resources::
 
     >>> sh = HalvingGridSearchCV(base_estimator, param_grid, cv=5,
     ...                            ratio=2,
-    ...                            max_budget=40,
+    ...                            max_resources=40,
     ...                            aggressive_elimination=True,
     ...                            ).fit(X, y)
     >>> results = pd.DataFrame.from_dict(sh.cv_results_)
@@ -416,8 +420,8 @@ necessary using ``r_min`` resources::
     Name: r_i, dtype: int64
 
 Notice that we end with 2 candidates at the last iteration since we have
-eliminated enough candidates during the first iterations, using ``r_i = r_min =
-20``.
+eliminated enough candidates during the first iterations, using ``r_i =
+min_resources = 20``.
 
 
 .. topic:: References:
