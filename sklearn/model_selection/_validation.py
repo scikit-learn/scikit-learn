@@ -20,8 +20,7 @@ import scipy.sparse as sp
 from joblib import Parallel, delayed
 
 from ..base import is_classifier, clone
-from ..utils import (indexable, check_random_state, safe_indexing,
-                     _message_with_time)
+from ..utils import indexable, check_random_state, safe_indexing, _message_with_time
 from ..utils.validation import _is_arraylike, _num_samples
 from ..utils.metaestimators import _safe_split
 from ..metrics.scorer import check_scoring, _check_multimetric_scoring
@@ -30,14 +29,31 @@ from ._split import check_cv
 from ..preprocessing import LabelEncoder
 
 
-__all__ = ['cross_validate', 'cross_val_score', 'cross_val_predict',
-           'permutation_test_score', 'learning_curve', 'validation_curve']
+__all__ = [
+    "cross_validate",
+    "cross_val_score",
+    "cross_val_predict",
+    "permutation_test_score",
+    "learning_curve",
+    "validation_curve",
+]
 
 
-def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
-                   n_jobs=None, verbose=0, fit_params=None,
-                   pre_dispatch='2*n_jobs', return_train_score=False,
-                   return_estimator=False, error_score=np.nan):
+def cross_validate(
+    estimator,
+    X,
+    y=None,
+    groups=None,
+    scoring=None,
+    cv=None,
+    n_jobs=None,
+    verbose=0,
+    fit_params=None,
+    pre_dispatch="2*n_jobs",
+    return_train_score=False,
+    return_estimator=False,
+    error_score=np.nan,
+):
     """Evaluate metric(s) by cross-validation and also record fit/score times.
 
     Read more in the :ref:`User Guide <multimetric_cross_validation>`.
@@ -216,15 +232,25 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
-    parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
-                        pre_dispatch=pre_dispatch)
+    parallel = Parallel(n_jobs=n_jobs, verbose=verbose, pre_dispatch=pre_dispatch)
     scores = parallel(
         delayed(_fit_and_score)(
-            clone(estimator), X, y, scorers, train, test, verbose, None,
-            fit_params, return_train_score=return_train_score,
-            return_times=True, return_estimator=return_estimator,
-            error_score=error_score)
-        for train, test in cv.split(X, y, groups))
+            clone(estimator),
+            X,
+            y,
+            scorers,
+            train,
+            test,
+            verbose,
+            None,
+            fit_params,
+            return_train_score=return_train_score,
+            return_times=True,
+            return_estimator=return_estimator,
+            error_score=error_score,
+        )
+        for train, test in cv.split(X, y, groups)
+    )
 
     zipped_scores = list(zip(*scores))
     if return_train_score:
@@ -236,24 +262,34 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     test_scores = _aggregate_score_dicts(test_scores)
 
     ret = {}
-    ret['fit_time'] = np.array(fit_times)
-    ret['score_time'] = np.array(score_times)
+    ret["fit_time"] = np.array(fit_times)
+    ret["score_time"] = np.array(score_times)
 
     if return_estimator:
-        ret['estimator'] = fitted_estimators
+        ret["estimator"] = fitted_estimators
 
     for name in scorers:
-        ret['test_%s' % name] = np.array(test_scores[name])
+        ret["test_%s" % name] = np.array(test_scores[name])
         if return_train_score:
-            key = 'train_%s' % name
+            key = "train_%s" % name
             ret[key] = np.array(train_scores[name])
 
     return ret
 
 
-def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
-                    n_jobs=None, verbose=0, fit_params=None,
-                    pre_dispatch='2*n_jobs', error_score=np.nan):
+def cross_val_score(
+    estimator,
+    X,
+    y=None,
+    groups=None,
+    scoring=None,
+    cv=None,
+    n_jobs=None,
+    verbose=0,
+    fit_params=None,
+    pre_dispatch="2*n_jobs",
+    error_score=np.nan,
+):
     """Evaluate a score by cross-validation
 
     Read more in the :ref:`User Guide <cross_validation>`.
@@ -373,20 +409,39 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
     # To ensure multimetric format is not supported
     scorer = check_scoring(estimator, scoring=scoring)
 
-    cv_results = cross_validate(estimator=estimator, X=X, y=y, groups=groups,
-                                scoring={'score': scorer}, cv=cv,
-                                n_jobs=n_jobs, verbose=verbose,
-                                fit_params=fit_params,
-                                pre_dispatch=pre_dispatch,
-                                error_score=error_score)
-    return cv_results['test_score']
+    cv_results = cross_validate(
+        estimator=estimator,
+        X=X,
+        y=y,
+        groups=groups,
+        scoring={"score": scorer},
+        cv=cv,
+        n_jobs=n_jobs,
+        verbose=verbose,
+        fit_params=fit_params,
+        pre_dispatch=pre_dispatch,
+        error_score=error_score,
+    )
+    return cv_results["test_score"]
 
 
-def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
-                   parameters, fit_params, return_train_score=False,
-                   return_parameters=False, return_n_test_samples=False,
-                   return_times=False, return_estimator=False,
-                   error_score=np.nan):
+def _fit_and_score(
+    estimator,
+    X,
+    y,
+    scorer,
+    train,
+    test,
+    verbose,
+    parameters,
+    fit_params,
+    return_train_score=False,
+    return_parameters=False,
+    return_n_test_samples=False,
+    return_times=False,
+    return_estimator=False,
+    error_score=np.nan,
+):
     """Fit estimator and compute scores for a given dataset split.
 
     Parameters
@@ -473,16 +528,14 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     """
     if verbose > 1:
         if parameters is None:
-            msg = ''
+            msg = ""
         else:
-            msg = '%s' % (', '.join('%s=%s' % (k, v)
-                          for k, v in parameters.items()))
-        print("[CV] %s %s" % (msg, (64 - len(msg)) * '.'))
+            msg = "%s" % (", ".join("%s=%s" % (k, v) for k, v in parameters.items()))
+        print("[CV] %s %s" % (msg, (64 - len(msg)) * "."))
 
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
-    fit_params = {k: _index_param_value(X, v, train)
-                  for k, v in fit_params.items()}
+    fit_params = {k: _index_param_value(X, v, train) for k, v in fit_params.items()}
 
     train_scores = {}
     if parameters is not None:
@@ -505,28 +558,29 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         # Note fit time as time until error
         fit_time = time.time() - start_time
         score_time = 0.0
-        if error_score == 'raise':
+        if error_score == "raise":
             raise
         elif isinstance(error_score, numbers.Number):
             if is_multimetric:
-                test_scores = dict(zip(scorer.keys(),
-                                   [error_score, ] * n_scorers))
+                test_scores = dict(zip(scorer.keys(), [error_score] * n_scorers))
                 if return_train_score:
-                    train_scores = dict(zip(scorer.keys(),
-                                        [error_score, ] * n_scorers))
+                    train_scores = dict(zip(scorer.keys(), [error_score] * n_scorers))
             else:
                 test_scores = error_score
                 if return_train_score:
                     train_scores = error_score
-            warnings.warn("Estimator fit failed. The score on this train-test"
-                          " partition for these parameters will be set to %f. "
-                          "Details: \n%s" %
-                          (error_score, format_exception_only(type(e), e)[0]),
-                          FitFailedWarning)
+            warnings.warn(
+                "Estimator fit failed. The score on this train-test"
+                " partition for these parameters will be set to %f. "
+                "Details: \n%s" % (error_score, format_exception_only(type(e), e)[0]),
+                FitFailedWarning,
+            )
         else:
-            raise ValueError("error_score must be the string 'raise' or a"
-                             " numeric value. (Hint: if using 'raise', please"
-                             " make sure that it has been spelled correctly.)")
+            raise ValueError(
+                "error_score must be the string 'raise' or a"
+                " numeric value. (Hint: if using 'raise', please"
+                " make sure that it has been spelled correctly.)"
+            )
 
     else:
         fit_time = time.time() - start_time
@@ -534,8 +588,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         test_scores = _score(estimator, X_test, y_test, scorer, is_multimetric)
         score_time = time.time() - start_time - fit_time
         if return_train_score:
-            train_scores = _score(estimator, X_train, y_train, scorer,
-                                  is_multimetric)
+            train_scores = _score(estimator, X_train, y_train, scorer, is_multimetric)
     if verbose > 2:
         if is_multimetric:
             for scorer_name in sorted(test_scores):
@@ -547,12 +600,15 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                     msg += "%.3f" % test_scores[scorer_name]
         else:
             msg += ", score="
-            msg += ("%.3f" % test_scores if not return_train_score else
-                    "(train=%.3f, test=%.3f)" % (train_scores, test_scores))
+            msg += (
+                "%.3f" % test_scores
+                if not return_train_score
+                else "(train=%.3f, test=%.3f)" % (train_scores, test_scores)
+            )
 
     if verbose > 1:
         total_time = score_time + fit_time
-        print(_message_with_time('CV', msg, total_time))
+        print(_message_with_time("CV", msg, total_time))
 
     ret = [train_scores, test_scores] if return_train_score else [test_scores]
 
@@ -581,7 +637,7 @@ def _score(estimator, X_test, y_test, scorer, is_multimetric=False):
         else:
             score = scorer(estimator, X_test, y_test)
 
-        if hasattr(score, 'item'):
+        if hasattr(score, "item"):
             try:
                 # e.g. unwrap memmapped scalars
                 score = score.item()
@@ -590,9 +646,10 @@ def _score(estimator, X_test, y_test, scorer, is_multimetric=False):
                 pass
 
         if not isinstance(score, numbers.Number):
-            raise ValueError("scoring must return a number, got %s (%s) "
-                             "instead. (scorer=%r)"
-                             % (str(score), type(score), scorer))
+            raise ValueError(
+                "scoring must return a number, got %s (%s) "
+                "instead. (scorer=%r)" % (str(score), type(score), scorer)
+            )
     return score
 
 
@@ -606,7 +663,7 @@ def _multimetric_score(estimator, X_test, y_test, scorers):
         else:
             score = scorer(estimator, X_test, y_test)
 
-        if hasattr(score, 'item'):
+        if hasattr(score, "item"):
             try:
                 # e.g. unwrap memmapped scalars
                 score = score.item()
@@ -616,15 +673,25 @@ def _multimetric_score(estimator, X_test, y_test, scorers):
         scores[name] = score
 
         if not isinstance(score, numbers.Number):
-            raise ValueError("scoring must return a number, got %s (%s) "
-                             "instead. (scorer=%s)"
-                             % (str(score), type(score), name))
+            raise ValueError(
+                "scoring must return a number, got %s (%s) "
+                "instead. (scorer=%s)" % (str(score), type(score), name)
+            )
     return scores
 
 
-def cross_val_predict(estimator, X, y=None, groups=None, cv=None,
-                      n_jobs=None, verbose=0, fit_params=None,
-                      pre_dispatch='2*n_jobs', method='predict'):
+def cross_val_predict(
+    estimator,
+    X,
+    y=None,
+    groups=None,
+    cv=None,
+    n_jobs=None,
+    verbose=0,
+    fit_params=None,
+    pre_dispatch="2*n_jobs",
+    method="predict",
+):
     """Generate cross-validated estimates for each input data point
 
     The data is split according to the cv parameter. Each sample belongs
@@ -744,8 +811,7 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None,
 
     # If classification methods produce multiple columns of output,
     # we need to manually encode classes to ensure consistent column ordering.
-    encode = method in ['decision_function', 'predict_proba',
-                        'predict_log_proba']
+    encode = method in ["decision_function", "predict_proba", "predict_log_proba"]
     if encode:
         y = np.asarray(y)
         if y.ndim == 1:
@@ -759,19 +825,20 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None,
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
-    parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
-                        pre_dispatch=pre_dispatch)
-    prediction_blocks = parallel(delayed(_fit_and_predict)(
-        clone(estimator), X, y, train, test, verbose, fit_params, method)
-        for train, test in cv.split(X, y, groups))
+    parallel = Parallel(n_jobs=n_jobs, verbose=verbose, pre_dispatch=pre_dispatch)
+    prediction_blocks = parallel(
+        delayed(_fit_and_predict)(
+            clone(estimator), X, y, train, test, verbose, fit_params, method
+        )
+        for train, test in cv.split(X, y, groups)
+    )
 
     # Concatenate the predictions
     predictions = [pred_block_i for pred_block_i, _ in prediction_blocks]
-    test_indices = np.concatenate([indices_i
-                                   for _, indices_i in prediction_blocks])
+    test_indices = np.concatenate([indices_i for _, indices_i in prediction_blocks])
 
     if not _check_is_permutation(test_indices, _num_samples(X)):
-        raise ValueError('cross_val_predict only works for partitions')
+        raise ValueError("cross_val_predict only works for partitions")
 
     inv_test_indices = np.empty(len(test_indices), dtype=int)
     inv_test_indices[test_indices] = np.arange(len(test_indices))
@@ -798,8 +865,7 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None,
         return predictions[inv_test_indices]
 
 
-def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
-                     method):
+def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params, method):
     """Fit estimator and predict values for a given dataset split.
 
     Read more in the :ref:`User Guide <cross_validation>`.
@@ -841,8 +907,7 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
     """
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
-    fit_params = {k: _index_param_value(X, v, train)
-                  for k, v in fit_params.items()}
+    fit_params = {k: _index_param_value(X, v, train) for k, v in fit_params.items()}
 
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, _ = _safe_split(estimator, X, y, test, train)
@@ -853,17 +918,23 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
         estimator.fit(X_train, y_train, **fit_params)
     func = getattr(estimator, method)
     predictions = func(X_test)
-    if method in ['decision_function', 'predict_proba', 'predict_log_proba']:
+    if method in ["decision_function", "predict_proba", "predict_log_proba"]:
         if isinstance(predictions, list):
-            predictions = [_enforce_prediction_order(
-                estimator.classes_[i_label], predictions[i_label],
-                n_classes=len(set(y[:, i_label])), method=method)
-                for i_label in range(len(predictions))]
+            predictions = [
+                _enforce_prediction_order(
+                    estimator.classes_[i_label],
+                    predictions[i_label],
+                    n_classes=len(set(y[:, i_label])),
+                    method=method,
+                )
+                for i_label in range(len(predictions))
+            ]
         else:
             # A 2D y array should be a binary label indicator matrix
             n_classes = len(set(y)) if y.ndim == 1 else y.shape[1]
             predictions = _enforce_prediction_order(
-                estimator.classes_, predictions, n_classes, method)
+                estimator.classes_, predictions, n_classes, method
+            )
     return predictions, test
 
 
@@ -882,43 +953,52 @@ def _enforce_prediction_order(classes, predictions, n_classes, method):
     """
     if n_classes != len(classes):
         recommendation = (
-            'To fix this, use a cross-validation '
-            'technique resulting in properly '
-            'stratified folds')
-        warnings.warn('Number of classes in training fold ({}) does '
-                      'not match total number of classes ({}). '
-                      'Results may not be appropriate for your use case. '
-                      '{}'.format(len(classes), n_classes, recommendation),
-                      RuntimeWarning)
-        if method == 'decision_function':
-            if (predictions.ndim == 2 and
-                    predictions.shape[1] != len(classes)):
+            "To fix this, use a cross-validation "
+            "technique resulting in properly "
+            "stratified folds"
+        )
+        warnings.warn(
+            "Number of classes in training fold ({}) does "
+            "not match total number of classes ({}). "
+            "Results may not be appropriate for your use case. "
+            "{}".format(len(classes), n_classes, recommendation),
+            RuntimeWarning,
+        )
+        if method == "decision_function":
+            if predictions.ndim == 2 and predictions.shape[1] != len(classes):
                 # This handles the case when the shape of predictions
                 # does not match the number of classes used to train
                 # it with. This case is found when sklearn.svm.SVC is
                 # set to `decision_function_shape='ovo'`.
-                raise ValueError('Output shape {} of {} does not match '
-                                 'number of classes ({}) in fold. '
-                                 'Irregular decision_function outputs '
-                                 'are not currently supported by '
-                                 'cross_val_predict'.format(
-                                    predictions.shape, method, len(classes)))
+                raise ValueError(
+                    "Output shape {} of {} does not match "
+                    "number of classes ({}) in fold. "
+                    "Irregular decision_function outputs "
+                    "are not currently supported by "
+                    "cross_val_predict".format(predictions.shape, method, len(classes))
+                )
             if len(classes) <= 2:
                 # In this special case, `predictions` contains a 1D array.
-                raise ValueError('Only {} class/es in training fold, but {} '
-                                 'in overall dataset. This '
-                                 'is not supported for decision_function '
-                                 'with imbalanced folds. {}'.format(
-                                    len(classes), n_classes, recommendation))
+                raise ValueError(
+                    "Only {} class/es in training fold, but {} "
+                    "in overall dataset. This "
+                    "is not supported for decision_function "
+                    "with imbalanced folds. {}".format(
+                        len(classes), n_classes, recommendation
+                    )
+                )
 
         float_min = np.finfo(predictions.dtype).min
-        default_values = {'decision_function': float_min,
-                          'predict_log_proba': float_min,
-                          'predict_proba': 0}
-        predictions_for_all_classes = np.full((_num_samples(predictions),
-                                               n_classes),
-                                              default_values[method],
-                                              dtype=predictions.dtype)
+        default_values = {
+            "decision_function": float_min,
+            "predict_log_proba": float_min,
+            "predict_proba": 0,
+        }
+        predictions_for_all_classes = np.full(
+            (_num_samples(predictions), n_classes),
+            default_values[method],
+            dtype=predictions.dtype,
+        )
         predictions_for_all_classes[:, classes] = predictions
         predictions = predictions_for_all_classes
     return predictions
@@ -958,9 +1038,18 @@ def _index_param_value(X, v, indices):
     return safe_indexing(v, indices)
 
 
-def permutation_test_score(estimator, X, y, groups=None, cv=None,
-                           n_permutations=100, n_jobs=None, random_state=0,
-                           verbose=0, scoring=None):
+def permutation_test_score(
+    estimator,
+    X,
+    y,
+    groups=None,
+    cv=None,
+    n_permutations=100,
+    n_jobs=None,
+    random_state=0,
+    verbose=0,
+    scoring=None,
+):
     """Evaluate the significance of a cross-validated score with permutations
 
     Read more in the :ref:`User Guide <cross_validation>`.
@@ -1068,9 +1157,10 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
     score = _permutation_test_score(clone(estimator), X, y, groups, cv, scorer)
     permutation_scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
         delayed(_permutation_test_score)(
-            clone(estimator), X, _shuffle(y, groups, random_state),
-            groups, cv, scorer)
-        for _ in range(n_permutations))
+            clone(estimator), X, _shuffle(y, groups, random_state), groups, cv, scorer
+        )
+        for _ in range(n_permutations)
+    )
     permutation_scores = np.array(permutation_scores)
     pvalue = (np.sum(permutation_scores >= score) + 1.0) / (n_permutations + 1)
     return score, permutation_scores, pvalue
@@ -1094,16 +1184,28 @@ def _shuffle(y, groups, random_state):
     else:
         indices = np.arange(len(groups))
         for group in np.unique(groups):
-            this_mask = (groups == group)
+            this_mask = groups == group
             indices[this_mask] = random_state.permutation(indices[this_mask])
     return safe_indexing(y, indices)
 
 
-def learning_curve(estimator, X, y, groups=None,
-                   train_sizes=np.linspace(0.1, 1.0, 5), cv=None,
-                   scoring=None, exploit_incremental_learning=False,
-                   n_jobs=None, pre_dispatch="all", verbose=0, shuffle=False,
-                   random_state=None, error_score=np.nan, return_times=False):
+def learning_curve(
+    estimator,
+    X,
+    y,
+    groups=None,
+    train_sizes=np.linspace(0.1, 1.0, 5),
+    cv=None,
+    scoring=None,
+    exploit_incremental_learning=False,
+    n_jobs=None,
+    pre_dispatch="all",
+    verbose=0,
+    shuffle=False,
+    random_state=None,
+    error_score=np.nan,
+    return_times=False,
+):
     """Learning curve.
 
     Determines cross-validated training and test scores for different training
@@ -1233,8 +1335,10 @@ def learning_curve(estimator, X, y, groups=None,
     <sphx_glr_auto_examples_model_selection_plot_learning_curve.py>`
     """
     if exploit_incremental_learning and not hasattr(estimator, "partial_fit"):
-        raise ValueError("An estimator must support the partial_fit interface "
-                         "to exploit incremental learning")
+        raise ValueError(
+            "An estimator must support the partial_fit interface "
+            "to exploit incremental learning"
+        )
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
@@ -1247,14 +1351,12 @@ def learning_curve(estimator, X, y, groups=None,
     # Because the lengths of folds can be significantly different, it is
     # not guaranteed that we use all of the available training data when we
     # use the first 'n_max_training_samples' samples.
-    train_sizes_abs = _translate_train_sizes(train_sizes,
-                                             n_max_training_samples)
+    train_sizes_abs = _translate_train_sizes(train_sizes, n_max_training_samples)
     n_unique_ticks = train_sizes_abs.shape[0]
     if verbose > 0:
         print("[learning_curve] Training set sizes: " + str(train_sizes_abs))
 
-    parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
-                        verbose=verbose)
+    parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch, verbose=verbose)
 
     if shuffle:
         rng = check_random_state(random_state)
@@ -1262,20 +1364,44 @@ def learning_curve(estimator, X, y, groups=None,
 
     if exploit_incremental_learning:
         classes = np.unique(y) if is_classifier(estimator) else None
-        out = parallel(delayed(_incremental_fit_estimator)(
-            clone(estimator), X, y, classes, train, test, train_sizes_abs,
-            scorer, verbose, return_times) for train, test in cv_iter)
+        out = parallel(
+            delayed(_incremental_fit_estimator)(
+                clone(estimator),
+                X,
+                y,
+                classes,
+                train,
+                test,
+                train_sizes_abs,
+                scorer,
+                verbose,
+                return_times,
+            )
+            for train, test in cv_iter
+        )
     else:
         train_test_proportions = []
         for train, test in cv_iter:
             for n_train_samples in train_sizes_abs:
                 train_test_proportions.append((train[:n_train_samples], test))
 
-        out = parallel(delayed(_fit_and_score)(
-            clone(estimator), X, y, scorer, train, test, verbose,
-            parameters=None, fit_params=None, return_train_score=True,
-            error_score=error_score, return_times=return_times)
-            for train, test in train_test_proportions)
+        out = parallel(
+            delayed(_fit_and_score)(
+                clone(estimator),
+                X,
+                y,
+                scorer,
+                train,
+                test,
+                verbose,
+                parameters=None,
+                fit_params=None,
+                return_train_score=True,
+                error_score=error_score,
+                return_times=return_times,
+            )
+            for train, test in train_test_proportions
+        )
         out = np.array(out)
         n_cv_folds = out.shape[0] // n_unique_ticks
         dim = 4 if return_times else 2
@@ -1321,52 +1447,60 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
     n_max_required_samples = np.max(train_sizes_abs)
     if np.issubdtype(train_sizes_abs.dtype, np.floating):
         if n_min_required_samples <= 0.0 or n_max_required_samples > 1.0:
-            raise ValueError("train_sizes has been interpreted as fractions "
-                             "of the maximum number of training samples and "
-                             "must be within (0, 1], but is within [%f, %f]."
-                             % (n_min_required_samples,
-                                n_max_required_samples))
+            raise ValueError(
+                "train_sizes has been interpreted as fractions "
+                "of the maximum number of training samples and "
+                "must be within (0, 1], but is within [%f, %f]."
+                % (n_min_required_samples, n_max_required_samples)
+            )
         train_sizes_abs = (train_sizes_abs * n_max_training_samples).astype(
-                             dtype=np.int, copy=False)
-        train_sizes_abs = np.clip(train_sizes_abs, 1,
-                                  n_max_training_samples)
+            dtype=np.int, copy=False
+        )
+        train_sizes_abs = np.clip(train_sizes_abs, 1, n_max_training_samples)
     else:
-        if (n_min_required_samples <= 0 or
-                n_max_required_samples > n_max_training_samples):
-            raise ValueError("train_sizes has been interpreted as absolute "
-                             "numbers of training samples and must be within "
-                             "(0, %d], but is within [%d, %d]."
-                             % (n_max_training_samples,
-                                n_min_required_samples,
-                                n_max_required_samples))
+        if (
+            n_min_required_samples <= 0
+            or n_max_required_samples > n_max_training_samples
+        ):
+            raise ValueError(
+                "train_sizes has been interpreted as absolute "
+                "numbers of training samples and must be within "
+                "(0, %d], but is within [%d, %d]."
+                % (
+                    n_max_training_samples,
+                    n_min_required_samples,
+                    n_max_required_samples,
+                )
+            )
 
     train_sizes_abs = np.unique(train_sizes_abs)
     if n_ticks > train_sizes_abs.shape[0]:
-        warnings.warn("Removed duplicate entries from 'train_sizes'. Number "
-                      "of ticks will be less than the size of "
-                      "'train_sizes' %d instead of %d)."
-                      % (train_sizes_abs.shape[0], n_ticks), RuntimeWarning)
+        warnings.warn(
+            "Removed duplicate entries from 'train_sizes'. Number "
+            "of ticks will be less than the size of "
+            "'train_sizes' %d instead of %d)." % (train_sizes_abs.shape[0], n_ticks),
+            RuntimeWarning,
+        )
 
     return train_sizes_abs
 
 
-def _incremental_fit_estimator(estimator, X, y, classes, train, test,
-                               train_sizes, scorer, verbose, return_times):
+def _incremental_fit_estimator(
+    estimator, X, y, classes, train, test, train_sizes, scorer, verbose, return_times
+):
     """Train estimator on training subsets incrementally and compute scores."""
     train_scores, test_scores, fit_times, score_times = [], [], [], []
     partitions = zip(train_sizes, np.split(train, train_sizes)[:-1])
     for n_train_samples, partial_train in partitions:
         train_subset = train[:n_train_samples]
         X_train, y_train = _safe_split(estimator, X, y, train_subset)
-        X_partial_train, y_partial_train = _safe_split(estimator, X, y,
-                                                       partial_train)
+        X_partial_train, y_partial_train = _safe_split(estimator, X, y, partial_train)
         X_test, y_test = _safe_split(estimator, X, y, test, train_subset)
         start_fit = time.time()
         if y_partial_train is None:
             estimator.partial_fit(X_partial_train, classes=classes)
         else:
-            estimator.partial_fit(X_partial_train, y_partial_train,
-                                  classes=classes)
+            estimator.partial_fit(X_partial_train, y_partial_train, classes=classes)
         fit_time = time.time() - start_fit
         fit_times.append(fit_time)
 
@@ -1378,15 +1512,29 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
         score_time = time.time() - start_score
         score_times.append(score_time)
 
-    ret = ((train_scores, test_scores, fit_times, score_times)
-           if return_times else (train_scores, test_scores))
+    ret = (
+        (train_scores, test_scores, fit_times, score_times)
+        if return_times
+        else (train_scores, test_scores)
+    )
 
     return np.array(ret).T
 
 
-def validation_curve(estimator, X, y, param_name, param_range, groups=None,
-                     cv=None, scoring=None, n_jobs=None, pre_dispatch="all",
-                     verbose=0, error_score=np.nan):
+def validation_curve(
+    estimator,
+    X,
+    y,
+    param_name,
+    param_range,
+    groups=None,
+    cv=None,
+    scoring=None,
+    n_jobs=None,
+    pre_dispatch="all",
+    verbose=0,
+    error_score=np.nan,
+):
     """Validation curve.
 
     Determine training and test scores for varying parameter values.
@@ -1484,14 +1632,25 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
     scorer = check_scoring(estimator, scoring=scoring)
 
-    parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
-                        verbose=verbose)
-    out = parallel(delayed(_fit_and_score)(
-        clone(estimator), X, y, scorer, train, test, verbose,
-        parameters={param_name: v}, fit_params=None, return_train_score=True,
-        error_score=error_score)
+    parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch, verbose=verbose)
+    out = parallel(
+        delayed(_fit_and_score)(
+            clone(estimator),
+            X,
+            y,
+            scorer,
+            train,
+            test,
+            verbose,
+            parameters={param_name: v},
+            fit_params=None,
+            return_train_score=True,
+            error_score=error_score,
+        )
         # NOTE do not change order of iteration to allow one time cv splitters
-        for train, test in cv.split(X, y, groups) for v in param_range)
+        for train, test in cv.split(X, y, groups)
+        for v in param_range
+    )
     out = np.asarray(out)
     n_params = len(param_range)
     n_cv_folds = out.shape[0] // n_params
@@ -1523,5 +1682,4 @@ def _aggregate_score_dicts(scores):
     {'a': array([1, 2, 3, 10]),
      'b': array([10, 2, 3, 10])}
     """
-    return {key: np.asarray([score[key] for score in scores])
-            for key in scores[0]}
+    return {key: np.asarray([score[key] for score in scores]) for key in scores[0]}

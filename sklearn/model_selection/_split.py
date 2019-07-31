@@ -27,22 +27,24 @@ from ..utils.multiclass import type_of_target
 from ..utils.fixes import comb
 from ..base import _pprint
 
-__all__ = ['BaseCrossValidator',
-           'KFold',
-           'GroupKFold',
-           'LeaveOneGroupOut',
-           'LeaveOneOut',
-           'LeavePGroupsOut',
-           'LeavePOut',
-           'RepeatedStratifiedKFold',
-           'RepeatedKFold',
-           'ShuffleSplit',
-           'GroupShuffleSplit',
-           'StratifiedKFold',
-           'StratifiedShuffleSplit',
-           'PredefinedSplit',
-           'train_test_split',
-           'check_cv']
+__all__ = [
+    "BaseCrossValidator",
+    "KFold",
+    "GroupKFold",
+    "LeaveOneGroupOut",
+    "LeaveOneOut",
+    "LeavePGroupsOut",
+    "LeavePOut",
+    "RepeatedStratifiedKFold",
+    "RepeatedKFold",
+    "ShuffleSplit",
+    "GroupShuffleSplit",
+    "StratifiedKFold",
+    "StratifiedShuffleSplit",
+    "PredefinedSplit",
+    "train_test_split",
+    "check_cv",
+]
 
 
 class BaseCrossValidator(metaclass=ABCMeta):
@@ -157,8 +159,7 @@ class LeaveOneOut(BaseCrossValidator):
         n_samples = _num_samples(X)
         if n_samples <= 1:
             raise ValueError(
-                'Cannot perform LeaveOneOut with n_samples={}.'.format(
-                    n_samples)
+                "Cannot perform LeaveOneOut with n_samples={}.".format(n_samples)
             )
         return range(n_samples)
 
@@ -240,8 +241,8 @@ class LeavePOut(BaseCrossValidator):
         n_samples = _num_samples(X)
         if n_samples <= self.p:
             raise ValueError(
-                'p={} must be strictly less than the number of '
-                'samples={}'.format(self.p, n_samples)
+                "p={} must be strictly less than the number of "
+                "samples={}".format(self.p, n_samples)
             )
         for combination in combinations(range(n_samples), self.p):
             yield np.array(combination)
@@ -272,20 +273,21 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
     @abstractmethod
     def __init__(self, n_splits, shuffle, random_state):
         if not isinstance(n_splits, numbers.Integral):
-            raise ValueError('The number of folds must be of Integral type. '
-                             '%s of type %s was passed.'
-                             % (n_splits, type(n_splits)))
+            raise ValueError(
+                "The number of folds must be of Integral type. "
+                "%s of type %s was passed." % (n_splits, type(n_splits))
+            )
         n_splits = int(n_splits)
 
         if n_splits <= 1:
             raise ValueError(
                 "k-fold cross-validation requires at least one"
                 " train/test split by setting n_splits=2 or more,"
-                " got n_splits={0}.".format(n_splits))
+                " got n_splits={0}.".format(n_splits)
+            )
 
         if not isinstance(shuffle, bool):
-            raise TypeError("shuffle must be True or False;"
-                            " got {0}".format(shuffle))
+            raise TypeError("shuffle must be True or False;" " got {0}".format(shuffle))
 
         self.n_splits = n_splits
         self.shuffle = shuffle
@@ -319,9 +321,11 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
         n_samples = _num_samples(X)
         if self.n_splits > n_samples:
             raise ValueError(
-                ("Cannot have number of splits n_splits={0} greater"
-                 " than the number of samples: n_samples={1}.")
-                .format(self.n_splits, n_samples))
+                (
+                    "Cannot have number of splits n_splits={0} greater"
+                    " than the number of samples: n_samples={1}."
+                ).format(self.n_splits, n_samples)
+            )
 
         for train, test in super().split(X, y, groups):
             yield train, test
@@ -416,8 +420,7 @@ class KFold(_BaseKFold):
     RepeatedKFold: Repeats K-Fold n times.
     """
 
-    def __init__(self, n_splits=5, shuffle=False,
-                 random_state=None):
+    def __init__(self, n_splits=5, shuffle=False, random_state=None):
         super().__init__(n_splits, shuffle, random_state)
 
     def _iter_test_indices(self, X, y=None, groups=None):
@@ -428,7 +431,7 @@ class KFold(_BaseKFold):
 
         n_splits = self.n_splits
         fold_sizes = np.full(n_splits, n_samples // n_splits, dtype=np.int)
-        fold_sizes[:n_samples % n_splits] += 1
+        fold_sizes[: n_samples % n_splits] += 1
         current = 0
         for fold_size in fold_sizes:
             start, stop = current, current + fold_size
@@ -486,6 +489,7 @@ class GroupKFold(_BaseKFold):
         For splitting the data according to explicit domain-specific
         stratification of the dataset.
     """
+
     def __init__(self, n_splits=5):
         super().__init__(n_splits, shuffle=False, random_state=None)
 
@@ -498,9 +502,10 @@ class GroupKFold(_BaseKFold):
         n_groups = len(unique_groups)
 
         if self.n_splits > n_groups:
-            raise ValueError("Cannot have number of splits n_splits=%d greater"
-                             " than the number of groups: %d."
-                             % (self.n_splits, n_groups))
+            raise ValueError(
+                "Cannot have number of splits n_splits=%d greater"
+                " than the number of groups: %d." % (self.n_splits, n_groups)
+            )
 
         # Weight groups by their number of occurrences
         n_samples_per_group = np.bincount(groups)
@@ -616,11 +621,13 @@ class StratifiedKFold(_BaseKFold):
         rng = check_random_state(self.random_state)
         y = np.asarray(y)
         type_of_target_y = type_of_target(y)
-        allowed_target_types = ('binary', 'multiclass')
+        allowed_target_types = ("binary", "multiclass")
         if type_of_target_y not in allowed_target_types:
             raise ValueError(
-                'Supported target types are: {}. Got {!r} instead.'.format(
-                    allowed_target_types, type_of_target_y))
+                "Supported target types are: {}. Got {!r} instead.".format(
+                    allowed_target_types, type_of_target_y
+                )
+            )
 
         y = column_or_1d(y)
         n_samples = y.shape[0]
@@ -628,15 +635,20 @@ class StratifiedKFold(_BaseKFold):
         y_counts = np.bincount(y_inversed)
         min_groups = np.min(y_counts)
         if np.all(self.n_splits > y_counts):
-            raise ValueError("n_splits=%d cannot be greater than the"
-                             " number of members in each class."
-                             % (self.n_splits))
+            raise ValueError(
+                "n_splits=%d cannot be greater than the"
+                " number of members in each class." % (self.n_splits)
+            )
         if self.n_splits > min_groups:
-            warnings.warn(("The least populated class in y has only %d"
-                           " members, which is too few. The minimum"
-                           " number of members in any class cannot"
-                           " be less than n_splits=%d."
-                           % (min_groups, self.n_splits)), Warning)
+            warnings.warn(
+                (
+                    "The least populated class in y has only %d"
+                    " members, which is too few. The minimum"
+                    " number of members in any class cannot"
+                    " be less than n_splits=%d." % (min_groups, self.n_splits)
+                ),
+                Warning,
+            )
 
         # pre-assign each sample to a test fold index using individual KFold
         # splitting strategies for each class so as to respect the balance of
@@ -645,9 +657,11 @@ class StratifiedKFold(_BaseKFold):
         # will break when the data is not 100% stratifiable for all classes.
         # So we pass np.zeroes(max(c, n_splits)) as data to the KFold
         per_cls_cvs = [
-            KFold(self.n_splits, shuffle=self.shuffle,
-                  random_state=rng).split(np.zeros(max(count, self.n_splits)))
-            for count in y_counts]
+            KFold(self.n_splits, shuffle=self.shuffle, random_state=rng).split(
+                np.zeros(max(count, self.n_splits))
+            )
+            for count in y_counts
+        ]
 
         test_folds = np.zeros(n_samples, dtype=np.int)
         for test_fold_indices, per_cls_splits in enumerate(zip(*per_cls_cvs)):
@@ -761,6 +775,7 @@ class TimeSeriesSplit(_BaseKFold):
     with a test set of size ``n_samples//(n_splits + 1)``,
     where ``n_samples`` is the number of samples.
     """
+
     def __init__(self, n_splits=5, max_train_size=None):
         super().__init__(n_splits, shuffle=False, random_state=None)
         self.max_train_size = max_train_size
@@ -794,20 +809,25 @@ class TimeSeriesSplit(_BaseKFold):
         n_folds = n_splits + 1
         if n_folds > n_samples:
             raise ValueError(
-                ("Cannot have number of folds ={0} greater"
-                 " than the number of samples: {1}.").format(n_folds,
-                                                             n_samples))
+                (
+                    "Cannot have number of folds ={0} greater"
+                    " than the number of samples: {1}."
+                ).format(n_folds, n_samples)
+            )
         indices = np.arange(n_samples)
-        test_size = (n_samples // n_folds)
-        test_starts = range(test_size + n_samples % n_folds,
-                            n_samples, test_size)
+        test_size = n_samples // n_folds
+        test_starts = range(test_size + n_samples % n_folds, n_samples, test_size)
         for test_start in test_starts:
             if self.max_train_size and self.max_train_size < test_start:
-                yield (indices[test_start - self.max_train_size:test_start],
-                       indices[test_start:test_start + test_size])
+                yield (
+                    indices[test_start - self.max_train_size : test_start],
+                    indices[test_start : test_start + test_size],
+                )
             else:
-                yield (indices[:test_start],
-                       indices[test_start:test_start + test_size])
+                yield (
+                    indices[:test_start],
+                    indices[test_start : test_start + test_size],
+                )
 
 
 class LeaveOneGroupOut(BaseCrossValidator):
@@ -861,7 +881,8 @@ class LeaveOneGroupOut(BaseCrossValidator):
         if len(unique_groups) <= 1:
             raise ValueError(
                 "The groups parameter contains fewer than 2 unique groups "
-                "(%s). LeaveOneGroupOut expects at least 2." % unique_groups)
+                "(%s). LeaveOneGroupOut expects at least 2." % unique_groups
+            )
         for i in unique_groups:
             yield groups == i
 
@@ -988,7 +1009,8 @@ class LeavePGroupsOut(BaseCrossValidator):
                 "The groups parameter contains fewer than (or equal to) "
                 "n_groups (%d) numbers of unique groups (%s). LeavePGroupsOut "
                 "expects that at least n_groups + 1 (%d) unique groups be "
-                "present" % (self.n_groups, unique_groups, self.n_groups + 1))
+                "present" % (self.n_groups, unique_groups, self.n_groups + 1)
+            )
         combi = combinations(range(len(unique_groups)), self.n_groups)
         for indices in combi:
             test_index = np.zeros(_num_samples(X), dtype=np.bool)
@@ -1074,6 +1096,7 @@ class _RepeatedSplits(metaclass=ABCMeta):
         Constructor parameters for cv. Must not contain random_state
         and shuffle.
     """
+
     def __init__(self, cv, n_repeats=10, random_state=None, **cvargs):
         if not isinstance(n_repeats, numbers.Integral):
             raise ValueError("Number of repetitions must be of Integral type.")
@@ -1081,9 +1104,8 @@ class _RepeatedSplits(metaclass=ABCMeta):
         if n_repeats <= 0:
             raise ValueError("Number of repetitions must be greater than 0.")
 
-        if any(key in cvargs for key in ('random_state', 'shuffle')):
-            raise ValueError(
-                "cvargs must not contain random_state or shuffle.")
+        if any(key in cvargs for key in ("random_state", "shuffle")):
+            raise ValueError("cvargs must not contain random_state or shuffle.")
 
         self.cv = cv
         self.n_repeats = n_repeats
@@ -1118,8 +1140,7 @@ class _RepeatedSplits(metaclass=ABCMeta):
         rng = check_random_state(self.random_state)
 
         for idx in range(n_repeats):
-            cv = self.cv(random_state=rng, shuffle=True,
-                         **self.cvargs)
+            cv = self.cv(random_state=rng, shuffle=True, **self.cvargs)
             for train_index, test_index in cv.split(X, y, groups):
                 yield train_index, test_index
 
@@ -1146,8 +1167,7 @@ class _RepeatedSplits(metaclass=ABCMeta):
             Returns the number of splitting iterations in the cross-validator.
         """
         rng = check_random_state(self.random_state)
-        cv = self.cv(random_state=rng, shuffle=True,
-                     **self.cvargs)
+        cv = self.cv(random_state=rng, shuffle=True, **self.cvargs)
         return cv.get_n_splits(X, y, groups) * self.n_repeats
 
 
@@ -1199,9 +1219,9 @@ class RepeatedKFold(_RepeatedSplits):
     --------
     RepeatedStratifiedKFold: Repeats Stratified K-Fold n times.
     """
+
     def __init__(self, n_splits=5, n_repeats=10, random_state=None):
-        super().__init__(
-            KFold, n_repeats, random_state, n_splits=n_splits)
+        super().__init__(KFold, n_repeats, random_state, n_splits=n_splits)
 
 
 class RepeatedStratifiedKFold(_RepeatedSplits):
@@ -1252,16 +1272,15 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
     --------
     RepeatedKFold: Repeats K-Fold n times.
     """
+
     def __init__(self, n_splits=5, n_repeats=10, random_state=None):
-        super().__init__(
-            StratifiedKFold, n_repeats, random_state, n_splits=n_splits)
+        super().__init__(StratifiedKFold, n_repeats, random_state, n_splits=n_splits)
 
 
 class BaseShuffleSplit(metaclass=ABCMeta):
     """Base class for ShuffleSplit and StratifiedShuffleSplit"""
 
-    def __init__(self, n_splits=10, test_size=None, train_size=None,
-                 random_state=None):
+    def __init__(self, n_splits=10, test_size=None, train_size=None, random_state=None):
         self.n_splits = n_splits
         self.test_size = test_size
         self.train_size = train_size
@@ -1394,32 +1413,36 @@ class ShuffleSplit(BaseShuffleSplit):
     TRAIN: [3 4 1] TEST: [5 2]
     TRAIN: [3 5 1] TEST: [2 4]
     """
-    def __init__(self, n_splits=10, test_size=None, train_size=None,
-                 random_state=None):
+
+    def __init__(self, n_splits=10, test_size=None, train_size=None, random_state=None):
         super().__init__(
             n_splits=n_splits,
             test_size=test_size,
             train_size=train_size,
-            random_state=random_state)
+            random_state=random_state,
+        )
         self._default_test_size = 0.1
 
     def _iter_indices(self, X, y=None, groups=None):
         n_samples = _num_samples(X)
         n_train, n_test = _validate_shuffle_split(
-            n_samples, self.test_size, self.train_size,
-            default_test_size=self._default_test_size)
+            n_samples,
+            self.test_size,
+            self.train_size,
+            default_test_size=self._default_test_size,
+        )
 
         rng = check_random_state(self.random_state)
         for i in range(self.n_splits):
             # random partition
             permutation = rng.permutation(n_samples)
             ind_test = permutation[:n_test]
-            ind_train = permutation[n_test:(n_test + n_train)]
+            ind_train = permutation[n_test : (n_test + n_train)]
             yield ind_train, ind_test
 
 
 class GroupShuffleSplit(ShuffleSplit):
-    '''Shuffle-Group(s)-Out cross-validation iterator
+    """Shuffle-Group(s)-Out cross-validation iterator
 
     Provides randomized train/test indices to split data according to a
     third-party provided group. This group information can be used to encode
@@ -1465,15 +1488,15 @@ class GroupShuffleSplit(ShuffleSplit):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    '''
+    """
 
-    def __init__(self, n_splits=5, test_size=None, train_size=None,
-                 random_state=None):
+    def __init__(self, n_splits=5, test_size=None, train_size=None, random_state=None):
         super().__init__(
             n_splits=n_splits,
             test_size=test_size,
             train_size=train_size,
-            random_state=random_state)
+            random_state=random_state,
+        )
         self._default_test_size = 0.2
 
     def _iter_indices(self, X, y, groups):
@@ -1584,50 +1607,58 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     TRAIN: [0 5 1] TEST: [3 4 2]
     """
 
-    def __init__(self, n_splits=10, test_size=None, train_size=None,
-                 random_state=None):
+    def __init__(self, n_splits=10, test_size=None, train_size=None, random_state=None):
         super().__init__(
             n_splits=n_splits,
             test_size=test_size,
             train_size=train_size,
-            random_state=random_state)
+            random_state=random_state,
+        )
         self._default_test_size = 0.1
 
     def _iter_indices(self, X, y, groups=None):
         n_samples = _num_samples(X)
         y = check_array(y, ensure_2d=False, dtype=None)
         n_train, n_test = _validate_shuffle_split(
-            n_samples, self.test_size, self.train_size,
-            default_test_size=self._default_test_size)
+            n_samples,
+            self.test_size,
+            self.train_size,
+            default_test_size=self._default_test_size,
+        )
 
         if y.ndim == 2:
             # for multi-label y, map each distinct row to a string repr
             # using join because str(row) uses an ellipsis if len(row) > 1000
-            y = np.array([' '.join(row.astype('str')) for row in y])
+            y = np.array([" ".join(row.astype("str")) for row in y])
 
         classes, y_indices = np.unique(y, return_inverse=True)
         n_classes = classes.shape[0]
 
         class_counts = np.bincount(y_indices)
         if np.min(class_counts) < 2:
-            raise ValueError("The least populated class in y has only 1"
-                             " member, which is too few. The minimum"
-                             " number of groups for any class cannot"
-                             " be less than 2.")
+            raise ValueError(
+                "The least populated class in y has only 1"
+                " member, which is too few. The minimum"
+                " number of groups for any class cannot"
+                " be less than 2."
+            )
 
         if n_train < n_classes:
-            raise ValueError('The train_size = %d should be greater or '
-                             'equal to the number of classes = %d' %
-                             (n_train, n_classes))
+            raise ValueError(
+                "The train_size = %d should be greater or "
+                "equal to the number of classes = %d" % (n_train, n_classes)
+            )
         if n_test < n_classes:
-            raise ValueError('The test_size = %d should be greater or '
-                             'equal to the number of classes = %d' %
-                             (n_test, n_classes))
+            raise ValueError(
+                "The test_size = %d should be greater or "
+                "equal to the number of classes = %d" % (n_test, n_classes)
+            )
 
         # Find the sorted list of instances for each class:
         # (np.unique above performs a sort, so code is O(n logn) already)
-        class_indices = np.split(np.argsort(y_indices, kind='mergesort'),
-                                 np.cumsum(class_counts)[:-1])
+        class_indices = np.split(
+            np.argsort(y_indices, kind="mergesort"), np.cumsum(class_counts)[:-1]
+        )
 
         rng = check_random_state(self.random_state)
 
@@ -1643,11 +1674,10 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
             for i in range(n_classes):
                 permutation = rng.permutation(class_counts[i])
-                perm_indices_class_i = class_indices[i].take(permutation,
-                                                             mode='clip')
+                perm_indices_class_i = class_indices[i].take(permutation, mode="clip")
 
-                train.extend(perm_indices_class_i[:n_i[i]])
-                test.extend(perm_indices_class_i[n_i[i]:n_i[i] + t_i[i]])
+                train.extend(perm_indices_class_i[: n_i[i]])
+                test.extend(perm_indices_class_i[n_i[i] : n_i[i] + t_i[i]])
 
             train = rng.permutation(train)
             test = rng.permutation(test)
@@ -1692,8 +1722,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         return super().split(X, y, groups)
 
 
-def _validate_shuffle_split(n_samples, test_size, train_size,
-                            default_test_size=None):
+def _validate_shuffle_split(n_samples, test_size, train_size, default_test_size=None):
     """
     Validation helper to check if the test/test sizes are meaningful wrt to the
     size of the data (n_samples)
@@ -1704,38 +1733,49 @@ def _validate_shuffle_split(n_samples, test_size, train_size,
     test_size_type = np.asarray(test_size).dtype.kind
     train_size_type = np.asarray(train_size).dtype.kind
 
-    if (test_size_type == 'i' and (test_size >= n_samples or test_size <= 0)
-       or test_size_type == 'f' and (test_size <= 0 or test_size >= 1)):
-        raise ValueError('test_size={0} should be either positive and smaller'
-                         ' than the number of samples {1} or a float in the '
-                         '(0, 1) range'.format(test_size, n_samples))
+    if (
+        test_size_type == "i"
+        and (test_size >= n_samples or test_size <= 0)
+        or test_size_type == "f"
+        and (test_size <= 0 or test_size >= 1)
+    ):
+        raise ValueError(
+            "test_size={0} should be either positive and smaller"
+            " than the number of samples {1} or a float in the "
+            "(0, 1) range".format(test_size, n_samples)
+        )
 
-    if (train_size_type == 'i' and (train_size >= n_samples or train_size <= 0)
-       or train_size_type == 'f' and (train_size <= 0 or train_size >= 1)):
-        raise ValueError('train_size={0} should be either positive and smaller'
-                         ' than the number of samples {1} or a float in the '
-                         '(0, 1) range'.format(train_size, n_samples))
+    if (
+        train_size_type == "i"
+        and (train_size >= n_samples or train_size <= 0)
+        or train_size_type == "f"
+        and (train_size <= 0 or train_size >= 1)
+    ):
+        raise ValueError(
+            "train_size={0} should be either positive and smaller"
+            " than the number of samples {1} or a float in the "
+            "(0, 1) range".format(train_size, n_samples)
+        )
 
-    if train_size is not None and train_size_type not in ('i', 'f'):
+    if train_size is not None and train_size_type not in ("i", "f"):
         raise ValueError("Invalid value for train_size: {}".format(train_size))
-    if test_size is not None and test_size_type not in ('i', 'f'):
+    if test_size is not None and test_size_type not in ("i", "f"):
         raise ValueError("Invalid value for test_size: {}".format(test_size))
 
-    if (train_size_type == 'f' and test_size_type == 'f' and
-            train_size + test_size > 1):
+    if train_size_type == "f" and test_size_type == "f" and train_size + test_size > 1:
         raise ValueError(
-            'The sum of test_size and train_size = {}, should be in the (0, 1)'
-            ' range. Reduce test_size and/or train_size.'
-            .format(train_size + test_size))
+            "The sum of test_size and train_size = {}, should be in the (0, 1)"
+            " range. Reduce test_size and/or train_size.".format(train_size + test_size)
+        )
 
-    if test_size_type == 'f':
+    if test_size_type == "f":
         n_test = ceil(test_size * n_samples)
-    elif test_size_type == 'i':
+    elif test_size_type == "i":
         n_test = float(test_size)
 
-    if train_size_type == 'f':
+    if train_size_type == "f":
         n_train = floor(train_size * n_samples)
-    elif train_size_type == 'i':
+    elif train_size_type == "i":
         n_train = float(train_size)
 
     if train_size is None:
@@ -1744,19 +1784,20 @@ def _validate_shuffle_split(n_samples, test_size, train_size,
         n_test = n_samples - n_train
 
     if n_train + n_test > n_samples:
-        raise ValueError('The sum of train_size and test_size = %d, '
-                         'should be smaller than the number of '
-                         'samples %d. Reduce test_size and/or '
-                         'train_size.' % (n_train + n_test, n_samples))
+        raise ValueError(
+            "The sum of train_size and test_size = %d, "
+            "should be smaller than the number of "
+            "samples %d. Reduce test_size and/or "
+            "train_size." % (n_train + n_test, n_samples)
+        )
 
     n_train, n_test = int(n_train), int(n_test)
 
     if n_train == 0:
         raise ValueError(
-            'With n_samples={}, test_size={} and train_size={}, the '
-            'resulting train set will be empty. Adjust any of the '
-            'aforementioned parameters.'.format(n_samples, test_size,
-                                                train_size)
+            "With n_samples={}, test_size={} and train_size={}, the "
+            "resulting train set will be empty. Adjust any of the "
+            "aforementioned parameters.".format(n_samples, test_size, train_size)
         )
 
     return n_train, n_test
@@ -1864,6 +1905,7 @@ class PredefinedSplit(BaseCrossValidator):
 
 class _CVIterableWrapper(BaseCrossValidator):
     """Wrapper class for old style cv objects and iterables."""
+
     def __init__(self, cv):
         self.cv = list(cv)
 
@@ -1953,17 +1995,22 @@ def check_cv(cv=5, y=None, classifier=False):
     """
     cv = 5 if cv is None else cv
     if isinstance(cv, numbers.Integral):
-        if (classifier and (y is not None) and
-                (type_of_target(y) in ('binary', 'multiclass'))):
+        if (
+            classifier
+            and (y is not None)
+            and (type_of_target(y) in ("binary", "multiclass"))
+        ):
             return StratifiedKFold(cv)
         else:
             return KFold(cv)
 
-    if not hasattr(cv, 'split') or isinstance(cv, str):
+    if not hasattr(cv, "split") or isinstance(cv, str):
         if not isinstance(cv, Iterable) or isinstance(cv, str):
-            raise ValueError("Expected cv as an integer, cross-validation "
-                             "object (from sklearn.model_selection) "
-                             "or an iterable. Got %s." % cv)
+            raise ValueError(
+                "Expected cv as an integer, cross-validation "
+                "object (from sklearn.model_selection) "
+                "or an iterable. Got %s." % cv
+            )
         return _CVIterableWrapper(cv)
 
     return cv  # New style cv objects are passed without any modification
@@ -2058,11 +2105,11 @@ def train_test_split(*arrays, **options):
     n_arrays = len(arrays)
     if n_arrays == 0:
         raise ValueError("At least one array required as input")
-    test_size = options.pop('test_size', None)
-    train_size = options.pop('train_size', None)
-    random_state = options.pop('random_state', None)
-    stratify = options.pop('stratify', None)
-    shuffle = options.pop('shuffle', True)
+    test_size = options.pop("test_size", None)
+    train_size = options.pop("train_size", None)
+    random_state = options.pop("random_state", None)
+    stratify = options.pop("stratify", None)
+    shuffle = options.pop("shuffle", True)
 
     if options:
         raise TypeError("Invalid parameters passed: %s" % str(options))
@@ -2070,14 +2117,15 @@ def train_test_split(*arrays, **options):
     arrays = indexable(*arrays)
 
     n_samples = _num_samples(arrays[0])
-    n_train, n_test = _validate_shuffle_split(n_samples, test_size, train_size,
-                                              default_test_size=0.25)
+    n_train, n_test = _validate_shuffle_split(
+        n_samples, test_size, train_size, default_test_size=0.25
+    )
 
     if shuffle is False:
         if stratify is not None:
             raise ValueError(
-                "Stratified train/test split is not implemented for "
-                "shuffle=False")
+                "Stratified train/test split is not implemented for " "shuffle=False"
+            )
 
         train = np.arange(n_train)
         test = np.arange(n_train, n_train + n_test)
@@ -2088,14 +2136,15 @@ def train_test_split(*arrays, **options):
         else:
             CVClass = ShuffleSplit
 
-        cv = CVClass(test_size=n_test,
-                     train_size=n_train,
-                     random_state=random_state)
+        cv = CVClass(test_size=n_test, train_size=n_train, random_state=random_state)
 
         train, test = next(cv.split(X=arrays[0], y=stratify))
 
-    return list(chain.from_iterable((safe_indexing(a, train),
-                                     safe_indexing(a, test)) for a in arrays))
+    return list(
+        chain.from_iterable(
+            (safe_indexing(a, train), safe_indexing(a, test)) for a in arrays
+        )
+    )
 
 
 # Tell nose that train_test_split is not a test.
@@ -2106,15 +2155,20 @@ train_test_split.__test__ = False
 def _build_repr(self):
     # XXX This is copied from BaseEstimator's get_params
     cls = self.__class__
-    init = getattr(cls.__init__, 'deprecated_original', cls.__init__)
+    init = getattr(cls.__init__, "deprecated_original", cls.__init__)
     # Ignore varargs, kw and default values and pop self
     init_signature = signature(init)
     # Consider the constructor parameters excluding 'self'
     if init is object.__init__:
         args = []
     else:
-        args = sorted([p.name for p in init_signature.parameters.values()
-                       if p.name != 'self' and p.kind != p.VAR_KEYWORD])
+        args = sorted(
+            [
+                p.name
+                for p in init_signature.parameters.values()
+                if p.name != "self" and p.kind != p.VAR_KEYWORD
+            ]
+        )
     class_name = self.__class__.__name__
     params = dict()
     for key in args:
@@ -2133,4 +2187,4 @@ def _build_repr(self):
             warnings.filters.pop(0)
         params[key] = value
 
-    return '%s(%s)' % (class_name, _pprint(params, offset=len(class_name)))
+    return "%s(%s)" % (class_name, _pprint(params, offset=len(class_name)))
