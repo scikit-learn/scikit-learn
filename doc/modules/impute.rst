@@ -32,13 +32,6 @@ missing values (e.g. :class:`impute.IterativeImputer`).
 Univariate feature imputation
 =============================
 
-Imputer transformers can be used to create pipelines that support data with
-missing values. See :ref:`sphx_glr_auto_examples_plot_missing_values.py`.
-
-
-Simple univariate imputation
-============================
-
 The :class:`SimpleImputer` class provides basic strategies for imputing missing
 values. Missing values can be imputed with a provided constant value, or using
 the statistics (mean, median or most frequent) of each column in which the
@@ -193,14 +186,16 @@ Nearest neighbors imputation
 ============================
 
 The :class:`KNNImputer` class provides imputation for filling in missing
-values using the k-Nearest Neighbors approach. By default, a eucliean distance
+values using the k-Nearest Neighbors approach. By default, a euclidean distance
 metric that supports missing values,
 :func:`~sklearn.metrics.nan_euclidean_distances`, is used to find the
-nearest neighbors. Each missing feature are 
+nearest neighbors. Each missing feature is 
 imputed using values from ``n_neighbors`` nearest neighbors that have a value
 for the feature. The feature of the neighbors are averaged uniformly or
-weighted by distance. When the number of neighbors is less than 
-``n_neighbors``, the training set average for that feature is used for
+weighted by distance to each neighbor. If a sample has more than one feature
+missing, then the neighbors for that sample can be different depending on the
+particular feature being imputed. When the number of neighbors is less
+than ``n_neighbors``, the training set average for that feature is used for
 imputation. For more information on the methodology, see ref. [OL2001]_.
 
 The following snippet demonstrates how to replace missing values,

@@ -24,6 +24,8 @@ class KNNImputer(TransformerMixin, BaseEstimator):
     training set average for that feature is used during imputation. If a
     feature is always missing, it is removed during `transform`.
 
+    Read more in the :ref:`User Guide <knnimpute>`.
+
     .. versionadded:: 0.22
 
     Parameters
@@ -68,7 +70,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
         neighbors search because they have too many missing features or
         all of the sample's k-nearest neighbors (i.e., the potential donors)
         also have the relevant feature value missing. If a feature is always
-        missing, the `mean_` will be `np.nan`, andt that feature will be
+        missing, the `mean_` will be `np.nan`, and that feature will be
         dropped during `transform`.
 
     References
