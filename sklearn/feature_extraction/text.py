@@ -1691,13 +1691,13 @@ class TfidfVectorizer(CountVectorizer):
             Tf-idf-weighted document-term matrix.
         """
         check_is_fitted(self, '_tfidf', 'The tfidf vector is not fitted')
-        # FIXME Remove copy parameter support in 0.23 -------------------------
+
+        # FIXME Remove copy parameter support in 0.23
         if copy != "deprecated":
             msg = ("'copy' param has been deprecated since version 0.21."
                    " Backward compatibility for 'copy' will be removed in"
                    " 0.23.")
             warnings.warn(msg, DeprecationWarning)
-        # ---------------------------------------------------------------------
         X = super().transform(raw_documents)
         return self._tfidf.transform(X, copy=False)
 
