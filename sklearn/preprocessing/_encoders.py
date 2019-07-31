@@ -122,6 +122,17 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                     msg = ("Found unknown categories {0} in column {1}"
                            " during transform".format(diff, i))
                     raise ValueError(msg)
+                elif handle_unknown == 'virtual':
+                    # Set the problematic rows to None and if necessary
+                    # append the None category to the category list.
+                    # This will create a virtual category that maps
+                    # back to None.
+                    if not None in self.categories_[i]:
+                        self.categories_[i] = np.append(
+                            self.categories_[i],
+                            np.array(None)
+                        )
+                    Xi[~valid_mask] = None
                 else:
                     # Set the problematic rows to an acceptable value and
                     # continue `The rows are marked `X_mask` and will be
@@ -552,6 +563,14 @@ class OrdinalEncoder(_BaseEncoder):
     dtype : number type, default np.float64
         Desired dtype of output.
 
+    handle_unknown : 'error' or 'virtual', default='error'.
+        Whether to raise an error or to create a virtual cagetory if an unknown 
+        categorical feature is present during transform (default is to raise). 
+        When this parameter is set to 'virtual' and an unknown category is 
+        encountered during transform, an additional ordinal value will be
+        appended to the existing values, at the final ordinal positon. In the 
+        inverse transform, an unknown category will be denoted as None.
+
     Attributes
     ----------
     categories_ : list of arrays
@@ -579,6 +598,24 @@ class OrdinalEncoder(_BaseEncoder):
     array([['Male', 1],
            ['Female', 2]], dtype=object)
 
+    >>> encvirtual = OrdinalEncoder(handle_unknown='virtual')
+    >>> X = [["Red","Coffee"], ["Green","Tea"],  ["Blue","Water"]]
+    >>> encvirtual.fit(X)
+    ... # doctest: +ELLIPSIS
+    OrdinalEncoder(categories='auto', dtype=<... 'numpy.float64'>,
+        handle_unknown='virtual')
+    >>> encvirtual.transform([["Red","Coffee"], ["Green","Tea"]])
+    array([[2., 0.],
+           [1., 1.]])
+    >>> encvirtual.transform([["Purple","Coffee"], ["Green","Tea"]])
+    array([[3., 0.],
+           [1., 1.]])
+
+    >>> encvirtual.inverse_transform([[3, 0], [1, 1]])
+    array([[None, "Coffee"],
+           ["Green","Tea"]], dtype=object)
+
+
     See also
     --------
     sklearn.preprocessing.OneHotEncoder : performs a one-hot encoding of
@@ -587,9 +624,10 @@ class OrdinalEncoder(_BaseEncoder):
       between 0 and n_classes-1.
     """
 
-    def __init__(self, categories='auto', dtype=np.float64):
+    def __init__(self, categories='auto', dtype=np.float64, handle_unknown="error"):
         self.categories = categories
         self.dtype = dtype
+        self.handle_unknown = handle_unknown
 
     def fit(self, X, y=None):
         """Fit the OrdinalEncoder to X.
@@ -622,7 +660,12 @@ class OrdinalEncoder(_BaseEncoder):
             Transformed input.
 
         """
-        X_int, _ = self._transform(X)
+        if self.handle_unknown not in ('error', 'virtual'):
+            msg = ("handle_unknown should be either 'error' or 'virtual', "
+                   "got {0}.".format(self.handle_unknown))
+            raise ValueError(msg)
+            
+        X_int, _ = self._transform(X, handle_unknown=self.handle_unknown)
         return X_int.astype(self.dtype, copy=False)
 
     def inverse_transform(self, X):
