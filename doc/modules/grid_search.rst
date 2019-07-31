@@ -162,23 +162,83 @@ Searching optimal parameters with successive halving
 Scikit-learn also provides the :class:`HalvingGridSearchCV` and
 :class:`HalvingRandomSearchCV` estimators that can be used to
 search a parameter space using successive halving [1]_ [2]_. Successive
-halving is an iterative selection process where all candidates are evaluated
-with a small amount of resources at the first iteration. Only some of
-these candidates are selected for the next iteration, which will be
-allocated more resources. What defines a resource is typically the number of
-samples to train on, or the number of iterations in iterative algorithms
-like gradient boosting.
+halving is an iterative selection process where all candidates (the
+parameter combinations) are evaluated with a small amount of resources at
+the first iteration. Only some of these candidates are selected for the next
+iteration, which will be allocated more resources. What defines a resource
+is typically the number of samples to train on, or the number of iterations
+in iterative algorithms like gradient boosting.
 
 As illustrated in the figure below, only a small subset of candidates 'survive'
 until the last iteration. These are the candidates that have consistently been
-part of the best candidates across all iterations.
+part of the best candidates across all iterations. Each iteration is allocated
+an increasing amount of resources, here the number of samples.
 
 .. figure:: ../auto_examples/svm/images/sphx_glr_plot_successive_halving_iterations_001.png
    :target: ../auto_examples/model_selection/plot_successive_halving_iterations.html
    :align: center
 
-The amount of resources ``r_i`` allocated for each candidate at iteration
-``i`` is controlled by the parameters ``ratio`` and ``r_min`` as follows::
+The ``ratio`` parameter controls the rate at which the resources grow, and
+the rate at which the number of candidate decreases (more details in
+:ref:`amount_of_resource_and_number_of_candidates`)
+
+
+Choosing ``r_min`` and the number of candidates
+-----------------------------------------------
+
+Beside ``ratio``, the two main parameters that influence the behaviour of a
+successive halving search are the ``r_min`` parameter, and the number of
+candidates (or parameter combinations) that are evaluated. ``r_min`` is the
+amount of resources allocated at the first iteration for each candidate. The
+number of candidates is specified directly in
+:class:`HalvingRandomSearchCV`, and is determined from the ``param_grid``
+parameter of :class:`HalvingGridSearchCV`.
+
+Consider a case where we have 1000 samples. With ``r_min=10`` and
+``ratio=2`` we are able to run 7 iterations, with the following number of
+samples: ``[10, 20, 40, 80, 160, 320, 640]``.
+
+If we start with a high number of candidates, we might end up with a lot of
+candidates at the last iteration. On the other hand if we start with a small
+number of candidates, the last iteration might use less than 640 samples
+which is a waste of resources.
+
+In the case of :class:`HalvingGridSearchCV`, the number of candidates is set
+by default such that the maximum amount of resources is used at the last
+iteration.
+
+Changing the value of ``r_min`` will impact the number of possible
+iterations, and as a result will also have an effect on the ideal number of
+candidates.
+
+Another consideration when choosing ``r_min`` is whether or not it is easy
+to discriminate between good and bad candidates with a small amount of
+resources. For example, if you need a lot of samples to distinguish between
+good and bad parameters, a high ``r_min`` (possibly with the use of
+``aggressive_elimination=True``) is recommended. On the other hand if the
+distinction is clear even with a small amount of samples, then a small
+``r_min`` may be preferable since it would speed up the computation.
+
+By default, ``r_min`` is set to a small value (see docstrings for details)
+that depends on the number of folds, and the number of classes for
+classification problems. Depending on the setting, the default valueof
+``r_min`` might not be ideal.
+
+.. note::
+  Notice in the example above that the last iteration does not use the
+  maximum amount of resources available: 1000 samples are available, yet
+  only 640 are used. Using ``force_exhaust_budget=True`` will set ``r_min``
+  to a specific value such that the last iteration uses as many samples as
+  possible. Please see :ref:`exhausting_the_budget` for details.
+
+.. _amount_of_resource_and_number_of_candidates:
+
+Amount of resource and number of candidates at each iteration
+-------------------------------------------------------------
+
+The amount of resources ``r_i`` (e.g. the number of samples) allocated for
+each candidate at iteration ``i`` is controlled by the parameters ``ratio``
+and ``r_min`` as follows::
 
     r_i = ratio**i * r_min
 
@@ -214,9 +274,13 @@ candidates:
 | 48 * 2 = 96 | 4 // 2 = 2            |
 +-------------+-----------------------+
 
-At the last iteration, ``ratio`` candidates are evaluated, and we can pick
-the best one. Note that each ``r_i`` is a multiple of both ``ratio`` and
-``r_min``.
+Ideally, at the last iteration, ``ratio`` candidates are evaluated, and we
+can pick the best one. Note that each ``r_i`` is a multiple of both
+``ratio`` and ``r_min``.
+
+The amount of resource that is used at each iteration can be found using the
+`cv_results_` after converting it to a dataframe:
+`results.groupby('iter')['r_i'].unique()`
 
 Choosing a resource to budget
 -----------------------------
@@ -244,6 +308,8 @@ terms of the number of estimators of a random forest::
 
 Note that it is not possible to budget on a parameter that is part of the
 parameter grid.
+
+.. _exhausting_the_budget:
 
 Exhausting the budget
 ---------------------
