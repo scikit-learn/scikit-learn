@@ -64,6 +64,9 @@ from .regression import mean_squared_error
 from .regression import mean_squared_log_error
 from .regression import median_absolute_error
 from .regression import r2_score
+from .regression import mean_tweedie_deviance
+from .regression import mean_poisson_deviance
+from .regression import mean_gamma_deviance
 
 
 from .scorer import check_scoring
@@ -110,6 +113,9 @@ __all__ = [
     'mean_absolute_error',
     'mean_squared_error',
     'mean_squared_log_error',
+    'mean_poisson_deviance',
+    'mean_gamma_deviance',
+    'mean_tweedie_deviance',
     'median_absolute_error',
     'multilabel_confusion_matrix',
     'mutual_info_score',
