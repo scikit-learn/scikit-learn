@@ -75,7 +75,8 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 'by estimator {}'.format(self.resource,
                                          self.estimator.__class__.__name__))
 
-        if isinstance(self.max_resources, str) and self.max_resources != 'auto':
+        if (isinstance(self.max_resources, str) and
+                self.max_resources != 'auto'):
             raise ValueError(
                 "max_resources must be either 'auto' or a positive number"
             )
@@ -84,20 +85,22 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 "max_resources must be either 'auto' or a positive number"
             )
 
-        if isinstance(self.min_resources, str) and self.min_resources != 'auto':
+        if (isinstance(self.min_resources, str) and
+                self.min_resources != 'auto'):
             raise ValueError(
-                "min_resources must be either 'auto' or a positive number no greater "
-                "than max_resources."
+                "min_resources must be either 'auto' or a positive number "
+                "no greater than max_resources."
             )
         if self.min_resources != 'auto' and self.min_resources <= 0:
             raise ValueError(
-                "min_resources must be either 'auto' or a positive number no greater "
-                "than max_resources."
+                "min_resources must be either 'auto' or a positive number "
+                "no greater than max_resources."
             )
 
         if self.force_exhaust_resources and self.min_resources != 'auto':
             raise ValueError(
-                'min_resources must be set to auto if force_exhaust_resources is True.'
+                'min_resources must be set to auto if force_exhaust_resources'
+                ' is True.'
             )
 
         self.min_resources_ = self.min_resources
@@ -181,21 +184,23 @@ class BaseSuccessiveHalving(BaseSearchCV):
         n_required_iterations = 1 + floor(log(self.n_candidates_, self.ratio))
 
         if self.force_exhaust_resources:
-            # To exhaust the budget, we want to start with the biggest min_resources
-            # possible so that the last (required) iteration uses as many
-            # resources as possible
-            # We only force exhausting the budget if min_resources wasn't specified by
-            # the user.
+            # To exhaust the budget, we want to start with the biggest
+            # min_resources possible so that the last (required) iteration
+            # uses as many resources as possible
+            # We only force exhausting the budget if min_resources wasn't
+            # specified by the user.
             last_iteration = n_required_iterations - 1
-            self.min_resources_ = max(self.min_resources_,
-                              self.max_resources_ // self.ratio**last_iteration)
+            self.min_resources_ = max(
+                self.min_resources_,
+                self.max_resources_ // self.ratio**last_iteration
+            )
 
         # n_possible_iterations is the number of iterations that we can
-        # actually do starting from min_resources and without exceeding the budget.
-        # Depending on budget size the number of candidates, this may be higher
-        # or smaller than n_required_iterations.
-        n_possible_iterations = 1 + floor(log(self.max_resources_ // self.min_resources_,
-                                              self.ratio))
+        # actually do starting from min_resources and without exceeding the
+        # budget. Depending on budget size the number of candidates, this may
+        # be higher or smaller than n_required_iterations.
+        n_possible_iterations = 1 + floor(log(
+            self.max_resources_ // self.min_resources_, self.ratio))
 
         if self.aggressive_elimination:
             n_iterations = n_required_iterations
@@ -210,7 +215,8 @@ class BaseSuccessiveHalving(BaseSearchCV):
             print('max_resources_: {}'.format(self.max_resources_))
             print('aggressive_elimination: {}'.format(
                 self.aggressive_elimination))
-            print('force_exhaust_resources: {}'.format(self.force_exhaust_resources))
+            print('force_exhaust_resources: {}'.format(
+                self.force_exhaust_resources))
             print('ratio: {}'.format(self.ratio))
 
         self._r_i_list = []  # list of r_i for each iteration, used in tests
@@ -219,8 +225,8 @@ class BaseSuccessiveHalving(BaseSearchCV):
 
             power = iter_i  # default
             if self.aggressive_elimination:
-                # this will set r_i to the initial value (i.e. the value of r_i
-                # at the first iteration) for as many iterations as needed
+                # this will set r_i to the initial value (i.e. the value of
+                # r_i at the first iteration) for as many iterations as needed
                 # (while candidates are being eliminated), and then go on as
                 # usual.
                 power = max(
@@ -426,10 +432,10 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         more than ``ratio`` candidates.
 
     force_exhaust_resources : bool, default=False
-        If True, then ``min_resources`` is set to a specific value such that the
-        last iteration uses as much budget as possible. Namely, the last
-        iteration uses the highest value smaller than ``max_resources`` that is a
-        multiple of both ``min_resources`` and ``ratio``.
+        If True, then ``min_resources`` is set to a specific value such that
+        the last iteration uses as much budget as possible. Namely, the last
+        iteration uses the highest value smaller than ``max_resources`` that
+        is a multiple of both ``min_resources`` and ``ratio``.
 
     Attributes
     ----------
@@ -443,10 +449,10 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
     max_resources_ : int
         The maximum number of resources that any candidate is allowed to use
-        for a given iteration. Note that since the number of resources used at
-        each iteration must be a multiple of ``min_resources_``, the actual number of
-        resources used at the last iteartion may be smaller than
-        ``max_resources_``.
+        for a given iteration. Note that since the number of resources used
+        at each iteration must be a multiple of ``min_resources_``, the
+        actual number of resources used at the last iteartion may be smaller
+        than ``max_resources_``.
 
     min_resources_ : int
         The amount of resources that are allocated for each candidate at the
@@ -459,14 +465,15 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         n_required_iterations_)``.
 
     n_possible_iterations_ : int
-        The number of iterations that are possible starting with ``min_resources_``
-        resources and without exceeding ``max_resources_``.
+        The number of iterations that are possible starting with
+        ``min_resources_`` resources and without exceeding
+        ``max_resources_``.
 
     n_required_iterations_ : int
         The number of iterations that are required to end up with less than
-        ``ratio`` candidates at the last iteration, starting with ``min_resources_``
-        resources. This will be smaller than ``n_possible_iterations_`` when
-        there isn't enough budget.
+        ``ratio`` candidates at the last iteration, starting with
+        ``min_resources_`` resources. This will be smaller than
+        ``n_possible_iterations_`` when there isn't enough budget.
 
     cv_results_ : dict of numpy (masked) ndarrays
         A dict with keys as column headers and values as columns, that can be
@@ -728,11 +735,10 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         more than ``ratio`` candidates.
 
     force_exhaust_resources : bool, default=False
-        If True, then ``min_resources`` is set to a specific value such that the
-        last iteration uses as much budget as possible. Namely, the last
-        iteration uses the highest value smaller than ``max_resources`` that is a
-        multiple of both ``min_resources`` and ``ratio``.
-
+        If True, then ``min_resources`` is set to a specific value such that
+        the last iteration uses as much budget as possible. Namely, the last
+        iteration uses the highest value smaller than ``max_resources`` that
+        is a multiple of both ``min_resources`` and ``ratio``.
     Attributes
     ----------
     n_candidates_ : int
@@ -746,8 +752,8 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
     max_resources_ : int
         The maximum number of resources that any candidate is allowed to use
         for a given iteration. Note that since the number of resources used at
-        each iteration must be a multiple of ``min_resources_``, the actual number of
-        resources used at the last iteartion may be smaller than
+        each iteration must be a multiple of ``min_resources_``, the actual
+        number of resources used at the last iteartion may be smaller than
         ``max_resources_``.
 
     min_resources_ : int
@@ -761,14 +767,15 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         n_required_iterations_)``.
 
     n_possible_iterations_ : int
-        The number of iterations that are possible starting with ``min_resources_``
-        resources and without exceeding ``max_resources_``.
+        The number of iterations that are possible starting with
+        ``min_resources_`` resources and without exceeding
+        ``max_resources_``.
 
     n_required_iterations_ : int
         The number of iterations that are required to end up with less than
-        ``ratio`` candidates at the last iteration, starting with ``min_resources_``
-        resources. This will be smaller than ``n_possible_iterations_`` when
-        there isn't enough budget.
+        ``ratio`` candidates at the last iteration, starting with
+        ``min_resources_`` resources. This will be smaller than
+        ``n_possible_iterations_`` when there isn't enough budget.
 
     cv_results_ : dict of numpy (masked) ndarrays
         A dict with keys as column headers and values as columns, that can be
@@ -872,7 +879,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
                  verbose=0, cv=5, pre_dispatch='2*n_jobs',
                  random_state=None, error_score=np.nan,
                  return_train_score=True, max_resources='auto',
-                 min_resources='auto', resource='n_samples', ratio=3, 
+                 min_resources='auto', resource='n_samples', ratio=3,
                  aggressive_elimination=False, force_exhaust_resources=False):
         super().__init__(estimator, scoring=scoring,
                          n_jobs=n_jobs, refit=refit, verbose=verbose, cv=cv,

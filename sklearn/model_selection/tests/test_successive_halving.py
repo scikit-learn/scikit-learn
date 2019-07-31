@@ -159,8 +159,8 @@ def test_force_exhaust_resources_false():
 ])
 def test_force_exhaust_budget_true(max_resources, r_i_list):
     # Test the force_exhaust_resources parameter when it's true
-    # in this case we need to change min_resources so that the last iteration uses as
-    # much budget as possible
+    # in this case we need to change min_resources so that the last iteration
+    # uses as much budget as possible
 
     n_samples = 1000
     X, y = make_classification(n_samples=n_samples, random_state=0)
@@ -195,7 +195,8 @@ def test_force_exhaust_budget_true(max_resources, r_i_list):
         (32, 4, 4),
         (31, 3, 3),
         (16, 3, 3),
-        (4, 1, 1),   # max_resources == min_resources, only one iteration is possible
+        (4, 1, 1),  # max_resources == min_resources, only one iteration is
+                    # possible
     ])
 def test_n_iterations(max_resources, n_iterations, n_possible_iterations):
     # test the number of actual iterations that were run depending on
@@ -265,9 +266,9 @@ def test_random_search(max_resources, n_candidates, expected_n_candidates_):
     parameters = {'a': norm, 'b': norm}
     base_estimator = FastClassifier()
     sh = HalvingRandomSearchCV(base_estimator, parameters,
-                               n_candidates=n_candidates,
-                               cv=2,
-                               max_resources=max_resources, ratio=2, min_resources=4)
+                               n_candidates=n_candidates, cv=2,
+                               max_resources=max_resources, ratio=2,
+                               min_resources=4)
     sh.fit(X, y)
     assert sh.n_candidates_ == expected_n_candidates_
     if n_candidates == 'auto':
