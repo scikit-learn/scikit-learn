@@ -60,8 +60,6 @@ def _tested_estimators():
             continue
         if name.startswith("_"):
             continue
-        # FIXME _skip_test should be used here (if we could)
-
         try:
             estimator = _construct_instance(Estimator)
         except SkipTest:
