@@ -1681,9 +1681,10 @@ class TfidfVectorizer(CountVectorizer):
             Whether to copy X and operate on the copy or perform in-place
             operations.
 
-        .. deprecated:: 0.21
-            The `copy` parameter was deprecated in version 0.21 and will
-            be removed in 0.23. This parameter will be ignored
+            .. deprecated:: 0.21
+               The `copy` parameter was deprecated in version 0.21 and
+               will be removed in 0.23. This parameter will be ignored
+
         Returns
         -------
         X : sparse matrix, [n_samples, n_features]
