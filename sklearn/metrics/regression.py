@@ -633,7 +633,7 @@ def mean_tweedie_deviance(y_true, y_pred, sample_weight=None, p=0):
         Sample weights.
 
     p : float, optional
-        Tweedie power parameter. Either p ≤ 0 or p ≥ 1.
+        Tweedie power parameter. Either p <= 0 or p >= 1.
 
         The higher `p` the less weight is given to extreme
         deviations between true and predicted targets.
@@ -641,8 +641,8 @@ def mean_tweedie_deviance(y_true, y_pred, sample_weight=None, p=0):
         - p < 0: Extreme stable distribution. Requires: y_pred > 0.
         - p = 0 : Normal distribution, output corresponds to
           mean_squared_error. y_true and y_pred can be any real numbers.
-        - p = 1 : Poisson distribution. Requires: y_true ≥ 0 and y_pred > 0.
-        - 1 < p < 2 : Compound Poisson distribution. Requires: y_true ≥ 0
+        - p = 1 : Poisson distribution. Requires: y_true >= 0 and y_pred > 0.
+        - 1 < p < 2 : Compound Poisson distribution. Requires: y_true >= 0
           and y_pred > 0.
         - p = 2 : Gamma distribution. Requires: y_true > 0 and y_pred > 0.
         - p = 3 : Inverse Gaussian distribution. Requires: y_true > 0
@@ -691,7 +691,7 @@ def mean_poisson_deviance(y_true, y_pred, sample_weight=None):
     Parameters
     ----------
     y_true : array-like of shape (n_samples,)
-        Ground truth (correct) target values. Requires y_true ≥ 0.
+        Ground truth (correct) target values. Requires y_true >= 0.
 
     y_pred : array-like of shape (n_samples,)
         Estimated target values. Requires y_pred > 0.

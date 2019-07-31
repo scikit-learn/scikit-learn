@@ -2034,6 +2034,9 @@ shape (n_estimators, ``loss_.K``)
         The collection of fitted sub-estimators. ``loss_.K`` is 1 for binary
         classification, otherwise n_classes.
 
+    classes_ : array of shape = [n_classes]
+        The classes labels.
+
     Notes
     -----
     The features are always randomly permuted at each split. Therefore,
