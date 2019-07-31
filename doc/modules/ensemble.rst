@@ -472,8 +472,8 @@ trees.
 
   The following guide focuses on :class:`GradientBoostingClassifier` and
   :class:`GradientBoostingRegressor`, which might be preferred for small
-  sample sizes, since binning may lead to split points that are too
-  approximate.
+  sample sizes since binning may lead to split points that are too approximate
+  in this setting.
 
 
 Classification
