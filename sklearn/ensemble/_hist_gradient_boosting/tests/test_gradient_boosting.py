@@ -128,6 +128,17 @@ def test_early_stopping_classification(data, scoring, validation_fraction,
         assert gb.n_iter_ == max_iter
 
 
+@pytest.mark.parametrize('GradientBoosting, X, y', [
+    (HistGradientBoostingClassifier, X_classification, y_classification),
+    (HistGradientBoostingRegressor, X_regression, y_regression)
+])
+def test_early_stopping_default(GradientBoosting, X, y):
+    # Test that early stopping is enabled by default
+    gb = GradientBoosting(max_iter=200)
+    gb.fit(X, y)
+    assert gb.n_iter_ < gb.max_iter
+
+
 @pytest.mark.parametrize(
     'scores, n_iter_no_change, tol, stopping',
     [
@@ -232,14 +243,3 @@ def test_infinite_values():
                                          n_iter_no_change=None)
     gbdt.fit(X, y)
     np.testing.assert_allclose(gbdt.predict(X), y, atol=1e-4)
-
-
-@pytest.mark.parametrize('GradientBoosting, X, y', [
-    (HistGradientBoostingClassifier, X_classification, y_classification),
-    (HistGradientBoostingRegressor, X_regression, y_regression)
-])
-def test_early_stopping_default(GradientBoosting, X, y):
-    # Test that early stopping is enabled by default
-    gb = GradientBoosting(max_iter=200)
-    gb.fit(X, y)
-    assert gb.n_iter_ < gb.max_iter
