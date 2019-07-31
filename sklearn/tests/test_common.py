@@ -12,7 +12,6 @@ import sys
 import re
 import pkgutil
 import functools
-from contextlib import suppress
 
 import pytest
 
@@ -63,8 +62,10 @@ def _tested_estimators():
             continue
         # FIXME _skip_test should be used here (if we could)
 
-        with suppress(SkipTest):
+        try:
             estimator = _construct_instance(Estimator)
+        except SkipTest:
+            continue
 
         yield name, estimator
 
