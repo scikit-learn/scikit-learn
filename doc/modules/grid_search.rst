@@ -237,11 +237,11 @@ classification problems. Depending on the setting, the default valueof
 Amount of resource and number of candidates at each iteration
 -------------------------------------------------------------
 
-The amount of resources ``r_i`` (e.g. the number of samples) allocated for
+The amount of resources ``resource_iter`` (e.g. the number of samples) allocated for
 each candidate at iteration ``i`` is controlled by the parameters ``ratio``
 and ``min_resources`` as follows::
 
-    r_i = ratio**i * min_resources
+    resource_iter = ratio**i * min_resources
 
 ``min_resources`` is the amount of resources used at the first iteration and
 ``ratio`` defines the proportions of candidates that will be selected for
@@ -260,7 +260,7 @@ Here is an example with ``min_resources=3`` and ``ratio=2``, starting with 70
 candidates:
 
 +-------------+-----------------------+
-| ``r_i``     | ``n_candidates_at_i`` |
+| ``resource_iter``     | ``n_candidates_at_i`` |
 +=============+=======================+
 | 3 (=min_resources)  | 70 (=n_candidates)    |
 +-------------+-----------------------+
@@ -276,12 +276,12 @@ candidates:
 +-------------+-----------------------+
 
 Ideally, at the last iteration, ``ratio`` candidates are evaluated, and we
-can pick the best one. Note that each ``r_i`` is a multiple of both
+can pick the best one. Note that each ``resource_iter`` is a multiple of both
 ``ratio`` and ``min_resources``.
 
 The amount of resource that is used at each iteration can be found using the
 `cv_results_` after converting it to a dataframe:
-`results.groupby('iter')['r_i'].unique()`
+`results.groupby('iter')['resource_iter'].unique()`
 
 Choosing a resource to budget
 -----------------------------
@@ -330,12 +330,12 @@ used)::
     >>> sh = HalvingGridSearchCV(base_estimator, param_grid, cv=5,
     ...                          ratio=2).fit(X, y)
     >>> results = pd.DataFrame(sh.cv_results_)
-    >>> results.groupby('iter')['r_i'].unique()
+    >>> results.groupby('iter')['resource_iter'].unique()
     iter
     0    [20]
     1    [40]
     2    [80]
-    Name: r_i, dtype: object
+    Name: resource_iter, dtype: object
 
 The search process will only use 80 resources at most, while our maximum
 amount of available resources is ``n_samples=1000``. Note in this case that
@@ -347,12 +347,12 @@ parameter.::
     ...                            ratio=2, force_exhaust_resources=True,
     ...                            ).fit(X, y)
     >>> results = pd.DataFrame.from_dict(sh.cv_results_)
-    >>> results.groupby('iter')['r_i'].unique()
+    >>> results.groupby('iter')['resource_iter'].unique()
     iter
     0     [250]
     1     [500]
     2    [1000]
-    Name: r_i, dtype: object
+    Name: resource_iter, dtype: object
 
 `min_resources` was here automatically set to 250, which results in the last
 iteration using all the resources. Since ``force_exhaust_resources`` chooses an
@@ -381,16 +381,16 @@ to evaluate more than ``ratio`` candidates::
     ...                          ratio=2, max_resources=40,
     ...                          aggressive_elimination=False).fit(X, y)
     >>> results = pd.DataFrame.from_dict(sh.cv_results_)
-    >>> results.groupby('iter').r_i.unique()
+    >>> results.groupby('iter').resource_iter.unique()
     iter
     0    [20]
     1    [40]
-    Name: r_i, dtype: object
-    >>> results.groupby('iter').r_i.count()  # number of candidates used at each iteration
+    Name: resource_iter, dtype: object
+    >>> results.groupby('iter').resource_iter.count()  # number of candidates used at each iteration
     iter
     0    6
     1    3
-    Name: r_i, dtype: int64
+    Name: resource_iter, dtype: int64
 
 Since we cannot use more than ``max_resources=40`` resources, the process has to
 stop at the second iteration which evaluates more than ``ratio=2`` candidates.
@@ -406,21 +406,21 @@ necessary using ``min_resources`` resources::
     ...                            aggressive_elimination=True,
     ...                            ).fit(X, y)
     >>> results = pd.DataFrame.from_dict(sh.cv_results_)
-    >>> results.groupby('iter').r_i.unique()
+    >>> results.groupby('iter').resource_iter.unique()
     iter
     0    [20]
     1    [20]
     2    [40]
-    Name: r_i, dtype: object
-    >>> results.groupby('iter').r_i.count()  # number of candidates used at each iteration
+    Name: resource_iter, dtype: object
+    >>> results.groupby('iter').resource_iter.count()  # number of candidates used at each iteration
     iter
     0    6
     1    3
     2    2
-    Name: r_i, dtype: int64
+    Name: resource_iter, dtype: int64
 
 Notice that we end with 2 candidates at the last iteration since we have
-eliminated enough candidates during the first iterations, using ``r_i =
+eliminated enough candidates during the first iterations, using ``resource_iter =
 min_resources = 20``.
 
 

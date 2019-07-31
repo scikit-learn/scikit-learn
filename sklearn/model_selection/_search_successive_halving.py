@@ -219,24 +219,26 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 self.force_exhaust_resources))
             print('ratio: {}'.format(self.ratio))
 
-        self._r_i_list = []  # list of r_i for each iteration, used in tests
+        # list of resource_iter for each iteration, used in tests
+        self._r_i_list = []
 
         for iter_i in range(n_iterations):
 
             power = iter_i  # default
             if self.aggressive_elimination:
-                # this will set r_i to the initial value (i.e. the value of
-                # r_i at the first iteration) for as many iterations as needed
-                # (while candidates are being eliminated), and then go on as
-                # usual.
+                # this will set resource_iter to the initial value (i.e. the
+                # value of resource_iter at the first iteration) for as many
+                # iterations as needed (while candidates are being
+                # eliminated), and then go on as usual.
                 power = max(
                     0,
                     iter_i - n_required_iterations + n_possible_iterations
                 )
 
-            r_i = int(self.ratio**power * self.min_resources_)
-            r_i = min(r_i, self.max_resources_)  # guard, probably not needed
-            self._r_i_list.append(r_i)
+            resource_iter = int(self.ratio**power * self.min_resources_)
+            # guard, probably not needed
+            resource_iter = min(resource_iter, self.max_resources_)
+            self._r_i_list.append(resource_iter)
 
             n_candidates = len(candidate_params)
 
@@ -244,7 +246,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 print('-' * 10)
                 print('iter_i: {}'.format(iter_i))
                 print('n_candidates: {}'.format(n_candidates))
-                print('r_i: {}'.format(r_i))
+                print('resource_iter: {}'.format(resource_iter))
 
             if self.resource == 'n_samples':
                 # Subsample X and y as well as fit_params
@@ -252,21 +254,23 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 fit_params = OrderedDict(fit_params)
                 X_iter, y_iter, *fit_params_iter_list = resample(
                     X, y, *fit_params.values(), replace=False,
-                    random_state=rng, stratify=stratify, n_samples=r_i)
+                    random_state=rng, stratify=stratify,
+                    n_samples=resource_iter)
                 fit_params_iter = {
                     key: fit_params_iter_list[i]
                     for (i, key) in enumerate(fit_params.keys())
                 }
             else:
-                # Need copy so that r_i of next iteration does not overwrite
+                # Need copy so that the resource_iter of next iteration does
+                # not overwrite
                 candidate_params = [c.copy() for c in candidate_params]
                 for candidate in candidate_params:
-                    candidate[self.resource] = r_i
+                    candidate[self.resource] = resource_iter
                 X_iter, y_iter = X, y
                 fit_params_iter = fit_params
 
             more_results = {'iter': [iter_i] * n_candidates,
-                            'r_i': [r_i] * n_candidates}
+                            'resource_iter': [resource_iter] * n_candidates}
             results = evaluate_candidates(candidate_params, X_iter, y_iter,
                                           more_results=more_results,
                                           **fit_params_iter)
