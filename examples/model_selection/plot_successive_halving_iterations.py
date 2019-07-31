@@ -9,7 +9,7 @@ from scipy.stats import randint
 import numpy as np
 
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import RandomHalvingSearchCV
+from sklearn.model_selection import HalvingRandomSearchCV
 
 
 rng = np.random.RandomState(0)
@@ -24,7 +24,7 @@ param_dist = {"max_depth": [3, None],
               "bootstrap": [True, False],
               "criterion": ["gini", "entropy"]}
 
-rsh = RandomHalvingSearchCV(
+rsh = HalvingRandomSearchCV(
     estimator=clf,
     param_distributions=param_dist,
     budget_on='n_samples',  # budget is the number of samples

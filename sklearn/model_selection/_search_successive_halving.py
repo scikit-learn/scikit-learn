@@ -356,7 +356,7 @@ class GridHalvingSearchCV(BaseSuccessiveHalving):
         for a given iteration. By default, this is set ``n_samples`` when
         ``budget_on='n_samples'`` (default), else an error is raised.
 
-    budget_on : `'n_samples'` or str, default='n_samples'
+    budget_on : ``'n_samples'`` or str, default='n_samples'
         Defines the nature of the budget. By default, the budget is the number
         of samples. It can also be set to any parameter of the base estimator
         that accepts positive integer values, e.g. 'n_iterations' or

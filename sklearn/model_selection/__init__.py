@@ -29,8 +29,8 @@ from ._search import ParameterGrid
 from ._search import ParameterSampler
 from ._search import fit_grid_point
 
-from ._search_successive_halving import GridHalvingSearchCV
-from ._search_successive_halving import RandomHalvingSearchCV
+from ._search_successive_halving import HalvingGridSearchCV
+from ._search_successive_halving import HalvingRandomSearchCV
 
 __all__ = ('BaseCrossValidator',
            'GridSearchCV',
