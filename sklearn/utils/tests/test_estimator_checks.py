@@ -265,6 +265,7 @@ class LargeSparseNotSupportedClassifier(BaseEstimator):
 class SparseTransformer(BaseEstimator):
     def fit(self, X, y=None):
         self.X_shape_ = check_array(X).shape
+        self.n_features_out_ = self.X_shape_[1]
         return self
 
     def fit_transform(self, X, y=None):
