@@ -137,6 +137,12 @@ Changelog
 :mod:`sklearn.gaussian_process`
 ...............................
 
+- |Feature| :func:`gaussian_process.GaussianProcessClassifier.log_marginal_likelihood`
+  and :func:`gaussian_process.GaussianProcessRegressor.log_marginal_likelihood` now
+  accept a ``clone_kernel=True`` keyword argument. When set to ``False``,
+  the kernel attribute is modified, but may result in a performance improvement.
+  :pr:`14378` by :user:`Masashi Shibata <c-bata>`.
+
 - |API| From version 0.24 :meth:`Kernel.get_params` will raise an
   AttributeError rather than return None for parameters that are in the
   estimator's constructor but not stored as attributes on the instance.
