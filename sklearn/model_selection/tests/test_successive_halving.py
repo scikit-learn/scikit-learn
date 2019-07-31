@@ -274,3 +274,14 @@ def test_random_search(max_budget, n_candidates, expected_n_candidates_):
         # Make sure 'auto' makes the last iteration use as much budget as we
         # can
         assert sh._r_i_list[-1] == max_budget
+
+
+def test_groups_not_supported():
+    base_estimator = FastClassifier()
+    param_grid = {'a': [1]}
+    sh = HalvingRandomSearchCV(base_estimator, param_grid)
+    X, y = make_classification(n_samples=10)
+    groups = [0] * 10
+
+    with pytest.raises(ValueError, match="groups are not supported"):
+        sh.fit(X, y, groups)

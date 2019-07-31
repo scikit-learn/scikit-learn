@@ -1,5 +1,6 @@
 from math import ceil, floor, log
 from abc import abstractmethod
+from collections import OrderedDict
 
 import numpy as np
 from ._search import _check_param_grid
@@ -58,6 +59,9 @@ class BaseSuccessiveHalving(BaseSearchCV):
         self.force_exhaust_budget = force_exhaust_budget
 
     def _check_input_parameters(self, X, y, groups):
+
+        if groups is not None:
+            raise ValueError('groups are not supported.')
 
         if self.scoring is not None and not (isinstance(self.scoring, str)
                                              or callable(self.scoring)):
@@ -126,18 +130,37 @@ class BaseSuccessiveHalving(BaseSearchCV):
             )
 
     def fit(self, X, y=None, groups=None, **fit_params):
+        """Run fit with all sets of parameters.
+
+        Parameters
+        ----------
+
+        X : array-like, shape (n_samples, n_features)
+            Training vector, where n_samples is the number of samples and
+            n_features is the number of features.
+
+        y : array-like, shape (n_samples,) or (n_samples, n_output), optional
+            Target relative to X for classification or regression;
+            None for unsupervised learning.
+
+        groups : None
+            Groups are not supported
+
+        **fit_params : dict of string -> object
+            Parameters passed to the ``fit`` method of the estimator
+        """
         self._check_input_parameters(
             X=X,
             y=y,
             groups=groups,
         )
-        super().fit(X, y=y, groups=groups, **fit_params)
+        super().fit(X, y=y, groups=None, **fit_params)
         # Set best_score_: BaseSearchCV does not set it, as refit is a callable
         self.best_score_ = (
             self.cv_results_['mean_test_score'][self.best_index_])
         return self
 
-    def _run_search(self, evaluate_candidates, X, y):
+    def _run_search(self, evaluate_candidates, X, y, **fit_params):
         rng = check_random_state(self.random_state)
 
         candidate_params = self._generate_candidate_params()
@@ -218,20 +241,29 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 print('r_i: {}'.format(r_i))
 
             if self.budget_on == 'n_samples':
+                # Subsample X and y as well as fit_params
                 stratify = y if is_classifier(self.estimator) else None
-                X_iter, y_iter = resample(X, y, replace=False,
-                                          random_state=rng, stratify=stratify,
-                                          n_samples=r_i)
+                fit_params = OrderedDict(fit_params)
+                X_iter, y_iter, *fit_params_iter_list = resample(
+                    X, y, *fit_params.values(), replace=False,
+                    random_state=rng, stratify=stratify, n_samples=r_i)
+                fit_params_iter = {
+                    key: fit_params_iter_list[i]
+                    for (i, key) in enumerate(fit_params.keys())
+                }
             else:
-                # Need copy so that r_i of next iteration do not overwrite
+                # Need copy so that r_i of next iteration does not overwrite
                 candidate_params = [c.copy() for c in candidate_params]
                 for candidate in candidate_params:
                     candidate[self.budget_on] = r_i
                 X_iter, y_iter = X, y
+                fit_params_iter = fit_params
+
             more_results = {'iter': [iter_i] * n_candidates,
                             'r_i': [r_i] * n_candidates}
             results = evaluate_candidates(candidate_params, X_iter, y_iter,
-                                          more_results=more_results)
+                                          more_results=more_results,
+                                          **fit_params_iter)
 
             n_candidates_to_keep = ceil(n_candidates / self.ratio)
             candidate_params = self._top_k(results,
