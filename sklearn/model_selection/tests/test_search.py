@@ -32,6 +32,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_multilabel_classification
+from sklearn.datasets import load_boston
 
 from sklearn.model_selection import fit_grid_point
 from sklearn.model_selection import cross_val_score
@@ -43,6 +44,7 @@ from sklearn.model_selection import LeavePGroupsOut
 from sklearn.model_selection import GroupKFold
 from sklearn.model_selection import GroupShuffleSplit
 from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import NestedCV_GridSearch
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import ParameterGrid
 from sklearn.model_selection import ParameterSampler
@@ -65,6 +67,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.linear_model import Ridge, SGDClassifier
 
 from sklearn.model_selection.tests.common import OneTimeSplitter
+from sklearn.ensemble import RandomForestRegressor
 
 
 # Neither of the following two estimators inherit from BaseEstimator,
@@ -154,8 +157,8 @@ def test_parameter_grid():
         # tuple + chain transforms {"a": 1, "b": 2} to ("a", 1, "b", 2)
         points = set(tuple(chain(*(sorted(p.items())))) for p in grid2)
         assert (points ==
-                     set(("bar", x, "foo", y)
-                         for x, y in product(params2["bar"], params2["foo"])))
+                set(("bar", x, "foo", y)
+                    for x, y in product(params2["bar"], params2["foo"])))
     assert_grid_iter_equals_getitem(grid2)
 
     # Special case: empty grid (useful to get default estimator settings)
@@ -854,10 +857,10 @@ def test_grid_search_cv_results():
         # Check if score and timing are reasonable
         assert all(cv_results['rank_test_score'] >= 1)
         assert (all(cv_results[k] >= 0) for k in score_keys
-                if k is not 'rank_test_score')
+                if k != 'rank_test_score')
         assert (all(cv_results[k] <= 1) for k in score_keys
                 if 'time' not in k and
-                k is not 'rank_test_score')
+                k != 'rank_test_score')
         # Check cv_results structure
         check_cv_results_array_types(search, param_keys, score_keys)
         check_cv_results_keys(cv_results, param_keys, score_keys, n_candidates)
@@ -1762,3 +1765,14 @@ def test_random_search_bad_cv():
                              'inconsistent results. Expected \\d+ '
                              'splits, got \\d+'):
         ridge.fit(X[:train_size], y[:train_size])
+
+
+def test_NestedCV_GridSearch():
+
+    boston_data = load_boston()
+    parameters = {"min_samples_split": [4, 6], "max_depth": [4, 6, 10]}
+    rf = RandomForestRegressor(n_estimators=200, random_state=34)
+    clf = NestedCV_GridSearch(rf, parameters, outer_cv=3,
+                              inner_cv=5, random_state=10)
+    result = clf.nested_search(boston_data["data"], boston_data["target"])
+    print(result)

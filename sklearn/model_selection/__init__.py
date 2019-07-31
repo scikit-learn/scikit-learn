@@ -28,9 +28,11 @@ from ._search import RandomizedSearchCV
 from ._search import ParameterGrid
 from ._search import ParameterSampler
 from ._search import fit_grid_point
+from ._search import NestedCV_GridSearch
 
 __all__ = ('BaseCrossValidator',
            'GridSearchCV',
+           'NestedCV_GridSearch',
            'TimeSeriesSplit',
            'KFold',
            'GroupKFold',

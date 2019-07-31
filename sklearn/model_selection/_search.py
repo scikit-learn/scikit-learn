@@ -21,11 +21,13 @@ import time
 import warnings
 
 import numpy as np
+import pandas as pd
 from scipy.stats import rankdata
 
 from ..base import BaseEstimator, is_classifier, clone
 from ..base import MetaEstimatorMixin
 from ._split import check_cv
+from ._split import KFold
 from ._validation import _fit_and_score
 from ._validation import _aggregate_score_dicts
 from ..exceptions import NotFittedError
@@ -40,7 +42,7 @@ from ..metrics.scorer import check_scoring
 
 
 __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
-           'ParameterSampler', 'RandomizedSearchCV']
+           'ParameterSampler', 'RandomizedSearchCV', "NestedCV_GridSearch"]
 
 
 class ParameterGrid:
@@ -1450,3 +1452,237 @@ class RandomizedSearchCV(BaseSearchCV):
         evaluate_candidates(ParameterSampler(
             self.param_distributions, self.n_iter,
             random_state=self.random_state))
+
+
+class NestedCV_GridSearch:
+    """performs nested grid search with test set in outer loop, and returns
+    results in the form of dictionary for best_params, best_estimators,
+    and best_scores
+
+     Parameters
+    ----------
+    estimator : estimator object.
+        This is assumed to implement the scikit-learn estimator interface.
+        Either estimator needs to provide a ``score`` function,
+        or ``scoring`` must be passed. The parameter random_state should be
+        defined here (see example)
+    param_grid : dict or list of dictionaries
+        Dictionary with parameters names (string) as keys and lists of
+        parameter settings to try as values, or a list of such
+        dictionaries, in which case the grids spanned by each dictionary
+        in the list are explored. This enables searching over any sequence
+        of parameter settings.
+    scoring : string, callable, list/tuple, dict or None, default: None
+        A single string (see :ref:`scoring_parameter`) or a callable
+        (see :ref:`scoring`) to evaluate the predictions on the test set.
+        For evaluating multiple metrics, either give a list of (unique)
+        strings or a dict with names as keys and callables as values.
+        NOTE that when using custom scorers, each scorer should return a
+        single value. Metric functions returning a list/array of values
+        can be wrapped into multiple scorers that return one value each.
+        See :ref:`multimetric_grid_search` for an example.
+        If None, the estimator's score method is used.
+
+    n_jobs : int or None, optional (default=None)
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+    pre_dispatch : int, or string, optional
+        Controls the number of jobs that get dispatched during parallel
+        execution. Reducing this number can be useful to avoid an
+        explosion of memory consumption when more jobs get dispatched
+        than CPUs can process. This parameter can be:
+            - None, in which case all the jobs are immediately
+              created and spawned. Use this for lightweight and
+              fast-running jobs, to avoid delays due to on-demand
+              spawning of the jobs
+            - An int, giving the exact number of total jobs that are
+              spawned
+            - A string, giving an expression as a function of n_jobs,
+              as in '2*n_jobs'
+
+    iid : boolean, default=False
+        If True, return the average score across folds, weighted by the number
+        of samples in each test set. In this case, the data is assumed to be
+        identically distributed across the folds, and the loss minimized is
+        the total loss per sample, and not the mean loss across the folds.
+
+        .. deprecated:: 0.22
+            Parameter ``iid`` is deprecated in 0.22 and will be removed in 0.24
+       refit : boolean, string, or callable, default=True
+        Refit an estimator using the best found parameters on the whole
+        dataset.
+
+        For multiple metric evaluation, this needs to be a string denoting the
+        scorer that would be used to find the best parameters for refitting
+        the estimator at the end.
+
+        Where there are considerations other than maximum score in
+        choosing a best estimator, ``refit`` can be set to a function which
+        returns the selected ``best_index_`` given the ``cv_results``.
+
+        The refitted estimator is made available at the ``best_estimator_``
+        attribute and permits using ``predict`` directly on this
+        ``RandomizedSearchCV`` instance.
+
+        Also for multiple metric evaluation, the attributes ``best_index_``,
+        ``best_score_`` and ``best_params_`` will only be available if
+        ``refit`` is set and all of them will be determined w.r.t this specific
+        scorer. When refit is callable, ``best_score_`` is disabled.
+
+        See ``scoring`` parameter to know more about multiple metric
+        evaluation.
+
+        .. versionchanged:: 0.20
+            Support for callable added.
+
+    verbose : integer
+            Controls the verbosity: the higher, the more messages.
+
+    outer_cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy for the outer
+        loop in Nested CV.
+        Possible inputs for cv are:
+        - None, to use the default 5-fold cross validation,
+        - integer, to specify the number of folds in a `(Stratified)KFold`,
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
+        For integer/None inputs, if the estimator is a classifier and ``y`` is
+        either binary or multiclass, :class:`StratifiedKFold` is used. In all
+        other cases, :class:`KFold` is used.
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
+
+    inner_cv : similar to outer_cv but it's for the inner loop in Nested CV
+
+    error_score : 'raise' or numeric
+        Value to assign to the score if an error occurs in estimator fitting.
+        If set to 'raise', the error is raised. If a numeric value is given,
+        FitFailedWarning is raised. This parameter does not affect the refit
+        step, which will always raise the error. Default is ``np.nan``.
+
+    return_train_score : boolean, default=False
+        If ``False``, the ``cv_results_`` attribute will not include training
+        scores.
+        Computing training scores is used to get insights on how different
+        parameter settings impact the overfitting/underfitting trade-off.
+        However computing the scores on the training set can be computationally
+        expensive and is not strictly required to select the parameters that
+        yield the best generalization performance.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_boston
+    >>> from sklearn.model_selection import NestedCV_GridSearch
+    >>> from sklearn.ensemble import RandomForestRegressor
+    >>> import numpy as np
+    >>> df = load_boston()
+    >>> parameters =  {'min_samples_split': [4, 6], "max_depth":[4,6,10]}
+    >>> rf = RandomForestRegressor(n_estimators=200,random_state=34)
+    >>> clf = NestedCV_GridSearch(rf, parameters, outer_cv=3,
+        inner_cv=5,random_state=10)
+    >>> result=clf.nested_search(df['data'], df['target'])
+
+
+    Attributes
+    ----------
+    results: dict of nested cv results
+            * best_score: score of each fold evaluated on the test set
+                            of the outer loop using the best estimator.
+            * best_params: best parameters from each fold selected based on
+                            evaluation on inner loop validation set.
+            * best_estimator: returns a list of estimator objects if user wants
+                            to re-use the estimator for further prediction.
+    """
+    _required_parameters = ["estimator", "param_grid"]
+
+    def __init__(
+        self,
+        estimator,
+        param_grid,
+        scoring=None,
+        n_jobs=None,
+        iid="deprecated",
+        refit=True,
+        verbose=0,
+        pre_dispatch="2*n_jobs",
+        outer_cv=None,
+        inner_cv=None,
+        error_score="raise-deprecating",
+        return_train_score=False,
+        random_state=None,
+    ):
+        self.estimator = estimator
+        self.param_grid = param_grid
+        self.scoring = scoring
+        self.outer_cv = outer_cv
+        self.inner_cv = inner_cv
+        self.verbose = verbose
+        self.n_jobs = n_jobs
+        self.iid = iid
+        self.refit = refit
+        self.pre_dispatch = pre_dispatch
+        self.error_score = error_score
+        self.return_train_score = return_train_score
+        self.random_state = random_state
+        _check_param_grid(param_grid)
+
+    def nested_search(self, X, y=None):
+        """
+        X: can be a pandas dataframe or numpy array
+        y: can be a pandas dataframe/series or numpy array
+        """
+        fold = KFold(
+            n_splits=self.outer_cv, shuffle=False,
+            random_state=self.random_state
+        )
+
+        best_score_ls = []
+        best_params_ls = []
+        best_est_ls = []
+        for tr, ts in fold.split(X):
+            # for inner loop
+            model_estimator = GridSearchCV(
+                self.estimator,
+                self.param_grid,
+                scoring=self.scoring,
+                n_jobs=self.n_jobs,
+                iid=self.iid,
+                refit=self.refit,
+                cv=self.inner_cv,
+                verbose=self.verbose,
+                pre_dispatch=self.pre_dispatch,
+                error_score=self.error_score,
+                return_train_score=self.return_train_score,
+            )
+            if isinstance(X, np.ndarray):
+                X_train = X[tr]
+                y_train = y[tr]
+                X_test = X[ts]
+                y_test = y[ts]
+
+            elif isinstance(X, pd.DataFrame):
+                X_train = X.iloc[tr]
+                y_train = y.iloc[tr]
+                X_test = X.iloc[ts]
+                y_test = y.iloc[ts]
+
+            else:
+                raise TypeError(
+                    "Please check that input is either pandas \
+                    DataFrame or numpy array"
+                )
+
+            model_estimator.fit(X_train, y_train)
+            score_test_set = model_estimator.score(X_test, y_test)
+            best_score_ls.append(score_test_set)
+            best_params_ls.append(model_estimator.best_params_)
+            best_est_ls.append(model_estimator.best_estimator_)
+
+        results = {
+            "best_scores": best_score_ls,
+            "best_params": best_params_ls,
+            "best_estimators": best_est_ls,
+        }
+        return results
