@@ -67,11 +67,11 @@ def _type_of_html_estimator(estimator):
         inner_estimator = estimator.estimator
         return _EstHTMLInfo('single-meta', inner_estimator, name, name_tip)
 
-    elif hasattr(estimator, "base_estimator"):
-        name = estimator.__class__.__name__
-        name_tip = _estimator_tool_tip(estimator)
-        inner_estimator = estimator.base_estimator
-        return _EstHTMLInfo('single-meta', inner_estimator, name, name_tip)
+    # elif hasattr(estimator, "base_estimator"):
+    #     name = estimator.__class__.__name__
+    #     name_tip = _estimator_tool_tip(estimator)
+    #     inner_estimator = estimator.base_estimator
+    #     return _EstHTMLInfo('single-meta', inner_estimator, name, name_tip)
 
     elif isinstance(estimator, BaseEstimator):
         name = estimator.__class__.__name__
@@ -158,6 +158,7 @@ _STYLE = """
 .sk-parallel {
   display: flex;
   align-items: stretch;
+  justify-content: center;
 }
 .sk-parallel-item {
   display: flex;
@@ -173,17 +174,21 @@ _STYLE = """
   align-self: flex-start;
   width: 50%;
 }
+.sk-parallel-item:only-child::after {
+  width: 0;
+}
 .sk-dashed-wrapped {
   border: 1px dashed gray;
   padding: 0 0.25em 0.25em 0.25em;
 }
 .sk-label {
-  text-align: center;
+  min-width: 70%;
   font-family: monospace;
   font-weight: bold;
   background: white;
   display: inline-block;
   margin: 0 0.5em;
+  line-height: 1.4em;
 }
 .sk-label-container {
   text-align: center;
@@ -227,7 +232,7 @@ _STYLE = """
 .sk-top-container {
   display: flex;
   color: black;
-  padding-bottom: 1em;
+  padding-bottom: 2em;
 }
 """
 
