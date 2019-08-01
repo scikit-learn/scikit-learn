@@ -7,8 +7,8 @@ from ...utils import check_matplotlib_support
 class RocCurveVisualizer:
     """ROC Curve visualization.
 
-    It is recommend to use `sklearn.metrics.plot_roc_curve` to create this
-    object.
+    It is recommend to use `sklearn.metrics.plot_roc_curve` to create a
+    visualizer. All parameters are stored as attributes.
 
     Read more in the :ref:`User Guide <visualizations>`.
 
