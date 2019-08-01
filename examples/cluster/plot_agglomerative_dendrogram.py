@@ -45,7 +45,6 @@ X = iris.data
 model = AgglomerativeClustering(distance_threshold=0, n_clusters=None)
 
 model = model.fit(X)
-fig = plt.figure(figsize=(25, 10))
 plt.title('Hierarchical Clustering Dendrogram')
 # plot the top three levels of the dendrogram
 plot_dendrogram(model, truncate_mode='level', p=3)
