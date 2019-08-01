@@ -511,7 +511,7 @@ def test_tfidf_vectorizer_deprecationwarning():
            " 0.23.")
     with pytest.warns(DeprecationWarning, match=msg):
         tv = TfidfVectorizer()
-        train_data = iter(JUNK_FOOD_DOCS)
+        train_data = JUNK_FOOD_DOCS
         tv.fit(train_data)
         tv.transform(train_data, copy=True)
 
