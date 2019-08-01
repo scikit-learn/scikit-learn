@@ -1664,8 +1664,8 @@ method takes in parameters that only have to do with visualization, such as a
 matplotlib axes. The `plot` method will store the matplotlib artists as
 attributes allowing for style adjustments through the visualizer object. A
 `plot_*` helper function accepts parameters to do the computation and the
-parameters used for plotting. After the function creates the visualizer with
-the computed values, it calls the visualizer's plot method. Note that the
+parameters used for plotting. After the helper function creates the visualizer
+with the computed values, it calls the visualizer's plot method. Note that the
 `plot` method defines attributes related to matplotlib, such as the line
 artist. This allows for customizations after calling the `plot` method.
 
@@ -1697,3 +1697,4 @@ attributes:
        return viz.plot(ax=ax, name=name, **kwargs)
 ```
 
+Read more in the :ref:`User Guide <visualizations>`

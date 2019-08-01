@@ -35,7 +35,6 @@ ROC curve for SVC in future plots. In this case, the `viz_svc` is a
 attributes called `roc_auc`, `fpr`, and `tpr`. Next, we train a random forest
 classifier and plot the previously computed roc curve again by using the `plot`
 method of the `Visualizer` object.
-``
 
 .. code-block:: python
 
