@@ -1657,7 +1657,7 @@ Plotting API
 Scikit-learn defines a simple API for creating visualizations for machine
 learning. The key features of this API is to run calculations once and to have
 the flexibility to adjust the visualizations after the fact. This logic is
-encapsulated into a visualizer object where the computed data is stored and 
+encapsulated into a visualizer object where the computed data is stored and
 the plotting is done in a `plot` method. The visualizer object's `__init__`
 method contains only the data needed to create the visualization. The `plot`
 method takes in parameters that only have to do with visualization, such as a
