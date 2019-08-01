@@ -268,10 +268,10 @@ def _safe_indexing_row(X, indices):
     elif not isinstance(indices, slice):
         indices = np.asarray(indices)
     if hasattr(X, "iloc"):
+        # Pandas Dataframes and Series
         if not isinstance(indices, slice):
             # Work-around for indexing with read-only indices in pandas
             indices = indices if indices.flags.writeable else indices.copy()
-        # Pandas Dataframes and Series
         try:
             return X.iloc[indices]
         except ValueError:
@@ -281,20 +281,14 @@ def _safe_indexing_row(X, indices):
                           DataConversionWarning)
             return X.copy().iloc[indices]
     elif hasattr(X, "shape"):
-        if hasattr(X, 'take') and (hasattr(indices, 'dtype') and
-                                   indices.dtype.kind == 'i'):
-            # This is often substantially faster than X[indices]
-            return X.take(indices, axis=0)
-        else:
-            return _array_indexing(X, indices, axis=0)
-    else:
+        return _array_indexing(X, indices, axis=0)
+    elif not isinstance(indices, Iterable) or indices.ndim == 0:
         # In the case of a slice or a scalar
-        if not isinstance(indices, Iterable) or indices.ndim == 0:
-            return X[indices]
-        else:
-            if np.issubdtype(indices.dtype, np.bool_):
-                indices = np.flatnonzero(indices)
-            return [X[idx] for idx in indices]
+        return X[indices]
+    else:
+        if np.issubdtype(indices.dtype, np.bool_):
+            indices = np.flatnonzero(indices)
+        return [X[idx] for idx in indices]
 
 
 def _check_key_type(key, superclass):
