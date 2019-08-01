@@ -201,20 +201,18 @@ def _pandas_indexing(X, key, axis, by_name):
     return getattr(X, indexer)[:, key] if axis else getattr(X, indexer)[key]
 
 
-def _list_indexing(X, key, axis):
+def _list_indexing(X, key):
     """Index a Python list."""
-    if axis == 0:
-        # Python list
-        if not isinstance(key, Iterable) or isinstance(indexable, slice):
-            # key being a slice or a scalar
-            return X[key]
-        key_set = set(key)
-        if len(key_set) == 2 and all(isinstance(k, (bool, np.bool_))
-                                     for k in key_set):
-            # key is a boolean array-like
-            return list(compress(X, key))
-        # key is a integer array-like of key
-        return [X[idx] for idx in key]
+    if not isinstance(key, Iterable) or isinstance(indexable, slice):
+        # key is a slice or a scalar
+        return X[key]
+    key_set = set(key)
+    if (len(key_set) == 2 and
+            all(isinstance(k, (bool, np.bool_)) for k in key_set)):
+        # key is a boolean array-like
+        return list(compress(X, key))
+    # key is a integer array-like of key
+    return [X[idx] for idx in key]
 
 
 def _check_key_type(key, superclass):
@@ -321,7 +319,7 @@ def safe_indexing(X, indices, axis=0):
     elif hasattr(X, "shape"):
         return _array_indexing(X, indices, axis=axis)
     else:
-        return _list_indexing(X, indices, axis=axis)
+        return _list_indexing(X, indices)
 
 
 def _get_column_indices(X, key):
