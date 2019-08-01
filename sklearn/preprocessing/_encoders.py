@@ -664,7 +664,7 @@ class OrdinalEncoder(_BaseEncoder):
             msg = ("handle_unknown should be either 'error' or 'virtual', "
                    "got {0}.".format(self.handle_unknown))
             raise ValueError(msg)
-            
+
         X_int, _ = self._transform(X, handle_unknown=self.handle_unknown)
         return X_int.astype(self.dtype, copy=False)
 
