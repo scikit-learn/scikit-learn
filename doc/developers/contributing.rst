@@ -603,23 +603,36 @@ Finally, follow the formatting rules below to make it consistently good:
     SelectKBest : Select features based on the k highest scores.
     SelectFpr : Select features based on a false positive rate test.
 
-* When documenting the parameters and attributes, have the following in mind:
+* When documenting the parameters and attributes, here is a list of some good
+  examples::
 
-    1. Do not use optional. Use `default=`. `str {'a', 'b'} or float, default=1.0`
+    some_param : {'hello', 'goodbye'}, bool or int, default=True
+	    The parameter description goes here, which can be either a string
+        literal (either `hello` or `goodbye`), a bool, or an int. The default
+        value is True.
+
+    array_parameter : {array-like, sparse matrix, dataframe} of shape (n_samples, n_features) or (n_samples,)
+        This parameter accepts a data in either of the mentioned forms, with one
+        of the mentioned shapes.
+
+In general have the following in mind:
+
+    1. Do not use optional. Use `default=`.
     2. Python basic types. (`bool` instead of `boolean`)
-    3. When defining 1-D shape, use parenthesis. `array-like shape=(n_samples,), None, default=None`.
-    4. When defining 2-D shape, use parenthesis. `array-like shape=(n_samples, n_features)`.
+    3. When defining 1-D shape, use parenthesis. `array-like of shape (n_samples,), None, default=None`.
+    4. When defining 2-D shape, use parenthesis. `array-like of shape (n_samples, n_features)`.
     5. str with multiple options: `input: {'log', 'squared', 'multinomial'}`
     6. Only use `or` for separating types. `float, int or None, default=None`
     7. Only use comma to separate types. Information such as `shape` or `string`
-    options are defined together. Here is an extreme example:
+    options are defined together. Here is an extreme example::
 
-    ```
-    {'a', 'b'}, float, int, array-like shape=(n_samples,) or None, default=None
-    ```
+        {'a', 'b'}, float, int, array-like shape=(n_samples,) or None, default=None
 
-    8. When supporting array-like and sparse matrix use:
-    `{array-like, sparse matrix} shape=(n_samples, n_features)`
+    8. Array or matrix-like data can be a subset of
+    `{array-like, ndarray, smarse matrix, dataframe}`. An example supporting two
+    of them would be::
+
+        `{array-like, sparse matrix} shape=(n_samples, n_features)`
 
 * For unwritten formatting rules, try to follow existing good works:
 
