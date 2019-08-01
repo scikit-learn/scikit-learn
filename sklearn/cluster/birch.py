@@ -534,8 +534,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
             return self._fit(X)
 
     def _check_fit(self, X):
-        check_is_fitted(self,
-                        all_or_any=any)
+        check_is_fitted(self)
 
         if (hasattr(self, 'subcluster_centers_') and
                 X.shape[1] != self.subcluster_centers_.shape[1]):
