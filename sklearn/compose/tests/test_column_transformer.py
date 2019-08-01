@@ -3,6 +3,7 @@ Test the ColumnTransformer.
 """
 import re
 
+import warnings
 import numpy as np
 from scipy import sparse
 import pytest
@@ -1108,3 +1109,32 @@ def test_column_transformer_reordered_column_names_remainder(explicit_colname):
     err_msg = 'Specifying the columns'
     with pytest.raises(ValueError, match=err_msg):
         tf.transform(X_array)
+
+
+def test_feature_name_validation():
+    """Tests if the proper warning/error is raised if the columns do not match
+    during fit and transform."""
+    pd = pytest.importorskip("pandas")
+
+    X = np.ones(shape=(3, 2))
+    X_extra = np.ones(shape=(3, 3))
+    df = pd.DataFrame(X, columns=['a', 'b'])
+    df_extra = pd.DataFrame(X_extra, columns=['a', 'b', 'c'])
+
+    tf = ColumnTransformer([('bycol', Trans(), ['a', 'b'])])
+    tf.fit(df)
+
+    msg = ("Given feature/column names or counts do not match the ones for "
+           "the data given during fit.")
+    with pytest.warns(DeprecationWarning, match=msg):
+        tf.transform(df_extra)
+
+    tf = ColumnTransformer([('bycol', Trans(), [0])])
+    tf.fit(df)
+
+    with pytest.warns(DeprecationWarning, match=msg):
+        tf.transform(X_extra)
+
+    with warnings.catch_warnings(record=True) as warns:
+        tf.transform(X)
+    assert not warns

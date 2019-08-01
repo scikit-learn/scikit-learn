@@ -1034,3 +1034,13 @@ def _check_sample_weight(sample_weight, X, dtype=None):
             raise ValueError("sample_weight.shape == {}, expected {}!"
                              .format(sample_weight.shape, (n_samples,)))
     return sample_weight
+
+
+def _feature_names(X):
+    """Returns the feature names of the data. In case of a pandas DataFrame,
+    it is the `columns` attribute.
+    """
+    if hasattr(X, "columns"):
+        return np.asarray(X.columns)
+
+    return None

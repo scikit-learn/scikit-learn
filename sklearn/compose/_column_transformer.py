@@ -6,7 +6,7 @@ different columns.
 # Author: Andreas Mueller
 #         Joris Van den Bossche
 # License: BSD
-
+import warnings
 from itertools import chain
 
 import numpy as np
@@ -21,7 +21,7 @@ from ..utils import safe_indexing
 from ..utils import _get_column_indices
 from ..utils import _check_key_type
 from ..utils.metaestimators import _BaseComposition
-from ..utils.validation import check_array, check_is_fitted
+from ..utils.validation import check_array, check_is_fitted, _feature_names
 
 
 __all__ = ['ColumnTransformer', 'make_column_transformer']
@@ -394,6 +394,24 @@ boolean mask array or callable
                     "The output of the '{0}' transformer should be 2D (scipy "
                     "matrix, array, or pandas DataFrame).".format(name))
 
+    def _validate_features(self, n_features, feature_names):
+        """Ensures feature counts and names are the same during fit and
+        transform.
+
+        TODO: It should raise an error from v0.24
+        """
+
+        if ((self._feature_names_in is None or feature_names is None)
+                and self._n_features == n_features):
+            return
+
+        if (self._n_features != n_features or
+                np.any(self._feature_names_in != np.asarray(feature_names))):
+            warnings.warn("Given feature/column names or counts do not match "
+                          "the ones for the data given during fit. This will "
+                          "fail from v0.24.",
+                          DeprecationWarning)
+
     def _log_message(self, name, idx, total):
         if not self.verbose:
             return None
@@ -470,6 +488,8 @@ boolean mask array or callable
             sparse matrices.
 
         """
+        # TODO: this should be `feature_names_in_` when we start having it
+        self._feature_names_in = _feature_names(X)
         X = _check_X(X)
         self._validate_transformers()
         self._validate_column_callables(X)
@@ -518,6 +538,7 @@ boolean mask array or callable
         """
         check_is_fitted(self, 'transformers_')
         X = _check_X(X)
+        self._validate_features(X.shape[1], _feature_names(X))
 
         if self._n_features > X.shape[1]:
             raise ValueError('Number of features of the input must be equal '
@@ -527,6 +548,8 @@ boolean mask array or callable
                              .format(self._n_features, X.shape[1]))
 
         # No column reordering allowed for named cols combined with remainder
+        # TODO: remove this mechanism in 0.24, once we enforce strict column
+        # name order and count. See #14237 for details.
         if (self._remainder[2] is not None and
                 hasattr(self, '_df_columns') and
                 hasattr(X, 'columns')):
