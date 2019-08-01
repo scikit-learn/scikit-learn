@@ -133,19 +133,13 @@ struct problem * set_problem(char *X, int double_precision_X, int n_samples,
     problem = malloc(sizeof(struct problem));
     if (problem == NULL) return NULL;
     problem->l = n_samples;
-
-    if (bias > 0) {
-        problem->n = (int) n_features + 1;
-    } else {
-        problem->n = (int) n_features;
-    }
-
+    problem->n = n_features + (bias > 0);
     problem->y = (double *) Y;
     problem->sample_weight = (double *) sample_weight;
     problem->x = dense_to_sparse(X, double_precision_X, n_samples, n_features,
                         n_nonzero, bias);
     problem->bias = bias;
-    problem->sample_weight = sample_weight;
+
     if (problem->x == NULL) { 
         free(problem);
         return NULL;
@@ -162,19 +156,12 @@ struct problem * csr_set_problem (char *X, int double_precision_X,
     problem = malloc (sizeof (struct problem));
     if (problem == NULL) return NULL;
     problem->l = n_samples;
-    problem->sample_weight = (double *) sample_weight;
-
-    if (bias > 0){
-        problem->n = (int) n_features + 1;
-    } else {
-        problem->n = (int) n_features;
-    }
-
+    problem->n = n_features + (bias > 0);
     problem->y = (double *) Y;
+    problem->sample_weight = (double *) sample_weight;
     problem->x = csr_to_sparse(X, double_precision_X, (int *) indices,
                         (int *) indptr, n_samples, n_features, n_nonzero, bias);
     problem->bias = bias;
-    problem->sample_weight = sample_weight;
 
     if (problem->x == NULL) {
         free(problem);

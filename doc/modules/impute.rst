@@ -256,7 +256,7 @@ mask of the features containing missing values at ``fit`` time::
   >>> indicator.features_
   array([0, 1, 3])
 
-The ``features`` parameter can be set to ``'all'`` to returned all features
+The ``features`` parameter can be set to ``'all'`` to return all features
 whether or not they contain missing values::
 
   >>> indicator = MissingIndicator(missing_values=-1, features="all")
