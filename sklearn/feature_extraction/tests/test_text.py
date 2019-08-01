@@ -510,7 +510,7 @@ def test_tfidf_vectorizer_deprecationwarning():
            " Backward compatibility for 'copy' will be removed in"
            " 0.23.")
     with pytest.warns(DeprecationWarning, match=msg):
-        tv = TfidfTransformer()
+        tv = TfidfVectorizer()
         train_data = iter(JUNK_FOOD_DOCS)
         tv.fit(train_data)
         tv.transform(train_data, copy=True)
