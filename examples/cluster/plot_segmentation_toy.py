@@ -68,7 +68,7 @@ img += 1 + 0.2 * np.random.randn(*img.shape)
 graph = image.img_to_graph(img, mask=mask)
 
 # Take a decreasing function of the gradient: we take it weakly
-# dependent from the gradient the segmentation is close to a voronoi. 
+# dependent from the gradient the segmentation is close to a voronoi
 graph.data = np.exp(-graph.data / graph.data.std())
 
 labels = spectral_clustering(graph, n_clusters=4, eigen_solver='arpack')
