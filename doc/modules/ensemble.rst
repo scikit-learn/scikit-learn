@@ -925,7 +925,6 @@ If no missing values were encountered for a given feature during training,
 then samples with missing values are mapped to whichever child has the most
 samples.
 
-
 Low-level parallelism
 ---------------------
 
@@ -942,6 +941,38 @@ details.
      Boosting System". https://arxiv.org/abs/1603.02754
   .. [LightGBM] Ke et. al. "LightGBM: A Highly Efficient Gradient
      BoostingDecision Tree"
+
+Why it's faster
+---------------
+
+The bottleneck of a gradient boosting procedure is building the decision
+trees. Building a traditional decision tree (as in the other GBDTs
+:class:`GradientBoostingClassifier` and :class:`GradientBoostingRegressor`)
+requires sorting the feature values of all the samples at each node (for
+each feature). Sorting is needed so that the potential gain of a split point
+can be computed efficiently. Splitting a single node has thus a complexity
+of :math:`\mathcal{O}(\text{n_features} * n \log(n))` where :math:`n` is the
+number of samples at the node.
+
+:class:`HistGradientBoostingClassifier` and
+:class:`HistGradientBoostingRegressor`, in contrast, do not require sorting the
+feature values and instead use a data-structure called a histogram, where the
+samples are implicitly ordered. Building a histogram has a
+:math:`\mathcal{O}(n)` complexity, so the node splitting procedure has a
+:math:`\mathcal{O}(\text{n_features} * n)` complexity, much smaller than the
+previous one. In addition, instead of considering :math:`n` split points, we
+here consider only ``max_bins`` split points, which is much smaller.
+
+In order to build histograms, the input data `X` needs to be binned into
+integer-valued bins. This binning procedure does require sorting the feature
+values, but it only happens once at the very beginning of the boosting process
+(not at each node, like in :class:`GradientBoostingClassifier` and
+:class:`GradientBoostingRegressor`).
+
+Finally, many parts of the implementation of
+:class:`HistGradientBoostingClassifier` and
+:class:`HistGradientBoostingRegressor` are parallelized.
+
 
 .. _voting_classifier:
 
