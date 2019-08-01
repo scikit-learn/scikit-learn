@@ -134,8 +134,21 @@ Changelog
   `predict_proba` give consistent results.
   :pr:`14114` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.feature_extraction`
+.......................
+
+- |Fix| Functions created by build_preprocessor and build_analyzer of
+  :class:`feature_extraction.text.VectorizerMixin` can now be pickled.
+  :pr:`14430` by :user:`Dillon Niederhut <deniederhut>`.
+
 :mod:`sklearn.gaussian_process`
 ...............................
+
+- |Feature| :func:`gaussian_process.GaussianProcessClassifier.log_marginal_likelihood`
+  and :func:`gaussian_process.GaussianProcessRegressor.log_marginal_likelihood` now
+  accept a ``clone_kernel=True`` keyword argument. When set to ``False``,
+  the kernel attribute is modified, but may result in a performance improvement.
+  :pr:`14378` by :user:`Masashi Shibata <c-bata>`.
 
 - |API| From version 0.24 :meth:`Kernel.get_params` will raise an
   AttributeError rather than return None for parameters that are in the
@@ -164,7 +177,7 @@ Changelog
 
 - |Efficiency| The 'liblinear' logistic regression solver is now faster and
   requires less memory.
-  :pr:`14108`, :pr:`14170` by :user:`Alex Henrie <alexhenrie>`.
+  :pr:`14108`, pr:`14170`, pr:`14296` by :user:`Alex Henrie <alexhenrie>`.
 
 - |Fix| :class:`linear_model.Ridge` with `solver='sag'` now accepts F-ordered
   and non-contiguous arrays and makes a conversion instead of failing.
@@ -216,7 +229,7 @@ Changelog
 - |Enhancement| SVM now throws more specific error when fit on non-square data
   and kernel = precomputed.  :class:`svm.BaseLibSVM`
   :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
-  
+
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -225,8 +238,8 @@ Changelog
   :class:`preprocessing.MaxAbsScaler`, :class:`preprocessing.RobustScaler`
   and :class:`preprocessing.QuantileTransformer` which results in a slight
   performance improvement. :pr:`13987` by `Roman Yurchak`_.
- 
-- |Fix| KernelCenterer now throws error when fit on non-square 
+
+- |Fix| KernelCenterer now throws error when fit on non-square
   class:`preprocessing.KernelCenterer`
   :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
 
@@ -258,7 +271,7 @@ Changelog
 
 - |Fix| KNearestRegressor now throws error when fit on non-square data and
   metric = precomputed.  :class:`neighbors.NeighborsBase`
-  :pr:`14336` by :user:`Gregory Dexter <gdex1>`.  
+  :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
 
 :mod:`sklearn.neural_network`
 .............................
@@ -269,7 +282,7 @@ Changelog
   :class:`neural_network.MLPClassifier` to give control over
   maximum number of function evaluation to not meet ``tol`` improvement.
   :issue:`9274` by :user:`Daniel Perry <daniel-perry>`.
-  
+
 
 Miscellaneous
 .............

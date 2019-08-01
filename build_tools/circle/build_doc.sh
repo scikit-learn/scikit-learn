@@ -130,10 +130,10 @@ conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
   cython="${CYTHON_VERSION:-*}" pytest coverage \
   matplotlib="${MATPLOTLIB_VERSION:-*}" sphinx=2.1.2 pillow \
   scikit-image="${SCIKIT_IMAGE_VERSION:-*}" pandas="${PANDAS_VERSION:-*}" \
-  joblib
+  joblib memory_profiler
 
 source activate testenv
-pip install "sphinx-gallery>=0.2,<0.3"
+pip install sphinx-gallery==0.3.1
 pip install numpydoc==0.9
 
 # Build and install scikit-learn in dev mode
