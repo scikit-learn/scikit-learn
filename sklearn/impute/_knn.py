@@ -61,18 +61,6 @@ class KNNImputer(TransformerMixin, BaseEstimator):
         If True, a copy of X will be created. If False, imputation will
         be done in-place whenever possible.
 
-    Attributes
-    ----------
-    statistics_ : array, shape (n_features,)
-        The 1-D array contains the mean of each feature calculated using
-        observed (i.e. non-missing) values. This is used for imputing
-        missing values in samples that are either excluded from nearest
-        neighbors search because they have too many missing features or
-        all of the sample's k-nearest neighbors (i.e., the potential donors)
-        also have the relevant feature value missing. If a feature is always
-        missing, the `mean_` will be `np.nan`, and that feature will be
-        dropped during `transform`.
-
     References
     ----------
     * Olga Troyanskaya, Michael Cantor, Gavin Sherlock, Pat Brown, Trevor
@@ -132,9 +120,10 @@ class KNNImputer(TransformerMixin, BaseEstimator):
         dist_potential_donors = dist[:, potential_donors_idx]
 
         # Get donors
+        n_neighbors = min(self.n_neighbors, len(potential_donors_idx))
         donors_idx = np.argpartition(dist_potential_donors,
-                                     self.n_neighbors - 1,
-                                     axis=1)[:, :self.n_neighbors]
+                                     n_neighbors - 1,
+                                     axis=1)[:, :n_neighbors]
 
         # Get weight matrix from from distance matrix
         donors_dist = dist_potential_donors[
@@ -180,12 +169,6 @@ class KNNImputer(TransformerMixin, BaseEstimator):
         mask = _get_mask(X, self.missing_values)
         self.weights = _check_weights(self.weights)
         self._fit_X = X
-
-        masked_X = np.ma.masked_array(X, mask=mask)
-        mean_masked = masked_X.mean(axis=0)
-        self.statistics_ = mean_masked.data
-        self.statistics_[mean_masked.mask] = np.nan
-
         return self
 
     def transform(self, X):
@@ -203,7 +186,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
             that is not always missing during `fit`.
         """
 
-        check_is_fitted(self, ["statistics_"])
+        check_is_fitted(self, ["_fit_X"])
         if not is_scalar_nan(self.missing_values):
             force_all_finite = True
         else:
@@ -232,32 +215,25 @@ class KNNImputer(TransformerMixin, BaseEstimator):
         dist_idx_map = np.zeros(X.shape[0], dtype=np.int)
         dist_idx_map[row_missing_idx] = np.arange(0, row_missing_idx.shape[0])
 
-        invalid_mask = _get_mask(self.statistics_, np.nan)
-        valid_mask = np.logical_not(invalid_mask)
-        valid_statistics_indexes = np.flatnonzero(valid_mask)
-
         mask_fit_X = _get_mask(self._fit_X, self.missing_values)
         non_missing_fix_X = np.logical_not(mask_fit_X)
         # Find and impute missing
+        valid_statistics_indexes = []
         for col in range(X.shape[1]):
 
             # column has no missing values
             if not np.any(mask[:, col]):
-                continue
-
-            # column was all missing during training
-            if col not in valid_statistics_indexes:
+                valid_statistics_indexes.append(col)
                 continue
 
             receivers_idx = np.where(mask[:, col])[0]
 
             # Row index for receivers and potential donors
             potential_donors_idx = np.flatnonzero(non_missing_fix_X[:, col])
-
-            # Use statistics if not enough donors are available
-            if len(potential_donors_idx) < self.n_neighbors:
-                X[receivers_idx, col] = self.statistics_[col]
+            if len(potential_donors_idx) == 0:
+                # column was all missing during training
                 continue
+            valid_statistics_indexes.append(col)
 
             dist_subset = dist[dist_idx_map[receivers_idx]]
             value = self._calc_impute(dist_subset, receivers_idx, X[:, col],
