@@ -179,32 +179,6 @@ def test_spectral_embedding_amg_solver(seed=36):
     assert _check_with_col_sign_flipping(embed_amg, embed_arpack, 0.05)
 
 
-def test_spectral_embedding_amg_solver_failure(seed=36):
-    # Test spectral embedding with amg solver failure
-    try:
-        from pyamg import smoothed_aggregation_solver  # noqa
-    except ImportError:
-        raise SkipTest("pyamg not available.")
-
-    # The generated graph below is NOT fully connected if n_neighbors=3
-    n_samples = 200
-    n_clusters = 3
-    n_features = 3
-    centers = np.eye(n_clusters, n_features)
-    S, true_labels = make_blobs(n_samples=n_samples, centers=centers,
-                                cluster_std=1., random_state=42)
-
-    se_amg0 = SpectralEmbedding(n_components=3, affinity="nearest_neighbors",
-                                eigen_solver="amg", n_neighbors=3,
-                                random_state=np.random.RandomState(seed))
-    se_amg1 = SpectralEmbedding(n_components=3, affinity="nearest_neighbors",
-                                eigen_solver="amg", n_neighbors=3,
-                                random_state=np.random.RandomState(seed+1))
-    embed_amg0 = se_amg0.fit_transform(S)
-    embed_amg1 = se_amg1.fit_transform(S)
-    assert _check_with_col_sign_flipping(embed_amg0, embed_amg1, 0.05)
-
-
 @pytest.mark.filterwarnings("ignore:the behavior of nmi will "
                             "change in version 0.22")
 
