@@ -31,6 +31,7 @@ from sklearn.utils.extmath import _incremental_mean_and_var
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils.extmath import softmax
 from sklearn.utils.extmath import stable_cumsum
+from sklearn.utils.extmath import _fast_mode
 from sklearn.datasets.samples_generator import make_low_rank_matrix
 
 
@@ -640,3 +641,32 @@ def test_stable_cumsum():
     assert_array_equal(stable_cumsum(A, axis=0), np.cumsum(A, axis=0))
     assert_array_equal(stable_cumsum(A, axis=1), np.cumsum(A, axis=1))
     assert_array_equal(stable_cumsum(A, axis=2), np.cumsum(A, axis=2))
+
+
+class TestFastMode():
+
+    def test_scipy_stats_axis_1(self):
+        rng = np.random.RandomState(0)
+
+        X = rng.randint(10, size=(100, 20))
+        mode_ref, _ = stats.mode(X, axis=1)
+        mode = _fast_mode(X, axis=1)
+        assert_array_equal(mode, mode_ref)
+
+    @pytest.mark.parametrize(
+            'x',
+            [np.ones((10, 10), dtype=np.float), 1, np.ones(5, dtype=np.int)],
+            ids=['array_float64', 'int', '1D-array'])
+    def test_input_validation(self, x):
+        with pytest.raises(ValueError,
+                           match='only implemented for 2D integer arrays'):
+            _fast_mode(x)
+
+    def test_ties(self):
+        # Check that ties are resolved in the same way as in stats.mode
+        X = np.ones((6, 9), dtype=np.int)
+        X[:, 3:] = 2
+        X[:, 6:] = 3
+        mode_ref, _ = stats.mode(X, axis=1)
+        mode = _fast_mode(X, axis=1)
+        assert_array_equal(mode, mode_ref)

@@ -10,7 +10,7 @@
 
 import numpy as np
 from scipy import stats
-from ..utils.extmath import weighted_mode
+from ..utils.extmath import weighted_mode, _fast_mode
 
 from .base import \
     _check_weights, _get_weights, \
@@ -180,7 +180,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         y_pred = np.empty((n_samples, n_outputs), dtype=classes_[0].dtype)
         for k, classes_k in enumerate(classes_):
             if weights is None:
-                mode, _ = stats.mode(_y[neigh_ind, k], axis=1)
+                mode = _fast_mode(_y[neigh_ind, k], axis=1)
             else:
                 mode, _ = weighted_mode(_y[neigh_ind, k], weights, axis=1)
 

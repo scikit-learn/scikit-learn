@@ -357,6 +357,45 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
         return U[:, :n_components], s[:n_components], V[:n_components, :]
 
 
+def _fast_mode(x, axis=1):
+    """Returns a faster equivalent for scipy.mode
+
+    This is only implemented for positive integer data.
+
+    Parameters
+    ----------
+    x : array_like, shape (n_samples, n_components)
+        n-dimensional array of which to find mode(s).
+    axis : int, optional
+        Axis along which to operate. Default is 1.
+        Only axis=1 is supported.
+
+    Returns
+    -------
+    mode: ndarray, shape=(n_samples)
+        index of the mode
+
+    Examples
+    --------
+    >>> x = np.array([[0, 1, 1], [2, 0, 2]])
+    >>> _fast_mode(x, axis=1)
+    array([1, 2])
+    """
+    if not hasattr(x, "__array__") or x.dtype.kind != 'i' or x.ndim != 2:
+        raise ValueError('_fast_mode is only implemented for 2D integer '
+                         'arrays!')
+    data = np.ones(x.shape, dtype=np.int).ravel()
+    indices = x.ravel()
+    indptr = np.arange(x.shape[0]+1)*x.shape[1]
+    # we use the fact that data for repeated indices is summed when
+    # creating sparse arrays. The index with highest value is then the mode
+    if axis != 1:
+        raise ValueError('Only axis=1 is supported.')
+    z = sparse.csr_matrix((data, indices, indptr),
+                          shape=(x.shape[0], x.max() + 1))
+    return np.asarray(np.argmax(z, axis=1))
+
+
 def weighted_mode(a, w, axis=0):
     """Returns an array of the weighted modal (most common) value in a
 
