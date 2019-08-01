@@ -866,21 +866,18 @@ def check_symmetric(array, tol=1E-10, raise_warning=True,
     return array
 
 
-def check_is_fitted(estimator, *, msg=None, all_or_any=all):
+def check_is_fitted(estimator, *, msg=None):
     """Perform is_fitted validation for estimator.
 
     Checks if the estimator is fitted by verifying the presence of
-    "all_or_any" of the passed attributes and raises a NotFittedError with the
-    given message.
+    fitted attributes (ending with a trailing underscore) and otherwise
+    raises a NotFittedError with the given message.
 
     Parameters
     ----------
     estimator : estimator instance.
         estimator instance for which the check is performed.
 
-    attributes : attribute name(s) given as string or a list/tuple of strings
-        Eg.:
-            ``["coef_", "estimator_", ...], "coef_"``
 
     msg : string
         The default error message is, "This %(name)s instance is not fitted
@@ -890,9 +887,6 @@ def check_is_fitted(estimator, *, msg=None, all_or_any=all):
         it is substituted for the estimator name.
 
         Eg. : "Estimator, %(name)s, must be fitted before sparsifying".
-
-    all_or_any : callable, {all, any}, default all
-        Specify whether all or any of the given attributes must exist.
 
     Returns
     -------

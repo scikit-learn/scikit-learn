@@ -505,7 +505,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         if self.solver == 'lsqr':
             raise NotImplementedError("transform not implemented for 'lsqr' "
                                       "solver (use 'svd' or 'eigen').")
-        check_is_fitted(self, all_or_any=any)
+        check_is_fitted(self)
 
         X = check_array(X)
         if self.solver == 'svd':

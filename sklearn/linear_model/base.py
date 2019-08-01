@@ -327,7 +327,7 @@ class SparseCoefMixin:
         self : estimator
         """
         msg = "Estimator, %(name)s, must be fitted before densifying."
-        check_is_fitted(self, "coef_", msg=msg)
+        check_is_fitted(self, msg=msg)
         if sp.issparse(self.coef_):
             self.coef_ = self.coef_.toarray()
         return self
@@ -357,7 +357,7 @@ class SparseCoefMixin:
         self : estimator
         """
         msg = "Estimator, %(name)s, must be fitted before sparsifying."
-        check_is_fitted(self, "coef_", msg=msg)
+        check_is_fitted(self, msg=msg)
         self.coef_ = sp.csr_matrix(self.coef_)
         return self
 

@@ -1216,7 +1216,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         array, shape (n_samples,)
            Predicted target values per element in X.
         """
-        check_is_fitted(self, all_or_any=all)
+        check_is_fitted(self)
 
         X = check_array(X, accept_sparse='csr')
 

@@ -350,7 +350,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         """
         msg = ("%(name)s is not fitted. Call fit to set the parameters before"
                " calling transform")
-        check_is_fitted(self, "sample_interval_", msg=msg)
+        check_is_fitted(self, msg=msg)
 
         X = check_array(X, accept_sparse='csr')
         sparse = sp.issparse(X)

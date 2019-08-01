@@ -1206,7 +1206,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         X : {array-like, sparse matrix}
             The data used to scale along the specified axis.
         """
-        check_is_fitted(self, 'scale_')
+        check_is_fitted(self)
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
@@ -1229,7 +1229,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         X : array-like
             The data used to scale along the specified axis.
         """
-        check_is_fitted(self, 'scale_')
+        check_is_fitted(self)
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')

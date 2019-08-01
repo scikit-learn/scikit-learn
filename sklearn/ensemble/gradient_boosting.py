@@ -115,7 +115,7 @@ class QuantileEstimator:
         y : array, shape (n_samples,)
             Returns predicted values.
         """
-        check_is_fitted(self, 'quantile')
+        check_is_fitted(self)
 
         y = np.empty((X.shape[0], 1), dtype=np.float64)
         y.fill(self.quantile)
@@ -158,7 +158,7 @@ class MeanEstimator:
         y : array, shape (n_samples,)
             Returns predicted values.
         """
-        check_is_fitted(self, 'mean')
+        check_is_fitted(self)
 
         y = np.empty((X.shape[0], 1), dtype=np.float64)
         y.fill(self.mean)
@@ -210,7 +210,7 @@ class LogOddsEstimator:
         y : array, shape (n_samples,)
             Returns predicted values.
         """
-        check_is_fitted(self, 'prior')
+        check_is_fitted(self)
 
         y = np.empty((X.shape[0], 1), dtype=np.float64)
         y.fill(self.prior)
@@ -262,7 +262,7 @@ class PriorProbabilityEstimator:
         y : array, shape (n_samples,)
             Returns predicted values.
         """
-        check_is_fitted(self, 'priors')
+        check_is_fitted(self)
 
         y = np.empty((X.shape[0], self.priors.shape[0]), dtype=np.float64)
         y[:] = self.priors
@@ -316,7 +316,7 @@ class ZeroEstimator:
         y : array, shape (n_samples,)
             Returns predicted values.
         """
-        check_is_fitted(self, 'n_classes')
+        check_is_fitted(self)
 
         y = np.empty((X.shape[0], self.n_classes), dtype=np.float64)
         y.fill(0.0)
