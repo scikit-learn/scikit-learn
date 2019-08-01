@@ -30,7 +30,7 @@ from ..utils.extmath import row_norms
 from ..utils.fixes import logsumexp
 from ..utils.optimize import newton_cg, _check_optimize_result
 from ..utils.validation import check_X_y
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils import deprecated
 from ..exceptions import ChangedBehaviorWarning
 from ..utils.multiclass import check_classification_targets
@@ -826,11 +826,8 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     # If sample weights exist, convert them to array (support for lists)
     # and check length
     # Otherwise set them to 1 for all examples
-    if sample_weight is not None:
-        sample_weight = np.array(sample_weight, dtype=X.dtype, order='C')
-        check_consistent_length(y, sample_weight)
-    else:
-        sample_weight = np.ones(X.shape[0], dtype=X.dtype)
+    sample_weight = _check_sample_weight(sample_weight, X,
+                                         dtype=X.dtype)
 
     # If class_weights is a dict (provided by the user), the weights
     # are assigned to the original labels. If it is "balanced", then
@@ -1133,9 +1130,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     y_test = y[test]
 
     if sample_weight is not None:
-        sample_weight = check_array(sample_weight, ensure_2d=False)
-        check_consistent_length(y, sample_weight)
-
+        sample_weight = _check_sample_weight(sample_weight, X)
         sample_weight = sample_weight[train]
 
     coefs, Cs, n_iter = _logistic_regression_path(
@@ -1286,7 +1281,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         - 'newton-cg', 'lbfgs', 'sag' and 'saga' handle L2 or no penalty
         - 'liblinear' and 'saga' also handle L1 penalty
         - 'saga' also supports 'elasticnet' penalty
-        - 'liblinear' does not handle no penalty
+        - 'liblinear' does not support setting ``penalty='none'``
 
         Note that 'sag' and 'saga' fast convergence is only guaranteed on
         features with approximately the same scale. You can
@@ -1512,7 +1507,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             raise ValueError("Tolerance for stopping criteria must be "
                              "positive; got (tol=%r)" % self.tol)
 
-        if solver in ['lbfgs', 'liblinear']:
+        if solver == 'lbfgs':
             _dtype = np.float64
         else:
             _dtype = [np.float64, np.float32]

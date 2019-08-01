@@ -29,16 +29,15 @@ from sklearn.utils.testing import assert_raise_message
 
 ACTIVATION_TYPES = ["identity", "logistic", "tanh", "relu"]
 
-digits_dataset_multi = load_digits(n_class=3)
+X_digits, y_digits = load_digits(n_class=3, return_X_y=True)
 
-X_digits_multi = MinMaxScaler().fit_transform(digits_dataset_multi.data[:200])
-y_digits_multi = digits_dataset_multi.target[:200]
+X_digits_multi = MinMaxScaler().fit_transform(X_digits[:200])
+y_digits_multi = y_digits[:200]
 
-digits_dataset_binary = load_digits(n_class=2)
+X_digits, y_digits = load_digits(n_class=2, return_X_y=True)
 
-X_digits_binary = MinMaxScaler().fit_transform(
-    digits_dataset_binary.data[:200])
-y_digits_binary = digits_dataset_binary.target[:200]
+X_digits_binary = MinMaxScaler().fit_transform(X_digits[:200])
+y_digits_binary = y_digits[:200]
 
 classification_datasets = [(X_digits_multi, y_digits_multi),
                            (X_digits_binary, y_digits_binary)]

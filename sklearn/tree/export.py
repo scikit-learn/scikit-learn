@@ -85,7 +85,6 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
 
     The sample counts that are shown are weighted with any sample_weights that
     might be present.
-    This function requires matplotlib, and works best with matplotlib >= 1.5.
 
     The visualization is fit automatically to the size of the axis.
     Use the ``figsize`` or ``dpi`` arguments of ``plt.figure``  to control
@@ -541,9 +540,6 @@ class _MPLTreeExporter(_BaseTreeExporter):
         self.bbox_args = dict(fc='w')
         if self.rounded:
             self.bbox_args['boxstyle'] = "round"
-        else:
-            # matplotlib <1.5 requires explicit boxstyle
-            self.bbox_args['boxstyle'] = "square"
 
         self.arrow_args = dict(arrowstyle="<-")
 
@@ -599,27 +595,20 @@ class _MPLTreeExporter(_BaseTreeExporter):
             # get figure to data transform
             # adjust fontsize to avoid overlap
             # get max box width and height
-            try:
-                extents = [ann.get_bbox_patch().get_window_extent()
-                           for ann in anns]
-                max_width = max([extent.width for extent in extents])
-                max_height = max([extent.height for extent in extents])
-                # width should be around scale_x in axis coordinates
-                size = anns[0].get_fontsize() * min(scale_x / max_width,
-                                                    scale_y / max_height)
-                for ann in anns:
-                    ann.set_fontsize(size)
-            except AttributeError:
-                # matplotlib < 1.5
-                warnings.warn("Automatic scaling of tree plots requires "
-                              "matplotlib 1.5 or higher. Please specify "
-                              "fontsize.")
+            extents = [ann.get_bbox_patch().get_window_extent()
+                       for ann in anns]
+            max_width = max([extent.width for extent in extents])
+            max_height = max([extent.height for extent in extents])
+            # width should be around scale_x in axis coordinates
+            size = anns[0].get_fontsize() * min(scale_x / max_width,
+                                                scale_y / max_height)
+            for ann in anns:
+                ann.set_fontsize(size)
 
         return anns
 
     def recurse(self, node, tree, ax, scale_x, scale_y, height, depth=0):
-        # need to copy bbox args because matplotib <1.5 modifies them
-        kwargs = dict(bbox=self.bbox_args.copy(), ha='center', va='center',
+        kwargs = dict(bbox=self.bbox_args, ha='center', va='center',
                       zorder=100 - 10 * depth, xycoords='axes pixels')
 
         if self.fontsize is not None:
