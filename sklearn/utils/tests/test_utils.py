@@ -442,13 +442,6 @@ def test_safe_indexing_mask_axis_1(array_type):
     assert_allclose_dense_sparse(X_masked, X_masked_array)
 
 
-def test_array_indexing_array_error():
-    X = np.array([[0, 1], [2, 3]])
-    mask = [True, False]
-    with pytest.raises(ValueError, match="'axis' should be either 0"):
-        _array_indexing(X, mask, axis=3)
-
-
 def test_shuffle_on_ndim_equals_three():
     def to_tuple(A):    # to make the inner arrays hashable
         return tuple(tuple(tuple(C) for C in B) for B in A)
