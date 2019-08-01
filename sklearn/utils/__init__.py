@@ -4,6 +4,7 @@ The :mod:`sklearn.utils` module includes various utilities.
 from collections.abc import Iterable
 from collections.abc import Sequence
 from contextlib import contextmanager
+from itertools import compress
 from itertools import islice
 import numbers
 import platform
@@ -188,19 +189,17 @@ def safe_indexing(X, indices, axis=0):
     ----------
     X : array-like, sparse-matrix, list, pandas.DataFrame, pandas.Series
         Data from which to sample rows, items or columns.
-    indices : array-like
-        - For both `axis=0` and `axis=1`, indices can be one of:
-            - scalar: output is 1D, unless `X` is sparse.
-              Supported data types for scalars:
-                - integer: supported for arrays, sparse matrices and
-                  dataframes.
-            - container: lists, slices, boolean masks: output is 2D.
-              Supported data types for containers:
-                - integer or boolean (positional): supported for arrays, sparse
-                  matrices and dataframes
-        - If `X` is a dataframe and `axis=1`, indices support string data type
-          (key-based) as a scalar or a container. The output dimension will be
-          identical to the above case.
+    indices : bool, int, str, array-like
+        - To select a single element (i.e. row or column), `indices` can be one
+          of the following: `bool` or `int` which are supported by all types of
+          `X`. `indices` being a `str` is only supported for `X` being a
+          dataframe. The selected subset will be 1D, unless `X` is a sparse
+          matrix in which case it will be 2D.
+        - To select multiple elements (i.e. rows or columns), `indices` can be
+          one of the following: `list`, `array`, `slice`. The type used in
+          these containers can be one of the following: `int`, `bool`, and
+          `str`. `str` is only supported when `X` is a dataframe.
+          The selected subset will be 2D.
     axis : int, default=0
         The axis along which `X` will be subsampled. ``axis=0`` will select
         rows while ``axis=1`` will select columns.
@@ -241,17 +240,18 @@ def _array_indexing(array, key, axis=0):
     return array[key] if axis == 0 else array[:, key]
 
 
-def _safe_indexing_row(X, indices):
+def _safe_indexing_row(X, key):
     """Return items or rows from X using indices.
 
-    Allows simple indexing of lists or arrays.
+    Allows simple indexing of lists, NumPy array, SciPy sparse matrices, and
+    Pandas DataFrame`.
 
     Parameters
     ----------
     X : array-like, sparse-matrix, list, pandas.DataFrame, pandas.Series
         Data from which to sample rows or items.
-    indices : array-like of int
-        Indices according to which X will be subsampled.
+    key : int, slice, bool or int array-like
+        Key used to get a subset of X.
 
     Returns
     -------
@@ -263,32 +263,36 @@ def _safe_indexing_row(X, indices):
     CSR, CSC, and LIL sparse matrices are supported. COO sparse matrices are
     not supported.
     """
-    if indices is None:
+    if key is None:
         return X
-    elif not isinstance(indices, slice):
-        indices = np.asarray(indices)
     if hasattr(X, "iloc"):
         # Pandas Dataframes and Series
-        if not isinstance(indices, slice):
-            # Work-around for indexing with read-only indices in pandas
-            indices = indices if indices.flags.writeable else indices.copy()
+        if hasattr(key, 'flags'):
+            # Work-around for indexing with read-only key in pandas
+            key = key if key.flags.writeable else key.copy()
         try:
-            return X.iloc[indices]
+            return X.iloc[key]
         except ValueError:
             # Cython typed memoryviews internally used in pandas do not support
             # readonly buffers.
             warnings.warn("Copying input dataframe for slicing.",
                           DataConversionWarning)
-            return X.copy().iloc[indices]
+            return X.copy().iloc[key]
     elif hasattr(X, "shape"):
-        return _array_indexing(X, indices, axis=0)
-    elif not isinstance(indices, Iterable) or indices.ndim == 0:
-        # In the case of a slice or a scalar
-        return X[indices]
+        # NumPy array and SciPy sparse matrix
+        return _array_indexing(X, key, axis=0)
     else:
-        if np.issubdtype(indices.dtype, np.bool_):
-            indices = np.flatnonzero(indices)
-        return [X[idx] for idx in indices]
+        # Python list
+        if not isinstance(key, Iterable) or isinstance(indexable, slice):
+            # key being a slice or a scalar
+            return X[key]
+        key_set = set(key)
+        if len(key_set) == 2 and all(isinstance(k, (bool, np.bool_))
+                                     for k in key_set):
+            # key is a boolean array-like
+            return list(compress(X, key))
+        # key is a integer array-like of key
+        return [X[idx] for idx in key]
 
 
 def _check_key_type(key, superclass):
