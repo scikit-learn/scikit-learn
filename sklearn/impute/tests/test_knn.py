@@ -566,3 +566,16 @@ def test_knn_imputer_with_weighted_features(na):
 
     imputer_comp_wt = KNNImputer(missing_values=na, weights="distance")
     assert_allclose(imputer_comp_wt.fit_transform(X), X_imputed)
+
+
+@pytest.mark.parametrize("na", [-1, np.nan])
+def test_knn_imputer_not_enough_valid_distances(na):
+    # Samples with needed feature has nan distance
+    X1 = np.array([[na, 11], [na, 1], [3, na]])
+    knn = KNNImputer(missing_values=na, n_neighbors=1)
+    X1_imputed = np.array([[3, 11], [3, 1], [3, 6]])
+    assert_allclose(knn.fit_transform(X1), X1_imputed)
+
+    X2 = np.array([[4, na]])
+    X2_imputed = np.array([[4, 6]])
+    assert_allclose(knn.transform(X2), X2_imputed)

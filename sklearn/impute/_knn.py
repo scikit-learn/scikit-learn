@@ -254,19 +254,27 @@ class KNNImputer(TransformerMixin, BaseEstimator):
             # Row index for receivers and potential donors
             potential_donors_idx = np.flatnonzero(non_missing_fix_X[:, col])
 
-            # Use statistics if not enough donors are available
+            # Use statistics if there are not enough donors are available
             if len(potential_donors_idx) < self.n_neighbors:
                 X[receivers_idx, col] = self.statistics_[col]
                 continue
 
+            # distances for samples that needed imputation for column
             dist_subset = dist[dist_idx_map[receivers_idx]]
+
+            # Use statistics if there are not enough valid distances
+            dist_is_nan = np.isnan(dist_subset[:, potential_donors_idx])
+            valid_neighbors = dist_is_nan.size - np.count_nonzero(dist_is_nan)
+            if valid_neighbors < self.n_neighbors:
+                X[receivers_idx, col] = self.statistics_[col]
+                continue
+
             value = self._calc_impute(dist_subset, receivers_idx, X[:, col],
                                       self._fit_X[:, col],
                                       potential_donors_idx)
             X[receivers_idx, col] = value
 
-        X = X[:, valid_statistics_indexes]
-        return X
+        return X[:, valid_statistics_indexes]
 
     def _more_tags(self):
         return {'allow_nan': True}
