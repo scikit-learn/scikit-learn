@@ -39,21 +39,15 @@ def clusterQR(vectors):
     ----------
     https://github.com/asdamle/QR-spectral-clustering
     https://arxiv.org/abs/1708.07481
-
-    Notes
-    -----
-    T.conj() allows the vectors to be complex-valued,
-    just in case for future use
-
     """
 
     k = vectors.shape[1]
-    piv = qr(vectors.T.conj(), pivoting=True)[2]
+    piv = qr(vectors.T, pivoting=True)[2]
     piv = piv[0:k]
-    UtSV = svd(vectors[piv, :].T.conj())
+    UtSV = svd(vectors[piv, :].T)
     Ut = UtSV[0]
     Vt = UtSV[2].T.conj()
-    vectors = abs(np.dot(vectors, np.dot(Ut, Vt.T.conj())))
+    vectors = abs(np.dot(vectors, np.dot(Ut, Vt.T)))
     return vectors.argmax(axis=1).T
 
 
