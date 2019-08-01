@@ -666,16 +666,16 @@ def test_safe_sparse_dot_nd():
     rng = np.random.RandomState(0)
 
     # dense ND / sparse
-    A = rng.random_sample((30, 10, 20))
-    B = rng.random_sample((20, 40))
+    A = rng.random_sample((2, 3, 4, 5, 6))
+    B = rng.random_sample((6, 7))
     expected = np.dot(A, B)
     B = sparse.csr_matrix(B)
     actual = safe_sparse_dot(A, B)
     assert_allclose(actual, expected)
 
     # sparse / dense ND
-    A = rng.random_sample((30, 10))
-    B = rng.random_sample((20, 10, 40))
+    A = rng.random_sample((2, 3))
+    B = rng.random_sample((4, 5, 3, 6))
     expected = np.dot(A, B)
     A = sparse.csr_matrix(A)
     actual = safe_sparse_dot(A, B)
