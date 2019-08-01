@@ -87,7 +87,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
     Examples
     --------
-    The following example shows how to retrieve the 5 right informative
+    The following example shows how to retrieve the 5 most informative
     features in the Friedman #1 dataset.
 
     >>> from sklearn.datasets import make_friedman1

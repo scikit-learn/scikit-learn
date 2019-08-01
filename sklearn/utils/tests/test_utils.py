@@ -13,6 +13,7 @@ from sklearn.utils.testing import (assert_raises,
                                    assert_allclose_dense_sparse,
                                    assert_raises_regex,
                                    assert_warns_message, assert_no_warnings)
+from sklearn.utils import _array_indexing
 from sklearn.utils import check_random_state
 from sklearn.utils import _check_key_type
 from sklearn.utils import deprecated
@@ -418,6 +419,34 @@ def test_safe_indexing_mock_pandas(inds):
     X_df_indexed = safe_indexing(X_df, inds)
     X_indexed = safe_indexing(X_df, inds)
     assert_array_equal(np.array(X_df_indexed), X_indexed)
+
+
+@pytest.mark.parametrize("array_type", ['array', 'sparse', 'dataframe'])
+def test_safe_indexing_mask_axis_1(array_type):
+    # regression test for #14510
+    # check that boolean array-like and boolean array lead to the same indexing
+    # even in NumPy < 1.13
+    if array_type == 'array':
+        array_constructor = np.asarray
+    elif array_type == 'sparse':
+        array_constructor = sp.csr_matrix
+    elif array_type == 'dataframe':
+        pd = pytest.importorskip('pandas')
+        array_constructor = pd.DataFrame
+
+    X = array_constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    mask = [True, False, True]
+    mask_array = np.array(mask)
+    X_masked = safe_indexing(X, mask, axis=1)
+    X_masked_array = safe_indexing(X, mask_array, axis=1)
+    assert_allclose_dense_sparse(X_masked, X_masked_array)
+
+
+def test_array_indexing_array_error():
+    X = np.array([[0, 1], [2, 3]])
+    mask = [True, False]
+    with pytest.raises(ValueError, match="'axis' should be either 0"):
+        _array_indexing(X, mask, axis=3)
 
 
 def test_shuffle_on_ndim_equals_three():
