@@ -985,6 +985,11 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
                                      else next(transformers))
                                     for name, old in self.transformer_list]
 
+    @property
+    def n_features_in_(self):
+        # X is passed to all transformers so we just delegate to the first one
+        return self.transformer_list[0][1].n_features_in_
+
 
 def make_union(*transformers, **kwargs):
     """Construct a FeatureUnion from the given transformers.

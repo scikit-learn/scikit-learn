@@ -514,7 +514,7 @@ def test_regressormixin_score_multioutput():
     assert_warns_message(FutureWarning, msg, reg.score, X, y)
 
 
-def test_validate_X():
+def test_validate_X_n_feature_mismatch():
     # Make sure ValueError is raised when there is a n_features mismatch
     # between fit and predict/transform
 
@@ -528,10 +528,17 @@ def test_validate_X():
         ss.transform(X_more_features)
 
 
+def test_validate_X_bad_kwargs():
+
+    est = BaseEstimator()
+    with pytest.raises(TypeError,
+                       match="check_array\(\) got an unexpected keyword"):
+        est._validate_X([1], bad_param=4)
+
+
 def test_n_features_in_attribute():
     # Make sure n_features_in_ is correctly set.
-    # Note that n_features_in_ is always None for vectorizers, while for other
-    # estimators the attribute doesn't exist until fit() is called.
+    # TODO: eventually move this in estimator_checks
     X_2 = [[0, 1], [2, 3]]
     X_3 = [[0, 1, 4], [2, 3, 5]]
 
@@ -541,38 +548,6 @@ def test_n_features_in_attribute():
     assert ss.n_features_in_ == 2
     ss = ss.fit(X_3)
     assert ss.n_features_in_ == 3
-
-    dv = DictVectorizer()
-    assert dv.n_features_in_ is None
-    d = [{'foo': 1, 'bar': 2}, {'foo': 3, 'baz': 1}]
-    dv.fit(d)
-    assert dv.n_features_in_ is None
-
-    # meta estimator need specific ways of dealing with the attribute:
-    # grid search delegates this to # the best estimator
-    n_features = 4
-    X, y = make_classification(n_features=n_features)
-    gbdt = HistGradientBoostingClassifier()
-    param_grid = {'max_iter': [3, 4]}
-    gs = GridSearchCV(gbdt, param_grid)
-    assert hasattr(ss, 'n_features_in_')  # that might be a bit unintuitive
-    with pytest.raises(NotFittedError):
-        gs.n_features_in_
-    gs.fit(X, y)
-    assert gs.n_features_in_ == n_features
-
-    # pipelines delegate to the first step
-    pipe = make_pipeline(gbdt)
-    assert not hasattr(pipe, 'n_features_in_')
-    pipe.fit(X, y)
-    assert pipe.n_features_in_ == n_features
-
-    dv = DictVectorizer()
-    pipe = make_pipeline(dv)
-    assert pipe.n_features_in_ is None
-    d = [{'foo': 1, 'bar': 2}, {'foo': 3, 'baz': 1}]
-    dv.fit(d)
-    assert pipe.n_features_in_ is None
 
 
 def test_warns_on_get_params_non_attribute():

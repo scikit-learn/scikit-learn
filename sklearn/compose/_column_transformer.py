@@ -471,6 +471,7 @@ boolean mask array or callable
 
         """
         X = _check_X(X)
+        self._validate_n_features(X, check_n_features=False)
         self._validate_transformers()
         self._validate_column_callables(X)
         self._validate_remainder(X)
@@ -518,6 +519,7 @@ boolean mask array or callable
         """
         check_is_fitted(self, 'transformers_')
         X = _check_X(X)
+        self._validate_n_features(X, check_n_features=True)
 
         if self._n_features > X.shape[1]:
             raise ValueError('Number of features of the input must be equal '

@@ -1108,3 +1108,15 @@ def test_column_transformer_reordered_column_names_remainder(explicit_colname):
     err_msg = 'Specifying the columns'
     with pytest.raises(ValueError, match=err_msg):
         tf.transform(X_array)
+
+
+def test_n_features_in():
+    # make sure n_features_in is what is passed as input to the column
+    # transformer.
+
+    X = [[1, 2], [3, 4], [5, 6]]
+    ct = ColumnTransformer([('a', DoubleTrans(), [0]),
+                            ('b', DoubleTrans(), [1])])
+    assert not hasattr(ct, 'n_features_in_')
+    ct.fit(X)
+    assert ct.n_features_in_ == 2

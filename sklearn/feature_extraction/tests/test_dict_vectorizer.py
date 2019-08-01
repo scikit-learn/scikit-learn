@@ -110,3 +110,13 @@ def test_deterministic_vocabulary():
     v_2 = DictVectorizer().fit([d_shuffled])
 
     assert v_1.vocabulary_ == v_2.vocabulary_
+
+
+def test_n_features_in():
+    # For vectorizers, n_features_in_ does not make sense and it is always
+    # None
+    dv = DictVectorizer()
+    assert dv.n_features_in_ is None
+    d = [{'foo': 1, 'bar': 2}, {'foo': 3, 'baz': 1}]
+    dv.fit(d)
+    assert dv.n_features_in_ is None
