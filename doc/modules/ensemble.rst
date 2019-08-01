@@ -464,8 +464,7 @@ trees.
   than tens of thousands of samples.
 
   They also have built-in support for missing values, which avoids the need
-  for an imputer. Support for categorical features is also part of the
-  roadmap.
+  for an imputer.
 
   These estimators are described in more detail below in
   :ref:`histogram_based_gradient_boosting`.
@@ -834,8 +833,7 @@ than :class:`GradientBoostingClassifier` and
 than tens of thousands of samples.
 
 They also have built-in support for missing values, which avoids the need
-for an imputer. Support for categorical features is also part of the
-roadmap. Moreover, early-stopping is enabled by default.
+for an imputer.
 
 These fast estimators first bin the input samples ``X`` into
 integer-valued bins (typically 256 bins) which tremendously reduces the
@@ -886,7 +884,7 @@ The size of the trees can be controlled through the ``max_lead_nodees``,
 The number of bins used to bin the data is controlled with the ``max_bins``
 parameter. Using less bins acts as a form of regularization. It is
 generally recommended to use as many bins as possible, which is the default:
-255 bins for non-missing values.
+255 bins.
 
 The ``l2_regularization`` parameter is a regularizer on the loss function and
 corresponds to :math:`\lambda` in equation (2) of [XGBoost]_.
@@ -932,12 +930,11 @@ Low-level parallelism
 ---------------------
 
 :class:`HistGradientBoostingClassifier` and
-:class:`HistGradientBoostingRegressor` have parallel implementations that
-use OpenMP through Cython. The number of threads that is used can be changed
-using the ``OMP_NUM_THREADS`` environment variable. By default, all available
-cores are used. Please refer to the OpenMP documentation for details. We are
-planning on adding a ``n_jobs`` parameter (or equivalent) in a future
-version.
+:class:`HistGradientBoostingRegressor` have implementations that use OpenMP
+for parallelization through Cython. The number of threads that is used can
+be changed using the ``OMP_NUM_THREADS`` environment variable. By default,
+all available cores are used. Please refer to the OpenMP documentation for
+details.
 
 .. topic:: References
 
