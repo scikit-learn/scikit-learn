@@ -128,7 +128,7 @@ ignored by setting them to ``'passthrough'``::
 
 The estimators of the pipeline can be retrieved by index:
 
-    >>> pipe[0] 
+    >>> pipe[0]
     PCA()
 
 or by name::
@@ -147,7 +147,7 @@ or by name::
 
 .. topic:: See also:
 
- * :ref:`grid_search`
+ * :ref:`_composite_grid_search`
 
 
 Notes
@@ -369,7 +369,7 @@ Like ``Pipeline``, individual steps may be replaced using ``set_params``,
 and ignored by setting to ``'drop'``::
 
     >>> combined.set_params(kernel_pca='drop')
-    FeatureUnion(transformer_list=[('linear_pca', PCA()), 
+    FeatureUnion(transformer_list=[('linear_pca', PCA()),
                                    ('kernel_pca', 'drop')])
 
 .. topic:: Examples:
@@ -420,7 +420,7 @@ preprocessing or a specific feature extraction method::
 
 For this data, we might want to encode the ``'city'`` column as a categorical
 variable using :class:`preprocessing.OneHotEncoder
-<sklearn.preprocessing.OneHotEncoder>` but apply a 
+<sklearn.preprocessing.OneHotEncoder>` but apply a
 :class:`feature_extraction.text.CountVectorizer
 <sklearn.feature_extraction.text.CountVectorizer>` to the ``'title'`` column.
 As we might use multiple feature extraction methods on the same column, we give
