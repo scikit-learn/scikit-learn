@@ -1697,4 +1697,4 @@ attributes:
        return viz.plot(ax=ax, name=name, **kwargs)
 ```
 
-Read more in the :ref:`User Guide <visualizations>`
+Read more in the :ref:`User Guide <visualizations>`.
