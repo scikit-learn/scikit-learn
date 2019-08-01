@@ -9,8 +9,7 @@
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 
 import numpy as np
-from scipy import stats
-from ..utils.extmath import weighted_mode, _fast_mode
+from ..utils.extmath import _fast_mode
 
 from .base import \
     _check_weights, _get_weights, \
@@ -416,11 +415,12 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             pred_labels = np.zeros(len(neigh_ind), dtype=object)
             pred_labels[:] = [_y[ind, k] for ind in neigh_ind]
             if weights is None:
-                mode = np.array([stats.mode(pl)[0]
+                mode = np.array([_fast_mode(np.atleast_2d(pl)).ravel()
                                  for pl in pred_labels[inliers]], dtype=np.int)
             else:
                 mode = np.array(
-                    [weighted_mode(pl, w)[0]
+                    [_fast_mode(np.atleast_2d(pl), np.atleast_2d(w),
+                                axis=1).ravel()
                      for (pl, w) in zip(pred_labels[inliers], weights[inliers])
                      ], dtype=np.int)
 
