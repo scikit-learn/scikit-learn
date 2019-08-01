@@ -935,13 +935,6 @@ be changed using the ``OMP_NUM_THREADS`` environment variable. By default,
 all available cores are used. Please refer to the OpenMP documentation for
 details.
 
-.. topic:: References
-
-  .. [XGBoost] Tianqi Chen, Carlos Guestrin, "XGBoost: A Scalable Tree
-     Boosting System". https://arxiv.org/abs/1603.02754
-  .. [LightGBM] Ke et. al. "LightGBM: A Highly Efficient Gradient
-     BoostingDecision Tree"
-
 Why it's faster
 ---------------
 
@@ -973,6 +966,12 @@ Finally, many parts of the implementation of
 :class:`HistGradientBoostingClassifier` and
 :class:`HistGradientBoostingRegressor` are parallelized.
 
+.. topic:: References
+
+  .. [XGBoost] Tianqi Chen, Carlos Guestrin, "XGBoost: A Scalable Tree
+     Boosting System". https://arxiv.org/abs/1603.02754
+  .. [LightGBM] Ke et. al. "LightGBM: A Highly Efficient Gradient
+     BoostingDecision Tree"
 
 .. _voting_classifier:
 
