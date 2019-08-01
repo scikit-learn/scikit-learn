@@ -228,6 +228,11 @@ def safe_indexing(X, indices, axis=0):
 
 def _array_indexing(array, key, axis=0):
     """Index an array consistently across NumPy version."""
+    if axis not in (0, 1):
+        raise ValueError(
+            "'axis' should be either 0 (to index rows) or 1 (to index "
+            " column). Got {} instead.".format(axis)
+        )
     if np_version < (1, 13) or issparse(array):
         # check if we have an boolean array-likes to make the proper indexing
         key_array = np.asarray(key)

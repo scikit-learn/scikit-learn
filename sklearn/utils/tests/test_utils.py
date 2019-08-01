@@ -13,6 +13,7 @@ from sklearn.utils.testing import (assert_raises,
                                    assert_allclose_dense_sparse,
                                    assert_raises_regex,
                                    assert_warns_message, assert_no_warnings)
+from sklearn.utils import _array_indexing
 from sklearn.utils import check_random_state
 from sklearn.utils import _check_key_type
 from sklearn.utils import deprecated
@@ -385,6 +386,13 @@ def test_safe_indexing_mask_axis_1(array_type):
     X_masked = safe_indexing(X, mask, axis=1)
     X_masked_array = safe_indexing(X, mask_array, axis=1)
     assert_allclose_dense_sparse(X_masked, X_masked_array)
+
+
+def test_array_indexing_array_error():
+    X = np.array([[0, 1], [2, 3]])
+    mask = [True, False]
+    with pytest.raises(ValueError, match="'axis' should be either 0"):
+        _array_indexing(X, mask, axis=3)
 
 
 def test_shuffle_on_ndim_equals_three():
