@@ -883,8 +883,10 @@ def test_random_search_cv_results():
     n_splits = 3
     n_search_iter = 30
 
-    params = dict(C=expon(scale=10), gamma=expon(scale=0.1))
-    param_keys = ('param_C', 'param_gamma')
+    params = [{'kernel': ['rbf'], 'C': expon(scale=10),
+               'gamma': expon(scale=0.1)},
+              {'kernel': ['poly'], 'degree': [2, 3]}]
+    param_keys = ('param_C', 'param_degree', 'param_gamma', 'param_kernel')
     score_keys = ('mean_test_score', 'mean_train_score',
                   'rank_test_score',
                   'split0_test_score', 'split1_test_score',
@@ -907,9 +909,17 @@ def test_random_search_cv_results():
         # Check results structure
         check_cv_results_array_types(search, param_keys, score_keys)
         check_cv_results_keys(cv_results, param_keys, score_keys, n_cand)
-        # For random_search, all the param array vals should be unmasked
-        assert not(any(np.ma.getmaskarray(cv_results['param_C'])) or
-                   any(np.ma.getmaskarray(cv_results['param_gamma'])))
+        n_candidates = len(search.cv_results_['params'])
+        assert all((cv_results['param_C'].mask[i] and
+                    cv_results['param_gamma'].mask[i] and
+                    not cv_results['param_degree'].mask[i])
+                   for i in range(n_candidates)
+                   if cv_results['param_kernel'][i] == 'linear')
+        assert all((not cv_results['param_C'].mask[i] and
+                    not cv_results['param_gamma'].mask[i] and
+                    cv_results['param_degree'].mask[i])
+                   for i in range(n_candidates)
+                   if cv_results['param_kernel'][i] == 'rbf')
 
 
 @pytest.mark.parametrize(
@@ -1475,10 +1485,11 @@ def test_grid_search_failing_classifier_raise():
 
 def test_parameters_sampler_replacement():
     # raise warning if n_iter is bigger than total parameter space
-    params = {'first': [0, 1], 'second': ['a', 'b', 'c']}
-    sampler = ParameterSampler(params, n_iter=7)
-    n_iter = 7
-    grid_size = 6
+    params = [{'first': [0, 1], 'second': ['a', 'b', 'c']},
+              {'third': ['two', 'values']}]
+    sampler = ParameterSampler(params, n_iter=9)
+    n_iter = 9
+    grid_size = 8
     expected_warning = ('The total space of parameters %d is smaller '
                         'than n_iter=%d. Running %d iterations. For '
                         'exhaustive searches, use GridSearchCV.'
@@ -1487,9 +1498,9 @@ def test_parameters_sampler_replacement():
                          list, sampler)
 
     # degenerates to GridSearchCV if n_iter the same as grid_size
-    sampler = ParameterSampler(params, n_iter=6)
+    sampler = ParameterSampler(params, n_iter=8)
     samples = list(sampler)
-    assert len(samples) == 6
+    assert len(samples) == 8
     for values in ParameterGrid(params):
         assert values in samples
 

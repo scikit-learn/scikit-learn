@@ -242,15 +242,25 @@ class ParameterSampler:
     True
     """
     def __init__(self, param_distributions, n_iter, random_state=None):
-        self.param_distributions = param_distributions
+        if not isinstance(param_distributions, (Mapping, Iterable)):
+            raise TypeError('Parameter distribution is not a dict or '
+                            'a list ({!r})'.format(param_distributions))
+
+        if isinstance(param_distributions, Mapping):
+            # wrap dictionary in a singleton list to support either dict
+            # or list of dicts
+            param_distributions = [param_distributions]
+
         self.n_iter = n_iter
         self.random_state = random_state
+        self.param_distributions = param_distributions
 
     def __iter__(self):
         # check if all distributions are given as lists
         # in this case we want to sample without replacement
-        all_lists = np.all([not hasattr(v, "rvs")
-                            for v in self.param_distributions.values()])
+        all_lists = np.all([np.all([not hasattr(v, "rvs")
+                            for v in space.values()])
+                            for space in self.param_distributions])
         rnd = check_random_state(self.random_state)
 
         if all_lists:
@@ -271,9 +281,11 @@ class ParameterSampler:
                 yield param_grid[i]
 
         else:
-            # Always sort the keys of a dictionary, for reproducibility
-            items = sorted(self.param_distributions.items())
             for _ in range(self.n_iter):
+                space = self.param_distributions[
+                    rnd.randint(len(self.param_distributions))]
+                # Always sort the keys of a dictionary, for reproducibility
+                items = sorted(space.items())
                 params = dict()
                 for k, v in items:
                     if hasattr(v, "rvs"):
@@ -1165,11 +1177,13 @@ class RandomizedSearchCV(BaseSearchCV):
         Either estimator needs to provide a ``score`` function,
         or ``scoring`` must be passed.
 
-    param_distributions : dict
+    param_distributions : dict or list of dicts
         Dictionary with parameters names (string) as keys and distributions
         or lists of parameters to try. Distributions must provide a ``rvs``
         method for sampling (such as those from scipy.stats.distributions).
         If a list is given, it is sampled uniformly.
+        If a list of dicts is given, for each parameter, one of the dicts
+        is sampled uniformly.
 
     n_iter : int, default=10
         Number of parameter settings that are sampled. n_iter trades
