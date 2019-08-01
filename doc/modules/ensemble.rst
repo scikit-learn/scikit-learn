@@ -878,7 +878,7 @@ controls the number of iterations of the boosting process:
   >>> clf.score(X_test, y_test)
   0.8998
 
-The size of the trees can be controlled through the ``max_lead_nodees``,
+The size of the trees can be controlled through the ``max_leaf_nodes``,
 ``max_depth``, and ``min_samples_leaf`` parameters.
 
 The number of bins used to bin the data is controlled with the ``max_bins``
