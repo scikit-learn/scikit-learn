@@ -199,7 +199,7 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
         """Fit model."""
 
     def _decision_function(self, X):
-        check_is_fitted(self, "coef_")
+        check_is_fitted(self)
 
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
         return safe_sparse_dot(X, self.coef_.T,
@@ -258,7 +258,7 @@ class LinearClassifierMixin(ClassifierMixin):
             case, confidence score for self.classes_[1] where >0 means this
             class would be predicted.
         """
-        check_is_fitted(self, 'coef_')
+        check_is_fitted(self)
 
         X = check_array(X, accept_sparse='csr')
 

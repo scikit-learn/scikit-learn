@@ -534,7 +534,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
             return self._fit(X)
 
     def _check_fit(self, X):
-        check_is_fitted(self, ['subcluster_centers_', 'partial_fit_'],
+        check_is_fitted(self,
                         all_or_any=any)
 
         if (hasattr(self, 'subcluster_centers_') and
@@ -583,7 +583,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         X_trans : {array-like, sparse matrix}, shape (n_samples, n_clusters)
             Transformed data.
         """
-        check_is_fitted(self, 'subcluster_centers_')
+        check_is_fitted(self)
         return euclidean_distances(X, self.subcluster_centers_)
 
     def _global_clustering(self, X=None):

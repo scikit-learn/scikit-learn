@@ -452,7 +452,7 @@ class VectorizerMixin:
     def _check_vocabulary(self):
         """Check if vocabulary is empty or missing (not fit-ed)"""
         msg = "%(name)s - Vocabulary wasn't fitted."
-        check_is_fitted(self, 'vocabulary_', msg=msg),
+        check_is_fitted(self, msg=msg),
 
         if len(self.vocabulary_) == 0:
             raise ValueError("Vocabulary is empty")
@@ -1380,7 +1380,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
             X.data += 1
 
         if self.use_idf:
-            check_is_fitted(self, '_idf_diag', 'idf vector is not fitted')
+            check_is_fitted(self, 'idf vector is not fitted')
 
             expected_n_features = self._idf_diag.shape[0]
             if n_features != expected_n_features:
@@ -1749,7 +1749,7 @@ class TfidfVectorizer(CountVectorizer):
         X : sparse matrix, [n_samples, n_features]
             Tf-idf-weighted document-term matrix.
         """
-        check_is_fitted(self, '_tfidf', 'The tfidf vector is not fitted')
+        check_is_fitted(self, 'The tfidf vector is not fitted')
 
         X = super().transform(raw_documents)
         return self._tfidf.transform(X, copy=False)

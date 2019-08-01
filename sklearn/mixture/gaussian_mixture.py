@@ -687,7 +687,7 @@ class GaussianMixture(BaseMixture):
         return log_prob_norm
 
     def _check_is_fitted(self):
-        check_is_fitted(self, ['weights_', 'means_', 'precisions_cholesky_'])
+        check_is_fitted(self)
 
     def _get_parameters(self):
         return (self.weights_, self.means_, self.covariances_,

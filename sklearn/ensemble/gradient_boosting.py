@@ -1390,7 +1390,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
     def _check_initialized(self):
         """Check that the estimator is initialized, raising an error if not."""
-        check_is_fitted(self, 'estimators_')
+        check_is_fitted(self)
 
     def fit(self, X, y, sample_weight=None, monitor=None):
         """Fit the gradient boosting model.
@@ -1741,7 +1741,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 (n_trees_per_iteration, n_samples)
             The value of the partial dependence function on each grid point.
         """
-        check_is_fitted(self, 'estimators_',
+        check_is_fitted(self,
                         msg="'estimator' parameter must be a fitted estimator")
         if self.init is not None:
             warnings.warn(

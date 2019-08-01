@@ -982,7 +982,7 @@ class SGDClassifier(BaseSGDClassifier):
         return self._predict_proba
 
     def _predict_proba(self, X):
-        check_is_fitted(self, "t_")
+        check_is_fitted(self)
 
         if self.loss == "log":
             return self._predict_proba_lr(X)
@@ -1216,7 +1216,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         array, shape (n_samples,)
            Predicted target values per element in X.
         """
-        check_is_fitted(self, ["t_", "coef_", "intercept_"], all_or_any=all)
+        check_is_fitted(self, all_or_any=all)
 
         X = check_array(X, accept_sparse='csr')
 

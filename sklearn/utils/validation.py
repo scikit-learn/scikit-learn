@@ -866,7 +866,7 @@ def check_symmetric(array, tol=1E-10, raise_warning=True,
     return array
 
 
-def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
+def check_is_fitted(estimator, *, msg=None, all_or_any=all):
     """Perform is_fitted validation for estimator.
 
     Checks if the estimator is fitted by verifying the presence of
@@ -910,10 +910,10 @@ def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
     if not hasattr(estimator, 'fit'):
         raise TypeError("%s is not an estimator instance." % (estimator))
 
-    if not isinstance(attributes, (list, tuple)):
-        attributes = [attributes]
+    attrs = [v for v in vars(estimator) if v.endswith("_")
+             and not v.startswith("__")]
 
-    if not all_or_any([hasattr(estimator, attr) for attr in attributes]):
+    if not len(attrs):
         raise NotFittedError(msg % {'name': type(estimator).__name__})
 
 
