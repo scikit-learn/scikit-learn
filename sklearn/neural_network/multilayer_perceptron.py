@@ -355,9 +355,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
         # Initialize lists
         activations = [X]
-        activations.extend(np.empty((batch_size, n_fan_out))
-                           for n_fan_out in layer_units[1:])
-        deltas = [np.empty_like(a_layer) for a_layer in activations[1:]]
+        activations.extend([None] * (len(layer_units) - 1))
+        deltas = [None] * (len(activations) - 1)
 
         coef_grads = [np.empty((n_fan_in_, n_fan_out_)) for n_fan_in_,
                       n_fan_out_ in zip(layer_units[:-1],
