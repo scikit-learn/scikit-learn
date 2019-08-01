@@ -2,7 +2,7 @@
 
 .. currentmodule:: sklearn
 
- .. _changes_0_20_4:
+.. _changes_0_20_4:
 
 Version 0.20.4
 ==============
@@ -30,6 +30,13 @@ The bundled version of joblib was upgraded from 0.13.0 to 0.13.2.
   :func:``transform`` could lead to silently passing incorrect columns to the
   ``remainder`` transformer.
   :pr:`14237` by `Andreas Schuderer <schuderer>`.
+
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Fixed a bug in :class:`cross_decomposition.CCA` improving numerical 
+  stability when `Y` is close to zero. :pr:`13903` by `Thomas Fan`_.
+
 
 :mod:`sklearn.model_selection`
 ..............................

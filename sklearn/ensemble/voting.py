@@ -13,8 +13,9 @@ This module contains:
 #
 # License: BSD 3 clause
 
-import numpy as np
 from abc import abstractmethod
+
+import numpy as np
 
 from joblib import Parallel, delayed
 
@@ -23,9 +24,11 @@ from ..base import RegressorMixin
 from ..base import TransformerMixin
 from ..base import clone
 from ..preprocessing import LabelEncoder
+from ..utils import Bunch
 from ..utils.validation import check_is_fitted
 from ..utils.metaestimators import _BaseComposition
-from ..utils import Bunch
+from ..utils.multiclass import check_classification_targets
+from ..utils.validation import column_or_1d
 
 
 def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
@@ -67,7 +70,7 @@ class _BaseVoting(_BaseComposition, TransformerMixin):
 
     def _predict(self, X):
         """Collect results from clf.predict calls. """
-        return np.asarray([clf.predict(X) for clf in self.estimators_]).T
+        return np.asarray([est.predict(X) for est in self.estimators_]).T
 
     @abstractmethod
     def fit(self, X, y, sample_weight=None):
@@ -264,6 +267,7 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
         -------
         self : object
         """
+        check_classification_targets(y)
         if isinstance(y, np.ndarray) and len(y.shape) > 1 and y.shape[1] > 1:
             raise NotImplementedError('Multilabel and multi-output'
                                       ' classification is not supported.')
@@ -454,6 +458,7 @@ class VotingRegressor(_BaseVoting, RegressorMixin):
         -------
         self : object
         """
+        y = column_or_1d(y, warn=True)
         return super().fit(X, y, sample_weight)
 
     def predict(self, X):
