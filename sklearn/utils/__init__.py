@@ -255,7 +255,8 @@ def safe_indexing(X, indices, axis=0):
     Parameters
     ----------
     X : array-like, sparse-matrix, list, pandas.DataFrame, pandas.Series
-        Data from which to sample rows, items or columns.
+        Data from which to sample rows, items or columns. `list` are only
+        supported when `axis=0`.
     indices : bool, int, str, slice, array-like
         - To select a single element (i.e. row or column), `indices` can be one
           of the following: `bool` or `int` which are supported by all types of
