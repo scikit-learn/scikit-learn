@@ -6,6 +6,7 @@
 import copy
 import warnings
 from collections import defaultdict
+import numbers
 import platform
 import inspect
 import re
@@ -590,10 +591,14 @@ class ComponentsMixin:
             # n_components could be auto or None
             # this is more likely to be an int
             n_features = self.n_components_
-        elif hasattr(self, 'n_components') and self.n_components is not None:
-            n_features = self.n_components
         elif hasattr(self, 'components_'):
             n_features = self.components_.shape[0]
+        elif (hasattr(self, 'n_components')
+              and isinstance(self.n_components, numbers.Integral)):
+            n_features = self.n_components
+        else:
+            raise AttributeError("{} has no attribute 'n_features_out_'".format(
+                type(self).__name__))
         return n_features
 
 
