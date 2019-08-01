@@ -31,7 +31,6 @@ import warnings
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
-from numpy.testing import assert_equal
 import scipy.sparse as sp
 
 from .base import BaseEstimator, TransformerMixin
@@ -382,11 +381,9 @@ class BaseRandomProjection(BaseEstimator, TransformerMixin, metaclass=ABCMeta):
                                                     n_features)
 
         # Check contract
-        assert_equal(
-            self.components_.shape,
-            (self.n_components_, n_features),
-            err_msg=('An error has occurred the self.components_ matrix has '
-                     ' not the proper shape.'))
+        assert self.components_.shape == (self.n_components_, n_features), (
+                'An error has occurred the self.components_ matrix has '
+                ' not the proper shape.')
 
         return self
 
@@ -456,7 +453,7 @@ class GaussianRandomProjection(BaseRandomProjection):
 
     Attributes
     ----------
-    n_component_ : int
+    n_components_ : int
         Concrete number of components computed when n_components="auto".
 
     components_ : numpy array of shape [n_components, n_features]
@@ -576,7 +573,7 @@ class SparseRandomProjection(BaseRandomProjection):
 
     Attributes
     ----------
-    n_component_ : int
+    n_components_ : int
         Concrete number of components computed when n_components="auto".
 
     components_ : CSR matrix with shape [n_components, n_features]

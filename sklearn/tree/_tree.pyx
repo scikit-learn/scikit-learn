@@ -16,7 +16,7 @@
 #
 # License: BSD 3 clause
 
-from cpython cimport Py_INCREF, PyObject
+from cpython cimport Py_INCREF, PyObject, PyTypeObject
 
 from libc.stdlib cimport free
 from libc.math cimport fabs
@@ -39,7 +39,7 @@ from ._utils cimport safe_realloc
 from ._utils cimport sizet_ptr_to_ndarray
 
 cdef extern from "numpy/arrayobject.h":
-    object PyArray_NewFromDescr(object subtype, np.dtype descr,
+    object PyArray_NewFromDescr(PyTypeObject* subtype, np.dtype descr,
                                 int nd, np.npy_intp* dims,
                                 np.npy_intp* strides,
                                 void* data, int flags, object obj)
@@ -1117,7 +1117,8 @@ cdef class Tree:
         strides[0] = sizeof(Node)
         cdef np.ndarray arr
         Py_INCREF(NODE_DTYPE)
-        arr = PyArray_NewFromDescr(np.ndarray, <np.dtype> NODE_DTYPE, 1, shape,
+        arr = PyArray_NewFromDescr(<PyTypeObject *> np.ndarray,
+                                   <np.dtype> NODE_DTYPE, 1, shape,
                                    strides, <void*> self.nodes,
                                    np.NPY_DEFAULT, None)
         Py_INCREF(self)
@@ -1126,7 +1127,7 @@ cdef class Tree:
 
 
     def compute_partial_dependence(self, DTYPE_t[:, ::1] X,
-                                   int[::1] target_feature,
+                                   int[::1] target_features,
                                    double[::1] out):
         """Partial dependence of the response on the ``target_feature`` set.
 
@@ -1148,7 +1149,7 @@ cdef class Tree:
         X : view on 2d ndarray, shape (n_samples, n_target_features)
             The grid points on which the partial dependence should be
             evaluated.
-        target_feature : view on 1d ndarray, shape (n_target_features)
+        target_features : view on 1d ndarray, shape (n_target_features)
             The set of target features for which the partial dependence
             should be evaluated.
         out : view on 1d ndarray, shape (n_samples)
@@ -1194,8 +1195,8 @@ cdef class Tree:
 
                     # determine if the split feature is a target feature
                     is_target_feature = False
-                    for feature_idx in range(target_feature.shape[0]):
-                        if target_feature[feature_idx] == current_node.feature:
+                    for feature_idx in range(target_features.shape[0]):
+                        if target_features[feature_idx] == current_node.feature:
                             is_target_feature = True
                             break
 

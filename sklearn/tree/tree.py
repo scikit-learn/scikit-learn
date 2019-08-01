@@ -1293,6 +1293,32 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
 
+    Attributes
+    ----------
+    classes_ : array of shape = [n_classes] or a list of such arrays
+        The classes labels (single output problem),
+        or a list of arrays of class labels (multi-output problem).
+
+    max_features_ : int,
+        The inferred value of max_features.
+
+    n_classes_ : int or list
+        The number of classes (for single output problems),
+        or a list containing the number of classes for each
+        output (for multi-output problems).
+
+    n_features_ : int
+        The number of features when ``fit`` is performed.
+
+    n_outputs_ : int
+        The number of outputs when ``fit`` is performed.
+
+    tree_ : Tree object
+        The underlying Tree object. Please refer to
+        ``help(sklearn.tree._tree.Tree)`` for attributes of Tree object and
+        :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
+        for basic usage of these attributes.
+
     See also
     --------
     ExtraTreeRegressor, sklearn.ensemble.ExtraTreesClassifier,
@@ -1461,6 +1487,22 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
+    Attributes
+    ----------
+    max_features_ : int,
+        The inferred value of max_features.
+
+    n_features_ : int
+        The number of features when ``fit`` is performed.
+
+    n_outputs_ : int
+        The number of outputs when ``fit`` is performed.
+
+    tree_ : Tree object
+        The underlying Tree object. Please refer to
+        ``help(sklearn.tree._tree.Tree)`` for attributes of Tree object and
+        :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
+        for basic usage of these attributes.
 
     See also
     --------
