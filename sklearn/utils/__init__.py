@@ -194,11 +194,21 @@ def _array_indexing(array, key, axis):
 
 def _pandas_indexing(X, key, axis, by_name):
     """Index a pandas dataframe or a series."""
-    if hasattr(key, 'flags'):
+    if hasattr(key, 'shape'):
         # Work-around for indexing with read-only key in pandas
         key = key if key.flags.writeable else key.copy()
     indexer = 'loc' if by_name else 'iloc'
-    return getattr(X, indexer)[:, key] if axis else getattr(X, indexer)[key]
+    try:
+        return (getattr(X, indexer)[:, key]
+                if axis else getattr(X, indexer)[key])
+    except ValueError:
+        # Cython typed memoryviews internally used in pandas do not support
+        # readonly buffers.
+        warnings.warn(
+            "Copying input dataframe for slicing.", DataConversionWarning
+        )
+        return (getattr(X.copy(), indexer)[:, key]
+                if axis else getattr(X.copy(), indexer)[key])
 
 
 def _list_indexing(X, key):
