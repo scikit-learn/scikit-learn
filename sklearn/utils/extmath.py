@@ -132,12 +132,14 @@ def safe_sparse_dot(a, b, dense_output=False):
     """
     if a.ndim > 2 or b.ndim > 2:
         if sparse.issparse(a):
+            # sparse is always 2D. Implies b is 3D+
             # [i, j] @ [k, ..., l, m, n] -> [i, k, ..., l, n]
             b_ = np.rollaxis(b, -2)
             b_2d = b_.reshape((b.shape[-2], -1))
             ret = a @ b_2d
             ret = ret.reshape(a.shape[0], *b_.shape[1:])
         elif sparse.issparse(b):
+            # sparse is always 2D. Implies a is 3D+
             # [k, ..., l, m] @ [i, j] -> [k, ..., l, j]
             a_2d = a.reshape(-1, a.shape[-1])
             ret = a_2d @ b
