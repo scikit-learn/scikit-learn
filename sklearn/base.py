@@ -597,8 +597,9 @@ class ComponentsMixin:
               and isinstance(self.n_components, numbers.Integral)):
             n_features = self.n_components
         else:
-            raise AttributeError("{} has no attribute 'n_features_out_'".format(
-                type(self).__name__))
+            raise AttributeError(
+                "{} has no attribute 'n_features_out_'".format(
+                    type(self).__name__))
         return n_features
 
 
