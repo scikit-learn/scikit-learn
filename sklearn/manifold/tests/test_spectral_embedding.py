@@ -179,10 +179,6 @@ def test_spectral_embedding_amg_solver(seed=36):
     assert _check_with_col_sign_flipping(embed_amg, embed_arpack, 0.05)
 
 
-@pytest.mark.filterwarnings("ignore:the behavior of nmi will "
-                            "change in version 0.22")
-
-
 def test_pipeline_spectral_clustering(seed=36):
     # Test using pipeline to do spectral clustering
     random_state = np.random.RandomState(seed)
