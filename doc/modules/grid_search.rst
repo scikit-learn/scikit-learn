@@ -192,6 +192,8 @@ result in an error when using multiple metrics.
 See :ref:`sphx_glr_auto_examples_model_selection_plot_multi_metric_evaluation.py`
 for an example usage.
 
+.. _composite_grid_search:
+
 Composite estimators and parameter spaces
 -----------------------------------------
 `GridSearchCV` and `RandomizedSearchCV` allow searching over parameters of
@@ -211,14 +213,15 @@ using a dedicated syntax ``<estimator>__<parameter>`` syntax::
   >>> search = GridSearchCV(calibrated_forest, param_grid, cv=5)
   >>> search.fit(X, y)
   GridSearchCV(cv=5,
-               estimator=CalibratedClassifierCV(base_estimator=RandomForestClassifier(n_estimators=10)),
+               estimator=CalibratedClassifierCV(
+                   base_estimator=RandomForestClassifier(n_estimators=10)),
                param_grid={'base_estimator__max_depth': [2, 4, 6, 8]})
 
 Here, ``<estimator>`` is the parameter name of the nested estimator,
 in this case ``base_estimator``.
 The `Pipeline` class has a slightly different notation, as explained in :ref:`pipeline`,
 where ``<estimators>`` referes to the name of the step in the pipeline.
-In practice, there can be several levels of nesting:
+In practice, there can be several levels of nesting::
 
   >>> from sklearn.pipeline import Pipeline
   >>> from sklearn.feature_selection import SelectKBest
@@ -233,7 +236,8 @@ In practice, there can be several levels of nesting:
   GridSearchCV(cv=5,
                estimator=Pipeline(steps=[('select', SelectKBest()),
                                          ('model',
-                                          CalibratedClassifierCV(base_estimator=RandomForestClassifier(n_estimators=10)))]),
+                                          CalibratedClassifierCV(
+                                              base_estimator=RandomForestClassifier(n_estimators=10)))]),
                param_grid={'model__base_estimator__max_depth': [2, 4, 6, 8],
                            'select__k': [1, 2]})
 
