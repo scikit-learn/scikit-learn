@@ -41,7 +41,7 @@ mean_scores = results.pivot(index='iter', columns='params_str',
                             values='mean_test_score')
 ax = mean_scores.plot(legend=False, alpha=.6)
 
-r_i_list = results.groupby('iter').r_i.unique()
+r_i_list = results.groupby('iter')['resource_iter'].unique()
 labels = ['{}\nn_samples={}'.format(i, r_i_list[i])
           for i in range(rsh.n_iterations_)]
 ax.set_xticklabels(labels)

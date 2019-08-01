@@ -227,7 +227,7 @@ def test_resource_parameter():
                              resource='c', max_resources=10, ratio=3)
     sh.fit(X, y)
     assert set(sh._r_i_list) == set([1, 3, 9])
-    for r_i, params, param_c in zip(sh.cv_results_['r_i'],
+    for r_i, params, param_c in zip(sh.cv_results_['resource_iter'],
                                     sh.cv_results_['params'],
                                     sh.cv_results_['param_c']):
         assert r_i == params['c'] == param_c
