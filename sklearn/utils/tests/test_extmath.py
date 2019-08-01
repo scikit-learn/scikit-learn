@@ -662,6 +662,12 @@ class TestFastMode():
                            match='only implemented for 2D integer arrays'):
             _fast_mode(x)
 
+    def test_negative_values(self):
+        x = - np.ones((10, 10), dtype=np.int)
+        with pytest.raises(ValueError,
+                           match="only positive data is supported"):
+            _fast_mode(x)
+
     def test_ties(self):
         # Check that ties are resolved in the same way as in stats.mode
         X = np.ones((6, 9), dtype=np.int)
@@ -670,3 +676,31 @@ class TestFastMode():
         mode_ref, _ = stats.mode(X, axis=1)
         mode = _fast_mode(X, axis=1)
         assert_array_equal(mode, mode_ref)
+
+    def test_uniform_weights(self):
+        # with uniform weights, results should be identical to
+        # stats.mode
+        rng = np.random.RandomState(0)
+        x = rng.randint(10, size=(10, 5))
+        weights = np.ones(x.shape)
+
+        mode, _ = stats.mode(x, axis=1)
+        mode2 = _fast_mode(x, weights, axis=1)
+
+        assert_array_equal(mode, mode2)
+
+    def test_random_weights(self):
+        # set this up so that each row should have a weighted mode of 6,
+        # with a score that is easily reproduced
+        mode_result = 6
+
+        rng = np.random.RandomState(0)
+        x = rng.randint(mode_result, size=(100, 10))
+        w = rng.random_sample(x.shape)
+
+        x[:, :5] = mode_result
+        w[:, :5] += 1
+
+        mode = _fast_mode(x, w, axis=1)
+
+        assert_array_equal(mode, mode_result)

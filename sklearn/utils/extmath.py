@@ -357,7 +357,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
         return U[:, :n_components], s[:n_components], V[:n_components, :]
 
 
-def _fast_mode(x, axis=1):
+def _fast_mode(x, weights=None, axis=1):
     """Returns a faster equivalent for scipy.mode
 
     This is only implemented for positive integer data.
@@ -366,6 +366,8 @@ def _fast_mode(x, axis=1):
     ----------
     x : array_like, shape (n_samples, n_components)
         n-dimensional array of which to find mode(s).
+    w : array_like, shape (n_samples, n_components)
+        n-dimensional array of weights for each value
     axis : int, optional
         Axis along which to operate. Default is 1.
         Only axis=1 is supported.
@@ -379,13 +381,40 @@ def _fast_mode(x, axis=1):
     --------
     >>> x = np.array([[0, 1, 1], [2, 0, 2]])
     >>> _fast_mode(x, axis=1)
-    array([1, 2])
+    array([[1], [2]])
+
+    Next we illustrate weighted mode calculations
+
+    >>> x = np.array([[4, 1, 4, 2, 4, 2]])
+    >>> weights = np.array([[1, 1, 1, 1, 1, 1]])
+    >>> _fast_mode(x, weights)
+    array([[4]])
+
+    The value 4 appears three times: with uniform weights, the result is
+    simply the mode of the distribution.
+
+    >>> weights = np.array([[1, 3, 0.5, 1.5, 1, 2]])  # deweight the 4's
+    >>> _fast_mode(x, weights)
+    array([[2]])
+
+    The value 2 has the highest score: it appears twice with weights of
+    1.5 and 2: the sum of these is 3.5.
+
     """
     if not hasattr(x, "__array__") or x.dtype.kind != 'i' or x.ndim != 2:
         raise ValueError('_fast_mode is only implemented for 2D integer '
                          'arrays!')
-    data = np.ones(x.shape, dtype=np.int).ravel()
-    indices = x.ravel()
+    if x.min() < 0:
+        raise ValueError('only positive data is supported.')
+
+    if weights is None:
+        data = np.ones(x.shape, dtype=np.int).ravel()
+    else:
+        if x.shape != weights.shape:
+            raise ValueError("x.shape {} !=  weights.shape {}"
+                             .format(x.shape, weights.shape))
+        data = np.ascontiguousarray(weights).ravel()
+    indices = np.ascontiguousarray(x).ravel()
     indptr = np.arange(x.shape[0]+1)*x.shape[1]
     # we use the fact that data for repeated indices is summed when
     # creating sparse arrays. The index with highest value is then the mode
