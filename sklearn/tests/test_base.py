@@ -17,12 +17,6 @@ from sklearn.svm import SVC
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import StandardScaler
-from sklearn.feature_extraction import DictVectorizer
-from sklearn.experimental import enable_hist_gradient_boosting  # noqa
-from sklearn.ensemble import HistGradientBoostingClassifier
-from sklearn.datasets import make_classification
-from sklearn.pipeline import make_pipeline
-from sklearn.exceptions import NotFittedError
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
@@ -532,7 +526,7 @@ def test_validate_X_bad_kwargs():
 
     est = BaseEstimator()
     with pytest.raises(TypeError,
-                       match="check_array\(\) got an unexpected keyword"):
+                       match="got an unexpected keyword"):
         est._validate_X([1], bad_param=4)
 
 
