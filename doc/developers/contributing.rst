@@ -617,20 +617,14 @@ Finally, follow the formatting rules below to make it consistently good:
 
 In general have the following in mind:
 
-    1. Do not use optional. Use `default=`.
-    2. Python basic types. (`bool` instead of `boolean`)
-    3. When defining 1-D shape, use parenthesis. `array-like of shape (n_samples,), None, default=None`.
-    4. When defining 2-D shape, use parenthesis. `array-like of shape (n_samples, n_features)`.
-    5. str with multiple options: `input: {'log', 'squared', 'multinomial'}`
-    6. Only use `or` for separating types. `float, int or None, default=None`
-    7. Only use comma to separate types. Information such as `shape` or `string`
-    options are defined together. Here is an extreme example::
-
-        {'a', 'b'}, float, int, array-like shape=(n_samples,) or None, default=None
-
-    8. Array or matrix-like data can be a subset of
-    `{array-like, ndarray, smarse matrix, dataframe}`. An example supporting two
-    of them would be::
+    1. Python basic types. (`bool` instead of `boolean`)
+    2. Use parenthesis for defining shapes: `array-like of shape (n_samples,)`
+    or `array-like of shape (n_samples, n_features)`
+    3. str with multiple options: `input: {'log', 'squared', 'multinomial'}`
+    4. 1D or 2D data can be a subset of
+    `{array-like, ndarray, sparse matrix, dataframe}`. Note that `array-like`
+    can also be a `list`, while `ndarray` is explicitly only a `numpy.ndarray`.
+    An example supporting two of them would be::
 
         `{array-like, sparse matrix} shape=(n_samples, n_features)`
 
