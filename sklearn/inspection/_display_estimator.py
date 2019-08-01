@@ -67,12 +67,6 @@ def _type_of_html_estimator(estimator):
         inner_estimator = estimator.estimator
         return _EstHTMLInfo('single-meta', inner_estimator, name, name_tip)
 
-    # elif hasattr(estimator, "base_estimator"):
-    #     name = estimator.__class__.__name__
-    #     name_tip = _estimator_tool_tip(estimator)
-    #     inner_estimator = estimator.base_estimator
-    #     return _EstHTMLInfo('single-meta', inner_estimator, name, name_tip)
-
     elif isinstance(estimator, BaseEstimator):
         name = estimator.__class__.__name__
         tool_tip = _estimator_tool_tip(estimator)
@@ -182,17 +176,14 @@ _STYLE = """
   padding: 0 0.25em 0.25em 0.25em;
 }
 .sk-label {
-  min-width: 70%;
   font-family: monospace;
   font-weight: bold;
   background: white;
   display: inline-block;
   margin: 0 0.5em;
-  line-height: 1.4em;
 }
 .sk-label-container {
   text-align: center;
-  border: #f0f8ff solid red;
 }
 .sk-serial-item {
   margin-bottom: 0.25em;
