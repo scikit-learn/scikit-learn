@@ -13,6 +13,7 @@ from ._split import ShuffleSplit
 from ._split import GroupShuffleSplit
 from ._split import StratifiedShuffleSplit
 from ._split import PredefinedSplit
+from ._split import BinnedStratifiedKFold
 from ._split import train_test_split
 from ._split import check_cv
 
@@ -30,6 +31,7 @@ from ._search import ParameterSampler
 from ._search import fit_grid_point
 
 __all__ = ('BaseCrossValidator',
+           'BinnedStratifiedKFold',
            'GridSearchCV',
            'TimeSeriesSplit',
            'KFold',
