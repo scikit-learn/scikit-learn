@@ -3,6 +3,7 @@
 from collections.abc import Iterable, Sized
 from io import StringIO
 from itertools import chain, product
+from functools import partial
 import pickle
 import sys
 from types import GeneratorType
@@ -121,17 +122,18 @@ y = np.array([1, 1, 2, 2])
 def assert_grid_iter_equals_getitem(grid):
     assert list(grid) == [grid[i] for i in range(len(grid))]
 
-
+@pytest.mark.parametrize("klass", [ParameterGrid,
+                                   partial(ParameterSampler, n_iter=10)])
 @pytest.mark.parametrize(
     "input, error_type, error_message",
-    [(0, TypeError, r'Parameter grid is not a dict or a list \(0\)'),
-     ([{'foo': [0]}, 0], TypeError, r'Parameter grid is not a dict \(0\)'),
-     ({'foo': 0}, TypeError, "Parameter grid value is not iterable "
+    [(0, TypeError, r'Parameter .* is not a dict or a list \(0\)'),
+     ([{'foo': [0]}, 0], TypeError, r'Parameter .* is not a dict \(0\)'),
+     ({'foo': 0}, TypeError, "Parameter.* value is not iterable .*"
       r"\(key='foo', value=0\)")]
 )
-def test_validate_parameter_grid_input(input, error_type, error_message):
+def test_validate_parameter_input(klass, input, error_type, error_message):
     with pytest.raises(error_type, match=error_message):
-        ParameterGrid(input)
+        klass(input)
 
 
 def test_parameter_grid():
