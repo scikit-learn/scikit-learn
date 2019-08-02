@@ -344,35 +344,10 @@ General Concepts
         likelihoods.
 
     estimator tags
-    	Estimator tags are tags that show the capabilities of an estimator.
-    	They were proposed in :issue:`8022`. From the tags, runtime behaviors can
-    	be enabled based on estimator inspection. Each estimator can also be 
-    	tested for appropriate invariances while being excepted from other 
-    	:term:`common tests`.
-
-        Some aspects of estimator tags are currently determined through
-        the :term:`duck typing` of methods like ``predict_proba`` and through
-        some special attributes on estimator objects:
-
-        .. glossary::
-
-            ``_estimator_type``
-                This string-valued attribute identifies an estimator as being a
-                classifier, regressor, etc. It is set by mixins such as
-                :class:`base.ClassifierMixin`, but needs to be more explicitly
-                adopted on a :term:`meta-estimator`.  Its value should usually be
-                checked by way of a helper such as :func:`base.is_classifier`.
-
-            ``_pairwise``
-                This boolean attribute indicates whether the data (``X``) passed to
-                :func:`fit` and similar methods consists of pairwise measures over
-                samples rather than a feature representation for each sample.  It
-                is usually ``True`` where an estimator has a ``metric`` or
-                ``affinity`` or ``kernel`` parameter with value 'precomputed'.
-                Its primary purpose is that when a :term:`meta-estimator`
-                extracts a sub-sample of data intended for a pairwise estimator,
-                the data needs to be indexed on both axes, while other data is
-                indexed only on the first axis.
+    	Estimator tags are annotations of estimators that allow programmatic 
+    	inspection of their capabilities. They are used in common tests to decide
+    	what tests to run and what input data is appropriate.
+    	
         The detailed explanation of each estimator tag can be found at 
         `estimator tags <https://scikit-learn.org/dev/developers/contributing.html#estimator-tags>`_.
 
