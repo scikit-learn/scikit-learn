@@ -14,7 +14,7 @@ import numbers
 import numpy as np
 import scipy.sparse as sp
 from distutils.version import LooseVersion
-from inspect import signature
+from inspect import signature, isclass
 
 from numpy.core.numeric import ComplexWarning
 import joblib
@@ -900,6 +900,8 @@ def check_is_fitted(estimator, attributes='deprecated', msg=None):
         warnings.warn("Passing attributes to check_is_fitted is deprecated"
                       "and will be removed in 0.23. The attributes "
                       "argument is ignored.", DeprecationWarning)
+    if isclass(estimator):
+        raise TypeError("{} is a class, not an instance.".format(estimator))
     if msg is None:
         msg = ("This %(name)s instance is not fitted yet. Call 'fit' with "
                "appropriate arguments before using this method.")
