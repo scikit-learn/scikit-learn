@@ -155,7 +155,6 @@ def _num_samples(x):
         raise TypeError(message)
 
 
-
 def check_memory(memory):
     """Check that ``memory`` is joblib.Memory-like.
 
@@ -866,7 +865,7 @@ def check_symmetric(array, tol=1E-10, raise_warning=True,
     return array
 
 
-def check_is_fitted(estimator, *, msg=None):
+def check_is_fitted(estimator, attributes='deprecated', msg=None):
     """Perform is_fitted validation for estimator.
 
     Checks if the estimator is fitted by verifying the presence of
@@ -897,6 +896,10 @@ def check_is_fitted(estimator, *, msg=None):
     NotFittedError
         If the attributes are not found.
     """
+    if attributes != 'deprecated':
+        warnings.warn("Passing attributes to check_is_fitted is deprecated"
+                      "and will be removed in 0.23. The attributes "
+                      "argument is ignored.", DeprecationWarning)
     if msg is None:
         msg = ("This %(name)s instance is not fitted yet. Call 'fit' with "
                "appropriate arguments before using this method.")

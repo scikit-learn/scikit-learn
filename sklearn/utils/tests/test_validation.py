@@ -661,6 +661,11 @@ def test_check_is_fitted():
     assert check_is_fitted(ard) is None
     assert check_is_fitted(svr) is None
 
+    assert_warns_message(
+        DeprecationWarning,
+        "Passing attributes to check_is_fitted is deprecated",
+        check_is_fitted, ard, ['coef_'])
+
 
 def test_check_consistent_length():
     check_consistent_length([1], [2], [3], [4], [5])
