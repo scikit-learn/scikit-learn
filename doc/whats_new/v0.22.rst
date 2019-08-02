@@ -203,7 +203,7 @@ Changelog
   :pr:`13231` by :user:`Dong-hee Na <corona10>`.
 
 :mod:`sklearn.model_selection`
-..................
+...............................
 
 - |Enhancement| :class:`model_selection.learning_curve` now accepts parameter
   ``return_times`` which can be used to retrieve computation times in order to
