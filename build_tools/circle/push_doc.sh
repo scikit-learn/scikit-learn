@@ -59,7 +59,7 @@ cp -R $GENERATED_DOC_DIR $dir
 git config user.email "olivier.grisel+sklearn-ci@gmail.com"
 git config user.name $USERNAME
 git config push.default matching
-
+git add -f $dir/
 git commit -m "$MSG" $dir
 git push
-echo $MSG
+echo $MSG 
