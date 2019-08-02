@@ -26,7 +26,7 @@ X, y = datasets.load_digits(return_X_y=True)
 classifiers = [
     ("SGD", SGDClassifier(max_iter=100)),
     ("ASGD", SGDClassifier(average=True, max_iter=1000)),
-    ("Perceptron", Perceptron(tol=1e-3)),
+    ("Perceptron", Perceptron()),
     ("Passive-Aggressive I", PassiveAggressiveClassifier(loss='hinge',
                                                          C=1.0, tol=1e-4)),
     ("Passive-Aggressive II", PassiveAggressiveClassifier(loss='squared_hinge',
