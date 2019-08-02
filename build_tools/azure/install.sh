@@ -51,11 +51,10 @@ if [[ "$DISTRIB" == "conda" ]]; then
         TO_INSTALL="$TO_INSTALL matplotlib=$MATPLOTLIB_VERSION"
     fi
 
-    if [[ "$PYTHON_VERSION" == "*" ]]; then
-        TO_INSTALL="$TO_INSTALL pytest-xdist"
-    fi
-
 	make_conda $TO_INSTALL
+    if [[ "$PYTHON_VERSION" == "*" ]]; then
+        pip install pytest-xdist
+    fi
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     sudo add-apt-repository --remove ppa:ubuntu-toolchain-r/test
@@ -90,4 +89,5 @@ except ImportError:
     print('pandas not installed')
 "
 pip list
+python setup.py build_ext --inplace -j 3
 python setup.py develop

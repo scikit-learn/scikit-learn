@@ -23,8 +23,7 @@ n_jobs = 1
 
 # Load the faces dataset
 data = fetch_olivetti_faces()
-X = data.images.reshape((len(data.images), -1))
-y = data.target
+X, y = data.data, data.target
 
 mask = y < 5  # Limit to 5 classes
 X = X[mask]

@@ -909,14 +909,15 @@ def test_sample_weight_length():
     # check that an error is raised when passing sample weights
     # with an incompatible shape
     km = KMeans(n_clusters=n_clusters, random_state=42)
-    assert_raises_regex(ValueError, r'len\(sample_weight\)', km.fit, X,
-                        sample_weight=np.ones(2))
+    msg = r'sample_weight.shape == \(2,\), expected \(100,\)'
+    with pytest.raises(ValueError, match=msg):
+        km.fit(X, sample_weight=np.ones(2))
 
 
-def test_check_sample_weight():
-    from sklearn.cluster.k_means_ import _check_sample_weight
+def test_check_normalize_sample_weight():
+    from sklearn.cluster.k_means_ import _check_normalize_sample_weight
     sample_weight = None
-    checked_sample_weight = _check_sample_weight(X, sample_weight)
+    checked_sample_weight = _check_normalize_sample_weight(sample_weight, X)
     assert _num_samples(X) == _num_samples(checked_sample_weight)
     assert_almost_equal(checked_sample_weight.sum(), _num_samples(X))
     assert X.dtype == checked_sample_weight.dtype

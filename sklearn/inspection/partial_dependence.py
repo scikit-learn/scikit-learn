@@ -601,8 +601,6 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
             raise ValueError(
                 'target must be in [0, n_tasks], got {}.'.format(target))
         target_idx = target
-    else:
-        target_idx = 0
 
     # get global min and max values of PD grouped by plot type
     pdp_lim = {}
