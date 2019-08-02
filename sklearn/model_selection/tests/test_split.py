@@ -44,7 +44,7 @@ from sklearn.model_selection._split import _validate_shuffle_split
 from sklearn.model_selection._split import _build_repr
 
 from sklearn.datasets import load_digits
-from sklearn.datasets import make_classification
+from sklearn.datasets import make_classification, make_regression
 
 from sklearn.utils.fixes import comb
 
@@ -1538,35 +1538,35 @@ def test_leave_p_out_empty_trainset():
 
 
 def test_binnedstratifiedkfold_balance():
+    rng = np.random.RandomState(0)
     for _ in range(10):
-        n_folds = 2 + int(10*np.random.rand())
-        y = np.random.randn(30)
-        np.random.shuffle(y)
+        n_splits = 2 + int(10 * rng.rand())
+        X, y = make_regression(noise=10, random_state=rng)
         sizes = []
 
-        bskf = BinnedStratifiedKFold(y, n_folds=n_folds, shuffle=False,
+        bskf = BinnedStratifiedKFold(n_splits=n_splits, shuffle=False,
                                      random_state=None)
 
-        bins = np.array([np.percentile(y, q) for q in range(n_folds)])
-        for train_index, test_index in bskf:
+        bins = np.array([np.percentile(y, q) for q in range(n_splits)])
+        for train_index, test_index in bskf.split(X=X, y=y):
             sizes.append(len(test_index))
         assert (np.max(sizes) - np.min(sizes)) <= 1
-        assert np.sum(sizes) == bskf.n
+        assert np.sum(sizes) == X.shape[0]
 
 
 def test_binnedstratifiedkfold_bin_spacing():
     "check if the binned `y` falls into bins of equal size (+/- 1)"
+    rng = np.random.RandomState(0)
     for _ in range(10):
-        n_folds = 2 + int(10*np.random.rand())
-        y = np.random.randn(30)
-        np.random.shuffle(y)
+        n_splits = 2 + int(10 * rng.rand())
+        X, y = make_regression(noise=10, random_state=rng)
 
-        skf = BinnedStratifiedKFold(y, n_folds=n_folds,
+        skf = BinnedStratifiedKFold(n_splits=n_splits,
                                     shuffle=False, random_state=None)
 
-        bins = np.array([np.percentile(y, q) for q in range(n_folds)])
+        bins = np.array([np.percentile(y, q) for q in range(n_splits)])
 
-        for train_index, test_index in skf:
+        for train_index, test_index in skf.split(X=X, y=y):
             y_test = y[test_index]
             hist_test, _ = np.histogram(y_test, bins=bins)
             assert all(abs(hist_test - np.mean(hist_test)) <= 1)
@@ -1576,29 +1576,30 @@ def test_binnedstratifiedkfold_bin_spacing():
             assert all(abs(hist_train - np.mean(hist_train)) <= 1)
 
 
-def test_binnedstratifiedkfold_stable_moments_between_folds():
+def test_binnedstratifiedkfold_stable_moments_between_splits():
     """check if BinnedStratifiedKFold performs on average better than KFold in
     terms of lower between-fold variance of fold mean(y_test) and fold
     std(y_test)
     """
     binned_has_more_stable_std_list = []
     binned_has_more_stable_mean_list = []
+    rng = np.random.RandomState(0)
 
     for trial in range(100):
-        n_folds = 2 + int(10*np.random.rand())
-        y = np.random.randn(30)
-        np.random.shuffle(y)
+        n_splits = 2 + int(10*rng.rand())
+        X, y = make_regression(noise=10, random_state=rng)
+
         ymeans_binned = []
         ystds_binned = []
 
-        skf = BinnedStratifiedKFold(y, n_folds=n_folds,
+        skf = BinnedStratifiedKFold(n_splits=n_splits,
                                     shuffle=False, random_state=None)
 
-        kf = KFold(len(y), n_folds=n_folds, shuffle=True, random_state=None)
+        kf = KFold(n_splits=n_splits, shuffle=True, random_state=None)
 
-        bins = np.array([np.percentile(y, q) for q in range(n_folds)])
+        bins = np.array([np.percentile(y, q) for q in range(n_splits)])
 
-        for train_index, test_index in skf:
+        for train_index, test_index in skf.split(X=X, y=y):
             y_test = y[test_index]
             ymeans_binned.append(y_test.mean())
             ystds_binned.append(y_test.std())
@@ -1608,7 +1609,7 @@ def test_binnedstratifiedkfold_stable_moments_between_folds():
 
         ymeans_regular = []
         ystds_regular = []
-        for train_index_reg, test_index_reg in kf:
+        for train_index_reg, test_index_reg in kf.split(X=X, y=y):
             ymeans_regular.append(y[test_index_reg].mean())
             ystds_regular.append(y[test_index_reg].std())
 

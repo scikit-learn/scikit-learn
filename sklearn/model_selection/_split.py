@@ -1875,7 +1875,7 @@ class BinnedStratifiedKFold(_BaseKFold):
 
     Parameters
     ----------
-    n_folds : int, default=3
+    n_splits : int, default=3
         Number of folds. Must be at least 2.
 
     shuffle : boolean, optional
@@ -1893,10 +1893,10 @@ class BinnedStratifiedKFold(_BaseKFold):
     >>> np.random.seed(0)
     >>> np.random.shuffle(y)
     >>> X = y + 0.1* np.random.randn(len(y))
-    >>> cv = BinnedStratifiedKFold(n_folds=3)
+    >>> cv = BinnedStratifiedKFold(n_splits=3)
     >>> skf = cv.split(y)
     >>> print(cv)  # doctest: +NORMALIZE_WHITESPACE
-    BinnedStratifiedKFold(n_folds=3, random_state=None,
+    BinnedStratifiedKFold(n_splits=3, random_state=None,
     shuffle=False)
     >>> indarr = np.zeros(len(y), dtype=bool)
     >>> for train_index, test_index in skf:
@@ -1909,8 +1909,8 @@ class BinnedStratifiedKFold(_BaseKFold):
 
     Notes
     -----
-    All the folds have size floor(n_samples / n_folds) or
-    floor(n_samples / n_folds) +1,
+    All the folds have size floor(n_samples / n_splits) or
+    floor(n_samples / n_splits) +1,
     the length is assigned randomly (even if no shuffling is requested)
     to balance the variance between folds.
 
@@ -1919,8 +1919,8 @@ class BinnedStratifiedKFold(_BaseKFold):
     StratifiedKFold -- stratified k-fold generator for classification data
     """
 
-    def __init__(self, n_folds=3, shuffle=False, random_state=None):
-        super(BinnedStratifiedKFold, self).__init__(n_folds, shuffle,
+    def __init__(self, n_splits=3, shuffle=False, random_state=None):
+        super(BinnedStratifiedKFold, self).__init__(n_splits, shuffle,
                                                     random_state)
 
     def _make_test_folds(self, X, y=None, labels=None):
@@ -1933,32 +1933,32 @@ class BinnedStratifiedKFold(_BaseKFold):
                                  "first argument is not a valid y")
         n_samples = len(y)
         self.n_samples = n_samples
-        n_folds = self.n_folds
+        n_splits = self.n_splits
         yinds = np.arange(n_samples)
         "reorder the labels according to the ordering of `y`"
         sorter0 = np.argsort(y)
         yinds = yinds[sorter0]
 
-        self.n_classes = n_samples // n_folds + int(n_samples % n_folds != 0)
+        self.n_classes = n_samples // n_splits + int(n_samples % n_splits != 0)
 
-        if n_samples // n_folds > 1:
-            n_items_boundary_cls = n_folds * (n_samples // n_folds // 2)
-            "assign lower `n_folds*(n_classes//2 )` labels to the lower class"
-            lowerclasses = yinds[:n_items_boundary_cls].reshape(-1, n_folds)
-            "assign upper `n_folds*(n_classes//2 )` labels to the upper class"
-            upperclasses = yinds[-n_items_boundary_cls:].reshape(-1, n_folds)
+        if n_samples // n_splits > 1:
+            n_items_boundary_cls = n_splits * (n_samples // n_splits // 2)
+            "assign lower `n_splits*(n_classes//2 )` labels to the lower class"
+            lowerclasses = yinds[:n_items_boundary_cls].reshape(-1, n_splits)
+            "assign upper `n_splits*(n_classes//2 )` labels to the upper class"
+            upperclasses = yinds[-n_items_boundary_cls:].reshape(-1, n_splits)
             """assign the remainder labels to the middle class;
             add -1 as a filling value;  shuffle"""
             middleclasses = yinds[n_items_boundary_cls:-n_items_boundary_cls]
             middleclasses = np.hstack([
                     middleclasses,
-                    -np.ones(n_folds - len(middleclasses) % n_folds, dtype=int)
+                    -np.ones(n_splits - len(middleclasses) % n_splits, dtype=int)
                     ])
-            middleclasses = middleclasses.reshape(-1, n_folds)
+            middleclasses = middleclasses.reshape(-1, n_splits)
 
             rng = check_random_state(self.random_state)
             rng.shuffle(middleclasses.T)
-            middleclasses = middleclasses.reshape(-1, n_folds)
+            middleclasses = middleclasses.reshape(-1, n_splits)
             self._test_masks = np.vstack([
                         lowerclasses,
                         middleclasses,
@@ -1968,11 +1968,11 @@ class BinnedStratifiedKFold(_BaseKFold):
             """put the lower half in one piece, and the rest into a ragged array;
             the central values will remain unpaired
             """
-            lowerclasses = yinds[:n_folds].reshape(-1, n_folds)
-            upperclasses = yinds[n_folds:]
+            lowerclasses = yinds[:n_splits].reshape(-1, n_splits)
+            upperclasses = yinds[n_splits:]
             upperclasses = np.hstack([
                     upperclasses,
-                    -np.ones(n_folds - len(upperclasses) % n_folds, dtype=int)
+                    -np.ones(n_splits - len(upperclasses) % n_splits, dtype=int)
                     ])
 
             self._test_masks = np.vstack([lowerclasses, upperclasses]).T
@@ -1989,7 +1989,7 @@ class BinnedStratifiedKFold(_BaseKFold):
 
     def _iter_test_masks(self, X, y=None, labels=None):
         test_folds = self._make_test_folds(X, y)
-        for i in range(self.n_folds):
+        for i in range(self.n_splits):
             yield test_folds == i
 
     def split(self, X, y=None, labels=None):
