@@ -954,7 +954,7 @@ distribution using the appropriate power parameter `p`,
    more appropriate in this case.
 
  - `p = 1`: Poisson distribution. :class:`PoissonRegressor` is exposed for
-   convinience however it is strictly equivalent to `TweedieRegressor(power=1)`.
+   convenience however it is strictly equivalent to `TweedieRegressor(power=1)`.
 
  - `p = 2`: Gamma distribution. :class:`GammaRegressor` is exposed for
    convinience however it is also strictly equivalent to
