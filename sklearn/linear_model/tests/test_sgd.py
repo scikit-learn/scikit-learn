@@ -1420,7 +1420,7 @@ def test_tol_parameter():
     assert model_2.n_iter_ > 3
 
     # Strict tolerance and small max_iter should trigger a warning
-    model_3 = SGDClassifier(max_iter=3, random_state=0)
+    model_3 = SGDClassifier(max_iter=3, tol=1e-3, random_state=0)
     model_3 = assert_warns(ConvergenceWarning, model_3.fit, X, y)
     assert model_3.n_iter_ == 3
 
