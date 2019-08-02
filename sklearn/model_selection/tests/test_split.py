@@ -36,6 +36,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RepeatedKFold
 from sklearn.model_selection import RepeatedStratifiedKFold
+from sklearn.model_selection import BinnedStratifiedKFold
 
 from sklearn.linear_model import Ridge
 
@@ -651,10 +652,10 @@ def test_stratified_shuffle_split_iter():
             assert_array_equal(np.unique(y[train]), np.unique(y[test]))
             # Checks if folds keep classes proportions
             p_train = (np.bincount(np.unique(y[train],
-                                   return_inverse=True)[1]) /
+                                             return_inverse=True)[1]) /
                        float(len(y[train])))
             p_test = (np.bincount(np.unique(y[test],
-                                  return_inverse=True)[1]) /
+                                            return_inverse=True)[1]) /
                       float(len(y[test])))
             assert_array_almost_equal(p_train, p_test, 1)
             assert len(train) + len(test) == y.size
@@ -840,8 +841,7 @@ def test_leave_one_p_group_out():
     assert repr(logo) == 'LeaveOneGroupOut()'
     assert repr(lpgo_1) == 'LeavePGroupsOut(n_groups=1)'
     assert repr(lpgo_2) == 'LeavePGroupsOut(n_groups=2)'
-    assert (repr(LeavePGroupsOut(n_groups=3)) ==
-                 'LeavePGroupsOut(n_groups=3)')
+    assert (repr(LeavePGroupsOut(n_groups=3)) == 'LeavePGroupsOut(n_groups=3)')
 
     for j, (cv, p_groups_out) in enumerate(((logo, 1), (lpgo_1, 1),
                                             (lpgo_2, 2))):
@@ -907,8 +907,7 @@ def test_leave_group_out_changing_groups():
 
     # n_splits = no of 2 (p) group combinations of the unique groups = 3C2 = 3
     assert (
-        3 == LeavePGroupsOut(n_groups=2).get_n_splits(X, y=X,
-                                                    groups=groups))
+        3 == LeavePGroupsOut(n_groups=2).get_n_splits(X, y=X, groups=groups))
     # n_splits = no of unique groups (C(uniq_lbls, 1) = n_unique_groups)
     assert 3 == LeaveOneGroupOut().get_n_splits(X, y=X,
                                                 groups=groups)
@@ -1335,8 +1334,7 @@ def test_group_kfold():
     # Check that folds have approximately the same size
     assert len(folds) == len(groups)
     for i in np.unique(folds):
-        assert (tolerance >=
-                             abs(sum(folds == i) - ideal_n_groups_per_fold))
+        assert (tolerance >= abs(sum(folds == i) - ideal_n_groups_per_fold))
 
     # Check that each group appears only in 1 fold
     for group in np.unique(groups):
@@ -1372,8 +1370,7 @@ def test_group_kfold():
     # Check that folds have approximately the same size
     assert len(folds) == len(groups)
     for i in np.unique(folds):
-        assert (tolerance >=
-                             abs(sum(folds == i) - ideal_n_groups_per_fold))
+        assert (tolerance >= abs(sum(folds == i) - ideal_n_groups_per_fold))
 
     # Check that each group appears only in 1 fold
     with warnings.catch_warnings():
@@ -1538,3 +1535,101 @@ def test_leave_p_out_empty_trainset():
             ValueError,
             match='p=2 must be strictly less than the number of samples=2'):
         next(cv.split(X, y, groups=[1, 2]))
+
+
+def test_binnedstratifiedkfold_balance():
+    for _ in range(10):
+        n_folds = 2 + int(10*np.random.rand())
+        y = np.random.randn(30)
+        np.random.shuffle(y)
+        sizes = []
+
+        bskf = BinnedStratifiedKFold(y, n_folds=n_folds, shuffle=False,
+                                     random_state=None)
+
+        bins = np.array([np.percentile(y, q) for q in range(n_folds)])
+        for train_index, test_index in bskf:
+            sizes.append(len(test_index))
+        assert (np.max(sizes) - np.min(sizes)) <= 1
+        assert np.sum(sizes) == bskf.n
+
+
+def test_binnedstratifiedkfold_bin_spacing():
+    "check if the binned `y` falls into bins of equal size (+/- 1)"
+    for _ in range(10):
+        n_folds = 2 + int(10*np.random.rand())
+        y = np.random.randn(30)
+        np.random.shuffle(y)
+
+        skf = BinnedStratifiedKFold(y, n_folds=n_folds,
+                                    shuffle=False, random_state=None)
+
+        bins = np.array([np.percentile(y, q) for q in range(n_folds)])
+
+        for train_index, test_index in skf:
+            y_test = y[test_index]
+            hist_test, _ = np.histogram(y_test, bins=bins)
+            assert all(abs(hist_test - np.mean(hist_test)) <= 1)
+
+            y_train = y[train_index]
+            hist_train, _ = np.histogram(y_train, bins=bins)
+            assert all(abs(hist_train - np.mean(hist_train)) <= 1)
+
+
+def test_binnedstratifiedkfold_stable_moments_between_folds():
+    """check if BinnedStratifiedKFold performs on average better than KFold in
+    terms of lower between-fold variance of fold mean(y_test) and fold
+    std(y_test)
+    """
+    binned_has_more_stable_std_list = []
+    binned_has_more_stable_mean_list = []
+
+    for trial in range(100):
+        n_folds = 2 + int(10*np.random.rand())
+        y = np.random.randn(30)
+        np.random.shuffle(y)
+        ymeans_binned = []
+        ystds_binned = []
+
+        skf = BinnedStratifiedKFold(y, n_folds=n_folds,
+                                    shuffle=False, random_state=None)
+
+        kf = KFold(len(y), n_folds=n_folds, shuffle=True, random_state=None)
+
+        bins = np.array([np.percentile(y, q) for q in range(n_folds)])
+
+        for train_index, test_index in skf:
+            y_test = y[test_index]
+            ymeans_binned.append(y_test.mean())
+            ystds_binned.append(y_test.std())
+            hist_, _ = np.histogram(y[test_index], bins=bins)
+
+            assert all(abs(hist_ - np.mean(hist_)) <= 1)
+
+        ymeans_regular = []
+        ystds_regular = []
+        for train_index_reg, test_index_reg in kf:
+            ymeans_regular.append(y[test_index_reg].mean())
+            ystds_regular.append(y[test_index_reg].std())
+
+        binned_has_more_stable_std = np.std(
+            ystds_regular) > np.std(ystds_binned)
+        binned_has_more_stable_std_list.append(binned_has_more_stable_std)
+
+        binned_has_more_stable_mean = np.std(
+            ymeans_regular) > np.std(ymeans_binned)
+        binned_has_more_stable_mean_list.append(binned_has_more_stable_mean)
+
+    binned_has_more_stable_std_fraction = np.mean(
+        binned_has_more_stable_std_list)
+    binned_has_more_stable_mean_fraction = np.mean(
+        binned_has_more_stable_mean_list)
+
+    assert binned_has_more_stable_std_fraction > 0.5
+    assert binned_has_more_stable_mean_fraction > 0.5
+    print(" std(y_test) of BinnedStratifiedKFold was more stable than "
+          "one of KFold in\t%.2f%% cases" %
+          (100.0*binned_has_more_stable_std_fraction))
+    print("mean(y_test) of BinnedStratifiedKFold was more stable than "
+          "one of KFold in\t%.2f%% cases" %
+          (100.0*binned_has_more_stable_mean_fraction))

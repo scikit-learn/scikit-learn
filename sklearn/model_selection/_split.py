@@ -1862,7 +1862,6 @@ class PredefinedSplit(BaseCrossValidator):
         return len(self.unique_folds)
 
 
-
 class BinnedStratifiedKFold(_BaseKFold):
     """Stratified K-Folds cross-validator
 
