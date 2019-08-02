@@ -340,7 +340,8 @@ def _get_column_indices(X, key):
             idx = safe_indexing(np.arange(n_columns), key)
         except IndexError as e:
             raise ValueError(
-                'all features must be in [0, %d]' % (n_columns - 1)
+                'all features must be in [0, {}] or [-{}, 0]'
+                .format(n_columns - 1, n_columns)
             ) from e
         return np.atleast_1d(idx).tolist()
     elif _check_key_type(key, str):
