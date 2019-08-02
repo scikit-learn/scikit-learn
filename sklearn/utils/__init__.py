@@ -233,7 +233,7 @@ def _array_indexing(array, key, axis=0):
             "'axis' should be either 0 (to index rows) or 1 (to index "
             " column). Got {} instead.".format(axis)
         )
-    if np_version < (1, 13) or issparse(array):
+    if np_version < (1, 12) or issparse(array):
         # check if we have an boolean array-likes to make the proper indexing
         key_array = np.asarray(key)
         if np.issubdtype(key_array.dtype, np.bool_):
