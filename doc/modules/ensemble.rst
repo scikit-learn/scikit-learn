@@ -941,7 +941,7 @@ Why it's faster
 The bottleneck of a gradient boosting procedure is building the decision
 trees. Building a traditional decision tree (as in the other GBDTs
 :class:`GradientBoostingClassifier` and :class:`GradientBoostingRegressor`)
-requires sorting the values of all the samples at each node (for
+requires sorting the samples at each node (for
 each feature). Sorting is needed so that the potential gain of a split point
 can be computed efficiently. Splitting a single node has thus a complexity
 of :math:`\mathcal{O}(\text{n_features} * n \log(n))` where :math:`n` is the
