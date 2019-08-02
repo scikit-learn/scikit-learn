@@ -359,6 +359,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
             fitted_attribute = 'n_iter_'
         check_is_fitted(estimator, fitted_attribute, msg=msg)
 
+    print(features)
     features_indices = np.asarray(
         _get_column_indices(X, features), dtype=np.int32, order='C'
     ).ravel()
