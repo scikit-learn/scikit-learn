@@ -883,8 +883,7 @@ The size of the trees can be controlled through the ``max_leaf_nodes``,
 
 The number of bins used to bin the data is controlled with the ``max_bins``
 parameter. Using less bins acts as a form of regularization. It is
-generally recommended to use as many bins as possible, which is the default:
-255 bins.
+generally recommended to use as many bins as possible, which is the default.
 
 The ``l2_regularization`` parameter is a regularizer on the loss function and
 corresponds to :math:`\lambda` in equation (2) of [XGBoost]_.
@@ -934,6 +933,17 @@ for parallelization through Cython. The number of threads that is used can
 be changed using the ``OMP_NUM_THREADS`` environment variable. By default,
 all available cores are used. Please refer to the OpenMP documentation for
 details.
+
+The following parts are parallelized:
+
+- mapping samples from real values to integer-valued bins (finding the bin
+  thresholds is however sequential)
+- building histograms is parallelized over features
+- finding the best split point at a node is parallelized over features
+- during fit, mapping samples into the left and right children is
+  parallelized over samples
+- gradient and hessians computations are parallelized over samples
+- predicting is parallelized over samples
 
 Why it's faster
 ---------------
