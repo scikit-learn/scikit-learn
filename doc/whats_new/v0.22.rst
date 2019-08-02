@@ -129,6 +129,14 @@ Changelog
   requires less memory.
   :pr:`14108`, pr:`14170` by :user:`Alex Henrie <alexhenrie>`.
 
+:mod:`sklearn.manifold`
+.......................
+
+- [Fix] Fixed a bug in :func:`manifold.spectral_embedding` where
+  ``eigen_solver="amg"`` would sometimes result in a LinAlgError.
+  :issue:`13393` by :user:`Andrew Knyazev <lobpcg>`
+  :pr:`13707` by :user:`Scott White <whitews>`
+
 :mod:`sklearn.metrics`
 ......................
 
