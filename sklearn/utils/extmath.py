@@ -604,7 +604,7 @@ def softmax(X, copy=True):
 
 
 @deprecated("safe_min is deprecated in version 0.22 and will be removed "
-            " in version 0.24.")
+            "in version 0.24.")
 def safe_min(X):
     """Returns the minimum value of a dense or a CSR/CSC matrix.
 
