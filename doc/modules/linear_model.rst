@@ -957,7 +957,7 @@ distribution using the appropriate power parameter `p`,
    convenience however it is strictly equivalent to `TweedieRegressor(power=1)`.
 
  - `p = 2`: Gamma distribution. :class:`GammaRegressor` is exposed for
-   convinience however it is also strictly equivalent to
+   convenience however it is strictly equivalent to
    `TweedieRegressor(power=2)`.
 
  - `p = 3`: Inverse Gamma distribution.
