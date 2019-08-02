@@ -146,6 +146,7 @@ def test_cross_validator_with_default_params():
     lopo = LeavePGroupsOut(p)
     ss = ShuffleSplit(random_state=0)
     ps = PredefinedSplit([1, 1, 2, 2])  # n_splits = np of unique folds = 2
+    bskf = BinnedStratifiedKFold(n_splits)
 
     loo_repr = "LeaveOneOut()"
     lpo_repr = "LeavePOut(p=2)"
@@ -156,15 +157,17 @@ def test_cross_validator_with_default_params():
     ss_repr = ("ShuffleSplit(n_splits=10, random_state=0, "
                "test_size=None, train_size=None)")
     ps_repr = "PredefinedSplit(test_fold=array([1, 1, 2, 2]))"
+    bskf_repr = ("BinnedStratifiedKFold(n_splits=2, random_state=None, "
+                 "shuffle=False)")
 
     n_splits_expected = [n_samples, comb(n_samples, p), n_splits, n_splits,
                          n_unique_groups, comb(n_unique_groups, p),
-                         n_shuffle_splits, 2]
+                         n_shuffle_splits, 2, 2]
 
     for i, (cv, cv_repr) in enumerate(zip(
-            [loo, lpo, kf, skf, lolo, lopo, ss, ps],
+            [loo, lpo, kf, skf, lolo, lopo, ss, ps, bskf],
             [loo_repr, lpo_repr, kf_repr, skf_repr, lolo_repr, lopo_repr,
-             ss_repr, ps_repr])):
+             ss_repr, ps_repr, bskf_repr])):
         # Test if get_n_splits works correctly
         assert n_splits_expected[i] == cv.get_n_splits(X, y, groups)
 
