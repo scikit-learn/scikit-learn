@@ -4,10 +4,11 @@
 # License: BSD 3 clause (C) 2011
 
 import numpy as np
+from scipy.sparse.csgraph import shortest_path
+
 from ..base import BaseEstimator, TransformerMixin
 from ..neighbors import NearestNeighbors, kneighbors_graph
 from ..utils import check_array
-from ..utils.graph import graph_shortest_path
 from ..decomposition import KernelPCA
 from ..preprocessing import KernelCenterer
 
@@ -129,9 +130,9 @@ class Isomap(BaseEstimator, TransformerMixin):
         kng = kneighbors_graph(self.nbrs_, self.n_neighbors,
                                mode='distance', n_jobs=self.n_jobs)
 
-        self.dist_matrix_ = graph_shortest_path(kng,
-                                                method=self.path_method,
-                                                directed=False)
+        self.dist_matrix_ = shortest_path(kng,
+                                          method=self.path_method,
+                                          directed=False)
         G = self.dist_matrix_ ** 2
         G *= -0.5
 

@@ -36,10 +36,6 @@ def configuration(parent_package='', top_path=None):
                          include_dirs=['src'],
                          libraries=libraries)
 
-    config.add_extension('graph_shortest_path',
-                         sources=['graph_shortest_path.pyx'],
-                         include_dirs=[numpy.get_include()])
-
     config.add_extension('fast_dict',
                          sources=['fast_dict.pyx'],
                          language="c++",

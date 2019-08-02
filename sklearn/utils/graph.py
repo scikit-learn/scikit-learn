@@ -12,8 +12,6 @@ sparse matrices.
 
 from scipy import sparse
 
-from .graph_shortest_path import graph_shortest_path  # noqa
-
 
 ###############################################################################
 # Path and connected component analysis.
