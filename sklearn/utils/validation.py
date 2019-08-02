@@ -907,7 +907,8 @@ def check_is_fitted(estimator, attributes='deprecated', msg=None):
     if not hasattr(estimator, 'fit'):
         raise TypeError("%s is not an estimator instance." % (estimator))
 
-    attrs = [v for v in vars(estimator) if v.endswith("_")
+    attrs = [v for v in vars(estimator)
+             if (v.endswith("_") or v.startswith("_"))
              and not v.startswith("__")]
 
     if not len(attrs):
