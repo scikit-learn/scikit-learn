@@ -184,7 +184,7 @@ def axis0_safe_slice(X, mask, len_mask):
 
 def _array_indexing(array, key, axis):
     """Index an array consistently across NumPy version."""
-    if np_version < (1, 13) or issparse(array):
+    if np_version < (1, 12) or issparse(array):
         # check if we have an boolean array-likes to make the proper indexing
         key_array = np.asarray(key)
         if np.issubdtype(key_array.dtype, np.bool_):

@@ -424,7 +424,7 @@ def test_safe_indexing_mock_pandas(inds):
 def test_safe_indexing_mask_axis_1(array_type):
     # regression test for #14510
     # check that boolean array-like and boolean array lead to the same indexing
-    # even in NumPy < 1.13
+    # even in NumPy < 1.12
     if array_type == 'array':
         array_constructor = np.asarray
     elif array_type == 'sparse':
