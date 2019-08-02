@@ -699,11 +699,6 @@ Support for Python 3.4 and below has been officially dropped.
   lots of neighbors and/or small datasets.
   :pr:`9907` by :user:`William de Vazelhes <wdevazelhes>`.
 
-- [Fix] Fixed a bug in :func:`manifold.spectral_embedding` where
-  ``eigen_solver="amg"`` would sometimes result in a LinAlgError.
-  :issue:`13393` by :user:`Andrew Knyazev <lobpcg>`
-  :pr:`13707` by :user:`Scott White <whitews>`
-
 :mod:`sklearn.metrics`
 ......................
 
