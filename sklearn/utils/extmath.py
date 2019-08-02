@@ -610,6 +610,8 @@ def safe_min(X):
 
     Adapated from https://stackoverflow.com/q/13426580
 
+    .. deprecated:: 0.21.0
+
     Parameters
     ----------
     X : array_like
