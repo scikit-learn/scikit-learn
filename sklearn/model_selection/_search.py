@@ -269,9 +269,9 @@ class ParameterSampler:
     def __iter__(self):
         # check if all distributions are given as lists
         # in this case we want to sample without replacement
-        all_lists = all(all(not hasattr(v, "rvs")
-                            for v in dist.values())
-                            for dist in self.param_distributions)
+        all_lists = all(
+            all(not hasattr(v, "rvs") for v in dist.values())
+            for dist in self.param_distributions)
         rnd = check_random_state(self.random_state)
 
         if all_lists:
