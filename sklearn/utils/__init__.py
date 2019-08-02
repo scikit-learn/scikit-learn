@@ -185,6 +185,7 @@ def axis0_safe_slice(X, mask, len_mask):
 def _array_indexing(array, key, axis):
     """Index an array consistently across NumPy version."""
     if np_version < (1, 12) or issparse(array):
+        # FIXME: Remove the check for NumPy when using >= 1.12
         # check if we have an boolean array-likes to make the proper indexing
         key_array = np.asarray(key)
         if np.issubdtype(key_array.dtype, np.bool_):
@@ -196,19 +197,11 @@ def _pandas_indexing(X, key, axis, by_name):
     """Index a pandas dataframe or a series."""
     if hasattr(key, 'shape'):
         # Work-around for indexing with read-only key in pandas
+        # FIXME: solved in pandas 0.25
+        key = np.asarray(key)
         key = key if key.flags.writeable else key.copy()
     indexer = 'loc' if by_name else 'iloc'
-    try:
-        return (getattr(X, indexer)[:, key]
-                if axis else getattr(X, indexer)[key])
-    except ValueError:
-        # Cython typed memoryviews internally used in pandas do not support
-        # readonly buffers.
-        warnings.warn(
-            "Copying input dataframe for slicing.", DataConversionWarning
-        )
-        return (getattr(X.copy(), indexer)[:, key]
-                if axis else getattr(X.copy(), indexer)[key])
+    return (getattr(X, indexer)[:, key] if axis else getattr(X, indexer)[key])
 
 
 def _list_indexing(X, key):
