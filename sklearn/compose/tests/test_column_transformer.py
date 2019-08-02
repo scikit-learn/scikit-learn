@@ -505,7 +505,8 @@ def test_column_transformer_invalid_columns(remainder):
     X_array_fewer = np.array([[0, 1, 2], ]).T
     err_msg = 'Number of features'
     with pytest.raises(ValueError, match=err_msg):
-        ct.transform(X_array_fewer)
+        with pytest.warns(DeprecationWarning, match=msg):
+            ct.transform(X_array_fewer)
 
 
 def test_column_transformer_invalid_transformer():
@@ -1108,7 +1109,8 @@ def test_column_transformer_reordered_column_names_remainder(explicit_colname):
     # No error for added columns if ordering is identical
     X_extended_df = X_fit_df.copy()
     X_extended_df['third'] = [3, 6, 9]
-    tf.transform(X_extended_df)  # No error should be raised
+    with pytest.warns(DeprecationWarning, match=warn_msg):
+        tf.transform(X_extended_df)  # No error should be raised, for now
 
     # No 'columns' AttributeError when transform input is a numpy array
     X_array = X_fit_array.copy()
