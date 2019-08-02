@@ -261,7 +261,6 @@ else:
     major, minor = match.groups()
     binder_branch = '{}.{}.X'.format(major, minor)
 
-print('binder_branch:', binder_branch)
 sphinx_gallery_conf = {
     'doc_module': 'sklearn',
     'backreferences_dir': os.path.join('modules', 'generated'),
