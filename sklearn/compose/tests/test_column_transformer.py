@@ -498,7 +498,10 @@ def test_column_transformer_invalid_columns(remainder):
     ct = ColumnTransformer([('trans', Trans(), col)], remainder=remainder)
     ct.fit(X_array)
     X_array_more = np.array([[0, 1, 2], [2, 4, 6], [3, 6, 9]]).T
-    ct.transform(X_array_more)  # Should accept added columns
+    msg = ("Given feature/column names or counts do not match the ones for "
+           "the data given during fit.")
+    with pytest.warns(DeprecationWarning, match=msg):
+        ct.transform(X_array_more)  # Should accept added columns, for now
     X_array_fewer = np.array([[0, 1, 2], ]).T
     err_msg = 'Number of features'
     with pytest.raises(ValueError, match=err_msg):
@@ -1096,8 +1099,11 @@ def test_column_transformer_reordered_column_names_remainder(explicit_colname):
 
     tf.fit(X_fit_df)
     err_msg = 'Column ordering must be equal'
+    warn_msg = ("Given feature/column names or counts do not match the ones "
+           "for the data given during fit.")
     with pytest.raises(ValueError, match=err_msg):
-        tf.transform(X_trans_df)
+        with pytest.warns(DeprecationWarning, match=warn_msg):
+            tf.transform(X_trans_df)
 
     # No error for added columns if ordering is identical
     X_extended_df = X_fit_df.copy()
@@ -1138,3 +1144,9 @@ def test_feature_name_validation():
     with warnings.catch_warnings(record=True) as warns:
         tf.transform(X)
     assert not warns
+
+    tf = ColumnTransformer([('bycol', Trans(), ['a'])],
+                           remainder=Trans())
+    tf.fit(df)
+    with pytest.warns(DeprecationWarning, match=msg):
+        tf.transform(df_extra)

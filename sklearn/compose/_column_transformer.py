@@ -21,7 +21,7 @@ from ..utils import safe_indexing
 from ..utils import _get_column_indices
 from ..utils import _check_key_type
 from ..utils.metaestimators import _BaseComposition
-from ..utils.validation import check_array, check_is_fitted, _feature_names
+from ..utils.validation import check_array, check_is_fitted
 
 
 __all__ = ['ColumnTransformer', 'make_column_transformer']
@@ -489,7 +489,10 @@ boolean mask array or callable
 
         """
         # TODO: this should be `feature_names_in_` when we start having it
-        self._feature_names_in = _feature_names(X)
+        if hasattr(X, "columns"):
+            self._feature_names_in = np.asarray(X.columns)
+        else:
+            self._feature_names_in = None
         X = _check_X(X)
         self._validate_transformers()
         self._validate_column_callables(X)
@@ -538,7 +541,11 @@ boolean mask array or callable
         """
         check_is_fitted(self, 'transformers_')
         X = _check_X(X)
-        self._validate_features(X.shape[1], _feature_names(X))
+        if hasattr(X, "columns"):
+            X_feature_names = np.asarray(X.columns)
+        else:
+            X_feature_names = None
+        self._validate_features(X.shape[1], X_feature_names)
 
         if self._n_features > X.shape[1]:
             raise ValueError('Number of features of the input must be equal '
