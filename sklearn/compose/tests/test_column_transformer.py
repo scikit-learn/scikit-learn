@@ -1100,7 +1100,7 @@ def test_column_transformer_reordered_column_names_remainder(explicit_colname):
     tf.fit(X_fit_df)
     err_msg = 'Column ordering must be equal'
     warn_msg = ("Given feature/column names or counts do not match the ones "
-           "for the data given during fit.")
+                "for the data given during fit.")
     with pytest.raises(ValueError, match=err_msg):
         with pytest.warns(DeprecationWarning, match=warn_msg):
             tf.transform(X_trans_df)
