@@ -1875,7 +1875,7 @@ class BinnedStratifiedKFold(_BaseKFold):
 
     Parameters
     ----------
-    n_splits : int, default=3
+    n_splits : int, default=5
         Number of folds. Must be at least 2.
 
     shuffle : boolean, optional
@@ -1895,8 +1895,8 @@ class BinnedStratifiedKFold(_BaseKFold):
     >>> X = y + 0.1* np.random.randn(len(y))
     >>> cv = BinnedStratifiedKFold(n_splits=3)
     >>> skf = cv.split(y)
-    >>> print(cv)  # doctest: +NORMALIZE_WHITESPACE
-    BinnedStratifiedKFold(n_splits=3, random_state=None,
+    >>> print(cv)
+    BinnedStratifiedKFold(n_splits=5, random_state=None,
     shuffle=False)
     >>> indarr = np.zeros(len(y), dtype=bool)
     >>> for train_index, test_index in skf:
@@ -1919,7 +1919,7 @@ class BinnedStratifiedKFold(_BaseKFold):
     StratifiedKFold -- stratified k-fold generator for classification data
     """
 
-    def __init__(self, n_splits=3, shuffle=False, random_state=None):
+    def __init__(self, n_splits=5, shuffle=False, random_state=None):
         super(BinnedStratifiedKFold, self).__init__(n_splits, shuffle,
                                                     random_state)
 
