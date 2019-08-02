@@ -235,8 +235,7 @@ In practice, there can be several levels of nesting::
   GridSearchCV(cv=5,
                estimator=Pipeline(steps=[('select', SelectKBest()),
                                          ('model',
-                                          CalibratedClassifierCV(
-                                              base_estimator=RandomForestClassifier(n_estimators=10)))]),
+                                          CalibratedClassifierCV(base_estimator=RandomForestClassifier(n_estimators=10)))]),
                param_grid={'model__base_estimator__max_depth': [2, 4, 6, 8],
                            'select__k': [1, 2]})
 
