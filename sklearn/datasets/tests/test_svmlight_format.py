@@ -9,12 +9,10 @@ from tempfile import NamedTemporaryFile
 
 import pytest
 
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import fails_if_pypy
 
 import sklearn
@@ -34,28 +32,28 @@ def test_load_svmlight_file():
     X, y = load_svmlight_file(datafile)
 
     # test X's shape
-    assert_equal(X.indptr.shape[0], 7)
-    assert_equal(X.shape[0], 6)
-    assert_equal(X.shape[1], 21)
-    assert_equal(y.shape[0], 6)
+    assert X.indptr.shape[0] == 7
+    assert X.shape[0] == 6
+    assert X.shape[1] == 21
+    assert y.shape[0] == 6
 
     # test X's non-zero values
     for i, j, val in ((0, 2, 2.5), (0, 10, -5.2), (0, 15, 1.5),
                       (1, 5, 1.0), (1, 12, -3),
                       (2, 20, 27)):
 
-        assert_equal(X[i, j], val)
+        assert X[i, j] == val
 
     # tests X's zero values
-    assert_equal(X[0, 3], 0)
-    assert_equal(X[0, 5], 0)
-    assert_equal(X[1, 8], 0)
-    assert_equal(X[1, 16], 0)
-    assert_equal(X[2, 18], 0)
+    assert X[0, 3] == 0
+    assert X[0, 5] == 0
+    assert X[1, 8] == 0
+    assert X[1, 16] == 0
+    assert X[2, 18] == 0
 
     # test can change X's values
     X[0, 2] *= 2
-    assert_equal(X[0, 2], 5)
+    assert X[0, 2] == 5
 
     # test y
     assert_array_equal(y, [1, 2, 3, 4, 1, 2])
@@ -76,7 +74,7 @@ def test_load_svmlight_file_fd():
 
 def test_load_svmlight_file_multilabel():
     X, y = load_svmlight_file(multifile, multilabel=True)
-    assert_equal(y, [(0, 1), (2,), (), (1, 2)])
+    assert y == [(0, 1), (2,), (), (1, 2)]
 
 
 def test_load_svmlight_files():
@@ -84,29 +82,29 @@ def test_load_svmlight_files():
                                                            dtype=np.float32)
     assert_array_equal(X_train.toarray(), X_test.toarray())
     assert_array_almost_equal(y_train, y_test)
-    assert_equal(X_train.dtype, np.float32)
-    assert_equal(X_test.dtype, np.float32)
+    assert X_train.dtype == np.float32
+    assert X_test.dtype == np.float32
 
     X1, y1, X2, y2, X3, y3 = load_svmlight_files([datafile] * 3,
                                                  dtype=np.float64)
-    assert_equal(X1.dtype, X2.dtype)
-    assert_equal(X2.dtype, X3.dtype)
-    assert_equal(X3.dtype, np.float64)
+    assert X1.dtype == X2.dtype
+    assert X2.dtype == X3.dtype
+    assert X3.dtype == np.float64
 
 
 def test_load_svmlight_file_n_features():
     X, y = load_svmlight_file(datafile, n_features=22)
 
     # test X'shape
-    assert_equal(X.indptr.shape[0], 7)
-    assert_equal(X.shape[0], 6)
-    assert_equal(X.shape[1], 22)
+    assert X.indptr.shape[0] == 7
+    assert X.shape[0] == 6
+    assert X.shape[1] == 22
 
     # test X's non-zero values
     for i, j, val in ((0, 2, 2.5), (0, 10, -5.2),
                       (1, 5, 1.0), (1, 12, -3)):
 
-        assert_equal(X[i, j], val)
+        assert X[i, j] == val
 
     # 21 features in file
     assert_raises(ValueError, load_svmlight_file, datafile, n_features=20)
@@ -159,13 +157,13 @@ def test_load_zero_based_auto():
 
     f1 = BytesIO(data1)
     X, y = load_svmlight_file(f1, zero_based="auto")
-    assert_equal(X.shape, (1, 3))
+    assert X.shape == (1, 3)
 
     f1 = BytesIO(data1)
     f2 = BytesIO(data2)
     X1, y1, X2, y2 = load_svmlight_files([f1, f2], zero_based="auto")
-    assert_equal(X1.shape, (1, 4))
-    assert_equal(X2.shape, (1, 4))
+    assert X1.shape == (1, 4)
+    assert X2.shape == (1, 4)
 
 
 def test_load_with_qid():
@@ -250,16 +248,16 @@ def test_dump():
                     comment = f.readline()
                     comment = str(comment, "utf-8")
 
-                    assert_in("scikit-learn %s" % sklearn.__version__, comment)
+                    assert "scikit-learn %s" % sklearn.__version__ in comment
 
                     comment = f.readline()
                     comment = str(comment, "utf-8")
 
-                    assert_in(["one", "zero"][zero_based] + "-based", comment)
+                    assert ["one", "zero"][zero_based] + "-based" in comment
 
                     X2, y2 = load_svmlight_file(f, dtype=dtype,
                                                 zero_based=zero_based)
-                    assert_equal(X2.dtype, dtype)
+                    assert X2.dtype == dtype
                     assert_array_equal(X2.sorted_indices().indices, X2.indices)
 
                     X2_dense = X2.toarray()
@@ -293,9 +291,9 @@ def test_dump_multilabel():
         dump_svmlight_file(X, y, f, multilabel=True)
         f.seek(0)
         # make sure it dumps multilabel correctly
-        assert_equal(f.readline(), b"1 0:1 2:3 4:5\n")
-        assert_equal(f.readline(), b"0,2 \n")
-        assert_equal(f.readline(), b"0,1 1:5 3:1\n")
+        assert f.readline() == b"1 0:1 2:3 4:5\n"
+        assert f.readline() == b"0,2 \n"
+        assert f.readline() == b"0,1 1:5 3:1\n"
 
 
 def test_dump_concise():
@@ -315,12 +313,12 @@ def test_dump_concise():
     dump_svmlight_file(X, y, f)
     f.seek(0)
     # make sure it's using the most concise format possible
-    assert_equal(f.readline(),
+    assert (f.readline() ==
                  b"1 0:1 1:2.1 2:3.01 3:1.000000000000001 4:1\n")
-    assert_equal(f.readline(), b"2.1 0:1000000000 1:2e+18 2:3e+27\n")
-    assert_equal(f.readline(), b"3.01 \n")
-    assert_equal(f.readline(), b"1.000000000000001 \n")
-    assert_equal(f.readline(), b"1 \n")
+    assert f.readline() == b"2.1 0:1000000000 1:2e+18 2:3e+27\n"
+    assert f.readline() == b"3.01 \n"
+    assert f.readline() == b"1.000000000000001 \n"
+    assert f.readline() == b"1 \n"
     f.seek(0)
     # make sure it's correct too :)
     X2, y2 = load_svmlight_file(f)

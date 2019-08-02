@@ -61,17 +61,22 @@ __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_run_python_script", "SkipTest"]
 
 _dummy = TestCase('__init__')
-assert_equal = _dummy.assertEqual
-assert_not_equal = _dummy.assertNotEqual
+deprecation_message = (
+    'This helper is deprecated in version 0.22 and will be removed in version '
+    '0.24. Please use "assert" instead'
+)
+assert_equal = deprecated(deprecation_message)(_dummy.assertEqual)
+assert_not_equal = deprecated(deprecation_message)(_dummy.assertNotEqual)
 assert_raises = _dummy.assertRaises
 SkipTest = unittest.case.SkipTest
 assert_dict_equal = _dummy.assertDictEqual
-assert_in = _dummy.assertIn
-assert_not_in = _dummy.assertNotIn
-assert_less = _dummy.assertLess
-assert_greater = _dummy.assertGreater
-assert_less_equal = _dummy.assertLessEqual
-assert_greater_equal = _dummy.assertGreaterEqual
+assert_in = deprecated(deprecation_message)(_dummy.assertIn)
+assert_not_in = deprecated(deprecation_message)(_dummy.assertNotIn)
+assert_less = deprecated(deprecation_message)(_dummy.assertLess)
+assert_greater = deprecated(deprecation_message)(_dummy.assertGreater)
+assert_less_equal = deprecated(deprecation_message)(_dummy.assertLessEqual)
+assert_greater_equal = deprecated(deprecation_message)(
+    _dummy.assertGreaterEqual)
 
 assert_raises_regex = _dummy.assertRaisesRegex
 # assert_raises_regexp is deprecated in Python 3.4 in favor of
@@ -697,16 +702,13 @@ def _get_args(function, varargs=False):
         return args
 
 
-def _get_func_name(func, class_name=None):
+def _get_func_name(func):
     """Get function full name
 
     Parameters
     ----------
     func : callable
         The function object.
-    class_name : string, optional (default: None)
-       If ``func`` is a class method and the class name is known specify
-       class_name for the error message.
 
     Returns
     -------
@@ -717,16 +719,16 @@ def _get_func_name(func, class_name=None):
     module = inspect.getmodule(func)
     if module:
         parts.append(module.__name__)
-    if class_name is not None:
-        parts.append(class_name)
-    elif hasattr(func, 'im_class'):
-        parts.append(func.im_class.__name__)
+
+    qualname = func.__qualname__
+    if qualname != func.__name__:
+        parts.append(qualname[:qualname.find('.')])
 
     parts.append(func.__name__)
     return '.'.join(parts)
 
 
-def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
+def check_docstring_parameters(func, doc=None, ignore=None):
     """Helper to check docstring
 
     Parameters
@@ -737,9 +739,6 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
         Docstring if it is passed manually to the test.
     ignore : None | list
         Parameters to ignore.
-    class_name : string, optional (default: None)
-       If ``func`` is a class method and the class name is known specify
-       class_name for the error message.
 
     Returns
     -------
@@ -750,7 +749,7 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
     incorrect = []
     ignore = [] if ignore is None else ignore
 
-    func_name = _get_func_name(func, class_name=class_name)
+    func_name = _get_func_name(func)
     if (not func_name.startswith('sklearn.') or
             func_name.startswith('sklearn.externals')):
         return incorrect
@@ -763,11 +762,13 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
     # Dont check estimator_checks module
     if func_name.split('.')[2] == 'estimator_checks':
         return incorrect
-    args = list(filter(lambda x: x not in ignore, _get_args(func)))
+    # Get the arguments from the function signature
+    param_signature = list(filter(lambda x: x not in ignore, _get_args(func)))
     # drop self
-    if len(args) > 0 and args[0] == 'self':
-        args.remove('self')
+    if len(param_signature) > 0 and param_signature[0] == 'self':
+        param_signature.remove('self')
 
+    # Analyze function's docstring
     if doc is None:
         with warnings.catch_warnings(record=True) as w:
             try:
@@ -778,8 +779,9 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
         if len(w):
             raise RuntimeError('Error for %s:\n%s' % (func_name, w[0]))
 
-    param_names = []
+    param_docs = []
     for name, type_definition, param_doc in doc['Parameters']:
+        # Type hints are empty only if parameter name ended with :
         if not type_definition.strip():
             if ':' in name and name[:name.index(':')][-1:].strip():
                 incorrect += [func_name +
@@ -790,18 +792,65 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
                               ' Parameter %r has an empty type spec. '
                               'Remove the colon' % (name.lstrip())]
 
+        # Create a list of parameters to compare with the parameters gotten
+        # from the func signature
         if '*' not in name:
-            param_names.append(name.split(':')[0].strip('` '))
+            param_docs.append(name.split(':')[0].strip('` '))
 
-    param_names = list(filter(lambda x: x not in ignore, param_names))
+    # If one of the docstring's parameters had an error then return that
+    # incorrect message
+    if len(incorrect) > 0:
+        return incorrect
 
-    if len(param_names) != len(args):
-        bad = str(sorted(list(set(param_names) ^ set(args))))
-        incorrect += [func_name + ' arg mismatch: ' + bad]
-    else:
-        for n1, n2 in zip(param_names, args):
-            if n1 != n2:
-                incorrect += [func_name + ' ' + n1 + ' != ' + n2]
+    # Remove the parameters that should be ignored from list
+    param_docs = list(filter(lambda x: x not in ignore, param_docs))
+
+    # The following is derived from pytest, Copyright (c) 2004-2017 Holger
+    # Krekel and others, Licensed under MIT License. See
+    # https://github.com/pytest-dev/pytest
+
+    message = []
+    for i in range(min(len(param_docs), len(param_signature))):
+        if param_signature[i] != param_docs[i]:
+            message += ["There's a parameter name mismatch in function"
+                        " docstring w.r.t. function signature, at index %s"
+                        " diff: %r != %r" %
+                        (i, param_signature[i], param_docs[i])]
+            break
+    if len(param_signature) > len(param_docs):
+        message += ["Parameters in function docstring have less items w.r.t."
+                    " function signature, first missing item: %s" %
+                    param_signature[len(param_docs)]]
+
+    elif len(param_signature) < len(param_docs):
+        message += ["Parameters in function docstring have more items w.r.t."
+                    " function signature, first extra item: %s" %
+                    param_docs[len(param_signature)]]
+
+    # If there wasn't any difference in the parameters themselves between
+    # docstring and signature including having the same length then return
+    # empty list
+    if len(message) == 0:
+        return []
+
+    import difflib
+    import pprint
+
+    param_docs_formatted = pprint.pformat(param_docs).splitlines()
+    param_signature_formatted = pprint.pformat(param_signature).splitlines()
+
+    message += ["Full diff:"]
+
+    message.extend(
+        line.strip() for line in difflib.ndiff(param_signature_formatted,
+                                               param_docs_formatted)
+    )
+
+    incorrect.extend(message)
+
+    # Prepend function name
+    incorrect = ['In function: ' + func_name] + incorrect
+
     return incorrect
 
 
@@ -828,10 +877,14 @@ def assert_run_python_script(source_code, timeout=60):
         cmd = [sys.executable, source_file]
         cwd = op.normpath(op.join(op.dirname(sklearn.__file__), '..'))
         env = os.environ.copy()
+        try:
+            env["PYTHONPATH"] = os.pathsep.join([cwd, env["PYTHONPATH"]])
+        except KeyError:
+            env["PYTHONPATH"] = cwd
         kwargs = {
             'cwd': cwd,
             'stderr': STDOUT,
-            'env': env,
+            'env': env
         }
         # If coverage is running, pass the config file to the subprocess
         coverage_rc = os.environ.get("COVERAGE_PROCESS_START")

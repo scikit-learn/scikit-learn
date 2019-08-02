@@ -224,8 +224,10 @@ then submit a "pull request" (PR):
 
     $ git remote add upstream https://github.com/scikit-learn/scikit-learn.git
 
-7. Create a branch to hold your development changes::
+7. Fetch the ``upstream`` and then create a branch to hold your development
+   changes::
 
+       $ git fetch upstream
        $ git checkout -b my-feature upstream/master
 
    and start making changes. Always use a ``feature`` branch. It's good
@@ -910,8 +912,8 @@ In the following example, k is deprecated and renamed to n_clusters::
 
     import warnings
 
-    def example_function(n_clusters=8, k='not_used'):
-        if k != 'not_used':
+    def example_function(n_clusters=8, k='deprecated'):
+        if k != 'deprecated':
             warnings.warn("'k' was renamed to n_clusters in version 0.13 and "
                           "will be removed in 0.15.", DeprecationWarning)
             n_clusters = k
@@ -921,12 +923,12 @@ When the change is in a class, we validate and raise warning in ``fit``::
   import warnings
 
   class ExampleEstimator(BaseEstimator):
-      def __init__(self, n_clusters=8, k='not_used'):
+      def __init__(self, n_clusters=8, k='deprecated'):
           self.n_clusters = n_clusters
           self.k = k
 
       def fit(self, X, y):
-          if self.k != 'not_used':
+          if self.k != 'deprecated':
               warnings.warn("'k' was renamed to n_clusters in version 0.13 and "
                             "will be removed in 0.15.", DeprecationWarning)
               self._n_clusters = self.k
@@ -1512,8 +1514,11 @@ The current set of estimator tags are:
 non_deterministic
     whether the estimator is not deterministic given a fixed ``random_state``
 
-requires_positive_data - unused for now
+requires_positive_X - unused for now
     whether the estimator requires positive X.
+
+requires_positive_y
+    whether the estimator requires a positive y (only applicable for regression).
 
 no_validation
     whether the estimator skips input-validation. This is only meant for stateless and dummy transformers!

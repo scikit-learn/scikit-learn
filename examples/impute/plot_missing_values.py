@@ -84,7 +84,8 @@ def get_results(dataset):
     # Estimate the score after iterative imputation of the missing values
     imputer = IterativeImputer(missing_values=0,
                                random_state=0,
-                               n_nearest_features=5)
+                               n_nearest_features=5,
+                               sample_posterior=True)
     iterative_impute_scores = get_scores_for_imputer(imputer,
                                                      X_missing,
                                                      y_missing)

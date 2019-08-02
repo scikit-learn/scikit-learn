@@ -386,7 +386,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
 
     Attributes
     ----------
-    constant_ : float or array of shape [n_outputs]
+    constant_ : array, shape (1, n_outputs)
         Mean or median or quantile of the training targets or constant value
         given by the user.
 
