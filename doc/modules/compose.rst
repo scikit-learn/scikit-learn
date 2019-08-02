@@ -147,7 +147,7 @@ or by name::
 
 .. topic:: See also:
 
- * :ref:`_composite_grid_search`
+ * :ref:`composite_grid_search`
 
 
 Notes
