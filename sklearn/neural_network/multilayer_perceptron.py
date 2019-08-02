@@ -354,8 +354,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             batch_size = np.clip(self.batch_size, 1, n_samples)
 
         # Initialize lists
-        activations = [X]
-        activations.extend([None] * (len(layer_units) - 1))
+        activations = [X] + [None] * (len(layer_units) - 1)
         deltas = [None] * (len(activations) - 1)
 
         coef_grads = [np.empty((n_fan_in_, n_fan_out_)) for n_fan_in_,
