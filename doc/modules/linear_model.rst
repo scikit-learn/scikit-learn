@@ -965,7 +965,7 @@ distribution using the appropriate power parameter `p`,
 
 Note that the feature matrix ``X`` should be standardized before fitting. This
 ensures that the penalty treats features equally. The estimator can be used as
-follows:
+follows::
 
     >>> from sklearn.linear_model import TweedieRegressor
     >>> reg = TweedieRegressor(power=1, alpha=0.5, link='log')
