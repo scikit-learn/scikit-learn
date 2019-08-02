@@ -176,7 +176,7 @@ def test_multi_output_classification_partial_fit_parallelism():
 
 # check predict_proba passes
 def test_multi_output_predict_proba():
-    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5, tol=1e-3)
+    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5)
     param = {'loss': ('hinge', 'log', 'modified_huber')}
 
     # inner function for custom scoring
@@ -194,7 +194,7 @@ def test_multi_output_predict_proba():
 
     # SGDClassifier defaults to loss='hinge' which is not a probabilistic
     # loss function; therefore it does not expose a predict_proba method
-    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5, tol=1e-3)
+    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5)
     multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
     multi_target_linear.fit(X, y)
     err_msg = "The base estimator should implement predict_proba method"

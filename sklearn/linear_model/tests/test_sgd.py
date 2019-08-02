@@ -1420,7 +1420,7 @@ def test_tol_parameter():
     assert model_2.n_iter_ > 3
 
     # Strict tolerance and small max_iter should trigger a warning
-    model_3 = SGDClassifier(max_iter=3, tol=1e-3, random_state=0)
+    model_3 = SGDClassifier(max_iter=3, random_state=0)
     model_3 = assert_warns(ConvergenceWarning, model_3.fit, X, y)
     assert model_3.n_iter_ == 3
 
@@ -1603,13 +1603,13 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     y = random_state.choice(20, 500)
 
     # Begin by fitting a SGD classifier sequentially
-    clf_sequential = SGDClassifier(tol=1e-3, max_iter=1000, n_jobs=1,
+    clf_sequential = SGDClassifier(max_iter=1000, n_jobs=1,
                                    random_state=42)
     clf_sequential.fit(X, y)
 
     # Fit a SGDClassifier using the specified backend, and make sure the
     # coefficients are equal to those obtained using a sequential fit
-    clf_parallel = SGDClassifier(tol=1e-3, max_iter=1000, n_jobs=4,
+    clf_parallel = SGDClassifier(max_iter=1000, n_jobs=4,
                                  random_state=42)
     with joblib.parallel_backend(backend=backend):
         clf_parallel.fit(X, y)
