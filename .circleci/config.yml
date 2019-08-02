@@ -13,6 +13,7 @@ jobs:
       - NUMPY_VERSION: 1.11.0
       - SCIPY_VERSION: 0.17.0
       - MATPLOTLIB_VERSION: 1.5.1
+      - CYTHON_VERSION: 0.28.5
       - SCIKIT_IMAGE_VERSION: 0.12.3
     steps:
       - checkout
