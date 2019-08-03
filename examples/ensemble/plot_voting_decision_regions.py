@@ -14,7 +14,7 @@ First, three exemplary classifiers are initialized (`DecisionTreeClassifier`,
 `KNeighborsClassifier`, and `SVC`) and used to initialize a
 soft-voting `VotingClassifier` with weights `[2, 1, 2]`, which means that
 the predicted probabilities of the `DecisionTreeClassifier` and `SVC`
-count 5 times as much as the weights of the `KNeighborsClassifier` classifier
+each count 2 times as much as the weights of the `KNeighborsClassifier` classifier
 when the averaged probability is calculated.
 
 """
