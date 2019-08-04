@@ -26,7 +26,7 @@ print(__doc__)
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn import datasets, linear_model
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.metrics import mean_squared_error, explained_variance_score
 
 # Load the diabetes dataset
 diabetes = datasets.load_diabetes()
@@ -58,7 +58,7 @@ print('Coefficients: \n', regr.coef_)
 print("Mean squared error: %.2f"
       % mean_squared_error(diabetes_y_test, diabetes_y_pred))
 # Explained variance score: 1 is perfect prediction
-print('Variance score: %.2f' % r2_score(diabetes_y_test, diabetes_y_pred))
+print('Variance score: %.2f' % explained_variance_score(diabetes_y_test, diabetes_y_pred))
 
 # Plot outputs
 plt.scatter(diabetes_X_test, diabetes_y_test,  color='black')
