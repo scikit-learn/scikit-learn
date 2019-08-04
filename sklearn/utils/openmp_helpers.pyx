@@ -8,7 +8,7 @@ cpdef _openmp_effective_n_threads(n_threads=None):
 
     - For ``n_threads = None``, returns the minimum between
       openmp.omp_get_max_threads() and joblib.effective_n_jobs(-1).
-      The result of ``omp_get_max_threads`` can be influenced by environement
+      The result of ``omp_get_max_threads`` can be influenced by environment
       variable ``OMP_NUM_THREADS`` or at runtime by ``omp_set_num_threads``.
     - For ``n_threads > 0``, use this as the maximal number of threads for
       parallel OpenMP calls.
