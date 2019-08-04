@@ -61,7 +61,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         If None, n_components is set to the number of features.
 
     tol : float
-        Stopping tolerance for SVD based approach.
+        Stopping tolerance for log-likelihood increase.
 
     copy : bool
         Whether to make a copy of X. If ``False``, the input X gets overwritten
