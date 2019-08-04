@@ -1681,7 +1681,7 @@ class TfidfVectorizer(CountVectorizer):
             Whether to copy X and operate on the copy or perform in-place
             operations.
 
-            .. deprecated:: 0.24
+            .. deprecated:: 0.22
                The `copy` parameter was deprecated in version 0.22 and
                will be removed in 0.24. This parameter will be ignored
 
