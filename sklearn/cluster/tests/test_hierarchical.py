@@ -16,7 +16,6 @@ from scipy.cluster import hierarchy
 
 from sklearn.metrics.cluster.supervised import adjusted_rand_score
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raise_message
@@ -93,7 +92,7 @@ def test_unstructured_linkage_tree():
             children, n_nodes, n_leaves, parent = assert_warns(
                 UserWarning, ward_tree, this_X.T, n_clusters=10)
         n_nodes = 2 * X.shape[1] - 1
-        assert_equal(len(children) + n_leaves, n_nodes)
+        assert len(children) + n_leaves == n_nodes
 
     for tree_builder in _TREE_BUILDERS.values():
         for this_X in (X, X[0]):
@@ -102,7 +101,7 @@ def test_unstructured_linkage_tree():
                     UserWarning, tree_builder, this_X.T, n_clusters=10)
 
             n_nodes = 2 * X.shape[1] - 1
-            assert_equal(len(children) + n_leaves, n_nodes)
+            assert len(children) + n_leaves == n_nodes
 
 
 def test_height_linkage_tree():
@@ -128,8 +127,15 @@ def test_agglomerative_clustering_wrong_arg_memory():
     assert_raises(ValueError, clustering.fit, X)
 
 
-@pytest.mark.filterwarnings("ignore:the behavior of nmi will "
-                            "change in version 0.22")
+def test_zero_cosine_linkage_tree():
+    # Check that zero vectors in X produce an error when
+    # 'cosine' affinity is used
+    X = np.array([[0, 1],
+                  [0, 0]])
+    msg = 'Cosine affinity cannot be used when X contains zero vectors'
+    assert_raise_message(ValueError, msg, linkage_tree, X, affinity='cosine')
+
+
 def test_agglomerative_clustering():
     # Check that we obtain the correct number of clusters with
     # agglomerative clustering.
@@ -238,8 +244,6 @@ def test_ward_agglomeration():
     assert_raises(ValueError, agglo.fit, X[:0])
 
 
-@pytest.mark.filterwarnings("ignore:the behavior of nmi will "
-                            "change in version 0.22")
 def test_single_linkage_clustering():
     # Check that we get the correct result in two emblematic cases
     moons, moon_labels = make_moons(noise=0.05, random_state=42)
@@ -301,8 +305,6 @@ def test_scikit_vs_scipy():
     assert_raises(ValueError, _hc_cut, n_leaves + 1, children, n_leaves)
 
 
-@pytest.mark.filterwarnings("ignore:the behavior of nmi will "
-                            "change in version 0.22")
 def test_identical_points():
     # Ensure identical points are handled correctly when using mst with
     # a sparse connectivity matrix
@@ -535,7 +537,7 @@ def test_compute_full_tree():
     agc.fit(X)
     n_samples = X.shape[0]
     n_nodes = agc.children_.shape[0]
-    assert_equal(n_nodes, n_samples - 1)
+    assert n_nodes == n_samples - 1
 
     # When n_clusters is large, greater than max of 100 and 0.02 * n_samples.
     # we should stop when there are n_clusters.
@@ -547,7 +549,7 @@ def test_compute_full_tree():
     agc.fit(X)
     n_samples = X.shape[0]
     n_nodes = agc.children_.shape[0]
-    assert_equal(n_nodes, n_samples - n_clusters)
+    assert n_nodes == n_samples - n_clusters
 
 
 def test_n_components():
@@ -559,7 +561,7 @@ def test_n_components():
     connectivity = np.eye(5)
 
     for linkage_func in _TREE_BUILDERS.values():
-        assert_equal(ignore_warnings(linkage_func)(X, connectivity)[1], 5)
+        assert ignore_warnings(linkage_func)(X, connectivity)[1] == 5
 
 
 def test_agg_n_clusters():

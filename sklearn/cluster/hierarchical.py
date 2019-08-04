@@ -432,6 +432,10 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
             'Unknown linkage option, linkage should be one '
             'of %s, but %s was given' % (linkage_choices.keys(), linkage))
 
+    if affinity == 'cosine' and np.any(~np.any(X, axis=1)):
+        raise ValueError(
+            'Cosine affinity cannot be used when X contains zero vectors')
+
     if connectivity is None:
         from scipy.cluster import hierarchy  # imports PIL
 
@@ -706,13 +710,6 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         - single uses the minimum of the distances between all observations
           of the two sets.
 
-    pooling_func : callable, default='deprecated'
-        Ignored.
-
-        .. deprecated:: 0.20
-            ``pooling_func`` has been deprecated in 0.20 and will be removed
-            in 0.22.
-
     distance_threshold : float, optional (default=None)
         The linkage distance threshold above which, clusters will not be
         merged. If not ``None``, ``n_clusters`` must be ``None`` and
@@ -751,11 +748,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     >>> X = np.array([[1, 2], [1, 4], [1, 0],
     ...               [4, 2], [4, 4], [4, 0]])
     >>> clustering = AgglomerativeClustering().fit(X)
-    >>> clustering # doctest: +NORMALIZE_WHITESPACE
-    AgglomerativeClustering(affinity='euclidean', compute_full_tree='auto',
-                            connectivity=None, distance_threshold=None,
-                            linkage='ward', memory=None, n_clusters=2,
-                            pooling_func='deprecated')
+    >>> clustering
+    AgglomerativeClustering()
     >>> clustering.labels_
     array([1, 1, 1, 0, 0, 0])
 
@@ -764,8 +758,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     def __init__(self, n_clusters=2, affinity="euclidean",
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
-                 linkage='ward', pooling_func='deprecated',
-                 distance_threshold=None):
+                 linkage='ward', distance_threshold=None):
         self.n_clusters = n_clusters
         self.distance_threshold = distance_threshold
         self.memory = memory
@@ -773,7 +766,6 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         self.compute_full_tree = compute_full_tree
         self.linkage = linkage
         self.affinity = affinity
-        self.pooling_func = pooling_func
 
     @deprecated("The ``n_components_`` attribute was deprecated "
                 "in favor of ``n_connected_components_`` in 0.21 "
@@ -783,25 +775,21 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         return self.n_connected_components_
 
     def fit(self, X, y=None):
-        """Fit the hierarchical clustering on the data
+        """Fit the hierarchical clustering from features, or distance matrix.
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training data. Shape [n_samples, n_features], or [n_samples,
-            n_samples] if affinity=='precomputed'.
+        X : array-like, shape (n_samples, n_features) or (n_samples, n_samples)
+            Training instances to cluster, or distances between instances if
+            ``affinity='precomputed'``.
 
         y : Ignored
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
         self
         """
-        if (self.pooling_func != 'deprecated' and
-                not isinstance(self, AgglomerationTransform)):
-            warnings.warn('Agglomerative "pooling_func" parameter is not used.'
-                          ' It has been deprecated in version 0.20 and will be'
-                          'removed in 0.22', DeprecationWarning)
         X = check_array(X, ensure_min_samples=2, estimator=self)
         memory = check_memory(self.memory)
 
@@ -889,6 +877,26 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
             # Reassign cluster numbers
             self.labels_ = np.searchsorted(np.unique(labels), labels)
         return self
+
+    def fit_predict(self, X, y=None):
+        """Fit the hierarchical clustering from features or distance matrix,
+        and return cluster labels.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features) or (n_samples, n_samples)
+            Training instances to cluster, or distances between instances if
+            ``affinity='precomputed'``.
+
+        y : Ignored
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        labels : ndarray, shape (n_samples,)
+            Cluster labels.
+        """
+        return super().fit_predict(X, y)
 
 
 class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
@@ -990,11 +998,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     >>> images = digits.images
     >>> X = np.reshape(images, (len(images), -1))
     >>> agglo = cluster.FeatureAgglomeration(n_clusters=32)
-    >>> agglo.fit(X) # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    FeatureAgglomeration(affinity='euclidean', compute_full_tree='auto',
-                 connectivity=None, distance_threshold=None, linkage='ward',
-                 memory=None, n_clusters=32,
-                 pooling_func=...)
+    >>> agglo.fit(X)
+    FeatureAgglomeration(n_clusters=32)
     >>> X_reduced = agglo.transform(X)
     >>> X_reduced.shape
     (1797, 32)
