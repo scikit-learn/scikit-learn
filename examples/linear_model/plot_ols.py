@@ -55,11 +55,11 @@ diabetes_y_pred = regr.predict(diabetes_X_test)
 # The coefficients
 print('Coefficients: \n', regr.coef_)
 # The mean squared error
-print("Mean squared error: %.2f"
+print('Mean squared error: %.2f'
       % mean_squared_error(diabetes_y_test, diabetes_y_pred))
 # Explained variance score: 1 is perfect prediction
-print('Variance score: %.2f' % explained_variance_score \
-        (diabetes_y_test, diabetes_y_pred))
+print('Variance score: %.2f'
+      % explained_variance_score(diabetes_y_test, diabetes_y_pred))
 
 # Plot outputs
 plt.scatter(diabetes_X_test, diabetes_y_test,  color='black')
