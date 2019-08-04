@@ -1681,9 +1681,9 @@ class TfidfVectorizer(CountVectorizer):
             Whether to copy X and operate on the copy or perform in-place
             operations.
 
-            .. deprecated:: 0.21
-               The `copy` parameter was deprecated in version 0.21 and
-               will be removed in 0.23. This parameter will be ignored
+            .. deprecated:: 0.24
+               The `copy` parameter was deprecated in version 0.22 and
+               will be removed in 0.24. This parameter will be ignored
 
         Returns
         -------
@@ -1692,11 +1692,11 @@ class TfidfVectorizer(CountVectorizer):
         """
         check_is_fitted(self, '_tfidf', 'The tfidf vector is not fitted')
 
-        # FIXME Remove copy parameter support in 0.23
+        # FIXME Remove copy parameter support in 0.24
         if copy != "deprecated":
-            msg = ("'copy' param has been deprecated since version 0.21."
+            msg = ("'copy' param has been deprecated since version 0.22."
                    " Backward compatibility for 'copy' will be removed in"
-                   " 0.23.")
+                   " 0.24.")
             warnings.warn(msg, DeprecationWarning)
         X = super().transform(raw_documents)
         return self._tfidf.transform(X, copy=False)
