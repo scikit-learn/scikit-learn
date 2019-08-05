@@ -205,7 +205,8 @@ def test_2d_y():
                  ShuffleSplit(), StratifiedShuffleSplit(test_size=.5),
                  GroupShuffleSplit(), LeaveOneGroupOut(),
                  LeavePGroupsOut(n_groups=2), GroupKFold(n_splits=3),
-                 TimeSeriesSplit(), PredefinedSplit(test_fold=groups)]
+                 TimeSeriesSplit(), PredefinedSplit(test_fold=groups),
+                 BinnedStratifiedKFold()]
     for splitter in splitters:
         list(splitter.split(X, y, groups))
         list(splitter.split(X, y_2d, groups))
