@@ -895,35 +895,6 @@ using an arbitrary :term:`scorer`, or just the training or validation loss. By
 default, early-stopping is performed using the default :term:`scorer` of
 the estimator on a validation set.
 
-Missing values support
-----------------------
-
-:class:`HistGradientBoostingClassifier` and
-:class:`HistGradientBoostingRegressor` have built-in support for missing
-values (NaNs).
-
-During training, the tree grower learns at each split point whether samples
-with missing values should go to the left or right child, based on the
-potential gain. When predicting, samples with missing values are assigned to
-the left or right child consequently.
-
-
-.. TODO: Add this example when missing values PR is merged (results are
-.. wrong for now)
-
-.. from sklearn.experimental import enable_hist_gradient_boosting
-.. from sklearn.ensemble import HistGradientBoostingRegressor
-.. import numpy as np
-
-.. X = np.array([0, 1, 2, np.nan]).reshape(-1, 1)
-.. y = [0, 0, 1, 1]
-.. gbdt = HistGradientBoostingRegressor().fit(X, y)
-.. gbdt.predict(X)
-
-If no missing values were encountered for a given feature during training,
-then samples with missing values are mapped to whichever child has the most
-samples.
-
 Low-level parallelism
 ---------------------
 
