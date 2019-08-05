@@ -45,9 +45,6 @@ from ..base import is_regressor
 
 
 class _MultimetricScorer(dict):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
     def __call__(self, estimator, *args, **kwargs):
         scores = {}
         cache = {} if self._use_cache() else None
