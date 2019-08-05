@@ -21,7 +21,8 @@ from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
                              jaccard_score)
 from sklearn.metrics import cluster as cluster_module
 from sklearn.metrics.scorer import (check_scoring, _PredictScorer,
-                                    _passthrough_scorer)
+                                    _passthrough_scorer,
+                                    _MultimetricScorer)
 from sklearn.metrics import accuracy_score
 from sklearn.metrics.scorer import _check_multimetric_scoring
 from sklearn.metrics import make_scorer, get_scorer, SCORERS
@@ -208,7 +209,7 @@ def check_multimetric_scoring_single_metric_wrapper(*args, **kwargs):
     assert not is_multi
     if args[0] is not None:
         assert scorers is not None
-        names, scorers = zip(*scorers.items())
+        names, scorers = zip(*scorers._scorers.items())
         assert len(scorers) == 1
         assert names[0] == 'score'
         scorers = scorers[0]
@@ -234,19 +235,21 @@ def test_check_scoring_and_check_multimetric_scoring():
 
         scorers, is_multi = _check_multimetric_scoring(estimator, scoring)
         assert is_multi
-        assert isinstance(scorers, dict)
-        assert sorted(scorers.keys()) == sorted(list(scoring))
+        assert isinstance(scorers, _MultimetricScorer)
+        scorer_dict = scorers._scorers
+        assert isinstance(scorer_dict, dict)
+        assert sorted(scorer_dict.keys()) == sorted(list(scoring))
         assert all([isinstance(scorer, _PredictScorer)
-                    for scorer in list(scorers.values())])
+                    for scorer in list(scorer_dict.values())])
 
         if 'acc' in scoring:
-            assert_almost_equal(scorers['acc'](
+            assert_almost_equal(scorer_dict['acc'](
                 estimator, [[1], [2], [3]], [1, 0, 0]), 2. / 3.)
         if 'accuracy' in scoring:
-            assert_almost_equal(scorers['accuracy'](
+            assert_almost_equal(scorer_dict['accuracy'](
                 estimator, [[1], [2], [3]], [1, 0, 0]), 2. / 3.)
         if 'precision' in scoring:
-            assert_almost_equal(scorers['precision'](
+            assert_almost_equal(scorer_dict['precision'](
                 estimator, [[1], [2], [3]], [1, 0, 0]), 0.5)
 
     estimator = EstimatorWithFitAndPredict()
@@ -574,7 +577,7 @@ def test_multimetric_scorer_calls_method_once(scorers, predicts,
     mock_est.predict_proba = predict_proba_func
     mock_est.decision_function = decision_function_func
 
-    scorer = _make_multimetric_scorer(scorers)
+    scorer, _ = _check_multimetric_scoring(LogisticRegression(), scorers)
     scores = scorer(mock_est, X, y)
 
     assert set(scorers) == set(scores)

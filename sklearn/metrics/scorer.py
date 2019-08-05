@@ -20,7 +20,6 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 
 from collections.abc import Iterable
 from functools import partial
-from contextlib import suppress
 
 import numpy as np
 
@@ -49,31 +48,36 @@ class _MultimetricScorer:
     def __init__(self, scorers):
         self._scorers = scorers
 
-    def __call__(self, estimator, X, y, **kwargs):
+    def __call__(self, estimator, *args, **kwargs):
         scores = {}
         cache = {} if self._use_cache() else None
         method_cacher = partial(self._method_cacher, cache)
 
         for name, scorer in self._scorers.items():
             if isinstance(scorer, _BaseScorer):
-                score = scorer(estimator, X, y, **kwargs,
-                               method_cacher=method_cacher)
-            elif y is None:
-                score = scorer(estimator, X, **kwargs)
+                score = scorer._score(estimator, *args, **kwargs,
+                                      method_cacher=method_cacher)
+            elif len(args) == 1:  # y is None
+                score = scorer(estimator, *args, **kwargs)
             else:
-                score = score(estimator, X, y, **kwargs)
-
-            with suppress(ValueError):
-                # e.g. unwrap memmapped scalars
-                score = score.item()
+                score = scorer(estimator, *args, **kwargs)
             scores[name] = score
-
         return scores
 
     def _use_cache(self):
         if len(self._scorers) == 1:
             return False
         return True
+
+    def _method_cacher(self, cache, estimator, method, *args, **kwargs):
+        if cache is None:
+            return getattr(estimator, method)(*args, **kwargs)
+        try:
+            return cache[method]
+        except KeyError:
+            result = getattr(estimator, method)(*args, **kwargs)
+            cache[method] = result
+            return result
 
 
 class _BaseScorer:
@@ -90,10 +94,10 @@ class _BaseScorer:
                    "" if self._sign > 0 else ", greater_is_better=False",
                    self._factory_args(), kwargs_string))
 
-    def __call__(self, estimator, X, y_true, sample_weight=None,
-                 method_cacher=None):
+    def __call__(self, estimator, X, y_true, sample_weight=None):
+        """Evaluate score for X relative to y_true."""
         return self._score(estimator, X, y_true, sample_weight=sample_weight,
-                           method_cacher=method_cacher)
+                           method_cacher=None)
 
     def _method_cacher(self, estimator, method, *args, **kwargs):
         return getattr(estimator, method)(*args, **kwargs)
@@ -122,6 +126,9 @@ class _PredictScorer(_BaseScorer):
 
         sample_weight : array-like, optional (default=None)
             Sample weights.
+
+        method_cacher: callable or None, default=None
+            Callable cacher that calls an estimator's method.
 
         Returns
         -------
@@ -160,6 +167,9 @@ class _ProbaScorer(_BaseScorer):
 
         sample_weight : array-like, optional (default=None)
             Sample weights.
+
+        method_cacher: callable or None, default=None
+            Callable cacher that calls an estimator's method.
 
         Returns
         -------
@@ -211,6 +221,10 @@ class _ThresholdScorer(_BaseScorer):
 
         sample_weight : array-like, optional (default=None)
             Sample weights.
+
+
+        method_cacher: callable or None, default=None
+            Callable cacher that calls an estimator's method.
 
         Returns
         -------
@@ -390,7 +404,7 @@ def _check_multimetric_scoring(estimator, scoring=None):
     if callable(scoring) or scoring is None or isinstance(scoring,
                                                           str):
         scorers = {"score": check_scoring(estimator, scoring=scoring)}
-        return scorers, False
+        return _MultimetricScorer(scorers), False
     else:
         err_msg_generic = ("scoring should either be a single string or "
                            "callable for single metric evaluation or a "
@@ -444,7 +458,7 @@ def _check_multimetric_scoring(estimator, scoring=None):
                        for key, scorer in scoring.items()}
         else:
             raise ValueError(err_msg_generic)
-        return scorers, True
+        return _MultimetricScorer(scorers), True
 
 
 def make_scorer(score_func, greater_is_better=True, needs_proba=False,

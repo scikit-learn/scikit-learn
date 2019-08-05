@@ -14,6 +14,7 @@ import warnings
 import numbers
 import time
 from traceback import format_exception_only
+from contextlib import suppress
 
 import numpy as np
 import scipy.sparse as sp
@@ -24,7 +25,8 @@ from ..utils import (indexable, check_random_state, safe_indexing,
                      _message_with_time)
 from ..utils.validation import _is_arraylike, _num_samples
 from ..utils.metaestimators import _safe_split
-from ..metrics.scorer import check_scoring, _check_multimetric_scoring
+from ..metrics.scorer import (check_scoring, _check_multimetric_scoring,
+                              _MultimetricScorer)
 from ..exceptions import FitFailedWarning
 from ._split import check_cv
 from ..preprocessing import LabelEncoder
@@ -242,7 +244,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     if return_estimator:
         ret['estimator'] = fitted_estimators
 
-    for name in scorers:
+    for name in scorers._scorers:
         ret['test_%s' % name] = np.array(test_scores[name])
         if return_train_score:
             key = 'train_%s' % name
@@ -493,8 +495,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, y_test = _safe_split(estimator, X, y, test, train)
 
-    is_multimetric = not callable(scorer)
-    n_scorers = len(scorer.keys()) if is_multimetric else 1
+    is_multimetric = isinstance(scorer, _MultimetricScorer)
+    n_scorers = len(scorer._scorers.keys()) if is_multimetric else 1
     try:
         if y_train is None:
             estimator.fit(X_train, **fit_params)
@@ -509,10 +511,10 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
             raise
         elif isinstance(error_score, numbers.Number):
             if is_multimetric:
-                test_scores = dict(zip(scorer.keys(),
+                test_scores = dict(zip(scorer._scorers.keys(),
                                    [error_score, ] * n_scorers))
                 if return_train_score:
-                    train_scores = dict(zip(scorer.keys(),
+                    train_scores = dict(zip(scorer._scorers.keys(),
                                         [error_score, ] * n_scorers))
             else:
                 test_scores = error_score
@@ -573,52 +575,28 @@ def _score(estimator, X_test, y_test, scorer, is_multimetric=False):
     Will return a single float if is_multimetric is False and a dict of floats,
     if is_multimetric is True
     """
-    if is_multimetric:
-        return _multimetric_score(estimator, X_test, y_test, scorer)
+    if y_test is None:
+        scores = scorer(estimator, X_test)
     else:
-        if y_test is None:
-            score = scorer(estimator, X_test)
-        else:
-            score = scorer(estimator, X_test, y_test)
-
-        if hasattr(score, 'item'):
-            try:
+        scores = scorer(estimator, X_test, y_test)
+    error_msg = ("scoring must return a number, got %s (%s) "
+                 "instead. (scorer=%s)")
+    if isinstance(scores, dict):
+        for name, score in scores.items():
+            if hasattr(score, 'item'):
+                with suppress(ValueError):
+                    # e.g. unwrap memmapped scalars
+                    score = score.item()
+            if not isinstance(score, numbers.Number):
+                raise ValueError(error_msg % (score, type(score), name))
+            scores[name] = score
+    else:  # scaler
+        if hasattr(scores, 'item'):
+            with suppress(ValueError):
                 # e.g. unwrap memmapped scalars
-                score = score.item()
-            except ValueError:
-                # non-scalar?
-                pass
-
-        if not isinstance(score, numbers.Number):
-            raise ValueError("scoring must return a number, got %s (%s) "
-                             "instead. (scorer=%r)"
-                             % (str(score), type(score), scorer))
-    return score
-
-
-def _multimetric_score(estimator, X_test, y_test, scorers):
-    """Return a dict of score for multimetric scoring"""
-    scores = {}
-
-    for name, scorer in scorers.items():
-        if y_test is None:
-            score = scorer(estimator, X_test)
-        else:
-            score = scorer(estimator, X_test, y_test)
-
-        if hasattr(score, 'item'):
-            try:
-                # e.g. unwrap memmapped scalars
-                score = score.item()
-            except ValueError:
-                # non-scalar?
-                pass
-        scores[name] = score
-
-        if not isinstance(score, numbers.Number):
-            raise ValueError("scoring must return a number, got %s (%s) "
-                             "instead. (scorer=%s)"
-                             % (str(score), type(score), name))
+                scores = scores.item()
+            if not isinstance(scores, numbers.Number):
+                raise ValueError(error_msg % (scores, type(scores), name))
     return scores
 
 

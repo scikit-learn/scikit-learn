@@ -424,7 +424,10 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
             raise ValueError("No score function explicitly defined, "
                              "and the estimator doesn't provide one %s"
                              % self.best_estimator_)
-        score = self.scorer_[self.refit] if self.multimetric_ else self.scorer_
+        if self.multimetric_:
+            score = self.scorer_._scorers[self.refit]
+        else:
+            score = self.scorer_
         return score(self.best_estimator_, X, y)
 
     def _check_is_fitted(self, method_name):
@@ -612,7 +615,8 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
             if self.refit is not False and (
                     not isinstance(self.refit, str) or
                     # This will work for both dict / list (tuple)
-                    self.refit not in scorers) and not callable(self.refit):
+                    self.refit not in scorers._scorers) and not callable(
+                        self.refit):
                 raise ValueError("For multi-metric scoring, the parameter "
                                  "refit must be set to a scorer key or a "
                                  "callable to refit an estimator with the "
@@ -719,7 +723,10 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
             self.refit_time_ = refit_end_time - refit_start_time
 
         # Store the only scorer not as a dict for single metric evaluation
-        self.scorer_ = scorers if self.multimetric_ else scorers['score']
+        if self.multimetric_:
+            self.scorer_ = scorers
+        else:
+            self.scorer_ = scorers._scorers['score']
 
         self.cv_results_ = results
         self.n_splits_ = n_splits
@@ -802,7 +809,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         else:
             iid = False
 
-        for scorer_name in scorers.keys():
+        for scorer_name in scorers._scorers.keys():
             # Computed the (weighted) mean and std for test scores alone
             _store('test_%s' % scorer_name, test_scores[scorer_name],
                    splits=True, rank=True,

@@ -53,6 +53,7 @@ from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import precision_score
 from sklearn.metrics import r2_score
 from sklearn.metrics.scorer import check_scoring
+from sklearn.metrics.scorer import _MultimetricScorer
 
 from sklearn.linear_model import Ridge, LogisticRegression, SGDClassifier
 from sklearn.linear_model import PassiveAggressiveClassifier, RidgeClassifier
@@ -1675,7 +1676,8 @@ def test_fit_and_score_working():
     clf = SVC(kernel="linear", random_state=0)
     train, test = next(ShuffleSplit().split(X))
     # Test return_parameters option
-    fit_and_score_args = [clf, X, y, dict(), train, test, 0]
+    scorer = _MultimetricScorer({"score": make_scorer(accuracy_score)})
+    fit_and_score_args = [clf, X, y, scorer, train, test, 0]
     fit_and_score_kwargs = {'parameters': {'max_iter': 100, 'tol': 0.1},
                             'fit_params': None,
                             'return_parameters': True}
@@ -1703,6 +1705,8 @@ def test_fit_and_score_verbosity(capsys, return_train_score, scorer, expected):
     train, test = next(ShuffleSplit().split(X))
 
     # test print without train score
+    if isinstance(scorer, dict):
+        scorer = _MultimetricScorer(scorer)
     fit_and_score_args = [clf, X, y, scorer, train, test, 10, None, None]
     fit_and_score_kwargs = {'return_train_score': return_train_score}
     _fit_and_score(*fit_and_score_args, **fit_and_score_kwargs)
@@ -1715,6 +1719,8 @@ def test_score():
 
     def two_params_scorer(estimator, X_test):
         return None
-    fit_and_score_args = [None, None, None, two_params_scorer]
+
+    scorer = _MultimetricScorer({"score": two_params_scorer})
+    fit_and_score_args = [None, None, None, scorer]
     assert_raise_message(ValueError, error_message,
                          _score, *fit_and_score_args)
