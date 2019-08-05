@@ -125,6 +125,10 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
     viz : :class:`sklearn.metrics.plot.RocCurveVisualizer`
         object that stores computed values
     """
+    if response_method not in ("predict_proba", "decision_function", "auto"):
+        raise ValueError("response_method must be 'predict_proba', "
+                         "'decision_function' or 'auto'")
+
     if response_method != "auto":
         prediction_method = getattr(estimator, response_method, None)
         if prediction_method is None:

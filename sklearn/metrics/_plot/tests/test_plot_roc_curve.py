@@ -34,7 +34,9 @@ def test_plot_roc_curve_error_non_binary(data):
     "response_method, msg",
     [("predict_proba", "response method predict_proba is not defined"),
      ("decision_function", "response method decision_function is not defined"),
-     ("auto", "response methods not defined")])
+     ("auto", "response methods not defined"),
+     ("bad_method", "response_method must be 'predict_proba', "
+                    "'decision_function' or 'auto'")])
 def test_plot_roc_curve_error_no_response(data_binary, response_method, msg):
     X, y = data_binary
 
