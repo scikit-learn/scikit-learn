@@ -272,7 +272,7 @@ class ParameterSampler:
         all_lists = all(
             all(not hasattr(v, "rvs") for v in dist.values())
             for dist in self.param_distributions)
-        rnd = check_random_state(self.random_state)
+        rng = check_random_state(self.random_state)
 
         if all_lists:
             # look up sampled parameter settings in parameter grid
@@ -288,21 +288,20 @@ class ParameterSampler:
                     % (grid_size, self.n_iter, grid_size), UserWarning)
                 n_iter = grid_size
             for i in sample_without_replacement(grid_size, n_iter,
-                                                random_state=rnd):
+                                                random_state=rng):
                 yield param_grid[i]
 
         else:
             for _ in range(self.n_iter):
-                dist = self.param_distributions[
-                    rnd.randint(len(self.param_distributions))]
+                dist = rng.choice(self.param_distributions)
                 # Always sort the keys of a dictionary, for reproducibility
                 items = sorted(dist.items())
                 params = dict()
                 for k, v in items:
                     if hasattr(v, "rvs"):
-                        params[k] = v.rvs(random_state=rnd)
+                        params[k] = v.rvs(random_state=rng)
                     else:
-                        params[k] = v[rnd.randint(len(v))]
+                        params[k] = v[rng.randint(len(v))]
                 yield params
 
     def __len__(self):
