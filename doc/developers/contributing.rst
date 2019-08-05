@@ -610,7 +610,7 @@ Finally, follow the formatting rules below to make it consistently good:
         The number of clusters detected by the algorithm.
 
     some_param : {'hello', 'goodbye'}, bool or int, default=True
-	    The parameter description goes here, which can be either a string
+        The parameter description goes here, which can be either a string
         literal (either `hello` or `goodbye`), a bool, or an int. The default
         value is True.
 
