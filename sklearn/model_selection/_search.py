@@ -612,8 +612,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
             if self.refit is not False and (
                     not isinstance(self.refit, str) or
                     # This will work for both dict / list (tuple)
-                    self.refit not in scorers) and not callable(
-                        self.refit):
+                    self.refit not in scorers) and not callable(self.refit):
                 raise ValueError("For multi-metric scoring, the parameter "
                                  "refit must be set to a scorer key or a "
                                  "callable to refit an estimator with the "
@@ -720,10 +719,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
             self.refit_time_ = refit_end_time - refit_start_time
 
         # Store the only scorer not as a dict for single metric evaluation
-        if self.multimetric_:
-            self.scorer_ = scorers
-        else:
-            self.scorer_ = scorers['score']
+        self.scorer_ = scorers if self.multimetric_ else scorers['score']
 
         self.cv_results_ = results
         self.n_splits_ = n_splits
