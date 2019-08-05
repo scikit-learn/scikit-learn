@@ -242,7 +242,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
                       " may not work as expected.")
     if not copy:
         adjacency = None
-        adjacency, dd = csgraph_laplacian(adjacency, normed=norm_laplacian, 
+        adjacency, dd = csgraph_laplacian(adjacency, normed=norm_laplacian,
                                           return_diag=True)
         laplacian = adjacency
         adjacency = None
