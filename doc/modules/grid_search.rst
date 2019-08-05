@@ -219,7 +219,7 @@ using a dedicated syntax ``<estimator>__<parameter>`` syntax::
 Here, ``<estimator>`` is the parameter name of the nested estimator,
 in this case ``base_estimator``.
 The `Pipeline` class has a slightly different notation, as explained in :ref:`pipeline`,
-where ``<estimators>`` referes to the name of the step in the pipeline.
+where ``<estimators>`` refers to the name of the step in the pipeline.
 In practice, there can be several levels of nesting::
 
   >>> from sklearn.pipeline import Pipeline
