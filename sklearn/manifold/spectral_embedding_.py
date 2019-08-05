@@ -241,10 +241,11 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         warnings.warn("Graph is not fully connected, spectral embedding"
                       " may not work as expected.")
     if not copy:
-        G, dd = csgraph_laplacian(adjacency,
+        adjacency = None
+        adjacency, dd = csgraph_laplacian(adjacency,
                                   normed=norm_laplacian, return_diag=True)
-        laplacian = G
-        G = None
+        laplacian = adjacency
+        adjacency = None
     else:
         laplacian, dd = csgraph_laplacian(adjacency, normed=norm_laplacian,
                                           return_diag=True)
