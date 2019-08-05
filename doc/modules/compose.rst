@@ -101,6 +101,9 @@ permitted). This is convenient for performing only some of the transformations
     >>> pipe[-1:]
     Pipeline(steps=[('clf', SVC())])
 
+
+.. _pipeline_nested_parameters:
+
 Nested parameters
 .................
 
