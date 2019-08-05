@@ -205,7 +205,7 @@ _STYLE = """
   opacity: 0;
   font-weight: 400;
   position: absolute;
-  top: 100%;
+  top: 0;
   left: 0;
   padding: 0.5em;
   overflow: hidden;
