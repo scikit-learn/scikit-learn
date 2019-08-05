@@ -1,6 +1,6 @@
 """
 ==========================================================================
-Gaussian process regression and classification on discrete data structures
+Gaussian processes on discrete data structures
 ==========================================================================
 
 This example illustrates the use of Gaussian processes to carry out
