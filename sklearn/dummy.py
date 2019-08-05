@@ -120,7 +120,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
         if not self.sparse_output_:
             y = np.atleast_1d(y)
 
-        self.output_2d_ = y.ndim == 2
+        self.output_2d_ = y.ndim == 2 and y.shape[1] > 1
+
         if y.ndim == 1:
             y = np.reshape(y, (-1, 1))
 
@@ -385,7 +386,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
 
     Attributes
     ----------
-    constant_ : float or array of shape [n_outputs]
+    constant_ : array, shape (1, n_outputs)
         Mean or median or quantile of the training targets or constant value
         given by the user.
 
@@ -425,7 +426,8 @@ class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
         if len(y) == 0:
             raise ValueError("y must not be empty.")
 
-        self.output_2d_ = y.ndim == 2
+        self.output_2d_ = y.ndim == 2 and y.shape[1] > 1
+
         if y.ndim == 1:
             y = np.reshape(y, (-1, 1))
         self.n_outputs_ = y.shape[1]
@@ -490,10 +492,10 @@ class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
 
         Returns
         -------
-        y : array, shape = [n_samples]  or [n_samples, n_outputs]
+        y : array, shape = [n_samples] or [n_samples, n_outputs]
             Predicted target values for X.
 
-        y_std : array, shape = [n_samples]  or [n_samples, n_outputs]
+        y_std : array, shape = [n_samples] or [n_samples, n_outputs]
             Standard deviation of predictive distribution of query points.
         """
         check_is_fitted(self, "constant_")

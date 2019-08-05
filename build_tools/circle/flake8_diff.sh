@@ -121,7 +121,7 @@ echo '--------------------------------------------------------------------------
 # We need the following command to exit with 0 hence the echo in case
 # there is no match
 MODIFIED_FILES="$(git diff --name-only $COMMIT_RANGE | grep -v 'sklearn/externals' | \
-                     grep -v 'doc/sphinxext/sphinx_gallery' || echo "no_match")"
+                     grep -v 'doc/sphinxext' || echo "no_match")"
 
 check_files() {
     files="$1"
@@ -135,7 +135,7 @@ check_files() {
 }
 
 if [[ "$MODIFIED_FILES" == "no_match" ]]; then
-    echo "No file outside sklearn/externals and doc/sphinxext/sphinx_gallery has been modified"
+    echo "No file outside sklearn/externals and doc/sphinxext has been modified"
 else
 
     check_files "$(echo "$MODIFIED_FILES" | grep -v ^examples)"

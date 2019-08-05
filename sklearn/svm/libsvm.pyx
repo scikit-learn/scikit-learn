@@ -1,4 +1,3 @@
-# cython: language_level=3
 """
 Binding for libsvm_skl
 ----------------------
@@ -34,7 +33,6 @@ Authors
 import warnings
 import  numpy as np
 cimport numpy as np
-from . cimport libsvm
 from libc.stdlib cimport free
 
 cdef extern from *:

@@ -1,3 +1,6 @@
+# cython: cdivision=True
+# cython: boundscheck=False
+# cython: wraparound=False
 {{py:
 
 """
@@ -26,7 +29,6 @@ def get_dispatch(dtypes):
         yield name, c_type, np_type
 
 }}
-
 {{for name, c_type, np_type in get_dispatch(dtypes)}}
 
 #------------------------------------------------------------------------------
@@ -36,10 +38,6 @@ Dataset abstractions for sequential data access.
 WARNING: Do not edit .pyx file directly, it is generated from .pyx.tp
 """
 
-# cython: cdivision=True
-# cython: boundscheck=False
-# cython: wraparound=False
-
 cimport cython
 from libc.limits cimport INT_MAX
 cimport numpy as np
@@ -47,6 +45,7 @@ import numpy as np
 
 np.import_array()
 
+from ._random cimport our_rand_r
 
 cdef class SequentialDataset{{name}}:
     """Base class for datasets with sequential data access.
@@ -358,17 +357,3 @@ cdef class CSRDataset{{name}}(SequentialDataset{{name}}):
 
 
 {{endfor}}
-
-cdef enum:
-    RAND_R_MAX = 0x7FFFFFFF
-
-
-# rand_r replacement using a 32bit XorShift generator
-# See https://www.jstatsoft.org/v08/i14/paper for details
-# XXX copied over from sklearn/tree/_tree.pyx, should refactor
-cdef inline np.uint32_t our_rand_r(np.uint32_t* seed) nogil:
-    seed[0] ^= <np.uint32_t>(seed[0] << 13)
-    seed[0] ^= <np.uint32_t>(seed[0] >> 17)
-    seed[0] ^= <np.uint32_t>(seed[0] << 5)
-
-    return seed[0] % (<np.uint32_t>RAND_R_MAX + 1)
