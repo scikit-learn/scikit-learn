@@ -341,15 +341,15 @@ def test_partial_dependence_error(estimator, params, err_msg):
         partial_dependence(estimator, X, **params)
 
 
-@pytest.mark.parametrize("features", [-1, 100000])
 @pytest.mark.parametrize(
     'estimator',
     [LinearRegression(), GradientBoostingClassifier(random_state=0)]
 )
-def test_partial_dependence_unknown_feature_indices(features, estimator):
+def test_partial_dependence_unknown_feature_indices(estimator):
     X, y = make_classification(random_state=0)
     estimator.fit(X, y)
 
+    features = 100000
     err_msg = 'all features must be in'
     with pytest.raises(ValueError, match=err_msg):
         partial_dependence(estimator, X, [features])
@@ -449,10 +449,11 @@ def test_partial_dependence_pipeline():
 
     features = 0
     pdp_pipe, values_pipe = partial_dependence(
-        pipe, iris.data, features=[features]
+        pipe, iris.data, features=[features], grid_resolution=10
     )
     pdp_clf, values_clf = partial_dependence(
-        clf, scaler.transform(iris.data), features=[features]
+        clf, scaler.transform(iris.data), features=[features],
+        grid_resolution=10
     )
     assert_allclose(pdp_pipe, pdp_clf)
     assert_allclose(
@@ -487,7 +488,9 @@ def test_partial_dependence_dataframe(estimator, preprocessor, features):
 
     pipe = make_pipeline(preprocessor, estimator)
     pipe.fit(df, iris.target)
-    pdp_pipe, values_pipe = partial_dependence(pipe, df, features=features)
+    pdp_pipe, values_pipe = partial_dependence(
+        pipe, df, features=features, grid_resolution=10
+    )
 
     # the column transformer will reorder the column when transforming
     # we mixed the index to be sure that we are computing the partial
@@ -501,7 +504,7 @@ def test_partial_dependence_dataframe(estimator, preprocessor, features):
 
     clf = clone(estimator).fit(X_proc, iris.target)
     pdp_clf, values_clf = partial_dependence(
-        clf, X_proc, features=features_clf, method='brute'
+        clf, X_proc, features=features_clf, method='brute', grid_resolution=10
     )
 
     assert_allclose(pdp_pipe, pdp_clf)
@@ -516,13 +519,16 @@ def test_partial_dependence_dataframe(estimator, preprocessor, features):
 
 
 @pytest.mark.parametrize(
-    "features",
-    [0, iris.feature_names[0],
-     [0, 2], [iris.feature_names[i] for i in (0, 2)],
-     slice(0, 2, 1), [True, False, True, False]],
+    "features, expected_pd_shape",
+    [(0, (3, 10)),
+     (iris.feature_names[0], (3, 10)),
+     ([0, 2], (3, 10, 10)),
+     ([iris.feature_names[i] for i in (0, 2)], (3, 10, 10)),
+     (slice(0, 2, 1), (3, 10, 10)),
+     ([True, False, True, False], (3, 10, 10))],
     ids=['scalar-int', 'scalar-str', 'list-int', 'list-str', 'slice', 'mask']
 )
-def test_partial_dependence_feature_type(features):
+def test_partial_dependence_feature_type(features, expected_pd_shape):
     # check all possible features type supported in PDP
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame(iris.data, columns=iris.feature_names)
@@ -535,7 +541,11 @@ def test_partial_dependence_feature_type(features):
         preprocessor, LogisticRegression(max_iter=1000, random_state=0)
     )
     pipe.fit(df, iris.target)
-    pdp_pipe, values_pipe = partial_dependence(pipe, df, features=features)
+    pdp_pipe, values_pipe = partial_dependence(
+        pipe, df, features=features, grid_resolution=10
+    )
+    assert pdp_pipe.shape == expected_pd_shape
+    assert len(values_pipe) == len(pdp_pipe.shape) - 1
 
 
 def test_plot_partial_dependence(pyplot):
@@ -647,10 +657,10 @@ def test_plot_partial_dependence_multioutput(pyplot):
      (multioutput_regression_data[0], {"target": 100, 'features': [0]},
       r'target must be in \[0, n_tasks\]'),
      (make_classification(random_state=0),
-     {'features': ['foobar'], 'feature_names': None},
-     'Feature foobar not in feature_names'),
+      {'features': ['foobar'], 'feature_names': None},
+      'Feature foobar not in feature_names'),
      (make_classification(random_state=0),
-     {'features': ['foobar'], 'feature_names': ['abcd', 'def']},
+      {'features': ['foobar'], 'feature_names': ['abcd', 'def']},
       'Feature foobar not in feature_names'),
      (make_classification(random_state=0), {'features': [(1, 2, 3)]},
       'Each entry in features must be either an int, '),

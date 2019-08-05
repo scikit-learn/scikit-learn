@@ -352,14 +352,13 @@ def partial_dependence(estimator, X, features, response_method='auto',
                 "With the 'recursion' method, the response_method must be "
                 "'decision_function'. Got {}.".format(response_method)
             )
-        msg = "'estimator' parameter must be a fitted estimator"
-        if isinstance(estimator, BaseGradientBoosting):
-            fitted_attribute = 'estimators_'
-        else:
-            fitted_attribute = 'n_iter_'
-        check_is_fitted(estimator, fitted_attribute, msg=msg)
+        # msg = "'estimator' parameter must be a fitted estimator"
+        # if isinstance(estimator, BaseGradientBoosting):
+        #     fitted_attribute = 'estimators_'
+        # else:
+        #     fitted_attribute = 'n_iter_'
+        # check_is_fitted(estimator, fitted_attribute, msg=msg)
 
-    print(features)
     features_indices = np.asarray(
         _get_column_indices(X, features), dtype=np.int32, order='C'
     ).ravel()
