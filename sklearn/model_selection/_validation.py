@@ -451,27 +451,29 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     Returns
     -------
-    train_scores : dict of scorer name -> float, optional
-        Score on training set (for all the scorers),
-        returned only if `return_train_score` is `True`.
+    dict: Dictionary with the following keys and values
 
-    test_scores : dict of scorer name -> float, optional
-        Score on testing set (for all the scorers).
+        train_scores : dict of scorer name -> float, optional
+            Score on training set (for all the scorers),
+            returned only if `return_train_score` is `True`.
 
-    n_test_samples : int
-        Number of test samples.
+        test_scores : dict of scorer name -> float, optional
+            Score on testing set (for all the scorers).
 
-    fit_time : float
-        Time spent for fitting in seconds.
+        n_test_samples : int
+            Number of test samples.
 
-    score_time : float
-        Time spent for scoring in seconds.
+        fit_time : float
+            Time spent for fitting in seconds.
 
-    parameters : dict or None, optional
-        The parameters that have been evaluated.
+        score_time : float
+            Time spent for scoring in seconds.
 
-    estimator : estimator object
-        The fitted estimator
+        parameters : dict or None, optional
+            The parameters that have been evaluated.
+
+        estimator : estimator object
+            The fitted estimator
     """
     if verbose > 1:
         if parameters is None:
@@ -556,17 +558,20 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         total_time = score_time + fit_time
         print(_message_with_time('CV', msg, total_time))
 
-    ret = [train_scores, test_scores] if return_train_score else [test_scores]
+    output = {"test_scores": test_scores}
+    if return_train_score:
+        output["train_scores"] = train_scores
 
     if return_n_test_samples:
-        ret.append(_num_samples(X_test))
+        output["n_test_samples"] = _num_samples(X_test)
     if return_times:
-        ret.extend([fit_time, score_time])
+        output["fit_time"] = fit_time
+        output["score_time"] = score_time
     if return_parameters:
-        ret.append(parameters)
+        output["parameters"] = parameters
     if return_estimator:
-        ret.append(estimator)
-    return ret
+        output["estimator"] = estimator
+    return output
 
 
 def _score(estimator, X_test, y_test, scorer, is_multimetric=False):
