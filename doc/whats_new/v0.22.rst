@@ -285,7 +285,7 @@ Changelog
   :issue:`9629` by :user:`Wenbo Zhao <webber26232>`.
 
 - |Efficiency| Efficiency improvements for
-  :func:`neighbors.RadiusNeighborsClassifier.prdict` by changing
+  :func:`neighbors.RadiusNeighborsClassifier.predict` by changing
   implementation from scipy.stats.mode to numpy.bincount.
   :pr:`9597` by :user:`Wenbo Zhao <webber26232>`.
 
