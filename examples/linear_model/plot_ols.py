@@ -12,8 +12,8 @@ to draw a straight line that will best minimize the residual sum of squares
 between the observed responses in the dataset, and the responses predicted by
 the linear approximation.
 
-The coefficients, the residual sum of squares and the coefficient of
-determination are also calculated.
+The coefficients, the residual sum of squares and the coefficient of determination
+are also calculated.
 
 """
 print(__doc__)
