@@ -54,8 +54,6 @@ class _MultimetricScorer(dict):
             if isinstance(scorer, _BaseScorer):
                 score = scorer._score(estimator, *args, **kwargs,
                                       method_cacher=method_cacher)
-            elif len(args) == 1:  # y is None
-                score = scorer(estimator, *args, **kwargs)
             else:
                 score = scorer(estimator, *args, **kwargs)
             scores[name] = score
