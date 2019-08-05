@@ -865,7 +865,7 @@ def check_symmetric(array, tol=1E-10, raise_warning=True,
     return array
 
 
-def check_is_fitted(estimator, attributes='deprecated', msg=None):
+def check_is_fitted(estimator, msg=None):
     """Perform is_fitted validation for estimator.
 
     Checks if the estimator is fitted by verifying the presence of
@@ -876,7 +876,6 @@ def check_is_fitted(estimator, attributes='deprecated', msg=None):
     ----------
     estimator : estimator instance.
         estimator instance for which the check is performed.
-
 
     msg : string
         The default error message is, "This %(name)s instance is not fitted
@@ -896,10 +895,6 @@ def check_is_fitted(estimator, attributes='deprecated', msg=None):
     NotFittedError
         If the attributes are not found.
     """
-    if attributes != 'deprecated':
-        warnings.warn("Passing attributes to check_is_fitted is deprecated"
-                      "and will be removed in 0.23. The attributes "
-                      "argument is ignored.", DeprecationWarning)
     if isclass(estimator):
         raise TypeError("{} is a class, not an instance.".format(estimator))
     if msg is None:
@@ -909,12 +904,18 @@ def check_is_fitted(estimator, attributes='deprecated', msg=None):
     if not hasattr(estimator, 'fit'):
         raise TypeError("%s is not an estimator instance." % (estimator))
 
-    attrs = [v for v in vars(estimator)
-             if (v.endswith("_") or v.startswith("_"))
-             and not v.startswith("__")]
+    from ..pipeline import Pipeline
+    if isinstance(estimator, Pipeline):
+        for est in estimator:
+            if est is not None:
+                check_is_fitted(est)
+    else:
+        attrs = [v for v in vars(estimator)
+                 if (v.endswith("_") or v.startswith("_"))
+                 and not v.startswith("__")]
 
-    if not len(attrs):
-        raise NotFittedError(msg % {'name': type(estimator).__name__})
+        if not attrs:
+            raise NotFittedError(msg % {'name': type(estimator).__name__})
 
 
 def check_non_negative(X, whom):

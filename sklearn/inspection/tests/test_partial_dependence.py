@@ -33,8 +33,11 @@ from sklearn.preprocessing import RobustScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.dummy import DummyClassifier
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
+from sklearn.exceptions import NotFittedError
+from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import SkipTest
 
 
 # toy sample
@@ -349,7 +352,7 @@ def test_partial_dependence_unknown_feature_indices(estimator):
     X, y = make_classification(random_state=0)
     estimator.fit(X, y)
 
-    features = 100000
+    features = 10000
     err_msg = 'all features must be in'
     with pytest.raises(ValueError, match=err_msg):
         partial_dependence(estimator, X, [features])
@@ -369,16 +372,6 @@ def test_partial_dependence_unknown_feature_string(estimator):
     err_msg = 'A given column is not a column of the dataframe'
     with pytest.raises(ValueError, match=err_msg):
         partial_dependence(estimator, df, [features])
-
-
-@pytest.mark.parametrize(
-    'estimator',
-    [LinearRegression(), GradientBoostingClassifier(random_state=0)]
-)
-def test_partial_dependence_unfitted_estimator(estimator):
-    err_msg = "'estimator' parameter must be a fitted estimator"
-    with pytest.raises(ValueError, match=err_msg):
-        partial_dependence(estimator, X, [0])
 
 
 @pytest.mark.parametrize(
@@ -546,6 +539,29 @@ def test_partial_dependence_feature_type(features, expected_pd_shape):
     )
     assert pdp_pipe.shape == expected_pd_shape
     assert len(values_pipe) == len(pdp_pipe.shape) - 1
+
+
+@pytest.mark.parametrize(
+    "name, Estimator", all_estimators(type_filter=['classifier', 'regressor'])
+)
+def test_partial_dependence_unfitted(name, Estimator):
+    try:
+        estimator = Estimator()
+    except TypeError:
+        raise SkipTest(
+            'The {} estimator cannot be built with default parameters'
+            .format(name)
+        )
+
+    X, y = iris.data, iris.target
+    preprocessor = make_column_transformer(
+        (StandardScaler(), [0, 2]), (RobustScaler(), [1, 3])
+    )
+    pipe = make_pipeline(preprocessor, estimator)
+    with pytest.raises(NotFittedError, match="is not fitted yet"):
+        partial_dependence(pipe, X, features=[0, 2], grid_resolution=10)
+    with pytest.raises(NotFittedError, match="is not fitted yet"):
+        partial_dependence(estimator, X, features=[0, 2], grid_resolution=10)
 
 
 def test_plot_partial_dependence(pyplot):
