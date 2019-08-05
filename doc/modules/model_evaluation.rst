@@ -91,6 +91,8 @@ Scoring                           Function                                      
 'neg_mean_squared_log_error'      :func:`metrics.mean_squared_log_error`
 'neg_median_absolute_error'       :func:`metrics.median_absolute_error`
 'r2'                              :func:`metrics.r2_score`
+'neg_mean_poisson_deviance'       :func:`metrics.mean_poisson_deviance`
+'neg_mean_gamma_deviance'         :func:`metrics.mean_gamma_deviance`
 ==============================    =============================================     ==================================
 
 
@@ -1956,6 +1958,76 @@ Here is a small example of usage of the :func:`r2_score` function::
   * See :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
     for an example of R² score usage to
     evaluate Lasso and Elastic Net on sparse signals.
+
+
+.. _mean_tweedie_deviance:
+
+Mean Poisson, Gamma, and Tweedie deviances
+------------------------------------------
+The :func:`mean_tweedie_deviance` function computes the `mean Tweedie
+deviance error
+<https://en.wikipedia.org/wiki/Tweedie_distribution#The_Tweedie_deviance>`_
+with power parameter `p`. This is a metric that elicits predicted expectation
+values of regression targets.
+
+Following special cases exist,
+
+- when `p=0` it is equivalent to :func:`mean_squared_error`.
+- when `p=1` it is equivalent to :func:`mean_poisson_deviance`.
+- when `p=2` it is equivalent to :func:`mean_gamma_deviance`.
+
+If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample,
+and :math:`y_i` is the corresponding true value, then the mean Tweedie
+deviance error (D) estimated over :math:`n_{\text{samples}}` is defined as
+
+.. math::
+
+  \text{D}(y, \hat{y}) = \frac{1}{n_\text{samples}}
+  \sum_{i=0}^{n_\text{samples} - 1}
+  \begin{cases}
+  (y_i-\hat{y}_i)^2, & \text{for }p=0\text{ (Normal)}\\
+  2(y_i \log(y/\hat{y}_i) + \hat{y}_i - y_i),  & \text{for }p=1\text{ (Poisson)}\\
+  2(\log(\hat{y}_i/y_i) + y_i/\hat{y}_i - 1),  & \text{for }p=2\text{ (Gamma)}\\
+  2\left(\frac{\max(y_i,0)^{2-p}}{(1-p)(2-p)}-
+  \frac{y\,\hat{y}^{1-p}_i}{1-p}+\frac{\hat{y}^{2-p}_i}{2-p}\right),
+  & \text{otherwise}
+  \end{cases}
+
+Tweedie deviance is a homogeneous function of degree ``2-p``.
+Thus, Gamma distribution with `p=2` means that simultaneously scaling `y_true`
+and `y_pred` has no effect on the deviance. For Poisson distribution `p=1`
+the deviance scales linearly, and for Normal distribution (`p=0`),
+quadratically.  In general, the higher `p` the less weight is given to extreme
+deviations between true and predicted targets.
+
+For instance, let's compare the two predictions 1.0 and 100 that are both
+50% of their corresponding true value.
+
+The mean squared error (``p=0``) is very sensitive to the
+prediction difference of the second point,::
+
+    >>> from sklearn.metrics import mean_tweedie_deviance
+    >>> mean_tweedie_deviance([1.0], [1.5], p=0)
+    0.25
+    >>> mean_tweedie_deviance([100.], [150.], p=0)
+    2500.0
+
+If we increase ``p`` to 1,::
+
+    >>> mean_tweedie_deviance([1.0], [1.5], p=1)
+    0.18...
+    >>> mean_tweedie_deviance([100.], [150.], p=1)
+    18.9...
+
+the difference in errors decreases. Finally, by setting, ``p=2``::
+
+    >>> mean_tweedie_deviance([1.0], [1.5], p=2)
+    0.14...
+    >>> mean_tweedie_deviance([100.], [150.], p=2)
+    0.14...
+
+we would get identical errors. The deviance when `p=2` is thus only
+sensitive to relative errors.
 
 .. _clustering_metrics:
 

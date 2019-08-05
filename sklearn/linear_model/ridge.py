@@ -27,6 +27,7 @@ from ..utils import check_array
 from ..utils import check_consistent_length
 from ..utils import compute_sample_weight
 from ..utils import column_or_1d
+from ..utils.validation import _check_sample_weight
 from ..preprocessing import LabelBinarizer
 from ..model_selection import GridSearchCV
 from ..metrics.scorer import check_scoring
@@ -408,7 +409,7 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), solver)
         X = check_array(X, accept_sparse=_accept_sparse, dtype=_dtype,
                         order="C")
-        y = check_array(y, dtype=X.dtype, ensure_2d=False, order="C")
+        y = check_array(y, dtype=X.dtype, ensure_2d=False, order=None)
     check_consistent_length(X, y)
 
     n_samples, n_features = X.shape
@@ -428,8 +429,7 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                          " %d != %d" % (n_samples, n_samples_))
 
     if has_sw:
-        if np.atleast_1d(sample_weight).ndim > 1:
-            raise ValueError("Sample weights must be 1D array or scalar")
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         if solver not in ['sag', 'saga']:
             # SAG supports sample_weight directly. For other solvers,
@@ -628,7 +628,7 @@ class Ridge(_BaseRidge, RegressorMixin):
         assumed to be specific to the targets. Hence they must correspond in
         number.
 
-    fit_intercept : boolean
+    fit_intercept : bool, default True
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
@@ -864,6 +864,9 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     n_iter_ : array or None, shape (n_targets,)
         Actual number of iterations for each target. Available only for
         sag and lsqr solvers. Other solvers will return None.
+
+    classes_ : array of shape = [n_classes]
+        The classes labels.
 
     Examples
     --------
@@ -1424,9 +1427,8 @@ class _RidgeGCV(LinearModel):
                 "alphas must be positive. Got {} containing some "
                 "negative or null value instead.".format(self.alphas))
 
-        if sample_weight is not None and not isinstance(sample_weight, float):
-            sample_weight = check_array(sample_weight, ensure_2d=False,
-                                        dtype=X.dtype)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+
         n_samples, n_features = X.shape
 
         X, y, X_offset, y_offset, X_scale = LinearModel._preprocess_data(
@@ -1596,7 +1598,7 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
         LogisticRegression or LinearSVC.
         If using generalized cross-validation, alphas must be positive.
 
-    fit_intercept : boolean
+    fit_intercept : bool, default True
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
@@ -1772,6 +1774,9 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     alpha_ : float
         Estimated regularization parameter
+
+    classes_ : array of shape = [n_classes]
+        The classes labels.
 
     Examples
     --------

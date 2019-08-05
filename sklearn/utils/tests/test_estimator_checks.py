@@ -414,7 +414,7 @@ def test_check_estimator():
 
     # doesn't error on actual estimator
     check_estimator(LogisticRegression)
-    check_estimator(LogisticRegression())
+    check_estimator(LogisticRegression(C=0.01))
     check_estimator(MultiTaskElasticNet)
     check_estimator(MultiTaskElasticNet())
 
@@ -483,11 +483,11 @@ def test_check_estimators_unfitted():
 
 
 def test_check_no_attributes_set_in_init():
-    class NonConformantEstimatorPrivateSet:
+    class NonConformantEstimatorPrivateSet(BaseEstimator):
         def __init__(self):
             self.you_should_not_set_this_ = None
 
-    class NonConformantEstimatorNoParamSet:
+    class NonConformantEstimatorNoParamSet(BaseEstimator):
         def __init__(self, you_should_set_this_=None):
             pass
 
