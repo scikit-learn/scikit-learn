@@ -18,8 +18,9 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: Simplified BSD
 
-from abc import ABCMeta
 from collections.abc import Iterable
+from functools import partial
+from contextlib import suppress
 
 import numpy as np
 
@@ -44,7 +45,38 @@ from ..utils.multiclass import type_of_target
 from ..base import is_regressor
 
 
-class _BaseScorer(metaclass=ABCMeta):
+class _MultimetricScorer:
+    def __init__(self, scorers):
+        self._scorers = scorers
+
+    def __call__(self, estimator, X, y, **kwargs):
+        scores = {}
+        cache = {} if self._use_cache() else None
+        method_cacher = partial(self._method_cacher, cache)
+
+        for name, scorer in self._scorers.items():
+            if isinstance(scorer, _BaseScorer):
+                score = scorer(estimator, X, y, **kwargs,
+                               method_cacher=method_cacher)
+            elif y is None:
+                score = scorer(estimator, X, **kwargs)
+            else:
+                score = score(estimator, X, y, **kwargs)
+
+            with suppress(ValueError):
+                # e.g. unwrap memmapped scalars
+                score = score.item()
+            scores[name] = score
+
+        return scores
+
+    def _use_cache(self):
+        if len(self._scorers) == 1:
+            return False
+        return True
+
+
+class _BaseScorer:
     def __init__(self, score_func, sign, kwargs):
         self._kwargs = kwargs
         self._score_func = score_func
@@ -58,13 +90,22 @@ class _BaseScorer(metaclass=ABCMeta):
                    "" if self._sign > 0 else ", greater_is_better=False",
                    self._factory_args(), kwargs_string))
 
+    def __call__(self, estimator, X, y_true, sample_weight=None,
+                 method_cacher=None):
+        return self._score(estimator, X, y_true, sample_weight=sample_weight,
+                           method_cacher=method_cacher)
+
+    def _method_cacher(self, estimator, method, *args, **kwargs):
+        return getattr(estimator, method)(*args, **kwargs)
+
     def _factory_args(self):
         """Return non-default make_scorer arguments for repr."""
         return ""
 
 
 class _PredictScorer(_BaseScorer):
-    def __call__(self, estimator, X, y_true, sample_weight=None):
+    def _score(self, estimator, X, y_true, sample_weight=None,
+               method_cacher=None):
         """Evaluate predicted target values for X relative to y_true.
 
         Parameters
@@ -87,8 +128,10 @@ class _PredictScorer(_BaseScorer):
         score : float
             Score function applied to prediction of estimator on X.
         """
+        if method_cacher is None:
+            method_cacher = self._method_cacher
 
-        y_pred = estimator.predict(X)
+        y_pred = method_cacher(estimator, "predict", X)
         if sample_weight is not None:
             return self._sign * self._score_func(y_true, y_pred,
                                                  sample_weight=sample_weight,
@@ -99,7 +142,7 @@ class _PredictScorer(_BaseScorer):
 
 
 class _ProbaScorer(_BaseScorer):
-    def __call__(self, clf, X, y, sample_weight=None):
+    def _score(self, clf, X, y, sample_weight=None, method_cacher=None):
         """Evaluate predicted probabilities for X relative to y_true.
 
         Parameters
@@ -123,8 +166,11 @@ class _ProbaScorer(_BaseScorer):
         score : float
             Score function applied to prediction of estimator on X.
         """
+        if method_cacher is None:
+            method_cacher = self._method_cacher
+
         y_type = type_of_target(y)
-        y_pred = clf.predict_proba(X)
+        y_pred = method_cacher(clf, "predict_proba", X)
         if y_type == "binary":
             if y_pred.shape[1] == 2:
                 y_pred = y_pred[:, 1]
@@ -145,7 +191,7 @@ class _ProbaScorer(_BaseScorer):
 
 
 class _ThresholdScorer(_BaseScorer):
-    def __call__(self, clf, X, y, sample_weight=None):
+    def _score(self, clf, X, y, sample_weight=None, method_cacher=None):
         """Evaluate decision function output for X relative to y_true.
 
         Parameters
@@ -171,22 +217,25 @@ class _ThresholdScorer(_BaseScorer):
         score : float
             Score function applied to prediction of estimator on X.
         """
+        if method_cacher is None:
+            method_cacher = self._method_cacher
+
         y_type = type_of_target(y)
         if y_type not in ("binary", "multilabel-indicator"):
             raise ValueError("{0} format is not supported".format(y_type))
 
         if is_regressor(clf):
-            y_pred = clf.predict(X)
+            y_pred = method_cacher(clf, "predict", X)
         else:
             try:
-                y_pred = clf.decision_function(X)
+                y_pred = method_cacher(clf, "decision_function", X)
 
                 # For multi-output multi-class estimator
                 if isinstance(y_pred, list):
                     y_pred = np.vstack([p for p in y_pred]).T
 
             except (NotImplementedError, AttributeError):
-                y_pred = clf.predict_proba(X)
+                y_pred = method_cacher(clf, "predict_proba", X)
 
                 if y_type == "binary":
                     if y_pred.shape[1] == 2:

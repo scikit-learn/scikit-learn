@@ -3,6 +3,7 @@ import tempfile
 import shutil
 import os
 import numbers
+from unittest.mock import Mock
 
 import numpy as np
 import pytest
@@ -543,3 +544,41 @@ def test_scoring_is_not_metric():
                          Ridge(), r2_score)
     assert_raises_regexp(ValueError, 'make_scorer', check_scoring,
                          KMeans(), cluster_module.adjusted_rand_score)
+
+
+@pytest.mark.parametrize("scorers,predicts,predict_probas,decision_funcs",
+                         [({
+                             'a1': 'accuracy',
+                             'a2': 'accuracy',
+                             'll1': 'neg_log_loss',
+                             'll2': 'neg_log_loss',
+                             'ra1': 'roc_auc',
+                             'ra2': 'roc_auc'
+                         }, 1, 1, 1), (['roc_auc', 'accuracy'], 1, 0, 1)],
+                         ids=['dict', 'list'])
+def test_multimetric_scorer_calls_method_once(scorers, predicts,
+                                              predict_probas, decision_funcs):
+    X, y = np.array([[1], [1], [0], [0], [0]]), np.array([0, 1, 1, 1, 0])
+
+    mock_est = Mock()
+    fit_func = Mock(return_value=mock_est)
+    predict_func = Mock(return_value=y)
+
+    pos_proba = np.random.rand(X.shape[0])
+    proba = np.c_[1 - pos_proba, pos_proba]
+    predict_proba_func = Mock(return_value=proba)
+    decision_function_func = Mock(return_value=pos_proba)
+
+    mock_est.fit = fit_func
+    mock_est.predict = predict_func
+    mock_est.predict_proba = predict_proba_func
+    mock_est.decision_function = decision_function_func
+
+    scorer = _make_multimetric_scorer(scorers)
+    scores = scorer(mock_est, X, y)
+
+    assert set(scorers) == set(scores)
+
+    assert predict_func.call_count == predicts
+    assert predict_proba_func.call_count == predict_probas
+    assert decision_function_func.call_count == decision_funcs
