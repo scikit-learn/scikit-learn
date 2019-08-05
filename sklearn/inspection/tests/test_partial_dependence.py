@@ -553,7 +553,7 @@ def test_partial_dependence_unfitted(name, Estimator):
             .format(name)
         )
 
-    X, y = iris.data, iris.target
+    X = iris.data
     preprocessor = make_column_transformer(
         (StandardScaler(), [0, 2]), (RobustScaler(), [1, 3])
     )
