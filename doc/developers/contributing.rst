@@ -912,8 +912,8 @@ In the following example, k is deprecated and renamed to n_clusters::
 
     import warnings
 
-    def example_function(n_clusters=8, k='not_used'):
-        if k != 'not_used':
+    def example_function(n_clusters=8, k='deprecated'):
+        if k != 'deprecated':
             warnings.warn("'k' was renamed to n_clusters in version 0.13 and "
                           "will be removed in 0.15.", DeprecationWarning)
             n_clusters = k
@@ -923,12 +923,12 @@ When the change is in a class, we validate and raise warning in ``fit``::
   import warnings
 
   class ExampleEstimator(BaseEstimator):
-      def __init__(self, n_clusters=8, k='not_used'):
+      def __init__(self, n_clusters=8, k='deprecated'):
           self.n_clusters = n_clusters
           self.k = k
 
       def fit(self, X, y):
-          if self.k != 'not_used':
+          if self.k != 'deprecated':
               warnings.warn("'k' was renamed to n_clusters in version 0.13 and "
                             "will be removed in 0.15.", DeprecationWarning)
               self._n_clusters = self.k
