@@ -437,7 +437,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
                                  'attribute'
                                  % (type(self).__name__, method_name))
         else:
-            check_is_fitted(self, 'best_estimator_')
+            check_is_fitted(self)
 
     @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
     def predict(self, X):

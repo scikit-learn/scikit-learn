@@ -631,35 +631,40 @@ def test_check_symmetric():
 
 
 def test_check_is_fitted():
-    # Check is ValueError raised when non estimator instance passed
-    assert_raises(ValueError, check_is_fitted, ARDRegression, "coef_")
-    assert_raises(TypeError, check_is_fitted, "SVR", "support_")
+    # Check is TypeError raised when non estimator instance passed
+    assert_raises(TypeError, check_is_fitted, ARDRegression)
+    assert_raises(TypeError, check_is_fitted, "SVR")
 
     ard = ARDRegression()
     svr = SVR()
 
     try:
-        assert_raises(NotFittedError, check_is_fitted, ard, "coef_")
-        assert_raises(NotFittedError, check_is_fitted, svr, "support_")
+        assert_raises(NotFittedError, check_is_fitted, ard)
+        assert_raises(NotFittedError, check_is_fitted, svr)
     except ValueError:
         assert False, "check_is_fitted failed with ValueError"
 
     # NotFittedError is a subclass of both ValueError and AttributeError
     try:
-        check_is_fitted(ard, "coef_", "Random message %(name)s, %(name)s")
+        check_is_fitted(ard, msg="Random message %(name)s, %(name)s")
     except ValueError as e:
         assert str(e) == "Random message ARDRegression, ARDRegression"
 
     try:
-        check_is_fitted(svr, "support_", "Another message %(name)s, %(name)s")
+        check_is_fitted(svr, msg="Another message %(name)s, %(name)s")
     except AttributeError as e:
         assert str(e) == "Another message SVR, SVR"
 
     ard.fit(*make_blobs())
     svr.fit(*make_blobs())
 
-    assert check_is_fitted(ard, "coef_") is None
-    assert check_is_fitted(svr, "support_") is None
+    assert check_is_fitted(ard) is None
+    assert check_is_fitted(svr) is None
+
+    assert_warns_message(
+        DeprecationWarning,
+        "Passing attributes to check_is_fitted is deprecated",
+        check_is_fitted, ard, ['coef_'])
 
 
 def test_check_consistent_length():
