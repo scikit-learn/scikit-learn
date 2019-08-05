@@ -244,7 +244,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         G, dd = csgraph_laplacian(adjacency,
                                   normed=norm_laplacian, return_diag=True)
         laplacian = G
-        del G
+        G = None
     else:
         laplacian, dd = csgraph_laplacian(adjacency, normed=norm_laplacian,
                                           return_diag=True)
