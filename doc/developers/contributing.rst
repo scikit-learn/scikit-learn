@@ -606,14 +606,18 @@ Finally, follow the formatting rules below to make it consistently good:
 * When documenting the parameters and attributes, here is a list of some good
   examples::
 
+    n_clusters : int, default=3
+        The number of clusters detected by the algorithm.
+
     some_param : {'hello', 'goodbye'}, bool or int, default=True
 	    The parameter description goes here, which can be either a string
         literal (either `hello` or `goodbye`), a bool, or an int. The default
         value is True.
 
     array_parameter : {array-like, sparse matrix, dataframe} of shape (n_samples, n_features) or (n_samples,)
-        This parameter accepts a data in either of the mentioned forms, with one
-        of the mentioned shapes.
+        This parameter accepts data in either of the mentioned forms, with one
+        of the mentioned shapes. The default value is
+        `np.ones(shape=(n_samples,))`.
 
 In general have the following in mind:
 
