@@ -75,7 +75,7 @@ from .scorer import SCORERS
 from .scorer import get_scorer
 
 from ._plot.roc_curve import plot_roc_curve
-from ._plot.roc_curve import RocCurveVisualizer
+from ._plot.roc_curve import RocCurveDisplay
 
 
 __all__ = [
@@ -135,7 +135,7 @@ __all__ = [
     'precision_score',
     'r2_score',
     'recall_score',
-    'RocCurveVisualizer',
+    'RocCurveDisplay',
     'roc_auc_score',
     'roc_curve',
     'SCORERS',

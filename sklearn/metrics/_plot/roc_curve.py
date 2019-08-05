@@ -4,7 +4,7 @@ from .. import roc_curve
 from ...utils import check_matplotlib_support
 
 
-class RocCurveVisualizer:
+class RocCurveDisplay:
     """ROC Curve visualization.
 
     It is recommend to use `sklearn.metrics.plot_roc_curve` to create a
@@ -122,7 +122,7 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
 
     Returns
     -------
-    viz : :class:`sklearn.metrics.plot.RocCurveVisualizer`
+    viz : :class:`sklearn.metrics.plot.RocCurveDisplay`
         object that stores computed values
     """
     if response_method not in ("predict_proba", "decision_function", "auto"):
@@ -151,5 +151,5 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
     fpr, tpr, _ = roc_curve(y, y_pred, pos_label=pos_label,
                             drop_intermediate=drop_intermediate)
     roc_auc = auc(fpr, tpr)
-    viz = RocCurveVisualizer(fpr, tpr, roc_auc, estimator.__class__.__name__)
+    viz = RocCurveDisplay(fpr, tpr, roc_auc, estimator.__class__.__name__)
     return viz.plot(ax=ax, name=name, **kwargs)

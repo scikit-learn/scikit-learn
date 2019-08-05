@@ -1024,7 +1024,7 @@ See the :ref:`visualizations` section of the user guide for further details.
    :toctree: generated/
    :template: class.rst
 
-   metrics.RocCurveVisualizer
+   metrics.RocCurveDisplay
 
 
 .. _mixture_ref:

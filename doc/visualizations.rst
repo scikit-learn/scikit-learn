@@ -22,19 +22,19 @@ ROC curve for a fitted support vector machine:
     svc = SVC(random_state=42)
     svc.fit(X_train, y_train)
 
-    viz_svc = plot_roc_curve(svc, X_test, y_test)
+    svc_disp = plot_roc_curve(svc, X_test, y_test)
 
-.. figure:: ../auto_examples/images/sphx_glr_plot_roc_curve_visualizer_001.png
-    :target: ../auto_examples/plot_roc_curve_visualizer.html
+.. figure:: ../auto_examples/images/sphx_glr_plot_roc_curve_visualization_api_001.png
+    :target: ../auto_examples/plot_roc_curve_visualization_api.html
     :align: center
     :scale: 75%
 
-The returned `viz_svc` object allows us to continue using the already computed
-ROC curve for SVC in future plots. In this case, the `viz_svc` is a
-:class:`~sklearn.metrics.RocCurveVisualizer` that stores the computed values as
+The returned `svc_disp` object allows us to continue using the already computed
+ROC curve for SVC in future plots. In this case, the `svc_disp` is a
+:class:`~sklearn.metrics.RocCurveDisplay` that stores the computed values as
 attributes called `roc_auc`, `fpr`, and `tpr`. Next, we train a random forest
 classifier and plot the previously computed roc curve again by using the `plot`
-method of the `Visualizer` object.
+method of the `Display` object.
 
 .. code-block:: python
 
@@ -45,11 +45,11 @@ method of the `Visualizer` object.
     rfc.fit(X_train, y_train)
 
     ax = plt.gca()
-    viz_rfc = plot_roc_curve(rfc, X_test, y_test, ax=ax, alpha=0.8)
-    viz_svc.plot(ax=ax, alpha=0.8)
+    rfc_disp = plot_roc_curve(rfc, X_test, y_test, ax=ax, alpha=0.8)
+    svc_disp.plot(ax=ax, alpha=0.8)
 
-.. figure:: ../auto_examples/images/sphx_glr_plot_roc_curve_visualizer_002.png
-    :target: ../auto_examples/plot_roc_curve_visualizer.html
+.. figure:: ../auto_examples/images/sphx_glr_plot_roc_curve_visualization_api_002.png
+    :target: ../auto_examples/plot_roc_curve_visualization_api.html
     :align: center
     :scale: 75%
 
@@ -58,7 +58,7 @@ values of the curves.
 
 .. topic:: Examples:
 
-    * :ref:`sphx_glr_auto_examples_plot_roc_curve_visualizer.py`
+    * :ref:`sphx_glr_auto_examples_plot_roc_curve_visualization_api.py`
 
 Available Plotting Utilities
 ============================
@@ -73,11 +73,11 @@ Fucntions
    metrics.plot_roc_curve
 
 
-Visualizers
------------
+Display Objects
+---------------
 
 .. currentmodule:: sklearn
 
 .. autosummary::
 
-   metrics.RocCurveVisualizer
+   metrics.RocCurveDisplay

@@ -1657,24 +1657,24 @@ Plotting API
 Scikit-learn defines a simple API for creating visualizations for machine
 learning. The key features of this API is to run calculations once and to have
 the flexibility to adjust the visualizations after the fact. This logic is
-encapsulated into a visualizer object where the computed data is stored and
-the plotting is done in a `plot` method. The visualizer object's `__init__`
+encapsulated into a display object where the computed data is stored and
+the plotting is done in a `plot` method. The display object's `__init__`
 method contains only the data needed to create the visualization. The `plot`
 method takes in parameters that only have to do with visualization, such as a
 matplotlib axes. The `plot` method will store the matplotlib artists as
-attributes allowing for style adjustments through the visualizer object. A
+attributes allowing for style adjustments through the display object. A
 `plot_*` helper function accepts parameters to do the computation and the
-parameters used for plotting. After the helper function creates the visualizer
-with the computed values, it calls the visualizer's plot method. Note that the
-`plot` method defines attributes related to matplotlib, such as the line
-artist. This allows for customizations after calling the `plot` method.
+parameters used for plotting. After the helper function creates the display
+object with the computed values, it calls the display's plot method. Note
+that the `plot` method defines attributes related to matplotlib, such as the
+line artist. This allows for customizations after calling the `plot` method.
 
-For example, the `RocCurveVisualizer` defines the following methods and
+For example, the `RocCurveDisplay` defines the following methods and
 attributes:
 
 .. code-block:: python
 
-   class RocCurveVisualizer:
+   class RocCurveDisplay:
        def __init__(self, fpr, tpr, roc_auc, estimator_name):
            ...
            self.fpr = fpr
@@ -1692,7 +1692,7 @@ attributes:
                       drop_intermediate=True, response_method="auto",
                       name=None, ax=None, **kwargs):
        # do computation
-       viz = RocCurveVisualizer(fpr, tpr, roc_auc, 
+       viz = RocCurveDisplay(fpr, tpr, roc_auc, 
                                 estimator.__class__.__name__)
        return viz.plot(ax=ax, name=name, **kwargs)
 ```
