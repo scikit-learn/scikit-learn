@@ -76,7 +76,7 @@ class SequenceKernel(StructureOrGenericKernelMixin, Kernel):
 
 kernel = SequenceKernel()
 
-seqs = np.array(['AGCT', 'AGC', 'AACT', 'TAA', 'AAA', 'GAACA'])
+X = ['AGCT', 'AGC', 'AACT', 'TAA', 'AAA', 'GAACA']
 vals = np.array([1.0, 1.0, 2.0, 2.0, 3.0, 3.0])
 
 '''
