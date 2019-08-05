@@ -401,8 +401,7 @@ def _check_multimetric_scoring(estimator, scoring=None):
         True if scorer is a list/tuple or dict of callables
         False if scorer is None/str/callable
     """
-    if callable(scoring) or scoring is None or isinstance(scoring,
-                                                          str):
+    if callable(scoring) or scoring is None or isinstance(scoring, str):
         scorers = {"score": check_scoring(estimator, scoring=scoring)}
         return _MultimetricScorer(**scorers), False
     else:
@@ -458,7 +457,7 @@ def _check_multimetric_scoring(estimator, scoring=None):
                        for key, scorer in scoring.items()}
         else:
             raise ValueError(err_msg_generic)
-        return _MultimetricScorer(**scorers), True
+        return _MultimetricScorer(scorers), True
 
 
 def make_scorer(score_func, greater_is_better=True, needs_proba=False,

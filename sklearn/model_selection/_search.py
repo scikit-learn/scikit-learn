@@ -424,10 +424,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
             raise ValueError("No score function explicitly defined, "
                              "and the estimator doesn't provide one %s"
                              % self.best_estimator_)
-        if self.multimetric_:
-            score = self.scorer_[self.refit]
-        else:
-            score = self.scorer_
+        score = self.scorer_[self.refit] if self.multimetric_ else self.scorer_
         return score(self.best_estimator_, X, y)
 
     def _check_is_fitted(self, method_name):
