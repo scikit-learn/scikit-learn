@@ -210,6 +210,10 @@ Changelog
   updated to accept the zero and `float('+inf')` value.
   :pr:`13231` by :user:`Dong-hee Na <corona10>`.
 
+- |Enhancement| Added parameter ``squared`` in :func:`metrics.mean_squared_error`
+  to return root mean squared error.
+  :pr:`13467` by :user:`Urvang Patel <urvang96>`.
+
 :mod:`sklearn.model_selection`
 ...............................
 
