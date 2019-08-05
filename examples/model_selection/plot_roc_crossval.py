@@ -75,7 +75,7 @@ for i, (train, test) in enumerate(cv.split(X, y)):
     interp_tpr = interp(mean_fpr, viz.fpr, viz.tpr)
     interp_tpr[0] = 0.0
     tprs.append(interp_tpr)
-    aucs.append(viz.auc_roc)
+    aucs.append(viz.roc_auc)
 
 ax.plot([0, 1], [0, 1], linestyle='--', lw=2, color='r',
         label='Chance', alpha=.8)

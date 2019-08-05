@@ -18,7 +18,7 @@ class RocCurveVisualizer:
         False positive rate.
     tpr : ndarray
         True positive rate.
-    auc_roc : float
+    roc_auc : float
         Area under ROC curve.
     estimator_name : str
         Name of estimator.
@@ -33,10 +33,10 @@ class RocCurveVisualizer:
         Figure containing the curve
     """
 
-    def __init__(self, fpr, tpr, auc_roc, estimator_name):
+    def __init__(self, fpr, tpr, roc_auc, estimator_name):
         self.fpr = fpr
         self.tpr = tpr
-        self.auc_roc = auc_roc
+        self.roc_auc = roc_auc
         self.estimator_name = estimator_name
 
     def plot(self, ax=None, name=None, **kwargs):
@@ -62,7 +62,7 @@ class RocCurveVisualizer:
         name = self.estimator_name if name is None else name
 
         if 'label' not in kwargs:
-            label = "{} (AUC = {:0.2f})".format(name, self.auc_roc)
+            label = "{} (AUC = {:0.2f})".format(name, self.roc_auc)
             kwargs['label'] = label
         self.line_ = ax.plot(self.fpr, self.tpr, **kwargs)[0]
         ax.set_xlabel("False Positive Rate")
@@ -146,6 +146,6 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
         y_pred = y_pred[:, 1]
     fpr, tpr, _ = roc_curve(y, y_pred, pos_label=pos_label,
                             drop_intermediate=drop_intermediate)
-    auc_roc = auc(fpr, tpr)
-    viz = RocCurveVisualizer(fpr, tpr, auc_roc, estimator.__class__.__name__)
+    roc_auc = auc(fpr, tpr)
+    viz = RocCurveVisualizer(fpr, tpr, roc_auc, estimator.__class__.__name__)
     return viz.plot(ax=ax, name=name, **kwargs)

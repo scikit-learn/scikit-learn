@@ -1675,11 +1675,11 @@ attributes:
 .. code-block:: python
 
    class RocCurveVisualizer:
-       def __init__(self, fpr, tpr, auc_roc, estimator_name):
+       def __init__(self, fpr, tpr, roc_auc, estimator_name):
            ...
            self.fpr = ...
            self.tpr = ...
-           self.auc_roc = ...
+           self.roc_auc = ...
            self.estimator_name = estimator_name
 
        def plot(self, ax=None, name=None, **kwargs):
@@ -1692,7 +1692,7 @@ attributes:
                       drop_intermediate=True, response_method="auto",
                       name=None, ax=None, **kwargs):
        # do computation
-       viz = RocCurveVisualizer(fpr, tpr, auc_roc, 
+       viz = RocCurveVisualizer(fpr, tpr, roc_auc, 
                                 estimator.__class__.__name__)
        return viz.plot(ax=ax, name=name, **kwargs)
 ```

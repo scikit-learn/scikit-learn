@@ -63,7 +63,7 @@ def test_plot_roc_curve(pyplot, response_method, data_binary):
 
     fpr, tpr, _ = roc_curve(y, y_pred)
 
-    assert_allclose(viz.auc_roc, auc(fpr, tpr))
+    assert_allclose(viz.roc_auc, auc(fpr, tpr))
     assert_allclose(viz.fpr, fpr)
     assert_allclose(viz.tpr, tpr)
 
@@ -76,5 +76,5 @@ def test_plot_roc_curve(pyplot, response_method, data_binary):
     assert isinstance(viz.ax_, mpl.axes.Axes)
     assert isinstance(viz.figure_, mpl.figure.Figure)
 
-    expected_label = "LogisticRegression (AUC = {:0.2f})".format(viz.auc_roc)
+    expected_label = "LogisticRegression (AUC = {:0.2f})".format(viz.roc_auc)
     assert viz.line_.get_label() == expected_label
