@@ -209,7 +209,7 @@ def check_multimetric_scoring_single_metric_wrapper(*args, **kwargs):
     assert not is_multi
     if args[0] is not None:
         assert scorers is not None
-        names, scorers = zip(*scorers._scorers.items())
+        names, scorers = zip(*scorers.items())
         assert len(scorers) == 1
         assert names[0] == 'score'
         scorers = scorers[0]
@@ -236,20 +236,18 @@ def test_check_scoring_and_check_multimetric_scoring():
         scorers, is_multi = _check_multimetric_scoring(estimator, scoring)
         assert is_multi
         assert isinstance(scorers, _MultimetricScorer)
-        scorer_dict = scorers._scorers
-        assert isinstance(scorer_dict, dict)
-        assert sorted(scorer_dict.keys()) == sorted(list(scoring))
+        assert sorted(scorers.keys()) == sorted(list(scoring))
         assert all([isinstance(scorer, _PredictScorer)
-                    for scorer in list(scorer_dict.values())])
+                    for scorer in list(scorers.values())])
 
         if 'acc' in scoring:
-            assert_almost_equal(scorer_dict['acc'](
+            assert_almost_equal(scorers['acc'](
                 estimator, [[1], [2], [3]], [1, 0, 0]), 2. / 3.)
         if 'accuracy' in scoring:
-            assert_almost_equal(scorer_dict['accuracy'](
+            assert_almost_equal(scorers['accuracy'](
                 estimator, [[1], [2], [3]], [1, 0, 0]), 2. / 3.)
         if 'precision' in scoring:
-            assert_almost_equal(scorer_dict['precision'](
+            assert_almost_equal(scorers['precision'](
                 estimator, [[1], [2], [3]], [1, 0, 0]), 0.5)
 
     estimator = EstimatorWithFitAndPredict()

@@ -1132,7 +1132,7 @@ def compare_cv_results_multimetric_with_single(
 
     assert search_multi.iid == iid
     assert search_multi.multimetric_
-    assert_array_equal(sorted(search_multi.scorer_._scorers),
+    assert_array_equal(sorted(search_multi.scorer_),
                        ('accuracy', 'recall'))
 
     cv_results_multi = search_multi.cv_results_

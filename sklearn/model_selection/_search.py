@@ -425,7 +425,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
                              "and the estimator doesn't provide one %s"
                              % self.best_estimator_)
         if self.multimetric_:
-            score = self.scorer_._scorers[self.refit]
+            score = self.scorer_[self.refit]
         else:
             score = self.scorer_
         return score(self.best_estimator_, X, y)
@@ -615,7 +615,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
             if self.refit is not False and (
                     not isinstance(self.refit, str) or
                     # This will work for both dict / list (tuple)
-                    self.refit not in scorers._scorers) and not callable(
+                    self.refit not in scorers) and not callable(
                         self.refit):
                 raise ValueError("For multi-metric scoring, the parameter "
                                  "refit must be set to a scorer key or a "
@@ -726,7 +726,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         if self.multimetric_:
             self.scorer_ = scorers
         else:
-            self.scorer_ = scorers._scorers['score']
+            self.scorer_ = scorers['score']
 
         self.cv_results_ = results
         self.n_splits_ = n_splits
@@ -809,7 +809,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         else:
             iid = False
 
-        for scorer_name in scorers._scorers.keys():
+        for scorer_name in scorers.keys():
             # Computed the (weighted) mean and std for test scores alone
             _store('test_%s' % scorer_name, test_scores[scorer_name],
                    splits=True, rank=True,

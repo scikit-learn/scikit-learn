@@ -44,16 +44,16 @@ from ..utils.multiclass import type_of_target
 from ..base import is_regressor
 
 
-class _MultimetricScorer:
-    def __init__(self, scorers):
-        self._scorers = scorers
+class _MultimetricScorer(dict):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def __call__(self, estimator, *args, **kwargs):
         scores = {}
         cache = {} if self._use_cache() else None
         method_cacher = partial(self._method_cacher, cache)
 
-        for name, scorer in self._scorers.items():
+        for name, scorer in self.items():
             if isinstance(scorer, _BaseScorer):
                 score = scorer._score(estimator, *args, **kwargs,
                                       method_cacher=method_cacher)
@@ -65,7 +65,7 @@ class _MultimetricScorer:
         return scores
 
     def _use_cache(self):
-        if len(self._scorers) == 1:
+        if len(self) == 1:
             return False
         return True
 
@@ -404,7 +404,7 @@ def _check_multimetric_scoring(estimator, scoring=None):
     if callable(scoring) or scoring is None or isinstance(scoring,
                                                           str):
         scorers = {"score": check_scoring(estimator, scoring=scoring)}
-        return _MultimetricScorer(scorers), False
+        return _MultimetricScorer(**scorers), False
     else:
         err_msg_generic = ("scoring should either be a single string or "
                            "callable for single metric evaluation or a "
@@ -458,7 +458,7 @@ def _check_multimetric_scoring(estimator, scoring=None):
                        for key, scorer in scoring.items()}
         else:
             raise ValueError(err_msg_generic)
-        return _MultimetricScorer(scorers), True
+        return _MultimetricScorer(**scorers), True
 
 
 def make_scorer(score_func, greater_is_better=True, needs_proba=False,

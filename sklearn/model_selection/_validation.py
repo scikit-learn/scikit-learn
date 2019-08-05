@@ -244,7 +244,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     if return_estimator:
         ret['estimator'] = fitted_estimators
 
-    for name in scorers._scorers:
+    for name in scorers:
         ret['test_%s' % name] = np.array(test_scores[name])
         if return_train_score:
             key = 'train_%s' % name
@@ -496,7 +496,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     X_test, y_test = _safe_split(estimator, X, y, test, train)
 
     is_multimetric = isinstance(scorer, _MultimetricScorer)
-    n_scorers = len(scorer._scorers.keys()) if is_multimetric else 1
+    n_scorers = len(scorer.keys()) if is_multimetric else 1
     try:
         if y_train is None:
             estimator.fit(X_train, **fit_params)
@@ -511,10 +511,10 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
             raise
         elif isinstance(error_score, numbers.Number):
             if is_multimetric:
-                test_scores = dict(zip(scorer._scorers.keys(),
+                test_scores = dict(zip(scorer.keys(),
                                    [error_score, ] * n_scorers))
                 if return_train_score:
-                    train_scores = dict(zip(scorer._scorers.keys(),
+                    train_scores = dict(zip(scorer.keys(),
                                         [error_score, ] * n_scorers))
             else:
                 test_scores = error_score
