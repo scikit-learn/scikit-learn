@@ -12,8 +12,8 @@ to draw a straight line that will best minimize the residual sum of squares
 between the observed responses in the dataset, and the responses predicted by
 the linear approximation.
 
-The coefficients, the residual sum of squares and the variance score are also
-calculated.
+The coefficients, the residual sum of squares and the coefficient of
+determination are also calculated.
 
 """
 print(__doc__)
@@ -26,7 +26,7 @@ print(__doc__)
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn import datasets, linear_model
-from sklearn.metrics import mean_squared_error, explained_variance_score
+from sklearn.metrics import mean_squared_error, r2_score
 
 # Load the diabetes dataset
 diabetes = datasets.load_diabetes()
@@ -57,9 +57,9 @@ print('Coefficients: \n', regr.coef_)
 # The mean squared error
 print('Mean squared error: %.2f'
       % mean_squared_error(diabetes_y_test, diabetes_y_pred))
-# Explained variance score: 1 is perfect prediction
-print('Variance score: %.2f'
-      % explained_variance_score(diabetes_y_test, diabetes_y_pred))
+# The coefficient of determination: 1 is perfect prediction
+print('Coefficient of determination: %.2f'
+      % r2_score(diabetes_y_test, diabetes_y_pred))
 
 # Plot outputs
 plt.scatter(diabetes_X_test, diabetes_y_test,  color='black')
