@@ -210,6 +210,9 @@ Changelog
   plot model scalability (see learning_curve example).
   :pr:`13938` by :user:`Hadrien Reboul <H4dr1en>`.
 
+- |Enhancement| :class:`model_selection.RandomizedSearchCV` now accepts lists
+  of parameter distributions. :pr:`14549` by `Andreas Müller`_.
+
 :mod:`sklearn.pipeline`
 .......................
 
