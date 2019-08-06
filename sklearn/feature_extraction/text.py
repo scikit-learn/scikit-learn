@@ -1682,8 +1682,9 @@ class TfidfVectorizer(CountVectorizer):
             operations.
 
             .. deprecated:: 0.22
-               The `copy` parameter was deprecated in version 0.22 and
-               will be removed in 0.24. This parameter will be ignored.
+               The `copy` parameter is unused and was deprecated in version
+               0.22 and will be removed in 0.24. This parameter will be
+               ignored.
 
         Returns
         -------
