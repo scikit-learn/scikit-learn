@@ -880,17 +880,11 @@ def _detect_categorical_features(X, categorical_features=None):
 def _precompute_gower_params(X, Y, scale, num_mask):
     """Precompute data-derived metric parameters for gower distances
     """
-    if not isinstance(X, np.ndarray):
-        X = np.asarray(X, dtype=np.object)
-
     X_num = X[:, num_mask].astype(np.float32)
     min = np.nanmin(X_num, axis=0)
     max = np.nanmax(X_num, axis=0)
 
     if X is not Y and Y is not None:
-        if not isinstance(Y, np.ndarray):
-            Y = np.asarray(Y, dtype=np.object)
-
         Y_num = Y[:, num_mask].astype(np.float32)
         min = np.minimum(np.nanmin(Y_num, axis=0), min)
         max = np.maximum(np.nanmax(Y_num, axis=0), max)
