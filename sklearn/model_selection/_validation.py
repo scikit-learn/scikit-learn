@@ -1260,18 +1260,14 @@ def learning_curve(estimator, X, y, groups=None,
             parameters=None, fit_params=None, return_train_score=True,
             error_score=error_score, return_times=return_times)
             for train, test in train_test_proportions)
-        train_scores = [result['train_scores'] for result in results]
-        test_scores = [result['test_scores'] for result in results]
+        keys = ['train_scores', 'test_scores']
         if return_times:
-            fit_times = [result['fit_times'] for result in results]
-            score_times = [result['score_times'] for result in results]
-            out = np.vstack((train_scores, test_scores, fit_times,
-                             score_times))
-        else:
-            out = np.vstack((train_scores, test_scores))
+            keys.extend(['fit_time', 'score_time'])
+
         n_cv_folds = len(results) // n_unique_ticks
-        dim = 4 if return_times else 2
-        out = out.reshape(n_cv_folds, n_unique_ticks, dim)
+        flat_results = [[result[key] for result in results] for key in keys]
+        out = np.column_stack(flat_results)
+        out = out.reshape(n_cv_folds, n_unique_ticks, len(keys))
 
     out = np.asarray(out).transpose((2, 1, 0))
 
@@ -1478,13 +1474,17 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
 
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
                         verbose=verbose)
-    out = parallel(delayed(_fit_and_score)(
+    results = parallel(delayed(_fit_and_score)(
         clone(estimator), X, y, scorer, train, test, verbose,
         parameters={param_name: v}, fit_params=None, return_train_score=True,
         error_score=error_score)
         # NOTE do not change order of iteration to allow one time cv splitters
         for train, test in cv.split(X, y, groups) for v in param_range)
-    out = np.asarray(out)
+    keys = ['train_scores', 'test_scores']
+    out = np.column_stack(
+        [[result[key] for result in results] for key in keys])
+    print(out)
+    assert False
     n_params = len(param_range)
     n_cv_folds = out.shape[0] // n_params
     out = out.reshape(n_cv_folds, n_params, 2).transpose((2, 1, 0))
