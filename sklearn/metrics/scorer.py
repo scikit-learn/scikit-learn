@@ -52,8 +52,8 @@ class _MultimetricScorer(dict):
 
         for name, scorer in self.items():
             if isinstance(scorer, _BaseScorer):
-                score = scorer._score(estimator, *args, **kwargs,
-                                      method_cacher=method_cacher)
+                score = scorer(estimator, *args, **kwargs,
+                               method_cacher=method_cacher)
             else:
                 score = scorer(estimator, *args, **kwargs)
             scores[name] = score
@@ -89,11 +89,6 @@ class _BaseScorer:
                    "" if self._sign > 0 else ", greater_is_better=False",
                    self._factory_args(), kwargs_string))
 
-    def __call__(self, estimator, X, y_true, sample_weight=None):
-        """Evaluate score for X relative to y_true."""
-        return self._score(estimator, X, y_true, sample_weight=sample_weight,
-                           method_cacher=None)
-
     def _method_cacher(self, estimator, method, *args, **kwargs):
         return getattr(estimator, method)(*args, **kwargs)
 
@@ -103,8 +98,8 @@ class _BaseScorer:
 
 
 class _PredictScorer(_BaseScorer):
-    def _score(self, estimator, X, y_true, sample_weight=None,
-               method_cacher=None):
+    def __call__(self, estimator, X, y_true, sample_weight=None,
+                 method_cacher=None):
         """Evaluate predicted target values for X relative to y_true.
 
         Parameters
@@ -144,7 +139,7 @@ class _PredictScorer(_BaseScorer):
 
 
 class _ProbaScorer(_BaseScorer):
-    def _score(self, clf, X, y, sample_weight=None, method_cacher=None):
+    def __call__(self, clf, X, y, sample_weight=None, method_cacher=None):
         """Evaluate predicted probabilities for X relative to y_true.
 
         Parameters
@@ -196,7 +191,7 @@ class _ProbaScorer(_BaseScorer):
 
 
 class _ThresholdScorer(_BaseScorer):
-    def _score(self, clf, X, y, sample_weight=None, method_cacher=None):
+    def __call__(self, clf, X, y, sample_weight=None, method_cacher=None):
         """Evaluate decision function output for X relative to y_true.
 
         Parameters
