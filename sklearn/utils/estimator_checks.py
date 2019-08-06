@@ -388,9 +388,6 @@ def set_checking_parameters(estimator):
         # The default min_samples_leaf (20) isn't appropriate for small
         # datasets (only very shallow trees are built) that the checks use.
         estimator.set_params(min_samples_leaf=5)
-        # Early stopping is not appropriate for some tests in test_estimators
-        # because the actual training set is smaller than the given data
-        estimator.set_params(n_iter_no_change=None)
 
     # Speed-up by reducing the number of CV or splits for CV estimators
     loo_cv = ['RidgeCV']
