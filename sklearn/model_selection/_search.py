@@ -725,16 +725,18 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
 
         return self
 
-    def _format_results(self, candidate_params, scorers, n_splits, out):
+    def _format_results(self, candidate_params, scorers, n_splits, outs):
         n_candidates = len(candidate_params)
 
-        # if one choose to see train score, "out" will contain train score info
+        # if one choose to see train score, "outs" will contain train score
+        # info
+        test_score_dicts = [out["test_scores"] for out in outs]
+        test_sample_counts = [out["n_test_samples"] for out in outs]
+        fit_time = [out["fit_time"] for out in outs]
+        score_time = [out["score_time"] for out in outs]
+
         if self.return_train_score:
-            (train_score_dicts, test_score_dicts, test_sample_counts, fit_time,
-             score_time) = zip(*out)
-        else:
-            (test_score_dicts, test_sample_counts, fit_time,
-             score_time) = zip(*out)
+            train_score_dicts = [out["train_scores"] for out in outs]
 
         # test_score_dicts and train_score dicts are lists of dictionaries and
         # we make them into dict of lists

@@ -1480,11 +1480,8 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
         error_score=error_score)
         # NOTE do not change order of iteration to allow one time cv splitters
         for train, test in cv.split(X, y, groups) for v in param_range)
-    keys = ['train_scores', 'test_scores']
-    out = np.column_stack(
-        [[result[key] for result in results] for key in keys])
-    print(out)
-    assert False
+    out = np.column_stack([[result[key] for result in results]
+                           for key in ['train_scores', 'test_scores']])
     n_params = len(param_range)
     n_cv_folds = out.shape[0] // n_params
     out = out.reshape(n_cv_folds, n_params, 2).transpose((2, 1, 0))
