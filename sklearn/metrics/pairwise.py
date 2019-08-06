@@ -817,6 +817,7 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
         results = (np.sum(cat_obj_dists, axis=1) +
                    np.sum(cat_num_dists, axis=1) +
                    np.sum(num_dists, axis=1))
+
         results /= non_missing
 
         D[i, j_start:] = results
