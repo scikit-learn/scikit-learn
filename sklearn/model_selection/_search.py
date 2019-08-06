@@ -15,7 +15,6 @@ from collections import defaultdict
 from collections.abc import Mapping, Sequence, Iterable
 from functools import partial, reduce
 from itertools import product
-from contextlib import suppress
 import numbers
 import operator
 import time
