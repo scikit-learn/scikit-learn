@@ -783,7 +783,6 @@ def test_gower_distances():
     # The calculation formula for Gower similarity is available in the
     # user guide.
 
-
     # Test X and Y with diferent ranges of numeric values, categorical values,
     # and using pairwise_distances
 

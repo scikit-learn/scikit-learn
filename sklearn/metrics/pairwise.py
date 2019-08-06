@@ -811,8 +811,8 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
                         Y[j_start:, num_mask].astype(np.float32)) / ranges
         # Calculates the number of non missing columns
         non_missing = X.shape[1] - (np.isnan(cat_obj_dists).sum(axis=1) +
-                      np.isnan(cat_num_dists).sum(axis=1) +
-                      np.isnan(num_dists).sum(axis=1))
+                                    np.isnan(cat_num_dists).sum(axis=1) +
+                                    np.isnan(num_dists).sum(axis=1))
         # Gets the final results
         results = (np.sum(cat_obj_dists, axis=1) +
         np.sum(cat_num_dists, axis=1) +
