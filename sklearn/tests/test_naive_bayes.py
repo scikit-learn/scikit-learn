@@ -790,4 +790,3 @@ def test_check_accuracy_on_digits():
 
     scores = cross_val_score(GaussianNB(), X_3v8, y_3v8, cv=10)
     assert scores.mean() > 0.86
-
