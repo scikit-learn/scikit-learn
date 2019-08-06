@@ -158,10 +158,8 @@ def test_grid_from_X_error(grid_resolution, percentiles, err_msg):
     (LinearRegression(), 'brute'),
     (GradientBoostingRegressor(random_state=0), 'brute'),
     (GradientBoostingRegressor(random_state=0), 'recursion'),
-    (HistGradientBoostingRegressor(random_state=0),
-     'brute'),
-    (HistGradientBoostingRegressor(random_state=0),
-     'recursion')]
+    (HistGradientBoostingRegressor(random_state=0), 'brute'),
+    (HistGradientBoostingRegressor(random_state=0), 'recursion')]
 )
 def test_partial_dependence_helpers(est, method, target_feature):
     # Check that what is returned by _partial_dependence_brute or
