@@ -9,6 +9,7 @@ different columns.
 import warnings
 from itertools import chain
 
+import numbers
 import numpy as np
 from scipy import sparse
 from joblib import Parallel, delayed
@@ -17,7 +18,7 @@ from ..base import clone, TransformerMixin
 from ..pipeline import _fit_transform_one, _transform_one, _name_estimators
 from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
-from ..utils import safe_indexing, _is_negative_indexing
+from ..utils import safe_indexing
 from ..utils import _get_column_indices
 from ..utils import _check_key_type
 from ..utils.metaestimators import _BaseComposition
@@ -747,3 +748,13 @@ boolean mask array or callable
                              remainder=remainder,
                              sparse_threshold=sparse_threshold,
                              verbose=verbose)
+
+
+def _is_negative_indexing(key):
+    # TODO: remove in v0.24
+    def is_neg(x): return isinstance(x, numbers.Integral) and x < 0
+    if isinstance(key, slice):
+        return is_neg(key.start) or is_neg(key.stop)
+    elif _check_key_type(key, int):
+        return np.any(np.asarray(key) < 0)
+    return False

@@ -1156,10 +1156,15 @@ def test_feature_name_validation():
 
     tf = ColumnTransformer([('bycol', Trans(), [0, -1])])
     tf.fit(df_extra)
-
     msg = "At least one negative column was used to"
     with pytest.raises(RuntimeError, match=msg):
         tf.transform(df)
+
+    tf = ColumnTransformer([('bycol', Trans(), slice(-1, -3, -1))])
+    tf.fit(df_extra)
+    with pytest.raises(RuntimeError, match=msg):
+        tf.transform(df)
+
 
 @pytest.mark.parametrize("array_type", [np.asarray, sparse.csr_matrix])
 def test_column_transformer_mask_indexing(array_type):
