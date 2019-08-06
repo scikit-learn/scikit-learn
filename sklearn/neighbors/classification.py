@@ -471,6 +471,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                           dtype=classes_[0].dtype)
 
         for k, prob in enumerate(probs):
+            # iterate over multi-output, assign labels based on probabilities
+            # of each output.
             max_prob_index = prob.argmax(axis=1)
             y_pred[:, k] = classes_[k].take(max_prob_index)
 
