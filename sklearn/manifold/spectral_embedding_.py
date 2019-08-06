@@ -10,13 +10,14 @@ import warnings
 import numpy as np
 from scipy import sparse
 from scipy.linalg import eigh
-from scipy.sparse.linalg import eigsh, lobpcg
+from scipy.sparse.linalg import eigsh
 from scipy.sparse.csgraph import connected_components
 from scipy.sparse.csgraph import laplacian as csgraph_laplacian
 
 from ..base import BaseEstimator
 from ..utils import check_random_state, check_array, check_symmetric
 from ..utils.extmath import _deterministic_vector_sign_flip
+from ..utils.fixes import lobpcg
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph
 
@@ -348,7 +349,7 @@ class SpectralEmbedding(BaseEstimator):
     Read more in the :ref:`User Guide <spectral_embedding>`.
 
     Parameters
-    -----------
+    ----------
     n_components : integer, default: 2
         The dimension of the projected subspace.
 
@@ -394,6 +395,9 @@ class SpectralEmbedding(BaseEstimator):
 
     affinity_matrix_ : array, shape = (n_samples, n_samples)
         Affinity_matrix constructed from samples or precomputed.
+
+    n_neighbors_ : int
+        Number of nearest neighbors effectively used.
 
     Examples
     --------

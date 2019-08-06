@@ -56,7 +56,8 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     n_bins_ : int array, shape (n_features,)
-        Number of bins per feature.
+        Number of bins per feature. Bins whose width are too small
+        (i.e., <= 1e-8) are removed with a warning.
 
     bin_edges_ : array of arrays, shape (n_features, )
         The edges of each bin. Contain arrays of varying shapes ``(n_bins_, )``
@@ -69,7 +70,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     ...      [ 0, 3, -2,  0.5],
     ...      [ 1, 4, -1,    2]]
     >>> est = KBinsDiscretizer(n_bins=3, encode='ordinal', strategy='uniform')
-    >>> est.fit(X)  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    >>> est.fit(X)
     KBinsDiscretizer(...)
     >>> Xt = est.transform(X)
     >>> Xt  # doctest: +SKIP
@@ -101,6 +102,11 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     You can combine ``KBinsDiscretizer`` with
     :class:`sklearn.compose.ColumnTransformer` if you only want to preprocess
     part of the features.
+
+    ``KBinsDiscretizer`` might produce constant features (e.g., when
+    ``encode = 'onehot'`` and certain bins do not contain any data).
+    These features can be removed with feature selection algorithms
+    (e.g., :class:`sklearn.feature_selection.VarianceThreshold`).
 
     See also
     --------
@@ -177,6 +183,16 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
                 bin_edges[jj] = (centers[1:] + centers[:-1]) * 0.5
                 bin_edges[jj] = np.r_[col_min, bin_edges[jj], col_max]
 
+            # Remove bins whose width are too small (i.e., <= 1e-8)
+            if self.strategy in ('quantile', 'kmeans'):
+                mask = np.ediff1d(bin_edges[jj], to_begin=np.inf) > 1e-8
+                bin_edges[jj] = bin_edges[jj][mask]
+                if len(bin_edges[jj]) - 1 != n_bins[jj]:
+                    warnings.warn('Bins whose width are too small (i.e., <= '
+                                  '1e-8) in feature %d are removed. Consider '
+                                  'decreasing the number of bins.' % jj)
+                    n_bins[jj] = len(bin_edges[jj]) - 1
+
         self.bin_edges_ = bin_edges
         self.n_bins_ = n_bins
 
@@ -195,7 +211,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         """
         orig_bins = self.n_bins
         if isinstance(orig_bins, numbers.Number):
-            if not isinstance(orig_bins, (numbers.Integral, np.integer)):
+            if not isinstance(orig_bins, numbers.Integral):
                 raise ValueError("{} received an invalid n_bins type. "
                                  "Received {}, expected int."
                                  .format(KBinsDiscretizer.__name__,

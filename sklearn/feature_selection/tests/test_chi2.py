@@ -14,7 +14,6 @@ from sklearn.feature_selection.univariate_selection import _chisquare
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import clean_warning_registry
 
 # Feature 0 is highly informative for class 1;
 # feature 1 is the same everywhere;
@@ -72,7 +71,6 @@ def test_chi2_negative():
 def test_chi2_unused_feature():
     # Unused feature should evaluate to NaN
     # and should issue no runtime warning
-    clean_warning_registry()
     with warnings.catch_warnings(record=True) as warned:
         warnings.simplefilter('always')
         chi, p = chi2([[1, 0], [0, 0]], [1, 0])

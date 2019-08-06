@@ -67,24 +67,25 @@ bottom.
 
    * document current handling
    * column reordering issue :issue:`7242`
-   * avoiding unnecessary conversion to ndarray
+   * avoiding unnecessary conversion to ndarray :issue:`12147`
    * returning DataFrames from transformers :issue:`5523`
-   * getting DataFrames from dataset loaders
-   * Sparse currently not considered
+   * getting DataFrames from dataset loaders :issue:`10733`, :issue:`13902`
+   * Sparse currently not considered :issue:`12800`
 
 #. Improved handling of categorical features
 
    * Tree-based models should be able to handle both continuous and categorical
      features :issue:`4899`
-   * In dataset loaders
+   * In dataset loaders :issue:`13902`
    * As generic transformers to be used with ColumnTransforms (e.g. ordinal
-     encoding supervised by correlation with target variable)
+     encoding supervised by correlation with target variable) :issue:`5853`,
+     :issue:`11805`
 
 #. Improved handling of missing data
 
    * Making sure meta-estimators are lenient towards missing data
-   * Non-trivial imputers
-   * Learners directly handling missing data
+   * Non-trivial imputers :issue:`11977`, :issue:`12852`
+   * Learners directly handling missing data :issue:`13911`
    * An amputation sample generator to make parts of a dataset go missing
    * Handling mixtures of categorical and continuous variables
 
@@ -128,8 +129,7 @@ bottom.
 
 #. Improved tools for model diagnostics and basic inference
 
-   * partial dependence plots :issue:`5653`
-   * alternative feature importances implementations (e.g. methods or wrappers)
+   * alternative feature importances implementations, :issue:`13146`
    * better ways to handle validation sets when fitting
    * better ways to find thresholds / create decision rules :issue:`8614`
 
@@ -143,19 +143,6 @@ bottom.
    * Verbose is not very friendly and should use a standard logging library
      :issue:`6929`
    * Callbacks or a similar system would facilitate logging and early stopping
-
-#. Use scipy BLAS Cython bindings
-
-   * This will make it possible to get rid of our partial copy of suboptimal
-     Atlas C-routines. :issue:`11638`
-   * This should speed up the Windows and Linux wheels
-
-#. Allow fine-grained parallelism in cython
-
-   * Now that we do not use fork-based multiprocessing in joblib anymore it's
-     possible to use the prange / openmp thread management which makes it
-     possible to have very efficient thread-based parallelism at the Cython
-     level. Example with K-Means: :issue:`11950`
 
 #. Distributed parallelism
 
@@ -240,9 +227,6 @@ Subpackage-specific goals
 :mod:`sklearn.ensemble`
 
 * a stacking implementation
-* a binned feature histogram based and thread parallel implementation of
-  decision trees to compete with the performance of state of the art gradient
-  boosting like LightGBM.
 
 :mod:`sklearn.model_selection`
 
@@ -269,5 +253,3 @@ Subpackage-specific goals
 
 * Performance issues with `Pipeline.memory`
 * see "Everything in Scikit-learn should conform to our API contract" above
-* Add a verbose option :issue:`10435`
-
