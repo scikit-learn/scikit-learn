@@ -1376,7 +1376,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
             X.data += 1
 
         if self.use_idf:
-            check_is_fitted(self, 'idf vector is not fitted')
+            check_is_fitted(self, msg='idf vector is not fitted')
 
             expected_n_features = self._idf_diag.shape[0]
             if n_features != expected_n_features:
@@ -1745,7 +1745,7 @@ class TfidfVectorizer(CountVectorizer):
         X : sparse matrix, [n_samples, n_features]
             Tf-idf-weighted document-term matrix.
         """
-        check_is_fitted(self, 'The tfidf vector is not fitted')
+        check_is_fitted(self, msg='The tfidf vector is not fitted')
 
         X = super().transform(raw_documents)
         return self._tfidf.transform(X, copy=False)

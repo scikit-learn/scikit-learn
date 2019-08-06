@@ -898,7 +898,7 @@ def check_is_fitted(estimator, attributes='deprecated', msg=None):
     """
     if attributes != 'deprecated':
         warnings.warn("Passing attributes to check_is_fitted is deprecated"
-                      "and will be removed in 0.23. The attributes "
+                      " and will be removed in 0.23. The attributes "
                       "argument is ignored.", DeprecationWarning)
     if isclass(estimator):
         raise TypeError("{} is a class, not an instance.".format(estimator))
