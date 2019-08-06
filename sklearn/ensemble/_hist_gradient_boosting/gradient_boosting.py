@@ -619,6 +619,7 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
 
     This estimator is much faster than
     :class:`GradientBoostingRegressor<sklearn.ensemble.GradientBoostingRegressor>`
+<<<<<<< HEAD
     for big datasets (n_samples >= 10 000). The input data ``X`` is pre-binned
     into integer-valued bins, which considerably reduces the number of
     splitting points to consider, and allows the algorithm to leverage
@@ -628,6 +629,9 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
     approximate in this setting. Early stopping is the default behavior, as
     it usually makes the fitting process much faster without a substantial
     difference in terms of predictive performance.
+=======
+    for big datasets (n_samples >= 10 000).
+>>>>>>> c64ee34a01ded919fc7fe3ad800260029624433b
 
     This implementation is inspired by
     `LightGBM <https://github.com/Microsoft/LightGBM>`_.
@@ -643,6 +647,7 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
         >>> # now you can import normally from ensemble
         >>> from sklearn.ensemble import HistGradientBoostingClassifier
 
+    Read more in the :ref:`User Guide <histogram_based_gradient_boosting>`.
 
     Parameters
     ----------
@@ -794,6 +799,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
 
     This estimator is much faster than
     :class:`GradientBoostingClassifier<sklearn.ensemble.GradientBoostingClassifier>`
+<<<<<<< HEAD
     for big datasets (n_samples >= 10 000). The input data ``X`` is pre-binned
     into integer-valued bins, which considerably reduces the number of
     splitting points to consider, and allows the algorithm to leverage
@@ -803,6 +809,9 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
     approximate in this setting. Early stopping is the default behavior, as
     it usually makes the fitting process much faster without a substantial
     difference in terms of predictive performance.
+=======
+    for big datasets (n_samples >= 10 000).
+>>>>>>> c64ee34a01ded919fc7fe3ad800260029624433b
 
     This implementation is inspired by
     `LightGBM <https://github.com/Microsoft/LightGBM>`_.
@@ -817,6 +826,8 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
         >>> # now you can import normally from ensemble
         >>> from sklearn.ensemble import HistGradientBoostingClassifier
+
+    Read more in the :ref:`User Guide <histogram_based_gradient_boosting>`.
 
     Parameters
     ----------

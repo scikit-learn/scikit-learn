@@ -1517,7 +1517,7 @@ def test_stochastic_gradient_loss_param():
     }
     X = np.arange(24).reshape(6, -1)
     y = [0, 0, 0, 1, 1, 1]
-    clf = GridSearchCV(estimator=SGDClassifier(tol=1e-3, loss='hinge'),
+    clf = GridSearchCV(estimator=SGDClassifier(loss='hinge'),
                        param_grid=param_grid, cv=3)
 
     # When the estimator is not fitted, `predict_proba` is not available as the
@@ -1532,7 +1532,7 @@ def test_stochastic_gradient_loss_param():
     param_grid = {
         'loss': ['hinge'],
     }
-    clf = GridSearchCV(estimator=SGDClassifier(tol=1e-3, loss='hinge'),
+    clf = GridSearchCV(estimator=SGDClassifier(loss='hinge'),
                        param_grid=param_grid, cv=3)
     assert not hasattr(clf, "predict_proba")
     clf.fit(X, y)

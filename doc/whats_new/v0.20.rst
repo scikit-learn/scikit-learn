@@ -23,7 +23,7 @@ The bundled version of joblib was upgraded from 0.13.0 to 0.13.2.
   could rarely result in an IndexError. :issue:`11756` by `Joel Nothman`_.
 
 :mod:`sklearn.compose`
-.....................
+.......................
 
 - |Fix| Fixed an issue in :class:`compose.ColumnTransformer` where using
   DataFrames whose column order differs between :func:``fit`` and
@@ -47,7 +47,7 @@ The bundled version of joblib was upgraded from 0.13.0 to 0.13.2.
   :issue:`13124` by :user:`Hanmin Qin <qinhanmin2014>`.
 
 :mod:`sklearn.neighbors`
-......................
+........................
 
 - |Fix| Fixed a bug in :class:`neighbors.KernelDensity` which could not be
   restored from a pickle if ``sample_weight`` had been used.
