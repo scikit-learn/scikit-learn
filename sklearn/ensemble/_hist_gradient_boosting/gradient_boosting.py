@@ -619,19 +619,7 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
 
     This estimator is much faster than
     :class:`GradientBoostingRegressor<sklearn.ensemble.GradientBoostingRegressor>`
-<<<<<<< HEAD
-    for big datasets (n_samples >= 10 000). The input data ``X`` is pre-binned
-    into integer-valued bins, which considerably reduces the number of
-    splitting points to consider, and allows the algorithm to leverage
-    integer-based data structures. For small sample sizes,
-    :class:`GradientBoostingRegressor<sklearn.ensemble.GradientBoostingRegressor>`
-    might be preferred since binning may lead to split points that are too
-    approximate in this setting. Early stopping is the default behavior, as
-    it usually makes the fitting process much faster without a substantial
-    difference in terms of predictive performance.
-=======
     for big datasets (n_samples >= 10 000).
->>>>>>> c64ee34a01ded919fc7fe3ad800260029624433b
 
     This implementation is inspired by
     `LightGBM <https://github.com/Microsoft/LightGBM>`_.
@@ -682,6 +670,10 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
         allows for a much faster training stage. Features with a small
         number of unique values may use less than ``max_bins`` bins. Must be no
         larger than 256.
+    early_stopping : 'auto' or bool (default='auto')
+        If 'auto', early stopping is enabled if the sample size is larger than
+        1000. If True, early stopping is enabled, otherwise early stopping is
+        disabled.
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble. For results to be valid, the
@@ -697,11 +689,11 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
         Proportion (or absolute size) of training data to set aside as
         validation data for early stopping. If None, early stopping is done on
         the training data. Only used if ``n_iter_no_change`` is not None.
-    n_iter_no_change : int or None, optional (default=10)
+    n_iter_no_change : int, optional (default=10)
         Used to determine when to "early stop". The fitting process is
         stopped when none of the last ``n_iter_no_change`` scores are better
         than the ``n_iter_no_change - 1`` -th-to-last one, up to some
-        tolerance. If None or 0, no early-stopping is done.
+        tolerance. Ignored if ``early_stopping`` is False.
     tol : float or None, optional (default=1e-7)
         The absolute tolerance to use when comparing scores during early
         stopping. The higher the tolerance, the more likely we are to early
@@ -743,9 +735,9 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
     >>> from sklearn.ensemble import HistGradientBoostingRegressor
     >>> from sklearn.datasets import load_boston
     >>> X, y = load_boston(return_X_y=True)
-    >>> est = HistGradientBoostingRegressor(random_state=42).fit(X, y)
+    >>> est = HistGradientBoostingRegressor().fit(X, y)
     >>> est.score(X, y)
-    0.95...
+    0.98...
     """
 
     _VALID_LOSSES = ('least_squares',)
@@ -753,16 +745,16 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
     def __init__(self, loss='least_squares', learning_rate=0.1,
                  max_iter=100, max_leaf_nodes=31, max_depth=None,
                  min_samples_leaf=20, l2_regularization=0., max_bins=256,
-                 warm_start=False, scoring=None, validation_fraction=0.1,
-                 n_iter_no_change=10, tol=1e-7, verbose=0,
-                 random_state=None):
+                 warm_start=False, early_stopping='auto', scoring=None,
+                 validation_fraction=0.1, n_iter_no_change=10, tol=1e-7,
+                 verbose=0, random_state=None):
         super(HistGradientBoostingRegressor, self).__init__(
             loss=loss, learning_rate=learning_rate, max_iter=max_iter,
             max_leaf_nodes=max_leaf_nodes, max_depth=max_depth,
             min_samples_leaf=min_samples_leaf,
             l2_regularization=l2_regularization, max_bins=max_bins,
-            warm_start=warm_start, scoring=scoring,
-            validation_fraction=validation_fraction,
+            warm_start=warm_start, early_stopping=early_stopping,
+            scoring=scoring, validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol, verbose=verbose,
             random_state=random_state)
 
@@ -799,19 +791,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
 
     This estimator is much faster than
     :class:`GradientBoostingClassifier<sklearn.ensemble.GradientBoostingClassifier>`
-<<<<<<< HEAD
-    for big datasets (n_samples >= 10 000). The input data ``X`` is pre-binned
-    into integer-valued bins, which considerably reduces the number of
-    splitting points to consider, and allows the algorithm to leverage
-    integer-based data structures. For small sample sizes,
-    :class:`GradientBoostingClassifier<sklearn.ensemble.GradientBoostingClassifier>`
-    might be preferred since binning may lead to split points that are too
-    approximate in this setting. Early stopping is the default behavior, as
-    it usually makes the fitting process much faster without a substantial
-    difference in terms of predictive performance.
-=======
     for big datasets (n_samples >= 10 000).
->>>>>>> c64ee34a01ded919fc7fe3ad800260029624433b
 
     This implementation is inspired by
     `LightGBM <https://github.com/Microsoft/LightGBM>`_.
@@ -865,6 +845,10 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         allows for a much faster training stage. Features with a small
         number of unique values may use less than ``max_bins`` bins. Must be no
         larger than 256.
+    early_stopping : 'auto' or bool (default='auto')
+        If 'auto', early stopping is enabled if the sample size is larger than
+        1000. If True, early stopping is enabled, otherwise early stopping is
+        disabled.
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble. For results to be valid, the
@@ -880,11 +864,11 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         Proportion (or absolute size) of training data to set aside as
         validation data for early stopping. If None, early stopping is done on
         the training data.
-    n_iter_no_change : int or None, optional (default=10)
+    n_iter_no_change : int, optional (default=10)
         Used to determine when to "early stop". The fitting process is
         stopped when none of the last ``n_iter_no_change`` scores are better
         than the ``n_iter_no_change - 1`` -th-to-last one, up to some
-        tolerance. If None or 0, no early-stopping is done.
+        tolerance. Ignored if ``early_stopping`` is False.
     tol : float or None, optional (default=1e-7)
         The absolute tolerance to use when comparing scores. The higher the
         tolerance, the more likely we are to early stop: higher tolerance
@@ -927,9 +911,9 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
     >>> from sklearn.ensemble import HistGradientBoostingRegressor
     >>> from sklearn.datasets import load_iris
     >>> X, y = load_iris(return_X_y=True)
-    >>> clf = HistGradientBoostingClassifier(random_state=42).fit(X, y)
+    >>> clf = HistGradientBoostingClassifier().fit(X, y)
     >>> clf.score(X, y)
-    0.98...
+    1.0
     """
 
     _VALID_LOSSES = ('binary_crossentropy', 'categorical_crossentropy',
@@ -938,15 +922,15 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
     def __init__(self, loss='auto', learning_rate=0.1, max_iter=100,
                  max_leaf_nodes=31, max_depth=None, min_samples_leaf=20,
                  l2_regularization=0., max_bins=256, warm_start=False,
-                 scoring=None, validation_fraction=0.1, n_iter_no_change=10,
-                 tol=1e-7, verbose=0, random_state=None):
+                 early_stopping='auto', scoring=None, validation_fraction=0.1,
+                 n_iter_no_change=10, tol=1e-7, verbose=0, random_state=None):
         super(HistGradientBoostingClassifier, self).__init__(
             loss=loss, learning_rate=learning_rate, max_iter=max_iter,
             max_leaf_nodes=max_leaf_nodes, max_depth=max_depth,
             min_samples_leaf=min_samples_leaf,
             l2_regularization=l2_regularization, max_bins=max_bins,
-            warm_start=warm_start, scoring=scoring,
-            validation_fraction=validation_fraction,
+            warm_start=warm_start, early_stopping=early_stopping,
+            scoring=scoring, validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol, verbose=verbose,
             random_state=random_state)
 
