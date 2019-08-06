@@ -815,8 +815,8 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
                                     np.isnan(num_dists).sum(axis=1))
         # Gets the final results
         results = (np.sum(cat_obj_dists, axis=1) +
-        np.sum(cat_num_dists, axis=1) +
-        np.sum(num_dists, axis=1)) / non_missing
+                   np.sum(cat_num_dists, axis=1) +
+                   np.sum(num_dists, axis=1)) / non_missing
 
         D[i, j_start:] = results
         if X is Y:
