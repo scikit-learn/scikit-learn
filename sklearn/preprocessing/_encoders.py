@@ -2,6 +2,8 @@
 #          Joris Van den Bossche <jorisvandenbossche@gmail.com>
 # License: BSD 3 clause
 
+from numbers import Integral
+
 import numpy as np
 from scipy import sparse
 
@@ -77,6 +79,13 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
             if len(self.categories) != n_features:
                 raise ValueError("Shape mismatch: if categories is an array,"
                                  " it has to be of shape (n_features,).")
+
+        if self.max_levels is not None:
+            if (not isinstance(self.max_levels, Integral) or
+                    self.max_levels <= 0):
+                raise ValueError("max_levels must be None or a strictly "
+                                 "positive int, got {}.".format(
+                                     self.max_levels))
 
         self.categories_ = []
         self.infrequent_indices_ = []
@@ -229,7 +238,11 @@ class OneHotEncoder(_BaseEncoder):
         - 'first' : drop the first category in each feature. If only one
           category is present, the feature will be dropped entirely.
         - array : ``drop[i]`` is the category in feature ``X[:, i]`` that
-          should be dropped.
+          should be dropped. If ``drop[i]`` is an infrequent category, an
+          error is raised: it is only possible to drop all of the infrequent
+          categories, not just one of them.
+        - 'infrequent' : drop the infrequent categories column (see
+          ``max_levels`` parameter).
 
     sparse : boolean, default=True
         Will return sparse matrix if set True else will return an array.
@@ -244,6 +257,10 @@ class OneHotEncoder(_BaseEncoder):
         transform, the resulting one-hot encoded columns for this feature
         will be all zeros. In the inverse transform, an unknown category
         will be denoted as None.
+
+    max_levels : int, default=None
+        Maximum number of categories to keep. Infrequent categories are
+        grouped together and mapped into a single column.
 
     Attributes
     ----------
@@ -641,6 +658,10 @@ class OrdinalEncoder(_BaseEncoder):
 
     dtype : number type, default np.float64
         Desired dtype of output.
+
+    max_levels : int, default=None
+        Maximum number of categories to keep. Infrequent categories are
+        grouped together and mapped to the highest int.
 
     Attributes
     ----------
