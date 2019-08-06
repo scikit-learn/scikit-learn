@@ -27,6 +27,7 @@ from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize
 from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
+from .preprocessing import OrdinalEncoder
 from .utils import check_X_y, check_array, check_consistent_length
 from .utils.extmath import safe_sparse_dot
 from .utils.fixes import logsumexp
@@ -620,8 +621,8 @@ class BaseDiscreteNB(BaseNB):
         # LabelBinarizer().fit_transform() returns arrays with dtype=np.int64.
         # We convert it to np.float64 to support sample_weight consistently;
         # this means we also don't have to cast X to floating point
-        Y = Y.astype(np.float64, copy=False)
         if sample_weight is not None:
+            Y = Y.astype(np.float64, copy=False)
             sample_weight = np.atleast_2d(sample_weight)
             Y *= check_array(sample_weight).T
 
@@ -1037,13 +1038,6 @@ class CategoricalNB(BaseDiscreteNB):
         Prior probabilities of the classes. If specified the priors are not
         adjusted according to the data.
 
-    handle_unknown : one of {'ignore', 'warn' (default), 'error'}
-        Can be 'ignore', 'warn' or 'error'. Determines the behaviour of the
-        classifier if it encounters unseen categories in the prediction step.
-        The setting 'ignore' does not notify the user if an unseen category
-        appears in the predict step. Unseen categories during the prediction
-        step are accounted for with probability 1.
-
     Attributes
     ----------
     class_log_prior_ : array, shape (n_classes, )
@@ -1063,9 +1057,9 @@ class CategoricalNB(BaseDiscreteNB):
         for each feature. Each array provides the number of samples
         encountered for each class and category of the specific feature.
 
-    feature_cat_index_mapping_ : list of dicts, len n_features
-        Holds a mapping from category to index for each feature and all
-        categories in the training set.
+    encoder_ : instance of OrdinalEncoder
+        Stores the mapping from category to index for all categories of the
+        training set.
 
     n_features_ : int
         Number of features of each sample.
@@ -1115,50 +1109,14 @@ class CategoricalNB(BaseDiscreteNB):
         return super().fit(X, y, sample_weight=sample_weight)
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
-        """Incremental fit on a batch of samples.
-
-        This method is expected to be called several times consecutively
-        on different chunks of a dataset so as to implement out-of-core
-        or online learning.
-
-        This is especially useful when the whole dataset is too big to fit in
-        memory at once.
-
-        This method has some performance overhead hence it is better to call
-        partial_fit on chunks of data that are as large as possible
-        (as long as fitting in the memory budget) to hide the overhead.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features. Here, each feature of X is
-            assumed to be from a different categorical distribution.
-
-        y : array-like, shape = [n_samples]
-            Target values.
-
-        classes : array-like, shape = [n_classes] (default=None)
-            List of all the classes that can possibly appear in the y vector.
-
-            Must be provided at the first call to partial_fit, can be omitted
-            in subsequent calls.
-
-        sample_weight : array-like, shape = [n_samples], (default=None)
-            Weights applied to individual samples (1. for unweighted).
-
-        Returns
-        -------
-        self : object
-        """
-        self._check_settings()
-        return super().partial_fit(X, y, classes, sample_weight=sample_weight)
+        raise NotImplementedError("Partial Fitting is not implemented for"
+                                  " CategoricalNB")
 
     def _check_X(self, X):
-        return check_array(X, accept_sparse=False)
+        return check_array(X, accept_sparse=False, dtype='int')
 
     def _check_X_y(self, X, y):
-        return check_X_y(X, y, accept_sparse=False)
+        return check_X_y(X, y, accept_sparse=False, dtype='int')
 
     def _check_settings(self):
         if self.handle_unknown not in ('ignore', 'warn', 'raise'):
@@ -1168,49 +1126,38 @@ class CategoricalNB(BaseDiscreteNB):
 
     def _init_counters(self, n_effective_classes, n_features):
         self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
-        self.category_count_ = [np.zeros((self.class_count_.shape[0], 0))
-                                for _ in range(n_features)]
-        self.feature_cat_index_mapping_ = [{} for _ in range(n_features)]
+        self.category_count_ = []
+        self.encoder_ = OrdinalEncoder()
 
     def _count(self, X, Y):
-        def _update_cat_mapping(cat_mapping, cats):
-            for cat in cats:
-                cat_mapping.setdefault(cat, len(cat_mapping))
-
-        def _update_cat_count_dims(cat_count, cat_mapping):
-            diff = len(cat_mapping) - cat_count.shape[1]
-            if diff > 0:
-                # we append a column full of zeros for each new category
-                return np.pad(cat_count, [(0, 0), (0, diff)], 'constant')
-            return cat_count
-
-        def _update_cat_count(X_feature, Y, cat_count, cat_mapping, n_classes):
+        def _update_cat_count(X_feature, Y, cat_count, n_classes):
             for j in range(n_classes):
                 mask = Y[:, j].astype(bool)
-                class_cats, n_feature_class = _unique_sums(X_feature[mask],
-                                                           Y[mask, j])
-                indices = [cat_mapping[cat] for cat in class_cats]
-                cat_count[j, indices] += n_feature_class
+                if Y.dtype.type == np.int64:
+                    indices, counts = np.unique(X_feature[mask],
+                                                return_counts=True)
+                else:
+                    indices, counts = _weighted_counts(X_feature[mask],
+                                                       Y[mask, j])
+                cat_count[j, indices] += counts
 
-        def _unique_sums(X_feature_class, Y_class):
+        def _weighted_counts(X_feature_class, Y_class):
             # Sum for each category in x the corresponding values in y
-            class_cats, inv = np.unique(X_feature_class, return_inverse=True)
-            n_feature_class = np.zeros(len(class_cats), dtype=Y_class.dtype)
+            indices, inv = np.unique(X_feature_class, return_inverse=True)
+            n_feature_class = np.zeros(len(indices), dtype=Y_class.dtype)
             np.add.at(n_feature_class, inv, Y_class)
-            return class_cats, n_feature_class
+            return indices, n_feature_class
 
         self.class_count_ += Y.sum(axis=0)
+        self.encoder_.fit(X)
+        X_enc = self.encoder_.transform(X).astype(int)
         for i in range(self.n_features_):
-            X_feature = X[:, i]
-            cats = np.unique(X_feature)
-            _update_cat_mapping(self.feature_cat_index_mapping_[i], cats)
-            # update category_count_dimensions in case partial_fit is used, to
-            # to account for unseen categories
-            self.category_count_[i] = _update_cat_count_dims(
-                self.category_count_[i], self.feature_cat_index_mapping_[i])
+            X_feature = X_enc[:, i]
+            self.category_count_.append(
+                np.zeros((self.class_count_.shape[0],
+                          self.encoder_.categories_[i].size)))
             _update_cat_count(X_feature, Y,
                               self.category_count_[i],
-                              self.feature_cat_index_mapping_[i],
                               self.class_count_.shape[0])
 
     def _update_feature_log_prob(self, alpha):
@@ -1223,38 +1170,13 @@ class CategoricalNB(BaseDiscreteNB):
         self.feature_log_prob_ = feature_log_prob
 
     def _joint_log_likelihood(self, X):
-        def _get_cat_index(mapping, cat, handle_unknown):
-            try:
-                return mapping[cat]
-            except KeyError:
-                if handle_unknown == 'warn':
-                    warnings.warn(
-                        "Category {} not expected for feature {} "
-                        "of features 0 - {}."
-                        .format(cat, i, self.n_features_-1)
-                    )
-                elif handle_unknown == 'error':
-                    raise KeyError(
-                        "Category {} not expected for feature {} "
-                        "of features 0 - {}."
-                        .format(cat, i, self.n_features_-1)
-                    )
-                else:
-                    return None
-
         if not X.shape[1] == self.n_features_:
             raise ValueError("Expected input with %d features, got %d instead"
                              .format(self.n_features_, X.shape[1]))
         jll = np.zeros((X.shape[0], self.class_count_.shape[0]))
+        X_enc = self.encoder_.transform(X).astype(int)
         for i in range(self.n_features_):
-            mapping = self.feature_cat_index_mapping_[i]
-            # generator over all samples of feature i
-            indices = (_get_cat_index(mapping, cat, self.handle_unknown)
-                       for cat in X[:, i])
-            indices = [idx for idx in indices if idx is not None]
-            # indices length is 0, if all categories have not been seen in the
-            # training set
-            if len(indices) > 0:
-                jll += self.feature_log_prob_[i][:, indices].T
+            indices = X_enc[:, i]
+            jll += self.feature_log_prob_[i][:, indices].T
         total_ll = jll + self.class_log_prior_
         return total_ll

@@ -253,10 +253,6 @@ to class :math:`c`, :math:`N_{c} = |\{ j \in J\mid y_j = c\}|` is the number
 of samples with class c, :math:`\alpha` is a smoothing parameter and
 :math:`n_i` is the number of available categories of feature :math:`i`.
 
-Unseen categories during the prediction step are accounted for with
-probability :math:`1`. This, effectively, ignores the given dimension for the
-classification of the respective sample.
-
 
 Out-of-core naive Bayes model fitting
 -------------------------------------

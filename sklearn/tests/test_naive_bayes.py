@@ -200,7 +200,7 @@ def test_discretenb_prior(cls):
                               clf.class_log_prior_, 8)
 
 
-@pytest.mark.parametrize("cls", [MultinomialNB, BernoulliNB, CategoricalNB])
+@pytest.mark.parametrize("cls", [MultinomialNB, BernoulliNB])
 def test_discretenb_partial_fit(cls):
     clf1 = cls()
     clf1.fit([[0, 1], [1, 0], [1, 1]], [0, 1, 1])
@@ -208,51 +208,14 @@ def test_discretenb_partial_fit(cls):
     clf2 = cls()
     clf2.partial_fit([[0, 1], [1, 0], [1, 1]], [0, 1, 1], classes=[0, 1])
     assert_array_equal(clf1.class_count_, clf2.class_count_)
-    if cls is CategoricalNB:
-        for i in range(len(clf1.category_count_)):
-            assert_array_equal(clf1.category_count_[i],
-                               clf2.category_count_[i])
-    else:
-        assert_array_equal(clf1.feature_count_, clf2.feature_count_)
+    assert_array_equal(clf1.feature_count_, clf2.feature_count_)
 
     clf3 = cls()
     clf3.partial_fit([[0, 1]], [0], classes=[0, 1])
     clf3.partial_fit([[1, 0]], [1])
     clf3.partial_fit([[1, 1]], [1])
     assert_array_equal(clf1.class_count_, clf3.class_count_)
-    if cls is CategoricalNB:
-        # the categories for each feature of CategoricalNB are mapped to an
-        # index chronologically with each call of partial fit and therefore
-        # the category_count matrices cannot be compared for equality
-        for i in range(len(clf1.category_count_)):
-            assert_array_equal(clf1.category_count_[i].shape,
-                               clf3.category_count_[i].shape)
-            assert_array_equal(np.sum(clf1.category_count_[i], axis=1),
-                               np.sum(clf3.category_count_[i], axis=1))
-
-        # assert 1st feature
-        # get indices for categories 0 and 1 for the first feature
-        ix0 = clf1.feature_cat_index_mapping_[0][0]
-        ix1 = clf1.feature_cat_index_mapping_[0][1]
-        # assert category 0 occurs 1x in the first class and 0x in the 2nd
-        # class
-        assert_array_equal(clf1.category_count_[0][ix0], np.array([1, 0]))
-        # assert category 1 occurs 0x in the first class and 2x in the 2nd
-        # class
-        assert_array_equal(clf1.category_count_[0][ix1], np.array([0, 2]))
-
-        # assert 2nd feature
-        # get indices for categories 0 and 1 for the second feature
-        ix0 = clf1.feature_cat_index_mapping_[1][0]
-        ix1 = clf1.feature_cat_index_mapping_[1][1]
-        # assert category 0 occurs 0x in the first class and 1x in the 2nd
-        # class
-        assert_array_equal(clf1.category_count_[1][ix0], np.array([0, 1]))
-        # assert category 1 occurs 1x in the first class and 1x in the 2nd
-        # class
-        assert_array_equal(clf1.category_count_[1][ix1], np.array([1, 1]))
-    else:
-        assert_array_equal(clf1.feature_count_, clf3.feature_count_)
+    assert_array_equal(clf1.feature_count_, clf3.feature_count_)
 
 
 @pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB, GaussianNB,
@@ -269,13 +232,14 @@ def test_discretenb_pickle(cls):
 
     assert_array_equal(y_pred, clf.predict(X2))
 
-    # Test pickling of estimator trained with partial_fit
-    clf2 = cls().partial_fit(X2[:3], y2[:3], classes=np.unique(y2))
-    clf2.partial_fit(X2[3:], y2[3:])
-    store = BytesIO()
-    pickle.dump(clf2, store)
-    clf2 = pickle.load(BytesIO(store.getvalue()))
-    assert_array_equal(y_pred, clf2.predict(X2))
+    if cls is not CategoricalNB:
+        # Test pickling of estimator trained with partial_fit
+        clf2 = cls().partial_fit(X2[:3], y2[:3], classes=np.unique(y2))
+        clf2.partial_fit(X2[3:], y2[3:])
+        store = BytesIO()
+        pickle.dump(clf2, store)
+        clf2 = pickle.load(BytesIO(store.getvalue()))
+        assert_array_equal(y_pred, clf2.predict(X2))
 
 
 @pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB, GaussianNB,
@@ -291,7 +255,7 @@ def test_discretenb_input_check_fit(cls):
     assert_raises(ValueError, clf.predict, X2[:, :-1])
 
 
-@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB, CategoricalNB])
+@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB])
 def test_discretenb_input_check_partial_fit(cls):
     # check shape consistency
     assert_raises(ValueError, cls().partial_fit, X2, y2[:-1],
@@ -367,11 +331,12 @@ def test_discretenb_provide_prior(cls):
 
     # Inconsistent number of classes with prior
     assert_raises(ValueError, clf.fit, [[0], [1], [2]], [0, 1, 2])
-    assert_raises(ValueError, clf.partial_fit, [[0], [1]], [0, 1],
-                  classes=[0, 1, 1])
+    if cls is not CategoricalNB:
+        assert_raises(ValueError, clf.partial_fit, [[0], [1]], [0, 1],
+                      classes=[0, 1, 1])
 
 
-@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB, CategoricalNB])
+@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB])
 def test_discretenb_provide_prior_with_partial_fit(cls):
     # Test whether discrete NB classes use provided prior
     # when using partial_fit
@@ -391,7 +356,7 @@ def test_discretenb_provide_prior_with_partial_fit(cls):
                                   clf_partial.class_log_prior_)
 
 
-@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB, CategoricalNB])
+@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB])
 def test_discretenb_sample_weight_multiclass(cls):
     # check shape consistency for number of samples at fit time
     X = [
@@ -670,7 +635,8 @@ def test_catnb():
     with pytest.raises(ValueError, match=error_msg):
         clf.fit(X3, y3)
 
-    with pytest.raises(ValueError, match=error_msg):
+    error_msg = "Partial Fitting is not implemented for CategoricalNB"
+    with pytest.raises(NotImplementedError, match=error_msg):
         clf.partial_fit(X3, y3)
 
     clf.handle_unknown = 'warn'
@@ -686,36 +652,7 @@ def test_catnb():
                               bayes_numerator / bayes_denominator)
 
     # Assert category_count has counted all features
-    assert len(clf.feature_cat_index_mapping_) == X3.shape[1]
-    for feature_ix, mapping in enumerate(clf.feature_cat_index_mapping_):
-        assert len(mapping) == 2
-        if feature_ix == 0:
-            assert 1 in clf.feature_cat_index_mapping_[feature_ix]
-            assert 2 in clf.feature_cat_index_mapping_[feature_ix]
-            assert mapping[1] != mapping[2]
-        if feature_ix == 1:
-            assert 4 in clf.feature_cat_index_mapping_[feature_ix]
-            assert 5 in clf.feature_cat_index_mapping_[feature_ix]
-            assert mapping[4] != mapping[5]
-
-    # Check that unseen categories in the test set count with probability 1
-    X3_test = np.array([[0, 5]])
-    assert_array_equal(clf.predict(X3_test), np.array([2]))
-    # as above, due to alpha the probability is 1/3 and 2/3 for category 5
-    bayes_numerator = np.array([[1/3, 2/3]])
-    bayes_denominator = bayes_numerator.sum()
-    assert_array_almost_equal(clf.predict_proba(X3_test),
-                              bayes_numerator / bayes_denominator)
-
-    # Check that unseen cats throw an error or warn accordingly
-    error_msg = ("Category {} not expected for feature {} "
-                 "of features 0 - {}.".format(0, 0, 1))
-    clf.handle_unknown = 'error'
-    with pytest.raises(KeyError, match=error_msg):
-        clf.predict(X3_test)
-    clf.handle_unknown = 'warn'
-    with pytest.warns(UserWarning, match=error_msg):
-        clf.predict(X3_test)
+    assert len(clf.category_count_) == X3.shape[1]
 
     # Check sample_weight
     X = np.array([[1, 3], [1, 3], [2, 4]])
@@ -751,7 +688,6 @@ def test_alpha():
     assert_array_almost_equal(nb.predict_proba(X), prob)
 
     nb = CategoricalNB(alpha=0.)
-    assert_warns(UserWarning, nb.partial_fit, X, y, classes=[0, 1])
     assert_warns(UserWarning, nb.fit, X, y)
     prob = np.array([[1., 0.], [0., 1.]])
     assert_array_almost_equal(nb.predict_proba(X), prob)
@@ -782,12 +718,9 @@ def test_alpha():
 
     b_nb = BernoulliNB(alpha=-0.1)
     m_nb = MultinomialNB(alpha=-0.1)
-    c_nb = CategoricalNB(alpha=-0.1)
     assert_raise_message(ValueError, expected_msg, b_nb.partial_fit,
                          X, y, classes=[0, 1])
     assert_raise_message(ValueError, expected_msg, m_nb.partial_fit,
-                         X, y, classes=[0, 1])
-    assert_raise_message(ValueError, expected_msg, c_nb.partial_fit,
                          X, y, classes=[0, 1])
 
 
