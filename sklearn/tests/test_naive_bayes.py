@@ -628,18 +628,6 @@ def test_catnb():
     y3 = np.array([1, 2])
     clf = CategoricalNB(alpha=1, fit_prior=False)
 
-    # Check that unexpected parameters throw an error
-    clf.handle_unknown = 'asdf'
-    error_msg = ("The attribute 'handle_unknown' is '{}' and "
-                 "should be one of 'ignore', 'warn' or 'raise'").format('asdf')
-    with pytest.raises(ValueError, match=error_msg):
-        clf.fit(X3, y3)
-
-    error_msg = "Partial Fitting is not implemented for CategoricalNB"
-    with pytest.raises(NotImplementedError, match=error_msg):
-        clf.partial_fit(X3, y3)
-
-    clf.handle_unknown = 'warn'
     clf.fit(X3, y3)
 
     # Test alpha
@@ -653,6 +641,11 @@ def test_catnb():
 
     # Assert category_count has counted all features
     assert len(clf.category_count_) == X3.shape[1]
+
+    # Assert partial_fit throws NotImplementedError
+    error_msg = "Partial Fitting is not implemented for CategoricalNB"
+    with pytest.raises(NotImplementedError, match=error_msg):
+        clf.partial_fit(X3, y3)
 
     # Check sample_weight
     X = np.array([[1, 3], [1, 3], [2, 4]])
@@ -797,3 +790,4 @@ def test_check_accuracy_on_digits():
 
     scores = cross_val_score(GaussianNB(), X_3v8, y_3v8, cv=10)
     assert scores.mean() > 0.86
+

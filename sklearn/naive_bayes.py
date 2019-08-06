@@ -1078,12 +1078,10 @@ class CategoricalNB(BaseDiscreteNB):
     [3]
     """
 
-    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None,
-                 handle_unknown='warn'):
+    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
         self.alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
-        self.handle_unknown = handle_unknown
 
     def fit(self, X, y, sample_weight=None):
         """Fit Naive Bayes classifier according to X, y
@@ -1105,7 +1103,6 @@ class CategoricalNB(BaseDiscreteNB):
         -------
         self : object
         """
-        self._check_settings()
         return super().fit(X, y, sample_weight=sample_weight)
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
@@ -1113,16 +1110,14 @@ class CategoricalNB(BaseDiscreteNB):
                                   " CategoricalNB")
 
     def _check_X(self, X):
-        return check_array(X, accept_sparse=False, dtype='int')
+        # force all finite does not work with dtype
+        X = check_array(X, accept_sparse=False, force_all_finite=True)
+        return check_array(X, dtype='int')
 
     def _check_X_y(self, X, y):
-        return check_X_y(X, y, accept_sparse=False, dtype='int')
-
-    def _check_settings(self):
-        if self.handle_unknown not in ('ignore', 'warn', 'raise'):
-            raise ValueError("The attribute 'handle_unknown' is '{}' and "
-                             "should be one of 'ignore', 'warn' or 'raise'"
-                             .format(self.handle_unknown))
+        # force all finite does not work with dtype
+        X, y = check_X_y(X, y, accept_sparse=False, force_all_finite=True)
+        return check_X_y(X, y, dtype='int')
 
     def _init_counters(self, n_effective_classes, n_features):
         self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)

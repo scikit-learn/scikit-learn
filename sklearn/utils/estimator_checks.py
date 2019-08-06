@@ -1127,7 +1127,10 @@ def check_fit_score_takes_y(name, estimator_orig):
     for func_name in funcs:
         func = getattr(estimator, func_name, None)
         if func is not None:
-            func(X, y)
+            try:
+                func(X, y)
+            except NotImplementedError:
+                pass
             args = [p.name for p in signature(func).parameters.values()]
             if args[0] == "self":
                 # if_delegate_has_method makes methods into functions
