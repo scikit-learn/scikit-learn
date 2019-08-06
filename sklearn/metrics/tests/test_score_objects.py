@@ -21,8 +21,7 @@ from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
                              jaccard_score)
 from sklearn.metrics import cluster as cluster_module
 from sklearn.metrics.scorer import (check_scoring, _PredictScorer,
-                                    _passthrough_scorer,
-                                    _MultimetricScorer)
+                                    _passthrough_scorer)
 from sklearn.metrics import accuracy_score
 from sklearn.metrics.scorer import _check_multimetric_scoring
 from sklearn.metrics import make_scorer, get_scorer, SCORERS
@@ -235,7 +234,7 @@ def test_check_scoring_and_check_multimetric_scoring():
 
         scorers, is_multi = _check_multimetric_scoring(estimator, scoring)
         assert is_multi
-        assert isinstance(scorers, _MultimetricScorer)
+        assert isinstance(scorers, dict)
         assert sorted(scorers.keys()) == sorted(list(scoring))
         assert all([isinstance(scorer, _PredictScorer)
                     for scorer in list(scorers.values())])
