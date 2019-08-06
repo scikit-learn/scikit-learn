@@ -783,6 +783,10 @@ def test_gower_distances():
     # The calculation formula for Gower similarity is available in the
     # user guide.
 
+
+    # Test X and Y with diferent ranges of numeric values, categorical values,
+    # and using pairwise_distances
+
     with pytest.raises(TypeError):
         gower_distances(csr_matrix((2, 2)))
     with pytest.raises(ValueError):
@@ -1100,6 +1104,58 @@ def test_gower_distances():
     D = pairwise_distances(X, Y, metric='gower', n_jobs=2)
     assert_array_almost_equal(D_expected, D)
 
+    # Test X and Y with diferent ranges of numeric values, categorical values,
+    # and using pairwise_distances
+    X = [[9222.22, -11, 'M', 1],
+         [41934.0, -44, 'F', 1],
+         [1, 1, np.nan, 0]]
+
+    Y = [[-222.22, 1, 'F', 0],
+         [1934.0, 4, 'M', 0],
+         [3000, 3000, 'F', 0]]
+
+    # The expected normalized values above are:
+    Xn = [[0.22403432, 0.010841, 'M', 1],
+          [1.0, 0.0, 'F', 1],
+          [0.00529507, 0.01478318, np.nan, 0]]
+
+    Yn = [[0.0, 0.01478318, 'F', 0],
+          [0.05114832, 0.01576873, 'M', 0],
+          [0.07643522, 1.0, 'F', 0]]
+
+    # Simplified calculation of Gower distance for expected values
+    n_rows, n_cols = np.shape(X)
+    D_expected = np.zeros((n_rows, n_rows))
+    for i in range(0, n_rows):
+        for j in range(0, n_rows):
+            # The calculations below shows how it compares observation
+            # by observation, attribute by attribute.
+            D_expected[i][j] = (abs(Xn[i][0] - Yn[j][0]) +
+                                abs(Xn[i][1] - Yn[j][1]) +
+                                [1, 0][Xn[i][2] == Yn[j][2]] +
+                                abs(Xn[i][3] - Yn[j][3])) / n_cols
+
+    D = pairwise_distances(X, Y, metric='gower', n_jobs=2)
+    assert_array_almost_equal(D_expected, D)
+
+    # Test extra parameters categorical_values passed in kwargs
+    # Simplified calculation of Gower distance for expected values
+    n_rows, n_cols = np.shape(X)
+    D_expected = np.zeros((n_rows, n_rows))
+    for i in range(0, n_rows):
+        for j in range(0, n_rows):
+            # The calculations below shows how it compares observation
+            # by observation, attribute by attribute.
+            D_expected[i][j] = (abs(Xn[i][0] - Yn[j][0]) +
+                                abs(Xn[i][1] - Yn[j][1]) +
+                                [1, 0][Xn[i][2] == Yn[j][2]] +
+                                [1, 0][Xn[i][3] == Yn[j][3]]) / n_cols
+
+    D = pairwise_distances(X, Y, metric='gower', n_jobs=2,
+                           categorical_features=[False, False, True, True])
+
+    assert_array_almost_equal(D_expected, D)
+
     X = np.random.randn(1000).reshape(200, -1) * 10
     X = np.append(X, np.random.randn(1000).reshape(200, -1) * 10000, axis=1)
 
@@ -1127,6 +1183,7 @@ def test_gower_distances():
     assert_array_almost_equal(X, D)
     D = gower_distances(X, scale=[0, 0])
     assert_array_almost_equal(X, D)
+
 
 def test_haversine_distances():
     # Check haversine distance with distances computation

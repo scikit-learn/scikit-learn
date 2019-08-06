@@ -765,6 +765,8 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
     X, Y = check_pairwise_arrays(X, Y, precomputed=False, dtype=X.dtype,
                                  force_all_finite=False)
 
+    X = np.asarray(X, dtype=np.object)
+
     cat_obj_mask, cat_num_mask, num_mask = \
         _detect_categorical_features(X, categorical_features)
 
@@ -772,7 +774,7 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
     # input values in order to obtain the distances between 0 and 1,
     # as proposed by the Gower's paper.
     ranges = 1
-    if X[:, num_mask].shape[1] > 0:
+    if np.any(num_mask):
         process_scale = False
         if isinstance(scale, bool):
             process_scale = scale
@@ -782,12 +784,9 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
                                  "to the number of numerical columns.")
             process_scale = True
 
-        ranges, min, max = \
-        _precompute_gower_params(X[:, num_mask].astype(np.float32),
-                                 Y[:, num_mask].astype(np.float32),
-                                 scale)
+        ranges, min, max = _precompute_gower_params(X, Y, scale, num_mask)
 
-        # avoid division by zero when all values in the column are he same
+        # avoid division by zero when all values in the column are the same
         ranges[ranges == 0] = 1
 
         # check if the data is pre-scaled when scale=False
@@ -808,14 +807,15 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
         # Calculates the similarities for numerical categorical columns
         cat_num_dists = X[i, cat_num_mask] != Y[j_start:, cat_num_mask]
         # Calculates the Manhattan distances for numerical columns
-        num_dists = abs(X[i, num_mask].astype(np.float32) - Y[j_start:, 
-        num_mask].astype(np.float32)) / ranges
+        num_dists = abs(X[i, num_mask].astype(np.float32) -
+                        Y[j_start:, num_mask].astype(np.float32)) / ranges
         # Calculates the number of non missing columns
-        non_missing = X.shape[1] - (np.isnan(cat_obj_dists).sum(axis=1) + 
-        np.isnan(cat_num_dists).sum(axis=1) + np.isnan(num_dists).sum(axis=1))
+        non_missing = X.shape[1] - (np.isnan(cat_obj_dists).sum(axis=1) +
+                      np.isnan(cat_num_dists).sum(axis=1) +
+                      np.isnan(num_dists).sum(axis=1))
         # Gets the final results
         results = (np.sum(cat_obj_dists, axis=1) +
-        np.sum(cat_num_dists, axis=1) + 
+        np.sum(cat_num_dists, axis=1) +
         np.sum(num_dists, axis=1)) / non_missing
 
         D[i, j_start:] = results
@@ -823,9 +823,6 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
             D[i:, j_start] = results
 
     return D
-
-    cat_obj_mask, cat_num_mask, num_mask = \
-        _detect_categorical_features(X, categorical_features)
 
 
 def _detect_categorical_features(X, categorical_features=None):
@@ -878,15 +875,23 @@ def _detect_categorical_features(X, categorical_features=None):
     return cat_obj_mask, cat_num_mask, ~(cat_obj_mask | cat_num_mask)
 
 
-def _precompute_gower_params(X, Y, scale):
+def _precompute_gower_params(X, Y, scale, num_mask):
     """Precompute data-derived metric parameters for gower distances
     """
-    min = np.nanmin(X, axis=0)
-    max = np.nanmax(X, axis=0)
+    if not isinstance(X, np.ndarray):
+        X = np.asarray(X, dtype=np.object)
+
+    X_num = X[:, num_mask].astype(np.float32)
+    min = np.nanmin(X_num, axis=0)
+    max = np.nanmax(X_num, axis=0)
 
     if X is not Y and Y is not None:
-        min = np.minimum(np.nanmin(Y, axis=0), min)
-        max = np.maximum(np.nanmax(Y, axis=0), max)
+        if not isinstance(Y, np.ndarray):
+            Y = np.asarray(Y, dtype=np.object)
+
+        Y_num = Y[:, num_mask].astype(np.float32)
+        min = np.minimum(np.nanmin(Y_num, axis=0), min)
+        max = np.maximum(np.nanmax(Y_num, axis=0), max)
 
     if scale is None or type(scale) is bool:
         scale = np.abs(max - min)
@@ -1493,10 +1498,16 @@ def _precompute_metric_params(X, Y, metric=None, **kwds):
     """Precompute data-derived metric parameters if not provided
     """
     if metric == 'gower':
+        categorical_features = None
+        if 'categorical_features' in kwds:
+            categorical_features = kwds['categorical_features']
+
+        _, _, num_mask = _detect_categorical_features(X, categorical_features)
+
         scale = None
         if 'scale' in kwds:
             scale = kwds['scale']
-        scale, _, _ = _precompute_gower_params(X, Y, scale)
+        scale, _, _ = _precompute_gower_params(X, Y, scale, num_mask)
 
         return {'scale': scale}
     if metric == "seuclidean" and 'V' not in kwds:
@@ -1776,6 +1787,11 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
         return X
     elif metric in PAIRWISE_DISTANCE_FUNCTIONS:
         if metric == 'gower':
+            # These convertions are necessary for matrices with string values
+            if not isinstance(X, np.ndarray):
+                X = np.asarray(X, dtype=np.object)
+            if Y is not None and not isinstance(Y, np.ndarray):
+                Y = np.asarray(Y, dtype=np.object)
             params = _precompute_metric_params(X, Y, metric=metric, **kwds)
             kwds.update(**params)
 
