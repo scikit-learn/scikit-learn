@@ -913,7 +913,7 @@ def check_is_fitted(estimator, attributes='deprecated', msg=None):
              if (v.endswith("_") or v.startswith("_"))
              and not v.startswith("__")]
 
-    if not len(attrs):
+    if not attrs:
         raise NotFittedError(msg % {'name': type(estimator).__name__})
 
 
