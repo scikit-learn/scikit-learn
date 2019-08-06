@@ -48,7 +48,7 @@ Changelog
 :mod:`sklearn.inspection`
 .....................
 
-- |API| Deprecated `copy` param for
+- |API| Deprecated unused `copy` param for
   :meth: `feature_extraction.text.TfidfVectorizer.transform` it will be
   removed in v0.24. :pr:`14520` by
   :user:`Guillem G. Subies <guillemgsubies>`.
