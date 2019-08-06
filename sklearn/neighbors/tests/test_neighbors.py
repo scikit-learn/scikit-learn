@@ -1476,7 +1476,7 @@ def test_pairwise_boolean_distance():
     assert_array_equal(nn1.kneighbors(X)[0], nn2.kneighbors(X)[0])
 
 
-def test_radius_neighbors_predidct_proba():
+def test_radius_neighbors_predict_proba():
     for seed in range(5):
         X, y = datasets.make_classification(n_samples=50, n_features=5,
                                             n_informative=3, n_redundant=0,

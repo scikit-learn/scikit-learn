@@ -228,16 +228,13 @@ def test_discretenb_pickle(cls):
 
     assert_array_equal(y_pred, clf.predict(X2))
 
-    if cls is not GaussianNB:
-        # TODO re-enable me when partial_fit is implemented for GaussianNB
-
-        # Test pickling of estimator trained with partial_fit
-        clf2 = cls().partial_fit(X2[:3], y2[:3], classes=np.unique(y2))
-        clf2.partial_fit(X2[3:], y2[3:])
-        store = BytesIO()
-        pickle.dump(clf2, store)
-        clf2 = pickle.load(BytesIO(store.getvalue()))
-        assert_array_equal(y_pred, clf2.predict(X2))
+    # Test pickling of estimator trained with partial_fit
+    clf2 = cls().partial_fit(X2[:3], y2[:3], classes=np.unique(y2))
+    clf2.partial_fit(X2[3:], y2[3:])
+    store = BytesIO()
+    pickle.dump(clf2, store)
+    clf2 = pickle.load(BytesIO(store.getvalue()))
+    assert_array_equal(y_pred, clf2.predict(X2))
 
 
 @pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB, GaussianNB])
