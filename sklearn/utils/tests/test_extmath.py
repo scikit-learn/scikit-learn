@@ -31,6 +31,7 @@ from sklearn.utils.extmath import _incremental_mean_and_var
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils.extmath import softmax
 from sklearn.utils.extmath import stable_cumsum
+from sklearn.utils.extmath import safe_min
 from sklearn.datasets.samples_generator import make_low_rank_matrix
 
 
@@ -640,3 +641,10 @@ def test_stable_cumsum():
     assert_array_equal(stable_cumsum(A, axis=0), np.cumsum(A, axis=0))
     assert_array_equal(stable_cumsum(A, axis=1), np.cumsum(A, axis=1))
     assert_array_equal(stable_cumsum(A, axis=2), np.cumsum(A, axis=2))
+
+
+def test_safe_min():
+    msg = ("safe_min is deprecated in version 0.22 and will be removed "
+           "in version 0.24.")
+    with pytest.warns(DeprecationWarning, match=msg):
+        safe_min(np.ones(10))
