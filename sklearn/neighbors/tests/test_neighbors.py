@@ -405,11 +405,17 @@ def test_radius_neighbors_classifier_outlier_labeling():
     X = np.array([[0], [1], [2], [3], [4], [5], [6], [7], [8], [9]])
     y = np.array([0, 2, 2, 1, 1, 1, 3, 3, 3, 3])
 
+    # test outlier_label scalar verification
+    def check_array_exception():
+        clf = RNC(radius=1, outlier_label=[[5]])
+        clf.fit(X, y)
+    assert_raises(TypeError, check_array_exception)
+
     # test invalid outlier_label dtype
-    def check_exception():
+    def check_dtype_exception():
         clf = RNC(radius=1, outlier_label='a')
         clf.fit(X, y)
-    assert_raises(TypeError, check_exception)
+    assert_raises(TypeError, check_dtype_exception)
 
     # test most frequent
     clf = RNC(radius=1, outlier_label='most_frequent')

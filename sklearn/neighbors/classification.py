@@ -409,8 +409,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         elif self.outlier_label == 'most_frequent':
             outlier_label_ = []
-            # iterate over multi-outputs to get the most frequest label
-            # for each output.
+            # iterate over multi-output, get the most frequest label for each
+            # output.
             for k, classes_k in enumerate(classes_):
                 label_count = np.bincount(_y[:, k])
                 outlier_label_.append(classes_k[label_count.argmax()])
@@ -419,19 +419,26 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             if (_is_arraylike(self.outlier_label) and
                not isinstance(self.outlier_label, string_types)):
                 if len(self.outlier_label) != len(classes_):
-                    raise ValueError('The length of outlier_label: {} is '
-                                     'inconsistent with the output '
-                                     'length: {}'.format(self.outlier_label,
+                    raise ValueError("The length of outlier_label: {} is "
+                                     "inconsistent with the output "
+                                     "length: {}".format(self.outlier_label,
                                                          len(classes_)))
                 outlier_label_ = self.outlier_label
             else:
                 outlier_label_ = [self.outlier_label] * len(classes_)
 
-            # ensure the dtype of outlier label is consistent with y
-            if any(np.append(classes, label).dtype != classes.dtype
-                   for classes, label in zip(classes_, outlier_label_)):
-                raise TypeError('The dtype of outlier_label is'
-                                'inconsistent with y')
+            for classes, label in zip(classes_, outlier_label_):
+                if (_is_arraylike(label) and
+                   not isinstance(label, string_types)):
+                    # ensure the outlier lable for each output is a scalar.
+                    raise TypeError("The outlier_label of classes {} is "
+                                    "supposed to be a scalar, got "
+                                    "{}.".format(classes, label))
+                if np.append(classes, label).dtype != classes.dtype:
+                    # ensure the dtype of outlier label is consistent with y.
+                    raise TypeError("The dtype of outlier_label {} is "
+                                    "inconsistent with classes {} in "
+                                    "y.".format(label, classes))
 
         self.outlier_label_ = outlier_label_
         return self
@@ -521,7 +528,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             weights = weights[inliers]
 
         probabilities = []
-        # iterate over multi-outputs
+        # iterate over multi-output, measure probabilities of the k-th output.
         for k, classes_k in enumerate(classes_):
             pred_labels = np.zeros(len(neigh_ind), dtype=object)
             pred_labels[:] = [_y[ind, k] for ind in neigh_ind]
@@ -542,7 +549,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             proba_k[inliers, :] = proba_inl
 
             if outliers.size > 0:
-                label_index = np.flatnonzero(classes_k == self.outlier_label_[k])
+                _outlier_label = self.outlier_label_[k]
+                label_index = np.flatnonzero(classes_k == _outlier_label)
                 if label_index.size == 1:
                     proba_k[outliers, label_index[0]] = 1.0
                 else:
