@@ -366,11 +366,15 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         if self.outlier_label is None:
             outlier_label_ = None
+
         elif self.outlier_label == 'most_frequent':
             outlier_label_ = []
+            # iterate over multi-outputs to get the most frequest label
+            # for each output.
             for k, classes_k in enumerate(classes_):
                 label_count = np.bincount(_y[:, k])
                 outlier_label_.append(classes_k[label_count.argmax()])
+
         else:
             if (_is_arraylike(self.outlier_label) and
                not isinstance(self.outlier_label, string_types)):
@@ -382,6 +386,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                 outlier_label_ = self.outlier_label
             else:
                 outlier_label_ = [self.outlier_label] * len(classes_)
+
             # ensure the dtype of outlier label is consistent with y
             if any(np.append(classes, label).dtype != classes.dtype
                    for classes, label in zip(classes_, outlier_label_)):
@@ -476,6 +481,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             weights = weights[inliers]
 
         probabilities = []
+        # iterate over multi-outputs
         for k, classes_k in enumerate(classes_):
             pred_labels = np.zeros(len(neigh_ind), dtype=object)
             pred_labels[:] = [_y[ind, k] for ind in neigh_ind]
@@ -496,9 +502,9 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             proba_k[inliers, :] = proba_inl
 
             if outliers.size > 0:
-                label_index = np.where(classes_k == self.outlier_label_[k])
-                if label_index[0].size != 0:
-                    proba_k[outliers, label_index[0][0]] = 1.0
+                label_index = np.flatnonzero(classes_k == self.outlier_label_[k])
+                if label_index.size == 1:
+                    proba_k[outliers, label_index[0]] = 1.0
                 else:
                     warnings.warn('Outlier label {} is not in training '
                                   'classes. All class probabilities of '
