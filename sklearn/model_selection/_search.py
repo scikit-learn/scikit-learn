@@ -15,6 +15,7 @@ from collections import defaultdict
 from collections.abc import Mapping, Sequence, Iterable
 from functools import partial, reduce
 from itertools import product
+from contextlib import suppress
 import numbers
 import operator
 import time
@@ -350,8 +351,7 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
                             parameters, fit_params=fit_params,
                             return_n_test_samples=True,
                             error_score=error_score)
-    return (result["test_scores"], result["parameters"],
-            result["n_test_samples"])
+    return result["test_scores"], parameters, result["n_test_samples"]
 
 
 def _check_param_grid(param_grid):
