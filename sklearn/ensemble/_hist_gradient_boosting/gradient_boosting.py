@@ -27,8 +27,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
     @abstractmethod
     def __init__(self, loss, learning_rate, max_iter, max_leaf_nodes,
                  max_depth, min_samples_leaf, l2_regularization, max_bins,
-                 warm_start, scoring, validation_fraction, n_iter_no_change,
-                 tol, verbose, random_state):
+                 early_stopping, warm_start, scoring, validation_fraction,
+                 n_iter_no_change, tol, verbose, random_state):
         self.loss = loss
         self.learning_rate = learning_rate
         self.max_iter = max_iter
@@ -37,6 +37,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self.min_samples_leaf = min_samples_leaf
         self.l2_regularization = l2_regularization
         self.max_bins = max_bins
+        self.early_stopping = early_stopping
         self.warm_start = warm_start
         self.scoring = scoring
         self.validation_fraction = validation_fraction
@@ -120,9 +121,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self._in_fit = True
 
         self.loss_ = self._get_loss()
-
-        self.do_early_stopping_ = (self.n_iter_no_change is not None and
-                                   self.n_iter_no_change > 0)
 
         # create validation data if needed
         self._use_validation_data = self.validation_fraction is not None
@@ -688,7 +686,7 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
     validation_fraction : int or float or None, optional (default=0.1)
         Proportion (or absolute size) of training data to set aside as
         validation data for early stopping. If None, early stopping is done on
-        the training data. Only used if ``n_iter_no_change`` is not None.
+        the training data. Only used if ``early_stopping`` is True.
     n_iter_no_change : int, optional (default=10)
         Used to determine when to "early stop". The fitting process is
         stopped when none of the last ``n_iter_no_change`` scores are better
@@ -863,7 +861,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
     validation_fraction : int or float or None, optional (default=0.1)
         Proportion (or absolute size) of training data to set aside as
         validation data for early stopping. If None, early stopping is done on
-        the training data.
+        the training data. Only used if ``early_stopping`` is True.
     n_iter_no_change : int, optional (default=10)
         Used to determine when to "early stop". The fitting process is
         stopped when none of the last ``n_iter_no_change`` scores are better
