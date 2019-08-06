@@ -64,7 +64,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if self.max_iter < 1:
             raise ValueError('max_iter={} must not be smaller '
                              'than 1.'.format(self.max_iter))
-        if self.n_iter_no_change is not None and self.n_iter_no_change < 0:
+        if self.n_iter_no_change < 0:
             raise ValueError('n_iter_no_change={} must be '
                              'positive.'.format(self.n_iter_no_change))
         if (self.validation_fraction is not None and
@@ -108,7 +108,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             self._rng = rng
 
         self._validate_parameters()
-        self.n_features_ = X.shape[1]  # used for validation in predict()
+        n_samples, self.n_features_ = X.shape  # used for validation in predict
 
         # we need this stateful variable to tell raw_predict() that it was
         # called from fit() (this current method), and that the data it has
@@ -121,9 +121,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self._in_fit = True
 
         self.loss_ = self._get_loss()
-
-        self.do_early_stopping_ = (self.n_iter_no_change is not None and
-                                   self.n_iter_no_change > 0)
+        if self.early_stopping == 'auto':
+            self.do_early_stopping_ = n_samples > 1000
+        else:
+            self.do_early_stopping_ = self.early_stopping
 
         # create validation data if needed
         self._use_validation_data = self.validation_fraction is not None
