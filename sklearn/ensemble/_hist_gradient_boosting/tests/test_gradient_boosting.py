@@ -116,7 +116,7 @@ def test_early_stopping_classification(data, scoring, validation_fraction,
         tol=tol,
         validation_fraction=validation_fraction,
         max_iter=max_iter,
-        n_iter_no_change=n_iter_no_change,
+        n_iter_no_change=10,
         random_state=0
     )
     gb.fit(X, y)
@@ -155,7 +155,7 @@ def test_binning_train_validation_are_separated():
     # See issue 13926
 
     rng = np.random.RandomState(0)
-    validation_fraction = .2
+    validation_fraction = .1
     gb = HistGradientBoostingClassifier(
         n_iter_no_change=5,
         validation_fraction=validation_fraction,
