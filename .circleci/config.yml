@@ -129,6 +129,7 @@ jobs:
             if [[ "${CIRCLE_BRANCH}" =~ ^master$|^[0-9]+\.[0-9]+\.X$ ]]; then
               bash build_tools/circle/push_doc.sh doc/_build/html/stable
             fi
+            
 workflows:
   version: 2
   build-doc-and-deploy:
