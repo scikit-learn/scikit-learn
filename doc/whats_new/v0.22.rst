@@ -280,7 +280,7 @@ Changelog
 
 - |Feature| :class:`neighbors.RadiusNeighborsClassifier` now supports
   predicting probabilities by using `predict_proba` and supports more
-  outlier_label options: 'most_frequent', different oulier_labels
+  outlier_label options: 'most_frequent', or different outlier_labels
   for multi-outputs.
   :issue:`9629` by :user:`Wenbo Zhao <webber26232>`.
 
