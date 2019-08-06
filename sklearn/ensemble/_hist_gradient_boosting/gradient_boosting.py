@@ -122,6 +122,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         self.loss_ = self._get_loss()
 
+        self.do_early_stopping_ = (self.n_iter_no_change is not None and
+                                   self.n_iter_no_change > 0)
+
         # create validation data if needed
         self._use_validation_data = self.validation_fraction is not None
         if self.do_early_stopping_ and self._use_validation_data:
@@ -682,16 +685,16 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
         string (see :ref:`scoring_parameter`) or a callable (see
         :ref:`scoring`). If None, the estimator's default scorer is used. If
         ``scoring='loss'``, early stopping is checked w.r.t the loss value.
-        Only used if ``n_iter_no_change`` is not None.
+        Only used if early stopping is performed.
     validation_fraction : int or float or None, optional (default=0.1)
         Proportion (or absolute size) of training data to set aside as
         validation data for early stopping. If None, early stopping is done on
-        the training data. Only used if ``early_stopping`` is True.
+        the training data. Only used if early stopping is performed.
     n_iter_no_change : int, optional (default=10)
         Used to determine when to "early stop". The fitting process is
         stopped when none of the last ``n_iter_no_change`` scores are better
         than the ``n_iter_no_change - 1`` -th-to-last one, up to some
-        tolerance. Ignored if ``early_stopping`` is False.
+        tolerance. Only used if early stopping is performed.
     tol : float or None, optional (default=1e-7)
         The absolute tolerance to use when comparing scores during early
         stopping. The higher the tolerance, the more likely we are to early
@@ -857,16 +860,16 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         string (see :ref:`scoring_parameter`) or a callable (see
         :ref:`scoring`). If None, the estimator's default scorer
         is used. If ``scoring='loss'``, early stopping is checked
-        w.r.t the loss value. Only used if ``n_iter_no_change`` is not None.
+        w.r.t the loss value. Only used if early stopping is performed.
     validation_fraction : int or float or None, optional (default=0.1)
         Proportion (or absolute size) of training data to set aside as
         validation data for early stopping. If None, early stopping is done on
-        the training data. Only used if ``early_stopping`` is True.
+        the training data. Only used if early stopping is performed.
     n_iter_no_change : int, optional (default=10)
         Used to determine when to "early stop". The fitting process is
         stopped when none of the last ``n_iter_no_change`` scores are better
         than the ``n_iter_no_change - 1`` -th-to-last one, up to some
-        tolerance. Ignored if ``early_stopping`` is False.
+        tolerance. Only used if early stopping is performed.
     tol : float or None, optional (default=1e-7)
         The absolute tolerance to use when comparing scores. The higher the
         tolerance, the more likely we are to early stop: higher tolerance
