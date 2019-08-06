@@ -319,6 +319,15 @@ def _check_key_type(key, superclass):
     return False
 
 
+def _is_negative_indexing(key):
+    def is_neg(x): isinstance(x, int) and x is not None and x < 0
+    if isinstance(key, slice):
+        return is_neg(key.start) or is_neg(key.stop)
+    elif _check_key_type(key, int):
+        return np.any(np.asarray(key) < 0)
+    return False
+
+
 def _safe_indexing_column(X, key):
     """Get feature column(s) from input data X.
 

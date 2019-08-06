@@ -17,7 +17,7 @@ from ..base import clone, TransformerMixin
 from ..pipeline import _fit_transform_one, _transform_one, _name_estimators
 from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
-from ..utils import safe_indexing
+from ..utils import safe_indexing, _is_negative_indexing
 from ..utils import _get_column_indices
 from ..utils import _check_key_type
 from ..utils.metaestimators import _BaseComposition
@@ -404,6 +404,16 @@ boolean mask array or callable
         if ((self._feature_names_in is None or feature_names is None)
                 and self._n_features == n_features):
             return
+
+        neg_col_present = np.any([_is_negative_indexing(col)
+                                  for col in self._columns])
+        if neg_col_present and self._n_features != n_features:
+            raise RuntimeError("At least one negative column was used to "
+                               "indicate columns, and the new data's number "
+                               "of columns does not match the data given "
+                               "during fit. "
+                               "Please make sure the data during fit and "
+                               "transform have the same number of columns.")
 
         if (self._n_features != n_features or
                 np.any(self._feature_names_in != np.asarray(feature_names))):
