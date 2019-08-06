@@ -16,6 +16,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.base import BaseEstimator
 from sklearn.compose import ColumnTransformer, make_column_transformer
 from sklearn.exceptions import NotFittedError
+from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing import StandardScaler, Normalizer, OneHotEncoder
 from sklearn.feature_extraction import DictVectorizer
 
@@ -1108,3 +1109,17 @@ def test_column_transformer_reordered_column_names_remainder(explicit_colname):
     err_msg = 'Specifying the columns'
     with pytest.raises(ValueError, match=err_msg):
         tf.transform(X_array)
+
+
+@pytest.mark.parametrize("array_type", [np.asarray, sparse.csr_matrix])
+def test_column_transformer_mask_indexing(array_type):
+    # Regression test for #14510
+    # Boolean array-like does not behave as boolean array with NumPy < 1.12
+    # and sparse matrices as well
+    X = np.transpose([[1, 2, 3], [4, 5, 6], [5, 6, 7], [8, 9, 10]])
+    X = array_type(X)
+    column_transformer = ColumnTransformer(
+        [('identity', FunctionTransformer(), [False, True, False, True])]
+    )
+    X_trans = column_transformer.fit_transform(X)
+    assert X_trans.shape == (3, 2)

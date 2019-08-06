@@ -1210,3 +1210,13 @@ def test_ridge_regression_dtype_stability(solver, seed):
     assert results[np.float32].dtype == np.float32
     assert results[np.float64].dtype == np.float64
     assert_allclose(results[np.float32], results[np.float64], atol=atol)
+
+
+def test_ridge_sag_with_X_fortran():
+    # check that Fortran array are converted when using SAG solver
+    X, y = make_regression(random_state=42)
+    # for the order of X and y to not be C-ordered arrays
+    X = np.asfortranarray(X)
+    X = X[::2, :]
+    y = y[::2]
+    Ridge(solver='sag').fit(X, y)
