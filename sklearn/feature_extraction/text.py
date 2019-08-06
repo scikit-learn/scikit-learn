@@ -1695,9 +1695,9 @@ class TfidfVectorizer(CountVectorizer):
 
         # FIXME Remove copy parameter support in 0.24
         if copy != "deprecated":
-            msg = ("'copy' param is unused and has been deprecated since version 0.22."
-                   " Backward compatibility for 'copy' will be removed in"
-                   " 0.24.")
+            msg = ("'copy' param is unused and has been deprecated since "
+                   "version 0.22. Backward compatibility for 'copy' will "
+                   "be removed in 0.24.")
             warnings.warn(msg, DeprecationWarning)
         X = super().transform(raw_documents)
         return self._tfidf.transform(X, copy=False)
