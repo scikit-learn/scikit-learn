@@ -8,6 +8,7 @@ Developer's Guide
 .. include:: ../tune_toc.rst
 
 .. toctree::
+   :maxdepth: 2
 
    contributing
    tips
