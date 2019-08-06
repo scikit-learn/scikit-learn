@@ -220,7 +220,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
                         pre_dispatch=pre_dispatch)
-    scores = parallel(
+    results = parallel(
         delayed(_fit_and_score)(
             clone(estimator), X, y, scorers, train, test, verbose, None,
             fit_params, return_train_score=return_train_score,
@@ -228,13 +228,14 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
             error_score=error_score)
         for train, test in cv.split(X, y, groups))
 
-    zipped_scores = list(zip(*scores))
     if return_train_score:
-        train_scores = zipped_scores.pop(0)
+        train_scores = [result['train_scores'] for result in results]
         train_scores = _aggregate_score_dicts(train_scores)
     if return_estimator:
-        fitted_estimators = zipped_scores.pop()
-    test_scores, fit_times, score_times = zipped_scores
+        fitted_estimators = [result['estimator'] for result in results]
+    test_scores = [result['test_scores'] for result in results]
+    fit_times = [result['fit_time'] for result in results]
+    score_times = [result['score_time'] for result in results]
     test_scores = _aggregate_score_dicts(test_scores)
 
     ret = {}
@@ -1254,13 +1255,21 @@ def learning_curve(estimator, X, y, groups=None,
             for n_train_samples in train_sizes_abs:
                 train_test_proportions.append((train[:n_train_samples], test))
 
-        out = parallel(delayed(_fit_and_score)(
+        results = parallel(delayed(_fit_and_score)(
             clone(estimator), X, y, scorer, train, test, verbose,
             parameters=None, fit_params=None, return_train_score=True,
             error_score=error_score, return_times=return_times)
             for train, test in train_test_proportions)
-        out = np.array(out)
-        n_cv_folds = out.shape[0] // n_unique_ticks
+        train_scores = [result['train_scores'] for result in results]
+        test_scores = [result['test_scores'] for result in results]
+        if return_times:
+            fit_times = [result['fit_times'] for result in results]
+            score_times = [result['score_times'] for result in results]
+            out = np.vstack((train_scores, test_scores, fit_times,
+                             score_times))
+        else:
+            out = np.vstack((train_scores, test_scores))
+        n_cv_folds = len(results) // n_unique_ticks
         dim = 4 if return_times else 2
         out = out.reshape(n_cv_folds, n_unique_ticks, dim)
 
