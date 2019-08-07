@@ -12,8 +12,8 @@ implements Stochastic Gradient Descent related algorithms.
 from .base import LinearRegression
 
 from .bayes import BayesianRidge, ARDRegression
-from .least_angle import (Lars, LassoLars, lars_path, LarsCV, LassoLarsCV,
-                          LassoLarsIC)
+from .least_angle import (Lars, LassoLars, lars_path, lars_path_gram, LarsCV,
+                          LassoLarsCV, LassoLarsIC)
 from .coordinate_descent import (Lasso, ElasticNet, LassoCV, ElasticNetCV,
                                  lasso_path, enet_path, MultiTaskLasso,
                                  MultiTaskElasticNet, MultiTaskElasticNetCV,
@@ -30,9 +30,6 @@ from .omp import (orthogonal_mp, orthogonal_mp_gram, OrthogonalMatchingPursuit,
 from .passive_aggressive import PassiveAggressiveClassifier
 from .passive_aggressive import PassiveAggressiveRegressor
 from .perceptron import Perceptron
-
-from .randomized_l1 import (RandomizedLasso, RandomizedLogisticRegression,
-                            lasso_stability_path)
 
 from .ransac import RANSACRegressor
 from .theil_sen import TheilSenRegressor
@@ -65,8 +62,6 @@ __all__ = ['ARDRegression',
            'PassiveAggressiveClassifier',
            'PassiveAggressiveRegressor',
            'Perceptron',
-           'RandomizedLasso',
-           'RandomizedLogisticRegression',
            'Ridge',
            'RidgeCV',
            'RidgeClassifier',
@@ -77,8 +72,8 @@ __all__ = ['ARDRegression',
            'TheilSenRegressor',
            'enet_path',
            'lars_path',
+           'lars_path_gram',
            'lasso_path',
-           'lasso_stability_path',
            'logistic_regression_path',
            'orthogonal_mp',
            'orthogonal_mp_gram',
