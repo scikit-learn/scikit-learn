@@ -46,7 +46,10 @@ from ..base import is_regressor
 
 
 class _MultimetricScorer(dict):
+    """Callable dictionary for multimetric scoring."""
+
     def __call__(self, estimator, *args, **kwargs):
+        """Evaluate predicted target values."""
         scores = {}
         cache = {} if self._use_cache() else None
         method_cacher = partial(self._method_cacher, cache)
@@ -61,6 +64,7 @@ class _MultimetricScorer(dict):
         return scores
 
     def _use_cache(self):
+        """Return True if using a cache is desired."""
         if len(self) == 1:
             return False
 
@@ -77,6 +81,7 @@ class _MultimetricScorer(dict):
         return False
 
     def _method_cacher(self, cache, estimator, method, *args, **kwargs):
+        """Call estimator with caching."""
         if cache is None:
             return getattr(estimator, method)(*args, **kwargs)
         try:
@@ -102,9 +107,32 @@ class _BaseScorer:
                    self._factory_args(), kwargs_string))
 
     def __call__(self, estimator, X, y_true, sample_weight=None):
+        """Evaluate predicted target values for X relative to y_true.
+
+        Parameters
+        ----------
+        estimator : object
+            Trained estimator to use for scoring. Must have a predict_proba
+            method; the output of that is used to compute the score.
+
+        X : array-like or sparse matrix
+            Test data that will be fed to estimator.predict.
+
+        y_true : array-like
+            Gold standard target values for X.
+
+        sample_weight : array-like, optional (default=None)
+            Sample weights.
+
+        Returns
+        -------
+        score : float
+            Score function applied to prediction of estimator on X.
+        """
         return self._score(estimator, X, y_true, sample_weight=sample_weight)
 
     def _method_cacher(self, estimator, method, *args, **kwargs):
+        """Call estimator directly."""
         return getattr(estimator, method)(*args, **kwargs)
 
     def _factory_args(self):
