@@ -97,6 +97,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                                " during fit".format(diff, i))
                         raise ValueError(msg)
             if handle_unknown == 'virtual':
+                # Add the None virtual category
                 cats = np.append(cats, None)
             self.categories_.append(cats)
 
@@ -125,10 +126,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                            " during transform".format(diff, i))
                     raise ValueError(msg)
                 elif handle_unknown == 'virtual':
-                    # Set the problematic rows to None and if necessary
-                    # append the None category to the category list.
-                    # This will create a virtual category that maps
-                    # back to None.
+                    # Set the problematic rows to None
                     Xi[~valid_mask] = None
                 else:
                     # Set the problematic rows to an acceptable value and
@@ -561,12 +559,13 @@ class OrdinalEncoder(_BaseEncoder):
         Desired dtype of output.
 
     handle_unknown : 'error' or 'virtual', default='error'.
-        Whether to raise an error or to create a virtual cagetory if an unknown
-        categorical feature is present during transform (default is to raise).
-        When this parameter is set to 'virtual' and an unknown category is
-        encountered during transform, an additional ordinal value will be
-        appended to the existing values, at the final ordinal positon. In the
-        inverse transform, an unknown category will be denoted as None.
+        Whether to raise an error if an unknown categorical feature is present
+        during transform, or to create a virtual cagetory "None" at
+        instantiation, and pass unknown categorical features to that "None"
+        category (default is to raise). When this parameter is set to 'virtual'
+        an additional ordinal value will be appended to the existing values at
+        fit, at the final ordinal positon. In the inverse transform, an unknown
+        category will be denoted as None.
 
     Attributes
     ----------
