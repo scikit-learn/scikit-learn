@@ -45,14 +45,6 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
-:mod:`sklearn.feature_extraction`
-.....................
-
-- |API| Deprecated unused `copy` param for
-  :meth: `feature_extraction.text.TfidfVectorizer.transform` it will be
-  removed in v0.24. :pr:`14520` by
-  :user:`Guillem G. Subies <guillemgsubies>`.
-
 
 :mod:`sklearn.base`
 ...................
@@ -142,6 +134,14 @@ Changelog
   the decision function as in the literature. Thus, `predict` and
   `predict_proba` give consistent results.
   :pr:`14114` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |API| Deprecated unused `copy` param for
+  :meth: `feature_extraction.text.TfidfVectorizer.transform` it will be
+  removed in v0.24. :pr:`14520` by
+  :user:`Guillem G. Subies <guillemgsubies>`.
 
 :mod:`sklearn.gaussian_process`
 ...............................
