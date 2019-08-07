@@ -101,14 +101,6 @@ def test_estimators(estimator, check):
         check(estimator)
 
 
-def test_check_estimator_class():
-    checks = check_estimator(LogisticRegression, generate_only=True)
-    assert len(checks) == 1
-    with pytest.warns(SkipTestWarning):
-        Estimator, check = checks[0]
-        check(Estimator)
-
-
 @ignore_warnings(category=DeprecationWarning)
 # ignore deprecated open(.., 'U') in numpy distutils
 def test_configure():

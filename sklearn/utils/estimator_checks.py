@@ -305,13 +305,6 @@ def set_check_estimator_ids(val):
             return re.sub(r"\s", "", str(val))
 
 
-def _check_class(Estimator):
-    warnings.warn("check_estimator with generate_only=True only"
-                  "supports estimator instances, "
-                  "got: {}".format(Estimator.__name__),
-                  SkipTestWarning)
-
-
 def _construct_instance(Estimator):
     """Construct Estimator instance if possible"""
     required_parameters = getattr(Estimator, "_required_parameters", [])
@@ -328,6 +321,20 @@ def _construct_instance(Estimator):
     else:
         estimator = Estimator()
     return estimator
+
+
+def _generate_class_checks(Estimator):
+    name = Estimator.__name__
+    yield (Estimator, partial(check_parameters_default_constructible, name))
+
+    try:
+        estimator = _construct_instance(Estimator)
+    except (SkipTest, TypeError):
+        # if we can't construct the instance, the first test will fail
+        return
+
+    yield from ((estimator, partial(check, name))
+                for check in _yield_all_checks(name, estimator))
 
 
 def check_estimator(Estimator, generate_only=False):
@@ -376,10 +383,10 @@ def check_estimator(Estimator, generate_only=False):
             check(estimator)
     """
     if isinstance(Estimator, type):
-        if generate_only:
-            return [(Estimator, _check_class)]
-
         # got a class
+        if generate_only:
+            return _generate_class_checks(Estimator)
+
         name = Estimator.__name__
         check_parameters_default_constructible(name, Estimator)
         estimator = _construct_instance(Estimator)
