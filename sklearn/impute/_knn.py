@@ -103,45 +103,56 @@ class KNNImputer(TransformerMixin, BaseEstimator):
         self.copy = copy
 
     def _calc_impute(self, dist, receivers_idx, X_col, fit_X_col,
-                     potential_donors_idx):
+                     mask_fit_X_col, potential_donors_idx):
         """Hellper function to impute a single column.
 
         Parameters
         ----------
         dist : array-like, shape=(n_receivers, n_train_samples)
-            distance matrix between the receivers and the train samples
+            Distance matrix between the receivers and the train samples.
 
         receivers_idx : array-like, shape=(n_receivers,)
-            indices of X_col to be imputed
+            Indices of X_col to be imputed.
 
         X_col : array-like, shape=(n_samples,)
-            column to be imputed
+            Column to be imputed.
 
         fit_X_col : array-like, shape=(n_train_samples,)
-            column from training
+            Column from training.
+
+        mask_fit_X_col : array-like, shape=(n_train_samples,)
+            Missing mask for fit_X_col.
 
         potential_donors_idx : array-like, shape=(n_donors,)
-            row index for receivers and potential donors
+            Row index for potential donors.
 
         Returns
         -------
-        imputed_values: array, shape=(n_receivers,)
-            imputed values for receiver
+        imputed_values: array, shape=(n_receivers,) or float
+            Imputed values for receiver.
         """
         # Get distance from potential donors
-        dist_potential_donors = dist[:, potential_donors_idx]
+        dist_pot_donors = dist[:, potential_donors_idx]
+
+        donors_nan_dist = np.all(np.isnan(dist_pot_donors), axis=1)
+        donors_nan_dist_idx = np.flatnonzero(donors_nan_dist)
 
         # Get donors
-        donors_idx = np.argpartition(dist_potential_donors,
+        donors_idx = np.argpartition(dist_pot_donors,
                                      self.n_neighbors - 1,
                                      axis=1)[:, :self.n_neighbors]
 
         # Get weight matrix from from distance matrix
-        donors_dist = dist_potential_donors[
+        donors_dist = dist_pot_donors[
             np.arange(donors_idx.shape[0])[:, None], donors_idx]
-        weight_matrix = _get_weights(donors_dist, self.weights)
 
-        # Retrieve donor values and calculate kNN score
+
+
+        weight_matrix = _get_weights(donors_dist, self.weights)
+        # fill nans with zeros
+        weight_matrix[~np.isnan(weight_matrix)] = 0.0
+
+        # Retrieve donor values and calculate kNN average
         donors = fit_X_col[potential_donors_idx].take(donors_idx)
         donors_missing_mask = _get_mask(donors, self.missing_values)
         donors = np.ma.array(donors, mask=donors_missing_mask)
@@ -153,7 +164,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like, shape=(n_samples, n_features)
             Input data, where ``n_samples`` is the number of samples and
             ``n_features`` is the number of features.
 
@@ -177,14 +188,8 @@ class KNNImputer(TransformerMixin, BaseEstimator):
         X = check_array(X, accept_sparse=False, dtype=FLOAT_DTYPES,
                         force_all_finite=force_all_finite, copy=self.copy)
 
-        mask = _get_mask(X, self.missing_values)
-        self.weights = _check_weights(self.weights)
+        _check_weights(self.weights)
         self._fit_X = X
-
-        masked_X = np.ma.masked_array(X, mask=mask)
-        mean_masked = masked_X.mean(axis=0)
-        self.statistics_ = mean_masked.data
-        self.statistics_[mean_masked.mask] = np.nan
 
         return self
 
@@ -203,7 +208,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
             that is not always missing during `fit`.
         """
 
-        check_is_fitted(self, ["statistics_"])
+        check_is_fitted(self, ["_fit_X"])
         if not is_scalar_nan(self.missing_values):
             force_all_finite = True
         else:
@@ -232,49 +237,37 @@ class KNNImputer(TransformerMixin, BaseEstimator):
         dist_idx_map = np.zeros(X.shape[0], dtype=np.int)
         dist_idx_map[row_missing_idx] = np.arange(0, row_missing_idx.shape[0])
 
-        invalid_mask = _get_mask(self.statistics_, np.nan)
-        valid_mask = np.logical_not(invalid_mask)
-        valid_statistics_indexes = np.flatnonzero(valid_mask)
-
         mask_fit_X = _get_mask(self._fit_X, self.missing_values)
         non_missing_fix_X = np.logical_not(mask_fit_X)
+
         # Find and impute missing
+        valid_indicies = []
         for col in range(X.shape[1]):
 
             # column has no missing values
             if not np.any(mask[:, col]):
+                valid_indicies.append(col)
                 continue
 
-            # column was all missing during training
-            if col not in valid_statistics_indexes:
-                continue
-
-            receivers_idx = np.where(mask[:, col])[0]
+            receivers_idx = np.flatnonzero(mask[:, col])
 
             # Row index for receivers and potential donors
             potential_donors_idx = np.flatnonzero(non_missing_fix_X[:, col])
 
-            # Use statistics if there are not enough donors are available
-            if len(potential_donors_idx) < self.n_neighbors:
-                X[receivers_idx, col] = self.statistics_[col]
+            # column was all missing during training
+            if len(potential_donors_idx) == 0:
                 continue
+            valid_indicies.append(col)
 
             # distances for samples that needed imputation for column
             dist_subset = dist[dist_idx_map[receivers_idx]]
 
-            # Use statistics if there are not enough valid distances
-            dist_is_nan = np.isnan(dist_subset[:, potential_donors_idx])
-            valid_neighbors = dist_is_nan.size - np.count_nonzero(dist_is_nan)
-            if valid_neighbors < self.n_neighbors:
-                X[receivers_idx, col] = self.statistics_[col]
-                continue
-
             value = self._calc_impute(dist_subset, receivers_idx, X[:, col],
-                                      self._fit_X[:, col],
+                                      self._fit_X[:, col], mask_fit_X[:, col],
                                       potential_donors_idx)
             X[receivers_idx, col] = value
 
-        return X[:, valid_statistics_indexes]
+        return X[:, valid_indicies]
 
     def _more_tags(self):
         return {'allow_nan': True}

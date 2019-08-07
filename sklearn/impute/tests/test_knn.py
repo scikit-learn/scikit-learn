@@ -30,7 +30,6 @@ def test_knn_imputer_shape(weights, n_neighbors):
     imputer = KNNImputer(n_neighbors=n_neighbors, weights=weights)
     X_imputed = imputer.fit_transform(X)
     assert X_imputed.shape == (n_rows, n_cols)
-    assert imputer.statistics_.shape == (n_cols, )
 
 
 @pytest.mark.parametrize("na", [np.nan, -1])
@@ -109,7 +108,6 @@ def test_knn_imputer_removes_all_na_features(na):
         [6, 4, na, na, 6, 6],
     ])
     knn = KNNImputer(missing_values=na, n_neighbors=2).fit(X)
-    assert np.isnan(knn.statistics_[2])
 
     X_transform = knn.transform(X)
     assert not np.isnan(X_transform).any()
@@ -131,7 +129,6 @@ def test_knn_imputer_zero_nan_imputes_the_same(na):
         [3, 3, 3, 3, na],
         [6, 6, na, 6, 6],
     ])
-    statistics_mean = _missing_mean(X_nan, na)
 
     X_imputed = np.array([
         [1, 2.5, 1, 1, 1.],
@@ -147,7 +144,6 @@ def test_knn_imputer_zero_nan_imputes_the_same(na):
                              weights="uniform")
 
     assert_allclose(imputer_zero.fit_transform(X_zero), X_imputed)
-    assert_allclose(imputer_zero.statistics_, statistics_mean)
     assert_allclose(imputer_zero.fit_transform(X_zero),
                     imputer_nan.fit_transform(X_nan))
 
@@ -164,7 +160,6 @@ def test_knn_imputer_verify(na):
         [8, 8, 8, 8],
         [16, 15, 18, 19],
     ])
-    statistics_mean = _missing_mean(X, na)
 
     X_imputed = np.array([
         [1, 0, 0, 1],
@@ -178,7 +173,6 @@ def test_knn_imputer_verify(na):
 
     imputer = KNNImputer(missing_values=na)
     assert_allclose(imputer.fit_transform(X), X_imputed)
-    assert_allclose(imputer.statistics_, statistics_mean)
 
     # Test when there is not enough neighbors
     X = np.array([
@@ -191,7 +185,6 @@ def test_knn_imputer_verify(na):
         [20, 20, 20, 20],
         [22, 22, 22, 22]
     ])
-    statistics_mean = _missing_mean(X, na)
 
     # Not enough neighbors, use column mean from training
     X_impute_value = (20 + 22) / 2
@@ -208,7 +201,6 @@ def test_knn_imputer_verify(na):
 
     imputer = KNNImputer(missing_values=na)
     assert_allclose(imputer.fit_transform(X), X_imputed)
-    assert_allclose(imputer.statistics_, statistics_mean)
 
     # Test when data in fit() and transform() are different
     X = np.array([
@@ -220,7 +212,6 @@ def test_knn_imputer_verify(na):
         [9, 8],
         [11, 16]
     ])
-    statistics_mean = _missing_mean(X, na)
 
     X1 = np.array([
         [1, 0],
@@ -237,7 +228,6 @@ def test_knn_imputer_verify(na):
 
     imputer = KNNImputer(missing_values=na)
     assert_allclose(imputer.fit(X).transform(X1), X1_imputed)
-    assert_allclose(imputer.statistics_, statistics_mean)
 
 
 @pytest.mark.parametrize("na", [np.nan, -1])
@@ -252,7 +242,6 @@ def test_knn_imputer_one_n_neighbors(na):
         [na, 8],
         [14, 13]
     ])
-    statistics_mean = _missing_mean(X, na)
 
     X_imputed = np.array([
         [0, 0],
@@ -267,7 +256,6 @@ def test_knn_imputer_one_n_neighbors(na):
     imputer = KNNImputer(n_neighbors=1, missing_values=na)
 
     assert_allclose(imputer.fit_transform(X), X_imputed)
-    assert_allclose(imputer.statistics_, statistics_mean)
 
 
 @pytest.mark.parametrize("na", [np.nan, -1])
@@ -281,7 +269,6 @@ def test_knn_imputer_all_samples_are_neighbors(na):
         [na, 8],
         [14, 13]
     ])
-    statistics_mean = _missing_mean(X, na)
 
     X_imputed = np.array([
         [0, 0],
@@ -297,12 +284,10 @@ def test_knn_imputer_all_samples_are_neighbors(na):
     imputer = KNNImputer(n_neighbors=n_neighbors, missing_values=na)
 
     assert_allclose(imputer.fit_transform(X), X_imputed)
-    assert_allclose(imputer.statistics_, statistics_mean)
 
     n_neighbors = X.shape[0]
     imputer_plus1 = KNNImputer(n_neighbors=n_neighbors, missing_values=na)
     assert_allclose(imputer_plus1.fit_transform(X), X_imputed)
-    assert_allclose(imputer_plus1.statistics_, statistics_mean)
 
 
 @pytest.mark.parametrize("na", [np.nan, -1])
@@ -396,7 +381,6 @@ def test_knn_imputer_weight_distance():
         [3, 2, 3],
         [4, 5, 5],
     ])
-    statistics_mean = np.nanmean(X, axis=0)
 
     # neighbors are rows 1, 2, the nan_euclidean_distances are:
     dist_0_1 = np.sqrt((3/2)*((1 - 0)**2 + (2 - 0)**2))
@@ -412,7 +396,6 @@ def test_knn_imputer_weight_distance():
 
     imputer = KNNImputer(n_neighbors=2, weights="distance")
     assert_allclose(imputer.fit_transform(X), X_imputed)
-    assert_allclose(imputer.statistics_, statistics_mean)
 
     # Test with varying missingness patterns
     X = np.array([
@@ -424,7 +407,6 @@ def test_knn_imputer_weight_distance():
         [1, 0, 1, 1],
         [10, 10, 10, 10],
     ])
-    statistics_mean = np.nanmean(X, axis=0)
 
     # Get weights of donor neighbors
     dist = nan_euclidean_distances(X)
@@ -457,7 +439,6 @@ def test_knn_imputer_weight_distance():
 
     imputer = KNNImputer(weights="distance")
     assert_allclose(imputer.fit_transform(X), X_imputed)
-    assert_allclose(imputer.statistics_, statistics_mean)
 
 
 def test_knn_imputer_callable_metric():
@@ -591,3 +572,38 @@ def test_knn_imputer_drops_all_nan_features(na):
     X2 = np.array([[1, 2], [3, na]])
     X2_expected = np.array([[2], [1.5]])
     assert_allclose(knn.transform(X2), X2_expected)
+
+
+# @pytest.mark.parametrize("na", [-1, np.nan])
+# def test_knn_imputer_distance_weighted_not_enough_neighbors(na):
+#     X = np.array([
+#         [3, na],
+#         [2, na],
+#         [na, 4],
+#         [5, 6],
+#         [6, 8],
+#         [na, 5]
+#     ])
+
+#     dist = pairwise_distances(X, metric="nan_euclidean", squared=False,
+#                               missing_values=na)
+
+#     X_01 = np.average(X[3:5, 1], weights=1/dist[0, 3:5])
+#     X_11 = np.average(X[3:5, 1], weights=1/dist[1, 3:5])
+#     X_20 = np.average(X[3:5, 0], weights=1/dist[2, 3:5])
+#     X_50 = np.average(X[3:5, 0], weights=1/dist[5, 3:5])
+
+#     X_expected = np.array([[
+#         [3, X_01],
+#         [2, X_11],
+#         [X_20, 4],
+#         [5, 6],
+#         [6, 8],
+#         [X_50, 5]
+#     ]])
+
+#     knn_3 = KNNImputer(missing_values=na, n_neighbors=3, weights='distance')
+#     assert_allclose(knn_3.fit_transform(X), X_expected)
+
+#     knn_4 = KNNImputer(missing_values=na, n_neighbors=4, weights='distance')
+#     assert_allclose(knn_4.fit_transform(X), X_expected)
