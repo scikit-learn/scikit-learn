@@ -603,8 +603,8 @@ Finally, follow the formatting rules below to make it consistently good:
     SelectKBest : Select features based on the k highest scores.
     SelectFpr : Select features based on a false positive rate test.
 
-* When documenting the parameters and attributes, here is a list of some good
-  examples::
+* When documenting the parameters and attributes, here is a list of some
+  well-formatted examples::
 
     n_clusters : int, default=3
         The number of clusters detected by the algorithm.
@@ -621,16 +621,14 @@ Finally, follow the formatting rules below to make it consistently good:
 
 In general have the following in mind:
 
-    1. Python basic types. (`bool` instead of `boolean`)
-    2. Use parenthesis for defining shapes: `array-like of shape (n_samples,)`
-    or `array-like of shape (n_samples, n_features)`
-    3. str with multiple options: `input: {'log', 'squared', 'multinomial'}`
+    1. Use Python basic types. (``bool`` instead of ``boolean``)
+    2. Use parenthesis for defining shapes: ``array-like of shape (n_samples,)``
+       or ``array-like of shape (n_samples, n_features)``
+    3. For strings with multiple options, use brackets:
+       ``input: {'log', 'squared', 'multinomial'}``
     4. 1D or 2D data can be a subset of
-    `{array-like, ndarray, sparse matrix, dataframe}`. Note that `array-like`
-    can also be a `list`, while `ndarray` is explicitly only a `numpy.ndarray`.
-    An example supporting two of them would be::
-
-        `{array-like, sparse matrix} shape=(n_samples, n_features)`
+       ``{array-like, ndarray, sparse matrix, dataframe}``. Note that ``array-like``
+       can also be a ``list``, while ``ndarray`` is explicitly only a ``numpy.ndarray``.
 
 * For unwritten formatting rules, try to follow existing good works:
 
