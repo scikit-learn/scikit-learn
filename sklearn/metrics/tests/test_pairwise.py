@@ -783,9 +783,25 @@ def test_gower_distances():
     # The calculation formula for Gower similarity is available in the
     # user guide.
 
-    # Test X and Y with diferent ranges of numeric values, categorical values,
-    # and using pairwise_distances
+    # Categorical values, with boolean represented as 1 and 0,
+    # and missing values
+    X = [['M', 0],
+         ['F', 1],
+         ['M', 1],
+         [np.nan, np.nan]]
 
+    D = gower_distances(X, categorical_features=[True, True])
+
+    n_rows, n_cols = np.shape(X)
+    D_expected = np.zeros((n_rows, n_rows))
+    for i in range(0, n_rows):
+        for j in range(0, n_rows):
+            D_expected[i][j] = ([1, 0][np.equals(X[i][0], X[j][0])] +
+                                [1, 0][np.equal(X[i][1], X[j][1])]) / n_cols
+    #cat_obj_dists = X[i, cat_obj_mask] != Y[j_start:, cat_obj_mask]
+    assert_array_almost_equal(D_expected, D)
+
+    # Test X and Y with diferent ranges of numeric values, categorical values,
     with pytest.raises(TypeError):
         gower_distances(csr_matrix((2, 2)))
     with pytest.raises(ValueError):
