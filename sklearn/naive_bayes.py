@@ -1152,9 +1152,16 @@ class CategoricalNB(BaseDiscreteNB):
 
     def _init_counters(self, n_effective_classes, n_features):
         self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
-        self.category_count_ = []
+        self.category_count_ = [np.zeros((self.class_count_.shape[0], 0))
+                                for _ in range(n_features)]
 
     def _count(self, X, Y):
+        def _update_cat_count_dims(cat_count, diff):
+            if diff > 0:
+                # we append a column full of zeros for each new category
+                return np.pad(cat_count, [(0, 0), (0, diff)], 'constant')
+            return cat_count
+
         def _update_cat_count(X_feature, Y, cat_count, n_classes):
             for j in range(n_classes):
                 mask = Y[:, j].astype(bool)
@@ -1176,9 +1183,9 @@ class CategoricalNB(BaseDiscreteNB):
         self.class_count_ += Y.sum(axis=0)
         for i in range(self.n_features_):
             X_feature = X[:, i]
-            self.category_count_.append(
-                np.zeros((self.class_count_.shape[0],
-                          X_feature.max()+1)))
+            diff = X_feature.max() + 1 - self.category_count_[i].shape[1]
+            self.category_count_[i] = _update_cat_count_dims(
+                self.category_count_[i], diff)
             _update_cat_count(X_feature, Y,
                               self.category_count_[i],
                               self.class_count_.shape[0])
