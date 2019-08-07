@@ -523,6 +523,20 @@ def test_ordinal_encoder_inverse():
     assert_raises_regex(ValueError, msg, enc.inverse_transform, X_tr)
 
 
+def test_ordinal_encoder_handle_unknown():
+    X = [["Red", "Coffee"], ["Green", "Tea"],  ["Blue", "Water"]]
+    Y = [["Purple", "Coffee"], ["Green", "Tea"]]
+    enc = OrdinalEncoder()
+    enc.fit(X)
+    with pytest.raises(ValueError, match="Found unknown categories"):
+        enc.transform(Y)
+    encVirtual = OrdinalEncoder(handle_unknown='virtual')
+    encVirtual.fit(X)
+    Y_tr = encVirtual.transform(Y)
+    exp = np.array([[None, 'Coffee'], ['Green', 'Tea']], dtype=object)
+    assert_array_equal(encVirtual.inverse_transform(Y_tr), exp)
+
+
 @pytest.mark.parametrize("X", [np.array([[1, np.nan]]).T,
                                np.array([['a', np.nan]], dtype=object).T],
                          ids=['numeric', 'object'])
