@@ -1442,10 +1442,6 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     """
     def __init__(self, length_scale=1.0, alpha=1.0,
                  length_scale_bounds=(1e-5, 1e5), alpha_bounds=(1e-5, 1e5)):
-        if len(np.atleast_1d(length_scale)) > 1:
-            raise AttributeError(
-                "RationalQuadratic kernel only supports isotropic version, "
-                "please use a single scalar for length_scale")
         self.length_scale = length_scale
         self.alpha = alpha
         self.length_scale_bounds = length_scale_bounds
@@ -1486,6 +1482,10 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
+        if len(np.atleast_1d(self.length_scale)) > 1:
+            raise AttributeError(
+                "RationalQuadratic kernel only supports isotropic version, "
+                "please use a single scalar for length_scale")
         X = np.atleast_2d(X)
         if Y is None:
             dists = squareform(pdist(X, metric='sqeuclidean'))
