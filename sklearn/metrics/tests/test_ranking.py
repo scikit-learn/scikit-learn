@@ -16,6 +16,7 @@ from sklearn.utils.validation import check_random_state
 
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -574,9 +575,8 @@ def test_roc_auc_score_multiclass_labels_error(
     ((r"sample_weight is not supported for multiclass one-vs-one "
       r"ROC AUC, 'sample_weight' must be None in this case"),
      {"multi_class": "ovo", "sample_weight": []}),
-    ((r"Partial AUC computation not available in multiclass setting, "
-      r"'max_fpr' must be set to `None`, received `max_fpr=0.5` "
-      r"instead"), {"multi_class": "ovo", "max_fpr": 0.5}),
+    ((r"Partial AUC computation not available in multiclass setting"),
+     {"multi_class": "ovo", "max_fpr": 0.5}),
     ((r"multi_class='ovp' is not supported for multiclass ROC AUC, "
       r"multi_class must be in \('ovo', 'ovr'\)"),
      {"multi_class": "ovp"}),

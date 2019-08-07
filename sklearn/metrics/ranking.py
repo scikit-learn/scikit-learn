@@ -360,6 +360,14 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
     0.75
 
     """
+    if max_fpr != "not_used":
+        warnings.warn("'max_fpr' was removed in favor for 'fpr_range' "
+                      "in 0.21 and will be removed in 0.23.",
+                      DeprecationWarning)
+        fpr_min, fpr_max = 0, max_fpr
+    else:
+        fpr_min, fpr_max = fpr_range[0], fpr_range[1]
+    tpr_min, tpr_max = tpr_range[0], tpr_range[1]
 
     def _binary_roc_auc_score(y_true, y_score, sample_weight):
 
@@ -371,9 +379,6 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
                                 sample_weight=sample_weight)
 
         if max_fpr != "not_used":
-            warnings.warn("'max_fpr' was removed in favor for 'fpr_range' "
-                          "in 0.21 and will be removed in 0.23.",
-                          DeprecationWarning)
             fpr_min, fpr_max = 0, max_fpr
         else:
             fpr_min, fpr_max = fpr_range[0], fpr_range[1]
@@ -464,16 +469,15 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
                                   y_score.ndim == 2 and
                                   y_score.shape[1] > 2):
         # do not support partial ROC computation for multiclass
-        if (fpr_range[0] != 0 or fpr_range[1] != 1 or
-            tpr_range[0] != 0 or tpr_range[1] != 1):
+        if (fpr_min != 0 or fpr_max != 1 or tpr_min != 0 or tpr_max != 1):
             raise ValueError(
                 "Partial AUC computation not available in multiclass "
                 "setting, 'fpr_range' must be set to `(0, 1)`, "
-                "received `fpr_range=(fpr_min, fpr_max)` instead. "
-                "Similarly, `tpr_range` must be set to `(0, 1)`, " 
-                "received `tpr_range=(tpr_min, tpr_max)` instead. "
-                .format(fpr_min=fpr_range[0], fpr_max=fpr_range[1],
-                        tpr_min=tpr_range[0], tpr_max=tpr_range[1])
+                "received `fpr_range=({fpr_min}, {fpr_max})` instead. "
+                "Similarly, `tpr_range` must be set to `(0, 1)`, "
+                "received `tpr_range=({tpr_min}, {tpr_max})` instead. "
+                .format(fpr_min=fpr_min, fpr_max=fpr_max,
+                        tpr_min=tpr_min, tpr_max=tpr_max)
             )
         if multi_class == 'raise':
             raise ValueError("multi_class must be in ('ovo', 'ovr')")
@@ -483,16 +487,12 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
         labels = np.unique(y_true)
         y_true = label_binarize(y_true, labels)[:, 0]
         return _average_binary_score(
-            partial(_binary_roc_auc_score, max_fpr=max_fpr, 
-                    fpr_range=fpr_range, tpr_range=tpr_range),
-            y_true, y_score, average, sample_weight=sample_weight
-        )
+            _binary_roc_auc_score, y_true, y_score, average,
+            sample_weight=sample_weight)
     else:  # multilabel-indicator
         return _average_binary_score(
-            partial(_binary_roc_auc_score, max_fpr=max_fpr, 
-                    fpr_range=fpr_range, tpr_range=tpr_range),
-            y_true, y_score, average, sample_weight=sample_weight
-        )
+            _binary_roc_auc_score, y_true, y_score, average,
+            sample_weight=sample_weight)
 
 
 def _multiclass_roc_auc_score(y_true, y_score, labels,
@@ -629,7 +629,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     thresholds : array, shape = [n_thresholds]
         Decreasing score values.
     """
-    # Check to make sure y_true is alid
+    # Check to make sure y_true is valid
     y_type = type_of_target(y_true)
     if not (y_type == "binary" or
             (y_type == "multiclass" and pos_label is not None)):
