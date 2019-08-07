@@ -207,7 +207,7 @@ class LeavePOut(BaseCrossValidator):
     Parameters
     ----------
     p : int
-        Size of the test sets. Must be strictly greater than the number of
+        Size of the test sets. Must be strictly less than the number of
         samples.
 
     Examples
@@ -1075,7 +1075,7 @@ class _RepeatedSplits(metaclass=ABCMeta):
         and shuffle.
     """
     def __init__(self, cv, n_repeats=10, random_state=None, **cvargs):
-        if not isinstance(n_repeats, (np.integer, numbers.Integral)):
+        if not isinstance(n_repeats, numbers.Integral):
             raise ValueError("Number of repetitions must be of Integral type.")
 
         if n_repeats <= 0:

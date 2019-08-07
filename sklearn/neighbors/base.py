@@ -11,9 +11,12 @@ from distutils.version import LooseVersion
 
 import warnings
 from abc import ABCMeta, abstractmethod
+import numbers
 
 import numpy as np
 from scipy.sparse import csr_matrix, issparse
+import joblib
+from joblib import Parallel, delayed, effective_n_jobs
 
 from .ball_tree import BallTree
 from .kd_tree import KDTree
@@ -24,8 +27,6 @@ from ..utils import check_X_y, check_array, gen_even_slices
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..exceptions import DataConversionWarning
-from ..utils._joblib import Parallel, delayed, effective_n_jobs
-from ..utils._joblib import __version__ as joblib_version
 
 VALID_METRICS = dict(ball_tree=BallTree.valid_metrics,
                      kd_tree=KDTree.valid_metrics,
@@ -211,6 +212,12 @@ class NeighborsBase(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
         if n_samples == 0:
             raise ValueError("n_samples must be greater than 0")
 
+        # Precomputed matrix X must be squared
+        if self.metric == 'precomputed' and X.shape[0] != X.shape[1]:
+            raise ValueError("Precomputed matrix must be a square matrix."
+                             " Input is a {}x{} matrix."
+                             .format(X.shape[0], X.shape[1]))
+
         if issparse(X):
             if self.algorithm not in ('auto', 'brute'):
                 warnings.warn("cannot use tree with sparse input: "
@@ -268,7 +275,7 @@ class NeighborsBase(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
                     self.n_neighbors
                 )
             else:
-                if not np.issubdtype(type(self.n_neighbors), np.integer):
+                if not isinstance(self.n_neighbors, numbers.Integral):
                     raise TypeError(
                         "n_neighbors does not take %s value, "
                         "enter integer value" %
@@ -391,7 +398,7 @@ class KNeighborsMixin:
                 n_neighbors
             )
         else:
-            if not np.issubdtype(type(n_neighbors), np.integer):
+            if not isinstance(n_neighbors, numbers.Integral):
                 raise TypeError(
                     "n_neighbors does not take %s value, "
                     "enter integer value" %
@@ -438,7 +445,8 @@ class KNeighborsMixin:
                 raise ValueError(
                     "%s does not work with sparse matrices. Densify the data, "
                     "or set algorithm='brute'" % self._fit_method)
-            old_joblib = LooseVersion(joblib_version) < LooseVersion('0.12')
+            old_joblib = (
+                    LooseVersion(joblib.__version__) < LooseVersion('0.12'))
             if old_joblib:
                 # Deal with change of API in joblib
                 check_pickle = False if old_joblib else None
@@ -734,7 +742,7 @@ class RadiusNeighborsMixin:
                     "or set algorithm='brute'" % self._fit_method)
 
             n_jobs = effective_n_jobs(self.n_jobs)
-            if LooseVersion(joblib_version) < LooseVersion('0.12'):
+            if LooseVersion(joblib.__version__) < LooseVersion('0.12'):
                 # Deal with change of API in joblib
                 delayed_query = delayed(_tree_query_radius_parallel_helper,
                                         check_pickle=False)
