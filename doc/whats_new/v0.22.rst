@@ -270,10 +270,11 @@ Changelog
 
 :mod:`sklearn.feature_selection`
 ................................
+
 - |Fix| Fixed a bug where :class:`VarianceThreshold` with `threshold=0` did not
   remove constant features due to numerical instability, by using range
   rather than variance in this case.
-  :pr:`13704` by `Roddy MacSween <rlms>`.
+  :pr:`13704` by :user:`Roddy MacSween <rlms>`.
 
 :mod:`sklearn.utils`
 ....................
@@ -281,10 +282,20 @@ Changelog
 - |Enhancement| :func:`utils.safe_indexing` accepts an ``axis`` parameter to
   index array-like across rows and columns. The column indexing can be done on
   NumPy array, SciPy sparse matrix, and Pandas DataFrame.
-  :pr:`14035` by `Guillaume Lemaitre <glemaitre>`.
+  :pr:`14035` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.neighbors`
-.............................
+....................
+
+- |Feature| :class:`neighbors.RadiusNeighborsClassifier` now supports
+  predicting probabilities by using `predict_proba` and supports more
+  outlier_label options: 'most_frequent', or different outlier_labels
+  for multi-outputs.
+  :pr:`9597` by :user:`Wenbo Zhao <webber26232>`.
+
+- |Efficiency| Efficiency improvements for
+  :func:`neighbors.RadiusNeighborsClassifier.predict`.
+  :pr:`9597` by :user:`Wenbo Zhao <webber26232>`.
 
 - |Fix| KNearestRegressor now throws error when fit on non-square data and
   metric = precomputed.  :class:`neighbors.NeighborsBase`
