@@ -1101,8 +1101,44 @@ class CategoricalNB(BaseDiscreteNB):
         return super().fit(X, y, sample_weight=sample_weight)
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
-        raise NotImplementedError("Partial Fitting is not implemented for"
-                                  " CategoricalNB")
+        """Incremental fit on a batch of samples.
+
+        This method is expected to be called several times consecutively
+        on different chunks of a dataset so as to implement out-of-core
+        or online learning.
+
+        This is especially useful when the whole dataset is too big to fit in
+        memory at once.
+
+        This method has some performance overhead hence it is better to call
+        partial_fit on chunks of data that are as large as possible
+        (as long as fitting in the memory budget) to hide the overhead.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples and
+            n_features is the number of features. Here, each feature of X is
+            assumed to be from a different categorical distribution.
+
+        y : array-like, shape = [n_samples]
+            Target values.
+
+        classes : array-like, shape = [n_classes] (default=None)
+            List of all the classes that can possibly appear in the y vector.
+
+            Must be provided at the first call to partial_fit, can be omitted
+            in subsequent calls.
+
+        sample_weight : array-like, shape = [n_samples], (default=None)
+            Weights applied to individual samples (1. for unweighted).
+
+        Returns
+        -------
+        self : object
+        """
+        return super().partial_fit(X, y, classes,
+                                   sample_weight=sample_weight)
 
     def _check_X(self, X):
         # force all finite does not work with dtype

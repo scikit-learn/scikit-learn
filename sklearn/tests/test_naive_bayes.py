@@ -200,7 +200,7 @@ def test_discretenb_prior(cls):
                               clf.class_log_prior_, 8)
 
 
-@pytest.mark.parametrize("cls", [MultinomialNB, BernoulliNB])
+@pytest.mark.parametrize("cls", [MultinomialNB, BernoulliNB, CategoricalNB])
 def test_discretenb_partial_fit(cls):
     clf1 = cls()
     clf1.fit([[0, 1], [1, 0], [1, 1]], [0, 1, 1])
@@ -208,14 +208,47 @@ def test_discretenb_partial_fit(cls):
     clf2 = cls()
     clf2.partial_fit([[0, 1], [1, 0], [1, 1]], [0, 1, 1], classes=[0, 1])
     assert_array_equal(clf1.class_count_, clf2.class_count_)
-    assert_array_equal(clf1.feature_count_, clf2.feature_count_)
+    if cls is CategoricalNB:
+        for i in range(len(clf1.category_count_)):
+            assert_array_equal(clf1.category_count_[i],
+                               clf2.category_count_[i])
+    else:
+        assert_array_equal(clf1.feature_count_, clf2.feature_count_)
 
     clf3 = cls()
-    clf3.partial_fit([[0, 1]], [0], classes=[0, 1])
-    clf3.partial_fit([[1, 0]], [1])
+    # all categories have to appear in the first partial fit
+    if cls is CategoricalNB:
+        clf3.partial_fit([[0, 1], [1, 0]], [0, 1], classes=[0, 1])
+    else:
+        clf3.partial_fit([[0, 1]], [0], classes=[0, 1])
+        clf3.partial_fit([[1, 0]], [1])
     clf3.partial_fit([[1, 1]], [1])
     assert_array_equal(clf1.class_count_, clf3.class_count_)
-    assert_array_equal(clf1.feature_count_, clf3.feature_count_)
+    if cls is CategoricalNB:
+        # the categories for each feature of CategoricalNB are mapped to an
+        # index chronologically with each call of partial fit and therefore
+        # the category_count matrices cannot be compared for equality
+        for i in range(len(clf1.category_count_)):
+            assert_array_equal(clf1.category_count_[i].shape,
+                               clf3.category_count_[i].shape)
+            assert_array_equal(np.sum(clf1.category_count_[i], axis=1),
+                               np.sum(clf3.category_count_[i], axis=1))
+
+        # assert category 0 occurs 1x in the first class and 0x in the 2nd
+        # class
+        assert_array_equal(clf1.category_count_[0][0], np.array([1, 0]))
+        # assert category 1 occurs 0x in the first class and 2x in the 2nd
+        # class
+        assert_array_equal(clf1.category_count_[0][1], np.array([0, 2]))
+
+        # assert category 0 occurs 0x in the first class and 1x in the 2nd
+        # class
+        assert_array_equal(clf1.category_count_[1][0], np.array([0, 1]))
+        # assert category 1 occurs 1x in the first class and 1x in the 2nd
+        # class
+        assert_array_equal(clf1.category_count_[1][1], np.array([1, 1]))
+    else:
+        assert_array_equal(clf1.feature_count_, clf3.feature_count_)
 
 
 @pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB, GaussianNB,
@@ -255,7 +288,7 @@ def test_discretenb_input_check_fit(cls):
     assert_raises(ValueError, clf.predict, X2[:, :-1])
 
 
-@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB])
+@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB, CategoricalNB])
 def test_discretenb_input_check_partial_fit(cls):
     # check shape consistency
     assert_raises(ValueError, cls().partial_fit, X2, y2[:-1],
@@ -336,7 +369,7 @@ def test_discretenb_provide_prior(cls):
                       classes=[0, 1, 1])
 
 
-@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB])
+@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB, CategoricalNB])
 def test_discretenb_provide_prior_with_partial_fit(cls):
     # Test whether discrete NB classes use provided prior
     # when using partial_fit
@@ -356,7 +389,7 @@ def test_discretenb_provide_prior_with_partial_fit(cls):
                                   clf_partial.class_log_prior_)
 
 
-@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB])
+@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB, CategoricalNB])
 def test_discretenb_sample_weight_multiclass(cls):
     # check shape consistency for number of samples at fit time
     X = [
@@ -371,13 +404,14 @@ def test_discretenb_sample_weight_multiclass(cls):
     clf = cls().fit(X, y, sample_weight=sample_weight)
     assert_array_equal(clf.predict(X), [0, 1, 1, 2])
 
-    # Check sample weight using the partial_fit method
-    clf = cls()
-    clf.partial_fit(X[:2], y[:2], classes=[0, 1, 2],
-                    sample_weight=sample_weight[:2])
-    clf.partial_fit(X[2:3], y[2:3], sample_weight=sample_weight[2:3])
-    clf.partial_fit(X[3:], y[3:], sample_weight=sample_weight[3:])
-    assert_array_equal(clf.predict(X), [0, 1, 1, 2])
+    if cls is not CategoricalNB:
+        # Check sample weight using the partial_fit method
+        clf = cls()
+        clf.partial_fit(X[:2], y[:2], classes=[0, 1, 2],
+                        sample_weight=sample_weight[:2])
+        clf.partial_fit(X[2:3], y[2:3], sample_weight=sample_weight[2:3])
+        clf.partial_fit(X[3:], y[3:], sample_weight=sample_weight[3:])
+        assert_array_equal(clf.predict(X), [0, 1, 1, 2])
 
 
 @pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB])
@@ -641,11 +675,6 @@ def test_catnb():
 
     # Assert category_count has counted all features
     assert len(clf.category_count_) == X3.shape[1]
-
-    # Assert partial_fit throws NotImplementedError
-    error_msg = "Partial Fitting is not implemented for CategoricalNB"
-    with pytest.raises(NotImplementedError, match=error_msg):
-        clf.partial_fit(X3, y3)
 
     # Check sample_weight
     X = np.array([[0, 0], [0, 0], [1, 1]])
