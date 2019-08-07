@@ -96,8 +96,8 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                         msg = ("Found unknown categories {0} in column {1}"
                                " during fit".format(diff, i))
                         raise ValueError(msg)
-                if handle_unknown == 'virtual':
-                    cats.append([None])
+            if handle_unknown == 'virtual':
+                cats = np.append(cats, None)
             self.categories_.append(cats)
 
     def _transform(self, X, handle_unknown='error'):
@@ -561,11 +561,11 @@ class OrdinalEncoder(_BaseEncoder):
         Desired dtype of output.
 
     handle_unknown : 'error' or 'virtual', default='error'.
-        Whether to raise an error or to create a virtual cagetory if an unknown 
-        categorical feature is present during transform (default is to raise). 
-        When this parameter is set to 'virtual' and an unknown category is 
+        Whether to raise an error or to create a virtual cagetory if an unknown
+        categorical feature is present during transform (default is to raise).
+        When this parameter is set to 'virtual' and an unknown category is
         encountered during transform, an additional ordinal value will be
-        appended to the existing values, at the final ordinal positon. In the 
+        appended to the existing values, at the final ordinal positon. In the
         inverse transform, an unknown category will be denoted as None.
 
     Attributes
@@ -596,21 +596,20 @@ class OrdinalEncoder(_BaseEncoder):
            ['Female', 2]], dtype=object)
 
     >>> encvirtual = OrdinalEncoder(handle_unknown='virtual')
-    >>> X = [["Red","Coffee"], ["Green","Tea"],  ["Blue","Water"]]
+    >>> X = [['Red','Coffee'], ['Green','Tea'],  ['Blue','Water']]
     >>> encvirtual.fit(X)
     ... # doctest: +ELLIPSIS
-    OrdinalEncoder(categories='auto', dtype=<... 'numpy.float64'>,
-        handle_unknown='virtual')
-    >>> encvirtual.transform([["Red","Coffee"], ["Green","Tea"]])
+    OrdinalEncoder(handle_unknown='virtual')
+    >>> encvirtual.transform([['Red','Coffee'], ['Green','Tea']])
     array([[2., 0.],
            [1., 1.]])
-    >>> encvirtual.transform([["Purple","Coffee"], ["Green","Tea"]])
+    >>> encvirtual.transform([['Purple','Coffee'], ['Green','Tea']])
     array([[3., 0.],
            [1., 1.]])
 
     >>> encvirtual.inverse_transform([[3, 0], [1, 1]])
-    array([[None, "Coffee"],
-           ["Green","Tea"]], dtype=object)
+    array([[None, 'Coffee'],
+           ['Green', 'Tea']], dtype=object)
 
 
     See also
@@ -621,7 +620,12 @@ class OrdinalEncoder(_BaseEncoder):
       between 0 and n_classes-1.
     """
 
-    def __init__(self, categories='auto', dtype=np.float64, handle_unknown="error"):
+    def __init__(
+            self,
+            categories='auto',
+            dtype=np.float64,
+            handle_unknown="error"
+            ):
         self.categories = categories
         self.dtype = dtype
         self.handle_unknown = handle_unknown
@@ -639,7 +643,12 @@ class OrdinalEncoder(_BaseEncoder):
         self
 
         """
-        self._fit(X)
+        if self.handle_unknown not in ('error', 'virtual'):
+            msg = ("handle_unknown should be either 'error' or 'virtual', "
+                   "got {0}.".format(self.handle_unknown))
+            raise ValueError(msg)
+
+        self._fit(X, handle_unknown=self.handle_unknown)
 
         return self
 
