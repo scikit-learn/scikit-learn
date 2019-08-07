@@ -15,13 +15,13 @@ import warnings
 import numpy as np
 from scipy import linalg, interpolate
 from scipy.linalg.lapack import get_lapack_funcs
+from joblib import Parallel, delayed
 
 from .base import LinearModel
 from ..base import RegressorMixin, MultiOutputMixin
 from ..utils import arrayfuncs, as_float_array, check_X_y
 from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
-from ..utils._joblib import Parallel, delayed
 
 SOLVE_TRIANGULAR_ARGS = {'check_finite': False}
 
@@ -835,11 +835,8 @@ class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
     >>> from sklearn import linear_model
     >>> reg = linear_model.Lars(n_nonzero_coefs=1)
     >>> reg.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111])
-    ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    Lars(copy_X=True, eps=..., fit_intercept=True, fit_path=True,
-       n_nonzero_coefs=1, normalize=True, precompute='auto',
-       verbose=False)
-    >>> print(reg.coef_) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    Lars(n_nonzero_coefs=1)
+    >>> print(reg.coef_)
     [ 0. -1.11...]
 
     See also
@@ -1068,11 +1065,8 @@ class LassoLars(Lars):
     >>> from sklearn import linear_model
     >>> reg = linear_model.LassoLars(alpha=0.01)
     >>> reg.fit([[-1, 1], [0, 0], [1, 1]], [-1, 0, -1])
-    ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    LassoLars(alpha=0.01, copy_X=True, eps=..., fit_intercept=True,
-         fit_path=True, max_iter=500, normalize=True, positive=False,
-         precompute='auto', verbose=False)
-    >>> print(reg.coef_) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    LassoLars(alpha=0.01)
+    >>> print(reg.coef_)
     [ 0.         -0.963257...]
 
     See also
@@ -1327,7 +1321,7 @@ class LarsCV(Lars):
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(n_samples=200, noise=4.0, random_state=0)
     >>> reg = LarsCV(cv=5).fit(X, y)
-    >>> reg.score(X, y) # doctest: +ELLIPSIS
+    >>> reg.score(X, y)
     0.9996...
     >>> reg.alpha_
     0.0254...
@@ -1553,7 +1547,7 @@ class LassoLarsCV(LarsCV):
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(noise=4.0, random_state=0)
     >>> reg = LassoLarsCV(cv=5).fit(X, y)
-    >>> reg.score(X, y) # doctest: +ELLIPSIS
+    >>> reg.score(X, y)
     0.9992...
     >>> reg.alpha_
     0.0484...
@@ -1692,11 +1686,8 @@ class LassoLarsIC(LassoLars):
     >>> from sklearn import linear_model
     >>> reg = linear_model.LassoLarsIC(criterion='bic')
     >>> reg.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111])
-    ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    LassoLarsIC(copy_X=True, criterion='bic', eps=..., fit_intercept=True,
-          max_iter=500, normalize=True, positive=False, precompute='auto',
-          verbose=False)
-    >>> print(reg.coef_) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    LassoLarsIC(criterion='bic')
+    >>> print(reg.coef_)
     [ 0.  -1.11...]
 
     Notes

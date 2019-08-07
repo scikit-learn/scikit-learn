@@ -15,10 +15,7 @@ import functools
 
 import pytest
 
-from sklearn.utils.testing import clean_warning_registry
 from sklearn.utils.testing import all_estimators
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning, SkipTestWarning
 
@@ -26,16 +23,15 @@ import sklearn
 from sklearn.base import RegressorMixin
 from sklearn.cluster.bicluster import BiclusterMixin
 
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.linear_model import Ridge
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.utils import IS_PYPY
 from sklearn.utils.estimator_checks import (
     _yield_all_checks,
     _safe_tags,
     set_checking_parameters,
     check_parameters_default_constructible,
-    check_no_attributes_set_in_init,
     check_class_weight_balanced_linear_classifier)
 
 
@@ -114,22 +110,6 @@ def test_estimators(estimator, check):
         check(name, estimator)
 
 
-@pytest.mark.parametrize("name, estimator",
-                         _tested_estimators())
-def test_no_attributes_set_in_init(name, estimator):
-    # input validation etc for all estimators
-    with ignore_warnings(category=(DeprecationWarning, ConvergenceWarning,
-                                   UserWarning, FutureWarning)):
-        tags = _safe_tags(estimator)
-        if tags['_skip_test']:
-            warnings.warn("Explicit SKIP via _skip_test tag for "
-                          "{}.".format(name),
-                          SkipTestWarning)
-            return
-        # check this on class
-        check_no_attributes_set_in_init(name, estimator)
-
-
 @ignore_warnings(category=DeprecationWarning)
 # ignore deprecated open(.., 'U') in numpy distutils
 def test_configure():
@@ -155,7 +135,6 @@ def test_configure():
         old_env = os.getenv('SKLEARN_NO_OPENMP')
         os.environ['SKLEARN_NO_OPENMP'] = "True"
 
-        clean_warning_registry()
         with warnings.catch_warnings():
             # The configuration spits out warnings when not finding
             # Blas/Atlas development headers
@@ -174,7 +153,6 @@ def test_configure():
 def _tested_linear_classifiers():
     classifiers = all_estimators(type_filter='classifier')
 
-    clean_warning_registry()
     with warnings.catch_warnings(record=True):
         for name, clazz in classifiers:
             required_parameters = getattr(clazz, "_required_parameters", [])
@@ -220,7 +198,7 @@ def test_root_import_all_completeness():
                                                onerror=lambda _: None):
         if '.' in modname or modname.startswith('_') or modname in EXCEPTIONS:
             continue
-        assert_in(modname, sklearn.__all__)
+        assert modname in sklearn.__all__
 
 
 def test_all_tests_are_importable():
@@ -239,7 +217,8 @@ def test_all_tests_are_importable():
                      if ispkg
                      and not HAS_TESTS_EXCEPTIONS.search(name)
                      and name + '.tests' not in lookup]
-    assert_equal(missing_tests, [],
-                 '{0} do not have `tests` subpackages. Perhaps they require '
-                 '__init__.py or an add_subpackage directive in the parent '
-                 'setup.py'.format(missing_tests))
+    assert missing_tests == [], ('{0} do not have `tests` subpackages. '
+                                 'Perhaps they require '
+                                 '__init__.py or an add_subpackage directive '
+                                 'in the parent '
+                                 'setup.py'.format(missing_tests))

@@ -11,12 +11,12 @@ from math import sqrt
 import numpy as np
 from scipy import linalg
 from scipy.linalg.lapack import get_lapack_funcs
+from joblib import Parallel, delayed
 
 from .base import LinearModel, _pre_fit
 from ..base import RegressorMixin, MultiOutputMixin
 from ..utils import as_float_array, check_array, check_X_y
 from ..model_selection import check_cv
-from ..utils._joblib import Parallel, delayed
 
 premature = """ Orthogonal matching pursuit ended prematurely due to linear
 dependence in the dictionary. The requested precision might not have been met.
@@ -589,7 +589,7 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin, MultiOutputMixin):
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(noise=4, random_state=0)
     >>> reg = OrthogonalMatchingPursuit().fit(X, y)
-    >>> reg.score(X, y) # doctest: +ELLIPSIS
+    >>> reg.score(X, y)
     0.9991...
     >>> reg.predict(X[:1,])
     array([-78.3854...])
@@ -833,7 +833,7 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
     >>> X, y = make_regression(n_features=100, n_informative=10,
     ...                        noise=4, random_state=0)
     >>> reg = OrthogonalMatchingPursuitCV(cv=5).fit(X, y)
-    >>> reg.score(X, y) # doctest: +ELLIPSIS
+    >>> reg.score(X, y)
     0.9991...
     >>> reg.n_nonzero_coefs_
     10
