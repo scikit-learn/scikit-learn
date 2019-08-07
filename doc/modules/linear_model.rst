@@ -733,8 +733,8 @@ of a single trial are modeled using a
 `logistic function <https://en.wikipedia.org/wiki/Logistic_function>`_.
 
 Logistic regression is implemented in :class:`LogisticRegression`.
-This implementation can fit binary, One-vs-Rest, or multinomial logistic 
-regression with optional :math:`\ell_1`, :math:`\ell_2` or Elastic-Net 
+This implementation can fit binary, One-vs-Rest, or multinomial logistic
+regression with optional :math:`\ell_1`, :math:`\ell_2` or Elastic-Net
 regularization.
 
 .. note::
@@ -946,18 +946,19 @@ it is convenient to apply a link function different from the identity link
 log-link with :math:`h(x^\top w)=\exp(x^\top w)`.
 
 :class:`linear_model.TweedieRegressor` implements a generalized linear model
-for the Tweedie distribution, that allows to model any of the above mentionned
-distribution using the appropriate power parameter `p`,
+for the Tweedie distribution, that allows to model any of the above mentioned
+distributions using the appropriate power parameter `p`,
 
  - `p = 0`: Normal distribution. Specialized solvers such as
    :class:`linear_model.Ridge`, :class:`linear_model.ElasticNet` are generally
    more appropriate in this case.
 
  - `p = 1`: Poisson distribution. :class:`PoissonRegressor` is exposed for
-   convenience however it is strictly equivalent to `TweedieRegressor(power=1)`.
+   convenience. However, it is strictly equivalent to
+   `TweedieRegressor(power=1)`.
 
  - `p = 2`: Gamma distribution. :class:`GammaRegressor` is exposed for
-   convenience however it is strictly equivalent to
+   convenience. However, it is strictly equivalent to
    `TweedieRegressor(power=2)`.
 
  - `p = 3`: Inverse Gamma distribution.

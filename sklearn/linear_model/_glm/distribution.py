@@ -224,7 +224,7 @@ class TweedieDistribution(ExponentialDispersionModel):
     ===== ================
     0     Normal
     1     Poisson
-    (0,1) Compound Poisson
+    (1,2) Compound Poisson
     2     Gamma
     3     Inverse Gaussian
 
