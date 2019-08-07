@@ -261,10 +261,7 @@ def mean_squared_error(y_true, y_pred,
             multioutput = None
 
     mse = np.average(output_errors, weights=multioutput)
-    if not squared:
-        return np.sqrt(mse)
-    else:
-        return mse
+    return mse if squared else np.sqrt(mse)
 
 
 def mean_squared_log_error(y_true, y_pred,
