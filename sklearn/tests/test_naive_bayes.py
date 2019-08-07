@@ -648,11 +648,11 @@ def test_catnb():
         clf.partial_fit(X3, y3)
 
     # Check sample_weight
-    X = np.array([[1, 3], [1, 3], [2, 4]])
+    X = np.array([[0, 0], [0, 0], [1, 1]])
     y = np.array([1, 2, 2])
     clf = CategoricalNB(alpha=1, fit_prior=False)
     clf.fit(X, y)
-    assert_array_equal(clf.predict(np.array([[1, 3]])), np.array([1]))
+    assert_array_equal(clf.predict(np.array([[0, 0]])), np.array([1]))
 
     sample_weight = np.array([0.25, 1., 0.5])
     clf = CategoricalNB(alpha=1, fit_prior=False)
@@ -661,7 +661,7 @@ def test_catnb():
                        np.array([[0.25, 0], [1.0, 0.5]]))
     assert_array_equal(clf.category_count_[1],
                        np.array([[0.25, 0], [1.0, 0.5]]))
-    assert_array_equal(clf.predict(np.array([[1, 3]])), np.array([2]))
+    assert_array_equal(clf.predict(np.array([[0, 0]])), np.array([2]))
 
 
 def test_alpha():

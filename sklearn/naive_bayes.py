@@ -27,7 +27,6 @@ from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize
 from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
-from .preprocessing import OrdinalEncoder
 from .utils import check_X_y, check_array, check_consistent_length
 from .utils.extmath import safe_sparse_dot
 from .utils.fixes import logsumexp
@@ -1057,10 +1056,6 @@ class CategoricalNB(BaseDiscreteNB):
         for each feature. Each array provides the number of samples
         encountered for each class and category of the specific feature.
 
-    encoder_ : instance of OrdinalEncoder
-        Stores the mapping from category to index for all categories of the
-        training set.
-
     n_features_ : int
         Number of features of each sample.
 
@@ -1122,7 +1117,6 @@ class CategoricalNB(BaseDiscreteNB):
     def _init_counters(self, n_effective_classes, n_features):
         self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
         self.category_count_ = []
-        self.encoder_ = OrdinalEncoder()
 
     def _count(self, X, Y):
         def _update_cat_count(X_feature, Y, cat_count, n_classes):
@@ -1144,13 +1138,11 @@ class CategoricalNB(BaseDiscreteNB):
             return indices, n_feature_class
 
         self.class_count_ += Y.sum(axis=0)
-        self.encoder_.fit(X)
-        X_enc = self.encoder_.transform(X).astype(int)
         for i in range(self.n_features_):
-            X_feature = X_enc[:, i]
+            X_feature = X[:, i]
             self.category_count_.append(
                 np.zeros((self.class_count_.shape[0],
-                          self.encoder_.categories_[i].size)))
+                          X_feature.max()+1)))
             _update_cat_count(X_feature, Y,
                               self.category_count_[i],
                               self.class_count_.shape[0])
@@ -1169,9 +1161,8 @@ class CategoricalNB(BaseDiscreteNB):
             raise ValueError("Expected input with %d features, got %d instead"
                              .format(self.n_features_, X.shape[1]))
         jll = np.zeros((X.shape[0], self.class_count_.shape[0]))
-        X_enc = self.encoder_.transform(X).astype(int)
         for i in range(self.n_features_):
-            indices = X_enc[:, i]
+            indices = X[:, i]
             jll += self.feature_log_prob_[i][:, indices].T
         total_ll = jll + self.class_log_prior_
         return total_ll
