@@ -9,46 +9,20 @@
     </style>
     <tr>
     <td>
-    <a href='https://github.com/mblondel'><img src='https://avatars2.githubusercontent.com/u/233706?v=4' class='avatar' /></a> <br />
-    <p>Mathieu Blondel</p>
+    <a href='https://github.com/jeremiedbb'><img src='https://avatars2.githubusercontent.com/u/34657725?v=4' class='avatar' /></a> <br />
+    <p>Jérémie Du Boisberranger</p>
     </td>
     <td>
     <a href='https://github.com/jorisvandenbossche'><img src='https://avatars2.githubusercontent.com/u/1020496?v=4' class='avatar' /></a> <br />
     <p>Joris Van den Bossche</p>
     </td>
     <td>
-    <a href='https://github.com/larsmans'><img src='https://avatars1.githubusercontent.com/u/335383?v=4' class='avatar' /></a> <br />
-    <p>Lars Buitinck</p>
-    </td>
-    <td>
-    <a href='https://github.com/ndawe'><img src='https://avatars1.githubusercontent.com/u/202816?v=4' class='avatar' /></a> <br />
-    <p>Noel Dawe</p>
-    </td>
-    <td>
-    <a href='https://github.com/lucidfrontier45'><img src='https://avatars2.githubusercontent.com/u/655305?v=4' class='avatar' /></a> <br />
-    <p>Shiqiao Du</p>
-    </td>
-    <td>
-    <a href='https://github.com/duchesnay'><img src='https://avatars1.githubusercontent.com/u/344402?v=4' class='avatar' /></a> <br />
-    <p>Edouard Duchesnay</p>
-    </td>
-    <td>
     <a href='https://github.com/lesteve'><img src='https://avatars1.githubusercontent.com/u/1680079?v=4' class='avatar' /></a> <br />
     <p>Loïc Estève</p>
     </td>
-    </tr>
-    <tr>
     <td>
     <a href='https://github.com/thomasjpfan'><img src='https://avatars2.githubusercontent.com/u/5402633?v=4' class='avatar' /></a> <br />
     <p>Thomas J Fan</p>
-    </td>
-    <td>
-    <a href='https://github.com/satra'><img src='https://avatars2.githubusercontent.com/u/184063?v=4' class='avatar' /></a> <br />
-    <p>Satrajit Ghosh</p>
-    </td>
-    <td>
-    <a href=''><img src='https://avatars2.githubusercontent.com/u/365630?v=4' class='avatar' /></a> <br />
-    <p>Angel Soler Gollonet</p>
     </td>
     <td>
     <a href='https://github.com/agramfort'><img src='https://avatars2.githubusercontent.com/u/161052?v=4' class='avatar' /></a> <br />
@@ -57,10 +31,6 @@
     <td>
     <a href='https://github.com/ogrisel'><img src='https://avatars0.githubusercontent.com/u/89061?v=4' class='avatar' /></a> <br />
     <p>Olivier Grisel</p>
-    </td>
-    <td>
-    <a href='https://github.com/jaquesgrobler'><img src='https://avatars3.githubusercontent.com/u/1378870?v=4' class='avatar' /></a> <br />
-    <p>Jaques Grobler</p>
     </td>
     <td>
     <a href='https://github.com/yarikoptic'><img src='https://avatars3.githubusercontent.com/u/39889?v=4' class='avatar' /></a> <br />
@@ -77,42 +47,12 @@
     <p>Adrin Jalali</p>
     </td>
     <td>
-    <a href='https://github.com/arjoly'><img src='https://avatars0.githubusercontent.com/u/1274722?v=4' class='avatar' /></a> <br />
-    <p>Arnaud Joly</p>
-    </td>
-    <td>
-    <a href='https://github.com/thouis'><img src='https://avatars1.githubusercontent.com/u/473043?v=4' class='avatar' /></a> <br />
-    <p>Thouis (Ray) Jones</p>
-    </td>
-    <td>
-    <a href='https://github.com/MechCoder'><img src='https://avatars3.githubusercontent.com/u/1867024?v=4' class='avatar' /></a> <br />
-    <p>Manoj Kumar</p>
-    </td>
-    <td>
     <a href='https://github.com/glemaitre'><img src='https://avatars2.githubusercontent.com/u/7454015?v=4' class='avatar' /></a> <br />
     <p>Guillaume Lemaitre</p>
     </td>
     <td>
-    <a href='https://github.com/weilinear'><img src='https://avatars0.githubusercontent.com/u/2232328?v=4' class='avatar' /></a> <br />
-    <p>Wei Li</p>
-    </td>
-    </tr>
-    <tr>
-    <td>
-    <a href='https://github.com/paolo-losi'><img src='https://avatars1.githubusercontent.com/u/264906?v=4' class='avatar' /></a> <br />
-    <p>Paolo Losi</p>
-    </td>
-    <td>
-    <a href='https://github.com/glouppe'><img src='https://avatars3.githubusercontent.com/u/477771?v=4' class='avatar' /></a> <br />
-    <p>Gilles Louppe</p>
-    </td>
-    <td>
     <a href='https://github.com/jmetzen'><img src='https://avatars1.githubusercontent.com/u/1116263?v=4' class='avatar' /></a> <br />
     <p>Jan Hendrik Metzen</p>
-    </td>
-    <td>
-    <a href='https://github.com/jarrodmillman'><img src='https://avatars1.githubusercontent.com/u/123428?v=4' class='avatar' /></a> <br />
-    <p>Jarrod Millman</p>
     </td>
     <td>
     <a href='https://github.com/amueller'><img src='https://avatars3.githubusercontent.com/u/449558?v=4' class='avatar' /></a> <br />
@@ -129,20 +69,8 @@
     </tr>
     <tr>
     <td>
-    <a href='https://github.com/fabianp'><img src='https://avatars3.githubusercontent.com/u/277639?v=4' class='avatar' /></a> <br />
-    <p>Fabian Pedregosa</p>
-    </td>
-    <td>
-    <a href='https://github.com/pprett'><img src='https://avatars0.githubusercontent.com/u/111730?v=4' class='avatar' /></a> <br />
-    <p>Peter Prettenhofer</p>
-    </td>
-    <td>
     <a href='https://github.com/qinhanmin2014'><img src='https://avatars2.githubusercontent.com/u/12003569?v=4' class='avatar' /></a> <br />
     <p>Hanmin Qin</p>
-    </td>
-    <td>
-    <a href='https://github.com/jmschrei'><img src='https://avatars2.githubusercontent.com/u/3916816?v=4' class='avatar' /></a> <br />
-    <p>Jacob Schreiber</p>
     </td>
     <td>
     <a href='https://github.com/bthirion'><img src='https://avatars1.githubusercontent.com/u/234454?v=4' class='avatar' /></a> <br />
@@ -156,8 +84,6 @@
     <a href='https://github.com/NelleV'><img src='https://avatars0.githubusercontent.com/u/184798?v=4' class='avatar' /></a> <br />
     <p>Nelle Varoquaux</p>
     </td>
-    </tr>
-    <tr>
     <td>
     <a href='https://github.com/GaelVaroquaux'><img src='https://avatars3.githubusercontent.com/u/208217?v=4' class='avatar' /></a> <br />
     <p>Gael Varoquaux</p>

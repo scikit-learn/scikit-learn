@@ -2,7 +2,6 @@
 #cython: boundscheck=False
 #cython: wraparound=False
 #cython: cdivision=True
-# cython: language_level=3
 
 # By Jake Vanderplas (2013) <jakevdp@cs.washington.edu>
 # written for the scikit-learn project

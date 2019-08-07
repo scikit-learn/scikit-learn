@@ -1,5 +1,4 @@
 """Common tests for metaestimators"""
-import pytest
 import functools
 
 import numpy as np
@@ -46,7 +45,6 @@ DELEGATING_METAESTIMATORS = [
 ]
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_metaestimator_delegation():
     # Ensures specified metaestimators have methods iff subestimator does
     def hides(method):

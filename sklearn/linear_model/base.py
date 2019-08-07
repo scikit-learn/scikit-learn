@@ -22,8 +22,8 @@ import scipy.sparse as sp
 from scipy import linalg
 from scipy import sparse
 from scipy.special import expit
+from joblib import Parallel, delayed
 
-from ..utils._joblib import Parallel, delayed
 from ..base import (BaseEstimator, ClassifierMixin, RegressorMixin,
                     MultiOutputMixin)
 from ..utils import check_array, check_X_y
@@ -35,7 +35,6 @@ from ..utils.fixes import sparse_lsqr
 from ..utils.seq_dataset import ArrayDataset32, CSRDataset32
 from ..utils.seq_dataset import ArrayDataset64, CSRDataset64
 from ..utils.validation import check_is_fitted
-from ..exceptions import NotFittedError
 from ..preprocessing.data import normalize as f_normalize
 
 # TODO: bayesian_ridge_regression and bayesian_regression_ard
@@ -92,6 +91,7 @@ def make_dataset(X, y, sample_weight, random_state=None):
                           seed=seed)
         intercept_decay = SPARSE_INTERCEPT_DECAY
     else:
+        X = np.ascontiguousarray(X)
         dataset = ArrayData(X, y, sample_weight, seed=seed)
         intercept_decay = 1.0
 
@@ -258,9 +258,7 @@ class LinearClassifierMixin(ClassifierMixin):
             case, confidence score for self.classes_[1] where >0 means this
             class would be predicted.
         """
-        if not hasattr(self, 'coef_') or self.coef_ is None:
-            raise NotFittedError("This %(name)s instance is not fitted "
-                                 "yet" % {'name': type(self).__name__})
+        check_is_fitted(self, 'coef_')
 
         X = check_array(X, accept_sparse='csr')
 
@@ -401,8 +399,15 @@ class LinearRegression(LinearModel, RegressorMixin, MultiOutputMixin):
         is a 2D array of shape (n_targets, n_features), while if only
         one target is passed, this is a 1D array of length n_features.
 
-    intercept_ : array
-        Independent term in the linear model.
+    rank_ : int
+        Rank of matrix `X`. Only available when `X` is dense.
+
+    singular_ : array, shape (min(X, y),)
+        Singular values of `X`. Only available when `X` is dense.
+
+    intercept_ : float | array, shape = (n_targets,)
+        Independent term in the linear model. Set to 0.0 if
+        `fit_intercept = False`.
 
     Examples
     --------
@@ -416,7 +421,7 @@ class LinearRegression(LinearModel, RegressorMixin, MultiOutputMixin):
     1.0
     >>> reg.coef_
     array([1., 2.])
-    >>> reg.intercept_ # doctest: +ELLIPSIS
+    >>> reg.intercept_
     3.0000...
     >>> reg.predict(np.array([[3, 5]]))
     array([16.])

@@ -53,8 +53,7 @@ from .utils.multiclass import (_check_partial_fit_first_call,
                                _ovr_decision_function)
 from .utils.metaestimators import _safe_split, if_delegate_has_method
 
-from .utils._joblib import Parallel
-from .utils._joblib import delayed
+from joblib import Parallel, delayed
 
 __all__ = [
     "OneVsRestClassifier",
@@ -287,11 +286,6 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
             Predicted multi-class targets.
         """
         check_is_fitted(self, 'estimators_')
-        if (hasattr(self.estimators_[0], "decision_function") and
-                is_classifier(self.estimators_[0])):
-            thresh = 0
-        else:
-            thresh = .5
 
         n_samples = _num_samples(X)
         if self.label_binarizer_.y_type_ == "multiclass":
@@ -302,8 +296,13 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
                 pred = _predict_binary(e, X)
                 np.maximum(maxima, pred, out=maxima)
                 argmaxima[maxima == pred] = i
-            return self.classes_[np.array(argmaxima.T)]
+            return self.classes_[argmaxima]
         else:
+            if (hasattr(self.estimators_[0], "decision_function") and
+                    is_classifier(self.estimators_[0])):
+                thresh = 0
+            else:
+                thresh = .5
             indices = array.array('i')
             indptr = array.array('i', [0])
             for e in self.estimators_:
@@ -465,11 +464,15 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
     Attributes
     ----------
-    estimators_ : list of `n_classes * (n_classes - 1) / 2` estimators
+    estimators_ : list of ``n_classes * (n_classes - 1) / 2`` estimators
         Estimators used for predictions.
 
     classes_ : numpy array of shape [n_classes]
         Array containing labels.
+
+    pairwise_indices_ : list, length = ``len(estimators_)``, or ``None``
+        Indices of samples used when training the estimators.
+        ``None`` when ``estimator`` does not have ``_pairwise`` attribute.
     """
 
     def __init__(self, estimator, n_jobs=None):
@@ -505,11 +508,8 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             for i in range(n_classes) for j in range(i + 1, n_classes)))))
 
         self.estimators_ = estimators_indices[0]
-        try:
-            self.pairwise_indices_ = (
-                estimators_indices[1] if self._pairwise else None)
-        except AttributeError:
-            self.pairwise_indices_ = None
+        self.pairwise_indices_ = (
+            estimators_indices[1] if self._pairwise else None)
 
         return self
 
@@ -629,10 +629,6 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     def _pairwise(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
         return getattr(self.estimator, "_pairwise", False)
-
-    def _more_tags(self):
-        # FIXME Remove once #10440 is merged
-        return {'_skip_test': True}
 
 
 class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
