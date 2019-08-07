@@ -193,8 +193,24 @@ def _array_indexing(array, key, axis):
     return array[key] if axis == 0 else array[:, key]
 
 
-def _pandas_indexing(X, key, axis, by_name):
+def _pandas_indexing(X, key, axis):
     """Index a pandas dataframe or a series."""
+    # check whether we should index with loc or iloc
+    if _check_key_type(key, int):
+        by_name = False
+    elif _check_key_type(key, str):
+        by_name = True
+    elif _check_key_type(key, bool):
+        # boolean mask
+        by_name = False
+        if hasattr(X, 'loc'):
+            # pandas boolean masks don't work with iloc, so take loc path
+            by_name = True
+    else:
+        raise ValueError("No valid specification of the columns. Only a "
+                         "scalar, list or slice of all integers or all "
+                         "strings, or boolean mask is allowed")
+
     if hasattr(key, 'shape'):
         # Work-around for indexing with read-only key in pandas
         # FIXME: solved in pandas 0.25
@@ -238,7 +254,14 @@ def _check_key_type(key, superclass):
         return (isinstance(key.start, (superclass, type(None))) and
                 isinstance(key.stop, (superclass, type(None))))
     if isinstance(key, list):
-        return all(isinstance(x, superclass) for x in set(key))
+        unique_key = set(key)
+        all_superclass = all(isinstance(x, superclass) for x in unique_key)
+        if superclass != int:
+            return all_superclass
+        # bool is a subclass of int, therefore we should check specifically for
+        # any bool
+        any_bool = any(isinstance(x, bool) for x in unique_key)
+        return all_superclass and not any_bool
     if hasattr(key, 'dtype'):
         if superclass is int:
             return key.dtype.kind == 'i'
@@ -285,25 +308,19 @@ def safe_indexing(X, indices, axis=0):
     """
     if indices is None:
         return X
-    if _check_key_type(indices, int):
-        by_name = False
-    elif _check_key_type(indices, str):
-        by_name = True
-    elif _check_key_type(indices, bool):
-        # boolean mask
-        by_name = False
-        if hasattr(X, 'loc'):
-            # pandas boolean masks don't work with iloc, so take loc path
-            by_name = True
-    else:
-        raise ValueError("No valid specification of the columns. Only a "
-                         "scalar, list or slice of all integers or all "
-                         "strings, or boolean mask is allowed")
 
     if axis not in (0, 1):
         raise ValueError(
             "'axis' should be either 0 (to index rows) or 1 (to index "
             " column). Got {} instead.".format(axis)
+        )
+
+    if (axis == 0 and not
+            (isinstance(indices, Iterable) and _check_key_type(indices, int) or
+             isinstance(indices, int))):
+        raise ValueError(
+            "'axis=0' only support integer array-like or scalar integer "
+            "as indices. Got {} instead.".format(indices)
         )
 
     if axis == 1 and X.ndim != 2:
@@ -313,12 +330,14 @@ def safe_indexing(X, indices, axis=0):
             "Got {} instead with {} dimension(s).".format(type(X), X.ndim)
         )
 
-    if by_name and not hasattr(X, 'loc'):
-        raise ValueError("Specifying the columns using strings is only "
-                         "supported for pandas DataFrames")
+    if axis == 1 and _check_key_type(indices, str) and not hasattr(X, 'loc'):
+        raise ValueError(
+            "Specifying the columns using strings is only supported for "
+            "pandas DataFrames"
+        )
 
     if hasattr(X, "iloc"):
-        return _pandas_indexing(X, indices, axis=axis, by_name=by_name)
+        return _pandas_indexing(X, indices, axis=axis)
     elif hasattr(X, "shape"):
         return _array_indexing(X, indices, axis=axis)
     else:
