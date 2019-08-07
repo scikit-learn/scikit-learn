@@ -1167,13 +1167,12 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         solvers ('sgd', 'adam'), note that this determines the number of epochs
         (how many times each data point will be used), not the number of
         gradient steps.
-        
-    loss : {'squared_loss', 'mae_loss'}, default 'squared_loss'
-        Loss function for MLP Regressor
 
+    loss : {'squared_loss', 'mae_loss'}, default 'squared_loss'
+        Loss function for MLP Regressor.
         - 'squared_loss' uses `squared_loss` as the loss function.
-        
-        - 'mae_loss' uses `mean absolute error` as the loss function.
+
+        - 'mae_loss' uses `mean_absolute_error` as the loss function.
 
     shuffle : bool, optional, default True
         Whether to shuffle samples in each iteration. Only used when
