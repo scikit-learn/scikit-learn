@@ -185,18 +185,21 @@ References
 Nearest neighbors imputation
 ============================
 
-The :class:`KNNImputer` class provides imputation for filling in missing
-values using the k-Nearest Neighbors approach. By default, a euclidean distance
-metric that supports missing values,
-:func:`~sklearn.metrics.nan_euclidean_distances`, is used to find the
-nearest neighbors. Each missing feature is 
-imputed using values from ``n_neighbors`` nearest neighbors that have a value
-for the feature. The feature of the neighbors are averaged uniformly or
-weighted by distance to each neighbor. If a sample has more than one feature
-missing, then the neighbors for that sample can be different depending on the
-particular feature being imputed. When the number of neighbors is less
-than ``n_neighbors``, the training set average for that feature is used for
-imputation. For more information on the methodology, see ref. [OL2001]_.
+The :class:`KNNImputer` class provides imputation for filling in missing values
+using the k-Nearest Neighbors approach. By default, a euclidean distance metric
+that supports missing values, :func:`~sklearn.metrics.nan_euclidean_distances`,
+is used to find the nearest neighbors. Each missing feature is imputed using
+values from ``n_neighbors`` nearest neighbors that have a value for the
+feature. The feature of the neighbors are averaged uniformly or weighted by
+distance to each neighbor. If a sample has more than one feature missing, then
+the neighbors for that sample can be different depending on the particular
+feature being imputed. When the number of available neighbors is less than
+`n_neighbors` and there are no defined distances to the training set, the
+training set average for that feature is used during imputation. If there is at
+least one neighbor with a defined distance, the weighted or unweighted average
+of the remaining neighbors will be used during imputation. If a feature is
+always missing, it is removed during `transform`.For more information on the
+methodology, see ref. [OL2001]_.
 
 The following snippet demonstrates how to replace missing values,
 encoded as ``np.nan``, using the mean feature value of the two nearest
