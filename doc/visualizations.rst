@@ -41,7 +41,7 @@ method of the `Display` object.
     import matplotlib.pyplot as plt
     from sklearn.ensemble import RandomForestClassifier
 
-    rfc = DecisionTreeClassifier(random_state=42)
+    rfc = RandomForestClassifier(random_state=42)
     rfc.fit(X_train, y_train)
 
     ax = plt.gca()
@@ -63,7 +63,7 @@ values of the curves.
 Available Plotting Utilities
 ============================
 
-Fucntions
+Functions
 ---------
 
 .. currentmodule:: sklearn

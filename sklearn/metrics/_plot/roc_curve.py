@@ -146,7 +146,7 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
 
     if y_pred.ndim != 1:
         if y_pred.shape[1] > 2:
-            raise ValueError("Estimator must be a binary classifier")
+            raise ValueError("Estimator solve a binary classification problem")
         y_pred = y_pred[:, 1]
     fpr, tpr, _ = roc_curve(y, y_pred, pos_label=pos_label,
                             drop_intermediate=drop_intermediate)
