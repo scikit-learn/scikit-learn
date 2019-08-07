@@ -1037,7 +1037,7 @@ def _check_sample_weight(sample_weight, X, dtype=None):
     return sample_weight
 
 
-def deprecate_positional_args(f):
+def _deprecate_positional_args(f):
     """Decorator for methods that issues warnings for positional arguments
 
     Using the keyword-only argument syntax in pep 3102, arguments after the

@@ -41,7 +41,7 @@ from sklearn.utils.validation import (
     check_non_negative,
     _num_samples,
     check_scalar,
-    deprecate_positional_args,
+    _deprecate_positional_args,
     _check_sample_weight)
 import sklearn
 
@@ -902,53 +902,54 @@ def test_check_sample_weight():
     sample_weight = _check_sample_weight(None, X, dtype=X.dtype)
     assert sample_weight.dtype == np.float64
 
-    def test_deprecate_positional_args_warns_for_function():
 
-        @deprecate_positional_args
-        def f1(a, b, *, c=1, d=1):
+def test_deprecate_positional_args_warns_for_function():
+
+    @_deprecate_positional_args
+    def f1(a, b, *, c=1, d=1):
+        pass
+
+    with pytest.warns(DeprecationWarning,
+                      match=r"Pass c=3 as keyword args"):
+        f1(1, 2, 3)
+
+    with pytest.warns(DeprecationWarning,
+                      match=r"Pass c=3, d=4 as keyword args"):
+        f1(1, 2, 3, 4)
+
+    @_deprecate_positional_args
+    def f2(a=1, *, b=1, c=1, d=1):
+        pass
+
+    with pytest.warns(DeprecationWarning,
+                      match=r"Pass b=2 as keyword args"):
+        f2(1, 2)
+
+
+def test_deprecate_positional_args_warns_for_class():
+
+    class A1:
+        @_deprecate_positional_args
+        def __init__(self, a, b, *, c=1, d=1):
             pass
 
-        with pytest.warns(DeprecationWarning,
-                          match=r"Pass c=3 as keyword args"):
-            f1(1, 2, 3)
+    with pytest.warns(DeprecationWarning,
+                      match=r"Pass c=3 as keyword args"):
+        A1(1, 2, 3)
 
-        with pytest.warns(DeprecationWarning,
-                          match=r"Pass c=3, d=4 as keyword args"):
-            f1(1, 2, 3, 4)
+    with pytest.warns(DeprecationWarning,
+                      match=r"Pass c=3, d=4 as keyword args"):
+        A1(1, 2, 3, 4)
 
-        @deprecate_positional_args
-        def f2(a=1, *, b=1, c=1, d=1):
+    class A2:
+        @_deprecate_positional_args
+        def __init__(self, a=1, b=1, *, c=1, d=1):
             pass
 
-        with pytest.warns(DeprecationWarning,
-                          match=r"Pass b=2 as keyword args"):
-            f2(1, 2)
+    with pytest.warns(DeprecationWarning,
+                      match=r"Pass c=3 as keyword args"):
+        A2(1, 2, 3)
 
-
-    def test_deprecate_positional_args_warns_for_class():
-
-        class A1:
-            @deprecate_positional_args
-            def __init__(self, a, b, *, c=1, d=1):
-                pass
-
-        with pytest.warns(DeprecationWarning,
-                          match=r"Pass c=3 as keyword args"):
-            A1(1, 2, 3)
-
-        with pytest.warns(DeprecationWarning,
-                          match=r"Pass c=3, d=4 as keyword args"):
-            A1(1, 2, 3, 4)
-
-        class A2:
-            @deprecate_positional_args
-            def __init__(self, a=1, b=1, *, c=1, d=1):
-                pass
-
-        with pytest.warns(DeprecationWarning,
-                          match=r"Pass c=3 as keyword args"):
-            A2(1, 2, 3)
-
-        with pytest.warns(DeprecationWarning,
-                          match=r"Pass c=3, d=4 as keyword args"):
-            A2(1, 2, 3, 4)
+    with pytest.warns(DeprecationWarning,
+                      match=r"Pass c=3, d=4 as keyword args"):
+        A2(1, 2, 3, 4)
