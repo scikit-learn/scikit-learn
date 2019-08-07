@@ -796,8 +796,8 @@ def test_gower_distances():
     D_expected = np.zeros((n_rows, n_rows))
     for i in range(0, n_rows):
         for j in range(0, n_rows):
-            D_expected[i][j] = ([1, 0][np.equals(X[i][0], X[j][0])] +
-                                [1, 0][np.equal(X[i][1], X[j][1])]) / n_cols
+            D_expected[i][j] = ([1, 0][X[i][0] == X[j][0]] +
+                                [1, 0][X[i][1] == X[j][1]]) / n_cols
     assert_array_almost_equal(D_expected, D)
 
     # Test X and Y with diferent ranges of numeric values, categorical values,
