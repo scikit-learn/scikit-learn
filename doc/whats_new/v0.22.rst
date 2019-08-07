@@ -45,6 +45,7 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+
 :mod:`sklearn.base`
 ...................
 
@@ -143,11 +144,16 @@ Changelog
   :pr:`14114` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.feature_extraction`
-.......................
+.................................
 
 - |Fix| Functions created by build_preprocessor and build_analyzer of
   :class:`feature_extraction.text.VectorizerMixin` can now be pickled.
   :pr:`14430` by :user:`Dillon Niederhut <deniederhut>`.
+
+- |API| Deprecated unused `copy` param for
+  :meth: `feature_extraction.text.TfidfVectorizer.transform` it will be
+  removed in v0.24. :pr:`14520` by
+  :user:`Guillem G. Subies <guillemgsubies>`.
 
 :mod:`sklearn.gaussian_process`
 ...............................
