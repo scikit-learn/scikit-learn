@@ -10,8 +10,6 @@ from scipy import stats
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_less
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
@@ -44,11 +42,11 @@ def test_gs():
     W, _, _ = np.linalg.svd(rng.randn(10, 10))
     w = rng.randn(10)
     _gs_decorrelation(w, W, 10)
-    assert_less((w ** 2).sum(), 1.e-10)
+    assert (w ** 2).sum() < 1.e-10
     w = rng.randn(10)
     u = _gs_decorrelation(w, W, 5)
     tmp = np.dot(u, W.T)
-    assert_less((tmp[:5] ** 2).sum(), 1.e-10)
+    assert (tmp[:5] ** 2).sum() < 1.e-10
 
 
 @pytest.mark.parametrize("add_noise", [True, False])
@@ -123,13 +121,13 @@ def test_fastica_simple(add_noise, seed):
                                 random_state=seed)
     ica = FastICA(fun=nl, algorithm=algo, random_state=seed)
     sources = ica.fit_transform(m.T)
-    assert_equal(ica.components_.shape, (2, 2))
-    assert_equal(sources.shape, (1000, 2))
+    assert ica.components_.shape == (2, 2)
+    assert sources.shape == (1000, 2)
 
     assert_array_almost_equal(sources_fun, sources)
     assert_array_almost_equal(sources, ica.transform(m.T))
 
-    assert_equal(ica.mixing_.shape, (2, 2))
+    assert ica.mixing_.shape == (2, 2)
 
     for fn in [np.tanh, "exp(-.5(x^2))"]:
         ica = FastICA(fun=fn, algorithm=algo)
@@ -225,12 +223,12 @@ def test_fit_transform():
 
         ica = FastICA(n_components=n_components, whiten=whiten, random_state=0)
         Xt = ica.fit_transform(X)
-        assert_equal(ica.components_.shape, (n_components_, 10))
-        assert_equal(Xt.shape, (100, n_components_))
+        assert ica.components_.shape == (n_components_, 10)
+        assert Xt.shape == (100, n_components_)
 
         ica = FastICA(n_components=n_components, whiten=whiten, random_state=0)
         ica.fit(X)
-        assert_equal(ica.components_.shape, (n_components_, 10))
+        assert ica.components_.shape == (n_components_, 10)
         Xt2 = ica.transform(X)
 
         assert_array_almost_equal(Xt, Xt2)
@@ -257,9 +255,9 @@ def test_inverse_transform():
                 # catch "n_components ignored" warning
                 Xt = ica.fit_transform(X)
             expected_shape = expected[(whiten, n_components_)]
-            assert_equal(ica.mixing_.shape, expected_shape)
+            assert ica.mixing_.shape == expected_shape
             X2 = ica.inverse_transform(Xt)
-            assert_equal(X.shape, X2.shape)
+            assert X.shape == X2.shape
 
             # reversibility test in non-reduction case
             if n_components == X.shape[1]:

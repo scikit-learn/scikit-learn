@@ -133,6 +133,9 @@ class GaussianNB(BaseNB):
     class_count_ : array, shape (n_classes,)
         number of training samples observed in each class.
 
+    classes_ : array, shape (n_classes,)
+        class labels known to the classifier
+
     theta_ : array, shape (n_classes, n_features)
         mean of each feature per class
 
@@ -141,6 +144,9 @@ class GaussianNB(BaseNB):
 
     epsilon_ : float
         absolute additive value to variances
+
+    classes_ : array-like, shape (n_classes,)
+        Unique class labels.
 
     Examples
     --------
@@ -679,10 +685,16 @@ class MultinomialNB(BaseDiscreteNB):
         Number of samples encountered for each class during fitting. This
         value is weighted by the sample weight when provided.
 
+    classes_ : array, shape (n_classes,)
+        Class labels known to the classifier
+
     feature_count_ : array, shape (n_classes, n_features)
         Number of samples encountered for each (class, feature)
         during fitting. This value is weighted by the sample weight when
         provided.
+
+    classes_ : array-like, shape (n_classes,)
+        Unique class labels.
 
     Examples
     --------
@@ -777,6 +789,9 @@ class ComplementNB(BaseDiscreteNB):
         Number of samples encountered for each class during fitting. This
         value is weighted by the sample weight when provided.
 
+    classes_ : array, shape (n_classes,)
+        Class labels known to the classifier
+
     feature_count_ : array, shape (n_classes, n_features)
         Number of samples encountered for each (class, feature) during fitting.
         This value is weighted by the sample weight when provided.
@@ -784,6 +799,9 @@ class ComplementNB(BaseDiscreteNB):
     feature_all_ : array, shape (n_features,)
         Number of samples encountered for each feature during fitting. This
         value is weighted by the sample weight when provided.
+
+    classes_ : array of shape = [n_classes]
+        The classes labels.
 
     Examples
     --------
@@ -882,10 +900,17 @@ class BernoulliNB(BaseDiscreteNB):
         Number of samples encountered for each class during fitting. This
         value is weighted by the sample weight when provided.
 
+    classes_ : array, shape (n_classes,)
+        Class labels known to the classifier
+
     feature_count_ : array, shape = [n_classes, n_features]
         Number of samples encountered for each (class, feature)
         during fitting. This value is weighted by the sample weight when
         provided.
+
+    classes_ : array of shape = [n_classes]
+        The classes labels.
+
 
     Examples
     --------
