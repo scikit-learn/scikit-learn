@@ -16,7 +16,6 @@ from sklearn.utils.validation import check_random_state
 
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -576,7 +575,7 @@ def test_roc_auc_score_multiclass_labels_error(
       r"ROC AUC, 'sample_weight' must be None in this case"),
      {"multi_class": "ovo", "sample_weight": []}),
     ((r"Partial AUC computation not available in multiclass setting"),
-     {"multi_class": "ovo", "max_fpr": 0.5}),
+     {"multi_class": "ovo", "fpr_range": (0.5, 1)}),
     ((r"multi_class='ovp' is not supported for multiclass ROC AUC, "
       r"multi_class must be in \('ovo', 'ovr'\)"),
      {"multi_class": "ovp"}),
@@ -1257,27 +1256,27 @@ def test_partial_roc_auc_score():
                   tpr_range=(0.2, 0.2))
 
     # List range
-    assert_equal(roc_auc_score(y_true, y_score),
-                 roc_auc_score(y_true, y_score, fpr_range=[0, 1]))
-    assert_equal(roc_auc_score(y_true, y_score),
-                 roc_auc_score(y_true, y_score, tpr_range=[0, 1]))
+    assert_almost_equal(roc_auc_score(y_true, y_score),
+                        roc_auc_score(y_true, y_score, fpr_range=[0, 1]))
+    assert_almost_equal(roc_auc_score(y_true, y_score),
+                        roc_auc_score(y_true, y_score, tpr_range=[0, 1]))
 
     # Make sure it works on both float and int
-    assert_equal(roc_auc_score(y_true, y_score),
-                 roc_auc_score(y_true, y_score, fpr_range=(0, 1)))
-    assert_equal(roc_auc_score(y_true, y_score),
-                 roc_auc_score(y_true, y_score, fpr_range=(0., 1.)))
-    assert_equal(roc_auc_score(y_true, y_score),
-                 roc_auc_score(y_true, y_score, tpr_range=(0, 1)))
-    assert_equal(roc_auc_score(y_true, y_score),
-                 roc_auc_score(y_true, y_score, tpr_range=(0., 1.)))
+    assert_almost_equal(roc_auc_score(y_true, y_score),
+                        roc_auc_score(y_true, y_score, fpr_range=(0, 1)))
+    assert_almost_equal(roc_auc_score(y_true, y_score),
+                        roc_auc_score(y_true, y_score, fpr_range=(0., 1.)))
+    assert_almost_equal(roc_auc_score(y_true, y_score),
+                        roc_auc_score(y_true, y_score, tpr_range=(0, 1)))
+    assert_almost_equal(roc_auc_score(y_true, y_score),
+                        roc_auc_score(y_true, y_score, tpr_range=(0., 1.)))
 
     # Specify both fpr_range and tpr_range with 0 and 1.
-    assert_equal(
+    assert_almost_equal(
         roc_auc_score(y_true, y_score),
         roc_auc_score(y_true, y_score, fpr_range=(0, 1), tpr_range=(0, 1))
     )
-    assert_equal(
+    assert_almost_equal(
         roc_auc_score(y_true, y_score),
         roc_auc_score(y_true, y_score, fpr_range=(0., 1.), tpr_range=(0., 1.))
     )
