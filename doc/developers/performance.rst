@@ -400,43 +400,7 @@ TODO
 Multi-core parallelism using ``joblib.Parallel``
 ================================================
 
-When it comes to building faster algorithms, one can rely on parallelization.
-
-Instead of running every steps of the algorithm the one after the other on a
-single core (or CPU processor), one can run **independant** steps on different cores.
-Spreading the tasks on the different cores is an operation that comes at a cost,
-but it is often paid back by the time spared in running the tasks simultanously.
-
-In the `Random Forest <https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html>`_
-algorithm for example, every tree can be computed independantly. For large datasets
-or large number of trees, parallelization can thus provide some benefits :
-
-    >>> from sklearn.datasets import load_wine
-    >>> from sklearn.tree import DecisionTreeClassifier
-    >>> import time
-    >>> from joblib import Parallel, delayed, parallel_backend
-    >>>
-    >>> wine = load_wine()
-    >>> X = wine.data
-    >>> y = wine.target
-    >>> num_of_trees = 4000 # this number is large only to see the effect of parallelization
-    >>> models = [DecisionTreeClassifier(random_state=i) for i in range(num_of_trees)]
-    >>>
-    >>> t = time.time()
-    >>> _ = [models[i].fit(X, y) for i in range(num_of_trees)]
-    >>> time_without_parallelization = time.time() - t # about 2.4s
-    >>>
-    >>> t = time.time()
-    >>> _ = Parallel(n_jobs=4, prefer="threads")(delayed(models[i].fit)(X, y) for i in range(num_of_trees))
-    >>> time_with_parallelization = time.time() - t # about 1.8s
-    >>>
-    >>> # The rest of the algorithm would come here
-    >>> # In the previous case, parallelization improves the algorithm speed by about 25%
-    >>> # NB : this code is provided as example and is not extracted from sklearn RandomForest implementations
-
-Checkout the official joblib documentation:
-
-- https://joblib.readthedocs.io
+See `joblib documentation <https://joblib.readthedocs.io>`_
 
 
 .. _warm-restarts:
