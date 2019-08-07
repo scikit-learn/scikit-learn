@@ -320,8 +320,10 @@ METRICS_WITH_AVERAGING = {
 # Threshold-based metrics with an "average" argument
 THRESHOLDED_METRICS_WITH_AVERAGING = {
     "roc_auc_score", "average_precision_score",
-    "partial_roc_auc_fpr_min", "partial_roc_auc_fpr_max", "partial_roc_auc_fpr"
-    "partial_roc_auc_tpr_min", "partial_roc_auc_tpr_max", "partial_roc_auc_tpr"
+    "partial_roc_auc_fpr_min", "partial_roc_auc_fpr_max",
+    "partial_roc_auc_fpr",
+    "partial_roc_auc_tpr_min", "partial_roc_auc_tpr_max",
+    "partial_roc_auc_tpr"
 }
 
 # Metrics with a "pos_label" argument
@@ -395,8 +397,10 @@ THRESHOLDED_MULTILABEL_METRICS = {
 
     "roc_auc_score", "weighted_roc_auc", "samples_roc_auc",
     "micro_roc_auc",
-    "partial_roc_auc_fpr_min", "partial_roc_auc_fpr_max", "partial_roc_auc_fpr"
-    "partial_roc_auc_tpr_min", "partial_roc_auc_tpr_max", "partial_roc_auc_tpr"
+    "partial_roc_auc_fpr_min", "partial_roc_auc_fpr_max",
+    "partial_roc_auc_fpr",
+    "partial_roc_auc_tpr_min", "partial_roc_auc_tpr_max",
+    "partial_roc_auc_tpr",
 
     "average_precision_score", "weighted_average_precision_score",
     "samples_average_precision_score", "micro_average_precision_score",
