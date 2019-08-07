@@ -603,6 +603,33 @@ Finally, follow the formatting rules below to make it consistently good:
     SelectKBest : Select features based on the k highest scores.
     SelectFpr : Select features based on a false positive rate test.
 
+* When documenting the parameters and attributes, here is a list of some
+  well-formatted examples::
+
+    n_clusters : int, default=3
+        The number of clusters detected by the algorithm.
+
+    some_param : {'hello', 'goodbye'}, bool or int, default=True
+        The parameter description goes here, which can be either a string
+        literal (either `hello` or `goodbye`), a bool, or an int. The default
+        value is True.
+
+    array_parameter : {array-like, sparse matrix, dataframe} of shape (n_samples, n_features) or (n_samples,)
+        This parameter accepts data in either of the mentioned forms, with one
+        of the mentioned shapes. The default value is
+        `np.ones(shape=(n_samples,))`.
+
+In general have the following in mind:
+
+    1. Use Python basic types. (``bool`` instead of ``boolean``)
+    2. Use parenthesis for defining shapes: ``array-like of shape (n_samples,)``
+       or ``array-like of shape (n_samples, n_features)``
+    3. For strings with multiple options, use brackets:
+       ``input: {'log', 'squared', 'multinomial'}``
+    4. 1D or 2D data can be a subset of
+       ``{array-like, ndarray, sparse matrix, dataframe}``. Note that ``array-like``
+       can also be a ``list``, while ``ndarray`` is explicitly only a ``numpy.ndarray``.
+
 * For unwritten formatting rules, try to follow existing good works:
 
     * For "References" in docstrings, see the Silhouette Coefficient
