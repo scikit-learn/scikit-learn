@@ -92,7 +92,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
     Attributes
     ----------
-    coef_ : array-like shape = (n_features,)
+    coef_ : array-like of shape (n_features,)
         Coefficients of the regression model (mean of distribution)
 
     intercept_ : float
@@ -105,10 +105,10 @@ class BayesianRidge(LinearModel, RegressorMixin):
     lambda_ : float
        Estimated precision of the weights.
 
-    sigma_ : array-like shape = (n_features, n_features)
+    sigma_ : array-like of shape (n_features, n_features)
         Estimated variance-covariance matrix of the weights
 
-    scores_ : array, shape = (n_iter_ + 1,)
+    scores_ : array-like of shape (n_iter_ + 1,)
         If computed_score is True, value of the log marginal likelihood (to be
         maximized) at each iteration of the optimization. The array starts
         with the value of the log marginal likelihood obtained for the initial
@@ -169,12 +169,12 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
         Parameters
         ----------
-        X : numpy array of shape=(n_samples,n_features)
+        X : ndarray of shape (n_samples,n_features)
             Training data
-        y : numpy array of shape=(n_samples,)
+        y : ndarray of shape (n_samples,)
             Target values. Will be cast to X's dtype if necessary
 
-        sample_weight : numpy array of shape=(n_samples,), default=None
+        sample_weight : ndarray of shape (n_samples,), default=None
             Individual weights for each sample
 
             .. versionadded:: 0.20
@@ -293,7 +293,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} shape = (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Samples.
 
         return_std : bool, default=False
@@ -301,10 +301,10 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
         Returns
         -------
-        y_mean : array-like shape = (n_samples,)
+        y_mean : array-like of shape (n_samples,)
             Mean of predictive distribution of query points.
 
-        y_std : array-like shape = (n_samples,)
+        y_std : array-like of shape (n_samples,)
             Standard deviation of predictive distribution of query points.
         """
         y_mean = self._decision_function(X)
@@ -438,16 +438,16 @@ class ARDRegression(LinearModel, RegressorMixin):
 
     Attributes
     ----------
-    coef_ : array-like shape = (n_features,)
+    coef_ : array-like of shape (n_features,)
         Coefficients of the regression model (mean of distribution)
 
     alpha_ : float
        estimated precision of the noise.
 
-    lambda_ : array-like shape = (n_features,)
+    lambda_ : array-like of shape (n_features,)
        estimated precisions of the weights.
 
-    sigma_ : array-like shape = (n_features, n_features)
+    sigma_ : array-like of shape (n_features, n_features)
         estimated variance-covariance matrix of the weights
 
     scores_ : float
@@ -506,10 +506,10 @@ class ARDRegression(LinearModel, RegressorMixin):
 
         Parameters
         ----------
-        X : array-like shape = (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
-        y : array-like shape = (n_samples,)
+        y : array-like of shape (n_samples,)
             Target values (integers). Will be cast to X's dtype if necessary
 
         Returns
@@ -615,7 +615,7 @@ class ARDRegression(LinearModel, RegressorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} shape = (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Samples.
 
         return_std : bool, default=False
@@ -623,10 +623,10 @@ class ARDRegression(LinearModel, RegressorMixin):
 
         Returns
         -------
-        y_mean : array-like shape = (n_samples,)
+        y_mean : array-like of shape (n_samples,)
             Mean of predictive distribution of query points.
 
-        y_std : array-like shape = (n_samples,)
+        y_std : array-like of shape (n_samples,)
             Standard deviation of predictive distribution of query points.
         """
         y_mean = self._decision_function(X)
