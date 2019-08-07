@@ -194,6 +194,17 @@ def squared_loss(y_true, y_pred):
     """
     return ((y_true - y_pred) ** 2).mean() / 2
 
+def mae_loss(y_true, y_pred):
+    """Compute the mean absolute error loss
+
+    Parameters
+    ----------
+    y_true : array-like or label indicator matrix
+         Ground truth (correct) labels.
+    y_pred : array-like or label indicator matrix
+         predicted values.
+    """
+    return np.average(np.abs(y_true - y_pred))
 
 def log_loss(y_true, y_prob):
     """Compute Logistic loss for classification.
@@ -246,4 +257,4 @@ def binary_log_loss(y_true, y_prob):
 
 
 LOSS_FUNCTIONS = {'squared_loss': squared_loss, 'log_loss': log_loss,
-                  'binary_log_loss': binary_log_loss}
+                  'binary_log_loss': binary_log_loss, 'mae_loss':mae_loss}

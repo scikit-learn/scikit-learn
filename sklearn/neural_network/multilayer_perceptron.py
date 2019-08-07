@@ -1167,6 +1167,13 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         solvers ('sgd', 'adam'), note that this determines the number of epochs
         (how many times each data point will be used), not the number of
         gradient steps.
+        
+    loss : {'squared_loss', 'mae_loss'}, default 'squared_loss'
+        Loss function for MLP Regressor
+
+        - 'squared_loss' uses `squared_loss` as the loss function.
+        
+        - 'mae_loss' uses `mean absolute error` as the loss function.
 
     shuffle : bool, optional, default True
         Whether to shuffle samples in each iteration. Only used when
@@ -1297,7 +1304,8 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
                  solver='adam', alpha=0.0001,
                  batch_size='auto', learning_rate="constant",
                  learning_rate_init=0.001,
-                 power_t=0.5, max_iter=200, shuffle=True,
+                 power_t=0.5, max_iter=200,
+                 loss='squared_loss', shuffle=True,
                  random_state=None, tol=1e-4,
                  verbose=False, warm_start=False, momentum=0.9,
                  nesterovs_momentum=True, early_stopping=False,
@@ -1308,7 +1316,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
             activation=activation, solver=solver, alpha=alpha,
             batch_size=batch_size, learning_rate=learning_rate,
             learning_rate_init=learning_rate_init, power_t=power_t,
-            max_iter=max_iter, loss='squared_loss', shuffle=shuffle,
+            max_iter=max_iter, loss=loss, shuffle=shuffle,
             random_state=random_state, tol=tol, verbose=verbose,
             warm_start=warm_start, momentum=momentum,
             nesterovs_momentum=nesterovs_momentum,
