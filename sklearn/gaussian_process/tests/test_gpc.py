@@ -60,6 +60,16 @@ def test_lml_precomputed(kernel):
                         gpc.log_marginal_likelihood(), 7)
 
 
+@pytest.mark.parametrize('kernel', kernels)
+def test_lml_without_cloning_kernel(kernel):
+    # Test that clone_kernel=False has side-effects of kernel.theta.
+    gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
+    input_theta = np.ones(gpc.kernel_.theta.shape, dtype=np.float64)
+
+    gpc.log_marginal_likelihood(input_theta, clone_kernel=False)
+    assert_almost_equal(gpc.kernel_.theta, input_theta, 7)
+
+
 @pytest.mark.parametrize('kernel', non_fixed_kernels)
 def test_converged_to_local_maximum(kernel):
     # Test that we are in local maximum after hyperparameter-optimization.

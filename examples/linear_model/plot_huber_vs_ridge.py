@@ -45,14 +45,13 @@ colors = ['r-', 'b-', 'y-', 'm-']
 x = np.linspace(X.min(), X.max(), 7)
 epsilon_values = [1.35, 1.5, 1.75, 1.9]
 for k, epsilon in enumerate(epsilon_values):
-    huber = HuberRegressor(fit_intercept=True, alpha=0.0, max_iter=100,
-                           epsilon=epsilon)
+    huber = HuberRegressor(alpha=0.0, epsilon=epsilon)
     huber.fit(X, y)
     coef_ = huber.coef_ * x + huber.intercept_
     plt.plot(x, coef_, colors[k], label="huber loss, %s" % epsilon)
 
 # Fit a ridge regressor to compare it to huber regressor.
-ridge = Ridge(fit_intercept=True, alpha=0.0, random_state=0, normalize=True)
+ridge = Ridge(alpha=0.0, random_state=0, normalize=True)
 ridge.fit(X, y)
 coef_ridge = ridge.coef_
 coef_ = ridge.coef_ * x + ridge.intercept_

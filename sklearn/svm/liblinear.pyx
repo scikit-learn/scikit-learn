@@ -25,17 +25,17 @@ def train_wrap(X, np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
 
     if is_sparse:
         problem = csr_set_problem(
-                (<np.ndarray[np.float64_t, ndim=1, mode='c']>X.data).data,
+                (<np.ndarray>X.data).data, X.dtype == np.float64,
                 (<np.ndarray[np.int32_t,   ndim=1, mode='c']>X.indices).data,
                 (<np.ndarray[np.int32_t,   ndim=1, mode='c']>X.indptr).data,
-                Y.data, (<np.int32_t>X.shape[0]), (<np.int32_t>X.shape[1]),
-                bias, sample_weight.data)
+                (<np.int32_t>X.shape[0]), (<np.int32_t>X.shape[1]),
+                (<np.int32_t>X.nnz), bias, sample_weight.data, Y.data)
     else:
         problem = set_problem(
-                (<np.ndarray[np.float64_t, ndim=2, mode='c']>X).data,
-                Y.data,
-                (<np.ndarray[np.float64_t, ndim=2, mode='c']>X).shape,
-                bias, sample_weight.data)
+                (<np.ndarray>X).data, X.dtype == np.float64,
+                (<np.int32_t>X.shape[0]), (<np.int32_t>X.shape[1]),
+                (<np.int32_t>np.count_nonzero(X)), bias, sample_weight.data,
+                Y.data)
 
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
         class_weight_label = np.arange(class_weight.shape[0], dtype=np.intc)

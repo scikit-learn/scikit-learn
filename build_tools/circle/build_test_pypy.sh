@@ -30,6 +30,7 @@ export PATH=/usr/lib/ccache:$PATH
 export LOKY_MAX_CPU_COUNT="2"
 export OMP_NUM_THREADS="1"
 
+python setup.py build_ext --inplace -j 3
 pip install -e .
 
 # Check that Python implementation is PyPy
