@@ -17,9 +17,9 @@ from sklearn.gaussian_process.kernels \
             Exponentiation, Kernel)
 from sklearn.base import clone
 
-from sklearn.utils.testing import (assert_equal, assert_almost_equal,
-                                   assert_not_equal, assert_array_equal,
-                                   assert_array_almost_equal, assert_raises)
+from sklearn.utils.testing import (assert_almost_equal, assert_array_equal,
+                                   assert_array_almost_equal,
+                                   assert_raise_message)
 
 
 X = np.random.RandomState(0).normal(0, 1, (5, 2))
@@ -347,4 +347,8 @@ def test_warns_on_get_params_non_attribute():
 
 
 def test_rational_quadratic_kernel():
-    assert_raises(AttributeError, RationalQuadratic, [1., 1.])
+    kernel = RationalQuadratic(length_scale=[1., 1.])
+    assert_raise_message(AttributeError,
+                         "RationalQuadratic kernel only supports isotropic "
+                         "version, please use a single "
+                         "scalar for length_scale", kernel, X)
