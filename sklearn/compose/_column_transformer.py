@@ -556,7 +556,6 @@ boolean mask array or callable
             X_feature_names = np.asarray(X.columns)
         else:
             X_feature_names = None
-        self._validate_features(X.shape[1], X_feature_names)
 
         if self._n_features > X.shape[1]:
             raise ValueError('Number of features of the input must be equal '
@@ -579,6 +578,7 @@ boolean mask array or callable
                                  'and for transform when using the '
                                  'remainder keyword')
 
+        self._validate_features(X.shape[1], X_feature_names)
         Xs = self._fit_transform(X, None, _transform_one, fitted=True)
         self._validate_output(Xs)
 

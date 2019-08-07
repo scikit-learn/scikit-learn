@@ -506,8 +506,7 @@ def test_column_transformer_invalid_columns(remainder):
     X_array_fewer = np.array([[0, 1, 2], ]).T
     err_msg = 'Number of features'
     with pytest.raises(ValueError, match=err_msg):
-        with pytest.warns(DeprecationWarning, match=msg):
-            ct.transform(X_array_fewer)
+        ct.transform(X_array_fewer)
 
 
 def test_column_transformer_invalid_transformer():
@@ -1104,8 +1103,7 @@ def test_column_transformer_reordered_column_names_remainder(explicit_colname):
     warn_msg = ("Given feature/column names or counts do not match the ones "
                 "for the data given during fit.")
     with pytest.raises(ValueError, match=err_msg):
-        with pytest.warns(DeprecationWarning, match=warn_msg):
-            tf.transform(X_trans_df)
+        tf.transform(X_trans_df)
 
     # No error for added columns if ordering is identical
     X_extended_df = X_fit_df.copy()
@@ -1155,15 +1153,19 @@ def test_feature_name_validation():
         tf.transform(df_extra)
 
     tf = ColumnTransformer([('bycol', Trans(), [0, -1])])
-    tf.fit(df_extra)
+    tf.fit(df)
     msg = "At least one negative column was used to"
     with pytest.raises(RuntimeError, match=msg):
-        tf.transform(df)
+        tf.transform(df_extra)
 
     tf = ColumnTransformer([('bycol', Trans(), slice(-1, -3, -1))])
-    tf.fit(df_extra)
+    tf.fit(df)
     with pytest.raises(RuntimeError, match=msg):
+        tf.transform(df_extra)
+
+    with warnings.catch_warnings(record=True) as warns:
         tf.transform(df)
+    assert not warns
 
 
 @pytest.mark.parametrize("array_type", [np.asarray, sparse.csr_matrix])
