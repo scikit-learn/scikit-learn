@@ -1025,8 +1025,8 @@ def test_ridge_fit_intercept_sparse(solver):
     # so the reference we use for both ("auto" and "sparse_cg") is
     # Ridge(solver="sparse_cg"), fitted using the dense representation (note
     # that "sparse_cg" can fit sparse or dense data)
-    dense_ridge = Ridge(alpha=1., solver='sparse_cg', fit_intercept=True)
-    sparse_ridge = Ridge(alpha=1., solver=solver, fit_intercept=True)
+    dense_ridge = Ridge(solver='sparse_cg')
+    sparse_ridge = Ridge(solver=solver)
     dense_ridge.fit(X, y)
     with pytest.warns(None) as record:
         sparse_ridge.fit(X_csr, y)
@@ -1039,11 +1039,10 @@ def test_ridge_fit_intercept_sparse(solver):
 def test_ridge_fit_intercept_sparse_error(solver):
     X, y = _make_sparse_offset_regression(n_features=20, random_state=0)
     X_csr = sp.csr_matrix(X)
-    sparse_ridge = Ridge(alpha=1., solver=solver, fit_intercept=True)
+    sparse_ridge = Ridge(solver=solver)
     err_msg = "solver='{}' does not support".format(solver)
     with pytest.raises(ValueError, match=err_msg):
         sparse_ridge.fit(X_csr, y)
-
 
 def test_ridge_fit_intercept_sparse_sag():
     X, y = _make_sparse_offset_regression(

@@ -1729,7 +1729,7 @@ class TfidfVectorizer(CountVectorizer):
         # we set copy to False
         return self._tfidf.transform(X, copy=False)
 
-    def transform(self, raw_documents, copy=True):
+    def transform(self, raw_documents, copy="deprecated"):
         """Transform documents to document-term matrix.
 
         Uses the vocabulary and document frequencies (df) learned by fit (or
@@ -1744,6 +1744,11 @@ class TfidfVectorizer(CountVectorizer):
             Whether to copy X and operate on the copy or perform in-place
             operations.
 
+            .. deprecated:: 0.22
+               The `copy` parameter is unused and was deprecated in version
+               0.22 and will be removed in 0.24. This parameter will be
+               ignored.
+
         Returns
         -------
         X : sparse matrix, [n_samples, n_features]
@@ -1751,6 +1756,12 @@ class TfidfVectorizer(CountVectorizer):
         """
         check_is_fitted(self, '_tfidf', 'The tfidf vector is not fitted')
 
+        # FIXME Remove copy parameter support in 0.24
+        if copy != "deprecated":
+            msg = ("'copy' param is unused and has been deprecated since "
+                   "version 0.22. Backward compatibility for 'copy' will "
+                   "be removed in 0.24.")
+            warnings.warn(msg, DeprecationWarning)
         X = super().transform(raw_documents)
         return self._tfidf.transform(X, copy=False)
 
