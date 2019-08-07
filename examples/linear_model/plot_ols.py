@@ -12,8 +12,8 @@ to draw a straight line that will best minimize the residual sum of squares
 between the observed responses in the dataset, and the responses predicted by
 the linear approximation.
 
-The coefficients, the residual sum of squares and the variance score are also
-calculated.
+The coefficients, the residual sum of squares and the coefficient
+of determination are also calculated.
 
 """
 print(__doc__)
@@ -55,10 +55,11 @@ diabetes_y_pred = regr.predict(diabetes_X_test)
 # The coefficients
 print('Coefficients: \n', regr.coef_)
 # The mean squared error
-print("Mean squared error: %.2f"
+print('Mean squared error: %.2f'
       % mean_squared_error(diabetes_y_test, diabetes_y_pred))
-# Explained variance score: 1 is perfect prediction
-print('Variance score: %.2f' % r2_score(diabetes_y_test, diabetes_y_pred))
+# The coefficient of determination: 1 is perfect prediction
+print('Coefficient of determination: %.2f'
+      % r2_score(diabetes_y_test, diabetes_y_pred))
 
 # Plot outputs
 plt.scatter(diabetes_X_test, diabetes_y_test,  color='black')
