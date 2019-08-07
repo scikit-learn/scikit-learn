@@ -64,7 +64,7 @@ def test_multioutput_regression():
     error = mean_squared_error(y_true, y_pred)
     assert_almost_equal(error, (1. / 3 + 2. / 3 + 2. / 3) / 4.)
 
-    error = mean_squared_error(y_true, y_pred, squared=True)
+    error = mean_squared_error(y_true, y_pred, squared=False)
     assert_almost_equal(error, 0.645, decimal=2)
 
     error = mean_squared_log_error(y_true, y_pred)
@@ -83,7 +83,7 @@ def test_multioutput_regression():
 
 def test_regression_metrics_at_limits():
     assert_almost_equal(mean_squared_error([0.], [0.]), 0.00, 2)
-    assert_almost_equal(mean_squared_error([0.], [0.], squared=True), 0.00, 2)
+    assert_almost_equal(mean_squared_error([0.], [0.], squared=False), 0.00, 2)
     assert_almost_equal(mean_squared_log_error([0.], [0.]), 0.00, 2)
     assert_almost_equal(mean_absolute_error([0.], [0.]), 0.00, 2)
     assert_almost_equal(median_absolute_error([0.], [0.]), 0.00, 2)
@@ -236,7 +236,7 @@ def test_regression_custom_weights():
 
     msew = mean_squared_error(y_true, y_pred, multioutput=[0.4, 0.6])
     rmsew = mean_squared_error(y_true, y_pred, multioutput=[0.4, 0.6],
-                               squared=True)
+                               squared=False)
     maew = mean_absolute_error(y_true, y_pred, multioutput=[0.4, 0.6])
     rw = r2_score(y_true, y_pred, multioutput=[0.4, 0.6])
     evsw = explained_variance_score(y_true, y_pred, multioutput=[0.4, 0.6])

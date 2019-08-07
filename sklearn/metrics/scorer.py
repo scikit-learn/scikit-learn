@@ -497,7 +497,7 @@ neg_median_absolute_error_scorer = make_scorer(median_absolute_error,
                                                greater_is_better=False)
 neg_root_mean_squared_error_scorer = make_scorer(mean_squared_error,
                                                  greater_is_better=False,
-                                                 squared=True)
+                                                 squared=False)
 neg_mean_poisson_deviance_scorer = make_scorer(
     mean_tweedie_deviance, p=1., greater_is_better=False
 )
