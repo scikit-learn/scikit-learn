@@ -368,11 +368,13 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
     # NOTE we are not using the return value as the scorer by itself should be
     # validated before. We use check_scoring only to reject multimetric scorer
     check_scoring(estimator, scorer)
-    result = _fit_and_score(estimator, X, y, scorer, train, test, verbose,
-                            parameters, fit_params=fit_params,
-                            return_n_test_samples=True,
-                            error_score=error_score)
-    return result["test_scores"], parameters, result["n_test_samples"]
+    scores, n_samples_test = _fit_and_score(estimator, X, y,
+                                            scorer, train,
+                                            test, verbose, parameters,
+                                            fit_params=fit_params,
+                                            return_n_test_samples=True,
+                                            error_score=error_score)
+    return scores, parameters, n_samples_test
 
 
 def _check_param_grid(param_grid):
@@ -746,18 +748,16 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
 
         return self
 
-    def _format_results(self, candidate_params, scorers, n_splits, outs):
+    def _format_results(self, candidate_params, scorers, n_splits, out):
         n_candidates = len(candidate_params)
 
-        # if one choose to see train score, "outs" will contain train score
-        # info
-        test_score_dicts = [out["test_scores"] for out in outs]
-        test_sample_counts = [out["n_test_samples"] for out in outs]
-        fit_time = [out["fit_time"] for out in outs]
-        score_time = [out["score_time"] for out in outs]
-
+        # if one choose to see train score, "out" will contain train score info
         if self.return_train_score:
-            train_score_dicts = [out["train_scores"] for out in outs]
+            (train_score_dicts, test_score_dicts, test_sample_counts, fit_time,
+             score_time) = zip(*out)
+        else:
+            (test_score_dicts, test_sample_counts, fit_time,
+             score_time) = zip(*out)
 
         # test_score_dicts and train_score dicts are lists of dictionaries and
         # we make them into dict of lists
