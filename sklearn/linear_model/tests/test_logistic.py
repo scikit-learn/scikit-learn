@@ -373,9 +373,9 @@ def test_consistency_path():
     for solver in ('lbfgs', 'newton-cg', 'liblinear', 'sag', 'saga'):
         Cs = [1e3]
         coefs, Cs, _ = f(_logistic_regression_path)(
-            X, y, Cs=Cs, fit_intercept=True, tol=1e-6, solver=solver,
+            X, y, Cs=Cs, tol=1e-6, solver=solver,
             intercept_scaling=10000., random_state=0, multi_class='ovr')
-        lr = LogisticRegression(C=Cs[0], fit_intercept=True, tol=1e-4,
+        lr = LogisticRegression(C=Cs[0], tol=1e-4,
                                 intercept_scaling=10000., random_state=0,
                                 multi_class='ovr', solver=solver)
         lr.fit(X, y)
@@ -596,9 +596,9 @@ def test_logistic_cv_sparse():
     X[X < 1.0] = 0.0
     csr = sp.csr_matrix(X)
 
-    clf = LogisticRegressionCV(fit_intercept=True)
+    clf = LogisticRegressionCV()
     clf.fit(X, y)
-    clfs = LogisticRegressionCV(fit_intercept=True)
+    clfs = LogisticRegressionCV()
     clfs.fit(csr, y)
     assert_array_almost_equal(clfs.coef_, clf.coef_)
     assert_array_almost_equal(clfs.intercept_, clf.intercept_)

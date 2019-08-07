@@ -6,9 +6,10 @@ different columns.
 # Author: Andreas Mueller
 #         Joris Van den Bossche
 # License: BSD
-
+import warnings
 from itertools import chain
 
+import numbers
 import numpy as np
 from scipy import sparse
 from joblib import Parallel, delayed
@@ -394,6 +395,34 @@ boolean mask array or callable
                     "The output of the '{0}' transformer should be 2D (scipy "
                     "matrix, array, or pandas DataFrame).".format(name))
 
+    def _validate_features(self, n_features, feature_names):
+        """Ensures feature counts and names are the same during fit and
+        transform.
+
+        TODO: It should raise an error from v0.24
+        """
+
+        if ((self._feature_names_in is None or feature_names is None)
+                and self._n_features == n_features):
+            return
+
+        neg_col_present = np.any([_is_negative_indexing(col)
+                                  for col in self._columns])
+        if neg_col_present and self._n_features != n_features:
+            raise RuntimeError("At least one negative column was used to "
+                               "indicate columns, and the new data's number "
+                               "of columns does not match the data given "
+                               "during fit. "
+                               "Please make sure the data during fit and "
+                               "transform have the same number of columns.")
+
+        if (self._n_features != n_features or
+                np.any(self._feature_names_in != np.asarray(feature_names))):
+            warnings.warn("Given feature/column names or counts do not match "
+                          "the ones for the data given during fit. This will "
+                          "fail from v0.24.",
+                          DeprecationWarning)
+
     def _log_message(self, name, idx, total):
         if not self.verbose:
             return None
@@ -470,6 +499,11 @@ boolean mask array or callable
             sparse matrices.
 
         """
+        # TODO: this should be `feature_names_in_` when we start having it
+        if hasattr(X, "columns"):
+            self._feature_names_in = np.asarray(X.columns)
+        else:
+            self._feature_names_in = None
         X = _check_X(X)
         self._validate_transformers()
         self._validate_column_callables(X)
@@ -518,6 +552,10 @@ boolean mask array or callable
         """
         check_is_fitted(self, 'transformers_')
         X = _check_X(X)
+        if hasattr(X, "columns"):
+            X_feature_names = np.asarray(X.columns)
+        else:
+            X_feature_names = None
 
         if self._n_features > X.shape[1]:
             raise ValueError('Number of features of the input must be equal '
@@ -527,6 +565,8 @@ boolean mask array or callable
                              .format(self._n_features, X.shape[1]))
 
         # No column reordering allowed for named cols combined with remainder
+        # TODO: remove this mechanism in 0.24, once we enforce strict column
+        # name order and count. See #14237 for details.
         if (self._remainder[2] is not None and
                 hasattr(self, '_df_columns') and
                 hasattr(X, 'columns')):
@@ -538,6 +578,7 @@ boolean mask array or callable
                                  'and for transform when using the '
                                  'remainder keyword')
 
+        self._validate_features(X.shape[1], X_feature_names)
         Xs = self._fit_transform(X, None, _transform_one, fitted=True)
         self._validate_output(Xs)
 
@@ -707,3 +748,13 @@ boolean mask array or callable
                              remainder=remainder,
                              sparse_threshold=sparse_threshold,
                              verbose=verbose)
+
+
+def _is_negative_indexing(key):
+    # TODO: remove in v0.24
+    def is_neg(x): return isinstance(x, numbers.Integral) and x < 0
+    if isinstance(key, slice):
+        return is_neg(key.start) or is_neg(key.stop)
+    elif _check_key_type(key, int):
+        return np.any(np.asarray(key) < 0)
+    return False
