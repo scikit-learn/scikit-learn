@@ -282,19 +282,20 @@ def safe_indexing(X, indices, axis=0):
         Data from which to sample rows, items or columns. `list` are only
         supported when `axis=0`.
     indices : bool, int, str, slice, array-like
-        - To select a single element (i.e. row or column), `indices` can be one
-          of the following: `bool` or `int` which are supported by all types of
-          `X`. `indices` being a `str` is only supported for `X` being a
-          dataframe. The selected subset will be 1D, unless `X` is a sparse
-          matrix in which case it will be 2D.
-        - To select multiple elements (i.e. rows or columns), `indices` can be
-          one of the following: `list`, `array`, `slice`. The type used in
-          these containers can be one of the following: `int` and `str`.
-          However, `str` is only supported when `X` is a dataframe.
-          The selected subset will be 2D.
+        - If `axis=0`, only integer array-like or scalar integer are supported.
+        - If `axis=1`:
+            - to select a single column, `indices` can be of `int` type for
+              all `X` types and `str` only for dataframe. The selected subset
+              will be 1D, unless `X` is a sparse matrix in which case it will
+              be 2D.
+            - to select multiples columns, `indices` can be one of the
+              following: `list`, `array`, `slice`. The type used in
+              these containers can be one of the following: `int` and `str`.
+              However, `str` is only supported when `X` is a dataframe.
+              The selected subset will be 2D.
     axis : int, default=0
-        The axis along which `X` will be subsampled. ``axis=0`` will select
-        rows while ``axis=1`` will select columns.
+        The axis along which `X` will be subsampled. `axis=0` will select
+        rows while `axis=1` will select columns.
 
     Returns
     -------
