@@ -14,10 +14,6 @@ from .gpr import GaussianProcessRegressor
 from .gpc import GaussianProcessClassifier
 from . import kernels
 
-from .gaussian_process import GaussianProcess
-from . import correlation_models
-from . import regression_models
 
-__all__ = ['GaussianProcess', 'correlation_models', 'regression_models',
-           'GaussianProcessRegressor', 'GaussianProcessClassifier',
+__all__ = ['GaussianProcessRegressor', 'GaussianProcessClassifier',
            'kernels']
