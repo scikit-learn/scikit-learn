@@ -96,6 +96,8 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                         msg = ("Found unknown categories {0} in column {1}"
                                " during fit".format(diff, i))
                         raise ValueError(msg)
+                if handle_unknown == 'virtual':
+                    cats.append([None])
             self.categories_.append(cats)
 
     def _transform(self, X, handle_unknown='error'):
@@ -127,11 +129,6 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                     # append the None category to the category list.
                     # This will create a virtual category that maps
                     # back to None.
-                    if not None in self.categories_[i]:
-                        self.categories_[i] = np.append(
-                            self.categories_[i],
-                            np.array(None)
-                        )
                     Xi[~valid_mask] = None
                 else:
                     # Set the problematic rows to an acceptable value and
@@ -664,7 +661,7 @@ class OrdinalEncoder(_BaseEncoder):
             msg = ("handle_unknown should be either 'error' or 'virtual', "
                    "got {0}.".format(self.handle_unknown))
             raise ValueError(msg)
-            
+
         X_int, _ = self._transform(X, handle_unknown=self.handle_unknown)
         return X_int.astype(self.dtype, copy=False)
 
