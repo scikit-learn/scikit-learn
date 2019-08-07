@@ -43,7 +43,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
 
     Parameters
     ----------
-    X : None or array-like shape=(n_samples, n_features)
+    X : None or array-like of shape (n_samples, n_features)
         Input data. Note that if X is None then the Gram matrix must be
         specified, i.e., cannot be None or False.
 
@@ -53,14 +53,14 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
            ``None`` will be removed in v0.23. Use :func:`lars_path_gram`
            instead.
 
-    y : None or array-like shape=(n_samples,)
+    y : None or array-like of shape (n_samples,)
         Input targets.
 
-    Xy : array-like shape=(n_samples,) or (n_samples, n_targets), default=None
+    Xy : array-like of shape (n_samples,) or (n_samples, n_targets), default=None
         Xy = np.dot(X.T, y) that can be precomputed. It is useful
         only when the Gram matrix is precomputed.
 
-    Gram : None, 'auto', array-like shape=(n_features, n_features), \
+    Gram : None, 'auto', array-like of shape (n_features, n_features), \
             default=None
         Precomputed Gram matrix (X' * X), if ``'auto'``, the Gram
         matrix is precomputed from the given X, if there are more samples
@@ -114,16 +114,16 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
 
     Returns
     -------
-    alphas : array-like shape=(n_alphas + 1,)
+    alphas : array-like of shape (n_alphas + 1,)
         Maximum of covariances (in absolute value) at each iteration.
         ``n_alphas`` is either ``max_iter``, ``n_features`` or the
         number of nodes in the path with ``alpha >= alpha_min``, whichever
         is smaller.
 
-    active : array-like shape=(n_alphas,)
+    active : array-like of shape (n_alphas,)
         Indices of active variables at the end of the path.
 
-    coefs : array-like shape=(n_features, n_alphas + 1)
+    coefs : array-like of shape (n_features, n_alphas + 1)
         Coefficients along the path
 
     n_iter : int
@@ -181,10 +181,10 @@ def lars_path_gram(Xy, Gram, n_samples, max_iter=500, alpha_min=0,
 
     Parameters
     ----------
-    Xy : array-like shape=(n_samples,) or (n_samples, n_targets)
+    Xy : array-like of shape (n_samples,) or (n_samples, n_targets)
         Xy = np.dot(X.T, y).
 
-    Gram : array-like shape=(n_features, n_features)
+    Gram : array-like of shape (n_features, n_features)
         Gram = np.dot(X.T * X).
 
     n_samples : int or float
@@ -233,16 +233,16 @@ def lars_path_gram(Xy, Gram, n_samples, max_iter=500, alpha_min=0,
 
     Returns
     -------
-    alphas : array-like shape=(n_alphas + 1,)
+    alphas : array-like of shape (n_alphas + 1,)
         Maximum of covariances (in absolute value) at each iteration.
         ``n_alphas`` is either ``max_iter``, ``n_features`` or the
         number of nodes in the path with ``alpha >= alpha_min``, whichever
         is smaller.
 
-    active : array-like shape=(n_alphas,)
+    active : array-like of shape (n_alphas,)
         Indices of active variables at the end of the path.
 
-    coefs : array-like shape=(n_features, n_alphas + 1)
+    coefs : array-like of shape (n_features, n_alphas + 1)
         Coefficients along the path
 
     n_iter : int
@@ -297,19 +297,19 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
 
     Parameters
     ----------
-    X : None or ndarray, shape=(n_samples, n_features)
+    X : None or ndarray, of shape (n_samples, n_features)
         Input data. Note that if X is None then Gram must be specified,
         i.e., cannot be None or False.
 
-    y : None or ndarray, shape=(n_samples,)
+    y : None or ndarray, of shape (n_samples,)
         Input targets.
 
-    Xy : array-like shape=(n_samples,) or (n_samples, n_targets), \
+    Xy : array-like of shape (n_samples,) or (n_samples, n_targets), \
             default=None
         Xy = np.dot(X.T, y) that can be precomputed. It is useful
         only when the Gram matrix is precomputed.
 
-    Gram : None, 'auto' or array-like shape=(n_features, n_features), \
+    Gram : None, 'auto' or array-like of shape (n_features, n_features), \
             default=None
         Precomputed Gram matrix (X' * X), if ``'auto'``, the Gram
         matrix is precomputed from the given X, if there are more samples
@@ -361,16 +361,16 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
 
     Returns
     --------
-    alphas : array-like shape=(n_alphas + 1,)
+    alphas : array-like of shape (n_alphas + 1,)
         Maximum of covariances (in absolute value) at each iteration.
         ``n_alphas`` is either ``max_iter``, ``n_features`` or the
         number of nodes in the path with ``alpha >= alpha_min``, whichever
         is smaller.
 
-    active : array-like shape=(n_alphas,)
+    active : array-like of shape (n_alphas,)
         Indices of active variables at the end of the path.
 
-    coefs : array-like shape=(n_features, n_alphas + 1)
+    coefs : array-like of shape (n_features, n_alphas + 1)
         Coefficients along the path
 
     n_iter : int
@@ -809,7 +809,7 @@ class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
 
     Attributes
     ----------
-    alphas_ : array-like shape=(n_alphas + 1,) | list of n_targets such arrays
+    alphas_ : array-like of shape (n_alphas + 1,) | list of n_targets such arrays
         Maximum of covariances (in absolute value) at each iteration. \
         ``n_alphas`` is either ``n_nonzero_coefs`` or ``n_features``, \
         whichever is smaller.
@@ -817,15 +817,15 @@ class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
     active_ : list, length = n_alphas | list of n_targets such lists
         Indices of active variables at the end of the path.
 
-    coef_path_ : array-like shape=(n_features, n_alphas + 1) \
+    coef_path_ : array-like of shape (n_features, n_alphas + 1) \
         | list of n_targets such arrays
         The varying values of the coefficients along the path. It is not
         present if the ``fit_path`` parameter is ``False``.
 
-    coef_ : array-like shape=(n_features,) or (n_targets, n_features)
+    coef_ : array-like of shape (n_features,) or (n_targets, n_features)
         Parameter vector (w in the formulation formula).
 
-    intercept_ : float or array-like shape=(n_targets,)
+    intercept_ : float or array-like of shape (n_targets,)
         Independent term in decision function.
 
     n_iter_ : array-like or int
@@ -935,13 +935,13 @@ class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
 
         Parameters
         ----------
-        X : array-like shape=(n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data.
 
-        y : array-like shape=(n_samples,) or (n_samples, n_targets)
+        y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values.
 
-        Xy : array-like shape=(n_samples,) or (n_samples, n_targets), \
+        Xy : array-like of shape (n_samples,) or (n_samples, n_targets), \
                 default=None
             Xy = np.dot(X.T, y) that can be precomputed. It is useful
             only when the Gram matrix is precomputed.
@@ -1038,7 +1038,7 @@ class LassoLars(Lars):
 
     Attributes
     ----------
-    alphas_ : array-like shape=(n_alphas + 1,) | list of n_targets such arrays
+    alphas_ : array-like of shape (n_alphas + 1,) | list of n_targets such arrays
         Maximum of covariances (in absolute value) at each iteration. \
         ``n_alphas`` is either ``max_iter``, ``n_features``, or the number of \
         nodes in the path with correlation greater than ``alpha``, whichever \
@@ -1047,15 +1047,15 @@ class LassoLars(Lars):
     active_ : list, length = n_alphas | list of n_targets such lists
         Indices of active variables at the end of the path.
 
-    coef_path_ : array-like shape=(n_features, n_alphas + 1) or list
+    coef_path_ : array-like of shape (n_features, n_alphas + 1) or list
         If a list is passed it's expected to be one of n_targets such arrays.
         The varying values of the coefficients along the path. It is not
         present if the ``fit_path`` parameter is ``False``.
 
-    coef_ : array-like shape=(n_features,) or (n_targets, n_features)
+    coef_ : array-like of shape (n_features,) or (n_targets, n_features)
         Parameter vector (w in the formulation formula).
 
-    intercept_ : float or array-like shape=(n_targets,)
+    intercept_ : float or array-like of shape (n_targets,)
         Independent term in decision function.
 
     n_iter_ : array-like or int.
@@ -1117,19 +1117,19 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
 
     Parameters
     -----------
-    X_train : array-like shape=(n_samples, n_features)
+    X_train : array-like of shape (n_samples, n_features)
         The data to fit the LARS on
 
-    y_train : array-like shape=(n_samples,)
+    y_train : array-like of shape (n_samples,)
         The target variable to fit LARS on
 
-    X_test : array-like shape=(n_samples, n_features)
+    X_test : array-like of shape (n_samples, n_features)
         The data to compute the residues on
 
-    y_test : array-like shape=(n_samples,)
+    y_test : array-like of shape (n_samples,)
         The target variable to compute the residues on
 
-    Gram : None, 'auto' or array-like shape=(n_features, n_features), \
+    Gram : None, 'auto' or array-like of shape (n_features, n_features), \
             default=None
         Precomputed Gram matrix (X' * X), if ``'auto'``, the Gram
         matrix is precomputed from the given X, if there are more samples
@@ -1179,7 +1179,7 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
 
     Returns
     --------
-    alphas : array-like shape=(n_alphas,)
+    alphas : array-like of shape (n_alphas,)
         Maximum of covariances (in absolute value) at each iteration.
         ``n_alphas`` is either ``max_iter`` or ``n_features``, whichever
         is smaller.
@@ -1187,10 +1187,10 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
     active : list
         Indices of active variables at the end of the path.
 
-    coefs : array-like shape=(n_features, n_alphas)
+    coefs : array-like of shape (n_features, n_alphas)
         Coefficients along the path
 
-    residues : array-like shape=(n_alphas, n_samples)
+    residues : array-like of shape (n_alphas, n_samples)
         Residues of the prediction on the test data
     """
     X_train = _check_copy_and_writeable(X_train, copy)
@@ -1293,25 +1293,25 @@ class LarsCV(Lars):
 
     Attributes
     ----------
-    coef_ : array-like shape=(n_features,)
+    coef_ : array-like of shape (n_features,)
         parameter vector (w in the formulation formula)
 
     intercept_ : float
         independent term in decision function
 
-    coef_path_ : array-like shape=(n_features, n_alphas)
+    coef_path_ : array-like of shape (n_features, n_alphas)
         the varying values of the coefficients along the path
 
     alpha_ : float
         the estimated regularization parameter alpha
 
-    alphas_ : array-like shape=(n_alphas,)
+    alphas_ : array-like of shape (n_alphas,)
         the different values of alpha along the path
 
-    cv_alphas_ : array-like shape=(n_cv_alphas,)
+    cv_alphas_ : array-like of shape (n_cv_alphas,)
         all the values of alpha along the path for the different folds
 
-    mse_path_ : array, shape (n_folds, n_cv_alphas)
+    mse_path_ : array-like of shape (n_folds, n_cv_alphas)
         the mean square error on left-out for each fold along the path
         (alpha values given by ``cv_alphas``)
 
@@ -1357,10 +1357,10 @@ class LarsCV(Lars):
 
         Parameters
         ----------
-        X : array-like shape=(n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data.
 
-        y : array-like shape=(n_samples,)
+        y : array-like of shape (n_samples,)
             Target values.
 
         Returns
@@ -1519,25 +1519,25 @@ class LassoLarsCV(LarsCV):
 
     Attributes
     ----------
-    coef_ : array-like shape=(n_features,)
+    coef_ : array-like of shape (n_features,)
         parameter vector (w in the formulation formula)
 
     intercept_ : float
         independent term in decision function.
 
-    coef_path_ : array-like shape=(n_features, n_alphas)
+    coef_path_ : array-like of shape (n_features, n_alphas)
         the varying values of the coefficients along the path
 
     alpha_ : float
         the estimated regularization parameter alpha
 
-    alphas_ : array-like shape=(n_alphas,)
+    alphas_ : array-like of shape (n_alphas,)
         the different values of alpha along the path
 
-    cv_alphas_ : array-like shape=(n_cv_alphas,)
+    cv_alphas_ : array-like of shape (n_cv_alphas,)
         all the values of alpha along the path for the different folds
 
-    mse_path_ : array-like shape=(n_folds, n_cv_alphas)
+    mse_path_ : array-like of shape (n_folds, n_cv_alphas)
         the mean square error on left-out for each fold along the path
         (alpha values given by ``cv_alphas``)
 
@@ -1664,7 +1664,7 @@ class LassoLarsIC(LassoLars):
 
     Attributes
     ----------
-    coef_ : array-like shape=(n_features,)
+    coef_ : array-like of shape (n_features,)
         parameter vector (w in the formulation formula)
 
     intercept_ : float
@@ -1677,7 +1677,7 @@ class LassoLarsIC(LassoLars):
         number of iterations run by lars_path to find the grid of
         alphas.
 
-    criterion_ : array-like shape=(n_alphas,)
+    criterion_ : array-like of shape (n_alphas,)
         The value of the information criteria ('aic', 'bic') across all
         alphas. The alpha which has the smallest information criterion is
         chosen. This value is larger by a factor of ``n_samples`` compared to
@@ -1727,10 +1727,10 @@ class LassoLarsIC(LassoLars):
 
         Parameters
         ----------
-        X : array-like shape=(n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             training data.
 
-        y : array-like shape=(n_samples,)
+        y : array-like of shape (n_samples,)
             target values. Will be cast to X's dtype if necessary
 
         copy_X : bool, default=None
