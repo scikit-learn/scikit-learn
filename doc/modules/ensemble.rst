@@ -925,7 +925,7 @@ trees. Building a traditional decision tree (as in the other GBDTs
 requires sorting the samples at each node (for
 each feature). Sorting is needed so that the potential gain of a split point
 can be computed efficiently. Splitting a single node has thus a complexity
-of :math:`\mathcal{O}(\text{n-features} \times n \log(n))` where :math:`n`
+of :math:`\mathcal{O}(n_\text{features} \times n \log(n))` where :math:`n`
 is the number of samples at the node.
 
 :class:`HistGradientBoostingClassifier` and
@@ -933,7 +933,7 @@ is the number of samples at the node.
 feature values and instead use a data-structure called a histogram, where the
 samples are implicitly ordered. Building a histogram has a
 :math:`\mathcal{O}(n)` complexity, so the node splitting procedure has a
-:math:`\mathcal{O}(\text{n-features} \times n)` complexity, much smaller
+:math:`\mathcal{O}(n_\text{features} \times n)` complexity, much smaller
 than the previous one. In addition, instead of considering :math:`n` split
 points, we here consider only ``max_bins`` split points, which is much
 smaller.
