@@ -22,8 +22,6 @@ MiniBatchKMeans. The document clusters derived from the biclusters
 achieve a better V-measure than clusters found by MiniBatchKMeans.
 
 """
-from __future__ import print_function
-
 from collections import defaultdict
 import operator
 from time import time
@@ -51,7 +49,7 @@ def number_normalizer(tokens):
 
 class NumberNormalizingVectorizer(TfidfVectorizer):
     def build_tokenizer(self):
-        tokenize = super(NumberNormalizingVectorizer, self).build_tokenizer()
+        tokenize = super().build_tokenizer()
         return lambda doc: list(number_normalizer(tokenize(doc)))
 
 

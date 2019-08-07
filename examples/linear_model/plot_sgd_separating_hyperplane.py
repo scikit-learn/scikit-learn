@@ -19,6 +19,7 @@ X, Y = make_blobs(n_samples=50, centers=2, random_state=0, cluster_std=0.60)
 
 # fit the model
 clf = SGDClassifier(loss="hinge", alpha=0.01, max_iter=200)
+
 clf.fit(X, Y)
 
 # plot the line, the points, and the nearest vectors to the plane

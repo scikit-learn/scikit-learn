@@ -27,7 +27,7 @@ class _BasePCA(BaseEstimator, TransformerMixin, metaclass=ABCMeta):
         """Compute data covariance with the generative model.
 
         ``cov = components_.T * S**2 * components_ + sigma2 * eye(n_features)``
-        where  S**2 contains the explained variances, and sigma2 contains the
+        where S**2 contains the explained variances, and sigma2 contains the
         noise variances.
 
         Returns
@@ -119,7 +119,7 @@ class _BasePCA(BaseEstimator, TransformerMixin, metaclass=ABCMeta):
         >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
         >>> ipca = IncrementalPCA(n_components=2, batch_size=3)
         >>> ipca.fit(X)
-        IncrementalPCA(batch_size=3, copy=True, n_components=2, whiten=False)
+        IncrementalPCA(batch_size=3, n_components=2)
         >>> ipca.transform(X) # doctest: +SKIP
         """
         check_is_fitted(self, ['mean_', 'components_'], all_or_any=all)

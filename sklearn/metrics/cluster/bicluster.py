@@ -1,9 +1,7 @@
-from __future__ import division
-
 import numpy as np
+from scipy.optimize import linear_sum_assignment
 
-from sklearn.utils.linear_assignment_ import linear_assignment
-from sklearn.utils.validation import check_consistent_length, check_array
+from ...utils.validation import check_consistent_length, check_array
 
 __all__ = ["consensus_score"]
 
@@ -80,7 +78,7 @@ def consensus_score(a, b, similarity="jaccard"):
     if similarity == "jaccard":
         similarity = _jaccard
     matrix = _pairwise_similarity(a, b, similarity)
-    indices = linear_assignment(1. - matrix)
+    row_indices, col_indices = linear_sum_assignment(1. - matrix)
     n_a = len(a[0])
     n_b = len(b[0])
-    return matrix[indices[:, 0], indices[:, 1]].sum() / max(n_a, n_b)
+    return matrix[row_indices, col_indices].sum() / max(n_a, n_b)

@@ -95,7 +95,7 @@ def _changed_params(estimator):
     init_params = signature(init_func).parameters
     init_params = {name: param.default for name, param in init_params.items()}
     for k, v in params.items():
-        if (v != init_params[k] and
+        if (repr(v) != repr(init_params[k]) and
                 not (is_scalar_nan(init_params[k]) and is_scalar_nan(v))):
             filtered_params[k] = v
     return filtered_params
@@ -321,7 +321,10 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
         self._format(v, stream, indent + len(rep) + len(middle), allowance,
                      context, level)
 
-    _dispatch = pprint.PrettyPrinter._dispatch
+    # Note: need to copy _dispatch to prevent instances of the builtin
+    # PrettyPrinter class to call methods of _EstimatorPrettyPrinter (see issue
+    # 12906)
+    _dispatch = pprint.PrettyPrinter._dispatch.copy()
     _dispatch[BaseEstimator.__repr__] = _pprint_estimator
     _dispatch[KeyValTuple.__repr__] = _pprint_key_val_tuple
 
