@@ -537,6 +537,26 @@ def test_ordinal_encoder_handle_unknown():
     assert_array_equal(encVirtual.inverse_transform(Y_tr), exp)
 
 
+def test_ordinal_encoder_categories_():
+    X = [["Red", "Coffee"], ["Green", "Tea"],  ["Blue", "Water"]]
+    enc = OrdinalEncoder()
+    enc.fit(X)
+    assert_array_equal(
+                        enc.categories_[0],
+                        np.array(['Blue', 'Green', 'Red'], dtype=object))
+    assert_array_equal(
+                        enc.categories_[1],
+                        np.array(['Coffee', 'Tea', 'Water'], dtype=object))
+    encVirtual = OrdinalEncoder(handle_unknown='virtual')
+    encVirtual.fit(X)
+    assert_array_equal(
+                        encVirtual.categories_[0],
+                        np.array(['Blue', 'Green', 'Red', None], dtype=object))
+    assert_array_equal(
+                        encVirtual.categories_[1],
+                        np.array(['Coffee', 'Tea', 'Water', None], dtype=object))
+
+
 @pytest.mark.parametrize("X", [np.array([[1, np.nan]]).T,
                                np.array([['a', np.nan]], dtype=object).T],
                          ids=['numeric', 'object'])
