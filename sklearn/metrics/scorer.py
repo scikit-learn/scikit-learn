@@ -20,6 +20,7 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 
 from collections.abc import Iterable
 from functools import partial
+from collections import Counter
 
 import numpy as np
 
@@ -52,8 +53,8 @@ class _MultimetricScorer(dict):
 
         for name, scorer in self.items():
             if isinstance(scorer, _BaseScorer):
-                score = scorer(estimator, *args, **kwargs,
-                               method_cacher=method_cacher)
+                score = scorer._score(estimator, *args, **kwargs,
+                                      method_cacher=method_cacher)
             else:
                 score = scorer(estimator, *args, **kwargs)
             scores[name] = score
@@ -62,7 +63,18 @@ class _MultimetricScorer(dict):
     def _use_cache(self):
         if len(self) == 1:
             return False
-        return True
+
+        counter = Counter([type(v) for v in self.values()])
+
+        for known_type in [_PredictScorer, _ProbaScorer, _ThresholdScorer]:
+            if counter[known_type] > 1:
+                return True
+
+        if counter[_ThresholdScorer] > 0 and (counter[_PredictScorer] or
+                                              counter[_ThresholdScorer]):
+            return True
+
+        return False
 
     def _method_cacher(self, cache, estimator, method, *args, **kwargs):
         if cache is None:
@@ -89,6 +101,9 @@ class _BaseScorer:
                    "" if self._sign > 0 else ", greater_is_better=False",
                    self._factory_args(), kwargs_string))
 
+    def __call__(self, estimator, X, y_true, sample_weight=None):
+        return self._score(estimator, X, y_true, sample_weight=sample_weight)
+
     def _method_cacher(self, estimator, method, *args, **kwargs):
         return getattr(estimator, method)(*args, **kwargs)
 
@@ -98,8 +113,8 @@ class _BaseScorer:
 
 
 class _PredictScorer(_BaseScorer):
-    def __call__(self, estimator, X, y_true, sample_weight=None,
-                 method_cacher=None):
+    def _score(self, estimator, X, y_true, sample_weight=None,
+               method_cacher=None):
         """Evaluate predicted target values for X relative to y_true.
 
         Parameters
@@ -139,7 +154,7 @@ class _PredictScorer(_BaseScorer):
 
 
 class _ProbaScorer(_BaseScorer):
-    def __call__(self, clf, X, y, sample_weight=None, method_cacher=None):
+    def _score(self, clf, X, y, sample_weight=None, method_cacher=None):
         """Evaluate predicted probabilities for X relative to y_true.
 
         Parameters
@@ -191,7 +206,7 @@ class _ProbaScorer(_BaseScorer):
 
 
 class _ThresholdScorer(_BaseScorer):
-    def __call__(self, clf, X, y, sample_weight=None, method_cacher=None):
+    def _score(self, clf, X, y, sample_weight=None, method_cacher=None):
         """Evaluate decision function output for X relative to y_true.
 
         Parameters
