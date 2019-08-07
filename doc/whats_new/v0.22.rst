@@ -45,6 +45,7 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+
 :mod:`sklearn.base`
 ...................
 
@@ -60,6 +61,14 @@ Changelog
   given a `sample_weight` parameter of type `list` (in the case where
   `sample_weights` are not supported by the wrapped estimator). :pr:`13575`
   by :user:`William de Vazelhes <wdevazelhes>`.
+
+:mod:`sklearn.compose`
+......................
+
+- |Fix| Fixed a bug in :class:`compose.ColumnTransformer` which failed to
+  select the proper columns when using a boolean list, with NumPy older than
+  1.12.
+  :pr:`14510` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.datasets`
 .......................
@@ -134,8 +143,26 @@ Changelog
   `predict_proba` give consistent results.
   :pr:`14114` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Fix| Functions created by build_preprocessor and build_analyzer of
+  :class:`feature_extraction.text.VectorizerMixin` can now be pickled.
+  :pr:`14430` by :user:`Dillon Niederhut <deniederhut>`.
+
+- |API| Deprecated unused `copy` param for
+  :meth: `feature_extraction.text.TfidfVectorizer.transform` it will be
+  removed in v0.24. :pr:`14520` by
+  :user:`Guillem G. Subies <guillemgsubies>`.
+
 :mod:`sklearn.gaussian_process`
 ...............................
+
+- |Feature| :func:`gaussian_process.GaussianProcessClassifier.log_marginal_likelihood`
+  and :func:`gaussian_process.GaussianProcessRegressor.log_marginal_likelihood` now
+  accept a ``clone_kernel=True`` keyword argument. When set to ``False``,
+  the kernel attribute is modified, but may result in a performance improvement.
+  :pr:`14378` by :user:`Masashi Shibata <c-bata>`.
 
 - |API| From version 0.24 :meth:`Kernel.get_params` will raise an
   AttributeError rather than return None for parameters that are in the
@@ -164,7 +191,7 @@ Changelog
 
 - |Efficiency| The 'liblinear' logistic regression solver is now faster and
   requires less memory.
-  :pr:`14108`, :pr:`14170` by :user:`Alex Henrie <alexhenrie>`.
+  :pr:`14108`, pr:`14170`, pr:`14296` by :user:`Alex Henrie <alexhenrie>`.
 
 - |Fix| :class:`linear_model.Ridge` with `solver='sag'` now accepts F-ordered
   and non-contiguous arrays and makes a conversion instead of failing.
@@ -190,12 +217,15 @@ Changelog
   :pr:`13231` by :user:`Dong-hee Na <corona10>`.
 
 :mod:`sklearn.model_selection`
-..................
+...............................
 
 - |Enhancement| :class:`model_selection.learning_curve` now accepts parameter
   ``return_times`` which can be used to retrieve computation times in order to
   plot model scalability (see learning_curve example).
   :pr:`13938` by :user:`Hadrien Reboul <H4dr1en>`.
+
+- |Enhancement| :class:`model_selection.RandomizedSearchCV` now accepts lists
+  of parameter distributions. :pr:`14549` by `Andreas Müller`_.
 
 :mod:`sklearn.pipeline`
 .......................
@@ -216,7 +246,7 @@ Changelog
 - |Enhancement| SVM now throws more specific error when fit on non-square data
   and kernel = precomputed.  :class:`svm.BaseLibSVM`
   :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
-  
+
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -225,8 +255,8 @@ Changelog
   :class:`preprocessing.MaxAbsScaler`, :class:`preprocessing.RobustScaler`
   and :class:`preprocessing.QuantileTransformer` which results in a slight
   performance improvement. :pr:`13987` by `Roman Yurchak`_.
- 
-- |Fix| KernelCenterer now throws error when fit on non-square 
+
+- |Fix| KernelCenterer now throws error when fit on non-square
   class:`preprocessing.KernelCenterer`
   :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
 
@@ -240,10 +270,11 @@ Changelog
 
 :mod:`sklearn.feature_selection`
 ................................
+
 - |Fix| Fixed a bug where :class:`VarianceThreshold` with `threshold=0` did not
   remove constant features due to numerical instability, by using range
   rather than variance in this case.
-  :pr:`13704` by `Roddy MacSween <rlms>`.
+  :pr:`13704` by :user:`Roddy MacSween <rlms>`.
 
 :mod:`sklearn.utils`
 ....................
@@ -251,18 +282,28 @@ Changelog
 - |Enhancement| :func:`utils.safe_indexing` accepts an ``axis`` parameter to
   index array-like across rows and columns. The column indexing can be done on
   NumPy array, SciPy sparse matrix, and Pandas DataFrame.
-  :pr:`14035` by `Guillaume Lemaitre <glemaitre>`.
+  :pr:`14035` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Feature| :func:`utils.estimator_checks.check_estimator` can now generate
   checks by setting `generate_only=True`. This allows libraries to call each
   check separately in their test suite. :pr:`14381` by `Thomas Fan`_.
 
 :mod:`sklearn.neighbors`
-.............................
+....................
+
+- |Feature| :class:`neighbors.RadiusNeighborsClassifier` now supports
+  predicting probabilities by using `predict_proba` and supports more
+  outlier_label options: 'most_frequent', or different outlier_labels
+  for multi-outputs.
+  :pr:`9597` by :user:`Wenbo Zhao <webber26232>`.
+
+- |Efficiency| Efficiency improvements for
+  :func:`neighbors.RadiusNeighborsClassifier.predict`.
+  :pr:`9597` by :user:`Wenbo Zhao <webber26232>`.
 
 - |Fix| KNearestRegressor now throws error when fit on non-square data and
   metric = precomputed.  :class:`neighbors.NeighborsBase`
-  :pr:`14336` by :user:`Gregory Dexter <gdex1>`.  
+  :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
 
 :mod:`sklearn.neural_network`
 .............................
@@ -273,7 +314,7 @@ Changelog
   :class:`neural_network.MLPClassifier` to give control over
   maximum number of function evaluation to not meet ``tol`` improvement.
   :issue:`9274` by :user:`Daniel Perry <daniel-perry>`.
-  
+
 
 Miscellaneous
 .............
