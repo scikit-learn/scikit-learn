@@ -353,11 +353,17 @@ def _get_column_indices(X, key):
     """
     n_columns = X.shape[1]
 
-    if (_check_key_type(key, int)
-            or hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_)):
+    if isinstance(key, list) and not key:
+        # we get an empty list
+        return []
+    elif (_check_key_type(key, int) or _check_key_type(key, bool)):
         # Convert key into positive indexes
         try:
-            idx = safe_indexing(np.arange(n_columns), key)
+            # The behavior of boolean array-like and boolean array is different
+            # in NumPy < 1.12. We convert the array-like for consistent
+            # behavior.
+            key = np.asarray(key) if _check_key_type(key, bool) else key
+            idx = np.arange(n_columns)[key]
         except IndexError as e:
             raise ValueError(
                 'all features must be in [0, {}] or [-{}, 0]'
