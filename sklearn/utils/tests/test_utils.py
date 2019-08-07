@@ -1,5 +1,4 @@
-from collections.abc import Iterable
-from itertools import chain, product
+from itertools import chain
 import warnings
 import string
 import timeit
@@ -13,7 +12,6 @@ from sklearn.utils.testing import (assert_raises,
                                    assert_allclose_dense_sparse,
                                    assert_raises_regex,
                                    assert_warns_message, assert_no_warnings)
-from sklearn.utils import _array_indexing
 from sklearn.utils import check_random_state
 from sklearn.utils import _check_key_type
 from sklearn.utils import deprecated
