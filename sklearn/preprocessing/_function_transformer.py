@@ -1,6 +1,5 @@
 import warnings
 
-
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.validation import _allclose_dense_sparse
