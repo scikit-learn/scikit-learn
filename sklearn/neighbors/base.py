@@ -405,6 +405,12 @@ class NeighborsBase(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
         if n_samples == 0:
             raise ValueError("n_samples must be greater than 0")
 
+        # Precomputed matrix X must be squared
+        if self.metric == 'precomputed' and X.shape[0] != X.shape[1]:
+            raise ValueError("Precomputed matrix must be a square matrix."
+                             " Input is a {}x{} matrix."
+                             .format(X.shape[0], X.shape[1]))
+
         if issparse(X):
             if self.algorithm not in ('auto', 'brute'):
                 warnings.warn("cannot use tree with sparse input: "

@@ -10,8 +10,11 @@
 
 import numpy as np
 from scipy import stats
+from six import string_types
 from ..utils.extmath import weighted_mode
+from ..utils.validation import _is_arraylike, _num_samples
 
+import warnings
 from .base import \
     _check_weights, _get_weights, \
     NeighborsBase, KNeighborsMixin,\
@@ -144,7 +147,6 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
                  weights='uniform', algorithm='auto', leaf_size=30,
                  p=2, metric='minkowski', metric_params=None, n_jobs=None,
                  **kwargs):
-
         super().__init__(
             n_neighbors=n_neighbors,
             algorithm=algorithm,
@@ -154,7 +156,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         self.weights = _check_weights(weights)
 
     def predict(self, X):
-        """Predict the class labels for the provided data
+        """Predict the class labels for the provided data.
 
         Parameters
         ----------
@@ -177,7 +179,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
             classes_ = [self.classes_]
 
         n_outputs = len(classes_)
-        n_queries = X.shape[0]
+        n_queries = _num_samples(X)
         weights = _get_weights(neigh_dist, self.weights)
 
         y_pred = np.empty((n_queries, n_outputs), dtype=classes_[0].dtype)
@@ -206,7 +208,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         Returns
         -------
-        p : array of shape = [n_samples, n_classes], or a list of n_outputs
+        p : array of shape = [n_queries, n_classes], or a list of n_outputs
             of such arrays if n_outputs > 1.
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.
@@ -221,7 +223,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
             _y = self._y.reshape((-1, 1))
             classes_ = [self.classes_]
 
-        n_queries = X.shape[0]
+        n_queries = _num_samples(X)
 
         weights = _get_weights(neigh_dist, self.weights)
         if weights is None:
@@ -308,10 +310,13 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         must be square during fit. X may be a :term:`Glossary <sparse graph>`,
         in which case only "nonzero" elements may be considered neighbors.
 
-    outlier_label : int, optional (default = None)
-        Label, which is given for outlier samples (samples with no
-        neighbors on given radius).
-        If set to None, ValueError is raised, when outlier is detected.
+    outlier_label : {manual label, 'most_frequent'}, optional (default = None)
+        label for outlier samples (samples with no neighbors in given radius).
+
+        - manual label: str or int label (should be the same type as y)
+          or list of manual labels if multi-output is used.
+        - 'most_frequent' : assign the most frequent label of y to outliers.
+        - None : when any outlier is detected, ValueError will be raised.
 
     metric_params : dict, optional (default = None)
         Additional keyword arguments for the metric function.
@@ -352,6 +357,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     RadiusNeighborsClassifier(...)
     >>> print(neigh.predict([[1.5]]))
     [0]
+    >>> print(neigh.predict_proba([[1.0]]))
+    [[0.66666667 0.33333333]]
 
     See also
     --------
@@ -381,8 +388,69 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         self.weights = _check_weights(weights)
         self.outlier_label = outlier_label
 
+    def fit(self, X, y):
+        """Fit the model using X as training data and y as target values
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix, BallTree, KDTree}
+            Training data. If array or matrix, shape [n_samples, n_features],
+            or [n_samples, n_samples] if metric='precomputed'.
+
+        y : {array-like, sparse matrix}
+            Target values of shape = [n_samples] or [n_samples, n_outputs]
+
+        """
+
+        SupervisedIntegerMixin.fit(self, X, y)
+
+        classes_ = self.classes_
+        _y = self._y
+        if not self.outputs_2d_:
+            _y = self._y.reshape((-1, 1))
+            classes_ = [self.classes_]
+
+        if self.outlier_label is None:
+            outlier_label_ = None
+
+        elif self.outlier_label == 'most_frequent':
+            outlier_label_ = []
+            # iterate over multi-output, get the most frequest label for each
+            # output.
+            for k, classes_k in enumerate(classes_):
+                label_count = np.bincount(_y[:, k])
+                outlier_label_.append(classes_k[label_count.argmax()])
+
+        else:
+            if (_is_arraylike(self.outlier_label) and
+               not isinstance(self.outlier_label, string_types)):
+                if len(self.outlier_label) != len(classes_):
+                    raise ValueError("The length of outlier_label: {} is "
+                                     "inconsistent with the output "
+                                     "length: {}".format(self.outlier_label,
+                                                         len(classes_)))
+                outlier_label_ = self.outlier_label
+            else:
+                outlier_label_ = [self.outlier_label] * len(classes_)
+
+            for classes, label in zip(classes_, outlier_label_):
+                if (_is_arraylike(label) and
+                   not isinstance(label, string_types)):
+                    # ensure the outlier lable for each output is a scalar.
+                    raise TypeError("The outlier_label of classes {} is "
+                                    "supposed to be a scalar, got "
+                                    "{}.".format(classes, label))
+                if np.append(classes, label).dtype != classes.dtype:
+                    # ensure the dtype of outlier label is consistent with y.
+                    raise TypeError("The dtype of outlier_label {} is "
+                                    "inconsistent with classes {} in "
+                                    "y.".format(label, classes))
+
+        self.outlier_label_ = outlier_label_
+        return self
+
     def predict(self, X):
-        """Predict the class labels for the provided data
+        """Predict the class labels for the provided data.
 
         Parameters
         ----------
@@ -394,55 +462,118 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         -------
         y : array of shape [n_queries] or [n_queries, n_outputs]
             Class labels for each data sample.
-
         """
+
+        probs = self.predict_proba(X)
+        classes_ = self.classes_
+
+        if not self.outputs_2d_:
+            probs = [probs]
+            classes_ = [self.classes_]
+
+        n_outputs = len(classes_)
+        n_queries = probs[0].shape[0]
+        y_pred = np.empty((n_queries, n_outputs), dtype=classes_[0].dtype)
+
+        for k, prob in enumerate(probs):
+            # iterate over multi-output, assign labels based on probabilities
+            # of each output.
+            max_prob_index = prob.argmax(axis=1)
+            y_pred[:, k] = classes_[k].take(max_prob_index)
+
+            outlier_zero_probs = (prob == 0).all(axis=1)
+            if outlier_zero_probs.any():
+                zero_prob_index = np.flatnonzero(outlier_zero_probs)
+                y_pred[zero_prob_index, k] = self.outlier_label_[k]
+
+        if not self.outputs_2d_:
+            y_pred = y_pred.ravel()
+
+        return y_pred
+
+    def predict_proba(self, X):
+        """Return probability estimates for the test data X.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_queries, n_features), \
+                or (n_queries, n_indexed) if metric == 'precomputed'
+            Test samples.
+
+        Returns
+        -------
+        p : array of shape = [n_queries, n_classes], or a list of n_outputs
+            of such arrays if n_outputs > 1.
+            The class probabilities of the input samples. Classes are ordered
+            by lexicographic order.
+        """
+
         X = check_array(X, accept_sparse='csr')
-        n_queries = X.shape[0]
+        n_queries = _num_samples(X)
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)
-
-        inliers = [i for i, nind in enumerate(neigh_ind) if len(nind) != 0]
-        outliers = [i for i, nind in enumerate(neigh_ind) if len(nind) == 0]
+        outlier_mask = np.zeros(n_queries, dtype=np.bool)
+        outlier_mask[:] = [len(nind) == 0 for nind in neigh_ind]
+        outliers = np.flatnonzero(outlier_mask)
+        inliers = np.flatnonzero(~outlier_mask)
 
         classes_ = self.classes_
         _y = self._y
         if not self.outputs_2d_:
             _y = self._y.reshape((-1, 1))
             classes_ = [self.classes_]
-        n_outputs = len(classes_)
 
-        if self.outlier_label is not None:
-            neigh_dist[outliers] = 1e-6
-        elif outliers:
+        if self.outlier_label_ is None and outliers.size > 0:
             raise ValueError('No neighbors found for test samples %r, '
                              'you can try using larger radius, '
-                             'give a label for outliers, '
-                             'or consider removing them from your dataset.'
+                             'giving a label for outliers, '
+                             'or considering removing them from your dataset.'
                              % outliers)
 
         weights = _get_weights(neigh_dist, self.weights)
+        if weights is not None:
+            weights = weights[inliers]
 
-        y_pred = np.empty((n_queries, n_outputs), dtype=classes_[0].dtype)
+        probabilities = []
+        # iterate over multi-output, measure probabilities of the k-th output.
         for k, classes_k in enumerate(classes_):
             pred_labels = np.zeros(len(neigh_ind), dtype=object)
             pred_labels[:] = [_y[ind, k] for ind in neigh_ind]
+
+            proba_k = np.zeros((n_queries, classes_k.size))
+            proba_inl = np.zeros((len(inliers), classes_k.size))
+
+            # samples have different size of neighbors within the same radius
             if weights is None:
-                mode = np.array([stats.mode(pl)[0]
-                                 for pl in pred_labels[inliers]], dtype=np.int)
+                for i, idx in enumerate(pred_labels[inliers]):
+                    proba_inl[i, :] = np.bincount(idx,
+                                                  minlength=classes_k.size)
             else:
-                mode = np.array(
-                    [weighted_mode(pl, w)[0]
-                     for (pl, w) in zip(pred_labels[inliers], weights[inliers])
-                     ], dtype=np.int)
+                for i, idx in enumerate(pred_labels[inliers]):
+                    proba_inl[i, :] = np.bincount(idx,
+                                                  weights[i],
+                                                  minlength=classes_k.size)
+            proba_k[inliers, :] = proba_inl
 
-            mode = mode.ravel()
+            if outliers.size > 0:
+                _outlier_label = self.outlier_label_[k]
+                label_index = np.flatnonzero(classes_k == _outlier_label)
+                if label_index.size == 1:
+                    proba_k[outliers, label_index[0]] = 1.0
+                else:
+                    warnings.warn('Outlier label {} is not in training '
+                                  'classes. All class probabilities of '
+                                  'outliers will be assigned with 0.'
+                                  ''.format(self.outlier_label_[k]))
 
-            y_pred[inliers, k] = classes_k.take(mode)
+            # normalize 'votes' into real [0,1] probabilities
+            normalizer = proba_k.sum(axis=1)[:, np.newaxis]
+            normalizer[normalizer == 0.0] = 1.0
+            proba_k /= normalizer
 
-        if outliers:
-            y_pred[outliers, :] = self.outlier_label
+            probabilities.append(proba_k)
 
         if not self.outputs_2d_:
-            y_pred = y_pred.ravel()
+            probabilities = probabilities[0]
 
-        return y_pred
+        return probabilities
