@@ -1290,11 +1290,16 @@ def test_callable_analyzer_reraise_error(tmpdir, Estimator):
         Estimator(analyzer=analyzer, input='file').fit_transform([f])
 
 
-def test_unused_parameters_warn():
+@pytest.mark.parametrize(
+    'Vectorizer',
+    [CountVectorizer]
+)
+def test_unused_parameters_warn(Vectorizer):
     msg = "The parameter 'stop_words' will not be used"
     " since analyzer != 'word'"
-    for vec in [CountVectorizer()]:
-        vec.set_params(stop_words=["you've", "you", "you'll", 'AND'],
-                       analyzer='char')
-        assert_warns_message(UserWarning, msg, vec.fit,
-                             ['hello world'])
+    vect = Vectorizer()
+    vect.set_params(stop_words=["you've", "you", "you'll", 'AND'],
+                    analyzer='char')
+    with pytest.warns(UserWarning, match=msg):
+        train_data = JUNK_FOOD_DOCS
+        vect.fit(train_data)
