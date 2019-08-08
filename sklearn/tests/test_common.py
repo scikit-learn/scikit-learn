@@ -27,9 +27,11 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.linear_model import Ridge
 from sklearn.utils import IS_PYPY
+from sklearn.utils.testing import SkipTest
 from sklearn.utils.estimator_checks import (
     _yield_all_checks,
     _safe_tags,
+    _construct_instance,
     set_checking_parameters,
     check_parameters_default_constructible,
     check_class_weight_balanced_linear_classifier)
@@ -58,23 +60,11 @@ def _tested_estimators():
             continue
         if name.startswith("_"):
             continue
-        # FIXME _skip_test should be used here (if we could)
+        try:
+            estimator = _construct_instance(Estimator)
+        except SkipTest:
+            continue
 
-        required_parameters = getattr(Estimator, "_required_parameters", [])
-        if len(required_parameters):
-            if required_parameters in (["estimator"], ["base_estimator"]):
-                if issubclass(Estimator, RegressorMixin):
-                    estimator = Estimator(Ridge())
-                else:
-                    estimator = Estimator(LinearDiscriminantAnalysis())
-            else:
-                warnings.warn("Can't instantiate estimator {} which requires "
-                              "parameters {}".format(name,
-                                                     required_parameters),
-                              SkipTestWarning)
-                continue
-        else:
-            estimator = Estimator()
         yield name, estimator
 
 
