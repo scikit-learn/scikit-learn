@@ -80,15 +80,16 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
     def set_params(self, **params):
         """Setting the parameters for the stacking estimator.
 
-        Valid parameter keys can be listed with get_params().
+        Valid parameter keys can be listed with `get_params()`.
 
         Parameters
         ----------
         params : keyword arguments
-            Specific parameters using e.g. set_params(parameter_name=new_value).
-            In addition, to setting the parameters of the stacking estimator,
-            the individual estimator of the stacking estimators can also be
-            set, or can be removed by setting them to 'drop'.
+            Specific parameters using e.g.
+            `set_params(parameter_name=new_value)`. In addition, to setting the
+            parameters of the stacking estimator, the individual estimator of
+            the stacking estimators can also be set, or can be removed by
+            setting them to 'drop'.
 
         Examples
         --------
@@ -106,7 +107,7 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
 
         Parameters
         ----------
-        deep: bool
+        deep : bool
             Setting it to True gets the various classifiers and the parameters
             of the classifiers as well.
         """
@@ -138,14 +139,14 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,)
             Target values.
 
-        sample_weight : array-like, shape (n_samples,) or None
+        sample_weight : array-like of shape (n_samples,) or None
             Sample weights. If None, then samples are equally weighted.
             Note that this is supported only if all underlying estimators
             support sample weights.
@@ -251,13 +252,13 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         Returns
         -------
-        y_preds : ndarray, shape (n_samples, n_estimators)
+        y_preds : ndarray of shape (n_samples, n_estimators)
             Prediction outputs for each estimator.
         """
         check_is_fitted(self, 'estimators_')
@@ -274,18 +275,18 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples and
             n_features is the number of features.
 
-        **predict_params : dict of string -> object
+        **predict_params : dict of str -> obj
             Parameters to the `predict` called by the `final_estimator`. Note
             that this may be used to return uncertainties from some estimators
             with `return_std` or `return_cov`.
 
         Returns
         -------
-        y_pred : ndarray, shape (n_samples,) or (n_samples, n_output)
+        y_pred : ndarray of shape (n_samples,) or (n_samples, n_output)
             Predicted targets.
         """
 
@@ -313,11 +314,12 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
 
     Parameters
     ----------
-    estimators : list of (string, estimator) tuples
-        Base estimators which will be stacked together. An estimator can be set
-        to None or 'drop' using `set_params`.
+    estimators : list of (str, estimator)
+        Base estimators which will be stacked together. Each element of the
+        list is defined as a tuple of string (i.e. name) and an estimator
+        instance. An estimator can be set to None or 'drop' using `set_params`.
 
-    final_estimator : estimator obj, default=None
+    final_estimator : estimator, default=None
         A classifier which will be used to combine the base estimators.
         The default classifier is a `LogisticRegression`.
 
@@ -337,7 +339,7 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-    predict_method : list of string or 'auto', default='auto'
+    predict_method : 'auto' or list of str, default='auto'
         Methods called for each base estimator. It can be:
 
         * if a list of string in which each string is associated to the
@@ -358,16 +360,16 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
 
     Attributes
     ----------
-    estimators_ : list of estimator objects
+    estimators_ : list of estimators
         The base estimators fitted.
 
-    named_estimators_ : Bunch object, a dictionary with attribute access
+    named_estimators_ : Bunch
         Attribute to access any fitted sub-estimators by name.
 
-    final_estimator_ : estimator object
+    final_estimator_ : estimator
         The classifier which predicts given the output of `estimators_`.
 
-    predict_method_ : list of string
+    predict_method_ : list of str
         The method used by each base estimator.
 
     References
@@ -430,14 +432,14 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,)
             Target values.
 
-        sample_weight : array-like, shape (n_samples,) or None
+        sample_weight : array-like of shape (n_samples,) or None
             Sample weights. If None, then samples are equally weighted.
             Note that this is supported only if all underlying estimators
             support sample weights.
@@ -457,18 +459,18 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples and
             n_features is the number of features.
 
-        **predict_params : dict of string -> object
+        **predict_params : dict of str -> obj
             Parameters to the `predict` called by the `final_estimator`. Note
             that this may be used to return uncertainties from some estimators
             with `return_std` or `return_cov`.
 
         Returns
         -------
-        y_pred : ndarray, shape (n_samples,) or (n_samples, n_output)
+        y_pred : ndarray of shape (n_samples,) or (n_samples, n_output)
             Predicted targets.
         """
         y_pred = super().predict(X, **predict_params)
@@ -486,8 +488,8 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
 
         Returns
         -------
-        probabilities : ndarray, shape (n_samples, n_classes) or \
-            list of arrays n_output
+        probabilities : ndarray of shape (n_samples, n_classes) or \
+            list of ndarray of shape (n_output,)
             The class probabilities of the input samples.
         """
         check_is_fitted(self, ['estimators_', 'final_estimator_'])
@@ -512,11 +514,12 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
 
     Parameters
     ----------
-    estimators : list of (string, estimator) tuples
-        Base estimators which will be stacked together. An estimator can be set
-        to None or 'drop' using `set_params`.
+    estimators : list of (str, estimator)
+        Base estimators which will be stacked together. Each element of the
+        list is defined as a tuple of string (i.e. name) and an estimator
+        instance. An estimator can be set to None or 'drop' using `set_params`.
 
-    final_estimator : estimator object, default=None
+    final_estimator : estimator, default=None
         A regressor which will be used to combine the base estimators.
         The default regressor is a `LinearRegressor`.
 
@@ -539,7 +542,7 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-    predict_method : list of string or 'auto', default='auto'
+    predict_method : 'auto' or list of str, default='auto'
         Methods called for each base estimator. It can be:
 
         * if a list of string in which each string is associated to the
@@ -560,20 +563,17 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
 
     Attributes
     ----------
-    estimators_ : list of estimator object
+    estimators_ : list of estimator
         The base estimators fitted.
 
-    named_estimators_ : Bunch object, a dictionary with attribute access
+    named_estimators_ : Bunch
         Attribute to access any fitted sub-estimators by name.
 
-    final_estimator_ : estimator object
+    final_estimator_ : estimator
         The regressor to stacked the base estimators fitted.
 
-    predict_method_ : list of string
+    predict_method_ : list of str
         The method used by each base estimator.
-
-    classes_ : ndarray, shape (n_predictions,)
-        The classes labels.
 
     References
     ----------
@@ -633,14 +633,14 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,)
             Target values.
 
-        sample_weight : array-like, shape (n_samples,) or None
+        sample_weight : array-like of shape (n_samples,) or None
             Sample weights. If None, then samples are equally weighted.
             Note that this is supported only if all underlying estimators
             support sample weights.

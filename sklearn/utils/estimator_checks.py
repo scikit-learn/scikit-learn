@@ -28,8 +28,6 @@ from .testing import assert_dict_equal
 from .testing import create_memmap_backed_data
 from . import is_scalar_nan
 from ..discriminant_analysis import LinearDiscriminantAnalysis
-from ..linear_model import LinearRegression
-from ..linear_model import LogisticRegression
 from ..linear_model import Ridge
 
 from ..base import (clone, ClusterMixin, is_classifier, is_regressor,
