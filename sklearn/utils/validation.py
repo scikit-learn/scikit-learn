@@ -877,6 +877,8 @@ def check_is_fitted(estimator, attributes='deprecated', msg=None):
     estimator : estimator instance.
         estimator instance for which the check is performed.
 
+    attributes : deprecated, ignored
+
     msg : string
         The default error message is, "This %(name)s instance is not fitted
         yet. Call 'fit' with appropriate arguments before using this method."
