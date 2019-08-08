@@ -658,8 +658,17 @@ Kernels:
 
    inspection.partial_dependence
    inspection.permutation_importance
-   inspection.plot_partial_dependence
 
+Plotting
+--------
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   inspection.plot_partial_dependence
 
 .. _isotonic_ref:
 
@@ -1455,9 +1464,18 @@ Low-level methods
    :template: function.rst
 
    tree.export_graphviz
-   tree.plot_tree
    tree.export_text
 
+Plotting
+--------
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   tree.plot_tree
 
 .. _utils_ref:
 
