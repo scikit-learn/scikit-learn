@@ -185,7 +185,8 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
         allowed by :func:`sklearn.metrics.pairwise.pairwise_distances`. If X is
-        the distance array itself, use "precomputed" as the metric.
+        the distance array itself, use "precomputed" as the metric. Precomputed
+        distance matrices must have 0 along the diagonal.
 
     `**kwds` : optional keyword parameters
         Any further parameters are passed directly to the distance function.
@@ -213,11 +214,10 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
 
     # Check for diagonal entries in precomputed distance matrix
     if metric == 'precomputed':
-        diag_indices = np.diag_indices(X.shape[0])
-        if np.any(X[diag_indices]):
+        if np.any(np.diagonal(X)):
             raise ValueError(
                 'The precomputed distance matrix contains non-zero '
-                'elements on the diagonal.'
+                'elements on the diagonal. Use np.fill_diagonal(X, 0).'
             )
 
     le = LabelEncoder()

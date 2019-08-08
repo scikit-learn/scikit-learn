@@ -77,7 +77,7 @@ Changelog
 
 - |Fix| Raise a ValueError in :func:`metrics.silhouette_score` when a
   precomputed distance matrix contains non-zero diagonal entries.
-  :issue:`12258` by :user:`Stephen Tierney <sjtrny>`.
+  :pr:`12258` by :user:`Stephen Tierney <sjtrny>`.
 
 :mod:`sklearn.model_selection`
 ..............................
