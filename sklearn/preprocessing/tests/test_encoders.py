@@ -551,10 +551,12 @@ def test_ordinal_encoder_categories_():
     encVirtual.fit(X)
     assert_array_equal(
                         encVirtual.categories_[0],
-                        np.array(['Blue', 'Green', 'Red', None], dtype=object))
+                        np.array(['Blue', 'Green', 'Red', None],
+                                 dtype=object))
     assert_array_equal(
                         encVirtual.categories_[1],
-                        np.array(['Coffee', 'Tea', 'Water', None], dtype=object))
+                        np.array(['Coffee', 'Tea', 'Water', None],
+                                 dtype=object))
 
 
 @pytest.mark.parametrize("X", [np.array([[1, np.nan]]).T,
