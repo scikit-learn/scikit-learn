@@ -19,6 +19,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import LinearRegression
 from sklearn.svm import LinearSVC
 from sklearn.svm import LinearSVR
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import scale
@@ -31,6 +33,8 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import KFold
 
 from sklearn.utils.testing import assert_allclose
+from sklearn.utils.estimator_checks import check_estimator
+from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
 
 X_diabetes, y_diabetes = load_diabetes(return_X_y=True)
 X_iris, y_iris = load_iris(return_X_y=True)
@@ -339,3 +343,20 @@ def test_stacking_set_get_params(stacking_estimator):
     stacking_estimator.set_params(lr=None)
     params = stacking_estimator.get_params()
     assert params['lr'] is None
+
+
+@pytest.mark.parametrize(
+    "estimator",
+    [StackingClassifier(
+        estimators=[('lr', LogisticRegression(random_state=0)),
+                    ('tree', DecisionTreeClassifier(random_state=0))]),
+     StackingRegressor(
+         estimators=[('lr', LinearRegression()),
+                     ('tree', DecisionTreeRegressor(random_state=0))])],
+    ids=['StackingClassifier', 'StackingRegressor']
+)
+def test_check_estimators_stacking_estimator(estimator):
+    # FIXME: to be removed when meta-estimators can specified themselves
+    # their testing parameters (for required parameters).
+    check_estimator(estimator)
+    check_no_attributes_set_in_init(estimator.__class__.__name__, estimator)

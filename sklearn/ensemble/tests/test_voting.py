@@ -525,7 +525,7 @@ def test_none_estimator_with_weights(X, y, voter, drop):
     ids=['VotingRegressor', 'VotingClassifier']
 )
 def test_check_estimators_voting_estimator(estimator):
-    # FIXME: to be removed when meta-estimators can be specified themselves
+    # FIXME: to be removed when meta-estimators can specified themselves
     # their testing parameters (for required parameters).
     check_estimator(estimator)
     check_no_attributes_set_in_init(estimator.__class__.__name__, estimator)
