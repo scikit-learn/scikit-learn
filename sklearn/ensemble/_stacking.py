@@ -54,7 +54,7 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
         self.random_state = random_state
         self.verbose = verbose
 
-    def _validate_final_estimator(self, default=None):
+    def _validate_final_estimator(self, default):
         if self.final_estimator is not None:
             self.final_estimator_ = clone(self.final_estimator)
         else:
@@ -85,10 +85,10 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
         Parameters
         ----------
         params : keyword arguments
-            Specific parameters using e.g. set_params(parameter_name=new_value)
+            Specific parameters using e.g. set_params(parameter_name=new_value).
             In addition, to setting the parameters of the stacking estimator,
-            the individual estimator of the stacking estimator can also be
-            set or replaced by setting them to None.
+            the individual estimator of the stacking estimators can also be
+            set, or can be removed by setting them to 'drop'.
 
         Examples
         --------
@@ -96,14 +96,14 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
         clf1 = LogisticRegression()
         clf2 = RandomForestClassifier()
         eclf = StackingClassifier(estimators=[('lr', clf1), ('rf', clf2)]
-        eclf.set_params(rf=None)
+        eclf.set_params(rf='drop')
 
         """
         super()._set_params('estimators', **params)
         return self
 
     def get_params(self, deep=True):
-        """ Get the parameters of the stacking estimator.
+        """Get the parameters of the stacking estimator.
 
         Parameters
         ----------
@@ -306,7 +306,7 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
 
     Note that `estimators` are fitted on the full `X` while `final_estimator`
     is trained using cross-validated predictions of the base estimators using
-    `cross_val_predict`).
+    `cross_val_predict`.
 
     .. versionadded:: 0.22
 
@@ -359,14 +359,14 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
 
     Attributes
     ----------
-    estimators_ : list of estimator object
+    estimators_ : list of estimator objects
         The base estimators fitted.
 
     named_estimators_ : Bunch object, a dictionary with attribute access
         Attribute to access any fitted sub-estimators by name.
 
     final_estimator_ : estimator object
-        The classifier to stacked the base estimators fitted.
+        The classifier which predicts given the output of `estimators_`.
 
     predict_method_ : list of string
         The method used by each base estimator.
