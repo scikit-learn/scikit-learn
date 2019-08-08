@@ -159,7 +159,7 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
         self._validate_meta_estimator()
 
         if self.estimators is None or len(self.estimators) == 0:
-            raise AttributeError(
+            raise ValueError(
                 "Invalid 'estimators' attribute, 'estimators' should be a list"
                 " of (string, estimator) tuples."
             )
@@ -180,14 +180,14 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
 
         if isinstance(self.predict_method, str):
             if self.predict_method != 'auto':
-                raise AttributeError(
+                raise ValueError(
                     "When 'predict_method' is a string, it should be 'auto'. "
                     " Got {} instead.".format(self.predict_method)
                 )
             predict_method = [self.predict_method] * len(estimators_)
         else:
             if len(self.estimators) != len(self.predict_method):
-                raise AttributeError(
+                raise ValueError(
                     "When 'predict_method' is a list, it should be the same "
                     "length as the list of estimators. Provided {} methods "
                     "for {} estimators."
@@ -282,7 +282,8 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
         **predict_params : dict of str -> obj
             Parameters to the `predict` called by the `final_estimator`. Note
             that this may be used to return uncertainties from some estimators
-            with `return_std` or `return_cov`.
+            with `return_std` or `return_cov`. Be aware that it will only
+            accounts for uncertainty in the final estimator.
 
         Returns
         -------
@@ -348,7 +349,7 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
           `predict_proba`, `decision_function` or `predict` in that order.
 
     n_jobs : int, default=None
-        The number of jobs to run in parallel for both `fit` the `estimators`.
+        The number of jobs to run in parallel all `estimators` `fit`.
         `None` means 1 unless in a `joblib.parallel_backend` context. -1 means
         using all processors. See Glossary for more details.
 
@@ -361,7 +362,9 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
     Attributes
     ----------
     estimators_ : list of estimators
-        The base estimators fitted.
+        The elements of the estimators parameter, having been fitted on the
+        training data. If an estimator has been set to `'drop'` or None, it
+        will not appear in `estimators_`.
 
     named_estimators_ : Bunch
         Attribute to access any fitted sub-estimators by name.
@@ -418,11 +421,9 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
         )
 
     def _validate_meta_estimator(self):
-        super()._validate_final_estimator(
-            default=LogisticRegression(random_state=self.random_state)
-        )
+        super()._validate_final_estimator(default=LogisticRegression())
         if not is_classifier(self.final_estimator_):
-            raise AttributeError(
+            raise ValueError(
                 "'final_estimator' parameter should be a classifier. Got {}"
                 .format(self.final_estimator_)
             )
@@ -466,7 +467,8 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
         **predict_params : dict of str -> obj
             Parameters to the `predict` called by the `final_estimator`. Note
             that this may be used to return uncertainties from some estimators
-            with `return_std` or `return_cov`.
+            with `return_std` or `return_cov`. Be aware that it will only
+            accounts for uncertainty in the final estimator.
 
         Returns
         -------
@@ -551,7 +553,7 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
           `predict_proba`, `decision_function` or `predict` in that order.
 
     n_jobs : int, default=None
-        The number of jobs to run in parallel for both `fit` the `estimators`.
+        The number of jobs to run in parallel for `fit` of all `estimators`.
         `None` means 1 unless in a `joblib.parallel_backend` context. -1 means
         using all processors. See Glossary for more details.
 
@@ -564,7 +566,9 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
     Attributes
     ----------
     estimators_ : list of estimator
-        The base estimators fitted.
+        The elements of the estimators parameter, having been fitted on the
+        training data. If an estimator has been set to `'drop'` or None, it
+        will not appear in `estimators_`.
 
     named_estimators_ : Bunch
         Attribute to access any fitted sub-estimators by name.
@@ -623,7 +627,7 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
             default=LinearRegression()
         )
         if not is_regressor(self.final_estimator_):
-            raise AttributeError(
+            raise ValueError(
                 "'final_estimator' parameter should be a regressor. Got {}"
                 .format(self.final_estimator_)
             )

@@ -185,10 +185,8 @@ def test_stacking_classifier_drop_binary_prob():
 
 
 class NoWeightRegressor(BaseEstimator, RegressorMixin):
-    def __init__(self):
-        self.reg = DummyRegressor()
-
     def fit(self, X, y):
+        self.reg = DummyRegressor()
         return self.reg.fit(X, y)
 
     def predict(self, X):
@@ -196,10 +194,8 @@ class NoWeightRegressor(BaseEstimator, RegressorMixin):
 
 
 class NoWeightClassifier(BaseEstimator, ClassifierMixin):
-    def __init__(self):
-        self.clf = DummyClassifier()
-
     def fit(self, X, y):
+        self.clf = DummyClassifier()
         return self.clf.fit(X, y)
 
 
@@ -207,18 +203,18 @@ class NoWeightClassifier(BaseEstimator, ClassifierMixin):
     "y, params, type_err, msg_err",
     [(y_iris,
       {'estimators': None},
-      AttributeError, "Invalid 'estimators' attribute,"),
+      ValueError, "Invalid 'estimators' attribute,"),
      (y_iris,
       {'estimators': []},
-      AttributeError, "Invalid 'estimators' attribute,"),
+      ValueError, "Invalid 'estimators' attribute,"),
      (y_iris,
       {'estimators': [('lr', LogisticRegression()), ('svm', LinearSVC())],
        'predict_method': 'random'},
-      AttributeError, "When 'predict_method' is a string"),
+      ValueError, "When 'predict_method' is a string"),
      (y_iris,
       {'estimators': [('lr', LogisticRegression()), ('svm', LinearSVC())],
        'predict_method': ['predict']},
-      AttributeError, "When 'predict_method' is a list"),
+      ValueError, "When 'predict_method' is a list"),
      (y_iris,
       {'estimators': [('lr', LinearRegression()),
                       ('svm', LinearSVR(max_iter=5e4))],
@@ -240,7 +236,7 @@ class NoWeightClassifier(BaseEstimator, ClassifierMixin):
      (y_iris,
       {'estimators': [('lr', LogisticRegression()), ('svm', LinearSVC())],
        'final_estimator': RandomForestRegressor()},
-      AttributeError, 'parameter should be a classifier.')]
+      ValueError, 'parameter should be a classifier.')]
 )
 def test_stacking_classifier_error(y, params, type_err, msg_err):
     with pytest.raises(type_err, match=msg_err):
@@ -254,18 +250,18 @@ def test_stacking_classifier_error(y, params, type_err, msg_err):
     "y, params, type_err, msg_err",
     [(y_diabetes,
       {'estimators': None},
-      AttributeError, "Invalid 'estimators' attribute,"),
+      ValueError, "Invalid 'estimators' attribute,"),
      (y_diabetes,
       {'estimators': []},
-      AttributeError, "Invalid 'estimators' attribute,"),
+      ValueError, "Invalid 'estimators' attribute,"),
      (y_diabetes,
       {'estimators': [('lr', LinearRegression()), ('svm', LinearSVR())],
        'predict_method': 'random'},
-      AttributeError, "When 'predict_method' is a string"),
+      ValueError, "When 'predict_method' is a string"),
      (y_diabetes,
       {'estimators': [('lr', LogisticRegression()), ('svm', LinearSVR())],
        'predict_method': ['predict']},
-      AttributeError, "When 'predict_method' is a list"),
+      ValueError, "When 'predict_method' is a list"),
      (y_diabetes,
       {'estimators': [('lr', LogisticRegression()), ('svm', LinearSVR())],
        'predict_method': ['predict', 'predict_proba']},
@@ -286,7 +282,7 @@ def test_stacking_classifier_error(y, params, type_err, msg_err):
      (y_diabetes,
       {'estimators': [('lr', LinearRegression()), ('svm', LinearSVR())],
        'final_estimator': RandomForestClassifier()},
-      AttributeError, 'parameter should be a regressor.')]
+      ValueError, 'parameter should be a regressor.')]
 )
 def test_stacking_regressor_error(y, params, type_err, msg_err):
     with pytest.raises(type_err, match=msg_err):
