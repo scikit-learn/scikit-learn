@@ -785,6 +785,10 @@ def test_gower_distances():
 
     # Categorical values, with boolean represented as 1 and 0,
     # and missing values
+    X = np.asarray([1, np.nan])
+    print(X == X)
+    assert_array_almost_equal(np.asarray([True, False]), X == X)
+
     X = [['M', 0],
          ['F', 1],
          ['M', 1],
