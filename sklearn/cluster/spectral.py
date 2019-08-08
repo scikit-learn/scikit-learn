@@ -373,7 +373,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         Affinity matrix used for clustering. Available only if after calling
         ``fit``.
 
-    labels_ :
+    labels_ : array, shape (n_samples,)
         Labels of each point
 
     Examples

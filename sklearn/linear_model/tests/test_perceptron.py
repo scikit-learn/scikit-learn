@@ -3,7 +3,6 @@ import scipy.sparse as sp
 import pytest
 
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 
 from sklearn.utils import check_random_state
@@ -51,7 +50,7 @@ def test_perceptron_accuracy():
         clf = Perceptron(max_iter=100, tol=None, shuffle=False)
         clf.fit(data, y)
         score = clf.score(data, y)
-        assert_greater(score, 0.7)
+        assert score > 0.7
 
 
 # 0.23. warning about tol not having its correct default value.

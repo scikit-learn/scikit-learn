@@ -49,7 +49,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
     FactorAnalysis performs a maximum likelihood estimate of the so-called
     `loading` matrix, the transformation of the latent variables to the
-    observed ones, using expectation-maximization (EM).
+    observed ones, using SVD based approach.
 
     Read more in the :ref:`User Guide <FA>`.
 
@@ -61,7 +61,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         If None, n_components is set to the number of features.
 
     tol : float
-        Stopping tolerance for EM algorithm.
+        Stopping tolerance for log-likelihood increase.
 
     copy : bool
         Whether to make a copy of X. If ``False``, the input X gets overwritten
@@ -107,6 +107,9 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
     n_iter_ : int
         Number of iterations run.
 
+    mean_ : array, shape (n_features,)
+        Per-feature empirical mean, estimated from the training set.
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits
@@ -151,7 +154,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         self.random_state = random_state
 
     def fit(self, X, y=None):
-        """Fit the FactorAnalysis model to X using EM
+        """Fit the FactorAnalysis model to X using SVD based approach
 
         Parameters
         ----------

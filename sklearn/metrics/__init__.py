@@ -64,12 +64,19 @@ from .regression import mean_squared_error
 from .regression import mean_squared_log_error
 from .regression import median_absolute_error
 from .regression import r2_score
+from .regression import mean_tweedie_deviance
+from .regression import mean_poisson_deviance
+from .regression import mean_gamma_deviance
 
 
 from .scorer import check_scoring
 from .scorer import make_scorer
 from .scorer import SCORERS
 from .scorer import get_scorer
+
+from ._plot.roc_curve import plot_roc_curve
+from ._plot.roc_curve import RocCurveDisplay
+
 
 __all__ = [
     'accuracy_score',
@@ -110,6 +117,9 @@ __all__ = [
     'mean_absolute_error',
     'mean_squared_error',
     'mean_squared_log_error',
+    'mean_poisson_deviance',
+    'mean_gamma_deviance',
+    'mean_tweedie_deviance',
     'median_absolute_error',
     'multilabel_confusion_matrix',
     'mutual_info_score',
@@ -119,11 +129,13 @@ __all__ = [
     'pairwise_distances_argmin_min',
     'pairwise_distances_chunked',
     'pairwise_kernels',
+    'plot_roc_curve',
     'precision_recall_curve',
     'precision_recall_fscore_support',
     'precision_score',
     'r2_score',
     'recall_score',
+    'RocCurveDisplay',
     'roc_auc_score',
     'roc_curve',
     'SCORERS',

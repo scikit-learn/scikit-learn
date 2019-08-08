@@ -21,6 +21,9 @@ from sklearn.utils.testing import (
     assert_warns,
     assert_no_warnings,
     assert_equal,
+    assert_not_equal,
+    assert_in,
+    assert_not_in,
     set_random_state,
     assert_raise_message,
     ignore_warnings,
@@ -36,25 +39,29 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 
+@pytest.mark.filterwarnings("ignore", category=DeprecationWarning)  # 0.24
 def test_assert_less():
-    assert_less(0, 1)
+    assert 0 < 1
     assert_raises(AssertionError, assert_less, 1, 0)
 
 
+@pytest.mark.filterwarnings("ignore", category=DeprecationWarning)  # 0.24
 def test_assert_greater():
-    assert_greater(1, 0)
+    assert 1 > 0
     assert_raises(AssertionError, assert_greater, 0, 1)
 
 
+@pytest.mark.filterwarnings("ignore", category=DeprecationWarning)  # 0.24
 def test_assert_less_equal():
-    assert_less_equal(0, 1)
-    assert_less_equal(1, 1)
+    assert 0 <= 1
+    assert 1 <= 1
     assert_raises(AssertionError, assert_less_equal, 1, 0)
 
 
+@pytest.mark.filterwarnings("ignore", category=DeprecationWarning)  # 0.24
 def test_assert_greater_equal():
-    assert_greater_equal(1, 0)
-    assert_greater_equal(1, 1)
+    assert 1 >= 0
+    assert 1 >= 1
     assert_raises(AssertionError, assert_greater_equal, 0, 1)
 
 
@@ -64,7 +71,7 @@ def test_set_random_state():
     # Linear Discriminant Analysis doesn't have random state: smoke test
     set_random_state(lda, 3)
     set_random_state(tree, 3)
-    assert_equal(tree.random_state, 3)
+    assert tree.random_state == 3
 
 
 def test_assert_allclose_dense_sparse():
@@ -236,13 +243,13 @@ class TestWarns(unittest.TestCase):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
             filters_orig = warnings.filters[:]
-            assert_equal(assert_warns(UserWarning, f), 3)
+            assert assert_warns(UserWarning, f) == 3
             # test that assert_warns doesn't have side effects on warnings
             # filters
-            assert_equal(warnings.filters, filters_orig)
+            assert warnings.filters == filters_orig
 
         assert_raises(AssertionError, assert_no_warnings, f)
-        assert_equal(assert_no_warnings(lambda x: x, 1), 1)
+        assert assert_no_warnings(lambda x: x, 1) == 1
 
     def test_warn_wrong_warning(self):
         def f():
@@ -646,3 +653,20 @@ def test_create_memmap_backed_data(monkeypatch):
     for input_array, data in zip(input_list, mmap_data_list):
         check_memmap(input_array, data)
     assert registration_counter.nb_calls == 4
+
+
+# 0.24
+@pytest.mark.parametrize('callable, args', [
+    (assert_equal, (0, 0)),
+    (assert_not_equal, (0, 1)),
+    (assert_greater, (1, 0)),
+    (assert_greater_equal, (1, 0)),
+    (assert_less, (0, 1)),
+    (assert_less_equal, (0, 1)),
+    (assert_in, (0, [0])),
+    (assert_not_in, (0, [1]))])
+def test_deprecated_helpers(callable, args):
+    msg = ('is deprecated in version 0.22 and will be removed in version '
+           '0.24. Please use "assert" instead')
+    with pytest.warns(DeprecationWarning, match=msg):
+        callable(*args)
