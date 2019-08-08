@@ -9,6 +9,7 @@ import numpy as np
 from sklearn.base import BaseEstimator
 from sklearn.base import ClassifierMixin
 from sklearn.base import RegressorMixin
+from sklearn.base import clone
 
 from sklearn.datasets import load_iris
 from sklearn.datasets import load_diabetes
@@ -335,6 +336,37 @@ def test_stacking_set_get_params(stacking_estimator):
     stacking_estimator.set_params(lr=None)
     params = stacking_estimator.get_params()
     assert params['lr'] is None
+
+
+@pytest.mark.parametrize(
+    "estimator, X, y",
+    [(StackingClassifier(
+        estimators=[('lr', LogisticRegression(random_state=0)),
+                    ('svm', LinearSVC(random_state=0))]),
+      X_iris[:100], y_iris[:100]),  # keep only classes 0 and 1
+     (StackingRegressor(
+         estimators=[('lr', LinearRegression()),
+                     ('svm', LinearSVR(random_state=0))]),
+      X_diabetes, y_diabetes)],
+    ids=['StackingClassifier', 'StackingRegressor']
+)
+def test_stacking_randomness(estimator, X, y):
+    rng = np.random.RandomState(0)
+    estimator_full = clone(estimator)
+    estimator_full.set_params(
+        cv=KFold(shuffle=True, random_state=np.random.RandomState(0))
+    )
+
+    estimator_drop = clone(estimator)
+    estimator_drop.set_params(lr='drop')
+    estimator_drop.set_params(
+        cv=KFold(shuffle=True, random_state=np.random.RandomState(0))
+    )
+
+    assert_allclose(
+        estimator_full.fit(X, y).transform(X)[:, 1:],
+        estimator_drop.fit(X, y).transform(X)
+    )
 
 
 @pytest.mark.parametrize(
