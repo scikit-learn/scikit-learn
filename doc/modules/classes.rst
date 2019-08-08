@@ -659,8 +659,18 @@ Kernels:
    :template: function.rst
 
    inspection.partial_dependence
-   inspection.plot_partial_dependence
+   inspection.permutation_importance
 
+Plotting
+--------
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   inspection.plot_partial_dependence
 
 .. _isotonic_ref:
 
@@ -904,6 +914,9 @@ details.
    metrics.mean_squared_log_error
    metrics.median_absolute_error
    metrics.r2_score
+   metrics.mean_poisson_deviance
+   metrics.mean_gamma_deviance
+   metrics.mean_tweedie_deviance
 
 Multilabel ranking metrics
 --------------------------
@@ -1003,6 +1016,26 @@ See the :ref:`metrics` section of the user guide for further details.
    metrics.pairwise_distances_argmin
    metrics.pairwise_distances_argmin_min
    metrics.pairwise_distances_chunked
+
+
+Plotting
+--------
+
+See the :ref:`visualizations` section of the user guide for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   metrics.plot_roc_curve
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   metrics.RocCurveDisplay
 
 
 .. _mixture_ref:
@@ -1259,7 +1292,6 @@ Model validation
    pipeline.make_pipeline
    pipeline.make_union
 
-
 .. _preprocessing_ref:
 
 :mod:`sklearn.preprocessing`: Preprocessing and Normalization
@@ -1434,9 +1466,18 @@ Low-level methods
    :template: function.rst
 
    tree.export_graphviz
-   tree.plot_tree
    tree.export_text
 
+Plotting
+--------
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   tree.plot_tree
 
 .. _utils_ref:
 

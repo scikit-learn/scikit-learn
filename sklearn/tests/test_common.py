@@ -28,15 +28,19 @@ from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import Ridge
+<<<<<<< HEAD
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
+=======
+>>>>>>> origin/master
 from sklearn.utils import IS_PYPY
+from sklearn.utils.testing import SkipTest
 from sklearn.utils.estimator_checks import (
     _yield_all_checks,
     _safe_tags,
+    _construct_instance,
     set_checking_parameters,
     check_parameters_default_constructible,
-    check_no_attributes_set_in_init,
     check_class_weight_balanced_linear_classifier)
 
 
@@ -63,38 +67,11 @@ def _tested_estimators():
             continue
         if name.startswith("_"):
             continue
-        # FIXME _skip_test should be used here (if we could)
+        try:
+            estimator = _construct_instance(Estimator)
+        except SkipTest:
+            continue
 
-        required_parameters = getattr(Estimator, "_required_parameters", [])
-        if len(required_parameters):
-            if required_parameters in (["estimator"], ["base_estimator"]):
-                if issubclass(Estimator, RegressorMixin):
-                    estimator = Estimator(Ridge())
-                else:
-                    estimator = Estimator(LinearDiscriminantAnalysis())
-            elif "estimators" in required_parameters:
-                if issubclass(Estimator, RegressorMixin):
-                    estimator = Estimator(
-                        estimators=[
-                            ('lr', LinearRegression()),
-                            ('tree', DecisionTreeRegressor(random_state=0))
-                        ]
-                    )
-                else:
-                    estimator = Estimator(
-                        estimators=[
-                            ('lr', LogisticRegression(random_state=0)),
-                            ('tree', DecisionTreeClassifier(random_state=0))
-                        ]
-                    )
-            else:
-                warnings.warn("Can't instantiate estimator {} which requires "
-                              "parameters {}".format(name,
-                                                     required_parameters),
-                              SkipTestWarning)
-                continue
-        else:
-            estimator = Estimator()
         yield name, estimator
 
 
@@ -128,22 +105,6 @@ def test_estimators(estimator, check):
         set_checking_parameters(estimator)
         name = estimator.__class__.__name__
         check(name, estimator)
-
-
-@pytest.mark.parametrize("name, estimator",
-                         _tested_estimators())
-def test_no_attributes_set_in_init(name, estimator):
-    # input validation etc for all estimators
-    with ignore_warnings(category=(DeprecationWarning, ConvergenceWarning,
-                                   UserWarning, FutureWarning)):
-        tags = _safe_tags(estimator)
-        if tags['_skip_test']:
-            warnings.warn("Explicit SKIP via _skip_test tag for "
-                          "{}.".format(name),
-                          SkipTestWarning)
-            return
-        # check this on class
-        check_no_attributes_set_in_init(name, estimator)
 
 
 @ignore_warnings(category=DeprecationWarning)

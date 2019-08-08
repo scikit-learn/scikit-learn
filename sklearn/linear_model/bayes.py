@@ -8,12 +8,12 @@ Various bayesian regression
 from math import log
 import numpy as np
 from scipy import linalg
-from scipy.linalg import pinvh
 
 from .base import LinearModel, _rescale_data
 from ..base import RegressorMixin
 from ..utils.extmath import fast_logdet
 from ..utils import check_X_y
+from ..utils.fixes import pinvh
 
 
 ###############################################################################
@@ -76,7 +76,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
         The intercept is not treated as a probabilistic parameter
         and thus has no associated variance. If set
         to False, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
 
     normalize : boolean, optional, default False
@@ -425,7 +425,7 @@ class ARDRegression(LinearModel, RegressorMixin):
     fit_intercept : boolean, optional
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
         Default is True.
 
     normalize : boolean, optional, default False

@@ -480,7 +480,12 @@ def test_vectorizer():
 
     # ascii preprocessor?
     v3.set_params(strip_accents='ascii', lowercase=False)
-    assert v3.build_preprocessor() == strip_accents_ascii
+    processor = v3.build_preprocessor()
+    text = ("J'ai mangé du kangourou  ce midi, "
+            "c'était pas très bon.")
+    expected = strip_accents_ascii(text)
+    result = processor(text)
+    assert expected == result
 
     # error on bad strip_accents param
     v3.set_params(strip_accents='_gabbledegook_', preprocessor=None)
@@ -502,6 +507,18 @@ def test_tfidf_vectorizer_setters():
     assert tv._tfidf.smooth_idf
     tv.sublinear_tf = True
     assert tv._tfidf.sublinear_tf
+
+
+# FIXME Remove copy parameter support in 0.24
+def test_tfidf_vectorizer_deprecationwarning():
+    msg = ("'copy' param is unused and has been deprecated since "
+           "version 0.22. Backward compatibility for 'copy' will "
+           "be removed in 0.24.")
+    with pytest.warns(DeprecationWarning, match=msg):
+        tv = TfidfVectorizer()
+        train_data = JUNK_FOOD_DOCS
+        tv.fit(train_data)
+        tv.transform(train_data, copy=True)
 
 
 @fails_if_pypy
@@ -882,6 +899,25 @@ def test_pickling_vectorizer():
             assert_array_equal(
                 copy.fit_transform(JUNK_FOOD_DOCS).toarray(),
                 orig.fit_transform(JUNK_FOOD_DOCS).toarray())
+
+
+@pytest.mark.parametrize('factory', [
+    CountVectorizer.build_analyzer,
+    CountVectorizer.build_preprocessor,
+    CountVectorizer.build_tokenizer,
+])
+def test_pickling_built_processors(factory):
+    """Tokenizers cannot be pickled
+    https://github.com/scikit-learn/scikit-learn/issues/12833
+    """
+    vec = CountVectorizer()
+    function = factory(vec)
+    text = ("J'ai mangé du kangourou  ce midi, "
+            "c'était pas très bon.")
+    roundtripped_function = pickle.loads(pickle.dumps(function))
+    expected = function(text)
+    result = roundtripped_function(text)
+    assert result == expected
 
 
 def test_countvectorizer_vocab_sets_when_pickling():
