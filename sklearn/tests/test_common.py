@@ -23,6 +23,7 @@ import sklearn
 from sklearn.cluster.bicluster import BiclusterMixin
 
 from sklearn.linear_model.base import LinearClassifierMixin
+from sklearn.utils import IS_PYPY
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.estimator_checks import (
     _yield_all_checks,

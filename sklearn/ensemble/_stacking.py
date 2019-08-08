@@ -97,7 +97,6 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
         clf2 = RandomForestClassifier()
         eclf = StackingClassifier(estimators=[('lr', clf1), ('rf', clf2)]
         eclf.set_params(rf='drop')
-
         """
         super()._set_params('estimators', **params)
         return self
@@ -318,7 +317,7 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
         Base estimators which will be stacked together. An estimator can be set
         to None or 'drop' using `set_params`.
 
-    final_estimator : estimator object, default=None
+    final_estimator : estimator obj, default=None
         A classifier which will be used to combine the base estimators.
         The default classifier is a `LogisticRegression`.
 
