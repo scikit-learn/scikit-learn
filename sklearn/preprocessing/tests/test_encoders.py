@@ -535,6 +535,9 @@ def test_ordinal_encoder_handle_unknown():
     Y_tr = encVirtual.transform(Y)
     exp = np.array([[None, 'Coffee'], ['Green', 'Tea']], dtype=object)
     assert_array_equal(encVirtual.inverse_transform(Y_tr), exp)
+    encIssue = OrdinalEncoder(handle_unknown='wrong')
+    with pytest.raises(ValueError, match="handle_unknown should be"):
+        encIssue.fit(X)
 
 
 def test_ordinal_encoder_categories_():
@@ -586,6 +589,7 @@ def test_ordinal_encoder_raise_categories_shape():
 
     with pytest.raises(ValueError, match=msg):
         enc.fit(X)
+
 
 def test_encoder_dtypes():
     # check that dtypes are preserved when determining categories
