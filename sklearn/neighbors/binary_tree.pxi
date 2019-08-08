@@ -1199,11 +1199,10 @@ cdef class BinaryTree:
 
     property metric_params:
         def __get__(self):
-            return self._metric_params
-
-    property p:
-        def __get__(self):
-            return self.dist_metric.p
+            # the `p` in `metric_params` (if exists) takes priority over `p`
+            params = {'p': self.dist_metric.p}
+            params.update(self._metric_params)
+            return params
 
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) nogil except -1:

@@ -172,14 +172,30 @@ class NeighborsBase(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
                 del params['p']
             return params
 
+        def _params_equal(params1, params2):
+            if params1.keys() != params2.keys():
+                return False
+            for key, value1 in params1.items():
+                value2 = params2[key]
+                if np.isscalar(value1) and value1 != value2:
+                    return False
+                elif (isinstance(value1, dict) and
+                        not _params_equal(value1, value2)):
+                    return False
+                elif np.any(np.asarray(value1) != np.asarray(value2)):
+                    return False
+            return True
+
         if (self.metric != other.metric
-                or _get_metric_params(self) != _get_metric_params(other)):
+                or not _params_equal(_get_metric_params(self),
+                                     _get_metric_params(other))):
             raise ValueError("The metric parameters of the given tree (%s, %s)"
-                             " do not match the parameters of this instance "
+                             " do not match the parameters of %s "
                              "(%s, %s)." % (other.metric,
                                             _get_metric_params(other),
                                             self.metric,
-                                            _get_metric_params(self)))
+                                            _get_metric_params(self),
+                                            self.__class__.__name__))
 
     def _fit(self, X):
         self._check_algorithm_metric()
