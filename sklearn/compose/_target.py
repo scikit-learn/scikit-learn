@@ -8,6 +8,7 @@ import numpy as np
 
 from ..base import BaseEstimator, RegressorMixin, clone
 from ..utils.validation import check_is_fitted
+from ..utils import check_array
 from ..preprocessing import FunctionTransformer
 
 __all__ = ['TransformedTargetRegressor']
