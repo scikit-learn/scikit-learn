@@ -1296,5 +1296,5 @@ def test_unused_parameters_warn():
     for vec in [CountVectorizer()]:
         vec.set_params(stop_words=["you've", "you", "you'll", 'AND'],
                        analyzer='char')
-        assert_warns_message(UserWarning, CountVectorizerMsg, vec.fit,
+        assert_warns_message(UserWarning, msg, vec.fit,
                              ['hello world'])
