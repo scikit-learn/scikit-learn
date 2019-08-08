@@ -394,7 +394,7 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
     ... X, y, stratify=y, random_state=42
     ... )
     >>> clf.fit(X_train, y_train).score(X_test, y_test)
-    0...
+    0.9...
 
     """
     def __init__(self, estimators, final_estimator=None, cv=None,
@@ -588,7 +588,7 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
     ... *load_diabetes(return_X_y=True), random_state=42
     ... )
     >>> reg.fit(X_train, y_train).score(X_test, y_test)
-    0...
+    0.3...
 
     """
     def __init__(self, estimators, final_estimator=None, cv=None,
