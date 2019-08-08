@@ -200,6 +200,11 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+- |MajorFeature| Added :func:`metrics.plot_roc_curve` and
+  :class:`metrics.RocCurveDisplay`, which plot the ROC curve of binary
+  classification problems.
+  :pr:`14357` :user:`Thomas Fan <thomasjpfan>`.
+
 - |Feature| Added multiclass support to :func:`metrics.roc_auc_score`.
   :issue:`12789` by :user:`Kathy Chen <kathyxchen>`,
   :user:`Mohamed Maskani <maskani-moh>`, and :user:`Thomas Fan <thomasjpfan>`.
