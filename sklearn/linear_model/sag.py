@@ -12,6 +12,7 @@ from .base import make_dataset
 from .sag_fast import sag32, sag64
 from ..exceptions import ConvergenceWarning
 from ..utils import check_array
+from ..utils.validation import _check_sample_weight
 from ..utils.extmath import row_norms
 
 
@@ -251,8 +252,7 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
     n_classes = int(y.max()) + 1 if loss == 'multinomial' else 1
 
     # initialization
-    if sample_weight is None:
-        sample_weight = np.ones(n_samples, dtype=X.dtype, order='C')
+    sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
     if 'coef' in warm_start_mem.keys():
         coef_init = warm_start_mem['coef']

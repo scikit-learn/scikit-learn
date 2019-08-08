@@ -91,6 +91,7 @@ def make_dataset(X, y, sample_weight, random_state=None):
                           seed=seed)
         intercept_decay = SPARSE_INTERCEPT_DECAY
     else:
+        X = np.ascontiguousarray(X)
         dataset = ArrayData(X, y, sample_weight, seed=seed)
         intercept_decay = 1.0
 
@@ -370,7 +371,7 @@ class LinearRegression(LinearModel, RegressorMixin, MultiOutputMixin):
     fit_intercept : boolean, optional, default True
         whether to calculate the intercept for this model. If set
         to False, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
     normalize : boolean, optional, default False
         This parameter is ignored when ``fit_intercept`` is set to False.
@@ -398,8 +399,15 @@ class LinearRegression(LinearModel, RegressorMixin, MultiOutputMixin):
         is a 2D array of shape (n_targets, n_features), while if only
         one target is passed, this is a 1D array of length n_features.
 
-    intercept_ : array
-        Independent term in the linear model.
+    rank_ : int
+        Rank of matrix `X`. Only available when `X` is dense.
+
+    singular_ : array, shape (min(X, y),)
+        Singular values of `X`. Only available when `X` is dense.
+
+    intercept_ : float | array, shape = (n_targets,)
+        Independent term in the linear model. Set to 0.0 if
+        `fit_intercept = False`.
 
     Examples
     --------
