@@ -359,10 +359,10 @@ def test_enet_cv_positive_constraint():
 
 
 def test_uniform_targets():
-    enet = ElasticNetCV(fit_intercept=True, n_alphas=3)
-    m_enet = MultiTaskElasticNetCV(fit_intercept=True, n_alphas=3)
-    lasso = LassoCV(fit_intercept=True, n_alphas=3)
-    m_lasso = MultiTaskLassoCV(fit_intercept=True, n_alphas=3)
+    enet = ElasticNetCV(n_alphas=3)
+    m_enet = MultiTaskElasticNetCV(n_alphas=3)
+    lasso = LassoCV(n_alphas=3)
+    m_lasso = MultiTaskLassoCV(n_alphas=3)
 
     models_single_task = (enet, lasso)
     models_multi_task = (m_enet, m_lasso)
@@ -432,7 +432,7 @@ def test_enet_multitarget():
     n_targets = 3
     X, y, _, _ = build_dataset(n_samples=10, n_features=8,
                                n_informative_features=10, n_targets=n_targets)
-    estimator = ElasticNet(alpha=0.01, fit_intercept=True)
+    estimator = ElasticNet(alpha=0.01)
     estimator.fit(X, y)
     coef, intercept, dual_gap = (estimator.coef_, estimator.intercept_,
                                  estimator.dual_gap_)
@@ -695,8 +695,7 @@ def test_enet_copy_X_False_check_input_False():
 def test_overrided_gram_matrix():
     X, y, _, _ = build_dataset(n_samples=20, n_features=10)
     Gram = X.T.dot(X)
-    clf = ElasticNet(selection='cyclic', tol=1e-8, precompute=Gram,
-                     fit_intercept=True)
+    clf = ElasticNet(selection='cyclic', tol=1e-8, precompute=Gram)
     assert_warns_message(UserWarning,
                          "Gram matrix was provided but X was centered"
                          " to fit intercept, "

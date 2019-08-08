@@ -768,7 +768,7 @@ class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
     fit_intercept : boolean
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
     verbose : boolean or integer, optional
         Sets the verbosity amount
@@ -987,7 +987,7 @@ class LassoLars(Lars):
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
     verbose : boolean or integer, optional
         Sets the verbosity amount
@@ -1146,7 +1146,7 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
     positive : boolean (default=False)
         Restrict coefficients to be >= 0. Be aware that you might want to
@@ -1232,7 +1232,7 @@ class LarsCV(Lars):
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
     verbose : boolean or integer, optional
         Sets the verbosity amount
@@ -1446,7 +1446,7 @@ class LassoLarsCV(LarsCV):
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
     verbose : boolean or integer, optional
         Sets the verbosity amount
@@ -1615,7 +1615,7 @@ class LassoLarsIC(LassoLars):
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
     verbose : boolean or integer, optional
         Sets the verbosity amount

@@ -519,7 +519,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         Returns
         -------
         imputer_mask : {ndarray or sparse matrix}, shape \
-(n_samples, n_features) or (n_samples, n_features_with_missing)
+        (n_samples, n_features)
             The imputer mask of the original data.
 
         features_with_missing : ndarray, shape (n_features_with_missing)
@@ -597,9 +597,9 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        imputer_mask : {ndarray or sparse matrix},
-                       shape (n_samples, n_features)
-                       The imputer mask of the original data.
+        imputer_mask : {ndarray or sparse matrix}, shape (n_samples, \
+        n_features)
+            The imputer mask of the original data.
 
         """
         X = self._validate_input(X)
@@ -647,7 +647,8 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        Xt : {ndarray or sparse matrix}, shape (n_samples, n_features)
+        Xt : {ndarray or sparse matrix}, shape (n_samples, n_features) \
+        or (n_samples, n_features_with_missing)
             The missing indicator for input data. The data type of ``Xt``
             will be boolean.
 
@@ -683,7 +684,8 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        Xt : {ndarray or sparse matrix}, shape (n_samples, n_features)
+        Xt : {ndarray or sparse matrix}, shape (n_samples, n_features) \
+        or (n_samples, n_features_with_missing)
             The missing indicator for input data. The data type of ``Xt``
             will be boolean.
 
