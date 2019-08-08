@@ -351,7 +351,6 @@ def test_stacking_set_get_params(stacking_estimator):
     ids=['StackingClassifier', 'StackingRegressor']
 )
 def test_stacking_randomness(estimator, X, y):
-    rng = np.random.RandomState(0)
     estimator_full = clone(estimator)
     estimator_full.set_params(
         cv=KFold(shuffle=True, random_state=np.random.RandomState(0))
