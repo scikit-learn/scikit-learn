@@ -943,7 +943,10 @@ def test_search_default_iid(SearchCV, specialized_params):
     # this leads to perfect classification on one fold and a score of 1/3 on
     # the other
     # create "cv" for splits
-    cv = [[mask, ~mask], [~mask, mask]]
+    first_fold_indices = np.flatnonzero(mask)
+    second_fold_indices = np.flatnonzero(~mask)
+    cv = [[first_fold_indices, second_fold_indices],
+          [second_fold_indices, first_fold_indices]]
 
     common_params = {'estimator': SVC(), 'cv': cv,
                      'return_train_score': True}
@@ -992,7 +995,10 @@ def test_search_iid_param():
     # this leads to perfect classification on one fold and a score of 1/3 on
     # the other
     # create "cv" for splits
-    cv = [[mask, ~mask], [~mask, mask]]
+    first_fold_indices = np.flatnonzero(mask)
+    second_fold_indices = np.flatnonzero(~mask)
+    cv = [[first_fold_indices, second_fold_indices],
+          [second_fold_indices, first_fold_indices]]
     # once with iid=True (default)
     grid_search = GridSearchCV(SVC(gamma='auto'), param_grid={'C': [1, 10]},
                                cv=cv, return_train_score=True, iid=True)
