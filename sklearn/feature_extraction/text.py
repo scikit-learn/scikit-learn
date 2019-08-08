@@ -951,10 +951,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         self.max_df = max_df
         self.min_df = min_df
         if max_df < 0 or min_df < 0:
-            raise ValueError("negative value for max_df or min_df")
-        if self.analyzer != 'word':
-	        warnings.warn("The parameter 'stop_words' will not be used"
-			" since analyzer != 'word'".format(self.stop_words))	
+            raise ValueError("negative value for max_df or min_df")	
         self.max_features = max_features
         if max_features is not None:
             if (not isinstance(max_features, numbers.Integral) or
@@ -1094,6 +1091,9 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         -------
         self
         """
+        if self.analyzer != 'word':
+			warnings.warn("The parameter 'stop_words' will not be used"
+			" since analyzer != 'word'"
         self.fit_transform(raw_documents)
         return self
 
