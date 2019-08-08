@@ -1288,3 +1288,12 @@ def test_callable_analyzer_reraise_error(tmpdir, Estimator):
 
     with pytest.raises(Exception, match="testing"):
         Estimator(analyzer=analyzer, input='file').fit_transform([f])
+        
+
+def test_CountVectorizer_fit_warning():
+	CountVectorizerMsg = "The parameter 'stop_words' will not be used"
+                        " since analyzer != 'word'"
+    for vec in [CountVectorizer()]:
+        vec.set_params(stop_words=["you've", "you", "you'll", 'AND'] ,analyzer='char')
+        assert_warns_message(UserWarning, CountVectorizerMsg, vec.fit,
+                             ['hello world'])
