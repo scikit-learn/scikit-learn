@@ -945,6 +945,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         self.preprocessor = preprocessor
         self.tokenizer = tokenizer
         self.analyzer = analyzer
+        if self.analyzer != 'word':
+            warnings.warn("Specified stop_words {} will not be used when analyzer is not 'word'".format(self.stop_words))
         self.lowercase = lowercase
         self.token_pattern = token_pattern
         self.stop_words = stop_words
