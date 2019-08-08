@@ -1091,7 +1091,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         -------
         self
         """
-        if self.analyzer != 'word':
+        if self.analyzer != 'word' and self.stop_words is not None:
             warnings.warn("The parameter 'stop_words' will not be used"
                           " since analyzer != 'word'")
         self.fit_transform(raw_documents)

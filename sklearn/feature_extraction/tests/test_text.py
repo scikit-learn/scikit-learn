@@ -1290,7 +1290,7 @@ def test_callable_analyzer_reraise_error(tmpdir, Estimator):
         Estimator(analyzer=analyzer, input='file').fit_transform([f])
 
 
-def test_CountVectorizer_fit_warning():
+def test_unused_parameters_warn():
     msg = "The parameter 'stop_words' will not be used"
     " since analyzer != 'word'"
     for vec in [CountVectorizer()]:
