@@ -953,8 +953,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         if max_df < 0 or min_df < 0:
             raise ValueError("negative value for max_df or min_df")
         if self.analyzer != 'word':
-	        warnings.warn("The parameter 'stop_words' will not be used since "
-			"analyzer != 'word'".format(self.stop_words))	
+	        warnings.warn("The parameter 'stop_words' will not be used"
+			" since analyzer != 'word'".format(self.stop_words))	
         self.max_features = max_features
         if max_features is not None:
             if (not isinstance(max_features, numbers.Integral) or
