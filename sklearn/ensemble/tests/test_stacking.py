@@ -56,8 +56,7 @@ def test_stacking_classifier_iris(cv, final_estimator):
     estimators = [('lr', LogisticRegression()),
                   ('svc', LinearSVC())]
     clf = StackingClassifier(
-        estimators=estimators, final_estimator=final_estimator, cv=cv,
-        random_state=42
+        estimators=estimators, final_estimator=final_estimator, cv=cv
     )
     clf.fit(X_train, y_train)
     clf.predict(X_test)
@@ -90,10 +89,10 @@ def test_stacking_classifier_drop_estimator(estimators):
     rf = RandomForestClassifier(n_estimators=10, random_state=42)
     clf = StackingClassifier(
         estimators=[('svc', LinearSVC(random_state=0))],
-        final_estimator=rf, cv=5, random_state=42
+        final_estimator=rf, cv=5
     )
     clf_drop = StackingClassifier(
-        estimators=estimators, final_estimator=rf, cv=5, random_state=42
+        estimators=estimators, final_estimator=rf, cv=5
     )
 
     clf.fit(X_train, y_train)
@@ -117,10 +116,10 @@ def test_stacking_regressor_drop_estimator(estimators):
     rf = RandomForestRegressor(n_estimators=10, random_state=42)
     reg = StackingRegressor(
         estimators=[('svr', LinearSVR(random_state=0))],
-        final_estimator=rf, cv=5, random_state=42
+        final_estimator=rf, cv=5
     )
     reg_drop = StackingRegressor(
-        estimators=estimators, final_estimator=rf, cv=5, random_state=42
+        estimators=estimators, final_estimator=rf, cv=5
     )
 
     reg.fit(X_train, y_train)
@@ -146,8 +145,7 @@ def test_stacking_regressor_diabetes(cv, final_estimator, predict_params):
     )
     estimators = [('lr', LinearRegression()), ('svr', LinearSVR())]
     reg = StackingRegressor(
-        estimators=estimators, final_estimator=final_estimator, cv=cv,
-        random_state=42
+        estimators=estimators, final_estimator=final_estimator, cv=cv
     )
     reg.fit(X_train, y_train)
     result = reg.predict(X_test, **predict_params)
@@ -176,9 +174,7 @@ def test_stacking_classifier_drop_binary_prob():
     estimators = [
         ('lr', LogisticRegression()), ('rf', RandomForestClassifier())
     ]
-    clf = StackingClassifier(
-        estimators=estimators, random_state=42
-    )
+    clf = StackingClassifier(estimators=estimators)
     clf.fit(X_, y_)
     X_meta = clf.transform(X_)
     assert X_meta.shape[1] == 2

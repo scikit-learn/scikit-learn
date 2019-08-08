@@ -24,7 +24,6 @@ from ..model_selection import check_cv
 
 from ..preprocessing import LabelEncoder
 
-from ..utils import check_random_state
 from ..utils import Bunch
 from ..utils.metaestimators import _BaseComposition
 from ..utils.metaestimators import if_delegate_has_method
@@ -44,14 +43,12 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
 
     @abstractmethod
     def __init__(self, estimators, final_estimator=None, cv=None,
-                 predict_method='auto', n_jobs=None, random_state=None,
-                 verbose=0):
+                 predict_method='auto', n_jobs=None, verbose=0):
         self.estimators = estimators
         self.final_estimator = final_estimator
         self.cv = cv
         self.predict_method = predict_method
         self.n_jobs = n_jobs
-        self.random_state = random_state
         self.verbose = verbose
 
     def _validate_final_estimator(self, default):
@@ -217,10 +214,9 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
         # To ensure that the data provided to each estimator are the same, we
         # need to set the random state of the cv if there is one and we need to
         # take a copy.
-        random_state = check_random_state(self.random_state)
         cv = check_cv(self.cv)
-        if hasattr(cv, 'random_state'):
-            cv.random_state = random_state
+        if hasattr(cv, 'random_state') and cv.random_state is None:
+            cv.random_state = np.random.RandomState()
 
         self.predict_method_ = [
             self._method_name(name, est, meth)
@@ -353,12 +349,6 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
         `None` means 1 unless in a `joblib.parallel_backend` context. -1 means
         using all processors. See Glossary for more details.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`. Used to set the `cv`.
-
     Attributes
     ----------
     estimators_ : list of estimators
@@ -408,15 +398,13 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
 
     """
     def __init__(self, estimators, final_estimator=None, cv=None,
-                 predict_method='auto', n_jobs=None, random_state=None,
-                 verbose=0):
+                 predict_method='auto', n_jobs=None, verbose=0):
         super().__init__(
             estimators=estimators,
             final_estimator=final_estimator,
             cv=cv,
             predict_method=predict_method,
             n_jobs=n_jobs,
-            random_state=random_state,
             verbose=verbose
         )
 
@@ -557,12 +545,6 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
         `None` means 1 unless in a `joblib.parallel_backend` context. -1 means
         using all processors. See Glossary for more details.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`. Used to set the `cv`.
-
     Attributes
     ----------
     estimators_ : list of estimator
@@ -610,15 +592,13 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
 
     """
     def __init__(self, estimators, final_estimator=None, cv=None,
-                 predict_method='auto', n_jobs=None, random_state=None,
-                 verbose=0):
+                 predict_method='auto', n_jobs=None, verbose=0):
         super().__init__(
             estimators=estimators,
             final_estimator=final_estimator,
             cv=cv,
             predict_method=predict_method,
             n_jobs=n_jobs,
-            random_state=random_state,
             verbose=verbose
         )
 
