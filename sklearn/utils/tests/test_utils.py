@@ -1,3 +1,4 @@
+from copy import copy
 from itertools import chain
 import warnings
 import string
@@ -270,14 +271,16 @@ def test_safe_indexing_1d_container(array_type, indices_type):
 @pytest.mark.parametrize("indices", [[1, 2], ["col_1", "col_2"]])
 def test_safe_indexing_2d_container_axis_1(array_type, indices_type, indices):
     # validation of the indices
+    # we make a copy because indices is mutable and shared between tests
+    indices_converted = copy(indices)
     if indices_type == 'slice' and isinstance(indices[1], int):
-        indices[1] += 1
+        indices_converted[1] += 1
 
     columns_name = ['col_0', 'col_1', 'col_2']
     array = _convert_container(
         [[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type, columns_name
     )
-    indices_converted = _convert_container(indices, indices_type)
+    indices_converted = _convert_container(indices_converted, indices_type)
 
     if isinstance(indices[0], str) and array_type != 'dataframe':
         err_msg = ("Specifying the columns using strings is only supported "
