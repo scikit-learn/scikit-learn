@@ -17,27 +17,15 @@ import pytest
 
 from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import ignore_warnings
-from sklearn.exceptions import ConvergenceWarning, SkipTestWarning
+from sklearn.exceptions import ConvergenceWarning
 
 import sklearn
-from sklearn.base import RegressorMixin
 from sklearn.cluster.bicluster import BiclusterMixin
 
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.linear_model.base import LinearClassifierMixin
-from sklearn.linear_model import LinearRegression
-from sklearn.linear_model import LogisticRegression
-from sklearn.linear_model import Ridge
-<<<<<<< HEAD
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.tree import DecisionTreeRegressor
-=======
->>>>>>> origin/master
-from sklearn.utils import IS_PYPY
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.estimator_checks import (
     _yield_all_checks,
-    _safe_tags,
     _construct_instance,
     set_checking_parameters,
     check_parameters_default_constructible,
