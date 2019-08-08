@@ -24,11 +24,12 @@ from collections.abc import Iterable
 import numpy as np
 
 from . import (r2_score, median_absolute_error, max_error, mean_absolute_error,
-               mean_squared_error, mean_squared_log_error, accuracy_score,
+               mean_squared_error, mean_squared_log_error,
+               mean_tweedie_deviance, accuracy_score,
                f1_score, roc_auc_score, average_precision_score,
                precision_score, recall_score, log_loss,
                balanced_accuracy_score, explained_variance_score,
-               brier_score_loss)
+               brier_score_loss, jaccard_score)
 
 from .cluster import adjusted_rand_score
 from .cluster import homogeneity_score
@@ -323,9 +324,9 @@ def _check_multimetric_scoring(estimator, scoring=None):
 
         See :ref:`multimetric_grid_search` for an example.
 
-        If None the estimator's default scorer (if available) is used.
+        If None the estimator's score method is used.
         The return value in that case will be ``{'score': <default_scorer>}``.
-        If the estimator's default scorer is not available, a ``TypeError``
+        If the estimator's score method is not available, a ``TypeError``
         is raised.
 
     Returns
@@ -423,10 +424,18 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
         Whether score_func requires predict_proba to get probability estimates
         out of a classifier.
 
+        If True, for binary `y_true`, the score function is supposed to accept
+        a 1D `y_pred` (i.e., probability of the positive class, shape
+        `(n_samples,)`).
+
     needs_threshold : boolean, default=False
         Whether score_func takes a continuous decision certainty.
         This only works for binary classification using estimators that
         have either a decision_function or predict_proba method.
+
+        If True, for binary `y_true`, the score function is supposed to accept
+        a 1D `y_pred` (i.e., probability of the positive class or the decision
+        function, shape `(n_samples,)`).
 
         For example ``average_precision`` or the area under the roc curve
         can not be computed using discrete predictions alone.
@@ -449,6 +458,16 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
     >>> from sklearn.svm import LinearSVC
     >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]},
     ...                     scoring=ftwo_scorer)
+
+    Notes
+    -----
+    If `needs_proba=False` and `needs_threshold=False`, the score
+    function is supposed to accept the output of `predict`. If
+    `needs_proba=True`, the score function is supposed to accept the
+    output of `predict_proba` (For binary `y_true`, the score function is
+    supposed to accept probability of the positive class). If
+    `needs_threshold=True`, the score function is supposed to accept the
+    output of `decision_function`.
     """
     sign = 1 if greater_is_better else -1
     if needs_proba and needs_threshold:
@@ -474,9 +493,18 @@ neg_mean_squared_log_error_scorer = make_scorer(mean_squared_log_error,
                                                 greater_is_better=False)
 neg_mean_absolute_error_scorer = make_scorer(mean_absolute_error,
                                              greater_is_better=False)
-
 neg_median_absolute_error_scorer = make_scorer(median_absolute_error,
                                                greater_is_better=False)
+neg_root_mean_squared_error_scorer = make_scorer(mean_squared_error,
+                                                 greater_is_better=False,
+                                                 squared=False)
+neg_mean_poisson_deviance_scorer = make_scorer(
+    mean_tweedie_deviance, p=1., greater_is_better=False
+)
+
+neg_mean_gamma_deviance_scorer = make_scorer(
+    mean_tweedie_deviance, p=2., greater_is_better=False
+)
 
 # Standard Classification Scores
 accuracy_scorer = make_scorer(accuracy_score)
@@ -487,6 +515,16 @@ roc_auc_scorer = make_scorer(roc_auc_score, greater_is_better=True,
                              needs_threshold=True)
 average_precision_scorer = make_scorer(average_precision_score,
                                        needs_threshold=True)
+roc_auc_ovo_scorer = make_scorer(roc_auc_score, needs_threshold=True,
+                                 multi_class='ovo')
+roc_auc_ovo_weighted_scorer = make_scorer(roc_auc_score, needs_threshold=True,
+                                          multi_class='ovo',
+                                          average='weighted')
+roc_auc_ovr_scorer = make_scorer(roc_auc_score, needs_threshold=True,
+                                 multi_class='ovr')
+roc_auc_ovr_weighted_scorer = make_scorer(roc_auc_score, needs_threshold=True,
+                                          multi_class='ovr',
+                                          average='weighted')
 
 # Score function for probabilistic classification
 neg_log_loss_scorer = make_scorer(log_loss, greater_is_better=False,
@@ -514,7 +552,12 @@ SCORERS = dict(explained_variance=explained_variance_scorer,
                neg_mean_absolute_error=neg_mean_absolute_error_scorer,
                neg_mean_squared_error=neg_mean_squared_error_scorer,
                neg_mean_squared_log_error=neg_mean_squared_log_error_scorer,
+               neg_root_mean_squared_error=neg_root_mean_squared_error_scorer,
+               neg_mean_poisson_deviance=neg_mean_poisson_deviance_scorer,
+               neg_mean_gamma_deviance=neg_mean_gamma_deviance_scorer,
                accuracy=accuracy_scorer, roc_auc=roc_auc_scorer,
+               roc_auc_ovr=roc_auc_ovr_scorer,
+               roc_auc_ovo=roc_auc_ovo_scorer,
                balanced_accuracy=balanced_accuracy_scorer,
                average_precision=average_precision_scorer,
                neg_log_loss=neg_log_loss_scorer,
@@ -531,8 +574,9 @@ SCORERS = dict(explained_variance=explained_variance_scorer,
 
 
 for name, metric in [('precision', precision_score),
-                     ('recall', recall_score), ('f1', f1_score)]:
-    SCORERS[name] = make_scorer(metric)
+                     ('recall', recall_score), ('f1', f1_score),
+                     ('jaccard', jaccard_score)]:
+    SCORERS[name] = make_scorer(metric, average='binary')
     for average in ['macro', 'micro', 'samples', 'weighted']:
         qualified_name = '{0}_{1}'.format(name, average)
         SCORERS[qualified_name] = make_scorer(metric, pos_label=None,

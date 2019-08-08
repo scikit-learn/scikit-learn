@@ -1,3 +1,5 @@
+.. _about:
+
 About us
 ========
 
@@ -14,10 +16,15 @@ release, February the 1st 2010. Since then, several releases have appeared
 following a ~3 month cycle, and a thriving international community has
 been leading the development.
 
+Governance
+----------
+The decision making process and governance structure of scikit-learn is laid
+out in the :ref:`governance document <governance>`.
+
 Authors
 -------
 
-The following people have been core contributors to scikit-learn's development
+The following people are currently core contributors to scikit-learn's development
 and maintenance:
 
 .. include:: authors.rst
@@ -31,12 +38,15 @@ in the FAQ.
 
    :ref:`How you can contribute to the project <contributing>`
 
-.. _citing-scikit-learn:
+Emeritus Core Developers
+------------------------
+The following people have been active contributors in the past, but are no
+longer active in the project:
 
-Governance
-----------
-The decision making process and governance structure of scikit-learn is laid
-out in the `governance document <governance>`_.
+.. include:: authors_emeritus.rst
+
+
+.. _citing-scikit-learn:
 
 Citing scikit-learn
 -------------------

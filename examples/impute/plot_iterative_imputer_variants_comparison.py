@@ -8,13 +8,13 @@ used with a variety of estimators to do round-robin regression, treating every
 variable as an output in turn.
 
 In this example we compare some estimators for the purpose of missing feature
-imputation with :class:`sklearn.imputeIterativeImputer`::
+imputation with :class:`sklearn.impute.IterativeImputer`:
 
-    :class:`~sklearn.linear_model.BayesianRidge`: regularized linear regression
-    :class:`~sklearn.tree.DecisionTreeRegressor`: non-linear regression
-    :class:`~sklearn.ensemble.ExtraTreesRegressor`: similar to missForest in R
-    :class:`~sklearn.neighbors.KNeighborsRegressor`: comparable to other KNN
-    imputation approaches
+* :class:`~sklearn.linear_model.BayesianRidge`: regularized linear regression
+* :class:`~sklearn.tree.DecisionTreeRegressor`: non-linear regression
+* :class:`~sklearn.ensemble.ExtraTreesRegressor`: similar to missForest in R
+* :class:`~sklearn.neighbors.KNeighborsRegressor`: comparable to other KNN
+  imputation approaches
 
 Of particular interest is the ability of
 :class:`sklearn.impute.IterativeImputer` to mimic the behavior of missForest, a
@@ -42,6 +42,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
+# To use this experimental feature, we need to explicitly ask for it:
+from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.datasets import fetch_california_housing
 from sklearn.impute import SimpleImputer
 from sklearn.impute import IterativeImputer

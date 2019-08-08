@@ -85,7 +85,6 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
 
     The sample counts that are shown are weighted with any sample_weights that
     might be present.
-    This function requires matplotlib, and works best with matplotlib >= 1.5.
 
     The visualization is fit automatically to the size of the axis.
     Use the ``figsize`` or ``dpi`` arguments of ``plt.figure``  to control
@@ -541,22 +540,19 @@ class _MPLTreeExporter(_BaseTreeExporter):
         self.bbox_args = dict(fc='w')
         if self.rounded:
             self.bbox_args['boxstyle'] = "round"
-        else:
-            # matplotlib <1.5 requires explicit boxstyle
-            self.bbox_args['boxstyle'] = "square"
 
         self.arrow_args = dict(arrowstyle="<-")
 
-    def _make_tree(self, node_id, et, depth=0):
+    def _make_tree(self, node_id, et, criterion, depth=0):
         # traverses _tree.Tree recursively, builds intermediate
         # "_reingold_tilford.Tree" object
-        name = self.node_to_str(et, node_id, criterion='entropy')
+        name = self.node_to_str(et, node_id, criterion=criterion)
         if (et.children_left[node_id] != _tree.TREE_LEAF
                 and (self.max_depth is None or depth <= self.max_depth)):
             children = [self._make_tree(et.children_left[node_id], et,
-                                        depth=depth + 1),
+                                        criterion, depth=depth + 1),
                         self._make_tree(et.children_right[node_id], et,
-                                        depth=depth + 1)]
+                                        criterion, depth=depth + 1)]
         else:
             return Tree(name, node_id)
         return Tree(name, node_id, *children)
@@ -568,7 +564,8 @@ class _MPLTreeExporter(_BaseTreeExporter):
             ax = plt.gca()
         ax.clear()
         ax.set_axis_off()
-        my_tree = self._make_tree(0, decision_tree.tree_)
+        my_tree = self._make_tree(0, decision_tree.tree_,
+                                  decision_tree.criterion)
         draw_tree = buchheim(my_tree)
 
         # important to make sure we're still
@@ -598,27 +595,20 @@ class _MPLTreeExporter(_BaseTreeExporter):
             # get figure to data transform
             # adjust fontsize to avoid overlap
             # get max box width and height
-            try:
-                extents = [ann.get_bbox_patch().get_window_extent()
-                           for ann in anns]
-                max_width = max([extent.width for extent in extents])
-                max_height = max([extent.height for extent in extents])
-                # width should be around scale_x in axis coordinates
-                size = anns[0].get_fontsize() * min(scale_x / max_width,
-                                                    scale_y / max_height)
-                for ann in anns:
-                    ann.set_fontsize(size)
-            except AttributeError:
-                # matplotlib < 1.5
-                warnings.warn("Automatic scaling of tree plots requires "
-                              "matplotlib 1.5 or higher. Please specify "
-                              "fontsize.")
+            extents = [ann.get_bbox_patch().get_window_extent()
+                       for ann in anns]
+            max_width = max([extent.width for extent in extents])
+            max_height = max([extent.height for extent in extents])
+            # width should be around scale_x in axis coordinates
+            size = anns[0].get_fontsize() * min(scale_x / max_width,
+                                                scale_y / max_height)
+            for ann in anns:
+                ann.set_fontsize(size)
 
         return anns
 
     def recurse(self, node, tree, ax, scale_x, scale_y, height, depth=0):
-        # need to copy bbox args because matplotib <1.5 modifies them
-        kwargs = dict(bbox=self.bbox_args.copy(), ha='center', va='center',
+        kwargs = dict(bbox=self.bbox_args, ha='center', va='center',
                       zorder=100 - 10 * depth, xycoords='axes pixels')
 
         if self.fontsize is not None:
@@ -749,7 +739,7 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
     >>> iris = load_iris()
 
     >>> clf = clf.fit(iris.data, iris.target)
-    >>> tree.export_graphviz(clf) # doctest: +ELLIPSIS
+    >>> tree.export_graphviz(clf)
     'digraph Tree {...
     """
 
@@ -839,7 +829,7 @@ def export_text(decision_tree, feature_names=None, max_depth=10,
         Text summary of all the rules in the decision tree.
 
     Examples
-    -------
+    --------
 
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.tree import DecisionTreeClassifier
@@ -858,7 +848,6 @@ def export_text(decision_tree, feature_names=None, max_depth=10,
     |   |   |--- class: 1
     |   |--- petal width (cm) >  1.75
     |   |   |--- class: 2
-    ...
     """
     check_is_fitted(decision_tree, 'tree_')
     tree_ = decision_tree.tree_
@@ -890,7 +879,8 @@ def export_text(decision_tree, feature_names=None, max_depth=10,
         value_fmt = "{}{} value: {}\n"
 
     if feature_names:
-        feature_names_ = [feature_names[i] for i in tree_.feature]
+        feature_names_ = [feature_names[i] if i != _tree.TREE_UNDEFINED
+                          else None for i in tree_.feature]
     else:
         feature_names_ = ["feature_{}".format(i) for i in tree_.feature]
 

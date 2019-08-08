@@ -1,7 +1,6 @@
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
-# cython: language_level=3
 #
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Mathieu Blondel (partial_fit support)
@@ -22,8 +21,8 @@ from numpy.math cimport INFINITY
 cdef extern from "sgd_fast_helpers.h":
     bint skl_isfinite(double) nogil
 
-from sklearn.utils.weight_vector cimport WeightVector
-from sklearn.utils.seq_dataset cimport SequentialDataset64 as SequentialDataset
+from ..utils.weight_vector cimport WeightVector
+from ..utils.seq_dataset cimport SequentialDataset64 as SequentialDataset
 
 np.import_array()
 
