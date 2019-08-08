@@ -1291,7 +1291,7 @@ def test_callable_analyzer_reraise_error(tmpdir, Estimator):
 
 
 def test_CountVectorizer_fit_warning():
-    CountVectorizerMsg = "The parameter 'stop_words' will not be used"
+    msg = "The parameter 'stop_words' will not be used"
     " since analyzer != 'word'"
     for vec in [CountVectorizer()]:
         vec.set_params(stop_words=["you've", "you", "you'll", 'AND'],
