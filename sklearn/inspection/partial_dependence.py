@@ -6,6 +6,7 @@
 # License: BSD 3 clause
 
 from itertools import count
+from itertools import chain
 import numbers
 from collections.abc import Iterable
 
@@ -23,6 +24,7 @@ from ..exceptions import NotFittedError
 from ..ensemble.gradient_boosting import BaseGradientBoosting
 from sklearn.ensemble._hist_gradient_boosting.gradient_boosting import (
     BaseHistGradientBoosting)
+from ._plot import PartialDependenceDisplay
 
 
 __all__ = ['partial_dependence', 'plot_partial_dependence']
@@ -374,7 +376,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
                             target=None, response_method='auto', n_cols=3,
                             grid_resolution=100, percentiles=(0.05, 0.95),
                             method='auto', n_jobs=None, verbose=0, fig=None,
-                            line_kw=None, contour_kw=None):
+                            line_kw=None, contour_kw=None, ax=None):
     """Partial dependence plots.
 
     The ``len(features)`` plots are arranged in a grid with ``n_cols``
@@ -538,7 +540,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         if isinstance(fxs, (numbers.Integral, str)):
             fxs = (fxs,)
         try:
-            fxs = [convert_feature(fx) for fx in fxs]
+            fxs = tuple(convert_feature(fx) for fx in fxs)
         except TypeError:
             raise ValueError('Each entry in features must be either an int, '
                              'a string, or an iterable of size at most 2.')
@@ -564,7 +566,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
                          .format(len(feature_names), i))
 
     # compute averaged predictions
-    pd_result = Parallel(n_jobs=n_jobs, verbose=verbose)(
+    pd_results = Parallel(n_jobs=n_jobs, verbose=verbose)(
         delayed(partial_dependence)(estimator, X, fxs,
                                     response_method=response_method,
                                     method=method,
@@ -577,7 +579,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     # Also note: as multiclass-multioutput classifiers are not supported,
     # multiclass and multioutput scenario are mutually exclusive. So there is
     # no risk of overwriting target_idx here.
-    avg_preds, _ = pd_result[0]  # checking the first result is enough
+    avg_preds, _ = pd_results[0]  # checking the first result is enough
     if is_regressor(estimator) and avg_preds.shape[0] > 1:
         if target is None:
             raise ValueError(
@@ -589,7 +591,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
 
     # get global min and max values of PD grouped by plot type
     pdp_lim = {}
-    for avg_preds, values in pd_result:
+    for avg_preds, values in pd_results:
         min_pd = avg_preds[target_idx].min()
         max_pd = avg_preds[target_idx].max()
         n_fx = len(values)
@@ -598,71 +600,80 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         max_pd = max(max_pd, old_max_pd)
         pdp_lim[n_fx] = (min_pd, max_pd)
 
+    deciles = {}
+    for fx in chain.from_iterable(features):
+        if fx not in deciles:
+            deciles[fx] = mquantiles(X[:, fx], prob=np.arange(0.1, 1.0, 0.1))
+
+    display = PartialDependenceDisplay(pd_results, features, names,
+                                       target_idx, pdp_lim, deciles)
+    return display.plot(ax=ax, n_cols=n_cols, line_kw=line_kw,
+                        contour_kw=contour_kw)
     # create contour levels for two-way plots
-    if 2 in pdp_lim:
-        Z_level = np.linspace(*pdp_lim[2], num=8)
+    # if 2 in pdp_lim:
+    #     Z_level = np.linspace(*pdp_lim[2], num=8)
 
-    if fig is None:
-        fig = plt.figure()
-    else:
-        fig.clear()
+    # if fig is None:
+    #     fig = plt.figure()
+    # else:
+    #     fig.clear()
 
-    if line_kw is None:
-        line_kw = {'color': 'green'}
-    if contour_kw is None:
-        contour_kw = {}
+    # if line_kw is None:
+    #     line_kw = {'color': 'green'}
+    # if contour_kw is None:
+    #     contour_kw = {}
 
-    n_cols = min(n_cols, len(features))
-    n_rows = int(np.ceil(len(features) / float(n_cols)))
-    axs = []
-    for i, fx, name, (avg_preds, values) in zip(
-            count(), features, names, pd_result):
-        ax = fig.add_subplot(n_rows, n_cols, i + 1)
+    # n_cols = min(n_cols, len(features))
+    # n_rows = int(np.ceil(len(features) / float(n_cols)))
+    # axs = []
+    # for i, fx, name, (avg_preds, values) in zip(
+    #         count(), features, names, pd_result):
+    #     ax = fig.add_subplot(n_rows, n_cols, i + 1)
 
-        if len(values) == 1:
-            ax.plot(values[0], avg_preds[target_idx].ravel(), **line_kw)
-        else:
-            # make contour plot
-            assert len(values) == 2
-            XX, YY = np.meshgrid(values[0], values[1])
-            Z = avg_preds[target_idx].T
-            CS = ax.contour(XX, YY, Z, levels=Z_level, linewidths=0.5,
-                            colors='k')
-            ax.contourf(XX, YY, Z, levels=Z_level, vmax=Z_level[-1],
-                        vmin=Z_level[0], alpha=0.75, **contour_kw)
-            ax.clabel(CS, fmt='%2.2f', colors='k', fontsize=10, inline=True)
+    #     if len(values) == 1:
+    #         ax.plot(values[0], avg_preds[target_idx].ravel(), **line_kw)
+    #     else:
+    #         # make contour plot
+    #         assert len(values) == 2
+    #         XX, YY = np.meshgrid(values[0], values[1])
+    #         Z = avg_preds[target_idx].T
+    #         CS = ax.contour(XX, YY, Z, levels=Z_level, linewidths=0.5,
+    #                         colors='k')
+    #         ax.contourf(XX, YY, Z, levels=Z_level, vmax=Z_level[-1],
+    #                     vmin=Z_level[0], alpha=0.75, **contour_kw)
+    #         ax.clabel(CS, fmt='%2.2f', colors='k', fontsize=10, inline=True)
 
-        # plot data deciles + axes labels
-        deciles = mquantiles(X[:, fx[0]], prob=np.arange(0.1, 1.0, 0.1))
-        trans = transforms.blended_transform_factory(ax.transData,
-                                                     ax.transAxes)
-        ylim = ax.get_ylim()
-        ax.vlines(deciles, [0], 0.05, transform=trans, color='k')
-        ax.set_xlabel(name[0])
-        ax.set_ylim(ylim)
+    #     # plot data deciles + axes labels
+    #     deciles = mquantiles(X[:, fx[0]], prob=np.arange(0.1, 1.0, 0.1))
+        # trans = transforms.blended_transform_factory(ax.transData,
+        #                                              ax.transAxes)
+    #     ylim = ax.get_ylim()
+    #     ax.vlines(deciles, [0], 0.05, transform=trans, color='k')
+    #     ax.set_xlabel(name[0])
+    #     ax.set_ylim(ylim)
 
-        # prevent x-axis ticks from overlapping
-        ax.xaxis.set_major_locator(MaxNLocator(nbins=6, prune='lower'))
-        tick_formatter = ScalarFormatter()
-        tick_formatter.set_powerlimits((-3, 4))
-        ax.xaxis.set_major_formatter(tick_formatter)
+    #     # prevent x-axis ticks from overlapping
+        # ax.xaxis.set_major_locator(MaxNLocator(nbins=6, prune='lower'))
+        # tick_formatter = ScalarFormatter()
+        # tick_formatter.set_powerlimits((-3, 4))
+        # ax.xaxis.set_major_formatter(tick_formatter)
 
-        if len(values) > 1:
+    #     if len(values) > 1:
             # two-way PDP - y-axis deciles + labels
-            deciles = mquantiles(X[:, fx[1]], prob=np.arange(0.1, 1.0, 0.1))
-            trans = transforms.blended_transform_factory(ax.transAxes,
-                                                         ax.transData)
-            xlim = ax.get_xlim()
-            ax.hlines(deciles, [0], 0.05, transform=trans, color='k')
-            ax.set_ylabel(name[1])
+            # deciles = mquantiles(X[:, fx[1]], prob=np.arange(0.1, 1.0, 0.1))
+            # trans = transforms.blended_transform_factory(ax.transAxes,
+            #                                              ax.transData)
+            # xlim = ax.get_xlim()
+            # ax.hlines(deciles, [0], 0.05, transform=trans, color='k')
+            # ax.set_ylabel(name[1])
             # hline erases xlim
-            ax.set_xlim(xlim)
-        else:
-            ax.set_ylabel('Partial dependence')
+            # ax.set_xlim(xlim)
+    #     else:
+    #         ax.set_ylabel('Partial dependence')
 
-        if len(values) == 1:
-            ax.set_ylim(pdp_lim[1])
-        axs.append(ax)
+    #     if len(values) == 1:
+    #         ax.set_ylim(pdp_lim[1])
+    #     axs.append(ax)
 
-    fig.subplots_adjust(bottom=0.15, top=0.7, left=0.1, right=0.95, wspace=0.4,
-                        hspace=0.3)
+    # fig.subplots_adjust(bottom=0.15, top=0.7, left=0.1, right=0.95, wspace=0.4,
+    #                     hspace=0.3)
