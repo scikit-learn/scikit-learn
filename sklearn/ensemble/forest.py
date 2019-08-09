@@ -225,7 +225,7 @@ class BaseForest(BaseEnsemble, MultiOutputMixin, metaclass=ABCMeta):
             converted into a sparse ``csc_matrix``.
 
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
-            The target values (class labels in classification, real s in
+            The target values (class labels in classification, real numbers in
             regression).
 
         sample_weight : array-like, shape = [n_samples] or None
