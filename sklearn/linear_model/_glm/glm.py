@@ -384,7 +384,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         """
         check_is_fitted(self, "coef_")
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                        dtype='numeric', copy=True, ensure_2d=True,
+                        dtype='numeric', ensure_2d=True,
                         allow_nd=False)
         return X @ self.coef_ + self.intercept_
 
@@ -401,9 +401,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         C : array, shape (n_samples,)
             Returns predicted values.
         """
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                        dtype='numeric', ensure_2d=True,
-                        allow_nd=False)
+        # check_array is done in _linear_predictor
         eta = self._linear_predictor(X)
         mu = self._link_instance.inverse(eta)
         return mu
