@@ -225,7 +225,7 @@ class BaseForest(BaseEnsemble, MultiOutputMixin, metaclass=ABCMeta):
             converted into a sparse ``csc_matrix``.
 
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
-            The target values (class labels in classification, real numbers in
+            The target values (class labels in classification, real s in
             regression).
 
         sample_weight : array-like, shape = [n_samples] or None
@@ -868,7 +868,7 @@ class RandomForestClassifier(ForestClassifier):
         the generalization accuracy.
 
     n_jobs : int or None, optional (default=None)
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs (each tree) to run in parallel for both `fit` and `predict`.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
