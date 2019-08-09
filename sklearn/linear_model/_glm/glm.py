@@ -388,32 +388,25 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                         allow_nd=False)
         return X @ self.coef_ + self.intercept_
 
-    def predict(self, X, sample_weight=None):
+    def predict(self, X):
         """Predict using GLM with feature matrix X.
-
-        If sample_weight is given, returns prediction*sample_weight.
 
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Samples.
 
-        sample_weight : {None, array-like}, shape (n_samples,), optional \
-                (default=None)
-
         Returns
         -------
         C : array, shape (n_samples,)
-            Returns predicted values times sample_weight.
+            Returns predicted values.
         """
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
                         dtype='numeric', ensure_2d=True,
                         allow_nd=False)
         eta = self._linear_predictor(X)
         mu = self._link_instance.inverse(eta)
-        weights = _check_sample_weight(sample_weight, X)
-
-        return mu*weights
+        return mu
 
     def estimate_phi(self, X, y, sample_weight=None):
         """Estimate/fit the dispersion parameter phi.
