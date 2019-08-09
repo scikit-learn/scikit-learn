@@ -945,7 +945,7 @@ it is convenient to apply a link function different from the identity link
 :math:`h(x^\top w)=x^\top w` that guarantees the non-negativeness, e.g. the
 log-link with :math:`h(x^\top w)=\exp(x^\top w)`.
 
-:class:`linear_model.TweedieRegressor` implements a generalized linear model
+:class:`TweedieRegressor` implements a generalized linear model
 for the Tweedie distribution, that allows to model any of the above mentioned
 distributions using the appropriate power parameter `p`,
 
