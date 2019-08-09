@@ -24,6 +24,10 @@ make_conda() {
     source activate $VIRTUALENV
 }
 
+function version_ge() {
+    test "$(echo "$@" | tr " " "\n" | sort -V | head -n 1)" == "$1";
+}
+
 if [[ "$DISTRIB" == "conda" ]]; then
     TO_INSTALL="python=$PYTHON_VERSION pip pytest=$PYTEST_VERSION pytest-cov \
                 numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
@@ -54,8 +58,9 @@ if [[ "$DISTRIB" == "conda" ]]; then
     # Old packages coming from the 'free' conda channel have been removed but
     # we are using them for testing Python 3.5. See
     # https://www.anaconda.com/why-we-removed-the-free-channel-in-conda-4-7/
-    # for more details.
-    if [[ "$PYTHON_VERSION" == "3.5" ]]; then
+    # for more details. restore_free_channel only defined in conda 4.7
+    conda_version=$(conda -V | awk '{print $2}')
+    if version_ge "$conda_version" "4.7.0" && [[ "$PYTHON_VERSION" == "3.5" ]]; then
         conda config --set restore_free_channel true
     fi
 
