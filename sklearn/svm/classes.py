@@ -487,10 +487,9 @@ class SVC(BaseSVC):
 
     probability : boolean, optional (default=False)
         Whether to enable probability estimates. This must be enabled prior
-        to calling `fit` and will slow down that method as it internally uses
-        5-fold cross-validation. When enabled, `predict_proba` may be
-        inconsistent with `predict`. Read more in the
-        :ref:`User Guide <scores_probabilities>`.
+        to calling `fit`, will slow down that method as it internally uses
+        5-fold cross-validation, and `predict_proba` may be inconsistent with
+        `predict`. Read more in the :ref:`User Guide <scores_probabilities>`.
 
     tol : float, optional (default=1e-3)
         Tolerance for stopping criterion.
@@ -689,10 +688,9 @@ class NuSVC(BaseSVC):
 
     probability : boolean, optional (default=False)
         Whether to enable probability estimates. This must be enabled prior
-        to calling `fit` and will slow down that method as it internally uses
-        5-fold cross-validation. When enabled, `predict_proba` may be
-        inconsistent with `predict`. Read more in the
-        :ref:`User Guide <scores_probabilities>`.
+        to calling `fit`, will slow down that method as it internally uses
+        5-fold cross-validation, and `predict_proba` may be inconsistent with
+        `predict`. Read more in the :ref:`User Guide <scores_probabilities>`.
 
     tol : float, optional (default=1e-3)
         Tolerance for stopping criterion.
