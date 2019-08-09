@@ -374,6 +374,8 @@ General Concepts
                 the data needs to be indexed on both axes, while other data is
                 indexed only on the first axis.
 
+        For more detailed info, see :ref:`estimator_tags`.
+
     feature
     features
     feature vector
