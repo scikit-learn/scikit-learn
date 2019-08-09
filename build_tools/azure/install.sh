@@ -52,10 +52,12 @@ if [[ "$DISTRIB" == "conda" ]]; then
     fi
 
     # Old packages coming from the 'free' conda channel have been removed but
-    # we are using them for testing. See
+    # we are using them for testing Python 3.5. See
     # https://www.anaconda.com/why-we-removed-the-free-channel-in-conda-4-7/
     # for more details.
-    conda config --set restore_free_channel true
+    if [[ "$PYTHON_VERSION" == "3.5" ]]; then
+        conda config --set restore_free_channel true
+    fi
 
 	make_conda $TO_INSTALL
     if [[ "$PYTHON_VERSION" == "*" ]]; then
