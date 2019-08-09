@@ -60,6 +60,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
     # https://www.anaconda.com/why-we-removed-the-free-channel-in-conda-4-7/
     # for more details. restore_free_channel is defined starting from conda 4.7
     conda_version=$(conda -V | awk '{print $2}')
+    echo "This is the version ${conda_version}"
     if version_ge "$conda_version" "4.7.0" && [[ "$PYTHON_VERSION" == "3.5" ]]; then
         conda config --set restore_free_channel true
     fi
