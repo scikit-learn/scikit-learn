@@ -865,7 +865,8 @@ def check_symmetric(array, tol=1E-10, raise_warning=True,
     return array
 
 
-def check_is_fitted(estimator, attributes='deprecated', msg=None):
+def check_is_fitted(estimator, attributes='deprecated', msg=None,
+                    all_or_any='deprecated'):
     """Perform is_fitted validation for estimator.
 
     Checks if the estimator is fitted by verifying the presence of
@@ -888,6 +889,8 @@ def check_is_fitted(estimator, attributes='deprecated', msg=None):
 
         Eg. : "Estimator, %(name)s, must be fitted before sparsifying".
 
+    all_or_any : deprecated, ignored
+
     Returns
     -------
     None
@@ -900,6 +903,10 @@ def check_is_fitted(estimator, attributes='deprecated', msg=None):
     if attributes != 'deprecated':
         warnings.warn("Passing attributes to check_is_fitted is deprecated"
                       " and will be removed in 0.23. The attributes "
+                      "argument is ignored.", DeprecationWarning)
+    if attributes != 'any_or_all':
+        warnings.warn("Passing any_or_all to check_is_fitted is deprecated"
+                      " and will be removed in 0.23. The any_or_all "
                       "argument is ignored.", DeprecationWarning)
     if isclass(estimator):
         raise TypeError("{} is a class, not an instance.".format(estimator))
