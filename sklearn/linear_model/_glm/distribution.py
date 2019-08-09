@@ -393,5 +393,5 @@ EDM_DISTRIBUTIONS = {
     'normal': NormalDistribution,
     'poisson': PoissonDistribution,
     'gamma': GammaDistribution,
-    'inverse.gaussian': InverseGaussianDistribution,
+    'inverse-gaussian': InverseGaussianDistribution,
 }

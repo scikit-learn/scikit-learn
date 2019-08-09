@@ -57,7 +57,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (X*coef+intercept).
 
-    family : {'normal', 'poisson', 'gamma', 'inverse.gaussian'} \
+    family : {'normal', 'poisson', 'gamma', 'inverse-gaussian'} \
             or an instance of class ExponentialDispersionModel, \
             optional(default='normal')
         The distributional assumption of the GLM, i.e. which distribution from
@@ -71,7 +71,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         - 'identity' for family 'normal'
 
-        - 'log' for families 'poisson', 'gamma', 'inverse.gaussian'
+        - 'log' for families 'poisson', 'gamma', 'inverse-gaussian'
 
     fit_dispersion : {None, 'chisqr', 'deviance'}, optional (default=None)
         Method for estimation of the dispersion parameter phi. Whether to use
@@ -217,7 +217,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             raise ValueError(
                 "The family must be an instance of class"
                 " ExponentialDispersionModel or an element of"
-                " ['normal', 'poisson', 'gamma', 'inverse.gaussian']"
+                " ['normal', 'poisson', 'gamma', 'inverse-gaussian']"
                 "; got (family={0})".format(self.family))
 
         # Guarantee that self._link_instance is set to an instance of

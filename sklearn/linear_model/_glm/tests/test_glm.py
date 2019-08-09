@@ -65,7 +65,7 @@ def test_sample_weights_validation():
                          [('normal', NormalDistribution()),
                           ('poisson', PoissonDistribution()),
                           ('gamma', GammaDistribution()),
-                          ('inverse.gaussian', InverseGaussianDistribution())])
+                          ('inverse-gaussian', InverseGaussianDistribution())])
 def test_glm_family_argument(f, fam):
     """Test GLM family argument set as string."""
     y = np.array([0.1, 0.5])  # in range of all distributions
