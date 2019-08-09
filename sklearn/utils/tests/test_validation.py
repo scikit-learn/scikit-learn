@@ -665,6 +665,10 @@ def test_check_is_fitted():
         DeprecationWarning,
         "Passing attributes to check_is_fitted is deprecated",
         check_is_fitted, ard, ['coef_'])
+    assert_warns_message(
+        DeprecationWarning,
+        "Passing all_or_any to check_is_fitted is deprecated",
+        check_is_fitted, ard, all_or_any=any)
 
 
 def test_check_consistent_length():
