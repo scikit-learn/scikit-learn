@@ -36,14 +36,18 @@ def check_clusterings(labels_true, labels_pred):
 
     Parameters
     ----------
-    labels_true : int array, shape = [n_samples]
-        The true labels
+    labels_true : array-like of shape (n_samples,)
+        The true labels.
 
-    labels_pred : int array, shape = [n_samples]
-        The predicted labels
+    labels_pred : array-like of shape (n_samples,)
+        The predicted labels.
     """
-    labels_true = check_array(labels_true, ensure_2d=False)
-    labels_pred = check_array(labels_pred, ensure_2d=False)
+    labels_true = check_array(
+        labels_true, ensure_2d=False, ensure_min_samples=0
+    )
+    labels_pred = check_array(
+        labels_pred, ensure_2d=False, ensure_min_samples=0
+    )
 
     # input checks
     if labels_true.ndim != 1:
