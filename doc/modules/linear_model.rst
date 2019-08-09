@@ -950,7 +950,7 @@ for the Tweedie distribution, that allows to model any of the above mentioned
 distributions using the appropriate power parameter `p`,
 
  - `p = 0`: Normal distribution. Specialized solvers such as
-   :class:`linear_model.Ridge`, :class:`linear_model.ElasticNet` are generally
+   :class:`Ridge`, :class:`ElasticNet` are generally
    more appropriate in this case.
 
  - `p = 1`: Poisson distribution. :class:`PoissonRegressor` is exposed for
