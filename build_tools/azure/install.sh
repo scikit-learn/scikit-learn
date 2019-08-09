@@ -54,8 +54,9 @@ if [[ "$DISTRIB" == "conda" ]]; then
     # Old packages coming from the 'free' conda channel have been removed but
     # we are using them for testing Python 3.5. See
     # https://www.anaconda.com/why-we-removed-the-free-channel-in-conda-4-7/
-    # for more details.
-    if [[ "$PYTHON_VERSION" == "3.5" ]]; then
+    # for more details. Only conda 3.7 has restore_free_channel
+    CONDA_VERSION=$(conda -V | awk '{print $2}')
+    if [[ "$PYTHON_VERSION" == "3.5" && "$CONDA_VERSION" =~ ^4.7 ]]; then
         conda config --set restore_free_channel true
     fi
 
