@@ -964,7 +964,7 @@ distributions using the appropriate power parameter `p`,
  - `p = 3`: Inverse Gamma distribution.
 
 
-Note that the feature matrix ``X`` should be standardized before fitting. This
+Note that the feature matrix `X` should be standardized before fitting. This
 ensures that the penalty treats features equally. The estimator can be used as
 follows::
 
