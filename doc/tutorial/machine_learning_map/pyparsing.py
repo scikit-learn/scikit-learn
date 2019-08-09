@@ -895,7 +895,7 @@ class ParseResults(object):
         """
         Pretty-printer for parsed results as a list, using the C{pprint} module.
         Accepts additional positional or keyword args as defined for the 
-        C{pprint.pprint} method. (U{http://docs.python.org/3/library/pprint.html#pprint.pprint})
+        C{pprint.pprint} method. (U{https://docs.python.org/3/library/pprint.html#pprint.pprint})
 
         Example::
             ident = Word(alphas, alphanums)
@@ -1302,7 +1302,7 @@ class ParserElement(object):
 
     def setFailAction( self, fn ):
         """Define action to perform if parsing fails at this expression.
-           Fail acton fn is a callable function that takes the arguments
+           Fail action fn is a callable function that takes the arguments
            C{fn(s,loc,expr,err)} where:
             - s = string being parsed
             - loc = location where expression match was attempted and failed
@@ -1604,7 +1604,7 @@ class ParserElement(object):
            (see L{I{parseWithTabs}<parseWithTabs>})
          - define your parse action using the full C{(s,loc,toks)} signature, and
            reference the input string using the parse action's C{s} argument
-         - explictly expand the tabs in your input string before calling
+         - explicitly expand the tabs in your input string before calling
            C{parseString}
         
         Example::
@@ -2751,7 +2751,7 @@ class Regex(Token):
     Example::
         realnum = Regex(r"[+-]?\d+\.\d*")
         date = Regex(r'(?P<year>\d{4})-(?P<month>\d\d?)-(?P<day>\d\d?)')
-        # ref: http://stackoverflow.com/questions/267399/how-do-you-match-only-valid-roman-numerals-with-a-regular-expression
+        # ref: https://stackoverflow.com/questions/267399/how-do-you-match-only-valid-roman-numerals-with-a-regular-expression
         roman = Regex(r"M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})")
     """
     compiledREtype = type(re.compile("[A-Z]"))

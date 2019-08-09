@@ -6,7 +6,6 @@ Benchmarks of Non-Negative Matrix Factorization
 #          Anthony Di Franco (projected gradient, Python and NumPy port)
 # License: BSD 3 clause
 
-from __future__ import print_function
 from time import time
 import sys
 import warnings
@@ -14,6 +13,7 @@ import numbers
 
 import numpy as np
 import matplotlib.pyplot as plt
+from joblib import Memory
 import pandas
 
 from sklearn.utils.testing import ignore_warnings
@@ -21,8 +21,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition.nmf import NMF
 from sklearn.decomposition.nmf import _initialize_nmf
 from sklearn.decomposition.nmf import _beta_divergence
-from sklearn.decomposition.nmf import INTEGER_TYPES, _check_init
-from sklearn.externals.joblib import Memory
+from sklearn.decomposition.nmf import _check_init
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.extmath import safe_sparse_dot, squared_norm
 from sklearn.utils import check_array
@@ -96,7 +95,7 @@ def _nls_subproblem(X, W, H, tol, max_iter, alpha=0., l1_ratio=0.,
     ----------
     C.-J. Lin. Projected gradient methods for non-negative matrix
     factorization. Neural Computation, 19(2007), 2756-2779.
-    http://www.csie.ntu.edu.tw/~cjlin/nmf/
+    https://www.csie.ntu.edu.tw/~cjlin/nmf/
     """
     WtX = safe_sparse_dot(W.T, X)
     WtW = np.dot(W.T, W)
@@ -203,7 +202,7 @@ class _PGNMF(NMF):
     def __init__(self, n_components=None, solver='pg', init=None,
                  tol=1e-4, max_iter=200, random_state=None,
                  alpha=0., l1_ratio=0., nls_max_iter=10):
-        super(_PGNMF, self).__init__(
+        super().__init__(
             n_components=n_components, init=init, solver=solver, tol=tol,
             max_iter=max_iter, random_state=random_state, alpha=alpha,
             l1_ratio=l1_ratio)
@@ -237,11 +236,12 @@ class _PGNMF(NMF):
         if n_components is None:
             n_components = n_features
 
-        if (not isinstance(n_components, INTEGER_TYPES) or
+        if (not isinstance(n_components, numbers.Integral) or
                 n_components <= 0):
             raise ValueError("Number of components must be a positive integer;"
                              " got (n_components=%r)" % n_components)
-        if not isinstance(self.max_iter, INTEGER_TYPES) or self.max_iter < 0:
+        if (not isinstance(self.max_iter, numbers.Integral) or
+                self.max_iter < 0):
             raise ValueError("Maximum number of iterations must be a positive "
                              "integer; got (max_iter=%r)" % self.max_iter)
         if not isinstance(self.tol, numbers.Number) or self.tol < 0:

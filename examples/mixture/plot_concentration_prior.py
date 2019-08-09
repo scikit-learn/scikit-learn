@@ -76,9 +76,9 @@ def plot_results(ax1, ax2, estimator, X, y, title, plot_title=False):
                  horizontalalignment='center')
     ax2.set_xlim(-.6, 2 * n_components - .4)
     ax2.set_ylim(0., 1.1)
-    ax2.tick_params(axis='y', which='both', left='off',
-                    right='off', labelleft='off')
-    ax2.tick_params(axis='x', which='both', top='off')
+    ax2.tick_params(axis='y', which='both', left=False,
+                    right=False, labelleft=False)
+    ax2.tick_params(axis='x', which='both', top=False)
 
     if plot_title:
         ax1.set_ylabel('Estimated Mixtures')
@@ -116,7 +116,7 @@ rng = np.random.RandomState(random_state)
 X = np.vstack([
     rng.multivariate_normal(means[j], covars[j], samples[j])
     for j in range(n_components)])
-y = np.concatenate([j * np.ones(samples[j], dtype=int)
+y = np.concatenate([np.full(samples[j], j, dtype=int)
                     for j in range(n_components)])
 
 # Plot results in two different figures

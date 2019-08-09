@@ -11,10 +11,13 @@ training example reaches, with low values meaning 'far' and high values meaning
 'close'. The ``gamma`` parameters can be seen as the inverse of the radius of
 influence of samples selected by the model as support vectors.
 
-The ``C`` parameter trades off misclassification of training examples against
-simplicity of the decision surface. A low ``C`` makes the decision surface
-smooth, while a high ``C`` aims at classifying all training examples correctly
-by giving the model freedom to select more samples as support vectors.
+The ``C`` parameter trades off correct classification of training examples
+against maximization of the decision function's margin. For larger values of
+``C``, a smaller margin will be accepted if the decision function is better at
+classifying all training points correctly. A lower ``C`` will encourage a
+larger margin, therefore a simpler decision function, at the cost of training
+accuracy. In other words``C`` behaves as a regularization parameter in the
+SVM.
 
 The first plot is a visualization of the decision function for a variety of
 parameter values on a simplified classification problem involving only 2 input
@@ -31,7 +34,7 @@ subsequent search.
 
 Note that the heat map plot has a special colorbar with a midpoint value close
 to the score values of the best performing models so as to make it easy to tell
-them appart in the blink of an eye.
+them apart in the blink of an eye.
 
 The behavior of the model is very sensitive to the ``gamma`` parameter. If
 ``gamma`` is too large, the radius of the area of influence of the support
@@ -46,16 +49,17 @@ centers of high density of any pair of two classes.
 
 For intermediate values, we can see on the second plot that good models can
 be found on a diagonal of ``C`` and ``gamma``. Smooth models (lower ``gamma``
-values) can be made more complex by selecting a larger number of support
-vectors (larger ``C`` values) hence the diagonal of good performing models.
+values) can be made more complex by increasing the importance of classifying
+each point correctly (larger ``C`` values) hence the diagonal of good
+performing models.
 
 Finally one can also observe that for some intermediate values of ``gamma`` we
 get equally performing models when ``C`` becomes very large: it is not
-necessary to regularize by limiting the number of support vectors. The radius of
-the RBF kernel alone acts as a good structural regularizer. In practice though
-it might still be interesting to limit the number of support vectors with a
-lower value of ``C`` so as to favor models that use less memory and that are
-faster to predict.
+necessary to regularize by enforcing a larger margin. The radius of the RBF
+kernel alone acts as a good structural regularizer. In practice though it
+might still be interesting to simplify the decision function with a lower
+value of ``C`` so as to favor models that use less memory and that are faster
+to predict.
 
 We should also note that small differences in scores results from the random
 splits of the cross-validation procedure. Those spurious variations can be

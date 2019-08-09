@@ -30,9 +30,7 @@ from matplotlib import pyplot as plt
 
 from sklearn import manifold, datasets
 
-digits = datasets.load_digits(n_class=10)
-X = digits.data
-y = digits.target
+X, y = datasets.load_digits(return_X_y=True)
 n_samples, n_features = X.shape
 
 np.random.seed(0)
@@ -56,7 +54,7 @@ X, y = nudge_images(X, y)
 
 #----------------------------------------------------------------------
 # Visualize the clustering
-def plot_clustering(X_red, X, labels, title=None):
+def plot_clustering(X_red, labels, title=None):
     x_min, x_max = np.min(X_red, axis=0), np.max(X_red, axis=0)
     X_red = (X_red - x_min) / (x_max - x_min)
 
@@ -87,7 +85,7 @@ for linkage in ('ward', 'average', 'complete', 'single'):
     clustering.fit(X_red)
     print("%s :\t%.2fs" % (linkage, time() - t0))
 
-    plot_clustering(X_red, X, clustering.labels_, "%s linkage" % linkage)
+    plot_clustering(X_red, clustering.labels_, "%s linkage" % linkage)
 
 
 plt.show()
