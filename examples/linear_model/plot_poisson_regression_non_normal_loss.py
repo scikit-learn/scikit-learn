@@ -238,7 +238,7 @@ for idx, model in enumerate([linregr, glm_freq, gbr]):
     y_pred = model.predict(X_train)
 
     pd.Series(y_pred).hist(bins=np.linspace(-1, 8, 50), ax=ax[idx+1])
-    ax[idx+1].set_title(model.__class__.__name__)
+    ax[idx + 1].set_title(model.__class__.__name__)
 
 for axi in ax:
     axi.set(
