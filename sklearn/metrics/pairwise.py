@@ -550,12 +550,15 @@ def haversine_distances(X, Y=None):
     (Buenos Aires, Argentina) and the Charles de Gaulle Airport (Paris, France)
 
     >>> from sklearn.metrics.pairwise import haversine_distances
+    >>> from math import radians
     >>> bsas = [-34.83333, -58.5166646]
     >>> paris = [49.0083899664, 2.53844117956]
-    >>> result = haversine_distances([bsas, paris])
+    >>> bsas_in_radians = [radians(_) for _ in bsas]
+    >>> paris_in_radians = [radians(_) for _ in paris]
+    >>> result = haversine_distances([bsas_in_radians, paris_in_radians])
     >>> result * 6371000/1000  # multiply by Earth radius to get kilometers
-    array([[    0.        , 11279.45379464],
-           [11279.45379464,     0.        ]])
+    array([[    0.        , 11099.54035582],
+           [11099.54035582,     0.        ]])
     """
     from sklearn.neighbors import DistanceMetric
     return DistanceMetric.get_metric('haversine').pairwise(X, Y)

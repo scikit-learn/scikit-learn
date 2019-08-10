@@ -556,7 +556,7 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin, MultiOutputMixin):
     fit_intercept : boolean, optional
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
     normalize : boolean, optional, default True
         This parameter is ignored when ``fit_intercept`` is set to False.
@@ -701,7 +701,7 @@ def _omp_path_residues(X_train, y_train, X_test, y_test, copy=True,
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
     normalize : boolean, optional, default True
         This parameter is ignored when ``fit_intercept`` is set to False.
@@ -770,7 +770,7 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
     fit_intercept : boolean, optional
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
     normalize : boolean, optional, default True
         This parameter is ignored when ``fit_intercept`` is set to False.
