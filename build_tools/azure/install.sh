@@ -25,11 +25,11 @@ make_conda() {
 }
 
 version_ge() {
-    # When comparing two versions, this function replaces " " with "\n" which
-    # is piped to sort -rV. The -V activates for version number sorting and
-    # -r sorts in decending order. If the first argument is the top element
-    # of the sort, it is greater than or equal to the second argument.
-    test "$(echo "$@" | tr " " "\n" | sort -rV | head -n 1)" == "$1";
+    # The two version numbers are seperated with a new line is piped to sort
+    # -rV. The -V activates for version number sorting and -r sorts in
+    # decending order. If the first argument is the top element of the sort, it
+    # is greater than or equal to the second argument.
+    test "$(printf "${1}\n${2}" | sort -rV | head -n 1)" == "$1"
 }
 
 if [[ "$DISTRIB" == "conda" ]]; then
