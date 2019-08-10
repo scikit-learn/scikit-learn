@@ -1291,28 +1291,33 @@ def test_callable_analyzer_reraise_error(tmpdir, Estimator):
 
 
 @pytest.mark.parametrize(
-    'Vectorizer', [CountVectorizer]
+    'Vectorizer',
+    [CountVectorizer, TfidfVectorizer, HashingVectorizer]
 )
 def test_unused_parameters_warn(Vectorizer):
-    # adding warning messages for  parameters to check
-    msg_stop_words = "The parameter 'stop_words' will not be used"
-    " since analyzer != 'word'"
-    msg_tokenizer = "The parameter 'tokenizer' will not be used"
-    " since analyzer != 'word'"
-    msg_token_pattern = "The parameter 'token_pattern' will not be used"
-    " since 'tokenizer' is not None'"
-    vect = Vectorizer()
+
     train_data = JUNK_FOOD_DOCS
     # setting parameter and checking for corresponding warning messages
+    vect = Vectorizer()
     vect.set_params(stop_words=["you've", "you", "you'll", 'AND'],
                     analyzer='char')
-    with pytest.warns(UserWarning, match=msg_stop_words):
+    msg = "The parameter 'stop_words' will not be used"
+    " since analyzer != 'word'"
+    with pytest.warns(UserWarning, match=msg):
         vect.fit(train_data)
+
+    vect = Vectorizer()
     vect.set_params(tokenizer=lambda s: s.split(),
                     analyzer='char')
-    with pytest.warns(UserWarning, match=msg_tokenizer):
+    msg = "The parameter 'tokenizer' will not be used"
+    " since analyzer != 'word'"
+    with pytest.warns(UserWarning, match=msg):
         vect.fit(train_data)
+
+    vect = Vectorizer()
     vect.set_params(tokenizer=lambda s: s.split(),
                     token_pattern=r'\w+')
-    with pytest.warns(UserWarning, match=msg_token_pattern):
+    msg = "The parameter 'token_pattern' will not be used"
+    " since 'tokenizer' is not None'"
+    with pytest.warns(UserWarning, match=msg):
         vect.fit(train_data)
