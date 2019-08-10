@@ -1098,6 +1098,11 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         if self.analyzer != 'word' and self.tokenizer is not None:
             warnings.warn("The parameter 'tokenizer' will not be used"
                           " since analyzer != 'word'")
+
+        if self.tokenizer is not None and self.token_pattern is not None:
+            warnings.warn("The parameter 'token_pattern' will not be used"
+                          " since 'tokenizer' is not None'")
+
         self.fit_transform(raw_documents)
         return self
 
