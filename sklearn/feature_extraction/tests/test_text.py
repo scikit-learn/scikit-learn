@@ -1294,11 +1294,18 @@ def test_callable_analyzer_reraise_error(tmpdir, Estimator):
     'Vectorizer', [CountVectorizer]
 )
 def test_unused_parameters_warn(Vectorizer):
-    msg = "The parameter 'stop_words' will not be used"
+    msg_stop_words = "The parameter 'stop_words' will not be used"
+    " since analyzer != 'word'"
+    msg_tokenizer = "The parameter 'tokenizer' will not be used"
     " since analyzer != 'word'"
     vect = Vectorizer()
     vect.set_params(stop_words=["you've", "you", "you'll", 'AND'],
                     analyzer='char')
-    with pytest.warns(UserWarning, match=msg):
+    with pytest.warns(UserWarning, match=msg_stop_words):
+        train_data = JUNK_FOOD_DOCS
+        vect.fit(train_data)
+    vect.set_params(tokenizer=lambda s: s.split(),
+                    analyzer='char')
+    with pytest.warns(UserWarning, match=msg_tokenizer):
         train_data = JUNK_FOOD_DOCS
         vect.fit(train_data)
