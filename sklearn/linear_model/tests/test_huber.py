@@ -129,7 +129,7 @@ def test_huber_sparse():
 def test_huber_scaling_invariant():
     # Test that outliers filtering is scaling independent.
     X, y = make_regression_with_outliers()
-    huber = HuberRegressor(fit_intercept=False, alpha=0.0, max_iter=100)
+    huber = HuberRegressor(fit_intercept=False, alpha=0.0)
     huber.fit(X, y)
     n_outliers_mask_1 = huber.outliers_
     assert not np.all(n_outliers_mask_1)
@@ -152,8 +152,7 @@ def test_huber_and_sgd_same_results():
 
     # Fit once to find out the scale parameter. Scale down X and y by scale
     # so that the scale parameter is optimized to 1.0
-    huber = HuberRegressor(fit_intercept=False, alpha=0.0, max_iter=100,
-                           epsilon=1.35)
+    huber = HuberRegressor(fit_intercept=False, alpha=0.0, epsilon=1.35)
     huber.fit(X, y)
     X_scale = X / huber.scale_
     y_scale = y / huber.scale_

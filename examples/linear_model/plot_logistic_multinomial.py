@@ -23,7 +23,7 @@ transformation = [[0.4, 0.2], [-0.4, 1.2]]
 X = np.dot(X, transformation)
 
 for multi_class in ('multinomial', 'ovr'):
-    clf = LogisticRegression(solver='sag', max_iter=100, random_state=42,
+    clf = LogisticRegression(solver='sag', random_state=42,
                              multi_class=multi_class).fit(X, y)
 
     # print the training scores

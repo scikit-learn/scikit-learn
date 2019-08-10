@@ -1542,7 +1542,7 @@ def test_gradient_squared_epsilon_insensitive():
 def test_multi_thread_multi_class_and_early_stopping():
     # This is a non-regression test for a bad interaction between
     # early stopping internal attribute and thread-based parallelism.
-    clf = SGDClassifier(alpha=1e-3, tol=1e-3, max_iter=1000,
+    clf = SGDClassifier(alpha=1e-3, tol=1e-3,
                         early_stopping=True, n_iter_no_change=100,
                         random_state=0, n_jobs=2)
     clf.fit(iris.data, iris.target)
@@ -1560,7 +1560,7 @@ def test_multi_core_gridsearch_and_early_stopping():
         'n_iter_no_change': [5, 10, 50],
     }
 
-    clf = SGDClassifier(tol=1e-2, max_iter=1000, early_stopping=True,
+    clf = SGDClassifier(tol=1e-2, early_stopping=True,
                         random_state=0)
     search = RandomizedSearchCV(clf, param_grid, n_iter=3, n_jobs=2,
                                 random_state=0)
@@ -1603,14 +1603,13 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     y = random_state.choice(20, 500)
 
     # Begin by fitting a SGD classifier sequentially
-    clf_sequential = SGDClassifier(max_iter=1000, n_jobs=1,
+    clf_sequential = SGDClassifier(n_jobs=1,
                                    random_state=42)
     clf_sequential.fit(X, y)
 
     # Fit a SGDClassifier using the specified backend, and make sure the
     # coefficients are equal to those obtained using a sequential fit
-    clf_parallel = SGDClassifier(max_iter=1000, n_jobs=4,
-                                 random_state=42)
+    clf_parallel = SGDClassifier(n_jobs=4, random_state=42)
     with joblib.parallel_backend(backend=backend):
         clf_parallel.fit(X, y)
     assert_array_almost_equal(clf_sequential.coef_, clf_parallel.coef_)
