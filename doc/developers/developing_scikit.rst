@@ -1,4 +1,4 @@
-.. _developing_estimators:
+.. _developing_scikit:
 
 ============
 Developing scikit-learn
