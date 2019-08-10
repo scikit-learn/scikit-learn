@@ -1,8 +1,222 @@
 .. _developing_estimators:
 
 ============
-Developing Estimators
+Developing scikit-learn
 ============
+
+.. _api_overview:
+
+APIs of scikit-learn objects
+============================
+
+To have a uniform API, we try to have a common basic API for all the
+objects. In addition, to avoid the proliferation of framework code, we
+try to adopt simple conventions and limit to a minimum the number of
+methods an object must implement.
+
+Elements of the scikit-learn API are described more definitively in the
+:ref:`glossary`.
+
+Different objects
+-----------------
+
+The main objects in scikit-learn are (one class can implement
+multiple interfaces):
+
+:Estimator:
+
+    The base object, implements a ``fit`` method to learn from data, either::
+
+      estimator = estimator.fit(data, targets)
+
+    or::
+
+      estimator = estimator.fit(data)
+
+:Predictor:
+
+    For supervised learning, or some unsupervised problems, implements::
+
+      prediction = predictor.predict(data)
+
+    Classification algorithms usually also offer a way to quantify certainty
+    of a prediction, either using ``decision_function`` or ``predict_proba``::
+
+      probability = predictor.predict_proba(data)
+
+:Transformer:
+
+    For filtering or modifying the data, in a supervised or unsupervised
+    way, implements::
+
+      new_data = transformer.transform(data)
+
+    When fitting and transforming can be performed much more efficiently
+    together than separately, implements::
+
+      new_data = transformer.fit_transform(data)
+
+:Model:
+
+    A model that can give a `goodness of fit <https://en.wikipedia.org/wiki/Goodness_of_fit>`_
+    measure or a likelihood of unseen data, implements (higher is better)::
+
+      score = model.score(data)
+
+Estimators
+----------
+
+The API has one predominant object: the estimator. A estimator is an
+object that fits a model based on some training data and is capable of
+inferring some properties on new data. It can be, for instance, a
+classifier or a regressor. All estimators implement the fit method::
+
+    estimator.fit(X, y)
+
+All built-in estimators also have a ``set_params`` method, which sets
+data-independent parameters (overriding previous parameter values passed
+to ``__init__``).
+
+All estimators in the main scikit-learn codebase should inherit from
+``sklearn.base.BaseEstimator``.
+
+Instantiation
+^^^^^^^^^^^^^
+
+This concerns the creation of an object. The object's ``__init__`` method
+might accept constants as arguments that determine the estimator's behavior
+(like the C constant in SVMs). It should not, however, take the actual training
+data as an argument, as this is left to the ``fit()`` method::
+
+    clf2 = SVC(C=2.3)
+    clf3 = SVC([[1, 2], [2, 3]], [-1, 1]) # WRONG!
+
+
+The arguments accepted by ``__init__`` should all be keyword arguments
+with a default value. In other words, a user should be able to instantiate
+an estimator without passing any arguments to it. The arguments should all
+correspond to hyperparameters describing the model or the optimisation
+problem the estimator tries to solve. These initial arguments (or parameters)
+are always remembered by the estimator.
+Also note that they should not be documented under the "Attributes" section,
+but rather under the "Parameters" section for that estimator.
+
+In addition, **every keyword argument accepted by** ``__init__`` **should
+correspond to an attribute on the instance**. Scikit-learn relies on this to
+find the relevant attributes to set on an estimator when doing model selection.
+
+To summarize, an ``__init__`` should look like::
+
+    def __init__(self, param1=1, param2=2):
+        self.param1 = param1
+        self.param2 = param2
+
+There should be no logic, not even input validation,
+and the parameters should not be changed.
+The corresponding logic should be put where the parameters are used,
+typically in ``fit``.
+The following is wrong::
+
+    def __init__(self, param1=1, param2=2, param3=3):
+        # WRONG: parameters should not be modified
+        if param1 > 1:
+            param2 += 1
+        self.param1 = param1
+        # WRONG: the object's attributes should have exactly the name of
+        # the argument in the constructor
+        self.param3 = param2
+
+The reason for postponing the validation is that the same validation
+would have to be performed in ``set_params``,
+which is used in algorithms like ``GridSearchCV``.
+
+Fitting
+^^^^^^^
+
+The next thing you will probably want to do is to estimate some
+parameters in the model. This is implemented in the ``fit()`` method.
+
+The ``fit()`` method takes the training data as arguments, which can be one
+array in the case of unsupervised learning, or two arrays in the case
+of supervised learning.
+
+Note that the model is fitted using X and y, but the object holds no
+reference to X and y. There are, however, some exceptions to this, as in
+the case of precomputed kernels where this data must be stored for use by
+the predict method.
+
+============= ======================================================
+Parameters
+============= ======================================================
+X             array-like, shape (n_samples, n_features)
+
+y             array, shape (n_samples,)
+
+kwargs        optional data-dependent parameters.
+============= ======================================================
+
+``X.shape[0]`` should be the same as ``y.shape[0]``. If this requisite
+is not met, an exception of type ``ValueError`` should be raised.
+
+``y`` might be ignored in the case of unsupervised learning. However, to
+make it possible to use the estimator as part of a pipeline that can
+mix both supervised and unsupervised transformers, even unsupervised
+estimators need to accept a ``y=None`` keyword argument in
+the second position that is just ignored by the estimator.
+For the same reason, ``fit_predict``, ``fit_transform``, ``score``
+and ``partial_fit`` methods need to accept a ``y`` argument in
+the second place if they are implemented.
+
+The method should return the object (``self``). This pattern is useful
+to be able to implement quick one liners in an IPython session such as::
+
+  y_predicted = SVC(C=100).fit(X_train, y_train).predict(X_test)
+
+Depending on the nature of the algorithm, ``fit`` can sometimes also
+accept additional keywords arguments. However, any parameter that can
+have a value assigned prior to having access to the data should be an
+``__init__`` keyword argument. **fit parameters should be restricted
+to directly data dependent variables**. For instance a Gram matrix or
+an affinity matrix which are precomputed from the data matrix ``X`` are
+data dependent. A tolerance stopping criterion ``tol`` is not directly
+data dependent (although the optimal value according to some scoring
+function probably is).
+
+When ``fit`` is called, any previous call to ``fit`` should be ignored. In
+general, calling ``estimator.fit(X1)`` and then ``estimator.fit(X2)`` should
+be the same as only calling ``estimator.fit(X2)``. However, this may not be
+true in practice when ``fit`` depends on some random process, see
+:term:`random_state`. Another exception to this rule is when the
+hyper-parameter ``warm_start`` is set to ``True`` for estimators that
+support it. ``warm_start=True`` means that the previous state of the
+trainable parameters of the estimator are reused instead of using the
+default initialization strategy.
+
+Estimated Attributes
+^^^^^^^^^^^^^^^^^^^^
+
+Attributes that have been estimated from the data must always have a name
+ending with trailing underscore, for example the coefficients of
+some regression estimator would be stored in a ``coef_`` attribute after
+``fit`` has been called.
+
+The estimated attributes are expected to be overridden when you call ``fit``
+a second time.
+
+Optional Arguments
+^^^^^^^^^^^^^^^^^^
+
+In iterative algorithms, the number of iterations should be specified by
+an integer called ``n_iter``.
+
+Pairwise Attributes
+^^^^^^^^^^^^^^^^^^^
+
+An estimator that accept ``X`` of shape ``(n_samples, n_samples)`` and defines
+a :term:`_pairwise` property equal to ``True`` allows for cross-validation of
+the dataset, e.g. when ``X`` is a precomputed kernel matrix. Specifically,
+the :term:`_pairwise` property is used by ``utils.metaestimators._safe_split``
+to slice rows and columns.
 
 .. _testing_coverage:
 
@@ -238,220 +452,6 @@ The reason for this setup is reproducibility:
 when an estimator is ``fit`` twice to the same data,
 it should produce an identical model both times,
 hence the validation in ``fit``, not ``__init__``.
-
-.. _api_overview:
-
-APIs of scikit-learn objects
-============================
-
-To have a uniform API, we try to have a common basic API for all the
-objects. In addition, to avoid the proliferation of framework code, we
-try to adopt simple conventions and limit to a minimum the number of
-methods an object must implement.
-
-Elements of the scikit-learn API are described more definitively in the
-:ref:`glossary`.
-
-Different objects
------------------
-
-The main objects in scikit-learn are (one class can implement
-multiple interfaces):
-
-:Estimator:
-
-    The base object, implements a ``fit`` method to learn from data, either::
-
-      estimator = estimator.fit(data, targets)
-
-    or::
-
-      estimator = estimator.fit(data)
-
-:Predictor:
-
-    For supervised learning, or some unsupervised problems, implements::
-
-      prediction = predictor.predict(data)
-
-    Classification algorithms usually also offer a way to quantify certainty
-    of a prediction, either using ``decision_function`` or ``predict_proba``::
-
-      probability = predictor.predict_proba(data)
-
-:Transformer:
-
-    For filtering or modifying the data, in a supervised or unsupervised
-    way, implements::
-
-      new_data = transformer.transform(data)
-
-    When fitting and transforming can be performed much more efficiently
-    together than separately, implements::
-
-      new_data = transformer.fit_transform(data)
-
-:Model:
-
-    A model that can give a `goodness of fit <https://en.wikipedia.org/wiki/Goodness_of_fit>`_
-    measure or a likelihood of unseen data, implements (higher is better)::
-
-      score = model.score(data)
-
-Estimators
-----------
-
-The API has one predominant object: the estimator. A estimator is an
-object that fits a model based on some training data and is capable of
-inferring some properties on new data. It can be, for instance, a
-classifier or a regressor. All estimators implement the fit method::
-
-    estimator.fit(X, y)
-
-All built-in estimators also have a ``set_params`` method, which sets
-data-independent parameters (overriding previous parameter values passed
-to ``__init__``).
-
-All estimators in the main scikit-learn codebase should inherit from
-``sklearn.base.BaseEstimator``.
-
-Instantiation
-^^^^^^^^^^^^^
-
-This concerns the creation of an object. The object's ``__init__`` method
-might accept constants as arguments that determine the estimator's behavior
-(like the C constant in SVMs). It should not, however, take the actual training
-data as an argument, as this is left to the ``fit()`` method::
-
-    clf2 = SVC(C=2.3)
-    clf3 = SVC([[1, 2], [2, 3]], [-1, 1]) # WRONG!
-
-
-The arguments accepted by ``__init__`` should all be keyword arguments
-with a default value. In other words, a user should be able to instantiate
-an estimator without passing any arguments to it. The arguments should all
-correspond to hyperparameters describing the model or the optimisation
-problem the estimator tries to solve. These initial arguments (or parameters)
-are always remembered by the estimator.
-Also note that they should not be documented under the "Attributes" section,
-but rather under the "Parameters" section for that estimator.
-
-In addition, **every keyword argument accepted by** ``__init__`` **should
-correspond to an attribute on the instance**. Scikit-learn relies on this to
-find the relevant attributes to set on an estimator when doing model selection.
-
-To summarize, an ``__init__`` should look like::
-
-    def __init__(self, param1=1, param2=2):
-        self.param1 = param1
-        self.param2 = param2
-
-There should be no logic, not even input validation,
-and the parameters should not be changed.
-The corresponding logic should be put where the parameters are used,
-typically in ``fit``.
-The following is wrong::
-
-    def __init__(self, param1=1, param2=2, param3=3):
-        # WRONG: parameters should not be modified
-        if param1 > 1:
-            param2 += 1
-        self.param1 = param1
-        # WRONG: the object's attributes should have exactly the name of
-        # the argument in the constructor
-        self.param3 = param2
-
-The reason for postponing the validation is that the same validation
-would have to be performed in ``set_params``,
-which is used in algorithms like ``GridSearchCV``.
-
-Fitting
-^^^^^^^
-
-The next thing you will probably want to do is to estimate some
-parameters in the model. This is implemented in the ``fit()`` method.
-
-The ``fit()`` method takes the training data as arguments, which can be one
-array in the case of unsupervised learning, or two arrays in the case
-of supervised learning.
-
-Note that the model is fitted using X and y, but the object holds no
-reference to X and y. There are, however, some exceptions to this, as in
-the case of precomputed kernels where this data must be stored for use by
-the predict method.
-
-============= ======================================================
-Parameters
-============= ======================================================
-X             array-like, shape (n_samples, n_features)
-
-y             array, shape (n_samples,)
-
-kwargs        optional data-dependent parameters.
-============= ======================================================
-
-``X.shape[0]`` should be the same as ``y.shape[0]``. If this requisite
-is not met, an exception of type ``ValueError`` should be raised.
-
-``y`` might be ignored in the case of unsupervised learning. However, to
-make it possible to use the estimator as part of a pipeline that can
-mix both supervised and unsupervised transformers, even unsupervised
-estimators need to accept a ``y=None`` keyword argument in
-the second position that is just ignored by the estimator.
-For the same reason, ``fit_predict``, ``fit_transform``, ``score``
-and ``partial_fit`` methods need to accept a ``y`` argument in
-the second place if they are implemented.
-
-The method should return the object (``self``). This pattern is useful
-to be able to implement quick one liners in an IPython session such as::
-
-  y_predicted = SVC(C=100).fit(X_train, y_train).predict(X_test)
-
-Depending on the nature of the algorithm, ``fit`` can sometimes also
-accept additional keywords arguments. However, any parameter that can
-have a value assigned prior to having access to the data should be an
-``__init__`` keyword argument. **fit parameters should be restricted
-to directly data dependent variables**. For instance a Gram matrix or
-an affinity matrix which are precomputed from the data matrix ``X`` are
-data dependent. A tolerance stopping criterion ``tol`` is not directly
-data dependent (although the optimal value according to some scoring
-function probably is).
-
-When ``fit`` is called, any previous call to ``fit`` should be ignored. In
-general, calling ``estimator.fit(X1)`` and then ``estimator.fit(X2)`` should
-be the same as only calling ``estimator.fit(X2)``. However, this may not be
-true in practice when ``fit`` depends on some random process, see
-:term:`random_state`. Another exception to this rule is when the
-hyper-parameter ``warm_start`` is set to ``True`` for estimators that
-support it. ``warm_start=True`` means that the previous state of the
-trainable parameters of the estimator are reused instead of using the
-default initialization strategy.
-
-Estimated Attributes
-^^^^^^^^^^^^^^^^^^^^
-
-Attributes that have been estimated from the data must always have a name
-ending with trailing underscore, for example the coefficients of
-some regression estimator would be stored in a ``coef_`` attribute after
-``fit`` has been called.
-
-The estimated attributes are expected to be overridden when you call ``fit``
-a second time.
-
-Optional Arguments
-^^^^^^^^^^^^^^^^^^
-
-In iterative algorithms, the number of iterations should be specified by
-an integer called ``n_iter``.
-
-Pairwise Attributes
-^^^^^^^^^^^^^^^^^^^
-
-An estimator that accept ``X`` of shape ``(n_samples, n_samples)`` and defines
-a :term:`_pairwise` property equal to ``True`` allows for cross-validation of
-the dataset, e.g. when ``X`` is a precomputed kernel matrix. Specifically,
-the :term:`_pairwise` property is used by ``utils.metaestimators._safe_split``
-to slice rows and columns.
 
 Rolling your own estimator
 ==========================
