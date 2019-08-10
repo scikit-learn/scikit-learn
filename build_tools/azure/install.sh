@@ -24,7 +24,11 @@ make_conda() {
     source activate $VIRTUALENV
 }
 
-function version_ge() {
+version_ge() {
+    # When comparing two versions, this function replaces " " with "\n" which
+    # is piped to sort -rV. The -V activates for version number sorting and
+    # -r sorts in decending order. This test passes when the top value from the
+    # sort is equal to the first argument.
     test "$(echo "$@" | tr " " "\n" | sort -rV | head -n 1)" == "$1";
 }
 
