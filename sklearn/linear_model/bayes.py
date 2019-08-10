@@ -51,13 +51,13 @@ class BayesianRidge(LinearModel, RegressorMixin):
     lambda_2 : float, default=1.e-6
         Hyper-parameter : inverse scale parameter (rate parameter) for the
         Gamma distribution prior over the lambda parameter.
-    
+
     alpha_init : float, default=None
         Initial value for alpha (precision of the noise).
         If not set, alpha_init is 1/Var(y).
 
             .. versionadded:: 0.22
-        
+    
     lambda_init : float, default=None
         Initial value for lambda (precision of the weights).
         If not set, lambda_init is 1.
