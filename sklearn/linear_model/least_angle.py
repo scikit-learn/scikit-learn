@@ -56,7 +56,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
     y : None or array-like of shape (n_samples,)
         Input targets.
 
-    Xy : array-like of shape (n_samples,) or (n_samples, n_targets), default=None
+    Xy : array-like of shape (n_samples,) or (n_samples, n_targets), \
+            default=None
         Xy = np.dot(X.T, y) that can be precomputed. It is useful
         only when the Gram matrix is precomputed.
 
@@ -809,7 +810,8 @@ class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
 
     Attributes
     ----------
-    alphas_ : array-like of shape (n_alphas + 1,) | list of n_targets such arrays
+    alphas_ : array-like of shape (n_alphas + 1,) | list of n_targets such 
+            \ arrays
         Maximum of covariances (in absolute value) at each iteration. \
         ``n_alphas`` is either ``n_nonzero_coefs`` or ``n_features``, \
         whichever is smaller.
@@ -1038,7 +1040,8 @@ class LassoLars(Lars):
 
     Attributes
     ----------
-    alphas_ : array-like of shape (n_alphas + 1,) | list of n_targets such arrays
+    alphas_ : array-like of shape (n_alphas + 1,) | list of n_targets such 
+            \ arrays
         Maximum of covariances (in absolute value) at each iteration. \
         ``n_alphas`` is either ``max_iter``, ``n_features``, or the number of \
         nodes in the path with correlation greater than ``alpha``, whichever \
