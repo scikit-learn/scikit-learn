@@ -1292,7 +1292,7 @@ def test_callable_analyzer_reraise_error(tmpdir, Estimator):
 
 @pytest.mark.parametrize(
     'Vectorizer',
-    [CountVectorizer]
+    [CountVectorizer, HashingVectorizer, TfidfVectorizer]
 )
 def test_unused_parameters_warn(Vectorizer):
 

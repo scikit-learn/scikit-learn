@@ -681,6 +681,26 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
 
         self._validate_params()
 
+        if self.analyzer != 'word' and self.stop_words is not None:
+            warnings.warn("The parameter 'stop_words' will not be used"
+                          " since analyzer != 'word'")
+
+        if self.analyzer != 'word' and self.tokenizer is not None:
+            warnings.warn("The parameter 'tokenizer' will not be used"
+                          " since analyzer != 'word'")
+
+        if self.tokenizer is not None and self.token_pattern is not None:
+            warnings.warn("The parameter 'token_pattern' will not be used"
+                          " since 'tokenizer' is not None'")
+
+        if self.preprocessor is not None and callable(self.analyzer):
+            warnings.warn("The parameter 'preprocessor' will not be used"
+                          " since 'analyzer' is callable'")
+
+        if self.ngram_range is not None and callable(self.analyzer):
+            warnings.warn("The parameter 'ngram_range' will not be used"
+                          " since 'analyzer' is callable'")
+
         self._get_hasher().fit(X, y=y)
         return self
 
@@ -1724,6 +1744,26 @@ class TfidfVectorizer(CountVectorizer):
         self : TfidfVectorizer
         """
         self._check_params()
+
+        if self.analyzer != 'word' and self.stop_words is not None:
+            warnings.warn("The parameter 'stop_words' will not be used"
+                          " since analyzer != 'word'")
+
+        if self.analyzer != 'word' and self.tokenizer is not None:
+            warnings.warn("The parameter 'tokenizer' will not be used"
+                          " since analyzer != 'word'")
+
+        if self.tokenizer is not None and self.token_pattern is not None:
+            warnings.warn("The parameter 'token_pattern' will not be used"
+                          " since 'tokenizer' is not None'")
+
+        if self.preprocessor is not None and callable(self.analyzer):
+            warnings.warn("The parameter 'preprocessor' will not be used"
+                          " since 'analyzer' is callable'")
+
+        if self.ngram_range is not None and callable(self.analyzer):
+            warnings.warn("The parameter 'ngram_range' will not be used"
+                          " since 'analyzer' is callable'")
         X = super().fit_transform(raw_documents)
         self._tfidf.fit(X)
         return self
