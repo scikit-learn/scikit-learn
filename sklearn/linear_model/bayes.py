@@ -57,7 +57,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
         If not set, alpha_init is 1/Var(y).
 
             .. versionadded:: 0.22
-    
+
     lambda_init : float, default=None
         Initial value for lambda (precision of the weights).
         If not set, lambda_init is 1.
