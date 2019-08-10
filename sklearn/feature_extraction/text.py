@@ -547,6 +547,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
     preprocessor : callable or None (default)
         Override the preprocessing (string transformation) stage while
         preserving the tokenizing and n-grams generation steps.
+        Only applies if ``analyzer is not callable``.
 
     tokenizer : callable or None (default)
         Override the string tokenization step while preserving the
@@ -572,6 +573,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         The lower and upper boundary of the range of n-values for different
         n-grams to be extracted. All values of n such that min_n <= n <= max_n
         will be used.
+        Only applies if ``analyzer is not callable``.
 
     analyzer : string, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word or character n-grams.
@@ -823,6 +825,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     preprocessor : callable or None (default)
         Override the preprocessing (string transformation) stage while
         preserving the tokenizing and n-grams generation steps.
+        Only applies if ``analyzer is not callable``.
 
     tokenizer : callable or None (default)
         Override the string tokenization step while preserving the
@@ -852,6 +855,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         The lower and upper boundary of the range of n-values for different
         n-grams to be extracted. All values of n such that min_n <= n <= max_n
         will be used.
+        Only applies if ``analyzer is not callable``.
 
     analyzer : string, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word or character n-grams.
