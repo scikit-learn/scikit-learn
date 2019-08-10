@@ -1507,7 +1507,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             raise ValueError("Tolerance for stopping criteria must be "
                              "positive; got (tol=%r)" % self.tol)
 
-        if solver in ['lbfgs', 'liblinear']:
+        if solver == 'lbfgs':
             _dtype = np.float64
         else:
             _dtype = [np.float64, np.float32]
