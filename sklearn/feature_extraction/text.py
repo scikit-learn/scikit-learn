@@ -1480,6 +1480,7 @@ class TfidfVectorizer(CountVectorizer):
     preprocessor : callable or None (default=None)
         Override the preprocessing (string transformation) stage while
         preserving the tokenizing and n-grams generation steps.
+        Only applies if ``analyzer is not callable``.
 
     tokenizer : callable or None (default=None)
         Override the string tokenization step while preserving the
@@ -1524,6 +1525,7 @@ class TfidfVectorizer(CountVectorizer):
         The lower and upper boundary of the range of n-values for different
         n-grams to be extracted. All values of n such that min_n <= n <= max_n
         will be used.
+        Only applies if ``analyzer is not callable``.
 
     max_df : float in range [0.0, 1.0] or int (default=1.0)
         When building the vocabulary ignore terms that have a document
