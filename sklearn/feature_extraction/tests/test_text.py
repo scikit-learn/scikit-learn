@@ -1292,7 +1292,7 @@ def test_callable_analyzer_reraise_error(tmpdir, Estimator):
 
 @pytest.mark.parametrize(
     'Vectorizer',
-    [CountVectorizer, TfidfVectorizer, HashingVectorizer]
+    [CountVectorizer]
 )
 def test_unused_parameters_warn(Vectorizer):
 
@@ -1319,5 +1319,27 @@ def test_unused_parameters_warn(Vectorizer):
                     token_pattern=r'\w+')
     msg = "The parameter 'token_pattern' will not be used"
     " since 'tokenizer' is not None'"
+    with pytest.warns(UserWarning, match=msg):
+        vect.fit(train_data)
+
+    def analyzer(doc):
+        return doc.upper()
+
+    def preprocess(doc):
+        return doc.upper()
+
+    vect = Vectorizer()
+    vect.set_params(preprocessor=preprocess,
+                    analyzer=analyzer)
+    msg = "The parameter 'preprocessor' will not be used"
+    " since 'analyzer' is callable"
+    with pytest.warns(UserWarning, match=msg):
+        vect.fit(train_data)
+
+    vect = Vectorizer()
+    vect.set_params(ngram_range=(1, 1),
+                    analyzer=analyzer)
+    msg = "The parameter 'ngram_range' will not be used"
+    " since 'analyzer' is callable"
     with pytest.warns(UserWarning, match=msg):
         vect.fit(train_data)

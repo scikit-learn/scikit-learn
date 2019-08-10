@@ -1107,6 +1107,10 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             warnings.warn("The parameter 'preprocessor' will not be used"
                           " since 'analyzer' is callable'")
 
+        if self.ngram_range is not None and callable(self.analyzer):
+            warnings.warn("The parameter 'ngram_range' will not be used"
+                          " since 'analyzer' is callable'")
+
         self.fit_transform(raw_documents)
         return self
 
