@@ -80,7 +80,7 @@ from sklearn.utils.extmath import randomized_svd
 from sklearn.datasets.samples_generator import (make_low_rank_matrix,
                                                 make_sparse_uncorrelated)
 from sklearn.datasets import (fetch_lfw_people,
-                              fetch_mldata,
+                              fetch_openml,
                               fetch_20newsgroups_vectorized,
                               fetch_olivetti_faces,
                               fetch_rcv1)
@@ -112,7 +112,7 @@ CIFAR_FOLDER = "./cifar-10-batches-py/"
 SVHN_FOLDER = "./SVHN/"
 
 datasets = ['low rank matrix', 'lfw_people', 'olivetti_faces', '20newsgroups',
-            'MNIST original', 'CIFAR', 'a1a', 'SVHN', 'uncorrelated matrix']
+            'mnist_784', 'CIFAR', 'a3a', 'SVHN', 'uncorrelated matrix']
 
 big_sparse_datasets = ['big sparse matrix', 'rcv1']
 
@@ -174,7 +174,7 @@ def get_data(dataset_name):
         del row
         del col
     else:
-        X = fetch_mldata(dataset_name).data
+        X = fetch_openml(dataset_name).data
     return X
 
 

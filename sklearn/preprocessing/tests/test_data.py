@@ -18,13 +18,9 @@ from sklearn.utils import gen_batches
 
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import clean_warning_registry
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_less
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_greater_equal
-from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_warns_message
@@ -53,7 +49,8 @@ from sklearn.preprocessing.data import add_dummy_feature
 from sklearn.preprocessing.data import PolynomialFeatures
 from sklearn.preprocessing.data import PowerTransformer
 from sklearn.preprocessing.data import power_transform
-from sklearn.exceptions import DataConversionWarning, NotFittedError
+from sklearn.preprocessing.data import BOUNDS_THRESHOLD
+from sklearn.exceptions import NotFittedError
 
 from sklearn.base import clone
 from sklearn.pipeline import Pipeline
@@ -93,9 +90,9 @@ def _check_dim_1axis(a):
 def assert_correct_incr(i, batch_start, batch_stop, n, chunk_size,
                         n_samples_seen):
     if batch_stop != n:
-        assert_equal((i + 1) * chunk_size, n_samples_seen)
+        assert (i + 1) * chunk_size == n_samples_seen
     else:
-        assert_equal(i * chunk_size + (batch_stop - batch_start),
+        assert (i * chunk_size + (batch_stop - batch_start) ==
                      n_samples_seen)
 
 
@@ -128,8 +125,8 @@ def test_polynomial_features():
     X_poly = interact.fit_transform(X)
     assert_array_almost_equal(X_poly, P2[:, [0, 1, 2, 4]])
 
-    assert_equal(interact.powers_.shape, (interact.n_output_features_,
-                 interact.n_input_features_))
+    assert interact.powers_.shape == (interact.n_output_features_,
+                                      interact.n_input_features_)
 
 
 def test_polynomial_feature_names():
@@ -204,7 +201,7 @@ def test_polynomial_features_csr_X(deg, include_bias, interaction_only, dtype):
     est = PolynomialFeatures(deg, include_bias=include_bias,
                              interaction_only=interaction_only)
     Xt_csr = est.fit_transform(X_csr.astype(dtype))
-    Xt_dense = est.fit_transform(X.astype(dtype))
+    Xt_dense = est.fit_transform(X.astype(dtype, copy=False))
 
     assert isinstance(Xt_csr, sparse.csr_matrix)
     assert Xt_csr.dtype == Xt_dense.dtype
@@ -319,7 +316,7 @@ def test_standard_scaler_1d():
                                       np.zeros_like(n_features))
             assert_array_almost_equal(X_scaled.mean(axis=0), .0)
             assert_array_almost_equal(X_scaled.std(axis=0), 1.)
-        assert_equal(scaler.n_samples_seen_, X.shape[0])
+        assert scaler.n_samples_seen_ == X.shape[0]
 
         # check inverse transform
         X_scaled_back = scaler.inverse_transform(X_scaled)
@@ -333,7 +330,7 @@ def test_standard_scaler_1d():
     assert_almost_equal(scaler.scale_, 1.)
     assert_array_almost_equal(X_scaled.mean(axis=0), .0)
     assert_array_almost_equal(X_scaled.std(axis=0), .0)
-    assert_equal(scaler.n_samples_seen_, X.shape[0])
+    assert scaler.n_samples_seen_ == X.shape[0]
 
 
 def test_standard_scaler_dtype():
@@ -408,7 +405,7 @@ def test_scaler_2d_arrays():
     scaler = StandardScaler()
     X_scaled = scaler.fit(X).transform(X, copy=True)
     assert not np.any(np.isnan(X_scaled))
-    assert_equal(scaler.n_samples_seen_, n_samples)
+    assert scaler.n_samples_seen_ == n_samples
 
     assert_array_almost_equal(X_scaled.mean(axis=0), n_features * [0.0])
     assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
@@ -501,7 +498,7 @@ def test_minmax_scaler_partial_fit():
                                   scaler_incr.data_min_)
         assert_array_almost_equal(scaler_batch.data_max_,
                                   scaler_incr.data_max_)
-        assert_equal(scaler_batch.n_samples_seen_, scaler_incr.n_samples_seen_)
+        assert scaler_batch.n_samples_seen_ == scaler_incr.n_samples_seen_
         assert_array_almost_equal(scaler_batch.data_range_,
                                   scaler_incr.data_range_)
         assert_array_almost_equal(scaler_batch.scale_, scaler_incr.scale_)
@@ -516,7 +513,7 @@ def test_minmax_scaler_partial_fit():
                                   scaler_incr.data_min_)
         assert_array_almost_equal(scaler_batch.data_max_,
                                   scaler_incr.data_max_)
-        assert_equal(scaler_batch.n_samples_seen_, scaler_incr.n_samples_seen_)
+        assert scaler_batch.n_samples_seen_ == scaler_incr.n_samples_seen_
         assert_array_almost_equal(scaler_batch.data_range_,
                                   scaler_incr.data_range_)
         assert_array_almost_equal(scaler_batch.scale_, scaler_incr.scale_)
@@ -548,8 +545,8 @@ def test_standard_scaler_partial_fit():
             scaler_incr = scaler_incr.partial_fit(X[batch])
 
         assert_array_almost_equal(scaler_batch.mean_, scaler_incr.mean_)
-        assert_equal(scaler_batch.var_, scaler_incr.var_)  # Nones
-        assert_equal(scaler_batch.n_samples_seen_, scaler_incr.n_samples_seen_)
+        assert scaler_batch.var_ == scaler_incr.var_  # Nones
+        assert scaler_batch.n_samples_seen_ == scaler_incr.n_samples_seen_
 
         # Test std after 1 step
         batch0 = slice(0, chunk_size)
@@ -576,7 +573,7 @@ def test_standard_scaler_partial_fit():
                                 n_samples_seen=scaler_incr.n_samples_seen_)
 
         assert_array_almost_equal(scaler_batch.var_, scaler_incr.var_)
-        assert_equal(scaler_batch.n_samples_seen_, scaler_incr.n_samples_seen_)
+        assert scaler_batch.n_samples_seen_ == scaler_incr.n_samples_seen_
 
 
 def test_standard_scaler_partial_fit_numerical_stability():
@@ -665,7 +662,7 @@ def test_standard_scaler_trasform_with_partial_fit():
         assert_array_less(zero, scaler_incr.var_ + epsilon)  # as less or equal
         assert_array_less(zero, scaler_incr.scale_ + epsilon)
         # (i+1) because the Scaler has been already fitted
-        assert_equal((i + 1), scaler_incr.n_samples_seen_)
+        assert (i + 1) == scaler_incr.n_samples_seen_
 
 
 def test_min_max_scaler_iris():
@@ -765,7 +762,7 @@ def test_min_max_scaler_1d():
         else:
             assert_array_almost_equal(X_scaled.min(axis=0), .0)
             assert_array_almost_equal(X_scaled.max(axis=0), 1.)
-        assert_equal(scaler.n_samples_seen_, X.shape[0])
+        assert scaler.n_samples_seen_ == X.shape[0]
 
         # check inverse transform
         X_scaled_back = scaler.inverse_transform(X_scaled)
@@ -775,9 +772,9 @@ def test_min_max_scaler_1d():
     X = np.ones((5, 1))
     scaler = MinMaxScaler()
     X_scaled = scaler.fit(X).transform(X)
-    assert_greater_equal(X_scaled.min(), 0.)
-    assert_less_equal(X_scaled.max(), 1.)
-    assert_equal(scaler.n_samples_seen_, X.shape[0])
+    assert X_scaled.min() >= 0.
+    assert X_scaled.max() <= 1.
+    assert scaler.n_samples_seen_ == X.shape[0]
 
     # Function interface
     X_1d = X_1row.ravel()
@@ -940,26 +937,22 @@ def test_scaler_int():
     X_csc = sparse.csc_matrix(X)
 
     null_transform = StandardScaler(with_mean=False, with_std=False, copy=True)
-    clean_warning_registry()
     with warnings.catch_warnings(record=True):
         X_null = null_transform.fit_transform(X_csr)
     assert_array_equal(X_null.data, X_csr.data)
     X_orig = null_transform.inverse_transform(X_null)
     assert_array_equal(X_orig.data, X_csr.data)
 
-    clean_warning_registry()
     with warnings.catch_warnings(record=True):
         scaler = StandardScaler(with_mean=False).fit(X)
         X_scaled = scaler.transform(X, copy=True)
     assert not np.any(np.isnan(X_scaled))
 
-    clean_warning_registry()
     with warnings.catch_warnings(record=True):
         scaler_csr = StandardScaler(with_mean=False).fit(X_csr)
         X_csr_scaled = scaler_csr.transform(X_csr, copy=True)
     assert not np.any(np.isnan(X_csr_scaled.data))
 
-    clean_warning_registry()
     with warnings.catch_warnings(record=True):
         scaler_csc = StandardScaler(with_mean=False).fit(X_csc)
         X_csc_scaled = scaler_csc.transform(X_csc, copy=True)
@@ -1259,6 +1252,13 @@ def test_quantile_transform_check_error():
     assert_raise_message(ValueError,
                          'Expected 2D array, got scalar array instead',
                          transformer.transform, 10)
+    # check that a warning is raised is n_quantiles > n_samples
+    transformer = QuantileTransformer(n_quantiles=100)
+    warn_msg = "n_quantiles is set to n_samples"
+    with pytest.warns(UserWarning, match=warn_msg) as record:
+        transformer.fit(X)
+    assert len(record) == 1
+    assert transformer.n_quantiles_ == X.shape[0]
 
 
 def test_quantile_transform_sparse_ignore_zeros():
@@ -1383,7 +1383,7 @@ def test_quantile_transform_subsampling():
         inf_norm_arr.append(inf_norm)
     # each random subsampling yield a unique approximation to the expected
     # linspace CDF
-    assert_equal(len(np.unique(inf_norm_arr)), len(inf_norm_arr))
+    assert len(np.unique(inf_norm_arr)) == len(inf_norm_arr)
 
     # sparse support
 
@@ -1401,7 +1401,7 @@ def test_quantile_transform_subsampling():
         inf_norm_arr.append(inf_norm)
     # each random subsampling yield a unique approximation to the expected
     # linspace CDF
-    assert_equal(len(np.unique(inf_norm_arr)), len(inf_norm_arr))
+    assert len(np.unique(inf_norm_arr)) == len(inf_norm_arr)
 
 
 def test_quantile_transform_sparse_toy():
@@ -1439,6 +1439,7 @@ def test_quantile_transform_sparse_toy():
     assert_array_almost_equal(X.toarray(), X_trans_inv.toarray())
 
 
+@pytest.mark.filterwarnings("ignore: The default value of `copy`")  # 0.23
 def test_quantile_transform_axis1():
     X = np.array([[0, 25, 50, 75, 100],
                   [2, 4, 6, 8, 10],
@@ -1482,25 +1483,26 @@ def test_quantile_transform_bounds():
     X = np.random.random((1000, 1))
     transformer = QuantileTransformer()
     transformer.fit(X)
-    assert_equal(transformer.transform([[-10]]),
+    assert (transformer.transform([[-10]]) ==
                  transformer.transform([[np.min(X)]]))
-    assert_equal(transformer.transform([[10]]),
+    assert (transformer.transform([[10]]) ==
                  transformer.transform([[np.max(X)]]))
-    assert_equal(transformer.inverse_transform([[-10]]),
+    assert (transformer.inverse_transform([[-10]]) ==
                  transformer.inverse_transform(
                      [[np.min(transformer.references_)]]))
-    assert_equal(transformer.inverse_transform([[10]]),
+    assert (transformer.inverse_transform([[10]]) ==
                  transformer.inverse_transform(
                      [[np.max(transformer.references_)]]))
 
 
 def test_quantile_transform_and_inverse():
-    # iris dataset
-    X = iris.data
-    transformer = QuantileTransformer(n_quantiles=1000, random_state=0)
-    X_trans = transformer.fit_transform(X)
-    X_trans_inv = transformer.inverse_transform(X_trans)
-    assert_array_almost_equal(X, X_trans_inv)
+    X_1 = iris.data
+    X_2 = np.array([[0.], [BOUNDS_THRESHOLD / 10], [1.5], [2], [3], [3], [4]])
+    for X in [X_1, X_2]:
+        transformer = QuantileTransformer(n_quantiles=1000, random_state=0)
+        X_trans = transformer.fit_transform(X)
+        X_trans_inv = transformer.inverse_transform(X_trans)
+        assert_array_almost_equal(X, X_trans_inv, decimal=9)
 
 
 def test_quantile_transform_nan():
@@ -1515,6 +1517,18 @@ def test_quantile_transform_nan():
     assert np.isnan(transformer.quantiles_[:, 0]).all()
     # all other column should not contain NaN
     assert not np.isnan(transformer.quantiles_[:, 1:]).any()
+
+
+def test_deprecated_quantile_transform_copy():
+    future_message = ("The default value of `copy` will change from False to "
+                      "True in 0.23 in order to make it more consistent with "
+                      "the default `copy` values of other functions in "
+                      ":mod:`sklearn.preprocessing.data` and prevent "
+                      "unexpected side effects by modifying the value of `X` "
+                      "inplace. To avoid inplace modifications of `X`, it is "
+                      "recommended to explicitly set `copy=True`")
+    assert_warns_message(FutureWarning, future_message, quantile_transform,
+                         np.array([[0, 1], [0, 0.5], [1, 0]]))
 
 
 def test_robust_scaler_invalid_range():
@@ -1693,19 +1707,6 @@ def test_maxabs_scaler_transform_one_row_csr():
     assert_array_almost_equal(X.toarray(), X_scaled_back.toarray())
 
 
-def test_warning_scaling_integers():
-    # Check warning when scaling integer data
-    X = np.array([[1, 2, 0],
-                  [0, 0, 0]], dtype=np.uint8)
-
-    w = "Data with input dtype uint8 was converted to float64"
-
-    clean_warning_registry()
-    assert_warns_message(DataConversionWarning, w, scale, X)
-    assert_warns_message(DataConversionWarning, w, StandardScaler().fit, X)
-    assert_warns_message(DataConversionWarning, w, MinMaxScaler().fit, X)
-
-
 def test_maxabs_scaler_1d():
     # Test scaling of dataset along single axis
     for X in [X_1row, X_1col, X_list_1row, X_list_1row]:
@@ -1721,7 +1722,7 @@ def test_maxabs_scaler_1d():
                                       np.ones(n_features))
         else:
             assert_array_almost_equal(np.abs(X_scaled.max(axis=0)), 1.)
-        assert_equal(scaler.n_samples_seen_, X.shape[0])
+        assert scaler.n_samples_seen_ == X.shape[0]
 
         # check inverse transform
         X_scaled_back = scaler.inverse_transform(X_scaled)
@@ -1732,7 +1733,7 @@ def test_maxabs_scaler_1d():
     scaler = MaxAbsScaler()
     X_scaled = scaler.fit(X).transform(X)
     assert_array_almost_equal(np.abs(X_scaled.max(axis=0)), 1.)
-    assert_equal(scaler.n_samples_seen_, X.shape[0])
+    assert scaler.n_samples_seen_ == X.shape[0]
 
     # function interface
     X_1d = X_1row.ravel()
@@ -1765,10 +1766,10 @@ def test_maxabs_scaler_partial_fit():
                                   scaler_incr_csr.max_abs_)
         assert_array_almost_equal(scaler_batch.max_abs_,
                                   scaler_incr_csc.max_abs_)
-        assert_equal(scaler_batch.n_samples_seen_, scaler_incr.n_samples_seen_)
-        assert_equal(scaler_batch.n_samples_seen_,
+        assert scaler_batch.n_samples_seen_ == scaler_incr.n_samples_seen_
+        assert (scaler_batch.n_samples_seen_ ==
                      scaler_incr_csr.n_samples_seen_)
-        assert_equal(scaler_batch.n_samples_seen_,
+        assert (scaler_batch.n_samples_seen_ ==
                      scaler_incr_csc.n_samples_seen_)
         assert_array_almost_equal(scaler_batch.scale_, scaler_incr.scale_)
         assert_array_almost_equal(scaler_batch.scale_, scaler_incr_csr.scale_)
@@ -1782,7 +1783,7 @@ def test_maxabs_scaler_partial_fit():
         scaler_incr = MaxAbsScaler().partial_fit(X[batch0])
 
         assert_array_almost_equal(scaler_batch.max_abs_, scaler_incr.max_abs_)
-        assert_equal(scaler_batch.n_samples_seen_, scaler_incr.n_samples_seen_)
+        assert scaler_batch.n_samples_seen_ == scaler_incr.n_samples_seen_
         assert_array_almost_equal(scaler_batch.scale_, scaler_incr.scale_)
         assert_array_almost_equal(scaler_batch.transform(X),
                                   scaler_incr.transform(X))
@@ -1962,7 +1963,7 @@ def test_normalize():
             for norm in ('l1', 'l2'):
                 X = X.astype(dtype)
                 X_norm = normalize(X, norm=norm)
-                assert_equal(X_norm.dtype, dtype)
+                assert X_norm.dtype == dtype
 
                 X_norm = toarray(X_norm)
                 if norm == 'l1':
@@ -2001,23 +2002,23 @@ def test_binarizer():
 
         binarizer = Binarizer(threshold=2.0, copy=True)
         X_bin = toarray(binarizer.transform(X))
-        assert_equal(np.sum(X_bin == 0), 4)
-        assert_equal(np.sum(X_bin == 1), 2)
+        assert np.sum(X_bin == 0) == 4
+        assert np.sum(X_bin == 1) == 2
         X_bin = binarizer.transform(X)
-        assert_equal(sparse.issparse(X), sparse.issparse(X_bin))
+        assert sparse.issparse(X) == sparse.issparse(X_bin)
 
         binarizer = Binarizer(copy=True).fit(X)
         X_bin = toarray(binarizer.transform(X))
         assert X_bin is not X
-        assert_equal(np.sum(X_bin == 0), 2)
-        assert_equal(np.sum(X_bin == 1), 4)
+        assert np.sum(X_bin == 0) == 2
+        assert np.sum(X_bin == 1) == 4
 
         binarizer = Binarizer(copy=True)
         X_bin = binarizer.transform(X)
         assert X_bin is not X
         X_bin = toarray(X_bin)
-        assert_equal(np.sum(X_bin == 0), 2)
-        assert_equal(np.sum(X_bin == 1), 4)
+        assert np.sum(X_bin == 0) == 2
+        assert np.sum(X_bin == 1) == 4
 
         binarizer = Binarizer(copy=False)
         X_bin = binarizer.transform(X)
@@ -2031,16 +2032,16 @@ def test_binarizer():
             assert X_bin is X_float
 
         X_bin = toarray(X_bin)
-        assert_equal(np.sum(X_bin == 0), 2)
-        assert_equal(np.sum(X_bin == 1), 4)
+        assert np.sum(X_bin == 0) == 2
+        assert np.sum(X_bin == 1) == 4
 
     binarizer = Binarizer(threshold=-0.5, copy=True)
     for init in (np.array, list):
         X = init(X_.copy())
 
         X_bin = toarray(binarizer.transform(X))
-        assert_equal(np.sum(X_bin == 0), 1)
-        assert_equal(np.sum(X_bin == 1), 5)
+        assert np.sum(X_bin == 0) == 1
+        assert np.sum(X_bin == 1) == 5
         X_bin = binarizer.transform(X)
 
     # Cannot use threshold < 0 for sparse
@@ -2080,8 +2081,7 @@ def test_cv_pipeline_precomputed():
     y_true = np.ones((4,))
     K = X.dot(X.T)
     kcent = KernelCenterer()
-    pipeline = Pipeline([("kernel_centerer", kcent), ("svr",
-                        SVR(gamma='scale'))])
+    pipeline = Pipeline([("kernel_centerer", kcent), ("svr", SVR())])
 
     # did the pipeline set the _pairwise attribute?
     assert pipeline._pairwise
@@ -2145,6 +2145,7 @@ def test_fit_cold_start():
         scaler.fit_transform(X_2d)
 
 
+@pytest.mark.filterwarnings("ignore: The default value of `copy`")  # 0.23
 def test_quantile_transform_valid_axis():
     X = np.array([[0, 25, 50, 75, 100],
                   [2, 4, 6, 8, 10],

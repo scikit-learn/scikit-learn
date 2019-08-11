@@ -2,10 +2,8 @@ import numpy as np
 from scipy.sparse import csr_matrix
 import pytest
 
-from sklearn.utils.testing import assert_array_equal, assert_equal
-from sklearn.utils.testing import assert_not_equal
+from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal, assert_raises
-from sklearn.utils.testing import assert_less_equal
 
 from sklearn.metrics.pairwise import kernel_metrics
 from sklearn.kernel_approximation import RBFSampler
@@ -65,19 +63,19 @@ def test_additive_chi2_sampler():
 
         # test that the sample_interval is initialized correctly
         transform = AdditiveChi2Sampler(sample_steps=sample_steps)
-        assert_equal(transform.sample_interval, None)
+        assert transform.sample_interval is None
 
         # test that the sample_interval is changed in the fit method
         transform.fit(X)
-        assert_not_equal(transform.sample_interval_, None)
+        assert transform.sample_interval_ is not None
 
     # test that the sample_interval is set correctly
     sample_interval = 0.3
     transform = AdditiveChi2Sampler(sample_steps=4,
                                     sample_interval=sample_interval)
-    assert_equal(transform.sample_interval, sample_interval)
+    assert transform.sample_interval == sample_interval
     transform.fit(X)
-    assert_equal(transform.sample_interval_, sample_interval)
+    assert transform.sample_interval_ == sample_interval
 
 
 def test_skewed_chi2_sampler():
@@ -133,10 +131,10 @@ def test_rbf_sampler():
     kernel_approx = np.dot(X_trans, Y_trans.T)
 
     error = kernel - kernel_approx
-    assert_less_equal(np.abs(np.mean(error)), 0.01)  # close to unbiased
+    assert np.abs(np.mean(error)) <= 0.01  # close to unbiased
     np.abs(error, out=error)
-    assert_less_equal(np.max(error), 0.1)  # nothing too far off
-    assert_less_equal(np.mean(error), 0.05)  # mean is fairly close
+    assert np.max(error) <= 0.1  # nothing too far off
+    assert np.mean(error) <= 0.05  # mean is fairly close
 
 
 def test_input_validation():
@@ -163,21 +161,21 @@ def test_nystroem_approximation():
 
     trans = Nystroem(n_components=2, random_state=rnd)
     X_transformed = trans.fit(X).transform(X)
-    assert_equal(X_transformed.shape, (X.shape[0], 2))
+    assert X_transformed.shape == (X.shape[0], 2)
 
     # test callable kernel
     def linear_kernel(X, Y):
         return np.dot(X, Y.T)
     trans = Nystroem(n_components=2, kernel=linear_kernel, random_state=rnd)
     X_transformed = trans.fit(X).transform(X)
-    assert_equal(X_transformed.shape, (X.shape[0], 2))
+    assert X_transformed.shape == (X.shape[0], 2)
 
     # test that available kernels fit and transform
     kernels_available = kernel_metrics()
     for kern in kernels_available:
         trans = Nystroem(n_components=2, kernel=kern, random_state=rnd)
         X_transformed = trans.fit(X).transform(X)
-        assert_equal(X_transformed.shape, (X.shape[0], 2))
+        assert X_transformed.shape == (X.shape[0], 2)
 
 
 def test_nystroem_default_parameters():
@@ -244,7 +242,7 @@ def test_nystroem_callable():
     Nystroem(kernel=logging_histogram_kernel,
              n_components=(n_samples - 1),
              kernel_params={'log': kernel_log}).fit(X)
-    assert_equal(len(kernel_log), n_samples * (n_samples - 1) / 2)
+    assert len(kernel_log) == n_samples * (n_samples - 1) / 2
 
     def linear_kernel(X, Y):
         return np.dot(X, Y.T)

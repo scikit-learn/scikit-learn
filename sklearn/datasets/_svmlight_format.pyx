@@ -4,6 +4,8 @@
 #          Lars Buitinck
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
+#
+# cython: boundscheck=False, wraparound=False
 
 import array
 from cpython cimport array
@@ -21,8 +23,6 @@ cdef bytes COMMA = u','.encode('ascii')
 cdef bytes COLON = u':'.encode('ascii')
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
                         bint query_id, long long offset, long long length):
     cdef array.array data, indices, indptr
@@ -61,7 +61,7 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
     for line in f:
         # skip comments
         line_cstr = line
-        hash_ptr = strchr(line_cstr, '#')
+        hash_ptr = strchr(line_cstr, 35)  # ASCII value of '#' is 35
         if hash_ptr != NULL:
             line = line[:hash_ptr - line_cstr]
 

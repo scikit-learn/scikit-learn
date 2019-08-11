@@ -1,21 +1,23 @@
 import pytest
-import cython
 
 import numpy as np
 
 from sklearn.utils.testing import assert_allclose
-
 from sklearn.utils._cython_blas import _dot_memview
 from sklearn.utils._cython_blas import _asum_memview
 from sklearn.utils._cython_blas import _axpy_memview
 from sklearn.utils._cython_blas import _nrm2_memview
 from sklearn.utils._cython_blas import _copy_memview
 from sklearn.utils._cython_blas import _scal_memview
+from sklearn.utils._cython_blas import _rotg_memview
+from sklearn.utils._cython_blas import _rot_memview
 from sklearn.utils._cython_blas import _gemv_memview
 from sklearn.utils._cython_blas import _ger_memview
 from sklearn.utils._cython_blas import _gemm_memview
 from sklearn.utils._cython_blas import RowMajor, ColMajor
 from sklearn.utils._cython_blas import Trans, NoTrans
+
+cython = pytest.importorskip("cython")
 
 
 NUMPY_TO_CYTHON = {np.float32: cython.float, np.float64: cython.double}
@@ -108,6 +110,50 @@ def test_scal(dtype):
     scal(alpha, x)
 
     assert_allclose(x, expected, rtol=RTOL[dtype])
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_rotg(dtype):
+    rotg = _rotg_memview[NUMPY_TO_CYTHON[dtype]]
+
+    rng = np.random.RandomState(0)
+    a = dtype(rng.randn())
+    b = dtype(rng.randn())
+    c, s = 0.0, 0.0
+
+    def expected_rotg(a, b):
+        roe = a if abs(a) > abs(b) else b
+        if a == 0 and b == 0:
+            c, s, r, z = (1, 0, 0, 0)
+        else:
+            r = np.sqrt(a**2 + b**2) * (1 if roe >= 0 else -1)
+            c, s = a/r, b/r
+            z = s if roe == a else (1 if c == 0 else 1 / c)
+        return r, z, c, s
+
+    expected = expected_rotg(a, b)
+    actual = rotg(a, b, c, s)
+
+    assert_allclose(actual, expected, rtol=RTOL[dtype])
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_rot(dtype):
+    rot = _rot_memview[NUMPY_TO_CYTHON[dtype]]
+
+    rng = np.random.RandomState(0)
+    x = rng.random_sample(10).astype(dtype, copy=False)
+    y = rng.random_sample(10).astype(dtype, copy=False)
+    c = dtype(rng.randn())
+    s = dtype(rng.randn())
+
+    expected_x = c * x + s * y
+    expected_y = c * y - s * x
+
+    rot(x, y, c, s)
+
+    assert_allclose(x, expected_x)
+    assert_allclose(y, expected_y)
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])

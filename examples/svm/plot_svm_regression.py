@@ -27,9 +27,6 @@ svr_rbf = SVR(kernel='rbf', C=100, gamma=0.1, epsilon=.1)
 svr_lin = SVR(kernel='linear', C=100, gamma='auto')
 svr_poly = SVR(kernel='poly', C=100, gamma='auto', degree=3, epsilon=.1,
                coef0=1)
-y_rbf = svr_rbf.fit(X, y).predict(X)
-y_lin = svr_lin.fit(X, y).predict(X)
-y_poly = svr_poly.fit(X, y).predict(X)
 
 # #############################################################################
 # Look at the results
