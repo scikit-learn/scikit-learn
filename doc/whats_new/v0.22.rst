@@ -103,6 +103,14 @@ Changelog
   need to store the entire dense matrix at once.
   :pr:`13960` by :user:`Scott Gigante <scottgigante>`.
 
+- |API| The default value of the :code:`whiten` argument in
+  :func:`decomposition.FastICA` will change from
+  :code:`True` to :code:`'unit-variance` in version 0.23.
+  A FutureWarning is raised when the default value is used.
+  :issue:`13056` by :user:`Facundo Ferrin <fferrin>`. Thanks to
+  :user:`<adrinjalali>`, :user:`<JesseLivezey>` and :user:`<jnothman>` for
+  help me with my first PR.
+
 :mod:`sklearn.ensemble`
 .......................
 
