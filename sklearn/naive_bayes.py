@@ -1166,19 +1166,12 @@ class CategoricalNB(BaseDiscreteNB):
             for j in range(n_classes):
                 mask = Y[:, j].astype(bool)
                 if Y.dtype.type == np.int64:
-                    indices, counts = np.unique(X_feature[mask],
-                                                return_counts=True)
+                    weights = None
                 else:
-                    indices, counts = _weighted_counts(X_feature[mask],
-                                                       Y[mask, j])
-                cat_count[j, indices] += counts
-
-        def _weighted_counts(X_feature_class, Y_class):
-            # Sum for each category in x the corresponding values in y
-            indices, inv = np.unique(X_feature_class, return_inverse=True)
-            n_feature_class = np.zeros(len(indices), dtype=Y_class.dtype)
-            np.add.at(n_feature_class, inv, Y_class)
-            return indices, n_feature_class
+                    weights = Y[mask, j]
+                counts = np.bincount(X_feature[mask], weights=weights)
+                indices = np.nonzero(counts)[0]
+                cat_count[j, indices] += counts[indices]
 
         self.class_count_ += Y.sum(axis=0)
         for i in range(self.n_features_):
