@@ -6,7 +6,6 @@ import warnings
 import pytest
 
 import numpy as np
-import pytest
 from scipy import stats
 
 from sklearn.utils.testing import assert_almost_equal
