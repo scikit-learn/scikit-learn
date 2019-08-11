@@ -56,9 +56,12 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         information about feature importance either through a ``coef_``
         attribute or through a ``feature_importances_`` attribute.
 
-    n_features_to_select : int or None (default=None)
+    n_features_to_select : int or None or float (default=None)
         The number of features to select. If `None`, half of the features
         are selected.
+        If float is specified between 0.0 and 1.0, it is taken as the
+        percentage of the available features. For example if you want to
+        select 25% of the available features, you would specify 0.25.
 
     step : int or float, optional (default=1)
         If greater than or equal to 1, then ``step`` corresponds to the
@@ -155,6 +158,8 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         n_features = X.shape[1]
         if self.n_features_to_select is None:
             n_features_to_select = n_features // 2
+        elif 0.0 < self.n_features_to_select < 1.0:
+            n_features_to_select = int(n_features * self.n_features_to_select)
         else:
             n_features_to_select = self.n_features_to_select
 
