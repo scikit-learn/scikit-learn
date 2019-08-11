@@ -868,7 +868,9 @@ class RandomForestClassifier(ForestClassifier):
         the generalization accuracy.
 
     n_jobs : int or None, optional (default=None)
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel.
+        `fit`, `predict`, ``decision_path`` and ``apply`` are all
+        parallelized over the trees.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -1157,7 +1159,9 @@ class RandomForestRegressor(ForestRegressor):
         the R^2 on unseen data.
 
     n_jobs : int or None, optional (default=None)
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel.
+        `fit`, `predict`, ``decision_path`` and ``apply`` are all
+        parallelized over the trees.
         `None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -1406,7 +1410,9 @@ class ExtraTreesClassifier(ForestClassifier):
         the generalization accuracy.
 
     n_jobs : int or None, optional (default=None)
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel.
+        `fit`, `predict`, ``decision_path`` and ``apply`` are all
+        parallelized over the trees.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -1671,7 +1677,9 @@ class ExtraTreesRegressor(ForestRegressor):
         Whether to use out-of-bag samples to estimate the R^2 on unseen data.
 
     n_jobs : int or None, optional (default=None)
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel.
+        `fit`, `predict`, ``decision_path`` and ``apply`` are all
+        parallelized over the trees.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -1874,7 +1882,9 @@ class RandomTreesEmbedding(BaseForest):
         or to return a dense array compatible with dense pipeline operators.
 
     n_jobs : int or None, optional (default=None)
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel.
+        Trees are built in parallel during `fit`. During `transform`, the leaf
+        indices computation is also parallelized over trees.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
