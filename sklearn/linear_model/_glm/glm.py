@@ -73,11 +73,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         - 'log' for families 'poisson', 'gamma', 'inverse-gaussian'
 
-    fit_dispersion : {None, 'chisqr', 'deviance'}, optional (default=None)
-        Method for estimation of the dispersion parameter phi. Whether to use
-        the chi squared statistic or the deviance statistic. If None, the
-        dispersion is not estimated.
-
     solver : {'auto', 'lbfgs'}, optional (default='auto')
         Algorithm to use in the optimization problem:
 
@@ -124,9 +119,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     intercept_ : float
         Intercept (a.k.a. bias) added to linear predictor.
 
-    dispersion_ : float
-        The dispersion parameter :math:`\\phi` if ``fit_dispersion`` was set.
-
     n_iter_ : int
         Actual number of iterations used in solver.
 
@@ -169,14 +161,12 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     """
     def __init__(self, alpha=1.0,
                  fit_intercept=True, family='normal', link='auto',
-                 fit_dispersion=None, solver='auto', max_iter=100,
-                 tol=1e-4, warm_start=False,
+                 solver='auto', max_iter=100, tol=1e-4, warm_start=False,
                  copy_X=True, check_input=True, verbose=0):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.family = family
         self.link = link
-        self.fit_dispersion = fit_dispersion
         self.solver = solver
         self.max_iter = max_iter
         self.tol = tol
@@ -310,8 +300,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         weights = weights/weights_sum
 
         # initialization of coef = (intercept_, coef)
-        # Note: Since phi=self.dispersion_ does not enter the estimation
-        #       of mu_i=E[y_i], set it to 1.
+        # Note: The dispersion parameter phi does not enter the estimation
+        #       of mu_i=E[y_i].
 
         if self.warm_start and hasattr(self, 'coef_'):
             if self.fit_intercept:
@@ -363,10 +353,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             self.intercept_ = 0.
             self.coef_ = coef
 
-        if self.fit_dispersion in ['chisqr', 'deviance']:
-            # attention because of rescaling of weights
-            self.dispersion_ = self.estimate_phi(X, y, weights)*weights_sum
-
         return self
 
     def _linear_predictor(self, X):
@@ -405,51 +391,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         eta = self._linear_predictor(X)
         mu = self._link_instance.inverse(eta)
         return mu
-
-    def estimate_phi(self, X, y, sample_weight=None):
-        """Estimate/fit the dispersion parameter phi.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Training data.
-
-        y : array-like, shape (n_samples,)
-            Target values.
-
-        sample_weight : {None, array-like}, shape (n_samples,), optional \
-                (default=None)
-            Sample weights.
-
-        Returns
-        -------
-        phi : float
-            Dispersion parameter.
-        """
-        check_is_fitted(self, "coef_")
-        _dtype = [np.float64, np.float32]
-        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
-                         dtype=_dtype, y_numeric=True, multi_output=False)
-        n_samples, n_features = X.shape
-        weights = _check_sample_weight(sample_weight, X)
-        eta = X @ self.coef_
-        if self.fit_intercept is True:
-            eta += self.intercept_
-            n_features += 1
-        if n_samples <= n_features:
-            raise ValueError("Estimation of dispersion parameter phi requires"
-                             " more samples than features, got"
-                             " samples=X.shape[0]={0} and"
-                             " n_features=X.shape[1]+fit_intercept={1}."
-                             .format(n_samples, n_features))
-        mu = self._link_instance.inverse(eta)
-        if self.fit_dispersion == 'chisqr':
-            chisq = np.sum(weights*(y-mu)**2 /
-                           self._family_instance.unit_variance(mu))
-            return chisq/(n_samples - n_features)
-        elif self.fit_dispersion == 'deviance':
-            dev = self._family_instance.deviance(y, mu, weights)
-            return dev/(n_samples - n_features)
 
     def score(self, X, y, sample_weight=None):
         """Compute D^2, the percentage of deviance explained.
@@ -525,11 +466,6 @@ class PoissonRegressor(GeneralizedLinearRegressor):
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (X*coef+intercept).
 
-    fit_dispersion : {None, 'chisqr', 'deviance'}, optional (default=None)
-        Method for estimation of the dispersion parameter phi. Whether to use
-        the chi squared statistic or the deviance statistic. If None, the
-        dispersion is not estimated.
-
     solver : {'lbfgs'}, optional (default='lbfgs')
         Algorithm to use in the optimization problem:
 
@@ -563,9 +499,6 @@ class PoissonRegressor(GeneralizedLinearRegressor):
 
     intercept_ : float
         Intercept (a.k.a. bias) added to linear predictor.
-
-    dispersion_ : float
-        The dispersion parameter :math:`\\phi` if ``fit_dispersion`` was set.
 
     n_iter_ : int
         Actual number of iterations used in solver.
@@ -605,14 +538,13 @@ class PoissonRegressor(GeneralizedLinearRegressor):
        <https://en.wikipedia.org/wiki/Exponential_dispersion_model>`_
     """
     def __init__(self, alpha=1.0, fit_intercept=True, link='log',
-                 fit_dispersion=None, solver='lbfgs', max_iter=100, tol=1e-4,
-                 warm_start=False, copy_X=True, check_input=True, verbose=0):
+                 solver='lbfgs', max_iter=100, tol=1e-4, warm_start=False,
+                 copy_X=True, check_input=True, verbose=0):
 
         super().__init__(alpha=alpha, fit_intercept=fit_intercept,
                          family="poisson", link=link,
-                         fit_dispersion=fit_dispersion, solver=solver,
-                         max_iter=max_iter, tol=tol, warm_start=warm_start,
-                         copy_X=copy_X, verbose=verbose)
+                         solver=solver, max_iter=max_iter, tol=tol,
+                         warm_start=warm_start, copy_X=copy_X, verbose=verbose)
 
     @property
     def family(self):
@@ -652,11 +584,6 @@ class GammaRegressor(GeneralizedLinearRegressor):
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (X*coef+intercept).
 
-    fit_dispersion : {None, 'chisqr', 'deviance'}, optional (default=None)
-        Method for estimation of the dispersion parameter phi. Whether to use
-        the chi squared statistic or the deviance statistic. If None, the
-        dispersion is not estimated.
-
     solver : {'lbfgs'}, optional (default='lbfgs')
         Algorithm to use in the optimization problem:
 
@@ -691,9 +618,6 @@ class GammaRegressor(GeneralizedLinearRegressor):
     intercept_ : float
         Intercept (a.k.a. bias) added to linear predictor.
 
-    dispersion_ : float
-        The dispersion parameter :math:`\\phi` if ``fit_dispersion`` was set.
-
     n_iter_ : int
         Actual number of iterations used in solver.
 
@@ -721,14 +645,13 @@ class GammaRegressor(GeneralizedLinearRegressor):
        <https://en.wikipedia.org/wiki/Exponential_dispersion_model>`_
     """
     def __init__(self, alpha=1.0, fit_intercept=True, link='log',
-                 fit_dispersion=None, solver='lbfgs', max_iter=100, tol=1e-4,
-                 warm_start=False, copy_X=True, check_input=True, verbose=0):
+                 solver='lbfgs', max_iter=100, tol=1e-4, warm_start=False,
+                 copy_X=True, check_input=True, verbose=0):
 
         super().__init__(alpha=alpha, fit_intercept=fit_intercept,
                          family="gamma", link=link,
-                         fit_dispersion=fit_dispersion, solver=solver,
-                         max_iter=max_iter, tol=tol, warm_start=warm_start,
-                         copy_X=copy_X, verbose=verbose)
+                         solver=solver, max_iter=max_iter, tol=tol,
+                         warm_start=warm_start, copy_X=copy_X, verbose=verbose)
 
     @property
     def family(self):
@@ -783,11 +706,6 @@ class TweedieRegressor(GeneralizedLinearRegressor):
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (X*coef+intercept).
 
-    fit_dispersion : {None, 'chisqr', 'deviance'}, optional (default=None)
-        Method for estimation of the dispersion parameter phi. Whether to use
-        the chi squared statistic or the deviance statistic. If None, the
-        dispersion is not estimated.
-
     solver : {'lbfgs'}, optional (default='lbfgs')
         Algorithm to use in the optimization problem:
 
@@ -822,9 +740,6 @@ class TweedieRegressor(GeneralizedLinearRegressor):
     intercept_ : float
         Intercept (a.k.a. bias) added to linear predictor.
 
-    dispersion_ : float
-        The dispersion parameter :math:`\\phi` if ``fit_dispersion`` was set.
-
     n_iter_ : int
         Actual number of iterations used in solver.
 
@@ -852,14 +767,13 @@ class TweedieRegressor(GeneralizedLinearRegressor):
        <https://en.wikipedia.org/wiki/Exponential_dispersion_model>`_
     """
     def __init__(self, power=0.0, alpha=1.0, fit_intercept=True, link='log',
-                 fit_dispersion=None, solver='lbfgs', max_iter=100, tol=1e-4,
-                 warm_start=False, copy_X=True, check_input=True, verbose=0):
+                 solver='lbfgs', max_iter=100, tol=1e-4, warm_start=False,
+                 copy_X=True, check_input=True, verbose=0):
 
         super().__init__(alpha=alpha, fit_intercept=fit_intercept,
                          family=TweedieDistribution(power=power), link=link,
-                         fit_dispersion=fit_dispersion, solver=solver,
-                         max_iter=max_iter, tol=tol, warm_start=warm_start,
-                         copy_X=copy_X, verbose=verbose)
+                         solver=solver, max_iter=max_iter, tol=tol,
+                         warm_start=warm_start, copy_X=copy_X, verbose=verbose)
 
     @property
     def family(self):

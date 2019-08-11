@@ -332,24 +332,6 @@ def test_solver_equivalence(params, regression_data):
     )
 
 
-def test_fit_dispersion(regression_data):
-    X, y = regression_data
-
-    est1 = GeneralizedLinearRegressor()
-    est1.fit(X, y)
-    assert not hasattr(est1, "dispersion_")
-
-    est2 = GeneralizedLinearRegressor(fit_dispersion="chisqr")
-    est2.fit(X, y)
-    assert isinstance(est2.dispersion_, float)
-
-    est3 = GeneralizedLinearRegressor(fit_dispersion="deviance")
-    est3.fit(X, y)
-    assert isinstance(est3.dispersion_, float)
-
-    assert_allclose(est2.dispersion_,  est3.dispersion_)
-
-
 @pytest.mark.parametrize("solver", GLM_SOLVERS)
 def test_convergence_warning(solver, regression_data):
     X, y = regression_data
