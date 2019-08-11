@@ -191,7 +191,7 @@ def mean_absolute_error(y_true, y_pred,
 
 def mean_squared_error(y_true, y_pred,
                        sample_weight=None,
-                       multioutput='uniform_average'):
+                       multioutput='uniform_average', squared=True):
     """Mean squared error regression loss
 
     Read more in the :ref:`User Guide <mean_squared_error>`.
@@ -218,6 +218,9 @@ def mean_squared_error(y_true, y_pred,
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
 
+    squared : boolean value, optional (default = True)
+        If True returns MSE value, if False returns RMSE value.
+
     Returns
     -------
     loss : float or ndarray of floats
@@ -231,6 +234,10 @@ def mean_squared_error(y_true, y_pred,
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> mean_squared_error(y_true, y_pred)
     0.375
+    >>> y_true = [3, -0.5, 2, 7]
+    >>> y_pred = [2.5, 0.0, 2, 8]
+    >>> mean_squared_error(y_true, y_pred, squared=False)
+    0.612...
     >>> y_true = [[0.5, 1],[-1, 1],[7, -6]]
     >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
     >>> mean_squared_error(y_true, y_pred)
@@ -253,7 +260,8 @@ def mean_squared_error(y_true, y_pred,
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    mse = np.average(output_errors, weights=multioutput)
+    return mse if squared else np.sqrt(mse)
 
 
 def mean_squared_log_error(y_true, y_pred,
