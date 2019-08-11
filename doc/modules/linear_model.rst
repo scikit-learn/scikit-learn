@@ -900,30 +900,31 @@ combination of the input variables :math:`X` via an inverse link function
 
 .. math::    \hat{y}(w, x) = h(x^\top w) = h(w_0 + w_1 x_1 + ... + w_p x_p).
 
-Secondly, the squared loss function is replaced by the deviance :math:`D` of an
-exponential dispersion model (EDM) [11]_. The minimized objective function is
-the penalized negative log likelihood,
+Secondly, the squared loss function is replaced by the unit deviance :math:`d`
+of a reproductive exponential dispersion model (EDM) [11]_. The minimization
+problem becomes
 
-.. math::    \frac{1}{2 \sum s_i}D(y, \hat{y}; s) +\frac{\alpha}{2} ||w||_2
+.. math::    \min_{w} \frac{1}{2 \sum_i s_i} \sum_i s_i \cdot d(y_i, \hat{y}(w, x_i)) + \frac{\alpha}{2} ||w||_2
 
 with sample weights :math:`s`, and L2 regularization penalty :math:`\alpha`.
-
-The deviance is defined by the log of the :math:`\mathrm{EDM}(\mu, \phi)`
+The unit deviance is defined by the log of the :math:`\mathrm{EDM}(\mu, \phi)`
 likelihood as
 
 .. math::     d(y, \mu) = -2\phi\cdot
               \left(loglike(y,\mu,\phi)
-              - loglike(y,y,\phi)\right) \\
-              D(y, \mu; s) = \sum_i s_i \cdot d(y_i, \mu_i)
+              - loglike(y,y,\phi)\right)
 
-================= ===============================  ================================= ============================================
-Distribution       Target Domain                    Variance Function :math:`v(\mu)`  Unit Deviance :math:`d(y, \mu)`
-================= ===============================  ================================= ============================================
-Normal            :math:`y \in (-\infty, \infty)`  :math:`1`                         :math:`(y-\mu)^2`
-Poisson           :math:`y \in [0, \infty)`        :math:`\mu`                       :math:`2(y\log\frac{y}{\mu}-y+\mu)`
-Gamma             :math:`y \in (0, \infty)`        :math:`\mu^2`                     :math:`2(\log\frac{\mu}{y}+\frac{y}{\mu}-1)`
-Inverse Gaussian  :math:`y \in (0, \infty)`        :math:`\mu^3`                     :math:`\frac{(y-\mu)^2}{y\mu^2}`
-================= ===============================  ================================= ============================================
+The following table lists some specific EDM distributions&mdash;all are Tweedie
+distributions&mdash;and some properties.
+
+================= ===============================  ====================================== ============================================
+Distribution       Target Domain                    Unit Variance Function :math:`v(\mu)`  Unit Deviance :math:`d(y, \mu)`
+================= ===============================  ====================================== ============================================
+Normal            :math:`y \in (-\infty, \infty)`  :math:`1`                              :math:`(y-\mu)^2`
+Poisson           :math:`y \in [0, \infty)`        :math:`\mu`                            :math:`2(y\log\frac{y}{\mu}-y+\mu)`
+Gamma             :math:`y \in (0, \infty)`        :math:`\mu^2`                          :math:`2(\log\frac{\mu}{y}+\frac{y}{\mu}-1)`
+Inverse Gaussian  :math:`y \in (0, \infty)`        :math:`\mu^3`                          :math:`\frac{(y-\mu)^2}{y\mu^2}`
+================= ===============================  ====================================== ============================================
 
 
 In the following use cases, a loss different from the squared loss might be
@@ -947,7 +948,8 @@ log-link with :math:`h(x^\top w)=\exp(x^\top w)`.
 
 :class:`TweedieRegressor` implements a generalized linear model
 for the Tweedie distribution, that allows to model any of the above mentioned
-distributions using the appropriate power parameter `p`,
+distributions using the appropriate power parameter `p`, i.e. the exponent of
+the unit variance function,
 
  - `p = 0`: Normal distribution. Specialized solvers such as
    :class:`Ridge`, :class:`ElasticNet` are generally
@@ -964,9 +966,16 @@ distributions using the appropriate power parameter `p`,
  - `p = 3`: Inverse Gamma distribution.
 
 
-Note that the feature matrix `X` should be standardized before fitting. This
-ensures that the penalty treats features equally. The estimator can be used as
-follows::
+Note:
+* The feature matrix `X` should be standardized before fitting. This
+  ensures that the penalty treats features equally.
+* If you want to model a relative frequency, i.e. counts per exposure (time,
+  volume, ...) you can do so by a Poisson distribution and passing
+  :math:`y=\frac{\mathrm{counts}}{\mathrm{exposure}}` as target values together
+  with :math:`s=\mathrm{exposure}` as sample weights. This is done in both
+  examples linked below.
+
+The estimator can be used as follows::
 
     >>> from sklearn.linear_model import TweedieRegressor
     >>> reg = TweedieRegressor(power=1, alpha=0.5, link='log')
@@ -993,7 +1002,7 @@ In the unpenalized case, the assumptions are the following:
       with expectation :math:`\mu_i=\mathrm{E}[Y]`, dispersion parameter
       :math:`\phi` and sample weights :math:`s_i`.
     * The aim is to predict the expectation :math:`\mu_i` with
-      :math:`\hat{y_i} = h(\eta_i)`, linear predictor
+      :math:`\hat{y}_i = h(\eta_i)`, linear predictor
       :math:`\eta_i=(Xw)_i` and inverse link function :math:`h(\eta)`.
 
 Note that the first assumption implies
@@ -1001,20 +1010,15 @@ Note that the first assumption implies
 function :math:`v(\mu)`. Specifying a particular distribution of an EDM is the
 same as specifying a unit variance function (they are one-to-one).
 
-The objective function (the penalized negative log likelihood) is
-independent of :math:`\phi` and is minimized with respect to the
-coefficients :math:`w`.
+A few remarks:
 
-Two remarks:
-
+* The deviance is independent of :math:`\phi`. Therefore, also the estimation
+  of the coefficients :math:`w` is independent of the dispersion parameter of
+  the EDM.
+* The minimization is equivalent to (penalized) maximum likelihood estimation.
 * The deviances for at least Normal, Poisson and Gamma distributions are
   strictly consistent scoring functions for the mean :math:`\mu`, see Eq.
   (19)-(20) in [12]_.
-
-* If you want to model a frequency, i.e. counts per exposure (time, volume, ...)
-  you can do so by a Poisson distribution and passing
-  :math:`y=\frac{\mathrm{counts}}{\mathrm{exposure}}` as target values together
-  with :math:`s=\mathrm{exposure}` as sample weights.
 
 
 .. topic:: References:
