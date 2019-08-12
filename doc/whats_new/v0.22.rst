@@ -224,8 +224,15 @@ Changelog
   to return root mean squared error.
   :pr:`13467` by :user:`Urvang Patel <urvang96>`.
 
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Raise a ValueError in :func:`metrics.silhouette_score` when a
+  precomputed distance matrix contains non-zero diagonal entries.
+  :pr:`12258` by :user:`Stephen Tierney <sjtrny>`.
+
 :mod:`sklearn.model_selection`
-...............................
+..............................
 
 - |Enhancement| :class:`model_selection.learning_curve` now accepts parameter
   ``return_times`` which can be used to retrieve computation times in order to
