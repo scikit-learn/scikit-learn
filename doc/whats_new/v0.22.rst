@@ -225,14 +225,6 @@ Changelog
   :pr:`13467` by :user:`Urvang Patel <urvang96>`.
 
 :mod:`sklearn.model_selection`
-...............................
-
-- |MajorFeature| Added :class:`naive_bayes.CategoricalNB` that implements the
-  Categorical Naive Bayes classifier.
-  :pr:`12569` by :user:`Tim Bicker <timbicker>` and
-  :user:`Florian Wilhelm <FlorianWilhelm>`.
-
-:mod:`sklearn.naive_bayes`
 ......................
 
 - |Enhancement| :class:`model_selection.learning_curve` now accepts parameter
@@ -242,6 +234,14 @@ Changelog
 
 - |Enhancement| :class:`model_selection.RandomizedSearchCV` now accepts lists
   of parameter distributions. :pr:`14549` by `Andreas Müller`_.
+
+:mod:`sklearn.naive_bayes`
+...............................
+
+- |MajorFeature| Added :class:`naive_bayes.CategoricalNB` that implements the
+  Categorical Naive Bayes classifier.
+  :pr:`12569` by :user:`Tim Bicker <timbicker>` and
+  :user:`Florian Wilhelm <FlorianWilhelm>`.
 
 :mod:`sklearn.pipeline`
 .......................

@@ -253,6 +253,11 @@ to class :math:`c`, :math:`N_{c} = |\{ j \in J\mid y_j = c\}|` is the number
 of samples with class c, :math:`\alpha` is a smoothing parameter and
 :math:`n_i` is the number of available categories of feature :math:`i`.
 
+:class:`CategoricalNB` assumes that the sample matrix :math:`X` is encoded
+(for instance with the help of :class:`OrdinalEncoder`) such that all
+categories for each feature :math:`i` are represented with numbers
+:math:`0, ..., n_i - 1` where :math:`n_i` is the number of available categories
+of feature :math:`i`.
 
 Out-of-core naive Bayes model fitting
 -------------------------------------
