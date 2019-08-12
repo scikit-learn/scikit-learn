@@ -795,7 +795,7 @@ def test_gower_distances():
     X = np.array([['M', 0],
          ['F', 1],
          ['M', 1],
-         [np.nan, np.nan]])
+         [np.nan, np.nan]], dtype=np.object)
 
     D = gower_distances(X, categorical_features=[True, True])
 
