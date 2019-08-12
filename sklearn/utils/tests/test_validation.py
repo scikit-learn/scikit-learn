@@ -661,6 +661,7 @@ def test_check_is_fitted():
     assert check_is_fitted(ard) is None
     assert check_is_fitted(svr) is None
 
+    # to be removed in 0.23
     assert_warns_message(
         DeprecationWarning,
         "Passing attributes to check_is_fitted is deprecated",
