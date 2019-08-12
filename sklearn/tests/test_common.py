@@ -11,6 +11,7 @@ import warnings
 import sys
 import re
 import pkgutil
+from inspect import isgenerator
 from itertools import chain
 from functools import partial
 
@@ -28,6 +29,8 @@ from sklearn.cluster.bicluster import BiclusterMixin
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GridSearchCV
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.utils import IS_PYPY
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.estimator_checks import (
@@ -99,6 +102,33 @@ def test_estimators(estimator, check):
                                    UserWarning, FutureWarning)):
         set_checking_parameters(estimator)
         check(estimator)
+
+
+def test_check_estimator_generate_only():
+    estimator_cls_gen_checks = check_estimator(LogisticRegression,
+                                               generate_only=True)
+    all_instance_gen_checks = check_estimator(LogisticRegression(),
+                                              generate_only=True)
+    assert isgenerator(estimator_cls_gen_checks)
+    assert isgenerator(all_instance_gen_checks)
+
+    estimator_cls_checks = list(estimator_cls_gen_checks)
+    all_instance_checks = list(all_instance_gen_checks)
+
+    # all classes checks include check_parameters_default_constructible
+    assert len(estimator_cls_checks) == len(all_instance_checks) + 1
+
+    estimator_instance_gen_checks = check_estimator(LogisticRegression(),
+                                                    generate_only=True)
+    assert isgenerator(estimator_instance_gen_checks)
+    estimator_instance_checks = list(estimator_instance_gen_checks)
+
+    assert len(estimator_instance_checks) == len(all_instance_checks)
+
+    # Grid search can not be constructed
+    grid_estimator_gen_checks = list(check_estimator(GridSearchCV,
+                                                     generate_only=True))
+    assert len(list(grid_estimator_gen_checks)) == 1
 
 
 @ignore_warnings(category=DeprecationWarning)

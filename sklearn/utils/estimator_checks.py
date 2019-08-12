@@ -323,6 +323,11 @@ def _construct_instance(Estimator):
     return estimator
 
 
+def _generate_instance_checks(name, estimator):
+    yield from ((estimator, partial(check, name))
+                for check in _yield_all_checks(name, estimator))
+
+
 def _generate_class_checks(Estimator):
     name = Estimator.__name__
     yield (Estimator, partial(check_parameters_default_constructible, name))
@@ -333,8 +338,7 @@ def _generate_class_checks(Estimator):
         # if we can't construct the instance, the first test will fail
         return
 
-    yield from ((estimator, partial(check, name))
-                for check in _yield_all_checks(name, estimator))
+    yield from _generate_instance_checks(name, estimator)
 
 
 def check_estimator(Estimator, generate_only=False):
@@ -396,8 +400,7 @@ def check_estimator(Estimator, generate_only=False):
         name = type(estimator).__name__
 
     if generate_only:
-        return [(estimator, partial(check, name))
-                for check in _yield_all_checks(name, estimator)]
+        return _generate_instance_checks(name, estimator)
 
     for check in _yield_all_checks(name, estimator):
         try:
