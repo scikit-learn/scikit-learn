@@ -807,7 +807,7 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
 
         # Calculates the similarities for categorical columns
         cat_obj_dists = X[i, cat_obj_mask] != Y[j_start:, cat_obj_mask]
-        #A =  (np.isnan(X[i, cat_obj_mask]) & 
+        # A =  (np.isnan(X[i, cat_obj_mask]) &
         # np.isnan(Y[j_start:, cat_obj_mask]))
         # cat_obj_dists = ~np.equal(X[i, cat_obj_mask],
         #                          Y[j_start:, cat_obj_mask])
