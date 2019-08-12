@@ -20,15 +20,17 @@ To make the example run faster, we use very few hidden units, and train only
 for a very short time. Training longer would result in weights with a much
 smoother spatial appearance.
 """
-print(__doc__)
-
 import matplotlib.pyplot as plt
-from sklearn.datasets import fetch_mldata
+from sklearn.datasets import fetch_openml
 from sklearn.neural_network import MLPClassifier
 
-mnist = fetch_mldata("MNIST original")
+print(__doc__)
+
+# Load data from https://www.openml.org/d/554
+X, y = fetch_openml('mnist_784', version=1, return_X_y=True)
+X = X / 255.
+
 # rescale the data, use the traditional train/test split
-X, y = mnist.data / 255., mnist.target
 X_train, X_test = X[:60000], X[60000:]
 y_train, y_test = y[:60000], y[60000:]
 

@@ -11,7 +11,40 @@ Who is using scikit-learn?
 
 .. to add a testimonials, just XXX
 
-`Spotify <http://www.spotify.com>`_
+`J.P.Morgan <https://www.jpmorgan.com>`_
+------------------------------------------
+
+.. raw:: html
+
+    <div class="logo">
+
+.. image:: images/jpmorgan.png
+    :width: 120pt
+    :target: https://www.jpmorgan.com
+
+.. raw:: html
+
+    </div>
+
+Scikit-learn is an indispensable part of the Python machine learning
+toolkit at JPMorgan. It is very widely used across all parts of the bank
+for classification, predictive analytics, and very many other machine
+learning tasks. Its straightforward API, its breadth of algorithms, and
+the quality of its documentation combine to make scikit-learn
+simultaneously very approachable and very powerful.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Stephen Simmons, VP, Athena Research, JPMorgan
+
+.. raw:: html
+
+   </span>
+
+
+`Spotify <https://www.spotify.com>`_
 ------------------------------------
 
 .. raw:: html
@@ -20,7 +53,7 @@ Who is using scikit-learn?
 
 .. image:: images/spotify.png
     :width: 120pt
-    :target: http://www.spotify.com
+    :target: https://www.spotify.com
 
 .. raw:: html
 
@@ -42,8 +75,8 @@ Erik Bernhardsson, Engineering Manager Music Discovery & Machine Learning, Spoti
 
    </span>
 
-`Inria <http://www.inria.fr>`_
--------------------------------
+`Inria <https://www.inria.fr/>`_
+--------------------------------
 
 .. raw:: html
 
@@ -51,7 +84,7 @@ Erik Bernhardsson, Engineering Manager Music Discovery & Machine Learning, Spoti
 
 .. image:: images/inria.png
     :width: 120pt
-    :target: http://www.inria.fr
+    :target: https://www.inria.fr/
 
 .. raw:: html
 
@@ -63,7 +96,7 @@ Erik Bernhardsson, Engineering Manager Music Discovery & Machine Learning, Spoti
 
 At INRIA, we use scikit-learn to support leading-edge basic research in many
 teams: `Parietal <https://team.inria.fr/parietal/>`_ for neuroimaging, `Lear
-<http://lear.inrialpes.fr/>`_ for computer vision, `Visages
+<https://lear.inrialpes.fr/>`_ for computer vision, `Visages
 <https://team.inria.fr/visages/>`_ for medical image analysis, `Privatics
 <https://team.inria.fr/privatics>`_ for security. The project is a fantastic
 tool to address difficult applications of machine learning in an academic
@@ -106,7 +139,7 @@ development, it is an essential part of our toolkit. Recent uses are included
 in `digg’s new video recommender system
 <https://medium.com/i-data/the-digg-video-recommender-2f9ade7c4ba3>`_,
 and Poncho’s `dynamic heuristic subspace clustering
-<https://medium.com/@DiggData/scaling-poncho-using-data-ca24569d56fd>`_. 
+<https://medium.com/@DiggData/scaling-poncho-using-data-ca24569d56fd>`_.
 
 .. raw:: html
 
@@ -120,7 +153,7 @@ Gilad Lotan, Chief Data Scientist
 
 
 `Hugging Face <https://huggingface.co>`_
-------------------------------------
+----------------------------------------
 
 .. raw:: html
 
@@ -136,7 +169,7 @@ Gilad Lotan, Chief Data Scientist
 
 At Hugging Face we're using NLP and probabilistic models to generate
 conversational Artificial intelligences that are fun to chat with. Despite using
-deep neural nets for `a few <https://medium.com/huggingface/understanding-emotions-from-keras-to-pytorch-3ccb61d5a983>`_ 
+deep neural nets for `a few <https://medium.com/huggingface/understanding-emotions-from-keras-to-pytorch-3ccb61d5a983>`_
 of our `NLP tasks <https://huggingface.co/coref/>`_, scikit-learn is still the bread-and-butter of
 our daily machine learning routine. The ease of use and predictability of the
 interface, as well as the straightforward mathematical explanations that are
@@ -188,7 +221,7 @@ Mark Ayzenshtat, VP, Augmented Intelligence
 
    </span>
 
-`Télécom ParisTech <http://www.telecom-paristech.fr>`_
+`Télécom ParisTech <https://www.telecom-paristech.fr/>`_
 --------------------------------------------------------
 
 .. raw:: html
@@ -197,7 +230,7 @@ Mark Ayzenshtat, VP, Augmented Intelligence
 
 .. image:: images/telecomparistech.jpg
     :width: 120pt
-    :target: https://www.telecom-paristech.fr
+    :target: https://www.telecom-paristech.fr/
 
 .. raw:: html
 
@@ -221,15 +254,15 @@ Alexandre Gramfort, Assistant Professor
    </span>
 
 
-`Booking.com <http://booking.com>`_
--------------------------------------
+`Booking.com <https://www.booking.com>`_
+-----------------------------------------
 .. raw:: html
 
   <div class="logo">
 
 .. image:: images/booking.png
     :width: 120pt
-    :target: http://www.booking.com
+    :target: https://www.booking.com
 
 .. raw:: html
 
@@ -256,7 +289,7 @@ Melanie Mueller, Data Scientist
 
    </span>
 
-`AWeber <http://www.aweber.com>`_
+`AWeber <https://www.aweber.com/>`_
 ------------------------------------------
 
 .. raw:: html
@@ -265,7 +298,7 @@ Melanie Mueller, Data Scientist
 
 .. image:: images/aweber.png
     :width: 120pt
-    :target: http://www.aweber.com
+    :target: https://www.aweber.com/
 
 .. raw:: html
 
@@ -460,7 +493,7 @@ Vijay Ramesh, Software Engineer in Data/science at Change.org
 
    </span>
 
-`PHIMECA Engineering <http://www.phimeca.com/?lang=en>`_
+`PHIMECA Engineering <https://www.phimeca.com/?lang=en>`_
 ----------------------------------------------------------
 
 .. raw:: html
@@ -469,7 +502,7 @@ Vijay Ramesh, Software Engineer in Data/science at Change.org
 
 .. image:: images/phimeca.png
     :width: 120pt
-    :target: http://www.phimeca.com/?lang=en
+    :target: https://www.phimeca.com/?lang=en
 
 .. raw:: html
 
@@ -624,7 +657,7 @@ David Koh - Senior Data Scientist at OkCupid
 .. raw:: html
 
    </span>
-   
+
 
 `Lovely <https://livelovely.com/>`_
 -----------------------------------
@@ -694,8 +727,8 @@ Guillaume Lebourgeois & Samuel Charron - Data Scientists at Data Publica
 
 
 
-`Machinalis <http://www.machinalis.com>`_
------------------------------------------
+`Machinalis <https://www.machinalis.com/>`_
+-------------------------------------------
 
 .. raw:: html
 
@@ -703,7 +736,7 @@ Guillaume Lebourgeois & Samuel Charron - Data Scientists at Data Publica
 
 .. image:: images/machinalis.png
     :width: 120pt
-    :target: http://www.machinalis.com
+    :target: https://www.machinalis.com/
 
 .. raw:: html
 
@@ -728,7 +761,7 @@ Scikit-learn in one word: Awesome.
 Rafael Carrascosa, Lead developer
 
 
-`solido <http://www.solidodesign.com/>`_
+`solido <https://www.solidodesign.com/>`_
 -----------------------------------------
 
 .. raw:: html
@@ -737,7 +770,7 @@ Rafael Carrascosa, Lead developer
 
 .. image:: images/solido_logo.png
     :width: 120pt
-    :target: http://www.solidodesign.com
+    :target: https://www.solidodesign.com/
 
 .. raw:: html
 
@@ -775,7 +808,7 @@ Trent McConaghy, founder, Solido Design Automation Inc.
 
 .. image:: images/infonea.jpg
     :width: 120pt
-    :target: http://www.infonea.com/en
+    :target: http://www.infonea.com/en/
 
 .. raw:: html
 
@@ -800,7 +833,7 @@ Thorsten Kranz, Data Scientist, Coma Soft AG.
   </span>
 
 
-`Dataiku <http://www.dataiku.com/>`_
+`Dataiku <https://www.dataiku.com/>`_
 -----------------------------------------
 
 .. raw:: html
@@ -809,19 +842,19 @@ Thorsten Kranz, Data Scientist, Coma Soft AG.
 
 .. image:: images/dataiku_logo.png
     :width: 120pt
-    :target: http://www.dataiku.com
+    :target: https://www.dataiku.com/
 
 .. raw:: html
 
    </div>
 
-Our software, Data Science Studio (DSS), enables users to create data services 
-that combine `ETL <https://en.wikipedia.org/wiki/Extract,_transform,_load>`_ with 
-Machine Learning. Our Machine Learning module integrates 
-many scikit-learn algorithms. The scikit-learn library is a perfect integration 
-with DSS because it offers algorithms for virtually all business cases. Our goal 
-is to offer a transparent and flexible tool that makes it easier to optimize 
-time consuming aspects of building a data service, preparing data, and training 
+Our software, Data Science Studio (DSS), enables users to create data services
+that combine `ETL <https://en.wikipedia.org/wiki/Extract,_transform,_load>`_ with
+Machine Learning. Our Machine Learning module integrates
+many scikit-learn algorithms. The scikit-learn library is a perfect integration
+with DSS because it offers algorithms for virtually all business cases. Our goal
+is to offer a transparent and flexible tool that makes it easier to optimize
+time consuming aspects of building a data service, preparing data, and training
 machine learning algorithms on all types of data.
 
 
@@ -886,10 +919,10 @@ Christian Rammig, Head of Data Science, Otto Group
 
 
 At Zopa, the first ever Peer-to-Peer lending platform, we extensively use scikit-learn
-to run the business and optimize our users' experience. It powers our 
-Machine Learning models involved in credit risk, fraud risk, marketing, and pricing, 
+to run the business and optimize our users' experience. It powers our
+Machine Learning models involved in credit risk, fraud risk, marketing, and pricing,
 and has been used for originating at least 1 billion GBP worth of Zopa loans.
-It is very well documented, powerful, and simple to use. We are grateful for the 
+It is very well documented, powerful, and simple to use. We are grateful for the
 capabilities it has provided, and for allowing us to deliver on our mission of making
 money simple and fair.
 
@@ -902,4 +935,37 @@ Vlasios Vasileiou, Head of Data Science, Zopa
 .. raw:: html
 
   </span>
+
+`MARS <https://www.mars.com/global>`_
+--------------------------------------
+
+.. raw:: html
+
+    <div class="logo">
+
+.. image:: images/mars.png
+    :width: 120pt
+    :target: https://www.mars.com/global
+
+.. raw:: html
+
+    </div>
+
+Scikit-Learn is integral to the Machine Learning Ecosystem at Mars. Whether
+we're designing better recipes for petfood or closely analysing our cocoa
+supply chain, Scikit-Learn is used as a tool for rapidly prototyping ideas
+and taking them to production. This allows us to better understand and meet
+the needs of our consumers worldwide. Scikit-Learn's feature-rich toolset is
+easy to use and equips our associates with the capabilities they need to
+solve the business challenges they face every day.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Michael Fitzke Next Generation Technologies Sr Leader, Mars Inc.
+
+.. raw:: html
+
+   </span>
 

@@ -3,21 +3,19 @@
 # Uses the pool adjacent violators algorithm (PAVA), with the
 # enhancement of searching for the longest decreasing subsequence to
 # pool at each step.
+#
+# cython: boundscheck=False, wraparound=False, cdivision=True
 
 import numpy as np
 cimport numpy as np
 cimport cython
+from cython cimport floating
 
-ctypedef np.float64_t DOUBLE
 
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
-def _inplace_contiguous_isotonic_regression(DOUBLE[::1] y, DOUBLE[::1] w):
+def _inplace_contiguous_isotonic_regression(floating[::1] y, floating[::1] w):
     cdef:
         Py_ssize_t n = y.shape[0], i, k
-        DOUBLE prev_y, sum_wy, sum_w
+        floating prev_y, sum_wy, sum_w
         Py_ssize_t[::1] target = np.arange(n, dtype=np.intp)
 
     # target describes a list of blocks.  At any time, if [i..j] (inclusive) is
@@ -65,12 +63,9 @@ def _inplace_contiguous_isotonic_regression(DOUBLE[::1] y, DOUBLE[::1] w):
             i = k
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
-def _make_unique(np.ndarray[dtype=np.float64_t] X,
-                 np.ndarray[dtype=np.float64_t] y,
-                 np.ndarray[dtype=np.float64_t] sample_weights):
+def _make_unique(np.ndarray[dtype=floating] X,
+                 np.ndarray[dtype=floating] y,
+                 np.ndarray[dtype=floating] sample_weights):
     """Average targets for duplicate X, drop duplicates.
 
     Aggregates duplicate X values into a single X value where
@@ -82,18 +77,20 @@ def _make_unique(np.ndarray[dtype=np.float64_t] X,
     unique_values = len(np.unique(X))
     if unique_values == len(X):
         return X, y, sample_weights
-    cdef np.ndarray[dtype=np.float64_t] y_out = np.empty(unique_values)
-    cdef np.ndarray[dtype=np.float64_t] x_out = np.empty(unique_values)
-    cdef np.ndarray[dtype=np.float64_t] weights_out = np.empty(unique_values)
 
-    cdef np.float64_t current_x = X[0]
-    cdef np.float64_t current_y = 0
-    cdef np.float64_t current_weight = 0
-    cdef np.float64_t y_old = 0
+    cdef np.ndarray[dtype=floating] y_out = np.empty(unique_values,
+                                                     dtype=X.dtype)
+    cdef np.ndarray[dtype=floating] x_out = np.empty_like(y_out)
+    cdef np.ndarray[dtype=floating] weights_out = np.empty_like(y_out)
+
+    cdef floating current_x = X[0]
+    cdef floating current_y = 0
+    cdef floating current_weight = 0
+    cdef floating y_old = 0
     cdef int i = 0
     cdef int current_count = 0
     cdef int j
-    cdef np.float64_t x
+    cdef floating x
     cdef int n_samples = len(X)
     for j in range(n_samples):
         x = X[j]
