@@ -305,7 +305,7 @@ class RequiresPositiveYRegressor(LinearRegression):
 
     def _get_tags(self):
         tags = super()._get_tags()
-        tags.update("requires_positive_y": True)
+        tags.update({"requires_positive_y": True})
         return tags
 
 
