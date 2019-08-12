@@ -869,7 +869,7 @@ class RandomForestClassifier(ForestClassifier):
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel.
-        `fit`, `predict`, ``decision_path`` and ``apply`` are all
+        `fit`, `predict`, `decision_path` and `apply` are all
         parallelized over the trees.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -1160,7 +1160,7 @@ class RandomForestRegressor(ForestRegressor):
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel.
-        `fit`, `predict`, ``decision_path`` and ``apply`` are all
+        `fit`, `predict`, `decision_path` and `apply` are all
         parallelized over the trees.
         `None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -1411,7 +1411,7 @@ class ExtraTreesClassifier(ForestClassifier):
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel.
-        `fit`, `predict`, ``decision_path`` and ``apply`` are all
+        `fit`, `predict`, `decision_path` and `apply` are all
         parallelized over the trees.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -1678,7 +1678,7 @@ class ExtraTreesRegressor(ForestRegressor):
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel.
-        `fit`, `predict`, ``decision_path`` and ``apply`` are all
+        `fit`, `predict`, `decision_path` and `apply` are all
         parallelized over the trees.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -1883,8 +1883,8 @@ class RandomTreesEmbedding(BaseForest):
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel.
-        Trees are built in parallel during `fit`. During `transform`, the leaf
-        indices computation is also parallelized over trees.
+        `fit`, `transform`, `decision_path` and `apply` are all
+        parallelized over the trees.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
