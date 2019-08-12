@@ -90,8 +90,6 @@ matrix as a binary prediction (micro-averaging).
              :func:`sklearn.metrics.precision_score`,
              :func:`sklearn.metrics.f1_score`
 """
-from __future__ import print_function
-
 ###############################################################################
 # In binary classification settings
 # --------------------------------------------------------
@@ -137,7 +135,7 @@ print('Average precision-recall score: {0:0.2f}'.format(
 # ................................
 from sklearn.metrics import precision_recall_curve
 import matplotlib.pyplot as plt
-from sklearn.utils.fixes import signature
+from inspect import signature
 
 precision, recall, _ = precision_recall_curve(y_test, y_score)
 

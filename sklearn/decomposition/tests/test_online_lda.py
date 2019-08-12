@@ -12,16 +12,13 @@ from sklearn.decomposition._online_lda import (_dirichlet_expectation_1d,
                                                _dirichlet_expectation_2d)
 
 from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import if_safe_multiprocessing_with_blas
 
 from sklearn.exceptions import NotFittedError
-from sklearn.externals.six.moves import xrange
-from sklearn.externals.six import StringIO
+from io import StringIO
 
 
 def _build_sparse_mtx():
@@ -90,7 +87,7 @@ def test_lda_partial_fit():
     lda = LatentDirichletAllocation(n_components=n_components,
                                     learning_offset=10., total_samples=100,
                                     random_state=rng)
-    for i in xrange(3):
+    for i in range(3):
         lda.partial_fit(X)
 
     correct_idx_grps = [(0, 1, 2), (3, 4, 5), (6, 7, 8)]
@@ -181,12 +178,12 @@ def test_lda_negative_input():
 
 
 def test_lda_no_component_error():
-    # test `transform` and `perplexity` before `fit`
+    # test `perplexity` before `fit`
     rng = np.random.RandomState(0)
     X = rng.randint(4, size=(20, 10))
     lda = LatentDirichletAllocation()
-    regex = r"^no 'components_' attribute"
-    assert_raises_regexp(NotFittedError, regex, lda.transform, X)
+    regex = ("This LatentDirichletAllocation instance is not fitted yet. "
+             "Call 'fit' with appropriate arguments before using this method.")
     assert_raises_regexp(NotFittedError, regex, lda.perplexity, X)
 
 
@@ -275,11 +272,11 @@ def test_lda_perplexity(method):
 
     lda_2.fit(X)
     perp_2 = lda_2.perplexity(X, sub_sampling=False)
-    assert_greater_equal(perp_1, perp_2)
+    assert perp_1 >= perp_2
 
     perp_1_subsampling = lda_1.perplexity(X, sub_sampling=True)
     perp_2_subsampling = lda_2.perplexity(X, sub_sampling=True)
-    assert_greater_equal(perp_1_subsampling, perp_2_subsampling)
+    assert perp_1_subsampling >= perp_2_subsampling
 
 
 @pytest.mark.parametrize('method', ('online', 'batch'))
@@ -298,7 +295,7 @@ def test_lda_score(method):
 
     lda_2.fit_transform(X)
     score_2 = lda_2.score(X)
-    assert_greater_equal(score_2, score_1)
+    assert score_2 >= score_1
 
 
 def test_perplexity_input_format():
@@ -385,8 +382,8 @@ def check_verbosity(verbose, evaluate_every, expected_lines,
 
     n_lines = out.getvalue().count('\n')
     n_perplexity = out.getvalue().count('perplexity')
-    assert_equal(expected_lines, n_lines)
-    assert_equal(expected_perplexities, n_perplexity)
+    assert expected_lines == n_lines
+    assert expected_perplexities == n_perplexity
 
 
 @pytest.mark.parametrize(

@@ -17,6 +17,7 @@ import numpy as np
 from scipy.spatial import distance
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
+from joblib import Parallel, delayed, effective_n_jobs
 
 from ..utils.validation import _num_samples
 from ..utils.validation import check_non_negative
@@ -25,11 +26,9 @@ from ..utils import gen_even_slices
 from ..utils import gen_batches, get_chunk_n_rows
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..preprocessing import normalize
-from ..utils._joblib import Parallel
-from ..utils._joblib import delayed
-from ..utils._joblib import effective_n_jobs
 
 from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
+from ..exceptions import DataConversionWarning
 
 
 # Utility Functions
@@ -99,19 +98,18 @@ def check_pairwise_arrays(X, Y, precomputed=False, dtype=None):
     """
     X, Y, dtype_float = _return_float_dtype(X, Y)
 
-    warn_on_dtype = dtype is not None
     estimator = 'check_pairwise_arrays'
     if dtype is None:
         dtype = dtype_float
 
     if Y is X or Y is None:
         X = Y = check_array(X, accept_sparse='csr', dtype=dtype,
-                            warn_on_dtype=warn_on_dtype, estimator=estimator)
+                            estimator=estimator)
     else:
         X = check_array(X, accept_sparse='csr', dtype=dtype,
-                        warn_on_dtype=warn_on_dtype, estimator=estimator)
+                        estimator=estimator)
         Y = check_array(Y, accept_sparse='csr', dtype=dtype,
-                        warn_on_dtype=warn_on_dtype, estimator=estimator)
+                        estimator=estimator)
 
     if precomputed:
         if X.shape[1] != Y.shape[0]:
@@ -193,6 +191,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     Y_norm_squared : array-like, shape (n_samples_2, ), optional
         Pre-computed dot-products of vectors in Y (e.g.,
         ``(Y**2).sum(axis=1)``)
+        May be ignored in some cases, see the note below.
 
     squared : boolean, optional
         Return squared Euclidean distances.
@@ -200,10 +199,16 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     X_norm_squared : array-like, shape = [n_samples_1], optional
         Pre-computed dot-products of vectors in X (e.g.,
         ``(X**2).sum(axis=1)``)
+        May be ignored in some cases, see the note below.
+
+    Notes
+    -----
+    To achieve better accuracy, `X_norm_squared` and `Y_norm_squared` may be
+    unused if they are passed as ``float32``.
 
     Returns
     -------
-    distances : {array, sparse matrix}, shape (n_samples_1, n_samples_2)
+    distances : array, shape (n_samples_1, n_samples_2)
 
     Examples
     --------
@@ -224,6 +229,9 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     """
     X, Y = check_pairwise_arrays(X, Y)
 
+    # If norms are passed as float32, they are unused. If arrays are passed as
+    # float32, norms needs to be recomputed on upcast chunks.
+    # TODO: use a float64 accumulator in row_norms to avoid the latter.
     if X_norm_squared is not None:
         XX = check_array(X_norm_squared)
         if XX.shape == (1, X.shape[0]):
@@ -231,10 +239,15 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
         elif XX.shape != (X.shape[0], 1):
             raise ValueError(
                 "Incompatible dimensions for X and X_norm_squared")
+        if XX.dtype == np.float32:
+            XX = None
+    elif X.dtype == np.float32:
+        XX = None
     else:
         XX = row_norms(X, squared=True)[:, np.newaxis]
 
-    if X is Y:  # shortcut in the common case euclidean_distances(X, X)
+    if X is Y and XX is not None:
+        # shortcut in the common case euclidean_distances(X, X)
         YY = XX.T
     elif Y_norm_squared is not None:
         YY = np.atleast_2d(Y_norm_squared)
@@ -242,21 +255,99 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
         if YY.shape != (1, Y.shape[0]):
             raise ValueError(
                 "Incompatible dimensions for Y and Y_norm_squared")
+        if YY.dtype == np.float32:
+            YY = None
+    elif Y.dtype == np.float32:
+        YY = None
     else:
         YY = row_norms(Y, squared=True)[np.newaxis, :]
 
-    distances = safe_sparse_dot(X, Y.T, dense_output=True)
-    distances *= -2
-    distances += XX
-    distances += YY
+    if X.dtype == np.float32:
+        # To minimize precision issues with float32, we compute the distance
+        # matrix on chunks of X and Y upcast to float64
+        distances = _euclidean_distances_upcast(X, XX, Y, YY)
+    else:
+        # if dtype is already float64, no need to chunk and upcast
+        distances = - 2 * safe_sparse_dot(X, Y.T, dense_output=True)
+        distances += XX
+        distances += YY
     np.maximum(distances, 0, out=distances)
 
+    # Ensure that distances between vectors and themselves are set to 0.0.
+    # This may not be the case due to floating point rounding errors.
     if X is Y:
-        # Ensure that distances between vectors and themselves are set to 0.0.
-        # This may not be the case due to floating point rounding errors.
-        distances.flat[::distances.shape[0] + 1] = 0.0
+        np.fill_diagonal(distances, 0)
 
     return distances if squared else np.sqrt(distances, out=distances)
+
+
+def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None, batch_size=None):
+    """Euclidean distances between X and Y
+
+    Assumes X and Y have float32 dtype.
+    Assumes XX and YY have float64 dtype or are None.
+
+    X and Y are upcast to float64 by chunks, which size is chosen to limit
+    memory increase by approximately 10% (at least 10MiB).
+    """
+    n_samples_X = X.shape[0]
+    n_samples_Y = Y.shape[0]
+    n_features = X.shape[1]
+
+    distances = np.empty((n_samples_X, n_samples_Y), dtype=np.float32)
+
+    if batch_size is None:
+        x_density = X.nnz / np.prod(X.shape) if issparse(X) else 1
+        y_density = Y.nnz / np.prod(Y.shape) if issparse(Y) else 1
+
+        # Allow 10% more memory than X, Y and the distance matrix take (at
+        # least 10MiB)
+        maxmem = max(
+            ((x_density * n_samples_X + y_density * n_samples_Y) * n_features
+             + (x_density * n_samples_X * y_density * n_samples_Y)) / 10,
+            10 * 2 ** 17)
+
+        # The increase amount of memory in 8-byte blocks is:
+        # - x_density * batch_size * n_features (copy of chunk of X)
+        # - y_density * batch_size * n_features (copy of chunk of Y)
+        # - batch_size * batch_size (chunk of distance matrix)
+        # Hence x² + (xd+yd)kx = M, where x=batch_size, k=n_features, M=maxmem
+        #                                 xd=x_density and yd=y_density
+        tmp = (x_density + y_density) * n_features
+        batch_size = (-tmp + np.sqrt(tmp ** 2 + 4 * maxmem)) / 2
+        batch_size = max(int(batch_size), 1)
+
+    x_batches = gen_batches(n_samples_X, batch_size)
+
+    for i, x_slice in enumerate(x_batches):
+        X_chunk = X[x_slice].astype(np.float64)
+        if XX is None:
+            XX_chunk = row_norms(X_chunk, squared=True)[:, np.newaxis]
+        else:
+            XX_chunk = XX[x_slice]
+
+        y_batches = gen_batches(n_samples_Y, batch_size)
+
+        for j, y_slice in enumerate(y_batches):
+            if X is Y and j < i:
+                # when X is Y the distance matrix is symmetric so we only need
+                # to compute half of it.
+                d = distances[y_slice, x_slice].T
+
+            else:
+                Y_chunk = Y[y_slice].astype(np.float64)
+                if YY is None:
+                    YY_chunk = row_norms(Y_chunk, squared=True)[np.newaxis, :]
+                else:
+                    YY_chunk = YY[:, y_slice]
+
+                d = -2 * safe_sparse_dot(X_chunk, Y_chunk.T, dense_output=True)
+                d += XX_chunk
+                d += YY_chunk
+
+            distances[x_slice, y_slice] = d.astype(np.float32, copy=False)
+
+    return distances
 
 
 def _argmin_min_reduce(dist, start):
@@ -266,7 +357,7 @@ def _argmin_min_reduce(dist, start):
 
 
 def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
-                                  batch_size=None, metric_kwargs=None):
+                                  metric_kwargs=None):
     """Compute minimum distances between one point and a set of points.
 
     This function computes for each row in X, the index of the row of Y which
@@ -317,11 +408,6 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
-    batch_size : integer
-        .. deprecated:: 0.20
-            Deprecated for removal in 0.22.
-            Use sklearn.set_config(working_memory=...) instead.
-
     metric_kwargs : dict, optional
         Keyword arguments to pass to specified metric function.
 
@@ -339,11 +425,6 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
     sklearn.metrics.pairwise_distances
     sklearn.metrics.pairwise_distances_argmin
     """
-    if batch_size is not None:
-        warnings.warn("'batch_size' is ignored. It was deprecated in version "
-                      "0.20 and will be removed in version 0.22. "
-                      "Use sklearn.set_config(working_memory=...) instead.",
-                      DeprecationWarning)
     X, Y = check_pairwise_arrays(X, Y)
 
     if metric_kwargs is None:
@@ -362,7 +443,7 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
 
 
 def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
-                              batch_size=None, metric_kwargs=None):
+                              metric_kwargs=None):
     """Compute minimum distances between one point and a set of points.
 
     This function computes for each row in X, the index of the row of Y which
@@ -415,11 +496,6 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
-    batch_size : integer
-        .. deprecated:: 0.20
-            Deprecated for removal in 0.22.
-            Use sklearn.set_config(working_memory=...) instead.
-
     metric_kwargs : dict
         keyword arguments to pass to specified metric function.
 
@@ -437,8 +513,55 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
         metric_kwargs = {}
 
     return pairwise_distances_argmin_min(X, Y, axis, metric,
-                                         metric_kwargs=metric_kwargs,
-                                         batch_size=batch_size)[0]
+                                         metric_kwargs=metric_kwargs)[0]
+
+
+def haversine_distances(X, Y=None):
+    """Compute the Haversine distance between samples in X and Y
+
+    The Haversine (or great circle) distance is the angular distance between
+    two points on the surface of a sphere. The first distance of each point is
+    assumed to be the latitude, the second is the longitude, given in radians.
+    The dimension of the data must be 2.
+
+    .. math::
+       D(x, y) = 2\\arcsin[\\sqrt{\\sin^2((x1 - y1) / 2)
+                                + \\cos(x1)\\cos(y1)\\sin^2((x2 - y2) / 2)}]
+
+    Parameters
+    ----------
+    X : array_like, shape (n_samples_1, 2)
+
+    Y : array_like, shape (n_samples_2, 2), optional
+
+    Returns
+    -------
+    distance : {array}, shape (n_samples_1, n_samples_2)
+
+    Notes
+    -----
+    As the Earth is nearly spherical, the haversine formula provides a good
+    approximation of the distance between two points of the Earth surface, with
+    a less than 1% error on average.
+
+    Examples
+    --------
+    We want to calculate the distance between the Ezeiza Airport
+    (Buenos Aires, Argentina) and the Charles de Gaulle Airport (Paris, France)
+
+    >>> from sklearn.metrics.pairwise import haversine_distances
+    >>> from math import radians
+    >>> bsas = [-34.83333, -58.5166646]
+    >>> paris = [49.0083899664, 2.53844117956]
+    >>> bsas_in_radians = [radians(_) for _ in bsas]
+    >>> paris_in_radians = [radians(_) for _ in paris]
+    >>> result = haversine_distances([bsas_in_radians, paris_in_radians])
+    >>> result * 6371000/1000  # multiply by Earth radius to get kilometers
+    array([[    0.        , 11099.54035582],
+           [11099.54035582,     0.        ]])
+    """
+    from sklearn.neighbors import DistanceMetric
+    return DistanceMetric.get_metric('haversine').pairwise(X, Y)
 
 
 def manhattan_distances(X, Y=None, sum_over_features=True):
@@ -474,20 +597,20 @@ def manhattan_distances(X, Y=None, sum_over_features=True):
     Examples
     --------
     >>> from sklearn.metrics.pairwise import manhattan_distances
-    >>> manhattan_distances([[3]], [[3]])#doctest:+ELLIPSIS
+    >>> manhattan_distances([[3]], [[3]])
     array([[0.]])
-    >>> manhattan_distances([[3]], [[2]])#doctest:+ELLIPSIS
+    >>> manhattan_distances([[3]], [[2]])
     array([[1.]])
-    >>> manhattan_distances([[2]], [[3]])#doctest:+ELLIPSIS
+    >>> manhattan_distances([[2]], [[3]])
     array([[1.]])
     >>> manhattan_distances([[1, 2], [3, 4]],\
-         [[1, 2], [0, 3]])#doctest:+ELLIPSIS
+         [[1, 2], [0, 3]])
     array([[0., 2.],
            [4., 4.]])
     >>> import numpy as np
     >>> X = np.ones((1, 2))
     >>> y = np.full((2, 2), 2.)
-    >>> manhattan_distances(X, y, sum_over_features=False)#doctest:+ELLIPSIS
+    >>> manhattan_distances(X, y, sum_over_features=False)
     array([[1., 1.],
            [1., 1.]])
     """
@@ -537,7 +660,7 @@ def cosine_distances(X, Y=None):
     See also
     --------
     sklearn.metrics.pairwise.cosine_similarity
-    scipy.spatial.distance.cosine (dense matrices only)
+    scipy.spatial.distance.cosine : dense matrices only
     """
     # 1.0 - cosine_similarity(X, Y) without copy
     S = cosine_similarity(X, Y)
@@ -613,7 +736,7 @@ def paired_cosine_distances(X, Y):
     distances : ndarray, shape (n_samples, )
 
     Notes
-    ------
+    -----
     The cosine distance is equivalent to the half the squared
     euclidean distance if each sample is normalized to unit norm
     """
@@ -780,7 +903,7 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     K = safe_sparse_dot(X, Y.T, dense_output=True)
     K *= gamma
     K += coef0
-    np.tanh(K, K)   # compute tanh in-place
+    np.tanh(K, K)  # compute tanh in-place
     return K
 
 
@@ -813,7 +936,7 @@ def rbf_kernel(X, Y=None, gamma=None):
 
     K = euclidean_distances(X, Y, squared=True)
     K *= -gamma
-    np.exp(K, K)    # exponentiate K in-place
+    np.exp(K, K)  # exponentiate K in-place
     return K
 
 
@@ -847,7 +970,7 @@ def laplacian_kernel(X, Y=None, gamma=None):
         gamma = 1.0 / X.shape[1]
 
     K = -gamma * manhattan_distances(X, Y)
-    np.exp(K, K)    # exponentiate K in-place
+    np.exp(K, K)  # exponentiate K in-place
     return K
 
 
@@ -1016,6 +1139,7 @@ PAIRWISE_DISTANCE_FUNCTIONS = {
     'cityblock': manhattan_distances,
     'cosine': cosine_distances,
     'euclidean': euclidean_distances,
+    'haversine': haversine_distances,
     'l2': euclidean_distances,
     'l1': manhattan_distances,
     'manhattan': manhattan_distances,
@@ -1032,21 +1156,27 @@ def distance_metrics():
 
     The valid distance metrics, and the function they map to, are:
 
-    ============     ====================================
-    metric           Function
-    ============     ====================================
-    'cityblock'      metrics.pairwise.manhattan_distances
-    'cosine'         metrics.pairwise.cosine_distances
-    'euclidean'      metrics.pairwise.euclidean_distances
-    'l1'             metrics.pairwise.manhattan_distances
-    'l2'             metrics.pairwise.euclidean_distances
-    'manhattan'      metrics.pairwise.manhattan_distances
-    ============     ====================================
+    ============   ====================================
+    metric         Function
+    ============   ====================================
+    'cityblock'    metrics.pairwise.manhattan_distances
+    'cosine'       metrics.pairwise.cosine_distances
+    'euclidean'    metrics.pairwise.euclidean_distances
+    'haversine'    metrics.pairwise.haversine_distances
+    'l1'           metrics.pairwise.manhattan_distances
+    'l2'           metrics.pairwise.euclidean_distances
+    'manhattan'    metrics.pairwise.manhattan_distances
+    ============   ====================================
 
     Read more in the :ref:`User Guide <metrics>`.
 
     """
     return PAIRWISE_DISTANCE_FUNCTIONS
+
+
+def _dist_wrapper(dist_func, dist_matrix, slice_, *args, **kwargs):
+    """Write in-place to a slice of a distance matrix"""
+    dist_matrix[:, slice_] = dist_func(*args, **kwargs)
 
 
 def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
@@ -1055,17 +1185,24 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
 
     if Y is None:
         Y = X
+    X, Y, dtype = _return_float_dtype(X, Y)
 
     if effective_n_jobs(n_jobs) == 1:
         return func(X, Y, **kwds)
 
-    # TODO: in some cases, backend='threading' may be appropriate
-    fd = delayed(func)
-    ret = Parallel(n_jobs=n_jobs, verbose=0)(
-        fd(X, Y[s], **kwds)
+    # enforce a threading backend to prevent data communication overhead
+    fd = delayed(_dist_wrapper)
+    ret = np.empty((X.shape[0], Y.shape[0]), dtype=dtype, order='F')
+    Parallel(backend="threading", n_jobs=n_jobs)(
+        fd(func, ret, s, X, Y[s], **kwds)
         for s in gen_even_slices(_num_samples(Y), effective_n_jobs(n_jobs)))
 
-    return np.hstack(ret)
+    if (X is Y or Y is None) and func is euclidean_distances:
+        # zeroing diagonal for euclidean norm.
+        # TODO: do it also for other norms.
+        np.fill_diagonal(ret, 0)
+
+    return ret
 
 
 def _pairwise_callable(X, Y, metric, **kwds):
@@ -1105,7 +1242,8 @@ _VALID_METRICS = ['euclidean', 'l2', 'l1', 'manhattan', 'cityblock',
                   'cosine', 'dice', 'hamming', 'jaccard', 'kulsinski',
                   'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto',
                   'russellrao', 'seuclidean', 'sokalmichener',
-                  'sokalsneath', 'sqeuclidean', 'yule', "wminkowski"]
+                  'sokalsneath', 'sqeuclidean', 'yule', 'wminkowski',
+                  'haversine']
 
 
 def _check_chunk_size(reduced, chunk_size):
@@ -1120,13 +1258,29 @@ def _check_chunk_size(reduced, chunk_size):
                         'Expected sequence(s) of length %d.' %
                         (reduced if is_tuple else reduced[0], chunk_size))
     if any(_num_samples(r) != chunk_size for r in reduced):
-        # XXX: we use int(_num_samples...) because sometimes _num_samples
-        #      returns a long in Python 2, even for small numbers.
-        actual_size = tuple(int(_num_samples(r)) for r in reduced)
+        actual_size = tuple(_num_samples(r) for r in reduced)
         raise ValueError('reduce_func returned object of length %s. '
                          'Expected same length as input: %d.' %
                          (actual_size if is_tuple else actual_size[0],
                           chunk_size))
+
+
+def _precompute_metric_params(X, Y, metric=None, **kwds):
+    """Precompute data-derived metric parameters if not provided
+    """
+    if metric == "seuclidean" and 'V' not in kwds:
+        if X is Y:
+            V = np.var(X, axis=0, ddof=1)
+        else:
+            V = np.var(np.vstack([X, Y]), axis=0, ddof=1)
+        return {'V': V}
+    if metric == "mahalanobis" and 'VI' not in kwds:
+        if X is Y:
+            VI = np.linalg.inv(np.cov(X.T)).T
+        else:
+            VI = np.linalg.inv(np.cov(np.vstack([X, Y]).T)).T
+        return {'VI': VI}
+    return {}
 
 
 def pairwise_distances_chunked(X, Y=None, reduce_func=None,
@@ -1201,9 +1355,11 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
     --------
     Without reduce_func:
 
+    >>> import numpy as np
+    >>> from sklearn.metrics import pairwise_distances_chunked
     >>> X = np.random.RandomState(0).rand(5, 3)
     >>> D_chunk = next(pairwise_distances_chunked(X))
-    >>> D_chunk  # doctest: +ELLIPSIS
+    >>> D_chunk
     array([[0.  ..., 0.29..., 0.41..., 0.19..., 0.57...],
            [0.29..., 0.  ..., 0.57..., 0.41..., 0.76...],
            [0.41..., 0.57..., 0.  ..., 0.44..., 0.90...],
@@ -1221,7 +1377,7 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
     >>> neigh, avg_dist = next(gen)
     >>> neigh
     [array([0, 3]), array([1]), array([2]), array([0, 3]), array([4])]
-    >>> avg_dist  # doctest: +ELLIPSIS
+    >>> avg_dist
     array([0.039..., 0.        , 0.        , 0.039..., 0.        ])
 
     Where r is defined per sample, we need to make use of ``start``:
@@ -1263,6 +1419,10 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
                                         max_n_rows=n_samples_X,
                                         working_memory=working_memory)
         slices = gen_batches(n_samples_X, chunk_n_rows)
+
+    # precompute data-derived metric params
+    params = _precompute_metric_params(X, Y, metric=metric, **kwds)
+    kwds.update(**params)
 
     for sl in slices:
         if sl.start == 0 and sl.stop == n_samples_X:
@@ -1393,7 +1553,17 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
                             " support sparse matrices.")
 
         dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else None
+
+        if (dtype == bool and
+                (X.dtype != bool or (Y is not None and Y.dtype != bool))):
+            msg = "Data was converted to boolean for metric %s" % metric
+            warnings.warn(msg, DataConversionWarning)
+
         X, Y = check_pairwise_arrays(X, Y, dtype=dtype)
+
+        # precompute data-derived metric params
+        params = _precompute_metric_params(X, Y, metric=metric, **kwds)
+        kwds.update(**params)
 
         if effective_n_jobs(n_jobs) == 1 and X is Y:
             return distance.squareform(distance.pdist(X, metric=metric,
@@ -1403,7 +1573,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
     return _parallel_pairwise(X, Y, func, n_jobs, **kwds)
 
 
-# These distances recquire boolean arrays, when using scipy.spatial.distance
+# These distances require boolean arrays, when using scipy.spatial.distance
 PAIRWISE_BOOLEAN_FUNCTIONS = [
     'dice',
     'jaccard',
@@ -1415,7 +1585,6 @@ PAIRWISE_BOOLEAN_FUNCTIONS = [
     'sokalsneath',
     'yule',
 ]
-
 
 # Helper functions - distance
 PAIRWISE_KERNEL_FUNCTIONS = {
@@ -1488,7 +1657,8 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
     kernel between the arrays from both X and Y.
 
     Valid values for metric are::
-        ['rbf', 'sigmoid', 'polynomial', 'poly', 'linear', 'cosine']
+        ['additive_chi2', 'chi2', 'linear', 'poly', 'polynomial', 'rbf',
+         'laplacian', 'sigmoid', 'cosine']
 
     Read more in the :ref:`User Guide <metrics>`.
 
@@ -1549,8 +1719,8 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
         func = metric.__call__
     elif metric in PAIRWISE_KERNEL_FUNCTIONS:
         if filter_params:
-            kwds = dict((k, kwds[k]) for k in kwds
-                        if k in KERNEL_PARAMS[metric])
+            kwds = {k: kwds[k] for k in kwds
+                    if k in KERNEL_PARAMS[metric]}
         func = PAIRWISE_KERNEL_FUNCTIONS[metric]
     elif callable(metric):
         func = partial(_pairwise_callable, metric=metric, **kwds)

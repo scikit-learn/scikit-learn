@@ -4,8 +4,6 @@
 # Modified by Thierry Guillemot <thierry.guillemot.work@gmail.com>
 # License: BSD 3 clause
 
-from __future__ import print_function
-
 import warnings
 from abc import ABCMeta, abstractmethod
 from time import time
@@ -15,7 +13,6 @@ import numpy as np
 from .. import cluster
 from ..base import BaseEstimator
 from ..base import DensityMixin
-from ..externals import six
 from ..exceptions import ConvergenceWarning
 from ..utils import check_array, check_random_state
 from ..utils.fixes import logsumexp
@@ -64,7 +61,7 @@ def _check_X(X, n_components=None, n_features=None, ensure_min_samples=1):
     return X
 
 
-class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
+class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for mixture models.
 
     This abstract class specifies an interface for all mixture classes and
@@ -260,11 +257,6 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
                 best_params = self._get_parameters()
                 best_n_iter = n_iter
 
-        # Always do a final e-step to guarantee that the labels returned by
-        # fit_predict(X) are always consistent with fit(X).predict(X)
-        # for any value of max_iter and tol (and any random_state).
-        _, log_resp = self._e_step(X)
-
         if not self.converged_:
             warnings.warn('Initialization %d did not converge. '
                           'Try different init parameters, '
@@ -275,6 +267,11 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         self._set_parameters(best_params)
         self.n_iter_ = best_n_iter
         self.lower_bound_ = max_lower_bound
+
+        # Always do a final e-step to guarantee that the labels returned by
+        # fit_predict(X) are always consistent with fit(X).predict(X)
+        # for any value of max_iter and tol (and any random_state).
+        _, log_resp = self._e_step(X)
 
         return log_resp.argmax(axis=1)
 

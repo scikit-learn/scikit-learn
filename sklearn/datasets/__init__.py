@@ -21,7 +21,6 @@ from .lfw import fetch_lfw_pairs
 from .lfw import fetch_lfw_people
 from .twenty_newsgroups import fetch_20newsgroups
 from .twenty_newsgroups import fetch_20newsgroups_vectorized
-from .mldata import fetch_mldata, mldata_filename
 from .openml import fetch_openml
 from .samples_generator import make_classification
 from .samples_generator import make_multilabel_classification
@@ -58,7 +57,6 @@ __all__ = ['clear_data_home',
            'fetch_20newsgroups_vectorized',
            'fetch_lfw_pairs',
            'fetch_lfw_people',
-           'fetch_mldata',
            'fetch_olivetti_faces',
            'fetch_species_distributions',
            'fetch_california_housing',
@@ -98,5 +96,4 @@ __all__ = ['clear_data_home',
            'make_sparse_spd_matrix',
            'make_sparse_uncorrelated',
            'make_spd_matrix',
-           'make_swiss_roll',
-           'mldata_filename']
+           'make_swiss_roll']

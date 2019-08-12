@@ -1,13 +1,16 @@
 # Author: Brian M. Clapper, G Varoquaux
 # License: BSD
 
+# TODO #0.23: Remove this test module as the methods being tested
+# have been replaced by SciPy methods
+
 import numpy as np
-
-# XXX we should be testing the public API here
-from sklearn.utils.linear_assignment_ import _hungarian
+import pytest
 
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_hungarian():
+    from sklearn.utils.linear_assignment_ import _hungarian
     matrices = [
         # Square
         ([[400, 150, 400],

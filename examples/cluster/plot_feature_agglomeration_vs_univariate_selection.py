@@ -63,7 +63,7 @@ y += noise_coef * noise  # add noise
 cv = KFold(2)  # cross-validation generator for model selection
 ridge = BayesianRidge()
 cachedir = tempfile.mkdtemp()
-mem = Memory(cachedir=cachedir, verbose=1)
+mem = Memory(location=cachedir, verbose=1)
 
 # Ward agglomeration followed by BayesianRidge
 connectivity = grid_to_graph(n_x=size, n_y=size)

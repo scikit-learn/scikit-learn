@@ -26,7 +26,6 @@ from scipy import linalg
 
 
 from ..base import BaseEstimator, TransformerMixin
-from ..externals.six.moves import xrange
 from ..utils import check_array, check_random_state
 from ..utils.extmath import fast_logdet, randomized_svd, squared_norm
 from ..utils.validation import check_is_fitted
@@ -50,7 +49,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
     FactorAnalysis performs a maximum likelihood estimate of the so-called
     `loading` matrix, the transformation of the latent variables to the
-    observed ones, using expectation-maximization (EM).
+    observed ones, using SVD based approach.
 
     Read more in the :ref:`User Guide <FA>`.
 
@@ -62,7 +61,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         If None, n_components is set to the number of features.
 
     tol : float
-        Stopping tolerance for EM algorithm.
+        Stopping tolerance for log-likelihood increase.
 
     copy : bool
         Whether to make a copy of X. If ``False``, the input X gets overwritten
@@ -108,6 +107,9 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
     n_iter_ : int
         Number of iterations run.
 
+    mean_ : array, shape (n_features,)
+        Per-feature empirical mean, estimated from the training set.
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits
@@ -152,7 +154,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         self.random_state = random_state
 
     def fit(self, X, y=None):
-        """Fit the FactorAnalysis model to X using EM
+        """Fit the FactorAnalysis model to X using SVD based approach
 
         Parameters
         ----------
@@ -211,7 +213,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
             raise ValueError('SVD method %s is not supported. Please consider'
                              ' the documentation' % self.svd_method)
 
-        for i in xrange(self.max_iter):
+        for i in range(self.max_iter):
             # SMALL helps numerics
             sqrt_psi = np.sqrt(psi) + SMALL
             s, V, unexp_var = my_svd(X / (sqrt_psi * nsqrt))

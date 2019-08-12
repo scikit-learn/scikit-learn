@@ -93,15 +93,18 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     metric_params : dict, optional (default=None)
         Additional keyword arguments for the metric function.
 
-    contamination : float in (0., 0.5), optional (default=0.1)
+    contamination : 'auto' or float, optional (default='auto')
         The amount of contamination of the data set, i.e. the proportion
         of outliers in the data set. When fitting this is used to define the
-        threshold on the decision function. If "auto", the decision function
-        threshold is determined as in the original paper.
+        threshold on the scores of the samples.
 
-        .. versionchanged:: 0.20
-           The default value of ``contamination`` will change from 0.1 in 0.20
-           to ``'auto'`` in 0.22.
+        - if 'auto', the threshold is determined as in the
+          original paper,
+        - if a float, the contamination should be in the range [0, 0.5].
+
+        .. versionchanged:: 0.22
+           The default value of ``contamination`` changed from 0.1
+           to ``'auto'``.
 
     novelty : boolean, default False
         By default, LocalOutlierFactor is only meant to be used for outlier
@@ -149,8 +152,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     """
     def __init__(self, n_neighbors=20, algorithm='auto', leaf_size=30,
                  metric='minkowski', p=2, metric_params=None,
-                 contamination="legacy", novelty=False, n_jobs=None):
-        super(LocalOutlierFactor, self).__init__(
+                 contamination="auto", novelty=False, n_jobs=None):
+        super().__init__(
             n_neighbors=n_neighbors,
             algorithm=algorithm,
             leaf_size=leaf_size, metric=metric, p=p,
@@ -229,21 +232,12 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         -------
         self : object
         """
-        if self.contamination == "legacy":
-            warnings.warn('default contamination parameter 0.1 will change '
-                          'in version 0.22 to "auto". This will change the '
-                          'predict method behavior.',
-                          FutureWarning)
-            self._contamination = 0.1
-        else:
-            self._contamination = self.contamination
-
-        if self._contamination != 'auto':
-            if not(0. < self._contamination <= .5):
+        if self.contamination != 'auto':
+            if not(0. < self.contamination <= .5):
                 raise ValueError("contamination must be in (0, 0.5], "
-                                 "got: %f" % self._contamination)
+                                 "got: %f" % self.contamination)
 
-        super(LocalOutlierFactor, self).fit(X)
+        super().fit(X)
 
         n_samples = self._fit_X.shape[0]
         if self.n_neighbors > n_samples:
@@ -265,12 +259,12 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
         self.negative_outlier_factor_ = -np.mean(lrd_ratios_array, axis=1)
 
-        if self._contamination == "auto":
+        if self.contamination == "auto":
             # inliers score around -1 (the higher, the less abnormal).
             self.offset_ = -1.5
         else:
             self.offset_ = np.percentile(self.negative_outlier_factor_,
-                                         100. * self._contamination)
+                                         100. * self.contamination)
 
         return self
 
@@ -401,7 +395,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     def score_samples(self):
         """Opposite of the Local Outlier Factor of X.
 
-        It is the opposite as as bigger is better, i.e. large values correspond
+        It is the opposite as bigger is better, i.e. large values correspond
         to inliers.
 
         Only available for novelty detection (when novelty is set to True).
@@ -437,7 +431,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     def _score_samples(self, X):
         """Opposite of the Local Outlier Factor of X.
 
-        It is the opposite as as bigger is better, i.e. large values correspond
+        It is the opposite as bigger is better, i.e. large values correspond
         to inliers.
 
         Only available for novelty detection (when novelty is set to True).
@@ -500,5 +494,5 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
                                         self.n_neighbors_ - 1]
         reach_dist_array = np.maximum(distances_X, dist_k)
 
-        #  1e-10 to avoid `nan' when nb of duplicates > n_neighbors_:
+        # 1e-10 to avoid `nan' when nb of duplicates > n_neighbors_:
         return 1. / (np.mean(reach_dist_array, axis=1) + 1e-10)
