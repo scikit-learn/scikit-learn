@@ -513,6 +513,18 @@ def test_tfidf_vectorizer_setters():
     assert tv._tfidf.sublinear_tf
 
 
+# FIXME Remove copy parameter support in 0.24
+def test_tfidf_vectorizer_deprecationwarning():
+    msg = ("'copy' param is unused and has been deprecated since "
+           "version 0.22. Backward compatibility for 'copy' will "
+           "be removed in 0.24.")
+    with pytest.warns(DeprecationWarning, match=msg):
+        tv = TfidfVectorizer()
+        train_data = JUNK_FOOD_DOCS
+        tv.fit(train_data)
+        tv.transform(train_data, copy=True)
+
+
 @fails_if_pypy
 def test_hashing_vectorizer():
     v = HashingVectorizer()
