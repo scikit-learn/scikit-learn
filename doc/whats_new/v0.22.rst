@@ -235,6 +235,12 @@ Changelog
 - |Enhancement| :class:`model_selection.RandomizedSearchCV` now accepts lists
   of parameter distributions. :pr:`14549` by `Andreas Müller`_.
 
+:mod:`sklearn.multioutput`
+..........................
+
+- |Fix| :class:`MultiOutputClassifier` now has attribute `classes_`.
+  :issue:`14615` by :user:`Agamemnon Krasoulis <agamemnonc>`.
+
 :mod:`sklearn.pipeline`
 .......................
 
