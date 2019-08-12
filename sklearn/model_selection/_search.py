@@ -565,7 +565,16 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
 
     @property
     def n_features_in_(self):
-        check_is_fitted(self, 'best_estimator_')
+        # For consistency with other estimators we raise a AttributeError so
+        # that hasattr() fails if the search estimator isn't fitted.
+        try:
+            check_is_fitted(self, 'best_estimator_')
+        except NotFittedError as nfe:
+            raise AttributeError(
+                "{} object has no n_features_in_ attribute."
+                .format(self.__class__.__name__ )
+            ) from nfe
+
         return self.best_estimator_.n_features_in_
 
     @property

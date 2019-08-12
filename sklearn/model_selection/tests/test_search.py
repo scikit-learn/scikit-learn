@@ -1786,7 +1786,6 @@ def test_n_features_in():
     gbdt = HistGradientBoostingClassifier()
     param_grid = {'max_iter': [3, 4]}
     gs = GridSearchCV(gbdt, param_grid)
-    with pytest.raises(NotFittedError):
-        gs.n_features_in_
+    assert not hasattr(gs, 'n_features_in_')
     gs.fit(X, y)
     assert gs.n_features_in_ == n_features
