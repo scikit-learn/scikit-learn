@@ -199,7 +199,7 @@ Composite estimators and parameter spaces
 `GridSearchCV` and `RandomizedSearchCV` allow searching over parameters of
 composite or nested estimators such as `pipeline.Pipeline`,
 `ColumnTransformer`, `VotingClassifier` or `CalibratedClassifierCV`
-using a dedicated syntax ``<estimator>__<parameter>`` syntax::
+using a dedicated ``<estimator>__<parameter>`` syntax::
 
   >>> from sklearn.model_selection import GridSearchCV
   >>> from sklearn.calibration import CalibratedClassifierCV
