@@ -811,7 +811,7 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
         # np.isnan(Y[j_start:, cat_obj_mask]))
         # cat_obj_dists = ~np.equal(X[i, cat_obj_mask],
         #                          Y[j_start:, cat_obj_mask])
-        
+
         # Calculates the similarities for numerical categorical columns
         cat_num_dists = X[i, cat_num_mask] != Y[j_start:, cat_num_mask]
         # Calculates the Manhattan distances for numerical columns
