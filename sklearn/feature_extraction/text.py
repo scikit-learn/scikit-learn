@@ -703,6 +703,10 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
             warnings.warn("The parameter 'ngram_range' will not be used"
                           " since 'analyzer' is callable'")
 
+        if self.analyzer != 'word' and self.token_pattern is not None:
+            warnings.warn("The parameter 'token_pattern' will not be used"
+                          " since analyzer != 'word'")
+
         self._get_hasher().fit(X, y=y)
         return self
 
@@ -1134,6 +1138,10 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         if self.ngram_range is not None and callable(self.analyzer):
             warnings.warn("The parameter 'ngram_range' will not be used"
                           " since 'analyzer' is callable'")
+
+        if self.analyzer != 'word' and self.token_pattern is not None:
+            warnings.warn("The parameter 'token_pattern' will not be used"
+                          " since analyzer != 'word'")
 
         self.fit_transform(raw_documents)
         return self
@@ -1768,6 +1776,10 @@ class TfidfVectorizer(CountVectorizer):
         if self.ngram_range is not None and callable(self.analyzer):
             warnings.warn("The parameter 'ngram_range' will not be used"
                           " since 'analyzer' is callable'")
+
+        if self.analyzer != 'word' and self.token_pattern is not None:
+            warnings.warn("The parameter 'token_pattern' will not be used"
+                          " since analyzer != 'word'")
         X = super().fit_transform(raw_documents)
         self._tfidf.fit(X)
         return self

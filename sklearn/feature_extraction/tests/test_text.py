@@ -1343,3 +1343,11 @@ def test_unused_parameters_warn(Vectorizer):
     " since 'analyzer' is callable"
     with pytest.warns(UserWarning, match=msg):
         vect.fit(train_data)
+
+    vect = Vectorizer()
+    vect.set_params(token_pattern=r"(?u)\b\w\w+\b",
+                    analyzer='char')
+    msg = "The parameter 'token_pattern' will not be used"
+    " since analyzer != 'word'"
+    with pytest.warns(UserWarning, match=msg):
+        vect.fit(train_data)
