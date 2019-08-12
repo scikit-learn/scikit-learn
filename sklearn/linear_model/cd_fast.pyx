@@ -95,14 +95,17 @@ cdef floating diff_abs_max(int n, floating* a, floating* b) nogil:
 
 
 cdef extern from "cblas.h":
-    enum CBLAS_ORDER:
+    enum _CBLAS_ORDER:
         CblasRowMajor=101
         CblasColMajor=102
-    enum CBLAS_TRANSPOSE:
+    enum _CBLAS_TRANSPOSE:
         CblasNoTrans=111
         CblasTrans=112
         CblasConjTrans=113
         AtlasConj=114
+
+    ctypedef _CBLAS_ORDER CBLAS_ORDER;
+    ctypedef _CBLAS_TRANSPOSE CBLAS_TRANSPOSE;
 
     void daxpy "cblas_daxpy"(int N, double alpha, double *X, int incX,
                              double *Y, int incY) nogil
