@@ -276,8 +276,8 @@ def test_multi_output_classification():
                            list(predict_proba[i]))
 
     # test classes_ attribute
-    [assert_array_equal(classes_true, classes_estim) for (classes_true,
-        classes_estim) in zip(classes, multi_target_forest.classes_)]
+    [assert_array_equal(classes_true, classes_est) for
+     (classes_true, classes_est) in zip(classes, multi_target_forest.classes_)]
 
 
 def test_multiclass_multioutput_estimator():
@@ -299,8 +299,8 @@ def test_multiclass_multioutput_estimator():
                      list(predictions[:, i]))
 
     # test classes_ attribute
-    [assert_array_equal(classes_true, classes_estim) for (classes_true,
-        classes_estim) in zip(classes, multi_target_svc.classes_)]
+    [assert_array_equal(classes_true, classes_est) for
+     (classes_true, classes_est) in zip(classes, multi_target_svc.classes_)]
 
 
 def test_multiclass_multioutput_estimator_predict_proba():
