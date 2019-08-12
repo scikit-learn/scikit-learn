@@ -18,6 +18,7 @@ from .class_weight import compute_class_weight, compute_sample_weight
 from . import _joblib
 from ..exceptions import DataConversionWarning
 from .deprecation import deprecated
+from .fixes import np_version
 from .validation import (as_float_array,
                          assert_all_finite,
                          check_random_state, column_or_1d, check_array,
@@ -225,6 +226,21 @@ def safe_indexing(X, indices, axis=0):
         )
 
 
+def _array_indexing(array, key, axis=0):
+    """Index an array consistently across NumPy version."""
+    if axis not in (0, 1):
+        raise ValueError(
+            "'axis' should be either 0 (to index rows) or 1 (to index "
+            " column). Got {} instead.".format(axis)
+        )
+    if np_version < (1, 12) or issparse(array):
+        # check if we have an boolean array-likes to make the proper indexing
+        key_array = np.asarray(key)
+        if np.issubdtype(key_array.dtype, np.bool_):
+            key = key_array
+    return array[key] if axis == 0 else array[:, key]
+
+
 def _safe_indexing_row(X, indices):
     """Return items or rows from X using indices.
 
@@ -266,7 +282,7 @@ def _safe_indexing_row(X, indices):
             # This is often substantially faster than X[indices]
             return X.take(indices, axis=0)
         else:
-            return X[indices]
+            return _array_indexing(X, indices, axis=0)
     else:
         return [X[idx] for idx in indices]
 
@@ -356,7 +372,7 @@ def _safe_indexing_column(X, key):
             return X.iloc[:, key]
         else:
             # numpy arrays, sparse arrays
-            return X[:, key]
+            return _array_indexing(X, key, axis=1)
 
 
 def _get_column_indices(X, key):
@@ -371,7 +387,7 @@ def _get_column_indices(X, key):
             or hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_)):
         # Convert key into positive indexes
         try:
-            idx = np.arange(n_columns)[key]
+            idx = safe_indexing(np.arange(n_columns), key)
         except IndexError as e:
             raise ValueError(
                 'all features must be in [0, %d]' % (n_columns - 1)

@@ -300,6 +300,7 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
     multi_class : string, 'ovr' or 'ovo', optional(default='raise')
         Determines the type of multiclass configuration to use.
         ``multi_class`` must be provided when ``y_true`` is multiclass.
+
         ``'ovr'``:
             Calculate metrics for the multiclass case using the one-vs-rest
             approach.

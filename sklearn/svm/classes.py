@@ -112,6 +112,9 @@ else [n_classes, n_features]
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
 
+    classes_ : array of shape = (n_classes,)
+        The unique classes labels.
+
     n_iter_ : int
         Maximum number of iterations run across all classes.
 
@@ -484,7 +487,9 @@ class SVC(BaseSVC):
 
     probability : boolean, optional (default=False)
         Whether to enable probability estimates. This must be enabled prior
-        to calling `fit`, and will slow down that method.
+        to calling `fit`, will slow down that method as it internally uses
+        5-fold cross-validation, and `predict_proba` may be inconsistent with
+        `predict`. Read more in the :ref:`User Guide <scores_probabilities>`.
 
     tol : float, optional (default=1e-3)
         Tolerance for stopping criterion.
@@ -570,6 +575,9 @@ class SVC(BaseSVC):
 
     fit_status_ : int
         0 if correctly fitted, 1 otherwise (will raise warning)
+
+    classes_ : array of shape = [n_classes]
+        The classes labels.
 
     probA_ : array, shape = [n_class * (n_class-1) / 2]
     probB_ : array, shape = [n_class * (n_class-1) / 2]
@@ -680,7 +688,9 @@ class NuSVC(BaseSVC):
 
     probability : boolean, optional (default=False)
         Whether to enable probability estimates. This must be enabled prior
-        to calling `fit`, and will slow down that method.
+        to calling `fit`, will slow down that method as it internally uses
+        5-fold cross-validation, and `predict_proba` may be inconsistent with
+        `predict`. Read more in the :ref:`User Guide <scores_probabilities>`.
 
     tol : float, optional (default=1e-3)
         Tolerance for stopping criterion.
@@ -761,6 +771,9 @@ class NuSVC(BaseSVC):
 
     intercept_ : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
+
+    classes_ : array of shape = (n_classes,)
+        The unique classes labels.
 
     Examples
     --------
