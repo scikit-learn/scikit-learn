@@ -810,8 +810,8 @@ class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
 
     Attributes
     ----------
-    alphas_ : array-like of shape (n_alphas + 1,) | list of n_targets such 
-            \ arrays
+    alphas_ : array-like of shape (n_alphas + 1,) | list of n_targets such \
+            arrays
         Maximum of covariances (in absolute value) at each iteration. \
         ``n_alphas`` is either ``n_nonzero_coefs`` or ``n_features``, \
         whichever is smaller.
@@ -1040,8 +1040,8 @@ class LassoLars(Lars):
 
     Attributes
     ----------
-    alphas_ : array-like of shape (n_alphas + 1,) | list of n_targets such 
-            \ arrays
+    alphas_ : array-like of shape (n_alphas + 1,) | list of n_targets such \
+            arrays
         Maximum of covariances (in absolute value) at each iteration. \
         ``n_alphas`` is either ``max_iter``, ``n_features``, or the number of \
         nodes in the path with correlation greater than ``alpha``, whichever \
