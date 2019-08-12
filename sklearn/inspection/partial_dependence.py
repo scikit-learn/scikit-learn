@@ -390,19 +390,23 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         A fitted estimator object implementing `predict`, `predict_proba`,
         or `decision_function`. Multioutput-multiclass classifiers are not
         supported.
+
     X : array-like, shape (n_samples, n_features)
         The data to use to build the grid of values on which the dependence
         will be evaluated. This is usually the training data.
+
     features : list of {int, str, pair of int, pair of str}
         The target features for which to create the PDPs.
         If features[i] is an int or a string, a one-way PDP is created; if
         features[i] is a tuple, a two-way PDP is created. Each tuple must be
         of size 2.
         if any entry is a string, then it must be in ``feature_names``.
+
     feature_names : seq of str, shape (n_features,), optional
         Name of each feature; feature_names[i] holds the name of the feature
         with index i. By default, the name of the feature corresponds to
         their numerical index.
+
     target : int, optional (default=None)
         - In a multiclass setting, specifies the class for which the PDPs
           should be computed. Note that for binary classification, the
@@ -410,6 +414,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         - In a multioutput setting, specifies the task for which the PDPs
           should be computed
         Ignored in binary classification or classical regression settings.
+
     response_method : 'auto', 'predict_proba' or 'decision_function', \
             optional (default='auto') :
         Specifies whether to use :term:`predict_proba` or
@@ -419,14 +424,18 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         and we revert to :term:`decision_function` if it doesn't exist. If
         ``method`` is 'recursion', the response is always the output of
         :term:`decision_function`.
+
     n_cols : int, optional (default=3)
         The maximum number of columns in the grid plot.
+
     grid_resolution : int, optional (default=100)
         The number of equally spaced points on the axes of the plots, for each
         target feature.
+
     percentiles : tuple of float, optional (default=(0.05, 0.95))
         The lower and upper percentile used to create the extreme values
         for the PDP axes. Must be in [0, 1].
+
     method : str, optional (default='auto')
         The method to use to calculate the partial dependence predictions:
 
@@ -450,22 +459,34 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         - 'auto':
           - 'recursion' is used for estimators that supports it.
           - 'brute' is used for all other estimators.
+
     n_jobs : int, optional (default=None)
         The number of CPUs to use to compute the partial dependences.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+
     verbose : int, optional (default=0)
         Verbose output during PD computations.
+
     fig : Matplotlib figure object, optional (default=None)
         A figure object onto which the plots will be drawn, after the figure
         has been cleared. By default, a new one is created.
+
     line_kw : dict, optional
         Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
         For one-way partial dependence plots.
+
     contour_kw : dict, optional
         Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
         For two-way partial dependence plots.
+
+    ax : Matplotlib axes, list of Matplotlib axes or None, (default=None)
+        By default,
+
+    Returns
+    -------
+    sklearn.inspection.PartialDependenceDisplay
 
     Examples
     --------
@@ -552,6 +573,11 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
 
     features = tmp_features
 
+    if isinstance(ax, Iterable):
+        if len(ax) != len(features):
+            raise ValueError("Expected len(ax) == len(features), "
+                             "got len(ax) = {}".format(len(ax)))
+
     names = []
     try:
         for fxs in features:
@@ -608,72 +634,4 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     display = PartialDependenceDisplay(pd_results, features, names,
                                        target_idx, pdp_lim, deciles)
     return display.plot(ax=ax, n_cols=n_cols, line_kw=line_kw,
-                        contour_kw=contour_kw)
-    # create contour levels for two-way plots
-    # if 2 in pdp_lim:
-    #     Z_level = np.linspace(*pdp_lim[2], num=8)
-
-    # if fig is None:
-    #     fig = plt.figure()
-    # else:
-    #     fig.clear()
-
-    # if line_kw is None:
-    #     line_kw = {'color': 'green'}
-    # if contour_kw is None:
-    #     contour_kw = {}
-
-    # n_cols = min(n_cols, len(features))
-    # n_rows = int(np.ceil(len(features) / float(n_cols)))
-    # axs = []
-    # for i, fx, name, (avg_preds, values) in zip(
-    #         count(), features, names, pd_result):
-    #     ax = fig.add_subplot(n_rows, n_cols, i + 1)
-
-    #     if len(values) == 1:
-    #         ax.plot(values[0], avg_preds[target_idx].ravel(), **line_kw)
-    #     else:
-    #         # make contour plot
-    #         assert len(values) == 2
-    #         XX, YY = np.meshgrid(values[0], values[1])
-    #         Z = avg_preds[target_idx].T
-    #         CS = ax.contour(XX, YY, Z, levels=Z_level, linewidths=0.5,
-    #                         colors='k')
-    #         ax.contourf(XX, YY, Z, levels=Z_level, vmax=Z_level[-1],
-    #                     vmin=Z_level[0], alpha=0.75, **contour_kw)
-    #         ax.clabel(CS, fmt='%2.2f', colors='k', fontsize=10, inline=True)
-
-    #     # plot data deciles + axes labels
-    #     deciles = mquantiles(X[:, fx[0]], prob=np.arange(0.1, 1.0, 0.1))
-        # trans = transforms.blended_transform_factory(ax.transData,
-        #                                              ax.transAxes)
-    #     ylim = ax.get_ylim()
-    #     ax.vlines(deciles, [0], 0.05, transform=trans, color='k')
-    #     ax.set_xlabel(name[0])
-    #     ax.set_ylim(ylim)
-
-    #     # prevent x-axis ticks from overlapping
-        # ax.xaxis.set_major_locator(MaxNLocator(nbins=6, prune='lower'))
-        # tick_formatter = ScalarFormatter()
-        # tick_formatter.set_powerlimits((-3, 4))
-        # ax.xaxis.set_major_formatter(tick_formatter)
-
-    #     if len(values) > 1:
-            # two-way PDP - y-axis deciles + labels
-            # deciles = mquantiles(X[:, fx[1]], prob=np.arange(0.1, 1.0, 0.1))
-            # trans = transforms.blended_transform_factory(ax.transAxes,
-            #                                              ax.transData)
-            # xlim = ax.get_xlim()
-            # ax.hlines(deciles, [0], 0.05, transform=trans, color='k')
-            # ax.set_ylabel(name[1])
-            # hline erases xlim
-            # ax.set_xlim(xlim)
-    #     else:
-    #         ax.set_ylabel('Partial dependence')
-
-    #     if len(values) == 1:
-    #         ax.set_ylim(pdp_lim[1])
-    #     axs.append(ax)
-
-    # fig.subplots_adjust(bottom=0.15, top=0.7, left=0.1, right=0.95, wspace=0.4,
-    #                     hspace=0.3)
+                        contour_kw=contour_kw, fig=fig)

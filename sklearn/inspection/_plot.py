@@ -1,6 +1,7 @@
 """Partial dependence display"""
 from itertools import count
 from typing import Iterable
+import warnings
 
 import numpy as np
 
@@ -17,8 +18,7 @@ class PartialDependenceDisplay:
         self.pdp_lim = pdp_lim
         self.deciles = deciles
 
-    def plot(self, ax=None, n_cols=3, line_kw=None, contour_kw=None,
-             ax_set_kw=None):
+    def plot(self, ax=None, n_cols=3, line_kw=None, contour_kw=None, fig=None):
         check_matplotlib_support("plot_partial_dependence")
         import matplotlib.pyplot as plt  # noqa
         from matplotlib import transforms  # noqa
@@ -26,23 +26,29 @@ class PartialDependenceDisplay:
         from matplotlib.ticker import ScalarFormatter  # noqa
         from matplotlib.gridspec import GridSpecFromSubplotSpec  # noqa
 
-        # create contour levels for two-way plots
-        if 2 in self.pdp_lim:
-            Z_level = np.linspace(*self.pdp_lim[2], num=8)
-
-        if ax is None:
-            _, ax = plt.subplots()
-
-        # check axes is the correct length
-
         if line_kw is None:
             line_kw = {}
         if contour_kw is None:
             contour_kw = {}
-        if ax_set_kw is None:
-            ax_set_kw = {}
+
+        contour_kw = {**{"alpha": 0.75}, **contour_kw}
+
+        if fig is not None:
+            warnings.warn("The fig parameter is deprecated in version "
+                          "0.22 and will be removed in version 0.24",
+                          DeprecationWarning)
+            fig.clear()
+
+        if ax is None:
+            if fig is None:
+                _, ax = plt.subplots()
+            else:
+                ax = fig.add_subplot()
 
         if isinstance(ax, Iterable):
+            if len(ax) != len(self.features):
+                raise ValueError("Expected len(ax) == len(features), "
+                                 "got len(ax) = {}".format(len(ax)))
             self.bounding_ax_ = None
             self.axes_ = dict(enumerate(ax))
             self.figure_ = ax[0].figure
@@ -57,7 +63,8 @@ class PartialDependenceDisplay:
 
             def _store_contour(contour, i):
                 self.contours_[i] = contour
-        else:
+
+        else:  # single axes
             self.bounding_ax_ = ax
             self.axes_ = {}
             self.figure_ = ax.figure
@@ -85,6 +92,10 @@ class PartialDependenceDisplay:
                 row_idx, col_idx = i // n_cols, i % n_cols
                 self.contours_[row_idx, col_idx] = contour
 
+        # create contour levels for two-way plots
+        if 2 in self.pdp_lim:
+            Z_level = np.linspace(*self.pdp_lim[2], num=8)
+
         for i, fx, name, (avg_preds, values) in zip(count(), self.features,
                                                     self.feature_names,
                                                     self.pd_results):
@@ -96,14 +107,13 @@ class PartialDependenceDisplay:
                 _store_line(line, i)
             else:
                 # contour plot
-                assert len(values) == 2
                 XX, YY = np.meshgrid(values[0], values[1])
                 Z = avg_preds[self.target_idx].T
                 CS = axi.contour(XX, YY, Z, levels=Z_level, linewidths=0.5,
                                  colors='k')
                 contour = axi.contourf(XX, YY, Z, levels=Z_level,
                                        vmax=Z_level[-1], vmin=Z_level[0],
-                                       alpha=0.75, **contour_kw)
+                                       **contour_kw)
                 _store_contour(contour, i)
                 axi.clabel(CS, fmt='%2.2f', colors='k', fontsize=10,
                            inline=True)
@@ -111,7 +121,7 @@ class PartialDependenceDisplay:
             trans = transforms.blended_transform_factory(axi.transData,
                                                          axi.transAxes)
             ylim = axi.get_ylim()
-            axi.vlines(self.deciles[fx[0]], [0], 0.05, transform=trans,
+            axi.vlines(self.deciles[fx[0]], 0, 0.05, transform=trans,
                        color='k')
             axi.set_xlabel(name[0])
             axi.set_ylim(ylim)
@@ -120,15 +130,14 @@ class PartialDependenceDisplay:
                 axi.set_ylabel('Partial dependence')
                 axi.set_ylim(self.pdp_lim[1])
             else:
+                # contour plot
                 trans = transforms.blended_transform_factory(axi.transAxes,
                                                              axi.transData)
                 xlim = axi.get_xlim()
-                axi.hlines(self.deciles[fx[1]], [0], 0.05, transform=trans,
+                axi.hlines(self.deciles[fx[1]], 0, 0.05, transform=trans,
                            color='k')
                 # hline erases xlim
                 axi.set_ylabel(name[1])
                 axi.set_xlim(xlim)
-
-            axi.set(**ax_set_kw)
 
         return self

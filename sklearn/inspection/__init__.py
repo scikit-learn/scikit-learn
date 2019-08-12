@@ -2,9 +2,11 @@
 from .partial_dependence import partial_dependence
 from .partial_dependence import plot_partial_dependence
 from .permutation_importance import permutation_importance
+from ._plot import PartialDependenceDisplay
 
 __all__ = [
     'partial_dependence',
     'plot_partial_dependence',
-    'permutation_importance'
+    'permutation_importance',
+    'PartialDependenceDisplay'
 ]
