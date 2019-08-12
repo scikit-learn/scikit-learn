@@ -2220,7 +2220,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         X : array-like, shape = (n_samples, n_features)
             Test samples.
 
-        y : array-like, shape = (n_samples,)
+        y : array-like of shape (n_samples,)
             True labels for X.
 
         sample_weight : array-like, shape = [n_samples], optional

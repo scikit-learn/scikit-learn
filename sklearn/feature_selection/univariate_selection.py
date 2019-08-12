@@ -189,7 +189,7 @@ def chi2(X, y):
     X : {array-like, sparse matrix}, shape = (n_samples, n_features_in)
         Sample vectors.
 
-    y : array-like, shape = (n_samples,)
+    y : array-like of shape (n_samples,)
         Target vector (class labels).
 
     Returns

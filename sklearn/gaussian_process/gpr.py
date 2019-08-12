@@ -127,7 +127,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
     L_ : array-like, shape = (n_samples, n_samples)
         Lower-triangular Cholesky decomposition of the kernel in ``X_train_``
 
-    alpha_ : array-like, shape = (n_samples,)
+    alpha_ : array-like of shape (n_samples,)
         Dual coefficients of training data points in kernel space
 
     log_marginal_likelihood_value_ : float

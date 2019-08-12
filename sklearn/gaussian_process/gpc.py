@@ -118,7 +118,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
     X_train_ : array-like, shape = (n_samples, n_features)
         Feature values in training data (also required for prediction)
 
-    y_train_ : array-like, shape = (n_samples,)
+    y_train_ : array-like of shape (n_samples,)
         Target values in training data (also required for prediction)
 
     classes_ : array-like, shape = (n_classes,)
@@ -131,11 +131,11 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
     L_ : array-like, shape = (n_samples, n_samples)
         Lower-triangular Cholesky decomposition of the kernel in X_train_
 
-    pi_ : array-like, shape = (n_samples,)
+    pi_ : array-like of shape (n_samples,)
         The probabilities of the positive class for the training points
         X_train_
 
-    W_sr_ : array-like, shape = (n_samples,)
+    W_sr_ : array-like of shape (n_samples,)
         Square root of W, the Hessian of log-likelihood of the latent function
         values for the observed labels. Since W is diagonal, only the diagonal
         of sqrt(W) is stored.
@@ -163,7 +163,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         X : array-like, shape = (n_samples, n_features)
             Training data
 
-        y : array-like, shape = (n_samples,)
+        y : array-like of shape (n_samples,)
             Target values, must be binary
 
         Returns
@@ -605,7 +605,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         X : array-like, shape = (n_samples, n_features)
             Training data
 
-        y : array-like, shape = (n_samples,)
+        y : array-like of shape (n_samples,)
             Target values, must be binary
 
         Returns
