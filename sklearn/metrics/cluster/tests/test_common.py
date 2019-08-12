@@ -201,7 +201,7 @@ def test_inf_nan_input(metric_name):
                     ([0, 1], [np.nan, np.inf])]
 
         metric = SUPERVISED_METRICS[metric_name]
-        with pytest.raises(ValueError, message="contains NaN, infinity"):
+        with pytest.raises(ValueError, match="contains NaN, infinity"):
             for y_true, y_score in invalids:
                 metric(y_true, y_score)
     else:
@@ -210,6 +210,6 @@ def test_inf_nan_input(metric_name):
                     (X, [np.nan, np.nan]),
                     (X, [np.nan, np.inf])]
         metric = UNSUPERVISED_METRICS[metric_name]
-        with pytest.raises(ValueError, message="contains NaN, infinity"):
+        with pytest.raises(ValueError, match="contains NaN, infinity"):
             for y_true, y_score in invalids:
                 metric(y_true, y_score)
