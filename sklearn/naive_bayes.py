@@ -635,8 +635,10 @@ class BaseDiscreteNB(BaseNB):
     coef_ = property(_get_coef)
     intercept_ = property(_get_intercept)
 
-    def _more_tags(self):
-        return {'poor_score': True}
+    def _get_tags(self):
+        tags = super()._get_tags()
+        tags.update({'poor_score': True})
+        return tags
 
 
 class MultinomialNB(BaseDiscreteNB):

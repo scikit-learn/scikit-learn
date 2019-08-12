@@ -1794,8 +1794,10 @@ class MultiTaskElasticNet(Lasso):
         # return self for chaining fit and predict calls
         return self
 
-    def _more_tags(self):
-        return {'multioutput_only': True}
+    def _get_tags(self):
+        tags = super()._get_tags()
+        tags.update({'multioutput_only': True})
+        return tags
 
 
 class MultiTaskLasso(MultiTaskElasticNet):
@@ -2099,8 +2101,10 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         self.random_state = random_state
         self.selection = selection
 
-    def _more_tags(self):
-        return {'multioutput_only': True}
+    def _get_tags(self):
+        tags = super()._get_tags()
+        tags.update({'multioutput_only': True})
+        return tags
 
 
 class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
@@ -2261,5 +2265,7 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
             cv=cv, verbose=verbose, n_jobs=n_jobs, random_state=random_state,
             selection=selection)
 
-    def _more_tags(self):
-        return {'multioutput_only': True}
+    def _get_tags(self):
+        tags = super()._get_tags()
+        tags.update({'multioutput_only': True})
+        return tags

@@ -606,12 +606,14 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         check_is_fitted(self, '_predictors')
         return len(self._predictors)
 
-    def _more_tags(self):
+    def _get_tags(self):
+        tags = super()._get_tags()
         # This is not strictly True, but it's needed since
         # force_all_finite=False means accept both nans and infinite values.
         # Without the tag, common checks would fail.
         # This comment must be removed once we merge PR 13911
-        return {'allow_nan': True}
+        tags.update({'allow_nan': True})
+        return tags
 
 
 class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):

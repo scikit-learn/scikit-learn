@@ -25,7 +25,7 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, TagsBase
 from ..preprocessing import normalize
 from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
@@ -181,7 +181,7 @@ def _check_stop_list(stop):
         return frozenset(stop)
 
 
-class VectorizerMixin:
+class VectorizerMixin(TagsBase):
     """Provides common code for text vectorizers (tokenization logic)."""
 
     _white_spaces = re.compile(r"\s\s+")
@@ -739,8 +739,10 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
                              input_type='string', dtype=self.dtype,
                              alternate_sign=self.alternate_sign)
 
-    def _more_tags(self):
-        return {'X_types': ['string']}
+    def _get_tags(self):
+        tags = super()._get_tags()
+        tags.update({'X_types': ['string']})
+        return tags
 
 
 def _document_frequency(X):
@@ -1224,8 +1226,10 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         return [t for t, i in sorted(self.vocabulary_.items(),
                                      key=itemgetter(1))]
 
-    def _more_tags(self):
-        return {'X_types': ['string']}
+    def _get_tags(self):
+        tags = super()._get_tags()
+        tags.update({'X_types': ['string']})
+        return tags
 
 
 def _make_int_array():
@@ -1408,8 +1412,10 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         self._idf_diag = sp.spdiags(value, diags=0, m=n_features,
                                     n=n_features, format='csr')
 
-    def _more_tags(self):
-        return {'X_types': 'sparse'}
+    def _get_tags(self):
+        tags = super()._get_tags()
+        tags.update({'X_types': 'sparse'})
+        return tags
 
 
 class TfidfVectorizer(CountVectorizer):
@@ -1765,5 +1771,7 @@ class TfidfVectorizer(CountVectorizer):
         X = super().transform(raw_documents)
         return self._tfidf.transform(X, copy=False)
 
-    def _more_tags(self):
-        return {'X_types': ['string'], '_skip_test': True}
+    def _get_tags(self):
+        tags = super()._get_tags()
+        tags.update({'X_types': ['string'], '_skip_test': True})
+        return tags

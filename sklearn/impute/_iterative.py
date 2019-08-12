@@ -684,5 +684,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         self.fit_transform(X)
         return self
 
-    def _more_tags(self):
-        return {'allow_nan': True}
+    def _get_tags(self):
+        tags = super()._get_tags()
+        tags.update({'allow_nan': True})
+        return tags

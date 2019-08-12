@@ -20,7 +20,7 @@ from joblib import Parallel, delayed, effective_n_jobs
 
 from .ball_tree import BallTree
 from .kd_tree import KDTree
-from ..base import BaseEstimator, MultiOutputMixin
+from ..base import BaseEstimator, MultiOutputMixin, TagsBase
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_X_y, check_array, gen_even_slices
@@ -298,7 +298,7 @@ def _tree_query_parallel_helper(tree, data, n_neighbors, return_distance):
     return tree.query(data, n_neighbors, return_distance)
 
 
-class KNeighborsMixin:
+class KNeighborsMixin(TagsBase):
     """Mixin for k-neighbors searches"""
 
     def _kneighbors_reduce_func(self, dist, start,
@@ -588,7 +588,7 @@ def _tree_query_radius_parallel_helper(tree, data, radius, return_distance):
     return tree.query_radius(data, radius, return_distance)
 
 
-class RadiusNeighborsMixin:
+class RadiusNeighborsMixin(TagsBase):
     """Mixin for radius-based neighbors searches"""
 
     def _radius_neighbors_reduce_func(self, dist, start,
@@ -862,7 +862,7 @@ class RadiusNeighborsMixin:
                           shape=(n_samples1, n_samples2))
 
 
-class SupervisedFloatMixin:
+class SupervisedFloatMixin(TagsBase):
     def fit(self, X, y):
         """Fit the model using X as training data and y as target values
 
@@ -882,7 +882,7 @@ class SupervisedFloatMixin:
         return self._fit(X)
 
 
-class SupervisedIntegerMixin:
+class SupervisedIntegerMixin(TagsBase):
     def fit(self, X, y):
         """Fit the model using X as training data and y as target values
 
@@ -925,7 +925,7 @@ class SupervisedIntegerMixin:
         return self._fit(X)
 
 
-class UnsupervisedMixin:
+class UnsupervisedMixin(TagsBase):
     def fit(self, X, y=None):
         """Fit the model using X as training data
 

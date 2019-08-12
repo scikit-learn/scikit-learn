@@ -413,8 +413,10 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         X /= self.scale_
         return X
 
-    def _more_tags(self):
-        return {'allow_nan': True}
+    def _get_tags(self):
+        tags = super()._get_tags()
+        tags.update({'allow_nan': True})
+        return tags
 
 
 def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
@@ -817,8 +819,10 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                 X += self.mean_
         return X
 
-    def _more_tags(self):
-        return {'allow_nan': True}
+    def _get_tags(self):
+        tags = super()._get_tags()
+        tags.update({'allow_nan': True})
+        return tags
 
 
 class MaxAbsScaler(BaseEstimator, TransformerMixin):
@@ -987,8 +991,10 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
             X *= self.scale_
         return X
 
-    def _more_tags(self):
-        return {'allow_nan': True}
+    def _get_tags(self):
+        tags = super()._get_tags()
+        tags.update({'allow_nan': True})
+        return tags
 
 
 def maxabs_scale(X, axis=0, copy=True):
@@ -1244,8 +1250,10 @@ class RobustScaler(BaseEstimator, TransformerMixin):
                 X += self.center_
         return X
 
-    def _more_tags(self):
-        return {'allow_nan': True}
+    def _get_tags(self):
+        tags = super()._get_tags()
+        tags.update({'allow_nan': True})
+        return tags
 
 
 def robust_scale(X, axis=0, with_centering=True, with_scaling=True,
@@ -1791,8 +1799,10 @@ class Normalizer(BaseEstimator, TransformerMixin):
         X = check_array(X, accept_sparse='csr')
         return normalize(X, norm=self.norm, axis=1, copy=copy)
 
-    def _more_tags(self):
-        return {'stateless': True}
+    def _get_tags(self):
+        tags = super()._get_tags()
+        tags.update({'stateless': True})
+        return tags
 
 
 def binarize(X, threshold=0.0, copy=True):
@@ -1926,8 +1936,10 @@ class Binarizer(BaseEstimator, TransformerMixin):
         copy = copy if copy is not None else self.copy
         return binarize(X, threshold=self.threshold, copy=copy)
 
-    def _more_tags(self):
-        return {'stateless': True}
+    def _get_tags(self):
+        tags = super()._get_tags()
+        tags.update({'stateless': True})
+        return tags
 
 
 class KernelCenterer(BaseEstimator, TransformerMixin):
@@ -2494,8 +2506,10 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
         return self._transform(X, inverse=True)
 
-    def _more_tags(self):
-        return {'allow_nan': True}
+    def _get_tags(self):
+        tags = super()._get_tags()
+        tags.update({'allow_nan': True})
+        return tags
 
 
 def quantile_transform(X, axis=0, n_quantiles=1000,
@@ -2980,8 +2994,10 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
 
         return X
 
-    def _more_tags(self):
-        return {'allow_nan': True}
+    def _get_tags(self):
+        tags = super()._get_tags()
+        tags.update({'allow_nan': True})
+        return tags
 
 
 def power_transform(X, method='warn', standardize=True, copy=True):

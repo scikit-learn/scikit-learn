@@ -133,5 +133,7 @@ class CheckingClassifier(BaseEstimator, ClassifierMixin):
             score = 0.
         return score
 
-    def _more_tags(self):
-        return {'_skip_test': True, 'X_types': ['1dlabel']}
+    def _get_tags(self):
+        tags = super()._get_tags()
+        tags.update({'_skip_test': True, 'X_types': ['1dlabel']})
+        return tags

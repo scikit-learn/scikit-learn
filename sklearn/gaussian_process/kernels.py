@@ -30,7 +30,7 @@ from scipy.special import kv, gamma
 from scipy.spatial.distance import pdist, cdist, squareform
 
 from ..metrics.pairwise import pairwise_kernels
-from ..base import clone
+from ..base import clone, TagsBase
 
 
 def _check_length_scale(X, length_scale):
@@ -366,7 +366,7 @@ class Kernel(metaclass=ABCMeta):
         """Returns whether the kernel is stationary. """
 
 
-class NormalizedKernelMixin:
+class NormalizedKernelMixin(TagsBase):
     """Mixin for kernels which are normalized: k(X, X)=1.
 
     .. versionadded:: 0.18
@@ -392,7 +392,7 @@ class NormalizedKernelMixin:
         return np.ones(X.shape[0])
 
 
-class StationaryKernelMixin:
+class StationaryKernelMixin(TagsBase):
     """Mixin for kernels which are stationary: k(X, Y)= f(X-Y).
 
     .. versionadded:: 0.18

@@ -289,8 +289,10 @@ class UntaggedBinaryClassifier(DecisionTreeClassifier):
 
 class TaggedBinaryClassifier(UntaggedBinaryClassifier):
     # Toy classifier that only supports binary classification.
-    def _more_tags(self):
-        return {'binary_only': True}
+    def _get_tags(self):
+        tags = super()._get_tags()
+        tags.update({'binary_only': True})
+        return tags
 
 
 class RequiresPositiveYRegressor(LinearRegression):
@@ -301,8 +303,10 @@ class RequiresPositiveYRegressor(LinearRegression):
             raise ValueError('negative y values not supported!')
         return super().fit(X, y)
 
-    def _more_tags(self):
-        return {"requires_positive_y": True}
+    def _get_tags(self):
+        tags = super()._get_tags()
+        tags.update("requires_positive_y": True)
+        return tags
 
 
 def test_check_fit_score_takes_y_works_on_deprecated_fit():

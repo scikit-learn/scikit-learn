@@ -158,6 +158,8 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
 
         return func(X, **(kw_args if kw_args else {}))
 
-    def _more_tags(self):
-        return {'no_validation': True,
-                'stateless': True}
+    def _get_tags(self):
+        tags = super()._get_tags()
+        tags.update({'no_validation': True,
+                     'stateless': True})
+        return tags

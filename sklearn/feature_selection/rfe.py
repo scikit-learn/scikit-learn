@@ -325,8 +325,10 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         check_is_fitted(self, 'estimator_')
         return self.estimator_.predict_log_proba(self.transform(X))
 
-    def _more_tags(self):
-        return {'poor_score': True}
+    def _get_tags(self):
+        tags = super()._get_tags()
+        tags.update({'poor_score': True})
+        return tags
 
 
 class RFECV(RFE):

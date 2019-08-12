@@ -144,8 +144,10 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
 
         return X_int, X_mask
 
-    def _more_tags(self):
-        return {'X_types': ['categorical']}
+    def _get_tags(self):
+        tags = super()._get_tags()
+        tags.update({'X_types': ['categorical']})
+        return tags
 
 
 class OneHotEncoder(_BaseEncoder):

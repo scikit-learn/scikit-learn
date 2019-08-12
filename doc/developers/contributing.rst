@@ -1596,14 +1596,16 @@ X_types
     of the ``'sparse'`` tag.
 
 
-To override the tags of a child class, one must define the `_more_tags()`
+To override the tags of a child class, one must define the `_get_tags()`
 method and return a dict with the desired tags, e.g::
 
     class MyMultiOutputEstimator(BaseEstimator):
 
-        def _more_tags(self):
-            return {'multioutput_only': True,
-                    'non_deterministic': True}
+        def _get_tags(self):
+            tags = super()._get_tags()
+            tags.update({'multioutput_only': True,
+                         'non_deterministic': True})
+            return tags
 
 In addition to the tags, estimators also need to declare any non-optional
 parameters to ``__init__`` in the ``_required_parameters`` class attribute,
@@ -1719,7 +1721,7 @@ attributes:
                       drop_intermediate=True, response_method="auto",
                       name=None, ax=None, **kwargs):
        # do computation
-       viz = RocCurveDisplay(fpr, tpr, roc_auc, 
+       viz = RocCurveDisplay(fpr, tpr, roc_auc,
                                 estimator.__class__.__name__)
        return viz.plot(ax=ax, name=name, **kwargs)
 ```
