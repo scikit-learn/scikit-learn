@@ -1152,7 +1152,7 @@ class CategoricalNB(BaseDiscreteNB):
 
     def _init_counters(self, n_effective_classes, n_features):
         self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
-        self.category_count_ = [np.zeros((self.class_count_.shape[0], 0))
+        self.category_count_ = [np.zeros((n_effective_classes, 0))
                                 for _ in range(n_features)]
 
     def _count(self, X, Y):
@@ -1184,12 +1184,13 @@ class CategoricalNB(BaseDiscreteNB):
                               self.class_count_.shape[0])
 
     def _update_feature_log_prob(self, alpha):
-        feature_log_prob = {}
+        feature_log_prob = []
         for i in range(self.n_features_):
             smoothed_cat_count = self.category_count_[i] + alpha
             smoothed_class_count = smoothed_cat_count.sum(axis=1)
-            feature_log_prob[i] = (np.log(smoothed_cat_count) -
-                                   np.log(smoothed_class_count.reshape(-1, 1)))
+            feature_log_prob.append(
+                np.log(smoothed_cat_count) -
+                np.log(smoothed_class_count.reshape(-1, 1)))
         self.feature_log_prob_ = feature_log_prob
 
     def _joint_log_likelihood(self, X):

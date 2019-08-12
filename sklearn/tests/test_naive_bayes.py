@@ -262,14 +262,13 @@ def test_discretenb_pickle(cls):
 
     assert_array_equal(y_pred, clf.predict(X2))
 
-    if cls is not CategoricalNB:
-        # Test pickling of estimator trained with partial_fit
-        clf2 = cls().partial_fit(X2[:3], y2[:3], classes=np.unique(y2))
-        clf2.partial_fit(X2[3:], y2[3:])
-        store = BytesIO()
-        pickle.dump(clf2, store)
-        clf2 = pickle.load(BytesIO(store.getvalue()))
-        assert_array_equal(y_pred, clf2.predict(X2))
+    # Test pickling of estimator trained with partial_fit
+    clf2 = cls().partial_fit(X2[:3], y2[:3], classes=np.unique(y2))
+    clf2.partial_fit(X2[3:], y2[3:])
+    store = BytesIO()
+    pickle.dump(clf2, store)
+    clf2 = pickle.load(BytesIO(store.getvalue()))
+    assert_array_equal(y_pred, clf2.predict(X2))
 
 
 @pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB, GaussianNB,
@@ -361,9 +360,8 @@ def test_discretenb_provide_prior(cls):
 
     # Inconsistent number of classes with prior
     assert_raises(ValueError, clf.fit, [[0], [1], [2]], [0, 1, 2])
-    if cls is not CategoricalNB:
-        assert_raises(ValueError, clf.partial_fit, [[0], [1]], [0, 1],
-                      classes=[0, 1, 1])
+    assert_raises(ValueError, clf.partial_fit, [[0], [1]], [0, 1],
+                  classes=[0, 1, 1])
 
 
 @pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB, CategoricalNB])
