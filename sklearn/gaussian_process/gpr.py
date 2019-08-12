@@ -19,7 +19,8 @@ from ..utils.validation import check_X_y, check_array
 from ..utils.optimize import _check_optimize_result
 
 
-class GaussianProcessRegressor(BaseEstimator, MultiOutputMixin, RegressorMixin):
+class GaussianProcessRegressor(BaseEstimator, MultiOutputMixin,
+                               RegressorMixin):
     """Gaussian process regression (GPR).
 
     The implementation is based on Algorithm 2.1 of Gaussian Processes
