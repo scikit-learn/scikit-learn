@@ -1325,6 +1325,27 @@ interface might be that you want to use it together with model evaluation and
 selection tools such as :class:`model_selection.GridSearchCV` and
 :class:`pipeline.Pipeline`.
 
+Setting `generate_only=True` allows for checks to be disassembled when
+testing an estimator. This feature can be used to parameterize tests in pytest
+as follows::
+
+  from itertools import chain
+  import pytest
+  from sklearn.utils.estimator_checks import check_estimator
+  from sklearn.utils.estimator_checks import set_check_estimator_ids
+  from sklearn.svm import LinearSVC
+  from sklearn.linear_model import LogisticRegression
+
+  estimators = [LinearSVC, LogisticRegression]
+
+  @pytest.mark.parametrize(
+      'estimator, check',
+      chain.from_iterable(check_estimator(est, generate_only=True)
+                          for est in estimators),
+      ids=set_check_estimator_ids)
+  def test_sklearn_compatible_estimator(estimator, check):
+      check(estimator)
+
 Before detailing the required interface below, we describe two ways to achieve
 the correct interface more easily.
 

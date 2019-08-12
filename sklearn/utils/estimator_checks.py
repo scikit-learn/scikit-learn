@@ -324,11 +324,13 @@ def _construct_instance(Estimator):
 
 
 def _generate_instance_checks(name, estimator):
+    """Generate instance checks."""
     yield from ((estimator, partial(check, name))
                 for check in _yield_all_checks(name, estimator))
 
 
 def _generate_class_checks(Estimator):
+    """Generate class checks."""
     name = Estimator.__name__
     yield (Estimator, partial(check_parameters_default_constructible, name))
 
@@ -368,10 +370,9 @@ def check_estimator(Estimator, generate_only=False):
 
     Notes
     -----
-    Setting `generate_only=False` allows for checks to be disaseembled when
-    testing an estimator. To use this with pytest this can be done with:
-
-    .. code-block:: python
+    Setting `generate_only=True` allows for checks to be disassembled when
+    testing an estimator. This feature can be used to parameterize tests in
+    pytest as follows::
 
         from itertools import chain
         import pytest
