@@ -275,6 +275,10 @@ def test_multi_output_classification():
         assert_array_equal(list(forest_.predict_proba(X)),
                            list(predict_proba[i]))
 
+    # test classes_ attribute
+    [assert_array_equal(classes_true, classes_estim) for (classes_true,
+        classes_estim) in zip(classes, multi_target_forest.classes_)]
+
 
 def test_multiclass_multioutput_estimator():
     # test to check meta of meta estimators
@@ -293,6 +297,10 @@ def test_multiclass_multioutput_estimator():
         multi_class_svc_.fit(X, y[:, i])
         assert (list(multi_class_svc_.predict(X)) ==
                      list(predictions[:, i]))
+
+    # test classes_ attribute
+    [assert_array_equal(classes_true, classes_estim) for (classes_true,
+        classes_estim) in zip(classes, multi_target_svc.classes_)]
 
 
 def test_multiclass_multioutput_estimator_predict_proba():
