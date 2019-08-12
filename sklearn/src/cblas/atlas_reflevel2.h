@@ -58,7 +58,7 @@
  */
 void       ATL_srefgbmv
 (
-  const enum ATLAS_TRANS,
+  const ATLAS_TRANS,
   const int,              const int,
   const int,              const int,
   const float,
@@ -70,8 +70,8 @@ void       ATL_srefgbmv
 
 void       ATL_srefgpmv
 (
-  const enum ATLAS_UPLO,
-  const enum ATLAS_TRANS,
+  const ATLAS_UPLO,
+  const ATLAS_TRANS,
   const int,              const int,
   const float,
   const float *,          const int,
@@ -82,7 +82,7 @@ void       ATL_srefgpmv
 
 void       ATL_srefgemv
 (
-  const enum ATLAS_TRANS,
+  const ATLAS_TRANS,
   const int,              const int,
   const float,
   const float *,          const int,
@@ -93,7 +93,7 @@ void       ATL_srefgemv
 
 void       ATL_srefgpr
 (
-  const enum ATLAS_UPLO,
+  const ATLAS_UPLO,
   const int,              const int,
   const float,
   const float *,          const int,
@@ -112,7 +112,7 @@ void       ATL_srefger
 
 void       ATL_srefsbmv
 (
-  const enum ATLAS_UPLO,
+  const ATLAS_UPLO,
   const int,              const int,
   const float,
   const float *,          const int,
@@ -123,7 +123,7 @@ void       ATL_srefsbmv
 
 void       ATL_srefspmv
 (
-  const enum ATLAS_UPLO,
+  const ATLAS_UPLO,
   const int,
   const float,
   const float *,
@@ -134,7 +134,7 @@ void       ATL_srefspmv
 
 void       ATL_srefspr
 (
-  const enum ATLAS_UPLO,
+  const ATLAS_UPLO,
   const int,
   const float,
   const float *,          const int,
@@ -143,7 +143,7 @@ void       ATL_srefspr
 
 void       ATL_srefspr2
 (
-  const enum ATLAS_UPLO,
+  const ATLAS_UPLO,
   const int,
   const float,
   const float *,          const int,
@@ -153,7 +153,7 @@ void       ATL_srefspr2
 
 void       ATL_srefsymv
 (
-  const enum ATLAS_UPLO,
+  const ATLAS_UPLO,
   const int,
   const float,
   const float *,          const int,
@@ -164,7 +164,7 @@ void       ATL_srefsymv
 
 void       ATL_srefsyr
 (
-  const enum ATLAS_UPLO,
+  const ATLAS_UPLO,
   const int,
   const float,
   const float *,          const int,
@@ -173,7 +173,7 @@ void       ATL_srefsyr
 
 void       ATL_srefsyr2
 (
-  const enum ATLAS_UPLO,
+  const ATLAS_UPLO,
   const int,
   const float,
   const float *,          const int,
@@ -183,7 +183,7 @@ void       ATL_srefsyr2
 
 void       ATL_sreftbmv
 (
-  const enum ATLAS_UPLO,  const enum ATLAS_TRANS, const enum ATLAS_DIAG,
+  const ATLAS_UPLO,  const ATLAS_TRANS, const ATLAS_DIAG,
   const int,              const int,
   const float *,          const int,
   float *,                const int
@@ -191,7 +191,7 @@ void       ATL_sreftbmv
 
 void       ATL_sreftbsv
 (
-  const enum ATLAS_UPLO,  const enum ATLAS_TRANS, const enum ATLAS_DIAG,
+  const ATLAS_UPLO,  const ATLAS_TRANS, const ATLAS_DIAG,
   const int,              const int,
   const float *,          const int,
   float *,                const int
@@ -199,7 +199,7 @@ void       ATL_sreftbsv
 
 void       ATL_sreftpmv
 (
-  const enum ATLAS_UPLO,  const enum ATLAS_TRANS, const enum ATLAS_DIAG,
+  const ATLAS_UPLO,  const ATLAS_TRANS, const ATLAS_DIAG,
   const int,
   const float *,
   float *,                const int
@@ -207,7 +207,7 @@ void       ATL_sreftpmv
 
 void       ATL_sreftpsv
 (
-  const enum ATLAS_UPLO,  const enum ATLAS_TRANS, const enum ATLAS_DIAG,
+  const ATLAS_UPLO,  const ATLAS_TRANS, const ATLAS_DIAG,
   const int,
   const float *,
   float *,                const int
@@ -215,7 +215,7 @@ void       ATL_sreftpsv
 
 void       ATL_sreftrmv
 (
-  const enum ATLAS_UPLO,  const enum ATLAS_TRANS, const enum ATLAS_DIAG,
+  const ATLAS_UPLO,  const ATLAS_TRANS, const ATLAS_DIAG,
   const int,
   const float *,          const int,
   float *,                const int
@@ -223,7 +223,7 @@ void       ATL_sreftrmv
 
 void       ATL_sreftrsv
 (
-  const enum ATLAS_UPLO,  const enum ATLAS_TRANS, const enum ATLAS_DIAG,
+  const ATLAS_UPLO,  const ATLAS_TRANS, const ATLAS_DIAG,
   const int,
   const float *,          const int,
   float *,                const int
@@ -231,7 +231,7 @@ void       ATL_sreftrsv
 
 void       ATL_drefgbmv
 (
-  const enum ATLAS_TRANS,
+  const ATLAS_TRANS,
   const int,              const int,
   const int,              const int,
   const double,
@@ -243,8 +243,8 @@ void       ATL_drefgbmv
 
 void       ATL_drefgpmv
 (
-  const enum ATLAS_UPLO,
-  const enum ATLAS_TRANS,
+  const ATLAS_UPLO,
+  const ATLAS_TRANS,
   const int,              const int,
   const double,
   const double *,         const int,
@@ -255,7 +255,7 @@ void       ATL_drefgpmv
 
 void       ATL_drefgemv
 (
-  const enum ATLAS_TRANS,
+  const ATLAS_TRANS,
   const int,              const int,
   const double,
   const double *,         const int,
@@ -266,7 +266,7 @@ void       ATL_drefgemv
 
 void       ATL_drefgpr
 (
-  const enum ATLAS_UPLO,
+  const ATLAS_UPLO,
   const int,              const int,
   const double,
   const double *,         const int,
@@ -285,7 +285,7 @@ void       ATL_drefger
 
 void       ATL_drefsbmv
 (
-  const enum ATLAS_UPLO,
+  const ATLAS_UPLO,
   const int,              const int,
   const double,
   const double *,         const int,
@@ -296,7 +296,7 @@ void       ATL_drefsbmv
 
 void       ATL_drefspmv
 (
-  const enum ATLAS_UPLO,
+  const ATLAS_UPLO,
   const int,
   const double,
   const double *,
@@ -307,7 +307,7 @@ void       ATL_drefspmv
 
 void       ATL_drefspr
 (
-  const enum ATLAS_UPLO,
+  const ATLAS_UPLO,
   const int,
   const double,
   const double *,         const int,
@@ -316,7 +316,7 @@ void       ATL_drefspr
 
 void       ATL_drefspr2
 (
-  const enum ATLAS_UPLO,
+  const ATLAS_UPLO,
   const int,
   const double,
   const double *,         const int,
@@ -326,7 +326,7 @@ void       ATL_drefspr2
 
 void       ATL_drefsymv
 (
-  const enum ATLAS_UPLO,
+  const ATLAS_UPLO,
   const int,
   const double,
   const double *,         const int,
@@ -337,7 +337,7 @@ void       ATL_drefsymv
 
 void       ATL_drefsyr
 (
-  const enum ATLAS_UPLO,
+  const ATLAS_UPLO,
   const int,
   const double,
   const double *,         const int,
@@ -346,7 +346,7 @@ void       ATL_drefsyr
 
 void       ATL_drefsyr2
 (
-  const enum ATLAS_UPLO,
+  const ATLAS_UPLO,
   const int,
   const double,
   const double *,         const int,
@@ -356,7 +356,7 @@ void       ATL_drefsyr2
 
 void       ATL_dreftbmv
 (
-  const enum ATLAS_UPLO,  const enum ATLAS_TRANS, const enum ATLAS_DIAG,
+  const ATLAS_UPLO,  const ATLAS_TRANS, const ATLAS_DIAG,
   const int,              const int,
   const double *,         const int,
   double *,               const int
@@ -364,7 +364,7 @@ void       ATL_dreftbmv
 
 void       ATL_dreftbsv
 (
-  const enum ATLAS_UPLO,  const enum ATLAS_TRANS, const enum ATLAS_DIAG,
+  const ATLAS_UPLO,  const ATLAS_TRANS, const ATLAS_DIAG,
   const int,              const int,
   const double *,         const int,
   double *,               const int
@@ -372,7 +372,7 @@ void       ATL_dreftbsv
 
 void       ATL_dreftpmv
 (
-  const enum ATLAS_UPLO,  const enum ATLAS_TRANS, const enum ATLAS_DIAG,
+  const ATLAS_UPLO,  const ATLAS_TRANS, const ATLAS_DIAG,
   const int,
   const double *,
   double *,               const int
@@ -380,7 +380,7 @@ void       ATL_dreftpmv
 
 void       ATL_dreftpsv
 (
-  const enum ATLAS_UPLO,  const enum ATLAS_TRANS, const enum ATLAS_DIAG,
+  const ATLAS_UPLO,  const ATLAS_TRANS, const ATLAS_DIAG,
   const int,
   const double *,
   double *,               const int
@@ -388,7 +388,7 @@ void       ATL_dreftpsv
 
 void       ATL_dreftrmv
 (
-  const enum ATLAS_UPLO,  const enum ATLAS_TRANS, const enum ATLAS_DIAG,
+  const ATLAS_UPLO,  const ATLAS_TRANS, const ATLAS_DIAG,
   const int,
   const double *,         const int,
   double *,               const int
@@ -396,7 +396,7 @@ void       ATL_dreftrmv
 
 void       ATL_dreftrsv
 (
-  const enum ATLAS_UPLO,  const enum ATLAS_TRANS, const enum ATLAS_DIAG,
+  const ATLAS_UPLO,  const ATLAS_TRANS, const ATLAS_DIAG,
   const int,
   const double *,         const int,
   double *,               const int
@@ -404,7 +404,7 @@ void       ATL_dreftrsv
 
 void       ATL_crefgbmv
 (
-  const enum ATLAS_TRANS,
+  const ATLAS_TRANS,
   const int,              const int,
   const int,              const int,
   const float *,
@@ -416,8 +416,8 @@ void       ATL_crefgbmv
 
 void       ATL_crefgpmv
 (
-  const enum ATLAS_UPLO,
-  const enum ATLAS_TRANS,
+  const ATLAS_UPLO,
+  const ATLAS_TRANS,
   const int,              const int,
   const float *,
   const float *,          const int,
@@ -428,7 +428,7 @@ void       ATL_crefgpmv
 
 void       ATL_crefgemv
 (
-  const enum ATLAS_TRANS,
+  const ATLAS_TRANS,
   const int,              const int,
   const float *,
   const float *,          const int,
@@ -439,7 +439,7 @@ void       ATL_crefgemv
 
 void       ATL_crefgprc
 (
-  const enum ATLAS_UPLO,
+  const ATLAS_UPLO,
   const int,              const int,
   const float *,
   const float *,          const int,
@@ -449,7 +449,7 @@ void       ATL_crefgprc
 
 void       ATL_crefgpru
 (
-  const enum ATLAS_UPLO,
+  const ATLAS_UPLO,
   const int,              const int,
   const float *,
   const float *,          const int,
@@ -477,7 +477,7 @@ void       ATL_crefgeru
 
 void       ATL_crefhbmv
 (
-  const enum ATLAS_UPLO,
+  const ATLAS_UPLO,
   const int,              const int,
   const float *,
   const float *,          const int,
@@ -488,7 +488,7 @@ void       ATL_crefhbmv
 
 void       ATL_crefhpmv
 (
-  const enum ATLAS_UPLO,
+  const ATLAS_UPLO,
   const int,
   const float *,
   const float *,
@@ -499,7 +499,7 @@ void       ATL_crefhpmv
 
 void       ATL_crefhpr
 (
-  const enum ATLAS_UPLO,
+  const ATLAS_UPLO,
   const int,
   const float,
   const float *,          const int,
@@ -508,7 +508,7 @@ void       ATL_crefhpr
 
 void       ATL_crefhpr2
 (
-  const enum ATLAS_UPLO,
+  const ATLAS_UPLO,
   const int,
   const float *,
   const float *,          const int,
@@ -518,7 +518,7 @@ void       ATL_crefhpr2
 
 void       ATL_crefhemv
 (
-  const enum ATLAS_UPLO,
+  const ATLAS_UPLO,
   const int,
   const float *,
   const float *,          const int,
@@ -529,7 +529,7 @@ void       ATL_crefhemv
 
 void       ATL_crefher
 (
-  const enum ATLAS_UPLO,
+  const ATLAS_UPLO,
   const int,
   const float,
   const float *,          const int,
@@ -538,7 +538,7 @@ void       ATL_crefher
 
 void       ATL_crefher2
 (
-  const enum ATLAS_UPLO,
+  const ATLAS_UPLO,
   const int,
   const float *,
   const float *,          const int,
@@ -548,7 +548,7 @@ void       ATL_crefher2
 
 void       ATL_creftbmv
 (
-  const enum ATLAS_UPLO,  const enum ATLAS_TRANS, const enum ATLAS_DIAG,
+  const ATLAS_UPLO,  const ATLAS_TRANS, const ATLAS_DIAG,
   const int,              const int,
   const float *,          const int,
   float *,                const int
@@ -556,7 +556,7 @@ void       ATL_creftbmv
 
 void       ATL_creftbsv
 (
-  const enum ATLAS_UPLO,  const enum ATLAS_TRANS, const enum ATLAS_DIAG,
+  const ATLAS_UPLO,  const ATLAS_TRANS, const ATLAS_DIAG,
   const int,              const int,
   const float *,          const int,
   float *,                const int
@@ -564,7 +564,7 @@ void       ATL_creftbsv
 
 void       ATL_creftpmv
 (
-  const enum ATLAS_UPLO,  const enum ATLAS_TRANS, const enum ATLAS_DIAG,
+  const ATLAS_UPLO,  const ATLAS_TRANS, const ATLAS_DIAG,
   const int,
   const float *,
   float *,                const int
@@ -572,7 +572,7 @@ void       ATL_creftpmv
 
 void       ATL_creftpsv
 (
-  const enum ATLAS_UPLO,  const enum ATLAS_TRANS, const enum ATLAS_DIAG,
+  const ATLAS_UPLO,  const ATLAS_TRANS, const ATLAS_DIAG,
   const int,
   const float *,
   float *,                const int
@@ -580,7 +580,7 @@ void       ATL_creftpsv
 
 void       ATL_creftrmv
 (
-  const enum ATLAS_UPLO,  const enum ATLAS_TRANS, const enum ATLAS_DIAG,
+  const ATLAS_UPLO,  const ATLAS_TRANS, const ATLAS_DIAG,
   const int,
   const float *,          const int,
   float *,                const int
@@ -588,7 +588,7 @@ void       ATL_creftrmv
 
 void       ATL_creftrsv
 (
-  const enum ATLAS_UPLO,  const enum ATLAS_TRANS, const enum ATLAS_DIAG,
+  const ATLAS_UPLO,  const ATLAS_TRANS, const ATLAS_DIAG,
   const int,
   const float *,          const int,
   float *,                const int
@@ -596,7 +596,7 @@ void       ATL_creftrsv
 
 void       ATL_zrefgbmv
 (
-  const enum ATLAS_TRANS,
+  const ATLAS_TRANS,
   const int,              const int,
   const int,              const int,
   const double *,
@@ -608,8 +608,8 @@ void       ATL_zrefgbmv
 
 void       ATL_zrefgpmv
 (
-  const enum ATLAS_UPLO,
-  const enum ATLAS_TRANS,
+  const ATLAS_UPLO,
+  const ATLAS_TRANS,
   const int,              const int,
   const double *,
   const double *,         const int,
@@ -620,7 +620,7 @@ void       ATL_zrefgpmv
 
 void       ATL_zrefgemv
 (
-  const enum ATLAS_TRANS,
+  const ATLAS_TRANS,
   const int,              const int,
   const double *,
   const double *,         const int,
@@ -631,7 +631,7 @@ void       ATL_zrefgemv
 
 void       ATL_zrefgprc
 (
-  const enum ATLAS_UPLO,
+  const ATLAS_UPLO,
   const int,              const int,
   const double *,
   const double *,         const int,
@@ -641,7 +641,7 @@ void       ATL_zrefgprc
 
 void       ATL_zrefgpru
 (
-  const enum ATLAS_UPLO,
+  const ATLAS_UPLO,
   const int,              const int,
   const double *,
   const double *,         const int,
@@ -669,7 +669,7 @@ void       ATL_zrefgeru
 
 void       ATL_zrefhbmv
 (
-  const enum ATLAS_UPLO,
+  const ATLAS_UPLO,
   const int,              const int,
   const double *,
   const double *,         const int,
@@ -680,7 +680,7 @@ void       ATL_zrefhbmv
 
 void       ATL_zrefhpmv
 (
-  const enum ATLAS_UPLO,
+  const ATLAS_UPLO,
   const int,
   const double *,
   const double *,
@@ -691,7 +691,7 @@ void       ATL_zrefhpmv
 
 void       ATL_zrefhpr
 (
-  const enum ATLAS_UPLO,
+  const ATLAS_UPLO,
   const int,
   const double,
   const double *,         const int,
@@ -700,7 +700,7 @@ void       ATL_zrefhpr
 
 void       ATL_zrefhpr2
 (
-  const enum ATLAS_UPLO,
+  const ATLAS_UPLO,
   const int,
   const double *,
   const double *,         const int,
@@ -710,7 +710,7 @@ void       ATL_zrefhpr2
 
 void       ATL_zrefhemv
 (
-  const enum ATLAS_UPLO,
+  const ATLAS_UPLO,
   const int,
   const double *,
   const double *,         const int,
@@ -721,7 +721,7 @@ void       ATL_zrefhemv
 
 void       ATL_zrefher
 (
-  const enum ATLAS_UPLO,
+  const ATLAS_UPLO,
   const int,
   const double,
   const double *,         const int,
@@ -730,7 +730,7 @@ void       ATL_zrefher
 
 void       ATL_zrefher2
 (
-  const enum ATLAS_UPLO,
+  const ATLAS_UPLO,
   const int,
   const double *,
   const double *,         const int,
@@ -740,7 +740,7 @@ void       ATL_zrefher2
 
 void       ATL_zreftbmv
 (
-  const enum ATLAS_UPLO,  const enum ATLAS_TRANS, const enum ATLAS_DIAG,
+  const ATLAS_UPLO,  const ATLAS_TRANS, const ATLAS_DIAG,
   const int,              const int,
   const double *,         const int,
   double *,               const int
@@ -748,7 +748,7 @@ void       ATL_zreftbmv
 
 void       ATL_zreftbsv
 (
-  const enum ATLAS_UPLO,  const enum ATLAS_TRANS, const enum ATLAS_DIAG,
+  const ATLAS_UPLO,  const ATLAS_TRANS, const ATLAS_DIAG,
   const int,              const int,
   const double *,         const int,
   double *,               const int
@@ -756,7 +756,7 @@ void       ATL_zreftbsv
 
 void       ATL_zreftpmv
 (
-  const enum ATLAS_UPLO,  const enum ATLAS_TRANS, const enum ATLAS_DIAG,
+  const ATLAS_UPLO,  const ATLAS_TRANS, const ATLAS_DIAG,
   const int,
   const double *,
   double *,               const int
@@ -764,7 +764,7 @@ void       ATL_zreftpmv
 
 void       ATL_zreftpsv
 (
-  const enum ATLAS_UPLO,  const enum ATLAS_TRANS, const enum ATLAS_DIAG,
+  const ATLAS_UPLO,  const ATLAS_TRANS, const ATLAS_DIAG,
   const int,
   const double *,
   double *,               const int
@@ -772,7 +772,7 @@ void       ATL_zreftpsv
 
 void       ATL_zreftrmv
 (
-  const enum ATLAS_UPLO,  const enum ATLAS_TRANS, const enum ATLAS_DIAG,
+  const ATLAS_UPLO,  const ATLAS_TRANS, const ATLAS_DIAG,
   const int,
   const double *,         const int,
   double *,               const int
@@ -780,7 +780,7 @@ void       ATL_zreftrmv
 
 void       ATL_zreftrsv
 (
-  const enum ATLAS_UPLO,  const enum ATLAS_TRANS, const enum ATLAS_DIAG,
+  const ATLAS_UPLO,  const ATLAS_TRANS, const ATLAS_DIAG,
   const int,
   const double *,         const int,
   double *,               const int

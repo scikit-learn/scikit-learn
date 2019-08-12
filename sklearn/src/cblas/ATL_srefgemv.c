@@ -52,7 +52,7 @@
 
 void ATL_srefgemv
 (
-   const enum ATLAS_TRANS     TRANS,
+   const ATLAS_TRANS     TRANS,
    const int                  M,
    const int                  N,
    const float                ALPHA,
@@ -83,7 +83,7 @@ void ATL_srefgemv
  * Arguments
  * =========
  *
- * TRANS   (input)                       const enum ATLAS_TRANS
+ * TRANS   (input)                       const ATLAS_TRANS
  *         On entry,  TRANS  specifies the  operation to be performed as
  *         follows:
  *

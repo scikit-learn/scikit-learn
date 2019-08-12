@@ -36,7 +36,7 @@
 #endif
 #include "atlas_level2.h"
 
-void cblas_sger (const enum CBLAS_ORDER Order, const int M, const int N,
+void cblas_sger (const CBLAS_ORDER Order, const int M, const int N,
                  const float alpha, const float *X, const int incX,
                  const float *Y, const int incY, float *A, const int lda)
 {

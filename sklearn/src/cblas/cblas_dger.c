@@ -36,7 +36,7 @@
 #endif
 #include "atlas_level2.h"
 
-void cblas_dger (const enum CBLAS_ORDER Order, const int M, const int N,
+void cblas_dger (const CBLAS_ORDER Order, const int M, const int N,
                  const double alpha, const double *X, const int incX,
                  const double *Y, const int incY, double *A, const int lda)
 {

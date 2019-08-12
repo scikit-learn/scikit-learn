@@ -36,7 +36,7 @@
 #endif
 #include "atlas_level2.h"
 
-void cblas_sgemv(const enum CBLAS_ORDER Order, const enum CBLAS_TRANSPOSE TA,
+void cblas_sgemv(const CBLAS_ORDER Order, const CBLAS_TRANSPOSE TA,
                  const int M, const int N, const float alpha, const float *A,
                  const int lda, const float *X, const int incX,
                  const float beta, float *Y, const int incY)

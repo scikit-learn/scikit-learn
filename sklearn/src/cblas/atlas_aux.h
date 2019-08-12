@@ -56,7 +56,7 @@ void ATL_sgemove(const int M, const int N, const float alpha,
                  const float *A, const int lda, float *C, const int ldc);
 void ATL_sgemoveT(const int N, const int M, const float alpha,
                   const float *A, const int lda, float *C, const int ldc);
-void ATL_ssyreflect(const enum ATLAS_UPLO Uplo, const int N,
+void ATL_ssyreflect(const ATLAS_UPLO Uplo, const int N,
                     float *C, const int ldc);
 void ATL_sgecopy(const int M, const int N, const float *A, const int lda,
                  float *C, const int ldc);
@@ -64,21 +64,21 @@ void ATL_sgecopy(const int M, const int N, const float *A, const int lda,
 void ATL_sgescal(const int M, const int N, const float beta,
                  float *C, const int ldc);
 void ATL_stradd
-   (const enum ATLAS_UPLO Uplo, ATL_CINT N, const float *A, ATL_CINT lda,
+   (const ATLAS_UPLO Uplo, ATL_CINT N, const float *A, ATL_CINT lda,
     const float beta, float *C, ATL_CINT ldc);
 void ATL_strscal
-   (const enum ATLAS_UPLO Uplo, const int M, const int N, const float alpha,
+   (const ATLAS_UPLO Uplo, const int M, const int N, const float alpha,
     float *A, const int lda);
 void ATL_shescal
-   (const enum ATLAS_UPLO Uplo, const int M, const int N, const float alpha,
+   (const ATLAS_UPLO Uplo, const int M, const int N, const float alpha,
     float *A, const int lda);
 
 void ATL_sgezero(const int M, const int N, float *C, const int ldc);
 void ATL_ssyApAt_NB
-   (const enum ATLAS_UPLO Uplo, ATL_CINT N, const float *A, ATL_CINT lda,
+   (const ATLAS_UPLO Uplo, ATL_CINT N, const float *A, ATL_CINT lda,
     const float beta, float *C, ATL_CINT ldc);
 void ATL_ssyApAt
-   (const enum ATLAS_UPLO Uplo, ATL_CINT N, const float *A, ATL_CINT lda,
+   (const ATLAS_UPLO Uplo, ATL_CINT N, const float *A, ATL_CINT lda,
     const float beta, float *C, ATL_CINT ldc);
 void ATL_sgeApBt_NB
    (ATL_CINT M, ATL_CINT N, const float *A, ATL_CINT lda,
@@ -187,7 +187,7 @@ void ATL_dgemove(const int M, const int N, const double alpha,
                  const double *A, const int lda, double *C, const int ldc);
 void ATL_dgemoveT(const int N, const int M, const double alpha,
                   const double *A, const int lda, double *C, const int ldc);
-void ATL_dsyreflect(const enum ATLAS_UPLO Uplo, const int N,
+void ATL_dsyreflect(const ATLAS_UPLO Uplo, const int N,
                     double *C, const int ldc);
 void ATL_dgecopy(const int M, const int N, const double *A, const int lda,
                  double *C, const int ldc);
@@ -195,21 +195,21 @@ void ATL_dgecopy(const int M, const int N, const double *A, const int lda,
 void ATL_dgescal(const int M, const int N, const double beta,
                  double *C, const int ldc);
 void ATL_dtradd
-   (const enum ATLAS_UPLO Uplo, ATL_CINT N, const double *A, ATL_CINT lda,
+   (const ATLAS_UPLO Uplo, ATL_CINT N, const double *A, ATL_CINT lda,
     const double beta, double *C, ATL_CINT ldc);
 void ATL_dtrscal
-   (const enum ATLAS_UPLO Uplo, const int M, const int N, const double alpha,
+   (const ATLAS_UPLO Uplo, const int M, const int N, const double alpha,
     double *A, const int lda);
 void ATL_dhescal
-   (const enum ATLAS_UPLO Uplo, const int M, const int N, const double alpha,
+   (const ATLAS_UPLO Uplo, const int M, const int N, const double alpha,
     double *A, const int lda);
 
 void ATL_dgezero(const int M, const int N, double *C, const int ldc);
 void ATL_dsyApAt_NB
-   (const enum ATLAS_UPLO Uplo, ATL_CINT N, const double *A, ATL_CINT lda,
+   (const ATLAS_UPLO Uplo, ATL_CINT N, const double *A, ATL_CINT lda,
     const double beta, double *C, ATL_CINT ldc);
 void ATL_dsyApAt
-   (const enum ATLAS_UPLO Uplo, ATL_CINT N, const double *A, ATL_CINT lda,
+   (const ATLAS_UPLO Uplo, ATL_CINT N, const double *A, ATL_CINT lda,
     const double beta, double *C, ATL_CINT ldc);
 void ATL_dgeApBt_NB
    (ATL_CINT M, ATL_CINT N, const double *A, ATL_CINT lda,
@@ -318,7 +318,7 @@ void ATL_cgemove(const int M, const int N, const float *alpha,
                  const float *A, const int lda, float *C, const int ldc);
 void ATL_cgemoveT(const int N, const int M, const float *alpha,
                   const float *A, const int lda, float *C, const int ldc);
-void ATL_csyreflect(const enum ATLAS_UPLO Uplo, const int N,
+void ATL_csyreflect(const ATLAS_UPLO Uplo, const int N,
                     float *C, const int ldc);
 void ATL_cgecopy(const int M, const int N, const float *A, const int lda,
                  float *C, const int ldc);
@@ -326,21 +326,21 @@ void ATL_cgecopy(const int M, const int N, const float *A, const int lda,
 void ATL_cgescal(const int M, const int N, const float *beta,
                  float *C, const int ldc);
 void ATL_ctradd
-   (const enum ATLAS_UPLO Uplo, ATL_CINT N, const float *A, ATL_CINT lda,
+   (const ATLAS_UPLO Uplo, ATL_CINT N, const float *A, ATL_CINT lda,
     const float *beta, float *C, ATL_CINT ldc);
 void ATL_ctrscal
-   (const enum ATLAS_UPLO Uplo, const int M, const int N, const float *alpha,
+   (const ATLAS_UPLO Uplo, const int M, const int N, const float *alpha,
     float *A, const int lda);
 void ATL_chescal
-   (const enum ATLAS_UPLO Uplo, const int M, const int N, const float alpha,
+   (const ATLAS_UPLO Uplo, const int M, const int N, const float alpha,
     float *A, const int lda);
 
 void ATL_cgezero(const int M, const int N, float *C, const int ldc);
 void ATL_csyApAt_NB
-   (const enum ATLAS_UPLO Uplo, ATL_CINT N, const float *A, ATL_CINT lda,
+   (const ATLAS_UPLO Uplo, ATL_CINT N, const float *A, ATL_CINT lda,
     const float *beta, float *C, ATL_CINT ldc);
 void ATL_csyApAt
-   (const enum ATLAS_UPLO Uplo, ATL_CINT N, const float *A, ATL_CINT lda,
+   (const ATLAS_UPLO Uplo, ATL_CINT N, const float *A, ATL_CINT lda,
     const float *beta, float *C, ATL_CINT ldc);
 void ATL_cgeApBt_NB
    (ATL_CINT M, ATL_CINT N, const float *A, ATL_CINT lda,
@@ -449,7 +449,7 @@ void ATL_zgemove(const int M, const int N, const double *alpha,
                  const double *A, const int lda, double *C, const int ldc);
 void ATL_zgemoveT(const int N, const int M, const double *alpha,
                   const double *A, const int lda, double *C, const int ldc);
-void ATL_zsyreflect(const enum ATLAS_UPLO Uplo, const int N,
+void ATL_zsyreflect(const ATLAS_UPLO Uplo, const int N,
                     double *C, const int ldc);
 void ATL_zgecopy(const int M, const int N, const double *A, const int lda,
                  double *C, const int ldc);
@@ -457,21 +457,21 @@ void ATL_zgecopy(const int M, const int N, const double *A, const int lda,
 void ATL_zgescal(const int M, const int N, const double *beta,
                  double *C, const int ldc);
 void ATL_ztradd
-   (const enum ATLAS_UPLO Uplo, ATL_CINT N, const double *A, ATL_CINT lda,
+   (const ATLAS_UPLO Uplo, ATL_CINT N, const double *A, ATL_CINT lda,
     const double *beta, double *C, ATL_CINT ldc);
 void ATL_ztrscal
-   (const enum ATLAS_UPLO Uplo, const int M, const int N, const double *alpha,
+   (const ATLAS_UPLO Uplo, const int M, const int N, const double *alpha,
     double *A, const int lda);
 void ATL_zhescal
-   (const enum ATLAS_UPLO Uplo, const int M, const int N, const double alpha,
+   (const ATLAS_UPLO Uplo, const int M, const int N, const double alpha,
     double *A, const int lda);
 
 void ATL_zgezero(const int M, const int N, double *C, const int ldc);
 void ATL_zsyApAt_NB
-   (const enum ATLAS_UPLO Uplo, ATL_CINT N, const double *A, ATL_CINT lda,
+   (const ATLAS_UPLO Uplo, ATL_CINT N, const double *A, ATL_CINT lda,
     const double *beta, double *C, ATL_CINT ldc);
 void ATL_zsyApAt
-   (const enum ATLAS_UPLO Uplo, ATL_CINT N, const double *A, ATL_CINT lda,
+   (const ATLAS_UPLO Uplo, ATL_CINT N, const double *A, ATL_CINT lda,
     const double *beta, double *C, ATL_CINT ldc);
 void ATL_zgeApBt_NB
    (ATL_CINT M, ATL_CINT N, const double *A, ATL_CINT lda,
@@ -571,10 +571,10 @@ void ATL_zgescal_bX
  */
 
 void ATL_cheApAc_NB
-   (const enum ATLAS_UPLO Uplo, ATL_CINT N, const float *A, ATL_CINT lda,
+   (const ATLAS_UPLO Uplo, ATL_CINT N, const float *A, ATL_CINT lda,
     const float *beta, float *C, ATL_CINT ldc);
 void ATL_cheApAc
-   (const enum ATLAS_UPLO Uplo, ATL_CINT N, const float *A, ATL_CINT lda,
+   (const ATLAS_UPLO Uplo, ATL_CINT N, const float *A, ATL_CINT lda,
     const float *beta, float *C, ATL_CINT ldc);
 void ATL_cgeApBc_NB
    (ATL_CINT M, ATL_CINT N, const float *A, ATL_CINT lda,
@@ -584,7 +584,7 @@ void ATL_ccplxdivide
 void ATL_ccplxinvert
    (const int N, float *X, const int incX, float *Y, const int incY);
 
-void ATL_chereflect(const enum ATLAS_UPLO Uplo, const int N,
+void ATL_chereflect(const ATLAS_UPLO Uplo, const int N,
                     float *C, const int ldc);
 void ATL_cscalConj
    (const int N, const float *alpha, float *X, const int incX);
@@ -727,10 +727,10 @@ void ATL_cgescal_bXi0
    (const int M, const int N, const float *beta, float *C, const int ldc);
 
 void ATL_zheApAc_NB
-   (const enum ATLAS_UPLO Uplo, ATL_CINT N, const double *A, ATL_CINT lda,
+   (const ATLAS_UPLO Uplo, ATL_CINT N, const double *A, ATL_CINT lda,
     const double *beta, double *C, ATL_CINT ldc);
 void ATL_zheApAc
-   (const enum ATLAS_UPLO Uplo, ATL_CINT N, const double *A, ATL_CINT lda,
+   (const ATLAS_UPLO Uplo, ATL_CINT N, const double *A, ATL_CINT lda,
     const double *beta, double *C, ATL_CINT ldc);
 void ATL_zgeApBc_NB
    (ATL_CINT M, ATL_CINT N, const double *A, ATL_CINT lda,
@@ -740,7 +740,7 @@ void ATL_zcplxdivide
 void ATL_zcplxinvert
    (const int N, double *X, const int incX, double *Y, const int incY);
 
-void ATL_zhereflect(const enum ATLAS_UPLO Uplo, const int N,
+void ATL_zhereflect(const ATLAS_UPLO Uplo, const int N,
                     double *C, const int ldc);
 void ATL_zscalConj
    (const int N, const double *alpha, double *X, const int incX);
@@ -891,13 +891,13 @@ void ATL_ezgecollapse(const int M, const int N, ATL_QTYPE *C,
                       const int dldc, const int sldc);
 void ATL_zcgecollapse(const int M, const int N, double *C,
                       const int dldc, const int sldc);
-void ATL_qdtrcollapse(const enum ATLAS_UPLO Uplo, const enum ATLAS_DIAG Diag,
+void ATL_qdtrcollapse(const ATLAS_UPLO Uplo, const ATLAS_DIAG Diag,
                       const int N, ATL_QTYPE *C, const int dldc,const int sldc);
-void ATL_dstrcollapse(const enum ATLAS_UPLO Uplo, const enum ATLAS_DIAG Diag,
+void ATL_dstrcollapse(const ATLAS_UPLO Uplo, const ATLAS_DIAG Diag,
                       const int N, double *C, const int dldc, const int sldc);
-void ATL_zctrcollapse(const enum ATLAS_UPLO Uplo, const enum ATLAS_DIAG Diag,
+void ATL_zctrcollapse(const ATLAS_UPLO Uplo, const ATLAS_DIAG Diag,
                       const int N, double *C, const int dldc, const int sldc);
-void ATL_eztrcollapse(const enum ATLAS_UPLO Uplo, const enum ATLAS_DIAG Diag,
+void ATL_eztrcollapse(const ATLAS_UPLO Uplo, const ATLAS_DIAG Diag,
                       const int N, ATL_QTYPE *C, const int dldc,const int sldc);
 
 /*
