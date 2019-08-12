@@ -879,6 +879,8 @@ def check_is_fitted(estimator, attributes='deprecated', msg=None,
         estimator instance for which the check is performed.
 
     attributes : deprecated, ignored
+        .. deprecated:: 0.22
+           `attributes` is deprecated, is currently ignored and will be removed in 0.23.
 
     msg : string
         The default error message is, "This %(name)s instance is not fitted
