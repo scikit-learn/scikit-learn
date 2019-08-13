@@ -807,26 +807,16 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
 
         # Calculates the similarities for categorical columns
         cat_dists = X[i, cat_mask] != Y[j_start:, cat_mask]
-        # print('X:', X[i, cat_mask])
-        # print('Y:', Y[j_start:, cat_mask])
-        # print('cat_obj_dists:', cat_dists)
         # Calculates the Manhattan distances for numerical columns
         num_dists = abs(X[i, num_mask].astype(np.float32) -
                         Y[j_start:, num_mask].astype(np.float32)) / ranges
-        # print('num_dists:', num_dists)                
         # Calculates the number of non missing columns
         n_missing = X.shape[1] - (np.isnan(cat_dists).sum(axis=1) +
                                   np.isnan(num_dists).sum(axis=1))
-        # print('X.shape[1]:', X.shape[1])
-        # print('n_missing:', n_missing)
-
         # Gets the final results
         results = (np.sum(cat_dists, axis=1) +
                    np.sum(num_dists, axis=1))
-        # print('results:', results)
         results /= n_missing
-        # print('results / n_missing:', results)
-        # print('------------------------------------')
         D[i, j_start:] = results
         if X is Y:
             D[i:, j_start] = results

@@ -783,50 +783,15 @@ def test_gower_distances():
     # The calculation formula for Gower similarity is available in the
     # user guide.
 
-    # Categorical values, with boolean represented as 1 and 0,
-    # and missing values
-    # X = np.asarray([[np.nan, np.nan]])
-    # Y = np.asarray([[np.nan, np.nan]])
-
-    # D = gower_distances(X, Y, categorical_features=[True, True])
-    # print(D)
-    # assert_array_almost_equal(np.asarray([[1.0]]), D)
-
-    D = np.asarray([np.nan], dtype=np.object) != np.asarray([[np.nan]], dtype=np.object)
-    assert_array_almost_equal(np.asarray([[True]]), D)
-
-    X = [['M', 0], [np.nan, np.nan]]
-    Y = [['M', 0], [np.nan, np.nan]]
-
-    D = gower_distances(X, categorical_features=[True, True])
+    D = np.asarray([[np.nan]], dtype=np.object) != np.asarray([[np.nan]], dtype=np.object)
     print(D)
-    assert_array_almost_equal(np.asarray([[0.0, 1.0], [1.0, 1.0]]), D)
-
-    # X = [[np.nan, np.nan], [np.nan, np.nan]]
-    # Y = [[np.nan, np.nan], [np.nan, np.nan]]
-    # D = gower_distances(X, Y, categorical_features=[True, True])
-    # print(D)
-    # assert_array_almost_equal(X, D)
-    # assert_array_almost_equal([[1, 1],[1, 1]], D)
-    # raise ValueError("Exiting...")
-    # return
-    X = np.array([['M', 0],
-                  ['F', 1],
-                  ['M', 1],
-                  [np.nan, np.nan]], dtype=np.object)
-
-    D = gower_distances(X, categorical_features=[True, True])
-
-    n_rows, n_cols = np.shape(X)
-    D_expected = np.zeros((n_rows, n_rows))
-    for i in range(0, n_rows):
-        for j in range(0, n_rows):
-            D_expected[i][j] = ([1, 0][X[i][0] == X[j][0]] +
-                                [1, 0][X[i][1] == X[j][1]]) / n_cols
-    assert_array_almost_equal(D_expected, D)
-
-    # ---
-    # Test X and Y with diferent ranges of numeric values, categorical values,
+    assert_array_almost_equal(np.asarray([[True]]), D)
+    
+    D = np.asarray([np.nan], dtype=np.object) != np.asarray([[np.nan]], dtype=np.object)
+    print(D)
+    assert_array_almost_equal(np.asarray([[True]]), D)
+    raise ValueError("exiting...")
+    
     with pytest.raises(TypeError):
         gower_distances(csr_matrix((2, 2)))
     with pytest.raises(ValueError):
