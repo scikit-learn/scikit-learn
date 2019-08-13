@@ -263,6 +263,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         # orders-of-magnitude speedup over simply using keyword which='LA'
         # in standard mode.
         try:
+            print("first case")
             # We are computing the opposite of the laplacian inplace so as
             # to spare a memory allocation of a possibly very large array
             laplacian *= -1
@@ -280,7 +281,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             # Revert the laplacian to its opposite to have lobpcg work
             laplacian *= -1
 
-    if eigen_solver == 'amg':
+    elif eigen_solver == 'amg':
         # Use AMG to get a preconditioner and speed up the eigenvalue
         # problem.
         if not sparse.issparse(laplacian):
@@ -301,7 +302,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         if embedding.shape[0] == 1:
             raise ValueError
 
-    elif eigen_solver == "lobpcg":
+    if eigen_solver == "lobpcg":
         # lobpcg needs double precision floats
         laplacian = check_array(laplacian, dtype=np.float64,
                                 accept_sparse=True)

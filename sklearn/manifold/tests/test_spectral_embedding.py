@@ -178,6 +178,20 @@ def test_spectral_embedding_amg_solver(seed=36):
     embed_arpack = se_arpack.fit_transform(S)
     assert _check_with_col_sign_flipping(embed_amg, embed_arpack, 0.05)
 
+    # same with special case in which amg is not actually used
+    # regression test for #10715
+    # affinity between nodes
+    row = [0, 0, 1, 2, 3, 3, 4]
+    col = [1, 2, 2, 3, 4, 5, 5]
+    val = [100, 100, 100, 1, 100, 100, 100]
+
+    affinity = sparse.coo_matrix((val + val, (row + col, col + row)), shape=(6, 6)).toarray()
+    se_amg.affinity = "precomputed"
+    se_arpack.affinity = "precomputed"
+    embed_amg = se_amg.fit_transform(affinity)
+    embed_arpack = se_arpack.fit_transform(affinity)
+    assert _check_with_col_sign_flipping(embed_amg, embed_arpack, 0.05)
+
 
 def test_pipeline_spectral_clustering(seed=36):
     # Test using pipeline to do spectral clustering
