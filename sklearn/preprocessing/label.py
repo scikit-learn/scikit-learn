@@ -210,8 +210,11 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    sklearn.preprocessing.OrdinalEncoder : encode categorical input features
+    sklearn.preprocessing.OrdinalEncoder : Encode categorical input features
         using an ordinal encoding scheme.
+
+    sklearn.preprocessing.OneHotEncoder : Encode categorical integer features
+        as a one-hot numeric array.
     """
 
     def fit(self, y):
