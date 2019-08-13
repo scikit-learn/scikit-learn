@@ -785,7 +785,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         y : array-like of shape (n_samples) or (n_samples, n_outputs)
             The target values (class labels) as integers or strings.
 
-        sample_weight : array-like, shape = [n_samples] or None
+        sample_weight : array-like of shape (n_samples) or None
             Sample weights. If None, then samples are equally weighted. Splits
             that would create child nodes with net zero or negative weight are
             ignored while searching for a split in each node. Splits are also
@@ -1128,7 +1128,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
             The target values (real numbers). Use ``dtype=np.float64`` and
             ``order='C'`` for maximum efficiency.
 
-        sample_weight : array-like, shape = [n_samples] or None
+        sample_weight : array-like of shape (n_samples) or None
             Sample weights. If None, then samples are equally weighted. Splits
             that would create child nodes with net zero or negative weight are
             ignored while searching for a split in each node.
