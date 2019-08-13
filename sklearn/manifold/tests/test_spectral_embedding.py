@@ -176,7 +176,7 @@ def test_spectral_embedding_amg_solver(seed=36):
                                   random_state=np.random.RandomState(seed))
     embed_amg = se_amg.fit_transform(S)
     embed_arpack = se_arpack.fit_transform(S)
-    assert _check_with_col_sign_flipping(embed_amg, embed_arpack, 0.05)
+    assert _check_with_col_sign_flipping(embed_amg, embed_arpack, 0.1e-4)
 
     # same with special case in which amg is not actually used
     # regression test for #10715
@@ -190,7 +190,7 @@ def test_spectral_embedding_amg_solver(seed=36):
     se_arpack.affinity = "precomputed"
     embed_amg = se_amg.fit_transform(affinity)
     embed_arpack = se_arpack.fit_transform(affinity)
-    assert _check_with_col_sign_flipping(embed_amg, embed_arpack, 0.05)
+    assert _check_with_col_sign_flipping(embed_amg, embed_arpack, 0.1e-4)
 
 
 def test_pipeline_spectral_clustering(seed=36):
