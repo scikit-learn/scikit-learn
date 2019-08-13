@@ -449,7 +449,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         return theta_opt, func_min
 
 
-class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
+class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
     """Gaussian process classification (GPC) based on Laplace approximation.
 
     The implementation is based on Algorithm 3.1, 3.2, and 5.1 of

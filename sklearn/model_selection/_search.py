@@ -397,7 +397,7 @@ def _check_param_grid(param_grid):
                                  "to be a non-empty sequence.".format(name))
 
 
-class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
+class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     """Abstract base class for hyper parameter search with cross-validation.
     """
 

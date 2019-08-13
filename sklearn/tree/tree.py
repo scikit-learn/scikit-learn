@@ -69,7 +69,7 @@ SPARSE_SPLITTERS = {"best": _splitter.BestSparseSplitter,
 # =============================================================================
 
 
-class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
+class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for decision trees.
 
     Warning: This class should not be used directly.
@@ -529,7 +529,7 @@ class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
 # Public estimators
 # =============================================================================
 
-class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
+class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     """A decision tree classifier.
 
     Read more in the :ref:`User Guide <tree>`.
@@ -894,7 +894,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             return proba
 
 
-class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
+class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     """A decision tree regressor.
 
     Read more in the :ref:`User Guide <tree>`.

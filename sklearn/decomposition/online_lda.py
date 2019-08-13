@@ -132,7 +132,7 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
     return (doc_topic_distr, suff_stats)
 
 
-class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
+class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
     """Latent Dirichlet Allocation with online variational Bayes algorithm
 
     .. versionadded:: 0.17

@@ -435,7 +435,7 @@ def _partial_fit_ovo_binary(estimator, X, y, i, j):
     return estimator
 
 
-class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
+class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     """One-vs-one multiclass strategy
 
     This strategy consists in fitting one classifier per class pair.
@@ -631,7 +631,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         return getattr(self.estimator, "_pairwise", False)
 
 
-class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
+class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     """(Error-Correcting) Output-Code multiclass strategy
 
     Output-code based strategies consist in representing each class with a

@@ -874,7 +874,7 @@ If, for some reason, randomness is needed after ``fit``,
 the RNG should be stored in an attribute ``random_state_``.
 The following example should make this clear::
 
-    class GaussianNoise(BaseEstimator, TransformerMixin):
+    class GaussianNoise(TransformerMixin, BaseEstimator):
         """This estimator ignores its input and returns random Gaussian noise.
 
         It also does not adhere to all scikit-learn conventions,
@@ -1361,7 +1361,7 @@ the correct interface more easily.
       >>> from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
       >>> from sklearn.utils.multiclass import unique_labels
       >>> from sklearn.metrics import euclidean_distances
-      >>> class TemplateClassifier(BaseEstimator, ClassifierMixin):
+      >>> class TemplateClassifier(ClassifierMixin, BaseEstimator):
       ...
       ...     def __init__(self, demo_param='demo'):
       ...         self.demo_param = demo_param

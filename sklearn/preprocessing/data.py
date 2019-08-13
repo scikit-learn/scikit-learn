@@ -196,7 +196,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     return X
 
 
-class MinMaxScaler(BaseEstimator, TransformerMixin):
+class MinMaxScaler(TransformerMixin, BaseEstimator):
     """Transforms features by scaling each feature to a given range.
 
     This estimator scales and translates each feature individually such
@@ -495,7 +495,7 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
     return X
 
 
-class StandardScaler(BaseEstimator, TransformerMixin):
+class StandardScaler(TransformerMixin, BaseEstimator):
     """Standardize features by removing the mean and scaling to unit variance
 
     The standard score of a sample `x` is calculated as:
@@ -825,7 +825,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         return tags
 
 
-class MaxAbsScaler(BaseEstimator, TransformerMixin):
+class MaxAbsScaler(TransformerMixin, BaseEstimator):
     """Scale each feature by its maximum absolute value.
 
     This estimator scales and translates each feature individually such
@@ -1056,7 +1056,7 @@ def maxabs_scale(X, axis=0, copy=True):
     return X
 
 
-class RobustScaler(BaseEstimator, TransformerMixin):
+class RobustScaler(TransformerMixin, BaseEstimator):
     """Scale features using statistics that are robust to outliers.
 
     This Scaler removes the median and scales the data according to
@@ -1336,7 +1336,7 @@ def robust_scale(X, axis=0, with_centering=True, with_scaling=True,
     return X
 
 
-class PolynomialFeatures(BaseEstimator, TransformerMixin):
+class PolynomialFeatures(TransformerMixin, BaseEstimator):
     """Generate polynomial and interaction features.
 
     Generate a new feature matrix consisting of all polynomial combinations
@@ -1709,7 +1709,7 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
         return X
 
 
-class Normalizer(BaseEstimator, TransformerMixin):
+class Normalizer(TransformerMixin, BaseEstimator):
     """Normalize samples individually to unit norm.
 
     Each sample (i.e. each row of the data matrix) with at least one
@@ -1849,7 +1849,7 @@ def binarize(X, threshold=0.0, copy=True):
     return X
 
 
-class Binarizer(BaseEstimator, TransformerMixin):
+class Binarizer(TransformerMixin, BaseEstimator):
     """Binarize data (set feature values to 0 or 1) according to a threshold
 
     Values greater than the threshold map to 1, while values less than
@@ -1942,7 +1942,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
         return tags
 
 
-class KernelCenterer(BaseEstimator, TransformerMixin):
+class KernelCenterer(TransformerMixin, BaseEstimator):
     """Center a kernel matrix
 
     Let K(x, z) be a kernel defined by phi(x)^T phi(z), where phi is a
@@ -2103,7 +2103,7 @@ def add_dummy_feature(X, value=1.0):
         return np.hstack((np.full((n_samples, 1), value), X))
 
 
-class QuantileTransformer(BaseEstimator, TransformerMixin):
+class QuantileTransformer(TransformerMixin, BaseEstimator):
     """Transform features using quantiles information.
 
     This method transforms the features to follow a uniform or a normal
@@ -2649,7 +2649,7 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
                          " axis={}".format(axis))
 
 
-class PowerTransformer(BaseEstimator, TransformerMixin):
+class PowerTransformer(TransformerMixin, BaseEstimator):
     """Apply a power transform featurewise to make data more Gaussian-like.
 
     Power transforms are a family of parametric, monotonic transformations

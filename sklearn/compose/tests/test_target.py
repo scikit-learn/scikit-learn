@@ -226,7 +226,7 @@ def test_transform_target_regressor_multi_to_single():
     assert_allclose(y_pred_1d_func, y_pred_2d_func)
 
 
-class DummyCheckerArrayTransformer(BaseEstimator, TransformerMixin):
+class DummyCheckerArrayTransformer(TransformerMixin, BaseEstimator):
 
     def fit(self, X, y=None):
         assert isinstance(X, np.ndarray)
@@ -266,7 +266,7 @@ def test_transform_target_regressor_ensure_y_array():
     assert_raises(AssertionError, tt.predict, X)
 
 
-class DummyTransformer(BaseEstimator, TransformerMixin):
+class DummyTransformer(TransformerMixin, BaseEstimator):
     """Dummy transformer which count how many time fit was called."""
     def __init__(self, fit_counter=0):
         self.fit_counter = fit_counter

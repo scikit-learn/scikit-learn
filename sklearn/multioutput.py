@@ -204,7 +204,7 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
         return tags
 
 
-class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
+class MultiOutputRegressor(RegressorMixin, MultiOutputEstimator):
     """Multi target regression
 
     This strategy consists of fitting one regressor per target. This is a
@@ -299,7 +299,7 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
                         multioutput='uniform_average')
 
 
-class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
+class MultiOutputClassifier(ClassifierMixin, MultiOutputEstimator):
     """Multi target classification
 
     This strategy consists of fitting one classifier per target. This is a
@@ -497,7 +497,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         return Y_pred
 
 
-class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
+class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     """A multi-label model that arranges binary classifiers into a chain.
 
     Each model makes a prediction in the order specified by the chain using
@@ -659,7 +659,7 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
         return tags
 
 
-class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
+class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
     """A multi-label model that arranges regressions into a chain.
 
     Each model makes a prediction in the order specified by the chain using

@@ -319,7 +319,7 @@ class _CFSubcluster:
             self.sq_norm_)
 
 
-class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
+class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
     """Implements the Birch clustering algorithm.
 
     It is a memory-efficient, online-learning algorithm provided as an

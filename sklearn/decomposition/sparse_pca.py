@@ -29,7 +29,7 @@ def _check_normalize_components(normalize_components, estimator_name):
             )
 
 
-class SparsePCA(BaseEstimator, TransformerMixin):
+class SparsePCA(TransformerMixin, BaseEstimator):
     """Sparse Principal Components Analysis (SparsePCA)
 
     Finds the set of sparse components that can optimally reconstruct

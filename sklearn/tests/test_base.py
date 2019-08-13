@@ -299,7 +299,7 @@ def test_score_sample_weight():
 
 def test_clone_pandas_dataframe():
 
-    class DummyEstimator(BaseEstimator, TransformerMixin):
+    class DummyEstimator(TransformerMixin, BaseEstimator):
         """This is a dummy class for generating numerical features
 
         This feature extractor extracts numerical features from pandas data
@@ -414,7 +414,7 @@ class DontPickleAttributeMixin:
         self.__dict__.update(state)
 
 
-class MultiInheritanceEstimator(BaseEstimator, DontPickleAttributeMixin):
+class MultiInheritanceEstimator(DontPickleAttributeMixin, BaseEstimator):
     def __init__(self, attribute_pickled=5):
         self.attribute_pickled = attribute_pickled
         self._attribute_not_pickled = None

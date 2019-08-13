@@ -932,7 +932,7 @@ class SparseCodingMixin(TransformerMixin):
         return code
 
 
-class SparseCoder(BaseEstimator, SparseCodingMixin):
+class SparseCoder(SparseCodingMixin, BaseEstimator):
     """Sparse coding
 
     Finds a sparse representation of data against a fixed, precomputed
@@ -1045,7 +1045,7 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
         return self
 
 
-class DictionaryLearning(BaseEstimator, SparseCodingMixin):
+class DictionaryLearning(SparseCodingMixin, BaseEstimator):
     """Dictionary learning
 
     Finds a dictionary (a set of atoms) that can best be used to represent data
@@ -1241,7 +1241,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         return self
 
 
-class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
+class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
     """Mini-batch dictionary learning
 
     Finds a dictionary (a set of atoms) that can best be used to represent data

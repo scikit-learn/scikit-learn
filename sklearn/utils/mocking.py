@@ -48,7 +48,7 @@ class MockDataFrame:
         return not self == other
 
 
-class CheckingClassifier(BaseEstimator, ClassifierMixin):
+class CheckingClassifier(ClassifierMixin, BaseEstimator):
     """Dummy classifier to test pipelining and meta-estimators.
 
     Checks some property of X and y in fit / predict.

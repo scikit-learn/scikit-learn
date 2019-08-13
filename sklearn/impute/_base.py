@@ -81,7 +81,7 @@ def _most_frequent(array, extra_value, n_repeat):
             return extra_value
 
 
-class SimpleImputer(BaseEstimator, TransformerMixin):
+class SimpleImputer(TransformerMixin, BaseEstimator):
     """Imputation transformer for completing missing values.
 
     Read more in the :ref:`User Guide <impute>`.
@@ -436,7 +436,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         return tags
 
 
-class MissingIndicator(BaseEstimator, TransformerMixin):
+class MissingIndicator(TransformerMixin, BaseEstimator):
     """Binary indicators for missing values.
 
     Note that this component typically should not be used in a vanilla

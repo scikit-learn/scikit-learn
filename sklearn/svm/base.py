@@ -485,7 +485,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         return safe_sparse_dot(self._dual_coef_, self.support_vectors_)
 
 
-class BaseSVC(BaseLibSVM, ClassifierMixin, metaclass=ABCMeta):
+class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
     """ABC for LibSVM-based classifiers."""
     @abstractmethod
     def __init__(self, kernel, degree, gamma, coef0, tol, C, nu,

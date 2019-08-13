@@ -290,7 +290,7 @@ def _samme_proba(estimator, n_classes, X):
                               * log_proba.sum(axis=1)[:, np.newaxis])
 
 
-class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
+class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     """An AdaBoost classifier.
 
     An AdaBoost [1] classifier is a meta-estimator that begins by fitting a
@@ -851,7 +851,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         return np.log(self.predict_proba(X))
 
 
-class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
+class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     """An AdaBoost regressor.
 
     An AdaBoost [1] regressor is a meta-estimator that begins by fitting a

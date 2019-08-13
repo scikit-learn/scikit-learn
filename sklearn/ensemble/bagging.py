@@ -429,7 +429,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
                 for _, sample_indices in self._get_estimators_indices()]
 
 
-class BaggingClassifier(BaseBagging, ClassifierMixin):
+class BaggingClassifier(ClassifierMixin, BaseBagging):
     """A Bagging classifier.
 
     A Bagging classifier is an ensemble meta-estimator that fits base
@@ -811,7 +811,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         return decisions
 
 
-class BaggingRegressor(BaseBagging, RegressorMixin):
+class BaggingRegressor(RegressorMixin, BaseBagging):
     """A Bagging regressor.
 
     A Bagging regressor is an ensemble meta-estimator that fits base

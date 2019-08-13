@@ -553,7 +553,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         return np.log(self.predict_proba(X))
 
 
-class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
+class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     """Quadratic Discriminant Analysis
 
     A classifier with a quadratic decision boundary, generated

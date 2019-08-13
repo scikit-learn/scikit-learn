@@ -137,7 +137,7 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
     return y[order]
 
 
-class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
+class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
     """Isotonic regression model.
 
     The isotonic regression optimization problem is defined by::

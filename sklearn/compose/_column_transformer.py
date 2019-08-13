@@ -33,7 +33,7 @@ _ERR_MSG_1DCOLUMN = ("1D data passed to a transformer that expects 2D data. "
                      "item instead of a scalar.")
 
 
-class ColumnTransformer(_BaseComposition, TransformerMixin):
+class ColumnTransformer(TransformerMixin, _BaseComposition):
     """Applies transformers to columns of an array or pandas DataFrame.
 
     This estimator allows different columns or column subsets of the input

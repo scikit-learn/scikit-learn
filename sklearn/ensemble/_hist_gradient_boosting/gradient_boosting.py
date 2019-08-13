@@ -616,7 +616,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         return tags
 
 
-class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
+class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     """Histogram-based Gradient Boosting Regression Tree.
 
     This estimator is much faster than

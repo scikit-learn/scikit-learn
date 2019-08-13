@@ -19,7 +19,7 @@ __all__ = [
 ]
 
 
-class _BaseEncoder(BaseEstimator, TransformerMixin):
+class _BaseEncoder(TransformerMixin, BaseEstimator):
     """
     Base class for encoders that includes the code to categorize and
     transform the input features.
