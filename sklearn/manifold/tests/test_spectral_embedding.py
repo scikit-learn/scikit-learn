@@ -287,12 +287,19 @@ def test_spectral_embedding_first_eigen_vector():
 def test_spectral_embedding_copy_variable(seed=36):
     # Test that when "copy" input variable is set to False
     # spectral_embedding returns the correct value
-    se_inplace = SpectralEmbedding(n_components=2, n_neighbors=5,
-                                   random_state=np.random.RandomState(seed),
-                                   copy=False)
+    random_state = np.random.RandomState(36)
+    data = random_state.randn(10, 30)
+    sims = rbf_kernel(data)
+    n_components = 8
+    embedding_1 = spectral_embedding(sims,
+                                     n_components=n_components,
+                                     drop_first=False,
+                                     copy=False)
 
-    se_copied = SpectralEmbedding(n_components=2, n_neighbors=5,
-                                  random_state=np.random.RandomState(seed),
-                                  copy=True)
+    # Verify with copy True or False
+    embedding_2 = spectral_embedding(sims,
+                                     n_components=n_components,
+                                     drop_first=False,
+                                     copy=True)
 
-    assert assert_array_almost_equal(se_inplace, se_copied)
+    assert_array_almost_equal(embedding_1, embedding_2)
