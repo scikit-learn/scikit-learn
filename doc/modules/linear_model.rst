@@ -927,6 +927,9 @@ Inverse Gaussian  :math:`y \in (0, \infty)`        :math:`\mu^3`                
 ================= ===============================  ====================================== ============================================
 
 
+Usage
+-----
+
 In the following use cases, a loss different from the squared loss might be
 appropriate,
 
@@ -944,7 +947,7 @@ Since the linear predictor :math:`Xw` can be negative and
 Poisson, Gamma and Inverse Gaussian distributions don't support negative values,
 it is convenient to apply a link function different from the identity link
 :math:`h(x^\top w)=x^\top w` that guarantees the non-negativeness, e.g. the
-log-link with :math:`h(x^\top w)=\exp(x^\top w)`.
+log-link `link='log'` with :math:`h(x^\top w)=\exp(x^\top w)`.
 
 :class:`TweedieRegressor` implements a generalized linear model
 for the Tweedie distribution, that allows to model any of the above mentioned
@@ -1018,7 +1021,9 @@ A few remarks:
 * The minimization is equivalent to (penalized) maximum likelihood estimation.
 * The deviances for at least Normal, Poisson and Gamma distributions are
   strictly consistent scoring functions for the mean :math:`\mu`, see Eq.
-  (19)-(20) in [12]_.
+  (19)-(20) in [12]_. This means that, given an appropriate feature matrix `X`,
+  you get good (asymptotic) estimators for the expectation when using these
+  deviances.
 
 
 .. topic:: References:
