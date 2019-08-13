@@ -189,7 +189,7 @@ if opts.minibatch:
     km = MiniBatchKMeans(n_clusters=true_k, init='k-means++', n_init=1,
                          init_size=1000, batch_size=1000, verbose=opts.verbose)
 else:
-    km = KMeans(n_clusters=true_k, max_iter=100, n_init=1,
+    km = KMeans(n_clusters=true_k, init='k-means++', max_iter=100, n_init=1,
                 verbose=opts.verbose)
 
 print("Clustering sparse data with %s" % km)
