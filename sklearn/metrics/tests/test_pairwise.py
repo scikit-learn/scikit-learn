@@ -785,13 +785,13 @@ def test_gower_distances():
 
     D = np.asarray([[np.nan]], dtype=np.object) != np.asarray([[np.nan]], dtype=np.object)
     print(D)
-    assert_array_almost_equal(np.asarray([[True]]), D)
+    #assert_array_almost_equal(np.asarray([[True]]), D)
     
     D = np.asarray([np.nan], dtype=np.object) != np.asarray([[np.nan]], dtype=np.object)
     print(D)
-    assert_array_almost_equal(np.asarray([[True]]), D)
-    raise ValueError("exiting...")
-    
+    #assert_array_almost_equal(np.asarray([[True]]), D)
+    raise ValueError("Forced exit...")
+     
     with pytest.raises(TypeError):
         gower_distances(csr_matrix((2, 2)))
     with pytest.raises(ValueError):

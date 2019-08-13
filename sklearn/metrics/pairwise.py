@@ -846,32 +846,21 @@ def _detect_categorical_features(X, categorical_features=None):
     categorical_features_mask, numerical_features_mask
      : ndarray, shape (n_features)
     """
-
     _, n_cols = np.shape(X)
     # Automatic detection of categorical features
-    categorical_features_detected = np.zeros(n_cols, dtype=bool)
-    for col in range(0, n_cols):
-        if not np.issubdtype(type(X[0][col]), np.number):
-            categorical_features_detected[col] = True
-
-    cat_obj_mask = categorical_features_detected
-    # Numerical categorical features can't be automatically detected
-    cat_num_mask = np.zeros(n_cols, dtype=bool)
-
-    if categorical_features is not None:
+    if categorical_features is None:
+        categorical_features = np.zeros(n_cols, dtype=bool)
+        for col in range(0, n_cols):
+            if not np.issubdtype(type(X[0][col]), np.number):
+                categorical_features[col] = True
+    else:
         categorical_features = np.asarray(categorical_features)
         if np.issubdtype(categorical_features.dtype, np.integer):
             new_categorical_features = np.zeros(n_cols, dtype=bool)
             new_categorical_features[categorical_features] = True
             categorical_features = new_categorical_features
 
-        # Identifies categorical values represented by objects or numbers
-        cat_num_mask = \
-            categorical_features_detected != categorical_features
-        cat_obj_mask = \
-            categorical_features_detected & categorical_features
-
-    return (cat_obj_mask | cat_num_mask), ~(cat_obj_mask | cat_num_mask)
+    return categorical_features, ~categorical_features
 
 
 def _precompute_gower_params(X, Y, scale, num_mask):
