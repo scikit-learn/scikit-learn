@@ -3,7 +3,7 @@ import warnings
 
 import numpy as np
 
-from ..utils import check_matplotlib_support
+from ...utils import check_matplotlib_support
 
 
 class PartialDependenceDisplay:
@@ -112,6 +112,8 @@ class PartialDependenceDisplay:
         fig : Matplotlib figure object or None, default=None
             A figure object onto which the plots will be drawn, after the
             figure has been cleared. By default, a new one is created.
+
+            .. deprecated:: 0.22
 
         Returns
         -------

@@ -5,7 +5,6 @@
 #          Nicolas Hug
 # License: BSD 3 clause
 
-from itertools import count
 from itertools import chain
 import numbers
 from collections.abc import Iterable
@@ -24,7 +23,7 @@ from ..exceptions import NotFittedError
 from ..ensemble.gradient_boosting import BaseGradientBoosting
 from sklearn.ensemble._hist_gradient_boosting.gradient_boosting import (
     BaseHistGradientBoosting)
-from ._plot import PartialDependenceDisplay
+from ._plot.partial_dependence import PartialDependenceDisplay
 
 
 __all__ = ['partial_dependence', 'plot_partial_dependence']
@@ -472,6 +471,8 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     fig : Matplotlib figure object, optional (default=None)
         A figure object onto which the plots will be drawn, after the figure
         has been cleared. By default, a new one is created.
+
+        .. deprecated:: 0.22
 
     line_kw : dict, optional
         Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
