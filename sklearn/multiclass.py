@@ -188,7 +188,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
         X : (sparse) array-like of shape (n_samples, n_features)
             Data.
 
-        y : (sparse) array-like, shape = [n_samples, ], [n_samples, n_classes]
+        y : (sparse) array-like of shape (n_samples,) or (n_samples, n_classes)
             Multi-class targets. An indicator matrix turns on multilabel
             classification.
 
@@ -228,7 +228,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
         X : (sparse) array-like of shape (n_samples, n_features)
             Data.
 
-        y : (sparse) array-like, shape = [n_samples, ], [n_samples, n_classes]
+        y : (sparse) array-like of shape (n_samples,) or (n_samples, n_classes)
             Multi-class targets. An indicator matrix turns on multilabel
             classification.
 
@@ -282,7 +282,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
 
         Returns
         -------
-        y : (sparse) array-like, shape = [n_samples, ], [n_samples, n_classes].
+        y : (sparse) array-like of shape (n_samples,) or (n_samples, n_classes).
             Predicted multi-class targets.
         """
         check_is_fitted(self, 'estimators_')
