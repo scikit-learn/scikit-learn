@@ -200,6 +200,15 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+- |Feature| New ranking metrics :func:`metrics.ndcg_score` and
+  :func:`metrics.dcg_score` have been added to compute Discounted Cumulative
+  Gain and Normalized Discounted Cumulative Gain. :pr:`9951` by :user:`Jérôme
+  Dockès <jeromedockes>`.
+
+- |MajorFeature| :func:`metrics.plot_roc_curve` has been added to plot roc
+  curves. This function introduces the visualization API described in
+  the :ref:`User Guide <visualizations>`. :pr:`14357` by `Thomas Fan`_.
+
 - |Feature| Added multiclass support to :func:`metrics.roc_auc_score`.
   :issue:`12789` by :user:`Kathy Chen <kathyxchen>`,
   :user:`Mohamed Maskani <maskani-moh>`, and :user:`Thomas Fan <thomasjpfan>`.
@@ -216,8 +225,19 @@ Changelog
   updated to accept the zero and `float('+inf')` value.
   :pr:`13231` by :user:`Dong-hee Na <corona10>`.
 
+- |Enhancement| Added parameter ``squared`` in :func:`metrics.mean_squared_error`
+  to return root mean squared error.
+  :pr:`13467` by :user:`Urvang Patel <urvang96>`.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Raise a ValueError in :func:`metrics.silhouette_score` when a
+  precomputed distance matrix contains non-zero diagonal entries.
+  :pr:`12258` by :user:`Stephen Tierney <sjtrny>`.
+
 :mod:`sklearn.model_selection`
-...............................
+..............................
 
 - |Enhancement| :class:`model_selection.learning_curve` now accepts parameter
   ``return_times`` which can be used to retrieve computation times in order to

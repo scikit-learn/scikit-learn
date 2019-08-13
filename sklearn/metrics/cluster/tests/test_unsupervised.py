@@ -168,6 +168,26 @@ def test_non_numpy_labels():
         silhouette_score(list(X), list(y)) == silhouette_score(X, y))
 
 
+@pytest.mark.parametrize('dtype', (np.float32, np.float64))
+def test_silhouette_nonzero_diag(dtype):
+    # Make sure silhouette_samples requires diagonal to be zero.
+    # Non-regression test for #12178
+
+    # Construct a zero-diagonal matrix
+    dists = pairwise_distances(
+        np.array([[0.2, 0.1, 0.12, 1.34, 1.11, 1.6]], dtype=dtype).T)
+    labels = [0, 0, 0, 1, 1, 1]
+
+    # small values on the diagonal are OK
+    dists[2][2] = np.finfo(dists.dtype).eps * 10
+    silhouette_samples(dists, labels, metric='precomputed')
+
+    # values bigger than eps * 100 are not
+    dists[2][2] = np.finfo(dists.dtype).eps * 1000
+    with pytest.raises(ValueError, match='contains non-zero'):
+        silhouette_samples(dists, labels, metric='precomputed')
+
+
 def assert_raises_on_only_one_label(func):
     """Assert message when there is only one label"""
     rng = np.random.RandomState(seed=0)
