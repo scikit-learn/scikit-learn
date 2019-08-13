@@ -91,7 +91,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
         X : {array-like, object with finite length or shape}
             Training data, requires length = n_samples
 
-        y : array-like, shape = [n_samples] or [n_samples, n_outputs]
+        y : array-like of shape (n_samples) or (n_samples, n_outputs)
             Target values.
 
         sample_weight : array-like of shape = [n_samples], optional
@@ -407,7 +407,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
         X : {array-like, object with finite length or shape}
             Training data, requires length = n_samples
 
-        y : array-like, shape = [n_samples] or [n_samples, n_outputs]
+        y : array-like of shape (n_samples) or (n_samples, n_outputs)
             Target values.
 
         sample_weight : array-like of shape = [n_samples], optional

@@ -782,7 +782,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csc_matrix``.
 
-        y : array-like, shape = [n_samples] or [n_samples, n_outputs]
+        y : array-like of shape (n_samples) or (n_samples, n_outputs)
             The target values (class labels) as integers or strings.
 
         sample_weight : array-like, shape = [n_samples] or None
@@ -1124,7 +1124,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csc_matrix``.
 
-        y : array-like, shape = [n_samples] or [n_samples, n_outputs]
+        y : array-like of shape (n_samples) or (n_samples, n_outputs)
             The target values (real numbers). Use ``dtype=np.float64`` and
             ``order='C'`` for maximum efficiency.
 
