@@ -148,7 +148,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
             raw_X = (_iteritems(d) for d in raw_X)
         elif self.input_type == "string":
             raw_X = (((f, 1) for f in x) for x in raw_X)
-        # expose the seed for minhash techniques
+        # expose the seed for HashingVectorizer
         if not hasattr(self, "_seed"):
             self._seed = 0
         indices, indptr, values = \

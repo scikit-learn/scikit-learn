@@ -1033,6 +1033,20 @@ def test_hashingvectorizer_nan_in_docs():
     assert_raise_message(exception, message, func)
 
 
+def test_hashingvectorize_seed():
+
+    # assert same behaviour without seed
+    hv = HashingVectorizer()
+    X = hv.fit_transform(['hello world', 'hello hello', 'hello goodbye'])
+    assert_array_equal(X.indices, [639749, 784967, 784967, 784967, 945982])
+
+    # assert seed influence
+    hv = HashingVectorizer()
+    hv._seed = 1
+    X = hv.fit_transform(['hello world', 'hello hello', 'hello goodbye'])
+    assert_array_equal(X.indices, [344915, 536287, 344915, 344915, 714648])
+
+
 def test_tfidfvectorizer_binary():
     # Non-regression test: TfidfVectorizer used to ignore its "binary" param.
     v = TfidfVectorizer(binary=True, use_idf=False, norm=None)

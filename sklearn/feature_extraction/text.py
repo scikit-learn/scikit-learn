@@ -707,7 +707,12 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         self._validate_params()
 
         analyzer = self.build_analyzer()
-        X = self._get_hasher().transform(analyzer(doc) for doc in X)
+        _hasher = self._get_hasher()
+        # expose the seed of the hashing function
+        if not(hasattr(self, "_seed")):
+            self._seed = 0
+        _hasher._seed = self._seed
+        X = _hasher.transform(analyzer(doc) for doc in X)
         if self.binary:
             X.data.fill(1)
         if self.norm is not None:
