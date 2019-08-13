@@ -805,7 +805,7 @@ def test_gower_distances():
     # print(D)
     # assert_array_almost_equal(X, D)
     # assert_array_almost_equal([[1, 1],[1, 1]], D)
-    raise ValueError("Exiting...")
+    # raise ValueError("Exiting...")
     # return
     return
     X = np.array([['M', 0],
