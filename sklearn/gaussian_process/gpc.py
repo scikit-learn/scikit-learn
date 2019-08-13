@@ -274,7 +274,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
         Returns
         -------
-        C : array-like, shape = (n_samples, n_classes)
+        C : array-like of shape (n_samples, n_classes)
             Returns the probability of the samples for each class in
             the model. The columns correspond to the classes in sorted
             order, as they appear in the attribute ``classes_``.
@@ -676,7 +676,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
 
         Returns
         -------
-        C : array-like, shape = (n_samples, n_classes)
+        C : array-like of shape (n_samples, n_classes)
             Returns the probability of the samples for each class in
             the model. The columns correspond to the classes in sorted
             order, as they appear in the attribute `classes_`.

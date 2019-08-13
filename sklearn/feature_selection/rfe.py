@@ -474,7 +474,7 @@ class RFECV(RFE):
             Target values (integers for classification, real numbers for
             regression).
 
-        groups : array-like, shape = [n_samples], optional
+        groups : array-like of shape (n_samples) or None
             Group labels for the samples used while splitting the dataset into
             train/test set. Only used in conjunction with a "Group" `cv`
             instance (e.g., `GroupKFold`).

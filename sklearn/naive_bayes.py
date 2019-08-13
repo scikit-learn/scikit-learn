@@ -521,7 +521,7 @@ class BaseDiscreteNB(BaseNB):
             Must be provided at the first call to partial_fit, can be omitted
             in subsequent calls.
 
-        sample_weight : array-like, shape = [n_samples] (default=None)
+        sample_weight : array-like of shape (n_samples,) or None
             Weights applied to individual samples (1. for unweighted).
 
         Returns
@@ -584,7 +584,7 @@ class BaseDiscreteNB(BaseNB):
         y : array-like, shape = [n_samples]
             Target values.
 
-        sample_weight : array-like, shape = [n_samples], (default=None)
+        sample_weight : array-like of shape (n_samples,) or None
             Weights applied to individual samples (1. for unweighted).
 
         Returns

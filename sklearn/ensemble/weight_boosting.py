@@ -229,7 +229,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         y : array-like, shape = [n_samples]
             Labels for X.
 
-        sample_weight : array-like, shape = [n_samples], optional
+        sample_weight : array-like of shape (n_samples) or None
             Sample weights.
 
         Returns

@@ -384,7 +384,7 @@ def _multiclass_roc_auc_score(y_true, y_score, labels,
     y_true : array-like, shape = (n_samples, )
         True multiclass labels.
 
-    y_score : array-like, shape = (n_samples, n_classes)
+    y_score : array-like of shape (n_samples, n_classes)
         Target scores corresponding to probability estimates of a sample
         belonging to a particular class
 
