@@ -460,7 +460,7 @@ class Pipeline(_BaseComposition):
 
         Returns
         -------
-        y_proba : array-like, shape = [n_samples, n_classes]
+        y_proba : array-like of shape (n_samples, n_classes)
         """
         Xt = X
         for _, name, transform in self._iter(with_final=False):
@@ -479,7 +479,7 @@ class Pipeline(_BaseComposition):
 
         Returns
         -------
-        y_score : array-like, shape = [n_samples, n_classes]
+        y_score : array-like of shape (n_samples, n_classes)
         """
         Xt = X
         for _, name, transform in self._iter(with_final=False):
@@ -517,7 +517,7 @@ class Pipeline(_BaseComposition):
 
         Returns
         -------
-        y_score : array-like, shape = [n_samples, n_classes]
+        y_score : array-like of shape (n_samples, n_classes)
         """
         Xt = X
         for _, name, transform in self._iter(with_final=False):

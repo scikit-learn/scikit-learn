@@ -1624,7 +1624,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
         Returns
         -------
-        T : array-like, shape = [n_samples, n_classes]
+        T : array-like of shape (n_samples, n_classes)
             Returns the probability of the sample for each class in the model,
             where classes are ordered as they are in ``self.classes_``.
         """
@@ -1657,7 +1657,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
         Returns
         -------
-        T : array-like, shape = [n_samples, n_classes]
+        T : array-like of shape (n_samples, n_classes)
             Returns the log-probability of the sample for each class in the
             model, where classes are ordered as they are in ``self.classes_``.
         """
