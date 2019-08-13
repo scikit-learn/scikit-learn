@@ -1032,6 +1032,7 @@ def test_hashingvectorizer_nan_in_docs():
 
     assert_raise_message(exception, message, func)
 
+
 @pytest.mark.parametrize("method", ['fit_transform', 'transform'])
 def test_hashingvectorizer_seed():
 
