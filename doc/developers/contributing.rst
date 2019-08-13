@@ -1307,6 +1307,8 @@ the dataset, e.g. when ``X`` is a precomputed kernel matrix. Specifically,
 the :term:`_pairwise` property is used by ``utils.metaestimators._safe_split``
 to slice rows and columns.
 
+.. _rolling_your_own_estimator:
+
 Rolling your own estimator
 ==========================
 If you want to implement a new estimator that is scikit-learn-compatible,
@@ -1325,23 +1327,35 @@ interface might be that you want to use it together with model evaluation and
 selection tools such as :class:`model_selection.GridSearchCV` and
 :class:`pipeline.Pipeline`.
 
-Setting `generate_only=True` allows for checks to be disassembled when
-testing an estimator. This feature can be used to parameterize tests in pytest
-as follows::
+Setting `generate_only=True` returns a generator that yields (estimator, check)
+tuples where the check can be called independently from each other, i.e.
+`check(estimator)`. This allows all checks can run independently and report the
+ones that are failing. In pytest, we can parameterize the check as follows::
 
-  from itertools import chain
   import pytest
   from sklearn.utils.estimator_checks import check_estimator
   from sklearn.utils.estimator_checks import set_check_estimator_ids
-  from sklearn.svm import LinearSVC
   from sklearn.linear_model import LogisticRegression
 
-  estimators = [LinearSVC, LogisticRegression]
+  @pytest.mark.parametrize(
+      'estimator, check',
+      check_estimator(LogisticRegression, generate_only=True)
+      ids=set_check_estimator_ids)
+  def test_sklearn_compatible_estimator(estimator, check):
+      check(estimator)
+
+When testing more than one estimator, python provides a `chain.from_iterable`
+to run checks for many estimators::
+
+  import chain
+  from sklearn.svm import LinearSVC
+
+  estimators = [LogisticRegression, LinearSVC]
 
   @pytest.mark.parametrize(
       'estimator, check',
       chain.from_iterable(check_estimator(est, generate_only=True)
-                          for est in estimators),
+                          for est in estimators)
       ids=set_check_estimator_ids)
   def test_sklearn_compatible_estimator(estimator, check):
       check(estimator)

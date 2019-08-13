@@ -356,6 +356,8 @@ def check_estimator(Estimator, generate_only=False):
     Classes currently have some additional tests that related to construction,
     while passing instances allows the testing of multiple options.
 
+    Read more in :ref:`rolling_your_own_estimator`.
+
     Parameters
     ----------
     estimator : estimator object or class
@@ -363,29 +365,17 @@ def check_estimator(Estimator, generate_only=False):
 
     generate_only : bool, optional (default=False)
         When `False`, checks are evaluated when `check_estimator` is called.
-        When `True`, `check_estimator` returns a list of checks for the
-        `estimator`.
+        When `True`, `check_estimator` returns a generator that yields
+        (estimator, check) tuples. The check is run by calling
+        `check(estimator)`.
 
         .. versionadded:: 0.22
 
-    Notes
-    -----
-    Setting `generate_only=True` allows for checks to be disassembled when
-    testing an estimator. This feature can be used to parameterize tests in
-    pytest as follows::
-
-        from itertools import chain
-        import pytest
-        from sklearn.utils.estimator_checks import check_estimator
-        from sklearn.utils.estimator_checks import set_check_estimator_ids
-
-        @pytest.mark.parametrize(
-            'estimator, check',
-            chain.from_iterable(check_estimator(est, generate_only=True)
-                                for est in estimators),
-            ids=set_check_estimator_ids)
-        def test_sklearn_compatible_estimator(estimator, check):
-            check(estimator)
+    Returns
+    -------
+    generator:
+        Generator that yields (estimator, check) tuples. Returned when
+        `generate_only=True`.
     """
     if isinstance(Estimator, type):
         # got a class
