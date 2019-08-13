@@ -327,7 +327,7 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             The training input samples.
 
         y : array-like, shape = [n_samples]

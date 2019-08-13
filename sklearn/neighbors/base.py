@@ -792,7 +792,7 @@ class RadiusNeighborsMixin:
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features], optional
+        X : array-like of shape (n_samples, n_features), optional
             The query point or points.
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.

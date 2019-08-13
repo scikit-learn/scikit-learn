@@ -1523,7 +1523,7 @@ class _BaseRidgeCV(LinearModel, MultiOutputMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Training data. If using GCV, will be cast to float64
             if necessary.
 

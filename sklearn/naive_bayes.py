@@ -55,7 +55,7 @@ class BaseNB(BaseEstimator, ClassifierMixin, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
@@ -71,7 +71,7 @@ class BaseNB(BaseEstimator, ClassifierMixin, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
@@ -91,7 +91,7 @@ class BaseNB(BaseEstimator, ClassifierMixin, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------

@@ -179,7 +179,7 @@ class EmpiricalCovariance(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
           Training data, where n_samples is the number of samples and
           n_features is the number of features.
 
@@ -208,7 +208,7 @@ class EmpiricalCovariance(BaseEstimator):
 
         Parameters
         ----------
-        X_test : array-like, shape = [n_samples, n_features]
+        X_test : array-like of shape (n_samples, n_features)
             Test data of which we compute the likelihood, where n_samples is
             the number of samples and n_features is the number of features.
             X_test is assumed to be drawn from the same distribution than
@@ -289,7 +289,7 @@ class EmpiricalCovariance(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             The observations, the Mahalanobis distances of the which we
             compute. Observations are assumed to be drawn from the same
             distribution than the data used in fit.

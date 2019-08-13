@@ -1650,7 +1650,7 @@ class MiniBatchKMeans(KMeans):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Coordinates of the data points to cluster. It must be noted that
             X will be copied if it is not C-contiguous.
 

@@ -569,7 +569,7 @@ class Pipeline(_BaseComposition):
 
         Returns
         -------
-        Xt : array-like, shape = [n_samples, n_features]
+        Xt : array-like of shape (n_samples, n_features)
         """
         # raise AttributeError if necessary for hasattr behaviour
         # XXX: Handling the None case means we can't use if_delegate_has_method

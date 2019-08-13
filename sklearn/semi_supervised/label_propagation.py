@@ -209,7 +209,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             A {n_samples by n_samples} size matrix will be created from this
 
         y : array_like, shape = [n_samples]

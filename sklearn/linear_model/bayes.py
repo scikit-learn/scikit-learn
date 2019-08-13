@@ -512,7 +512,7 @@ class ARDRegression(LinearModel, RegressorMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
         y : array, shape = [n_samples]

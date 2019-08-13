@@ -185,7 +185,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
 
         Parameters
         ----------
-        X : (sparse) array-like, shape = [n_samples, n_features]
+        X : (sparse) array-like of shape (n_samples, n_features)
             Data.
 
         y : (sparse) array-like, shape = [n_samples, ], [n_samples, n_classes]
@@ -225,7 +225,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
 
         Parameters
         ----------
-        X : (sparse) array-like, shape = [n_samples, n_features]
+        X : (sparse) array-like of shape (n_samples, n_features)
             Data.
 
         y : (sparse) array-like, shape = [n_samples, ], [n_samples, n_classes]
@@ -277,7 +277,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
 
         Parameters
         ----------
-        X : (sparse) array-like, shape = [n_samples, n_features]
+        X : (sparse) array-like of shape (n_samples, n_features)
             Data.
 
         Returns
@@ -329,7 +329,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
@@ -360,7 +360,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
@@ -484,7 +484,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Parameters
         ----------
-        X : (sparse) array-like, shape = [n_samples, n_features]
+        X : (sparse) array-like of shape (n_samples, n_features)
             Data.
 
         y : array-like, shape = [n_samples]
@@ -524,7 +524,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Parameters
         ----------
-        X : (sparse) array-like, shape = [n_samples, n_features]
+        X : (sparse) array-like of shape (n_samples, n_features)
             Data.
 
         y : array-like, shape = [n_samples]
@@ -574,7 +574,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Parameters
         ----------
-        X : (sparse) array-like, shape = [n_samples, n_features]
+        X : (sparse) array-like of shape (n_samples, n_features)
             Data.
 
         Returns
@@ -597,7 +597,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
@@ -711,7 +711,7 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Parameters
         ----------
-        X : (sparse) array-like, shape = [n_samples, n_features]
+        X : (sparse) array-like of shape (n_samples, n_features)
             Data.
 
         y : numpy array of shape [n_samples]
@@ -760,7 +760,7 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Parameters
         ----------
-        X : (sparse) array-like, shape = [n_samples, n_features]
+        X : (sparse) array-like of shape (n_samples, n_features)
             Data.
 
         Returns
