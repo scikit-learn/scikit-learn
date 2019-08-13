@@ -53,7 +53,7 @@ def test_feature_hasher_seed():
     h = FeatureHasher(n_features, input_type="string",
                       alternate_sign=False)
     X = h.transform(raw_X)
-    assert_array_equal(X.indices, [44, 114, 125, 39, 44, 125])
+    assert_array_equal(X.indices, [13, 22, 96, 13, 22, 116])
 
     # assert a different random_state gives a different output
     h = FeatureHasher(n_features, input_type="string",
