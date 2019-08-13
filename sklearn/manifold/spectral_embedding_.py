@@ -188,7 +188,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         should be True as the first eigenvector should be constant vector for
         connected graph, but for spectral clustering, this should be kept as
         False to retain the first eigenvector.
-    
+
     copy : bool, optional, default: True
         Parameter to opt whether memory optimization needs to be done in
         the graph_laplacian function. If False, the values in affinity
