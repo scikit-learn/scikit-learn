@@ -169,9 +169,10 @@ def _encode_check_unknown(values, uniques, return_mask=False):
 
 
 class LabelEncoder(BaseEstimator, TransformerMixin):
-    """Encode target labels with value between 0 and n_classes-1. This
-    transformer should be used to encode target values, *i.e.* ``y``, and not
-    the input ``X``.
+    """Encode target labels with value between 0 and n_classes-1.
+
+    This transformer should be used to encode target values, *i.e.* `y`, and
+    not the input `X`.
 
     Read more in the :ref:`User Guide <preprocessing_targets>`.
 
