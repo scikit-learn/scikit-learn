@@ -336,7 +336,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
             as passing real test samples, since DummyClassifier
             operates independently of the sampled observations.
 
-        y : array-like, shape = (n_samples) or (n_samples, n_outputs)
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             True labels for X.
 
         sample_weight : array-like, shape = [n_samples], optional
@@ -537,7 +537,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
             as passing real test samples, since DummyRegressor
             operates independently of the sampled observations.
 
-        y : array-like, shape = (n_samples) or (n_samples, n_outputs)
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             True values for X.
 
         sample_weight : array-like, shape = [n_samples], optional

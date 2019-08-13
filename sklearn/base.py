@@ -352,7 +352,7 @@ class ClassifierMixin:
         X : array-like, shape = (n_samples, n_features)
             Test samples.
 
-        y : array-like, shape = (n_samples) or (n_samples, n_outputs)
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             True labels for X.
 
         sample_weight : array-like, shape = [n_samples], optional
@@ -391,7 +391,7 @@ class RegressorMixin:
             n_samples_fitted], where n_samples_fitted is the number of
             samples used in the fitting for the estimator.
 
-        y : array-like, shape = (n_samples) or (n_samples, n_outputs)
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             True values for X.
 
         sample_weight : array-like, shape = [n_samples], optional
