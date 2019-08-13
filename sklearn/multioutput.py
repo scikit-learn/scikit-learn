@@ -89,7 +89,7 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
             and can be omitted in the subsequent calls.
             Note that y doesn't need to contain all labels in `classes`.
 
-        sample_weight : array-like of shape (n_samples) or None
+        sample_weight : array-like of shape (n_samples,) or None
             Sample weights. If None, then samples are equally weighted.
             Only supported if the underlying regressor supports sample
             weights.
@@ -134,7 +134,7 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
             Multi-output targets. An indicator matrix turns on multilabel
             estimation.
 
-        sample_weight : array-like of shape (n_samples) or None
+        sample_weight : array-like of shape (n_samples,) or None
             Sample weights. If None, then samples are equally weighted.
             Only supported if the underlying regressor supports sample
             weights.
@@ -246,7 +246,7 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
         y : (sparse) array-like, shape (n_samples, n_outputs)
             Multi-output targets.
 
-        sample_weight : array-like of shape (n_samples) or None
+        sample_weight : array-like of shape (n_samples,) or None
             Sample weights. If None, then samples are equally weighted.
             Only supported if the underlying regressor supports sample
             weights.

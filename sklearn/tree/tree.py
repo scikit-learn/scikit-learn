@@ -782,10 +782,10 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csc_matrix``.
 
-        y : array-like of shape (n_samples) or (n_samples, n_outputs)
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             The target values (class labels) as integers or strings.
 
-        sample_weight : array-like of shape (n_samples) or None
+        sample_weight : array-like of shape (n_samples,) or None
             Sample weights. If None, then samples are equally weighted. Splits
             that would create child nodes with net zero or negative weight are
             ignored while searching for a split in each node. Splits are also
@@ -1124,11 +1124,11 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csc_matrix``.
 
-        y : array-like of shape (n_samples) or (n_samples, n_outputs)
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             The target values (real numbers). Use ``dtype=np.float64`` and
             ``order='C'`` for maximum efficiency.
 
-        sample_weight : array-like of shape (n_samples) or None
+        sample_weight : array-like of shape (n_samples,) or None
             Sample weights. If None, then samples are equally weighted. Splits
             that would create child nodes with net zero or negative weight are
             ignored while searching for a split in each node.

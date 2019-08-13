@@ -204,7 +204,7 @@ else [n_classes, n_features]
         y : array-like, shape = [n_samples]
             Target vector relative to X
 
-        sample_weight : array-like of shape (n_samples) or None
+        sample_weight : array-like of shape (n_samples,) or None
             Array of weights that are assigned to individual
             samples. If not provided,
             then each sample is given unit weight.
@@ -391,7 +391,7 @@ class LinearSVR(LinearModel, RegressorMixin):
         y : array-like, shape = [n_samples]
             Target vector relative to X
 
-        sample_weight : array-like of shape (n_samples) or None
+        sample_weight : array-like of shape (n_samples,) or None
             Array of weights that are assigned to individual
             samples. If not provided,
             then each sample is given unit weight.

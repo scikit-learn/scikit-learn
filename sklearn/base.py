@@ -355,7 +355,7 @@ class ClassifierMixin:
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             True labels for X.
 
-        sample_weight : array-like of shape (n_samples) or None
+        sample_weight : array-like of shape (n_samples,) or None
             Sample weights.
 
         Returns
@@ -394,7 +394,7 @@ class RegressorMixin:
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             True values for X.
 
-        sample_weight : array-like of shape (n_samples) or None
+        sample_weight : array-like of shape (n_samples,) or None
             Sample weights.
 
         Returns
