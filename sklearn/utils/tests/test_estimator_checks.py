@@ -304,6 +304,17 @@ class RequiresPositiveYRegressor(LinearRegression):
         return {"requires_positive_y": True}
 
 
+class FailsWithConstantFeatures(BaseEstimator):
+    # Estimator that fails with constant features and don't raise
+    # an adequate error message
+
+    def fit(self, X, y):
+        X, y = check_X_y(X, y)
+        if (np.std(X, axis=0) == 0).any():
+            raise FloatingPointError('Inadequate error for'
+                                     'constant features in X')
+        return self
+
 def test_check_fit_score_takes_y_works_on_deprecated_fit():
     # Tests that check_fit_score_takes_y works on a class with
     # a deprecated fit method
@@ -403,6 +414,12 @@ def test_check_estimator():
            r'support \S{3}_64 matrix, and is not failing gracefully.*')
     assert_raises_regex(AssertionError, msg, check_estimator,
                         LargeSparseNotSupportedClassifier)
+
+    # Constant features on bad estimator
+    msg = ("Estimator FailsWithConstantFeatures raised an error due to "
+           "constant features, but does not match expected error message")
+    assert_raises_regex(AssertionError, msg, check_estimator,
+                        FailsWithConstantFeatures)
 
     # does error on binary_only untagged estimator
     msg = 'Only 2 classes are supported'
