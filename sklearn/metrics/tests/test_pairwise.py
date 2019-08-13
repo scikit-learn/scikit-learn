@@ -783,19 +783,6 @@ def test_gower_distances():
     # The calculation formula for Gower similarity is available in the
     # user guide.
 
-    D = gower_distances(np.asarray([[np.nan]], dtype=np.object), categorical_features=[True])
-    print(D)
-    assert_array_almost_equal(np.asarray([[True]]), D)
-
-    # D = np.asarray([[np.nan]], dtype=np.object) != np.asarray([[np.nan]], dtype=np.object)
-    # print(D)
-    # > [[True]]
-    # > [[False]]
-    # D = np.asarray([np.nan], dtype=np.object) != np.asarray([[np.nan]], dtype=np.object)
-    # print(D)
-    # > [[True]]
-    # > [[False]]
-
     with pytest.raises(TypeError):
         gower_distances(csr_matrix((2, 2)))
     with pytest.raises(ValueError):
