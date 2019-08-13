@@ -792,6 +792,9 @@ def test_gower_distances():
     # print(D)
     # assert_array_almost_equal(np.asarray([[1.0]]), D)
 
+    D = np.asarray([np.nan], dtype=np.object) != np.asarray([[np.nan]], dtype=np.object)
+    assert_array_almost_equal(np.asarray([[True]]), D)
+
     X = [['M', 0], [np.nan, np.nan]]
     Y = [['M', 0], [np.nan, np.nan]]
 
@@ -807,7 +810,6 @@ def test_gower_distances():
     # assert_array_almost_equal([[1, 1],[1, 1]], D)
     # raise ValueError("Exiting...")
     # return
-    return
     X = np.array([['M', 0],
                   ['F', 1],
                   ['M', 1],
