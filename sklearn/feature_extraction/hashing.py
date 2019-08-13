@@ -149,7 +149,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         elif self.input_type == "string":
             raw_X = (((f, 1) for f in x) for x in raw_X)
         # expose the seed for minhash techniques
-        if not hasattr(self, _seed):
+        if not hasattr(self, "_seed"):
             self._seed = 0
         indices, indptr, values = \
             _hashing_transform(raw_X, self.n_features, self.dtype,
