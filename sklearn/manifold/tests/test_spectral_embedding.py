@@ -295,6 +295,4 @@ def test_spectral_embedding_copy_variable(seed=36):
                                   random_state=np.random.RandomState(seed),
                                   copy=True)
 
-    embed_inplace = se_inplace.fit_transform(S)
-    embed_copied = se_copied.fit_transform(S)
-    assert assert_array_almost_equal(embed_inplace, embed_copied)
+    assert assert_array_almost_equal(se_inplace, se_copied)
