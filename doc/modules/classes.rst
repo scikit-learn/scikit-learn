@@ -99,11 +99,11 @@ Classes
    cluster.AgglomerativeClustering
    cluster.Birch
    cluster.DBSCAN
-   cluster.OPTICS
    cluster.FeatureAgglomeration
    cluster.KMeans
    cluster.MiniBatchKMeans
    cluster.MeanShift
+   cluster.OPTICS
    cluster.SpectralClustering
 
 Functions
