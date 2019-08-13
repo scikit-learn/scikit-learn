@@ -275,10 +275,6 @@ def test_multi_output_classification():
         assert_array_equal(list(forest_.predict_proba(X)),
                            list(predict_proba[i]))
 
-    # test classes_ attribute
-    [assert_array_equal(classes_true, classes_est) for
-     (classes_true, classes_est) in zip(classes, multi_target_forest.classes_)]
-
 
 def test_multiclass_multioutput_estimator():
     # test to check meta of meta estimators
@@ -297,10 +293,6 @@ def test_multiclass_multioutput_estimator():
         multi_class_svc_.fit(X, y[:, i])
         assert (list(multi_class_svc_.predict(X)) ==
                      list(predictions[:, i]))
-
-    # test classes_ attribute
-    [assert_array_equal(classes_true, classes_est) for
-     (classes_true, classes_est) in zip(classes, multi_target_svc.classes_)]
 
 
 def test_multiclass_multioutput_estimator_predict_proba():
@@ -535,3 +527,21 @@ def test_base_chain_crossval_fit_and_predict():
             assert jaccard_score(Y, Y_pred_cv, average='samples') > .4
         else:
             assert mean_squared_error(Y, Y_pred_cv) < .25
+
+
+def test_multi_output_classes_():
+    # Tests classes_ attribute of multioutput classifiers
+    # RandomForestClassifier supports multioutput out-of-the-box
+    forest = RandomForestClassifier(n_estimators=10, random_state=1)
+    multi_output_forest = MultiOutputClassifier(forest)
+    cc_forest = ClassifierChain(forest)
+
+    forest.fit(X, y)
+    multi_output_forest.fit(X, y)
+    cc_forest.fit(X, y)
+
+    for estimator in [forest, multi_output_forest, cc_forest]:
+        assert isinstance(estimator.classes_, list)
+        assert len(estimator.classes_) == n_outputs
+        [assert_array_equal(classes_true, classes_est) for
+         (classes_true, classes_est) in zip(classes, estimator.classes_)]
