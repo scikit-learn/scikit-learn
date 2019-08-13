@@ -239,7 +239,7 @@ class EmpiricalCovariance(BaseEstimator):
 
         Parameters
         ----------
-        comp_cov : array-like, shape = [n_features, n_features]
+        comp_cov : array-like of shape (n_features, n_features)
             The covariance to compare with.
 
         norm : str
