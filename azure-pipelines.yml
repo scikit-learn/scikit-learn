@@ -90,3 +90,14 @@ jobs:
       py35_pip_openblas_32bit:
         PYTHON_VERSION: '3.5'
         PYTHON_ARCH: '32'
+- script: pip install -r requirements.txt
+  displayName: 'Install requirements'
+- script: |
+    python -m pip install flake8
+    flake8 .
+  displayName: 'Run lint tests'
+- script: |
+    pip install pytest
+    pip install pytest-cov
+    pytest tests --doctest-modules --junitxml=junit/test-results.xml --cov=com --cov-report=xml --cov-report=html
+  displayName: 'Test with pytest'
