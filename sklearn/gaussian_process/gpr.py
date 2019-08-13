@@ -114,7 +114,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
 
     Attributes
     ----------
-    X_train_ : array-like, shape = (n_samples, n_features)
+    X_train_ : array-like of shape (n_samples, n_features)
         Feature values in training data (also required for prediction)
 
     y_train_ : array-like, shape = (n_samples, [n_output_dims])
@@ -164,7 +164,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data
 
         y : array-like, shape = (n_samples, [n_output_dims])
@@ -273,7 +273,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Query points where the GP is evaluated
 
         return_std : bool, default: False

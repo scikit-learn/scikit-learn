@@ -349,7 +349,7 @@ class ClassifierMixin:
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Test samples.
 
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
@@ -385,7 +385,7 @@ class RegressorMixin:
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Test samples. For some estimators this may be a
             precomputed kernel matrix instead, shape = (n_samples,
             n_samples_fitted], where n_samples_fitted is the number of
@@ -576,7 +576,7 @@ class DensityMixin:
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------

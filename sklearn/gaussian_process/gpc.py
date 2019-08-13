@@ -115,7 +115,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
     Attributes
     ----------
-    X_train_ : array-like, shape = (n_samples, n_features)
+    X_train_ : array-like of shape (n_samples, n_features)
         Feature values in training data (also required for prediction)
 
     y_train_ : array-like of shape (n_samples,)
@@ -160,7 +160,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data
 
         y : array-like of shape (n_samples,)
@@ -248,7 +248,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
@@ -270,7 +270,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
@@ -602,7 +602,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data
 
         y : array-like of shape (n_samples,)
@@ -656,7 +656,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
@@ -672,7 +672,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
