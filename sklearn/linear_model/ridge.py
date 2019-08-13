@@ -249,7 +249,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         shape = [n_samples, n_features]
         Training data
 
-    y : array-like, shape = [n_samples] or [n_samples, n_targets]
+    y : array-like of shape (n_samples,) or (n_samples, n_targets)
         Target values
 
     alpha : {float, array-like},
@@ -751,7 +751,7 @@ class Ridge(_BaseRidge, RegressorMixin):
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Training data
 
-        y : array-like, shape = [n_samples] or [n_samples, n_targets]
+        y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values
 
         sample_weight : float or numpy array of shape [n_samples]
@@ -1408,7 +1408,7 @@ class _RidgeGCV(LinearModel):
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Training data. Will be cast to float64 if necessary
 
-        y : array-like, shape = [n_samples] or [n_samples, n_targets]
+        y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values. Will be cast to float64 if necessary
 
         sample_weight : float or array-like of shape [n_samples]
@@ -1527,7 +1527,7 @@ class _BaseRidgeCV(LinearModel, MultiOutputMixin):
             Training data. If using GCV, will be cast to float64
             if necessary.
 
-        y : array-like, shape = [n_samples] or [n_samples, n_targets]
+        y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values. Will be cast to X's dtype if necessary
 
         sample_weight : float or array-like of shape [n_samples]

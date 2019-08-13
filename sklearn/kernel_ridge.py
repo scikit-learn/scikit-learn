@@ -137,7 +137,7 @@ class KernelRidge(BaseEstimator, RegressorMixin, MultiOutputMixin):
             a precomputed kernel matrix, shape = [n_samples,
             n_samples].
 
-        y : array-like, shape = [n_samples] or [n_samples, n_targets]
+        y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values
 
         sample_weight : float or array-like of shape [n_samples]
