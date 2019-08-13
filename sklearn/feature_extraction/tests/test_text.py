@@ -1034,8 +1034,7 @@ def test_hashingvectorizer_nan_in_docs():
 
 
 @pytest.mark.parametrize("method", ['fit_transform', 'transform'])
-def test_hashingvectorizer_seed():
-
+def test_hashingvectorizer_seed(method):
     text = ['hello world', 'hello hello', 'hello goodbye']
     # assert same behaviour without seed
     hv = HashingVectorizer()
