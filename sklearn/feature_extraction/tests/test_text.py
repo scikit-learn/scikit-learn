@@ -1032,18 +1032,19 @@ def test_hashingvectorizer_nan_in_docs():
 
     assert_raise_message(exception, message, func)
 
+@pytest.mark.parametrize("method", ['fit_transform', 'transform'])
+def test_hashingvectorizer_seed():
 
-def test_hashingvectorize_seed():
-
+    text = ['hello world', 'hello hello', 'hello goodbye']
     # assert same behaviour without seed
     hv = HashingVectorizer()
-    X = hv.fit_transform(['hello world', 'hello hello', 'hello goodbye'])
+    X = getattr(hv, method)(text)
     assert_array_equal(X.indices, [639749, 784967, 784967, 784967, 945982])
 
     # assert seed influence
     hv = HashingVectorizer()
     hv._seed = 1
-    X = hv.fit_transform(['hello world', 'hello hello', 'hello goodbye'])
+    X = getattr(hv, method)(text)
     assert_array_equal(X.indices, [344915, 536287, 344915, 344915, 714648])
 
 
