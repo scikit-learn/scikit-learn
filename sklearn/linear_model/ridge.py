@@ -906,7 +906,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         X : {array-like, sparse matrix}, shape = [n_samples,n_features]
             Training data
 
-        y : array-like, shape = [n_samples]
+        y : array-like of shape (n_samples,)
             Target values
 
         sample_weight : float or numpy array of shape (n_samples,)

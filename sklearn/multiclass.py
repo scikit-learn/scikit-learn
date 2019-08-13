@@ -487,7 +487,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         X : (sparse) array-like of shape (n_samples, n_features)
             Data.
 
-        y : array-like, shape = [n_samples]
+        y : array-like of shape (n_samples,)
             Multi-class targets.
 
         Returns
@@ -527,7 +527,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         X : (sparse) array-like of shape (n_samples, n_features)
             Data.
 
-        y : array-like, shape = [n_samples]
+        y : array-like of shape (n_samples,)
             Multi-class targets.
 
         classes : array, shape (n_classes, )

@@ -226,7 +226,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             The training input samples. Sparse matrices are accepted only if
             they are supported by the base estimator.
 
-        y : array-like, shape = [n_samples]
+        y : array-like of shape (n_samples,)
             The target values (class labels in classification, real numbers in
             regression).
 
@@ -254,7 +254,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             The training input samples. Sparse matrices are accepted only if
             they are supported by the base estimator.
 
-        y : array-like, shape = [n_samples]
+        y : array-like of shape (n_samples,)
             The target values (class labels in classification, real numbers in
             regression).
 

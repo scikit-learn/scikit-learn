@@ -201,7 +201,7 @@ else [n_classes, n_features]
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
 
-        y : array-like, shape = [n_samples]
+        y : array-like of shape (n_samples,)
             Target vector relative to X
 
         sample_weight : array-like of shape (n_samples,) or None
@@ -388,7 +388,7 @@ class LinearSVR(LinearModel, RegressorMixin):
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
 
-        y : array-like, shape = [n_samples]
+        y : array-like of shape (n_samples,)
             Target vector relative to X
 
         sample_weight : array-like of shape (n_samples,) or None

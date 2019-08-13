@@ -330,7 +330,7 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
         X : array-like of shape (n_samples, n_features)
             The training input samples.
 
-        y : array-like, shape = [n_samples]
+        y : array-like of shape (n_samples,)
             The target values (class labels in classification, real numbers in
             regression).
 

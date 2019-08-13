@@ -512,7 +512,7 @@ class BaseDiscreteNB(BaseNB):
             Training vectors, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like, shape = [n_samples]
+        y : array-like of shape (n_samples,)
             Target values.
 
         classes : array-like, shape = [n_classes] (default=None)
@@ -581,7 +581,7 @@ class BaseDiscreteNB(BaseNB):
             Training vectors, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like, shape = [n_samples]
+        y : array-like of shape (n_samples,)
             Target values.
 
         sample_weight : array-like of shape (n_samples,) or None

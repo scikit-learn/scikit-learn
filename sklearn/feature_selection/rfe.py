@@ -139,7 +139,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             The training input samples.
 
-        y : array-like, shape = [n_samples]
+        y : array-like of shape (n_samples,)
             The target values.
         """
         return self._fit(X, y)
@@ -470,7 +470,7 @@ class RFECV(RFE):
             Training vector, where `n_samples` is the number of samples and
             `n_features` is the total number of features.
 
-        y : array-like, shape = [n_samples]
+        y : array-like of shape (n_samples,)
             Target values (integers for classification, real numbers for
             regression).
 

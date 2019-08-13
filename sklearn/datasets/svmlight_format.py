@@ -418,7 +418,7 @@ def dump_svmlight_file(X, y, f,  zero_based=True, comment=None, query_id=None,
         the file as having been dumped by scikit-learn. Note that not all
         tools grok comments in SVMlight files.
 
-    query_id : array-like, shape = [n_samples]
+    query_id : array-like of shape (n_samples,)
         Array containing pairwise preference constraints (qid in svmlight
         format).
 

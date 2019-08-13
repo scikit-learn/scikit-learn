@@ -226,7 +226,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
             The training input samples. Sparse matrix can be CSC, CSR, COO,
             DOK, or LIL. COO, DOK, and LIL are converted to CSR.
 
-        y : array-like, shape = [n_samples]
+        y : array-like of shape (n_samples,)
             Labels for X.
 
         sample_weight : array-like of shape (n_samples,) or None
