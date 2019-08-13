@@ -117,7 +117,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
     X_train_ : array-like of shape (n_samples, n_features)
         Feature values in training data (also required for prediction)
 
-    y_train_ : array-like, shape = (n_samples, [n_output_dims])
+    y_train_ : array-like of shape (n_samples,) or (n_samples, n_targets)
         Target values in training data (also required for prediction)
 
     kernel_ : kernel object
@@ -167,7 +167,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
         X : array-like of shape (n_samples, n_features)
             Training data
 
-        y : array-like, shape = (n_samples, [n_output_dims])
+        y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values
 
         Returns
