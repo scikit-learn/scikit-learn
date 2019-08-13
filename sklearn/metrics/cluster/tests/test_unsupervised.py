@@ -168,13 +168,14 @@ def test_non_numpy_labels():
         silhouette_score(list(X), list(y)) == silhouette_score(X, y))
 
 
-def test_silhouette_nonzero_diag():
+@pytest.mark.parametrize('dtype', (np.float32, np.float64))
+def test_silhouette_nonzero_diag(dtype):
     # Make sure silhouette_samples requires diagonal to be zero.
     # Non-regression test for #12178
 
     # Construct a zero-diagonal matrix
     dists = pairwise_distances(
-        np.array([[0.2, 0.1, 0.12, 1.34, 1.11, 1.6]]).transpose())
+        np.array([[0.2, 0.1, 0.12, 1.34, 1.11, 1.6]], dtype=dtype).T)
     labels = [0, 0, 0, 1, 1, 1]
 
     # small values on the diagonal are OK
