@@ -589,7 +589,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
 
     Attributes
     ----------
-    covariance_ : list of array-like, shape = [n_features, n_features]
+    covariance_ : list of array-like of shape (n_features, n_features)
         Covariance matrices of each class.
 
     means_ : array-like of shape (n_classes, n_features)

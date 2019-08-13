@@ -357,7 +357,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples_X, n_features)
+        X : array-like of shape (n_samples_X, n_features)
             Query points where the GP samples are evaluated
 
         n_samples : int, default: 1
