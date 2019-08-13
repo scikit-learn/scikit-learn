@@ -144,7 +144,7 @@ class PartialDependenceDisplay:
             if fig is None:
                 _, ax = plt.subplots()
             else:
-                ax = fig.add_subplot()
+                ax = fig.add_subplot(111)
 
         if isinstance(ax, list):
             if len(ax) != len(self.features):
