@@ -1482,6 +1482,10 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
+        if len(np.atleast_1d(self.length_scale)) > 1:
+            raise AttributeError(
+                "RationalQuadratic kernel only supports isotropic version, "
+                "please use a single scalar for length_scale")
         X = np.atleast_2d(X)
         if Y is None:
             dists = squareform(pdist(X, metric='sqeuclidean'))

@@ -603,6 +603,18 @@ Single linkage can also perform well on non-globular data.
  * :ref:`sphx_glr_auto_examples_cluster_plot_digits_linkage.py`: exploration of the
    different linkage strategies in a real dataset.
 
+Visualization of cluster hierarchy
+----------------------------------
+
+It's possible to visualize the tree representing the hierarchical merging of clusters
+as a dendrogram. Visual inspection can often be useful for understanding the structure
+of the data, though more so in the case of small sample sizes.
+
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_dendrogram_001.png
+    :target: ../auto_examples/cluster/plot_agglomerative_dendrogram.html
+    :scale: 42
+
+
 
 Adding connectivity constraints
 -------------------------------
