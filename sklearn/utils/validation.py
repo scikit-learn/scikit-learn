@@ -880,7 +880,8 @@ def check_is_fitted(estimator, attributes='deprecated', msg=None,
 
     attributes : deprecated, ignored
         .. deprecated:: 0.22
-           `attributes` is deprecated, is currently ignored and will be removed in 0.23.
+           `attributes` is deprecated, is currently ignored and will be removed
+           in 0.23.
 
     msg : string
         The default error message is, "This %(name)s instance is not fitted
@@ -892,8 +893,9 @@ def check_is_fitted(estimator, attributes='deprecated', msg=None,
         Eg. : "Estimator, %(name)s, must be fitted before sparsifying".
 
     all_or_any : deprecated, ignored
-            .. deprecated:: 0.21
-           `all_or_any` is deprecated, is currently ignored and will be removed in 0.23.
+        .. deprecated:: 0.21
+           `all_or_any` is deprecated, is currently ignored and will be removed
+           in 0.23.
 
     Returns
     -------
