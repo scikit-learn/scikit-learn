@@ -373,29 +373,25 @@ def check_estimator(Estimator, generate_only=False):
 
     Returns
     -------
-    generator:
+    checks_generator : generator
         Generator that yields (estimator, check) tuples. Returned when
         `generate_only=True`.
     """
     if isinstance(Estimator, type):
         # got a class
-        if generate_only:
-            return _generate_class_checks(Estimator)
-
-        name = Estimator.__name__
-        check_parameters_default_constructible(name, Estimator)
-        estimator = _construct_instance(Estimator)
+        checks_generator = _generate_class_checks(Estimator)
     else:
         # got an instance
         estimator = Estimator
         name = type(estimator).__name__
+        checks_generator = _generate_instance_checks(name, estimator)
 
     if generate_only:
-        return _generate_instance_checks(name, estimator)
+        return checks_generator
 
-    for check in _yield_all_checks(name, estimator):
+    for estimator, check in checks_generator:
         try:
-            check(name, estimator)
+            check(estimator)
         except SkipTest as exception:
             # the only SkipTest thrown currently results from not
             # being able to import pandas.
