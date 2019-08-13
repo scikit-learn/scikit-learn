@@ -44,6 +44,25 @@ def test_feature_hasher_strings():
         assert X.nnz == 6
 
 
+def test_feature_hasher_seed():
+    raw_X = [["foo", "bar", "baz", "foo".encode("ascii")],
+             ["bar".encode("ascii"), "baz", "quux"]]
+    n_features = 2 ** 7
+
+    # assert we maintain the precedent behaviour
+    h = FeatureHasher(n_features, input_type="string",
+                      alternate_sign=False)
+    X = h.transform(raw_X)
+    assert_array_equal(X.indices, [44, 114, 125, 39, 44, 125])
+
+    # assert a different random_state gives a different output
+    h = FeatureHasher(n_features, input_type="string",
+                      alternate_sign=False)
+    h._seed = 1
+    X = h.transform(raw_X)
+    assert_array_equal(X.indices, [44, 114, 125, 39, 44, 125])
+
+
 def test_feature_hasher_pairs():
     raw_X = (iter(d.items()) for d in [{"foo": 1, "bar": 2},
                                        {"baz": 3, "quux": 4, "foo": -1}])
