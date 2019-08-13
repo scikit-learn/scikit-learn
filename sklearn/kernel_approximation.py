@@ -530,7 +530,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples, n_feature)
+        X : array-like of shape (n_samples, n_features)
             Training data.
         """
         X = check_array(X, accept_sparse='csr')
@@ -572,7 +572,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Data to transform.
 
         Returns

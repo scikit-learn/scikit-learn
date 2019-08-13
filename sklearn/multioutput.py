@@ -507,7 +507,7 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
     base_estimator : estimator
         The base estimator from which the classifier chain is built.
 
-    order : array-like, shape=[n_outputs] or 'random', optional
+    order : array-like of shape (n_outputs,) or 'random', optional
         By default the order will be determined by the order of columns in
         the label matrix Y.::
 
@@ -667,7 +667,7 @@ class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
     base_estimator : estimator
         The base estimator from which the classifier chain is built.
 
-    order : array-like, shape=[n_outputs] or 'random', optional
+    order : array-like of shape (n_outputs,) or 'random', optional
         By default the order will be determined by the order of columns in
         the label matrix Y.::
 

@@ -595,7 +595,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
     means_ : array-like of shape (n_classes, n_features)
         Class means.
 
-    priors_ : array-like, shape = [n_classes]
+    priors_ : array-like of shape (n_classes)
         Class priors (sum to 1).
 
     rotations_ : list of arrays

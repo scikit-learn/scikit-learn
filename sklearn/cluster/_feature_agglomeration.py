@@ -62,7 +62,7 @@ class AgglomerationTransform(TransformerMixin):
 
         Parameters
         ----------
-        Xred : array-like, shape=[n_samples, n_clusters] or [n_clusters,]
+        Xred : array-like of shape (n_samples, n_clusters) or (n_clusters,)
             The values to be assigned to each cluster of samples
 
         Returns

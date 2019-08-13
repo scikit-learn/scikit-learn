@@ -121,14 +121,14 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
     y_train_ : array-like of shape (n_samples,)
         Target values in training data (also required for prediction)
 
-    classes_ : array-like, shape = (n_classes,)
+    classes_ : array-like of shape (n_classes,)
         Unique class labels.
 
     kernel_ : kernel object
         The kernel used for prediction. The structure of the kernel is the
         same as the one passed as parameter but with optimized hyperparameters
 
-    L_ : array-like, shape = (n_samples, n_samples)
+    L_ : array-like of shape (n_samples, n_samples)
         Lower-triangular Cholesky decomposition of the kernel in X_train_
 
     pi_ : array-like of shape (n_samples,)
@@ -310,7 +310,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
         Parameters
         ----------
-        theta : array-like, shape = (n_kernel_params,) or None
+        theta : array-like of shape (n_kernel_params,) or None
             Kernel hyperparameters for which the log-marginal likelihood is
             evaluated. If None, the precomputed log_marginal_likelihood
             of ``self.kernel_.theta`` is returned.
@@ -560,7 +560,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
     log_marginal_likelihood_value_ : float
         The log-marginal-likelihood of ``self.kernel_.theta``
 
-    classes_ : array-like, shape = (n_classes,)
+    classes_ : array-like of shape (n_classes,)
         Unique class labels.
 
     n_classes_ : int
@@ -707,7 +707,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        theta : array-like, shape = (n_kernel_params,) or none
+        theta : array-like of shape (n_kernel_params,) or None
             Kernel hyperparameters for which the log-marginal likelihood is
             evaluated. In the case of multi-class classification, theta may
             be the  hyperparameters of the compound kernel or of an individual

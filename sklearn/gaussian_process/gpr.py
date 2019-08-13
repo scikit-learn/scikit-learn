@@ -124,7 +124,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
         The kernel used for prediction. The structure of the kernel is the
         same as the one passed as parameter but with optimized hyperparameters
 
-    L_ : array-like, shape = (n_samples, n_samples)
+    L_ : array-like of shape (n_samples, n_samples)
         Lower-triangular Cholesky decomposition of the kernel in ``X_train_``
 
     alpha_ : array-like of shape (n_samples,)
@@ -394,7 +394,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
 
         Parameters
         ----------
-        theta : array-like, shape = (n_kernel_params,) or None
+        theta : array-like of shape (n_kernel_params,) or None
             Kernel hyperparameters for which the log-marginal likelihood is
             evaluated. If None, the precomputed log_marginal_likelihood
             of ``self.kernel_.theta`` is returned.
