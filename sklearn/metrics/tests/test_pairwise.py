@@ -785,12 +785,12 @@ def test_gower_distances():
 
     # Categorical values, with boolean represented as 1 and 0,
     # and missing values
-    #X = np.asarray([[np.nan, np.nan]])
-    #Y = np.asarray([[np.nan, np.nan]])
+    # X = np.asarray([[np.nan, np.nan]])
+    # Y = np.asarray([[np.nan, np.nan]])
 
-    #D = gower_distances(X, Y, categorical_features=[True, True])
-    #print(D)
-    #assert_array_almost_equal(np.asarray([[1.0]]), D)
+    # D = gower_distances(X, Y, categorical_features=[True, True])
+    # print(D)
+    # assert_array_almost_equal(np.asarray([[1.0]]), D)
 
     X = np.asarray([['M', 0], [np.nan, np.nan]])
     Y = np.asarray([['M', 0], [np.nan, np.nan]])
@@ -799,14 +799,14 @@ def test_gower_distances():
     print(D)
     assert_array_almost_equal(np.asarray([[0.0, 1.0], [1.0, 0.0]]), D)
 
-    #X = [[np.nan, np.nan], [np.nan, np.nan]]
-    #Y = [[np.nan, np.nan], [np.nan, np.nan]]
-    #D = gower_distances(X, Y, categorical_features=[True, True])
-    #print(D)
-    #assert_array_almost_equal(X, D)
-    #assert_array_almost_equal([[1, 1],[1, 1]], D)
-    #raise ValueError("Exiting...")
-    #return
+    # X = [[np.nan, np.nan], [np.nan, np.nan]]
+    # Y = [[np.nan, np.nan], [np.nan, np.nan]]
+    # D = gower_distances(X, Y, categorical_features=[True, True])
+    # print(D)
+    # assert_array_almost_equal(X, D)
+    # assert_array_almost_equal([[1, 1],[1, 1]], D)
+    # raise ValueError("Exiting...")
+    # return
 
     X = np.array([['M', 0],
                   ['F', 1],
@@ -817,7 +817,6 @@ def test_gower_distances():
 
     n_rows, n_cols = np.shape(X)
     D_expected = np.zeros((n_rows, n_rows))
-    n_missing = [2, 2, 2, 1]
     for i in range(0, n_rows):
         for j in range(0, n_rows):
             D_expected[i][j] = ([1, 0][X[i][0] == X[j][0]] +
