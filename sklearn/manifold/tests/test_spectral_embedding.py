@@ -185,7 +185,8 @@ def test_spectral_embedding_amg_solver(seed=36):
     col = [1, 2, 2, 3, 4, 5, 5]
     val = [100, 100, 100, 1, 100, 100, 100]
 
-    affinity = sparse.coo_matrix((val + val, (row + col, col + row)), shape=(6, 6)).toarray()
+    affinity = sparse.coo_matrix((val + val, (row + col, col + row)),
+                                 shape=(6, 6)).toarray()
     se_amg.affinity = "precomputed"
     se_arpack.affinity = "precomputed"
     embed_amg = se_amg.fit_transform(affinity)
