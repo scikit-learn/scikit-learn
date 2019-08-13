@@ -129,8 +129,8 @@ class _ConstantPredictor(BaseEstimator):
                          X.shape[0], axis=0)
 
 
-class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin, MetaEstimatorMixin,
-                          BaseEstimator):
+class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
+                          MetaEstimatorMixin, BaseEstimator):
     """One-vs-the-rest (OvR) multiclass/multilabel strategy
 
     Also known as one-vs-all, this strategy consists in fitting one classifier
@@ -559,7 +559,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
                 delayed(_partial_fit_ovo_binary)(
                     estimator, X, y, self.classes_[i], self.classes_[j])
                 for estimator, (i, j) in zip(self.estimators_,
-                                              (combinations)))
+                                             (combinations)))
 
         self.pairwise_indices_ = None
 
