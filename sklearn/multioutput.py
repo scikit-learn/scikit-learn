@@ -330,11 +330,11 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input data.
-        Y : array-like, shape (n_samples, n_classes)
+        Y : array-like of shape (n_samples, n_classes)
             The target values.
-        sample_weight : array-like, shape = (n_samples) or None
+        sample_weight : array-like of shape (n_samples,) or None
             Sample weights. If None, then samples are equally weighted.
             Only supported if the underlying classifier supports sample
             weights.
@@ -740,7 +740,6 @@ class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
         chaining.
 
     """
-
     def fit(self, X, Y):
         """Fit the model to data matrix X and targets Y.
 
