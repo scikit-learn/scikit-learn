@@ -200,6 +200,11 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+- |Feature| New ranking metrics :func:`metrics.ndcg_score` and
+  :func:`metrics.dcg_score` have been added to compute Discounted Cumulative
+  Gain and Normalized Discounted Cumulative Gain. :pr:`9951` by :user:`Jérôme
+  Dockès <jeromedockes>`.
+
 - |MajorFeature| :func:`metrics.plot_roc_curve` has been added to plot roc
   curves. This function introduces the visualization API described in
   the :ref:`User Guide <visualizations>`. :pr:`14357` by `Thomas Fan`_.
