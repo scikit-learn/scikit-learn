@@ -77,7 +77,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
         Is automatically set to True if the input y is passed in sparse format.
     """
 
-    def __init__(self, strategy="stratified", random_state=None,
+    def __init__(self, strategy="prior", random_state=None,
                  constant=None):
         self.strategy = strategy
         self.random_state = random_state
