@@ -185,7 +185,7 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
             Multi-output targets predicted across multiple predictors.
             Note: Separate models are generated for each predictor.
         """
-        check_is_fitted(self, 'estimators_')
+        check_is_fitted(self)
         if not hasattr(self.estimator, "predict"):
             raise ValueError("The base estimator should implement"
                              " a predict method")
@@ -344,7 +344,7 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
-        check_is_fitted(self, 'estimators_')
+        check_is_fitted(self)
         if not all([hasattr(estimator, "predict_proba")
                     for estimator in self.estimators_]):
             raise ValueError("The base estimator should implement "
@@ -370,7 +370,7 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
         scores : float
             accuracy_score of self.predict(X) versus y
         """
-        check_is_fitted(self, 'estimators_')
+        check_is_fitted(self)
         n_outputs_ = len(self.estimators_)
         if y.ndim == 1:
             raise ValueError("y must have at least two dimensions for "
@@ -472,7 +472,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             The predicted values.
 
         """
-        check_is_fitted(self, 'estimators_')
+        check_is_fitted(self)
         X = check_array(X, accept_sparse=True)
         Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
         for chain_idx, estimator in enumerate(self.estimators_):

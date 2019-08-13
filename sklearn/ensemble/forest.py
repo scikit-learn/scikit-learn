@@ -346,7 +346,7 @@ class BaseForest(BaseEnsemble, MultiOutputMixin, metaclass=ABCMeta):
 
     def _validate_X_predict(self, X):
         """Validate X whenever one tries to predict, apply, predict_proba"""
-        check_is_fitted(self, 'estimators_')
+        check_is_fitted(self)
 
         return self.estimators_[0]._validate_X_predict(X, check_input=True)
 
@@ -362,7 +362,7 @@ class BaseForest(BaseEnsemble, MultiOutputMixin, metaclass=ABCMeta):
             trees consisting of only the root node, in which case it will be an
             array of zeros.
         """
-        check_is_fitted(self, 'estimators_')
+        check_is_fitted(self)
 
         all_importances = Parallel(n_jobs=self.n_jobs,
                                    **_joblib_parallel_args(prefer='threads'))(
@@ -575,7 +575,7 @@ class ForestClassifier(BaseForest, ClassifierMixin, metaclass=ABCMeta):
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
-        check_is_fitted(self, 'estimators_')
+        check_is_fitted(self)
         # Check data
         X = self._validate_X_predict(X)
 
@@ -680,7 +680,7 @@ class ForestRegressor(BaseForest, RegressorMixin, metaclass=ABCMeta):
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted values.
         """
-        check_is_fitted(self, 'estimators_')
+        check_is_fitted(self)
         # Check data
         X = self._validate_X_predict(X)
 
@@ -2036,5 +2036,5 @@ class RandomTreesEmbedding(BaseForest):
         X_transformed : sparse matrix, shape=(n_samples, n_out)
             Transformed dataset.
         """
-        check_is_fitted(self, 'one_hot_encoder_')
+        check_is_fitted(self)
         return self.one_hot_encoder_.transform(self.apply(X))
