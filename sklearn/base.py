@@ -129,15 +129,7 @@ def _pprint(params, offset=0, printer=repr):
     return lines
 
 
-class TagsBase:
-    def _get_tags(self):
-        tags = _DEFAULT_TAGS.copy()
-        if hasattr(super(), '_get_tags'):
-            tags.update(super()._get_tags())
-        return tags
-
-
-class BaseEstimator(TagsBase):
+class BaseEstimator:
     """Base class for all estimators in scikit-learn
 
     Notes
@@ -317,8 +309,14 @@ class BaseEstimator(TagsBase):
         except AttributeError:
             self.__dict__.update(state)
 
+    def _get_tags(self):
+        tags = _DEFAULT_TAGS.copy()
+        if hasattr(super(), '_get_tags'):
+            tags.update(super()._get_tags())
+        return tags
 
-class ClassifierMixin(TagsBase):
+
+class ClassifierMixin:
     """Mixin class for all classifiers in scikit-learn."""
     _estimator_type = "classifier"
 
@@ -350,7 +348,7 @@ class ClassifierMixin(TagsBase):
         return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
 
 
-class RegressorMixin(TagsBase):
+class RegressorMixin:
     """Mixin class for all regression estimators in scikit-learn."""
     _estimator_type = "regressor"
 
@@ -415,7 +413,7 @@ class RegressorMixin(TagsBase):
                         multioutput='variance_weighted')
 
 
-class ClusterMixin(TagsBase):
+class ClusterMixin:
     """Mixin class for all cluster estimators in scikit-learn."""
     _estimator_type = "clusterer"
 
@@ -441,7 +439,7 @@ class ClusterMixin(TagsBase):
         return self.labels_
 
 
-class BiclusterMixin(TagsBase):
+class BiclusterMixin:
     """Mixin class for all bicluster estimators in scikit-learn"""
 
     @property
@@ -516,7 +514,7 @@ class BiclusterMixin(TagsBase):
         return data[row_ind[:, np.newaxis], col_ind]
 
 
-class TransformerMixin(TagsBase):
+class TransformerMixin:
     """Mixin class for all transformers in scikit-learn."""
 
     def fit_transform(self, X, y=None, **fit_params):
@@ -549,7 +547,7 @@ class TransformerMixin(TagsBase):
             return self.fit(X, y, **fit_params).transform(X)
 
 
-class DensityMixin(TagsBase):
+class DensityMixin:
     """Mixin class for all density estimators in scikit-learn."""
     _estimator_type = "DensityEstimator"
 
@@ -567,7 +565,7 @@ class DensityMixin(TagsBase):
         pass
 
 
-class OutlierMixin(TagsBase):
+class OutlierMixin:
     """Mixin class for all outlier detection estimators in scikit-learn."""
     _estimator_type = "outlier_detector"
 
@@ -593,12 +591,12 @@ class OutlierMixin(TagsBase):
         return self.fit(X).predict(X)
 
 
-class MetaEstimatorMixin(TagsBase):
+class MetaEstimatorMixin:
     _required_parameters = ["estimator"]
     """Mixin class for all meta estimators in scikit-learn."""
 
 
-class MultiOutputMixin(TagsBase):
+class MultiOutputMixin:
     """Mixin to mark estimators that support multioutput."""
     def _get_tags(self):
         tags = super()._get_tags()
@@ -606,7 +604,7 @@ class MultiOutputMixin(TagsBase):
         return tags
 
 
-class _UnstableArchMixin(TagsBase):
+class _UnstableArchMixin:
     """Mark estimators that are non-determinstic on 32bit or PowerPC"""
     def _get_tags(self):
         tags = super()._get_tags()

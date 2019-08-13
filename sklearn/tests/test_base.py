@@ -21,7 +21,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
 from sklearn import datasets
 
-from sklearn.base import TransformerMixin, TagsBase
+from sklearn.base import TransformerMixin
 from sklearn.utils.mocking import MockDataFrame
 import pickle
 
@@ -403,7 +403,7 @@ def test_pickle_version_no_warning_is_issued_with_non_sklearn_estimator():
         TreeNoVersion.__module__ = module_backup
 
 
-class DontPickleAttributeMixin(TagsBase):
+class DontPickleAttributeMixin:
     def __getstate__(self):
         data = self.__dict__.copy()
         data["_attribute_not_pickled"] = None
