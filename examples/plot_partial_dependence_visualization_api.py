@@ -1,0 +1,110 @@
+"""
+=========================================
+Partial Dependence with Visualization API
+=========================================
+The :func:`~sklearn.inspection.plot_partial_dependence` function returns a
+:class:`~sklearn.inspection.PartialDependenceDisplay` object that can be used
+for plotting without needing to recalculate the partial dependence. In this
+example we should how to plot partial dependence plots and quickly customize
+tht plot with the Visualization API.
+
+.. note::
+
+    See also :ref:`sphx_glr_auto_examples_plot_roc_curve_visualization_api.py`
+
+"""
+print(__doc__)
+
+import matplotlib.pyplot as plt
+from sklearn.datasets import load_boston
+from sklearn.neural_network import MLPRegressor
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import make_pipeline
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.inspection import plot_partial_dependence
+
+
+##############################################################################
+# Train models on the boston housing price dataset
+# ================================================
+#
+# First, we load the boston housing price dataset and split the the dataset
+# into a training and test set. Then, we train a histogram gradient boosting
+# decision tree and a multi-layer perceptron on the training set.
+
+boston = load_boston()
+X, y = boston.data, boston.target
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1,
+                                                    random_state=0)
+
+hgbr = make_pipeline(StandardScaler(), HistGradientBoostingRegressor())
+mlp = make_pipeline(StandardScaler(),
+                    MLPRegressor(hidden_layer_sizes=(100, 100),
+                                 tol=1e-2, max_iter=500, random_state=0))
+hgbr.fit(X_train, y_train)
+mlp.fit(X_train, y_train)
+
+##############################################################################
+# Plotting partial dependence of the two models independently
+# ===========================================================
+#
+# Next, we plot a partial dependence curves for features "LSTAT" and "RM" for
+# for the histogram gradient boosting model.
+fig, ax = plt.subplots(figsize=(12, 6))
+ax.set_title("Histogram Gradient Boosting")
+hgbr_disp = plot_partial_dependence(hgbr, X_test, ["LSTAT", "RM"],
+                                    feature_names=boston.feature_names, ax=ax)
+
+##############################################################################
+# The partial depdendence curves can be plotted for the multi-layer perceptron.
+# In this case `line_kw` was passed to
+# `~sklearn.inspection.plot_partial_dependence` to change the color of the
+# curve and `n_cols` was set to 1 to set the number of columns to 1.
+fig, ax = plt.subplots(figsize=(8, 8))
+ax.set_title("Multi-layer Perceptron")
+mlp_disp = plot_partial_dependence(mlp, X_test, ["LSTAT", "RM"],
+                                   feature_names=boston.feature_names, ax=ax,
+                                   n_cols=1, line_kw={"c": "red"})
+
+##############################################################################
+# Plotting partial dependence of the two models together
+# ======================================================
+#
+# The `hgbr_disp` and `mlp_disp`
+# :class:`~sklearn.inspection.PartialDependenceDisplay` objects contain all the
+# computed information needed to recreate the partial dependence curves. This
+# means we can easily create additional plots without needing to recompute the
+# curves.
+#
+# One way to plot the curves is to place them in the same figure, with the
+# curves of each model on each row. First, we create a figure two axes with two
+# rows and one column. The two axes are passed to the
+# :func:`~sklearn.inspection.PartialDependenceDisplay.plot` functions of
+# `hgbr_disp` and `mlp_disp`. The plot funciton will plot the two curves in the
+# space by the passed in axes. The resulting plot places the histogram gradient
+# boosting partial dependence curves on top of the multi-layer perceptron
+# plots.
+
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 12))
+hgbr_disp.plot(ax=ax1)
+ax1.set_title("Histogram Gradient Boosting")
+mlp_disp.plot(ax=ax2, line_kw={"c": "red"})
+ax2.set_title("Multi-layer Perceptron")
+
+##############################################################################
+# Another way to compare the curves is to plot them on top of each other. Here
+# we create a figure with one row and two columns. The axes are passed into the
+# :func:`~sklearn.inspection.PartialDependenceDisplay.plot` function as list,
+# which will plot the partial dependence curves of each model on the same axes.
+
+# sphinx_gallery_thumbnail_number = 4
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
+hgbr_disp.plot(ax=[ax1, ax2],
+               line_kw={"label": "Histogram Gradient Boosting"})
+mlp_disp.plot(ax=[ax1, ax2],
+              line_kw={"label": "Multi-layer Perceptron", "c": "red"})
+ax1.legend()
+ax2.legend()
+plt.show()

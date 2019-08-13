@@ -478,7 +478,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         For one-way partial dependence plots.
 
     contour_kw : dict, optional
-        Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
+        Dict with keywords passed to the ``matplotlib.pyplot.contourf`` call.
         For two-way partial dependence plots.
 
     ax : Matplotlib axes, list of Matplotlib axes or None, (default=None)
@@ -573,23 +573,16 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
 
     features = tmp_features
 
-    if isinstance(ax, Iterable):
+    if isinstance(ax, list):
         if len(ax) != len(features):
             raise ValueError("Expected len(ax) == len(features), "
                              "got len(ax) = {}".format(len(ax)))
 
-    names = []
-    try:
-        for fxs in features:
-            names_ = []
-            # explicit loop so "i" is bound for exception below
-            for i in fxs:
-                names_.append(feature_names[i])
-            names.append(names_)
-    except IndexError:
-        raise ValueError('All entries of features must be less than '
-                         'len(feature_names) = {0}, got {1}.'
-                         .format(len(feature_names), i))
+    for i in chain.from_iterable(features):
+        if i >= len(feature_names):
+            raise ValueError('All entries of features must be less than '
+                             'len(feature_names) = {0}, got {1}.'
+                             .format(len(feature_names), i))
 
     # compute averaged predictions
     pd_results = Parallel(n_jobs=n_jobs, verbose=verbose)(
@@ -615,7 +608,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
                 'target must be in [0, n_tasks], got {}.'.format(target))
         target_idx = target
 
-    # get global min and max values of PD grouped by plot type
+    # get global min and max average predictions of PD grouped by plot type
     pdp_lim = {}
     for avg_preds, values in pd_results:
         min_pd = avg_preds[target_idx].min()
@@ -631,7 +624,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         if fx not in deciles:
             deciles[fx] = mquantiles(X[:, fx], prob=np.arange(0.1, 1.0, 0.1))
 
-    display = PartialDependenceDisplay(pd_results, features, names,
+    display = PartialDependenceDisplay(pd_results, features, feature_names,
                                        target_idx, pdp_lim, deciles)
     return display.plot(ax=ax, n_cols=n_cols, line_kw=line_kw,
                         contour_kw=contour_kw, fig=fig)

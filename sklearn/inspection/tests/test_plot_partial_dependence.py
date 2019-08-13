@@ -42,8 +42,7 @@ def test_plot_partial_dependence(pyplot, clf_boston, grid_resolution):
     assert len(disp.lines_) == 2
     assert len(disp.contours_) == 1
     assert disp.features == [(0, ), (1, ), (0, 1)]
-    assert disp.feature_names == [[feature_names[0]], [feature_names[1]],
-                                  [feature_names[0], feature_names[1]]]
+    assert np.all(disp.feature_names == feature_names)
     assert len(disp.deciles) == 2
     for i in [0, 1]:
         assert_allclose(disp.deciles[i],
@@ -120,17 +119,17 @@ def test_plot_partial_dependence_str_features(pyplot, clf_boston):
 
 def test_plot_partial_dependence_custom_axes(pyplot, clf_boston):
     grid_resolution = 25
-    fig, ax = pyplot.subplots(1, 2)
+    fig, (ax1, ax2) = pyplot.subplots(1, 2)
     feature_names = boston.feature_names.tolist()
     disp = plot_partial_dependence(clf_boston, boston.data,
                                    ['CRIM', ('CRIM', 'ZN')],
                                    grid_resolution=grid_resolution,
-                                   feature_names=feature_names, ax=ax)
+                                   feature_names=feature_names, ax=[ax1, ax2])
     assert fig is disp.figure_
     assert disp.bounding_ax_ is None
     assert len(disp.axes_) == 2
-    assert disp.axes_[0] is ax[0]
-    assert disp.axes_[1] is ax[1]
+    assert disp.axes_[0] is ax1
+    assert disp.axes_[1] is ax2
 
     ax = disp.axes_[0]
     assert ax.get_xlabel() == "CRIM"
@@ -155,14 +154,15 @@ def test_plot_partial_dependence_custom_axes(pyplot, clf_boston):
 
 def test_plot_partial_dependence_incorrent_num_axes(pyplot, clf_boston):
     grid_resolution = 25
-    fig, ax = pyplot.subplots(1, 3)
+    fig, (ax1, ax2, ax3) = pyplot.subplots(1, 3)
 
     msg = r"Expected len\(ax\) == len\(features\), got len\(ax\) = 3"
     with pytest.raises(ValueError, match=msg):
         plot_partial_dependence(clf_boston, boston.data,
                                 ['CRIM', ('CRIM', 'ZN')],
                                 grid_resolution=grid_resolution,
-                                feature_names=boston.feature_names, ax=ax)
+                                feature_names=boston.feature_names,
+                                ax=[ax1, ax2, ax3])
 
     disp = plot_partial_dependence(clf_boston, boston.data,
                                    ['CRIM', ('CRIM', 'ZN')],
@@ -170,7 +170,7 @@ def test_plot_partial_dependence_incorrent_num_axes(pyplot, clf_boston):
                                    feature_names=boston.feature_names)
 
     with pytest.raises(ValueError, match=msg):
-        disp.plot(ax=ax)
+        disp.plot(ax=[ax1, ax2, ax3])
 
 
 def test_plot_partial_dependence_multiclass(pyplot):
