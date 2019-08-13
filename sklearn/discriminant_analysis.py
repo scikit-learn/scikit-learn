@@ -728,7 +728,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
 
         Returns
         -------
-        C : array, shape = [n_samples, n_classes] or [n_samples,]
+        C : ndarray of shape (n_samples,) or (n_samples, n_classes)
             Decision function values related to each class, per sample.
             In the two-class case, the shape is [n_samples,], giving the
             log likelihood ratio of the positive class.
@@ -750,7 +750,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
 
         Returns
         -------
-        C : array, shape = [n_samples]
+        C : ndarray of shape (n_samples,)
         """
         d = self._decision_function(X)
         y_pred = self.classes_.take(d.argmax(1))
@@ -766,7 +766,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
 
         Returns
         -------
-        C : array, shape = [n_samples, n_classes]
+        C : ndarray of shape (n_samples, n_classes)
             Posterior probabilities of classification per class.
         """
         values = self._decision_function(X)
@@ -786,7 +786,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
 
         Returns
         -------
-        C : array, shape = [n_samples, n_classes]
+        C : ndarray of shape (n_samples, n_classes)
             Posterior log-probabilities of classification per class.
         """
         # XXX : can do better to avoid precision overflows

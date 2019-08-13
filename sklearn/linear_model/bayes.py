@@ -297,7 +297,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Samples.
 
         return_std : boolean, optional
@@ -621,7 +621,7 @@ class ARDRegression(LinearModel, RegressorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Samples.
 
         return_std : boolean, optional

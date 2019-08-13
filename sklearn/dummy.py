@@ -168,7 +168,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
 
         Returns
         -------
-        y : array, shape = [n_samples] or [n_samples, n_outputs]
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             Predicted target values for X.
         """
         check_is_fitted(self, 'classes_')
@@ -339,7 +339,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             True labels for X.
 
-        sample_weight : array-like of shape (n_samples,) or None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
         Returns
@@ -492,10 +492,10 @@ class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
 
         Returns
         -------
-        y : array, shape = [n_samples] or [n_samples, n_outputs]
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             Predicted target values for X.
 
-        y_std : array, shape = [n_samples] or [n_samples, n_outputs]
+        y_std : array-like of shape (n_samples,) or (n_samples, n_outputs)
             Standard deviation of predictive distribution of query points.
         """
         check_is_fitted(self, "constant_")
@@ -540,7 +540,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             True values for X.
 
-        sample_weight : array-like of shape (n_samples,) or None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
         Returns

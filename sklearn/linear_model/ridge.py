@@ -748,7 +748,7 @@ class Ridge(_BaseRidge, RegressorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data
 
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
@@ -903,7 +903,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples,n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data
 
         y : array-like of shape (n_samples,)
@@ -1212,7 +1212,7 @@ class _RidgeGCV(LinearModel):
 
         Parameters
         ----------
-        X : sparse matrix, shape = (n_samples, n_features)
+        X : sparse matrix of shape (n_samples, n_features)
 
         A : np.ndarray, shape = (n_features, n_features)
 
@@ -1405,7 +1405,7 @@ class _RidgeGCV(LinearModel):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data. Will be cast to float64 if necessary
 
         y : array-like of shape (n_samples,) or (n_samples, n_targets)

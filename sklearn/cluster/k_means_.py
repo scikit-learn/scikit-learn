@@ -971,7 +971,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             New data to transform.
 
         y : Ignored
@@ -995,7 +995,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             New data to transform.
 
         y : Ignored
@@ -1025,7 +1025,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             New data to transform.
 
         Returns
@@ -1051,7 +1051,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             New data to predict.
 
         sample_weight : array-like, shape (n_samples,), optional
@@ -1075,7 +1075,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             New data.
 
         y : Ignored
@@ -1721,7 +1721,7 @@ class MiniBatchKMeans(KMeans):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             New data to predict.
 
         sample_weight : array-like, shape (n_samples,), optional

@@ -252,7 +252,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
         Returns
         -------
-        C : array, shape = (n_samples,)
+        C : ndarray of shape (n_samples,)
             Predicted target values for X, values are from ``classes_``
         """
         check_is_fitted(self, ["X_train_", "y_train_", "pi_", "W_sr_", "L_"])
@@ -660,7 +660,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
 
         Returns
         -------
-        C : array, shape = (n_samples,)
+        C : ndarray of shape (n_samples,)
             Predicted target values for X, values are from ``classes_``
         """
         check_is_fitted(self, ["classes_", "n_classes_"])

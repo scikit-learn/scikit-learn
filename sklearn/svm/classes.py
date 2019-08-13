@@ -197,14 +197,14 @@ else [n_classes, n_features]
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
 
         y : array-like of shape (n_samples,)
             Target vector relative to X
 
-        sample_weight : array-like of shape (n_samples,) or None
+        sample_weight : array-like of shape (n_samples,), default=None
             Array of weights that are assigned to individual
             samples. If not provided,
             then each sample is given unit weight.
@@ -384,14 +384,14 @@ class LinearSVR(LinearModel, RegressorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
 
         y : array-like of shape (n_samples,)
             Target vector relative to X
 
-        sample_weight : array-like of shape (n_samples,) or None
+        sample_weight : array-like of shape (n_samples,), default=None
             Array of weights that are assigned to individual
             samples. If not provided,
             then each sample is given unit weight.
@@ -570,7 +570,7 @@ class SVC(BaseSVC):
         `coef_` is a readonly property derived from `dual_coef_` and
         `support_vectors_`.
 
-    intercept_ : array, shape = [n_class * (n_class-1) / 2]
+    intercept_ : ndarray of shape (n_class * (n_class-1) / 2,)
         Constants in decision function.
 
     fit_status_ : int
@@ -769,7 +769,7 @@ class NuSVC(BaseSVC):
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`.
 
-    intercept_ : array, shape = [n_class * (n_class-1) / 2]
+    intercept_ : ndarray of shape (n_class * (n_class-1) / 2,)
         Constants in decision function.
 
     classes_ : array of shape = (n_classes,)

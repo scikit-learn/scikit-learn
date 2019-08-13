@@ -21,7 +21,7 @@ def l1_min_c(X, y, loss='squared_hinge', fit_intercept=True,
 
     Parameters
     ----------
-    X : array-like or sparse matrix, shape = [n_samples, n_features]
+    X : {array-like or sparse matrix} of shape (n_samples, n_features)
         Training vector, where n_samples in the number of samples and
         n_features is the number of features.
 

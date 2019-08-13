@@ -216,7 +216,7 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
 
     Returns
     -------
-    C : array, shape = [n_classes, n_classes]
+    C : ndarray of shape (n_classes, n_classes)
         Confusion matrix
 
     References

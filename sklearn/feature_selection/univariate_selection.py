@@ -186,7 +186,7 @@ def chi2(X, y):
 
     Parameters
     ----------
-    X : {array-like, sparse matrix}, shape = (n_samples, n_features_in)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Sample vectors.
 
     y : array-like of shape (n_samples,)

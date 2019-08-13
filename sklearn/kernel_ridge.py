@@ -74,7 +74,7 @@ class KernelRidge(BaseEstimator, RegressorMixin, MultiOutputMixin):
     dual_coef_ : array, shape = [n_samples] or [n_samples, n_targets]
         Representation of weight vector(s) in kernel space
 
-    X_fit_ : {array-like, sparse matrix}, shape = [n_samples, n_features]
+    X_fit_ : {array-like, sparse matrix} of shape (n_samples, n_features)
         Training data, which is also required for prediction. If
         kernel == "precomputed" this is instead the precomputed
         training matrix, shape = [n_samples, n_samples].
@@ -132,7 +132,7 @@ class KernelRidge(BaseEstimator, RegressorMixin, MultiOutputMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data. If kernel == "precomputed" this is instead
             a precomputed kernel matrix, shape = [n_samples,
             n_samples].
@@ -177,7 +177,7 @@ class KernelRidge(BaseEstimator, RegressorMixin, MultiOutputMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Samples. If kernel == "precomputed" this is instead a
             precomputed kernel matrix, shape = [n_samples,
             n_samples_fitted], where n_samples_fitted is the number of
@@ -185,7 +185,7 @@ class KernelRidge(BaseEstimator, RegressorMixin, MultiOutputMixin):
 
         Returns
         -------
-        C : array, shape = [n_samples] or [n_samples, n_targets]
+        C : ndarray of shape (n_samples,) or (n_samples, n_targets)
             Returns predicted values.
         """
         check_is_fitted(self, ["X_fit_", "dual_coef_"])

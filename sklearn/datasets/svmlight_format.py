@@ -392,7 +392,7 @@ def dump_svmlight_file(X, y, f,  zero_based=True, comment=None, query_id=None,
 
     Parameters
     ----------
-    X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Training vectors, where n_samples is the number of samples and
         n_features is the number of features.
 

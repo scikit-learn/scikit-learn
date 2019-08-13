@@ -136,7 +136,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The training input samples.
 
         y : array-like of shape (n_samples,)
@@ -271,7 +271,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape = [n_samples, n_features]
+        X : {array-like or sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
@@ -293,7 +293,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape = [n_samples, n_features]
+        X : {array-like or sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
@@ -466,7 +466,7 @@ class RFECV(RFE):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training vector, where `n_samples` is the number of samples and
             `n_features` is the total number of features.
 

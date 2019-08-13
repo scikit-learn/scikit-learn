@@ -310,7 +310,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         y : array-like of shape (n_samples,)
             Training target.
 
-        sample_weight : array-like of shape (n_samples,) or None
+        sample_weight : array-like of shape (n_samples,), default=None
             Weights. If set to None, all weights will be set to 1 (equal
             weights).
 

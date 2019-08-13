@@ -696,7 +696,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
 
         Returns
         -------
-        X : scipy.sparse matrix, shape = (n_samples, self.n_features)
+        X : sparse matrix of shape (n_samples, n_features)
             Document-term matrix.
         """
         if isinstance(X, str):
@@ -729,7 +729,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
 
         Returns
         -------
-        X : scipy.sparse matrix, shape = (n_samples, self.n_features)
+        X : sparse matrix of shape (n_samples, n_features)
             Document-term matrix.
         """
         return self.fit(X, y).transform(X)
@@ -1189,7 +1189,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         Parameters
         ----------
-        X : {array, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
 
         Returns
         -------
