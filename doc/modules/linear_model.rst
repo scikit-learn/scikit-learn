@@ -1003,7 +1003,7 @@ In the unpenalized case, the assumptions are the following:
       :math:`\phi` and sample weights :math:`s_i`.
     * The aim is to predict the expectation :math:`\mu_i` with
       :math:`\hat{y}_i = h(\eta_i)`, linear predictor
-      :math:`\eta_i=(Xw)_i` and inverse link function :math:`h(\eta)`.
+      :math:`\eta_i=(Xw)_i` and inverse link function :math:`h`.
 
 Note that the first assumption implies
 :math:`\mathrm{Var}[Y_i]=\frac{\phi}{s_i} v(\mu_i)` with unit variance
