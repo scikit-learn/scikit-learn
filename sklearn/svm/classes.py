@@ -547,10 +547,10 @@ class SVC(BaseSVC):
 
     Attributes
     ----------
-    support_ : array-like, shape = [n_SV]
+    support_ : array-like of shape (n_SV)
         Indices of support vectors.
 
-    support_vectors_ : array-like, shape = [n_SV, n_features]
+    support_vectors_ : array-like of shape (n_SV, n_features)
         Support vectors.
 
     n_support_ : array-like, dtype=int32, shape = [n_class]
@@ -746,10 +746,10 @@ class NuSVC(BaseSVC):
 
     Attributes
     ----------
-    support_ : array-like, shape = [n_SV]
+    support_ : array-like of shape (n_SV)
         Indices of support vectors.
 
-    support_vectors_ : array-like, shape = [n_SV, n_features]
+    support_vectors_ : array-like of shape (n_SV, n_features)
         Support vectors.
 
     n_support_ : array-like, dtype=int32, shape = [n_class]
@@ -890,10 +890,10 @@ class SVR(BaseLibSVM, RegressorMixin):
 
     Attributes
     ----------
-    support_ : array-like, shape = [n_SV]
+    support_ : array-like of shape (n_SV)
         Indices of support vectors.
 
-    support_vectors_ : array-like, shape = [nSV, n_features]
+    support_vectors_ : array-like of shape (n_SV, n_features)
         Support vectors.
 
     dual_coef_ : array, shape = [1, n_SV]
@@ -1016,10 +1016,10 @@ class NuSVR(BaseLibSVM, RegressorMixin):
 
     Attributes
     ----------
-    support_ : array-like, shape = [n_SV]
+    support_ : array-like of shape (n_SV)
         Indices of support vectors.
 
-    support_vectors_ : array-like, shape = [nSV, n_features]
+    support_vectors_ : array-like of shape (n_SV, n_features)
         Support vectors.
 
     dual_coef_ : array, shape = [1, n_SV]
@@ -1137,10 +1137,10 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
 
     Attributes
     ----------
-    support_ : array-like, shape = [n_SV]
+    support_ : array-like of shape (n_SV)
         Indices of support vectors.
 
-    support_vectors_ : array-like, shape = [nSV, n_features]
+    support_vectors_ : array-like of shape (n_SV, n_features)
         Support vectors.
 
     dual_coef_ : array, shape = [1, n_SV]
