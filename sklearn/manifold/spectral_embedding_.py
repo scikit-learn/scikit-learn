@@ -263,7 +263,6 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         # orders-of-magnitude speedup over simply using keyword which='LA'
         # in standard mode.
         try:
-            print("first case")
             # We are computing the opposite of the laplacian inplace so as
             # to spare a memory allocation of a possibly very large array
             laplacian *= -1
