@@ -1,8 +1,14 @@
 .. _developing_scikit:
 
-============
-Developing scikit-learn
-============
+==================================
+Developing scikit-learn estimators
+==================================
+
+Whether you are proposing an estimator for inclusion in scikit-learn,
+developing a separate scikit-learn package, or implementing custom
+components for your own projects, this chapter details how to develop
+objects that safely interact with scikit-learn Pipelines and model
+selection tools.
 
 .. _api_overview:
 
@@ -273,56 +279,16 @@ To test code coverage, you need to install the `coverage
 
 3. Loop.
 
-
-Issue Tracker Tags
-------------------
-All issues and pull requests on the
-`GitHub issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_
-should have (at least) one of the following tags:
-
-:Bug / Crash:
-    Something is happening that clearly shouldn't happen.
-    Wrong results as well as unexpected errors from estimators go here.
-
-:Cleanup / Enhancement:
-    Improving performance, usability, consistency.
-
-:Documentation:
-    Missing, incorrect or sub-standard documentations and examples.
-
-:New Feature:
-    Feature requests and pull requests implementing a new feature.
-
-There are four other tags to help new contributors:
-
-:good first issue:
-    This issue is ideal for a first contribution to scikit-learn. Ask for help
-    if the formulation is unclear. If you have already contributed to
-    scikit-learn, look at Easy issues instead.
-
-:Easy:
-    This issue can be tackled without much prior experience.
-
-:Moderate:
-    Might need some knowledge of machine learning or the package,
-    but is still approachable for someone new to the project.
-
-:help wanted:
-    This tag marks an issue which currently lacks a contributor or a
-    PR that needs another contributor to take over the work. These
-    issues can range in difficulty, and may not be approachable
-    for new contributors. Note that not all issues which need
-    contributors will have this tag.
-
 .. _coding-guidelines:
 
 Coding guidelines
 =================
 
-The following are some guidelines on how new code should be written. Of
-course, there are special cases and there will be exceptions to these
-rules. However, following these rules when submitting new code makes
-the review easier so new code can be integrated in less time.
+The following  are some standards used within scikit-learn, which may
+be appropriate to adopt in external projects. Of course, there are special
+cases and there will be exceptions to these rules. However, following
+these rules when submitting new code makes the review easier so new code
+can be integrated in less time.
 
 Uniformly formatted code makes it easier to share code ownership. The
 scikit-learn project tries to closely follow the official Python guidelines
