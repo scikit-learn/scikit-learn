@@ -529,8 +529,6 @@ def test_base_chain_crossval_fit_and_predict():
             assert mean_squared_error(Y, Y_pred_cv) < .25
 
 
-# Tests classes_ attribute of multioutput classifiers
-# RandomForestClassifier supports multioutput out-of-the-box
 @pytest.mark.parametrize(
     'estimator',
     [RandomForestClassifier(n_estimators=2),
@@ -538,6 +536,8 @@ def test_base_chain_crossval_fit_and_predict():
      ClassifierChain(RandomForestClassifier(n_estimators=2))]
 )
 def test_multi_output_classes_(estimator):
+    # Tests classes_ attribute of multioutput classifiers
+    # RandomForestClassifier supports multioutput out-of-the-box
     estimator.fit(X, y)
     assert isinstance(estimator.classes_, list)
     assert len(estimator.classes_) == n_outputs
