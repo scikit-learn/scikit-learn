@@ -243,8 +243,8 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         # we don't pass **self.get_params() to allow subclasses to
         # add other parameters to __init__
         self.support_, self.support_vectors_, self.n_support_, \
-        self.dual_coef_, self.intercept_, self.probA_, \
-        self.probB_, self.fit_status_ = libsvm.fit(
+            self.dual_coef_, self.intercept_, self.probA_, \
+            self.probB_, self.fit_status_ = libsvm.fit(
             X, y,
             svm_type=solver_type, sample_weight=sample_weight,
             class_weight=self.class_weight_, kernel=kernel, C=self.C,
@@ -266,8 +266,8 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         libsvm_sparse.set_verbosity_wrap(self.verbose)
 
         self.support_, self.support_vectors_, dual_coef_data, \
-        self.intercept_, self.n_support_, \
-        self.probA_, self.probB_, self.fit_status_ = \
+            self.intercept_, self.n_support_, \
+            self.probA_, self.probB_, self.fit_status_ = \
             libsvm_sparse.libsvm_sparse_train(
                 X.shape[1], X.data, X.indices, X.indptr, y, solver_type,
                 kernel_type, self.degree, self._gamma, self.coef0, self.tol,
@@ -942,10 +942,9 @@ def _check_fit_liblinear_args(C=None, tol=None, max_iter=None):
         raise ValueError("Maximum number of iteration must be positive;"
                          " got (max_iter=%r)" % max_iter)
     if tol and not isinstance(tol, numbers.Number) or tol < 0:
-            raise ValueError("Tolerance for stopping criteria must be "
-                             "positive; got (tol=%r)" % tol)
+        raise ValueError("Tolerance for stopping criteria must be "
+                         "positive; got (tol=%r)" % tol)
 
     if C and not isinstance(C, numbers.Number) or C < 0:
         raise ValueError("Penalty term must be positive; got (C=%r)"
                          % C)
-
