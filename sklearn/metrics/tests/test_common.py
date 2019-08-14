@@ -56,6 +56,8 @@ from sklearn.metrics import recall_score
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
 from sklearn.metrics import zero_one_loss
+from sklearn.metrics import ndcg_score
+from sklearn.metrics import dcg_score
 
 from sklearn.metrics.base import _average_binary_score
 
@@ -237,6 +239,8 @@ THRESHOLDED_METRICS = {
     partial(average_precision_score, average="micro"),
     "label_ranking_average_precision_score":
     label_ranking_average_precision_score,
+    "ndcg_score": ndcg_score,
+    "dcg_score": dcg_score
 }
 
 ALL_METRICS = dict()
@@ -266,6 +270,8 @@ METRIC_UNDEFINED_BINARY = {
     "unnormalized_multilabel_confusion_matrix_sample",
     "label_ranking_loss",
     "label_ranking_average_precision_score",
+    "dcg_score",
+    "ndcg_score"
 }
 
 # Those metrics don't support multiclass inputs
@@ -388,6 +394,10 @@ THRESHOLDED_MULTILABEL_METRICS = {
     "samples_average_precision_score", "micro_average_precision_score",
 
     "coverage_error", "label_ranking_loss",
+
+    "ndcg_score",
+    "dcg_score",
+
     "label_ranking_average_precision_score",
 }
 
