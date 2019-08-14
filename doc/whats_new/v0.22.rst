@@ -254,8 +254,8 @@ Changelog
 :mod:`sklearn.multioutput`
 ..........................
 
-- |Fix| :class:`MultiOutputClassifier` now has attribute `classes_`.
-  :pr:`14629` by :user:`Agamemnon Krasoulis <agamemnonc>`.
+- |Fix| :class:`multioutput.MultiOutputClassifier` now has attribute
+  ``classes_``. :pr:`14629` by :user:`Agamemnon Krasoulis <agamemnonc>`.
 
 :mod:`sklearn.pipeline`
 .......................
