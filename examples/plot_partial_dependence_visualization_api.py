@@ -56,6 +56,7 @@ fig, ax = plt.subplots(figsize=(12, 6))
 ax.set_title("Histogram Gradient Boosting")
 hgbr_disp = plot_partial_dependence(hgbr, X_test, ["LSTAT", "RM"],
                                     feature_names=boston.feature_names, ax=ax)
+plt.show()
 
 ##############################################################################
 # The partial depdendence curves can be plotted for the multi-layer perceptron.
@@ -67,6 +68,7 @@ ax.set_title("Multi-layer Perceptron")
 mlp_disp = plot_partial_dependence(mlp, X_test, ["LSTAT", "RM"],
                                    feature_names=boston.feature_names, ax=ax,
                                    n_cols=1, line_kw={"c": "red"})
+plt.show()
 
 ##############################################################################
 # Plotting partial dependence of the two models together
@@ -92,6 +94,7 @@ hgbr_disp.plot(ax=ax1)
 ax1.set_title("Histogram Gradient Boosting")
 mlp_disp.plot(ax=ax2, line_kw={"c": "red"})
 ax2.set_title("Multi-layer Perceptron")
+plt.show()
 
 ##############################################################################
 # Another way to compare the curves is to plot them on top of each other. Here
@@ -107,4 +110,19 @@ mlp_disp.plot(ax=[ax1, ax2],
               line_kw={"label": "Multi-layer Perceptron", "c": "red"})
 ax1.legend()
 ax2.legend()
+plt.show()
+
+##############################################################################
+# `hgbr_disp.axes_` is a numpy array container the axes used to draw th
+# partial dependence plots. This can be passed to `mlp_disp` to have the same
+# affect of drawing the plots on top of each other. Furthermore, the
+# `mlp_disp.figure_` stores the figure, which allows for resizing the figure
+# after calling `plot`.
+
+hgbr_disp.plot(line_kw={"label": "Histogram Gradient Boosting"})
+mlp_disp.plot(line_kw={"label": "Multi-layer Perceptron", "c": "red"},
+              ax=hgbr_disp.axes_)
+hgbr_disp.figure_.set_size_inches(12, 6)
+hgbr_disp.axes_[0, 0].legend()
+hgbr_disp.axes_[0, 1].legend()
 plt.show()

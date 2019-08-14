@@ -18,6 +18,8 @@ class PartialDependenceDisplay:
     :ref:`sphx_glr_auto_examples_plot_roc_curve_visualization_api.py` and the
     :ref:`User Guide <visualizations>`.
 
+        .. versionadded:: 0.22
+
     Parameters
     ----------
     pd_results : list of (ndarray, ndarray)
@@ -51,30 +53,32 @@ class PartialDependenceDisplay:
     ----------
     bounding_ax_ : matplotlib Axes or None
         If `ax` is an axes or None, the `bounding_ax_` is the axes where the
-        grid of partial dependence plots are drawn. If `ax` is  list of axes,
-        `bounding_ax_` is None.
+        grid of partial dependence plots are drawn. If `ax` is  list of axes or
+        a numpy array of axes, `bounding_ax_` is None.
 
-    axes_ : dict of matplotlib Axes
+    axes_ : ndarray of matplotlib Axes
         If `ax` is an axes or None, `axes_[i, j]` is the axes on the ith row
         and jth column. If `ax` is a list of axes, `axes_[i]` is the ith item
-        in `ax`.
+        in `ax`. Elements that are None corresponds to a nonexisting axes in
+        that position.
 
-    lines_ : matplotlib Artists
+    lines_ : ndarray of matplotlib Artists
         If `ax` is an axes or None, `line_[i, j]` is the partial dependence
         curve on the ith row and jth column. If `ax` is a list of axes,
         `lines_[i]` is the partial dependence curve corresponding to the ith
-        item in `ax`. Only plots with a single feature will be populated in
-        `lines_`. Contour plots are stored in `contours_`.
+        item in `ax`. Elements that are None corresponds to a nonexisting axes
+        or an axes that does not include a line plot.
 
-    contours_ : matplotlib Artists
+    contours_ : ndarray of matplotlib Artists
         If `ax` is an axes or None, `contours_[i, j]` is the partial dependence
         plot on the ith row and jth column. If `ax` is a list of axes,
         `contours_[i]` is the partial dependence plot corresponding to the ith
-        item in `ax`. Only plots with a two feature will be populated in
-        `contours_`. Line plots are stored in `lines_`.
+        item in `ax`. Elements that are None corresponds to a nonexisting axes
+        or an axes that does not include a contour plot.
 
     figure_ : matplotlib Figure
         Figure containing partial dependence plots.
+
     """
     def __init__(self, pd_results, features, feature_names, target_idx,
                  pdp_lim, deciles):
@@ -90,13 +94,16 @@ class PartialDependenceDisplay:
 
         Parameters
         ----------
-        ax : Matplotlib axes, list of Matplotlib axes or None, default=None
-            Axes to plot the partial dependence curves. If a single axes is
-            given, it is treated as a bounding axes and a grid of partial
-            depdendence plots will be drawn on that top of it. If a list of
-            axes are passed, the partial dependence plots will be drawn on
-            those axes. By default, a single bounding axes is created and
-            treated as the single axes case.
+        ax : Matplotlib axes, list of Matplotlib axes, ndarray of Matplotlib \
+        Axes, default=None
+            Axes to plot the partial dependence curves.
+            - If a single axes is given, it is treated as a bounding axes and
+              a grid of partial depdendence plots will be drawn on that top of
+              it.
+            - If a list of axes or a ndarray of axes are passed in, the partial
+              dependence plots will be drawn on those axes.
+            - By default, a single bounding axes is created and treated as the
+              single axes case.
 
         n_cols : int, default=3
             The maximum number of columns in the grid plot.
@@ -144,77 +151,69 @@ class PartialDependenceDisplay:
             if fig is None:
                 _, ax = plt.subplots()
             else:
-                ax = fig.add_subplot(111)
+                ax = fig.gca()
+
+        n_features = len(self.features)
 
         if isinstance(ax, list):
-            if len(ax) != len(self.features):
+            if len(ax) != n_features:
                 raise ValueError("Expected len(ax) == len(features), "
                                  "got len(ax) = {}".format(len(ax)))
             self.bounding_ax_ = None
-            self.axes_ = dict(enumerate(ax))
             self.figure_ = ax[0].figure
-            self.lines_ = {}
-            self.contours_ = {}
+            self.axes_ = np.array(ax)
+            self.lines_ = np.empty(n_features, dtype=np.object)
+            self.contours_ = np.empty(n_features, dtype=np.object)
 
-            def _get_axes(i):
-                return self.axes_[i]
-
-            def _store_line(line, i):
-                self.lines_[i] = line
-
-            def _store_contour(contour, i):
-                self.contours_[i] = contour
-
+        elif isinstance(ax, np.ndarray):
+            self.bounding_ax_ = None
+            self.axes_ = ax
+            self.figure_ = ax.ravel()[0].figure
+            self.lines_ = np.empty_like(ax, dtype=np.object)
+            self.contours_ = np.empty_like(ax, dtype=np.object)
         else:  # single axes
             self.bounding_ax_ = ax
-            self.axes_ = {}
             self.figure_ = ax.figure
-            self.lines_ = {}
-            self.contours_ = {}
-
             ax.set_axis_off()
-            n_cols = min(n_cols, len(self.features))
-            n_rows = int(np.ceil(len(self.features) / float(n_cols)))
+
+            n_cols = min(n_cols, n_features)
+            n_rows = int(np.ceil(n_features / float(n_cols)))
+
+            self.axes_ = np.empty((n_rows, n_cols), dtype=np.object)
+            self.lines_ = np.empty((n_rows, n_cols), dtype=np.object)
+            self.contours_ = np.empty((n_rows, n_cols), dtype=np.object)
+
+            axes_ravel = self.axes_.ravel()
 
             gs = GridSpecFromSubplotSpec(n_rows, n_cols,
                                          subplot_spec=ax.get_subplotspec())
-
-            def _get_axes(i):
-                row_idx, col_idx = i // n_cols, i % n_cols
-                axi = self.figure_.add_subplot(gs[row_idx, col_idx])
-                self.axes_[row_idx, col_idx] = axi
-                return axi
-
-            def _store_line(line, i):
-                row_idx, col_idx = i // n_cols, i % n_cols
-                self.lines_[row_idx, col_idx] = line
-
-            def _store_contour(contour, i):
-                row_idx, col_idx = i // n_cols, i % n_cols
-                self.contours_[row_idx, col_idx] = contour
+            for i, spec in zip(range(n_features), gs):
+                axes_ravel[i] = self.figure_.add_subplot(spec)
 
         # create contour levels for two-way plots
         if 2 in self.pdp_lim:
             Z_level = np.linspace(*self.pdp_lim[2], num=8)
+        lines_ravel = self.lines_.ravel()
+        contours_ravel = self.contours_.ravel()
 
-        for i, fx, (avg_preds, values) in zip(count(), self.features,
-                                              self.pd_results):
-            axi = _get_axes(i)
-
+        for i, axi, fx, (avg_preds, values) in zip(count(),
+                                                   self.axes_.ravel(),
+                                                   self.features,
+                                                   self.pd_results):
             if len(values) == 1:
-                line = axi.plot(values[0], avg_preds[self.target_idx].ravel(),
-                                **line_kw)[0]
-                _store_line(line, i)
+                lines_ravel[i] = axi.plot(values[0],
+                                          avg_preds[self.target_idx].ravel(),
+                                          **line_kw)[0]
             else:
                 # contour plot
                 XX, YY = np.meshgrid(values[0], values[1])
                 Z = avg_preds[self.target_idx].T
                 CS = axi.contour(XX, YY, Z, levels=Z_level, linewidths=0.5,
                                  colors='k')
-                contour = axi.contourf(XX, YY, Z, levels=Z_level,
-                                       vmax=Z_level[-1], vmin=Z_level[0],
-                                       **contour_kw)
-                _store_contour(contour, i)
+                contours_ravel[i] = axi.contourf(XX, YY, Z, levels=Z_level,
+                                                 vmax=Z_level[-1],
+                                                 vmin=Z_level[0],
+                                                 **contour_kw)
                 axi.clabel(CS, fmt='%2.2f', colors='k', fontsize=10,
                            inline=True)
 

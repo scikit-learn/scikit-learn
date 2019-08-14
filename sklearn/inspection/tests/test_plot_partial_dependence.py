@@ -38,9 +38,14 @@ def test_plot_partial_dependence(pyplot, clf_boston, grid_resolution):
     assert len(axs) == 4
 
     assert disp.bounding_ax_ is not None
-    assert len(disp.axes_) == 3
-    assert len(disp.lines_) == 2
-    assert len(disp.contours_) == 1
+    assert disp.axes_.shape == (1, 3)
+    assert disp.lines_.shape == (1, 3)
+    assert disp.contours_.shape == (1, 3)
+
+    assert disp.lines_[0, 2] is None
+    assert disp.contours_[0, 0] is None
+    assert disp.contours_[0, 1] is None
+
     assert disp.features == [(0, ), (1, ), (0, 1)]
     assert np.all(disp.feature_names == feature_names)
     assert len(disp.deciles) == 2
@@ -90,9 +95,12 @@ def test_plot_partial_dependence_str_features(pyplot, clf_boston):
     assert len(axs) == 3
 
     assert disp.figure_ is fig
-    assert len(disp.axes_) == 2
-    assert len(disp.lines_) == 1
-    assert len(disp.contours_) == 1
+    assert disp.axes_.shape == (2, 1)
+    assert disp.lines_.shape == (2, 1)
+    assert disp.contours_.shape == (2, 1)
+
+    assert disp.lines_[0, 0] is None
+    assert disp.contours_[1, 0] is None
 
     # line
     ax = disp.axes_[1, 0]
@@ -127,7 +135,7 @@ def test_plot_partial_dependence_custom_axes(pyplot, clf_boston):
                                    feature_names=feature_names, ax=[ax1, ax2])
     assert fig is disp.figure_
     assert disp.bounding_ax_ is None
-    assert len(disp.axes_) == 2
+    assert disp.axes_.shape == (2, )
     assert disp.axes_[0] is ax1
     assert disp.axes_[1] is ax2
 
@@ -150,6 +158,31 @@ def test_plot_partial_dependence_custom_axes(pyplot, clf_boston):
     assert_allclose(coutour.levels, expect_levels)
     assert ax.get_xlabel() == "CRIM"
     assert ax.get_ylabel() == "ZN"
+
+
+def test_plot_partial_dependence_passing_numpy_axes(pyplot, clf_boston):
+    grid_resolution = 25
+    feature_names = boston.feature_names.tolist()
+    disp1 = plot_partial_dependence(clf_boston, boston.data,
+                                    ['CRIM', 'ZN'],
+                                    grid_resolution=grid_resolution,
+                                    feature_names=feature_names)
+    assert disp1.axes_.shape == (1, 2)
+    assert len(disp1.axes_[0, 0].get_lines()) == 1
+    assert len(disp1.axes_[0, 1].get_lines()) == 1
+
+    lr = LinearRegression()
+    lr.fit(boston.data, boston.target)
+
+    disp2 = plot_partial_dependence(lr, boston.data,
+                                    ['CRIM', 'ZN'],
+                                    grid_resolution=grid_resolution,
+                                    feature_names=feature_names,
+                                    ax=disp1.axes_)
+
+    assert np.all(disp1.axes_ == disp2.axes_)
+    assert len(disp2.axes_[0, 0].get_lines()) == 2
+    assert len(disp2.axes_[0, 1].get_lines()) == 2
 
 
 def test_plot_partial_dependence_incorrent_num_axes(pyplot, clf_boston):
@@ -184,9 +217,10 @@ def test_plot_partial_dependence_multiclass(pyplot):
                                             target=0,
                                             grid_resolution=grid_resolution)
     assert disp_target_0.figure_ is pyplot.gcf()
-    assert len(disp_target_0.axes_) == 2
-    assert len(disp_target_0.lines_) == 2
-    assert len(disp_target_0.contours_) == 0
+    assert disp_target_0.axes_.shape == (1, 2)
+    assert disp_target_0.lines_.shape == (1, 2)
+    assert disp_target_0.contours_.shape == (1, 2)
+    assert all(c is None for c in disp_target_0.contours_.flat)
     assert disp_target_0.target_idx == 0
 
     # now with symbol labels
@@ -197,9 +231,10 @@ def test_plot_partial_dependence_multiclass(pyplot):
                                           target='setosa',
                                           grid_resolution=grid_resolution)
     assert disp_symbol.figure_ is pyplot.gcf()
-    assert len(disp_symbol.axes_) == 2
-    assert len(disp_symbol.lines_) == 2
-    assert len(disp_symbol.contours_) == 0
+    assert disp_symbol.axes_.shape == (1, 2)
+    assert disp_symbol.lines_.shape == (1, 2)
+    assert disp_symbol.contours_.shape == (1, 2)
+    assert all(c is None for c in disp_symbol.contours_.flat)
     assert disp_symbol.target_idx == 0
 
     for int_result, symbol_result in zip(disp_target_0.pd_results,

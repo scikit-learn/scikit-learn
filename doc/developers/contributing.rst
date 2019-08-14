@@ -1753,10 +1753,11 @@ axes is created and the gridspec api is used to create the regions to plot in.
 For example, :func:`sklearn.inspection.plot_partial_dependence` plots multiple
 lines and contours using this API. The axes that is passed in or created that
 defines the space is saved as a `bounding_ax_` attribute. The individual axes
-created are stored in a `axes_` dictionary, where the key is the position of
-the axes on the grid. Furthermore, the matplotlib Artists are stored in
-`lines_` and `contours_` where the key is the position on the grid. When a list
-of axes is passsed in, the `axes_`, `lines_`, and `contours_` keys is single
-int corresponding to the position on the passed in list of axes.
+created are stored in a `axes_` ndarray, corresponding to the axes position on
+the grid. Positions that are not used are set to `None`. Furthermore, the
+matplotlib Artists are stored in `lines_` and `contours_` where the key is the
+position on the grid. When a list of axes is passsed in, the `axes_`, `lines_`,
+and `contours_` keys is single int corresponding to the position on the passed
+in list of axes.
 
 Read more in the :ref:`User Guide <visualizations>`.

@@ -482,8 +482,18 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         Dict with keywords passed to the ``matplotlib.pyplot.contourf`` call.
         For two-way partial dependence plots.
 
-    ax : Matplotlib axes, list of Matplotlib axes or None, (default=None)
-        By default,
+    ax : Matplotlib axes, list of Matplotlib axes, ndarray of Matplotlib \
+    Axes, default=None
+        Axes to plot the partial dependence curves.
+        - If a single axes is given, it is treated as a bounding axes and
+            a grid of partial depdendence plots will be drawn on that top of
+            it.
+        - If a list of axes or a ndarray of axes are passed in, the partial
+            dependence plots will be drawn on those axes.
+        - By default, a single bounding axes is created and treated as the
+            single axes case.
+
+        .. versionadded:: 0.22
 
     Returns
     -------
