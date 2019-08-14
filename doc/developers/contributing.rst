@@ -1329,8 +1329,9 @@ selection tools such as :class:`model_selection.GridSearchCV` and
 
 Setting `generate_only=True` returns a generator that yields (estimator, check)
 tuples where the check can be called independently from each other, i.e.
-`check(estimator)`. This allows all checks can run independently and report the
-ones that are failing. In pytest, we can parameterize the check as follows::
+`check(estimator)`. This allows all checks to be run independently and report
+the checks that are failing. In pytest, we can parameterize the check as
+follows::
 
   import pytest
   from sklearn.utils.estimator_checks import check_estimator
