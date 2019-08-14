@@ -198,8 +198,8 @@ feature being imputed. When the number of available neighbors is less than
 training set average for that feature is used during imputation. If there is at
 least one neighbor with a defined distance, the weighted or unweighted average
 of the remaining neighbors will be used during imputation. If a feature is
-always missing, it is removed during `transform`.For more information on the
-methodology, see ref. [OL2001]_.
+always missing in training, it is removed during `transform`. For more
+information on the methodology, see ref. [OL2001]_.
 
 The following snippet demonstrates how to replace missing values,
 encoded as ``np.nan``, using the mean feature value of the two nearest
