@@ -260,6 +260,11 @@ Changelog
 - |Fix| :class:`multioutput.MultiOutputClassifier` now has attribute
   ``classes_``. :pr:`14629` by :user:`Agamemnon Krasoulis <agamemnonc>`.
 
+- |Fix| :func:`multioutput.ClassifierChain.decision_function` and
+  :func:`multioutput.ClassifierChain.predict_proba` now both return a list of
+  ``n_outputs`` arrays of shape `(n_samples, n_classes).` :pr:`14654` by
+  :user:`Agamemnon Krasoulis <agamemnonc>`.
+
 :mod:`sklearn.pipeline`
 .......................
 
