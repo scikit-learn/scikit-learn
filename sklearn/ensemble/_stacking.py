@@ -230,7 +230,7 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
 
     def _transform(self, X):
         """Concatenate and return the predictions of the estimators."""
-        check_is_fitted(self, 'estimators_')
+        check_is_fitted(self)
         predictions = [
             getattr(est, meth)(X)
             for est, meth in zip(self.estimators_, self.stack_method_)
@@ -260,7 +260,7 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
             Predicted targets.
         """
 
-        check_is_fitted(self, ['estimators_', 'final_estimator_'])
+        check_is_fitted(self)
         return self.final_estimator_.predict(
             self.transform(X), **predict_params
         )
@@ -463,7 +463,7 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
             list of ndarray of shape (n_output,)
             The class probabilities of the input samples.
         """
-        check_is_fitted(self, ['estimators_', 'final_estimator_'])
+        check_is_fitted(self)
         return self.final_estimator_.predict_proba(self.transform(X))
 
     def transform(self, X):
