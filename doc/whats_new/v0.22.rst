@@ -233,6 +233,9 @@ Changelog
   to return root mean squared error.
   :pr:`13467` by :user:`Urvang Patel <urvang96>`.
 
+- |Enhancement| Allow computing averaged metrics in the case of no true positives.
+  :pr:`14595` by `Andreas Müller`_.
+
 :mod:`sklearn.metrics`
 ......................
 
