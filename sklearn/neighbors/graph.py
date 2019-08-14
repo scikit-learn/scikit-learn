@@ -301,7 +301,7 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
             Only the neighbors have an explicit value.
             The diagonal is always explicit.
         """
-        check_is_fitted(self, '_fit_X')
+        check_is_fitted(self)
         add_one = self.mode == 'distance'
         return self.kneighbors_graph(X, mode=self.mode,
                                      n_neighbors=self.n_neighbors + add_one)
@@ -438,7 +438,7 @@ class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
             Only the neighbors have an explicit value.
             The diagonal is always explicit.
         """
-        check_is_fitted(self, '_fit_X')
+        check_is_fitted(self)
         return self.radius_neighbors_graph(X, mode=self.mode,
                                            sort_results=True)
 

@@ -149,7 +149,7 @@ class Isomap(BaseEstimator, TransformerMixin):
     @deprecated("Attribute training_data_ was deprecated in version 0.22 and "
                 "will be removed in 0.24.")
     def training_data_(self):
-        check_is_fitted(self, 'nbrs_')
+        check_is_fitted(self)
         return self.nbrs_._fit_X
 
     def reconstruction_error(self):
@@ -235,7 +235,7 @@ class Isomap(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_queries, n_components)
         """
-        check_is_fitted(self, 'embedding_')
+        check_is_fitted(self)
         distances, indices = self.nbrs_.kneighbors(X, return_distance=True)
 
         # Create the graph of shortest distances from X to
