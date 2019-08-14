@@ -33,22 +33,22 @@ class BayesianRidge(LinearModel, RegressorMixin):
     n_iter : int, default=300
         Maximum number of iterations. Should be greater than or equal to 1.
 
-    tol : float, default=1.e-3
+    tol : float, default=1e-3
         Stop the algorithm if w has converged.
 
-    alpha_1 : float, default=1.e-6
+    alpha_1 : float, default=1e-6
         Hyper-parameter : shape parameter for the Gamma distribution prior
         over the alpha parameter.
 
-    alpha_2 : float, default=1.e-6
+    alpha_2 : float, default=1e-6
         Hyper-parameter : inverse scale parameter (rate parameter) for the
         Gamma distribution prior over the alpha parameter.
 
-    lambda_1 : float, default=1.e-6
+    lambda_1 : float, default=1e-6
         Hyper-parameter : shape parameter for the Gamma distribution prior
         over the lambda parameter.
 
-    lambda_2 : float, default=1.e-6
+    lambda_2 : float, default=1e-6
         Hyper-parameter : inverse scale parameter (rate parameter) for the
         Gamma distribution prior over the lambda parameter.
 
@@ -391,29 +391,29 @@ class ARDRegression(LinearModel, RegressorMixin):
     n_iter : int, default=300
         Maximum number of iterations.
 
-    tol : float, default=1.e-3
+    tol : float, default=1e-3
         Stop the algorithm if w has converged.
 
-    alpha_1 : float, default=1.e-6
+    alpha_1 : float, default=1e-6
         Hyper-parameter : shape parameter for the Gamma distribution prior
         over the alpha parameter.
 
-    alpha_2 : float, default=1.e-6
+    alpha_2 : float, default=1e-6
         Hyper-parameter : inverse scale parameter (rate parameter) for the
         Gamma distribution prior over the alpha parameter.
 
-    lambda_1 : float, default=1.e-6
+    lambda_1 : float, default=1e-6
         Hyper-parameter : shape parameter for the Gamma distribution prior
         over the lambda parameter.
 
-    lambda_2 : float, default=1.e-6
+    lambda_2 : float, default=1e-6
         Hyper-parameter : inverse scale parameter (rate parameter) for the
         Gamma distribution prior over the lambda parameter.
 
     compute_score : bool, default=False
         If True, compute the objective function at each step of the model.
 
-    threshold_lambda : float, default=1.e+4
+    threshold_lambda : float, default=10 000
         threshold for removing (pruning) weights with high precision from
         the computation.
 
@@ -430,7 +430,7 @@ class ARDRegression(LinearModel, RegressorMixin):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    copy_X : bool, default=True.
+    copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
     verbose : bool, default=False
