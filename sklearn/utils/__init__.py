@@ -201,11 +201,8 @@ def _pandas_indexing(X, key, axis):
     elif _check_key_type(key, str):
         by_name = True
     elif _check_key_type(key, bool):
-        # boolean mask
-        by_name = False
-        if hasattr(X, 'loc'):
-            # pandas boolean masks don't work with iloc, so take loc path
-            by_name = True
+        # pandas boolean masks don't work with iloc, so take loc path
+        by_name = True
     else:
         raise ValueError("No valid specification of the columns. Only a "
                          "scalar, list or slice of all integers or all "
@@ -222,7 +219,7 @@ def _pandas_indexing(X, key, axis):
 
 def _list_indexing(X, key):
     """Index a Python list."""
-    if not isinstance(key, Iterable) or isinstance(indexable, slice):
+    if not isinstance(key, Iterable):
         # key is a slice or a scalar
         return X[key]
     key_set = set(key)

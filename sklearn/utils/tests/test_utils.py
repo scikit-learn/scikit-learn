@@ -385,13 +385,9 @@ def test_safe_indexing_2d_scalar_axis_1(array_type, expected_output_type,
         assert_allclose_dense_sparse(subset, expected_array)
 
 
-@pytest.mark.parametrize(
-    "array_type", [None, np.asarray, sp.csr_matrix],
-    ids=["list", "array", "sparse"]
-)
+@pytest.mark.parametrize("array_type", ["list", "array", "sparse"])
 def test_safe_indexing_None_axis_0(array_type):
-    X = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    X = array_type(X) if array_type is not None else X
+    X = _convert_container([[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type)
     X_subset = safe_indexing(X, None, axis=0)
     assert_allclose_dense_sparse(X_subset, X)
 
