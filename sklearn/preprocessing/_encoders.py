@@ -371,7 +371,7 @@ class OneHotEncoder(_BaseEncoder):
         X_out : sparse matrix if sparse=True else a 2-d array
             Transformed input.
         """
-        check_is_fitted(self, 'categories_')
+        check_is_fitted(self)
         # validation of X happens in _check_X called by _transform
         X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown)
 
@@ -423,7 +423,7 @@ class OneHotEncoder(_BaseEncoder):
             Inverse transformed array.
 
         """
-        check_is_fitted(self, 'categories_')
+        check_is_fitted(self)
         X = check_array(X, accept_sparse='csr')
 
         n_samples, _ = X.shape
@@ -506,7 +506,7 @@ class OneHotEncoder(_BaseEncoder):
         output_feature_names : array of string, length n_output_features
 
         """
-        check_is_fitted(self, 'categories_')
+        check_is_fitted(self)
         cats = self.categories_
         if input_features is None:
             input_features = ['x%d' % i for i in range(len(cats))]
@@ -639,7 +639,7 @@ class OrdinalEncoder(_BaseEncoder):
             Inverse transformed array.
 
         """
-        check_is_fitted(self, 'categories_')
+        check_is_fitted(self)
         X = check_array(X, accept_sparse='csr')
 
         n_samples, _ = X.shape
