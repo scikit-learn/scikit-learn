@@ -329,7 +329,7 @@ def _generate_instance_checks(name, estimator):
                 for check in _yield_all_checks(name, estimator))
 
 
-def _generate_class_checks(Estimator):
+def _generate_class_checks(Estimator, raise_on_error):
     """Generate class checks."""
     name = Estimator.__name__
     yield (Estimator, partial(check_parameters_default_constructible, name))
@@ -338,6 +338,8 @@ def _generate_class_checks(Estimator):
         estimator = _construct_instance(Estimator)
     except (SkipTest, TypeError):
         # if we can't construct the instance, the first test will fail
+        if raise_on_error:
+            raise
         return
 
     yield from _generate_instance_checks(name, estimator)
@@ -379,7 +381,8 @@ def check_estimator(Estimator, generate_only=False):
     """
     if isinstance(Estimator, type):
         # got a class
-        checks_generator = _generate_class_checks(Estimator)
+        checks_generator = _generate_class_checks(Estimator,
+                                                  not generate_only)
     else:
         # got an instance
         estimator = Estimator
