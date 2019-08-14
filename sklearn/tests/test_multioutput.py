@@ -413,8 +413,9 @@ def test_classifier_chain_fit_and_predict_with_linear_svc():
     assert Y_pred.shape == Y.shape
 
     Y_decision = classifier_chain.decision_function(X)
+    Y_binary = [Y_decision[i] >= 0 for i in range(Y.shape[1])]
+    Y_binary = np.asarray(Y_binary).T
 
-    Y_binary = (Y_decision >= 0)
     assert_array_equal(Y_binary, Y_pred)
     assert not hasattr(classifier_chain, 'predict_proba')
 
@@ -470,7 +471,8 @@ def test_base_chain_fit_and_predict():
                      list(range(X.shape[1], X.shape[1] + Y.shape[1])))
 
     Y_prob = chains[1].predict_proba(X)
-    Y_binary = (Y_prob >= .5)
+    Y_binary = [np.argmax(Y_prob[i], axis=1) for i in range(Y.shape[1])]
+    Y_binary = np.asarray(Y_binary).T
     assert_array_equal(Y_binary, Y_pred)
 
     assert isinstance(chains[1], ClassifierMixin)
