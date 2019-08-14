@@ -233,6 +233,9 @@ Changelog
   to return root mean squared error.
   :pr:`13467` by :user:`Urvang Patel <urvang96>`.
 
+- |Enhancement| Allow computing averaged metrics in the case of no true positives.
+  :pr:`14595` by `Andreas Müller`_.
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -250,6 +253,12 @@ Changelog
 
 - |Enhancement| :class:`model_selection.RandomizedSearchCV` now accepts lists
   of parameter distributions. :pr:`14549` by `Andreas Müller`_.
+
+:mod:`sklearn.multioutput`
+..........................
+
+- |Fix| :class:`multioutput.MultiOutputClassifier` now has attribute
+  ``classes_``. :pr:`14629` by :user:`Agamemnon Krasoulis <agamemnonc>`.
 
 :mod:`sklearn.pipeline`
 .......................
