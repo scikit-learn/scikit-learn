@@ -118,14 +118,16 @@ plt.subplots_adjust(bottom=.04, top=0.95, hspace=.2, wspace=.05,
                     left=.03, right=.97)
 
 # Fit a Gaussian mixture with EM using ten components
-gmm = mixture.GaussianMixture(n_components=10, covariance_type='full').fit(X)
+gmm = mixture.GaussianMixture(n_components=10, covariance_type='full',
+                              max_iter=100).fit(X)
 plot_results(X, gmm.predict(X), gmm.means_, gmm.covariances_, 0,
              'Expectation-maximization')
 
 dpgmm = mixture.BayesianGaussianMixture(
-    n_components=10, weight_concentration_prior=1e-2,
+    n_components=10, covariance_type='full', weight_concentration_prior=1e-2,
+    weight_concentration_prior_type='dirichlet_process',
     mean_precision_prior=1e-2, covariance_prior=1e0 * np.eye(2),
-    init_params="random", random_state=2).fit(X)
+    init_params="random", max_iter=100, random_state=2).fit(X)
 plot_results(X, dpgmm.predict(X), dpgmm.means_, dpgmm.covariances_, 1,
              "Bayesian Gaussian mixture models with a Dirichlet process prior "
              r"for $\gamma_0=0.01$.")
@@ -136,9 +138,10 @@ plot_samples(X_s, y_s, dpgmm.n_components, 0,
              r"for $\gamma_0=0.01$ sampled with $2000$ samples.")
 
 dpgmm = mixture.BayesianGaussianMixture(
-    n_components=10, weight_concentration_prior=1e+2,
+    n_components=10, covariance_type='full', weight_concentration_prior=1e+2,
+    weight_concentration_prior_type='dirichlet_process',
     mean_precision_prior=1e-2, covariance_prior=1e0 * np.eye(2),
-    random_state=2).fit(X)
+    init_params="kmeans", max_iter=100, random_state=2).fit(X)
 plot_results(X, dpgmm.predict(X), dpgmm.means_, dpgmm.covariances_, 2,
              "Bayesian Gaussian mixture models with a Dirichlet process prior "
              r"for $\gamma_0=100$")

@@ -378,7 +378,7 @@ def test_check_covariance_precision():
 
     # Computation of the full_covariance
     bgmm = BayesianGaussianMixture(n_components=n_components,
-                                   random_state=rng, tol=1e-3,
+                                   max_iter=100, random_state=rng, tol=1e-3,
                                    reg_covar=0)
     for covar_type in COVARIANCE_TYPE:
         bgmm.covariance_type = covar_type
@@ -414,11 +414,11 @@ def test_invariant_translation():
             X = rand_data.X[covar_type]
             bgmm1 = BayesianGaussianMixture(
                 weight_concentration_prior_type=prior_type,
-                n_components=n_components, random_state=0,
+                n_components=n_components, max_iter=100, random_state=0,
                 tol=1e-3, reg_covar=0).fit(X)
             bgmm2 = BayesianGaussianMixture(
                 weight_concentration_prior_type=prior_type,
-                n_components=n_components, random_state=0,
+                n_components=n_components, max_iter=100, random_state=0,
                 tol=1e-3, reg_covar=0).fit(X + 100)
 
             assert_almost_equal(bgmm1.means_, bgmm2.means_ - 100)

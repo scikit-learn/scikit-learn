@@ -105,8 +105,8 @@ fig.tight_layout(rect=[0, 0.03, 1, 0.95])
 
 print("Training GradientBoostingRegressor...")
 tic = time()
-est = HistGradientBoostingRegressor(max_leaf_nodes=64, learning_rate=0.1,
-                                    random_state=1)
+est = HistGradientBoostingRegressor(max_iter=100, max_leaf_nodes=64,
+                                    learning_rate=0.1, random_state=1)
 est.fit(X_train, y_train)
 print("done in {:.3f}s".format(time() - tic))
 print("Test R2 score: {:.2f}".format(est.score(X_test, y_test)))
