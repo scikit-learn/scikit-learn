@@ -219,7 +219,7 @@ def _pandas_indexing(X, key, axis):
 
 def _list_indexing(X, key):
     """Index a Python list."""
-    if not isinstance(key, Iterable):
+    if np.isscalar(key) or isinstance(key, slice):
         # key is a slice or a scalar
         return X[key]
     key_set = set(key)
