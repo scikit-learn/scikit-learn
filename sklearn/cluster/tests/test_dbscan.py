@@ -12,7 +12,6 @@ from scipy import sparse
 import pytest
 
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises
 from sklearn.neighbors import NearestNeighbors
 from sklearn.cluster.dbscan_ import DBSCAN
 from sklearn.cluster.dbscan_ import dbscan
@@ -224,21 +223,16 @@ def test_input_validation():
 
 def test_dbscan_badargs():
     # Test bad argument values: these should all raise ValueErrors
-    assert_raises(ValueError,
-                  dbscan,
-                  X, eps=-1.0)
-    assert_raises(ValueError,
-                  dbscan,
-                  X, algorithm='blah')
-    assert_raises(ValueError,
-                  dbscan,
-                  X, metric='blah')
-    assert_raises(ValueError,
-                  dbscan,
-                  X, leaf_size=-1)
-    assert_raises(ValueError,
-                  dbscan,
-                  X, p=-1)
+    with pytest.raises(ValueError):
+        dbscan(X, eps=-1.0)
+    with pytest.raises(ValueError):
+        dbscan(X, algorithm='blah')
+    with pytest.raises(ValueError):
+        dbscan(X, metric='blah')
+    with pytest.raises(ValueError):
+        dbscan(X, leaf_size=-1)
+    with pytest.raises(ValueError):
+        dbscan(X, p=-1)
 
 
 def test_pickle():
@@ -260,8 +254,10 @@ def test_boundaries():
 
 def test_weighted_dbscan():
     # ensure sample_weight is validated
-    assert_raises(ValueError, dbscan, [[0], [1]], sample_weight=[2])
-    assert_raises(ValueError, dbscan, [[0], [1]], sample_weight=[2, 3, 4])
+    with pytest.raises(ValueError):
+        dbscan([[0], [1]], sample_weight=[2])
+    with pytest.raises(ValueError):
+        dbscan([[0], [1]], sample_weight=[2, 3, 4])
 
     # ensure sample_weight has an effect
     assert_array_equal([], dbscan([[0], [1]], sample_weight=None,
