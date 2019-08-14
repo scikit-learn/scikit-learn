@@ -15,17 +15,9 @@ from ..utils.validation import check_is_fitted
 class KNNImputer(TransformerMixin, BaseEstimator):
     """Imputation for completing missing values using k-Nearest Neighbors.
 
-    Each sample's missing values are imputed using values from `n_neighbors`
-    nearest neighbors found in the training set. Each missing feature is then
-    imputed as the average, either weighted or unweighted, of these neighbors.
-    If a sample has more than one feature missing, then the neighbors for that
-    sample can be different depending on the particular feature being imputed.
-    When the number of available neighbors is less than `n_neighbors` and
-    there are no defined distances to the training set, the training set
-    average for that feature is used during imputation. If there is at least
-    one neighbor with a defined distance, the weighted or unweighted average
-    of the remaining neighbors will be used during imputation. If a feature is
-    always missing, it is removed during `transform`.
+    Each sample's missing values are imputed using the mean value from
+    `n_neighbors` nearest neighbors found in the training set. Two samples are
+    close if the features that neither is missing are close.
 
     Read more in the :ref:`User Guide <knnimpute>`.
 
@@ -95,7 +87,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
 
     def _calc_impute(self, dist_pot_donors, fit_X_col, mask_fit_X_col,
                      potential_donors_idx):
-        """Hellper function to impute a single column.
+        """Helper function to impute a single column.
 
         Parameters
         ----------
@@ -211,7 +203,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
                                   metric=self.metric,
                                   squared=False,
                                   missing_values=self.missing_values,
-                                  force_all_finite=False)
+                                  force_all_finite=force_all_finite)
 
         # Maps from indices from X to indices in dist matrix
         dist_idx_map = np.zeros(X.shape[0], dtype=np.int)
