@@ -32,7 +32,7 @@ from .stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
 from ..utils import _IS_32BIT
 from ..utils.fixes import _astype_copy_false
-from ..exceptions import ChangedBehaviorWarning
+from ..exceptions import ChangedBehaviorWarning, NotFittedError
 
 
 __all__ = ['HashingVectorizer',
@@ -450,9 +450,11 @@ class VectorizerMixin:
             self.fixed_vocabulary_ = False
 
     def _check_vocabulary(self):
-        """Check if vocabulary is empty or missing (not fit-ed)"""
-        msg = "%(name)s - Vocabulary wasn't fitted."
-        check_is_fitted(self, 'vocabulary_', msg=msg),
+        """Check if vocabulary is empty or missing (not fitted)"""
+        if not hasattr(self, 'vocabulary_'):
+            self._validate_vocabulary()
+            if not self.fixed_vocabulary_:
+                raise NotFittedError("Vocabulary not fitted or provided")
 
         if len(self.vocabulary_) == 0:
             raise ValueError("Vocabulary is empty")
@@ -1172,10 +1174,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             raise ValueError(
                 "Iterable over raw text documents expected, "
                 "string object received.")
-
-        if not hasattr(self, 'vocabulary_'):
-            self._validate_vocabulary()
-
         self._check_vocabulary()
 
         # use the same matrix-building strategy as fit_transform
@@ -1216,8 +1214,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
     def get_feature_names(self):
         """Array mapping from feature integer indices to feature name"""
-        if not hasattr(self, 'vocabulary_'):
-            self._validate_vocabulary()
 
         self._check_vocabulary()
 
@@ -1380,7 +1376,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
             X.data += 1
 
         if self.use_idf:
-            check_is_fitted(self, '_idf_diag', 'idf vector is not fitted')
+            check_is_fitted(self, msg='idf vector is not fitted')
 
             expected_n_features = self._idf_diag.shape[0]
             if n_features != expected_n_features:
@@ -1729,7 +1725,7 @@ class TfidfVectorizer(CountVectorizer):
         # we set copy to False
         return self._tfidf.transform(X, copy=False)
 
-    def transform(self, raw_documents, copy=True):
+    def transform(self, raw_documents, copy="deprecated"):
         """Transform documents to document-term matrix.
 
         Uses the vocabulary and document frequencies (df) learned by fit (or
@@ -1744,13 +1740,24 @@ class TfidfVectorizer(CountVectorizer):
             Whether to copy X and operate on the copy or perform in-place
             operations.
 
+            .. deprecated:: 0.22
+               The `copy` parameter is unused and was deprecated in version
+               0.22 and will be removed in 0.24. This parameter will be
+               ignored.
+
         Returns
         -------
         X : sparse matrix, [n_samples, n_features]
             Tf-idf-weighted document-term matrix.
         """
-        check_is_fitted(self, '_tfidf', 'The tfidf vector is not fitted')
+        check_is_fitted(self, msg='The tfidf vector is not fitted')
 
+        # FIXME Remove copy parameter support in 0.24
+        if copy != "deprecated":
+            msg = ("'copy' param is unused and has been deprecated since "
+                   "version 0.22. Backward compatibility for 'copy' will "
+                   "be removed in 0.24.")
+            warnings.warn(msg, DeprecationWarning)
         X = super().transform(raw_documents)
         return self._tfidf.transform(X, copy=False)
 

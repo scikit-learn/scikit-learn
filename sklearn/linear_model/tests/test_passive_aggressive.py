@@ -91,8 +91,7 @@ def test_classifier_partial_fit():
     classes = np.unique(y)
     for data in (X, X_csr):
         for average in (False, True):
-            clf = PassiveAggressiveClassifier(
-                C=1.0, fit_intercept=True, random_state=0,
+            clf = PassiveAggressiveClassifier(random_state=0,
                 average=average, max_iter=5)
             for t in range(30):
                 clf.partial_fit(data, y, classes)
@@ -123,13 +122,11 @@ def test_classifier_correctness(loss):
     y_bin = y.copy()
     y_bin[y != 1] = -1
 
-    clf1 = MyPassiveAggressive(
-        C=1.0, loss=loss, fit_intercept=True, n_iter=2)
+    clf1 = MyPassiveAggressive(loss=loss, n_iter=2)
     clf1.fit(X, y_bin)
 
     for data in (X, X_csr):
-        clf2 = PassiveAggressiveClassifier(
-            C=1.0, loss=loss, fit_intercept=True, max_iter=2,
+        clf2 = PassiveAggressiveClassifier(loss=loss, max_iter=2,
             shuffle=False, tol=None)
         clf2.fit(data, y_bin)
 
@@ -254,8 +251,7 @@ def test_regressor_partial_fit():
 
     for data in (X, X_csr):
         for average in (False, True):
-            reg = PassiveAggressiveRegressor(
-                C=1.0, fit_intercept=True, random_state=0,
+            reg = PassiveAggressiveRegressor(random_state=0,
                 average=average, max_iter=100)
             for t in range(50):
                 reg.partial_fit(data, y_bin)
@@ -277,13 +273,11 @@ def test_regressor_correctness(loss):
     y_bin = y.copy()
     y_bin[y != 1] = -1
 
-    reg1 = MyPassiveAggressive(
-        C=1.0, loss=loss, fit_intercept=True, n_iter=2)
+    reg1 = MyPassiveAggressive(loss=loss, n_iter=2)
     reg1.fit(X, y_bin)
 
     for data in (X, X_csr):
-        reg2 = PassiveAggressiveRegressor(
-            C=1.0, tol=None, loss=loss, fit_intercept=True, max_iter=2,
+        reg2 = PassiveAggressiveRegressor(tol=None, loss=loss, max_iter=2,
             shuffle=False)
         reg2.fit(data, y_bin)
 
