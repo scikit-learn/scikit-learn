@@ -267,9 +267,9 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             # to spare a memory allocation of a possibly very large array
             laplacian *= -1
             v0 = random_state.uniform(-1, 1, laplacian.shape[0])
-            diffusion_map = eigsh(
+            _, diffusion_map = eigsh(
                 laplacian, k=n_components, sigma=1.0, which='LM',
-                tol=eigen_tol, v0=v0, return_eigenvectors=False)
+                tol=eigen_tol, v0=v0)
             embedding = diffusion_map.T[n_components::-1]
             if norm_laplacian:
                 embedding = embedding / dd
