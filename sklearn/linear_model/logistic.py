@@ -21,7 +21,7 @@ from joblib import Parallel, delayed, effective_n_jobs
 from .base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from .sag import sag_solver
 from ..preprocessing import LabelEncoder, LabelBinarizer
-from ..svm.base import _fit_liblinear
+from ..svm.base import _fit_liblinear, _check_fit_liblinear_args
 from ..utils import check_array, check_consistent_length, compute_class_weight
 from ..utils import check_random_state
 from ..utils.extmath import (log_logistic, safe_sparse_dot, softmax,
@@ -1475,10 +1475,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         The SAGA solver supports both float64 and float32 bit arrays.
         """
         solver = _check_solver(self.solver, self.penalty, self.dual)
+        _check_fit_liblinear_args(self.C, self.tol, self.max_iter)
 
-        if not isinstance(self.C, numbers.Number) or self.C < 0:
-            raise ValueError("Penalty term must be positive; got (C=%r)"
-                             % self.C)
         if self.penalty == 'elasticnet':
             if (not isinstance(self.l1_ratio, numbers.Number) or
                     self.l1_ratio < 0 or self.l1_ratio > 1):
@@ -1500,12 +1498,6 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         else:
             C_ = self.C
             penalty = self.penalty
-        if not isinstance(self.max_iter, numbers.Number) or self.max_iter < 0:
-            raise ValueError("Maximum number of iteration must be positive;"
-                             " got (max_iter=%r)" % self.max_iter)
-        if not isinstance(self.tol, numbers.Number) or self.tol < 0:
-            raise ValueError("Tolerance for stopping criteria must be "
-                             "positive; got (tol=%r)" % self.tol)
 
         if solver == 'lbfgs':
             _dtype = np.float64
@@ -1953,13 +1945,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         self : object
         """
         solver = _check_solver(self.solver, self.penalty, self.dual)
+        _check_fit_liblinear_args(tol=self.tol, max_iter=self.max_iter)
 
-        if not isinstance(self.max_iter, numbers.Number) or self.max_iter < 0:
-            raise ValueError("Maximum number of iteration must be positive;"
-                             " got (max_iter=%r)" % self.max_iter)
-        if not isinstance(self.tol, numbers.Number) or self.tol < 0:
-            raise ValueError("Tolerance for stopping criteria must be "
-                             "positive; got (tol=%r)" % self.tol)
         if self.penalty == 'elasticnet':
             if self.l1_ratios is None or len(self.l1_ratios) == 0 or any(
                     (not isinstance(l1_ratio, numbers.Number) or l1_ratio < 0
