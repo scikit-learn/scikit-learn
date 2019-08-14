@@ -43,11 +43,11 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
 
     @abstractmethod
     def __init__(self, estimators, final_estimator=None, cv=None,
-                 predict_method='auto', n_jobs=None, verbose=0):
+                 stack_method='auto', n_jobs=None, verbose=0):
         self.estimators = estimators
         self.final_estimator = final_estimator
         self.cv = cv
-        self.predict_method = predict_method
+        self.stack_method = stack_method
         self.n_jobs = n_jobs
         self.verbose = verbose
 
@@ -124,7 +124,7 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
                 X_meta.append(preds.reshape(-1, 1))
             else:
                 # remove one column in case of probabilities with binary case
-                if (self.predict_method_[est_idx] == 'predict_proba' and
+                if (self.stack_method_[est_idx] == 'predict_proba' and
                         preds.shape[1] == 2):
                     X_meta.append(preds[:, [1]])
                 else:
@@ -175,22 +175,7 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
                 "to be an estimator."
             )
 
-        if isinstance(self.predict_method, str):
-            if self.predict_method != 'auto':
-                raise ValueError(
-                    "When 'predict_method' is a string, it should be 'auto'. "
-                    " Got {} instead.".format(self.predict_method)
-                )
-            predict_method = [self.predict_method] * len(estimators_)
-        else:
-            if len(self.estimators) != len(self.predict_method):
-                raise ValueError(
-                    "When 'predict_method' is a list, it should be the same "
-                    "length as the list of estimators. Provided {} methods "
-                    "for {} estimators."
-                    .format(len(self.predict_method), len(self.estimators))
-                )
-            predict_method = self.predict_method
+        stack_method = [self.stack_method] * len(estimators_)
 
         # Fit the base estimators on the whole training data. Those
         # base estimators will be used in transform, predict, and
@@ -218,23 +203,23 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
         if hasattr(cv, 'random_state') and cv.random_state is None:
             cv.random_state = np.random.RandomState()
 
-        self.predict_method_ = [
+        self.stack_method_ = [
             self._method_name(name, est, meth)
-            for name, est, meth in zip(names, estimators_, predict_method)
+            for name, est, meth in zip(names, estimators_, stack_method)
         ]
 
         predictions = Parallel(n_jobs=self.n_jobs)(
             delayed(cross_val_predict)(clone(est), X, y, cv=deepcopy(cv),
                                        method=meth, n_jobs=self.n_jobs,
                                        verbose=self.verbose)
-            for est, meth in zip(estimators_, self.predict_method_)
+            for est, meth in zip(estimators_, self.stack_method_)
             if est not in (None, 'drop')
         )
 
         # Only not None or not 'drop' estimators will be used in transform.
         # Remove the None from the method as well.
-        self.predict_method_ = [
-            meth for (meth, est) in zip(self.predict_method_, estimators_)
+        self.stack_method_ = [
+            meth for (meth, est) in zip(self.stack_method_, estimators_)
             if est not in (None, 'drop')
         ]
 
@@ -243,24 +228,12 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
 
         return self
 
-    def transform(self, X):
-        """Return class labels or probabilities for X for each estimator.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vectors, where `n_samples` is the number of samples and
-            `n_features` is the number of features.
-
-        Returns
-        -------
-        y_preds : ndarray of shape (n_samples, n_estimators)
-            Prediction outputs for each estimator.
-        """
+    def _transform(self, X):
+        """Concatenate and return the predictions of the estimators."""
         check_is_fitted(self, 'estimators_')
         predictions = [
             getattr(est, meth)(X)
-            for est, meth in zip(self.estimators_, self.predict_method_)
+            for est, meth in zip(self.estimators_, self.stack_method_)
             if est not in (None, 'drop')
         ]
         return self._concatenate_predictions(predictions)
@@ -305,6 +278,11 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
     is trained using cross-validated predictions of the base estimators using
     `cross_val_predict`.
 
+    When `predict_proba` is used by each estimator (i.e. most of the time for
+    `stack_methodd='auto'` or specifically for `stack_methodd='predict_proba'`)
+    and if the classes are a binary (e.g. 0 and 1), one of the column predicted
+    by each estimator will be dropped since they are collinear.
+
     .. versionadded:: 0.22
 
     Read more in the :ref:`User Guide <stacking>`.
@@ -336,13 +314,16 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-    predict_method : 'auto' or list of str, default='auto'
+    stack_method : {'auto', 'predict_proba', 'decision_function', 'predict'}, \
+            default='auto'
         Methods called for each base estimator. It can be:
 
-        * if a list of string in which each string is associated to the
-          `estimators`,
         * if 'auto', it will try to invoke, for each estimator,
-          `predict_proba`, `decision_function` or `predict` in that order.
+          `'predict_proba'`, `'decision_function'` or `'predict'` in that
+          order.
+        * otherwise, one of `'predict_proba'`, `'decision_function'` or
+         `'predict'`. If the method is not implemented by the estimator, it
+         will raise an error.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel all `estimators` `fit`.
@@ -362,7 +343,7 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
     final_estimator_ : estimator
         The classifier which predicts given the output of `estimators_`.
 
-    predict_method_ : list of str
+    stack_method_ : list of str
         The method used by each base estimator.
 
     References
@@ -398,12 +379,12 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
 
     """
     def __init__(self, estimators, final_estimator=None, cv=None,
-                 predict_method='auto', n_jobs=None, verbose=0):
+                 stack_method='auto', n_jobs=None, verbose=0):
         super().__init__(
             estimators=estimators,
             final_estimator=final_estimator,
             cv=cv,
-            predict_method=predict_method,
+            stack_method=stack_method,
             n_jobs=n_jobs,
             verbose=verbose
         )
@@ -485,6 +466,23 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
         check_is_fitted(self, ['estimators_', 'final_estimator_'])
         return self.final_estimator_.predict_proba(self.transform(X))
 
+    def transform(self, X):
+        """Return class labels or probabilities for X for each estimator.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+
+        Returns
+        -------
+        y_preds : ndarray of shape (n_samples, n_estimators) or \
+                (n_samples, n_classes * n_estimators)
+            Prediction outputs for each estimator.
+        """
+        return self._transform(X)
+
 
 class StackingRegressor(_BaseStacking, RegressorMixin):
     """Stacked of estimators using a final regressor.
@@ -532,13 +530,16 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-    predict_method : 'auto' or list of str, default='auto'
+    stack_method : {'auto', 'predict_proba', 'decision_function', 'predict'}, \
+            default='auto'
         Methods called for each base estimator. It can be:
 
-        * if a list of string in which each string is associated to the
-          `estimators`,
         * if 'auto', it will try to invoke, for each estimator,
-          `predict_proba`, `decision_function` or `predict` in that order.
+          `'predict_proba'`, `'decision_function'` or `'predict'` in that
+          order.
+        * otherwise, one of `'predict_proba'`, `'decision_function'` or
+         `'predict'`. If the method is not implemented by the estimator, it
+         will raise an error.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel for `fit` of all `estimators`.
@@ -558,7 +559,7 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
     final_estimator_ : estimator
         The regressor to stacked the base estimators fitted.
 
-    predict_method_ : list of str
+    stack_method_ : list of str
         The method used by each base estimator.
 
     References
@@ -592,12 +593,12 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
 
     """
     def __init__(self, estimators, final_estimator=None, cv=None,
-                 predict_method='auto', n_jobs=None, verbose=0):
+                 stack_method='auto', n_jobs=None, verbose=0):
         super().__init__(
             estimators=estimators,
             final_estimator=final_estimator,
             cv=cv,
-            predict_method=predict_method,
+            stack_method=stack_method,
             n_jobs=n_jobs,
             verbose=verbose
         )
@@ -635,3 +636,19 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
         """
         y = column_or_1d(y, warn=True)
         return super().fit(X, y, sample_weight)
+
+    def transform(self, X):
+        """Return the predictions for X for each estimator.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+
+        Returns
+        -------
+        y_preds : ndarray of shape (n_samples, n_estimators)
+            Prediction outputs for each estimator.
+        """
+        return self._transform(X)

@@ -722,7 +722,7 @@ The parameter ``learning_rate`` strongly interacts with the parameter
 ``n_estimators``, the number of weak learners to fit. Smaller values
 of ``learning_rate`` require larger numbers of weak learners to maintain
 a constant training error. Empirical evidence suggests that small
-values of ``learning_rate`` favor better test error. [HTF2009]_
+values of ``learning_rate`` favor better test error. [HTF]_
 recommend to set the learning rate to a small constant
 (e.g. ``learning_rate <= 0.1``) and choose ``n_estimators`` by early
 stopping. For a more detailed discussion of the interaction between
@@ -1164,15 +1164,17 @@ Stacked generalization
 ======================
 
 Stacked generalization is a method for combining estimators to reduce their
-biases [W1992]. More precisely, the predictions of each individual estimator
-are stacked together and used as input to a final estimator to compute the
-final prediction. This final estimator is trained through cross-validation.
+biases [W1992]_ [HTF]_. More precisely, the predictions of each individual
+estimator are stacked together and used as input to a final estimator to
+compute the prediction. This final estimator is trained through
+cross-validation.
 
 The :class:`StackingClassifier` and :class:`StackingRegressor` provide such
 strategies which can be applied to classification and regression problems.
 
 The `estimators` parameter corresponds to the list of the estimators which
-are stacked together. It should be given as a list of names and estimators::
+are stacked together in parallel on the input data. It should be given as a
+list of names and estimators::
 
   >>> from sklearn.linear_model import RidgeCV, LassoCV
   >>> from sklearn.svm import SVR
@@ -1204,19 +1206,18 @@ to be called on the training data::
 During training, the `estimators` are fitted on the whole training data
 `X_train`. They will be used when calling `predict`, `predict`, or
 `predict_proba`. To generalize and avoid over-fitting, the
-`final_estimator` is trained on out-samples using internally
-:func:`sklearn.model_selection.cross_val_predict`.
+`final_estimator` is trained on out-samples using
+:func:`sklearn.model_selection.cross_val_predict` internally.
 
-Note that the output of the `estimators` is controlled by the parameter
-`predict_method`. It corresponds to the method called by each
-estimator. This parameter is either a list of strings, being method names, or
-`'auto'` which will automatically identify an available method depending on the
-availability and a pre-determined order of preference (`predict_proba`,
-`decision_function` and `predict`).
+Note that the output of the ``estimators`` is controlled by the parameter
+`stack_method` and it is called by each estimator. This parameter is either a
+string, being estimator method names, or `'auto'` which will automatically
+identify an available method depending on the availability, tested in the
+order of preference: `predict_proba`, `decision_function` and `predict`.
 
-The fitted stacking estimators have the `predict` method, and classifier also
-have the `predict_proba` method. They can be used as any other
-estimator, e.g.::
+A :class:`StackingRegressor` and :class:`StackingClassifier` can be used as
+any other regressor or classifier, exposing a `predict` and `predict_proba`
+methods, e.g.::
 
    >>> y_pred = reg.predict(X_test)
    >>> from sklearn.metrics import r2_score
@@ -1234,8 +1235,29 @@ Note that it is also possible to get the output of the stacked outputs of the
          [18.93..., 19.26..., 17.03... ]])
 
 .. note::
+   In a binary classification problem, one of the column corresponding to the
+   probability of one of the outcome will be dropped when using `predict_proba`
+   since both columns are collinear.
+
+.. note::
    Multiple stacking layers can be achieved by assigning `final_estimator` to
-   a :class:`StackingClassifier` or :class:`StackingRegressor`.
+   a :class:`StackingClassifier` or :class:`StackingRegressor`::
+
+    >>> final_layer = StackingRegressor(
+    ...     estimators=[('rf', RandomForestRegressor(random_state=42)),
+    ...                 ('gbrt', GradientBoostingRegressor(random_state=42))],
+    ...     final_estimator=LinearRegression()
+    ...     )
+    >>> multi_layer_regressor = StackingRegressor(
+    ...     estimators=[('ridge', RidgeCV()),
+    ...                 ('lasso', LassoCV(random_state=42)),
+    ...                 ('svr', SVR(C=1, gamma=1e-6, kernel='rbf'))],
+    ...     final_estimator=final_layer
+    ... )
+    >>> multi_layer_regressor.fit(X_train, y_train)
+    >>> print('R2 score: {:.2f}'
+    ...       .format(multi_layer_regressor.score(X_test, y_test)))
+    R2 score: 0.46
 
 .. topic:: References
 
