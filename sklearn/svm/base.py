@@ -2,7 +2,7 @@ import numpy as np
 import scipy.sparse as sp
 import warnings
 from abc import ABCMeta, abstractmethod
-
+import numbers
 from . import libsvm, liblinear
 from . import libsvm_sparse
 from ..base import BaseEstimator, ClassifierMixin
@@ -17,7 +17,6 @@ from ..utils.validation import _check_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..exceptions import ConvergenceWarning
 from ..exceptions import NotFittedError
-
 
 LIBSVM_IMPL = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
 
@@ -81,6 +80,11 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             msg = ("The gamma value of 0.0 is invalid. Use 'auto' to set"
                    " gamma to a value of 1 / n_features.")
             raise ValueError(msg)
+        if isinstance(gamma, str) and gamma not in ['scale', 'auto']:
+            raise ValueError(
+                "When 'gamma' is a string, it should be either 'scale' or "
+                "'auto'. Got '{}' instead.".format(self.gamma)
+            )
 
         self.kernel = kernel
         self.degree = degree
@@ -170,21 +174,15 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                              "boolean masks (use `indices=True` in CV)."
                              % (sample_weight.shape, X.shape))
 
-        if isinstance(self.gamma, str):
-            if self.gamma == 'scale':
-                # var = E[X^2] - E[X]^2 if sparse
-                X_var = ((X.multiply(X)).mean() - (X.mean()) ** 2
-                         if sparse else X.var())
-                self._gamma = 1.0 / (X.shape[1] * X_var) if X_var != 0 else 1.0
-            elif self.gamma == 'auto':
-                self._gamma = 1.0 / X.shape[1]
-            else:
-                raise ValueError(
-                    "When 'gamma' is a string, it should be either 'scale' or "
-                    "'auto'. Got '{}' instead.".format(self.gamma)
-                )
-        else:
-            self._gamma = self.gamma
+        if self.gamma == 'scale':
+            # var = E[X^2] - E[X]^2 if sparse
+            X_var = ((X.multiply(X)).mean() - (X.mean()) ** 2
+                     if sparse else X.var())
+            self._gamma = 1.0 / (X.shape[1] * X_var) if X_var != 0 else 1.0
+        elif self.gamma == 'auto':
+            self._gamma = 1.0 / X.shape[1]
+
+        self._gamma = self.gamma
 
         kernel = self.kernel
         if callable(kernel):
@@ -245,16 +243,16 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         # we don't pass **self.get_params() to allow subclasses to
         # add other parameters to __init__
         self.support_, self.support_vectors_, self.n_support_, \
-            self.dual_coef_, self.intercept_, self.probA_, \
-            self.probB_, self.fit_status_ = libsvm.fit(
-                X, y,
-                svm_type=solver_type, sample_weight=sample_weight,
-                class_weight=self.class_weight_, kernel=kernel, C=self.C,
-                nu=self.nu, probability=self.probability, degree=self.degree,
-                shrinking=self.shrinking, tol=self.tol,
-                cache_size=self.cache_size, coef0=self.coef0,
-                gamma=self._gamma, epsilon=self.epsilon,
-                max_iter=self.max_iter, random_seed=random_seed)
+        self.dual_coef_, self.intercept_, self.probA_, \
+        self.probB_, self.fit_status_ = libsvm.fit(
+            X, y,
+            svm_type=solver_type, sample_weight=sample_weight,
+            class_weight=self.class_weight_, kernel=kernel, C=self.C,
+            nu=self.nu, probability=self.probability, degree=self.degree,
+            shrinking=self.shrinking, tol=self.tol,
+            cache_size=self.cache_size, coef0=self.coef0,
+            gamma=self._gamma, epsilon=self.epsilon,
+            max_iter=self.max_iter, random_seed=random_seed)
 
         self._warn_from_fit_status()
 
@@ -268,8 +266,8 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         libsvm_sparse.set_verbosity_wrap(self.verbose)
 
         self.support_, self.support_vectors_, dual_coef_data, \
-            self.intercept_, self.n_support_, \
-            self.probA_, self.probB_, self.fit_status_ = \
+        self.intercept_, self.n_support_, \
+        self.probA_, self.probB_, self.fit_status_ = \
             libsvm_sparse.libsvm_sparse_train(
                 X.shape[1], X.data, X.indices, X.indptr, y, solver_type,
                 kernel_type, self.degree, self._gamma, self.coef0, self.tol,
@@ -487,6 +485,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
 class BaseSVC(BaseLibSVM, ClassifierMixin, metaclass=ABCMeta):
     """ABC for LibSVM-based classifiers."""
+
     @abstractmethod
     def __init__(self, kernel, degree, gamma, coef0, tol, C, nu,
                  shrinking, probability, cache_size, class_weight, verbose,
@@ -935,3 +934,18 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
         intercept_ = 0.
 
     return coef_, intercept_, n_iter_
+
+
+def _check_fit_liblinear_args(C=None, tol=None, max_iter=None):
+
+    if max_iter and not isinstance(max_iter, numbers.Number) or max_iter < 0:
+        raise ValueError("Maximum number of iteration must be positive;"
+                         " got (max_iter=%r)" % max_iter)
+    if tol and not isinstance(tol, numbers.Number) or tol < 0:
+            raise ValueError("Tolerance for stopping criteria must be "
+                             "positive; got (tol=%r)" % tol)
+
+    if C and not isinstance(C, numbers.Number) or C < 0:
+        raise ValueError("Penalty term must be positive; got (C=%r)"
+                         % C)
+

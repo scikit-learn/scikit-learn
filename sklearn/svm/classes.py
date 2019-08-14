@@ -2,6 +2,7 @@ import warnings
 import numpy as np
 
 from .base import _fit_liblinear, BaseSVC, BaseLibSVM
+from .base import _check_fit_liblinear_args
 from ..base import BaseEstimator, RegressorMixin, OutlierMixin
 from ..linear_model.base import LinearClassifierMixin, SparseCoefMixin, \
     LinearModel
@@ -214,20 +215,18 @@ else [n_classes, n_features]
         self : object
         """
         # FIXME Remove l1/l2 support in 0.23 ----------------------------------
-        msg = ("loss='%s' has been deprecated in favor of "
-               "loss='%s' as of 0.16. Backward compatibility"
-               " for the loss='%s' will be removed in %s")
-
         if self.loss in ('l1', 'l2'):
+            msg = ("loss='%s' has been deprecated in favor of "
+                   "loss='%s' as of 0.16. Backward compatibility"
+                   " for the loss='%s' will be removed in %s")
+
             old_loss = self.loss
             self.loss = {'l1': 'hinge', 'l2': 'squared_hinge'}.get(self.loss)
             warnings.warn(msg % (old_loss, self.loss, old_loss, '0.23'),
                           DeprecationWarning)
         # ---------------------------------------------------------------------
 
-        if self.C < 0:
-            raise ValueError("Penalty term must be positive; got (C=%r)"
-                             % self.C)
+        _check_fit_liblinear_args(tol=self.tol, max_iter=self.max_iter)
 
         X, y = check_X_y(X, y, accept_sparse='csr',
                          dtype=np.float64, order="C",
@@ -401,11 +400,10 @@ class LinearSVR(LinearModel, RegressorMixin):
         self : object
         """
         # FIXME Remove l1/l2 support in 0.23 ----------------------------------
-        msg = ("loss='%s' has been deprecated in favor of "
-               "loss='%s' as of 0.16. Backward compatibility"
-               " for the loss='%s' will be removed in %s")
-
         if self.loss in ('l1', 'l2'):
+            msg = ("loss='%s' has been deprecated in favor of "
+                   "loss='%s' as of 0.16. Backward compatibility"
+                   " for the loss='%s' will be removed in %s")
             old_loss = self.loss
             self.loss = {'l1': 'epsilon_insensitive',
                          'l2': 'squared_epsilon_insensitive'
@@ -414,9 +412,7 @@ class LinearSVR(LinearModel, RegressorMixin):
                           DeprecationWarning)
         # ---------------------------------------------------------------------
 
-        if self.C < 0:
-            raise ValueError("Penalty term must be positive; got (C=%r)"
-                             % self.C)
+        _check_fit_liblinear_args(self.C, self.tol, self.max_iter)
 
         X, y = check_X_y(X, y, accept_sparse='csr',
                          dtype=np.float64, order="C",
@@ -1265,3 +1261,6 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
         """
         y = super().predict(X)
         return np.asarray(y, dtype=np.intp)
+
+
+
