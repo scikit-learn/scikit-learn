@@ -1258,7 +1258,7 @@ Note that it is also possible to get the output of the stacked outputs of the
     StackingRegressor(...)
     >>> print('R2 score: {:.2f}'
     ...       .format(multi_layer_regressor.score(X_test, y_test)))
-    R2 score: 0.46
+    R2 score: 0.82
 
 .. topic:: References
 
