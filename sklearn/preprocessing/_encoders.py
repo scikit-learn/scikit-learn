@@ -149,7 +149,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
 
 
 class OneHotEncoder(_BaseEncoder):
-    """Encode categorical integer features as a one-hot numeric array.
+    """Encode categorical features as a one-hot numeric array.
 
     The input to this transformer should be an array-like of integers or
     strings, denoting the values taken on by categorical (discrete) features.

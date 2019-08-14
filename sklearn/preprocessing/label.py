@@ -211,10 +211,10 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    sklearn.preprocessing.OrdinalEncoder : Encode categorical input features
+    sklearn.preprocessing.OrdinalEncoder : Encode categorical features
         using an ordinal encoding scheme.
 
-    sklearn.preprocessing.OneHotEncoder : Encode categorical integer features
+    sklearn.preprocessing.OneHotEncoder : Encode categorical features
         as a one-hot numeric array.
     """
 
