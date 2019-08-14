@@ -256,7 +256,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         -------
         y : array-like of shape [n_samples]
         """
-        check_is_fitted(self, 'classes_')
+        check_is_fitted(self)
         y = column_or_1d(y, warn=True)
         # transform of empty array is empty array
         if _num_samples(y) == 0:
@@ -277,7 +277,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         -------
         y : numpy array of shape [n_samples]
         """
-        check_is_fitted(self, 'classes_')
+        check_is_fitted(self)
         y = column_or_1d(y, warn=True)
         # inverse transform of empty array is empty array
         if _num_samples(y) == 0:
@@ -465,7 +465,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         Y : numpy array or CSR matrix of shape [n_samples, n_classes]
             Shape will be [n_samples, 1] for binary problems.
         """
-        check_is_fitted(self, 'classes_')
+        check_is_fitted(self)
 
         y_is_multilabel = type_of_target(y).startswith('multilabel')
         if y_is_multilabel and not self.y_type_.startswith('multilabel'):
@@ -508,7 +508,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         linear model's decision_function method directly as the input
         of inverse_transform.
         """
-        check_is_fitted(self, 'classes_')
+        check_is_fitted(self)
 
         if threshold is None:
             threshold = (self.pos_label + self.neg_label) / 2.
@@ -911,7 +911,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
             A matrix such that `y_indicator[i, j] = 1` iff `classes_[j]` is in
             `y[i]`, and 0 otherwise.
         """
-        check_is_fitted(self, 'classes_')
+        check_is_fitted(self)
 
         class_to_index = self._build_cache()
         yt = self._transform(y, class_to_index)
@@ -976,7 +976,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
             The set of labels for each sample such that `y[i]` consists of
             `classes_[j]` for each `yt[i, j] == 1`.
         """
-        check_is_fitted(self, 'classes_')
+        check_is_fitted(self)
 
         if yt.shape[1] != len(self.classes_):
             raise ValueError('Expected indicator for {0} classes, but got {1}'

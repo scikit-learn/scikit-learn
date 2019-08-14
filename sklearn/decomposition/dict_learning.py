@@ -911,7 +911,7 @@ class SparseCodingMixin(TransformerMixin):
             Transformed data
 
         """
-        check_is_fitted(self, 'components_')
+        check_is_fitted(self)
 
         X = check_array(X)
 

@@ -80,6 +80,10 @@ Changelog
   :func:`datasets.fetch_20newsgroups` and :func:`datasets.fetch_olivetti_faces`
   . :pr:`14259` by :user:`Sourav Singh <souravsingh>`.
 
+- |Fix| Fixed a bug in :func:`datasets.fetch_openml`, which failed to load
+  an OpenML dataset that contains an ignored feature.
+  :pr:`14623` by :user:`Sarra Habchi <HabchiSarra>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
@@ -200,6 +204,11 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+- |Feature| New ranking metrics :func:`metrics.ndcg_score` and
+  :func:`metrics.dcg_score` have been added to compute Discounted Cumulative
+  Gain and Normalized Discounted Cumulative Gain. :pr:`9951` by :user:`Jérôme
+  Dockès <jeromedockes>`.
+
 - |MajorFeature| :func:`metrics.plot_roc_curve` has been added to plot roc
   curves. This function introduces the visualization API described in
   the :ref:`User Guide <visualizations>`. :pr:`14357` by `Thomas Fan`_.
@@ -224,8 +233,15 @@ Changelog
   to return root mean squared error.
   :pr:`13467` by :user:`Urvang Patel <urvang96>`.
 
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Raise a ValueError in :func:`metrics.silhouette_score` when a
+  precomputed distance matrix contains non-zero diagonal entries.
+  :pr:`12258` by :user:`Stephen Tierney <sjtrny>`.
+
 :mod:`sklearn.model_selection`
-...............................
+..............................
 
 - |Enhancement| :class:`model_selection.learning_curve` now accepts parameter
   ``return_times`` which can be used to retrieve computation times in order to
