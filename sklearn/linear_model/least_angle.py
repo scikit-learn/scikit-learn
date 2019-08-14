@@ -361,7 +361,7 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
         solution of the coordinate descent lasso_path function.
 
     Returns
-    --------
+    -------
     alphas : array-like of shape (n_alphas + 1,)
         Maximum of covariances (in absolute value) at each iteration.
         ``n_alphas`` is either ``max_iter``, ``n_features`` or the
@@ -1259,7 +1259,7 @@ class LarsCV(Lars):
         calculations. If set to ``'auto'`` let us decide. The Gram matrix
         cannot be passed as argument since we will use only subsets of X.
 
-    cv : int, cross-validation generator or an iterable, default='warn'
+    cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
@@ -1473,7 +1473,7 @@ class LassoLarsCV(LarsCV):
         calculations. If set to ``'auto'`` let us decide. The Gram matrix
         cannot be passed as argument since we will use only subsets of X.
 
-    cv : int, cross-validation generator or an iterable, default='warn'
+    cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
