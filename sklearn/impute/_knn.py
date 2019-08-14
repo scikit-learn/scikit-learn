@@ -180,7 +180,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
             that is not always missing during `fit`.
         """
 
-        check_is_fitted(self, ["_fit_X"])
+        check_is_fitted(self)
         if not is_scalar_nan(self.missing_values):
             force_all_finite = True
         else:
