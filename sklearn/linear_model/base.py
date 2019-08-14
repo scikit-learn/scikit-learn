@@ -467,8 +467,12 @@ class LinearRegression(LinearModel, RegressorMixin, MultiOutputMixin):
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
                          y_numeric=True, multi_output=True)
 
-        if sample_weight is not None and np.atleast_1d(sample_weight).ndim > 1:
-            raise ValueError("Sample weights must be 1D array or scalar")
+        if sample_weight:
+            if not isinstance(sample_weight, numbers.Number) or np.atleast_1d(sample_weight).ndim != 1:
+                raise ValueError("Sample weights must be 1D array of numbers or scalar")
+            elif len(sample_weight) != len(X) or not isinstance(sample_weight[0], numbers.Number):
+                raise ValueError("If Sample weights is not a scalar, "
+                                 "it must be a 1D array of numbers and of the same length as X")
 
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
             X, y, fit_intercept=self.fit_intercept, normalize=self.normalize,
