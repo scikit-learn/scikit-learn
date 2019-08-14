@@ -201,7 +201,6 @@ class KNNImputer(TransformerMixin, BaseEstimator):
         # Pairwise distances between receivers and fitted samples
         dist = pairwise_distances(X[row_missing_idx, :], self._fit_X,
                                   metric=self.metric,
-                                  squared=False,
                                   missing_values=self.missing_values,
                                   force_all_finite=force_all_finite)
 
