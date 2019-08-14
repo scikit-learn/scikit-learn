@@ -1814,7 +1814,10 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by `np.random`. Note that this only applies to the solver and not the
+        cross-validation generator. Futhermore, if a deterministic solver is
+        chosen, changing this value will have no impact on the outcome.
+
 
     l1_ratios : list of float or None, optional (default=None)
         The list of Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``.
