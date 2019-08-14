@@ -1255,6 +1255,7 @@ Note that it is also possible to get the output of the stacked outputs of the
     ...     final_estimator=final_layer
     ... )
     >>> multi_layer_regressor.fit(X_train, y_train)
+    StackingRegressor(...)
     >>> print('R2 score: {:.2f}'
     ...       .format(multi_layer_regressor.score(X_test, y_test)))
     R2 score: 0.46
