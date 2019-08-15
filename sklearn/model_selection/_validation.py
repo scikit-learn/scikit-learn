@@ -588,8 +588,8 @@ def _score(estimator, X_test, y_test, scorer):
             with suppress(ValueError):
                 # e.g. unwrap memmapped scalars
                 scores = scores.item()
-            if not isinstance(scores, numbers.Number):
-                raise ValueError(error_msg % (scores, type(scores), name))
+        if not isinstance(scores, numbers.Number):
+            raise ValueError(error_msg % (scores, type(scores), scorer))
     return scores
 
 

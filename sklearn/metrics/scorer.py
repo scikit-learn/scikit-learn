@@ -435,7 +435,8 @@ def _check_multimetric_scoring(estimator, scoring=None):
         True if scorer is a list/tuple or dict of callables
         False if scorer is None/str/callable
     """
-    if callable(scoring) or scoring is None or isinstance(scoring, str):
+    if callable(scoring) or scoring is None or isinstance(scoring,
+                                                          str):
         scorers = {"score": check_scoring(estimator, scoring=scoring)}
         return scorers, False
     else:
