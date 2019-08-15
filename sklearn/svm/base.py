@@ -953,13 +953,16 @@ def _check_fit_liblinear_args(C=None, tol=None, max_iter=None):
         Number of iterations.
 
     """
-    if max_iter and not isinstance(max_iter, numbers.Number) or max_iter < 0:
+    if max_iter is not None\
+            and not isinstance(max_iter, numbers.Number) or max_iter < 0:
         raise ValueError("Maximum number of iteration must be positive;"
                          " got (max_iter=%r)" % max_iter)
-    if tol and not isinstance(tol, numbers.Number) or tol < 0:
+    if tol is not None \
+            and not isinstance(tol, numbers.Number) or tol < 0:
         raise ValueError("Tolerance for stopping criteria must be "
                          "positive; got (tol=%r)" % tol)
 
-    if C and not isinstance(C, numbers.Number) or C < 0:
+    if C is not None\
+            and not isinstance(C, numbers.Number) or C < 0:
         raise ValueError("Penalty term must be positive; got (C=%r)"
                          % C)
