@@ -45,6 +45,15 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+
+:mod:`sklearn.base`
+...................
+
+- |API| From version 0.24 :meth:`BaseEstimator.get_params` will raise an
+  AttributeError rather than return None for parameters that are in the
+  estimator's constructor but not stored as attributes on the instance.
+  :pr:`14464` by `Joel Nothman`_.
+
 :mod:`sklearn.calibration`
 ..........................
 
@@ -53,15 +62,27 @@ Changelog
   `sample_weights` are not supported by the wrapped estimator). :pr:`13575`
   by :user:`William de Vazelhes <wdevazelhes>`.
 
+:mod:`sklearn.compose`
+......................
+
+- |Fix| Fixed a bug in :class:`compose.ColumnTransformer` which failed to
+  select the proper columns when using a boolean list, with NumPy older than
+  1.12.
+  :pr:`14510` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.datasets`
 .......................
 
-- |Feature| :func:`datasets.fetch_openml` now supports heterogeneous data using pandas 
+- |Feature| :func:`datasets.fetch_openml` now supports heterogeneous data using pandas
   by setting `as_frame=True`. :pr:`13902` by `Thomas Fan`_.
 
 - |Enhancement| The parameter `return_X_y` was added to
   :func:`datasets.fetch_20newsgroups` and :func:`datasets.fetch_olivetti_faces`
   . :pr:`14259` by :user:`Sourav Singh <souravsingh>`.
+
+- |Fix| Fixed a bug in :func:`datasets.fetch_openml`, which failed to load
+  an OpenML dataset that contains an ignored feature.
+  :pr:`14623` by :user:`Sarra Habchi <HabchiSarra>`.
 
 :mod:`sklearn.decomposition`
 ............................
@@ -107,15 +128,62 @@ Changelog
   preserve the class balance of the original training set. :pr:`14194`
   by :user:`Johann Faouzi <johannfaouzi>`.
 
+- |Fix| Run by default
+  :func:`utils.estimator_checks.check_estimator` on both
+  :class:`ensemble.VotingClassifier` and :class:`ensemble.VotingRegressor`. It
+  leads to solve issues regarding shape consistency during `predict` which was
+  failing when the underlying estimators were not outputting consistent array
+  dimensions. Note that it should be replaced by refactoring the common tests
+  in the future.
+  :pr:`14305` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Efficiency| :func:`ensemble.MissingIndicator.fit_transform` the
+  _get_missing_features_info function is now called once when calling
+  fit_transform for MissingIndicator class. :pr:`14356` by :user:
+  `Harsh Soni <harsh020>`.
+
 - |Fix| :class:`ensemble.AdaBoostClassifier` computes probabilities based on
   the decision function as in the literature. Thus, `predict` and
   `predict_proba` give consistent results.
   :pr:`14114` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Fix| Functions created by build_preprocessor and build_analyzer of
+  :class:`feature_extraction.text.VectorizerMixin` can now be pickled.
+  :pr:`14430` by :user:`Dillon Niederhut <deniederhut>`.
+
+- |API| Deprecated unused `copy` param for
+  :meth: `feature_extraction.text.TfidfVectorizer.transform` it will be
+  removed in v0.24. :pr:`14520` by
+  :user:`Guillem G. Subies <guillemgsubies>`.
+
+:mod:`sklearn.gaussian_process`
+...............................
+
+- |Feature| :func:`gaussian_process.GaussianProcessClassifier.log_marginal_likelihood`
+  and :func:`gaussian_process.GaussianProcessRegressor.log_marginal_likelihood` now
+  accept a ``clone_kernel=True`` keyword argument. When set to ``False``,
+  the kernel attribute is modified, but may result in a performance improvement.
+  :pr:`14378` by :user:`Masashi Shibata <c-bata>`.
+
+- |API| From version 0.24 :meth:`Kernel.get_params` will raise an
+  AttributeError rather than return None for parameters that are in the
+  estimator's constructor but not stored as attributes on the instance.
+  :pr:`14464` by `Joel Nothman`_.
+
+:mod:`sklearn.inspection`
+.........................
+
+- |MajorFeature| :func:`inspection.permutation_importance` has been added to
+  measure the importance of each feature in an arbitrary trained model with
+  respect to a given scoring function. :issue:`13146` by `Thomas Fan`_.
+
 :mod:`sklearn.linear_model`
 ...........................
 
-- |Enhancement| :class:`linearmodel.BayesianRidge` now accepts hyperparameters
+- |Enhancement| :class:`linear_model.BayesianRidge` now accepts hyperparameters
   ``alpha_init`` and ``lambda_init`` which can be used to set the initial value
   of the maximization procedure in :term:`fit`.
   :pr:`13618` by :user:`Yoshihiro Uchida <c56pony>`.
@@ -127,15 +195,28 @@ Changelog
 
 - |Efficiency| The 'liblinear' logistic regression solver is now faster and
   requires less memory.
-  :pr:`14108`, pr:`14170` by :user:`Alex Henrie <alexhenrie>`.
+  :pr:`14108`, pr:`14170`, pr:`14296` by :user:`Alex Henrie <alexhenrie>`.
+
+- |Fix| :class:`linear_model.Ridge` with `solver='sag'` now accepts F-ordered
+  and non-contiguous arrays and makes a conversion instead of failing.
+  :pr:`14458` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.metrics`
 ......................
 
+- |Feature| New ranking metrics :func:`metrics.ndcg_score` and
+  :func:`metrics.dcg_score` have been added to compute Discounted Cumulative
+  Gain and Normalized Discounted Cumulative Gain. :pr:`9951` by :user:`Jérôme
+  Dockès <jeromedockes>`.
+
+- |MajorFeature| :func:`metrics.plot_roc_curve` has been added to plot roc
+  curves. This function introduces the visualization API described in
+  the :ref:`User Guide <visualizations>`. :pr:`14357` by `Thomas Fan`_.
+
 - |Feature| Added multiclass support to :func:`metrics.roc_auc_score`.
   :issue:`12789` by :user:`Kathy Chen <kathyxchen>`,
   :user:`Mohamed Maskani <maskani-moh>`, and :user:`Thomas Fan <thomasjpfan>`.
-  
+
 - |Feature| Add :class:`metrics.mean_tweedie_deviance` measuring the
   Tweedie deviance for a power parameter ``p``. Also add mean Poisson deviance
   :class:`metrics.mean_poisson_deviance` and mean Gamma deviance
@@ -148,13 +229,36 @@ Changelog
   updated to accept the zero and `float('+inf')` value.
   :pr:`13231` by :user:`Dong-hee Na <corona10>`.
 
+- |Enhancement| Added parameter ``squared`` in :func:`metrics.mean_squared_error`
+  to return root mean squared error.
+  :pr:`13467` by :user:`Urvang Patel <urvang96>`.
+
+- |Enhancement| Allow computing averaged metrics in the case of no true positives.
+  :pr:`14595` by `Andreas Müller`_.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Raise a ValueError in :func:`metrics.silhouette_score` when a
+  precomputed distance matrix contains non-zero diagonal entries.
+  :pr:`12258` by :user:`Stephen Tierney <sjtrny>`.
+
 :mod:`sklearn.model_selection`
-..................
+..............................
 
 - |Enhancement| :class:`model_selection.learning_curve` now accepts parameter
   ``return_times`` which can be used to retrieve computation times in order to
   plot model scalability (see learning_curve example).
   :pr:`13938` by :user:`Hadrien Reboul <H4dr1en>`.
+
+- |Enhancement| :class:`model_selection.RandomizedSearchCV` now accepts lists
+  of parameter distributions. :pr:`14549` by `Andreas Müller`_.
+
+:mod:`sklearn.multioutput`
+..........................
+
+- |Fix| :class:`multioutput.MultiOutputClassifier` now has attribute
+  ``classes_``. :pr:`14629` by :user:`Agamemnon Krasoulis <agamemnonc>`.
 
 :mod:`sklearn.pipeline`
 .......................
@@ -172,6 +276,9 @@ Changelog
   ``decision_function_shape='ovr'``, and the number of target classes > 2.
   :pr:`12557` by `Adrin Jalali`_.
 
+- |Enhancement| SVM now throws more specific error when fit on non-square data
+  and kernel = precomputed.  :class:`svm.BaseLibSVM`
+  :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
 
 :mod:`sklearn.preprocessing`
 ............................
@@ -182,21 +289,25 @@ Changelog
   and :class:`preprocessing.QuantileTransformer` which results in a slight
   performance improvement. :pr:`13987` by `Roman Yurchak`_.
 
+- |Fix| KernelCenterer now throws error when fit on non-square
+  class:`preprocessing.KernelCenterer`
+  :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
 
 :mod:`sklearn.cluster`
 ......................
 
-- |Enhancement| :class:`cluster.SpectralClustering` now accepts a ``n_components`` 
+- |Enhancement| :class:`cluster.SpectralClustering` now accepts a ``n_components``
   parameter. This parameter extends `SpectralClustering` class functionality to
   match `spectral_clustering`.
   :pr:`13726` by :user:`Shuzhe Xiao <fdas3213>`.
 
 :mod:`sklearn.feature_selection`
 ................................
+
 - |Fix| Fixed a bug where :class:`VarianceThreshold` with `threshold=0` did not
   remove constant features due to numerical instability, by using range
   rather than variance in this case.
-  :pr:`13704` by `Roddy MacSween <rlms>`.
+  :pr:`13704` by :user:`Roddy MacSween <rlms>`.
 
 :mod:`sklearn.utils`
 ....................
@@ -204,7 +315,24 @@ Changelog
 - |Enhancement| :func:`utils.safe_indexing` accepts an ``axis`` parameter to
   index array-like across rows and columns. The column indexing can be done on
   NumPy array, SciPy sparse matrix, and Pandas DataFrame.
-  :pr:`14035` by `Guillaume Lemaitre <glemaitre>`.
+  :pr:`14035` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.neighbors`
+....................
+
+- |Feature| :class:`neighbors.RadiusNeighborsClassifier` now supports
+  predicting probabilities by using `predict_proba` and supports more
+  outlier_label options: 'most_frequent', or different outlier_labels
+  for multi-outputs.
+  :pr:`9597` by :user:`Wenbo Zhao <webber26232>`.
+
+- |Efficiency| Efficiency improvements for
+  :func:`neighbors.RadiusNeighborsClassifier.predict`.
+  :pr:`9597` by :user:`Wenbo Zhao <webber26232>`.
+
+- |Fix| KNearestRegressor now throws error when fit on non-square data and
+  metric = precomputed.  :class:`neighbors.NeighborsBase`
+  :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
 
 :mod:`sklearn.neural_network`
 .............................
@@ -237,6 +365,10 @@ These changes mostly affect library developers.
   ``transform`` is called before ``fit``; previously an ``AttributeError`` or
   ``ValueError`` was acceptable.
   :pr:`13013` by by :user:`Agamemnon Krasoulis <agamemnonc>`.
+
+- |Fix| Added check_transformer_data_not_an_array to checks where missing
+  |Fix| Added check that pairwise estimators raise error on non-square data
+  :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
 
 - |Enhancement| Binary only classifiers are now supported in estimator checks.
   Such classifiers need to have the `binary_only=True` estimator tag.

@@ -17,7 +17,6 @@ import scipy.sparse as sp
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_random_state, check_array
 from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
-from ..utils.extmath import safe_min
 from ..utils.validation import check_is_fitted, check_non_negative
 from ..exceptions import ConvergenceWarning
 from .cdnmf_fast import _update_cdnmf_fast
@@ -1000,7 +999,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     check_non_negative(X, "NMF (input X)")
     beta_loss = _check_string_param(solver, regularization, beta_loss, init)
 
-    if safe_min(X) == 0 and beta_loss <= 0:
+    if X.min() == 0 and beta_loss <= 0:
         raise ValueError("When beta_loss <= 0 and X contains zeros, "
                          "the solver may diverge. Please add small values to "
                          "X, or use a positive beta_loss.")
@@ -1313,7 +1312,7 @@ class NMF(BaseEstimator, TransformerMixin):
         W : array, shape (n_samples, n_components)
             Transformed data
         """
-        check_is_fitted(self, 'n_components_')
+        check_is_fitted(self)
 
         W, _, n_iter_ = non_negative_factorization(
             X=X, W=None, H=self.components_, n_components=self.n_components_,
@@ -1340,5 +1339,5 @@ class NMF(BaseEstimator, TransformerMixin):
 
         .. versionadded:: 0.18
         """
-        check_is_fitted(self, 'n_components_')
+        check_is_fitted(self)
         return np.dot(W, self.components_)

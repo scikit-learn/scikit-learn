@@ -675,7 +675,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
-        check_is_fitted(self, "classes_")
+        check_is_fitted(self)
         # Check data
         X = check_array(
             X, accept_sparse=['csr', 'csc'], dtype=None,
@@ -725,7 +725,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             The class log-probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
-        check_is_fitted(self, "classes_")
+        check_is_fitted(self)
         if hasattr(self.base_estimator_, "predict_log_proba"):
             # Check data
             X = check_array(
@@ -783,7 +783,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             cases with ``k == 1``, otherwise ``k==n_classes``.
 
         """
-        check_is_fitted(self, "classes_")
+        check_is_fitted(self)
 
         # Check data
         X = check_array(
@@ -974,7 +974,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         y : array of shape = [n_samples]
             The predicted values.
         """
-        check_is_fitted(self, "estimators_features_")
+        check_is_fitted(self)
         # Check data
         X = check_array(
             X, accept_sparse=['csr', 'csc'], dtype=None,

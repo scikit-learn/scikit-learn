@@ -604,6 +604,10 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     mi : float
        Mutual information, a non-negative value
 
+    Notes
+    -----
+    The logarithm used is the natural logarithm (base-e).
+
     See also
     --------
     adjusted_mutual_info_score: Adjusted against chance Mutual Information
@@ -947,6 +951,10 @@ def entropy(labels):
     ----------
     labels : int array, shape = [n_samples]
         The labels
+
+    Notes
+    -----
+    The logarithm used is the natural logarithm (base-e).
     """
     if len(labels) == 0:
         return 1.0

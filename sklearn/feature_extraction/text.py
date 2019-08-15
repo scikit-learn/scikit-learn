@@ -15,6 +15,7 @@ build feature vectors from text documents.
 import array
 from collections import defaultdict
 from collections.abc import Mapping
+from functools import partial
 import numbers
 from operator import itemgetter
 import re
@@ -31,7 +32,7 @@ from .stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
 from ..utils import _IS_32BIT
 from ..utils.fixes import _astype_copy_false
-from ..exceptions import ChangedBehaviorWarning
+from ..exceptions import ChangedBehaviorWarning, NotFittedError
 
 
 __all__ = ['HashingVectorizer',
@@ -42,6 +43,72 @@ __all__ = ['HashingVectorizer',
            'strip_accents_ascii',
            'strip_accents_unicode',
            'strip_tags']
+
+
+def _preprocess(doc, accent_function=None, lower=False):
+    """Chain together an optional series of text preprocessing steps to
+    apply to a document.
+
+    Parameters
+    ----------
+    doc: str
+        The string to preprocess
+    accent_function: callable
+        Function for handling accented characters. Common strategies include
+        normalizing and removing.
+    lower: bool
+        Whether to use str.lower to lowercase all fo the text
+
+    Returns
+    -------
+    doc: str
+        preprocessed string
+    """
+    if lower:
+        doc = doc.lower()
+    if accent_function is not None:
+        doc = accent_function(doc)
+    return doc
+
+
+def _analyze(doc, analyzer=None, tokenizer=None, ngrams=None,
+             preprocessor=None, decoder=None, stop_words=None):
+    """Chain together an optional series of text processing steps to go from
+    a single document to ngrams, with or without tokenizing or preprocessing.
+
+    If analyzer is used, only the decoder argument is used, as the analyzer is
+    intended to replace the preprocessor, tokenizer, and ngrams steps.
+
+    Parameters
+    ----------
+    analyzer: callable
+    tokenizer: callable
+    ngrams: callable
+    preprocessor: callable
+    decoder: callable
+    stop_words: list
+
+    Returns
+    -------
+    ngrams: list
+        A sequence of tokens, possibly with pairs, triples, etc.
+    """
+
+    if decoder is not None:
+        doc = decoder(doc)
+    if analyzer is not None:
+        doc = analyzer(doc)
+    else:
+        if preprocessor is not None:
+            doc = preprocessor(doc)
+        if tokenizer is not None:
+            doc = tokenizer(doc)
+        if ngrams is not None:
+            if stop_words is not None:
+                doc = ngrams(doc, stop_words)
+            else:
+                doc = ngrams(doc)
+    return doc
 
 
 def strip_accents_unicode(s):
@@ -232,16 +299,9 @@ class VectorizerMixin:
         if self.preprocessor is not None:
             return self.preprocessor
 
-        # unfortunately python functools package does not have an efficient
-        # `compose` function that would have allowed us to chain a dynamic
-        # number of functions. However the cost of a lambda call is a few
-        # hundreds of nanoseconds which is negligible when compared to the
-        # cost of tokenizing a string of 1000 chars for instance.
-        noop = lambda x: x
-
         # accent stripping
         if not self.strip_accents:
-            strip_accents = noop
+            strip_accents = None
         elif callable(self.strip_accents):
             strip_accents = self.strip_accents
         elif self.strip_accents == 'ascii':
@@ -252,17 +312,16 @@ class VectorizerMixin:
             raise ValueError('Invalid value for "strip_accents": %s' %
                              self.strip_accents)
 
-        if self.lowercase:
-            return lambda x: strip_accents(x.lower())
-        else:
-            return strip_accents
+        return partial(
+            _preprocess, accent_function=strip_accents, lower=self.lowercase
+        )
 
     def build_tokenizer(self):
         """Return a function that splits a string into a sequence of tokens"""
         if self.tokenizer is not None:
             return self.tokenizer
         token_pattern = re.compile(self.token_pattern)
-        return lambda doc: token_pattern.findall(doc)
+        return token_pattern.findall
 
     def get_stop_words(self):
         """Build or fetch the effective stop words list"""
@@ -335,24 +394,28 @@ class VectorizerMixin:
         if callable(self.analyzer):
             if self.input in ['file', 'filename']:
                 self._validate_custom_analyzer()
-            return lambda doc: self.analyzer(self.decode(doc))
+            return partial(
+                _analyze, analyzer=self.analyzer, decoder=self.decode
+            )
 
         preprocess = self.build_preprocessor()
 
         if self.analyzer == 'char':
-            return lambda doc: self._char_ngrams(preprocess(self.decode(doc)))
+            return partial(_analyze, ngrams=self._char_ngrams,
+                           preprocessor=preprocess, decoder=self.decode)
 
         elif self.analyzer == 'char_wb':
-            return lambda doc: self._char_wb_ngrams(
-                preprocess(self.decode(doc)))
+            return partial(_analyze, ngrams=self._char_wb_ngrams,
+                           preprocessor=preprocess, decoder=self.decode)
 
         elif self.analyzer == 'word':
             stop_words = self.get_stop_words()
             tokenize = self.build_tokenizer()
             self._check_stop_words_consistency(stop_words, preprocess,
                                                tokenize)
-            return lambda doc: self._word_ngrams(
-                tokenize(preprocess(self.decode(doc))), stop_words)
+            return partial(_analyze, ngrams=self._word_ngrams,
+                           tokenizer=tokenize, preprocessor=preprocess,
+                           decoder=self.decode, stop_words=stop_words)
 
         else:
             raise ValueError('%s is not a valid tokenization scheme/analyzer' %
@@ -387,9 +450,11 @@ class VectorizerMixin:
             self.fixed_vocabulary_ = False
 
     def _check_vocabulary(self):
-        """Check if vocabulary is empty or missing (not fit-ed)"""
-        msg = "%(name)s - Vocabulary wasn't fitted."
-        check_is_fitted(self, 'vocabulary_', msg=msg),
+        """Check if vocabulary is empty or missing (not fitted)"""
+        if not hasattr(self, 'vocabulary_'):
+            self._validate_vocabulary()
+            if not self.fixed_vocabulary_:
+                raise NotFittedError("Vocabulary not fitted or provided")
 
         if len(self.vocabulary_) == 0:
             raise ValueError("Vocabulary is empty")
@@ -1109,10 +1174,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             raise ValueError(
                 "Iterable over raw text documents expected, "
                 "string object received.")
-
-        if not hasattr(self, 'vocabulary_'):
-            self._validate_vocabulary()
-
         self._check_vocabulary()
 
         # use the same matrix-building strategy as fit_transform
@@ -1153,8 +1214,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
     def get_feature_names(self):
         """Array mapping from feature integer indices to feature name"""
-        if not hasattr(self, 'vocabulary_'):
-            self._validate_vocabulary()
 
         self._check_vocabulary()
 
@@ -1317,7 +1376,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
             X.data += 1
 
         if self.use_idf:
-            check_is_fitted(self, '_idf_diag', 'idf vector is not fitted')
+            check_is_fitted(self, msg='idf vector is not fitted')
 
             expected_n_features = self._idf_diag.shape[0]
             if n_features != expected_n_features:
@@ -1666,7 +1725,7 @@ class TfidfVectorizer(CountVectorizer):
         # we set copy to False
         return self._tfidf.transform(X, copy=False)
 
-    def transform(self, raw_documents, copy=True):
+    def transform(self, raw_documents, copy="deprecated"):
         """Transform documents to document-term matrix.
 
         Uses the vocabulary and document frequencies (df) learned by fit (or
@@ -1681,13 +1740,24 @@ class TfidfVectorizer(CountVectorizer):
             Whether to copy X and operate on the copy or perform in-place
             operations.
 
+            .. deprecated:: 0.22
+               The `copy` parameter is unused and was deprecated in version
+               0.22 and will be removed in 0.24. This parameter will be
+               ignored.
+
         Returns
         -------
         X : sparse matrix, [n_samples, n_features]
             Tf-idf-weighted document-term matrix.
         """
-        check_is_fitted(self, '_tfidf', 'The tfidf vector is not fitted')
+        check_is_fitted(self, msg='The tfidf vector is not fitted')
 
+        # FIXME Remove copy parameter support in 0.24
+        if copy != "deprecated":
+            msg = ("'copy' param is unused and has been deprecated since "
+                   "version 0.22. Backward compatibility for 'copy' will "
+                   "be removed in 0.24.")
+            warnings.warn(msg, DeprecationWarning)
         X = super().transform(raw_documents)
         return self._tfidf.transform(X, copy=False)
 
