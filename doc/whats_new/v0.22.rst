@@ -286,8 +286,7 @@ Changelog
   :pr:`13726` by :user:`Shuzhe Xiao <fdas3213>`.
 
 - |Fix| Fixed a bug where :class:`cluster.KMeans` produced inconsistent results
-  between `n_jobs=1` and `n_jobs>1` due to the random seed which did not be used
-  when `n_jobs=1` before.
+  between `n_jobs=1` and `n_jobs>1` due to the handling of the random state.
   :pr:`9288` by :user:`Bryan Yang <bryanyang0528>`.
 
 :mod:`sklearn.feature_selection`
