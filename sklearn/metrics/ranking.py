@@ -459,9 +459,9 @@ def _multiclass_roc_auc_score(y_true, y_score, labels,
 
     if multi_class == "ovo":
         if sample_weight is not None:
-            raise TypeError("sample_weight is not supported "
-                            "for multiclass one-vs-one ROC AUC, "
-                            "'sample_weight' must be None in this case.")
+            raise ValueError("sample_weight is not supported "
+                             "for multiclass one-vs-one ROC AUC, "
+                             "'sample_weight' must be None in this case.")
         _, y_true_encoded = _encode(y_true, uniques=classes, encode=True)
         # Hand & Till (2001) implementation (ovo)
         return _average_multiclass_ovo_score(_binary_roc_auc_score,
