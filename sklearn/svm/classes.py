@@ -225,7 +225,7 @@ else [n_classes, n_features]
             warnings.warn(msg % (old_loss, self.loss, old_loss, '0.23'),
                           DeprecationWarning)
         # ---------------------------------------------------------------------
-        _check_fit_liblinear_args(self.C, self.tol, self.max_iter)
+        _check_fit_liblinear_args(self.C, self.tol)
 
         X, y = check_X_y(X, y, accept_sparse='csr',
                          dtype=np.float64, order="C",
@@ -412,7 +412,7 @@ class LinearSVR(LinearModel, RegressorMixin):
                           DeprecationWarning)
         # ---------------------------------------------------------------------
 
-        _check_fit_liblinear_args(self.C, self.tol, self.max_iter)
+        _check_fit_liblinear_args(self.C, self.tol)
 
         X, y = check_X_y(X, y, accept_sparse='csr',
                          dtype=np.float64, order="C",

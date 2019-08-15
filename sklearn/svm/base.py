@@ -177,9 +177,9 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                              % (sample_weight.shape, X.shape))
 
         if self.gamma == 'scale':
-             # var = E[X^2] - E[X]^2 if sparse
+            # var = E[X^2] - E[X]^2 if sparse
             X_var = ((X.multiply(X)).mean() - (X.mean()) ** 2
-                 if sparse else X.var())
+                     if sparse else X.var())
             self._gamma = 1.0 / (X.shape[1] * X_var) if X_var != 0 else 1.0
         elif self.gamma == 'auto':
             self._gamma = 1.0 / X.shape[1]
@@ -942,14 +942,14 @@ def _check_fit_liblinear_args(C=None, tol=None, max_iter=None):
 
     Parameters
     ----------
-    C : float
+    C : float or None, optional (default=None)
         Inverse of cross-validation parameter. Lower the C, the more
         the penalization.
 
-    tol : float
+    tol : float or None, optional (default=None)
         Stopping condition.
 
-     max_iter : int
+     max_iter : int or None, optional (default=None)
         Number of iterations.
 
     """
@@ -957,8 +957,8 @@ def _check_fit_liblinear_args(C=None, tol=None, max_iter=None):
         raise ValueError("Maximum number of iteration must be positive;"
                          " got (max_iter=%r)" % max_iter)
     if tol and not isinstance(tol, numbers.Number) or tol < 0:
-            raise ValueError("Tolerance for stopping criteria must be "
-                             "positive; got (tol=%r)" % tol)
+        raise ValueError("Tolerance for stopping criteria must be "
+                         "positive; got (tol=%r)" % tol)
 
     if C and not isinstance(C, numbers.Number) or C < 0:
         raise ValueError("Penalty term must be positive; got (C=%r)"
