@@ -401,10 +401,28 @@ class VectorizerMixin:
         preprocess = self.build_preprocessor()
 
         if self.analyzer == 'char':
+            if self.stop_words is not None:
+                warnings.warn("The parameter 'stop_words' will not be used"
+                              " since analyzer != 'word'")
+            if self.token_pattern is not None:
+                warnings.warn("The parameter 'token_pattern' will not be used"
+                              " since analyzer != 'word'")
+            if self.tokenizer is not None:
+                warnings.warn("The parameter 'tokenizer' will not be used"
+                              " since analyzer != 'word'")
             return partial(_analyze, ngrams=self._char_ngrams,
                            preprocessor=preprocess, decoder=self.decode)
 
         elif self.analyzer == 'char_wb':
+            if self.stop_words is not None:
+                warnings.warn("The parameter 'stop_words' will not be used"
+                              " since analyzer != 'word'")
+            if self.token_pattern is not None:
+                warnings.warn("The parameter 'token_pattern' will not be used"
+                              " since analyzer != 'word'")
+            if self.tokenizer is not None:
+                warnings.warn("The parameter 'tokenizer' will not be used"
+                              " since analyzer != 'word'")
             return partial(_analyze, ngrams=self._char_wb_ngrams,
                            preprocessor=preprocess, decoder=self.decode)
 
@@ -468,14 +486,6 @@ class VectorizerMixin:
 
     def _missing_param_warning(self):
 
-        if self.analyzer != 'word' and self.stop_words is not None:
-            warnings.warn("The parameter 'stop_words' will not be used"
-                          " since analyzer != 'word'")
-
-        if self.analyzer != 'word' and self.tokenizer is not None:
-            warnings.warn("The parameter 'tokenizer' will not be used"
-                          " since analyzer != 'word'")
-
         if self.tokenizer is not None and self.token_pattern is not None:
             warnings.warn("The parameter 'token_pattern' will not be used"
                           " since 'tokenizer' is not None'")
@@ -487,10 +497,6 @@ class VectorizerMixin:
         if self.ngram_range is not None and callable(self.analyzer):
             warnings.warn("The parameter 'ngram_range' will not be used"
                           " since 'analyzer' is callable'")
-
-        if self.analyzer != 'word' and self.token_pattern is not None:
-            warnings.warn("The parameter 'token_pattern' will not be used"
-                          " since analyzer != 'word'")
 
 
 class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
