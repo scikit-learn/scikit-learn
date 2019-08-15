@@ -324,6 +324,13 @@ def test_knn_imputer_weight_uniform(na):
     imputer = KNNImputer(weights=no_weight, missing_values=na)
     assert_allclose(imputer.fit_transform(X), X_imputed_uniform)
 
+    # Test with "callable" uniform weight
+    def uniform_weight(dist):
+        return np.ones_like(dist)
+
+    imputer = KNNImputer(weights=uniform_weight, missing_values=na)
+    assert_allclose(imputer.fit_transform(X), X_imputed_uniform)
+
 
 def test_knn_imputer_weight_distance():
     na = np.nan
