@@ -1681,7 +1681,7 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
         should take two rows from X as input and return a value indicating
         the distance between them. This means that callables from
         ``sklearn.metrics.pairwise`` are not allowed, as they operate on
-        matrices, not single samples. Use the string identifying this metric
+        matrices, not single samples. Use the string identifying the kernel
         instead.
 
     filter_params : boolean
