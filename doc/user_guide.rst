@@ -23,3 +23,4 @@ User Guide
    data_transforms.rst
    Dataset loading utilities <datasets/index.rst>
    modules/computing.rst
+   modules/recommended_practices.rst
