@@ -149,15 +149,15 @@ class BaseEstimator:
     at the class level in their ``__init__`` as explicit keyword
     arguments (no ``*args`` or ``**kwargs``).
     """
-	
-	_param_names_cache = dict()
+
+    _param_names_cache = dict()
 
     @classmethod
     def _get_param_names(cls):
-	    params = _param_names_cache.get(cls, None)
+        params = _param_names_cache.get(cls, None)
         if params is not None:
-            return params		
-	
+            return params
+
         """Get parameter names for the estimator"""
         # fetch the constructor or the original constructor before
         # deprecation wrapping if any
@@ -182,9 +182,9 @@ class BaseEstimator:
                                    % (cls, init_signature))
         # Extract and sort argument names excluding 'self'
         sorted_parameters = sorted([p.name for p in parameters])
-		_param_names_cache[cls] = sorted_parameters
-		
-		return sorted_parameters
+        _param_names_cache[cls] = sorted_parameters
+
+        return sorted_parameters
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
