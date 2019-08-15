@@ -1330,36 +1330,27 @@ selection tools such as :class:`model_selection.GridSearchCV` and
 Setting `generate_only=True` returns a generator that yields (estimator, check)
 tuples where the check can be called independently from each other, i.e.
 `check(estimator)`. This allows all checks to be run independently and report
-the checks that are failing. In pytest, checks can be run on multiple
-estimators by using `chain.from_iterable`::
+the checks that are failing. In pytest, the checks can be constructed as
+follows::
 
-  from itertools import chain
   import pytest
   from sklearn.utils.estimator_checks import check_estimator
   from sklearn.utils.estimator_checks import set_check_estimator_ids
   from sklearn.linear_model import LogisticRegression
-  from sklearn.svm import LinearSVC
-
-  estimators = [LogisticRegression, LinearSVC
 
   @pytest.mark.parametrize(
       'estimator, check',
-      chain.from_iterable(check_estimator(est, generate_only=True)
-                          for est in estimators)
+      check_estimator(LogisticRegression, generate_only=True),
       ids=set_check_estimator_ids)
   def test_sklearn_compatible_estimator(estimator, check):
       check(estimator)
 
-Setting set_check_estimator_ids` in `pytest.mark.parameterize`
-renames the test name to expose the name of the underlying estimator and check.
-This allows `pytest -k` to be used to specific which test to run
+Setting `set_check_estimator_ids` in `pytest.mark.parameterize` renames the
+test name to expose the name of the underlying estimator and check. This allows
+`pytest -k` to be used to specific which test to run
 
 .. code-block: bash
    
-   # Run checks only for LogisticRegression
-   pytest test_check_estimators.py -k LogisticRegression
-
-   # Run only check_estimators_fit_returns_self
    pytest test_check_estimators.py -k check_estimators_fit_returns_self
 
 Before detailing the required interface below, we describe two ways to achieve
