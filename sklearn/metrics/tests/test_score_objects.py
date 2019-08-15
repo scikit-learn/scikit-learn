@@ -21,7 +21,7 @@ from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
                              jaccard_score)
 from sklearn.metrics import cluster as cluster_module
 from sklearn.metrics.scorer import (check_scoring, _PredictScorer,
-                                    _passthrough_scorer)
+                                    _passthrough_scorer, _MultimetricScorer)
 from sklearn.metrics import accuracy_score
 from sklearn.metrics.scorer import _check_multimetric_scoring
 from sklearn.metrics import make_scorer, get_scorer, SCORERS
@@ -548,18 +548,17 @@ def test_scoring_is_not_metric():
                          KMeans(), cluster_module.adjusted_rand_score)
 
 
-@pytest.mark.parametrize("scorers,predicts,predict_probas,decision_funcs",
-                         [({
-                             'a1': 'accuracy',
-                             'a2': 'accuracy',
-                             'll1': 'neg_log_loss',
-                             'll2': 'neg_log_loss',
-                             'ra1': 'roc_auc',
-                             'ra2': 'roc_auc'
-                         }, 1, 1, 1), (['roc_auc', 'accuracy'], 1, 0, 1)],
-                         ids=['dict', 'list'])
-def test_multimetric_scorer_calls_method_once(scorers, predicts,
-                                              predict_probas, decision_funcs):
+@pytest.mark.parametrize(
+    ("scorers,expected_predict_count,"
+     "expected_predict_proba_count,expected_decision_func_count"),
+    [({'a1': 'accuracy', 'a2': 'accuracy',
+       'll1': 'neg_log_loss', 'll2': 'neg_log_loss',
+        'ra1': 'roc_auc', 'ra2': 'roc_auc'}, 1, 1, 1),
+     (['roc_auc', 'accuracy'], 1, 0, 1)],
+    ids=['dict', 'list'])
+def test_multimetric_scorer_calls_method_once(scorers, expected_predict_count,
+                                              expected_predict_proba_count,
+                                              expected_decision_func_count):
     X, y = np.array([[1], [1], [0], [0], [0]]), np.array([0, 1, 1, 1, 0])
 
     mock_est = Mock()
@@ -576,11 +575,33 @@ def test_multimetric_scorer_calls_method_once(scorers, predicts,
     mock_est.predict_proba = predict_proba_func
     mock_est.decision_function = decision_function_func
 
-    scorer, _ = _check_multimetric_scoring(LogisticRegression(), scorers)
+    scorer_dict, _ = _check_multimetric_scoring(LogisticRegression(), scorers)
+    scorer = _MultimetricScorer(**scorer_dict)
     scores = scorer(mock_est, X, y)
 
-    assert set(scorers) == set(scores)
+    assert set(scorers) == set(scores)  # compare dict keys
 
-    assert predict_func.call_count == predicts
-    assert predict_proba_func.call_count == predict_probas
-    assert decision_function_func.call_count == decision_funcs
+    assert predict_func.call_count == expected_predict_count
+    assert predict_proba_func.call_count == expected_predict_proba_count
+    assert decision_function_func.call_count == expected_decision_func_count
+
+
+def test_multimetric_scorer_sanity_check():
+    # Calling scoring for two different X's return different values
+    scorers = {'a1': 'accuracy', 'a2': 'accuracy',
+               'll1': 'neg_log_loss', 'll2': 'neg_log_loss',
+               'ra1': 'roc_auc', 'ra2': 'roc_auc'}
+
+    X1, y1 = make_classification(random_state=0)
+    X2, y2 = make_classification(random_state=1)
+
+    clf = DecisionTreeClassifier()
+    clf.fit(X1, y1)
+
+    scorer_dict, _ = _check_multimetric_scoring(clf, scorers)
+    scorer = _MultimetricScorer(**scorer_dict)
+
+    score1 = scorer(clf, X1, y1)
+    score2 = scorer(clf, X2, y2)
+    assert set(score1) == set(score2)  # compare dict keys
+    assert score1 != score2
