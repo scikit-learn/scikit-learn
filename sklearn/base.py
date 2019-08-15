@@ -154,7 +154,7 @@ class BaseEstimator:
 
     @classmethod
     def _get_param_names(cls):
-        params = _param_names_cache.get(cls, None)
+        params = cls._param_names_cache.get(cls, None)
         if params is not None:
             return params
 
@@ -182,7 +182,7 @@ class BaseEstimator:
                                    % (cls, init_signature))
         # Extract and sort argument names excluding 'self'
         sorted_parameters = sorted([p.name for p in parameters])
-        _param_names_cache[cls] = sorted_parameters
+        cls._param_names_cache[cls] = sorted_parameters
 
         return sorted_parameters
 
