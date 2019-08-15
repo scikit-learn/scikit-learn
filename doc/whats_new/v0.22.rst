@@ -26,6 +26,8 @@ random sampling procedures.
 
 - :class:`linear_model.Ridge` when `X` is sparse. |Fix|
 
+- :class:`cluster.KMeans` when `n_jobs=1`. |Fix|
+
 Details are listed in the changelog below.
 
 (While we are trying to better inform users by providing this information, we
@@ -282,6 +284,11 @@ Changelog
   parameter. This parameter extends `SpectralClustering` class functionality to
   match `spectral_clustering`.
   :pr:`13726` by :user:`Shuzhe Xiao <fdas3213>`.
+
+- |Fix| Fixed a bug where :class:`cluster.KMeans` produced inconsistent results
+  between `n_jobs=1` and `n_jobs>1` due to the random seed which did not be used
+  when `n_jobs=1` before.
+  :pr:`9288` by :user:`Bryan Yang <bryanyang0528>`.
 
 :mod:`sklearn.feature_selection`
 ................................
