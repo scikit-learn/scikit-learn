@@ -220,6 +220,7 @@ def test_input_validation():
     X = [[1., 2.], [3., 4.]]
     DBSCAN().fit(X)             # must not raise exception
 
+
 @pytest.mark.parametrize(
     "args",
     [{'eps': -1.0}, {'algorithm': 'blah'}, {'metric': 'blah'},
