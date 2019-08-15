@@ -232,34 +232,17 @@ def test_perfect_checkerboard():
                            (rows, cols)) == 1
 
 
-def test_errors():
+@pytest.mark.parametrize(
+    "args",
+    [{'n_clusters': (3, 3, 3)}, {'n_clusters': 'abc'},
+     {'n_clusters': (3, 'abc')}, {'method':'unknown'},
+     {'n_components': 0}, {'n_best': 0},
+     {'svd_method': 'unknown'}]
+)
+def test_errors(args):
     data = np.arange(25).reshape((5, 5))
 
-    model = SpectralBiclustering(n_clusters=(3, 3, 3))
-    with pytest.raises(ValueError):
-        model.fit(data)
-
-    model = SpectralBiclustering(n_clusters='abc')
-    with pytest.raises(ValueError):
-        model.fit(data)
-
-    model = SpectralBiclustering(n_clusters=(3, 'abc'))
-    with pytest.raises(ValueError):
-        model.fit(data)
-
-    model = SpectralBiclustering(method='unknown')
-    with pytest.raises(ValueError):
-        model.fit(data)
-
-    model = SpectralBiclustering(svd_method='unknown')
-    with pytest.raises(ValueError):
-        model.fit(data)
-
-    model = SpectralBiclustering(n_components=0)
-    with pytest.raises(ValueError):
-        model.fit(data)
-
-    model = SpectralBiclustering(n_best=0)
+    model = SpectralBiclustering(**args)
     with pytest.raises(ValueError):
         model.fit(data)
 
