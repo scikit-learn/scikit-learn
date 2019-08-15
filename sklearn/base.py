@@ -156,7 +156,7 @@ class BaseEstimator:
     def _get_param_names(cls):
         params = cls._param_names_cache.get(cls, None)
         if params is not None:
-            return copy.copy(params)
+            return [*params]
 
         """Get parameter names for the estimator"""
         # fetch the constructor or the original constructor before
@@ -184,7 +184,7 @@ class BaseEstimator:
         sorted_parameters = sorted([p.name for p in parameters])
         cls._param_names_cache[cls] = sorted_parameters
 
-        return copy.copy(sorted_parameters)
+        return [*sorted_parameters]
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
