@@ -197,6 +197,9 @@ Changelog
   and non-contiguous arrays and makes a conversion instead of failing.
   :pr:`14458` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| :class:`linear_model.LassoCV` no longer forces ``precompute=False``
+  when fitting the final model. :pr:`14591` by `Andreas Müller`_.
+
 :mod:`sklearn.metrics`
 ......................
 
