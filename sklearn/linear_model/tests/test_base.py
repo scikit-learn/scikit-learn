@@ -93,6 +93,40 @@ def test_linear_regression_sample_weights():
                 assert_almost_equal(inter1, coefs2[0])
 
 
+def test_sample_weights():
+    X = [[1], [2]]
+    Y = [1, 2]
+
+    reg = LinearRegression()
+    reg.fit(X, Y)
+    # test should pass if sample weight is None
+    assert_array_almost_equal(reg.coef_, [0])
+    assert_array_almost_equal(reg.intercept_, [0])
+    assert_array_almost_equal(reg.predict(X), [0])
+
+    # improperly defined sample weight
+    sample_weight = ["1", "pi"]
+    np.testing.assert_raises(ValueError, reg.fit, X, Y, sample_weight)
+
+    # sample weights which can be converted to numeric types passes
+    # if this behavior is not desirable, we can raise an exception
+    sample_weight = ["1", "1"]
+    reg.fit(X, Y, sample_weight)
+    assert_array_almost_equal(reg.coef_, [0])
+    assert_array_almost_equal(reg.intercept_, [0])
+    assert_array_almost_equal(reg.predict(X), [0])
+
+    # sample wight with few samples than X should raise an ValueError
+    sample_weight = [2]
+    reg.fit(X, Y, sample_weight)
+    np.testing.assert_raises(ValueError, reg.fit, X, Y, sample_weight)
+
+    # sample weights greater than 1D raises ValueError
+    sample_weight = [[1, 1]]
+    reg.fit(X, Y, sample_weight)
+    np.testing.assert_raises(ValueError, reg.fit, X, Y, sample_weight)
+
+
 def test_raises_value_error_if_sample_weights_greater_than_1d():
     # Sample weights must be either scalar or 1D
 

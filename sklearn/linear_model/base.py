@@ -27,7 +27,7 @@ from joblib import Parallel, delayed
 from ..base import (BaseEstimator, ClassifierMixin, RegressorMixin,
                     MultiOutputMixin)
 from ..utils import check_array, check_X_y
-from ..utils.validation import FLOAT_DTYPES
+from ..utils.validation import FLOAT_DTYPES, _check_sample_weight
 from ..utils import check_random_state
 from ..utils.extmath import safe_sparse_dot
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
@@ -467,8 +467,8 @@ class LinearRegression(LinearModel, RegressorMixin, MultiOutputMixin):
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
                          y_numeric=True, multi_output=True)
 
-        if sample_weight is not None and np.atleast_1d(sample_weight).ndim > 1:
-            raise ValueError("Sample weights must be 1D array or scalar")
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X, X.dtype)
 
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
             X, y, fit_intercept=self.fit_intercept, normalize=self.normalize,
