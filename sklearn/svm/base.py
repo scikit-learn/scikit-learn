@@ -938,21 +938,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
 
 
 def _check_fit_liblinear_args(C=None, tol=None, max_iter=None):
-    """Streamline the checks some of the parameters of _fit_linear
-
-    Parameters
-    ----------
-    C : float or None, optional (default=None)
-        Inverse of cross-validation parameter. Lower the C, the more
-        the penalization.
-
-    tol : float or None, optional (default=None)
-        Stopping condition.
-
-     max_iter : int or None, optional (default=None)
-        Number of iterations.
-
-    """
+    """Streamline the checks some of the parameters of _fit_linear"""
     if max_iter is not None\
             and not isinstance(max_iter, numbers.Number) or max_iter < 0:
         raise ValueError("Maximum number of iteration must be positive;"
