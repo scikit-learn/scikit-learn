@@ -220,19 +220,15 @@ def test_input_validation():
     X = [[1., 2.], [3., 4.]]
     DBSCAN().fit(X)             # must not raise exception
 
-
-def test_dbscan_badargs():
+@pytest.mark.parametrize(
+    "args",
+    [{'eps': -1.0}, {'algorithm': 'blah'}, {'metric': 'blah'},
+     {'leaf_size': -1}, {'p': -1}]
+)
+def test_dbscan_badargs(args):
     # Test bad argument values: these should all raise ValueErrors
     with pytest.raises(ValueError):
-        dbscan(X, eps=-1.0)
-    with pytest.raises(ValueError):
-        dbscan(X, algorithm='blah')
-    with pytest.raises(ValueError):
-        dbscan(X, metric='blah')
-    with pytest.raises(ValueError):
-        dbscan(X, leaf_size=-1)
-    with pytest.raises(ValueError):
-        dbscan(X, p=-1)
+        dbscan(X, **args)
 
 
 def test_pickle():
