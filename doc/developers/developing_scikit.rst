@@ -224,201 +224,6 @@ the dataset, e.g. when ``X`` is a precomputed kernel matrix. Specifically,
 the :term:`_pairwise` property is used by ``utils.metaestimators._safe_split``
 to slice rows and columns.
 
-.. _testing_coverage:
-
-Testing and improving test coverage
-===================================
-
-High-quality `unit testing <https://en.wikipedia.org/wiki/Unit_testing>`_
-is a corner-stone of the scikit-learn development process. For this
-purpose, we use the `pytest <https://docs.pytest.org>`_
-package. The tests are functions appropriately named, located in `tests`
-subdirectories, that check the validity of the algorithms and the
-different options of the code.
-
-The full scikit-learn tests can be run using 'make' in the root folder.
-Alternatively, running 'pytest' in a folder will run all the tests of
-the corresponding subpackages.
-
-We expect code coverage of new features to be at least around 90%.
-
-For guidelines on how to use ``pytest`` efficiently, see the
-:ref:`pytest_tips`.
-
-Writing matplotlib related tests
---------------------------------
-
-Test fixtures ensure that a set of tests will be executing with the appropriate
-initialization and cleanup. The scikit-learn test suite implements a fixture
-which can be used with ``matplotlib``.
-
-``pyplot``
-    The ``pyplot`` fixture should be used when a test function is dealing with
-    ``matplotlib``. ``matplotlib`` is a soft dependency and is not required.
-    This fixture is in charge of skipping the tests if ``matplotlib`` is not
-    installed. In addition, figures created during the tests will be
-    automatically closed once the test function has been executed.
-
-To use this fixture in a test function, one needs to pass it as an
-argument::
-
-    def test_requiring_mpl_fixture(pyplot):
-        # you can now safely use matplotlib
-
-Workflow to improve test coverage
----------------------------------
-
-To test code coverage, you need to install the `coverage
-<https://pypi.org/project/coverage/>`_ package in addition to pytest.
-
-1. Run 'make test-coverage'. The output lists for each file the line
-    numbers that are not tested.
-
-2. Find a low hanging fruit, looking at which lines are not tested,
-    write or adapt a test specifically for these lines.
-
-3. Loop.
-
-.. _coding-guidelines:
-
-Coding guidelines
-=================
-
-The following  are some standards used within scikit-learn, which may
-be appropriate to adopt in external projects. Of course, there are special
-cases and there will be exceptions to these rules. However, following
-these rules when submitting new code makes the review easier so new code
-can be integrated in less time.
-
-Uniformly formatted code makes it easier to share code ownership. The
-scikit-learn project tries to closely follow the official Python guidelines
-detailed in `PEP8 <https://www.python.org/dev/peps/pep-0008>`_ that
-detail how code should be formatted and indented. Please read it and
-follow it.
-
-In addition, we add the following guidelines:
-
-* Use underscores to separate words in non class names: ``n_samples``
-  rather than ``nsamples``.
-
-* Avoid multiple statements on one line. Prefer a line return after
-  a control flow statement (``if``/``for``).
-
-* Use relative imports for references inside scikit-learn.
-
-* Unit tests are an exception to the previous rule;
-  they should use absolute imports, exactly as client code would.
-  A corollary is that, if ``sklearn.foo`` exports a class or function
-  that is implemented in ``sklearn.foo.bar.baz``,
-  the test should import it from ``sklearn.foo``.
-
-* **Please don't use** ``import *`` **in any case**. It is considered harmful
-  by the `official Python recommendations
-  <https://docs.python.org/2/howto/doanddont.html#from-module-import>`_.
-  It makes the code harder to read as the origin of symbols is no
-  longer explicitly referenced, but most important, it prevents
-  using a static analysis tool like `pyflakes
-  <https://divmod.readthedocs.io/en/latest/products/pyflakes.html>`_ to automatically
-  find bugs in scikit-learn.
-
-* Use the `numpy docstring standard
-  <https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt>`_
-  in all your docstrings.
-
-
-A good example of code that we like can be found `here
-<https://gist.github.com/nateGeorge/5455d2c57fb33c1ae04706f2dc4fee01>`_.
-
-Input validation
-----------------
-
-.. currentmodule:: sklearn.utils
-
-The module :mod:`sklearn.utils` contains various functions for doing input
-validation and conversion. Sometimes, ``np.asarray`` suffices for validation;
-do *not* use ``np.asanyarray`` or ``np.atleast_2d``, since those let NumPy's
-``np.matrix`` through, which has a different API
-(e.g., ``*`` means dot product on ``np.matrix``,
-but Hadamard product on ``np.ndarray``).
-
-In other cases, be sure to call :func:`check_array` on any array-like argument
-passed to a scikit-learn API function. The exact parameters to use depends
-mainly on whether and which ``scipy.sparse`` matrices must be accepted.
-
-For more information, refer to the :ref:`developers-utils` page.
-
-Random Numbers
---------------
-
-If your code depends on a random number generator, do not use
-``numpy.random.random()`` or similar routines.  To ensure
-repeatability in error checking, the routine should accept a keyword
-``random_state`` and use this to construct a
-``numpy.random.RandomState`` object.
-See :func:`sklearn.utils.check_random_state` in :ref:`developers-utils`.
-
-Here's a simple example of code using some of the above guidelines::
-
-    from sklearn.utils import check_array, check_random_state
-
-    def choose_random_sample(X, random_state=0):
-        """
-        Choose a random point from X
-
-        Parameters
-        ----------
-        X : array-like, shape (n_samples, n_features)
-            array representing the data
-        random_state : RandomState or an int seed (0 by default)
-            A random number generator instance to define the state of the
-            random permutations generator.
-
-        Returns
-        -------
-        x : numpy array, shape (n_features,)
-            A random point selected from X
-        """
-        X = check_array(X)
-        random_state = check_random_state(random_state)
-        i = random_state.randint(X.shape[0])
-        return X[i]
-
-If you use randomness in an estimator instead of a freestanding function,
-some additional guidelines apply.
-
-First off, the estimator should take a ``random_state`` argument to its
-``__init__`` with a default value of ``None``.
-It should store that argument's value, **unmodified**,
-in an attribute ``random_state``.
-``fit`` can call ``check_random_state`` on that attribute
-to get an actual random number generator.
-If, for some reason, randomness is needed after ``fit``,
-the RNG should be stored in an attribute ``random_state_``.
-The following example should make this clear::
-
-    class GaussianNoise(BaseEstimator, TransformerMixin):
-        """This estimator ignores its input and returns random Gaussian noise.
-
-        It also does not adhere to all scikit-learn conventions,
-        but showcases how to handle randomness.
-        """
-
-        def __init__(self, n_components=100, random_state=None):
-            self.random_state = random_state
-
-        # the arguments are ignored anyway, so we make them optional
-        def fit(self, X=None, y=None):
-            self.random_state_ = check_random_state(self.random_state)
-
-        def transform(self, X):
-            n_samples = X.shape[0]
-            return self.random_state_.randn(n_samples, n_components)
-
-The reason for this setup is reproducibility:
-when an estimator is ``fit`` twice to the same data,
-it should produce an identical model both times,
-hence the validation in ``fit``, not ``__init__``.
-
 Rolling your own estimator
 ==========================
 If you want to implement a new estimator that is scikit-learn-compatible,
@@ -493,7 +298,7 @@ the correct interface more easily.
       ...     def predict(self, X):
       ...
       ...         # Check is fit had been called
-      ...         check_is_fitted(self, ['X_', 'y_'])
+      ...         check_is_fitted(self)
       ...
       ...         # Input validation
       ...         X = check_array(X)
@@ -725,3 +530,142 @@ instantiated with an instance of ``LinearDiscriminantAnalysis`` (or
 ``RidgeRegression`` if the estimator is a regressor) in the tests. The choice
 of these two models is somewhat idiosyncratic but both should provide robust
 closed-form solutions.
+
+.. _coding-guidelines:
+
+Coding guidelines
+=================
+
+The following are some guidelines on how new code should be written for 
+inclusion in scikit-learn, and which may be appropriate to adopt in external 
+projects. Of course, there are special cases and there will be exceptions to 
+these rules. However, following these rules when submitting new code makes 
+the review easier so new code can be integrated in less time.
+
+Uniformly formatted code makes it easier to share code ownership. The
+scikit-learn project tries to closely follow the official Python guidelines
+detailed in `PEP8 <https://www.python.org/dev/peps/pep-0008>`_ that
+detail how code should be formatted and indented. Please read it and
+follow it.
+
+In addition, we add the following guidelines:
+
+* Use underscores to separate words in non class names: ``n_samples``
+  rather than ``nsamples``.
+
+* Avoid multiple statements on one line. Prefer a line return after
+  a control flow statement (``if``/``for``).
+
+* Use relative imports for references inside scikit-learn.
+
+* Unit tests are an exception to the previous rule;
+  they should use absolute imports, exactly as client code would.
+  A corollary is that, if ``sklearn.foo`` exports a class or function
+  that is implemented in ``sklearn.foo.bar.baz``,
+  the test should import it from ``sklearn.foo``.
+
+* **Please don't use** ``import *`` **in any case**. It is considered harmful
+  by the `official Python recommendations
+  <https://docs.python.org/3.1/howto/doanddont.html#at-module-level>`_.
+  It makes the code harder to read as the origin of symbols is no
+  longer explicitly referenced, but most important, it prevents
+  using a static analysis tool like `pyflakes
+  <https://divmod.readthedocs.io/en/latest/products/pyflakes.html>`_ to automatically
+  find bugs in scikit-learn.
+
+* Use the `numpy docstring standard
+  <https://numpy.readthedocs.io/en/latest/format.html>`_ in all your docstrings.
+
+
+A good example of code that we like can be found `here
+<https://gist.github.com/nateGeorge/5455d2c57fb33c1ae04706f2dc4fee01>`_.
+
+Input validation
+----------------
+
+.. currentmodule:: sklearn.utils
+
+The module :mod:`sklearn.utils` contains various functions for doing input
+validation and conversion. Sometimes, ``np.asarray`` suffices for validation;
+do *not* use ``np.asanyarray`` or ``np.atleast_2d``, since those let NumPy's
+``np.matrix`` through, which has a different API
+(e.g., ``*`` means dot product on ``np.matrix``,
+but Hadamard product on ``np.ndarray``).
+
+In other cases, be sure to call :func:`check_array` on any array-like argument
+passed to a scikit-learn API function. The exact parameters to use depends
+mainly on whether and which ``scipy.sparse`` matrices must be accepted.
+
+For more information, refer to the :ref:`developers-utils` page.
+
+Random Numbers
+--------------
+
+If your code depends on a random number generator, do not use
+``numpy.random.random()`` or similar routines.  To ensure
+repeatability in error checking, the routine should accept a keyword
+``random_state`` and use this to construct a
+``numpy.random.RandomState`` object.
+See :func:`sklearn.utils.check_random_state` in :ref:`developers-utils`.
+
+Here's a simple example of code using some of the above guidelines::
+
+    from sklearn.utils import check_array, check_random_state
+
+    def choose_random_sample(X, random_state=0):
+        """
+        Choose a random point from X
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            array representing the data
+        random_state : RandomState or an int seed (0 by default)
+            A random number generator instance to define the state of the
+            random permutations generator.
+
+        Returns
+        -------
+        x : numpy array, shape (n_features,)
+            A random point selected from X
+        """
+        X = check_array(X)
+        random_state = check_random_state(random_state)
+        i = random_state.randint(X.shape[0])
+        return X[i]
+
+If you use randomness in an estimator instead of a freestanding function,
+some additional guidelines apply.
+
+First off, the estimator should take a ``random_state`` argument to its
+``__init__`` with a default value of ``None``.
+It should store that argument's value, **unmodified**,
+in an attribute ``random_state``.
+``fit`` can call ``check_random_state`` on that attribute
+to get an actual random number generator.
+If, for some reason, randomness is needed after ``fit``,
+the RNG should be stored in an attribute ``random_state_``.
+The following example should make this clear::
+
+    class GaussianNoise(BaseEstimator, TransformerMixin):
+        """This estimator ignores its input and returns random Gaussian noise.
+
+        It also does not adhere to all scikit-learn conventions,
+        but showcases how to handle randomness.
+        """
+
+        def __init__(self, n_components=100, random_state=None):
+            self.random_state = random_state
+
+        # the arguments are ignored anyway, so we make them optional
+        def fit(self, X=None, y=None):
+            self.random_state_ = check_random_state(self.random_state)
+
+        def transform(self, X):
+            n_samples = X.shape[0]
+            return self.random_state_.randn(n_samples, n_components)
+
+The reason for this setup is reproducibility:
+when an estimator is ``fit`` twice to the same data,
+it should produce an identical model both times,
+hence the validation in ``fit``, not ``__init__``.
