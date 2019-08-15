@@ -13,6 +13,7 @@ jobs:
       - NUMPY_VERSION: 1.11.0
       - SCIPY_VERSION: 0.17.0
       - MATPLOTLIB_VERSION: 1.5.1
+      - CYTHON_VERSION: 0.28.5
       - SCIKIT_IMAGE_VERSION: 0.12.3
     steps:
       - checkout
@@ -48,7 +49,8 @@ jobs:
       - MKL_NUM_THREADS: 2
       - MINICONDA_PATH: ~/miniconda
       - CONDA_ENV_NAME: testenv
-      - PYTHON_VERSION: 3
+      # TODO: Revert to 3 when wheel issue with conda installation of python 3.7.4
+      - PYTHON_VERSION: 3.7.3
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh

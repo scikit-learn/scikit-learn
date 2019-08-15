@@ -113,17 +113,17 @@ class _ConstantPredictor(BaseEstimator):
         return self
 
     def predict(self, X):
-        check_is_fitted(self, 'y_')
+        check_is_fitted(self)
 
         return np.repeat(self.y_, X.shape[0])
 
     def decision_function(self, X):
-        check_is_fitted(self, 'y_')
+        check_is_fitted(self)
 
         return np.repeat(self.y_, X.shape[0])
 
     def predict_proba(self, X):
-        check_is_fitted(self, 'y_')
+        check_is_fitted(self)
 
         return np.repeat([np.hstack([1 - self.y_, self.y_])],
                          X.shape[0], axis=0)
@@ -285,12 +285,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
         y : (sparse) array-like, shape = [n_samples, ], [n_samples, n_classes].
             Predicted multi-class targets.
         """
-        check_is_fitted(self, 'estimators_')
-        if (hasattr(self.estimators_[0], "decision_function") and
-                is_classifier(self.estimators_[0])):
-            thresh = 0
-        else:
-            thresh = .5
+        check_is_fitted(self)
 
         n_samples = _num_samples(X)
         if self.label_binarizer_.y_type_ == "multiclass":
@@ -303,6 +298,11 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
                 argmaxima[maxima == pred] = i
             return self.classes_[argmaxima]
         else:
+            if (hasattr(self.estimators_[0], "decision_function") and
+                    is_classifier(self.estimators_[0])):
+                thresh = 0
+            else:
+                thresh = .5
             indices = array.array('i')
             indptr = array.array('i', [0])
             for e in self.estimators_:
@@ -337,7 +337,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
             Returns the probability of the sample for each class in the model,
             where classes are ordered as they are in `self.classes_`.
         """
-        check_is_fitted(self, 'estimators_')
+        check_is_fitted(self)
         # Y[i, j] gives the probability that sample i has the label j.
         # In the multi-label case, these are not disjoint.
         Y = np.array([e.predict_proba(X)[:, 1] for e in self.estimators_]).T
@@ -366,7 +366,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
         -------
         T : array-like, shape = [n_samples, n_classes]
         """
-        check_is_fitted(self, 'estimators_')
+        check_is_fitted(self)
         if len(self.estimators_) == 1:
             return self.estimators_[0].decision_function(X)
         return np.array([est.decision_function(X).ravel()
@@ -383,7 +383,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
 
     @property
     def coef_(self):
-        check_is_fitted(self, 'estimators_')
+        check_is_fitted(self)
         if not hasattr(self.estimators_[0], "coef_"):
             raise AttributeError(
                 "Base estimator doesn't have a coef_ attribute.")
@@ -394,7 +394,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
 
     @property
     def intercept_(self):
-        check_is_fitted(self, 'estimators_')
+        check_is_fitted(self)
         if not hasattr(self.estimators_[0], "intercept_"):
             raise AttributeError(
                 "Base estimator doesn't have an intercept_ attribute.")
@@ -603,7 +603,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         -------
         Y : array-like, shape = [n_samples, n_classes]
         """
-        check_is_fitted(self, 'estimators_')
+        check_is_fitted(self)
 
         indices = self.pairwise_indices_
         if indices is None:
@@ -768,7 +768,7 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         y : numpy array of shape [n_samples]
             Predicted multi-class targets.
         """
-        check_is_fitted(self, 'estimators_')
+        check_is_fitted(self)
         X = check_array(X)
         Y = np.array([_predict_binary(e, X) for e in self.estimators_]).T
         pred = euclidean_distances(Y, self.code_book_).argmin(axis=1)

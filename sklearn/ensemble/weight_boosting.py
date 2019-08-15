@@ -590,8 +590,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         if not iboost == self.n_estimators - 1:
             # Only boost positive weights
             sample_weight *= np.exp(estimator_weight * incorrect *
-                                    ((sample_weight > 0) |
-                                     (estimator_weight < 0)))
+                                    (sample_weight > 0))
 
         return sample_weight, estimator_weight, estimator_error
 
@@ -675,7 +674,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             values closer to -1 or 1 mean more like the first or second
             class in ``classes_``, respectively.
         """
-        check_is_fitted(self, "n_classes_")
+        check_is_fitted(self)
         X = self._validate_data(X)
 
         n_classes = self.n_classes_
@@ -718,7 +717,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             values closer to -1 or 1 mean more like the first or second
             class in ``classes_``, respectively.
         """
-        check_is_fitted(self, "n_classes_")
+        check_is_fitted(self)
         X = self._validate_data(X)
 
         n_classes = self.n_classes_
@@ -787,7 +786,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             The class probabilities of the input samples. The order of
             outputs is the same of that of the `classes_` attribute.
         """
-        check_is_fitted(self, "n_classes_")
+        check_is_fitted(self)
         X = self._validate_data(X)
 
         n_classes = self.n_classes_
@@ -1110,7 +1109,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         y : array of shape = [n_samples]
             The predicted regression values.
         """
-        check_is_fitted(self, "estimator_weights_")
+        check_is_fitted(self)
         X = self._validate_data(X)
 
         return self._get_median_predict(X, len(self.estimators_))
@@ -1135,7 +1134,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         y : generator of array, shape = [n_samples]
             The predicted regression values.
         """
-        check_is_fitted(self, "estimator_weights_")
+        check_is_fitted(self)
         X = self._validate_data(X)
 
         for i, _ in enumerate(self.estimators_, 1):

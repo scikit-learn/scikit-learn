@@ -1507,7 +1507,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             raise ValueError("Tolerance for stopping criteria must be "
                              "positive; got (tol=%r)" % self.tol)
 
-        if solver in ['lbfgs', 'liblinear']:
+        if solver == 'lbfgs':
             _dtype = np.float64
         else:
             _dtype = [np.float64, np.float32]
@@ -1628,7 +1628,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             Returns the probability of the sample for each class in the model,
             where classes are ordered as they are in ``self.classes_``.
         """
-        check_is_fitted(self, 'coef_')
+        check_is_fitted(self)
 
         ovr = (self.multi_class in ["ovr", "warn"] or
                (self.multi_class == 'auto' and (self.classes_.size <= 2 or
@@ -1814,7 +1814,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by `np.random`. Used when `solver='sag'` or `solver='liblinear'`.
+        Note that this only applies to the solver and not the cross-validation
+        generator.
 
     l1_ratios : list of float or None, optional (default=None)
         The list of Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``.

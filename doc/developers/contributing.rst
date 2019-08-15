@@ -603,6 +603,33 @@ Finally, follow the formatting rules below to make it consistently good:
     SelectKBest : Select features based on the k highest scores.
     SelectFpr : Select features based on a false positive rate test.
 
+* When documenting the parameters and attributes, here is a list of some
+  well-formatted examples::
+
+    n_clusters : int, default=3
+        The number of clusters detected by the algorithm.
+
+    some_param : {'hello', 'goodbye'}, bool or int, default=True
+        The parameter description goes here, which can be either a string
+        literal (either `hello` or `goodbye`), a bool, or an int. The default
+        value is True.
+
+    array_parameter : {array-like, sparse matrix, dataframe} of shape (n_samples, n_features) or (n_samples,)
+        This parameter accepts data in either of the mentioned forms, with one
+        of the mentioned shapes. The default value is
+        `np.ones(shape=(n_samples,))`.
+
+In general have the following in mind:
+
+    1. Use Python basic types. (``bool`` instead of ``boolean``)
+    2. Use parenthesis for defining shapes: ``array-like of shape (n_samples,)``
+       or ``array-like of shape (n_samples, n_features)``
+    3. For strings with multiple options, use brackets:
+       ``input: {'log', 'squared', 'multinomial'}``
+    4. 1D or 2D data can be a subset of
+       ``{array-like, ndarray, sparse matrix, dataframe}``. Note that ``array-like``
+       can also be a ``list``, while ``ndarray`` is explicitly only a ``numpy.ndarray``.
+
 * For unwritten formatting rules, try to follow existing good works:
 
     * For "References" in docstrings, see the Silhouette Coefficient
@@ -912,8 +939,8 @@ In the following example, k is deprecated and renamed to n_clusters::
 
     import warnings
 
-    def example_function(n_clusters=8, k='not_used'):
-        if k != 'not_used':
+    def example_function(n_clusters=8, k='deprecated'):
+        if k != 'deprecated':
             warnings.warn("'k' was renamed to n_clusters in version 0.13 and "
                           "will be removed in 0.15.", DeprecationWarning)
             n_clusters = k
@@ -923,12 +950,12 @@ When the change is in a class, we validate and raise warning in ``fit``::
   import warnings
 
   class ExampleEstimator(BaseEstimator):
-      def __init__(self, n_clusters=8, k='not_used'):
+      def __init__(self, n_clusters=8, k='deprecated'):
           self.n_clusters = n_clusters
           self.k = k
 
       def fit(self, X, y):
-          if self.k != 'not_used':
+          if self.k != 'deprecated':
               warnings.warn("'k' was renamed to n_clusters in version 0.13 and "
                             "will be removed in 0.15.", DeprecationWarning)
               self._n_clusters = self.k
@@ -1354,7 +1381,7 @@ the correct interface more easily.
       ...     def predict(self, X):
       ...
       ...         # Check is fit had been called
-      ...         check_is_fitted(self, ['X_', 'y_'])
+      ...         check_is_fitted(self)
       ...
       ...         # Input validation
       ...         X = check_array(X)
@@ -1647,3 +1674,54 @@ make this task easier and faster (in no particular order).
     <https://git-scm.com/docs/git-grep#_examples>`_) is also extremely
     useful to see every occurrence of a pattern (e.g. a function call or a
     variable) in the code base.
+
+
+.. _plotting_api:
+
+Plotting API
+============
+
+Scikit-learn defines a simple API for creating visualizations for machine
+learning. The key features of this API is to run calculations once and to have
+the flexibility to adjust the visualizations after the fact. This logic is
+encapsulated into a display object where the computed data is stored and
+the plotting is done in a `plot` method. The display object's `__init__`
+method contains only the data needed to create the visualization. The `plot`
+method takes in parameters that only have to do with visualization, such as a
+matplotlib axes. The `plot` method will store the matplotlib artists as
+attributes allowing for style adjustments through the display object. A
+`plot_*` helper function accepts parameters to do the computation and the
+parameters used for plotting. After the helper function creates the display
+object with the computed values, it calls the display's plot method. Note
+that the `plot` method defines attributes related to matplotlib, such as the
+line artist. This allows for customizations after calling the `plot` method.
+
+For example, the `RocCurveDisplay` defines the following methods and
+attributes:
+
+.. code-block:: python
+
+   class RocCurveDisplay:
+       def __init__(self, fpr, tpr, roc_auc, estimator_name):
+           ...
+           self.fpr = fpr
+           self.tpr = tpr
+           self.roc_auc = roc_auc
+           self.estimator_name = estimator_name
+
+       def plot(self, ax=None, name=None, **kwargs):
+           ...
+           self.line_ = ...
+           self.ax_ = ax
+           self.figure_ = ax.figure_
+
+   def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
+                      drop_intermediate=True, response_method="auto",
+                      name=None, ax=None, **kwargs):
+       # do computation
+       viz = RocCurveDisplay(fpr, tpr, roc_auc, 
+                                estimator.__class__.__name__)
+       return viz.plot(ax=ax, name=name, **kwargs)
+```
+
+Read more in the :ref:`User Guide <visualizations>`.

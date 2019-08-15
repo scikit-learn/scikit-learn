@@ -115,7 +115,7 @@ class QuantileEstimator:
         y : array, shape (n_samples,)
             Returns predicted values.
         """
-        check_is_fitted(self, 'quantile')
+        check_is_fitted(self)
 
         y = np.empty((X.shape[0], 1), dtype=np.float64)
         y.fill(self.quantile)
@@ -158,7 +158,7 @@ class MeanEstimator:
         y : array, shape (n_samples,)
             Returns predicted values.
         """
-        check_is_fitted(self, 'mean')
+        check_is_fitted(self)
 
         y = np.empty((X.shape[0], 1), dtype=np.float64)
         y.fill(self.mean)
@@ -210,7 +210,7 @@ class LogOddsEstimator:
         y : array, shape (n_samples,)
             Returns predicted values.
         """
-        check_is_fitted(self, 'prior')
+        check_is_fitted(self)
 
         y = np.empty((X.shape[0], 1), dtype=np.float64)
         y.fill(self.prior)
@@ -262,7 +262,7 @@ class PriorProbabilityEstimator:
         y : array, shape (n_samples,)
             Returns predicted values.
         """
-        check_is_fitted(self, 'priors')
+        check_is_fitted(self)
 
         y = np.empty((X.shape[0], self.priors.shape[0]), dtype=np.float64)
         y[:] = self.priors
@@ -316,7 +316,7 @@ class ZeroEstimator:
         y : array, shape (n_samples,)
             Returns predicted values.
         """
-        check_is_fitted(self, 'n_classes')
+        check_is_fitted(self)
 
         y = np.empty((X.shape[0], self.n_classes), dtype=np.float64)
         y.fill(0.0)
@@ -1390,7 +1390,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
     def _check_initialized(self):
         """Check that the estimator is initialized, raising an error if not."""
-        check_is_fitted(self, 'estimators_')
+        check_is_fitted(self)
 
     def fit(self, X, y, sample_weight=None, monitor=None):
         """Fit the gradient boosting model.
@@ -1741,7 +1741,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 (n_trees_per_iteration, n_samples)
             The value of the partial dependence function on each grid point.
         """
-        check_is_fitted(self, 'estimators_',
+        check_is_fitted(self,
                         msg="'estimator' parameter must be a fitted estimator")
         if self.init is not None:
             warnings.warn(
@@ -2033,6 +2033,9 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 shape (n_estimators, ``loss_.K``)
         The collection of fitted sub-estimators. ``loss_.K`` is 1 for binary
         classification, otherwise n_classes.
+
+    classes_ : array of shape = [n_classes]
+        The classes labels.
 
     Notes
     -----

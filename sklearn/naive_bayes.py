@@ -145,6 +145,9 @@ class GaussianNB(BaseNB):
     epsilon_ : float
         absolute additive value to variances
 
+    classes_ : array-like, shape (n_classes,)
+        Unique class labels.
+
     Examples
     --------
     >>> import numpy as np
@@ -428,7 +431,7 @@ class GaussianNB(BaseNB):
         return self
 
     def _joint_log_likelihood(self, X):
-        check_is_fitted(self, "classes_")
+        check_is_fitted(self)
 
         X = check_array(X)
         joint_log_likelihood = []
@@ -690,6 +693,9 @@ class MultinomialNB(BaseDiscreteNB):
         during fitting. This value is weighted by the sample weight when
         provided.
 
+    classes_ : array-like, shape (n_classes,)
+        Unique class labels.
+
     Examples
     --------
     >>> import numpy as np
@@ -737,7 +743,7 @@ class MultinomialNB(BaseDiscreteNB):
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
-        check_is_fitted(self, "classes_")
+        check_is_fitted(self)
 
         X = check_array(X, accept_sparse='csr')
         return (safe_sparse_dot(X, self.feature_log_prob_.T) +
@@ -794,6 +800,9 @@ class ComplementNB(BaseDiscreteNB):
         Number of samples encountered for each feature during fitting. This
         value is weighted by the sample weight when provided.
 
+    classes_ : array of shape = [n_classes]
+        The classes labels.
+
     Examples
     --------
     >>> import numpy as np
@@ -843,7 +852,7 @@ class ComplementNB(BaseDiscreteNB):
 
     def _joint_log_likelihood(self, X):
         """Calculate the class scores for the samples in X."""
-        check_is_fitted(self, "classes_")
+        check_is_fitted(self)
 
         X = check_array(X, accept_sparse="csr")
         jll = safe_sparse_dot(X, self.feature_log_prob_.T)
@@ -899,6 +908,10 @@ class BernoulliNB(BaseDiscreteNB):
         during fitting. This value is weighted by the sample weight when
         provided.
 
+    classes_ : array of shape = [n_classes]
+        The classes labels.
+
+
     Examples
     --------
     >>> import numpy as np
@@ -950,7 +963,7 @@ class BernoulliNB(BaseDiscreteNB):
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
-        check_is_fitted(self, "classes_")
+        check_is_fitted(self)
 
         X = check_array(X, accept_sparse='csr')
 

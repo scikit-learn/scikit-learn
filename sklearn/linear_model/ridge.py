@@ -409,7 +409,7 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), solver)
         X = check_array(X, accept_sparse=_accept_sparse, dtype=_dtype,
                         order="C")
-        y = check_array(y, dtype=X.dtype, ensure_2d=False, order="C")
+        y = check_array(y, dtype=X.dtype, ensure_2d=False, order=None)
     check_consistent_length(X, y)
 
     n_samples, n_features = X.shape
@@ -628,10 +628,10 @@ class Ridge(_BaseRidge, RegressorMixin):
         assumed to be specific to the targets. Hence they must correspond in
         number.
 
-    fit_intercept : boolean
+    fit_intercept : bool, default True
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
     normalize : boolean, optional, default False
         This parameter is ignored when ``fit_intercept`` is set to False.
@@ -864,6 +864,9 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     n_iter_ : array or None, shape (n_targets,)
         Actual number of iterations for each target. Available only for
         sag and lsqr solvers. Other solvers will return None.
+
+    classes_ : array of shape = [n_classes]
+        The classes labels.
 
     Examples
     --------
@@ -1595,10 +1598,10 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
         LogisticRegression or LinearSVC.
         If using generalized cross-validation, alphas must be positive.
 
-    fit_intercept : boolean
+    fit_intercept : bool, default True
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
     normalize : boolean, optional, default False
         This parameter is ignored when ``fit_intercept`` is set to False.
@@ -1711,7 +1714,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     fit_intercept : boolean
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
     normalize : boolean, optional, default False
         This parameter is ignored when ``fit_intercept`` is set to False.
@@ -1771,6 +1774,9 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     alpha_ : float
         Estimated regularization parameter
+
+    classes_ : array of shape = [n_classes]
+        The classes labels.
 
     Examples
     --------
