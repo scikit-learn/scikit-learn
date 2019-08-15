@@ -150,7 +150,7 @@ class BaseEstimator:
     arguments (no ``*args`` or ``**kwargs``).
     """
 
-    _param_names_cache = dict()
+    _param_names_cache = {}
 
     @classmethod
     def _get_param_names(cls):
