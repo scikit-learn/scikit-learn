@@ -1911,28 +1911,24 @@ def assert_is_subtree(tree, subtree):
     stack = [(0, 0)]
     while stack:
         tree_node_idx, subtree_node_idx = stack.pop()
-        assert_array_almost_equal(
-            tree.value[tree_node_idx], subtree.value[subtree_node_idx])
-        assert_almost_equal(
-            tree.impurity[tree_node_idx], subtree.impurity[subtree_node_idx])
-        assert_almost_equal(
-            tree.n_node_samples[tree_node_idx],
-            subtree.n_node_samples[subtree_node_idx])
-        assert_almost_equal(
-            tree.weighted_n_node_samples[tree_node_idx],
-            subtree.weighted_n_node_samples[subtree_node_idx])
+        assert_array_almost_equal(tree.value[tree_node_idx],
+                                  subtree.value[subtree_node_idx])
+        assert_almost_equal(tree.impurity[tree_node_idx],
+                            subtree.impurity[subtree_node_idx])
+        assert_almost_equal(tree.n_node_samples[tree_node_idx],
+                            subtree.n_node_samples[subtree_node_idx])
+        assert_almost_equal(tree.weighted_n_node_samples[tree_node_idx],
+                            subtree.weighted_n_node_samples[subtree_node_idx])
 
         if (subtree_c_left[subtree_node_idx] ==
-           subtree_c_right[subtree_node_idx]):
+                subtree_c_right[subtree_node_idx]):
             # is a leaf
-            assert_almost_equal(
-                TREE_UNDEFINED,
-                subtree.threshold[subtree_node_idx])
+            assert_almost_equal(TREE_UNDEFINED,
+                                subtree.threshold[subtree_node_idx])
         else:
             # not a leaf
-            assert_almost_equal(
-                tree.threshold[tree_node_idx],
-                subtree.threshold[subtree_node_idx])
+            assert_almost_equal(tree.threshold[tree_node_idx],
+                                subtree.threshold[subtree_node_idx])
             stack.append((tree_c_left[tree_node_idx],
                           subtree_c_left[subtree_node_idx]))
             stack.append((tree_c_right[tree_node_idx],
