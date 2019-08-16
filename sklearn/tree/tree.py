@@ -545,15 +545,15 @@ class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The training input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csc_matrix``.
 
-        y : array-like, shape = [n_samples] or [n_samples, n_outputs]
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             The target values (class labels) as integers or strings.
 
-        sample_weight : array-like, shape = [n_samples] or None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted. Splits
             that would create child nodes with net zero or negative weight are
             ignored while searching for a split in each node. Splits are also
