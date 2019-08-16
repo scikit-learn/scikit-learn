@@ -4,6 +4,7 @@ import warnings
 import numpy as np
 
 from ...utils import check_matplotlib_support
+from ...utils import check_array
 
 
 class PartialDependenceDisplay:
@@ -156,27 +157,18 @@ class PartialDependenceDisplay:
 
         n_features = len(self.features)
 
-        if isinstance(ax, list):
-            if len(ax) != n_features:
-                raise ValueError("Expected len(ax) == len(features), "
-                                 "got len(ax) = {}".format(len(ax)))
-            self.bounding_ax_ = None
-            self.figure_ = ax[0].figure
-            self.axes_ = np.array(ax)
-            self.lines_ = np.empty(n_features, dtype=np.object)
-            self.contours_ = np.empty(n_features, dtype=np.object)
+        if isinstance(ax, plt.Axes):
+            # If ax has visible==False, it has most likely been set to False
+            # by a previous call to plot.
+            if not ax.get_visible():
+                raise ValueError("The ax was already used in another plot "
+                                 "function, please set ax=display.axes_ "
+                                 "instead")
 
-        elif isinstance(ax, np.ndarray):
-            self.bounding_ax_ = None
-            self.axes_ = ax
-            self.figure_ = ax.ravel()[0].figure
-            self.lines_ = np.empty_like(ax, dtype=np.object)
-            self.contours_ = np.empty_like(ax, dtype=np.object)
-
-        else:  # single axes
+            ax.set_axis_off()
+            ax.set_visible(False)
             self.bounding_ax_ = ax
             self.figure_ = ax.figure
-            ax.set_axis_off()
 
             n_cols = min(n_cols, n_features)
             n_rows = int(np.ceil(n_features / float(n_cols)))
@@ -191,12 +183,23 @@ class PartialDependenceDisplay:
                                          subplot_spec=ax.get_subplotspec())
             for i, spec in zip(range(n_features), gs):
                 axes_ravel[i] = self.figure_.add_subplot(spec)
+        else:  # array-like
+            ax = check_array(ax, dtype=object, ensure_2d=False)
+
+            if ax.ndim == 1 and ax.shape[0] != n_features:
+                raise ValueError("Expected len(ax) == len(features), "
+                                 "got len(ax) = {}".format(len(ax)))
+            self.bounding_ax_ = None
+            self.figure_ = ax.ravel()[0].figure
+            self.axes_ = ax
+            self.lines_ = np.empty_like(ax, dtype=np.object)
+            self.contours_ = np.empty_like(ax, dtype=np.object)
 
         # create contour levels for two-way plots
         if 2 in self.pdp_lim:
             Z_level = np.linspace(*self.pdp_lim[2], num=8)
-        lines_ravel = self.lines_.ravel()
-        contours_ravel = self.contours_.ravel()
+        lines_ravel = self.lines_.ravel(order='C')
+        contours_ravel = self.contours_.ravel(order='C')
 
         for i, axi, fx, (avg_preds, values) in zip(count(),
                                                    self.axes_.ravel(),
@@ -240,5 +243,4 @@ class PartialDependenceDisplay:
                 # hline erases xlim
                 axi.set_ylabel(self.feature_names[fx[1]])
                 axi.set_xlim(xlim)
-
         return self

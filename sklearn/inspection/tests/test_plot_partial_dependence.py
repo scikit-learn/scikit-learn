@@ -210,6 +210,25 @@ def test_plot_partial_dependence_incorrent_num_axes(pyplot, clf_boston,
         disp.plot(ax=[ax1, ax2, ax3])
 
 
+def test_plot_partial_dependence_with_same_axes(pyplot, clf_boston, boston):
+    # The first call to `plot_*` will plot the axes
+
+    grid_resolution = 25
+    fig, ax = pyplot.subplots()
+    plot_partial_dependence(clf_boston, boston.data, ['CRIM', 'ZN'],
+                            grid_resolution=grid_resolution,
+                            feature_names=boston.feature_names, ax=ax)
+
+    msg = ("The ax was already used in another plot function, please set "
+           "ax=display.axes_ instead")
+
+    with pytest.raises(ValueError, match=msg):
+        plot_partial_dependence(clf_boston, boston.data,
+                                ['CRIM', 'ZN'],
+                                grid_resolution=grid_resolution,
+                                feature_names=boston.feature_names, ax=ax)
+
+
 def test_plot_partial_dependence_multiclass(pyplot):
     grid_resolution = 25
     clf_int = GradientBoostingClassifier(n_estimators=10, random_state=1)

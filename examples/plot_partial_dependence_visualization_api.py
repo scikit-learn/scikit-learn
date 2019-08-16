@@ -52,7 +52,7 @@ mlp.fit(X_train, y_train)
 # Next, we plot a partial dependence curves for features "LSTAT" and "RM" for
 # for the decision tree.
 fig, ax = plt.subplots(figsize=(12, 6))
-ax.set_title("Decision tree")
+ax.set_title("Decision Tree")
 tree_disp = plot_partial_dependence(tree, X_test, ["LSTAT", "RM"],
                                     feature_names=boston.feature_names, ax=ax)
 
