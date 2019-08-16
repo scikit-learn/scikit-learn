@@ -23,7 +23,6 @@ from sklearn.linear_model._glm.distribution import (
     GammaDistribution, InverseGaussianDistribution,
 )
 from sklearn.linear_model import Ridge
-from sklearn.metrics import mean_absolute_error
 from sklearn.exceptions import ConvergenceWarning
 
 GLM_SOLVERS = ['lbfgs']
@@ -183,8 +182,7 @@ def test_glm_identity_regression(solver):
     X = np.array([[1, 1, 1, 1, 1], [0, 1, 2, 3, 4]]).T
     y = np.dot(X, coef)
     glm = GeneralizedLinearRegressor(alpha=0, family='normal', link='identity',
-                                     fit_intercept=False, solver=solver,
-                                     tol=1e-7)
+                                     fit_intercept=False, solver=solver)
     res = glm.fit(X, y)
     assert_allclose(res.coef_, coef, rtol=1e-6)
 
@@ -242,18 +240,13 @@ def test_warm_start(fit_intercept):
 @pytest.mark.parametrize('fit_intercept', [True, False])
 @pytest.mark.parametrize('solver', GLM_SOLVERS)
 def test_normal_ridge_comparison(n_samples, n_features, fit_intercept, solver):
-    """Test ridge regression for Normal distributions.
-
-    Case n_samples >> n_features
-
-    Compare to test_ridge in test_ridge.py.
-    """
+    """Compare with Ridge regression for Normal distributions."""
     alpha = 1.0
     n_predict = 10
-    X, y, coef = make_regression(n_samples=n_samples+n_predict,
-                                 n_features=n_features,
-                                 n_informative=n_features-2, noise=0.5,
-                                 coef=True, random_state=42)
+    X, y, _ = make_regression(n_samples=n_samples+n_predict,
+                              n_features=n_features,
+                              n_informative=n_features-2, noise=0.5,
+                              coef=True, random_state=42)
     y = y[0:n_samples]
     X, T = X[0:n_samples], X[n_samples:]
 
@@ -279,10 +272,9 @@ def test_normal_ridge_comparison(n_samples, n_features, fit_intercept, solver):
 
 
 @pytest.mark.parametrize('solver, tol', [('lbfgs', 1e-7)])
-def test_poisson_ridge(solver, tol):
-    """Test ridge regression with poisson family and LogLink.
-
-    Compare to R's glmnet"""
+def test_poisson_glmnet(solver, tol):
+    """Compare Poisson regression with L2 regularization and LogLink to glmnet
+    """
     # library("glmnet")
     # options(digits=10)
     # df <- data.frame(a=c(-2,-1,1,2), b=c(0,0,1,1), y=c(0,1,1,2))
@@ -304,32 +296,6 @@ def test_poisson_ridge(solver, tol):
     glm.fit(X, y)
     assert_allclose(glm.intercept_, -0.12889386979, rtol=1e-5)
     assert_allclose(glm.coef_, [0.29019207995, 0.03741173122], rtol=1e-5)
-
-
-@pytest.mark.parametrize(
-        "params",
-        [
-            {"solver": "lbfgs"},
-        ],
-        ids=lambda params: ', '.join("%s=%s" % (key, val)
-                                     for key,  val in params.items())
-)
-def test_solver_equivalence(params, regression_data):
-    X, y = regression_data
-    est_ref = GeneralizedLinearRegressor()
-    est_ref.fit(X, y)
-
-    estimator = GeneralizedLinearRegressor(**params)
-
-    estimator.fit(X, y)
-
-    assert_allclose(estimator.intercept_, est_ref.intercept_, rtol=1e-4)
-    assert_allclose(estimator.coef_, est_ref.coef_, rtol=1e-4)
-    assert_allclose(
-        mean_absolute_error(estimator.predict(X), y),
-        mean_absolute_error(est_ref.predict(X), y),
-        rtol=1e-4
-    )
 
 
 @pytest.mark.parametrize("solver", GLM_SOLVERS)
