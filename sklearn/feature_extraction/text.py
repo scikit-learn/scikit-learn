@@ -714,7 +714,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
                 "string object received.")
 
         self._validate_params()
-
+        self.build_analyzer()
         self._missing_param_warning()
 
         self._get_hasher().fit(X, y=y)
