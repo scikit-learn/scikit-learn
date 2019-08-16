@@ -110,11 +110,11 @@ class PartialDependenceDisplay:
             The maximum number of columns in the grid plot.
 
         line_kw : dict or None, default=None
-            Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
+            Dict with keywords passed to the `matplotlib.pyplot.plot` call.
             For one-way partial dependence plots.
 
         contour_kw : dict or None, default=None
-            Dict with keywords passed to the ``matplotlib.pyplot.contourf``
+            Dict with keywords passed to the `matplotlib.pyplot.contourf`
             call for two-way partial dependence plots.
 
         fig : Matplotlib figure object or None, default=None
@@ -167,8 +167,6 @@ class PartialDependenceDisplay:
             self.contours_ = np.empty(n_features, dtype=np.object)
 
         elif isinstance(ax, np.ndarray):
-            # check number of none elements
-
             self.bounding_ax_ = None
             self.axes_ = ax
             self.figure_ = ax.ravel()[0].figure

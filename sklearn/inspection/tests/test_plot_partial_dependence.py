@@ -188,32 +188,6 @@ def test_plot_partial_dependence_passing_numpy_axes(pyplot, clf_boston,
     assert len(disp2.axes_[0, 1].get_lines()) == 2
 
 
-def test_plot_partial_dependence_passing_numpy_axes_invalid(pyplot, clf_boston,
-                                                            boston):
-    grid_resolution = 25
-    feature_names = boston.feature_names
-    disp1 = plot_partial_dependence(clf_boston, boston.data,
-                                    ['CRIM', 'ZN', 'LSTAT'],
-                                    grid_resolution=grid_resolution,
-                                    feature_names=feature_names)
-
-    msg = ""
-    with pytest.raises(ValueError, match=msg):
-        plot_partial_dependence(clf_boston, boston.data,
-                                ['CRIM', 'ZN'],
-                                grid_resolution=grid_resolution,
-                                feature_names=feature_names,
-                                ax=disp1.axes_)
-
-    disp2 = plot_partial_dependence(clf_boston, boston.data,
-                                    ['CRIM', 'ZN'],
-                                    grid_resolution=grid_resolution,
-                                    feature_names=feature_names)
-
-    with pytest.raises(ValueError, match=msg):
-        disp2.plot(ax=disp1.axes_)
-
-
 def test_plot_partial_dependence_incorrent_num_axes(pyplot, clf_boston,
                                                     boston):
     grid_resolution = 25
