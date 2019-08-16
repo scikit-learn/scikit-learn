@@ -1876,6 +1876,18 @@ def test_prune_tree_regression_are_subtrees(criterion, dataset, tree_cls):
     assert_pruning_creates_subtree(tree_cls, X, y, pruning_path)
 
 
+def test_prune_single_node_tree():
+    # single node tree
+    clf1 = DecisionTreeClassifier(random_state=0)
+    clf1.fit([[0], [1]], [0, 0])
+
+    # pruned single node tree
+    clf2 = DecisionTreeClassifier(random_state=0, ccp_alpha=10)
+    clf2.fit([[0], [1]], [0, 0])
+
+    assert_is_subtree(clf1.tree_, clf2.tree_)
+
+
 def assert_pruning_creates_subtree(estimator_cls, X, y, pruning_path):
     estimators = []
     for ccp_alpha in pruning_path:
