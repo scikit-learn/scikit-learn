@@ -87,7 +87,7 @@ mlp_disp = plot_partial_dependence(mlp, X_test, ["LSTAT", "RM"],
 # histogram gradient boosting partial dependence curves in the first row of the
 # multi-layer perceptron in the second row.
 
-fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 12))
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 10))
 hgbr_disp.plot(ax=ax1)
 ax1.set_title("Histogram Gradient Boosting")
 mlp_disp.plot(ax=ax2, line_kw={"c": "red"})
@@ -98,10 +98,10 @@ ax2.set_title("Multi-layer Perceptron")
 # we create a figure with one row and two columns. The axes are passed into the
 # :func:`~sklearn.inspection.PartialDependenceDisplay.plot` function as list,
 # which will plot the partial dependence curves of each model on the same axes.
-# In this case, we pass two axes into :func:`~sklearn.inspection.PartialDependenceDisplay.plot`
+# The length of the axes list must be equal to the number of plots drawn.
 
 # sphinx_gallery_thumbnail_number = 4
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 6))
 hgbr_disp.plot(ax=[ax1, ax2],
                line_kw={"label": "Histogram Gradient Boosting"})
 mlp_disp.plot(ax=[ax1, ax2],
@@ -119,7 +119,7 @@ ax2.legend()
 hgbr_disp.plot(line_kw={"label": "Histogram Gradient Boosting"})
 mlp_disp.plot(line_kw={"label": "Multi-layer Perceptron", "c": "red"},
               ax=hgbr_disp.axes_)
-hgbr_disp.figure_.set_size_inches(12, 6)
+hgbr_disp.figure_.set_size_inches(10, 6)
 hgbr_disp.axes_[0, 0].legend()
 hgbr_disp.axes_[0, 1].legend()
 plt.show()
