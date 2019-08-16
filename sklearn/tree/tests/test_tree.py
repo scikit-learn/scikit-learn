@@ -1848,8 +1848,14 @@ def test_decision_tree_memmap():
 def test_prune_tree_classifier_are_subtrees(criterion, dataset, tree_cls):
     dataset = DATASETS[dataset]
     X, y = dataset["X"], dataset["y"]
-    assert_pruning_creates_subtree(tree_cls, X, y)
-    assert_ccp_pruning_path_increases(tree_cls, X, y)
+    est = tree_cls(max_leaf_nodes=20, random_state=0)
+    info = est.cost_complexity_pruning_path(X, y)
+
+    pruning_path = info.ccp_alphas
+    # pruning path increases
+    assert np.all(np.diff(pruning_path) >= 0)
+
+    assert_pruning_creates_subtree(tree_cls, X, y, pruning_path)
 
 
 @pytest.mark.parametrize("criterion", REG_CRITERIONS)
@@ -1859,36 +1865,20 @@ def test_prune_tree_classifier_are_subtrees(criterion, dataset, tree_cls):
 def test_prune_tree_regression_are_subtrees(criterion, dataset, tree_cls):
     dataset = DATASETS[dataset]
     X, y = dataset["X"], dataset["y"]
-    assert_pruning_creates_subtree(tree_cls, X, y)
-    assert_ccp_pruning_path_increases(tree_cls, X, y)
 
-
-def test_prune_tree_raises_negative_ccp_alpha():
-    clf = DecisionTreeClassifier()
-    msg = "ccp_alpha must be greater than or equal to 0"
-
-    with pytest.raises(ValueError, match=msg):
-        clf.set_params(ccp_alpha=-1.0)
-        clf.fit(X, y)
-
-    clf.set_params(ccp_alpha=0.0)
-    clf.fit(X, y)
-
-    with pytest.raises(ValueError, match=msg):
-        clf.set_params(ccp_alpha=-1.0)
-        clf._prune_tree()
-
-
-def assert_ccp_pruning_path_increases(estimator_cls, X, y):
-    est = estimator_cls(max_leaf_nodes=20, random_state=0)
+    est = tree_cls(max_leaf_nodes=20, random_state=0)
     info = est.cost_complexity_pruning_path(X, y)
+
     pruning_path = info.ccp_alphas
+    # pruning path increases
     assert np.all(np.diff(pruning_path) >= 0)
 
+    assert_pruning_creates_subtree(tree_cls, X, y, pruning_path)
 
-def assert_pruning_creates_subtree(estimator_cls, X, y):
+
+def assert_pruning_creates_subtree(estimator_cls, X, y, pruning_path):
     estimators = []
-    for ccp_alpha in np.linspace(0.0, 0.2, 11):
+    for ccp_alpha in pruning_path:
         est = estimator_cls(
             max_leaf_nodes=20, ccp_alpha=ccp_alpha, random_state=0).fit(X, y)
         estimators.append(est)
@@ -1935,3 +1925,19 @@ def assert_is_subtree(tree, subtree):
                           subtree_c_left[subtree_node_idx]))
             stack.append((tree_c_right[tree_node_idx],
                           subtree_c_right[subtree_node_idx]))
+
+
+def test_prune_tree_raises_negative_ccp_alpha():
+    clf = DecisionTreeClassifier()
+    msg = "ccp_alpha must be greater than or equal to 0"
+
+    with pytest.raises(ValueError, match=msg):
+        clf.set_params(ccp_alpha=-1.0)
+        clf.fit(X, y)
+
+    clf.set_params(ccp_alpha=0.0)
+    clf.fit(X, y)
+
+    with pytest.raises(ValueError, match=msg):
+        clf.set_params(ccp_alpha=-1.0)
+        clf._prune_tree()
