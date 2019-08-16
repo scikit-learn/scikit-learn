@@ -23,16 +23,16 @@ class PartialDependenceDisplay:
 
     Parameters
     ----------
-    pd_results : list of (ndarray, ndarray)
+    pd_results : (ndarray, ndarray) list
         Results of `sklearn.inspection.partial_dependence` for ``features``.
         Each tuple corresponds to a (averaged_predictions, grid).
 
-    features : list of {(int, ), (int, int)}
+    features {(int, ), (int, int)} list
         Indices of features for a given plot. A tuple of one integer will plot
         a partial dependence curve of one feature. A tuple of two integers will
         plot a two-way partial dependence curve as a contour plot.
 
-    feature_names : list of str
+    feature_names : str list
         Feature names corrsponding to the indicies in ``features``.
 
     target_idx : int
@@ -96,8 +96,7 @@ class PartialDependenceDisplay:
 
         Parameters
         ----------
-        ax : Matplotlib axes, list of Matplotlib axes, ndarray of Matplotlib \
-        Axes, default=None
+        ax : Matplotlib axes or Matplotlib axes array-like, default=None
             Axes to plot the partial dependence curves.
             - If a single axes is given, it is treated as a bounding axes and
               a grid of partial depedendence plots will be drawn within these
@@ -110,15 +109,15 @@ class PartialDependenceDisplay:
         n_cols : int, default=3
             The maximum number of columns in the grid plot.
 
-        line_kw : dict or None, default=None
+        line_kw : dict, default=None
             Dict with keywords passed to the `matplotlib.pyplot.plot` call.
             For one-way partial dependence plots.
 
-        contour_kw : dict or None, default=None
+        contour_kw : dict, default=None
             Dict with keywords passed to the `matplotlib.pyplot.contourf`
             call for two-way partial dependence plots.
 
-        fig : Matplotlib figure object or None, default=None
+        fig : Matplotlib figure object, default=None
             A figure object onto which the plots will be drawn, after the
             figure has been cleared. By default, a new one is created.
 
