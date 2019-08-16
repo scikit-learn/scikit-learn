@@ -1891,12 +1891,15 @@ def test_prune_single_node_tree():
 
 
 def assert_pruning_creates_subtree(estimator_cls, X, y, pruning_path):
+    # generate trees with increasing alphas
     estimators = []
     for ccp_alpha in pruning_path:
         est = estimator_cls(
             max_leaf_nodes=20, ccp_alpha=ccp_alpha, random_state=0).fit(X, y)
         estimators.append(est)
 
+    # A pruned tree must be a subtree of the previous tree (which had a
+    # smaller ccp_alpha)
     for prev_est, next_est in zip(estimators, estimators[1:]):
         assert_is_subtree(prev_est.tree_, next_est.tree_)
 
