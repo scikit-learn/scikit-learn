@@ -261,16 +261,14 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         family = self._family_instance
         link = self._link_instance
 
-        _dtype = [np.float64, np.float32]
-        _stype = ['csc', 'csr']
-        X, y = check_X_y(X, y, accept_sparse=_stype,
-                         dtype=_dtype, y_numeric=True, multi_output=False,
-                         copy=self.copy_X)
+        X, y = check_X_y(X, y, accept_sparse=['csc', 'csr'],
+                         dtype=[np.float64, np.float32],
+                         y_numeric=True, multi_output=False, copy=self.copy_X)
         y = np.asarray(y, dtype=np.float64)
 
         weights = _check_sample_weight(sample_weight, X)
 
-        n_samples, n_features = X.shape
+        _, n_features = X.shape
 
         if self.check_input:
             if not np.all(family.in_y_range(y)):
@@ -287,7 +285,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         # we rescale weights such that sum(weights) = 1 and this becomes
         # 1/2*deviance + L2 with deviance=sum(weights * unit_deviance)
         weights_sum = np.sum(weights)
-        weights = weights/weights_sum
+        weights = weights / weights_sum
 
         # initialization of coef = (intercept_, coef)
         # Note: The dispersion parameter phi does not enter the estimation
@@ -355,7 +353,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         Returns
         -------
-        C : array, shape (n_samples,)
+        y_pred : array, shape (n_samples,)
             Returns predicted values of linear predictor.
         """
         check_is_fitted(self, "coef_")
