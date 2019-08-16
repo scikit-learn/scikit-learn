@@ -524,7 +524,7 @@ All these estimators can compute internally the nearest neighbors, but most of
 them also accept precomputed nearest neighbors :term:`sparse graph`,
 as given by :func:`~sklearn.neighbors.kneighbors_graph` and
 :func:`~sklearn.neighbors.radius_neighbors_graph`. With mode
-`mode='connectivity'`, these functions return an binary adjacency sparse graph
+`mode='connectivity'`, these functions return a binary adjacency sparse graph
 as required for instance in :class:`~sklearn.cluster.SpectralClustering`,
 whereas with `mode='distance'`, they return a distance sparse graph as required
 for instance in :class:`~sklearn.cluster.DBSCAN`. The benefits of precomputation
