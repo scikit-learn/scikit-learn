@@ -1510,7 +1510,25 @@ def _build_pruned_tree_ccp(
 
 
 def ccp_pruning_path(Tree orig_tree):
-    """Computes the cost complexity pruning path"""
+    """Computes the cost complexity pruning path.
+
+    Parameters
+    ----------
+    tree : Tree
+        Original tree.
+
+    Returns
+    -------
+    path_info : dict
+        Information about pruning path with attributes:
+
+        ccp_alphas : ndarray
+            Effective alphas of subtree during pruning.
+
+        impurities : ndarray
+            Sum of the impurities of the subtree leaves for the
+            corresponding alpha value in ``ccp_alphas``.
+    """
     cdef:
         unsigned char[:] leaves_in_subtree = np.zeros(
             shape=orig_tree.node_count, dtype=np.uint8)
