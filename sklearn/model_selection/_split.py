@@ -1862,14 +1862,14 @@ class PredefinedSplit(BaseCrossValidator):
         return len(self.unique_folds)
 
 
-class BinnedStratifiedKFold(_BaseKFold):
+class BinnedStratifiedKFold(StratifiedKFold):
     """Stratified K-Folds cross-validator
 
     Provides train/test indices to split data in train/test sets.
 
     This cross-validation object is a variation of KFold that returns
-    stratified folds. The folds are made by preserving the percentage of
-    samples for each class.
+    stratified folds by binning a regression target. The folds are made
+    by approximately preserving the percentage of samples in each bin.
 
     Read more in the :ref:`User Guide <cross_validation>`.
 
@@ -1881,6 +1881,9 @@ class BinnedStratifiedKFold(_BaseKFold):
     shuffle : boolean, optional
         Whether to shuffle each stratification of the data before splitting
         into batches.
+
+    quantiles : int, default=10
+        How many quantile bins to use.
 
     random_state : None, int or RandomState
         When shuffle=True, pseudo-random number generator state used for
@@ -1919,104 +1922,22 @@ class BinnedStratifiedKFold(_BaseKFold):
     StratifiedKFold -- stratified k-fold generator for classification data
     """
 
-    def __init__(self, n_splits=5, shuffle=False, random_state=None):
-        super(BinnedStratifiedKFold, self).__init__(n_splits, shuffle,
-                                                    random_state)
+    def __init__(self, n_splits=5, shuffle=False, quantile_bins=5,
+                 random_state=None):
+        super().__init__(n_splits, shuffle, random_state)
+        self.quantile_bins = quantile_bins
+        if quantile_bins < 2:
+            raise ValueError("Need at least two bins, got {}.".format(
+                quantile_bins))
 
-    def _make_test_folds(self, X, y=None, labels=None):
+    def _iter_test_indices(self, X, y, groups):
         if y is None:
-            if hasattr(X, "shape") and \
-               (len(X.shape) == 1 or all(X.shape[1:] == 1)):
-                y = X
-            else:
-                raise ValueError("no y has been supplied; "
-                                 "first argument is not a valid y")
-        n_samples = len(y)
-        self.n_samples = n_samples
-        n_splits = self.n_splits
-        yinds = np.arange(n_samples)
-        "reorder the labels according to the ordering of `y`"
-        sorter0 = np.argsort(y)
-        yinds = yinds[sorter0]
-
-        self.n_classes = n_samples // n_splits + int(n_samples % n_splits != 0)
-
-        if n_samples // n_splits > 1:
-            n_items_boundary_cls = n_splits * (n_samples // n_splits // 2)
-            "assign lower `n_splits*(n_classes//2 )` labels to the lower class"
-            lowerclasses = yinds[:n_items_boundary_cls].reshape(-1, n_splits)
-            "assign upper `n_splits*(n_classes//2 )` labels to the upper class"
-            upperclasses = yinds[-n_items_boundary_cls:].reshape(-1, n_splits)
-            """assign the remainder labels to the middle class;
-            add -1 as a filling value;  shuffle"""
-            middleclasses = yinds[n_items_boundary_cls:-n_items_boundary_cls]
-            middleclasses = np.hstack([
-                    middleclasses,
-                    -np.ones(n_splits - len(middleclasses) % n_splits, dtype=int)
-                    ])
-            middleclasses = middleclasses.reshape(-1, n_splits)
-
-            rng = check_random_state(self.random_state)
-            rng.shuffle(middleclasses.T)
-            middleclasses = middleclasses.reshape(-1, n_splits)
-            self._test_masks = np.vstack([
-                        lowerclasses,
-                        middleclasses,
-                        upperclasses]).T
-            "to do : middle class rebalancing"
-        elif n_samples > self.n_classes:
-            """put the lower half in one piece, and the rest into a ragged array;
-            the central values will remain unpaired
-            """
-            lowerclasses = yinds[:n_splits].reshape(-1, n_splits)
-            upperclasses = yinds[n_splits:]
-            upperclasses = np.hstack([
-                    upperclasses,
-                    -np.ones(n_splits - len(upperclasses) % n_splits, dtype=int)
-                    ])
-
-            self._test_masks = np.vstack([lowerclasses, upperclasses]).T
-
-        if self.shuffle:
-            rng.shuffle(self._test_masks)
-        "remove missing values from the middle class"
-        self._test_masks = [y[y != -1] for y in self._test_masks]
-
-        test_folds = np.empty(n_samples,  dtype=np.int)
-        for nn, fold_masks in enumerate(self._test_masks):
-            test_folds[fold_masks] = nn
-        return test_folds
-
-    def _iter_test_masks(self, X, y=None, labels=None):
-        test_folds = self._make_test_folds(X, y)
-        for i in range(self.n_splits):
-            yield test_folds == i
-
-    def split(self, X, y=None, labels=None):
-        """Generate indices to split data into training and test set.
-
-        Parameters
-        ----------
-        X : array-like, shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
-            and n_features is the number of features.
-
-        y : array-like, shape (n_samples,)
-            The target variable for supervised learning problems.
-
-        labels : array-like, with shape (n_samples,), optional
-            Group labels for the samples used while splitting the dataset into
-            train/test set.
-
-        Returns
-        -------
-        train : ndarray
-            The training set indices for that split.
-
-        test : ndarray
-            The testing set indices for that split.
-        """
-        return super(BinnedStratifiedKFold, self).split(X, y, labels)
+            raise ValueError("no y has been supplied; "
+                             "first argument is not a valid y")
+        percentiles = np.percentile(
+            X, np.linspace(0, 100, self.quantile_bins + 1))
+        bins = np.histogram(y, bins=percentiles)
+        yield from super()._iter_tes_indices(X, bins, groups)
 
 
 class _CVIterableWrapper(BaseCrossValidator):
