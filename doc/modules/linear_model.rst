@@ -951,22 +951,22 @@ log-link `link='log'` with :math:`h(x^\top w)=\exp(x^\top w)`.
 
 :class:`TweedieRegressor` implements a generalized linear model
 for the Tweedie distribution, that allows to model any of the above mentioned
-distributions using the appropriate power parameter `p`, i.e. the exponent of
+distributions using the appropriate power parameter ``p``, i.e. the exponent of
 the unit variance function,
 
- - `p = 0`: Normal distribution. Specialized solvers such as
+ - ``p = 0``: Normal distribution. Specialized solvers such as
    :class:`Ridge`, :class:`ElasticNet` are generally
    more appropriate in this case.
 
- - `p = 1`: Poisson distribution. :class:`PoissonRegressor` is exposed for
+ - ``p = 1``: Poisson distribution. :class:`PoissonRegressor` is exposed for
    convenience. However, it is strictly equivalent to
    `TweedieRegressor(power=1)`.
 
- - `p = 2`: Gamma distribution. :class:`GammaRegressor` is exposed for
+ - ``p = 2``: Gamma distribution. :class:`GammaRegressor` is exposed for
    convenience. However, it is strictly equivalent to
    `TweedieRegressor(power=2)`.
 
- - `p = 3`: Inverse Gamma distribution.
+ - ``p = 3``: Inverse Gamma distribution.
 
 
 Note:

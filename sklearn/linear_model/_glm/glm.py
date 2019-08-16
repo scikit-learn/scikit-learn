@@ -397,7 +397,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         D^2 is a generalization of the coefficient of determination R^2.
         R^2 uses squared error and D^2 deviance. Note that those two are equal
-        for family='normal'.
+        for ``family='normal'``.
 
         D^2 is defined as
         :math:`D^2 = 1-\\frac{D(y_{true},y_{pred})}{D_{null}}`,
