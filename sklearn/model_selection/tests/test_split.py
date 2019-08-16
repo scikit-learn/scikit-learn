@@ -1553,7 +1553,7 @@ def test_binnedstratifiedkfold_balance():
 
         for train_index, test_index in bskf.split(X=X, y=y):
             sizes.append(len(test_index))
-        assert (np.max(sizes) - np.min(sizes)) <= 1
+        assert (np.max(sizes) - np.min(sizes)) <= bskf.quantile_bins
         assert np.sum(sizes) == X.shape[0]
 
 
