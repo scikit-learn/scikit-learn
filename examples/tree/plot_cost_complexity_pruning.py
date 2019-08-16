@@ -98,7 +98,9 @@ fig, ax = plt.subplots()
 ax.set_xlabel("alpha")
 ax.set_ylabel("accuracy")
 ax.set_title("Accuracy vs alpha for training and testing sets")
-ax.plot(ccp_alphas, train_scores, label="train", drawstyle="steps-post")
-ax.plot(ccp_alphas, test_scores, label="test", drawstyle="steps-post")
+ax.plot(ccp_alphas, train_scores, marker='o', label="train",
+        drawstyle="steps-post")
+ax.plot(ccp_alphas, test_scores, marker='o', label="test",
+        drawstyle="steps-post")
 ax.legend()
 plt.show()

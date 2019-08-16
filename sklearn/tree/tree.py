@@ -562,10 +562,13 @@ class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
 
         Returns
         -------
-        ccp_path : Bunch object, a dictionary with attribute access
-            ``ccp_alphas``
+        ccp_path : Bunch
+            Dictionary-like object, with attributes:
+
+            ccp_alphas : ndarray
                 Effective alphas of subtree during pruning.
-            ``impurities``
+
+            impurities : ndarray
                 Sum of the impurities of the subtree leaves for the
                 corresponding alpha value in ``ccp_alphas``.
         """

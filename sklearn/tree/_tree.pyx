@@ -1478,11 +1478,10 @@ def _build_pruned_tree_ccp(
     Tree tree, # OUT
     Tree orig_tree,
     DOUBLE_t ccp_alpha):
-    """Build a pruned tree from the original tree by transforming the nodes in
-    leaves_in_subtree into leaves.
+    """Build a pruned tree from the original tree with cost complexity pruning.
 
-    Build a pruned tree from the original tree. The values and nodes from the
-    original tree are copied into the pruned tree.
+    The values and nodes from the original tree are copied into the pruned
+    tree.
 
     Parameters
     ----------
@@ -1540,7 +1539,7 @@ cdef _build_pruned_tree(
     Tree orig_tree,
     const unsigned char[:] leaves_in_subtree,
     SIZE_t capacity):
-    """Build a pruned tree
+    """Build a pruned tree.
 
     Build a pruned tree from the original tree by transforming the nodes in
     ``leaves_in_subtree`` into leaves.

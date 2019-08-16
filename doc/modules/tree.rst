@@ -540,10 +540,10 @@ where :math:`X_m` is the training data in node :math:`m`
 Minimal Cost-Complexity Pruning
 ===============================
 
-Minimal cost-complexity pruning is an algorithm used to prune a tree after it
-is grown. This algorithm is parameterized by :math:`\alpha\ge0` known as the
-complexity parameter. The complexity parameter is used to define the
-cost-complexity measure, :math:`R_\alpha(T)` of a given tree :math:`T`:
+Minimal cost-complexity pruning is an algorithm used to prune a tree, described
+in Chapter 3 of [BRE]_. This algorithm is parameterized by :math:`\alpha\ge0`
+known as the complexity parameter. The complexity parameter is used to define
+the cost-complexity measure, :math:`R_\alpha(T)` of a given tree :math:`T`:
 
 .. math::
 
@@ -565,7 +565,7 @@ is greater than the sum of impurities of its terminal nodes,
 :math:`t`, and its branch, :math:`T_t`, can be equal depending on
 :math:`\alpha`. We define the effective :math:`\alpha` of a node to be the
 value where they are equal, :math:`R_\alpha(T_t)=R_\alpha(t)` or
-:math:`\alpha_{eff}(t)=(R(t)-R(T_t))/(|\tilde{T}|-1)`. A non-terminal node
+:math:`\alpha_{eff}(t)=(R(t)-R(T_t))/(|T|-1)`. A non-terminal node
 with the smallest value of :math:`\alpha_{eff}` is the weakest link and will
 be pruned. This process stops when the pruned tree's minimal
 :math:`\alpha_{eff}` is greater than the ``ccp_alpha`` parameter.
@@ -576,14 +576,15 @@ be pruned. This process stops when the pruned tree's minimal
   
 .. topic:: References:
 
+    .. [BRE] L. Breiman, J. Friedman, R. Olshen, and C. Stone. Classification
+      and Regression Trees. Wadsworth, Belmont, CA, 1984.
+
     * https://en.wikipedia.org/wiki/Decision_tree_learning
 
     * https://en.wikipedia.org/wiki/Predictive_analytics
 
-    * L. Breiman, J. Friedman, R. Olshen, and C. Stone. Classification and
-      Regression Trees. Wadsworth, Belmont, CA, 1984.
+    * J.R. Quinlan. C4. 5: programs for machine learning. Morgan
+      Kaufmann, 1993.
 
-    * J.R. Quinlan. C4. 5: programs for machine learning. Morgan Kaufmann, 1993.
-
-    * T. Hastie, R. Tibshirani and J. Friedman.
-      Elements of Statistical Learning, Springer, 2009.
+    * T. Hastie, R. Tibshirani and J. Friedman. Elements of Statistical
+      Learning, Springer, 2009.
