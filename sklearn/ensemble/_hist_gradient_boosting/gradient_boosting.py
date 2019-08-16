@@ -541,7 +541,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         """
         X = check_array(X, dtype=[X_DTYPE, X_BINNED_DTYPE],
                         force_all_finite=False)
-        check_is_fitted(self, '_predictors')
+        check_is_fitted(self)
         if X.shape[1] != self.n_features_:
             raise ValueError(
                 'X has {} features but this estimator was trained with '
@@ -603,7 +603,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
     @property
     def n_iter_(self):
-        check_is_fitted(self, '_predictors')
+        check_is_fitted(self)
         return len(self._predictors)
 
     def _more_tags(self):
@@ -619,13 +619,7 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
 
     This estimator is much faster than
     :class:`GradientBoostingRegressor<sklearn.ensemble.GradientBoostingRegressor>`
-    for big datasets (n_samples >= 10 000). The input data ``X`` is pre-binned
-    into integer-valued bins, which considerably reduces the number of
-    splitting points to consider, and allows the algorithm to leverage
-    integer-based data structures. For small sample sizes,
-    :class:`GradientBoostingRegressor<sklearn.ensemble.GradientBoostingRegressor>`
-    might be preferred since binning may lead to split points that are too
-    approximate in this setting.
+    for big datasets (n_samples >= 10 000).
 
     This implementation is inspired by
     `LightGBM <https://github.com/Microsoft/LightGBM>`_.
@@ -641,6 +635,7 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
         >>> # now you can import normally from ensemble
         >>> from sklearn.ensemble import HistGradientBoostingClassifier
 
+    Read more in the :ref:`User Guide <histogram_based_gradient_boosting>`.
 
     Parameters
     ----------
@@ -792,13 +787,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
 
     This estimator is much faster than
     :class:`GradientBoostingClassifier<sklearn.ensemble.GradientBoostingClassifier>`
-    for big datasets (n_samples >= 10 000). The input data ``X`` is pre-binned
-    into integer-valued bins, which considerably reduces the number of
-    splitting points to consider, and allows the algorithm to leverage
-    integer-based data structures. For small sample sizes,
-    :class:`GradientBoostingClassifier<sklearn.ensemble.GradientBoostingClassifier>`
-    might be preferred since binning may lead to split points that are too
-    approximate in this setting.
+    for big datasets (n_samples >= 10 000).
 
     This implementation is inspired by
     `LightGBM <https://github.com/Microsoft/LightGBM>`_.
@@ -813,6 +802,8 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
         >>> # now you can import normally from ensemble
         >>> from sklearn.ensemble import HistGradientBoostingClassifier
+
+    Read more in the :ref:`User Guide <histogram_based_gradient_boosting>`.
 
     Parameters
     ----------
