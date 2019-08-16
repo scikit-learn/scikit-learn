@@ -183,6 +183,7 @@ class PartialDependenceDisplay:
                                          subplot_spec=ax.get_subplotspec())
             for i, spec in zip(range(n_features), gs):
                 axes_ravel[i] = self.figure_.add_subplot(spec)
+
         else:  # array-like
             ax = check_array(ax, dtype=object, ensure_2d=False)
 
