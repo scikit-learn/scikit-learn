@@ -1478,7 +1478,8 @@ def _build_pruned_tree_ccp(
     Tree tree, # OUT
     Tree orig_tree,
     DOUBLE_t ccp_alpha):
-    """Build a pruned tree from the original tree with cost complexity pruning.
+    """Build a pruned tree from the original tree using cost complexity
+    pruning.
 
     The values and nodes from the original tree are copied into the pruned
     tree.
