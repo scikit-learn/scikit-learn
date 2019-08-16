@@ -85,11 +85,13 @@ class _MultimetricScorer(dict):
         """Return True if using a cache it is beneficial.
 
         Caching is beneficial when of these conditions hold:
-          - `predict_proba` will be called twice.
-          - `predict` will be called twice.
-          - `decision_function` will be called twice.
-          - `decision_function` and `predict` is called.
-          - `decision_function` and `predict_proba` is called.
+          - `_ProbaScorer` will be called twice.
+          - `_PredictScorer` will be called twice.
+          - `_ThresholdScorer` will be called twice.
+          - `_ThresholdScorer` and `_PredictScorer` are called and
+             estimator is a regressor.
+          - `_ThresholdScorer` and `_ProbaScorer` are called and
+             estimator does not have `decision_function` an attribute.
 
         """
         if len(self) == 1:
@@ -101,9 +103,12 @@ class _MultimetricScorer(dict):
                [_PredictScorer, _ProbaScorer, _ThresholdScorer]):
             return True
 
-        if counter[_ThresholdScorer] and (counter[_PredictScorer] or
-                                          counter[_ProbaScorer]):
-            return True
+        if counter[_ThresholdScorer]:
+            if is_regressor(estimator) and counter[_PredictScorer]:
+                return True
+            elif (counter[_ProbaScorer] and
+                  not hasattr(estimator, "decision_function")):
+                return True
         return False
 
 

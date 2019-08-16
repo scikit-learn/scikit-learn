@@ -25,6 +25,7 @@ from sklearn.metrics.scorer import (check_scoring, _PredictScorer,
 from sklearn.metrics import accuracy_score
 from sklearn.metrics.scorer import _check_multimetric_scoring
 from sklearn.metrics import make_scorer, get_scorer, SCORERS
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import make_pipeline
 from sklearn.cluster import KMeans
@@ -554,8 +555,8 @@ def test_scoring_is_not_metric():
     [({'a1': 'accuracy', 'a2': 'accuracy',
        'll1': 'neg_log_loss', 'll2': 'neg_log_loss',
         'ra1': 'roc_auc', 'ra2': 'roc_auc'}, 1, 1, 1),
-     (['roc_auc', 'accuracy'], 1, 0, 1)],
-    ids=['dict', 'list'])
+     (['roc_auc', 'accuracy'], 1, 0, 1),
+     (['neg_log_loss', 'accuracy'], 1, 1, 0)])
 def test_multimetric_scorer_calls_method_once(scorers, expected_predict_count,
                                               expected_predict_proba_count,
                                               expected_decision_func_count):
@@ -584,6 +585,55 @@ def test_multimetric_scorer_calls_method_once(scorers, expected_predict_count,
     assert predict_func.call_count == expected_predict_count
     assert predict_proba_func.call_count == expected_predict_proba_count
     assert decision_function_func.call_count == expected_decision_func_count
+
+
+def test_multimetric_scorer_calls_method_once_classifier_no_decision():
+    predict_proba_call_cnt = 0
+
+    class MockKNeighborsClassifier(KNeighborsClassifier):
+        def predict_proba(self, X):
+            nonlocal predict_proba_call_cnt
+            predict_proba_call_cnt += 1
+            return super().predict_proba(X)
+
+    X, y = np.array([[1], [1], [0], [0], [0]]), np.array([0, 1, 1, 1, 0])
+
+    # no decision function
+    clf = MockKNeighborsClassifier(n_neighbors=1)
+    clf.fit(X, y)
+
+    scorers = ['roc_auc', 'neg_log_loss']
+    scorer_dict, _ = _check_multimetric_scoring(clf, scorers)
+    scorer = _MultimetricScorer(**scorer_dict)
+    scorer(clf, X, y)
+
+    assert predict_proba_call_cnt == 1
+
+
+def test_multimetric_scorer_calls_method_once_regressos_threshold():
+    predict_called_cnt = 0
+
+    class MockDecisionTreeRegressor(DecisionTreeRegressor):
+        def predict(self, X):
+            nonlocal predict_called_cnt
+            predict_called_cnt += 1
+            return super().predict(X)
+
+    X, y = np.array([[1], [1], [0], [0], [0]]), np.array([0, 1, 1, 1, 0])
+
+    # no decision function
+    clf = MockDecisionTreeRegressor()
+    clf.fit(X, y)
+
+    # regression metric that needs "threshold" which calls predict
+    r2_threshold = make_scorer(r2_score, needs_threshold=True)
+
+    scorers = {'neg_mse': 'neg_mean_squared_error', 'r2': r2_threshold}
+    scorer_dict, _ = _check_multimetric_scoring(clf, scorers)
+    scorer = _MultimetricScorer(**scorer_dict)
+    scorer(clf, X, y)
+
+    assert predict_called_cnt == 1
 
 
 def test_multimetric_scorer_sanity_check():
