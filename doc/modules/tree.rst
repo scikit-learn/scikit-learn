@@ -547,9 +547,9 @@ cost-complexity measure, :math:`R_\alpha(T)` of a given tree :math:`T`:
 
 .. math::
 
-  R_\alpha(T) = R(T) + \alpha|\tilde{T}|
+  R_\alpha(T) = R(T) + \alpha|T|
 
-where :math:`|\tilde{T}|` is the number of terminal nodes in :math:`T` and
+where :math:`|T|` is the number of terminal nodes in :math:`T` and
 :math:`R(T)` is traditionally defined as the total misclassification rate of
 the terminal nodes. Alternatively, scikit-learn uses the total sample weighted
 impurity of the terminal nodes for :math:`R(T)`. As shown in the previous

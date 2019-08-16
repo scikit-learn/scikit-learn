@@ -10,7 +10,7 @@ The :class:`DecisionTreeClassifier` provides parameters such as
 complexity pruning provides another option to control the size of a tree. In
 :class:`DecisionTreeClassifier`, this pruning technique is parameterized by the
 cost complexity parameter, ``ccp_alpha``. Greater values of ``ccp_alpha``
-increases the number of nodes pruned. Here we only show the effect of
+increase the number of nodes pruned. Here we only show the effect of
 ``ccp_alpha`` on regularizing the trees and how to choose a ``ccp_alpha``
 based on validation scores.
 
@@ -26,28 +26,29 @@ from sklearn.tree import DecisionTreeClassifier
 ###############################################################################
 # Total impurity of leaves vs effective alphas of pruned tree
 # ---------------------------------------------------------------
-# Minimal cost complexity pruning recursively finds the node with the
-# "weakest link". The weakest link is characterized by an effective alpha,
-# where the nodes with the smallest effective alpha are pruned first.
-# scikit-learn provides a
-# :func:`DecisionTreeClassifier.cost_complexity_pruning_path`
-# that returns the effective alphas and the corresponding total leaf impurities
-# at each step of the pruning process. As alpha increases, more
-# of the tree is pruned, which increases the total impurity of its leaves.
-# In the following plot, the maximum effective alpha value is removed,
-# because it is the trivial tree with only one node.
+# Minimal cost complexity pruning recursively finds the node with the "weakest
+# link". The weakest link is characterized by an effective alpha, where the
+# nodes with the smallest effective alpha are pruned first. To get an idea of
+# what values of ``ccp_alpha`` could be appropriate, scikit-learn provides
+# :func:`DecisionTreeClassifier.cost_complexity_pruning_path` that returns the
+# effective alphas and the corresponding total leaf impurities at each step of
+# the pruning process. As alpha increases, more of the tree is pruned, which
+# increases the total impurity of its leaves.
 X, y = load_breast_cancer(return_X_y=True)
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
 clf = DecisionTreeClassifier(random_state=0)
 path = clf.cost_complexity_pruning_path(X_train, y_train)
 ccp_alphas, impurities = path.ccp_alphas, path.impurities
+
+###############################################################################
+# In the following plot, the maximum effective alpha value is removed, because
+# it is the trivial tree with only one node.
 fig, ax = plt.subplots()
-ax.plot(ccp_alphas[:-1], impurities[:-1], drawstyle="steps-post")
+ax.plot(ccp_alphas[:-1], impurities[:-1], marker='o', drawstyle="steps-post")
 ax.set_xlabel("effective alpha")
 ax.set_ylabel("total impurity of leaves")
 ax.set_title("Total Impurity vs effective alpha for training set")
-plt.show()
 
 ###############################################################################
 # Next, we train a decision tree using the effective alphas. The last value
@@ -72,16 +73,15 @@ ccp_alphas = ccp_alphas[:-1]
 node_counts = [clf.tree_.node_count for clf in clfs]
 depth = [clf.tree_.max_depth for clf in clfs]
 fig, ax = plt.subplots(2, 1)
-ax[0].plot(ccp_alphas, node_counts, drawstyle="steps-post")
+ax[0].plot(ccp_alphas, node_counts, marker='o', drawstyle="steps-post")
 ax[0].set_xlabel("alpha")
 ax[0].set_ylabel("number of nodes")
 ax[0].set_title("Number of nodes vs alpha")
-ax[1].plot(ccp_alphas, depth, drawstyle="steps-post")
+ax[1].plot(ccp_alphas, depth, marker='o', drawstyle="steps-post")
 ax[1].set_xlabel("alpha")
 ax[1].set_ylabel("depth of tree")
 ax[1].set_title("Depth vs alpha")
 fig.tight_layout()
-plt.show()
 
 ###############################################################################
 # Accuracy vs alpha for training and testing sets

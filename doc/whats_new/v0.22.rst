@@ -293,7 +293,7 @@ Changelog
   :class:`ensemble.RandomTreesEmbedding`, 
   :class:`ensemble.GradientBoostingClassifier`, 
   and :class:`ensemble.GradientBoostingRegressor`.
-  :issue:`12887` by `Thomas Fan`_.
+  :pr:`12887` by `Thomas Fan`_.
 
 :mod:`sklearn.preprocessing`
 ............................

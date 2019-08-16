@@ -2083,7 +2083,7 @@ shape (n_estimators, ``loss_.K``)
                  random_state=None, max_features=None, verbose=0,
                  max_leaf_nodes=None, warm_start=False,
                  presort='auto', validation_fraction=0.1,
-                 n_iter_no_change=None, tol=1e-4, ccp_alpha=0.0, ):
+                 n_iter_no_change=None, tol=1e-4, ccp_alpha=0.0):
 
         super().__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,

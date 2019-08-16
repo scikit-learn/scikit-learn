@@ -1298,7 +1298,7 @@ cdef class _PathFinder(_CCPPruneController):
 cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
                             Tree orig_tree,
                             _CCPPruneController controller):
-    """Performs cost complexity pruning.
+    """Perform cost complexity pruning.
 
     This function takes an already grown tree, `orig_tree` and outputs a
     boolean mask `leaves_in_subtree` to are the leaves in the pruned tree. The
@@ -1478,7 +1478,8 @@ def _build_pruned_tree_ccp(
     Tree tree, # OUT
     Tree orig_tree,
     DOUBLE_t ccp_alpha):
-    """Build a pruned tree with Minimal Cost-Complexity Pruning.
+    """Build a pruned tree from the original tree by transforming the nodes in
+    leaves_in_subtree into leaves.
 
     Build a pruned tree from the original tree. The values and nodes from the
     original tree are copied into the pruned tree.
@@ -1531,10 +1532,7 @@ def ccp_pruning_path(Tree orig_tree):
         impurities[count] = path_finder.impurities[count]
         count += 1
 
-    return {
-        'ccp_alphas': ccp_alphas,
-        'impurities': impurities
-    }
+    return {'ccp_alphas': ccp_alphas, 'impurities': impurities}
 
 
 cdef _build_pruned_tree(
