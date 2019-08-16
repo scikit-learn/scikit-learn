@@ -228,19 +228,19 @@ print("mean Poisson deviance: %.3f" % mean_poisson_deviance(
 # histogram of observed target values with that of predicted values,
 
 
-fig, ax = plt.subplots(1, 4, figsize=(16, 3))
+fig, axes = plt.subplots(1, 4, figsize=(16, 3))
 
-df_train.Frequency.hist(bins=np.linspace(-1, 10, 50), ax=ax[0])
+df_train.Frequency.hist(bins=np.linspace(-1, 10, 50), ax=axes[0])
 
-ax[0].set_title('Experimental data')
+axes[0].set_title('Experimental data')
 
 for idx, model in enumerate([linregr, glm_freq, gbr]):
     y_pred = model.predict(X_train)
 
-    pd.Series(y_pred).hist(bins=np.linspace(-1, 8, 50), ax=ax[idx+1])
-    ax[idx + 1].set_title(model.__class__.__name__)
+    pd.Series(y_pred).hist(bins=np.linspace(-1, 8, 50), ax=axes[idx+1])
+    axes[idx + 1].set_title(model.__class__.__name__)
 
-for axi in ax:
+for axi in axes:
     axi.set(
         yscale='log',
         xlabel="y (Frequency)"
