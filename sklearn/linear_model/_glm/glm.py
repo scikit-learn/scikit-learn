@@ -73,18 +73,11 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         - 'log' for families 'poisson', 'gamma', 'inverse-gaussian'
 
-    solver : {'auto', 'lbfgs'}, optional (default='auto')
+    solver : 'lbfgs', optional (default='lbfgs')
         Algorithm to use in the optimization problem:
-
-        'auto'
-            Sets 'lbfgs'
 
         'lbfgs'
             Calls scipy's L-BFGS-B optimizer.
-
-
-        Note that all solvers except lbfgs use the fisher matrix, i.e. the
-        expected Hessian instead of the Hessian matrix.
 
     max_iter : int, optional (default=100)
         The maximal number of iterations for solver algorithms.
@@ -161,7 +154,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     """
     def __init__(self, alpha=1.0,
                  fit_intercept=True, family='normal', link='auto',
-                 solver='auto', max_iter=100, tol=1e-4, warm_start=False,
+                 solver='lbfgs', max_iter=100, tol=1e-4, warm_start=False,
                  copy_X=True, check_input=True, verbose=0):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
@@ -243,14 +236,11 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         if not isinstance(self.fit_intercept, bool):
             raise ValueError("The argument fit_intercept must be bool;"
                              " got {0}".format(self.fit_intercept))
-        if self.solver not in ['auto', 'lbfgs']:
+        if self.solver not in ['lbfgs']:
             raise ValueError("GeneralizedLinearRegressor supports only solvers"
-                             "'auto', 'lbfgs';"
-                             " got {0}".format(self.solver))
+                             "'lbfgs'; got {0}".format(self.solver))
         solver = self.solver
-        if self.solver == 'auto':
-            solver = 'lbfgs'
-        if (not isinstance(self.max_iter, int)
+        if (not isinstance(self.max_iter, numbers.Integral)
                 or self.max_iter <= 0):
             raise ValueError("Maximum number of iteration must be a positive "
                              "integer;"
