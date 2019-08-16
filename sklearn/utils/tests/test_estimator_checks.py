@@ -170,7 +170,7 @@ class CorrectNotFittedErrorClassifier(BaseBadClassifier):
         return self
 
     def predict(self, X):
-        check_is_fitted(self, 'coef_')
+        check_is_fitted(self)
         X = check_array(X)
         return np.ones(X.shape[0])
 

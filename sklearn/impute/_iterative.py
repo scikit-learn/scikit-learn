@@ -627,7 +627,7 @@ class IterativeImputer(TransformerMixin, BaseEstimator):
         Xt : array-like, shape (n_samples, n_features)
              The imputed input data.
         """
-        check_is_fitted(self, 'initial_imputer_')
+        check_is_fitted(self)
 
         if self.add_indicator:
             X_trans_indicator = self.indicator_.transform(X)

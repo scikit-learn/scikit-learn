@@ -431,7 +431,7 @@ class GaussianNB(BaseNB):
         return self
 
     def _joint_log_likelihood(self, X):
-        check_is_fitted(self, "classes_")
+        check_is_fitted(self)
 
         X = check_array(X)
         joint_log_likelihood = []
@@ -745,7 +745,7 @@ class MultinomialNB(BaseDiscreteNB):
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
-        check_is_fitted(self, "classes_")
+        check_is_fitted(self)
 
         X = check_array(X, accept_sparse='csr')
         return (safe_sparse_dot(X, self.feature_log_prob_.T) +
@@ -854,7 +854,7 @@ class ComplementNB(BaseDiscreteNB):
 
     def _joint_log_likelihood(self, X):
         """Calculate the class scores for the samples in X."""
-        check_is_fitted(self, "classes_")
+        check_is_fitted(self)
 
         X = check_array(X, accept_sparse="csr")
         jll = safe_sparse_dot(X, self.feature_log_prob_.T)
@@ -965,7 +965,7 @@ class BernoulliNB(BaseDiscreteNB):
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
-        check_is_fitted(self, "classes_")
+        check_is_fitted(self)
 
         X = check_array(X, accept_sparse='csr')
 

@@ -212,9 +212,10 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
     """
     X, labels = check_X_y(X, labels, accept_sparse=['csc', 'csr'])
 
-    # Check for diagonal entries in precomputed distance matrix
+    # Check for non-zero diagonal entries in precomputed distance matrix
     if metric == 'precomputed':
-        if np.any(np.diagonal(X)):
+        atol = np.finfo(X.dtype).eps * 100
+        if np.any(np.abs(np.diagonal(X)) > atol):
             raise ValueError(
                 'The precomputed distance matrix contains non-zero '
                 'elements on the diagonal. Use np.fill_diagonal(X, 0).'

@@ -466,7 +466,7 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
         y : array, shape = [n_samples] or [n_samples, n_targets]
             Returns predicted values.
         """
-        check_is_fitted(self, 'estimator_')
+        check_is_fitted(self)
 
         return self.estimator_.predict(X)
 
@@ -488,6 +488,6 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
         z : float
             Score of the prediction.
         """
-        check_is_fitted(self, 'estimator_')
+        check_is_fitted(self)
 
         return self.estimator_.score(X, y)
