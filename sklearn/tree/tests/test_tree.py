@@ -1852,8 +1852,9 @@ def test_prune_tree_classifier_are_subtrees(criterion, dataset, tree_cls):
     info = est.cost_complexity_pruning_path(X, y)
 
     pruning_path = info.ccp_alphas
-    # pruning path increases
+    impurities = info.impurities
     assert np.all(np.diff(pruning_path) >= 0)
+    assert np.all(np.diff(impurities) >= 0)
 
     assert_pruning_creates_subtree(tree_cls, X, y, pruning_path)
 
@@ -1870,8 +1871,9 @@ def test_prune_tree_regression_are_subtrees(criterion, dataset, tree_cls):
     info = est.cost_complexity_pruning_path(X, y)
 
     pruning_path = info.ccp_alphas
-    # pruning path increases
+    impurities = info.impurities
     assert np.all(np.diff(pruning_path) >= 0)
+    assert np.all(np.diff(impurities) >= 0)
 
     assert_pruning_creates_subtree(tree_cls, X, y, pruning_path)
 
