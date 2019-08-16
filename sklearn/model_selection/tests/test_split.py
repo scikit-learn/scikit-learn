@@ -157,8 +157,8 @@ def test_cross_validator_with_default_params():
     ss_repr = ("ShuffleSplit(n_splits=10, random_state=0, "
                "test_size=None, train_size=None)")
     ps_repr = "PredefinedSplit(test_fold=array([1, 1, 2, 2]))"
-    bskf_repr = ("BinnedStratifiedKFold(n_splits=2, random_state=None, "
-                 "shuffle=False)")
+    bskf_repr = ("BinnedStratifiedKFold(n_splits=2, quantile_bins=5, "
+                 "random_state=None,\n           shuffle=False)")
 
     n_splits_expected = [n_samples, comb(n_samples, p), n_splits, n_splits,
                          n_unique_groups, comb(n_unique_groups, p),
@@ -1551,7 +1551,6 @@ def test_binnedstratifiedkfold_balance():
         bskf = BinnedStratifiedKFold(n_splits=n_splits, shuffle=False,
                                      random_state=None)
 
-        bins = np.array([np.percentile(y, q) for q in range(n_splits)])
         for train_index, test_index in bskf.split(X=X, y=y):
             sizes.append(len(test_index))
         assert (np.max(sizes) - np.min(sizes)) <= 1
@@ -1568,7 +1567,8 @@ def test_binnedstratifiedkfold_bin_spacing():
         skf = BinnedStratifiedKFold(n_splits=n_splits,
                                     shuffle=False, random_state=None)
 
-        bins = np.array([np.percentile(y, q) for q in range(n_splits)])
+        bins = np.percentile(y, np.linspace(0, 100, skf.quantile_bins + 1))
+
 
         for train_index, test_index in skf.split(X=X, y=y):
             y_test = y[test_index]
@@ -1601,7 +1601,7 @@ def test_binnedstratifiedkfold_stable_moments_between_splits():
 
         kf = KFold(n_splits=n_splits, shuffle=True, random_state=None)
 
-        bins = np.array([np.percentile(y, q) for q in range(n_splits)])
+        bins = np.percentile(y, np.linspace(0, 100, skf.quantile_bins + 1))
 
         for train_index, test_index in skf.split(X=X, y=y):
             y_test = y[test_index]

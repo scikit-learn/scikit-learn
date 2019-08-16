@@ -1930,14 +1930,14 @@ class BinnedStratifiedKFold(StratifiedKFold):
             raise ValueError("Need at least two bins, got {}.".format(
                 quantile_bins))
 
-    def _iter_test_indices(self, X, y, groups):
+    def _make_test_folds(self, X, y):
         if y is None:
             raise ValueError("no y has been supplied; "
                              "first argument is not a valid y")
         percentiles = np.percentile(
-            X, np.linspace(0, 100, self.quantile_bins + 1))
-        bins = np.histogram(y, bins=percentiles)
-        yield from super()._iter_tes_indices(X, bins, groups)
+            y, np.linspace(0, 100, self.quantile_bins + 1))
+        bins = np.digitize(y, bins=percentiles)
+        return super()._make_test_folds(X, bins)
 
 
 class _CVIterableWrapper(BaseCrossValidator):
