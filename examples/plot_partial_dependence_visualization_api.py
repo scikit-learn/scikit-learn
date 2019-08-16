@@ -18,11 +18,10 @@ print(__doc__)
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_boston
 from sklearn.neural_network import MLPRegressor
-from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
-from sklearn.experimental import enable_hist_gradient_boosting  # noqa
-from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.tree import DecisionTreeRegressor
 from sklearn.inspection import plot_partial_dependence
 
 
@@ -31,19 +30,19 @@ from sklearn.inspection import plot_partial_dependence
 # ================================================
 #
 # First, we load the boston housing price dataset and split the the dataset
-# into a training and test set. Then, we train a histogram gradient boosting
-# decision tree and a multi-layer perceptron on the training set.
+# into a training and test set. Then, we train a decision tree and a
+# multi-layer perceptron on the training set.
 
 boston = load_boston()
 X, y = boston.data, boston.target
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1,
                                                     random_state=0)
 
-hgbr = make_pipeline(StandardScaler(), HistGradientBoostingRegressor())
+tree = DecisionTreeRegressor()
 mlp = make_pipeline(StandardScaler(),
                     MLPRegressor(hidden_layer_sizes=(100, 100),
                                  tol=1e-2, max_iter=500, random_state=0))
-hgbr.fit(X_train, y_train)
+tree.fit(X_train, y_train)
 mlp.fit(X_train, y_train)
 
 ##############################################################################
@@ -51,10 +50,10 @@ mlp.fit(X_train, y_train)
 # ===========================================================
 #
 # Next, we plot a partial dependence curves for features "LSTAT" and "RM" for
-# for the histogram gradient boosting model.
+# for the decision tree.
 fig, ax = plt.subplots(figsize=(12, 6))
-ax.set_title("Histogram Gradient Boosting")
-hgbr_disp = plot_partial_dependence(hgbr, X_test, ["LSTAT", "RM"],
+ax.set_title("Decision tree")
+tree_disp = plot_partial_dependence(tree, X_test, ["LSTAT", "RM"],
                                     feature_names=boston.feature_names, ax=ax)
 
 ##############################################################################
@@ -72,7 +71,7 @@ mlp_disp = plot_partial_dependence(mlp, X_test, ["LSTAT", "RM"],
 # Plotting partial dependence of the two models together
 # ======================================================
 #
-# The `hgbr_disp` and `mlp_disp`
+# The `tree_disp` and `mlp_disp`
 # :class:`~sklearn.inspection.PartialDependenceDisplay` objects contain all the
 # computed information needed to recreate the partial dependence curves. This
 # means we can easily create additional plots without needing to recompute the
@@ -82,14 +81,14 @@ mlp_disp = plot_partial_dependence(mlp, X_test, ["LSTAT", "RM"],
 # curves of each model on each row. First, we create a figure with two axes
 # within two rows and one column. The two axes are passed to the
 # :func:`~sklearn.inspection.PartialDependenceDisplay.plot` functions of
-# `hgbr_disp` and `mlp_disp`. The given axes will be used by the plotting
+# `tree_disp` and `mlp_disp`. The given axes will be used by the plotting
 # function to draw the partial dependence. The resulting plot places the
-# histogram gradient boosting partial dependence curves in the first row of the
+# decision tree partial dependence curves in the first row of the
 # multi-layer perceptron in the second row.
 
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 10))
-hgbr_disp.plot(ax=ax1)
-ax1.set_title("Histogram Gradient Boosting")
+tree_disp.plot(ax=ax1)
+ax1.set_title("Decision Tree")
 mlp_disp.plot(ax=ax2, line_kw={"c": "red"})
 ax2.set_title("Multi-layer Perceptron")
 
@@ -102,24 +101,23 @@ ax2.set_title("Multi-layer Perceptron")
 
 # sphinx_gallery_thumbnail_number = 4
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 6))
-hgbr_disp.plot(ax=[ax1, ax2],
-               line_kw={"label": "Histogram Gradient Boosting"})
-mlp_disp.plot(ax=[ax1, ax2],
-              line_kw={"label": "Multi-layer Perceptron", "c": "red"})
+tree_disp.plot(ax=[ax1, ax2], line_kw={"label": "Decision Tree"})
+mlp_disp.plot(ax=[ax1, ax2], line_kw={"label": "Multi-layer Perceptron",
+                                      "c": "red"})
 ax1.legend()
 ax2.legend()
 
 ##############################################################################
-# `hgbr_disp.axes_` is a numpy array container the axes used to draw th
+# `tree_disp.axes_` is a numpy array container the axes used to draw th
 # partial dependence plots. This can be passed to `mlp_disp` to have the same
 # affect of drawing the plots on top of each other. Furthermore, the
 # `mlp_disp.figure_` stores the figure, which allows for resizing the figure
 # after calling `plot`.
 
-hgbr_disp.plot(line_kw={"label": "Histogram Gradient Boosting"})
+tree_disp.plot(line_kw={"label": "Decision Tree"})
 mlp_disp.plot(line_kw={"label": "Multi-layer Perceptron", "c": "red"},
-              ax=hgbr_disp.axes_)
-hgbr_disp.figure_.set_size_inches(10, 6)
-hgbr_disp.axes_[0, 0].legend()
-hgbr_disp.axes_[0, 1].legend()
+              ax=tree_disp.axes_)
+tree_disp.figure_.set_size_inches(10, 6)
+tree_disp.axes_[0, 0].legend()
+tree_disp.axes_[0, 1].legend()
 plt.show()
