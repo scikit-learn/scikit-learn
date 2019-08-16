@@ -13,18 +13,20 @@ from sklearn.linear_model import LinearRegression
 from sklearn.inspection import plot_partial_dependence
 
 
-boston = load_boston()
+@pytest.fixture(scope="module")
+def boston():
+    return load_boston()
 
 
 @pytest.fixture(scope="module")
-def clf_boston():
+def clf_boston(boston):
     clf = GradientBoostingRegressor(n_estimators=10, random_state=1)
     clf.fit(boston.data, boston.target)
     return clf
 
 
 @pytest.mark.parametrize("grid_resolution", [10, 20])
-def test_plot_partial_dependence(pyplot, clf_boston, grid_resolution):
+def test_plot_partial_dependence(grid_resolution, pyplot, clf_boston, boston):
     # Test partial dependence plot function.
     feature_names = boston.feature_names
     disp = plot_partial_dependence(clf_boston, boston.data,
@@ -82,7 +84,7 @@ def test_plot_partial_dependence(pyplot, clf_boston, grid_resolution):
     assert ax.get_ylabel() == boston.feature_names[1]
 
 
-def test_plot_partial_dependence_str_features(pyplot, clf_boston):
+def test_plot_partial_dependence_str_features(pyplot, clf_boston, boston):
     grid_resolution = 25
     # check with str features and array feature names and single column
     disp = plot_partial_dependence(clf_boston, boston.data,
@@ -125,7 +127,7 @@ def test_plot_partial_dependence_str_features(pyplot, clf_boston):
     assert ax.get_ylabel() == "ZN"
 
 
-def test_plot_partial_dependence_custom_axes(pyplot, clf_boston):
+def test_plot_partial_dependence_custom_axes(pyplot, clf_boston, boston):
     grid_resolution = 25
     fig, (ax1, ax2) = pyplot.subplots(1, 2)
     feature_names = boston.feature_names.tolist()
@@ -160,7 +162,8 @@ def test_plot_partial_dependence_custom_axes(pyplot, clf_boston):
     assert ax.get_ylabel() == "ZN"
 
 
-def test_plot_partial_dependence_passing_numpy_axes(pyplot, clf_boston):
+def test_plot_partial_dependence_passing_numpy_axes(pyplot, clf_boston,
+                                                    boston):
     grid_resolution = 25
     feature_names = boston.feature_names.tolist()
     disp1 = plot_partial_dependence(clf_boston, boston.data,
@@ -185,7 +188,34 @@ def test_plot_partial_dependence_passing_numpy_axes(pyplot, clf_boston):
     assert len(disp2.axes_[0, 1].get_lines()) == 2
 
 
-def test_plot_partial_dependence_incorrent_num_axes(pyplot, clf_boston):
+def test_plot_partial_dependence_passing_numpy_axes_invalid(pyplot, clf_boston,
+                                                            boston):
+    grid_resolution = 25
+    feature_names = boston.feature_names
+    disp1 = plot_partial_dependence(clf_boston, boston.data,
+                                    ['CRIM', 'ZN', 'LSTAT'],
+                                    grid_resolution=grid_resolution,
+                                    feature_names=feature_names)
+
+    msg = ""
+    with pytest.raises(ValueError, match=msg):
+        plot_partial_dependence(clf_boston, boston.data,
+                                ['CRIM', 'ZN'],
+                                grid_resolution=grid_resolution,
+                                feature_names=feature_names,
+                                ax=disp1.axes_)
+
+    disp2 = plot_partial_dependence(clf_boston, boston.data,
+                                    ['CRIM', 'ZN'],
+                                    grid_resolution=grid_resolution,
+                                    feature_names=feature_names)
+
+    with pytest.raises(ValueError, match=msg):
+        disp2.plot(ax=disp1.axes_)
+
+
+def test_plot_partial_dependence_incorrent_num_axes(pyplot, clf_boston,
+                                                    boston):
     grid_resolution = 25
     fig, (ax1, ax2, ax3) = pyplot.subplots(1, 3)
 
@@ -257,21 +287,15 @@ multioutput_regression_data = make_regression(n_samples=50, n_targets=2,
                                               random_state=0)
 
 
-@pytest.fixture(scope="module")
-def clf_multioutput():
-    clf = LinearRegression()
-    return clf.fit(*multioutput_regression_data)
-
-
 @pytest.mark.parametrize("target", [0, 1])
-def test_plot_partial_dependence_multioutput(pyplot, target, clf_multioutput):
+def test_plot_partial_dependence_multioutput(pyplot, target):
     # Test partial dependence plot function on multi-output input.
     X, y = multioutput_regression_data
     clf = LinearRegression()
     clf.fit(X, y)
 
     grid_resolution = 25
-    disp = plot_partial_dependence(clf_multioutput, X, [0, 1], target=target,
+    disp = plot_partial_dependence(clf, X, [0, 1], target=target,
                                    grid_resolution=grid_resolution)
     fig = pyplot.gcf()
     axs = fig.get_axes()

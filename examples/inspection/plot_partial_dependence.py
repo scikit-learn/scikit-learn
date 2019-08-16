@@ -121,7 +121,6 @@ fig = plt.gcf()
 fig.suptitle('Partial dependence of house value on non-location features\n'
              'for the California housing dataset, with Gradient Boosting')
 fig.subplots_adjust(wspace=0.8, hspace=0.3)
-plt.show()
 
 
 ##############################################################################

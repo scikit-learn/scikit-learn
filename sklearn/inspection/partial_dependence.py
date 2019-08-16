@@ -486,12 +486,12 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     Axes, default=None
         Axes to plot the partial dependence curves.
         - If a single axes is given, it is treated as a bounding axes and
-            a grid of partial depdendence plots will be drawn on that top of
-            it.
+            a grid of partial depedendence plots will be drawn within these
+            bounds.
         - If a list of axes or a ndarray of axes are passed in, the partial
-            dependence plots will be drawn on those axes.
-        - By default, a single bounding axes is created and treated as the
-            single axes case.
+            dependence plots will be drawn directly into these axes.
+        - By default, a bounding axes is created and treated as the single
+            axes case.
 
         .. versionadded:: 0.22
 

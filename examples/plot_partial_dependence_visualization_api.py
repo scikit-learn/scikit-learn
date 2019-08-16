@@ -1,12 +1,12 @@
 """
 =========================================
-Partial Dependence with Visualization API
+Advanced Plotting With Partial Dependence
 =========================================
 The :func:`~sklearn.inspection.plot_partial_dependence` function returns a
 :class:`~sklearn.inspection.PartialDependenceDisplay` object that can be used
 for plotting without needing to recalculate the partial dependence. In this
-example we should how to plot partial dependence plots and quickly customize
-tht plot with the Visualization API.
+example, we show how to plot partial dependence plots and how to quickly
+customize the plot with the Visualization API.
 
 .. note::
 
@@ -56,7 +56,6 @@ fig, ax = plt.subplots(figsize=(12, 6))
 ax.set_title("Histogram Gradient Boosting")
 hgbr_disp = plot_partial_dependence(hgbr, X_test, ["LSTAT", "RM"],
                                     feature_names=boston.feature_names, ax=ax)
-plt.show()
 
 ##############################################################################
 # The partial depdendence curves can be plotted for the multi-layer perceptron.
@@ -68,7 +67,6 @@ ax.set_title("Multi-layer Perceptron")
 mlp_disp = plot_partial_dependence(mlp, X_test, ["LSTAT", "RM"],
                                    feature_names=boston.feature_names, ax=ax,
                                    n_cols=1, line_kw={"c": "red"})
-plt.show()
 
 ##############################################################################
 # Plotting partial dependence of the two models together
@@ -81,26 +79,26 @@ plt.show()
 # curves.
 #
 # One way to plot the curves is to place them in the same figure, with the
-# curves of each model on each row. First, we create a figure two axes with two
-# rows and one column. The two axes are passed to the
+# curves of each model on each row. First, we create a figure with two axes
+# within two rows and one column. The two axes are passed to the
 # :func:`~sklearn.inspection.PartialDependenceDisplay.plot` functions of
-# `hgbr_disp` and `mlp_disp`. The plot funciton will plot the two curves in the
-# space by the passed in axes. The resulting plot places the histogram gradient
-# boosting partial dependence curves on top of the multi-layer perceptron
-# plots.
+# `hgbr_disp` and `mlp_disp`. The given axes will be used by the plotting
+# function to draw the partial dependence. The resulting plot places the
+# histogram gradient boosting partial dependence curves in the first row of the
+# multi-layer perceptron in the second row.
 
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 12))
 hgbr_disp.plot(ax=ax1)
 ax1.set_title("Histogram Gradient Boosting")
 mlp_disp.plot(ax=ax2, line_kw={"c": "red"})
 ax2.set_title("Multi-layer Perceptron")
-plt.show()
 
 ##############################################################################
-# Another way to compare the curves is to plot them on top of each other. Here
+# Another way to compare the curves is to plot them on top of each other. Here,
 # we create a figure with one row and two columns. The axes are passed into the
 # :func:`~sklearn.inspection.PartialDependenceDisplay.plot` function as list,
 # which will plot the partial dependence curves of each model on the same axes.
+# In this case, we pass two axes into :func:`~sklearn.inspection.PartialDependenceDisplay.plot`
 
 # sphinx_gallery_thumbnail_number = 4
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
@@ -110,7 +108,6 @@ mlp_disp.plot(ax=[ax1, ax2],
               line_kw={"label": "Multi-layer Perceptron", "c": "red"})
 ax1.legend()
 ax2.legend()
-plt.show()
 
 ##############################################################################
 # `hgbr_disp.axes_` is a numpy array container the axes used to draw th

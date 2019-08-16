@@ -7,7 +7,7 @@ from ...utils import check_matplotlib_support
 
 
 class PartialDependenceDisplay:
-    """Partial Dependence visualization.
+    """Partial Dependence Plot (PDP) visualization.
 
     If is recommended to use
     :func:`~sklearn.inspection.plot_partial_dependence` to create a
@@ -24,10 +24,11 @@ class PartialDependenceDisplay:
     ----------
     pd_results : list of (ndarray, ndarray)
         Results of `sklearn.inspection.partial_dependence` for ``features``.
+        Each tuple corresponds to a (averaged_predictions, grid).
 
     features : list of {(int, ), (int, int)}
-        Indicies of features for a given plot. A tuple of one int will plot
-        a partial dependence curve of one feature. A tuple of two ints will
+        Indices of features for a given plot. A tuple of one integer will plot
+        a partial dependence curve of one feature. A tuple of two integers will
         plot a two-way partial dependence curve as a contour plot.
 
     feature_names : list of str
@@ -38,7 +39,7 @@ class PartialDependenceDisplay:
           should be computed. Note that for binary classification, the
           positive class (index 1) is always used.
         - In a multioutput setting, specifies the task for which the PDPs
-          should be computed
+          should be computed.
         Ignored in binary classification or classical regression settings.
 
     pdp_lim : dict
@@ -53,26 +54,26 @@ class PartialDependenceDisplay:
     ----------
     bounding_ax_ : matplotlib Axes or None
         If `ax` is an axes or None, the `bounding_ax_` is the axes where the
-        grid of partial dependence plots are drawn. If `ax` is  list of axes or
-        a numpy array of axes, `bounding_ax_` is None.
+        grid of partial dependence plots are drawn. If `ax` is a list of axe
+        or a numpy array of axes, `bounding_ax_` is None.
 
     axes_ : ndarray of matplotlib Axes
-        If `ax` is an axes or None, `axes_[i, j]` is the axes on the ith row
-        and jth column. If `ax` is a list of axes, `axes_[i]` is the ith item
+        If `ax` is an axes or None, `axes_[i, j]` is the axes on the i-th row
+        and j-th column. If `ax` is a list of axes, `axes_[i]` is the i-th item
         in `ax`. Elements that are None corresponds to a nonexisting axes in
         that position.
 
     lines_ : ndarray of matplotlib Artists
         If `ax` is an axes or None, `line_[i, j]` is the partial dependence
-        curve on the ith row and jth column. If `ax` is a list of axes,
-        `lines_[i]` is the partial dependence curve corresponding to the ith
+        curve on the i-th row and j-th column. If `ax` is a list of axes,
+        `lines_[i]` is the partial dependence curve corresponding to the i-th
         item in `ax`. Elements that are None corresponds to a nonexisting axes
         or an axes that does not include a line plot.
 
     contours_ : ndarray of matplotlib Artists
         If `ax` is an axes or None, `contours_[i, j]` is the partial dependence
-        plot on the ith row and jth column. If `ax` is a list of axes,
-        `contours_[i]` is the partial dependence plot corresponding to the ith
+        plot on the i-th row and j-th column. If `ax` is a list of axes,
+        `contours_[i]` is the partial dependence plot corresponding to the i-th
         item in `ax`. Elements that are None corresponds to a nonexisting axes
         or an axes that does not include a contour plot.
 
@@ -98,12 +99,12 @@ class PartialDependenceDisplay:
         Axes, default=None
             Axes to plot the partial dependence curves.
             - If a single axes is given, it is treated as a bounding axes and
-              a grid of partial depdendence plots will be drawn on that top of
-              it.
+              a grid of partial depedendence plots will be drawn within these
+              bounds.
             - If a list of axes or a ndarray of axes are passed in, the partial
-              dependence plots will be drawn on those axes.
-            - By default, a single bounding axes is created and treated as the
-              single axes case.
+              dependence plots will be drawn directly into these axes.
+            - By default, a bounding axes is created and treated as the single
+              axes case.
 
         n_cols : int, default=3
             The maximum number of columns in the grid plot.
@@ -166,11 +167,14 @@ class PartialDependenceDisplay:
             self.contours_ = np.empty(n_features, dtype=np.object)
 
         elif isinstance(ax, np.ndarray):
+            # check number of none elements
+
             self.bounding_ax_ = None
             self.axes_ = ax
             self.figure_ = ax.ravel()[0].figure
             self.lines_ = np.empty_like(ax, dtype=np.object)
             self.contours_ = np.empty_like(ax, dtype=np.object)
+
         else:  # single axes
             self.bounding_ax_ = ax
             self.figure_ = ax.figure

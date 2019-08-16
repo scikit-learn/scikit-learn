@@ -1722,7 +1722,6 @@ attributes:
        viz = RocCurveDisplay(fpr, tpr, roc_auc, 
                                 estimator.__class__.__name__)
        return viz.plot(ax=ax, name=name, **kwargs)
-```
 
 Plotting with Multiple Axes
 ---------------------------
@@ -1758,6 +1757,7 @@ the grid. Positions that are not used are set to `None`. Furthermore, the
 matplotlib Artists are stored in `lines_` and `contours_` where the key is the
 position on the grid. When a list of axes is passsed in, the `axes_`, `lines_`,
 and `contours_` keys is single int corresponding to the position on the passed
-in list of axes.
+in list of axes. 
 
-Read more in the :ref:`User Guide <visualizations>`.
+Read more in :ref:`sphx_glr_auto_examples_plot_roc_curve_visualization_api.py`
+and the :ref:`User Guide <visualizations>`.
