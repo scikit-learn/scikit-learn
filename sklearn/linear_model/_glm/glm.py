@@ -384,7 +384,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         Returns
         -------
-        C : array, shape (n_samples,)
+        y_pred : array, shape (n_samples,)
             Returns predicted values.
         """
         # check_array is done in _linear_predictor
