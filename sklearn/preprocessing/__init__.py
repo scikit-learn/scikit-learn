@@ -1,6 +1,6 @@
 """
 The :mod:`sklearn.preprocessing` module includes scaling, centering,
-normalization, binarization and imputation methods.
+normalization, binarization methods.
 """
 
 from ._function_transformer import FunctionTransformer
@@ -22,23 +22,24 @@ from .data import maxabs_scale
 from .data import minmax_scale
 from .data import quantile_transform
 from .data import power_transform
-from .data import OneHotEncoder
 from .data import PowerTransformer
-from .data import CategoricalEncoder
 from .data import PolynomialFeatures
+
+from ._encoders import OneHotEncoder
+from ._encoders import OrdinalEncoder
 
 from .label import label_binarize
 from .label import LabelBinarizer
 from .label import LabelEncoder
 from .label import MultiLabelBinarizer
 
-from .imputation import Imputer
+from ._discretization import KBinsDiscretizer
 
 
 __all__ = [
     'Binarizer',
     'FunctionTransformer',
-    'Imputer',
+    'KBinsDiscretizer',
     'KernelCenterer',
     'LabelBinarizer',
     'LabelEncoder',
@@ -48,7 +49,7 @@ __all__ = [
     'QuantileTransformer',
     'Normalizer',
     'OneHotEncoder',
-    'CategoricalEncoder',
+    'OrdinalEncoder',
     'PowerTransformer',
     'RobustScaler',
     'StandardScaler',

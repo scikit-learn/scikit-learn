@@ -128,16 +128,23 @@ Random Forests
 --------------
 
 In random forests (see :class:`RandomForestClassifier` and
-:class:`RandomForestRegressor` classes), each tree in the ensemble is
-built from a sample drawn with replacement (i.e., a bootstrap sample)
-from the training set. In addition, when splitting a node during the
-construction of the tree, the split that is chosen is no longer the
-best split among all features. Instead, the split that is picked is the
-best split among a random subset of the features. As a result of this
-randomness, the bias of the forest usually slightly increases (with
-respect to the bias of a single non-random tree) but, due to averaging,
-its variance also decreases, usually more than compensating for the
-increase in bias, hence yielding an overall better model.
+:class:`RandomForestRegressor` classes), each tree in the ensemble is built
+from a sample drawn with replacement (i.e., a bootstrap sample) from the
+training set.
+
+Furthermore, when splitting each node during the construction of a tree, the
+best split is found either from all input features or a random subset of size
+``max_features``. (See the :ref:`parameter tuning guidelines
+<random_forest_parameters>` for more details).
+
+The purpose of these two sources of randomness is to decrease the variance of
+the forest estimator. Indeed, individual decision trees typically exhibit high
+variance and tend to overfit. The injected randomness in forests yield decision
+trees with somewhat decoupled prediction errors. By taking an average of those
+predictions, some errors can cancel out. Random forests achieve a reduced
+variance by combining diverse trees, sometimes at the cost of a slight increase
+in bias. In practice the variance reduction is often significant hence yielding
+an overall better model.
 
 In contrast to the original publication [B2001]_, the scikit-learn
 implementation combines classifiers by averaging their probabilistic
@@ -167,19 +174,19 @@ in bias::
 
     >>> clf = DecisionTreeClassifier(max_depth=None, min_samples_split=2,
     ...     random_state=0)
-    >>> scores = cross_val_score(clf, X, y)
-    >>> scores.mean()                             # doctest: +ELLIPSIS
-    0.97...
+    >>> scores = cross_val_score(clf, X, y, cv=5)
+    >>> scores.mean()
+    0.98...
 
     >>> clf = RandomForestClassifier(n_estimators=10, max_depth=None,
     ...     min_samples_split=2, random_state=0)
-    >>> scores = cross_val_score(clf, X, y)
-    >>> scores.mean()                             # doctest: +ELLIPSIS
+    >>> scores = cross_val_score(clf, X, y, cv=5)
+    >>> scores.mean()
     0.999...
 
     >>> clf = ExtraTreesClassifier(n_estimators=10, max_depth=None,
     ...     min_samples_split=2, random_state=0)
-    >>> scores = cross_val_score(clf, X, y)
+    >>> scores = cross_val_score(clf, X, y, cv=5)
     >>> scores.mean() > 0.999
     True
 
@@ -188,37 +195,38 @@ in bias::
     :align: center
     :scale: 75%
 
+.. _random_forest_parameters:
+
 Parameters
 ----------
 
-The main parameters to adjust when using these methods is ``n_estimators``
-and ``max_features``. The former is the number of trees in the forest. The
-larger the better, but also the longer it will take to compute. In
-addition, note that results will stop getting significantly better
-beyond a critical number of trees. The latter is the size of the random
-subsets of features to consider when splitting a node. The lower the
-greater the reduction of variance, but also the greater the increase in
-bias. Empirical good default values are ``max_features=n_features``
-for regression problems, and ``max_features=sqrt(n_features)`` for
-classification tasks (where ``n_features`` is the number of features
-in the data). Good results are often achieved when setting ``max_depth=None``
-in combination with ``min_samples_split=2`` (i.e., when fully developing the
-trees). Bear in mind though that these values are usually not optimal, and
-might result in models that consume a lot of RAM. The best parameter values
-should always be cross-validated. In addition, note that in random forests,
-bootstrap samples are used by default (``bootstrap=True``)
-while the default strategy for extra-trees is to use the whole dataset
-(``bootstrap=False``).
-When using bootstrap sampling the generalization accuracy can be estimated
-on the left out or out-of-bag samples. This can be enabled by
-setting ``oob_score=True``.
+The main parameters to adjust when using these methods is ``n_estimators`` and
+``max_features``. The former is the number of trees in the forest. The larger
+the better, but also the longer it will take to compute. In addition, note that
+results will stop getting significantly better beyond a critical number of
+trees. The latter is the size of the random subsets of features to consider
+when splitting a node. The lower the greater the reduction of variance, but
+also the greater the increase in bias. Empirical good default values are
+``max_features=None`` (always considering all features instead of a random
+subset) for regression problems, and ``max_features="sqrt"`` (using a random
+subset of size ``sqrt(n_features)``) for classification tasks (where
+``n_features`` is the number of features in the data). Good results are often
+achieved when setting ``max_depth=None`` in combination with
+``min_samples_split=2`` (i.e., when fully developing the trees). Bear in mind
+though that these values are usually not optimal, and might result in models
+that consume a lot of RAM. The best parameter values should always be
+cross-validated. In addition, note that in random forests, bootstrap samples
+are used by default (``bootstrap=True``) while the default strategy for
+extra-trees is to use the whole dataset (``bootstrap=False``). When using
+bootstrap sampling the generalization accuracy can be estimated on the left out
+or out-of-bag samples. This can be enabled by setting ``oob_score=True``.
 
 .. note::
 
     The size of the model with the default parameters is :math:`O( M * N * log (N) )`,
     where :math:`M` is the number of trees and :math:`N` is the number of samples.
     In order to reduce the size of the model, you can change these parameters:
-    ``min_samples_split``, ``min_samples_leaf``, ``max_leaf_nodes`` and ``max_depth``.
+    ``min_samples_split``, ``max_leaf_nodes``, ``max_depth`` and ``min_samples_leaf``.
 
 Parallelization
 ---------------
@@ -257,14 +265,19 @@ Feature importance evaluation
 The relative rank (i.e. depth) of a feature used as a decision node in a
 tree can be used to assess the relative importance of that feature with
 respect to the predictability of the target variable. Features used at
-the top of the tree contribute to the final prediction decision of a 
-larger fraction of the input samples. The **expected fraction of the 
+the top of the tree contribute to the final prediction decision of a
+larger fraction of the input samples. The **expected fraction of the
 samples** they contribute to can thus be used as an estimate of the
-**relative importance of the features**.
+**relative importance of the features**. In scikit-learn, the fraction of
+samples a feature contributes to is combined with the decrease in impurity
+from splitting them to create a normalized estimate of the predictive power
+of that feature.
 
-By **averaging** those expected activity rates over several randomized
+By **averaging** the estimates of predictive ability over several randomized
 trees one can **reduce the variance** of such an estimate and use it
-for feature selection.
+for feature selection. This is known as the mean decrease in impurity, or MDI.
+Refer to [L2014]_ for more information on MDI and feature importance
+evaluation with Random Forests.
 
 The following example shows a color-coded representation of the relative
 importances of each individual pixel for a face recognition task using
@@ -285,6 +298,12 @@ to the prediction function.
 
  * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`
  * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances.py`
+
+.. topic:: References
+
+ .. [L2014] G. Louppe,
+         "Understanding Random Forests: From Theory to Practice",
+         PhD Thesis, U. of Liege, 2014.
 
 .. _random_trees_embedding:
 
@@ -373,8 +392,8 @@ learners::
 
     >>> iris = load_iris()
     >>> clf = AdaBoostClassifier(n_estimators=100)
-    >>> scores = cross_val_score(clf, iris.data, iris.target)
-    >>> scores.mean()                             # doctest: +ELLIPSIS
+    >>> scores = cross_val_score(clf, iris.data, iris.target, cv=5)
+    >>> scores.mean()
     0.9...
 
 The number of weak learners is controlled by the parameter ``n_estimators``. The
@@ -383,8 +402,7 @@ the final combination. By default, weak learners are decision stumps. Different
 weak learners can be specified through the ``base_estimator`` parameter.
 The main parameters to tune to obtain good results are ``n_estimators`` and
 the complexity of the base estimators (e.g., its depth ``max_depth`` or
-minimum required number of samples at a leaf ``min_samples_leaf`` in case of
-decision trees).
+minimum required number of samples to consider a split ``min_samples_split``).
 
 .. topic:: Examples:
 
@@ -422,29 +440,40 @@ Gradient Tree Boosting
 ======================
 
 `Gradient Tree Boosting <https://en.wikipedia.org/wiki/Gradient_boosting>`_
-or Gradient Boosted Regression Trees (GBRT) is a generalization
+or Gradient Boosted Decision Trees (GBDT) is a generalization
 of boosting to arbitrary
-differentiable loss functions. GBRT is an accurate and effective
+differentiable loss functions. GBDT is an accurate and effective
 off-the-shelf procedure that can be used for both regression and
-classification problems.  Gradient Tree Boosting models are used in a
+classification problems in a
 variety of areas including Web search ranking and ecology.
 
-The advantages of GBRT are:
-
-  + Natural handling of data of mixed type (= heterogeneous features)
-
-  + Predictive power
-
-  + Robustness to outliers in output space (via robust loss functions)
-
-The disadvantages of GBRT are:
-
-  + Scalability, due to the sequential nature of boosting it can
-    hardly be parallelized.
-
 The module :mod:`sklearn.ensemble` provides methods
-for both classification and regression via gradient boosted regression
+for both classification and regression via gradient boosted decision
 trees.
+
+.. note::
+
+  Scikit-learn 0.21 introduces two new experimental implementations of
+  gradient boosting trees, namely :class:`HistGradientBoostingClassifier`
+  and :class:`HistGradientBoostingRegressor`, inspired by
+  `LightGBM <https://github.com/Microsoft/LightGBM>`_.
+
+  These histogram-based estimators can be **orders of magnitude faster**
+  than :class:`GradientBoostingClassifier` and
+  :class:`GradientBoostingRegressor` when the number of samples is larger
+  than tens of thousands of samples.
+
+  They also have built-in support for missing values, which avoids the need
+  for an imputer.
+
+  These estimators are described in more detail below in
+  :ref:`histogram_based_gradient_boosting`.
+
+  The following guide focuses on :class:`GradientBoostingClassifier` and
+  :class:`GradientBoostingRegressor`, which might be preferred for small
+  sample sizes since binning may lead to split points that are too approximate
+  in this setting.
+
 
 Classification
 ---------------
@@ -463,7 +492,7 @@ with 100 decision stumps as weak learners::
 
     >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
     ...     max_depth=1, random_state=0).fit(X_train, y_train)
-    >>> clf.score(X_test, y_test)                 # doctest: +ELLIPSIS
+    >>> clf.score(X_test, y_test)
     0.913...
 
 The number of weak learners (i.e. regression trees) is controlled by the parameter ``n_estimators``; :ref:`The size of each tree <gradient_boosting_tree_size>` can be controlled either by setting the tree depth via ``max_depth`` or by setting the number of leaf nodes via ``max_leaf_nodes``. The ``learning_rate`` is a hyper-parameter in the range (0.0, 1.0] that controls overfitting via :ref:`shrinkage <gradient_boosting_shrinkage>` .
@@ -475,7 +504,8 @@ The number of weak learners (i.e. regression trees) is controlled by the paramet
    thus, the total number of induced trees equals
    ``n_classes * n_estimators``. For datasets with a large number
    of classes we strongly recommend to use
-   :class:`RandomForestClassifier` as an alternative to :class:`GradientBoostingClassifier` .
+   :class:`HistGradientBoostingClassifier` as an alternative to
+   :class:`GradientBoostingClassifier` .
 
 Regression
 ----------
@@ -497,7 +527,7 @@ for regression which can be specified via the argument
     >>> y_train, y_test = y[:200], y[200:]
     >>> est = GradientBoostingRegressor(n_estimators=100, learning_rate=0.1,
     ...     max_depth=1, random_state=0, loss='ls').fit(X_train, y_train)
-    >>> mean_squared_error(y_test, est.predict(X_test))    # doctest: +ELLIPSIS
+    >>> mean_squared_error(y_test, est.predict(X_test))
     5.00...
 
 The figure below shows the results of applying :class:`GradientBoostingRegressor`
@@ -536,7 +566,7 @@ fitted model.
 
   >>> _ = est.set_params(n_estimators=200, warm_start=True)  # set warm_start and new nr of trees
   >>> _ = est.fit(X_train, y_train) # fit additional 100 trees to est
-  >>> mean_squared_error(y_test, est.predict(X_test))    # doctest: +ELLIPSIS
+  >>> mean_squared_error(y_test, est.predict(X_test))
   3.84...
 
 .. _gradient_boosting_tree_size:
@@ -584,21 +614,20 @@ learners. Decision trees have a number of abilities that make them
 valuable for boosting, namely the ability to handle data of mixed type
 and the ability to model complex functions.
 
-Similar to other boosting algorithms GBRT builds the additive model in
-a forward stagewise fashion:
+Similar to other boosting algorithms, GBRT builds the additive model in
+a greedy fashion:
 
   .. math::
 
-    F_m(x) = F_{m-1}(x) + \gamma_m h_m(x)
+    F_m(x) = F_{m-1}(x) + \gamma_m h_m(x),
 
-At each stage the decision tree :math:`h_m(x)` is chosen to
-minimize the loss function :math:`L` given the current model
-:math:`F_{m-1}` and its fit :math:`F_{m-1}(x_i)`
+where the newly added tree :math:`h_m` tries to minimize the loss :math:`L`,
+given the previous ensemble :math:`F_{m-1}`:
 
   .. math::
 
-    F_m(x) = F_{m-1}(x) + \arg\min_{h} \sum_{i=1}^{n} L(y_i,
-    F_{m-1}(x_i) + h(x))
+    h_m =  \arg\min_{h} \sum_{i=1}^{n} L(y_i,
+    F_{m-1}(x_i) + h(x_i)).
 
 The initial model :math:`F_{0}` is problem specific, for least-squares
 regression one usually chooses the mean of the target values.
@@ -781,144 +810,157 @@ accessed via the ``feature_importances_`` property::
     >>> X, y = make_hastie_10_2(random_state=0)
     >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
     ...     max_depth=1, random_state=0).fit(X, y)
-    >>> clf.feature_importances_  # doctest: +ELLIPSIS
-    array([0.11, 0.1 , 0.11, ...
+    >>> clf.feature_importances_
+    array([0.10..., 0.10..., 0.11..., ...
 
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regression.py`
 
-.. currentmodule:: sklearn.ensemble.partial_dependence
+.. _histogram_based_gradient_boosting:
 
-.. _partial_dependence:
+Histogram-Based Gradient Boosting
+=================================
 
-Partial dependence
-..................
+Scikit-learn 0.21 introduces two new experimental implementations of
+gradient boosting trees, namely :class:`HistGradientBoostingClassifier`
+and :class:`HistGradientBoostingRegressor`, inspired by
+`LightGBM <https://github.com/Microsoft/LightGBM>`_.
 
-Partial dependence plots (PDP) show the dependence between the target response
-and a set of 'target' features, marginalizing over the
-values of all other features (the 'complement' features).
-Intuitively, we can interpret the partial dependence as the expected
-target response [1]_ as a function of the 'target' features [2]_.
+These histogram-based estimators can be **orders of magnitude faster**
+than :class:`GradientBoostingClassifier` and
+:class:`GradientBoostingRegressor` when the number of samples is larger
+than tens of thousands of samples.
 
-Due to the limits of human perception the size of the target feature
-set must be small (usually, one or two) thus the target features are
-usually chosen among the most important features.
+They also have built-in support for missing values, which avoids the need
+for an imputer.
 
-The Figure below shows four one-way and one two-way partial dependence plots
-for the California housing dataset:
+These fast estimators first bin the input samples ``X`` into
+integer-valued bins (typically 256 bins) which tremendously reduces the
+number of splitting points to consider, and allows the algorithm to
+leverage integer-based data structures (histograms) instead of relying on
+sorted continuous values when building the trees. The API of these
+estimators is slightly different, and some of the features from
+:class:`GradientBoostingClassifier` and :class:`GradientBoostingRegressor`
+are not yet supported: in particular sample weights, and some loss
+functions.
 
-.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_partial_dependence_001.png
-   :target: ../auto_examples/ensemble/plot_partial_dependence.html
-   :align: center
-   :scale: 70
+These estimators are still **experimental**: their predictions
+and their API might change without any deprecation cycle. To use them, you
+need to explicitly import ``enable_hist_gradient_boosting``::
 
-One-way PDPs tell us about the interaction between the target
-response and the target feature (e.g. linear, non-linear).
-The upper left plot in the above Figure shows the effect of the
-median income in a district on the median house price; we can
-clearly see a linear relationship among them.
-
-PDPs with two target features show the
-interactions among the two features. For example, the two-variable PDP in the
-above Figure shows the dependence of median house price on joint
-values of house age and avg. occupants per household. We can clearly
-see an interaction between the two features:
-For an avg. occupancy greater than two, the house price is nearly independent
-of the house age, whereas for values less than two there is a strong dependence
-on age.
-
-The module :mod:`partial_dependence` provides a convenience function
-:func:`~sklearn.ensemble.partial_dependence.plot_partial_dependence`
-to create one-way and two-way partial dependence plots. In the below example
-we show how to create a grid of partial dependence plots: two one-way
-PDPs for the features ``0`` and ``1`` and a two-way PDP between the two
-features::
-
-    >>> from sklearn.datasets import make_hastie_10_2
-    >>> from sklearn.ensemble import GradientBoostingClassifier
-    >>> from sklearn.ensemble.partial_dependence import plot_partial_dependence
-
-    >>> X, y = make_hastie_10_2(random_state=0)
-    >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
-    ...     max_depth=1, random_state=0).fit(X, y)
-    >>> features = [0, 1, (0, 1)]
-    >>> fig, axs = plot_partial_dependence(clf, X, features) #doctest: +SKIP
-
-For multi-class models, you need to set the class label for which the
-PDPs should be created via the ``label`` argument::
-
-    >>> from sklearn.datasets import load_iris
-    >>> iris = load_iris()
-    >>> mc_clf = GradientBoostingClassifier(n_estimators=10,
-    ...     max_depth=1).fit(iris.data, iris.target)
-    >>> features = [3, 2, (3, 2)]
-    >>> fig, axs = plot_partial_dependence(mc_clf, X, features, label=0) #doctest: +SKIP
-
-If you need the raw values of the partial dependence function rather
-than the plots you can use the
-:func:`~sklearn.ensemble.partial_dependence.partial_dependence` function::
-
-    >>> from sklearn.ensemble.partial_dependence import partial_dependence
-
-    >>> pdp, axes = partial_dependence(clf, [0], X=X)
-    >>> pdp  # doctest: +ELLIPSIS
-    array([[ 2.46643157,  2.46643157, ...
-    >>> axes  # doctest: +ELLIPSIS
-    [array([-1.62497054, -1.59201391, ...
-
-The function requires either the argument ``grid`` which specifies the
-values of the target features on which the partial dependence function
-should be evaluated or the argument ``X`` which is a convenience mode
-for automatically creating ``grid`` from the training data. If ``X``
-is given, the ``axes`` value returned by the function gives the axis
-for each target feature.
-
-For each value of the 'target' features in the ``grid`` the partial
-dependence function need to marginalize the predictions of a tree over
-all possible values of the 'complement' features. In decision trees
-this function can be evaluated efficiently without reference to the
-training data. For each grid point a weighted tree traversal is
-performed: if a split node involves a 'target' feature, the
-corresponding left or right branch is followed, otherwise both
-branches are followed, each branch is weighted by the fraction of
-training samples that entered that branch. Finally, the partial
-dependence is given by a weighted average of all visited leaves. For
-tree ensembles the results of each individual tree are again
-averaged.
-
-.. rubric:: Footnotes
-
-.. [1] For classification with ``loss='deviance'``  the target
-   response is logit(p).
-
-.. [2] More precisely its the expectation of the target response after
-   accounting for the initial model; partial dependence plots
-   do not include the ``init`` model.
+  >>> # explicitly require this experimental feature
+  >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+  >>> # now you can import normally from ensemble
+  >>> from sklearn.ensemble import HistGradientBoostingClassifier
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_ensemble_plot_partial_dependence.py`
+ * :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
 
+Usage
+-----
+
+Most of the parameters are unchanged from
+:class:`GradientBoostingClassifier` and :class:`GradientBoostingRegressor`.
+One exception is the ``max_iter`` parameter that replaces ``n_estimators``, and
+controls the number of iterations of the boosting process:
+
+  >>> from sklearn.experimental import enable_hist_gradient_boosting
+  >>> from sklearn.ensemble import HistGradientBoostingClassifier
+  >>> from sklearn.datasets import make_hastie_10_2
+
+  >>> X, y = make_hastie_10_2(random_state=0)
+  >>> X_train, X_test = X[:2000], X[2000:]
+  >>> y_train, y_test = y[:2000], y[2000:]
+  >>> clf = HistGradientBoostingClassifier(max_iter=100).fit(X_train, y_train)
+
+  >>> clf.score(X_test, y_test)
+  0.8998
+
+The size of the trees can be controlled through the ``max_leaf_nodes``,
+``max_depth``, and ``min_samples_leaf`` parameters.
+
+The number of bins used to bin the data is controlled with the ``max_bins``
+parameter. Using less bins acts as a form of regularization. It is
+generally recommended to use as many bins as possible, which is the default.
+
+The ``l2_regularization`` parameter is a regularizer on the loss function and
+corresponds to :math:`\lambda` in equation (2) of [XGBoost]_.
+
+Note that **early-stopping is enabled by default**. The early-stopping
+behaviour is controlled via the ``scoring``, ``validation_fraction``,
+``n_iter_no_change``, and ``tol`` parameters. It is possible to early-stop
+using an arbitrary :term:`scorer`, or just the training or validation loss. By
+default, early-stopping is performed using the default :term:`scorer` of
+the estimator on a validation set.
+
+Low-level parallelism
+---------------------
+
+:class:`HistGradientBoostingClassifier` and
+:class:`HistGradientBoostingRegressor` have implementations that use OpenMP
+for parallelization through Cython. The number of threads that is used can
+be changed using the ``OMP_NUM_THREADS`` environment variable. By default,
+all available cores are used. Please refer to the OpenMP documentation for
+details.
+
+The following parts are parallelized:
+
+- mapping samples from real values to integer-valued bins (finding the bin
+  thresholds is however sequential)
+- building histograms is parallelized over features
+- finding the best split point at a node is parallelized over features
+- during fit, mapping samples into the left and right children is
+  parallelized over samples
+- gradient and hessians computations are parallelized over samples
+- predicting is parallelized over samples
+
+Why it's faster
+---------------
+
+The bottleneck of a gradient boosting procedure is building the decision
+trees. Building a traditional decision tree (as in the other GBDTs
+:class:`GradientBoostingClassifier` and :class:`GradientBoostingRegressor`)
+requires sorting the samples at each node (for
+each feature). Sorting is needed so that the potential gain of a split point
+can be computed efficiently. Splitting a single node has thus a complexity
+of :math:`\mathcal{O}(n_\text{features} \times n \log(n))` where :math:`n`
+is the number of samples at the node.
+
+:class:`HistGradientBoostingClassifier` and
+:class:`HistGradientBoostingRegressor`, in contrast, do not require sorting the
+feature values and instead use a data-structure called a histogram, where the
+samples are implicitly ordered. Building a histogram has a
+:math:`\mathcal{O}(n)` complexity, so the node splitting procedure has a
+:math:`\mathcal{O}(n_\text{features} \times n)` complexity, much smaller
+than the previous one. In addition, instead of considering :math:`n` split
+points, we here consider only ``max_bins`` split points, which is much
+smaller.
+
+In order to build histograms, the input data `X` needs to be binned into
+integer-valued bins. This binning procedure does require sorting the feature
+values, but it only happens once at the very beginning of the boosting process
+(not at each node, like in :class:`GradientBoostingClassifier` and
+:class:`GradientBoostingRegressor`).
+
+Finally, many parts of the implementation of
+:class:`HistGradientBoostingClassifier` and
+:class:`HistGradientBoostingRegressor` are parallelized.
 
 .. topic:: References
 
- .. [F2001] J. Friedman, "Greedy Function Approximation: A Gradient Boosting Machine",
-   The Annals of Statistics, Vol. 29, No. 5, 2001.
+  .. [XGBoost] Tianqi Chen, Carlos Guestrin, "XGBoost: A Scalable Tree
+     Boosting System". https://arxiv.org/abs/1603.02754
+  .. [LightGBM] Ke et. al. "LightGBM: A Highly Efficient Gradient
+     BoostingDecision Tree"
 
- .. [F1999] J. Friedman, "Stochastic Gradient Boosting", 1999
-
- .. [HTF2009] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical Learning Ed. 2", Springer, 2009.
-
- .. [R2007] G. Ridgeway, "Generalized Boosted Models: A guide to the gbm package", 2007
-
-
- .. _voting_classifier:
+.. _voting_classifier:
 
 Voting Classifier
 ========================
 
-The idea behind the :class:`VotingClassifier` is to combine
+The idea behind the `VotingClassifier` is to combine
 conceptually different machine learning classifiers and use a majority vote
 or the average predicted probabilities (soft vote) to predict the class labels.
 Such a classifier can be useful for a set of equally well performing model
@@ -965,18 +1007,18 @@ The following example shows how to fit the majority rule classifier::
    >>> X, y = iris.data[:, 1:3], iris.target
 
    >>> clf1 = LogisticRegression(random_state=1)
-   >>> clf2 = RandomForestClassifier(random_state=1)
+   >>> clf2 = RandomForestClassifier(n_estimators=50, random_state=1)
    >>> clf3 = GaussianNB()
 
    >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='hard')
 
    >>> for clf, label in zip([clf1, clf2, clf3, eclf], ['Logistic Regression', 'Random Forest', 'naive Bayes', 'Ensemble']):
-   ...     scores = cross_val_score(clf, X, y, cv=5, scoring='accuracy')
+   ...     scores = cross_val_score(clf, X, y, scoring='accuracy', cv=5)
    ...     print("Accuracy: %0.2f (+/- %0.2f) [%s]" % (scores.mean(), scores.std(), label))
-   Accuracy: 0.90 (+/- 0.05) [Logistic Regression]
-   Accuracy: 0.93 (+/- 0.05) [Random Forest]
+   Accuracy: 0.95 (+/- 0.04) [Logistic Regression]
+   Accuracy: 0.94 (+/- 0.04) [Random Forest]
    Accuracy: 0.91 (+/- 0.04) [naive Bayes]
-   Accuracy: 0.95 (+/- 0.05) [Ensemble]
+   Accuracy: 0.95 (+/- 0.04) [Ensemble]
 
 
 Weighted Average Probabilities (Soft Voting)
@@ -1023,29 +1065,30 @@ Vector Machine, a Decision Tree, and a K-nearest neighbor classifier::
 
    >>> # Loading some example data
    >>> iris = datasets.load_iris()
-   >>> X = iris.data[:, [0,2]]
+   >>> X = iris.data[:, [0, 2]]
    >>> y = iris.target
 
    >>> # Training classifiers
    >>> clf1 = DecisionTreeClassifier(max_depth=4)
    >>> clf2 = KNeighborsClassifier(n_neighbors=7)
-   >>> clf3 = SVC(gamma='scale', kernel='rbf', probability=True)
-   >>> eclf = VotingClassifier(estimators=[('dt', clf1), ('knn', clf2), ('svc', clf3)], voting='soft', weights=[2,1,2])
+   >>> clf3 = SVC(kernel='rbf', probability=True)
+   >>> eclf = VotingClassifier(estimators=[('dt', clf1), ('knn', clf2), ('svc', clf3)],
+   ...                         voting='soft', weights=[2, 1, 2])
 
-   >>> clf1 = clf1.fit(X,y)
-   >>> clf2 = clf2.fit(X,y)
-   >>> clf3 = clf3.fit(X,y)
-   >>> eclf = eclf.fit(X,y)
+   >>> clf1 = clf1.fit(X, y)
+   >>> clf2 = clf2.fit(X, y)
+   >>> clf3 = clf3.fit(X, y)
+   >>> eclf = eclf.fit(X, y)
 
 .. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_voting_decision_regions_001.png
     :target: ../auto_examples/ensemble/plot_voting_decision_regions.html
     :align: center
     :scale: 75%
 
-Using the `VotingClassifier` with `GridSearch`
-----------------------------------------------
+Using the `VotingClassifier` with `GridSearchCV`
+------------------------------------------------
 
-The `VotingClassifier` can also be used together with `GridSearch` in order
+The `VotingClassifier` can also be used together with `GridSearchCV` in order
 to tune the hyperparameters of the individual estimators::
 
    >>> from sklearn.model_selection import GridSearchCV
@@ -1054,7 +1097,7 @@ to tune the hyperparameters of the individual estimators::
    >>> clf3 = GaussianNB()
    >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='soft')
 
-   >>> params = {'lr__C': [1.0, 100.0], 'rf__n_estimators': [20, 200],}
+   >>> params = {'lr__C': [1.0, 100.0], 'rf__n_estimators': [20, 200]}
 
    >>> grid = GridSearchCV(estimator=eclf, param_grid=params, cv=5)
    >>> grid = grid.fit(iris.data, iris.target)
@@ -1070,4 +1113,48 @@ must support ``predict_proba`` method)::
 
 Optionally, weights can be provided for the individual classifiers::
 
-   >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='soft', weights=[2,5,1])
+   >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)],
+   ...                         voting='soft', weights=[2, 5, 1])
+
+
+.. _voting_regressor:
+
+Voting Regressor
+================
+
+The idea behind the `VotingRegressor` is to combine conceptually
+different machine learning regressors and return the average predicted values.
+Such a regressor can be useful for a set of equally well performing models
+in order to balance out their individual weaknesses.
+
+Usage
+.....
+
+The following example shows how to fit the VotingRegressor::
+
+   >>> from sklearn import datasets
+   >>> from sklearn.ensemble import GradientBoostingRegressor
+   >>> from sklearn.ensemble import RandomForestRegressor
+   >>> from sklearn.linear_model import LinearRegression
+   >>> from sklearn.ensemble import VotingRegressor
+
+   >>> # Loading some example data
+   >>> boston = datasets.load_boston()
+   >>> X = boston.data
+   >>> y = boston.target
+
+   >>> # Training classifiers
+   >>> reg1 = GradientBoostingRegressor(random_state=1, n_estimators=10)
+   >>> reg2 = RandomForestRegressor(random_state=1, n_estimators=10)
+   >>> reg3 = LinearRegression()
+   >>> ereg = VotingRegressor(estimators=[('gb', reg1), ('rf', reg2), ('lr', reg3)])
+   >>> ereg = ereg.fit(X, y)
+
+.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_voting_regressor_001.png
+    :target: ../auto_examples/ensemble/plot_voting_regressor.html
+    :align: center
+    :scale: 75%
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_ensemble_plot_voting_regressor.py`
