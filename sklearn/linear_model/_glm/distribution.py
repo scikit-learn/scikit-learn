@@ -206,7 +206,7 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         if coef.size == X.shape[1] + 1:
             devp = np.concatenate(([temp.sum()], temp @ X))
         else:
-            devp = temp @ X  # sampe as X.T @ temp
+            devp = temp @ X  # same as X.T @ temp
         return mu, devp
 
 
