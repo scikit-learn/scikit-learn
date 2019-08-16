@@ -287,10 +287,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         weights_sum = np.sum(weights)
         weights = weights / weights_sum
 
-        # initialization of coef = (intercept_, coef)
-        # Note: The dispersion parameter phi does not enter the estimation
-        #       of mu_i=E[y_i].
-
         if self.warm_start and hasattr(self, 'coef_'):
             if self.fit_intercept:
                 coef = np.concatenate((np.array([self.intercept_]),

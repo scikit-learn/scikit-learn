@@ -61,17 +61,17 @@ def test_sample_weights_validation():
         glm.fit(X, y, weights)
 
 
-@pytest.mark.parametrize('f, fam',
+@pytest.mark.parametrize('name, instance',
                          [('normal', NormalDistribution()),
                           ('poisson', PoissonDistribution()),
                           ('gamma', GammaDistribution()),
                           ('inverse-gaussian', InverseGaussianDistribution())])
-def test_glm_family_argument(f, fam):
+def test_glm_family_argument(name, instance):
     """Test GLM family argument set as string."""
     y = np.array([0.1, 0.5])  # in range of all distributions
     X = np.array([[1], [2]])
-    glm = GeneralizedLinearRegressor(family=f, alpha=0).fit(X, y)
-    assert isinstance(glm._family_instance, fam.__class__)
+    glm = GeneralizedLinearRegressor(family=name, alpha=0).fit(X, y)
+    assert isinstance(glm._family_instance, instance.__class__)
 
     glm = GeneralizedLinearRegressor(family='not a family',
                                      fit_intercept=False)
@@ -79,15 +79,15 @@ def test_glm_family_argument(f, fam):
         glm.fit(X, y)
 
 
-@pytest.mark.parametrize('l, link',
+@pytest.mark.parametrize('name, instance',
                          [('identity', IdentityLink()),
                           ('log', LogLink())])
-def test_glm_link_argument(l, link):
+def test_glm_link_argument(name, instance):
     """Test GLM link argument set as string."""
     y = np.array([0.1, 0.5])  # in range of all distributions
     X = np.array([[1], [2]])
-    glm = GeneralizedLinearRegressor(family='normal', link=l).fit(X, y)
-    assert isinstance(glm._link_instance, link.__class__)
+    glm = GeneralizedLinearRegressor(family='normal', link=name).fit(X, y)
+    assert isinstance(glm._link_instance, instance.__class__)
 
     glm = GeneralizedLinearRegressor(family='normal', link='not a link')
     with pytest.raises(ValueError, match="link must be"):
