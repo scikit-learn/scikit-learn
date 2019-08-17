@@ -11,7 +11,6 @@ This module defines export functions for decision trees.
 #          Li Li <aiki.nogard@gmail.com>
 #          Giuseppe Vettigli <vettigli@gmail.com>
 # License: BSD 3 clause
-import warnings
 from io import StringIO
 
 from numbers import Integral
@@ -743,7 +742,7 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
     'digraph Tree {...
     """
 
-    check_is_fitted(decision_tree, 'tree_')
+    check_is_fitted(decision_tree)
     own_file = False
     return_string = False
     try:
@@ -849,7 +848,7 @@ def export_text(decision_tree, feature_names=None, max_depth=10,
     |   |--- petal width (cm) >  1.75
     |   |   |--- class: 2
     """
-    check_is_fitted(decision_tree, 'tree_')
+    check_is_fitted(decision_tree)
     tree_ = decision_tree.tree_
     class_names = decision_tree.classes_
     right_child_fmt = "{} {} <= {}\n"

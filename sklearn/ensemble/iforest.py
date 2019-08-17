@@ -303,7 +303,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
             For each observation, tells whether or not (+1 or -1) it should
             be considered as an inlier according to the fitted model.
         """
-        check_is_fitted(self, ["offset_"])
+        check_is_fitted(self)
         X = check_array(X, accept_sparse='csr')
         is_inlier = np.ones(X.shape[0], dtype=int)
         is_inlier[self.decision_function(X) < 0] = -1
@@ -365,7 +365,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
             The lower, the more abnormal.
         """
         # code structure from ForestClassifier/predict_proba
-        check_is_fitted(self, ["estimators_"])
+        check_is_fitted(self)
 
         # Check data
         X = check_array(X, accept_sparse='csr')

@@ -435,6 +435,6 @@ class MeanShift(BaseEstimator, ClusterMixin):
         labels : array, shape [n_samples,]
             Index of the cluster each sample belongs to.
         """
-        check_is_fitted(self, "cluster_centers_")
+        check_is_fitted(self)
 
         return pairwise_distances_argmin(X, self.cluster_centers_)
