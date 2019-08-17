@@ -352,7 +352,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         y_pred : array, shape (n_samples,)
             Returns predicted values of linear predictor.
         """
-        check_is_fitted(self, "coef_")
+        check_is_fitted(self)
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
                         dtype='numeric', ensure_2d=True,
                         allow_nd=False)
