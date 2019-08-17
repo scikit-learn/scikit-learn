@@ -300,7 +300,7 @@ class TweedieDistribution(ExponentialDispersionModel):
         p = self.power
 
         if check_input:
-            message = ("Mean Tweedie deviance error with p={} can only be "
+            message = ("Mean Tweedie deviance error with power={} can only be "
                        "used on ".format(p))
             if p < 0:
                 # 'Extreme stable', y any realy number, mu > 0
@@ -310,8 +310,8 @@ class TweedieDistribution(ExponentialDispersionModel):
                 # Normal, y and mu can be any real number
                 pass
             elif 0 < p < 1:
-                raise ValueError("Tweedie deviance is only defined for p<=0 "
-                                 "and p>=1.")
+                raise ValueError("Tweedie deviance is only defined for "
+                                 "power<=0 and power>=1.")
             elif 1 <= p < 2:
                 # Poisson and Compound poisson distribution, y >= 0, mu > 0
                 if (y < 0).any() or (mu <= 0).any():
@@ -335,8 +335,8 @@ class TweedieDistribution(ExponentialDispersionModel):
             # Normal distribution, y and mu any real number
             dev = (y - mu)**2
         elif p < 1:
-            raise ValueError("Tweedie deviance is only defined for p<=0 and "
-                             "p>=1.")
+            raise ValueError("Tweedie deviance is only defined for power<=0 "
+                             "and power>=1.")
         elif p == 1:
             # Poisson distribution
             dev = 2 * (xlogy(y, y/mu) - y + mu)
