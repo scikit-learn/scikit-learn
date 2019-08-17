@@ -185,9 +185,12 @@ clustering an image.
 
 ::
 
-   >>> X = np.reshape(rescaled_coins, (-1, 1)) # We need a vectorized version of the image.
-   # rescaled_coins is a down-scaled version of the coins image to speed up the process.
-   >>> connectivity = grid_to_graph(*rescaled_coins.shape) # Define the graph structure of the data. Pixels connected to their neighbors.
+   >>> X = np.reshape(rescaled_coins, (-1, 1)) 
+   # We need a vectorized version of the image.
+   # rescaled_coins is a down-scaled version of the coins image to speed up the 
+   # process.
+   >>> connectivity = grid_to_graph(*rescaled_coins.shape) 
+   # Define the graph structure of the data. Pixels connected to their neighbors
    >>> n_clusters = 27  # number of regions
    >>> ward = AgglomerativeClustering(n_clusters=n_clusters, linkage='ward',
                                connectivity=connectivity)
