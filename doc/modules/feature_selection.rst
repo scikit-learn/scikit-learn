@@ -47,6 +47,17 @@ so we can select using the threshold ``.8 * (1 - .8)``::
 As expected, ``VarianceThreshold`` has removed the first column,
 which has a probability :math:`p = 5/6 > .8` of containing a zero.
 
+.. _covariance_threshold:
+
+Remove features with high covariance
+====================================
+
+Talk about `CovarianceThreshold`
+
+.. topic:: Reference
+
+    .. [BOOK] This is a book
+
 .. _univariate_feature_selection:
 
 Univariate feature selection
