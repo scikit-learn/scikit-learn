@@ -422,3 +422,15 @@ def test_ovr_decision_function():
                                              n_classes)[0] for i in range(4)]
 
     assert_allclose(dec_values, dec_values_one, atol=1e-6)
+
+
+def type_of_target_is_consistent_for_array_like_entities():
+    y_list = [[1, 1], [0, 1]]
+    y_np_ndarray = np.asarray(y_list)
+
+    expected_type_of_target = "multilable_indicator"
+    type_of_target_list = type_of_target(y_list)
+    type_of_target_nd_array = type_of_target(y_np_ndarray)
+
+    assert type_of_target_list == expected_type_of_target
+    assert type_of_target_list == type_of_target_nd_array

@@ -108,11 +108,15 @@ def _is_integral_float(y):
 
 def is_multilabel(y):
     """ Check if ``y`` is in a multilabel format.
+    Generally, ``y`` is in a multilabel format
+    if it has the following three properties
+    1. It has exactly two dimensions
+    2. Its second dimension has least 2 elements
+    3. Its data type is either bool, int or unsign int
 
     Parameters
     ----------
-    y : numpy array of shape [n_samples]
-        Target values.
+    y : an array-like object of target values. y can be a sparse matrix too.
 
     Returns
     -------
@@ -133,23 +137,32 @@ def is_multilabel(y):
     False
     >>> is_multilabel(np.array([[1, 0, 0]]))
     True
+    >>> is_multilabel(None)
+    False
+    >>> is_multilabel([])
+    False
+    >>> is_multilabel([[1, 2], [1, 1]])
+    True
+    >>> is_multilabel(np.array([[1, 2], [3, 1]]))
+    False
     """
-    if hasattr(y, '__array__'):
-        y = np.asarray(y)
-    if not (hasattr(y, "shape") and y.ndim == 2 and y.shape[1] > 1):
-        return False
 
     if issparse(y):
+        if not (y.ndim == 2 and y.shape[1] > 1):
+            return False
         if isinstance(y, (dok_matrix, lil_matrix)):
             y = y.tocsr()
         return (len(y.data) == 0 or np.unique(y.data).size == 1 and
-                (y.dtype.kind in 'biu' or  # bool, int, uint
+                (y.dtype.kind in ('b', 'i', 'u') or  # bool, int, uint
                  _is_integral_float(np.unique(y.data))))
-    else:
-        labels = np.unique(y)
 
-        return len(labels) < 3 and (y.dtype.kind in 'biu' or  # bool, int, uint
-                                    _is_integral_float(labels))
+    y = np.asarray(y)
+    if y.ndim != 2 or y.shape[1] < 2:
+        return False
+
+    labels = np.unique(y)
+    return len(labels) < 3 and \
+        (y.dtype.kind in ('b', 'i', 'u') or _is_integral_float(labels))
 
 
 def check_classification_targets(y):
@@ -227,7 +240,7 @@ def type_of_target(y):
     >>> type_of_target(np.array([[1, 2], [3, 1]]))
     'multiclass-multioutput'
     >>> type_of_target([[1, 2]])
-    'multiclass-multioutput'
+    'multilabel-indicator'
     >>> type_of_target(np.array([[1.5, 2.0], [3.0, 1.6]]))
     'continuous-multioutput'
     >>> type_of_target(np.array([[0, 1], [1, 1]]))
