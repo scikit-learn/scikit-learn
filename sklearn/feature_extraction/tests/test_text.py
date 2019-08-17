@@ -1294,60 +1294,36 @@ def test_callable_analyzer_reraise_error(tmpdir, Estimator):
     'Vectorizer',
     [CountVectorizer, HashingVectorizer, TfidfVectorizer]
 )
-def test_unused_parameters_warn(Vectorizer):
+@pytest.mark.parametrize(
+    'stop_words, tokenizer, preprocessor, ngram_range, token_pattern,'
+    'analyzer, unused_name, ovrd_name, ovrd_msg',
+    [(["you've", "you'll"], None, None, (1, 1), None, 'char',
+     "'stop_words'", "'analyzer'", "!= 'word'"),
+     (None, lambda s: s.split(), None, (1, 1), None, 'char',
+     "'tokenizer'", "'analyzer'", "!= 'word'"),
+     (None, lambda s: s.split(), None, (1, 1), r'\w+', 'word',
+      "'token_pattern'", "'tokenizer'", "is not None"),
+     (None, None, lambda s:s.upper(), (1, 1), r'\w+', lambda s:s.upper(),
+      "'preprocessor'", "'analyzer'", "is callable"),
+     (None, None, None, (1, 2), None, lambda s:s.upper(),
+      "'ngram_range'", "'analyzer'", "is callable"),
+     (None, None, None, (1, 1), r'\w+', 'char',
+      "'token_pattern'", "'analyzer'", "!= 'word'")]
+)
+def test_unused_parameters_warn(Vectorizer, stop_words,
+                                tokenizer, preprocessor,
+                                ngram_range, token_pattern,
+                                analyzer, unused_name, ovrd_name,
+                                ovrd_msg):
 
     train_data = JUNK_FOOD_DOCS
     # setting parameter and checking for corresponding warning messages
     vect = Vectorizer()
-    vect.set_params(stop_words=["you've", "you", "you'll", 'AND'],
-                    analyzer='char')
-    msg = "The parameter 'stop_words' will not be used"
-    " since analyzer != 'word'"
-    with pytest.warns(UserWarning, match=msg):
-        vect.fit(train_data)
-
-    vect = Vectorizer()
-    vect.set_params(tokenizer=lambda s: s.split(),
-                    analyzer='char')
-    msg = "The parameter 'tokenizer' will not be used"
-    " since analyzer != 'word'"
-    with pytest.warns(UserWarning, match=msg):
-        vect.fit(train_data)
-
-    vect = Vectorizer()
-    vect.set_params(tokenizer=lambda s: s.split(),
-                    token_pattern=r'\w+')
-    msg = "The parameter 'token_pattern' will not be used"
-    " since 'tokenizer' is not None'"
-    with pytest.warns(UserWarning, match=msg):
-        vect.fit(train_data)
-
-    def analyzer(doc):
-        return doc.upper()
-
-    def preprocess(doc):
-        return doc.upper()
-
-    vect = Vectorizer()
-    vect.set_params(preprocessor=preprocess,
-                    analyzer=analyzer)
-    msg = "The parameter 'preprocessor' will not be used"
-    " since 'analyzer' is callable"
-    with pytest.warns(UserWarning, match=msg):
-        vect.fit(train_data)
-
-    vect = Vectorizer()
-    vect.set_params(ngram_range=(1, 1),
-                    analyzer=analyzer)
-    msg = "The parameter 'ngram_range' will not be used"
-    " since 'analyzer' is callable"
-    with pytest.warns(UserWarning, match=msg):
-        vect.fit(train_data)
-
-    vect = Vectorizer()
-    vect.set_params(token_pattern=r"(?u)\b\w\w+\b",
-                    analyzer='char')
-    msg = "The parameter 'token_pattern' will not be used"
-    " since analyzer != 'word'"
+    vect.set_params(stop_words=stop_words, tokenizer=tokenizer,
+                    preprocessor=preprocessor, ngram_range=ngram_range,
+                    token_pattern=token_pattern, analyzer=analyzer)
+    msg = ("The parameter %s will not be used"
+           " since %s %s" % (unused_name, ovrd_name, ovrd_msg)
+           )
     with pytest.warns(UserWarning, match=msg):
         vect.fit(train_data)
