@@ -914,8 +914,8 @@ likelihood as
               \left(loglike(y,\mu,\phi)
               - loglike(y,y,\phi)\right)
 
-The following table lists some specific EDM distributions&mdash;all are Tweedie
-distributions&mdash;and some properties.
+The following table lists some specific EDM distributions—all are Tweedie
+distributions—and some of their properties.
 
 ================= ===============================  ====================================== ============================================
 Distribution       Target Domain                    Unit Variance Function :math:`v(\mu)`  Unit Deviance :math:`d(y, \mu)`
@@ -943,7 +943,7 @@ appropriate,
     you might try an Inverse Gaussian deviance (or even higher variance powers
     of the Tweedie family).
 
-Since the linear predictor :math:`Xw` can be negative and
+Since the linear predictor :math:`x^\top w` can be negative and
 Poisson, Gamma and Inverse Gaussian distributions don't support negative values,
 it is convenient to apply a link function different from the identity link
 :math:`h(x^\top w)=x^\top w` that guarantees the non-negativeness, e.g. the
@@ -951,32 +951,33 @@ log-link `link='log'` with :math:`h(x^\top w)=\exp(x^\top w)`.
 
 :class:`TweedieRegressor` implements a generalized linear model
 for the Tweedie distribution, that allows to model any of the above mentioned
-distributions using the appropriate power parameter ``p``, i.e. the exponent of
-the unit variance function,
+distributions using the appropriate ``power`` parameter, i.e. the exponent
+of the unit variance function,
 
- - ``p = 0``: Normal distribution. Specialized solvers such as
+ - ``power = 0``: Normal distribution. Specialized solvers such as
    :class:`Ridge`, :class:`ElasticNet` are generally
    more appropriate in this case.
 
- - ``p = 1``: Poisson distribution. :class:`PoissonRegressor` is exposed for
+ - ``power = 1``: Poisson distribution. :class:`PoissonRegressor` is exposed for
    convenience. However, it is strictly equivalent to
    `TweedieRegressor(power=1)`.
 
- - ``p = 2``: Gamma distribution. :class:`GammaRegressor` is exposed for
+ - ``power = 2``: Gamma distribution. :class:`GammaRegressor` is exposed for
    convenience. However, it is strictly equivalent to
    `TweedieRegressor(power=2)`.
 
- - ``p = 3``: Inverse Gamma distribution.
+ - ``power = 3``: Inverse Gamma distribution.
 
 
-Note:
-* The feature matrix `X` should be standardized before fitting. This
-  ensures that the penalty treats features equally.
-* If you want to model a relative frequency, i.e. counts per exposure (time,
-  volume, ...) you can do so by a Poisson distribution and passing
-  :math:`y=\frac{\mathrm{counts}}{\mathrm{exposure}}` as target values together
-  with :math:`s=\mathrm{exposure}` as sample weights. This is done in both
-  examples linked below.
+.. note::
+
+   * The feature matrix `X` should be standardized before fitting. This
+     ensures that the penalty treats features equally.
+   * If you want to model a relative frequency, i.e. counts per exposure (time,
+     volume, ...) you can do so by a Poisson distribution and passing
+     :math:`y=\frac{\mathrm{counts}}{\mathrm{exposure}}` as target values
+     together with :math:`s=\mathrm{exposure}` as sample weights. This is done
+     in both examples linked below.
 
 The estimator can be used as follows::
 
