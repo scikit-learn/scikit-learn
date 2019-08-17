@@ -1,13 +1,17 @@
 """Tests for Incremental PCA."""
 import numpy as np
+import pytest
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
+from sklearn.utils.testing import assert_allclose_dense_sparse
 
 from sklearn import datasets
 from sklearn.decomposition import PCA, IncrementalPCA
+
+from scipy import sparse
 
 iris = datasets.load_iris()
 
@@ -22,17 +26,51 @@ def test_incremental_pca():
 
     X_transformed = ipca.fit_transform(X)
 
-    np.testing.assert_equal(X_transformed.shape, (X.shape[0], 2))
-    assert_almost_equal(ipca.explained_variance_ratio_.sum(),
-                        pca.explained_variance_ratio_.sum(), 1)
+    assert X_transformed.shape == (X.shape[0], 2)
+    np.testing.assert_allclose(ipca.explained_variance_ratio_.sum(),
+                               pca.explained_variance_ratio_.sum(), rtol=1e-3)
 
     for n_components in [1, 2, X.shape[1]]:
         ipca = IncrementalPCA(n_components, batch_size=batch_size)
         ipca.fit(X)
         cov = ipca.get_covariance()
         precision = ipca.get_precision()
-        assert_array_almost_equal(np.dot(cov, precision),
-                                  np.eye(X.shape[1]))
+        np.testing.assert_allclose(np.dot(cov, precision),
+                                   np.eye(X.shape[1]), atol=1e-13)
+
+
+@pytest.mark.parametrize(
+    "matrix_class",
+    [sparse.csc_matrix, sparse.csr_matrix, sparse.lil_matrix])
+def test_incremental_pca_sparse(matrix_class):
+    # Incremental PCA on sparse arrays.
+    X = iris.data
+    pca = PCA(n_components=2)
+    pca.fit_transform(X)
+    X_sparse = matrix_class(X)
+    batch_size = X_sparse.shape[0] // 3
+    ipca = IncrementalPCA(n_components=2, batch_size=batch_size)
+
+    X_transformed = ipca.fit_transform(X_sparse)
+
+    assert X_transformed.shape == (X_sparse.shape[0], 2)
+    np.testing.assert_allclose(ipca.explained_variance_ratio_.sum(),
+                               pca.explained_variance_ratio_.sum(), rtol=1e-3)
+
+    for n_components in [1, 2, X.shape[1]]:
+        ipca = IncrementalPCA(n_components, batch_size=batch_size)
+        ipca.fit(X_sparse)
+        cov = ipca.get_covariance()
+        precision = ipca.get_precision()
+        np.testing.assert_allclose(np.dot(cov, precision),
+                                   np.eye(X_sparse.shape[1]), atol=1e-13)
+
+    with pytest.raises(
+            TypeError,
+            match="IncrementalPCA.partial_fit does not support "
+            "sparse input. Either convert data to dense "
+            "or use IncrementalPCA.fit to do so in batches."):
+        ipca.partial_fit(X_sparse)
 
 
 def test_incremental_pca_check_projection():
@@ -173,6 +211,23 @@ def test_incremental_pca_batch_values():
 
     for i, j in zip(all_components[:-1], all_components[1:]):
         assert_almost_equal(i, j, decimal=1)
+
+
+def test_incremental_pca_batch_rank():
+    # Test sample size in each batch is always larger or equal to n_components
+    rng = np.random.RandomState(1999)
+    n_samples = 100
+    n_features = 20
+    X = rng.randn(n_samples, n_features)
+    all_components = []
+    batch_sizes = np.arange(20, 90, 3)
+    for batch_size in batch_sizes:
+        ipca = IncrementalPCA(n_components=20, batch_size=batch_size).fit(X)
+        all_components.append(ipca.components_)
+
+    for components_i, components_j in zip(all_components[:-1],
+                                          all_components[1:]):
+        assert_allclose_dense_sparse(components_i, components_j)
 
 
 def test_incremental_pca_partial_fit():

@@ -499,8 +499,8 @@ API changes summary
 
 - The ``shuffle`` option of :class:`.linear_model.SGDClassifier`,
   :class:`linear_model.SGDRegressor`, :class:`linear_model.Perceptron`,
-  :class:`linear_model.PassiveAgressiveClassifier` and
-  :class:`linear_model.PassiveAgressiveRegressor` now defaults to ``True``.
+  :class:`linear_model.PassiveAggressiveClassifier` and
+  :class:`linear_model.PassiveAggressiveRegressor` now defaults to ``True``.
 
 - :class:`cluster.DBSCAN` now uses a deterministic initialization. The
   `random_state` parameter is deprecated. By :user:`Erich Schubert <kno10>`.

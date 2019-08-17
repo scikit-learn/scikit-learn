@@ -1,14 +1,14 @@
 from itertools import product
 import numpy as np
-from numpy.testing import (assert_almost_equal, assert_array_almost_equal,
-                           assert_equal)
+from numpy.testing import assert_almost_equal, assert_array_almost_equal
 
 from sklearn import datasets
 from sklearn import manifold
 from sklearn import neighbors
 from sklearn import pipeline
 from sklearn import preprocessing
-from sklearn.utils.testing import assert_less
+
+from scipy.sparse import rand as sparse_rand
 
 eigen_solvers = ['auto', 'dense', 'arpack']
 path_methods = ['auto', 'FW', 'D']
@@ -99,7 +99,7 @@ def test_transform():
     X_iso2 = iso.transform(X + noise)
 
     # Make sure the rms error on re-embedding is comparable to noise_scale
-    assert_less(np.sqrt(np.mean((X_iso - X_iso2) ** 2)), 2 * noise_scale)
+    assert np.sqrt(np.mean((X_iso - X_iso2) ** 2)) < 2 * noise_scale
 
 
 def test_pipeline():
@@ -111,7 +111,7 @@ def test_pipeline():
         [('isomap', manifold.Isomap()),
          ('clf', neighbors.KNeighborsClassifier())])
     clf.fit(X, y)
-    assert_less(.9, clf.score(X, y))
+    assert .9 < clf.score(X, y)
 
 
 def test_isomap_clone_bug():
@@ -120,5 +120,17 @@ def test_isomap_clone_bug():
     for n_neighbors in [10, 15, 20]:
         model.set_params(n_neighbors=n_neighbors)
         model.fit(np.random.rand(50, 2))
-        assert_equal(model.nbrs_.n_neighbors,
+        assert (model.nbrs_.n_neighbors ==
                      n_neighbors)
+
+
+def test_sparse_input():
+    X = sparse_rand(100, 3, density=0.1, format='csr')
+
+    # Should not error
+    for eigen_solver in eigen_solvers:
+        for path_method in path_methods:
+            clf = manifold.Isomap(n_components=2,
+                                  eigen_solver=eigen_solver,
+                                  path_method=path_method)
+            clf.fit(X)

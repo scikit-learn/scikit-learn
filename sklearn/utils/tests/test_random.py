@@ -1,16 +1,11 @@
-from __future__ import division
-
 import numpy as np
 import scipy.sparse as sp
 from numpy.testing import assert_array_almost_equal
-from sklearn.utils.random import sample_without_replacement
-from sklearn.utils.random import random_choice_csc
-from sklearn.utils.fixes import comb
 
-from sklearn.utils.testing import (
-    assert_raises,
-    assert_equal,
-    assert_true)
+from sklearn.utils.fixes import comb
+from sklearn.utils.random import random_choice_csc, sample_without_replacement
+from sklearn.utils._random import _our_rand_r_py
+from sklearn.utils.testing import assert_raises
 
 
 ###############################################################################
@@ -42,13 +37,13 @@ def check_edge_case_of_sample_int(sample_without_replacement):
     assert_raises(ValueError, sample_without_replacement, 1, 2)
 
     # n_population == n_samples
-    assert_equal(sample_without_replacement(0, 0).shape, (0, ))
+    assert sample_without_replacement(0, 0).shape == (0, )
 
-    assert_equal(sample_without_replacement(1, 1).shape, (1, ))
+    assert sample_without_replacement(1, 1).shape == (1, )
 
     # n_population >= n_samples
-    assert_equal(sample_without_replacement(5, 0).shape, (0, ))
-    assert_equal(sample_without_replacement(5, 1).shape, (1, ))
+    assert sample_without_replacement(5, 0).shape == (0, )
+    assert sample_without_replacement(5, 1).shape == (1, )
 
     # n_population < 0 or n_samples < 0
     assert_raises(ValueError, sample_without_replacement, -1, 5)
@@ -64,13 +59,13 @@ def check_sample_int(sample_without_replacement):
 
     for n_samples in range(n_population + 1):
         s = sample_without_replacement(n_population, n_samples)
-        assert_equal(len(s), n_samples)
+        assert len(s) == n_samples
         unique = np.unique(s)
-        assert_equal(np.size(unique), n_samples)
-        assert_true(np.all(unique < n_population))
+        assert np.size(unique) == n_samples
+        assert np.all(unique < n_population)
 
     # test edge case n_population == n_samples == 0
-    assert_equal(np.size(sample_without_replacement(0, 0)), 0)
+    assert np.size(sample_without_replacement(0, 0)) == 0
 
 
 def check_sample_int_distribution(sample_without_replacement):
@@ -110,7 +105,7 @@ def test_random_choice_csc(n_samples=10000, random_state=24):
 
     got = random_choice_csc(n_samples, classes, class_probabilities,
                             random_state)
-    assert_true(sp.issparse(got))
+    assert sp.issparse(got)
 
     for k in range(len(classes)):
         p = np.bincount(got.getcol(k).toarray().ravel()) / float(n_samples)
@@ -123,7 +118,7 @@ def test_random_choice_csc(n_samples=10000, random_state=24):
     got = random_choice_csc(n_samples=n_samples,
                             classes=classes,
                             random_state=random_state)
-    assert_true(sp.issparse(got))
+    assert sp.issparse(got)
 
     for k in range(len(classes)):
         p = np.bincount(got.getcol(k).toarray().ravel()) / float(n_samples)
@@ -135,7 +130,7 @@ def test_random_choice_csc(n_samples=10000, random_state=24):
 
     got = random_choice_csc(n_samples, classes, class_probabilities,
                             random_state)
-    assert_true(sp.issparse(got))
+    assert sp.issparse(got)
 
     for k in range(len(classes)):
         p = np.bincount(got.getcol(k).toarray().ravel(),
@@ -149,7 +144,7 @@ def test_random_choice_csc(n_samples=10000, random_state=24):
     got = random_choice_csc(n_samples=n_samples,
                             classes=classes,
                             random_state=random_state)
-    assert_true(sp.issparse(got))
+    assert sp.issparse(got)
 
     for k in range(len(classes)):
         p = np.bincount(got.getcol(k).toarray().ravel()) / n_samples
@@ -180,3 +175,8 @@ def test_random_choice_csc_errors():
     class_probabilities = [np.array([0.5, 0.6]), np.array([0.6, 0.1, 0.3])]
     assert_raises(ValueError, random_choice_csc, 4, classes,
                   class_probabilities, 1)
+
+
+def test_our_rand_r():
+    assert 131541053 == _our_rand_r_py(1273642419)
+    assert 270369 == _our_rand_r_py(0)

@@ -44,6 +44,20 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    Examples
+    --------
+    >>> from sklearn.kernel_approximation import RBFSampler
+    >>> from sklearn.linear_model import SGDClassifier
+    >>> X = [[0, 0], [1, 1], [1, 0], [0, 1]]
+    >>> y = [0, 0, 1, 1]
+    >>> rbf_feature = RBFSampler(gamma=1, random_state=1)
+    >>> X_features = rbf_feature.fit_transform(X)
+    >>> clf = SGDClassifier(max_iter=5, tol=1e-3)
+    >>> clf.fit(X_features, y)
+    SGDClassifier(max_iter=5)
+    >>> clf.score(X_features, y)
+    1.0
+
     Notes
     -----
     See "Random Features for Large-Scale Kernel Machines" by A. Rahimi and
@@ -52,7 +66,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
     [1] "Weighted Sums of Random Kitchen Sinks: Replacing
     minimization with randomization in learning" by A. Rahimi and
     Benjamin Recht.
-    (http://people.eecs.berkeley.edu/~brecht/papers/08.rah.rec.nips.pdf)
+    (https://people.eecs.berkeley.edu/~brecht/papers/08.rah.rec.nips.pdf)
     """
 
     def __init__(self, gamma=1., n_components=100, random_state=None):
@@ -101,7 +115,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
-        check_is_fitted(self, 'random_weights_')
+        check_is_fitted(self)
 
         X = check_array(X, accept_sparse='csr')
         projection = safe_sparse_dot(X, self.random_weights_)
@@ -131,6 +145,22 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
+
+    Examples
+    --------
+    >>> from sklearn.kernel_approximation import SkewedChi2Sampler
+    >>> from sklearn.linear_model import SGDClassifier
+    >>> X = [[0, 0], [1, 1], [1, 0], [0, 1]]
+    >>> y = [0, 0, 1, 1]
+    >>> chi2_feature = SkewedChi2Sampler(skewedness=.01,
+    ...                                  n_components=10,
+    ...                                  random_state=0)
+    >>> X_features = chi2_feature.fit_transform(X, y)
+    >>> clf = SGDClassifier(max_iter=10, tol=1e-3)
+    >>> clf.fit(X_features, y)
+    SGDClassifier(max_iter=10)
+    >>> clf.score(X_features, y)
+    1.0
 
     References
     ----------
@@ -192,7 +222,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
-        check_is_fitted(self, 'random_weights_')
+        check_is_fitted(self)
 
         X = as_float_array(X, copy=True)
         X = check_array(X, copy=False)
@@ -233,6 +263,20 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
     sample_interval : float, optional
         Sampling interval. Must be specified when sample_steps not in {1,2,3}.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.linear_model import SGDClassifier
+    >>> from sklearn.kernel_approximation import AdditiveChi2Sampler
+    >>> X, y = load_digits(return_X_y=True)
+    >>> chi2sampler = AdditiveChi2Sampler(sample_steps=2)
+    >>> X_transformed = chi2sampler.fit_transform(X, y)
+    >>> clf = SGDClassifier(max_iter=5, random_state=0, tol=1e-3)
+    >>> clf.fit(X_transformed, y)
+    SGDClassifier(max_iter=5, random_state=0)
+    >>> clf.score(X_transformed, y)
+    0.9499...
+
     Notes
     -----
     This estimator approximates a slightly different version of the additive
@@ -261,8 +305,20 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         self.sample_interval = sample_interval
 
     def fit(self, X, y=None):
-        """Set parameters."""
-        X = check_array(X, accept_sparse='csr')
+        """Set the parameters
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data, where n_samples in the number of samples
+            and n_features is the number of features.
+
+        Returns
+        -------
+        self : object
+            Returns the transformer.
+        """
+        check_array(X, accept_sparse='csr')
         if self.sample_interval is None:
             # See reference, figure 2 c)
             if self.sample_steps == 1:
@@ -294,7 +350,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         """
         msg = ("%(name)s is not fitted. Call fit to set the parameters before"
                " calling transform")
-        check_is_fitted(self, "sample_interval_", msg=msg)
+        check_is_fitted(self, msg=msg)
 
         X = check_array(X, accept_sparse='csr')
         sparse = sp.issparse(X)
@@ -363,6 +419,9 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
 
         return sp.hstack(X_new)
 
+    def _more_tags(self):
+        return {'stateless': True}
+
 
 class Nystroem(BaseEstimator, TransformerMixin):
     """Approximate a kernel map using a subset of the training data.
@@ -379,26 +438,26 @@ class Nystroem(BaseEstimator, TransformerMixin):
         and the keyword arguments passed to this object as kernel_params, and
         should return a floating point number.
 
-    n_components : int
-        Number of features to construct.
-        How many data points will be used to construct the mapping.
-
     gamma : float, default=None
         Gamma parameter for the RBF, laplacian, polynomial, exponential chi2
         and sigmoid kernels. Interpretation of the default value is left to
         the kernel; see the documentation for sklearn.metrics.pairwise.
         Ignored by other kernels.
 
-    degree : float, default=None
-        Degree of the polynomial kernel. Ignored by other kernels.
-
     coef0 : float, default=None
         Zero coefficient for polynomial and sigmoid kernels.
         Ignored by other kernels.
 
+    degree : float, default=None
+        Degree of the polynomial kernel. Ignored by other kernels.
+
     kernel_params : mapping of string to any, optional
         Additional parameters (keyword arguments) for kernel function passed
         as callable object.
+
+    n_components : int
+        Number of features to construct.
+        How many data points will be used to construct the mapping.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -418,6 +477,21 @@ class Nystroem(BaseEstimator, TransformerMixin):
         Normalization matrix needed for embedding.
         Square root of the kernel matrix on ``components_``.
 
+    Examples
+    --------
+    >>> from sklearn import datasets, svm
+    >>> from sklearn.kernel_approximation import Nystroem
+    >>> X, y = datasets.load_digits(n_class=9, return_X_y=True)
+    >>> data = X / 16.
+    >>> clf = svm.LinearSVC()
+    >>> feature_map_nystroem = Nystroem(gamma=.2,
+    ...                                 random_state=1,
+    ...                                 n_components=300)
+    >>> data_transformed = feature_map_nystroem.fit_transform(data)
+    >>> clf.fit(data_transformed, y)
+    LinearSVC()
+    >>> clf.score(data_transformed, y)
+    0.9987...
 
     References
     ----------
@@ -506,7 +580,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
         X_transformed : array, shape=(n_samples, n_components)
             Transformed data.
         """
-        check_is_fitted(self, 'components_')
+        check_is_fitted(self)
         X = check_array(X, accept_sparse='csr')
 
         kernel_params = self._get_kernel_params()
@@ -528,10 +602,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
             if (self.gamma is not None or
                     self.coef0 is not None or
                     self.degree is not None):
-                warnings.warn(
-                    "Passing gamma, coef0 or degree to Nystroem when using a"
-                    " callable kernel is deprecated in version 0.19 and will"
-                    " raise an error in 0.21, as they are ignored. Use "
-                    "kernel_params instead.", DeprecationWarning)
+                raise ValueError("Don't pass gamma, coef0 or degree to "
+                                 "Nystroem if using a callable kernel.")
 
         return params
