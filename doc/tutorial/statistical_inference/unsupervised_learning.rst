@@ -175,19 +175,27 @@ clustered together by giving a connectivity graph. Graphs in scikit-learn
 are represented by their adjacency matrix. Often, a sparse matrix is used.
 This can be useful, for instance, to retrieve connected regions (sometimes
 also referred to as connected components) when
-clustering an image:
+clustering an image. 
+
 
 .. image:: /auto_examples/cluster/images/sphx_glr_plot_coin_ward_segmentation_001.png
     :target: ../../auto_examples/cluster/plot_coin_ward_segmentation.html
     :scale: 40
     :align: right
 
-.. literalinclude:: ../../auto_examples/cluster/plot_coin_ward_segmentation.py
-    :lines: 21-45
+::
 
-..
-    >>> from sklearn.feature_extraction.image import grid_to_graph
-    >>> connectivity = grid_to_graph(*face.shape)
+   >>> X = np.reshape(rescaled_coins, (-1, 1)) # We need a vectorized version of the image.
+   # rescaled_coins is a down-scaled version of the coins image to speed up the process.
+   >>> connectivity = grid_to_graph(*rescaled_coins.shape) # Define the graph structure of the data. Pixels connected to their neighbors.
+   >>> n_clusters = 27  # number of regions
+   >>> ward = AgglomerativeClustering(n_clusters=n_clusters, linkage='ward',
+                               connectivity=connectivity)
+   >>> ward.fit(X)
+   FeatureAgglomeration(connectivity=..., n_clusters=27)
+   >>> label = np.reshape(ward.labels_, rescaled_coins.shape)
+
+
 
 
 Feature agglomeration
