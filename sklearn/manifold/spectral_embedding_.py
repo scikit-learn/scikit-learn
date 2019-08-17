@@ -44,7 +44,8 @@ def _graph_connected_component(graph, node_id):
         node
     """
     n_node = graph.shape[0]
-    graph = sparse.csc_matrix(graph)
+    if isinstance(graph, np.matrix):
+        graph = graph.A
 
     if sparse.issparse(graph):
         # speed up row-wise access to boolean connection mask
