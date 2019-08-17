@@ -914,8 +914,8 @@ def test_multilabel_representation_invariance():
 @pytest.mark.parametrize('name', sorted(MULTILABELS_METRICS))
 def test_raise_value_error_multilabel_sequences(name):
     # make sure the multilabel-sequence format raises ValueError
+    # [[1, 2]] is a valid multi-label object
     multilabel_sequences = [
-        [[0, 1]],
         [[1], [2], [0, 1]],
         [(), (2), (0, 1)],
         [[]],
