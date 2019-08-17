@@ -527,14 +527,14 @@ as given by :func:`~sklearn.neighbors.kneighbors_graph` and
 `mode='connectivity'`, these functions return a binary adjacency sparse graph
 as required for instance in :class:`~sklearn.cluster.SpectralClustering`,
 whereas with `mode='distance'`, they return a distance sparse graph as required
-for instance in :class:`~sklearn.cluster.DBSCAN`. The benefits of precomputation
-are multiple.
+for instance in :class:`~sklearn.cluster.DBSCAN`. To include these functions in
+a scikit-learn pipeline, one can also use the corresponding classes
+:class:`KNeighborsTransformer` and :class:`RadiusNeighborsTransformer`.
+The benefits of this sparse graph API are multiple.
 
 First, the precomputed graph can be re-used multiple times, for instance while
-varying a parameter of the estimator. This can be done manually, or using the
-caching properties of the scikit-learn pipeline, with the help of
-:class:`KNeighborsTransformer` and :class:`RadiusNeighborsTransformer` to
-include the precomputation in a pipeline:
+varying a parameter of the estimator. This can be done manually by the user, or
+using the caching properties of the scikit-learn pipeline:
 
     >>> from sklearn.manifold import Isomap
     >>> from sklearn.neighbors import KNeighborsTransformer
@@ -544,8 +544,9 @@ include the precomputation in a pipeline:
     ...     Isomap(neighbors_algorithm='precomputed'),
     ...     memory='/path/to/cache')
 
-Second, these transformers give finer control on the nearest neighbors
-estimation, for instance enabling multiprocessing though the parameter `n_jobs`.
+Second, precomputing the graph can give finer control on the nearest neighbors
+estimation, for instance enabling multiprocessing though the parameter
+`n_jobs`, which might not be available in all estimators.
 
 Finally, the precomputation can be performed by custom estimators to use
 different implementations, such as approximate nearest neighbors methods, or

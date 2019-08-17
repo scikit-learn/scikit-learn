@@ -296,7 +296,7 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
 
         Returns
         -------
-        Xt : CSR sparse graph, shape (n_samples_fit, n_samples_transform)
+        Xt : CSR sparse graph, shape (n_samples_transform, n_samples_fit)
             Xt[i, j] is assigned the weight of edge that connects i to j.
             Only the neighbors have an explicit value.
             The diagonal is always explicit.
@@ -433,7 +433,7 @@ class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
 
         Returns
         -------
-        Xt : CSR sparse graph, shape (n_samples_fit, n_samples_transform)
+        Xt : CSR sparse graph, shape (n_samples_transform, n_samples_fit)
             Xt[i, j] is assigned the weight of edge that connects i to j.
             Only the neighbors have an explicit value.
             The diagonal is always explicit.
