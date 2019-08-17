@@ -241,7 +241,7 @@ class TweedieDistribution(ExponentialDispersionModel):
             self._lower_bound = DistributionBoundary(-np.Inf, inclusive=False)
         elif 0 < power < 1:
             raise ValueError('Tweedie distribution is only defined for '
-                             'power<=0 and p>=1.')
+                             'power<=0 and power>=1.')
         elif 1 <= power < 2:
             # Poisson or Compound Poisson distribution
             self._lower_bound = DistributionBoundary(0, inclusive=True)
