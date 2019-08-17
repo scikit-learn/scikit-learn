@@ -38,13 +38,12 @@ def test_transform_target_regressor_error():
     regr = TransformedTargetRegressor(regressor=Lasso(),
                                       transformer=StandardScaler())
     with pytest.raises(TypeError, match=r"fit\(\) got an unexpected "
-                                  "keyword argument 'sample_weight'"):
+                       "keyword argument 'sample_weight'"):
         regr.fit(X, y, sample_weight=sample_weight)
     # func is given but inverse_func is not
     regr = TransformedTargetRegressor(func=np.exp)
     with pytest.raises(ValueError, match="When 'func' is provided, "
-                                   "'inverse_func' must also "
-                                   "be provided"):
+                       "'inverse_func' must also be provided"):
         regr.fit(X, y)
 
 
@@ -266,7 +265,7 @@ def test_transform_target_regressor_ensure_y_array():
     with pytest.raises(AssertionError):
         tt.fit(X, y.tolist())
     with pytest.raises(AssertionError):
-       tt.predict(X)
+        tt.predict(X)
 
 
 class DummyTransformer(BaseEstimator, TransformerMixin):
