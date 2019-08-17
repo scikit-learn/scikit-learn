@@ -373,7 +373,7 @@ def test_dump_invalid():
 
     f = BytesIO()
     with pytest.raises(ValueError):
-       dump_svmlight_file(X, y[:-1], f)
+        dump_svmlight_file(X, y[:-1], f)
 
 
 def test_dump_query_id():

@@ -469,6 +469,6 @@ def test_make_circles():
             "Samples not correctly distributed across circles.")
 
     with pytest.raises(ValueError):
-       make_circles(factor=-0.01)
+        make_circles(factor=-0.01)
     with pytest.raises(ValueError):
         make_circles(factor=1.)
