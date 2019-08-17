@@ -351,6 +351,26 @@ General Concepts
         The detailed explanation of each estimator tag can be found at 
         `estimator tags <https://scikit-learn.org/dev/developers/contributing.html#estimator-tags>`_.
 
+        .. glossary::
+
+        ``_estimator_type``
+            This string-valued attribute identifies an estimator as being a
+            classifier, regressor, etc. It is set by mixins such as
+            :class:`base.ClassifierMixin`, but needs to be more explicitly
+            adopted on a :term:`meta-estimator`.  Its value should usually be
+            checked by way of a helper such as :func:`base.is_classifier`.
+
+        ``_pairwise``
+            This boolean attribute indicates whether the data (``X``) passed to
+            :func:`fit` and similar methods consists of pairwise measures over
+            samples rather than a feature representation for each sample.  It
+            is usually ``True`` where an estimator has a ``metric`` or
+            ``affinity`` or ``kernel`` parameter with value 'precomputed'.
+            Its primary purpose is that when a :term:`meta-estimator`
+            extracts a sub-sample of data intended for a pairwise estimator,
+            the data needs to be indexed on both axes, while other data is
+            indexed only on the first axis.
+
     feature
     features
     feature vector
