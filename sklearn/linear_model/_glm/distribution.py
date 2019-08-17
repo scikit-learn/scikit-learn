@@ -26,19 +26,15 @@ DistributionBoundary = namedtuple("DistributionBoundary",
 
 
 class ExponentialDispersionModel(metaclass=ABCMeta):
-    r"""Base class for reproductive Exponential Dispersion Models (EDM).
+    """Base class for reproductive Exponential Dispersion Models (EDM).
 
-    The pdf of :math:`Y\sim \mathrm{EDM}(\mu, \phi)` is given by
+    The pdf of Y∼EDM(μ, φ) is given by::
 
-    .. math:: p(y| \theta, \phi) = c(y, \phi)
-        \exp\left(\frac{\theta y-A(\theta)}{\phi}\right)
-        = \tilde{c}(y, \phi)
-            \exp\left(-\frac{d(y, \mu)}{2\phi}\right)
+        p(y| θ, φ) = c1(y, φ) * exp((θy-A(θ))/φ)
+        = c2(y, φ) * exp(-d(y, μ)/(2φ))
 
-    with mean :math:`\mathrm{E}[Y] = A'(\theta) = \mu`,
-    variance :math:`\mathrm{Var}[Y] = \phi \cdot v(\mu)`,
-    unit variance :math:`v(\mu)` and
-    unit deviance :math:`d(y,\mu)`.
+    with mean E[Y] = A'(θ) = μ, variance Var[Y] = φ * v(μ),
+    unit variance v(μ), unit deviance d(y,μ) and dispersion parameter φ.
 
     Methods
     -------
@@ -56,7 +52,7 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
     """
 
     def in_y_range(self, y):
-        """Returns ``True`` if y is in the valid range of Y~EDM.
+        """Returns ``True`` if y is in the valid range of Y∼EDM.
 
         Parameters
         ----------
@@ -80,17 +76,13 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
 
     @abstractmethod
     def unit_variance(self, mu):
-        r"""Compute the unit variance function.
+        """Compute the unit variance function.
 
-        The unit variance :math:`v(\mu)` determines the variance as
-        a function of the mean :math:`\mu` by
-        :math:`\mathrm{Var}[Y_i] = \phi/s_i*v(\mu_i)`.
-        It can also be derived from the unit deviance :math:`d(y,\mu)` as
+        The unit variance v(μ) determines the variance as a function of the
+        mean μ by Var[Y_i] = φ/s_i * v(μ_i).
+        It can also be derived from the unit deviance d(y,μ) as::
 
-        .. math:: v(\mu) = \frac{2}{\frac{\partial^2 d(y,\mu)}{
-            \partial\mu^2}}\big|_{y=\mu}
-
-        See also :func:`variance`.
+            v(μ) = 2/(∂^2 d(y,μ)/(∂ μ^2))|_{y=μ}
 
         Parameters
         ----------
@@ -101,9 +93,9 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
 
     @abstractmethod
     def unit_variance_derivative(self, mu):
-        r"""Compute the derivative of the unit variance w.r.t. mu.
+        """Compute the derivative of the unit variance w.r.t. mu.
 
-        Return :math:`v'(\mu)`.
+        Return v'(μ).
 
         Parameters
         ----------
@@ -114,12 +106,11 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
 
     @abstractmethod
     def unit_deviance(self, y, mu, check_input=False):
-        r"""Compute the unit deviance.
+        """Compute the unit deviance.
 
-        The unit_deviance :math:`d(y,\mu)` can be defined by the
-        log-likelihood as
-        :math:`d(y,\mu) = -2\phi\cdot
-        \left(loglike(y,\mu,\phi) - loglike(y,y,\phi)\right).`
+        The unit_deviance d(y,μ) can be defined by the log-likelihood as::
+
+        d(y,μ) = -2φ * (loglike(y,μ,φ) - loglike(y,y,φ))
 
         Parameters
         ----------
@@ -140,11 +131,10 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         pass  # pragma: no cover
 
     def unit_deviance_derivative(self, y, mu):
-        r"""Compute the derivative of the unit deviance w.r.t. mu.
+        """Compute the derivative of the unit deviance w.r.t. mu.
 
         The derivative of the unit deviance is given by
-        :math:`\frac{\partial}{\partial\mu}d(y,\mu) = -2\frac{y-\mu}{v(\mu)}`
-        with unit variance :math:`v(\mu)`.
+        ∂ d(y,μ)/(∂ μ) = -2(y-μ)/v(μ) with unit variance v(μ).
 
         Parameters
         ----------
@@ -157,14 +147,13 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         return -2 * (y - mu) / self.unit_variance(mu)
 
     def deviance(self, y, mu, weights=1):
-        r"""Compute the deviance.
+        """Compute the deviance.
 
         The deviance is a weighted sum of the per sample unit deviances,
-        :math:`D = \sum_i s_i \cdot d(y_i, \mu_i)`
-        with weights :math:`s_i` and unit deviance :math:`d(y,\mu)`.
-        In terms of the log-likelihood it is :math:`D = -2\phi\cdot
-        \left(loglike(y,\mu,\frac{phi}{s})
-        - loglike(y,y,\frac{phi}{s})\right)`.
+        D = sum_i s_i * d(y_i,μ_i)
+        with weights s_i and unit deviance d(y,μ).
+        In terms of the log-likelihood it is
+        D = -2φ * (loglike(y,μ,φ/s) - loglike(y,y,φ/s)).
 
         Parameters
         ----------
@@ -182,7 +171,7 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
     def deviance_derivative(self, y, mu, weights=1):
         """Compute the derivative of the deviance w.r.t. mu.
 
-        It gives :math:`\\frac{\\partial}{\\partial\\mu} D(y, \\mu; weights)`.
+        It gives ∂ D(y, μ; weights)/(∂ μ).
 
         Parameters
         ----------
@@ -211,11 +200,10 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
 
 
 class TweedieDistribution(ExponentialDispersionModel):
-    r"""A class for the Tweedie distribution.
+    """A class for the Tweedie distribution.
 
-    A Tweedie distribution with mean :math:`\mu=\mathrm{E}[Y]` is uniquely
-    defined by it's mean-variance relationship
-    :math:`\mathrm{Var}[Y] \propto \mu^power`.
+    A Tweedie distribution with mean μ=E[Y] is uniquely defined by it's
+    mean-variance relationship Var[Y] ∝ μ^power.
 
     Special cases are:
 
@@ -231,8 +219,7 @@ class TweedieDistribution(ExponentialDispersionModel):
     Parameters
     ----------
     power : float (default=0)
-            The variance power of the `unit_variance`
-            :math:`v(\mu) = \mu^{power}`.
+            The variance power of the unit variance v(μ) = μ^power.
             For ``0<power<1``, no distribution exists.
     """
     def __init__(self, power=0):
@@ -253,8 +240,8 @@ class TweedieDistribution(ExponentialDispersionModel):
             # Extreme Stable or Normal distribution
             self._lower_bound = DistributionBoundary(-np.Inf, inclusive=False)
         elif 0 < power < 1:
-            raise ValueError('Tweedie distribution is only defined for p<=0 '
-                             'and p>=1.')
+            raise ValueError('Tweedie distribution is only defined for '
+                             'power<=0 and p>=1.')
         elif 1 <= power < 2:
             # Poisson or Compound Poisson distribution
             self._lower_bound = DistributionBoundary(0, inclusive=True)
@@ -279,7 +266,7 @@ class TweedieDistribution(ExponentialDispersionModel):
 
     def unit_variance_derivative(self, mu):
         """Compute the derivative of the unit variance of a Tweedie
-        distribution v(mu)=power*mu**(power-1).
+        distribution v(mu)=power * mu**(power-1).
 
         Parameters
         ----------
@@ -289,12 +276,10 @@ class TweedieDistribution(ExponentialDispersionModel):
         return self.power * np.power(mu, self.power - 1)
 
     def unit_deviance(self, y, mu, check_input=False):
-        r"""Compute the unit deviance.
+        """Compute the unit deviance.
 
-        The unit_deviance :math:`d(y,\mu)` can be defined by the
-        log-likelihood as
-        :math:`d(y,\mu) = -2\phi\cdot
-        \left(loglike(y,\mu,\phi) - loglike(y,y,\phi)\right).`
+        The unit deviance d(y,μ) can be defined by the log-likelihood as
+        d(y,μ) = -2φ * (loglike(y,μ,φ) - loglike(y,y,φ)).
 
         Parameters
         ----------
@@ -328,7 +313,7 @@ class TweedieDistribution(ExponentialDispersionModel):
                 raise ValueError("Tweedie deviance is only defined for p<=0 "
                                  "and p>=1.")
             elif 1 <= p < 2:
-                # Poisson and Compount poisson distribution, y >= 0, mu > 0
+                # Poisson and Compound poisson distribution, y >= 0, mu > 0
                 if (y < 0).any() or (mu <= 0).any():
                     raise ValueError(message + "non-negative y and strictly "
                                      "positive mu.")

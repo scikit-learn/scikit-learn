@@ -31,7 +31,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     """Regression via a Generalized Linear Model (GLM) with penalties.
 
     GLMs based on a reproductive Exponential Dispersion Model (EDM) aim at
-    fitting and predicting the mean of the target y as mu=h(X*w). Therefore,
+    fitting and predicting the mean of the target y as μ=h(X*w). Therefore,
     the fit minimizes the following objective function with L2
     priors as regularizer::
 
@@ -118,16 +118,16 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     Notes
     -----
     The fit itself does not need Y to be from an EDM, but only assumes
-    the first two moments to be :math:`E[Y_i]=\\mu_i=h((Xw)_i)` and
-    :math:`Var[Y_i]=\\frac{\\phi}{s_i} v(\\mu_i)`. The unit variance function
-    :math:`v(\\mu_i)` is a property of and given by the specific EDM, see
+    the first two moments to be E[Y_i]=μ_i=h((Xw)_i) and
+    Var[Y_i]=φ/s_i * v(μ_i). The unit variance function v(μ_i) is a property of
+    and given by the specific EDM, see
     :ref:`User Guide <Generalized_linear_regression>`.
 
-    The parameters :math:`w` (`coef_` and `intercept_`) are estimated by
+    The parameters w (``coef_`` and ``intercept_``) are estimated by
     minimizing the deviance plus penalty term, which is equivalent to
     (penalized) maximum likelihood estimation.
 
-    For alpha > 0, the feature matrix X should be standardized in order to
+    For ``alpha > 0``, the feature matrix X should be standardized in order to
     penalize features equally strong. Call
     :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``.
 
@@ -138,7 +138,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     y = z/s, i.e. ``GeneralizedLinearModel(family='poisson').fit(X, y,
     sample_weight=s)``. The weights are necessary for the right (finite
     sample) mean.
-    Consider :math:`\\bar{y} = \\frac{\\sum_i s_i y_i}{\\sum_i s_i}`,
+    Consider ȳ = (sum_i s_i y_i)(sum_i s_i),
     in this case one might say that y has a 'scaled' Poisson distributions.
     The same holds for other distributions.
 
@@ -183,9 +183,9 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                 optional (default=None)
             Individual weights w_i for each sample. Note that for an
             Exponential Dispersion Model (EDM), one has
-            Var[Y_i]=phi/w_i * v(mu).
-            If Y_i ~ EDM(mu, phi/w_i), then
-            sum(w*Y)/sum(w) ~ EDM(mu, phi/sum(w)), i.e. the mean of y is a
+            Var[Y_i]=φ/w_i * v(mu).
+            If Y_i ~ EDM(mu, φ/w_i), then
+            sum(w*Y)/sum(w) ~ EDM(mu, φ/sum(w)), i.e. the mean of y is a
             weighted average with weights=sample_weight.
 
         Returns
@@ -218,7 +218,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                     raise ValueError("No default link known for the "
                                      "specified distribution family. Please "
                                      "set link manually, i.e. not to 'auto'; "
-                                     "got (link='auto', family={}"
+                                     "got (link='auto', family={})"
                                      .format(self.family))
             elif self.link == 'identity':
                 self._link_instance = IdentityLink()
@@ -383,11 +383,10 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         R^2 uses squared error and D^2 deviance. Note that those two are equal
         for ``family='normal'``.
 
-        D^2 is defined as
-        :math:`D^2 = 1-\\frac{D(y_{true},y_{pred})}{D_{null}}`,
-        :math:`D_{null}` is the null deviance, i.e. the deviance of a model
-        with intercept alone, which corresponds to :math:`y_{pred} = \\bar{y}`.
-        The mean :math:`\\bar{y}` is averaged by sample_weight.
+        D^2 is defined as D^2 = 1 - D(y_true,y_pred) / D_null,
+        D_null is the null deviance, i.e. the deviance of a model
+        with intercept alone, which corresponds to y_pred = ȳ.
+        The mean ȳ is averaged by sample_weight.
         Best possible score is 1.0 and it can be negative (because the model
         can be arbitrarily worse).
 
@@ -490,17 +489,18 @@ class PoissonRegressor(GeneralizedLinearRegressor):
     Notes
     -----
     The fit itself does not need Y to be from an EDM, but only assumes
-    the first two moments to be :math:`E[Y_i]=\\mu_i=h((Xw)_i)` and
-    :math:`Var[Y_i]=\\frac{\\phi}{s_i} v(\\mu_i)`. The unit variance function
-    :math:`v(\\mu_i)` is a property of and given by the specific EDM, see
+    the first two moments to be E[Y_i]=μ_i=h((Xw)_i) and
+    Var[Y_i]=φ/s_i * v(μ_i). The unit variance function v(μ_i) is a property of
+    and given by the specific EDM, see
     :ref:`User Guide <Generalized_linear_regression>`.
 
-    The parameters :math:`w` (`coef_` and `intercept_`) are estimated by
+    The parameters w (``coef_`` and ``intercept_``) are estimated by
     minimizing the deviance plus penalty term, which is equivalent to
     (penalized) maximum likelihood estimation.
 
-    For alpha > 0, the feature matrix X should be standardized in order to
-    penalize features equally strong.
+    For ``alpha > 0``, the feature matrix X should be standardized in order to
+    penalize features equally strong. Call
+    :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``.
 
     If the target y is a ratio, appropriate sample weights s should be
     provided.
@@ -508,7 +508,7 @@ class PoissonRegressor(GeneralizedLinearRegressor):
     weights s=exposure (time, money, persons years, ...). Then you fit
     y = z/s, i.e. ``PoissonRegressor().fit(X, y, sample_weight=s)``.
     The weights are necessary for the right (finite sample) mean.
-    Consider :math:`\\bar{y} = \\frac{\\sum_i s_i y_i}{\\sum_i s_i}`,
+    Consider ȳ = (sum_i s_i y_i)(sum_i s_i),
     in this case one might say that y has a 'scaled' Poisson distributions.
 
     References
@@ -608,12 +608,12 @@ class GammaRegressor(GeneralizedLinearRegressor):
     Notes
     -----
     The fit itself does not need Y to be from an EDM, but only assumes
-    the first two moments to be :math:`E[Y_i]=\\mu_i=h((Xw)_i)` and
-    :math:`Var[Y_i]=\\frac{\\phi}{s_i} v(\\mu_i)`. The unit variance function
-    :math:`v(\\mu_i)` is a property of and given by the specific EDM, see
+    the first two moments to be E[Y_i]=μ_i=h((Xw)_i) and
+    Var[Y_i]=φ/s_i * v(μ_i). The unit variance function v(μ_i) is a property of
+    and given by the specific EDM, see
     :ref:`User Guide <Generalized_linear_regression>`.
 
-    The parameters :math:`w` (`coef_` and `intercept_`) are estimated by
+    The parameters w (``coef_`` and ``intercept_``) are estimated by
     minimizing the deviance plus penalty term, which is equivalent to
     (penalized) maximum likelihood estimation.
 
@@ -664,7 +664,7 @@ class TweedieRegressor(GeneralizedLinearRegressor):
     Parameters
     ----------
     power : float (default=0)
-            The variance power: :math:`v(\\mu) = \\mu^{power}`.
+            The variance power: v(μ) = μ^{power}.
             For ``0<power<1``, no distribution exists.
 
             Special cases are:
@@ -682,7 +682,7 @@ class TweedieRegressor(GeneralizedLinearRegressor):
         Constant that multiplies the penalty terms and thus determines the
         regularization strength.
         See the notes for the exact mathematical meaning of this
-        parameter.``alpha = 0`` is equivalent to unpenalized GLMs. In this
+        parameter. ``alpha = 0`` is equivalent to unpenalized GLMs. In this
         case, the design matrix X must have full column rank
         (no collinearities).
 
@@ -730,12 +730,12 @@ class TweedieRegressor(GeneralizedLinearRegressor):
     Notes
     -----
     The fit itself does not need Y to be from an EDM, but only assumes
-    the first two moments to be :math:`E[Y_i]=\\mu_i=h((Xw)_i)` and
-    :math:`Var[Y_i]=\\frac{\\phi}{s_i} v(\\mu_i)`. The unit variance function
-    :math:`v(\\mu_i)` is a property of and given by the specific EDM, see
+    the first two moments to be E[Y_i]=μ_i=h((Xw)_i) and
+    Var[Y_i]=φ/s_i * v(μ_i). The unit variance function v(μ_i) is a property of
+    and given by the specific EDM, see
     :ref:`User Guide <Generalized_linear_regression>`.
 
-    The parameters :math:`w` (`coef_` and `intercept_`) are estimated by
+    The parameters w (``coef_`` and ``intercept_``) are estimated by
     minimizing the deviance plus penalty term, which is equivalent to
     (penalized) maximum likelihood estimation.
 
