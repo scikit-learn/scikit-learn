@@ -45,7 +45,7 @@ def test_invalid_distribution_bound():
 
 
 def test_tweedie_distribution_power():
-    msg = "distribution is only defined for p<=0 and p>=1"
+    msg = "distribution is only defined for power<=0 and power>=1"
     with pytest.raises(ValueError, match=msg):
         TweedieDistribution(power=0.5)
 

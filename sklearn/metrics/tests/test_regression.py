@@ -133,7 +133,7 @@ def test_regression_metrics_at_limits():
         mean_tweedie_deviance([0.], [0.], p=p)
 
     with pytest.raises(ValueError,
-                       match="is only defined for p<=0 and p>=1"):
+                       match="is only defined for power<=0 and power>=1"):
         mean_tweedie_deviance([0.], [0.], p=0.5)
 
 
