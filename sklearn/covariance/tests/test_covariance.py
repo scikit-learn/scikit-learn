@@ -5,11 +5,11 @@
 # License: BSD 3 clause
 
 import numpy as np
+import pytest
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 
 from sklearn import datasets
@@ -38,8 +38,8 @@ def test_covariance():
         cov.error_norm(emp_cov, scaling=False), 0)
     assert_almost_equal(
         cov.error_norm(emp_cov, squared=False), 0)
-    assert_raises(NotImplementedError,
-                  cov.error_norm, emp_cov, norm='foo')
+    with pytest.raises(NotImplementedError):
+        cov.error_norm(emp_cov, norm='foo')
     # Mahalanobis distances computation test
     mahal_dist = cov.mahalanobis(X)
     assert np.amin(mahal_dist) > 0

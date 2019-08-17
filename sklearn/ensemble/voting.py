@@ -296,7 +296,7 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
             Predicted class labels.
         """
 
-        check_is_fitted(self, 'estimators_')
+        check_is_fitted(self)
         if self.voting == 'soft':
             maj = np.argmax(self.predict_proba(X), axis=1)
 
@@ -317,7 +317,7 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
 
     def _predict_proba(self, X):
         """Predict class probabilities for X in 'soft' voting """
-        check_is_fitted(self, 'estimators_')
+        check_is_fitted(self)
         avg = np.average(self._collect_probas(X), axis=0,
                          weights=self._weights_not_none)
         return avg
@@ -363,7 +363,7 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
                 array-like of shape (n_samples, n_classifiers), being
                 class labels predicted by each classifier.
         """
-        check_is_fitted(self, 'estimators_')
+        check_is_fitted(self)
 
         if self.voting == 'soft':
             probas = self._collect_probas(X)
@@ -477,7 +477,7 @@ class VotingRegressor(_BaseVoting, RegressorMixin):
         y : array of shape (n_samples,)
             The predicted values.
         """
-        check_is_fitted(self, "estimators_")
+        check_is_fitted(self)
         return np.average(self._predict(X), axis=1,
                           weights=self._weights_not_none)
 
@@ -495,5 +495,5 @@ class VotingRegressor(_BaseVoting, RegressorMixin):
             array-like of shape (n_samples, n_classifiers), being
             values predicted by each regressor.
         """
-        check_is_fitted(self, 'estimators_')
+        check_is_fitted(self)
         return self._predict(X)
