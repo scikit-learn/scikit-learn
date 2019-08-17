@@ -915,7 +915,7 @@ def test_multilabel_representation_invariance():
 def test_raise_value_error_multilabel_sequences(name):
     # make sure the multilabel-sequence format raises ValueError
     multilabel_sequences = [
-        [[0, 1], [1]],
+        [[0, 1], [1]], # the initial value was a valid multi_label.
         [[1], [2], [0, 1]],
         [(), (2), (0, 1)],
         [[]],
