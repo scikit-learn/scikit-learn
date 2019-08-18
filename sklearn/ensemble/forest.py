@@ -118,7 +118,8 @@ def _generate_unsampled_indices(random_state, n_samples, n_bootstrap_samples):
 
 
 def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
-                          verbose=0, class_weight=None, max_samples=None):
+                          verbose=0, class_weight=None,
+                          n_bootstrap_samples=None):
     """Private function used to fit a single tree in parallel."""
     if verbose > 1:
         print("building tree %d of %d" % (tree_idx + 1, n_trees))
@@ -130,7 +131,6 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
         else:
             curr_sample_weight = sample_weight.copy()
 
-        n_bootstrap_samples = _get_n_bootstrap_samples(n_samples, max_samples)
         indices = _generate_sample_indices(tree.random_state, n_samples,
                                            n_bootstrap_samples)
         sample_counts = np.bincount(indices, minlength=n_samples)
@@ -307,6 +307,10 @@ class BaseForest(BaseEnsemble, MultiOutputMixin, metaclass=ABCMeta):
             else:
                 sample_weight = expanded_class_weight
 
+        # Get bootstrap sample size
+        n_bootstrap_samples = _get_n_bootstrap_samples(
+            n_samples=X.shape[0], max_samples=self.max_samples)
+
         # Check parameters
         self._validate_estimator()
 
@@ -351,7 +355,7 @@ class BaseForest(BaseEnsemble, MultiOutputMixin, metaclass=ABCMeta):
                 delayed(_parallel_build_trees)(
                     t, self, X, y, sample_weight, i, len(trees),
                     verbose=self.verbose, class_weight=self.class_weight,
-                    max_samples=self.max_samples)
+                    n_bootstrap_samples=n_bootstrap_samples)
                 for i, t in enumerate(trees))
 
             # Collect newly grown trees
