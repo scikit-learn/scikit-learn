@@ -19,11 +19,8 @@ the lower the better
 #          Manoj Kumar <manojkumarsivaraj334@gmail.com>
 #          Michael Eickenberg <michael.eickenberg@gmail.com>
 #          Konstantin Shmelkov <konstantin.shmelkov@polytechnique.edu>
-<<<<<<< HEAD
-#          Mohamed Ali Jamaoui <m.ali.jamaoui@gmail.com>
-=======
 #          Christian Lorentzen <lorentzen.ch@googlemail.com>
->>>>>>> master
+#          Mohamed Ali Jamaoui <m.ali.jamaoui@gmail.com>
 # License: BSD 3 clause
 
 
