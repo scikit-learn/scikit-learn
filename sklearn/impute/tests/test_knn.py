@@ -630,3 +630,9 @@ def test_knn_imputer_distance_weighted_not_enough_neighbors(na):
 
     knn_4 = KNNImputer(missing_values=na, n_neighbors=4, weights='distance')
     assert_allclose(knn_4.fit_transform(X), X_expected)
+
+
+@pytest.mark.parametrize("na, allow_nan", [(-1, False), (np.nan, True)])
+def test_knn_tags(na, allow_nan):
+    knn = KNNImputer(missing_values=na)
+    assert knn._get_tags()["allow_nan"] == allow_nan
