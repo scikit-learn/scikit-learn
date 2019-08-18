@@ -477,34 +477,24 @@ NOT_SYMMETRIC_METRICS = {
 
     "macro_f0.5_score", "macro_f2_score", "macro_precision_score",
     "macro_recall_score", "log_loss", "hinge_loss",
-<<<<<<< HEAD
-
-    "mean_absolute_percentage_error"
-]
-=======
     "mean_gamma_deviance", "mean_poisson_deviance",
-    "mean_compound_poisson_deviance"
+    "mean_compound_poisson_deviance", "mean_absolute_percentage_error"
 }
->>>>>>> master
-
 
 # No Sample weight support
 METRICS_WITHOUT_SAMPLE_WEIGHT = {
     "median_absolute_error",
-<<<<<<< HEAD
-    "mean_absolute_percentage_error"
-]
-
-# Metrics that only support non-zero y
-METRICS_WITH_NON_ZERO_Y = [
-    "mean_absolute_percentage_error"
-]
-=======
+    "mean_absolute_percentage_error",
     "max_error",
     "ovo_roc_auc",
     "weighted_ovo_roc_auc"
 }
->>>>>>> master
+
+# Metrics that only support non-zero y
+METRICS_WITH_NON_ZERO_Y = [
+    "mean_absolute_percentage_error",
+    "mean_absolute_percentage_error"
+]
 
 METRICS_REQUIRE_POSITIVE_Y = {
     "mean_poisson_deviance",
@@ -584,16 +574,10 @@ def test_not_symmetric_metric(name):
         sorted(set(ALL_METRICS) - METRIC_UNDEFINED_BINARY_MULTICLASS))
 def test_sample_order_invariance(name):
     random_state = check_random_state(0)
-<<<<<<< HEAD
-    y_true = random_state.randint(1, 3, size=(20, ))
-    y_pred = random_state.randint(1, 3, size=(20, ))
-    y_true_shuffle, y_pred_shuffle = shuffle(y_true, y_pred, random_state=0)
-=======
     y_true = random_state.randint(0, 2, size=(20, ))
     y_pred = random_state.randint(0, 2, size=(20, ))
     if name in METRICS_REQUIRE_POSITIVE_Y:
         y_true, y_pred = _require_positive_targets(y_true, y_pred)
->>>>>>> master
 
     y_true_shuffle, y_pred_shuffle = shuffle(y_true, y_pred, random_state=0)
 
@@ -837,15 +821,11 @@ def check_single_sample(name):
     metric = ALL_METRICS[name]
 
     # assert that no exception is thrown
-<<<<<<< HEAD
-    for i, j in product([1, 2], repeat=2):
-=======
     if name in METRICS_REQUIRE_POSITIVE_Y:
         values = [1, 2]
     else:
         values = [0, 1]
     for i, j in product(values, repeat=2):
->>>>>>> master
         metric([i], [j])
 
 
@@ -1331,7 +1311,6 @@ def test_no_averaging_labels():
             assert_array_equal(score_labels, score[inverse_labels])
 
 
-<<<<<<< HEAD
 def test_raise_value_error_y_with_zeros():
     random_state = check_random_state(0)
     y_true = random_state.randint(0, 2, size=(20, ))
@@ -1343,7 +1322,8 @@ def test_raise_value_error_y_with_zeros():
                              "mean_absolute_percentage_error requires"
                              " y_true to not include zeros",
                              metric, y_true, y_pred)
-=======
+
+
 @pytest.mark.parametrize(
     'name',
     sorted(MULTILABELS_METRICS - {"unnormalized_multilabel_confusion_matrix"}))
@@ -1411,4 +1391,3 @@ def test_thresholded_metric_permutation_invariance(name):
 
         current_score = metric(y_true_perm, y_score_perm)
         assert_almost_equal(score, current_score)
->>>>>>> master
