@@ -250,6 +250,7 @@ intersphinx_mapping = {
 sphinx_gallery_conf = {
     'doc_module': 'sklearn',
     'backreferences_dir': os.path.join('modules', 'generated'),
+    'show_memory': True,
     'reference_url': {
         'sklearn': None}
 }

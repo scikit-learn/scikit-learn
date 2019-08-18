@@ -260,6 +260,11 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         .. versionadded:: 0.17
            *data_range_*
 
+    n_samples_seen_ : int
+        The number of samples processed by the estimator.
+        It will be reset on new calls to fit, but increments across
+        ``partial_fit`` calls.
+
     Examples
     --------
     >>> from sklearn.preprocessing import MinMaxScaler
@@ -382,7 +387,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         X : array-like, shape [n_samples, n_features]
             Input data that will be transformed.
         """
-        check_is_fitted(self, 'scale_')
+        check_is_fitted(self)
 
         X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES,
                         force_all_finite="allow-nan")
@@ -399,7 +404,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         X : array-like, shape [n_samples, n_features]
             Input data that will be transformed. It cannot be sparse.
         """
-        check_is_fitted(self, 'scale_')
+        check_is_fitted(self)
 
         X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES,
                         force_all_finite="allow-nan")
@@ -751,7 +756,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         copy : bool, optional (default: None)
             Copy the input X or not.
         """
-        check_is_fitted(self, 'scale_')
+        check_is_fitted(self)
 
         copy = copy if copy is not None else self.copy
         X = check_array(X, accept_sparse='csr', copy=copy,
@@ -787,7 +792,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         X_tr : array-like, shape [n_samples, n_features]
             Transformed array.
         """
-        check_is_fitted(self, 'scale_')
+        check_is_fitted(self)
 
         copy = copy if copy is not None else self.copy
         if sparse.issparse(X):
@@ -952,7 +957,7 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
         X : {array-like, sparse matrix}
             The data that should be scaled.
         """
-        check_is_fitted(self, 'scale_')
+        check_is_fitted(self)
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
@@ -971,7 +976,7 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
         X : {array-like, sparse matrix}
             The data that should be transformed back.
         """
-        check_is_fitted(self, 'scale_')
+        check_is_fitted(self)
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
@@ -1201,7 +1206,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         X : {array-like, sparse matrix}
             The data used to scale along the specified axis.
         """
-        check_is_fitted(self, 'center_', 'scale_')
+        check_is_fitted(self)
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
@@ -1224,7 +1229,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         X : array-like
             The data used to scale along the specified axis.
         """
-        check_is_fitted(self, 'center_', 'scale_')
+        check_is_fitted(self)
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
@@ -1410,7 +1415,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
 
     @property
     def powers_(self):
-        check_is_fitted(self, 'n_input_features_')
+        check_is_fitted(self)
 
         combinations = self._combinations(self.n_input_features_, self.degree,
                                           self.interaction_only,
@@ -1497,7 +1502,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
             The matrix of features, where NP is the number of polynomial
             features generated from the combination of inputs.
         """
-        check_is_fitted(self, ['n_input_features_', 'n_output_features_'])
+        check_is_fitted(self)
 
         X = check_array(X, order='F', dtype=FLOAT_DTYPES,
                         accept_sparse=('csr', 'csc'))
@@ -1526,10 +1531,10 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         elif sparse.isspmatrix_csc(X) and self.degree < 4:
             return self.transform(X.tocsr()).tocsc()
         else:
-            combinations = self._combinations(n_features, self.degree,
-                                              self.interaction_only,
-                                              self.include_bias)
             if sparse.isspmatrix(X):
+                combinations = self._combinations(n_features, self.degree,
+                                                  self.interaction_only,
+                                                  self.include_bias)
                 columns = []
                 for comb in combinations:
                     if comb:
@@ -1544,8 +1549,56 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
             else:
                 XP = np.empty((n_samples, self.n_output_features_),
                               dtype=X.dtype, order=self.order)
-                for i, comb in enumerate(combinations):
-                    XP[:, i] = X[:, comb].prod(1)
+
+                # What follows is a faster implementation of:
+                # for i, comb in enumerate(combinations):
+                #     XP[:, i] = X[:, comb].prod(1)
+                # This implementation uses two optimisations.
+                # First one is broadcasting,
+                # multiply ([X1, ..., Xn], X1) -> [X1 X1, ..., Xn X1]
+                # multiply ([X2, ..., Xn], X2) -> [X2 X2, ..., Xn X2]
+                # ...
+                # multiply ([X[:, start:end], X[:, start]) -> ...
+                # Second optimisation happens for degrees >= 3.
+                # Xi^3 is computed reusing previous computation:
+                # Xi^3 = Xi^2 * Xi.
+
+                if self.include_bias:
+                    XP[:, 0] = 1
+                    current_col = 1
+                else:
+                    current_col = 0
+
+                # d = 0
+                XP[:, current_col:current_col + n_features] = X
+                index = list(range(current_col,
+                                   current_col + n_features))
+                current_col += n_features
+                index.append(current_col)
+
+                # d >= 1
+                for _ in range(1, self.degree):
+                    new_index = []
+                    end = index[-1]
+                    for feature_idx in range(n_features):
+                        start = index[feature_idx]
+                        new_index.append(current_col)
+                        if self.interaction_only:
+                            start += (index[feature_idx + 1] -
+                                      index[feature_idx])
+                        next_col = current_col + end - start
+                        if next_col <= current_col:
+                            break
+                        # XP[:, start:end] are terms of degree d - 1
+                        # that exclude feature #feature_idx.
+                        np.multiply(XP[:, start:end],
+                                    X[:, feature_idx:feature_idx + 1],
+                                    out=XP[:, current_col:next_col],
+                                    casting='no')
+                        current_col = next_col
+
+                    new_index.append(current_col)
+                    index = new_index
 
         return XP
 
@@ -1888,6 +1941,14 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
 
     Read more in the :ref:`User Guide <kernel_centering>`.
 
+    Attributes
+    ----------
+    K_fit_rows_ : array, shape (n_samples,)
+        Average of each column of kernel matrix
+
+    K_fit_all_ : float
+        Average of kernel matrix
+
     Examples
     --------
     >>> from sklearn.preprocessing import KernelCenterer
@@ -1925,7 +1986,14 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         -------
         self : returns an instance of self.
         """
+
         K = check_array(K, dtype=FLOAT_DTYPES)
+
+        if K.shape[0] != K.shape[1]:
+            raise ValueError("Kernel matrix must be a square matrix."
+                             " Input is a {}x{} matrix."
+                             .format(K.shape[0], K.shape[1]))
+
         n_samples = K.shape[0]
         self.K_fit_rows_ = np.sum(K, axis=0) / n_samples
         self.K_fit_all_ = self.K_fit_rows_.sum() / n_samples
@@ -1946,7 +2014,7 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         -------
         K_new : numpy array of shape [n_samples1, n_samples2]
         """
-        check_is_fitted(self, 'K_fit_all_')
+        check_is_fitted(self)
 
         K = check_array(K, copy=copy, dtype=FLOAT_DTYPES)
 
@@ -2343,7 +2411,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
     def _check_is_fitted(self, X):
         """Check the inputs before transforming"""
-        check_is_fitted(self, 'quantiles_')
+        check_is_fitted(self)
         # check that the dimension of X are adequate with the fitted data
         if X.shape[1] != self.quantiles_.shape[1]:
             raise ValueError('X does not have the same number of features as'
@@ -2718,7 +2786,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         X_trans : array-like, shape (n_samples, n_features)
             The transformed data.
         """
-        check_is_fitted(self, 'lambdas_')
+        check_is_fitted(self)
         X = self._check_input(X, check_positive=True, check_shape=True)
 
         transform_function = {'box-cox': boxcox,
@@ -2764,7 +2832,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
             The original data
         """
-        check_is_fitted(self, 'lambdas_')
+        check_is_fitted(self)
         X = self._check_input(X, check_shape=True)
 
         if self.standardize:

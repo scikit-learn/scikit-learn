@@ -785,7 +785,7 @@ class ElasticNet(LinearModel, RegressorMixin, MultiOutputMixin):
         T : array, shape (n_samples,)
             The predicted decision function
         """
-        check_is_fitted(self, 'n_iter_')
+        check_is_fitted(self)
         if sparse.isspmatrix(X):
             return safe_sparse_dot(X, self.coef_.T,
                                    dense_output=True) + self.intercept_
@@ -820,7 +820,7 @@ class Lasso(ElasticNet):
     fit_intercept : boolean, optional, default True
         Whether to calculate the intercept for this model. If set
         to False, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
     normalize : boolean, optional, default False
         This parameter is ignored when ``fit_intercept`` is set to False.
@@ -1258,7 +1258,7 @@ class LassoCV(LinearModelCV, RegressorMixin):
     fit_intercept : boolean, default True
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
     normalize : boolean, optional, default False
         This parameter is ignored when ``fit_intercept`` is set to False.
@@ -1430,7 +1430,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
     normalize : boolean, optional, default False
         This parameter is ignored when ``fit_intercept`` is set to False.
@@ -1635,7 +1635,7 @@ class MultiTaskElasticNet(Lasso):
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
     normalize : boolean, optional, default False
         This parameter is ignored when ``fit_intercept`` is set to False.
@@ -1821,7 +1821,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
     normalize : boolean, optional, default False
         This parameter is ignored when ``fit_intercept`` is set to False.
@@ -1962,7 +1962,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
     normalize : boolean, optional, default False
         This parameter is ignored when ``fit_intercept`` is set to False.
@@ -2136,7 +2136,7 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
     normalize : boolean, optional, default False
         This parameter is ignored when ``fit_intercept`` is set to False.
