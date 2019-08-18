@@ -85,31 +85,31 @@ class KNNImputer(TransformerMixin, BaseEstimator):
         self.metric = metric
         self.copy = copy
 
-    def _calc_impute(self, dist_pot_donors, fit_X_col, mask_fit_X_col,
-                     potential_donors_idx):
+    def _calc_impute(self, dist_pot_donors, n_neighbors,
+                     fit_X_col, mask_fit_X_col):
         """Helper function to impute a single column.
 
         Parameters
         ----------
-        dist_pot_donors : array-like, shape=(n_receivers, n_train_samples)
-            Distance matrix between the receivers and potential donors.
+        dist_pot_donors : ndarray of shape (n_receivers, n_potential_donors)
+            Distance matrix between the receivers and potential donors from
+            training set. There must be at least one non-nan distance between
+            a receiver and a potential donor.
 
-        fit_X_col : array-like, shape=(n_train_samples,)
-            Column from training.
+        n_neighbors : int
+            Number of neighbors to consider.
 
-        mask_fit_X_col : array-like, shape=(n_train_samples,)
+        fit_X_col : ndarray of shape (n_potential_donors,)
+            Column of potential donors from training set.
+
+        mask_fit_X_col : ndarray of shape (n_potential_donors,)
             Missing mask for fit_X_col.
-
-        potential_donors_idx : array-like, shape=(n_donors,)
-            Row index for potential donors.
 
         Returns
         -------
-        imputed_values: array, shape=(n_receivers,) or float
+        imputed_values: ndarray of shape (n_receivers,)
             Imputed values for receiver.
         """
-        n_neighbors = min(self.n_neighbors, len(potential_donors_idx))
-
         # Get donors
         donors_idx = np.argpartition(dist_pot_donors, n_neighbors - 1,
                                      axis=1)[:, :n_neighbors]
@@ -125,8 +125,8 @@ class KNNImputer(TransformerMixin, BaseEstimator):
             weight_matrix[np.isnan(weight_matrix)] = 0.0
 
         # Retrieve donor values and calculate kNN average
-        donors = fit_X_col[potential_donors_idx].take(donors_idx)
-        donors_mask = mask_fit_X_col[potential_donors_idx].take(donors_idx)
+        donors = fit_X_col.take(donors_idx)
+        donors_mask = mask_fit_X_col.take(donors_idx)
         donors = np.ma.array(donors, mask=donors_mask)
 
         return np.ma.average(donors, axis=1, weights=weight_matrix).data
@@ -136,7 +136,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples, n_features)
+        X : array-like shape of (n_samples, n_features)
             Input data, where `n_samples` is the number of samples and
             `n_features` is the number of features.
 
@@ -170,12 +170,12 @@ class KNNImputer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The input data to complete.
 
         Returns
         -------
-        X : array-like, shape = (n_samples, n_output_features)
+        X : array-like of shape (n_samples, n_output_features)
             The imputed dataset. `n_output_features` is the number of features
             that is not always missing during `fit`.
         """
@@ -252,8 +252,10 @@ class KNNImputer(TransformerMixin, BaseEstimator):
                 dist_subset = (dist[dist_idx_map[receivers_idx]]
                                    [:, potential_donors_idx])
 
-            value = self._calc_impute(dist_subset, self._fit_X[:, col],
-                                      mask_fit_X[:, col], potential_donors_idx)
+            n_neighbors = min(self.n_neighbors, len(potential_donors_idx))
+            value = self._calc_impute(dist_subset, n_neighbors,
+                                      self._fit_X[potential_donors_idx, col],
+                                      mask_fit_X[potential_donors_idx, col])
             X[receivers_idx, col] = value
 
         return X[:, valid_idx]
