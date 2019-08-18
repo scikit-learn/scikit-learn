@@ -27,6 +27,8 @@ from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import label_ranking_loss
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
+from sklearn.metrics.ranking import _ndcg_sample_scores, _dcg_sample_scores
+from sklearn.metrics.ranking import ndcg_score, dcg_score
 
 from sklearn.exceptions import UndefinedMetricWarning
 
@@ -332,7 +334,8 @@ def test_roc_curve_toydata():
     y_true = [0, 0]
     y_score = [0.25, 0.75]
     # assert UndefinedMetricWarning because of no positive sample in y_true
-    tpr, fpr, _ = assert_warns(UndefinedMetricWarning, roc_curve, y_true, y_score)
+    tpr, fpr, _ = assert_warns(UndefinedMetricWarning, roc_curve, y_true,
+                               y_score)
     assert_raises(ValueError, roc_auc_score, y_true, y_score)
     assert_array_almost_equal(tpr, [0., 0.5, 1.])
     assert_array_almost_equal(fpr, [np.nan, np.nan, np.nan])
@@ -340,7 +343,8 @@ def test_roc_curve_toydata():
     y_true = [1, 1]
     y_score = [0.25, 0.75]
     # assert UndefinedMetricWarning because of no negative sample in y_true
-    tpr, fpr, _ = assert_warns(UndefinedMetricWarning, roc_curve, y_true, y_score)
+    tpr, fpr, _ = assert_warns(UndefinedMetricWarning, roc_curve, y_true,
+                               y_score)
     assert_raises(ValueError, roc_auc_score, y_true, y_score)
     assert_array_almost_equal(tpr, [np.nan, np.nan, np.nan])
     assert_array_almost_equal(fpr, [0., 0.5, 1.])
@@ -658,6 +662,7 @@ def test_binary_clf_curve():
     assert_raise_message(ValueError, msg, precision_recall_curve,
                          y_true, y_pred)
 
+
 def test_precision_recall_curve():
     y_true, _, probas_pred = make_prediction(binary=True)
     _test_precision_recall_curve(y_true, probas_pred)
@@ -804,6 +809,13 @@ def test_precision_recall_curve_toydata():
                             average="samples"), 0.5)
         assert_almost_equal(average_precision_score(y_true, y_score,
                             average="micro"), 0.5)
+
+    with np.errstate(all="ignore"):
+        # if one class is never present weighted should not be NaN
+        y_true = np.array([[0, 0], [0, 1]])
+        y_score = np.array([[0, 0], [0, 1]])
+        assert_almost_equal(average_precision_score(y_true, y_score,
+                            average="weighted"), 1)
 
 
 def test_average_precision_constant_values():
@@ -1252,6 +1264,125 @@ def test_ranking_loss_ties_handling():
     assert_almost_equal(label_ranking_loss([[1, 0, 0]], [[0.25, 0.5, 0.5]]), 1)
     assert_almost_equal(label_ranking_loss([[1, 0, 1]], [[0.25, 0.5, 0.5]]), 1)
     assert_almost_equal(label_ranking_loss([[1, 1, 0]], [[0.25, 0.5, 0.5]]), 1)
+
+
+def test_dcg_score():
+    _, y_true = make_multilabel_classification(random_state=0, n_classes=10)
+    y_score = - y_true + 1
+    _test_dcg_score_for(y_true, y_score)
+    y_true, y_score = np.random.RandomState(0).random_sample((2, 100, 10))
+    _test_dcg_score_for(y_true, y_score)
+
+
+def _test_dcg_score_for(y_true, y_score):
+    discount = np.log2(np.arange(y_true.shape[1]) + 2)
+    ideal = _dcg_sample_scores(y_true, y_true)
+    score = _dcg_sample_scores(y_true, y_score)
+    assert (score <= ideal).all()
+    assert (_dcg_sample_scores(y_true, y_true, k=5) <= ideal).all()
+    assert ideal.shape == (y_true.shape[0], )
+    assert score.shape == (y_true.shape[0], )
+    assert ideal == pytest.approx(
+        (np.sort(y_true)[:, ::-1] / discount).sum(axis=1))
+
+
+def test_dcg_ties():
+    y_true = np.asarray([np.arange(5)])
+    y_score = np.zeros(y_true.shape)
+    dcg = _dcg_sample_scores(y_true, y_score)
+    dcg_ignore_ties = _dcg_sample_scores(y_true, y_score, ignore_ties=True)
+    discounts = 1 / np.log2(np.arange(2, 7))
+    assert dcg == pytest.approx([discounts.sum() * y_true.mean()])
+    assert dcg_ignore_ties == pytest.approx(
+        [(discounts * y_true[:, ::-1]).sum()])
+    y_score[0, 3:] = 1
+    dcg = _dcg_sample_scores(y_true, y_score)
+    dcg_ignore_ties = _dcg_sample_scores(y_true, y_score, ignore_ties=True)
+    assert dcg_ignore_ties == pytest.approx(
+        [(discounts * y_true[:, ::-1]).sum()])
+    assert dcg == pytest.approx([
+        discounts[:2].sum() * y_true[0, 3:].mean() +
+        discounts[2:].sum() * y_true[0, :3].mean()
+    ])
+
+
+def test_ndcg_ignore_ties_with_k():
+    a = np.arange(12).reshape((2, 6))
+    assert ndcg_score(a, a, k=3, ignore_ties=True) == pytest.approx(
+        ndcg_score(a, a, k=3, ignore_ties=True))
+
+
+def test_ndcg_invariant():
+    y_true = np.arange(70).reshape(7, 10)
+    y_score = y_true + np.random.RandomState(0).uniform(
+        -.2, .2, size=y_true.shape)
+    ndcg = ndcg_score(y_true, y_score)
+    ndcg_no_ties = ndcg_score(y_true, y_score, ignore_ties=True)
+    assert ndcg == pytest.approx(ndcg_no_ties)
+    assert ndcg == pytest.approx(1.)
+    y_score += 1000
+    assert ndcg_score(y_true, y_score) == pytest.approx(1.)
+
+
+@pytest.mark.parametrize('ignore_ties', [True, False])
+def test_ndcg_toy_examples(ignore_ties):
+    y_true = 3 * np.eye(7)[:5]
+    y_score = np.tile(np.arange(6, -1, -1), (5, 1))
+    y_score_noisy = y_score + np.random.RandomState(0).uniform(
+        -.2, .2, size=y_score.shape)
+    assert _dcg_sample_scores(
+        y_true, y_score, ignore_ties=ignore_ties) == pytest.approx(
+            3 / np.log2(np.arange(2, 7)))
+    assert _dcg_sample_scores(
+        y_true, y_score_noisy, ignore_ties=ignore_ties) == pytest.approx(
+            3 / np.log2(np.arange(2, 7)))
+    assert _ndcg_sample_scores(
+        y_true, y_score, ignore_ties=ignore_ties) == pytest.approx(
+            1 / np.log2(np.arange(2, 7)))
+    assert _dcg_sample_scores(y_true, y_score, log_base=10,
+                              ignore_ties=ignore_ties) == pytest.approx(
+                                  3 / np.log10(np.arange(2, 7)))
+    assert ndcg_score(
+        y_true, y_score, ignore_ties=ignore_ties) == pytest.approx(
+            (1 / np.log2(np.arange(2, 7))).mean())
+    assert dcg_score(
+        y_true, y_score, ignore_ties=ignore_ties) == pytest.approx(
+            (3 / np.log2(np.arange(2, 7))).mean())
+    y_true = 3 * np.ones((5, 7))
+    expected_dcg_score = (3 / np.log2(np.arange(2, 9))).sum()
+    assert _dcg_sample_scores(
+        y_true, y_score, ignore_ties=ignore_ties) == pytest.approx(
+            expected_dcg_score * np.ones(5))
+    assert _ndcg_sample_scores(
+        y_true, y_score, ignore_ties=ignore_ties) == pytest.approx(np.ones(5))
+    assert dcg_score(
+        y_true, y_score, ignore_ties=ignore_ties) == pytest.approx(
+            expected_dcg_score)
+    assert ndcg_score(
+        y_true, y_score, ignore_ties=ignore_ties) == pytest.approx(1.)
+
+
+def test_ndcg_score():
+    _, y_true = make_multilabel_classification(random_state=0, n_classes=10)
+    y_score = - y_true + 1
+    _test_ndcg_score_for(y_true, y_score)
+    y_true, y_score = np.random.RandomState(0).random_sample((2, 100, 10))
+    _test_ndcg_score_for(y_true, y_score)
+
+
+def _test_ndcg_score_for(y_true, y_score):
+    ideal = _ndcg_sample_scores(y_true, y_true)
+    score = _ndcg_sample_scores(y_true, y_score)
+    assert (score <= ideal).all()
+    all_zero = (y_true == 0).all(axis=1)
+    assert ideal[~all_zero] == pytest.approx(np.ones((~all_zero).sum()))
+    assert ideal[all_zero] == pytest.approx(np.zeros(all_zero.sum()))
+    assert score[~all_zero] == pytest.approx(
+        _dcg_sample_scores(y_true, y_score)[~all_zero] /
+        _dcg_sample_scores(y_true, y_true)[~all_zero])
+    assert score[all_zero] == pytest.approx(np.zeros(all_zero.sum()))
+    assert ideal.shape == (y_true.shape[0], )
+    assert score.shape == (y_true.shape[0], )
 
 
 def test_partial_roc_auc_score():

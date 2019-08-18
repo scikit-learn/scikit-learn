@@ -111,13 +111,13 @@ class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
         The depth of a tree is the maximum distance between the root
         and any leaf.
         """
-        check_is_fitted(self, 'tree_')
+        check_is_fitted(self)
         return self.tree_.max_depth
 
     def get_n_leaves(self):
         """Returns the number of leaves of the decision tree.
         """
-        check_is_fitted(self, 'tree_')
+        check_is_fitted(self)
         return self.tree_.n_leaves
 
     def fit(self, X, y, sample_weight=None, check_input=True,
@@ -424,7 +424,7 @@ class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted classes, or the predict values.
         """
-        check_is_fitted(self, 'tree_')
+        check_is_fitted(self)
         X = self._validate_X_predict(X, check_input)
         proba = self.tree_.predict(X)
         n_samples = X.shape[0]
@@ -478,7 +478,7 @@ class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
             ``[0; self.tree_.node_count)``, possibly with gaps in the
             numbering.
         """
-        check_is_fitted(self, 'tree_')
+        check_is_fitted(self)
         X = self._validate_X_predict(X, check_input)
         return self.tree_.apply(X)
 
@@ -520,7 +520,7 @@ class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
         -------
         feature_importances_ : array, shape = [n_features]
         """
-        check_is_fitted(self, 'tree_')
+        check_is_fitted(self)
 
         return self.tree_.compute_feature_importances()
 
@@ -841,7 +841,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
-        check_is_fitted(self, 'tree_')
+        check_is_fitted(self)
         X = self._validate_X_predict(X, check_input)
         proba = self.tree_.predict(X)
 

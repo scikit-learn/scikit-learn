@@ -599,7 +599,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
-        check_is_fitted(self, 'mixing_')
+        check_is_fitted(self)
 
         X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
         if self.whiten or self.whiten == 'unit-variance':
@@ -622,7 +622,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_features)
         """
-        check_is_fitted(self, 'mixing_')
+        check_is_fitted(self)
 
         X = check_array(X, copy=(copy and self.whiten), dtype=FLOAT_DTYPES)
         X = np.dot(X, self.mixing_.T)

@@ -7,8 +7,10 @@ and pairwise metrics and distance computations.
 from .ranking import auc
 from .ranking import average_precision_score
 from .ranking import coverage_error
+from .ranking import dcg_score
 from .ranking import label_ranking_average_precision_score
 from .ranking import label_ranking_loss
+from .ranking import ndcg_score
 from .ranking import precision_recall_curve
 from .ranking import roc_auc_score
 from .ranking import roc_curve
@@ -95,6 +97,7 @@ __all__ = [
     'confusion_matrix',
     'consensus_score',
     'coverage_error',
+    'dcg_score',
     'davies_bouldin_score',
     'euclidean_distances',
     'explained_variance_score',
@@ -123,6 +126,7 @@ __all__ = [
     'median_absolute_error',
     'multilabel_confusion_matrix',
     'mutual_info_score',
+    'ndcg_score',
     'normalized_mutual_info_score',
     'pairwise_distances',
     'pairwise_distances_argmin',
