@@ -1349,6 +1349,10 @@ def test__generate_sample_indices():
     indices = _generate_sample_indices(rng, n_samples, max_samples=5)
     assert len(indices) == 5
 
+    # Check that indices with max_samples kwarg subsamples by that amount
+    indices = _generate_sample_indices(rng, n_samples, max_samples=0.5)
+    assert len(indices) == 5
+
     # Check that ValueError is raised when `max_samples` is integral
     # and greater than `n_samples`
     with pytest.raises(ValueError):
