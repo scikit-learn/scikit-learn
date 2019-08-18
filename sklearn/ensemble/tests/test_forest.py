@@ -1330,3 +1330,92 @@ def test_forest_degenerate_feature_importances():
     gbr = RandomForestRegressor(n_estimators=10).fit(X, y)
     assert_array_equal(gbr.feature_importances_,
                        np.zeros(10, dtype=np.float64))
+
+
+def test__generate_sample_indices():
+
+    from sklearn.ensemble.forest import _generate_sample_indices
+
+    rng = np.random.RandomState(1234)
+    n_samples = 10
+
+    # Check that indices without max_samples kwarg defaults to full n_samples
+    indices = _generate_sample_indices(rng, n_samples)
+    assert len(indices) == n_samples
+
+    # Check that indices with max_samples kwarg subsamples by that amount
+    indices = _generate_sample_indices(rng, n_samples, max_samples=5)
+    assert len(indices) == 5
+
+    # Check that ValueError is raised when `max_samples` is integral
+    # and greater than `n_samples`
+    with pytest.raises(ValueError):
+        _generate_sample_indices(rng, n_samples, max_samples=n_samples + 1)
+
+    # Check that ValueError is raised when `max_samples` is float
+    # and not in range (0, 1]
+    with pytest.raises(ValueError):
+        _generate_sample_indices(rng, n_samples, max_samples=2.0)
+    with pytest.raises(ValueError):
+        _generate_sample_indices(rng, n_samples, max_samples=0.0)
+    with pytest.raises(ValueError):
+        _generate_sample_indices(rng, n_samples, max_samples=np.nan)
+
+    # Check that TypeError is raised when `max_samples` is garbage
+    with pytest.raises(TypeError):
+        _generate_sample_indices(rng, n_samples,
+                                 max_samples='bad max sample type')
+    with pytest.raises(TypeError):
+        _generate_sample_indices(rng, n_samples,
+                                 max_samples=np.ones(n_samples))
+
+
+def check_max_samples_classification(name):
+    """ Checks that the `max_samples` option works as expected
+    for a simple two-class problem
+    """
+
+    rng = np.random.RandomState(1)
+
+    # Make a two-sample, two-class dataset
+    X = np.array([
+        [-1.],
+        [+1.],
+    ])
+    y = np.array([0, 1])
+
+    # Initialize the classifier
+    rfc = FOREST_CLASSIFIERS[name](
+        n_estimators=1,
+        random_state=rng,
+        bootstrap=True,
+        max_depth=1,
+    )
+
+    # Limiting bootstrap samples to 1 on the two-sample
+    # dataset with `n_estimators=1` and `max_depth=1`
+    # should yield an accuracy of 0.5
+    rfc.max_samples = 1
+    rfc.fit(X, y)
+    assert rfc.score(X, y) == 0.5
+
+    # Should be equivlaent to `max_samples=1`
+    rfc.max_samples = 0.5
+    rfc.fit(X, y)
+    assert rfc.score(X, y) == 0.5
+
+    # Allowing bootstrap samples to 2 should allow choosing
+    # the optimal threshold between -1 and +1 yielding perfect accuracy
+    rfc.max_samples = 2
+    rfc.fit(X, y)
+    assert rfc.score(X, y) == 1.0
+
+    # Should be equivalent to `max_samples=2`
+    rfc.max_samples = 1.0
+    rfc.fit(X, y)
+    assert rfc.score(X, y) == 1.0
+
+
+@pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
+def test_max_samples_classification(name):
+    check_max_samples_classification(name)
