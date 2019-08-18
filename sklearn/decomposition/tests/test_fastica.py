@@ -82,8 +82,8 @@ def test_fastica_simple(add_noise, seed):
     for algo, nl, whiten in itertools.product(algos, nls, whitening):
         if whiten == 'unit-variance':
             k_, mixing_, s_ = fastica(m.T, fun=nl, algorithm=algo)
-            assert_raises(ValueError, fastica, m.T, fun=np.tanh,
-                          algorithm=algo)
+            with pytest.raises(ValueError):
+                fastica(m.T, fun=np.tanh, algorithm=algo)
         else:
             pca = PCA(n_components=2, whiten=True, random_state=rng)
             X = pca.fit_transform(m.T)
@@ -287,8 +287,8 @@ def test_fastica_errors():
     with pytest.raises(ValueError, match='Invalid algorithm.+must '
                        'be.+parallel.+or.+deflation'):
         fastica(X, algorithm='pizza')
-        
-        
+
+
 def test_fastica_whiten_true_raises_warning():
     """Test raise warning when setting `whiten` parameter as True
 
