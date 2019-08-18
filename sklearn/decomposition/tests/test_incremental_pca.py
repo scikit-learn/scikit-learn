@@ -117,14 +117,14 @@ def test_incremental_pca_validation():
                            " for n_features={}, need more rows than"
                            " columns for IncrementalPCA"
                            " processing".format(n_components,
-                           n_features)):
+                                                n_features)):
             IncrementalPCA(n_components, batch_size=10).fit(X)
 
     # Tests that n_components is also <= n_samples.
     n_components = 3
     with pytest.raises(ValueError, match="n_components={} must be"
                        " less or equal to the batch number of"
-                       " samples {}".format( n_components, n_samples)):
+                       " samples {}".format(n_components, n_samples)):
         IncrementalPCA(n_components=n_components).partial_fit(X)
 
 
@@ -163,7 +163,7 @@ def test_incremental_pca_set_params():
     # Increasing number of components
     ipca.set_params(n_components=15)
     with pytest.raises(ValueError):
-       ipca.partial_fit(X3)
+        ipca.partial_fit(X3)
     # Returning to original setting
     ipca.set_params(n_components=20)
     ipca.partial_fit(X)
