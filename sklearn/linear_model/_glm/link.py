@@ -15,7 +15,7 @@ class Link(metaclass=ABCMeta):
     """Abstract base class for Link functions."""
 
     @abstractmethod
-    def link(self, mu):
+    def __call__(self, mu):
         """Compute the link function g(mu).
 
         The link function links the mean mu=E[Y] to the so called linear
@@ -79,7 +79,7 @@ class Link(metaclass=ABCMeta):
 class IdentityLink(Link):
     """The identity link function g(x)=x."""
 
-    def link(self, mu):
+    def __call__(self, mu):
         return mu
 
     def derivative(self, mu):
@@ -98,7 +98,7 @@ class IdentityLink(Link):
 class LogLink(Link):
     """The log link function g(x)=log(x)."""
 
-    def link(self, mu):
+    def __call__(self, mu):
         return np.log(mu)
 
     def derivative(self, mu):
@@ -117,7 +117,7 @@ class LogLink(Link):
 class LogitLink(Link):
     """The logit link function g(x)=logit(x)."""
 
-    def link(self, mu):
+    def __call__(self, mu):
         return logit(mu)
 
     def derivative(self, mu):

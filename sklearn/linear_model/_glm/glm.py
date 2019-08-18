@@ -49,7 +49,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         Constant that multiplies the penalty terms and thus determines the
         regularization strength.
         See the notes for the exact mathematical meaning of this
-        parameter.``alpha = 0`` is equivalent to unpenalized GLMs. In this
+        parameter. ``alpha = 0`` is equivalent to unpenalized GLMs. In this
         case, the design matrix X must have full column rank
         (no collinearities).
 
@@ -296,7 +296,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         else:
             if self.fit_intercept:
                 coef = np.zeros(n_features+1)
-                coef[0] = link.link(np.average(y, weights=weights))
+                coef[0] = link(np.average(y, weights=weights))
             else:
                 coef = np.zeros(n_features)
 
@@ -441,7 +441,7 @@ class PoissonRegressor(GeneralizedLinearRegressor):
         Constant that multiplies the penalty terms and thus determines the
         regularization strength.
         See the notes for the exact mathematical meaning of this
-        parameter.``alpha = 0`` is equivalent to unpenalized GLMs. In this
+        parameter. ``alpha = 0`` is equivalent to unpenalized GLMs. In this
         case, the design matrix X must have full column rank
         (no collinearities).
 
@@ -560,7 +560,7 @@ class GammaRegressor(GeneralizedLinearRegressor):
         Constant that multiplies the penalty terms and thus determines the
         regularization strength.
         See the notes for the exact mathematical meaning of this
-        parameter.``alpha = 0`` is equivalent to unpenalized GLMs. In this
+        parameter. ``alpha = 0`` is equivalent to unpenalized GLMs. In this
         case, the design matrix X must have full column rank
         (no collinearities).
 
