@@ -347,8 +347,6 @@ boolean mask array or callable
             if trans == 'drop':
                 continue
             if trans == 'passthrough':
-                if isinstance(column, (str, int)):
-                    column = [column]
                 if hasattr(self, '_df_columns'):
                     feature_names.extend([self._df_columns[c]
                                           if isinstance(c, int)
