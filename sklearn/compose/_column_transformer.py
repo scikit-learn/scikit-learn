@@ -657,32 +657,20 @@ def make_column_transformer(*transformers, **kwargs):
     require, and does not permit, naming the transformers. Instead, they will
     be given names automatically based on their types. It also does not allow
     weighting with ``transformer_weights``.
-    
-    Read more in the :ref:`User Guide <make_column_transformer>`.
 
     Read more in the :ref:`User Guide <make_column_transformer>`.
 
     Parameters
     ----------
-<<<<<<< HEAD
-	*transformers : tuples of transformers and column selections
-
-      transformer : estimator or {'passthrough', 'drop'}
-=======
     *transformers : tuples
         Tuples of the form (transformer, column(s)) specifying the
         transformer objects to be applied to subsets of the data.
 
         transformer : estimator or {'passthrough', 'drop'}
->>>>>>> upstream/master
             Estimator must support `fit` and `transform`. Special-cased
             strings 'drop' and 'passthrough' are accepted as well, to
             indicate to drop the columns or to pass them through untransformed,
             respectively.
-<<<<<<< HEAD
-            
-      column(s) : string or int, array-like of string or int, slice, \
-=======
         column(s) : string or int, array-like of string or int, slice, \
 boolean mask array or callable
             Indexes the data on its second axis. Integers are interpreted as
@@ -692,7 +680,6 @@ boolean mask array or callable
             otherwise a 2d array will be passed to the transformer.
             A callable is passed the input data `X` and can return any of the
             above.
->>>>>>> upstream/master
 
     remainder : {'drop', 'passthrough'} or estimator, default 'drop'
         By default, only the specified columns in `transformers` are
