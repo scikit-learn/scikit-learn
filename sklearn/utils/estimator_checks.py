@@ -328,8 +328,7 @@ def check_estimator(Estimator):
 def _boston_subset(n_samples=200):
     global BOSTON
     if BOSTON is None:
-        boston = load_boston()
-        X, y = boston.data, boston.target
+        X, y = load_boston(return_X_y=True)
         X, y = shuffle(X, y, random_state=0)
         X, y = X[:n_samples], y[:n_samples]
         X = StandardScaler().fit_transform(X)
@@ -2408,8 +2407,7 @@ def check_set_params(name, estimator_orig):
 def check_classifiers_regression_target(name, estimator_orig):
     # Check if classifier throws an exception when fed regression targets
 
-    boston = load_boston()
-    X, y = boston.data, boston.target
+    X, y = load_boston(return_X_y=True)
     e = clone(estimator_orig)
     msg = 'Unknown label type: '
     if not _safe_tags(e, "no_validation"):
