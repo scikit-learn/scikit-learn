@@ -285,8 +285,8 @@ Changelog
 :mod:`sklearn.tree`
 ...................
 
-- |Feature| Adds minimal cost complexity pruning to
-  :class:`tree.DecisionTreeClassifier`, :class:`tree.DecisionTreeRegressor`,
+- |Feature| Adds minimal cost complexity pruning, controlled by ``ccp_alpha``,
+  to :class:`tree.DecisionTreeClassifier`, :class:`tree.DecisionTreeRegressor`,
   :class:`tree.ExtraTreeClassifier`, :class:`tree.ExtraTreeRegressor`,
   :class:`ensemble.RandomForestClassifier`, 
   :class:`ensemble.RandomForestRegressor`,

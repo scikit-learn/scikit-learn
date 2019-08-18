@@ -540,22 +540,22 @@ where :math:`X_m` is the training data in node :math:`m`
 Minimal Cost-Complexity Pruning
 ===============================
 
-Minimal cost-complexity pruning is an algorithm used to prune a tree, described
-in Chapter 3 of [BRE]_. This algorithm is parameterized by :math:`\alpha\ge0`
-known as the complexity parameter. The complexity parameter is used to define
-the cost-complexity measure, :math:`R_\alpha(T)` of a given tree :math:`T`:
+Minimal cost-complexity pruning is an algorithm used to prune a tree to avoid
+over-fitting, described in Chapter 3 of [BRE]_. This algorithm is parameterized
+by :math:`\alpha\ge0` known as the complexity parameter. The complexity
+parameter is used to define the cost-complexity measure, :math:`R_\alpha(T)` of
+a given tree :math:`T`:
 
 .. math::
 
   R_\alpha(T) = R(T) + \alpha|T|
 
-where :math:`|T|` is the number of terminal nodes in :math:`T` and
-:math:`R(T)` is traditionally defined as the total misclassification rate of
-the terminal nodes. Alternatively, scikit-learn uses the total sample weighted
-impurity of the terminal nodes for :math:`R(T)`. As shown in the previous
-section, the impurity of a node depends on the criterion. Minimal
-cost-complexity pruning finds the subtree of :math:`T` that minimizes
-:math:`R_\alpha(T)`.
+where :math:`|T|` is the number of terminal nodes in :math:`T` and :math:`R(T)`
+is traditionally defined as the total misclassification rate of the terminal
+nodes. Alternatively, scikit-learn uses the total sample weighted impurity of
+the terminal nodes for :math:`R(T)`. As shown above, the impurity of a node
+depends on the criterion. Minimal cost-complexity pruning finds the subtree of
+:math:`T` that minimizes :math:`R_\alpha(T)`.
 
 The cost complexity measure of a single node is
 :math:`R_\alpha(t)=R(t)+\alpha`. The branch, :math:`T_t`, is defined to be a
@@ -565,7 +565,7 @@ is greater than the sum of impurities of its terminal nodes,
 :math:`t`, and its branch, :math:`T_t`, can be equal depending on
 :math:`\alpha`. We define the effective :math:`\alpha` of a node to be the
 value where they are equal, :math:`R_\alpha(T_t)=R_\alpha(t)` or
-:math:`\alpha_{eff}(t)=(R(t)-R(T_t))/(|T|-1)`. A non-terminal node
+:math:`\alpha_{eff}(t)=\frac{R(t)-R(T_t)}{|T|-1}`. A non-terminal node
 with the smallest value of :math:`\alpha_{eff}` is the weakest link and will
 be pruned. This process stops when the pruned tree's minimal
 :math:`\alpha_{eff}` is greater than the ``ccp_alpha`` parameter.
