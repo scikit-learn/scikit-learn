@@ -513,7 +513,6 @@ def test_scorer_sample_weight():
                                                         ignored))
 
         except TypeError as e:
-<<<<<<< HEAD
             assert_true("sample_weight" in str(e),
                         "scorer {0} raises unhelpful exception when called "
                         "with sample weights: {1}".format(name, str(e)))
@@ -529,11 +528,6 @@ def check_scorer_memmap(scorer_name):
     else:
         score = scorer(estimator, X_mm, y_mm)
     assert isinstance(score, numbers.Number), scorer_name
-=======
-            assert "sample_weight" in str(e), (
-                "scorer {0} raises unhelpful exception when called "
-                "with sample weights: {1}".format(name, str(e)))
->>>>>>> master
 
 
 @pytest.mark.parametrize('name', SCORERS)
