@@ -1333,6 +1333,8 @@ def test_forest_degenerate_feature_importances():
 
 
 def test__generate_sample_indices():
+    """ Test the behavior of the sample index generation helper
+    """
 
     from sklearn.ensemble.forest import _generate_sample_indices
 
@@ -1361,7 +1363,7 @@ def test__generate_sample_indices():
     with pytest.raises(ValueError):
         _generate_sample_indices(rng, n_samples, max_samples=np.nan)
 
-    # Check that TypeError is raised when `max_samples` is garbage
+    # Check that TypeError is raised when `max_samples` is the wrong type
     with pytest.raises(TypeError):
         _generate_sample_indices(rng, n_samples,
                                  max_samples='bad max sample type')
@@ -1370,52 +1372,38 @@ def test__generate_sample_indices():
                                  max_samples=np.ones(n_samples))
 
 
-def check_max_samples_classification(name):
-    """ Checks that the `max_samples` option works as expected
-    for a simple two-class problem
+def check_classification_toy_max_samples(name):
+    """ Test that the toy example is separable via a bootstrap size of only 2
     """
 
     rng = np.random.RandomState(1)
+    max_tries = 100
 
-    # Make a two-sample, two-class dataset
-    X = np.array([
-        [-1.],
-        [+1.],
-    ])
-    y = np.array([0, 1])
-
-    # Initialize the classifier
-    rfc = FOREST_CLASSIFIERS[name](
+    # The toy example is separable using just one
+    # decision stump, and choosing 2 examples from the full
+    # 6-example dataset *if* the 2 examples are chosen correctly.
+    est = FOREST_CLASSIFIERS[name](
         n_estimators=1,
-        random_state=rng,
         bootstrap=True,
+        max_samples=2,
         max_depth=1,
+        random_state=rng,
     )
 
-    # Limiting bootstrap samples to 1 on the two-sample
-    # dataset with `n_estimators=1` and `max_depth=1`
-    # should yield an accuracy of 0.5
-    rfc.max_samples = 1
-    rfc.fit(X, y)
-    assert rfc.score(X, y) == 0.5
+    # Each call to fit uses a different bootstrap sample of size two. If we
+    # fit multiple times, we expect that we eventually hit a case where
+    # the two examples chosen for the bootstrap sample are from the opposite
+    # class and yield a perfect score across the entire dataset.
+    perfect_score = False
+    for _ in range(max_tries):
+        est.fit(X, y)
+        if est.score(X, y) == 1.0:
+            perfect_score = True
+            break
 
-    # Should be equivlaent to `max_samples=1`
-    rfc.max_samples = 0.5
-    rfc.fit(X, y)
-    assert rfc.score(X, y) == 0.5
-
-    # Allowing bootstrap samples to 2 should allow choosing
-    # the optimal threshold between -1 and +1 yielding perfect accuracy
-    rfc.max_samples = 2
-    rfc.fit(X, y)
-    assert rfc.score(X, y) == 1.0
-
-    # Should be equivalent to `max_samples=2`
-    rfc.max_samples = 1.0
-    rfc.fit(X, y)
-    assert rfc.score(X, y) == 1.0
+    assert perfect_score
 
 
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
-def test_max_samples_classification(name):
-    check_max_samples_classification(name)
+def test_classification_toy_max_samples(name):
+    check_classification_toy_max_samples(name)
