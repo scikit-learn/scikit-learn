@@ -353,25 +353,25 @@ class TweedieDistribution(ExponentialDispersionModel):
 class NormalDistribution(TweedieDistribution):
     """Class for the Normal (aka Gaussian) distribution"""
     def __init__(self):
-        super(NormalDistribution, self).__init__(power=0)
+        super().__init__(power=0)
 
 
 class PoissonDistribution(TweedieDistribution):
     """Class for the scaled Poisson distribution"""
     def __init__(self):
-        super(PoissonDistribution, self).__init__(power=1)
+        super().__init__(power=1)
 
 
 class GammaDistribution(TweedieDistribution):
     """Class for the Gamma distribution"""
     def __init__(self):
-        super(GammaDistribution, self).__init__(power=2)
+        super().__init__(power=2)
 
 
 class InverseGaussianDistribution(TweedieDistribution):
     """Class for the scaled InverseGaussianDistribution distribution"""
     def __init__(self):
-        super(InverseGaussianDistribution, self).__init__(power=3)
+        super().__init__(power=3)
 
 
 EDM_DISTRIBUTIONS = {
