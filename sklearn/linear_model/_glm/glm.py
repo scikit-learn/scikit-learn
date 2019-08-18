@@ -664,19 +664,24 @@ class TweedieRegressor(GeneralizedLinearRegressor):
     Parameters
     ----------
     power : float (default=0)
-            The variance power: v(μ) = μ^{power}.
+            The variance power: v(μ) = μ^power.
             For ``0<power<1``, no distribution exists.
 
             Special cases are:
 
-            ===== ================
-            Power Distribution
-            ===== ================
-            0     Normal
-            1     Poisson
-            (1,2) Compound Poisson
-            2     Gamma
-            3     Inverse Gaussian
+            +-------+------------------+
+            | Power | Distribution     |
+            +=======+==================+
+            | 0     | Normal           |
+            +-------+------------------+
+            | 1     | Poisson          |
+            +-------+------------------+
+            | (1,2) | Compound Poisson |
+            +-------+------------------+
+            | 2     | Gamma            |
+            +-------+------------------+
+            | 3     | Inverse Gaussian |
+            +-------+------------------+
 
     alpha : float, optional (default=1)
         Constant that multiplies the penalty terms and thus determines the
