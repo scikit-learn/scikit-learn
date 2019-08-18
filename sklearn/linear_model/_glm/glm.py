@@ -415,7 +415,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         dev = self._family_instance.deviance(y, mu, weights=weights)
         y_mean = np.average(y, weights=weights)
         dev_null = self._family_instance.deviance(y, y_mean, weights=weights)
-        return 1. - dev / dev_null
+        return 1 - dev / dev_null
 
     def _more_tags(self):
         return {"requires_positive_y": True}

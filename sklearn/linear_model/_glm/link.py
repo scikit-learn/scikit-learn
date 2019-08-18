@@ -102,7 +102,7 @@ class LogLink(Link):
         return np.log(mu)
 
     def derivative(self, mu):
-        return 1./mu
+        return 1 / mu
 
     def inverse(self, lin_pred):
         return np.exp(lin_pred)
@@ -121,15 +121,15 @@ class LogitLink(Link):
         return logit(mu)
 
     def derivative(self, mu):
-        return 1. / (mu * (1 - mu))
+        return 1 / (mu * (1 - mu))
 
     def inverse(self, lin_pred):
         return expit(lin_pred)
 
     def inverse_derivative(self, lin_pred):
         ep = expit(lin_pred)
-        return ep * (1. - ep)
+        return ep * (1 - ep)
 
     def inverse_derivative2(self, lin_pred):
         ep = expit(lin_pred)
-        return ep * (1. - ep) * (1. - 2 * ep)
+        return ep * (1 - ep) * (1 - 2 * ep)
