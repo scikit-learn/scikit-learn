@@ -4,13 +4,13 @@
 Developing scikit-learn estimators
 ==================================
 
+.. currentmodule:: sklearn
+
 Whether you are proposing an estimator for inclusion in scikit-learn,
 developing a separate package compatible with scikit-learn, or 
 implementing custom components for your own projects, this chapter 
 details how to develop objects that safely interact with scikit-learn 
 Pipelines and model selection tools.
-
-.. currentmodule:: sklearn
 
 .. _api_overview:
 
