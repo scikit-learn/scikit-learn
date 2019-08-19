@@ -251,11 +251,11 @@ intersphinx_mapping = {
 if 'dev' in version:
     binder_branch = 'master'
 else:
-    match = re.match(r'^(\d+)\.(\d+)(?:\.\d)?$', version)
+    match = re.match(r'^(\d+)\.(\d+)(?:\.\d+)?$', version)
     if match is None:
         raise ValueError(
             'Ill-formed version: {!r}. Expected either '
-            'a version containing dev '
+            "a version containing 'dev' "
             'or a version like X.Y or X.Y.Z.'.format(version))
 
     major, minor = match.groups()
