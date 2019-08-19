@@ -537,9 +537,9 @@ def check_estimator_sparse_data(name, estimator_orig):
                     raise AssertionError(msg % (name, matrix_format))
                 else:
                     print("Estimator %s doesn't seem to fail gracefully on "
-                          "sparse data: error message state explicitly that "
-                          "sparse input is not supported if this is not"
-                          " the case." % name)
+                          "sparse data: error message should state explicitly "
+                          "that sparse input is not supported if this is not "
+                          "the case." % name)
                     raise
         except Exception:
             print("Estimator %s doesn't seem to fail gracefully on "
@@ -2394,7 +2394,8 @@ def check_estimator_sparse_dense(name, estimator_orig):
     centers = 2 if tags["binary_only"] else None
     X, y = make_blobs(random_state=rng, cluster_std=0.5, centers=centers)
     # for put some points to zero to have a little bit of sparsity
-    X -= np.min(X) - 1.  # we need positive data for ComplementNB for instance
+    if tags["requires_positive_X"]:
+        X -= np.min(X) - 1.
     X_csr = sparse.csr_matrix(X)
     if tags["multioutput"] or tags["multioutput_only"]:
         y = y[:, np.newaxis]
@@ -2431,17 +2432,13 @@ def check_estimator_sparse_dense(name, estimator_orig):
             if hasattr(estimator, 'predict_proba'):
                 probs = estimator.predict_proba(X)
 
-                if isinstance(probs, list):
-                    # XXX : hack for dummy classifier
-                    probs = probs[0]
-
                 assert probs.shape == (X.shape[0], len(np.unique(y)))
         except TypeError as e:
             if 'sparse' not in str.lower(repr(e)):
                 print("Estimator %s doesn't seem to fail gracefully on "
-                      "sparse data: error message state explicitly that "
-                      "sparse input is not supported if this is not the case."
-                      % name)
+                      "sparse data: error message should state explicitly "
+                      "that sparse input is not supported if this is not the "
+                      "case." % name)
                 raise
         except Exception:
             print("Estimator %s doesn't seem to fail gracefully on "

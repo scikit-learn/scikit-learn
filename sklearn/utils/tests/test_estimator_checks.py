@@ -152,14 +152,27 @@ class NoCheckinPredict(BaseBadClassifier):
 
 class NoSparseClassifier(BaseBadClassifier):
     def fit(self, X, y):
-        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc'])
+        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'dok', 'lil',
+                                              'coo', 'dia', 'bsr'])
         if sp.issparse(X):
-            raise ValueError("Nonsensical Error")
+            raise Exception("Nonsensical Error")
         return self
 
     def predict(self, X):
         X = check_array(X)
         return np.ones(X.shape[0])
+
+
+class NoSparseClassifierTypeError(NoSparseClassifier):
+    """An estimator that refuses sparse inputs that returns a type error
+    (as expected), but with the wrong message"""
+
+    def fit(self, X, y):
+        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'dok', 'lil',
+                                              'coo', 'dia', 'bsr'])
+        if sp.issparse(X):
+            raise TypeError("Nonsensical Error")
+        return self
 
 
 class CorrectNotFittedErrorClassifier(BaseBadClassifier):
@@ -381,9 +394,11 @@ def test_check_estimator():
            "to a subset.").format(method=method, name=name)
     assert_raises_regex(AssertionError, msg,
                         check_estimator, NotInvariantPredict)
-    # check for sparse matrix input handling
+    # check for sparse matrix input handling, if an Exception is thrown
     name = NoSparseClassifier.__name__
-    msg = "Estimator %s doesn't seem to fail gracefully on sparse data" % name
+    msg = ("Estimator %s doesn't seem to fail gracefully on sparse data: "
+           "it should raise a TypeError if sparse input is explicitly not "
+           "supported." % name)
     # the check for sparse input handling prints to the stdout,
     # instead of raising an error, so as not to remove the original traceback.
     # that means we need to jump through some hoops to catch it.
@@ -392,7 +407,25 @@ def test_check_estimator():
     sys.stdout = string_buffer
     try:
         check_estimator(NoSparseClassifier)
-    except:
+    except Exception:
+        pass
+    finally:
+        sys.stdout = old_stdout
+    assert msg in string_buffer.getvalue()
+    # check for sparse matrix input handling, if the wrong TypeError is thrown
+    name = NoSparseClassifierTypeError.__name__
+    msg = ("Estimator %s doesn't seem to fail gracefully on sparse data: "
+           "error message should state explicitly that sparse input is not "
+           "supported if this is not the case." % name)
+    # the check for sparse input handling prints to the stdout,
+    # instead of raising an error, so as not to remove the original traceback.
+    # that means we need to jump through some hoops to catch it.
+    old_stdout = sys.stdout
+    string_buffer = StringIO()
+    sys.stdout = string_buffer
+    try:
+        check_estimator(NoSparseClassifierTypeError)
+    except TypeError:
         pass
     finally:
         sys.stdout = old_stdout
