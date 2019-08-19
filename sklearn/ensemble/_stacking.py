@@ -358,19 +358,17 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
     >>> from sklearn.ensemble import StackingClassifier
     >>> X, y = load_iris(return_X_y=True)
     >>> estimators = [
-    ...     ('lr', LogisticRegression(solver='lbfgs', multi_class='auto',
-    ...                               tol=1e-1)),
+    ...     ('lr', LogisticRegression(tol=1e-1)),
     ...     ('svr', LinearSVC(tol=1e-1, random_state=42))
     ... ]
     >>> clf = StackingClassifier(
     ...     estimators=estimators,
     ...     final_estimator=RandomForestClassifier(n_estimators=10,
-    ...                                            random_state=42),
-    ...     cv=5,
+    ...                                            random_state=42)
     ... )
     >>> from sklearn.model_selection import train_test_split
     >>> X_train, X_test, y_train, y_test = train_test_split(
-    ... X, y, stratify=y, random_state=42
+    ...     X, y, stratify=y, random_state=42
     ... )
     >>> clf.fit(X_train, y_train).score(X_test, y_test)
     0.9...
@@ -572,12 +570,11 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
     >>> reg = StackingRegressor(
     ...     estimators=estimators,
     ...     final_estimator=RandomForestRegressor(n_estimators=10,
-    ...                                           random_state=42),
-    ...     cv=5
+    ...                                           random_state=42)
     ... )
     >>> from sklearn.model_selection import train_test_split
     >>> X_train, X_test, y_train, y_test = train_test_split(
-    ... *load_diabetes(return_X_y=True), random_state=42
+    ...     *load_diabetes(return_X_y=True), random_state=42
     ... )
     >>> reg.fit(X_train, y_train).score(X_test, y_test)
     0.3...
