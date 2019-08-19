@@ -14,7 +14,7 @@ regressor with the stacking strategy. Stacking improves the overall
 performance.
 
 """
-
+print(__doc__)
 # Authors: Guillaume Lemaitre <g.lemaitre58@gmail.com>
 # License: BSD 3 clause
 

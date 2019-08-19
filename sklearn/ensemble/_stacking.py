@@ -509,7 +509,7 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
 
     final_estimator : estimator, default=None
         A regressor which will be used to combine the base estimators.
-        The default regressor is a `LinearRegressor`.
+        The default regressor is a `LinearRegression`.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy. Possible inputs for
