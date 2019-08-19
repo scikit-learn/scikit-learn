@@ -749,6 +749,9 @@ class MultinomialNB(BaseDiscreteNB):
         return (safe_sparse_dot(X, self.feature_log_prob_.T) +
                 self.class_log_prior_)
 
+    def _more_tags(self):
+        return {'requires_positive_X': True}
+
 
 class ComplementNB(BaseDiscreteNB):
     """The Complement Naive Bayes classifier described in Rennie et al. (2003).
@@ -859,6 +862,9 @@ class ComplementNB(BaseDiscreteNB):
         if len(self.classes_) == 1:
             jll += self.class_log_prior_
         return jll
+
+    def _more_tags(self):
+        return {'requires_positive_X': True}
 
 
 class BernoulliNB(BaseDiscreteNB):
@@ -983,3 +989,6 @@ class BernoulliNB(BaseDiscreteNB):
         jll += self.class_log_prior_ + neg_prob.sum(axis=1)
 
         return jll
+
+    def _more_tags(self):
+        return {'requires_positive_X': True}

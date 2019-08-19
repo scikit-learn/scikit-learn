@@ -1341,3 +1341,6 @@ class NMF(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'n_components_')
         return np.dot(W, self.components_)
+
+    def _more_tags(self):
+        return {'requires_positive_X': True}
