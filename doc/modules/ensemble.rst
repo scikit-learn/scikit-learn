@@ -1211,11 +1211,12 @@ During training, the `estimators` are fitted on the whole training data
 `final_estimator` is trained on out-samples using
 :func:`sklearn.model_selection.cross_val_predict` internally.
 
-Note that the output of the ``estimators`` is controlled by the parameter
-`stack_method` and it is called by each estimator. This parameter is either a
-string, being estimator method names, or `'auto'` which will automatically
-identify an available method depending on the availability, tested in the
-order of preference: `predict_proba`, `decision_function` and `predict`.
+For :class:`StackingClassifier`, note that the output of the ``estimators`` is
+controlled by the parameter `stack_method` and it is called by each estimator.
+This parameter is either a string, being estimator method names, or `'auto'`
+which will automatically identify an available method depending on the
+availability, tested in the order of preference: `predict_proba`,
+`decision_function` and `predict`.
 
 A :class:`StackingRegressor` and :class:`StackingClassifier` can be used as
 any other regressor or classifier, exposing a `predict` and `predict_proba`
