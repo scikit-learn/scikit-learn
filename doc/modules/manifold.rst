@@ -426,7 +426,7 @@ space and the similarities/dissimilarities.
 Let :math:`S` be the similarity matrix, and :math:`X` the coordinates of the
 :math:`n` input points. Disparities :math:`\hat{d}_{ij}` are transformation of
 the similarities chosen in some optimal ways. The objective, called the
-stress, is then defined by :math:`sum_{i < j} d_{ij}(X) - \hat{d}_{ij}(X)`
+stress, is then defined by :math:`\sum_{i < j} d_{ij}(X) - \hat{d}_{ij}(X)`
 
 
 Metric MDS
