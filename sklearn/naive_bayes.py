@@ -726,10 +726,12 @@ class MultinomialNB(BaseDiscreteNB):
         self.fit_prior = fit_prior
         self.class_prior = class_prior
 
+    def _more_tags(self):
+        return {'requires_positive_X': True}
+
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""
-        if np.any((X.data if issparse(X) else X) < 0):
-            raise ValueError("Input X must be non-negative")
+        check_non_negative(X, "MultinomialNB (input X)")
         self.feature_count_ += safe_sparse_dot(Y.T, X)
         self.class_count_ += Y.sum(axis=0)
 
