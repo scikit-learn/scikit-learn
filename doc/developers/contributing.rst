@@ -805,6 +805,10 @@ In addition, we add the following guidelines:
 A good example of code that we like can be found `here
 <https://gist.github.com/nateGeorge/5455d2c57fb33c1ae04706f2dc4fee01>`_.
 
+.. _backwards-compatibility:
+
+Maintaining backwards compatibility
+===================================
 
 .. _contributing_deprecation:
 
@@ -933,13 +937,7 @@ cases. The warning should be caught in all other tests
 (using e.g., ``@pytest.mark.filterwarnings``), and there should be no warning
 in the examples.
 
-
 .. currentmodule:: sklearn
-
-Python versions supported
--------------------------
-
-Since scikit-learn 0.21, only Python 3.5 and newer is supported.
 
 .. _code_review:
 
