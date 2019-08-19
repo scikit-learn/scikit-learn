@@ -101,7 +101,10 @@ if [[ "$COVERAGE" == "true" ]]; then
 fi
 
 if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
-    python -m pip install sphinx numpydoc  # numpydoc requires sphinx
+    # numpydoc requires sphinx
+    # pin sphinx until jinja2 (>2.10.1) is not released
+    python -m pip install sphinx==2.1.2
+    python -m pip install numpydoc
 fi
 
 python --version
