@@ -288,8 +288,8 @@ def safe_indexing(X, indices, axis=0):
               be 2D.
             - to select multiples columns, `indices` can be one of the
               following: `list`, `array`, `slice`. The type used in
-              these containers can be one of the following: `int` and `str`.
-              However, `str` is only supported when `X` is a dataframe.
+              these containers can be one of the following: `int`, 'bool' and
+              `str`. However, `str` is only supported when `X` is a dataframe.
               The selected subset will be 2D.
     axis : int, default=0
         The axis along which `X` will be subsampled. `axis=0` will select
