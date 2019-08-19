@@ -247,6 +247,8 @@ def _check_key_type(key, superclass):
     if isinstance(key, superclass):
         return True
     if isinstance(key, slice):
+        if key.start is None and key.stop is None:
+            return False
         return (isinstance(key.start, (superclass, type(None))) and
                 isinstance(key.stop, (superclass, type(None))))
     if isinstance(key, list):
