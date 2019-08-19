@@ -66,7 +66,7 @@ def test_stacking_classifier_iris(cv, final_estimator):
     assert clf.score(X_test, y_test) > 0.8
 
     X_trans = clf.transform(X_test)
-    assert X_trans.shape[1] == 6
+    assert X_trans.shape[1] == 5
 
     clf.set_params(lr='drop')
     clf.fit(X_train, y_train)

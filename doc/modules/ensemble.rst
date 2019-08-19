@@ -1238,9 +1238,8 @@ Note that it is also possible to get the output of the stacked outputs of the
          [18.93..., 19.26..., 17.03... ]])
 
 .. note::
-   In a binary classification problem, one of the column corresponding to the
-   probability of one of the outcome will be dropped when using `predict_proba`
-   since both columns are collinear.
+   For :class:`StackingClassifier`, when using `stack_method_='predict_proba'`,
+   the first column is dropped since it is collinear with other columns.
 
 .. note::
    Multiple stacking layers can be achieved by assigning `final_estimator` to

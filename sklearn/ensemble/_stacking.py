@@ -104,8 +104,8 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
         """Concatenate the predictions of each first layer learner.
 
         This helper is in charge of ensuring the preditions are 2D arrays and
-        it will drop one of the probability column when the problem is binary
-        since a p(c=1) = 1 - p(c=2).
+        it will drop one of the probability column when using probabilities.
+        Indeed, the p(y|c=0) = 1 - sum_{k=1}^{K} p(y|c=k)
         """
         X_meta = []
         for est_idx, preds in enumerate(predictions):
@@ -113,10 +113,10 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
             if preds.ndim == 1:
                 X_meta.append(preds.reshape(-1, 1))
             else:
-                # remove one column in case of probabilities with binary case
-                if (self.stack_method_[est_idx] == 'predict_proba' and
-                        preds.shape[1] == 2):
-                    X_meta.append(preds[:, [1]])
+                if self.stack_method_[est_idx] == 'predict_proba':
+                    # Remove the first column when using probabilities. It is
+                    # collinear with others.
+                    X_meta.append(preds[:, 1:])
                 else:
                     X_meta.append(preds)
         return np.concatenate(X_meta, axis=1)
@@ -277,9 +277,9 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
     `cross_val_predict`.
 
     When `predict_proba` is used by each estimator (i.e. most of the time for
-    `stack_methodd='auto'` or specifically for `stack_methodd='predict_proba'`)
-    and if the classes are a binary (e.g. 0 and 1), one of the column predicted
-    by each estimator will be dropped since they are collinear.
+    `stack_method='auto'` or specifically for `stack_method='predict_proba'`)
+    one of the column predicted by each estimator will be dropped since they
+    are collinear.
 
     .. versionadded:: 0.22
 
