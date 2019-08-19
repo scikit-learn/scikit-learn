@@ -107,7 +107,7 @@ def _yield_checks(name, estimator):
     if hasattr(estimator, 'sparsify'):
         yield check_sparsify_coefficients
 
-    yield check_estimator_sparse_data
+    yield check_estimator_sparse_data2
     yield check_estimator_sparse_data_process_maxrss
     yield check_estimator_sparse_data_memory_growth
 
@@ -516,7 +516,7 @@ def _generate_sparse_matrix(X_csr):
         yield sparse_format + "_64", X
 
 
-def check_estimator_sparse_data(name, estimator_orig):
+def check_estimator_sparse_data2(name, estimator_orig):
     rng = np.random.RandomState(0)
     X = rng.rand(40, 10)
     X[X < .8] = 0
@@ -617,7 +617,8 @@ def check_estimator_sparse_data_memory_growth(name, estimator_orig):
         # fit and predict
         with record_memory_growth() as get_growth:
             try:
-                with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
+                with ignore_warnings(category=(DeprecationWarning,
+                                               FutureWarning)):
                     estimator.fit(X, y)
                 if hasattr(estimator, "predict"):
                     pred = estimator.predict(X)
@@ -641,8 +642,8 @@ def check_estimator_sparse_data_memory_growth(name, estimator_orig):
                     raise
             except Exception:
                 print("Estimator %s doesn't seem to fail gracefully on "
-                      "sparse data: it should raise a TypeError if sparse input "
-                      "is explicitly not supported." % name)
+                      "sparse data: it should raise a TypeError if sparse "
+                      "input is explicitly not supported." % name)
                 raise
         return get_growth()
 

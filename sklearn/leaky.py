@@ -1,5 +1,4 @@
 import scipy.sparse as sp
-import resource
 from .base import BaseEstimator
 
 
