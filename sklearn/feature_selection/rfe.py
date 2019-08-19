@@ -242,7 +242,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         y : array of shape [n_samples]
             The predicted target values.
         """
-        check_is_fitted(self, 'estimator_')
+        check_is_fitted(self)
         return self.estimator_.predict(self.transform(X))
 
     @if_delegate_has_method(delegate='estimator')
@@ -258,11 +258,11 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         y : array of shape [n_samples]
             The target values.
         """
-        check_is_fitted(self, 'estimator_')
+        check_is_fitted(self)
         return self.estimator_.score(self.transform(X), y)
 
     def _get_support_mask(self):
-        check_is_fitted(self, 'support_')
+        check_is_fitted(self)
         return self.support_
 
     @if_delegate_has_method(delegate='estimator')
@@ -284,7 +284,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
             Regression and binary classification produce an array of shape
             [n_samples].
         """
-        check_is_fitted(self, 'estimator_')
+        check_is_fitted(self)
         return self.estimator_.decision_function(self.transform(X))
 
     @if_delegate_has_method(delegate='estimator')
@@ -304,7 +304,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
-        check_is_fitted(self, 'estimator_')
+        check_is_fitted(self)
         return self.estimator_.predict_proba(self.transform(X))
 
     @if_delegate_has_method(delegate='estimator')
@@ -322,7 +322,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
             The class log-probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
-        check_is_fitted(self, 'estimator_')
+        check_is_fitted(self)
         return self.estimator_.predict_log_proba(self.transform(X))
 
     def _more_tags(self):
