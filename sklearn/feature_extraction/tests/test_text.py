@@ -261,6 +261,10 @@ def test_countvectorizer_custom_vocabulary():
             assert set(vect.vocabulary_) == terms
         X = vect.transform(JUNK_FOOD_DOCS)
         assert X.shape[1] == len(terms)
+        v = typ(vocab)
+        vect = CountVectorizer(vocabulary=v)
+        inv = vect.inverse_transform(X)
+        assert len(inv) == X.shape[0]
 
 
 def test_countvectorizer_custom_vocabulary_pipeline():
@@ -507,6 +511,18 @@ def test_tfidf_vectorizer_setters():
     assert tv._tfidf.smooth_idf
     tv.sublinear_tf = True
     assert tv._tfidf.sublinear_tf
+
+
+# FIXME Remove copy parameter support in 0.24
+def test_tfidf_vectorizer_deprecationwarning():
+    msg = ("'copy' param is unused and has been deprecated since "
+           "version 0.22. Backward compatibility for 'copy' will "
+           "be removed in 0.24.")
+    with pytest.warns(DeprecationWarning, match=msg):
+        tv = TfidfVectorizer()
+        train_data = JUNK_FOOD_DOCS
+        tv.fit(train_data)
+        tv.transform(train_data, copy=True)
 
 
 @fails_if_pypy
