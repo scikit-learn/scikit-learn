@@ -279,7 +279,8 @@ def safe_indexing(X, indices, axis=0):
         Data from which to sample rows, items or columns. `list` are only
         supported when `axis=0`.
     indices : bool, int, str, slice, array-like
-        - If `axis=0`, only integer array-like or scalar integer are supported.
+        - If `axis=0`, boolean and integer array-like, integer slice,
+          and scalar integer are supported.
         - If `axis=1`:
             - to select a single column, `indices` can be of `int` type for
               all `X` types and `str` only for dataframe. The selected subset
@@ -313,12 +314,11 @@ def safe_indexing(X, indices, axis=0):
             " column). Got {} instead.".format(axis)
         )
 
-    if (axis == 0 and not
-            (isinstance(indices, Iterable) and _check_key_type(indices, int) or
-             isinstance(indices, int))):
+    if axis == 0 and _check_key_type(indices, str):
         raise ValueError(
-            "'axis=0' only support integer array-like or scalar integer "
-            "as indices. Got {} instead.".format(indices)
+            "'axis=0' only support integer or boolean array-like, slice with "
+            "integer, or scalar integer as indices. Got {} instead."
+            .format(indices)
         )
 
     if axis == 1 and X.ndim != 2:
@@ -356,11 +356,7 @@ def _get_column_indices(X, key):
     elif (_check_key_type(key, int) or _check_key_type(key, bool)):
         # Convert key into positive indexes
         try:
-            # The behavior of boolean array-like and boolean array is different
-            # in NumPy < 1.12. We convert the array-like for consistent
-            # behavior.
-            key = np.asarray(key) if _check_key_type(key, bool) else key
-            idx = np.arange(n_columns)[key]
+            idx = safe_indexing(np.arange(n_columns), key)
         except IndexError as e:
             raise ValueError(
                 'all features must be in [0, {}] or [-{}, 0]'

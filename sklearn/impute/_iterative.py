@@ -272,17 +272,16 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
             estimator = clone(self._estimator)
 
         if fit_mode:
-            indices_row_available = np.flatnonzero(~missing_row_mask)
             X_train = safe_indexing(X_filled[:, neighbor_feat_idx],
-                                    indices_row_available)
+                                    ~missing_row_mask)
             y_train = safe_indexing(X_filled[:, feat_idx],
-                                    indices_row_available)
+                                    missing_row_mask)
             estimator.fit(X_train, y_train)
 
         # get posterior samples
         indices_row_missing = np.flatnonzero(missing_row_mask)
         X_test = safe_indexing(X_filled[:, neighbor_feat_idx],
-                               indices_row_missing)
+                               missing_row_mask)
         if self.sample_posterior:
             mus, sigmas = estimator.predict(X_test, return_std=True)
             imputed_values = np.zeros(mus.shape, dtype=X_filled.dtype)

@@ -241,14 +241,13 @@ def _convert_container(container, constructor_name, columns_name=None):
 @pytest.mark.parametrize(
     "array_type", ["list", "array", "sparse", "dataframe"]
 )
-@pytest.mark.parametrize(
-    "indices",
-    [_convert_container([1, 2], "list"),
-     _convert_container([1, 2], "array"),
-     _convert_container([1, 2], "series")]
-)
-def test_safe_indexing_2d_container_axis_0(array_type, indices):
+@pytest.mark.parametrize("indices_type", ["list", "array", "series", "slice"])
+def test_safe_indexing_2d_container_axis_0(array_type, indices_type):
+    indices = [1, 2]
+    if indices_type == 'slice' and isinstance(indices[1], int):
+        indices[1] += 1
     array = _convert_container([[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type)
+    indices = _convert_container(indices, indices_type)
     subset = safe_indexing(array, indices, axis=0)
     assert_allclose_dense_sparse(
         subset, _convert_container([[4, 5, 6], [7, 8, 9]], array_type)
@@ -258,8 +257,11 @@ def test_safe_indexing_2d_container_axis_0(array_type, indices):
 @pytest.mark.parametrize("array_type", ["list", "array", "series"])
 @pytest.mark.parametrize("indices_type", ["list", "array", "series"])
 def test_safe_indexing_1d_container(array_type, indices_type):
+    indices = [1, 2]
+    if indices_type == 'slice' and isinstance(indices[1], int):
+        indices[1] += 1
     array = _convert_container([1, 2, 3, 4, 5, 6, 7, 8, 9], array_type)
-    indices = _convert_container([1, 2], indices_type)
+    indices = _convert_container(indices, indices_type)
     subset = safe_indexing(array, indices, axis=0)
     assert_allclose_dense_sparse(
         subset, _convert_container([2, 3], array_type)
@@ -319,9 +321,27 @@ def test_safe_indexing_2d_read_only_axis_1(array_read_only, indices_read_only,
     )
 
 
+@pytest.mark.parametrize("array_type", ["list", "array", "series"])
+@pytest.mark.parametrize("indices_type", ["list", "array", "series"])
+def test_safe_indexing_1d_container_mask(array_type, indices_type):
+    indices = [False] + [True] * 2 + [False] * 6
+    array = _convert_container([1, 2, 3, 4, 5, 6, 7, 8, 9], array_type)
+    indices = _convert_container(indices, indices_type)
+    subset = safe_indexing(array, indices, axis=0)
+    assert_allclose_dense_sparse(
+        subset, _convert_container([2, 3], array_type)
+    )
+
+
 @pytest.mark.parametrize("array_type", ["array", "sparse", "dataframe"])
 @pytest.mark.parametrize("indices_type", ["list", "array", "series"])
-def test_safe_indexing_2d_mask_axis_1(array_type, indices_type):
+@pytest.mark.parametrize(
+    "axis, expected_subset",
+    [(0, [[4, 5, 6], [7, 8, 9]]),
+     (1, [[2, 3], [5, 6], [8, 9]])]
+)
+def test_safe_indexing_2d_mask(array_type, indices_type, axis,
+                               expected_subset):
     columns_name = ['col_0', 'col_1', 'col_2']
     array = _convert_container(
         [[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type, columns_name
@@ -329,9 +349,9 @@ def test_safe_indexing_2d_mask_axis_1(array_type, indices_type):
     indices = [False, True, True]
     indices = _convert_container(indices, indices_type)
 
-    subset = safe_indexing(array, indices, axis=1)
+    subset = safe_indexing(array, indices, axis=axis)
     assert_allclose_dense_sparse(
-        subset, _convert_container([[2, 3], [5, 6], [8, 9]], array_type)
+        subset, _convert_container(expected_subset, array_type)
     )
 
 
@@ -422,10 +442,10 @@ def test_safe_indexing_1d_array_error(X_constructor):
         safe_indexing(X_constructor, [0, 1], axis=1)
 
 
-@pytest.mark.parametrize("indices", [["col_1", "col_2"], [True, False, True]])
-def test_safe_indexing_container_axis_0_unsupported_type(indices):
+def test_safe_indexing_container_axis_0_unsupported_type():
+    indices = ["col_1", "col_2"]
     array = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    err_msg = "'axis=0' only support integer array-like or scalar integer"
+    err_msg = "'axis=0' only support integer or boolean array-like,"
     with pytest.raises(ValueError, match=err_msg):
         safe_indexing(array, indices, axis=0)
 
