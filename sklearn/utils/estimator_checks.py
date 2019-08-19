@@ -107,7 +107,7 @@ def _yield_checks(name, estimator):
     if hasattr(estimator, 'sparsify'):
         yield check_sparsify_coefficients
 
-    yield check_estimator_sparse_data2
+    yield check_estimator_sparse_data
     yield check_estimator_sparse_data_process_maxrss
     yield check_estimator_sparse_data_memory_growth
 
@@ -516,7 +516,7 @@ def _generate_sparse_matrix(X_csr):
         yield sparse_format + "_64", X
 
 
-def check_estimator_sparse_data2(name, estimator_orig):
+def check_estimator_sparse_data(name, estimator_orig):
     rng = np.random.RandomState(0)
     X = rng.rand(40, 10)
     X[X < .8] = 0
