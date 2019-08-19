@@ -123,7 +123,7 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
 
     @staticmethod
     def _method_name(name, estimator, method):
-        if estimator in (None, 'drop'):
+        if estimator == 'drop':
             return None
         if method == 'auto':
             if getattr(estimator, 'predict_proba', None):
@@ -164,12 +164,12 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
 
         has_estimator = False
         for est in estimators_:
-            if est not in (None, 'drop'):
+            if est != 'drop':
                 has_estimator = True
 
         if not has_estimator:
             raise ValueError(
-                "All estimators are None or 'drop'. At least one is required "
+                "All estimators are dropped. At least one is required "
                 "to be an estimator."
             )
 
@@ -180,13 +180,13 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
         # predict_proba. They are exposed publicly.
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_parallel_fit_estimator)(clone(est), X, y, sample_weight)
-            for est in estimators_ if est not in (None, 'drop')
+            for est in estimators_ if est != 'drop'
         )
 
         self.named_estimators_ = Bunch()
         est_fitted_idx = 0
         for name_est, org_est in zip(names, estimators_):
-            if org_est not in (None, 'drop'):
+            if org_est != 'drop':
                 self.named_estimators_[name_est] = self.estimators_[
                     est_fitted_idx]
                 est_fitted_idx += 1
@@ -211,14 +211,14 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
                                        method=meth, n_jobs=self.n_jobs,
                                        verbose=self.verbose)
             for est, meth in zip(estimators_, self.stack_method_)
-            if est not in (None, 'drop')
+            if est != 'drop'
         )
 
         # Only not None or not 'drop' estimators will be used in transform.
         # Remove the None from the method as well.
         self.stack_method_ = [
             meth for (meth, est) in zip(self.stack_method_, estimators_)
-            if est not in (None, 'drop')
+            if est != 'drop'
         ]
 
         X_meta = self._concatenate_predictions(predictions)
@@ -232,7 +232,7 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
         predictions = [
             getattr(est, meth)(X)
             for est, meth in zip(self.estimators_, self.stack_method_)
-            if est not in (None, 'drop')
+            if est != 'drop'
         ]
         return self._concatenate_predictions(predictions)
 
@@ -290,7 +290,7 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
     estimators : list of (str, estimator)
         Base estimators which will be stacked together. Each element of the
         list is defined as a tuple of string (i.e. name) and an estimator
-        instance. An estimator can be set to None or 'drop' using `set_params`.
+        instance. An estimator can be set to 'drop' using `set_params`.
 
     final_estimator : estimator, default=None
         A classifier which will be used to combine the base estimators.
@@ -332,7 +332,7 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
     ----------
     estimators_ : list of estimators
         The elements of the estimators parameter, having been fitted on the
-        training data. If an estimator has been set to `'drop'` or None, it
+        training data. If an estimator has been set to `'drop'`, it
         will not appear in `estimators_`.
 
     named_estimators_ : Bunch
@@ -390,7 +390,7 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
     def _validate_estimators(self):
         names, estimators = super()._validate_estimators()
         for est in estimators:
-            if est not in (None, 'drop') and not is_classifier(est):
+            if est != 'drop' and not is_classifier(est):
                 raise ValueError(
                     "The estimator {} should be a classifier."
                     .format(est.__class__.__name__)
@@ -513,7 +513,7 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
     estimators : list of (str, estimator)
         Base estimators which will be stacked together. Each element of the
         list is defined as a tuple of string (i.e. name) and an estimator
-        instance. An estimator can be set to None or 'drop' using `set_params`.
+        instance. An estimator can be set to 'drop' using `set_params`.
 
     final_estimator : estimator, default=None
         A regressor which will be used to combine the base estimators.
@@ -544,7 +544,7 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
     ----------
     estimators_ : list of estimator
         The elements of the estimators parameter, having been fitted on the
-        training data. If an estimator has been set to `'drop'` or None, it
+        training data. If an estimator has been set to `'drop'`, it
         will not appear in `estimators_`.
 
     named_estimators_ : Bunch
@@ -597,7 +597,7 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
     def _validate_estimators(self):
         names, estimators = super()._validate_estimators()
         for est in estimators:
-            if est not in (None, 'drop') and not is_regressor(est):
+            if est != 'drop' and not is_regressor(est):
                 raise ValueError(
                     "The estimator {} should be a regressor."
                     .format(est.__class__.__name__)

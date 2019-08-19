@@ -68,7 +68,7 @@ def test_stacking_classifier_iris(cv, final_estimator):
     X_trans = clf.transform(X_test)
     assert X_trans.shape[1] == 6
 
-    clf.set_params(lr=None)
+    clf.set_params(lr='drop')
     clf.fit(X_train, y_train)
     clf.predict(X_test)
     clf.predict_proba(X_test)
@@ -77,17 +77,13 @@ def test_stacking_classifier_iris(cv, final_estimator):
     assert X_trans.shape[1] == 3
 
 
-@pytest.mark.parametrize(
-    "estimators",
-    [[('lr', None), ('svc', LinearSVC(random_state=0))],
-     [('lr', 'drop'), ('svc', LinearSVC(random_state=0))]]
-)
-def test_stacking_classifier_drop_estimator(estimators):
+def test_stacking_classifier_drop_estimator():
     # prescale the data to avoid convergence warning without using a pipeline
     # for later assert
     X_train, X_test, y_train, _ = train_test_split(
         scale(X_iris), y_iris, stratify=y_iris, random_state=42
     )
+    estimators = [('lr', 'drop'), ('svc', LinearSVC(random_state=0))]
     rf = RandomForestClassifier(n_estimators=10, random_state=42)
     clf = StackingClassifier(
         estimators=[('svc', LinearSVC(random_state=0))],
@@ -104,17 +100,13 @@ def test_stacking_classifier_drop_estimator(estimators):
     assert_allclose(clf.transform(X_test), clf_drop.transform(X_test))
 
 
-@pytest.mark.parametrize(
-    "estimators",
-    [[('lr', None), ('svr', LinearSVR(random_state=0))],
-     [('lr', 'drop'), ('svr', LinearSVR(random_state=0))]]
-)
-def test_stacking_regressor_drop_estimator(estimators):
+def test_stacking_regressor_drop_estimator():
     # prescale the data to avoid convergence warning without using a pipeline
     # for later assert
     X_train, X_test, y_train, _ = train_test_split(
         scale(X_diabetes), y_diabetes, random_state=42
     )
+    estimators = [('lr', 'drop'), ('svr', LinearSVR(random_state=0))]
     rf = RandomForestRegressor(n_estimators=10, random_state=42)
     reg = StackingRegressor(
         estimators=[('svr', LinearSVR(random_state=0))],
@@ -158,7 +150,7 @@ def test_stacking_regressor_diabetes(cv, final_estimator, predict_params):
     X_trans = reg.transform(X_test)
     assert X_trans.shape[1] == 2
 
-    reg.set_params(lr=None)
+    reg.set_params(lr='drop')
     reg.fit(X_train, y_train)
     reg.predict(X_test)
 
@@ -219,14 +211,8 @@ class NoWeightClassifier(BaseEstimator, ClassifierMixin):
                       ('cor', NoWeightClassifier())]},
       TypeError, 'does not support sample weight'),
      (y_iris,
-      {'estimators': [('lr', None), ('svm', None)]},
-      ValueError, 'All estimators are None'),
-     (y_iris,
-      {'estimators': [('lr', 'drop'), ('svm', None)]},
-      ValueError, 'All estimators are None'),
-     (y_iris,
       {'estimators': [('lr', 'drop'), ('svm', 'drop')]},
-      ValueError, 'All estimators are None'),
+      ValueError, 'All estimators are dropped'),
      (y_iris,
       {'estimators': [('lr', LogisticRegression()), ('svm', LinearSVC())],
        'final_estimator': RandomForestRegressor()},
@@ -256,14 +242,8 @@ def test_stacking_classifier_error(y, params, type_err, msg_err):
                       ('cor', NoWeightRegressor())]},
       TypeError, 'does not support sample weight'),
      (y_diabetes,
-      {'estimators': [('lr', None), ('svm', None)]},
-      ValueError, 'All estimators are None'),
-     (y_diabetes,
-      {'estimators': [('lr', 'drop'), ('svm', None)]},
-      ValueError, 'All estimators are None'),
-     (y_diabetes,
       {'estimators': [('lr', 'drop'), ('svm', 'drop')]},
-      ValueError, 'All estimators are None'),
+      ValueError, 'All estimators are dropped'),
      (y_diabetes,
       {'estimators': [('lr', LinearRegression()), ('svm', LinearSVR())],
        'final_estimator': RandomForestClassifier()},
@@ -321,9 +301,9 @@ def test_stacking_set_get_params(stacking_estimator):
     assert 'lr' in list(params.keys())
     assert 'svm' in list(params.keys())
 
-    stacking_estimator.set_params(lr=None)
+    stacking_estimator.set_params(lr='drop')
     params = stacking_estimator.get_params()
-    assert params['lr'] is None
+    assert params['lr'] == 'drop'
 
 
 @pytest.mark.parametrize(
