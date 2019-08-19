@@ -20,6 +20,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import LinearRegression
 from sklearn.svm import LinearSVC
 from sklearn.svm import LinearSVR
+from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestClassifier
@@ -206,9 +207,13 @@ class NoWeightClassifier(BaseEstimator, ClassifierMixin):
       ValueError, "Invalid 'estimators' attribute,"),
      (y_iris,
       {'estimators': [('lr', LinearRegression()),
-                      ('svm', LinearSVC(max_iter=5e4))],
+                      ('svm', LinearSVC(max_iter=5e4))]},
+      ValueError, 'should be a classifier'),
+     (y_iris,
+      {'estimators': [('lr', LogisticRegression()),
+                      ('svm', SVC(max_iter=5e4))],
        'stack_method': 'predict_proba'},
-      ValueError, 'does not implement the method'),
+      ValueError, 'does not implement the method predict_proba'),
      (y_iris,
       {'estimators': [('lr', LogisticRegression()),
                       ('cor', NoWeightClassifier())]},
@@ -244,9 +249,8 @@ def test_stacking_classifier_error(y, params, type_err, msg_err):
       {'estimators': []},
       ValueError, "Invalid 'estimators' attribute,"),
      (y_diabetes,
-      {'estimators': [('lr', LogisticRegression()), ('svm', LinearSVR())],
-       'stack_method': 'predict_proba'},
-      ValueError, 'does not implement the method'),
+      {'estimators': [('lr', LogisticRegression()), ('svm', LinearSVR())]},
+      ValueError, 'should be a regressor'),
      (y_diabetes,
       {'estimators': [('lr', LinearRegression()),
                       ('cor', NoWeightRegressor())]},

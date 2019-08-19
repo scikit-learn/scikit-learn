@@ -90,10 +90,10 @@ for ax, (name, est) in zip(axs, estimators + [('Stacking Regressor',
     plot_regression_results(
         ax, y, y_pred,
         name,
-        r'$R^2={:.2f} \pm {:.2f}$\n$MAE={:.2f} \pm {:.2f}$'
+        (r'$R^2={:.2f} \pm {:.2f}$' + '\n' + r'$MAE={:.2f} \pm {:.2f}$')
         .format(np.mean(score['test_r2']),
                 np.std(score['test_r2']),
-                np.mean(score['test_neg_mean_absolute_error']),
+                -np.mean(score['test_neg_mean_absolute_error']),
                 np.std(score['test_neg_mean_absolute_error'])))
 
 plt.suptitle('Single predictors versus stacked predictors')

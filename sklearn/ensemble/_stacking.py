@@ -34,11 +34,7 @@ from ..utils.validation import column_or_1d
 
 class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
                     metaclass=ABCMeta):
-    """Base class for stacking method.
-
-    Warning: This class should not be used directly. Use derived classes
-    instead.
-    """
+    """Base class for stacking method."""
     _required_parameters = ['estimators']
 
     @abstractmethod
@@ -51,28 +47,22 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
         self.n_jobs = n_jobs
         self.verbose = verbose
 
-    def _validate_final_estimator(self, default):
+    @abstractmethod
+    def _validate_estimators(self):
+        if self.estimators is None or len(self.estimators) == 0:
+            raise ValueError(
+                "Invalid 'estimators' attribute, 'estimators' should be a list"
+                " of (string, estimator) tuples."
+            )
+        names, estimators = zip(*self.estimators)
+        self._validate_names(names)
+        return names, estimators
+
+    def _clone_final_estimator(self, default):
         if self.final_estimator is not None:
             self.final_estimator_ = clone(self.final_estimator)
         else:
             self.final_estimator_ = clone(default)
-
-    @staticmethod
-    def _method_name(name, estimator, method):
-        if estimator in (None, 'drop'):
-            return None
-        if method == 'auto':
-            if getattr(estimator, 'predict_proba', None):
-                return 'predict_proba'
-            elif getattr(estimator, 'decision_function', None):
-                return 'decision_function'
-            else:
-                return 'predict'
-        else:
-            if not hasattr(estimator, method):
-                raise ValueError('Underlying estimator {} does not implement '
-                                 'the method {}.'.format(name, method))
-            return method
 
     def set_params(self, **params):
         """Setting the parameters for the stacking estimator.
@@ -131,6 +121,23 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
                     X_meta.append(preds)
         return np.concatenate(X_meta, axis=1)
 
+    @staticmethod
+    def _method_name(name, estimator, method):
+        if estimator in (None, 'drop'):
+            return None
+        if method == 'auto':
+            if getattr(estimator, 'predict_proba', None):
+                return 'predict_proba'
+            elif getattr(estimator, 'decision_function', None):
+                return 'decision_function'
+            else:
+                return 'predict'
+        else:
+            if not hasattr(estimator, method):
+                raise ValueError('Underlying estimator {} does not implement '
+                                 'the method {}.'.format(name, method))
+            return method
+
     def fit(self, X, y, sample_weight=None):
         """Fit the estimators.
 
@@ -152,17 +159,8 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
         -------
         self : object
         """
-
-        self._validate_meta_estimator()
-
-        if self.estimators is None or len(self.estimators) == 0:
-            raise ValueError(
-                "Invalid 'estimators' attribute, 'estimators' should be a list"
-                " of (string, estimator) tuples."
-            )
-
-        names, estimators_ = zip(*self.estimators)
-        self._validate_names(names)
+        names, estimators_ = self._validate_estimators()
+        self._validate_final_estimator()
 
         has_estimator = False
         for est in estimators_:
@@ -389,8 +387,18 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
             verbose=verbose
         )
 
-    def _validate_meta_estimator(self):
-        super()._validate_final_estimator(default=LogisticRegression())
+    def _validate_estimators(self):
+        names, estimators = super()._validate_estimators()
+        for est in estimators:
+            if est not in (None, 'drop') and not is_classifier(est):
+                raise ValueError(
+                    "The estimator {} should be a classifier."
+                    .format(est.__class__.__name__)
+                )
+        return names, estimators
+
+    def _validate_final_estimator(self):
+        self._clone_final_estimator(default=LogisticRegression())
         if not is_classifier(self.final_estimator_):
             raise ValueError(
                 "'final_estimator' parameter should be a classifier. Got {}"
@@ -527,20 +535,6 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        Refer :ref:`User Guide <cross_validation>` for the various
-        cross-validation strategies that can be used here.
-
-    stack_method : {'auto', 'predict_proba', 'decision_function', 'predict'}, \
-            default='auto'
-        Methods called for each base estimator. It can be:
-
-        * if 'auto', it will try to invoke, for each estimator,
-          `'predict_proba'`, `'decision_function'` or `'predict'` in that
-          order.
-        * otherwise, one of `'predict_proba'`, `'decision_function'` or
-         `'predict'`. If the method is not implemented by the estimator, it
-         will raise an error.
-
     n_jobs : int, default=None
         The number of jobs to run in parallel for `fit` of all `estimators`.
         `None` means 1 unless in a `joblib.parallel_backend` context. -1 means
@@ -558,9 +552,6 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
 
     final_estimator_ : estimator
         The regressor to stacked the base estimators fitted.
-
-    stack_method_ : list of str
-        The method used by each base estimator.
 
     References
     ----------
@@ -598,15 +589,23 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
             estimators=estimators,
             final_estimator=final_estimator,
             cv=cv,
-            stack_method=stack_method,
+            stack_method="predict",
             n_jobs=n_jobs,
             verbose=verbose
         )
 
-    def _validate_meta_estimator(self):
-        super()._validate_final_estimator(
-            default=LinearRegression()
-        )
+    def _validate_estimators(self):
+        names, estimators = super()._validate_estimators()
+        for est in estimators:
+            if est not in (None, 'drop') and not is_regressor(est):
+                raise ValueError(
+                    "The estimator {} should be a regressor."
+                    .format(est.__class__.__name__)
+                )
+        return names, estimators
+
+    def _validate_final_estimator(self):
+        self._clone_final_estimator(default=LinearRegression())
         if not is_regressor(self.final_estimator_):
             raise ValueError(
                 "'final_estimator' parameter should be a regressor. Got {}"
