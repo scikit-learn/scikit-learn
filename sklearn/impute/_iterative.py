@@ -279,7 +279,6 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
             estimator.fit(X_train, y_train)
 
         # get posterior samples
-        indices_row_missing = np.flatnonzero(missing_row_mask)
         X_test = safe_indexing(X_filled[:, neighbor_feat_idx],
                                missing_row_mask)
         if self.sample_posterior:

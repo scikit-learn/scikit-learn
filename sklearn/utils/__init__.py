@@ -1,7 +1,6 @@
 """
 The :mod:`sklearn.utils` module includes various utilities.
 """
-from collections.abc import Iterable
 from collections.abc import Sequence
 from contextlib import contextmanager
 from itertools import compress
