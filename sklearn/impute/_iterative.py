@@ -275,7 +275,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
             X_train = safe_indexing(X_filled[:, neighbor_feat_idx],
                                     ~missing_row_mask)
             y_train = safe_indexing(X_filled[:, feat_idx],
-                                    missing_row_mask)
+                                    ~missing_row_mask)
             estimator.fit(X_train, y_train)
 
         # get posterior samples
