@@ -40,9 +40,9 @@ class CorrelationThreshold(BaseEstimator, SelectorMixin):
     >>> X = np.array([[0.0, 1.0, 2.0], [1.1, 2.0, 3.0], [0.5, 10.1, 1.1]]).T
     >>> selector = CorrelationThreshold()
     >>> selector.fit_transform(X)
-    array([[ 1.1,  0.5],
-           [ 2. , 10.1],
-           [ 3. ,  1.1]])
+    array([[ 0. ,  0.5],
+           [ 1. , 10.1],
+           [ 2. ,  1.1]])
     """
     def __init__(self, threshold=0.9):
         self.threshold = threshold
