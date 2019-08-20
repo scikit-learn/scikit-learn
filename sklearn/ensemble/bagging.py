@@ -511,6 +511,9 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
     base_estimator_ : estimator
         The base estimator from which the ensemble is grown.
 
+    n_features_ : int
+        The number of features when `fit` is performed.
+
     estimators_ : list of estimators
         The collection of fitted base estimators.
 
@@ -887,6 +890,12 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
 
     Attributes
     ----------
+    base_estimator_ : estimator
+        The base estimator from which the ensemble is grown.
+
+    n_features_ : int
+        The number of features when `fit` is performed.
+
     estimators_ : list of estimators
         The collection of fitted sub-estimators.
 

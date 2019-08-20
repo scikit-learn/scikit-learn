@@ -13,9 +13,9 @@ from sklearn.ensemble._hist_gradient_boosting.common import (
 
 @pytest.mark.parametrize('n_bins', [200, 256])
 def test_boston_dataset(n_bins):
-    boston = load_boston()
+    X, y = load_boston(return_X_y=True)
     X_train, X_test, y_train, y_test = train_test_split(
-        boston.data, boston.target, random_state=42)
+        X, y, random_state=42)
 
     mapper = _BinMapper(n_bins=n_bins, random_state=42)
     X_train_binned = mapper.fit_transform(X_train)

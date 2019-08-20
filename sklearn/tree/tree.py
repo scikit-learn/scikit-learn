@@ -1078,9 +1078,9 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     >>> from sklearn.datasets import load_boston
     >>> from sklearn.model_selection import cross_val_score
     >>> from sklearn.tree import DecisionTreeRegressor
-    >>> boston = load_boston()
+    >>> X, y = load_boston(return_X_y=True)
     >>> regressor = DecisionTreeRegressor(random_state=0)
-    >>> cross_val_score(regressor, boston.data, boston.target, cv=10)
+    >>> cross_val_score(regressor, X, y, cv=10)
     ...                    # doctest: +SKIP
     ...
     array([ 0.61..., 0.57..., -0.34..., 0.41..., 0.75...,

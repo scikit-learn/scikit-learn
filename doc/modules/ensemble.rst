@@ -1158,17 +1158,15 @@ Usage
 
 The following example shows how to fit the VotingRegressor::
 
-   >>> from sklearn import datasets
+   >>> from sklearn.datasets import load_boston
    >>> from sklearn.ensemble import GradientBoostingRegressor
    >>> from sklearn.ensemble import RandomForestRegressor
    >>> from sklearn.linear_model import LinearRegression
    >>> from sklearn.ensemble import VotingRegressor
 
    >>> # Loading some example data
-   >>> boston = datasets.load_boston()
-   >>> X = boston.data
-   >>> y = boston.target
-
+   >>> X, y = load_boston(return_X_y=True)
+   
    >>> # Training classifiers
    >>> reg1 = GradientBoostingRegressor(random_state=1, n_estimators=10)
    >>> reg2 = RandomForestRegressor(random_state=1, n_estimators=10)
