@@ -555,6 +555,7 @@ From text
    :toctree: generated/
    :template: class.rst
 
+   feature_selection.CorrelationThreshold
    feature_selection.GenericUnivariateSelect
    feature_selection.SelectPercentile
    feature_selection.SelectKBest

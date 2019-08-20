@@ -8,26 +8,28 @@ breast cancer dataset using :func:`~sklearn.inspection.permutation_importance`.
 The :class:`~sklearn.ensemble.RandomForestClassifier` can easily get about 97%
 accuracy on a test dataset. Because this dataset contains multicollinear
 features, the permutation importance will show that none of the features are
-important. One approach to handling multicollinearity is by performing
-hierarchical clustering on the features' Spearman rank-order correlations,
-picking a threshold, and keeping a single feature from each cluster.
+important. Hierarchical clustering is used to visualize the correlations
+between features and :class:`~sklearn.feature_selection.CorrelationThreshold`
+is used to ensure all pairwises correlations are below a certain threshold.
 
 .. note::
     See also
     :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`
 """
 print(__doc__)
-from collections import defaultdict
-
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.stats import spearmanr
+import pandas as pd
 from scipy.cluster import hierarchy
 
 from sklearn.datasets import load_breast_cancer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.inspection import permutation_importance
 from sklearn.model_selection import train_test_split
+from sklearn.feature_selection import CorrelationThreshold
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import GridSearchCV
+
 
 ##############################################################################
 # Random Forest Feature Importance on Breast Cancer Data
@@ -50,8 +52,8 @@ print("Accuracy on test data: {:.2f}".format(clf.score(X_test, y_test)))
 # computed above: some feature must be important. The permutation importance
 # is calculated on the training set to show how much the model relies on each
 # feature during training.
-result = permutation_importance(clf, X_train, y_train, n_repeats=10,
-                                random_state=42)
+result = permutation_importance(clf, X_train, y_train, n_repeats=20,
+                                random_state=42, n_jobs=2)
 perm_sorted_idx = result.importances_mean.argsort()
 
 tree_importance_sorted_idx = np.argsort(clf.feature_importances_)
@@ -64,7 +66,6 @@ ax1.set_yticks(tree_indicies)
 ax2.boxplot(result.importances[perm_sorted_idx].T, vert=False,
             labels=data.feature_names)
 fig.tight_layout()
-plt.show()
 
 ##############################################################################
 # Handling Multicollinear Features
@@ -76,7 +77,7 @@ plt.show()
 # picking a threshold, and keeping a single feature from each cluster. First,
 # we plot a heatmap of the correlated features:
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 8))
-corr = spearmanr(X).correlation
+corr = np.corrcoef(X, rowvar=False)
 corr_linkage = hierarchy.ward(corr)
 dendro = hierarchy.dendrogram(corr_linkage, labels=data.feature_names, ax=ax1,
                               leaf_rotation=90)
@@ -88,24 +89,59 @@ ax2.set_yticks(dendro_idx)
 ax2.set_xticklabels(dendro['ivl'], rotation='vertical')
 ax2.set_yticklabels(dendro['ivl'])
 fig.tight_layout()
-plt.show()
 
 ##############################################################################
-# Next, we manually pick a threshold by visual inspection of the dendrogram
-# to group our features into clusters and choose a feature from each cluster to
-# keep, select those features from our dataset, and train a new random forest.
-# The test accuracy of the new random forest did not change much compared to
-# the random forest trained on the complete dataset.
-cluster_ids = hierarchy.fcluster(corr_linkage, 1, criterion='distance')
-cluster_id_to_feature_ids = defaultdict(list)
-for idx, cluster_id in enumerate(cluster_ids):
-    cluster_id_to_feature_ids[cluster_id].append(idx)
-selected_features = [v[0] for v in cluster_id_to_feature_ids.values()]
+# Next, we use :class:`~sklearn.feature_selection.CorrelationThreshold` to
+# select features such that all pairwise correlations are below a certain
+# threshold. :class:`~sklearn.model_selection.GridSearchCV` is used to explore
+# the different thresholds.
+pipe = Pipeline([
+    ('correlation', CorrelationThreshold(threshold=0.9)),
+    ('forest', RandomForestClassifier(n_estimators=100, random_state=42))])
 
-X_train_sel = X_train[:, selected_features]
-X_test_sel = X_test[:, selected_features]
+params = {'correlation__threshold': np.linspace(0.95, 1, 10)}
+search = GridSearchCV(pipe, params, refit=False, n_jobs=2)
+search.fit(X_train, y_train)
+df = pd.DataFrame(search.cv_results_)
+df = df.sort_values(by='rank_test_score')
+rank_3_row = df.query('rank_test_score == 3')
 
-clf_sel = RandomForestClassifier(n_estimators=100, random_state=42)
-clf_sel.fit(X_train_sel, y_train)
-print("Accuracy on test data with features removed: {:.2f}".format(
-      clf_sel.score(X_test_sel, y_test)))
+fig, ax = plt.subplots(figsize=(12, 8))
+ax.errorbar('rank_test_score', 'mean_test_score', yerr='std_test_score',
+            data=df, marker='o')
+ax.plot(3, rank_3_row['mean_test_score'], marker='o', color='red', ms=24,
+        mew=3, mfc='none')
+ax.set_xlabel('rank')
+ax.set_ylabel('accuracy')
+ax.set_xticks(df['rank_test_score'])
+
+##############################################################################
+# When taking into account standard deviation, the top three cross validated
+# accuracy scores are overlapping. Here, we choose the threshold that achieves
+# the third highest score and train on the full training set.
+threshold = rank_3_row['param_correlation__threshold'].values[0]
+print("All pairwise correlations will be below: {:.4f}".format(threshold))
+
+pipe = pipe.set_params(correlation__threshold=threshold)
+pipe.fit(X_train, y_train)
+support_mask = pipe['correlation'].support_mask_
+pct_features = 100 * np.sum(support_mask)/X_train.shape[1]
+print("Accuracy on test data with {:.2f}% features: {:.2f}".format(
+      pct_features, pipe.score(X_test, y_test)))
+
+##############################################################################
+# Lastly, we use select features from the test set to ensure the pairwise
+# correlations is below the choosen threshold and plot the permutation
+# importance with some correlation features removed. This shows that
+# "worst concave points", "worst concavity", and "worst area" are important to
+# the model.
+X_test_sel = pipe['correlation'].transform(X_test)
+feature_names = data.feature_names[support_mask]
+result = permutation_importance(pipe['forest'], X_test_sel, y_test,
+                                n_repeats=20, random_state=42, n_jobs=2)
+perm_sorted_idx = result.importances_mean.argsort()
+fig, ax = plt.subplots(figsize=(12, 8))
+ax.boxplot(result.importances[perm_sorted_idx].T, vert=False,
+           labels=feature_names)
+fig.tight_layout()
+plt.show()

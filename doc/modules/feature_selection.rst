@@ -47,16 +47,41 @@ so we can select using the threshold ``.8 * (1 - .8)``::
 As expected, ``VarianceThreshold`` has removed the first column,
 which has a probability :math:`p = 5/6 > .8` of containing a zero.
 
-.. _covariance_threshold:
+.. _correlation_threshold:
 
-Remove features with high covariance
-====================================
+Remove features with high correlation
+=====================================
 
-Talk about `CovarianceThreshold`
+:class:`CorrelationThreshold` is a feature selection technique that removes
+features until all pairwise correlations are below a certain threshold. As
+described in [KUHN]_, the algorithm is as follows:
+
+0. Remove features with zero variance because they would contribute to an
+   ill-defined correlation matrix.
+1. Calculate the correlation matrix of the features.
+2. Determine the two features associated with the largest absolute pairwise
+   correlation.
+3. Remove the feature with the higher average correlation with the rest of the
+   features.
+4. Repeat until there are no absolute correlations that are above the
+   threshold.
+
+The following example shows how one of the first highly correlated features
+are removed, while the uncorrelated feature remains:
+
+    >>> import numpy as np
+    >>> from sklearn.feature_selection import CorrelationThreshold
+    >>> X = np.array([[0.0, 1.0, 2.0], [1.1, 2.0, 3.0], [1.0, 10.0, 1.0]]).T
+    >>> selector = CorrelationThreshold()
+    >>> selector.fit_transform(X)
+    array([[ 1.1,  0.5],
+           [ 2. , 10.1],
+           [ 3. ,  1.1]])
 
 .. topic:: Reference
 
-    .. [BOOK] This is a book
+    .. [KUHN] Max Kuhn and Kjell Johnson, "Applied Predictive Modeling",
+        Springer, 2013
 
 .. _univariate_feature_selection:
 
