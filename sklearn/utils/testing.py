@@ -511,7 +511,9 @@ def all_estimators(include_meta_estimators=None,
         if IS_PYPY and ('_svmlight_format' in modname or
                         'feature_extraction._hashing' in modname):
             continue
-        module = __import__(modname, fromlist="dummy")
+        # Ignore deprecation warnings triggered at import time.
+        with ignore_warnings(category=DeprecationWarning):
+            module = __import__(modname, fromlist="dummy")
         classes = inspect.getmembers(module, inspect.isclass)
         all_classes.extend(classes)
 
