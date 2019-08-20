@@ -374,7 +374,7 @@ def test_splitting_missing_values(X_binned, all_gradients,
     # is on bin_idx=3, when there are no missing values.
     # Then we introduce missing values and:
     #   - make sure the chosen bin is correct (find_best_bin()): it's
-    #     still the same split, even though the index of the bin  may
+    #     still the same split, even though the index of the bin may change
     #   - make sure the missing values are mapped to the correct child
     #     (split_indices())
 

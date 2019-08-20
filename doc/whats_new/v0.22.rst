@@ -133,6 +133,8 @@ Changelog
   - |Fix| Estimators now bin the training and validation data separately to
     avoid any data leak. :pr:`13933` by `Nicolas Hug`_.
 
+  Note that pickles from 0.21 will not work in 0.22.
+
 - |Fix| :func:`ensemble.VotingClassifier.predict_proba` will no longer be
   present when `voting='hard'`. :pr:`14287` by `Thomas Fan`_.
 

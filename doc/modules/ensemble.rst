@@ -864,7 +864,7 @@ Usage
 Most of the parameters are unchanged from
 :class:`GradientBoostingClassifier` and :class:`GradientBoostingRegressor`.
 One exception is the ``max_iter`` parameter that replaces ``n_estimators``, and
-controls the number of iterations of the boosting process:
+controls the number of iterations of the boosting process::
 
   >>> from sklearn.experimental import enable_hist_gradient_boosting
   >>> from sklearn.ensemble import HistGradientBoostingClassifier
@@ -873,8 +873,8 @@ controls the number of iterations of the boosting process:
   >>> X, y = make_hastie_10_2(random_state=0)
   >>> X_train, X_test = X[:2000], X[2000:]
   >>> y_train, y_test = y[:2000], y[2000:]
-  >>> clf = HistGradientBoostingClassifier(max_iter=100).fit(X_train, y_train)
 
+  >>> clf = HistGradientBoostingClassifier(max_iter=100).fit(X_train, y_train)
   >>> clf.score(X_test, y_test)
   0.8965
 
@@ -905,7 +905,7 @@ values (NaNs).
 During training, the tree grower learns at each split point whether samples
 with missing values should go to the left or right child, based on the
 potential gain. When predicting, samples with missing values are assigned to
-the left or right child consequently.:
+the left or right child consequently::
 
   >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
   >>> from sklearn.ensemble import HistGradientBoostingClassifier
@@ -913,9 +913,20 @@ the left or right child consequently.:
 
   >>> X = np.array([0, 1, 2, np.nan]).reshape(-1, 1)
   >>> y = [0, 0, 1, 1]
+
   >>> gbdt = HistGradientBoostingClassifier(min_samples_leaf=1).fit(X, y)
   >>> gbdt.predict(X)
   array([0, 0, 1, 1])
+
+When the missingness pattern is predictive, the splits can be done on
+whether the feature value is missing or not::
+
+  >>> X = np.array([0, np.nan, 1, 2, np.nan]).reshape(-1, 1)
+  >>> y = [0, 1, 0, 0, 1]
+  >>> gbdt = HistGradientBoostingClassifier(min_samples_leaf=1,
+                                            max_iter=1, max_depth=2).fit(X, y)
+  >>> gbdt.predict(X)
+  [0, 1, 0, 0, 1]
 
 If no missing values were encountered for a given feature during training,
 then samples with missing values are mapped to whichever child has the most
