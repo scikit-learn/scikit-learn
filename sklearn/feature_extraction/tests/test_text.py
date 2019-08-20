@@ -305,7 +305,7 @@ def test_countvectorizer_stop_words():
         cv.get_stop_words()
     cv.set_params(stop_words='_bad_unicode_stop_')
     with pytest.raises(ValueError):
-       cv.get_stop_words()
+        cv.get_stop_words()
     stoplist = ['some', 'other', 'words']
     cv.set_params(stop_words=stoplist)
     assert cv.get_stop_words() == set(stoplist)
