@@ -14,7 +14,7 @@ from sklearn.utils.testing import (assert_raises,
                                    assert_raises_regex,
                                    assert_warns_message, assert_no_warnings)
 from sklearn.utils import check_random_state
-from sklearn.utils import _check_key_type
+from sklearn.utils import _determine_key_type
 from sklearn.utils import deprecated
 from sklearn.utils import _get_column_indices
 from sklearn.utils import resample
@@ -198,30 +198,26 @@ def test_column_or_1d():
 
 
 @pytest.mark.parametrize(
-    "key, clazz, is_expected_type",
-    [(0, int, True),
-     ('0', int, False),
-     ([0, 1, 2], int, True),
-     (['0', '1', '2'], int, False),
-     (slice(None, None), str, False),
-     (slice(None, None), bool, False),
-     (slice(None, None), int, False),
-     (slice(0, 2), int, True),
-     (np.array([0, 1, 2], dtype=np.int32), int, True),
-     (np.array([0, 1, 2], dtype=np.int64), int, True),
-     (np.array([0, 1, 2], dtype=np.uint8), int, False),
-     ([True, False], bool, True),
-     ([True, False], int, False),
-     (np.array([True, False]), bool, True),
-     (np.array([True, False]), int, False),
-     ('col_0', str, True),
-     (['col_0', 'col_1', 'col_2'], str, True),
-     (slice('begin', 'end'), str, True),
-     (np.array(['col_0', 'col_1', 'col_2']), str, True),
-     (np.array(['col_0', 'col_1', 'col_2'], dtype=object), str, True)]
+    "key, dtype",
+    [(0, 'int'),
+     ('0', 'str'),
+     ([0, 1, 2], 'int'),
+     (['0', '1', '2'], 'str'),
+     (slice(None, None), None),
+     (slice(0, 2), 'int'),
+     (np.array([0, 1, 2], dtype=np.int32), 'int'),
+     (np.array([0, 1, 2], dtype=np.int64), 'int'),
+     (np.array([0, 1, 2], dtype=np.uint8), 'int'),
+     ([True, False], 'bool'),
+     (np.array([True, False]), 'bool'),
+     ('col_0', 'str'),
+     (['col_0', 'col_1', 'col_2'], 'str'),
+     (slice('begin', 'end'), 'str'),
+     (np.array(['col_0', 'col_1', 'col_2']), 'str'),
+     (np.array(['col_0', 'col_1', 'col_2'], dtype=object), 'str')]
 )
-def test_check_key_type(key, clazz, is_expected_type):
-    assert _check_key_type(key, clazz) is is_expected_type
+def test_determine_key_type(key, dtype):
+    assert _determine_key_type(key) == dtype
 
 
 def _convert_container(container, constructor_name, columns_name=None):
@@ -448,7 +444,7 @@ def test_safe_indexing_1d_array_error(X_constructor):
 def test_safe_indexing_container_axis_0_unsupported_type():
     indices = ["col_1", "col_2"]
     array = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    err_msg = "'axis=0' only support integer or boolean array-like,"
+    err_msg = "String indexing is not supported with 'axis=0'"
     with pytest.raises(ValueError, match=err_msg):
         safe_indexing(array, indices, axis=0)
 

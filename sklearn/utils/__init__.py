@@ -181,94 +181,94 @@ def axis0_safe_slice(X, mask, len_mask):
     return np.zeros(shape=(0, X.shape[1]))
 
 
-def _array_indexing(array, key, axis):
+def _array_indexing(array, key, key_dtype, axis):
     """Index an array consistently across NumPy version."""
     if np_version < (1, 12) or issparse(array):
         # FIXME: Remove the check for NumPy when using >= 1.12
         # check if we have an boolean array-likes to make the proper indexing
-        key_array = np.asarray(key)
-        if np.issubdtype(key_array.dtype, np.bool_):
-            key = key_array
+        if key_dtype == 'bool':
+            key = np.asarray(key)
     return array[key] if axis == 0 else array[:, key]
 
 
-def _pandas_indexing(X, key, axis):
+def _pandas_indexing(X, key, key_dtype, axis):
     """Index a pandas dataframe or a series."""
-    # check whether we should index with loc or iloc
-    if _check_key_type(key, int):
-        by_name = False
-    elif _check_key_type(key, str):
-        by_name = True
-    elif _check_key_type(key, bool):
-        # pandas boolean masks don't work with iloc, so take loc path
-        by_name = True
-    else:
-        raise ValueError("No valid specification of the columns. Only a "
-                         "scalar, list or slice of all integers or all "
-                         "strings, or boolean mask is allowed")
-
     if hasattr(key, 'shape'):
         # Work-around for indexing with read-only key in pandas
         # FIXME: solved in pandas 0.25
         key = np.asarray(key)
         key = key if key.flags.writeable else key.copy()
-    indexer = 'loc' if by_name else 'iloc'
+    # check whether we should index with loc or iloc
+    indexer = 'iloc' if key_dtype == 'int' else 'loc'
     return (getattr(X, indexer)[:, key] if axis else getattr(X, indexer)[key])
 
 
-def _list_indexing(X, key):
+def _list_indexing(X, key, key_dtype):
     """Index a Python list."""
     if np.isscalar(key) or isinstance(key, slice):
         # key is a slice or a scalar
         return X[key]
-    key_set = set(key)
-    if (len(key_set) == 2 and
-            all(isinstance(k, (bool, np.bool_)) for k in key_set)):
+    if key_dtype == 'bool':
         # key is a boolean array-like
         return list(compress(X, key))
     # key is a integer array-like of key
     return [X[idx] for idx in key]
 
 
-def _check_key_type(key, superclass):
-    """Check that scalar, list or slice is of a certain type.
-
-    This is only used in _safe_indexing_column and _get_column_indices to check
-    if the ``key`` (column specification) is fully integer or fully
-    string-like.
+def _determine_key_type(key):
+    """Determine the data type of key.
 
     Parameters
     ----------
-    key : scalar, list, slice, array-like
-        The column specification to check.
-    superclass : int or str
-        The type for which to check the `key`.
+    key : scalar, slice or array-like
+        The key from which we want to infer the data type.
+
+    Returns
+    -------
+    dtype : {'int', 'str', 'bool'}
+        Returns the data type of key.
     """
-    if isinstance(key, superclass):
-        return True
+    err_msg = ("No valid specification of the columns. Only a scalar, list or "
+               "slice of all integers or all strings, or boolean mask is "
+               "allowed")
+
+    dtype_to_str = {int: 'int', str: 'str', bool: 'bool', np.bool_: 'bool'}
+    array_dtype_to_str = {'i': 'int', 'u': 'int', 'b': 'bool', 'O': 'str',
+                          'U': 'str', 'S': 'str'}
+
+    if key is None:
+        return None
+    if isinstance(key, tuple(dtype_to_str.keys())):
+        try:
+            return dtype_to_str[type(key)]
+        except KeyError:
+            raise ValueError(err_msg)
     if isinstance(key, slice):
         if key.start is None and key.stop is None:
-            return False
-        return (isinstance(key.start, (superclass, type(None))) and
-                isinstance(key.stop, (superclass, type(None))))
+            return None
+        key_start_type = _determine_key_type(key.start)
+        key_stop_type = _determine_key_type(key.stop)
+        if key_start_type is not None and key_stop_type is not None:
+            if key_start_type != key_stop_type:
+                raise ValueError(err_msg)
+        if key_start_type is not None:
+            return key_start_type
+        return key_stop_type
     if isinstance(key, list):
         unique_key = set(key)
-        all_superclass = all(isinstance(x, superclass) for x in unique_key)
-        if superclass != int:
-            return all_superclass
-        # bool is a subclass of int, therefore we should check specifically for
-        # any bool
-        any_bool = any(isinstance(x, bool) for x in unique_key)
-        return all_superclass and not any_bool
+        set_type = {_determine_key_type(elt) for elt in unique_key}
+        if not set_type:
+            return None
+        if len(set_type) != 1:
+            raise ValueError(err_msg)
+        set_type, = set_type
+        return set_type
     if hasattr(key, 'dtype'):
-        if superclass is int:
-            return key.dtype.kind == 'i'
-        elif superclass is bool:
-            return key.dtype.kind == 'b'
-        else:
-            # superclass = str
-            return key.dtype.kind in ('O', 'U', 'S')
-    return False
+        try:
+            return array_dtype_to_str[key.dtype.kind]
+        except KeyError:
+            raise ValueError(err_msg)
+    raise ValueError(err_msg)
 
 
 def safe_indexing(X, indices, axis=0):
@@ -315,11 +315,11 @@ def safe_indexing(X, indices, axis=0):
             " column). Got {} instead.".format(axis)
         )
 
-    if axis == 0 and _check_key_type(indices, str):
+    indices_dtype = _determine_key_type(indices)
+
+    if axis == 0 and indices_dtype == 'str':
         raise ValueError(
-            "'axis=0' only support integer or boolean array-like, slice with "
-            "integer, or scalar integer as indices. Got {} instead."
-            .format(indices)
+            "String indexing is not supported with 'axis=0'"
         )
 
     if axis == 1 and X.ndim != 2:
@@ -329,18 +329,18 @@ def safe_indexing(X, indices, axis=0):
             "Got {} instead with {} dimension(s).".format(type(X), X.ndim)
         )
 
-    if axis == 1 and _check_key_type(indices, str) and not hasattr(X, 'loc'):
+    if axis == 1 and indices_dtype == 'str' and not hasattr(X, 'loc'):
         raise ValueError(
             "Specifying the columns using strings is only supported for "
             "pandas DataFrames"
         )
 
     if hasattr(X, "iloc"):
-        return _pandas_indexing(X, indices, axis=axis)
+        return _pandas_indexing(X, indices, indices_dtype, axis=axis)
     elif hasattr(X, "shape"):
-        return _array_indexing(X, indices, axis=axis)
+        return _array_indexing(X, indices, indices_dtype, axis=axis)
     else:
-        return _list_indexing(X, indices)
+        return _list_indexing(X, indices, indices_dtype)
 
 
 def _get_column_indices(X, key):
@@ -351,10 +351,12 @@ def _get_column_indices(X, key):
     """
     n_columns = X.shape[1]
 
+    key_dtype = _determine_key_type(key)
+
     if isinstance(key, list) and not key:
         # we get an empty list
         return []
-    elif (_check_key_type(key, int) or _check_key_type(key, bool)):
+    elif key_dtype in ('bool', 'int'):
         # Convert key into positive indexes
         try:
             idx = safe_indexing(np.arange(n_columns), key)
@@ -364,7 +366,7 @@ def _get_column_indices(X, key):
                 .format(n_columns - 1, n_columns)
             ) from e
         return np.atleast_1d(idx).tolist()
-    elif _check_key_type(key, str):
+    elif key_dtype == 'str':
         try:
             all_columns = list(X.columns)
         except AttributeError:
