@@ -234,10 +234,14 @@ def test_perfect_checkerboard():
 
 @pytest.mark.parametrize(
     "args",
-    [{'n_clusters': (3, 3, 3)}, {'n_clusters': 'abc'},
-     {'n_clusters': (3, 'abc')}, {'method': 'unknown'},
-     {'n_components': 0}, {'n_best': 0},
-     {'svd_method': 'unknown'}]
+    [{'n_clusters': (3, 3, 3)},
+     {'n_clusters': 'abc'},
+     {'n_clusters': (3, 'abc')},
+     {'method': 'unknown'},
+     {'n_components': 0},
+     {'n_best': 0},
+     {'svd_method': 'unknown'},
+     {'n_components': 3, 'n_best': 4}]
 )
 def test_errors(args):
     data = np.arange(25).reshape((5, 5))
@@ -246,9 +250,6 @@ def test_errors(args):
     with pytest.raises(ValueError):
         model.fit(data)
 
-    model = SpectralBiclustering(n_components=3, n_best=4)
-    with pytest.raises(ValueError):
-        model.fit(data)
 
 def test_wrong_shape():
     model = SpectralBiclustering()
