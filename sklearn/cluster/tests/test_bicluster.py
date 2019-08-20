@@ -250,6 +250,7 @@ def test_errors(args):
     with pytest.raises(ValueError):
         model.fit(data)
 
+def test_wrong_shape():
     model = SpectralBiclustering()
     data = np.arange(27).reshape((3, 3, 3))
     with pytest.raises(ValueError):
