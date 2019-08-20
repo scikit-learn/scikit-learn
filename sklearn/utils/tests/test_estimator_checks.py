@@ -1,5 +1,6 @@
 import unittest
 import sys
+import pytest
 
 import numpy as np
 import scipy.sparse as sp
@@ -20,6 +21,7 @@ from sklearn.utils.estimator_checks import set_checking_parameters
 from sklearn.utils.estimator_checks import check_estimators_unfitted
 from sklearn.utils.estimator_checks import check_fit_score_takes_y
 from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
+from sklearn.utils.estimator_checks import check_constant_features
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.estimator_checks import check_outlier_corruption
 from sklearn.ensemble import RandomForestClassifier
@@ -304,17 +306,6 @@ class RequiresPositiveYRegressor(LinearRegression):
         return {"requires_positive_y": True}
 
 
-class FailsWithConstantFeatures(BaseEstimator):
-    # Estimator that fails with constant features and don't raise
-    # an adequate error message
-
-    def fit(self, X, y):
-        X, y = check_X_y(X, y)
-        if (np.std(X, axis=0) == 0).any():
-            raise FloatingPointError('Inadequate error for'
-                                     'constant features in X')
-        return self
-
 def test_check_fit_score_takes_y_works_on_deprecated_fit():
     # Tests that check_fit_score_takes_y works on a class with
     # a deprecated fit method
@@ -415,11 +406,6 @@ def test_check_estimator():
     assert_raises_regex(AssertionError, msg, check_estimator,
                         LargeSparseNotSupportedClassifier)
 
-    # Constant features on bad estimator
-    msg = ("Estimator FailsWithConstantFeatures raised an error due to "
-           "constant features, but does not match expected error message")
-    assert_raises_regex(AssertionError, msg, check_estimator,
-                        FailsWithConstantFeatures)
 
     # does error on binary_only untagged estimator
     msg = 'Only 2 classes are supported'
@@ -559,6 +545,33 @@ def test_check_class_weight_balanced_linear_classifier():
                         check_class_weight_balanced_linear_classifier,
                         'estimator_name',
                         BadBalancedWeightsClassifier)
+
+
+def test_check_constant_features():
+    # Tests that estimators that fail with constant features output passes/fails
+    # the check when the error message is adequate/inadequate
+
+    class FailsWithConstantFeatures(BaseEstimator):
+        def __init__(self, err_msg):
+            self.err_msg = err_msg
+        def fit(self, X, y):
+            X, y = check_X_y(X, y)
+            if (np.std(X, axis=0) == 0).any():
+                raise ValueError(self.err_msg)
+            return self
+
+    # Testing that estimator passes the check. Should not raise any error
+    correct_msg = "The system is too ill-conditioned for this solver"
+    clf = FailsWithConstantFeatures(correct_msg)
+    check_constant_features(clf.__class__.__name__, clf)
+
+    # Testing that estimator does not pass the check
+    wrong_msg = "Inadequate error for constant features in X'"
+    clf = FailsWithConstantFeatures(wrong_msg)
+    msg = ("Estimator FailsWithConstantFeatures raised an error due to "
+           "constant features, but does not match expected error message")
+    with pytest.raises(AssertionError, match=msg):
+        check_constant_features(clf.__class__.__name__, clf)
 
 
 if __name__ == '__main__':
