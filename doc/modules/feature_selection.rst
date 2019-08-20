@@ -54,7 +54,7 @@ Remove features with high correlation
 
 :class:`CorrelationThreshold` is a feature selection technique that removes
 features until all pairwise correlations are below a certain threshold. As
-described in [KUHN]_, the algorithm is as follows:
+described in Section 3.5 of [KUHN]_, the algorithm is as follows:
 
 0. Remove features with zero variance because they would contribute to an
    ill-defined correlation matrix.
