@@ -435,7 +435,10 @@ class NotAnArray:
         return self.data
 
     def __array_function__(self, func, types, args, kwargs):
-        raise TypeError("Don't want to call array_function!")
+        if func.__name__ == "may_share_memory":
+            return False
+        raise TypeError("Don't want to call array_function {}!".format(
+            func.__name__))
 
 
 def _is_pairwise(estimator):
