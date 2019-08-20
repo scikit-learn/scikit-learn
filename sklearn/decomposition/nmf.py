@@ -1240,6 +1240,9 @@ class NMF(BaseEstimator, TransformerMixin):
         self.verbose = verbose
         self.shuffle = shuffle
 
+    def _more_tags(self):
+        return {'requires_positive_X': True}
+
     def fit_transform(self, X, y=None, W=None, H=None):
         """Learn a NMF model for the data X and returns the transformed data.
 
