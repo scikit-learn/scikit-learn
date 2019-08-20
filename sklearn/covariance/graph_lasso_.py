@@ -243,7 +243,7 @@ def graphical_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
                 covariance_[idx, indices != idx] = coefs
                 covariance_[indices != idx, idx] = coefs
             if not np.isfinite(precision_.sum()):
-                raise FloatingPointError('The system is too ill-conditioned '
+                raise ValueError('The system is too ill-conditioned '
                                          'for this solver')
             d_gap = _dual_gap(emp_cov, precision_, alpha)
             cost = _objective(emp_cov, precision_, alpha)
