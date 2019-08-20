@@ -436,7 +436,7 @@ class NotAnArray:
 
     def __array_function__(self, func, types, args, kwargs):
         if func.__name__ == "may_share_memory":
-            return False
+            return True
         raise TypeError("Don't want to call array_function {}!".format(
             func.__name__))
 
