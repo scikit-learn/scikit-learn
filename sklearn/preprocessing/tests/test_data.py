@@ -1211,11 +1211,11 @@ def test_quantile_transform_check_error():
                         QuantileTransformer(subsample=10).fit, X)
 
     transformer = QuantileTransformer(n_quantiles=10)
-    assert_raises_regex(ValueError, "QuantileTransformer only accepts "
+    assert_raises_regex(TypeError, "QuantileTransformer only accepts "
                         "non-negative sparse matrices.",
                         transformer.fit, X_neg)
     transformer.fit(X)
-    assert_raises_regex(ValueError, "QuantileTransformer only accepts "
+    assert_raises_regex(TypeError, "QuantileTransformer only accepts "
                         "non-negative sparse matrices.",
                         transformer.transform, X_neg)
 
