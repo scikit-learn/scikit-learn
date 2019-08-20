@@ -73,12 +73,24 @@ __all__ = ["RandomForestClassifier",
 MAX_INT = np.iinfo(np.int32).max
 
 
-def _get_n_bootstrap_samples(n_samples, max_samples=None):
-    """Generates the number of bootstrap samples given the total
-    available `n_samples` and the limit `max_samples`, which can be
-    either None, integral, or real valued.
-    """
+def _get_n_samples_bootstrap(n_samples, max_samples):
+    """Get the number of samples in a bootstrap sample.
 
+    Parameters
+    ----------
+    n_samples : int
+        Number of samples in the dataset.
+    max_samples : int, float or None, default=None
+        The maximum number of samples to draw from the total available:
+            - float indicates a fraction of the total.
+            - int indicates the exact number of samples.
+            - None indicates the total number of samples
+
+    Returns
+    -------
+    n_samples_bootstrap : int
+        The total number of samples to draw for the bootstrap sample.
+    """
     if max_samples is None:
         return n_samples
     elif isinstance(max_samples, numbers.Integral):
@@ -308,7 +320,7 @@ class BaseForest(BaseEnsemble, MultiOutputMixin, metaclass=ABCMeta):
                 sample_weight = expanded_class_weight
 
         # Get bootstrap sample size
-        n_bootstrap_samples = _get_n_bootstrap_samples(
+        n_bootstrap_samples = _get_n_samples_bootstrap(
             n_samples=X.shape[0], max_samples=self.max_samples)
 
         # Check parameters
@@ -473,7 +485,7 @@ class ForestClassifier(BaseForest, ClassifierMixin, metaclass=ABCMeta):
                        for k in range(self.n_outputs_)]
 
         for estimator in self.estimators_:
-            n_bootstrap_samples = _get_n_bootstrap_samples(
+            n_bootstrap_samples = _get_n_samples_bootstrap(
                 n_samples, self.max_samples)
             unsampled_indices = _generate_unsampled_indices(
                 estimator.random_state, n_samples, n_bootstrap_samples)
@@ -755,7 +767,7 @@ class ForestRegressor(BaseForest, RegressorMixin, metaclass=ABCMeta):
         n_predictions = np.zeros((n_samples, self.n_outputs_))
 
         for estimator in self.estimators_:
-            n_bootstrap_samples = _get_n_bootstrap_samples(
+            n_bootstrap_samples = _get_n_samples_bootstrap(
                 n_samples, self.max_samples)
             unsampled_indices = _generate_unsampled_indices(
                 estimator.random_state, n_samples, n_bootstrap_samples)

@@ -1336,53 +1336,53 @@ def test__get_n_bootstrap_samples():
     """ Test bootstrap sample number getter
     """
 
-    from sklearn.ensemble.forest import _get_n_bootstrap_samples
+    from sklearn.ensemble.forest import _get_n_samples_bootstrap
 
     n_samples = 10
 
     # Check that max_samples=None defaults to full n_samples
-    n_bootstrap = _get_n_bootstrap_samples(n_samples, max_samples=None)
+    n_bootstrap = _get_n_samples_bootstrap(n_samples, max_samples=None)
     assert n_bootstrap == n_samples
 
     # Check that max less total yields max
-    n_bootstrap = _get_n_bootstrap_samples(n_samples, max_samples=5)
+    n_bootstrap = _get_n_samples_bootstrap(n_samples, max_samples=5)
     assert n_bootstrap == 5
 
     # Check that indices with max_samples kwarg subsamples by that amount
-    n_bootstrap = _get_n_bootstrap_samples(n_samples, max_samples=0.1)
+    n_bootstrap = _get_n_samples_bootstrap(n_samples, max_samples=0.1)
     assert n_bootstrap == 1
 
     # Check that ValueError is raised when `max_samples` is integral
     # and greater than `n_samples`
     with pytest.raises(ValueError):
-        _get_n_bootstrap_samples(n_samples, max_samples=n_samples + 1)
+        _get_n_samples_bootstrap(n_samples, max_samples=n_samples + 1)
 
     # Check that ValueError is raised when `max_samples` is float
     # and not in range (0, 1)
     with pytest.raises(ValueError):
         # Edge case at 1.0
-        _get_n_bootstrap_samples(n_samples, max_samples=1.0)
+        _get_n_samples_bootstrap(n_samples, max_samples=1.0)
     with pytest.raises(ValueError):
         # Greater than 1.0
-        _get_n_bootstrap_samples(n_samples, max_samples=2.0)
+        _get_n_samples_bootstrap(n_samples, max_samples=2.0)
     with pytest.raises(ValueError):
         # Edge case at 0.0
-        _get_n_bootstrap_samples(n_samples, max_samples=0.0)
+        _get_n_samples_bootstrap(n_samples, max_samples=0.0)
     with pytest.raises(ValueError):
         # Less than 0.0
-        _get_n_bootstrap_samples(n_samples, max_samples=-1.0)
+        _get_n_samples_bootstrap(n_samples, max_samples=-1.0)
     with pytest.raises(ValueError):
         # NaN: valid float, so should raise ValueError
-        _get_n_bootstrap_samples(n_samples, max_samples=np.nan)
+        _get_n_samples_bootstrap(n_samples, max_samples=np.nan)
     with pytest.raises(ValueError):
         # Inf: valid float, so should raise ValueError
-        _get_n_bootstrap_samples(n_samples, max_samples=np.inf)
+        _get_n_samples_bootstrap(n_samples, max_samples=np.inf)
 
     # Check that TypeError is raised when `max_samples` is the wrong type
     with pytest.raises(TypeError):
-        _get_n_bootstrap_samples(n_samples, max_samples='bad max sample type')
+        _get_n_samples_bootstrap(n_samples, max_samples='bad max sample type')
     with pytest.raises(TypeError):
-        _get_n_bootstrap_samples(n_samples, max_samples=np.ones(n_samples))
+        _get_n_samples_bootstrap(n_samples, max_samples=np.ones(n_samples))
 
 
 def check_classification_toy_max_samples(name):
