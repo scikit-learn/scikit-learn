@@ -174,7 +174,7 @@ def check_constant_features(name, estimator_orig):
 
     try:
         estimator.fit(X, y)
-    except FloatingPointError as e:
+    except ValueError as e:
         errmsg = 'The system is too ill-conditioned for this solver'
         msg = ("Estimator {0} raised an error due to constant features, "
                "but does not match expected error message".format(name))
