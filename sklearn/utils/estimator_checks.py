@@ -434,6 +434,9 @@ class NotAnArray:
     def __array__(self, dtype=None):
         return self.data
 
+    def __array_function__(self, func, types, args, kwargs):
+        raise TypeError("Don't want to call array_function!")
+
 
 def _is_pairwise(estimator):
     """Returns True if estimator has a _pairwise attribute set to True.
