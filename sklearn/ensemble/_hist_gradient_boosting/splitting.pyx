@@ -471,10 +471,10 @@ cdef class Splitter:
             unsigned int n_samples_left
             unsigned int n_samples_right
             unsigned int n_samples_ = n_samples
-            # We set the 'end' variable such that the last non-missing bin
-            # never goes to the left child (which would result in and empty
-            # right child), unless there are missing values, since these would
-            # go to the right child.
+            # We set the 'end' variable such that the last non-missing-values
+            # bin never goes to the left child (which would result in and
+            # empty right child), unless there are missing values, since these
+            # would go to the right child.
             unsigned int end = \
                 self.n_bins_non_missing[feature_idx] - 1 + has_missing_values
             Y_DTYPE_C sum_hessian_left
@@ -549,9 +549,11 @@ cdef class Splitter:
         (min_gain_to_split, etc.) are discarded here.
 
         We scan node from right to left. This version is only called when
-        there are missing values. If there's no missing value, calling
-        _find_best_bin_to_split_left_to_right is enough. Missing
-        values are assigned to the left node.
+        there are missing values. Missing values are assigned to the left
+        child.
+
+        If no missing value are present in the data this method isn't called
+        since only calling _find_best_bin_to_split_left_to_right is enough.
         """
 
         cdef:

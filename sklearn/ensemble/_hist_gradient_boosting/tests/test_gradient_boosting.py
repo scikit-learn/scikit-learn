@@ -390,6 +390,7 @@ def test_missing_values_minmax_imputation():
 
 
 def test_infinite_values():
+    # Basic test for infinite values
 
     X = np.array([-np.inf, 0, 1, np.inf]).reshape(-1, 1)
     y = np.array([0, 0, 1, 1])
@@ -397,3 +398,20 @@ def test_infinite_values():
     gbdt = HistGradientBoostingRegressor(min_samples_leaf=1)
     gbdt.fit(X, y)
     np.testing.assert_allclose(gbdt.predict(X), y, atol=1e-4)
+
+
+def test_infinite_values_missing_values():
+    # High level test making sure that inf and nan values are properly handled
+    # when both are present. This is similar to
+    # test_split_on_nan_with_infinite_values() in test_grower.py, though we
+    # cannot check the predicitons for binned values here.
+
+    X = np.asarray([-np.inf, 0, 1, np.inf, np.nan]).reshape(-1, 1)
+    y_isnan = np.isnan(X.ravel())
+    y_isinf = X.ravel() == np.inf
+
+    stump_clf = HistGradientBoostingClassifier(min_samples_leaf=1, max_iter=1,
+                                               learning_rate=1, max_depth=2)
+
+    assert stump_clf.fit(X, y_isinf).score(X, y_isinf) == 1
+    assert stump_clf.fit(X, y_isnan).score(X, y_isnan) == 1

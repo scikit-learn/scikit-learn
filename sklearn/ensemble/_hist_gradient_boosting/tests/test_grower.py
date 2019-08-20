@@ -349,7 +349,8 @@ def test_split_on_nan_with_infinite_values():
     # Make sure the split on nan situations are respected even when there are
     # samples with +inf values (we set the threshold to +inf when we have a
     # split on nan so this test makes sure this does not introduce edge-case
-    # bugs)
+    # bugs). We need to use the private API so that we can also test
+    # predict_binned().
 
     X = np.array([0, 1, np.inf, np.nan, np.nan]).reshape(-1, 1)
     # the gradient values will force a split on nan situation

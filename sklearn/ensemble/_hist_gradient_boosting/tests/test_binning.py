@@ -274,7 +274,7 @@ def test_subsample():
                         [1, 0, 0]])])
 def test_missing_values_support(n_bins, n_bins_non_missing, X_trans_expected):
     # check for missing values: make sure nans are mapped to the last bin
-    # and that attributes are correct
+    # and that the _BinMapper attributes are correct
 
     X = [[1,      1,      0],
          [np.NaN, np.NaN, 0],
