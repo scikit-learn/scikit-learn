@@ -323,6 +323,11 @@ Changelog
   NumPy array, SciPy sparse matrix, and Pandas DataFrame.
   :pr:`14035` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |API| `requires_positive_X` estimator tag (for models that require
+  X to be non-negative) is now used by `check_estimator` to make sure
+  a proper error message is raised if X contains some negative entries.
+  :pr:`14680` by :user:`Alex Gramfort <agramfort>`.
+
 :mod:`sklearn.neighbors`
 ....................
 
