@@ -74,9 +74,9 @@ are removed, while the uncorrelated feature remains:
     >>> X = np.array([[0.0, 1.0, 2.0], [1.1, 2.0, 3.0], [0.5, 10.1, 1.1]]).T
     >>> selector = CorrelationThreshold()
     >>> selector.fit_transform(X)
-    array([[ 0. ,  0.5],
-           [ 1. , 10.1],
-           [ 2. ,  1.1]])
+    array([[ 1.1,  0.5],
+           [ 2. , 10.1],
+           [ 3. ,  1.1]])
 
 .. topic:: Reference
 
