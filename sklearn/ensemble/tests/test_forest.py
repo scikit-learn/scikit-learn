@@ -1331,7 +1331,8 @@ def test_forest_degenerate_feature_importances():
     assert_array_equal(gbr.feature_importances_,
                        np.zeros(10, dtype=np.float64))
 
-@pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
+
+@pytest.mark.parametrize('name', FOREST_CLASSIFIERS_REGRESSORS)
 @pytest.mark.parametrize(
     'max_samples_exception',
     [(int(1e9), ValueError),
