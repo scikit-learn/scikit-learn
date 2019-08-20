@@ -328,7 +328,7 @@ def test_invalid_percentile():
     with pytest.raises(ValueError):
         SelectPercentile(percentile=101).fit(X, y)
     with pytest.raises(ValueError):
-       GenericUnivariateSelect(mode='percentile', param=-1).fit(X, y)
+        GenericUnivariateSelect(mode='percentile', param=-1).fit(X, y)
     with pytest.raises(ValueError):
         GenericUnivariateSelect(mode='percentile', param=101).fit(X, y)
 
