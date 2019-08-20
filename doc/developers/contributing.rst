@@ -1000,8 +1000,6 @@ from high-level questions to a more detailed check-list.
 
 :ref:`saved_replies` includes some frequent comments that reviewers may make.
 
-.. _reading-code:
-
 Reading the existing code base
 ==============================
 

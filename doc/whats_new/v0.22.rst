@@ -26,6 +26,8 @@ random sampling procedures.
 
 - :class:`linear_model.Ridge` when `X` is sparse. |Fix|
 
+- :class:`cluster.KMeans` when `n_jobs=1`. |Fix|
+
 Details are listed in the changelog below.
 
 (While we are trying to better inform users by providing this information, we
@@ -279,6 +281,21 @@ Changelog
 - |Enhancement| SVM now throws more specific error when fit on non-square data
   and kernel = precomputed.  :class:`svm.BaseLibSVM`
   :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
+  
+:mod:`sklearn.tree`
+...................
+
+- |Feature| Adds minimal cost complexity pruning, controlled by ``ccp_alpha``,
+  to :class:`tree.DecisionTreeClassifier`, :class:`tree.DecisionTreeRegressor`,
+  :class:`tree.ExtraTreeClassifier`, :class:`tree.ExtraTreeRegressor`,
+  :class:`ensemble.RandomForestClassifier`, 
+  :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.ExtraTreesClassifier`, 
+  :class:`ensemble.ExtraTreesRegressor`,
+  :class:`ensemble.RandomTreesEmbedding`, 
+  :class:`ensemble.GradientBoostingClassifier`, 
+  and :class:`ensemble.GradientBoostingRegressor`.
+  :pr:`12887` by `Thomas Fan`_.
 
 :mod:`sklearn.preprocessing`
 ............................
@@ -301,6 +318,10 @@ Changelog
   match `spectral_clustering`.
   :pr:`13726` by :user:`Shuzhe Xiao <fdas3213>`.
 
+- |Fix| Fixed a bug where :class:`cluster.KMeans` produced inconsistent results
+  between `n_jobs=1` and `n_jobs>1` due to the handling of the random state.
+  :pr:`9288` by :user:`Bryan Yang <bryanyang0528>`.
+
 :mod:`sklearn.feature_selection`
 ................................
 
@@ -316,6 +337,11 @@ Changelog
   index array-like across rows and columns. The column indexing can be done on
   NumPy array, SciPy sparse matrix, and Pandas DataFrame.
   :pr:`14035` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |API| `requires_positive_X` estimator tag (for models that require
+  X to be non-negative) is now used by `check_estimator` to make sure
+  a proper error message is raised if X contains some negative entries.
+  :pr:`14680` by :user:`Alex Gramfort <agramfort>`.
 
 :mod:`sklearn.neighbors`
 ....................

@@ -534,16 +534,57 @@ Mean Absolute Error:
 
 where :math:`X_m` is the training data in node :math:`m`
 
+
+.. _minimal_cost_complexity_pruning:
+
+Minimal Cost-Complexity Pruning
+===============================
+
+Minimal cost-complexity pruning is an algorithm used to prune a tree to avoid
+over-fitting, described in Chapter 3 of [BRE]_. This algorithm is parameterized
+by :math:`\alpha\ge0` known as the complexity parameter. The complexity
+parameter is used to define the cost-complexity measure, :math:`R_\alpha(T)` of
+a given tree :math:`T`:
+
+.. math::
+
+  R_\alpha(T) = R(T) + \alpha|T|
+
+where :math:`|T|` is the number of terminal nodes in :math:`T` and :math:`R(T)`
+is traditionally defined as the total misclassification rate of the terminal
+nodes. Alternatively, scikit-learn uses the total sample weighted impurity of
+the terminal nodes for :math:`R(T)`. As shown above, the impurity of a node
+depends on the criterion. Minimal cost-complexity pruning finds the subtree of
+:math:`T` that minimizes :math:`R_\alpha(T)`.
+
+The cost complexity measure of a single node is
+:math:`R_\alpha(t)=R(t)+\alpha`. The branch, :math:`T_t`, is defined to be a
+tree where node :math:`t` is its root. In general, the impurity of a node
+is greater than the sum of impurities of its terminal nodes,
+:math:`R(T_t)<R(t)`. However, the cost complexity measure of a node,
+:math:`t`, and its branch, :math:`T_t`, can be equal depending on
+:math:`\alpha`. We define the effective :math:`\alpha` of a node to be the
+value where they are equal, :math:`R_\alpha(T_t)=R_\alpha(t)` or
+:math:`\alpha_{eff}(t)=\frac{R(t)-R(T_t)}{|T|-1}`. A non-terminal node
+with the smallest value of :math:`\alpha_{eff}` is the weakest link and will
+be pruned. This process stops when the pruned tree's minimal
+:math:`\alpha_{eff}` is greater than the ``ccp_alpha`` parameter.
+
+.. topic:: Examples:
+
+    * :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
+  
 .. topic:: References:
+
+    .. [BRE] L. Breiman, J. Friedman, R. Olshen, and C. Stone. Classification
+      and Regression Trees. Wadsworth, Belmont, CA, 1984.
 
     * https://en.wikipedia.org/wiki/Decision_tree_learning
 
     * https://en.wikipedia.org/wiki/Predictive_analytics
 
-    * L. Breiman, J. Friedman, R. Olshen, and C. Stone. Classification and
-      Regression Trees. Wadsworth, Belmont, CA, 1984.
+    * J.R. Quinlan. C4. 5: programs for machine learning. Morgan
+      Kaufmann, 1993.
 
-    * J.R. Quinlan. C4. 5: programs for machine learning. Morgan Kaufmann, 1993.
-
-    * T. Hastie, R. Tibshirani and J. Friedman.
-      Elements of Statistical Learning, Springer, 2009.
+    * T. Hastie, R. Tibshirani and J. Friedman. Elements of Statistical
+      Learning, Springer, 2009.
