@@ -647,7 +647,6 @@ Support for Python 3.3 has been officially dropped.
   by `Andreas Müller`_ and :user:`Guillaume Lemaitre <glemaitre>`.
 
 
-
 :mod:`sklearn.covariance`
 .........................
 

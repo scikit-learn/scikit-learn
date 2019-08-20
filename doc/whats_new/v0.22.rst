@@ -245,6 +245,8 @@ Changelog
   precomputed distance matrix contains non-zero diagonal entries.
   :pr:`12258` by :user:`Stephen Tierney <sjtrny>`.
 
+- |Feature| Added the :func:`metrics.mean_absolute_percentage_error` metric and the associated scorer for regression problems. :issue:`10711` by :user:`Mohamed Ali Jamaoui <mohamed-ali>`
+
 :mod:`sklearn.model_selection`
 ..............................
 
