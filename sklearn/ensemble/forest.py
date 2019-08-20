@@ -108,19 +108,19 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
         raise TypeError(msg.format(type(max_samples)))
 
 
-def _generate_sample_indices(random_state, n_samples, n_bootstrap_samples):
+def _generate_sample_indices(random_state, n_samples, n_samples_bootstrap):
     """Private function used to _parallel_build_trees function."""
 
     random_instance = check_random_state(random_state)
-    sample_indices = random_instance.randint(0, n_samples, n_bootstrap_samples)
+    sample_indices = random_instance.randint(0, n_samples, n_samples_bootstrap)
 
     return sample_indices
 
 
-def _generate_unsampled_indices(random_state, n_samples, n_bootstrap_samples):
+def _generate_unsampled_indices(random_state, n_samples, n_samples_bootstrap):
     """Private function used to forest._set_oob_score function."""
     sample_indices = _generate_sample_indices(random_state, n_samples,
-                                              n_bootstrap_samples)
+                                              n_samples_bootstrap)
     sample_counts = np.bincount(sample_indices, minlength=n_samples)
     unsampled_mask = sample_counts == 0
     indices_range = np.arange(n_samples)
@@ -131,7 +131,7 @@ def _generate_unsampled_indices(random_state, n_samples, n_bootstrap_samples):
 
 def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
                           verbose=0, class_weight=None,
-                          n_bootstrap_samples=None):
+                          n_samples_bootstrap=None):
     """Private function used to fit a single tree in parallel."""
     if verbose > 1:
         print("building tree %d of %d" % (tree_idx + 1, n_trees))
@@ -144,7 +144,7 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
             curr_sample_weight = sample_weight.copy()
 
         indices = _generate_sample_indices(tree.random_state, n_samples,
-                                           n_bootstrap_samples)
+                                           n_samples_bootstrap)
         sample_counts = np.bincount(indices, minlength=n_samples)
         curr_sample_weight *= sample_counts
 
@@ -320,7 +320,7 @@ class BaseForest(BaseEnsemble, MultiOutputMixin, metaclass=ABCMeta):
                 sample_weight = expanded_class_weight
 
         # Get bootstrap sample size
-        n_bootstrap_samples = _get_n_samples_bootstrap(
+        n_samples_bootstrap = _get_n_samples_bootstrap(
             n_samples=X.shape[0], max_samples=self.max_samples)
 
         # Check parameters
@@ -367,7 +367,7 @@ class BaseForest(BaseEnsemble, MultiOutputMixin, metaclass=ABCMeta):
                 delayed(_parallel_build_trees)(
                     t, self, X, y, sample_weight, i, len(trees),
                     verbose=self.verbose, class_weight=self.class_weight,
-                    n_bootstrap_samples=n_bootstrap_samples)
+                    n_samples_bootstrap=n_samples_bootstrap)
                 for i, t in enumerate(trees))
 
             # Collect newly grown trees
@@ -485,10 +485,10 @@ class ForestClassifier(BaseForest, ClassifierMixin, metaclass=ABCMeta):
                        for k in range(self.n_outputs_)]
 
         for estimator in self.estimators_:
-            n_bootstrap_samples = _get_n_samples_bootstrap(
+            n_samples_bootstrap = _get_n_samples_bootstrap(
                 n_samples, self.max_samples)
             unsampled_indices = _generate_unsampled_indices(
-                estimator.random_state, n_samples, n_bootstrap_samples)
+                estimator.random_state, n_samples, n_samples_bootstrap)
             p_estimator = estimator.predict_proba(X[unsampled_indices, :],
                                                   check_input=False)
 
@@ -767,10 +767,10 @@ class ForestRegressor(BaseForest, RegressorMixin, metaclass=ABCMeta):
         n_predictions = np.zeros((n_samples, self.n_outputs_))
 
         for estimator in self.estimators_:
-            n_bootstrap_samples = _get_n_samples_bootstrap(
+            n_samples_bootstrap = _get_n_samples_bootstrap(
                 n_samples, self.max_samples)
             unsampled_indices = _generate_unsampled_indices(
-                estimator.random_state, n_samples, n_bootstrap_samples)
+                estimator.random_state, n_samples, n_samples_bootstrap)
             p_estimator = estimator.predict(
                 X[unsampled_indices, :], check_input=False)
 
