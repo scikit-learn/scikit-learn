@@ -2498,7 +2498,6 @@ def check_fit_non_negative(name, estimator_orig):
                         estimator.fit, X, y)
 
 
-
 def check_fit_idempotent(name, estimator_orig):
     # Check that est.fit(X) is the same as est.fit(X).fit(X). Ideally we would
     # check that the estimated parameters during training (e.g. coefs_) are
