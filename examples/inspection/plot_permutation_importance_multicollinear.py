@@ -42,7 +42,8 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
 clf = RandomForestClassifier(n_estimators=100, random_state=42)
 clf.fit(X_train, y_train)
-print("Accuracy on test data: {:.2f}".format(clf.score(X_test, y_test)))
+print("Accuracy on test data with 100% of the features: "
+      "{:.2f}".format(clf.score(X_test, y_test)))
 
 ##############################################################################
 # Next, we plot the tree based feature importance and the permutation
@@ -120,13 +121,14 @@ ax.set_xticks(df['rank_test_score'])
 # accuracy scores are overlapping. Here, we choose the threshold that achieves
 # the third highest score and train on the full training set.
 threshold = rank_3_row['param_correlation__threshold'].values[0]
-print("All pairwise correlations will be below: {:.4f}".format(threshold))
+print("All pairwise correlations above {:4f} will be "
+      "removed".format(threshold))
 
 pipe = pipe.set_params(correlation__threshold=threshold)
 pipe.fit(X_train, y_train)
 support_mask = pipe['correlation'].support_mask_
 pct_features = 100 * np.sum(support_mask)/X_train.shape[1]
-print("Accuracy on test data with {:.2f}% features: {:.2f}".format(
+print("Accuracy on test data with {:.2f}% of the features: {:.2f}".format(
       pct_features, pipe.score(X_test, y_test)))
 
 ##############################################################################
