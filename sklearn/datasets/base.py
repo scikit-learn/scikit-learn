@@ -724,8 +724,8 @@ def load_boston(return_X_y=False):
     Examples
     --------
     >>> from sklearn.datasets import load_boston
-    >>> boston = load_boston()
-    >>> print(boston.data.shape)
+    >>> X, y = load_boston(return_X_y=True)
+    >>> print(X.shape)
     (506, 13)
     """
     module_path = dirname(__file__)
