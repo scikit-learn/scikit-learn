@@ -69,7 +69,7 @@ class CorrelationThreshold(BaseEstimator, SelectorMixin):
         X = check_array(X, accept_sparse=['csc', 'csr'], dtype=float)
 
         n_features = X.shape[1]
-        if self.threshold == 1.0:
+        if self.threshold == 1.0 or (1 in X.shape):
             self.support_mask_ = np.ones(n_features, dtype=np.bool)
             return self
 
