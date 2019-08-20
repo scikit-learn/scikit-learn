@@ -267,6 +267,8 @@ def _yield_all_checks(name, estimator):
     yield check_dict_unchanged
     yield check_dont_overwrite_parameters
     yield check_fit_idempotent
+    if tags["requires_positive_X"]:
+        yield check_fit_non_negative
 
 
 def _construct_instance(Estimator):
@@ -2482,6 +2484,16 @@ def check_outliers_fit_predict(name, estimator_orig):
         for contamination in [-0.5, 2.3]:
             estimator.set_params(contamination=contamination)
             assert_raises(ValueError, estimator.fit_predict, X)
+
+
+def check_fit_non_negative(name, estimator_orig):
+    # Check that proper warning is raised for non-negative X
+    # when tag requires_positive_X is present
+    X = np.array([[-1., 1], [-1., 1]])
+    y = np.array([1, 2])
+    estimator = clone(estimator_orig)
+    assert_raises_regex(ValueError, "Negative values in data passed to",
+                        estimator.fit, X, y)
 
 
 def check_fit_idempotent(name, estimator_orig):

@@ -1170,7 +1170,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     def __init__(self, loss, learning_rate, n_estimators, criterion,
                  min_samples_split, min_samples_leaf, min_weight_fraction_leaf,
                  max_depth, min_impurity_decrease, min_impurity_split,
-                 init, subsample, max_features,
+                 init, subsample, max_features, ccp_alpha,
                  random_state, alpha=0.9, verbose=0, max_leaf_nodes=None,
                  warm_start=False, presort='auto',
                  validation_fraction=0.1, n_iter_no_change=None,
@@ -1188,6 +1188,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self.max_depth = max_depth
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
+        self.ccp_alpha = ccp_alpha
         self.init = init
         self.random_state = random_state
         self.alpha = alpha
@@ -1233,7 +1234,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 max_features=self.max_features,
                 max_leaf_nodes=self.max_leaf_nodes,
                 random_state=random_state,
-                presort=self.presort)
+                presort=self.presort,
+                ccp_alpha=self.ccp_alpha)
 
             if self.subsample < 1.0:
                 # no inplace multiplication!
@@ -1999,6 +2001,14 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         .. versionadded:: 0.20
 
+    ccp_alpha : non-negative float, optional (default=0.0)
+        Complexity parameter used for Minimal Cost-Complexity Pruning. The
+        subtree with the largest cost complexity that is smaller than
+        ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
+        :ref:`minimal_cost_complexity_pruning` for details.
+
+        .. versionadded:: 0.22
+
     Attributes
     ----------
     n_estimators_ : int
@@ -2073,7 +2083,7 @@ shape (n_estimators, ``loss_.K``)
                  random_state=None, max_features=None, verbose=0,
                  max_leaf_nodes=None, warm_start=False,
                  presort='auto', validation_fraction=0.1,
-                 n_iter_no_change=None, tol=1e-4):
+                 n_iter_no_change=None, tol=1e-4, ccp_alpha=0.0):
 
         super().__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
@@ -2088,7 +2098,7 @@ shape (n_estimators, ``loss_.K``)
             min_impurity_split=min_impurity_split,
             warm_start=warm_start, presort=presort,
             validation_fraction=validation_fraction,
-            n_iter_no_change=n_iter_no_change, tol=tol)
+            n_iter_no_change=n_iter_no_change, tol=tol, ccp_alpha=ccp_alpha)
 
     def _validate_y(self, y, sample_weight):
         check_classification_targets(y)
@@ -2471,6 +2481,13 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
         .. versionadded:: 0.20
 
+    ccp_alpha : non-negative float, optional (default=0.0)
+        Complexity parameter used for Minimal Cost-Complexity Pruning. The
+        subtree with the largest cost complexity that is smaller than
+        ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
+        :ref:`minimal_cost_complexity_pruning` for details.
+
+        .. versionadded:: 0.22
 
     Attributes
     ----------
@@ -2532,7 +2549,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
                  min_impurity_split=None, init=None, random_state=None,
                  max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
                  warm_start=False, presort='auto', validation_fraction=0.1,
-                 n_iter_no_change=None, tol=1e-4):
+                 n_iter_no_change=None, tol=1e-4, ccp_alpha=0.0):
 
         super().__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
@@ -2546,7 +2563,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             random_state=random_state, alpha=alpha, verbose=verbose,
             max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
             presort=presort, validation_fraction=validation_fraction,
-            n_iter_no_change=n_iter_no_change, tol=tol)
+            n_iter_no_change=n_iter_no_change, tol=tol, ccp_alpha=ccp_alpha)
 
     def predict(self, X):
         """Predict regression target for X.
