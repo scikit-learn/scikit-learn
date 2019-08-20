@@ -4,8 +4,6 @@
 Developing scikit-learn estimators
 ==================================
 
-.. currentmodule:: sklearn
-
 Whether you are proposing an estimator for inclusion in scikit-learn,
 developing a separate package compatible with scikit-learn, or 
 implementing custom components for your own projects, this chapter 
