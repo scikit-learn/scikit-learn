@@ -20,6 +20,7 @@ print(__doc__)
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import scipy as sp
 from scipy.cluster import hierarchy
 
 from sklearn.datasets import load_breast_cancer
@@ -28,7 +29,7 @@ from sklearn.inspection import permutation_importance
 from sklearn.model_selection import train_test_split
 from sklearn.feature_selection import CorrelationThreshold
 from sklearn.pipeline import Pipeline
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import RandomizedSearchCV
 
 
 ##############################################################################
@@ -100,27 +101,25 @@ pipe = Pipeline([
     ('correlation', CorrelationThreshold(threshold=0.9)),
     ('forest', RandomForestClassifier(n_estimators=100, random_state=42))])
 
-params = {'correlation__threshold': np.linspace(0.95, 1, 10)}
-search = GridSearchCV(pipe, params, refit=False, n_jobs=2)
+params = {'correlation__threshold': sp.stats.uniform(0.5, 0.5)}
+search = RandomizedSearchCV(pipe, params, refit=False, n_jobs=2, n_iter=30,
+                            random_state=42)
 search.fit(X_train, y_train)
 df = pd.DataFrame(search.cv_results_)
 df = df.sort_values(by='rank_test_score')
-rank_3_row = df.query('rank_test_score == 3')
 
 fig, ax = plt.subplots(figsize=(12, 8))
 ax.errorbar('rank_test_score', 'mean_test_score', yerr='std_test_score',
             data=df, marker='o')
-ax.plot(3, rank_3_row['mean_test_score'], marker='o', color='red', ms=24,
-        mew=3, mfc='none')
 ax.set_xlabel('rank')
 ax.set_ylabel('accuracy')
 ax.set_xticks(df['rank_test_score'])
 
 ##############################################################################
-# When taking into account standard deviation, the top three cross validated
-# accuracy scores are overlapping. Here, we choose the threshold that achieves
-# the third highest score and train on the full training set.
-threshold = rank_3_row['param_correlation__threshold'].values[0]
+# When taking into account standard deviation, all the cross validated scores
+# overlap. Here we take the threshold with the lowest rank and train a model
+# with most of the correlated features removed.
+threshold = df.iloc[-1]['param_correlation__threshold']
 print("All pairwise correlations above {:4f} will be "
       "removed".format(threshold))
 
@@ -135,8 +134,7 @@ print("Accuracy on test data with {:.2f}% of the features: {:.2f}".format(
 # Lastly, we use select features from the test set to ensure the pairwise
 # correlations is below the choosen threshold and plot the permutation
 # importance with some correlation features removed. This shows that
-# "worst concave points", "worst concavity", and "worst area" are important to
-# the model.
+# "worst symmetry" is important to the model.
 X_test_sel = pipe['correlation'].transform(X_test)
 feature_names = data.feature_names[support_mask]
 result = permutation_importance(pipe['forest'], X_test_sel, y_test,

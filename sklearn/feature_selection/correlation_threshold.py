@@ -6,7 +6,7 @@ from .base import SelectorMixin
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
 from ..utils.extmath import safe_sparse_dot
-from ..utils.sparsefuncs import min_max_axis
+from ..utils.sparsefuncs import min_max_axis, mean_variance_axis
 
 
 class CorrelationThreshold(BaseEstimator, SelectorMixin):
@@ -73,26 +73,32 @@ class CorrelationThreshold(BaseEstimator, SelectorMixin):
             self.support_mask_ = np.ones(n_features, dtype=np.bool)
             return self
 
-        support_mask = np.ones(n_features, dtype=np.bool)
-        upper_idx = np.triu_indices(n_features, 1)
-
         # get constant features
         if issparse(X):
             mins, maxes = min_max_axis(X, axis=0)
             peak_to_peaks = maxes - mins
+            ptp_mask = peak_to_peaks != 0
+
+            # sparse correlation
+            mu, sparse_var = mean_variance_axis(X, 0)
+            X_diff = X - mu[None, :]
+            X_corr = safe_sparse_dot(X_diff.T, X_diff, dense_output=True)
+            stddev = np.sqrt(np.diag(X_corr))
+
+            # # only divide when feature is non constant
+            X_corr[ptp_mask, :] /= stddev[ptp_mask][:, None]
+            X_corr[:, ptp_mask] /= stddev[ptp_mask][None, :]
         else:
             peak_to_peaks = np.ptp(X, axis=0)
-        ptp_mask = peak_to_peaks != 0
-
-        X_corr = safe_sparse_dot(X.T, X, dense_output=True)
-        # only divide when feature is non constant
-        stddev = np.sqrt(np.diag(X_corr))[ptp_mask]
-        X_corr[ptp_mask, :] /= stddev[:, None]
-        X_corr[:, ptp_mask] /= stddev[None, :]
+            ptp_mask = peak_to_peaks != 0
+            X_corr = np.corrcoef(X, rowvar=False)
 
         np.fabs(X_corr, out=X_corr)
 
         # Removes constant features from support_mask
+        support_mask = np.ones(n_features, dtype=np.bool)
+        upper_idx = np.triu_indices(n_features, 1)
+
         non_constant_features = n_features
         for i, ptp in enumerate(peak_to_peaks):
             if ptp == 0.0:
@@ -112,27 +118,35 @@ class CorrelationThreshold(BaseEstimator, SelectorMixin):
             if cur_corr < self.threshold:
                 break
 
+            # Temporary remove both features to calculate the mean with other
+            # features. One of the features will be selected.
             support_mask[[feat1, feat2]] = False
 
-            # if there are no other features to compare to then keep the keep
-            # the first feature
+            # if there are no other features to compare, keep the feature with
+            # the most variance
             if np.all(~support_mask):
-                support_mask[feat1] = True
+                if issparse(X):
+                    var = sparse_var[[feat1, feat2]]
+                else:
+                    var = np.var(X[:, [feat1, feat2]], axis=0)
+
+                if var[0] > var[1]:
+                    support_mask[feat1] = True
+                else:
+                    support_mask[feat2] = True
                 break
 
             # means with other features
             feat1_mean = np.mean(X_corr[feat1, support_mask])
             feat2_mean = np.mean(X_corr[feat2, support_mask])
 
-            # feature with higher mean is removed
+            # feature with lower mean is kept
             if feat1_mean > feat2_mean:
-                feat_to_keep = feat2
+                support_mask[feat2] = True
                 feat_to_remove = feat1
             else:
-                feat_to_keep = feat1
+                support_mask[feat1] = True
                 feat_to_remove = feat2
-
-            support_mask[feat_to_keep] = True
 
             # Removes the removed feature from consideration
             upper_idx_to_keep = np.logical_and(upper_idx[0] != feat_to_remove,

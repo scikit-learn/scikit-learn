@@ -30,6 +30,23 @@ def test_correlated_features_are_removed(toarray):
 
 
 @pytest.mark.parametrize("toarray", [np.asarray, csr_matrix, csc_matrix])
+@pytest.mark.parametrize("flip_cols", [True, False])
+def test_keeps_feature_with_the_most_variance(toarray, flip_cols):
+    X = np.array([[0, 0.2], [1, 1.8], [2, 2.2], [3, 2.8]])
+    if flip_cols:
+        X = np.c_[X[:, 1], X[:, 0]]
+
+    higher_variance_idx = np.argmax(np.std(X, axis=0))
+    print(np.std(X, axis=0))
+    X = toarray(X)
+
+    cor_thres = CorrelationThreshold(threshold=0.5)
+    X_trans = cor_thres.fit_transform(X)
+
+    assert_allclose_dense_sparse(X[:, [higher_variance_idx]], X_trans)
+
+
+@pytest.mark.parametrize("toarray", [np.asarray, csr_matrix, csc_matrix])
 def test_uncorrelated_features_are_kept(toarray):
     rng = np.random.RandomState(0)
     X_shape = (1000, 3)
