@@ -111,22 +111,32 @@ class LeastSquares(BaseLoss):
 
         loss(x_i) = 0.5 * (y_true_i - raw_pred_i)**2
 
-    This actually computes the half least squares loss to optimize simplify
+    This actually computes the half least squares loss to simplify
     the computation of the gradients and get a unit hessian (and be consistent
     with what is done in LightGBM).
     """
 
     hessians_are_constant = True
 
-    def __call__(self, y_true, raw_predictions, average=True):
+    def __call__(self, y_true, raw_predictions, sample_weight,
+                 average=True):
         # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
         # return a view.
         raw_predictions = raw_predictions.reshape(-1)
         loss = 0.5 * np.power(y_true - raw_predictions, 2)
-        return loss.mean() if average else loss
+        if sample_weight is not None:
+            loss = sample_weight * loss
 
-    def get_baseline_prediction(self, y_train, prediction_dim):
-        return np.mean(y_train)
+        if average:
+            if sample_weight is None:
+                return loss.mean()
+            else:
+                return loss.sum() / sample_weight.sum
+        else:
+            return loss
+
+    def get_baseline_prediction(self, y_train, sample_weight, prediction_dim):
+        return np.average(y_train, sample_weight)
 
     @staticmethod
     def inverse_link_function(raw_predictions):
