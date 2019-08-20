@@ -212,6 +212,12 @@ class NeighborsBase(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
         if n_samples == 0:
             raise ValueError("n_samples must be greater than 0")
 
+        # Precomputed matrix X must be squared
+        if self.metric == 'precomputed' and X.shape[0] != X.shape[1]:
+            raise ValueError("Precomputed matrix must be a square matrix."
+                             " Input is a {}x{} matrix."
+                             .format(X.shape[0], X.shape[1]))
+
         if issparse(X):
             if self.algorithm not in ('auto', 'brute'):
                 warnings.warn("cannot use tree with sparse input: "
@@ -382,7 +388,7 @@ class KNeighborsMixin:
                [2]]...)
 
         """
-        check_is_fitted(self, ["_fit_method", "_fit_X"], all_or_any=any)
+        check_is_fitted(self)
 
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
@@ -537,7 +543,7 @@ class KNeighborsMixin:
         --------
         NearestNeighbors.radius_neighbors_graph
         """
-        check_is_fitted(self, ["_fit_method", "_fit_X"], all_or_any=any)
+        check_is_fitted(self)
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
 
@@ -685,7 +691,7 @@ class RadiusNeighborsMixin:
         For efficiency, `radius_neighbors` returns arrays of objects, where
         each object is a 1D array of indices or distances.
         """
-        check_is_fitted(self, ["_fit_method", "_fit_X"], all_or_any=any)
+        check_is_fitted(self)
 
         if X is not None:
             query_is_train = False
@@ -822,7 +828,7 @@ class RadiusNeighborsMixin:
         --------
         kneighbors_graph
         """
-        check_is_fitted(self, ["_fit_method", "_fit_X"], all_or_any=any)
+        check_is_fitted(self)
         if X is not None:
             X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 

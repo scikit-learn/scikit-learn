@@ -116,7 +116,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         h : array, shape (n_samples, n_components)
             Latent representations of the data.
         """
-        check_is_fitted(self, "components_")
+        check_is_fitted(self)
 
         X = check_array(X, accept_sparse='csr', dtype=np.float64)
         return self._mean_hiddens(X)
@@ -208,7 +208,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         v_new : array-like, shape (n_samples, n_features)
             Values of the visible layer after one Gibbs step.
         """
-        check_is_fitted(self, "components_")
+        check_is_fitted(self)
         if not hasattr(self, "random_state_"):
             self.random_state_ = check_random_state(self.random_state)
         h_ = self._sample_hiddens(v, self.random_state_)
@@ -299,7 +299,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         free energy on X, then on a randomly corrupted version of X, and
         returns the log of the logistic function of the difference.
         """
-        check_is_fitted(self, "components_")
+        check_is_fitted(self)
 
         v = check_array(X, accept_sparse='csr')
         rng = check_random_state(self.random_state)
