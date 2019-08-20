@@ -220,6 +220,11 @@ def test_determine_key_type(key, dtype):
     assert _determine_key_type(key) == dtype
 
 
+def test_determine_key_type_error():
+    with pytest.raises(ValueError, match="No valid specification of the"):
+        _determine_key_type(1.0)
+
+
 def _convert_container(container, constructor_name, columns_name=None):
     if constructor_name == 'list':
         return list(container)
@@ -254,7 +259,7 @@ def test_safe_indexing_2d_container_axis_0(array_type, indices_type):
 
 
 @pytest.mark.parametrize("array_type", ["list", "array", "series"])
-@pytest.mark.parametrize("indices_type", ["list", "array", "series"])
+@pytest.mark.parametrize("indices_type", ["list", "array", "series", "slice"])
 def test_safe_indexing_1d_container(array_type, indices_type):
     indices = [1, 2]
     if indices_type == 'slice' and isinstance(indices[1], int):
