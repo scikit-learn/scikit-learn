@@ -230,3 +230,17 @@ def test_infinite_values():
     gbdt = HistGradientBoostingRegressor(min_samples_leaf=1)
     gbdt.fit(X, y)
     np.testing.assert_allclose(gbdt.predict(X), y, atol=1e-4)
+
+
+def test_consistent_lengths():
+    X = np.array([-np.inf, 0, 1, np.inf]).reshape(-1, 1)
+    y = np.array([0, 0, 1, 1])
+    sample_weight = np.array([.1, .3, .1])
+    gbdt = HistGradientBoostingRegressor(min_samples_leaf=1)
+    with pytest.raises(ValueError,
+                       match="Found input variables with inconsistent numbers"):
+        gbdt.fit(X, y, sample_weight)
+
+    with pytest.raises(ValueError,
+                       match="Found input variables with inconsistent numbers"):
+        gbdt.fit(X, y[1:])

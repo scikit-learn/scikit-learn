@@ -8,7 +8,8 @@ from timeit import default_timer as time
 from ...base import (BaseEstimator, RegressorMixin, ClassifierMixin,
                      is_classifier)
 from ...utils import check_X_y, check_random_state, check_array, resample
-from ...utils.validation import check_is_fitted
+from ...utils.validation import (check_is_fitted, column_or_1d,
+                                 check_consistent_length)
 from ...utils.multiclass import check_classification_targets
 from ...metrics import check_scoring
 from ...model_selection import train_test_split
@@ -75,7 +76,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             raise ValueError('tol={} '
                              'must not be smaller than 0.'.format(self.tol))
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit the gradient boosting model.
 
         Parameters
@@ -85,6 +86,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         y : array-like, shape=(n_samples,)
             Target values.
+
+        sample_weight : array-like of shape(n_samples,) default=None
+            Weights of training data.
 
         Returns
         -------
@@ -98,6 +102,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         acc_prediction_time = 0.
         X, y = check_X_y(X, y, dtype=[X_DTYPE], force_all_finite=False)
         y = self._encode_y(y)
+        if sample_weight is not None:
+            sample_weight = column_or_1d(sample_weight)
+            check_consistent_length(X, y, sample_weight)
+        else:
+            check_consistent_length(X, y)
 
         # The rng state must be preserved if warm_start is True
         if (self.warm_start and hasattr(self, '_rng')):
