@@ -58,7 +58,8 @@ def test_plot_roc_curve(pyplot, response_method, data_binary,
                         with_sample_weight, drop_intermediate):
     X, y = data_binary
     if with_sample_weight:
-        sample_weight = np.random.randint(1, 4, size=(X.shape[0]))
+        rng = np.random.RandomState(42)
+        sample_weight = rng.randint(1, 4, size=(X.shape[0]))
     else:
         sample_weight = None
 
