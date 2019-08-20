@@ -281,6 +281,21 @@ Changelog
 - |Enhancement| SVM now throws more specific error when fit on non-square data
   and kernel = precomputed.  :class:`svm.BaseLibSVM`
   :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
+  
+:mod:`sklearn.tree`
+...................
+
+- |Feature| Adds minimal cost complexity pruning, controlled by ``ccp_alpha``,
+  to :class:`tree.DecisionTreeClassifier`, :class:`tree.DecisionTreeRegressor`,
+  :class:`tree.ExtraTreeClassifier`, :class:`tree.ExtraTreeRegressor`,
+  :class:`ensemble.RandomForestClassifier`, 
+  :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.ExtraTreesClassifier`, 
+  :class:`ensemble.ExtraTreesRegressor`,
+  :class:`ensemble.RandomTreesEmbedding`, 
+  :class:`ensemble.GradientBoostingClassifier`, 
+  and :class:`ensemble.GradientBoostingRegressor`.
+  :pr:`12887` by `Thomas Fan`_.
 
 :mod:`sklearn.preprocessing`
 ............................
