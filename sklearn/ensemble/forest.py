@@ -80,7 +80,7 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
     ----------
     n_samples : int
         Number of samples in the dataset.
-    max_samples : int, float or None, default=None
+    max_samples : int, float or None (default=None)
         The maximum number of samples to draw from the total available:
             - float indicates a fraction of the total.
             - int indicates the exact number of samples.
