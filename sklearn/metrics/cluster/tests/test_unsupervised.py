@@ -5,7 +5,6 @@ from scipy.sparse import csr_matrix
 
 from sklearn import datasets
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_warns_message
 from sklearn.metrics.cluster import silhouette_score
@@ -137,17 +136,17 @@ def test_correct_labelsize():
 
     # n_labels = n_samples
     y = np.arange(X.shape[0])
-    assert_raises_regexp(ValueError,
-                         r'Number of labels is %d\. Valid values are 2 '
-                         r'to n_samples - 1 \(inclusive\)' % len(np.unique(y)),
-                         silhouette_score, X, y)
+    with pytest.raises(ValueError,
+                       match=r'Number of labels is %d\. Valid values are 2 '
+                       r'to n_samples - 1 \(inclusive\)' % len(np.unique(y))):
+        silhouette_score(X, y)
 
     # n_labels = 1
     y = np.zeros(X.shape[0])
-    assert_raises_regexp(ValueError,
-                         r'Number of labels is %d\. Valid values are 2 '
-                         r'to n_samples - 1 \(inclusive\)' % len(np.unique(y)),
-                         silhouette_score, X, y)
+    with pytest.raises(ValueError,
+                       match=r'Number of labels is %d\. Valid values are 2 '
+                       r'to n_samples - 1 \(inclusive\)' % len(np.unique(y))):
+        silhouette_score(X, y)
 
 
 def test_non_encoded_labels():
