@@ -1629,6 +1629,7 @@ def kernel_metrics():
 
 
 KERNEL_PARAMS = {
+    "precomputed": (),
     "additive_chi2": (),
     "chi2": frozenset(["gamma"]),
     "cosine": (),
