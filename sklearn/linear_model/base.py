@@ -34,7 +34,7 @@ from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
 from ..utils.fixes import sparse_lsqr
 from ..utils.seq_dataset import ArrayDataset32, CSRDataset32
 from ..utils.seq_dataset import ArrayDataset64, CSRDataset64
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted,  _check_sample_weight
 from ..preprocessing.data import normalize as f_normalize
 
 # TODO: bayesian_ridge_regression and bayesian_regression_ard
@@ -118,8 +118,8 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
     centered. This function also systematically makes y consistent with X.dtype
     """
 
-    if isinstance(sample_weight, numbers.Number):
-        sample_weight = None
+    if sample_weight is not None:
+        sample_weight = _check_sample_weight(sample_weight, X, np.float64)
 
     if check_input:
         X = check_array(X, copy=copy, accept_sparse=['csr', 'csc'],

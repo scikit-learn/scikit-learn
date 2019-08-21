@@ -1025,6 +1025,9 @@ def _check_sample_weight(sample_weight, X, dtype=None):
     """
     n_samples = _num_samples(X)
 
+    if hasattr(sample_weight, "dtype"):
+        dtype = sample_weight.dtype
+
     if dtype not in [np.float32, np.float64]:
         dtype = np.float64
 
