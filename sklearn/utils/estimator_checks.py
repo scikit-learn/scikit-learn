@@ -985,7 +985,7 @@ def check_transformer_general(name, transformer, readonly_memmap=False):
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
     X = StandardScaler().fit_transform(X)
-    X -= X.min()
+    X = enforce_estimator_tags_X(transformer, X)
     X = pairwise_estimator_convert_X(X, transformer)
 
     if readonly_memmap:
@@ -999,9 +999,7 @@ def check_transformer_data_not_an_array(name, transformer):
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
     X = StandardScaler().fit_transform(X)
-    # We need to make sure that we have non negative data, for things
-    # like NMF
-    X -= X.min() - .1
+    X = enforce_estimator_tags_X(transformer, X)
     X = pairwise_estimator_convert_X(X, transformer)
     this_X = NotAnArray(X)
     this_y = NotAnArray(np.asarray(y))
@@ -1107,7 +1105,7 @@ def check_pipeline_consistency(name, estimator_orig):
     # check that make_pipeline(est) gives same score as est
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
-    X -= X.min()
+    X = enforce_estimator_tags_X(estimator_orig, X)
     X = pairwise_estimator_convert_X(X, estimator_orig, kernel=rbf_kernel)
     estimator = clone(estimator_orig)
     y = enforce_estimator_tags_y(estimator, y)
@@ -1299,8 +1297,7 @@ def check_estimators_pickle(name, estimator_orig):
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
 
-    # some estimators can't do features less than 0
-    X -= X.min()
+    X = enforce_estimator_tags_X(estimator_orig, X)
     X = pairwise_estimator_convert_X(X, estimator_orig, kernel=rbf_kernel)
 
     tags = _safe_tags(estimator_orig)
@@ -1346,7 +1343,7 @@ def check_estimators_partial_fit_n_features(name, estimator_orig):
         return
     estimator = clone(estimator_orig)
     X, y = make_blobs(n_samples=50, random_state=1)
-    X -= X.min()
+    X = enforce_estimator_tags_X(estimator_orig, X)
 
     try:
         if is_classifier(estimator):
@@ -1700,8 +1697,7 @@ def check_estimators_fit_returns_self(name, estimator_orig,
     else:
         n_centers = 3
     X, y = make_blobs(random_state=0, n_samples=9, centers=n_centers)
-    # some want non-negative input
-    X -= X.min()
+    X = enforce_estimator_tags_X(estimator_orig, X)
     X = pairwise_estimator_convert_X(X, estimator_orig)
 
     estimator = clone(estimator_orig)
@@ -2069,8 +2065,7 @@ def check_estimators_overwrite_params(name, estimator_orig):
     else:
         n_centers = 3
     X, y = make_blobs(random_state=0, n_samples=9, centers=n_centers)
-    # some want non-negative input
-    X -= X.min()
+    X = enforce_estimator_tags_X(estimator_orig, X)
     X = pairwise_estimator_convert_X(X, estimator_orig, kernel=rbf_kernel)
     estimator = clone(estimator_orig)
     y = enforce_estimator_tags_y(estimator, y)
@@ -2267,7 +2262,7 @@ def check_parameters_default_constructible(name, Estimator):
 
 def enforce_estimator_tags_y(estimator, y):
     # Estimators with a `requires_positive_y` tag only accept strictly positive
-    # data
+    # targets
     if _safe_tags(estimator, "requires_positive_y"):
         # Create strictly positive y. The minimal increment above 0 is 1, as
         # y could be of integer dtype.
@@ -2277,6 +2272,16 @@ def enforce_estimator_tags_y(estimator, y):
     if _safe_tags(estimator, "multioutput_only"):
         return np.reshape(y, (-1, 1))
     return y
+
+
+def enforce_estimator_tags_X(estimator, X):
+    # Estimators with a `requires_positive_X` tag only accept strictly positive
+    # inputs
+    if _safe_tags(estimator, "requires_positive_X"):
+        # Create strictly positive X. The minimal increment above 0 is 1, as
+        # y could be of integer dtype.
+        X += 1 + abs(X.min())
+    return X
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
@@ -2327,7 +2332,7 @@ def check_transformer_n_iter(name, estimator_orig):
         else:
             X, y_ = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                                random_state=0, n_features=2, cluster_std=0.1)
-            X -= X.min() - 0.1
+            X = enforce_estimator_tags_X(estimator_orig, X)
         set_random_state(estimator, 0)
         estimator.fit(X, y_)
 
