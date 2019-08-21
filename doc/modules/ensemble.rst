@@ -878,6 +878,13 @@ controls the number of iterations of the boosting process::
   >>> clf.score(X_test, y_test)
   0.8965
 
+Available losses for regression are 'least_squares' and
+'least_absolute_deviation', which is less sensitive to outliers. For
+classification, 'binary_crossentropy' is used for binary classification and
+'categorical_crossentropy' is used for multiclass classification. By default
+the loss is 'auto' and will select the appropriate loss depending on
+:term:`y` passed to :term:`fit`.
+
 The size of the trees can be controlled through the ``max_leaf_nodes``,
 ``max_depth``, and ``min_samples_leaf`` parameters.
 
