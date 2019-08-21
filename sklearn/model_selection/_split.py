@@ -1873,7 +1873,7 @@ class BinnedStratifiedKFold(StratifiedKFold):
 
     This cross-validation object is a variation of KFold that returns
     stratified folds by binning a regression target. The folds are made
-    by approximately preserving the percentage of samples in each bin.
+    by approximately preserving the distribution of targets in each bin.
 
     Read more in the :ref:`User Guide <cross_validation>`.
 
@@ -1886,7 +1886,7 @@ class BinnedStratifiedKFold(StratifiedKFold):
         Whether to shuffle each stratification of the data before splitting
         into batches.
 
-    quantiles : int, default=10
+    n_bins : int, default=10
         How many quantile bins to use.
 
     random_state : None, int or RandomState
