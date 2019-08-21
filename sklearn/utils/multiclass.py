@@ -353,6 +353,8 @@ def class_distribution(y, sample_weight=None):
     class_prior = []
 
     n_samples, n_outputs = y.shape
+    if sample_weight is not None:
+        sample_weight = np.asarray(sample_weight)
 
     if issparse(y):
         y = y.tocsc()
@@ -362,7 +364,7 @@ def class_distribution(y, sample_weight=None):
             col_nonzero = y.indices[y.indptr[k]:y.indptr[k + 1]]
             # separate sample weights for zero and non-zero elements
             if sample_weight is not None:
-                nz_samp_weight = np.asarray(sample_weight)[col_nonzero]
+                nz_samp_weight = sample_weight[col_nonzero]
                 zeros_samp_weight_sum = (np.sum(sample_weight) -
                                          np.sum(nz_samp_weight))
             else:

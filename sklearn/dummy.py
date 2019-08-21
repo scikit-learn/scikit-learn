@@ -434,6 +434,8 @@ class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
         self.n_outputs_ = y.shape[1]
 
         check_consistent_length(X, y, sample_weight)
+        if sample_weight is not None:
+            sample_weight = np.asarray(sample_weight)
 
         if self.strategy == "mean":
             self.constant_ = np.average(y, axis=0, weights=sample_weight)

@@ -76,6 +76,7 @@ def _yield_checks(name, estimator):
     yield check_estimators_dtypes
     yield check_fit_score_takes_y
     yield check_sample_weights_pandas_series
+    yield check_sample_weights_not_an_array
     yield check_sample_weights_list
     yield check_sample_weights_invariance
     yield check_estimators_fit_returns_self
@@ -429,7 +430,7 @@ class NotAnArray:
     """
 
     def __init__(self, data):
-        self.data = data
+        self.data = np.asarray(data)
 
     def __array__(self, dtype=None):
         return self.data
@@ -600,6 +601,23 @@ def check_sample_weights_pandas_series(name, estimator_orig):
         except ImportError:
             raise SkipTest("pandas is not installed: not testing for "
                            "input of type pandas.Series to class weight.")
+
+
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
+def check_sample_weights_not_an_array(name, estimator_orig):
+    # check that estimators will accept a 'sample_weight' parameter of
+    # type NotAnArray in the 'fit' function.
+    estimator = clone(estimator_orig)
+    if has_fit_parameter(estimator, "sample_weight"):
+        X = np.array([[1, 1], [1, 2], [1, 3], [1, 4],
+                      [2, 1], [2, 2], [2, 3], [2, 4]])
+        X = NotAnArray(pairwise_estimator_convert_X(X, estimator_orig))
+        y = NotAnArray(np.array([1, 1, 1, 1, 2, 2, 2, 2]))
+        weights = NotAnArray([1] * 8)
+        if _safe_tags(estimator, "multioutput_only"):
+            y = NotAnArray(y.data.reshape(-1, 1))
+        estimator.fit(X, y, sample_weight=weights)
+
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
