@@ -1048,6 +1048,7 @@ Splitter Classes
    :toctree: generated/
    :template: class.rst
 
+   model_selection.BinnedStratifiedKFold
    model_selection.GroupKFold
    model_selection.GroupShuffleSplit
    model_selection.KFold
