@@ -238,6 +238,9 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         projection *= np.sqrt(2.) / np.sqrt(self.n_components)
         return projection
 
+    def _more_tags(self):
+        return {'stateless': True, 'requires_positive_X': True}
+
 
 class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
     """Approximate feature map for additive chi2 kernel.
@@ -420,7 +423,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         return sp.hstack(X_new)
 
     def _more_tags(self):
-        return {'stateless': True}
+        return {'stateless': True, 'requires_positive_X': True}
 
 
 class Nystroem(BaseEstimator, TransformerMixin):
