@@ -119,9 +119,10 @@ def test_check_estimator_generate_only():
 
     # TODO: meta-estimators like GridSearchCV has required parameters
     # that do not have default values. This is expected to change in the future
-    grid_estimator_gen_checks = list(check_estimator(GridSearchCV,
-                                                     generate_only=True))
-    assert len(list(grid_estimator_gen_checks)) == 1
+    with pytest.raises(SkipTest):
+        for estimator, check in check_estimator(GridSearchCV,
+                                                generate_only=True):
+            check(estimator)
 
 
 @ignore_warnings(category=DeprecationWarning)
