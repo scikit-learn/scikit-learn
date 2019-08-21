@@ -484,9 +484,10 @@ class ForestClassifier(BaseForest, ClassifierMixin, metaclass=ABCMeta):
         predictions = [np.zeros((n_samples, n_classes_[k]))
                        for k in range(self.n_outputs_)]
 
+        n_samples_bootstrap = _get_n_samples_bootstrap(
+            n_samples, self.max_samples)
+
         for estimator in self.estimators_:
-            n_samples_bootstrap = _get_n_samples_bootstrap(
-                n_samples, self.max_samples)
             unsampled_indices = _generate_unsampled_indices(
                 estimator.random_state, n_samples, n_samples_bootstrap)
             p_estimator = estimator.predict_proba(X[unsampled_indices, :],
@@ -766,9 +767,10 @@ class ForestRegressor(BaseForest, RegressorMixin, metaclass=ABCMeta):
         predictions = np.zeros((n_samples, self.n_outputs_))
         n_predictions = np.zeros((n_samples, self.n_outputs_))
 
+        n_samples_bootstrap = _get_n_samples_bootstrap(
+            n_samples, self.max_samples)
+
         for estimator in self.estimators_:
-            n_samples_bootstrap = _get_n_samples_bootstrap(
-                n_samples, self.max_samples)
             unsampled_indices = _generate_unsampled_indices(
                 estimator.random_state, n_samples, n_samples_bootstrap)
             p_estimator = estimator.predict(
