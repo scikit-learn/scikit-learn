@@ -623,9 +623,9 @@ class StratifiedKFold(_BaseKFold):
                     allowed_target_types, type_of_target_y))
 
         y = column_or_1d(y)
-        n_samples = y.shape[0]
-        unique_y, y_inversed = np.unique(y, return_inverse=True)
-        y_counts = np.bincount(y_inversed)
+        unique_y, y_encoded = np.unique(y, return_inverse=True)
+        n_classes = len(unique_y)
+        y_counts = np.bincount(y_encoded)
         min_groups = np.min(y_counts)
         if np.all(self.n_splits > y_counts):
             raise ValueError("n_splits=%d cannot be greater than the"
@@ -633,35 +633,20 @@ class StratifiedKFold(_BaseKFold):
                              % (self.n_splits))
         if self.n_splits > min_groups:
             warnings.warn(("The least populated class in y has only %d"
-                           " members, which is too few. The minimum"
-                           " number of members in any class cannot"
-                           " be less than n_splits=%d."
-                           % (min_groups, self.n_splits)), Warning)
+                           " members, which is less than n_splits=%d."
+                           % (min_groups, self.n_splits)), UserWarning)
 
-        # pre-assign each sample to a test fold index using individual KFold
-        # splitting strategies for each class so as to respect the balance of
-        # classes
-        # NOTE: Passing the data corresponding to ith class say X[y==class_i]
-        # will break when the data is not 100% stratifiable for all classes.
-        # So we pass np.zeroes(max(c, n_splits)) as data to the KFold
-        per_cls_cvs = [
-            KFold(self.n_splits, shuffle=self.shuffle,
-                  random_state=rng).split(np.zeros(max(count, self.n_splits)))
-            for count in y_counts]
+        y_order = np.sort(y_encoded, kind='mergesort')
+        allocation = np.asarray(
+            [np.bincount(y_order[i::self.n_splits], minlength=n_classes)
+             for i in range(self.n_splits)])
 
-        test_folds = np.zeros(n_samples, dtype=np.int)
-        for test_fold_indices, per_cls_splits in enumerate(zip(*per_cls_cvs)):
-            for cls, (_, test_split) in zip(unique_y, per_cls_splits):
-                cls_test_folds = test_folds[y == cls]
-                # the test split can be too big because we used
-                # KFold(...).split(X[:max(c, n_splits)]) when data is not 100%
-                # stratifiable for all the classes
-                # (we use a warning instead of raising an exception)
-                # If this is the case, let's trim it:
-                test_split = test_split[test_split < len(cls_test_folds)]
-                cls_test_folds[test_split] = test_fold_indices
-                test_folds[y == cls] = cls_test_folds
-
+        test_folds = np.empty(len(y), dtype='i')
+        for i in range(n_classes):
+            folds_for_class = np.arange(self.n_splits).repeat(allocation[:, i])
+            if self.shuffle:
+                rng.shuffle(folds_for_class)
+            test_folds[y_encoded == i] = folds_for_class
         return test_folds
 
     def _iter_test_masks(self, X, y=None, groups=None):

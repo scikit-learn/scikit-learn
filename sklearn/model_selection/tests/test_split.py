@@ -369,7 +369,9 @@ def test_stratified_kfold_no_shuffle():
         list(StratifiedKFold(2).split(X, y2)))
 
 
-def test_stratified_kfold_ratios():
+@pytest.mark.parametrize('shuffle', [False, True])
+@pytest.mark.parametrize('k', [4, 5, 6, 7, 8, 9, 10])
+def test_stratified_kfold_ratios(k, shuffle):
     # Check that stratified kfold preserves class ratios in individual splits
     # Repeat with shuffling turned off and on
     n_samples = 1000
@@ -377,15 +379,14 @@ def test_stratified_kfold_ratios():
     y = np.array([4] * int(0.10 * n_samples) +
                  [0] * int(0.89 * n_samples) +
                  [1] * int(0.01 * n_samples))
+    distr = np.bincount(y) / len(y)
 
-    for shuffle in (False, True):
-        for train, test in StratifiedKFold(5, shuffle=shuffle).split(X, y):
-            assert_almost_equal(np.sum(y[train] == 4) / len(train), 0.10, 2)
-            assert_almost_equal(np.sum(y[train] == 0) / len(train), 0.89, 2)
-            assert_almost_equal(np.sum(y[train] == 1) / len(train), 0.01, 2)
-            assert_almost_equal(np.sum(y[test] == 4) / len(test), 0.10, 2)
-            assert_almost_equal(np.sum(y[test] == 0) / len(test), 0.89, 2)
-            assert_almost_equal(np.sum(y[test] == 1) / len(test), 0.01, 2)
+    test_sizes = []
+    for train, test in StratifiedKFold(k, shuffle=shuffle).split(X, y):
+        assert_almost_equal(np.bincount(y[train]) / len(train), distr, 2)
+        assert_almost_equal(np.bincount(y[test]) / len(test), distr, 2)
+        test_sizes.append(len(test))
+    assert np.ptp(test_sizes) <= 1
 
 
 def test_kfold_balance():
@@ -536,7 +537,7 @@ def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
 
     cv = StratifiedKFold(n_splits)
     mean_score = cross_val_score(model, X, y, cv=cv).mean()
-    assert 0.93 > mean_score
+    assert 0.94 > mean_score
     assert mean_score > 0.80
 
 
