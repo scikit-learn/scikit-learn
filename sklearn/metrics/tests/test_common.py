@@ -21,7 +21,6 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.metrics import accuracy_score
@@ -556,7 +555,7 @@ def test_not_symmetric_metric(name):
     metric = ALL_METRICS[name]
 
     # use context manager to supply custom error message
-    with assert_raises(AssertionError) as cm:
+    with pytest.raises(AssertionError) as cm:
         assert_array_equal(metric(y_true, y_pred), metric(y_pred, y_true))
         cm.msg = ("%s seems to be symmetric" % name)
 
@@ -681,18 +680,25 @@ def test_format_invariance_with_1d_vectors(name):
                                 "list and np-array-column" % name)
 
         # These mix representations aren't allowed
-        assert_raises(ValueError, metric, y1_1d, y2_row)
-        assert_raises(ValueError, metric, y1_row, y2_1d)
-        assert_raises(ValueError, metric, y1_list, y2_row)
-        assert_raises(ValueError, metric, y1_row, y2_list)
-        assert_raises(ValueError, metric, y1_column, y2_row)
-        assert_raises(ValueError, metric, y1_row, y2_column)
+        with pytest.raises(ValueError):
+            metric(y1_1d, y2_row)
+        with pytest.raises(ValueError):
+            metric(y1_row, y2_1d)
+        with pytest.raises(ValueError):
+            metric(y1_list, y2_row)
+        with pytest.raises(ValueError):
+            metric(y1_row, y2_list)
+        with pytest.raises(ValueError):
+            metric(y1_column, y2_row)
+        with pytest.raises(ValueError):
+            metric(y1_row, y2_column)
 
         # NB: We do not test for y1_row, y2_row as these may be
         # interpreted as multilabel or multioutput data.
         if (name not in (MULTIOUTPUT_METRICS | THRESHOLDED_MULTILABEL_METRICS |
                          MULTILABELS_METRICS)):
-            assert_raises(ValueError, metric, y1_row, y2_row)
+            with pytest.raises(ValueError):
+                metric(y1_row, y2_row)
 
 
 @pytest.mark.parametrize(
@@ -776,8 +782,10 @@ def test_thresholded_invariance_string_vs_numbers_labels(name):
                                        "invariance test".format(name))
         else:
             # TODO those metrics doesn't support string label yet
-            assert_raises(ValueError, metric, y1_str, y2)
-            assert_raises(ValueError, metric, y1_str.astype('O'), y2)
+            with pytest.raises(ValueError):
+                metric(y1_str, y2)
+            with pytest.raises(ValueError):
+                metric(y1_str.astype('O'), y2)
 
 
 invalids = [([0, 1], [np.inf, np.inf]),
@@ -853,7 +861,8 @@ def test_multioutput_number_of_output_differ(name):
     y_pred = np.array([[0, 0], [1, 0], [0, 0]])
 
     metric = ALL_METRICS[name]
-    assert_raises(ValueError, metric, y_true, y_pred)
+    with pytest.raises(ValueError):
+        metric(y_true, y_pred)
 
 
 @pytest.mark.parametrize('name', sorted(MULTIOUTPUT_METRICS))
@@ -924,7 +933,8 @@ def test_raise_value_error_multilabel_sequences(name):
 
     metric = ALL_METRICS[name]
     for seq in multilabel_sequences:
-        assert_raises(ValueError, metric, seq, seq)
+        with pytest.raises(ValueError):
+            metric(seq, seq)
 
 
 @pytest.mark.parametrize('name', sorted(METRICS_WITH_NORMALIZE_OPTION))
@@ -1031,8 +1041,10 @@ def _check_averaging(metric, y_true, y_pred, y_true_binarize, y_pred_binarize,
                         np.mean([metric(y_true_binarize[i], y_pred_binarize[i])
                                  for i in range(n_samples)]))
 
-    assert_raises(ValueError, metric, y_true, y_pred, average="unknown")
-    assert_raises(ValueError, metric, y_true, y_pred, average="garbage")
+    with pytest.raises(ValueError):
+        metric(y_true, y_pred, average="unknown")
+    with pytest.raises(ValueError):
+        metric(y_true, y_pred, average="garbage")
 
 
 def check_averaging(name, y_true, y_true_binarize, y_pred, y_pred_binarize,
@@ -1140,7 +1152,7 @@ def check_sample_weight_invariance(name, metric, y1, y2):
     weighted_score = metric(y1, y2, sample_weight=sample_weight)
 
     # use context manager to supply custom error message
-    with assert_raises(AssertionError) as cm:
+    with pytest.raises(AssertionError) as cm:
         assert_allclose(unweighted_score, weighted_score)
         cm.msg = ("Unweighted and weighted scores are unexpectedly almost "
                   "equal (%s) and (%s) for %s" % (unweighted_score,
