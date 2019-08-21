@@ -1900,7 +1900,7 @@ class BinnedStratifiedKFold(StratifiedKFold):
     >>> cv = BinnedStratifiedKFold(n_splits=3)
     >>> skf = cv.split(X, y)
     >>> print(cv)
-    BinnedStratifiedKFold(n_bins=5, n_splits=3, random_state=None, shuffle=False)
+    BinnedStratifiedKFold(n_bins=5, n_splits=3, random_state=None...)
     >>> indarr = np.zeros(len(y), dtype=bool)
     >>> for train_index, test_index in skf:
     ...    print("TRAIN:", train_index, "TEST:", test_index)
