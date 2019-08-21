@@ -29,7 +29,7 @@ from ..preprocessing import normalize
 
 from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 from ..exceptions import DataConversionWarning
-
+from ..utils.fixes import _object_dtype_isnan
 
 # Utility Functions
 def _return_float_dtype(X, Y):
@@ -806,7 +806,10 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
             j_start = 0
 
         # Calculates the similarities for categorical columns
-        cat_dists = X[i, cat_mask] != Y[j_start:, cat_mask]
+        cat_dists = (X[i, cat_mask] != Y[j_start:, cat_mask]) | \
+                    (_object_dtype_isnan(X[i, cat_mask]) | \
+                     _object_dtype_isnan(Y[j_start:, cat_mask]))
+
         # Calculates the Manhattan distances for numerical columns
         num_dists = abs(X[i, num_mask].astype(np.float32) -
                         Y[j_start:, num_mask].astype(np.float32)) / ranges
@@ -814,9 +817,9 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
         n_missing = X.shape[1] - (np.isnan(cat_dists).sum(axis=1) +
                                   np.isnan(num_dists).sum(axis=1))
         # Gets the final results
-        results = (np.sum(cat_dists, axis=1) +
-                   np.sum(num_dists, axis=1))
+        results = np.sum(cat_dists, axis=1) + np.sum(num_dists, axis=1)
         results /= n_missing
+
         D[i, j_start:] = results
         if X is Y:
             D[i:, j_start] = results
