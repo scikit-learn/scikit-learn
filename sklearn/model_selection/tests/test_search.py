@@ -211,7 +211,7 @@ def check_hyperparameter_searcher_with_fit_params(klass, **klass_kwargs):
                          searcher.fit, X, y, spam=np.ones(10))
     assert_raise_message(
         ValueError,
-        "Found input variables with inconsistent numbers of samples: [1, 10]",
+        "Found input variables with inconsistent numbers of samples: [",
         searcher.fit, X, y, spam=np.ones(1),
         eggs=np.zeros(10))
     searcher.fit(X, y, spam=np.ones(10), eggs=np.zeros(10))
