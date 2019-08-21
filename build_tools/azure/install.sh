@@ -101,7 +101,11 @@ if [[ "$COVERAGE" == "true" ]]; then
 fi
 
 if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
-    python -m pip install sphinx numpydoc  # numpydoc requires sphinx
+    # numpydoc requires sphinx
+    # FIXME: until jinja2 2.10.2 is released with a fix the import station for
+    # collections.abc so as to not raise a spurious deprecation warning
+    python -m pip install sphinx==2.1.2
+    python -m pip install numpydoc
 fi
 
 python --version

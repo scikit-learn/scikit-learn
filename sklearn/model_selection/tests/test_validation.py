@@ -765,8 +765,7 @@ def test_cross_val_score_multilabel():
 
 
 def test_cross_val_predict():
-    boston = load_boston()
-    X, y = boston.data, boston.target
+    X, y = load_boston(return_X_y=True)
     cv = KFold()
 
     est = Ridge()
