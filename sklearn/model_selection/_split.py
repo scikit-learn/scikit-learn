@@ -607,6 +607,9 @@ class StratifiedKFold(_BaseKFold):
       classes, or as close as possible.
     * Be invariant to class label: relabelling ``y = ["Happy", "Sad"]`` to
       ``y = [1, 0]`` should not change the indices generated.
+    * Preserve order dependencies in the dataset ordering, when
+      ``shuffle=False``: all samples from class k in some test set were
+      contiguous in y, or separated in y by samples from classes other than k.
     * Generate test sets where the smallest and largest differ by at most one
       sample.
 
