@@ -201,6 +201,8 @@ def test_column_or_1d():
     "key, dtype",
     [(0, 'int'),
      ('0', 'str'),
+     (True, 'bool'),
+     (np.bool_(True), 'bool'),
      ([0, 1, 2], 'int'),
      (['0', '1', '2'], 'str'),
      (slice(None, None), None),
