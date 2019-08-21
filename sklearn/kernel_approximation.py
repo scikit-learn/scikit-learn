@@ -17,7 +17,7 @@ from .base import BaseEstimator
 from .base import TransformerMixin
 from .utils import check_array, check_random_state, as_float_array
 from .utils.extmath import safe_sparse_dot
-from .utils.validation import check_is_fitted
+from .utils.validation import check_is_fitted, check_non_negative
 from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
 
 
@@ -198,6 +198,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         """
 
         X = check_array(X)
+        check_non_negative(X)
         random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
         uniform = random_state.uniform(size=(n_features, self.n_components))
@@ -226,6 +227,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
 
         X = as_float_array(X, copy=True)
         X = check_array(X, copy=False)
+        check_non_negative(X)
         if (X <= -self.skewedness).any():
             raise ValueError("X may not contain entries smaller than"
                              " -skewedness.")
@@ -322,6 +324,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
             Returns the transformer.
         """
         check_array(X, accept_sparse='csr')
+        check_non_negative(X)
         if self.sample_interval is None:
             # See reference, figure 2 c)
             if self.sample_steps == 1:
@@ -359,8 +362,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         sparse = sp.issparse(X)
 
         # check if X has negative values. Doesn't play well with np.log.
-        if ((X.data if sparse else X) < 0).any():
-            raise ValueError("Entries of X must be non-negative.")
+        check_non_negative(X)
         # zeroth component
         # 1/cosh = sech
         # cosh(0) = 1.0
