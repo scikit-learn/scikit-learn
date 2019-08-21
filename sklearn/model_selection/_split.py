@@ -1882,7 +1882,7 @@ class BinnedStratifiedKFold(StratifiedKFold):
     n_splits : int, default=5
         Number of folds. Must be at least 2.
 
-    shuffle : boolean, optional
+    shuffle : boolean, default=False
         Whether to shuffle each stratification of the data before splitting
         into batches.
 
