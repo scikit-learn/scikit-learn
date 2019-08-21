@@ -118,6 +118,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
         self.sparse_output_ = sp.issparse(y)
 
         if not self.sparse_output_:
+            y = np.asarray(y)
             y = np.atleast_1d(y)
 
         self.output_2d_ = y.ndim == 2 and y.shape[1] > 1
