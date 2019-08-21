@@ -924,7 +924,7 @@ whether the feature value is missing or not::
   >>> X = np.array([0, np.nan, 1, 2, np.nan]).reshape(-1, 1)
   >>> y = [0, 1, 0, 0, 1]
   >>> gbdt = HistGradientBoostingClassifier(min_samples_leaf=1,
-                                            max_iter=1, max_depth=2).fit(X, y)
+  ...                                       max_iter=1, max_depth=2).fit(X, y)
   >>> gbdt.predict(X)
   [0, 1, 0, 0, 1]
 
