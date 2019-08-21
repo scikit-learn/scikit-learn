@@ -569,14 +569,18 @@ def test_enforce_estimator_tags_X():
         def _more_tags(self):
             return {"requires_positive_X": False}
 
+    class EstimatorDefault(BaseEstimator):
+        pass
+
     random_state = np.random.RandomState(42)
     X = random_state.randn(30, 5)
     X_enforced = enforce_estimator_tags_X(EstimatorWithPositiveX(), X)
     assert np.all(X_enforced > 0)
 
-    X_enforced = enforce_estimator_tags_X(EstimatorWithoutPositiveX(), X)
-    assert len(np.where(X_enforced < 0)) > 0
-    assert len(np.where(X_enforced > 0)) > 0
+    for estimator in [EstimatorWithoutPositiveX(), EstimatorDefault()]:
+        X_enforced = enforce_estimator_tags_X(estimator, X)
+        assert len(np.where(X_enforced < 0)) > 0
+        assert len(np.where(X_enforced > 0)) > 0
 
 if __name__ == '__main__':
     # This module is run as a script to check that we have no dependency on
