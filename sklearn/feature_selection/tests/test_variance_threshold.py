@@ -12,10 +12,6 @@ data = [[0, 1, 2, 3, 4],
         [1, 1, 2, 4, 0]]
 
 
-@pytest.mark.parametrize(
-    "args",
-    [[[0, 1, 2, 3]],
-     [[0, 1], [0, 1]]])
 def test_zero_variance(args):
     # Test VarianceThreshold with default setting, zero variance.
 
@@ -24,8 +20,9 @@ def test_zero_variance(args):
         assert_array_equal([0, 1, 3, 4], sel.get_support(indices=True))
 
     with pytest.raises(ValueError):
-        VarianceThreshold().fit(*args)
-
+        VarianceThreshold().fit([[0, 1, 2, 3]])
+    with pytest.raises(ValueError):
+        VarianceThreshold().fit([[0, 1], [0, 1]])
 
 def test_variance_threshold():
     # Test VarianceThreshold with custom variance.
