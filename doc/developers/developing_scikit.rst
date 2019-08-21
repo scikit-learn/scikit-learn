@@ -10,6 +10,8 @@ implementing custom components for your own projects, this chapter
 details how to develop objects that safely interact with scikit-learn 
 Pipelines and model selection tools.
 
+.. currentmodule:: sklearn
+
 .. _api_overview:
 
 APIs of scikit-learn objects
