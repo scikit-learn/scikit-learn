@@ -1021,7 +1021,7 @@ class LassoLars(Lars):
         the tolerance of the optimization.
         By default, ``np.finfo(np.float).eps`` is used.
 
-    copy_X : bool default=True
+    copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
     fit_path : bool, default=True
