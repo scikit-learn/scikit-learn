@@ -8,7 +8,7 @@ from itertools import combinations
 from itertools import combinations_with_replacement
 from itertools import permutations
 
-from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_array_almost_equal
@@ -385,8 +385,8 @@ def test_stratified_kfold_ratios(k, shuffle):
     test_sizes = []
     skf = StratifiedKFold(k, random_state=0, shuffle=shuffle)
     for train, test in skf.split(X, y):
-        assert_almost_equal(np.bincount(y[train]) / len(train), distr, 2)
-        assert_almost_equal(np.bincount(y[test]) / len(test), distr, 2)
+        assert_allclose(np.bincount(y[train]) / len(train), distr, atol=0.02)
+        assert_allclose(np.bincount(y[test]) / len(test), distr, atol=0.02)
         test_sizes.append(len(test))
     assert np.ptp(test_sizes) <= 1
 
