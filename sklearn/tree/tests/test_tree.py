@@ -39,7 +39,7 @@ from sklearn.tree import ExtraTreeClassifier
 from sklearn.tree import ExtraTreeRegressor
 
 from sklearn import tree
-from sklearn.tree._tree import TREE_LEAF
+from sklearn.tree._tree import TREE_LEAF, TREE_UNDEFINED
 from sklearn.tree.tree import CRITERIA_CLF
 from sklearn.tree.tree import CRITERIA_REG
 from sklearn import datasets
@@ -1838,3 +1838,119 @@ def test_decision_tree_memmap():
 
     with TempMemmap((X, y)) as (X_read_only, y_read_only):
         DecisionTreeClassifier().fit(X_read_only, y_read_only)
+
+
+@pytest.mark.parametrize("criterion", CLF_CRITERIONS)
+@pytest.mark.parametrize(
+    "dataset", sorted(set(DATASETS.keys()) - {"reg_small", "boston"}))
+@pytest.mark.parametrize(
+    "tree_cls", [DecisionTreeClassifier, ExtraTreeClassifier])
+def test_prune_tree_classifier_are_subtrees(criterion, dataset, tree_cls):
+    dataset = DATASETS[dataset]
+    X, y = dataset["X"], dataset["y"]
+    est = tree_cls(max_leaf_nodes=20, random_state=0)
+    info = est.cost_complexity_pruning_path(X, y)
+
+    pruning_path = info.ccp_alphas
+    impurities = info.impurities
+    assert np.all(np.diff(pruning_path) >= 0)
+    assert np.all(np.diff(impurities) >= 0)
+
+    assert_pruning_creates_subtree(tree_cls, X, y, pruning_path)
+
+
+@pytest.mark.parametrize("criterion", REG_CRITERIONS)
+@pytest.mark.parametrize("dataset", DATASETS.keys())
+@pytest.mark.parametrize(
+    "tree_cls", [DecisionTreeRegressor, ExtraTreeRegressor])
+def test_prune_tree_regression_are_subtrees(criterion, dataset, tree_cls):
+    dataset = DATASETS[dataset]
+    X, y = dataset["X"], dataset["y"]
+
+    est = tree_cls(max_leaf_nodes=20, random_state=0)
+    info = est.cost_complexity_pruning_path(X, y)
+
+    pruning_path = info.ccp_alphas
+    impurities = info.impurities
+    assert np.all(np.diff(pruning_path) >= 0)
+    assert np.all(np.diff(impurities) >= 0)
+
+    assert_pruning_creates_subtree(tree_cls, X, y, pruning_path)
+
+
+def test_prune_single_node_tree():
+    # single node tree
+    clf1 = DecisionTreeClassifier(random_state=0)
+    clf1.fit([[0], [1]], [0, 0])
+
+    # pruned single node tree
+    clf2 = DecisionTreeClassifier(random_state=0, ccp_alpha=10)
+    clf2.fit([[0], [1]], [0, 0])
+
+    assert_is_subtree(clf1.tree_, clf2.tree_)
+
+
+def assert_pruning_creates_subtree(estimator_cls, X, y, pruning_path):
+    # generate trees with increasing alphas
+    estimators = []
+    for ccp_alpha in pruning_path:
+        est = estimator_cls(
+            max_leaf_nodes=20, ccp_alpha=ccp_alpha, random_state=0).fit(X, y)
+        estimators.append(est)
+
+    # A pruned tree must be a subtree of the previous tree (which had a
+    # smaller ccp_alpha)
+    for prev_est, next_est in zip(estimators, estimators[1:]):
+        assert_is_subtree(prev_est.tree_, next_est.tree_)
+
+
+def assert_is_subtree(tree, subtree):
+    assert tree.node_count >= subtree.node_count
+    assert tree.max_depth >= subtree.max_depth
+
+    tree_c_left = tree.children_left
+    tree_c_right = tree.children_right
+    subtree_c_left = subtree.children_left
+    subtree_c_right = subtree.children_right
+
+    stack = [(0, 0)]
+    while stack:
+        tree_node_idx, subtree_node_idx = stack.pop()
+        assert_array_almost_equal(tree.value[tree_node_idx],
+                                  subtree.value[subtree_node_idx])
+        assert_almost_equal(tree.impurity[tree_node_idx],
+                            subtree.impurity[subtree_node_idx])
+        assert_almost_equal(tree.n_node_samples[tree_node_idx],
+                            subtree.n_node_samples[subtree_node_idx])
+        assert_almost_equal(tree.weighted_n_node_samples[tree_node_idx],
+                            subtree.weighted_n_node_samples[subtree_node_idx])
+
+        if (subtree_c_left[subtree_node_idx] ==
+                subtree_c_right[subtree_node_idx]):
+            # is a leaf
+            assert_almost_equal(TREE_UNDEFINED,
+                                subtree.threshold[subtree_node_idx])
+        else:
+            # not a leaf
+            assert_almost_equal(tree.threshold[tree_node_idx],
+                                subtree.threshold[subtree_node_idx])
+            stack.append((tree_c_left[tree_node_idx],
+                          subtree_c_left[subtree_node_idx]))
+            stack.append((tree_c_right[tree_node_idx],
+                          subtree_c_right[subtree_node_idx]))
+
+
+def test_prune_tree_raises_negative_ccp_alpha():
+    clf = DecisionTreeClassifier()
+    msg = "ccp_alpha must be greater than or equal to 0"
+
+    with pytest.raises(ValueError, match=msg):
+        clf.set_params(ccp_alpha=-1.0)
+        clf.fit(X, y)
+
+    clf.set_params(ccp_alpha=0.0)
+    clf.fit(X, y)
+
+    with pytest.raises(ValueError, match=msg):
+        clf.set_params(ccp_alpha=-1.0)
+        clf._prune_tree()
