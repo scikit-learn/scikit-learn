@@ -369,6 +369,13 @@ def test_stratified_kfold_no_shuffle():
         list(StratifiedKFold(2).split(X, y1)),
         list(StratifiedKFold(2).split(X, y2)))
 
+    # Check equivalence to KFold
+    y = [0, 1, 0, 1, 0, 1, 0, 1]
+    X = np.ones_like(y)
+    np.testing.assert_equal(
+        list(StratifiedKFold(3).split(X, y)),
+        list(KFold(3).split(X, y)))
+
 
 @pytest.mark.parametrize('shuffle', [False, True])
 @pytest.mark.parametrize('k', [4, 5, 6, 7, 8, 9, 10])
