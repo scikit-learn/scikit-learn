@@ -24,6 +24,7 @@ def test_zero_variance(args):
     with pytest.raises(ValueError):
         VarianceThreshold().fit([[0, 1], [0, 1]])
 
+
 def test_variance_threshold():
     # Test VarianceThreshold with custom variance.
     for X in [data, csr_matrix(data)]:
