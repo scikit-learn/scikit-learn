@@ -607,6 +607,7 @@ class StratifiedKFold(_BaseKFold):
     See also
     --------
     RepeatedStratifiedKFold: Repeats Stratified K-Fold n times.
+    BinnedStratifiedKFold: Stratified K-Fold variant for regression targets.
     """
 
     def __init__(self, n_splits=5, shuffle=False, random_state=None):
