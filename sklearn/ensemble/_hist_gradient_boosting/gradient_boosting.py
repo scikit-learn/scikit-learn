@@ -248,7 +248,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     (X_binned_small_train,
                      y_small_train) = self._get_small_trainset(
                         X_binned_train, y_train, self._small_trainset_seed)
-
                     self._check_early_stopping_scorer(
                         X_binned_small_train, y_small_train,
                         X_binned_val, y_val,
@@ -426,11 +425,15 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         Scores are computed on validation data or on training data.
         """
+        if hasattr(self, 'classes_'):
+            y_small_train = self.classes_[y_small_train.astype(int)]
         self.train_score_.append(
             self.scorer_(self, X_binned_small_train, y_small_train)
         )
 
         if self._use_validation_data:
+            if hasattr(self, 'classes_'):
+                y_val = self.classes_[y_val.astype(int)]
             self.validation_score_.append(
                 self.scorer_(self, X_binned_val, y_val)
             )
