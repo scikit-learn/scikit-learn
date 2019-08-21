@@ -2446,15 +2446,15 @@ def check_estimator_sparse_dense(name, estimator_orig):
 
         set_random_state(estimator)
         set_random_state(estimator_sp)
-        X = pairwise_estimator_convert_X(X, estimator)
-        X_sp = pairwise_estimator_convert_X(X_sp, estimator)
+        X_converted = pairwise_estimator_convert_X(X, estimator)
+        X_sp_converted = pairwise_estimator_convert_X(X_sp, estimator)
         try:
             with ignore_warnings(category=DeprecationWarning):
-                estimator_sp.fit(X_sp, y)
-                estimator.fit(X, y)
+                estimator_sp.fit(X_sp_converted, y)
+                estimator.fit(X_converted, y)
             if hasattr(estimator, "predict"):
-                pred = estimator.predict(X)
-                pred_sp = estimator_sp.predict(X_sp)
+                pred = estimator.predict(X_converted)
+                pred_sp = estimator_sp.predict(X_sp_converted)
                 if not (isinstance(estimator, BaseSGD) or  # SGD is too random
                         getattr(estimator, 'kernel', None) == 'precomputed' or
                         getattr(estimator, 'metric', None) == 'precomputed'):
@@ -2462,9 +2462,10 @@ def check_estimator_sparse_dense(name, estimator_orig):
 
                 assert pred.shape == pred_sp.shape
             if hasattr(estimator, 'predict_proba'):
-                probs = estimator.predict_proba(X)
-
-                assert probs.shape == (X.shape[0], len(np.unique(y)))
+                probs = estimator.predict_proba(X_converted)
+                probs_sp = estimator.predict_proba(X_sp_converted)
+                assert probs_sp.shape == (X.shape[0], len(np.unique(y)))
+                assert_allclose(probs, probs_sp)
         except TypeError as e:
             if 'sparse' not in str.lower(repr(e)):
                 print("Estimator %s doesn't seem to fail gracefully on "
