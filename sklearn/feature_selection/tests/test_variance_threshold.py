@@ -12,7 +12,7 @@ data = [[0, 1, 2, 3, 4],
         [1, 1, 2, 4, 0]]
 
 
-def test_zero_variance(args):
+def test_zero_variance():
     # Test VarianceThreshold with default setting, zero variance.
 
     for X in [data, csr_matrix(data), csc_matrix(data), bsr_matrix(data)]:
