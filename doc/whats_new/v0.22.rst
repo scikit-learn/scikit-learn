@@ -17,16 +17,16 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
+- :class:`cluster.KMeans` when `n_jobs=1`. |Fix|
 - :class:`decomposition.SparseCoder`,
   :class:`decomposition.DictionaryLearning`, and
   :class:`decomposition.MiniBatchDictionaryLearning` |Fix|
 - :class:`decomposition.SparseCoder` with `algorithm='lasso_lars'` |Fix|
 - :class:`decomposition.SparsePCA` where `normalize_components` has no effect
   due to deprecation.
-
 - :class:`linear_model.Ridge` when `X` is sparse. |Fix|
-
-- :class:`cluster.KMeans` when `n_jobs=1`. |Fix|
+- :class:`model_selection.StratifiedKFold` and any use of `cv=int` with a
+  classifier. |Fix|
 
 Details are listed in the changelog below.
 
@@ -255,6 +255,10 @@ Changelog
 
 - |Enhancement| :class:`model_selection.RandomizedSearchCV` now accepts lists
   of parameter distributions. :pr:`14549` by `Andreas Müller`_.
+
+- |Fix| Reimplemented :class:`model_selection.StratifiedKFold` to fix an issue
+  where one test set could be `n_classes` larger than another. Test sets should
+  now be near-equally sized. :pr:`14704` by `Joel Nothman`_.
 
 :mod:`sklearn.multioutput`
 ..........................
