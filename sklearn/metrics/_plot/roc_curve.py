@@ -150,6 +150,7 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
                              "binary classification problem")
         y_pred = y_pred[:, 1]
     fpr, tpr, _ = roc_curve(y, y_pred, pos_label=pos_label,
+                            sample_weight=sample_weight,
                             drop_intermediate=drop_intermediate)
     roc_auc = auc(fpr, tpr)
     viz = RocCurveDisplay(fpr, tpr, roc_auc, estimator.__class__.__name__)
