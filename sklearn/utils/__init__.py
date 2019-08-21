@@ -256,12 +256,12 @@ def _determine_key_type(key):
         return key_stop_type
     if isinstance(key, list):
         unique_key = set(key)
-        set_type = {_determine_key_type(elt) for elt in unique_key}
-        if not set_type:
+        key_type = {_determine_key_type(elt) for elt in unique_key}
+        if not key_type:
             return None
-        if len(set_type) != 1:
+        if len(key_type) != 1:
             raise ValueError(err_msg)
-        return set_type.pop()
+        return key_type.pop()
     if hasattr(key, 'dtype'):
         try:
             return array_dtype_to_str[key.dtype.kind]
