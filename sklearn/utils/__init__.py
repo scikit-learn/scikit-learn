@@ -182,7 +182,7 @@ def axis0_safe_slice(X, mask, len_mask):
 
 
 def _array_indexing(array, key, key_dtype, axis):
-    """Index an array consistently across NumPy version."""
+    """Index an array or scipy.sparse consistently across NumPy version."""
     if np_version < (1, 12) or issparse(array):
         # FIXME: Remove the check for NumPy when using >= 1.12
         # check if we have an boolean array-likes to make the proper indexing
