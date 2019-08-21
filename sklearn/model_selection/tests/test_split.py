@@ -157,8 +157,8 @@ def test_cross_validator_with_default_params():
     ss_repr = ("ShuffleSplit(n_splits=10, random_state=0, "
                "test_size=None, train_size=None)")
     ps_repr = "PredefinedSplit(test_fold=array([1, 1, 2, 2]))"
-    bskf_repr = ("BinnedStratifiedKFold(n_splits=2, quantile_bins=5, "
-                 "random_state=None,\n           shuffle=False)")
+    bskf_repr = ("BinnedStratifiedKFold(n_bins=5, n_splits=2, "
+                 "random_state=None, shuffle=False)")
 
     n_splits_expected = [n_samples, comb(n_samples, p), n_splits, n_splits,
                          n_unique_groups, comb(n_unique_groups, p),
@@ -1546,38 +1546,21 @@ def test_binnedstratifiedkfold_balance():
     for _ in range(10):
         n_splits = 2 + int(10 * rng.rand())
         X, y = make_regression(noise=10, random_state=rng)
-        sizes = []
+        train_sizes = []
+        test_sizes = []
 
         bskf = BinnedStratifiedKFold(n_splits=n_splits, shuffle=False,
                                      random_state=None)
 
         for train_index, test_index in bskf.split(X=X, y=y):
-            sizes.append(len(test_index))
-        assert (np.max(sizes) - np.min(sizes)) <= bskf.quantile_bins
-        assert np.sum(sizes) == X.shape[0]
+            train_sizes.append(len(train_index))
+            test_sizes.append(len(test_index))
 
-
-def test_binnedstratifiedkfold_bin_spacing():
-    "check if the binned `y` falls into bins of equal size (+/- 1)"
-    rng = np.random.RandomState(0)
-    for _ in range(10):
-        n_splits = 2 + int(10 * rng.rand())
-        X, y = make_regression(noise=10, random_state=rng)
-
-        skf = BinnedStratifiedKFold(n_splits=n_splits,
-                                    shuffle=False, random_state=None)
-
-        bins = np.percentile(y, np.linspace(0, 100, skf.quantile_bins + 1))
-
-
-        for train_index, test_index in skf.split(X=X, y=y):
-            y_test = y[test_index]
-            hist_test, _ = np.histogram(y_test, bins=bins)
-            assert all(abs(hist_test - np.mean(hist_test)) <= 1)
-
-            y_train = y[train_index]
-            hist_train, _ = np.histogram(y_train, bins=bins)
-            assert all(abs(hist_train - np.mean(hist_train)) <= 1)
+        # fixme we can make this test be <= 1 once we fix StratifiedKFold
+        assert (np.max(test_sizes) - np.min(test_sizes)) <= bskf.n_bins
+        assert (np.max(train_sizes) - np.min(train_sizes)) <= bskf.n_bins
+        assert np.sum(test_sizes) == X.shape[0]
+        assert np.sum(train_sizes) == X.shape[0] * (n_splits - 1)
 
 
 def test_binnedstratifiedkfold_stable_moments_between_splits():
@@ -1601,7 +1584,7 @@ def test_binnedstratifiedkfold_stable_moments_between_splits():
 
         kf = KFold(n_splits=n_splits, shuffle=True, random_state=None)
 
-        bins = np.percentile(y, np.linspace(0, 100, skf.quantile_bins + 1))
+        bins = np.percentile(y, np.linspace(0, 100, skf.n_bins))
 
         for train_index, test_index in skf.split(X=X, y=y):
             y_test = y[test_index]
@@ -1609,7 +1592,7 @@ def test_binnedstratifiedkfold_stable_moments_between_splits():
             ystds_binned.append(y_test.std())
             hist_, _ = np.histogram(y[test_index], bins=bins)
 
-            assert all(abs(hist_ - np.mean(hist_)) <= 1)
+            assert all(abs(hist_ - np.mean(hist_)) <= skf.n_bins)
 
         ymeans_regular = []
         ystds_regular = []
@@ -1632,9 +1615,3 @@ def test_binnedstratifiedkfold_stable_moments_between_splits():
 
     assert binned_has_more_stable_std_fraction > 0.5
     assert binned_has_more_stable_mean_fraction > 0.5
-    print(" std(y_test) of BinnedStratifiedKFold was more stable than "
-          "one of KFold in\t%.2f%% cases" %
-          (100.0*binned_has_more_stable_std_fraction))
-    print("mean(y_test) of BinnedStratifiedKFold was more stable than "
-          "one of KFold in\t%.2f%% cases" %
-          (100.0*binned_has_more_stable_mean_fraction))

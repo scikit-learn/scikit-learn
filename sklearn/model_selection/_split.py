@@ -1897,10 +1897,9 @@ class BinnedStratifiedKFold(StratifiedKFold):
     >>> np.random.shuffle(y)
     >>> X = y + 0.1* np.random.randn(len(y))
     >>> cv = BinnedStratifiedKFold(n_splits=3)
-    >>> skf = cv.split(y)
+    >>> skf = cv.split(X, y)
     >>> print(cv)
-    BinnedStratifiedKFold(n_splits=5, random_state=None,
-    shuffle=False)
+    BinnedStratifiedKFold(n_bins=5, n_splits=3, random_state=None, shuffle=False)
     >>> indarr = np.zeros(len(y), dtype=bool)
     >>> for train_index, test_index in skf:
     ...    print("TRAIN:", train_index, "TEST:", test_index)
@@ -1922,23 +1921,23 @@ class BinnedStratifiedKFold(StratifiedKFold):
     StratifiedKFold -- stratified k-fold generator for classification data
     """
 
-    def __init__(self, n_splits=5, shuffle=False, quantile_bins=5,
+    def __init__(self, n_splits=5, shuffle=False, n_bins=5,
                  random_state=None):
         super().__init__(n_splits, shuffle, random_state)
-        self.quantile_bins = quantile_bins
-        if quantile_bins < 2:
+        self.n_bins = n_bins
+        if n_bins < 2:
             raise ValueError("Need at least two bins, got {}.".format(
-                quantile_bins))
+                n_bins))
 
     def _make_test_folds(self, X, y):
         if y is None:
             raise ValueError("no y has been supplied; "
                              "first argument is not a valid y")
         percentiles = np.percentile(
-            y, np.linspace(0, 100, self.quantile_bins))
+            y, np.linspace(0, 100, self.n_bins))
         bins = np.digitize(y, bins=percentiles)
-        if len(y) > self.quantile_bins:
-            assert len(np.unique(bins)) == min(len(np.unique(y)), self.quantile_bins)
+        if len(y) > self.n_bins:
+            assert len(np.unique(bins)) == min(len(np.unique(y)), self.n_bins)
         return super()._make_test_folds(X, bins)
 
 
