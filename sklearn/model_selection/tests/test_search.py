@@ -210,7 +210,7 @@ def check_hyperparameter_searcher_with_fit_params(klass, **klass_kwargs):
                          "Expected fit parameter(s) ['eggs'] not seen.",
                          searcher.fit, X, y, spam=np.ones(10))
     assert_raise_message(AssertionError,
-                         "Fit parameter spam has length 1; expected 4.",
+                         "Fit parameter spam has length 1; expected",
                          searcher.fit, X, y, spam=np.ones(1),
                          eggs=np.zeros(10))
     searcher.fit(X, y, spam=np.ones(10), eggs=np.zeros(10))
