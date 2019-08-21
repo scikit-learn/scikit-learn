@@ -1054,10 +1054,10 @@ def _check_transformer(name, transformer_orig, X, y):
     # fit
 
     if name in CROSS_DECOMPOSITION:
-        array_type = type(y)
         y_ = np.c_[np.asarray(y), np.asarray(y)]
         y_[::2, 1] *= 2
-        y_ = array_type(y_)
+        if isinstance(X, NotAnArray):
+            y_ = NotAnArray(y_)
     else:
         y_ = y
 
