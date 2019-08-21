@@ -1409,7 +1409,7 @@ the correct interface more easily.
       ...     def predict(self, X):
       ...
       ...         # Check is fit had been called
-      ...         check_is_fitted(self, ['X_', 'y_'])
+      ...         check_is_fitted(self)
       ...
       ...         # Input validation
       ...         X = check_array(X)
@@ -1569,7 +1569,7 @@ The current set of estimator tags are:
 non_deterministic
     whether the estimator is not deterministic given a fixed ``random_state``
 
-requires_positive_X - unused for now
+requires_positive_X
     whether the estimator requires positive X.
 
 requires_positive_y
