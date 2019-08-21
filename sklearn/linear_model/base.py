@@ -14,7 +14,6 @@ Generalized Linear models.
 # License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
-import numbers
 import warnings
 
 import numpy as np
@@ -27,7 +26,7 @@ from joblib import Parallel, delayed
 from ..base import (BaseEstimator, ClassifierMixin, RegressorMixin,
                     MultiOutputMixin)
 from ..utils import check_array, check_X_y
-from ..utils.validation import FLOAT_DTYPES, _check_sample_weight
+from ..utils.validation import FLOAT_DTYPES
 from ..utils import check_random_state
 from ..utils.extmath import safe_sparse_dot
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
