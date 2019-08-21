@@ -558,6 +558,7 @@ def test_check_class_weight_balanced_linear_classifier():
                         'estimator_name',
                         BadBalancedWeightsClassifier)
 
+
 def test_enforce_estimator_tags_X():
     class EstimatorWithPositiveX(BaseEstimator):
 
