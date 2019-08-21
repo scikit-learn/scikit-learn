@@ -277,8 +277,8 @@ def set_check_estimator_ids(obj):
     """Create pytest ids for checks.
 
     When `obj` is an estimator, this returns the pprint version of the
-    estimator. When `obj` is a function, the name of the function is returned
-    with its keyworld arguments.
+    estimator (with `print_changed_only=True`). When `obj` is a function, the
+    name of the function is returned with its keyworld arguments.
 
     `set_check_estimator_ids` is designed to be used as the `id` in
     `pytest.mark.parametrize` where `check_estimator(..., generate_only=True)`
