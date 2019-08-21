@@ -627,7 +627,8 @@ class StratifiedKFold(_BaseKFold):
         # the encoding is numeric, with 0 being the first label appearing in y,
         # 1 the second, etc.
         _, y_idx, y_inv = np.unique(y, return_index=True, return_inverse=True)
-        y_encoded = np.argsort(y_idx)[y_inv]
+        _, class_perm = np.unique(y_idx, return_inverse=True)
+        y_encoded = class_perm[y_inv]
 
         n_classes = len(y_idx)
         y_counts = np.bincount(y_encoded)

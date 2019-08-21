@@ -6,6 +6,7 @@ from scipy.sparse import coo_matrix, csc_matrix, csr_matrix
 from scipy import stats
 from itertools import combinations
 from itertools import combinations_with_replacement
+from itertools import permutations
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
@@ -382,11 +383,35 @@ def test_stratified_kfold_ratios(k, shuffle):
     distr = np.bincount(y) / len(y)
 
     test_sizes = []
-    for train, test in StratifiedKFold(k, shuffle=shuffle).split(X, y):
+    skf = StratifiedKFold(k, random_state=0, shuffle=shuffle)
+    for train, test in skf.split(X, y):
         assert_almost_equal(np.bincount(y[train]) / len(train), distr, 2)
         assert_almost_equal(np.bincount(y[test]) / len(test), distr, 2)
         test_sizes.append(len(test))
     assert np.ptp(test_sizes) <= 1
+
+
+@pytest.mark.parametrize('shuffle', [False, True])
+@pytest.mark.parametrize('k', [4, 6, 7])
+def test_stratified_kfold_label_invariance(k, shuffle):
+    # Check that stratified kfold gives the same indices regardless of labels
+    n_samples = 100
+    y = np.array([2] * int(0.10 * n_samples) +
+                 [0] * int(0.89 * n_samples) +
+                 [1] * int(0.01 * n_samples))
+    X = np.ones(len(y))
+
+    def get_splits(y):
+        return [(list(train), list(test))
+                for train, test
+                in StratifiedKFold(k, random_state=0,
+                                   shuffle=shuffle).split(X, y)]
+
+    splits_base = get_splits(y)
+    for perm in permutations([0, 1, 2]):
+        y_perm = np.take(perm, y)
+        splits_perm = get_splits(y_perm)
+        assert splits_perm == splits_base
 
 
 def test_kfold_balance():
