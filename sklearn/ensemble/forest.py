@@ -2040,6 +2040,12 @@ class RandomTreesEmbedding(BaseForest):
 
         .. versionadded:: 0.22
 
+    max_samples : int or float (default=None)
+        The number of samples to draw from X to train each base estimator.
+            - If None (default), then draw `X.shape[0]` samples.
+            - If int, then draw `max_samples` samples.
+            - If float, then draw `max_samples * X.shape[0]` samples.
+
     Attributes
     ----------
     estimators_ : list of DecisionTreeClassifier
@@ -2072,7 +2078,8 @@ class RandomTreesEmbedding(BaseForest):
                  random_state=None,
                  verbose=0,
                  warm_start=False,
-                 ccp_alpha=0.0):
+                 ccp_alpha=0.0,
+                 max_samples=None):
         super().__init__(
             base_estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
@@ -2086,7 +2093,8 @@ class RandomTreesEmbedding(BaseForest):
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose,
-            warm_start=warm_start)
+            warm_start=warm_start,
+            max_samples=max_samples)
 
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
