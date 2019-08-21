@@ -1906,9 +1906,9 @@ class BinnedStratifiedKFold(StratifiedKFold):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
-    TRAIN: [ 1  2  3  4  5  8 10] TEST: [0 6 7 9]
-    TRAIN: [0 2 3 4 6 7 8 9] TEST: [ 1  5 10]
-    TRAIN: [ 0  1  5  6  7  9 10] TEST: [2 3 4 8]
+    TRAIN: [ 5  6  7  8  9 10] TEST: [0 1 2 3 4]
+    TRAIN: [ 0  1  2  3  4  9 10] TEST: [5 6 7 8]
+    TRAIN: [0 1 2 3 4 5 6 7 8] TEST: [ 9 10]
 
     Notes
     -----
