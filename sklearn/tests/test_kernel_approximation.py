@@ -265,4 +265,3 @@ def test_nystroem_precomputed_kernel():
     nystroem = Nystroem(kernel='precomputed', n_components=X.shape[0])
     X_transformed = nystroem.fit_transform(K)
     assert_array_equal(np.dot(X_transformed, X_transformed.T), K)
-    
