@@ -323,7 +323,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         self : object
             Returns the transformer.
         """
-        check_array(X, accept_sparse='csr')
+        X = check_array(X, accept_sparse='csr')
         check_non_negative(X, "AdditiveChi2Sampler (input X)")
         if self.sample_interval is None:
             # See reference, figure 2 c)
