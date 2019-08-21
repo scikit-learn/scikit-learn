@@ -591,6 +591,10 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
             if not self.sample_posterior:
                 inf_norm = np.linalg.norm(Xt - Xt_previous, ord=np.inf,
                                           axis=None)
+                if self.verbose > 0:
+                    print('[IterativeImputer] '
+                          'Change: {}, scaled tolerance: {} '.format(
+                            inf_norm, normalized_tol))
                 if inf_norm < normalized_tol:
                     if self.verbose > 0:
                         print('[IterativeImputer] Early stopping criterion '
@@ -623,7 +627,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         Xt : array-like, shape (n_samples, n_features)
              The imputed input data.
         """
-        check_is_fitted(self, 'initial_imputer_')
+        check_is_fitted(self)
 
         if self.add_indicator:
             X_trans_indicator = self.indicator_.transform(X)

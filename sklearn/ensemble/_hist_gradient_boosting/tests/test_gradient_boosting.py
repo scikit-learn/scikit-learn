@@ -220,3 +220,13 @@ def test_small_trainset():
     # Test that the class distributions in the whole dataset and in the small
     # training set are identical
     assert small_distrib == pytest.approx(original_distrib)
+
+
+def test_infinite_values():
+
+    X = np.array([-np.inf, 0, 1, np.inf]).reshape(-1, 1)
+    y = np.array([0, 0, 1, 1])
+
+    gbdt = HistGradientBoostingRegressor(min_samples_leaf=1)
+    gbdt.fit(X, y)
+    np.testing.assert_allclose(gbdt.predict(X), y, atol=1e-4)

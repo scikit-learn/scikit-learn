@@ -44,6 +44,9 @@ from sklearn.metrics import max_error
 from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_tweedie_deviance
+from sklearn.metrics import mean_poisson_deviance
+from sklearn.metrics import mean_gamma_deviance
 from sklearn.metrics import median_absolute_error
 from sklearn.metrics import multilabel_confusion_matrix
 from sklearn.metrics import precision_recall_curve
@@ -53,6 +56,8 @@ from sklearn.metrics import recall_score
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
 from sklearn.metrics import zero_one_loss
+from sklearn.metrics import ndcg_score
+from sklearn.metrics import dcg_score
 
 from sklearn.metrics.base import _average_binary_score
 
@@ -97,6 +102,11 @@ REGRESSION_METRICS = {
     "median_absolute_error": median_absolute_error,
     "explained_variance_score": explained_variance_score,
     "r2_score": partial(r2_score, multioutput='variance_weighted'),
+    "mean_normal_deviance": partial(mean_tweedie_deviance, p=0),
+    "mean_poisson_deviance": mean_poisson_deviance,
+    "mean_gamma_deviance": mean_gamma_deviance,
+    "mean_compound_poisson_deviance":
+    partial(mean_tweedie_deviance, p=1.4),
 }
 
 CLASSIFICATION_METRICS = {
@@ -211,6 +221,12 @@ THRESHOLDED_METRICS = {
     "weighted_roc_auc": partial(roc_auc_score, average="weighted"),
     "samples_roc_auc": partial(roc_auc_score, average="samples"),
     "micro_roc_auc": partial(roc_auc_score, average="micro"),
+    "ovr_roc_auc": partial(roc_auc_score, average="macro", multi_class='ovr'),
+    "weighted_ovr_roc_auc": partial(roc_auc_score, average="weighted",
+                                    multi_class='ovr'),
+    "ovo_roc_auc": partial(roc_auc_score, average="macro", multi_class='ovo'),
+    "weighted_ovo_roc_auc": partial(roc_auc_score, average="weighted",
+                                    multi_class='ovo'),
     "partial_roc_auc": partial(roc_auc_score, max_fpr=0.5),
 
     "average_precision_score":
@@ -223,6 +239,8 @@ THRESHOLDED_METRICS = {
     partial(average_precision_score, average="micro"),
     "label_ranking_average_precision_score":
     label_ranking_average_precision_score,
+    "ndcg_score": ndcg_score,
+    "dcg_score": dcg_score
 }
 
 ALL_METRICS = dict()
@@ -252,17 +270,19 @@ METRIC_UNDEFINED_BINARY = {
     "unnormalized_multilabel_confusion_matrix_sample",
     "label_ranking_loss",
     "label_ranking_average_precision_score",
+    "dcg_score",
+    "ndcg_score"
 }
 
 # Those metrics don't support multiclass inputs
 METRIC_UNDEFINED_MULTICLASS = {
     "brier_score_loss",
 
-    "roc_auc_score",
     "micro_roc_auc",
-    "weighted_roc_auc",
     "samples_roc_auc",
     "partial_roc_auc",
+    "roc_auc_score",
+    "weighted_roc_auc",
 
     "average_precision_score",
     "weighted_average_precision_score",
@@ -374,6 +394,10 @@ THRESHOLDED_MULTILABEL_METRICS = {
     "samples_average_precision_score", "micro_average_precision_score",
 
     "coverage_error", "label_ranking_loss",
+
+    "ndcg_score",
+    "dcg_score",
+
     "label_ranking_average_precision_score",
 }
 
@@ -428,7 +452,7 @@ SYMMETRIC_METRICS = {
     "matthews_corrcoef_score", "mean_absolute_error", "mean_squared_error",
     "median_absolute_error", "max_error",
 
-    "cohen_kappa_score",
+    "cohen_kappa_score", "mean_normal_deviance"
 }
 
 # Asymmetric with respect to their input arguments y_true and y_pred
@@ -450,26 +474,36 @@ NOT_SYMMETRIC_METRICS = {
     "unnormalized_multilabel_confusion_matrix",
 
     "macro_f0.5_score", "macro_f2_score", "macro_precision_score",
-    "macro_recall_score", "log_loss", "hinge_loss"
+    "macro_recall_score", "log_loss", "hinge_loss",
+    "mean_gamma_deviance", "mean_poisson_deviance",
+    "mean_compound_poisson_deviance"
 }
 
 
 # No Sample weight support
 METRICS_WITHOUT_SAMPLE_WEIGHT = {
     "median_absolute_error",
-    "max_error"
+    "max_error",
+    "ovo_roc_auc",
+    "weighted_ovo_roc_auc"
+}
+
+METRICS_REQUIRE_POSITIVE_Y = {
+    "mean_poisson_deviance",
+    "mean_gamma_deviance",
+    "mean_compound_poisson_deviance",
 }
 
 
-@ignore_warnings
-def test_symmetry():
-    # Test the symmetry of score and loss functions
-    random_state = check_random_state(0)
-    y_true = random_state.randint(0, 2, size=(20, ))
-    y_pred = random_state.randint(0, 2, size=(20, ))
+def _require_positive_targets(y1, y2):
+    """Make targets strictly positive"""
+    offset = abs(min(y1.min(), y2.min())) + 1
+    y1 += offset
+    y2 += offset
+    return y1, y2
 
-    y_true_bin = random_state.randint(0, 2, size=(20, 25))
-    y_pred_bin = random_state.randint(0, 2, size=(20, 25))
+
+def test_symmetry_consistency():
 
     # We shouldn't forget any metrics
     assert (SYMMETRIC_METRICS.union(
@@ -481,29 +515,50 @@ def test_symmetry():
         SYMMETRIC_METRICS.intersection(NOT_SYMMETRIC_METRICS) ==
         set())
 
-    # Symmetric metric
-    for name in SYMMETRIC_METRICS:
-        metric = ALL_METRICS[name]
-        if name in METRIC_UNDEFINED_BINARY:
-            if name in MULTILABELS_METRICS:
-                assert_allclose(metric(y_true_bin, y_pred_bin),
-                                metric(y_pred_bin, y_true_bin),
-                                err_msg="%s is not symmetric" % name)
-            else:
-                assert False, "This case is currently unhandled"
-        else:
-            assert_allclose(metric(y_true, y_pred),
-                            metric(y_pred, y_true),
+
+@pytest.mark.parametrize("name", sorted(SYMMETRIC_METRICS))
+def test_symmetric_metric(name):
+    # Test the symmetry of score and loss functions
+    random_state = check_random_state(0)
+    y_true = random_state.randint(0, 2, size=(20, ))
+    y_pred = random_state.randint(0, 2, size=(20, ))
+
+    if name in METRICS_REQUIRE_POSITIVE_Y:
+        y_true, y_pred = _require_positive_targets(y_true, y_pred)
+
+    y_true_bin = random_state.randint(0, 2, size=(20, 25))
+    y_pred_bin = random_state.randint(0, 2, size=(20, 25))
+
+    metric = ALL_METRICS[name]
+    if name in METRIC_UNDEFINED_BINARY:
+        if name in MULTILABELS_METRICS:
+            assert_allclose(metric(y_true_bin, y_pred_bin),
+                            metric(y_pred_bin, y_true_bin),
                             err_msg="%s is not symmetric" % name)
+        else:
+            assert False, "This case is currently unhandled"
+    else:
+        assert_allclose(metric(y_true, y_pred),
+                        metric(y_pred, y_true),
+                        err_msg="%s is not symmetric" % name)
 
-    # Not symmetric metrics
-    for name in NOT_SYMMETRIC_METRICS:
-        metric = ALL_METRICS[name]
 
-        # use context manager to supply custom error message
-        with assert_raises(AssertionError) as cm:
-            assert_array_equal(metric(y_true, y_pred), metric(y_pred, y_true))
-            cm.msg = ("%s seems to be symmetric" % name)
+@pytest.mark.parametrize("name", sorted(NOT_SYMMETRIC_METRICS))
+def test_not_symmetric_metric(name):
+    # Test the symmetry of score and loss functions
+    random_state = check_random_state(0)
+    y_true = random_state.randint(0, 2, size=(20, ))
+    y_pred = random_state.randint(0, 2, size=(20, ))
+
+    if name in METRICS_REQUIRE_POSITIVE_Y:
+        y_true, y_pred = _require_positive_targets(y_true, y_pred)
+
+    metric = ALL_METRICS[name]
+
+    # use context manager to supply custom error message
+    with assert_raises(AssertionError) as cm:
+        assert_array_equal(metric(y_true, y_pred), metric(y_pred, y_true))
+        cm.msg = ("%s seems to be symmetric" % name)
 
 
 @pytest.mark.parametrize(
@@ -513,6 +568,9 @@ def test_sample_order_invariance(name):
     random_state = check_random_state(0)
     y_true = random_state.randint(0, 2, size=(20, ))
     y_pred = random_state.randint(0, 2, size=(20, ))
+    if name in METRICS_REQUIRE_POSITIVE_Y:
+        y_true, y_pred = _require_positive_targets(y_true, y_pred)
+
     y_true_shuffle, y_pred_shuffle = shuffle(y_true, y_pred, random_state=0)
 
     with ignore_warnings():
@@ -565,6 +623,9 @@ def test_format_invariance_with_1d_vectors(name):
     random_state = check_random_state(0)
     y1 = random_state.randint(0, 2, size=(20, ))
     y2 = random_state.randint(0, 2, size=(20, ))
+
+    if name in METRICS_REQUIRE_POSITIVE_Y:
+        y1, y2 = _require_positive_targets(y1, y2)
 
     y1_list = list(y1)
     y2_list = list(y2)
@@ -754,7 +815,11 @@ def check_single_sample(name):
     metric = ALL_METRICS[name]
 
     # assert that no exception is thrown
-    for i, j in product([0, 1], repeat=2):
+    if name in METRICS_REQUIRE_POSITIVE_Y:
+        values = [1, 2]
+    else:
+        values = [0, 1]
+    for i, j in product(values, repeat=2):
         metric([i], [j])
 
 
@@ -1184,7 +1249,10 @@ def test_multiclass_sample_weight_invariance(name):
     y_score = random_state.random_sample(size=(n_samples, 5))
     metric = ALL_METRICS[name]
     if name in THRESHOLDED_METRICS:
-        check_sample_weight_invariance(name, metric, y_true, y_score)
+        # softmax
+        temp = np.exp(-y_score)
+        y_score_norm = temp / temp.sum(axis=-1).reshape(-1, 1)
+        check_sample_weight_invariance(name, metric, y_true, y_score_norm)
     else:
         check_sample_weight_invariance(name, metric, y_true, y_pred)
 
@@ -1277,6 +1345,30 @@ def test_thresholded_multilabel_multioutput_permutations_invariance(name):
     for perm in permutations(range(n_classes), n_classes):
         y_score_perm = y_score[:, perm]
         y_true_perm = y_true[:, perm]
+
+        current_score = metric(y_true_perm, y_score_perm)
+        assert_almost_equal(score, current_score)
+
+
+@pytest.mark.parametrize(
+    'name',
+    sorted(set(THRESHOLDED_METRICS) - METRIC_UNDEFINED_BINARY_MULTICLASS))
+def test_thresholded_metric_permutation_invariance(name):
+    n_samples, n_classes = 100, 3
+    random_state = check_random_state(0)
+
+    y_score = random_state.rand(n_samples, n_classes)
+    temp = np.exp(-y_score)
+    y_score = temp / temp.sum(axis=-1).reshape(-1, 1)
+    y_true = random_state.randint(0, n_classes, size=n_samples)
+
+    metric = ALL_METRICS[name]
+    score = metric(y_true, y_score)
+    for perm in permutations(range(n_classes), n_classes):
+        inverse_perm = np.zeros(n_classes, dtype=int)
+        inverse_perm[list(perm)] = np.arange(n_classes)
+        y_score_perm = y_score[:, inverse_perm]
+        y_true_perm = np.take(perm, y_true)
 
         current_score = metric(y_true_perm, y_score_perm)
         assert_almost_equal(score, current_score)

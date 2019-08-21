@@ -115,7 +115,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
-        check_is_fitted(self, 'random_weights_')
+        check_is_fitted(self)
 
         X = check_array(X, accept_sparse='csr')
         projection = safe_sparse_dot(X, self.random_weights_)
@@ -222,7 +222,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
-        check_is_fitted(self, 'random_weights_')
+        check_is_fitted(self)
 
         X = as_float_array(X, copy=True)
         X = check_array(X, copy=False)
@@ -350,7 +350,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         """
         msg = ("%(name)s is not fitted. Call fit to set the parameters before"
                " calling transform")
-        check_is_fitted(self, "sample_interval_", msg=msg)
+        check_is_fitted(self, msg=msg)
 
         X = check_array(X, accept_sparse='csr')
         sparse = sp.issparse(X)
@@ -481,16 +481,16 @@ class Nystroem(BaseEstimator, TransformerMixin):
     --------
     >>> from sklearn import datasets, svm
     >>> from sklearn.kernel_approximation import Nystroem
-    >>> digits = datasets.load_digits(n_class=9)
-    >>> data = digits.data / 16.
+    >>> X, y = datasets.load_digits(n_class=9, return_X_y=True)
+    >>> data = X / 16.
     >>> clf = svm.LinearSVC()
     >>> feature_map_nystroem = Nystroem(gamma=.2,
     ...                                 random_state=1,
     ...                                 n_components=300)
     >>> data_transformed = feature_map_nystroem.fit_transform(data)
-    >>> clf.fit(data_transformed, digits.target)
+    >>> clf.fit(data_transformed, y)
     LinearSVC()
-    >>> clf.score(data_transformed, digits.target)
+    >>> clf.score(data_transformed, y)
     0.9987...
 
     References
@@ -580,7 +580,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
         X_transformed : array, shape=(n_samples, n_components)
             Transformed data.
         """
-        check_is_fitted(self, 'components_')
+        check_is_fitted(self)
         X = check_array(X, accept_sparse='csr')
 
         kernel_params = self._get_kernel_params()

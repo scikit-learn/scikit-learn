@@ -18,7 +18,7 @@ from ..base import BaseEstimator, RegressorMixin
 from ..utils import check_array, check_random_state, check_X_y
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..exceptions import ConvergenceWarning
 from ..model_selection import StratifiedShuffleSplit, ShuffleSplit
 
@@ -96,18 +96,18 @@ class BaseSGD(BaseEstimator, SparseCoefMixin, metaclass=ABCMeta):
         self.tol = tol
         # current tests expect init to do parameter validation
         # but we are not allowed to set attributes
-        self._validate_params(set_max_iter=False)
+        self._validate_params()
 
     def set_params(self, *args, **kwargs):
         super().set_params(*args, **kwargs)
-        self._validate_params(set_max_iter=False)
+        self._validate_params()
         return self
 
     @abstractmethod
     def fit(self, X, y):
         """Fit model."""
 
-    def _validate_params(self, set_max_iter=True, for_partial_fit=False):
+    def _validate_params(self, for_partial_fit=False):
         """Validate input params. """
         if not isinstance(self.shuffle, bool):
             raise ValueError("shuffle must be either True or False")
@@ -140,9 +140,6 @@ class BaseSGD(BaseEstimator, SparseCoefMixin, metaclass=ABCMeta):
         if self.loss not in self.loss_functions:
             raise ValueError("The loss %s is not supported. " % self.loss)
 
-        if not set_max_iter:
-            return
-
     def _get_loss_function(self, loss):
         """Get concrete ``LossFunction`` object for str ``loss``. """
         try:
@@ -168,19 +165,6 @@ class BaseSGD(BaseEstimator, SparseCoefMixin, metaclass=ABCMeta):
             return PENALTY_TYPES[penalty]
         except KeyError:
             raise ValueError("Penalty %s is not supported. " % penalty)
-
-    def _validate_sample_weight(self, sample_weight, n_samples):
-        """Set the sample weight array."""
-        if sample_weight is None:
-            # uniform sample weights
-            sample_weight = np.ones(n_samples, dtype=np.float64, order='C')
-        else:
-            # user-provided array
-            sample_weight = np.asarray(sample_weight, dtype=np.float64,
-                                       order="C")
-        if sample_weight.shape[0] != n_samples:
-            raise ValueError("Shapes of X and sample_weight do not match.")
-        return sample_weight
 
     def _allocate_parameter_mem(self, n_classes, n_features, coef_init=None,
                                 intercept_init=None):
@@ -488,7 +472,7 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin, metaclass=ABCMeta):
         # Allocate datastructures from input arguments
         self._expanded_class_weight = compute_class_weight(self.class_weight,
                                                            self.classes_, y)
-        sample_weight = self._validate_sample_weight(sample_weight, n_samples)
+        sample_weight = _check_sample_weight(sample_weight, X)
 
         if getattr(self, "coef_", None) is None or coef_init is not None:
             self._allocate_parameter_mem(n_classes, n_features,
@@ -793,10 +777,10 @@ class SGDClassifier(BaseSGDClassifier):
         Whether or not the training data should be shuffled after each epoch.
         Defaults to True.
 
-    verbose : integer, optional
+    verbose : integer, default=0
         The verbosity level
 
-    epsilon : float
+    epsilon : float, default=0.1
         Epsilon in the epsilon-insensitive loss functions; only if `loss` is
         'huber', 'epsilon_insensitive', or 'squared_epsilon_insensitive'.
         For 'huber', determines the threshold at which it becomes less
@@ -873,7 +857,7 @@ class SGDClassifier(BaseSGDClassifier):
         weights inversely proportional to class frequencies in the input data
         as ``n_samples / (n_classes * np.bincount(y))``
 
-    warm_start : bool, optional
+    warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
         See :term:`the Glossary <warm_start>`.
@@ -886,7 +870,7 @@ class SGDClassifier(BaseSGDClassifier):
         this counter, while ``partial_fit`` will result in increasing the
         existing counter.
 
-    average : bool or int, optional
+    average : bool or int, default=False
         When set to True, computes the averaged SGD weights and stores the
         result in the ``coef_`` attribute. If set to an int greater than 1,
         averaging will begin once the total number of samples seen reaches
@@ -907,6 +891,12 @@ class SGDClassifier(BaseSGDClassifier):
         For multiclass fits, it is the maximum over every binary fit.
 
     loss_function_ : concrete ``LossFunction``
+
+    classes_ : array of shape = [n_classes]
+
+    t_ : int
+        Number of weight updates performed during training.
+        Same as ``(n_iter_ * n_samples)``.
 
     Examples
     --------
@@ -989,7 +979,7 @@ class SGDClassifier(BaseSGDClassifier):
         return self._predict_proba
 
     def _predict_proba(self, X):
-        check_is_fitted(self, "t_")
+        check_is_fitted(self)
 
         if self.loss == "log":
             return self._predict_proba_lr(X)
@@ -1095,9 +1085,9 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
         n_samples, n_features = X.shape
 
-        # Allocate datastructures from input arguments
-        sample_weight = self._validate_sample_weight(sample_weight, n_samples)
+        sample_weight = _check_sample_weight(sample_weight, X)
 
+        # Allocate datastructures from input arguments
         if getattr(self, "coef_", None) is None:
             self._allocate_parameter_mem(1, n_features, coef_init,
                                          intercept_init)
@@ -1223,7 +1213,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         array, shape (n_samples,)
            Predicted target values per element in X.
         """
-        check_is_fitted(self, ["t_", "coef_", "intercept_"], all_or_any=all)
+        check_is_fitted(self)
 
         X = check_array(X, accept_sparse='csr')
 
@@ -1399,10 +1389,10 @@ class SGDRegressor(BaseSGDRegressor):
         Whether or not the training data should be shuffled after each epoch.
         Defaults to True.
 
-    verbose : integer, optional
+    verbose : integer, default=0
         The verbosity level.
 
-    epsilon : float
+    epsilon : float, default=0.1
         Epsilon in the epsilon-insensitive loss functions; only if `loss` is
         'huber', 'epsilon_insensitive', or 'squared_epsilon_insensitive'.
         For 'huber', determines the threshold at which it becomes less
@@ -1438,7 +1428,7 @@ class SGDRegressor(BaseSGDRegressor):
         'adaptive' schedules. The default value is 0.01.
 
     power_t : double
-        The exponent for inverse scaling learning rate [default 0.5].
+        The exponent for inverse scaling learning rate [default 0.25].
 
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
@@ -1461,7 +1451,7 @@ class SGDRegressor(BaseSGDRegressor):
 
         .. versionadded:: 0.20
 
-    warm_start : bool, optional
+    warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
         See :term:`the Glossary <warm_start>`.
@@ -1474,7 +1464,7 @@ class SGDRegressor(BaseSGDRegressor):
         this counter, while ``partial_fit``  will result in increasing the
         existing counter.
 
-    average : bool or int, optional
+    average : bool or int, default=False
         When set to True, computes the averaged SGD weights and stores the
         result in the ``coef_`` attribute. If set to an int greater than 1,
         averaging will begin once the total number of samples seen reaches
@@ -1497,6 +1487,10 @@ class SGDRegressor(BaseSGDRegressor):
 
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
+
+    t_ : int
+        Number of weight updates performed during training.
+        Same as ``(n_iter_ * n_samples)``.
 
     Examples
     --------

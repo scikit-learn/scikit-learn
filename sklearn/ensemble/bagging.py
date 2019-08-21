@@ -511,6 +511,9 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
     base_estimator_ : estimator
         The base estimator from which the ensemble is grown.
 
+    n_features_ : int
+        The number of features when `fit` is performed.
+
     estimators_ : list of estimators
         The collection of fitted base estimators.
 
@@ -672,7 +675,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
-        check_is_fitted(self, "classes_")
+        check_is_fitted(self)
         # Check data
         X = check_array(
             X, accept_sparse=['csr', 'csc'], dtype=None,
@@ -722,7 +725,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             The class log-probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
-        check_is_fitted(self, "classes_")
+        check_is_fitted(self)
         if hasattr(self.base_estimator_, "predict_log_proba"):
             # Check data
             X = check_array(
@@ -780,7 +783,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             cases with ``k == 1``, otherwise ``k==n_classes``.
 
         """
-        check_is_fitted(self, "classes_")
+        check_is_fitted(self)
 
         # Check data
         X = check_array(
@@ -887,6 +890,12 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
 
     Attributes
     ----------
+    base_estimator_ : estimator
+        The base estimator from which the ensemble is grown.
+
+    n_features_ : int
+        The number of features when `fit` is performed.
+
     estimators_ : list of estimators
         The collection of fitted sub-estimators.
 
@@ -965,7 +974,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         y : array of shape = [n_samples]
             The predicted values.
         """
-        check_is_fitted(self, "estimators_features_")
+        check_is_fitted(self)
         # Check data
         X = check_array(
             X, accept_sparse=['csr', 'csc'], dtype=None,

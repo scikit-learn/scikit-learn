@@ -24,9 +24,26 @@ make_conda() {
     source activate $VIRTUALENV
 }
 
+version_ge() {
+    # The two version numbers are seperated with a new line is piped to sort
+    # -rV. The -V activates for version number sorting and -r sorts in
+    # decending order. If the first argument is the top element of the sort, it
+    # is greater than or equal to the second argument.
+    test "$(printf "${1}\n${2}" | sort -rV | head -n 1)" == "$1"
+}
+
 if [[ "$DISTRIB" == "conda" ]]; then
-    TO_INSTALL="python=$PYTHON_VERSION pip pytest=$PYTEST_VERSION pytest-cov \
-                numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
+
+    # TODO
+    # Remove when wheel issue is fixed with conda installations of python 3.7.4
+    if [[ "$PYTHON_VERSION" == "*" ]]; then
+        PINNED_PYTHON_VERSION="3.7.3"
+    else
+        PINNED_PYTHON_VERSION=$PYTHON_VERSION
+    fi
+
+    TO_INSTALL="python=$PINNED_PYTHON_VERSION pip pytest=$PYTEST_VERSION \
+                pytest-cov numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
                 cython=$CYTHON_VERSION joblib=$JOBLIB_VERSION"
 
     if [[ "$INSTALL_MKL" == "true" ]]; then
@@ -51,11 +68,19 @@ if [[ "$DISTRIB" == "conda" ]]; then
         TO_INSTALL="$TO_INSTALL matplotlib=$MATPLOTLIB_VERSION"
     fi
 
-    if [[ "$PYTHON_VERSION" == "*" ]]; then
-        TO_INSTALL="$TO_INSTALL pytest-xdist"
+    # Old packages coming from the 'free' conda channel have been removed but
+    # we are using them for testing Python 3.5. See
+    # https://www.anaconda.com/why-we-removed-the-free-channel-in-conda-4-7/
+    # for more details. restore_free_channel is defined starting from conda 4.7
+    conda_version=$(conda -V | awk '{print $2}')
+    if version_ge "$conda_version" "4.7.0" && [[ "$PYTHON_VERSION" == "3.5" ]]; then
+        conda config --set restore_free_channel true
     fi
 
 	make_conda $TO_INSTALL
+    if [[ "$PYTHON_VERSION" == "*" ]]; then
+        pip install pytest-xdist
+    fi
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     sudo add-apt-repository --remove ppa:ubuntu-toolchain-r/test
@@ -76,7 +101,11 @@ if [[ "$COVERAGE" == "true" ]]; then
 fi
 
 if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
-    python -m pip install sphinx numpydoc  # numpydoc requires sphinx
+    # numpydoc requires sphinx
+    # FIXME: until jinja2 2.10.2 is released with a fix the import station for
+    # collections.abc so as to not raise a spurious deprecation warning
+    python -m pip install sphinx==2.1.2
+    python -m pip install numpydoc
 fi
 
 python --version
@@ -90,4 +119,5 @@ except ImportError:
     print('pandas not installed')
 "
 pip list
+python setup.py build_ext --inplace -j 3
 python setup.py develop

@@ -20,7 +20,9 @@ jobs:
         INSTALL_MKL: 'false'
         NUMPY_VERSION: '1.11.0'
         SCIPY_VERSION: '0.17.0'
+        PANDAS_VERSION: '*'
         CYTHON_VERSION: '*'
+        PYTEST_VERSION: '*'
         PILLOW_VERSION: '4.0.0'
         MATPLOTLIB_VERSION: '1.5.1'
         # later version of joblib are not packaged in conda for Python 3.5
@@ -70,7 +72,7 @@ jobs:
         SCIPY_VERSION: '*'
         CYTHON_VERSION: '*'
         PILLOW_VERSION: '*'
-        PYTEST_VERSION: '4.6.2'
+        PYTEST_VERSION: '*'
         JOBLIB_VERSION: '*'
         COVERAGE: 'true'
 
@@ -83,7 +85,7 @@ jobs:
         PYTHON_VERSION: '3.7'
         CHECK_WARNINGS: 'true'
         PYTHON_ARCH: '64'
-        PYTEST_VERSION: '4.6.2'
+        PYTEST_VERSION: '*'
         COVERAGE: 'true'
       py35_pip_openblas_32bit:
         PYTHON_VERSION: '3.5'
