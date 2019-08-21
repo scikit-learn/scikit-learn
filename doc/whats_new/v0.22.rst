@@ -218,6 +218,10 @@ Changelog
   plot model scalability (see learning_curve example).
   :pr:`13938` by :user:`Hadrien Reboul <H4dr1en>`.
 
+- |Enhancement| A new cross-validation iterator
+  :class:`model_selection.BinnedStratifiedKFold` for stratifying in the regression
+  setting was added. :pr:`14560` by :user:`Zech Xu<RNAer>` and `Andreas Müller`_.
+
 :mod:`sklearn.pipeline`
 .......................
 
