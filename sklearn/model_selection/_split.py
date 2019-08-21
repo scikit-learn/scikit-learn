@@ -623,8 +623,13 @@ class StratifiedKFold(_BaseKFold):
                     allowed_target_types, type_of_target_y))
 
         y = column_or_1d(y)
-        unique_y, y_encoded = np.unique(y, return_inverse=True)
-        n_classes = len(unique_y)
+
+        # the encoding is numeric, with 0 being the first label appearing in y,
+        # 1 the second, etc.
+        _, y_idx, y_inv = np.unique(y, return_index=True, return_inverse=True)
+        y_encoded = np.argsort(y_idx)[y_inv]
+
+        n_classes = len(y_idx)
         y_counts = np.bincount(y_encoded)
         min_groups = np.min(y_counts)
         if np.all(self.n_splits > y_counts):
