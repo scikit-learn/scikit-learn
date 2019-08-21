@@ -225,7 +225,7 @@ def _determine_key_type(key):
 
     Returns
     -------
-    dtype : {'int', 'str', 'bool'}
+    dtype : {'int', 'str', 'bool', None}
         Returns the data type of key.
     """
     err_msg = ("No valid specification of the columns. Only a scalar, list or "
@@ -261,8 +261,7 @@ def _determine_key_type(key):
             return None
         if len(set_type) != 1:
             raise ValueError(err_msg)
-        set_type, = set_type
-        return set_type
+        return set_type.pop()
     if hasattr(key, 'dtype'):
         try:
             return array_dtype_to_str[key.dtype.kind]
