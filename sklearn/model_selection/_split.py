@@ -624,9 +624,10 @@ class StratifiedKFold(_BaseKFold):
 
         y = column_or_1d(y)
 
-        # the encoding is numeric, with 0 being the first label appearing in y,
-        # 1 the second, etc.
         _, y_idx, y_inv = np.unique(y, return_index=True, return_inverse=True)
+        # y_inv encodes y according to lexicographic order. We invert y_idx to
+        # map the classes so that they are encoded by order of appearance:
+        # 0 represents the first label appearing in y, 1 the second, etc.
         _, class_perm = np.unique(y_idx, return_inverse=True)
         y_encoded = class_perm[y_inv]
 
@@ -642,17 +643,26 @@ class StratifiedKFold(_BaseKFold):
                            " members, which is less than n_splits=%d."
                            % (min_groups, self.n_splits)), UserWarning)
 
+        # Determine the optimal number of samples from each class in each fold,
+        # using round robin over the sorted y. (This can be done direct from
+        # counts, but that code is unreadable.)
         y_order = np.sort(y_encoded, kind='mergesort')
         allocation = np.asarray(
             [np.bincount(y_order[i::self.n_splits], minlength=n_classes)
              for i in range(self.n_splits)])
 
+        # To maintain the data order dependencies as best as possible within
+        # the stratification constraint, we assign samples from each class in
+        # blocks (and then mess that up when shuffle=True).
         test_folds = np.empty(len(y), dtype='i')
-        for i in range(n_classes):
-            folds_for_class = np.arange(self.n_splits).repeat(allocation[:, i])
+        for k in range(n_classes):
+            # since the kth column of allocation stores the number of samples
+            # of class k in each test set, this generates blocks of fold
+            # indices corresponding to the allocation for class k.
+            folds_for_class = np.arange(self.n_splits).repeat(allocation[:, k])
             if self.shuffle:
                 rng.shuffle(folds_for_class)
-            test_folds[y_encoded == i] = folds_for_class
+            test_folds[y_encoded == k] = folds_for_class
         return test_folds
 
     def _iter_test_masks(self, X, y=None, groups=None):
