@@ -248,6 +248,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     (X_binned_small_train,
                      y_small_train) = self._get_small_trainset(
                         X_binned_train, y_train, self._small_trainset_seed)
+
                     self._check_early_stopping_scorer(
                         X_binned_small_train, y_small_train,
                         X_binned_val, y_val,
