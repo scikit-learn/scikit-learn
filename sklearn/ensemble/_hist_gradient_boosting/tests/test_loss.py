@@ -7,8 +7,8 @@ from sklearn.utils.fixes import sp_version
 import pytest
 
 from sklearn.ensemble._hist_gradient_boosting.loss import _LOSSES
-from sklearn.ensemble._hist_gradient_boosting.types import Y_DTYPE
-from sklearn.ensemble._hist_gradient_boosting.types import G_H_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.common import Y_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
 
 
 def get_derivatives_helper(loss):

@@ -3,11 +3,11 @@ Test the ColumnTransformer.
 """
 import re
 
+import warnings
 import numpy as np
 from scipy import sparse
 import pytest
 
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose_dense_sparse
@@ -498,7 +498,10 @@ def test_column_transformer_invalid_columns(remainder):
     ct = ColumnTransformer([('trans', Trans(), col)], remainder=remainder)
     ct.fit(X_array)
     X_array_more = np.array([[0, 1, 2], [2, 4, 6], [3, 6, 9]]).T
-    ct.transform(X_array_more)  # Should accept added columns
+    msg = ("Given feature/column names or counts do not match the ones for "
+           "the data given during fit.")
+    with pytest.warns(DeprecationWarning, match=msg):
+        ct.transform(X_array_more)  # Should accept added columns, for now
     X_array_fewer = np.array([[0, 1, 2], ]).T
     err_msg = 'Number of features'
     with pytest.raises(ValueError, match=err_msg):
@@ -644,7 +647,8 @@ def test_column_transformer_get_feature_names():
     X_array = np.array([[0., 1., 2.], [2., 4., 6.]]).T
     ct = ColumnTransformer([('trans', Trans(), [0, 1])])
     # raise correct error when not fitted
-    assert_raises(NotFittedError, ct.get_feature_names)
+    with pytest.raises(NotFittedError):
+        ct.get_feature_names()
     # raise correct error when no feature names are available
     ct.fit(X_array)
     assert_raise_message(AttributeError,
@@ -1096,19 +1100,72 @@ def test_column_transformer_reordered_column_names_remainder(explicit_colname):
 
     tf.fit(X_fit_df)
     err_msg = 'Column ordering must be equal'
+    warn_msg = ("Given feature/column names or counts do not match the ones "
+                "for the data given during fit.")
     with pytest.raises(ValueError, match=err_msg):
         tf.transform(X_trans_df)
 
     # No error for added columns if ordering is identical
     X_extended_df = X_fit_df.copy()
     X_extended_df['third'] = [3, 6, 9]
-    tf.transform(X_extended_df)  # No error should be raised
+    with pytest.warns(DeprecationWarning, match=warn_msg):
+        tf.transform(X_extended_df)  # No error should be raised, for now
 
     # No 'columns' AttributeError when transform input is a numpy array
     X_array = X_fit_array.copy()
     err_msg = 'Specifying the columns'
     with pytest.raises(ValueError, match=err_msg):
         tf.transform(X_array)
+
+
+def test_feature_name_validation():
+    """Tests if the proper warning/error is raised if the columns do not match
+    during fit and transform."""
+    pd = pytest.importorskip("pandas")
+
+    X = np.ones(shape=(3, 2))
+    X_extra = np.ones(shape=(3, 3))
+    df = pd.DataFrame(X, columns=['a', 'b'])
+    df_extra = pd.DataFrame(X_extra, columns=['a', 'b', 'c'])
+
+    tf = ColumnTransformer([('bycol', Trans(), ['a', 'b'])])
+    tf.fit(df)
+
+    msg = ("Given feature/column names or counts do not match the ones for "
+           "the data given during fit.")
+    with pytest.warns(DeprecationWarning, match=msg):
+        tf.transform(df_extra)
+
+    tf = ColumnTransformer([('bycol', Trans(), [0])])
+    tf.fit(df)
+
+    with pytest.warns(DeprecationWarning, match=msg):
+        tf.transform(X_extra)
+
+    with warnings.catch_warnings(record=True) as warns:
+        tf.transform(X)
+    assert not warns
+
+    tf = ColumnTransformer([('bycol', Trans(), ['a'])],
+                           remainder=Trans())
+    tf.fit(df)
+    with pytest.warns(DeprecationWarning, match=msg):
+        tf.transform(df_extra)
+
+    tf = ColumnTransformer([('bycol', Trans(), [0, -1])])
+    tf.fit(df)
+    msg = "At least one negative column was used to"
+    with pytest.raises(RuntimeError, match=msg):
+        tf.transform(df_extra)
+
+    tf = ColumnTransformer([('bycol', Trans(), slice(-1, -3, -1))])
+    tf.fit(df)
+    with pytest.raises(RuntimeError, match=msg):
+        tf.transform(df_extra)
+
+    with warnings.catch_warnings(record=True) as warns:
+        tf.transform(df)
+    assert not warns
 
 
 @pytest.mark.parametrize("array_type", [np.asarray, sparse.csr_matrix])

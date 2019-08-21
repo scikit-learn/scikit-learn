@@ -267,6 +267,26 @@ def _yield_all_checks(name, estimator):
     yield check_dict_unchanged
     yield check_dont_overwrite_parameters
     yield check_fit_idempotent
+    if tags["requires_positive_X"]:
+        yield check_fit_non_negative
+
+
+def _construct_instance(Estimator):
+    """Construct Estimator instance if possible"""
+    required_parameters = getattr(Estimator, "_required_parameters", [])
+    if len(required_parameters):
+        if required_parameters in (["estimator"], ["base_estimator"]):
+            if issubclass(Estimator, RegressorMixin):
+                estimator = Estimator(Ridge())
+            else:
+                estimator = Estimator(LinearDiscriminantAnalysis())
+        else:
+            raise SkipTest("Can't instantiate estimator {} which requires "
+                           "parameters {}".format(Estimator.__name__,
+                                                  required_parameters))
+    else:
+        estimator = Estimator()
+    return estimator
 
 
 def check_estimator(Estimator):
@@ -291,8 +311,8 @@ def check_estimator(Estimator):
     if isinstance(Estimator, type):
         # got a class
         name = Estimator.__name__
-        estimator = Estimator()
         check_parameters_default_constructible(name, Estimator)
+        estimator = _construct_instance(Estimator)
     else:
         # got an instance
         estimator = Estimator
@@ -310,8 +330,7 @@ def check_estimator(Estimator):
 def _boston_subset(n_samples=200):
     global BOSTON
     if BOSTON is None:
-        boston = load_boston()
-        X, y = boston.data, boston.target
+        X, y = load_boston(return_X_y=True)
         X, y = shuffle(X, y, random_state=0)
         X, y = X[:n_samples], y[:n_samples]
         X = StandardScaler().fit_transform(X)
@@ -2184,19 +2203,7 @@ def check_parameters_default_constructible(name, Estimator):
     # test default-constructibility
     # get rid of deprecation warnings
     with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
-        required_parameters = getattr(Estimator, "_required_parameters", [])
-        if required_parameters:
-            if required_parameters in (["base_estimator"], ["estimator"]):
-                if issubclass(Estimator, RegressorMixin):
-                    estimator = Estimator(Ridge())
-                else:
-                    estimator = Estimator(LinearDiscriminantAnalysis())
-            else:
-                raise SkipTest("Can't instantiate estimator {} which"
-                               " requires parameters {}".format(
-                                   name, required_parameters))
-        else:
-            estimator = Estimator()
+        estimator = _construct_instance(Estimator)
         # test cloning
         clone(estimator)
         # test __repr__
@@ -2228,9 +2235,9 @@ def check_parameters_default_constructible(name, Estimator):
             # true for mixins
             return
         params = estimator.get_params()
-        if required_parameters == ["estimator"]:
-            # they can need a non-default argument
-            init_params = init_params[1:]
+        # they can need a non-default argument
+        init_params = init_params[len(getattr(
+            estimator, '_required_parameters', [])):]
 
         for init_param in init_params:
             assert init_param.default != init_param.empty, (
@@ -2402,8 +2409,7 @@ def check_set_params(name, estimator_orig):
 def check_classifiers_regression_target(name, estimator_orig):
     # Check if classifier throws an exception when fed regression targets
 
-    boston = load_boston()
-    X, y = boston.data, boston.target
+    X, y = load_boston(return_X_y=True)
     e = clone(estimator_orig)
     msg = 'Unknown label type: '
     if not _safe_tags(e, "no_validation"):
@@ -2478,6 +2484,16 @@ def check_outliers_fit_predict(name, estimator_orig):
         for contamination in [-0.5, 2.3]:
             estimator.set_params(contamination=contamination)
             assert_raises(ValueError, estimator.fit_predict, X)
+
+
+def check_fit_non_negative(name, estimator_orig):
+    # Check that proper warning is raised for non-negative X
+    # when tag requires_positive_X is present
+    X = np.array([[-1., 1], [-1., 1]])
+    y = np.array([1, 2])
+    estimator = clone(estimator_orig)
+    assert_raises_regex(ValueError, "Negative values in data passed to",
+                        estimator.fit, X, y)
 
 
 def check_fit_idempotent(name, estimator_orig):

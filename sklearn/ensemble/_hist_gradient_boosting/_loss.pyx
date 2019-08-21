@@ -12,8 +12,8 @@ cimport numpy as np
 
 from libc.math cimport exp
 
-from .types cimport Y_DTYPE_C
-from .types cimport G_H_DTYPE_C
+from .common cimport Y_DTYPE_C
+from .common cimport G_H_DTYPE_C
 
 
 def _update_gradients_least_squares(

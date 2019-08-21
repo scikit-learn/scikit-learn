@@ -20,6 +20,7 @@ from . import check_random_state
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
+from .deprecation import deprecated
 
 
 def squared_norm(x):
@@ -602,10 +603,14 @@ def softmax(X, copy=True):
     return X
 
 
+@deprecated("safe_min is deprecated in version 0.22 and will be removed "
+            "in version 0.24.")
 def safe_min(X):
     """Returns the minimum value of a dense or a CSR/CSC matrix.
 
     Adapated from https://stackoverflow.com/q/13426580
+
+    .. deprecated:: 0.22.0
 
     Parameters
     ----------
@@ -646,7 +651,7 @@ def make_nonnegative(X, min_value=0):
     ValueError
         When X is sparse
     """
-    min_ = safe_min(X)
+    min_ = X.min()
     if min_ < min_value:
         if sparse.issparse(X):
             raise ValueError("Cannot make the data matrix"

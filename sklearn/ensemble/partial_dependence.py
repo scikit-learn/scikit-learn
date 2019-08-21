@@ -138,7 +138,7 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
     """
     if not isinstance(gbrt, BaseGradientBoosting):
         raise ValueError('gbrt has to be an instance of BaseGradientBoosting')
-    check_is_fitted(gbrt, 'estimators_')
+    check_is_fitted(gbrt)
     if (grid is None and X is None) or (grid is not None and X is not None):
         raise ValueError('Either grid or X must be specified')
 
@@ -270,7 +270,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
 
     if not isinstance(gbrt, BaseGradientBoosting):
         raise ValueError('gbrt has to be an instance of BaseGradientBoosting')
-    check_is_fitted(gbrt, 'estimators_')
+    check_is_fitted(gbrt)
 
     # set label_idx for multi-class GBRT
     if hasattr(gbrt, 'classes_') and np.size(gbrt.classes_) > 2:

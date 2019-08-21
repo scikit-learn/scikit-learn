@@ -9,8 +9,8 @@ from cython.parallel import prange
 
 from ...base import is_classifier
 from .binning import _BinMapper
-from .types cimport G_H_DTYPE_C
-from .types cimport Y_DTYPE_C
+from .common cimport G_H_DTYPE_C
+from .common cimport Y_DTYPE_C
 
 
 def get_equivalent_estimator(estimator, lib='lightgbm'):
