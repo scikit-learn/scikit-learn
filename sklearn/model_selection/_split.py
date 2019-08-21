@@ -601,8 +601,17 @@ class StratifiedKFold(_BaseKFold):
 
     Notes
     -----
-    Train and test sizes may be different in each fold, with a difference of at
-    most ``n_classes``.
+    The implementation is designed to:
+
+    * Generate test sets such that all contain the same distribution of
+      classes, or as close as possible.
+    * Be invariant to class label: relabelling ``y = ["Happy", "Sad"]`` to
+      ``y = [1, 0]`` should not change the indices generated.
+    * Generate test sets where the smallest and largest differ by at most one
+      sample.
+
+    .. versionchanged:: 0.22
+        The previous implementation did not follow the last constraint.
 
     See also
     --------
