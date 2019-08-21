@@ -11,6 +11,7 @@ import numpy as np
 from scipy import sparse
 from scipy.stats import rankdata
 import joblib
+import pytest
 
 from . import IS_PYPY
 from .testing import assert_raises, _get_args
@@ -635,6 +636,16 @@ def check_sample_weights_invariance(name, estimator_orig):
         y = np.array([1, 1, 1, 1, 2, 2, 2, 2,
                       1, 1, 1, 1, 2, 2, 2, 2], dtype=np.dtype('int'))
         y = enforce_estimator_tags_y(estimator1, y)
+
+        # sample weights greater than 1D raises ValueError
+        sample_weight = [[1, 2]]
+        with pytest.raises(ValueError):
+            estimator2.fit(X, y, sample_weight=sample_weight)
+
+        # sample wight with few samples than X raises ValueError
+        sample_weight = [[1, 1]]
+        with pytest.raises(ValueError):
+            estimator2.fit(X, y, sample_weight=sample_weight)
 
         estimator1.fit(X, y=y, sample_weight=np.ones(shape=len(y)))
         estimator2.fit(X, y=y, sample_weight=None)

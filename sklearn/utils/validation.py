@@ -1025,23 +1025,18 @@ def _check_sample_weight(sample_weight, X, dtype=None):
     """
     n_samples = _num_samples(X)
 
-    if dtype is  None:
-        dtype = [np.float64, np.float32]
-    elif dtype not in [np.float32, np.float64]:
+    if dtype not in [np.float32, np.float64]:
         dtype = np.float64
 
-    if sample_weight is None:
-        sample_weight = np.ones(n_samples, dtype=dtype)
-    elif isinstance(sample_weight, numbers.Number):
-        sample_weight = np.full(n_samples, sample_weight,
+    if sample_weight is None or isinstance(sample_weight, numbers.Number):
+        if sample_weight is None:
+            sample_weight = np.ones(n_samples, dtype=dtype)
+        elif isinstance(sample_weight, numbers.Number):
+            sample_weight = np.full(n_samples, sample_weight,
                                     dtype=dtype)
-    else:
-        try:
-            sample_weight = np.array(sample_weight, dtype=dtype)
-        except ValueError as e:
-            e.args = e.args[0] + ". sample weights must a scalar or" \
-                              " a 1D array numeric types"
-            raise
+        return sample_weight
+
+    sample_weight = np.array(sample_weight, dtype=dtype)
 
     if sample_weight.ndim != 1:
         raise ValueError("Sample weights must be 1D array or scalar")
