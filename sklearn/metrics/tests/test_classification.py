@@ -13,7 +13,6 @@ from sklearn import svm
 from sklearn.datasets import make_multilabel_classification
 from sklearn.preprocessing import label_binarize, LabelBinarizer
 from sklearn.utils.validation import check_random_state
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -249,10 +248,12 @@ def test_precision_recall_f_extra_labels():
     # Error when introducing invalid label in multilabel case
     # (although it would only affect performance if average='macro'/None)
     for average in [None, 'macro', 'micro', 'samples']:
-        assert_raises(ValueError, recall_score, y_true_bin, y_pred_bin,
-                      labels=np.arange(6), average=average)
-        assert_raises(ValueError, recall_score, y_true_bin, y_pred_bin,
-                      labels=np.arange(-1, 4), average=average)
+        with pytest.raises(ValueError):
+            recall_score(y_true_bin, y_pred_bin, labels=np.arange(6),
+                         average=average)
+        with pytest.raises(ValueError):
+            recall_score(y_true_bin, y_pred_bin, labels=np.arange(-1, 4),
+                         average=average)
 
     # tests non-regression on issue #10307
     y_true = np.array([[0, 1, 1], [1, 0, 0]])
@@ -330,16 +331,19 @@ def test_precision_recall_fscore_support_errors():
     y_true, y_pred, _ = make_prediction(binary=True)
 
     # Bad beta
-    assert_raises(ValueError, precision_recall_fscore_support,
-                  y_true, y_pred, beta=-0.1)
+    with pytest.raises(ValueError):
+        precision_recall_fscore_support(y_true, y_pred, beta=-0.1)
 
     # Bad pos_label
-    assert_raises(ValueError, precision_recall_fscore_support,
-                  y_true, y_pred, pos_label=2, average='binary')
+    with pytest.raises(ValueError):
+        precision_recall_fscore_support(y_true, y_pred,
+                                        pos_label=2,
+                                        average='binary')
 
     # Bad average option
-    assert_raises(ValueError, precision_recall_fscore_support,
-                  [0, 1, 2], [1, 2, 0], average='mega')
+    with pytest.raises(ValueError):
+        precision_recall_fscore_support([0, 1, 2], [1, 2, 0],
+                                        average='mega')
 
 
 def test_precision_recall_f_unused_pos_label():
@@ -621,8 +625,9 @@ def test_matthews_corrcoef():
     mask = [1] * 10 + [0] * 10
     # Now the first half of the vector elements are alone given a weight of 1
     # and hence the mcc will not be a perfect 0 as in the previous case
-    assert_raises(AssertionError, assert_almost_equal,
-                  matthews_corrcoef(y_1, y_2, sample_weight=mask), 0.)
+    with pytest.raises(AssertionError):
+        assert_almost_equal(matthews_corrcoef(y_1, y_2,
+                                              sample_weight=mask), 0.)
 
 
 def test_matthews_corrcoef_multiclass():
@@ -754,12 +759,14 @@ def test_precision_recall_f1_score_multiclass():
     fs = f1_score(y_true, y_pred, average='weighted')
     assert_array_almost_equal(fs, 0.47, 2)
 
-    assert_raises(ValueError, precision_score, y_true, y_pred,
-                  average="samples")
-    assert_raises(ValueError, recall_score, y_true, y_pred, average="samples")
-    assert_raises(ValueError, f1_score, y_true, y_pred, average="samples")
-    assert_raises(ValueError, fbeta_score, y_true, y_pred, average="samples",
-                  beta=0.5)
+    with pytest.raises(ValueError):
+        precision_score(y_true, y_pred, average="samples")
+    with pytest.raises(ValueError):
+        recall_score(y_true, y_pred, average="samples")
+    with pytest.raises(ValueError):
+        f1_score(y_true, y_pred, average="samples")
+    with pytest.raises(ValueError):
+        fbeta_score(y_true, y_pred, average="samples", beta=0.5)
 
     # same prediction but with and explicit label ordering
     p, r, f, s = precision_recall_fscore_support(
@@ -847,8 +854,9 @@ def test_confusion_matrix_multiclass_subset_labels():
                             [0, 0]])
 
     # check for exception when none of the specified labels are in y_true
-    assert_raises(ValueError, confusion_matrix, y_true, y_pred,
-                  labels=[extra_label, extra_label + 1])
+    with pytest.raises(ValueError):
+        confusion_matrix(y_true, y_pred,
+                         labels=[extra_label, extra_label + 1])
 
 
 def test_confusion_matrix_dtype():
@@ -1757,7 +1765,8 @@ def test__check_targets():
         except KeyError:
             expected = EXPECTED[type2, type1]
         if expected is None:
-            assert_raises(ValueError, _check_targets, y1, y2)
+            with pytest.raises(ValueError):
+                _check_targets(y1, y2)
 
             if type1 != type2:
                 assert_raise_message(
@@ -1781,7 +1790,8 @@ def test__check_targets():
             else:
                 assert_array_equal(y1out, np.squeeze(y1))
                 assert_array_equal(y2out, np.squeeze(y2))
-            assert_raises(ValueError, _check_targets, y1[:-1], y2)
+            with pytest.raises(ValueError):
+                _check_targets(y1[:-1], y2)
 
     # Make sure seq of seq is not supported
     y1 = [(1, 2,), (0, 2, 3)]
@@ -1928,7 +1938,8 @@ def test_log_loss():
     # raise error if number of classes are not equal.
     y_true = [1, 0, 2]
     y_pred = [[0.2, 0.7], [0.6, 0.5], [0.4, 0.1]]
-    assert_raises(ValueError, log_loss, y_true, y_pred)
+    with pytest.raises(ValueError):
+        log_loss(y_true, y_pred)
 
     # case when y_true is a string array object
     y_true = ["ham", "spam", "spam", "ham"]
@@ -1992,9 +2003,12 @@ def test_brier_score_loss():
                         true_score)
     assert_almost_equal(brier_score_loss(2 * y_true - 1, y_pred),
                         true_score)
-    assert_raises(ValueError, brier_score_loss, y_true, y_pred[1:])
-    assert_raises(ValueError, brier_score_loss, y_true, y_pred + 1.)
-    assert_raises(ValueError, brier_score_loss, y_true, y_pred - 1.)
+    with pytest.raises(ValueError):
+        brier_score_loss(y_true, y_pred[1:])
+    with pytest.raises(ValueError):
+        brier_score_loss(y_true, y_pred + 1.)
+    with pytest.raises(ValueError):
+        brier_score_loss(y_true, y_pred - 1.)
 
     # ensure to raise an error for multiclass y_true
     y_true = np.array([0, 1, 2, 0])
