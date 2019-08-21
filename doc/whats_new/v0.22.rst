@@ -23,8 +23,11 @@ random sampling procedures.
 - :class:`decomposition.SparseCoder` with `algorithm='lasso_lars'` |Fix|
 - :class:`decomposition.SparsePCA` where `normalize_components` has no effect
   due to deprecation.
-
 - :class:`linear_model.Ridge` when `X` is sparse. |Fix|
+- :class:`cluster.KMeans` when `n_jobs=1`. |Fix|
+- :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` |Fix|, |Feature|,
+  |Enhancement|.
 
 Details are listed in the changelog below.
 
@@ -44,6 +47,7 @@ Changelog
     Entries should end with:
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
+
 
 :mod:`sklearn.base`
 ...................
@@ -79,6 +83,10 @@ Changelog
   :func:`datasets.fetch_20newsgroups` and :func:`datasets.fetch_olivetti_faces`
   . :pr:`14259` by :user:`Sourav Singh <souravsingh>`.
 
+- |Fix| Fixed a bug in :func:`datasets.fetch_openml`, which failed to load
+  an OpenML dataset that contains an ignored feature.
+  :pr:`14623` by :user:`Sarra Habchi <HabchiSarra>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
@@ -105,23 +113,30 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
-- |Feature| :class:`ensemble.HistGradientBoostingClassifier` and
-  :class:`ensemble.HistGradientBoostingRegressor` have an additional
-  parameter called `warm_start` that enables warm starting. :pr:`14012` by
-  :user:`Johann Faouzi <johannfaouzi>`.
+- Many improvements were made to
+  :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor`:
 
-- |Fix| :class:`ensemble.HistGradientBoostingClassifier` and
-  :class:`ensemble.HistGradientBoostingRegressor` now bin the training and
-  validation data separately to avoid any data leak. :pr:`13933` by
-  `Nicolas Hug`_.
+  - |MajorFeature| Estimators now natively support dense data with missing
+    values both for training and predicting. They also support infinite
+    values. :pr:`13911` and :pr:`14406` by `Nicolas Hug`_, `Adrin Jalali`_
+    and `Olivier Grisel`_.
+  - |Feature| Estimators now have an additional `warm_start` parameter that
+    enables warm starting. :pr:`14012` by :user:`Johann Faouzi <johannfaouzi>`.
+  - |Enhancement| for :class:`ensemble.HistGradientBoostingClassifier` the
+    training loss or score is now monitored on a class-wise stratified
+    subsample to preserve the class balance of the original training set.
+    :pr:`14194` by :user:`Johann Faouzi <johannfaouzi>`.
+  - |Feature| :func:`inspection.partial_dependence` and
+    :func:`inspection.plot_partial_dependence` now support the fast 'recursion'
+    method for both estimators. :pr:`13769` by `Nicolas Hug`_.
+  - |Fix| Estimators now bin the training and validation data separately to
+    avoid any data leak. :pr:`13933` by `Nicolas Hug`_.
+
+  Note that pickles from 0.21 will not work in 0.22.
 
 - |Fix| :func:`ensemble.VotingClassifier.predict_proba` will no longer be
   present when `voting='hard'`. :pr:`14287` by `Thomas Fan`_.
-
-- |Enhancement| :class:`ensemble.HistGradientBoostingClassifier` the training
-  loss or score is now monitored on a class-wise stratified subsample to
-  preserve the class balance of the original training set. :pr:`14194`
-  by :user:`Johann Faouzi <johannfaouzi>`.
 
 - |Fix| Run by default
   :func:`utils.estimator_checks.check_estimator` on both
@@ -143,11 +158,16 @@ Changelog
   :pr:`14114` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.feature_extraction`
-.......................
+.................................
 
 - |Fix| Functions created by build_preprocessor and build_analyzer of
   :class:`feature_extraction.text.VectorizerMixin` can now be pickled.
   :pr:`14430` by :user:`Dillon Niederhut <deniederhut>`.
+
+- |API| Deprecated unused `copy` param for
+  :meth: `feature_extraction.text.TfidfVectorizer.transform` it will be
+  removed in v0.24. :pr:`14520` by
+  :user:`Guillem G. Subies <guillemgsubies>`.
 
 :mod:`sklearn.gaussian_process`
 ...............................
@@ -169,6 +189,12 @@ Changelog
 - |MajorFeature| :func:`inspection.permutation_importance` has been added to
   measure the importance of each feature in an arbitrary trained model with
   respect to a given scoring function. :issue:`13146` by `Thomas Fan`_.
+
+- |Feature| :func:`inspection.partial_dependence` and
+  :func:`inspection.plot_partial_dependence` now support the fast 'recursion'
+  method for :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor`. :pr:`13769` by
+  `Nicolas Hug`_.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -194,6 +220,15 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+- |Feature| New ranking metrics :func:`metrics.ndcg_score` and
+  :func:`metrics.dcg_score` have been added to compute Discounted Cumulative
+  Gain and Normalized Discounted Cumulative Gain. :pr:`9951` by :user:`Jérôme
+  Dockès <jeromedockes>`.
+
+- |MajorFeature| :func:`metrics.plot_roc_curve` has been added to plot roc
+  curves. This function introduces the visualization API described in
+  the :ref:`User Guide <visualizations>`. :pr:`14357` by `Thomas Fan`_.
+
 - |Feature| Added multiclass support to :func:`metrics.roc_auc_score`.
   :issue:`12789` by :user:`Kathy Chen <kathyxchen>`,
   :user:`Mohamed Maskani <maskani-moh>`, and :user:`Thomas Fan <thomasjpfan>`.
@@ -210,8 +245,22 @@ Changelog
   updated to accept the zero and `float('+inf')` value.
   :pr:`13231` by :user:`Dong-hee Na <corona10>`.
 
+- |Enhancement| Added parameter ``squared`` in :func:`metrics.mean_squared_error`
+  to return root mean squared error.
+  :pr:`13467` by :user:`Urvang Patel <urvang96>`.
+
+- |Enhancement| Allow computing averaged metrics in the case of no true positives.
+  :pr:`14595` by `Andreas Müller`_.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Raise a ValueError in :func:`metrics.silhouette_score` when a
+  precomputed distance matrix contains non-zero diagonal entries.
+  :pr:`12258` by :user:`Stephen Tierney <sjtrny>`.
+
 :mod:`sklearn.model_selection`
-...............................
+..............................
 
 - |Enhancement| :class:`model_selection.learning_curve` now accepts parameter
   ``return_times`` which can be used to retrieve computation times in order to
@@ -221,6 +270,15 @@ Changelog
 - |Enhancement| A new cross-validation iterator
   :class:`model_selection.BinnedStratifiedKFold` for stratifying in the regression
   setting was added. :pr:`14560` by :user:`Zech Xu<RNAer>` and `Andreas Müller`_.
+
+- |Enhancement| :class:`model_selection.RandomizedSearchCV` now accepts lists
+  of parameter distributions. :pr:`14549` by `Andreas Müller`_.
+
+:mod:`sklearn.multioutput`
+..........................
+
+- |Fix| :class:`multioutput.MultiOutputClassifier` now has attribute
+  ``classes_``. :pr:`14629` by :user:`Agamemnon Krasoulis <agamemnonc>`.
 
 :mod:`sklearn.pipeline`
 .......................
@@ -241,6 +299,21 @@ Changelog
 - |Enhancement| SVM now throws more specific error when fit on non-square data
   and kernel = precomputed.  :class:`svm.BaseLibSVM`
   :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
+  
+:mod:`sklearn.tree`
+...................
+
+- |Feature| Adds minimal cost complexity pruning, controlled by ``ccp_alpha``,
+  to :class:`tree.DecisionTreeClassifier`, :class:`tree.DecisionTreeRegressor`,
+  :class:`tree.ExtraTreeClassifier`, :class:`tree.ExtraTreeRegressor`,
+  :class:`ensemble.RandomForestClassifier`, 
+  :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.ExtraTreesClassifier`, 
+  :class:`ensemble.ExtraTreesRegressor`,
+  :class:`ensemble.RandomTreesEmbedding`, 
+  :class:`ensemble.GradientBoostingClassifier`, 
+  and :class:`ensemble.GradientBoostingRegressor`.
+  :pr:`12887` by `Thomas Fan`_.
 
 :mod:`sklearn.preprocessing`
 ............................
@@ -263,12 +336,17 @@ Changelog
   match `spectral_clustering`.
   :pr:`13726` by :user:`Shuzhe Xiao <fdas3213>`.
 
+- |Fix| Fixed a bug where :class:`cluster.KMeans` produced inconsistent results
+  between `n_jobs=1` and `n_jobs>1` due to the handling of the random state.
+  :pr:`9288` by :user:`Bryan Yang <bryanyang0528>`.
+
 :mod:`sklearn.feature_selection`
 ................................
+
 - |Fix| Fixed a bug where :class:`VarianceThreshold` with `threshold=0` did not
   remove constant features due to numerical instability, by using range
   rather than variance in this case.
-  :pr:`13704` by `Roddy MacSween <rlms>`.
+  :pr:`13704` by :user:`Roddy MacSween <rlms>`.
 
 :mod:`sklearn.utils`
 ....................
@@ -276,10 +354,25 @@ Changelog
 - |Enhancement| :func:`utils.safe_indexing` accepts an ``axis`` parameter to
   index array-like across rows and columns. The column indexing can be done on
   NumPy array, SciPy sparse matrix, and Pandas DataFrame.
-  :pr:`14035` by `Guillaume Lemaitre <glemaitre>`.
+  :pr:`14035` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |API| `requires_positive_X` estimator tag (for models that require
+  X to be non-negative) is now used by `check_estimator` to make sure
+  a proper error message is raised if X contains some negative entries.
+  :pr:`14680` by :user:`Alex Gramfort <agramfort>`.
 
 :mod:`sklearn.neighbors`
-.............................
+....................
+
+- |Feature| :class:`neighbors.RadiusNeighborsClassifier` now supports
+  predicting probabilities by using `predict_proba` and supports more
+  outlier_label options: 'most_frequent', or different outlier_labels
+  for multi-outputs.
+  :pr:`9597` by :user:`Wenbo Zhao <webber26232>`.
+
+- |Efficiency| Efficiency improvements for
+  :func:`neighbors.RadiusNeighborsClassifier.predict`.
+  :pr:`9597` by :user:`Wenbo Zhao <webber26232>`.
 
 - |Fix| KNearestRegressor now throws error when fit on non-square data and
   metric = precomputed.  :class:`neighbors.NeighborsBase`
