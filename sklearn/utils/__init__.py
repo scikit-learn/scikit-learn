@@ -199,8 +199,8 @@ def _pandas_indexing(X, key, key_dtype, axis):
         key = np.asarray(key)
         key = key if key.flags.writeable else key.copy()
     # check whether we should index with loc or iloc
-    indexer = 'iloc' if key_dtype == 'int' else 'loc'
-    return (getattr(X, indexer)[:, key] if axis else getattr(X, indexer)[key])
+    indexer = X.iloc if key_dtype == 'int' else X.loc
+    return indexer[:, key] if axis else indexer[key]
 
 
 def _list_indexing(X, key, key_dtype):
