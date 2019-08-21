@@ -13,7 +13,8 @@ from sklearn.utils.testing import (assert_raises_regex,
                                    ignore_warnings,
                                    assert_warns, assert_raises,
                                    SkipTest)
-from sklearn.utils.estimator_checks import check_estimator
+from sklearn.utils.estimator_checks import check_estimator, \
+    enforce_estimator_tags_X
 from sklearn.utils.estimator_checks \
     import check_class_weight_balanced_linear_classifier
 from sklearn.utils.estimator_checks import set_random_state
@@ -557,6 +558,25 @@ def test_check_class_weight_balanced_linear_classifier():
                         'estimator_name',
                         BadBalancedWeightsClassifier)
 
+def test_enforce_estimator_tags_X():
+    class EstimatorWithPositiveX(BaseEstimator):
+
+        def _more_tags(self):
+            return {"requires_positive_X": True}
+
+    class EstimatorWithoutPositiveX(BaseEstimator):
+
+        def _more_tags(self):
+            return {"requires_positive_X": False}
+
+    random_state = np.random.RandomState(42)
+    X = random_state.randn(30, 5)
+    X_enforced = enforce_estimator_tags_X(EstimatorWithPositiveX(), X)
+    assert np.all(X_enforced > 0)
+
+    X_enforced = enforce_estimator_tags_X(EstimatorWithoutPositiveX(), X)
+    assert len(np.where(X_enforced < 0)) > 0
+    assert len(np.where(X_enforced > 0)) > 0
 
 if __name__ == '__main__':
     # This module is run as a script to check that we have no dependency on
