@@ -264,4 +264,4 @@ def test_nystroem_precomputed_kernel():
     K = polynomial_kernel(X, degree=2, coef0=.1)
     nystroem = Nystroem(kernel='precomputed', n_components=X.shape[0])
     X_transformed = nystroem.fit_transform(K)
-    assert_array_equal(np.dot(X_transformed, X_transformed.T), K)
+    assert_array_almost_equal(np.dot(X_transformed, X_transformed.T), K)
