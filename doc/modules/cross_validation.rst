@@ -517,7 +517,7 @@ Here is a visualization of the cross-validation behavior. Note that
 validation that allows a finer control on the number of iterations and
 the proportion of samples on each side of the train / test split.
 
-Cross-validation iterators with stratification based on class labels.
+Cross-validation iterators with stratification based on targets
 ---------------------------------------------------------------------
 
 Some classification problems can exhibit a large imbalance in the distribution
@@ -531,8 +531,8 @@ Stratified k-fold
 ^^^^^^^^^^^^^^^^^
 
 :class:`StratifiedKFold` is a variation of *k-fold* which returns *stratified*
-folds: each set contains approximately the same percentage of samples of each
-target class as the complete set.
+folds for classification: each set contains approximately the same percentage
+of samples of each target class as the complete set.
 
 Example of stratified 3-fold cross-validation on a dataset with 10 samples from
 two slightly unbalanced classes::
@@ -557,6 +557,35 @@ Here is a visualization of the cross-validation behavior.
 
 :class:`RepeatedStratifiedKFold` can be used to repeat Stratified K-Fold n times
 with different randomization in each repetition.
+
+Binned Stratified k-fold
+^^^^^^^^^^^^^^^^^^^^^^^^
+:class:`BinnedStratifiedKFold` is a variant of *k-fold* which returns *stratified*
+fold for regression. Similarly to :class:`StratifiedKFold`, the goal is to make
+sure that the distribution of the target is similar within each fold. This
+is achieved by binning the target into ``n_bins`` using quantiles of the target.
+
+As is shown in the following example, without stratification or binning,
+there can be large differences between the target statistics in folds,
+in particular if the data was sorted in some way::
+
+  >>> from sklearn.model_selection import BinnedStratifiedKFold
+  >>> X = np.random.uniform(size=(15, 3))
+  >>> y = np.linspace(0, 1, 15)
+  >>> bskf = BinnedStratifiedKFold(n_splits=3)
+  >>> kf = KFold(n_splits=3)
+  >>> for train, test in bskf.split(X, y):
+  ...     print("stratified test-set mean y: {:.3f}".format(y[test].mean()))
+  stratified test-set mean y: 0.459
+  stratified test-set mean y: 0.500
+  stratified test-set mean y: 0.571
+
+  >>> for train, test in kf.split(X, y):
+  ...     print("standard test-set mean y: {:.3f}".format(y[test].mean()))
+  standard test-set mean y: 0.143
+  standard test-set mean y: 0.500
+  standard test-set mean y: 0.857
+
 
 
 Stratified Shuffle Split
