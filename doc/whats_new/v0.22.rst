@@ -197,6 +197,13 @@ Changelog
   and non-contiguous arrays and makes a conversion instead of failing.
   :pr:`14458` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.manifold`
+.......................
+- |Fix| Fixed a bug where :func:`manifold.spectral_embedding` (and therefore
+  :class:`manifold.SpectralEmedding` and `clustering.SpectralClustering`)
+  computed wrong eigenvalues with ``solver='amg'`` when
+  ``n_samples < 5 * n_components``. :pr:`14647` by `Andreas Müller`_.
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -228,9 +235,6 @@ Changelog
 - |Enhancement| Added parameter ``squared`` in :func:`metrics.mean_squared_error`
   to return root mean squared error.
   :pr:`13467` by :user:`Urvang Patel <urvang96>`.
-
-:mod:`sklearn.metrics`
-......................
 
 - |Fix| Raise a ValueError in :func:`metrics.silhouette_score` when a
   precomputed distance matrix contains non-zero diagonal entries.
