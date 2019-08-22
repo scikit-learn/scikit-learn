@@ -96,18 +96,18 @@ class BaseSGD(BaseEstimator, SparseCoefMixin, metaclass=ABCMeta):
         self.tol = tol
         # current tests expect init to do parameter validation
         # but we are not allowed to set attributes
-        self._validate_params(set_max_iter=False)
+        self._validate_params()
 
     def set_params(self, *args, **kwargs):
         super().set_params(*args, **kwargs)
-        self._validate_params(set_max_iter=False)
+        self._validate_params()
         return self
 
     @abstractmethod
     def fit(self, X, y):
         """Fit model."""
 
-    def _validate_params(self, set_max_iter=True, for_partial_fit=False):
+    def _validate_params(self, for_partial_fit=False):
         """Validate input params. """
         if not isinstance(self.shuffle, bool):
             raise ValueError("shuffle must be either True or False")
@@ -139,9 +139,6 @@ class BaseSGD(BaseEstimator, SparseCoefMixin, metaclass=ABCMeta):
 
         if self.loss not in self.loss_functions:
             raise ValueError("The loss %s is not supported. " % self.loss)
-
-        if not set_max_iter:
-            return
 
     def _get_loss_function(self, loss):
         """Get concrete ``LossFunction`` object for str ``loss``. """
