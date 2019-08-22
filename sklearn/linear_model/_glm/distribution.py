@@ -342,9 +342,9 @@ class TweedieDistribution(ExponentialDispersionModel):
 
         if p < 0:
             # 'Extreme stable', y any realy number, mu > 0
-            dev = 2 * (np.power(np.maximum(y, 0), 2-p)/((1-p) * (2-p)) -
-                       y * np.power(mu, 1-p)/(1-p) +
-                       np.power(mu, 2-p)/(2-p))
+            dev = 2 * (np.power(np.maximum(y, 0), 2-p) / ((1-p) * (2-p))
+                       - y * np.power(mu, 1-p) / (1-p)
+                       + np.power(mu, 2-p) / (2-p))
 
         elif p == 0:
             # Normal distribution, y and mu any real number
@@ -359,9 +359,9 @@ class TweedieDistribution(ExponentialDispersionModel):
             # Gamma distribution
             dev = 2 * (np.log(mu/y) + y/mu - 1)
         else:
-            dev = 2 * (np.power(y, 2-p)/((1-p) * (2-p)) -
-                       y * np.power(mu, 1-p)/(1-p) +
-                       np.power(mu, 2-p)/(2-p))
+            dev = 2 * (np.power(y, 2-p) / ((1-p) * (2-p))
+                       - y * np.power(mu, 1-p) / (1-p)
+                       + np.power(mu, 2-p) / (2-p))
         return dev
 
 

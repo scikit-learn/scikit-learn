@@ -181,9 +181,6 @@ print(df[df.ClaimAmount > 0].head())
 # events occuring with a constant rate in a given time interval (``Exposure``).
 # Here we model the frequency ``y = ClaimNb / Exposure``,
 # which is still a (scaled) Poisson distribution.
-#
-# A very important property of the Poisson distribution is its mean-variance
-# relation: The variance is proportional to the mean.
 
 df_train, df_test, X_train, X_test = train_test_split(df, X, random_state=2)
 
