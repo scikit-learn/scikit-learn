@@ -132,16 +132,16 @@ def test_early_stopping_classification(data, scoring, validation_fraction,
 
 @pytest.mark.parametrize('GradientBoosting, X, y', [
     (HistGradientBoostingClassifier, X_classification, y_classification),
-    (HistGradientBoostingClassifier, *make_classification(n_samples=1001)),
+    (HistGradientBoostingClassifier, *make_classification(n_samples=10001)),
     (HistGradientBoostingRegressor, X_regression, y_regression),
-    (HistGradientBoostingRegressor, *make_regression(n_samples=1001))
+    (HistGradientBoostingRegressor, *make_regression(n_samples=10001))
 ])
 def test_early_stopping_default(GradientBoosting, X, y):
     # Test that early stopping is enabled by default if and only if there
-    # are more than 1000 samples
+    # are more than 10000 samples
     gb = GradientBoosting(max_iter=200)
     gb.fit(X, y)
-    if X.shape[0] > 1000:
+    if X.shape[0] > 10000:
         assert gb.n_iter_ < gb.max_iter
     else:
         assert gb.n_iter_ == gb.max_iter

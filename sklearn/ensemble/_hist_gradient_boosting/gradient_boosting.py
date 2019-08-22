@@ -122,7 +122,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         self.loss_ = self._get_loss()
         if self.early_stopping == 'auto':
-            self.do_early_stopping_ = n_samples > 1000
+            self.do_early_stopping_ = n_samples > 10000
         else:
             self.do_early_stopping_ = self.early_stopping
 
@@ -666,12 +666,13 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
     l2_regularization : float, optional (default=0)
         The L2 regularization parameter. Use ``0`` for no regularization
         (default).
-    max_bins : int, optional (default=256)
-        The maximum number of bins to use. Before training, each feature of
-        the input array ``X`` is binned into at most ``max_bins`` bins, which
-        allows for a much faster training stage. Features with a small
-        number of unique values may use less than ``max_bins`` bins. Must be no
-        larger than 256.
+    max_bins : int, optional (default=255)
+        The maximum number of bins to use for non-missing values. Before
+        training, each feature of the input array `X` is binned into
+        integer-valued bins, which allows for a much faster training stage.
+        Features with a small number of unique values may use less than
+        ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
+        is always reserved for missing values. Must be no larger than 255.
     early_stopping : 'auto' or bool (default='auto')
         If 'auto', early stopping is enabled if the sample size is larger than
         1000. If True, early stopping is enabled, otherwise early stopping is
@@ -746,7 +747,7 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
 
     def __init__(self, loss='least_squares', learning_rate=0.1,
                  max_iter=100, max_leaf_nodes=31, max_depth=None,
-                 min_samples_leaf=20, l2_regularization=0., max_bins=256,
+                 min_samples_leaf=20, l2_regularization=0., max_bins=255,
                  early_stopping='auto', warm_start=False, scoring=None,
                  validation_fraction=0.1, n_iter_no_change=10, tol=1e-7,
                  verbose=0, random_state=None):
@@ -841,12 +842,13 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         since only very shallow trees would be built.
     l2_regularization : float, optional (default=0)
         The L2 regularization parameter. Use 0 for no regularization.
-    max_bins : int, optional (default=256)
-        The maximum number of bins to use. Before training, each feature of
-        the input array ``X`` is binned into at most ``max_bins`` bins, which
-        allows for a much faster training stage. Features with a small
-        number of unique values may use less than ``max_bins`` bins. Must be no
-        larger than 256.
+    max_bins : int, optional (default=255)
+        The maximum number of bins to use for non-missing values. Before
+        training, each feature of the input array `X` is binned into
+        integer-valued bins, which allows for a much faster training stage.
+        Features with a small number of unique values may use less than
+        ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
+        is always reserved for missing values. Must be no larger than 255.
     early_stopping : 'auto' or bool (default='auto')
         If 'auto', early stopping is enabled if the sample size is larger than
         1000. If True, early stopping is enabled, otherwise early stopping is
@@ -923,7 +925,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
 
     def __init__(self, loss='auto', learning_rate=0.1, max_iter=100,
                  max_leaf_nodes=31, max_depth=None, min_samples_leaf=20,
-                 l2_regularization=0., max_bins=256, early_stopping='auto',
+                 l2_regularization=0., max_bins=255, early_stopping='auto',
                  warm_start=False, scoring=None, validation_fraction=0.1,
                  n_iter_no_change=10, tol=1e-7, verbose=0, random_state=None):
         super(HistGradientBoostingClassifier, self).__init__(
