@@ -253,7 +253,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         Xt : numeric array-like or sparse matrix
             Data in the binned space.
         """
-        check_is_fitted(self, ["bin_edges_"])
+        check_is_fitted(self)
 
         Xt = check_array(X, copy=True, dtype=FLOAT_DTYPES)
         n_features = self.n_bins_.shape[0]
@@ -294,7 +294,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         Xinv : numeric array-like
             Data in the original feature space.
         """
-        check_is_fitted(self, ["bin_edges_"])
+        check_is_fitted(self)
 
         if 'onehot' in self.encode:
             Xt = self._encoder.inverse_transform(Xt)
