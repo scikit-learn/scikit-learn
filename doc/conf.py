@@ -15,6 +15,7 @@
 import sys
 import os
 import warnings
+import re
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory
@@ -247,12 +248,35 @@ intersphinx_mapping = {
     'joblib': ('https://joblib.readthedocs.io/en/latest/', None),
 }
 
+if 'dev' in version:
+    binder_branch = 'master'
+else:
+    match = re.match(r'^(\d+)\.(\d+)(?:\.\d+)?$', version)
+    if match is None:
+        raise ValueError(
+            'Ill-formed version: {!r}. Expected either '
+            "a version containing 'dev' "
+            'or a version like X.Y or X.Y.Z.'.format(version))
+
+    major, minor = match.groups()
+    binder_branch = '{}.{}.X'.format(major, minor)
+
 sphinx_gallery_conf = {
     'doc_module': 'sklearn',
     'backreferences_dir': os.path.join('modules', 'generated'),
     'show_memory': True,
     'reference_url': {
-        'sklearn': None}
+        'sklearn': None},
+    'examples_dirs': ['../examples'],
+    'gallery_dirs': ['auto_examples'],
+    'binder': {
+        'org': 'scikit-learn',
+        'repo': 'binder-examples',
+        'binderhub_url': 'https://mybinder.org',
+        'branch': binder_branch,
+        'dependencies': './binder/requirements.txt',
+        'use_jupyter_lab': True
+    }
 }
 
 

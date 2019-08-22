@@ -23,6 +23,7 @@ cdef packed struct node_struct:
     unsigned int count
     unsigned int feature_idx
     X_DTYPE_C threshold
+    unsigned char missing_go_to_left
     unsigned int left
     unsigned int right
     Y_DTYPE_C gain
