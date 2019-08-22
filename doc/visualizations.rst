@@ -70,6 +70,7 @@ Functions
 
 .. autosummary::
 
+   metrics.plot_precision_recall_curve
    metrics.plot_roc_curve
 
 
@@ -80,4 +81,5 @@ Display Objects
 
 .. autosummary::
 
+   metrics.PrecisionRecallDisplay
    metrics.RocCurveDisplay
