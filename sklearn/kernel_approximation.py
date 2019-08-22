@@ -198,6 +198,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         """
 
         X = check_array(X)
+        check_non_negative(X, "SkewedChi2Sampler (input X)")
         random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
         uniform = random_state.uniform(size=(n_features, self.n_components))
@@ -226,10 +227,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
 
         X = as_float_array(X, copy=True)
         X = check_array(X, copy=False)
-        if (X <= -self.skewedness).any():
-            raise ValueError("X may not contain entries smaller than"
-                             " -skewedness.")
-
+        check_non_negative(X, "SkewedChi2Sampler (input X)")
         X += self.skewedness
         np.log(X, X)
         projection = safe_sparse_dot(X, self.random_weights_)
@@ -239,7 +237,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         return projection
 
     def _more_tags(self):
-        return {'stateless': True}
+        return {'stateless': True, 'requires_positive_X': True}
 
 
 class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):

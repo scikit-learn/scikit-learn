@@ -2,6 +2,7 @@ import numpy as np
 from scipy.sparse import csr_matrix
 import pytest
 
+from sklearn.utils.estimator_checks import enforce_estimator_tags_X
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal, assert_raises
 
@@ -81,16 +82,19 @@ def test_additive_chi2_sampler():
 def test_skewed_chi2_sampler():
     # test that RBFSampler approximates kernel on random data
 
-    # compute exact kernel
     c = 0.03
-    # set on negative component but greater than c to ensure that the kernel
-    # approximation is valid on the group (-c; +\infty) endowed with the skewed
-    # multiplication.
-    Y[0, 0] = -c / 2.
+
+    # approximate kernel mapping
+    transform = SkewedChi2Sampler(skewedness=c, n_components=1000,
+                                  random_state=42)
+
+    # SkewedChi2Sampler is valid only on positive inputs
+    X_p = enforce_estimator_tags_X(transform, X)
+    Y_p = enforce_estimator_tags_X(transform, Y)
 
     # abbreviations for easier formula
-    X_c = (X + c)[:, np.newaxis, :]
-    Y_c = (Y + c)[np.newaxis, :, :]
+    X_c = (X_p + c)[:, np.newaxis, :]
+    Y_c = (Y_p + c)[np.newaxis, :, :]
 
     # we do it in log-space in the hope that it's more stable
     # this array is n_samples_x x n_samples_y big x n_features
@@ -99,11 +103,8 @@ def test_skewed_chi2_sampler():
     # reduce to n_samples_x x n_samples_y by summing over features in log-space
     kernel = np.exp(log_kernel.sum(axis=2))
 
-    # approximate kernel mapping
-    transform = SkewedChi2Sampler(skewedness=c, n_components=1000,
-                                  random_state=42)
-    X_trans = transform.fit_transform(X)
-    Y_trans = transform.transform(Y)
+    X_trans = transform.fit_transform(X_p)
+    Y_trans = transform.transform(Y_p)
 
     kernel_approx = np.dot(X_trans, Y_trans.T)
     assert_array_almost_equal(kernel, kernel_approx, 1)
@@ -111,11 +112,6 @@ def test_skewed_chi2_sampler():
         'NaNs found in the Gram matrix'
     assert np.isfinite(kernel_approx).all(), \
         'NaNs found in the approximate Gram matrix'
-
-    # test error is raised on when inputs contains values smaller than -c
-    Y_neg = Y.copy()
-    Y_neg[0, 0] = -c * 2.
-    assert_raises(ValueError, transform.transform, Y_neg)
 
 
 def test_rbf_sampler():
