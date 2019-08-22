@@ -704,7 +704,7 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
         is always reserved for missing values. Must be no larger than 255.
     early_stopping : 'auto' or bool (default='auto')
         If 'auto', early stopping is enabled if the sample size is larger than
-        1000. If True, early stopping is enabled, otherwise early stopping is
+        10000. If True, early stopping is enabled, otherwise early stopping is
         disabled.
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
@@ -888,7 +888,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         is always reserved for missing values. Must be no larger than 255.
     early_stopping : 'auto' or bool (default='auto')
         If 'auto', early stopping is enabled if the sample size is larger than
-        1000. If True, early stopping is enabled, otherwise early stopping is
+        10000. If True, early stopping is enabled, otherwise early stopping is
         disabled.
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
