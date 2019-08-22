@@ -115,7 +115,7 @@ def test_skewed_chi2_sampler():
 
     # test error is raised on when inputs contains negative values
     Y_neg = Y.copy()
-    Y_neg[0, 0] = -c * 2.
+    Y_neg[0, 0] = -42
     assert_raises(ValueError, transform.transform, Y_neg)
 
 
