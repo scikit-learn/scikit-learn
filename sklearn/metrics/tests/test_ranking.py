@@ -12,7 +12,6 @@ from sklearn.random_projection import sparse_random_matrix
 from sklearn.utils.validation import check_array, check_consistent_length
 from sklearn.utils.validation import check_random_state
 
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -226,7 +225,8 @@ def test_roc_curve_multi():
     # roc_curve not applicable for multi-class problems
     y_true, _, probas_pred = make_prediction(binary=False)
 
-    assert_raises(ValueError, roc_curve, y_true, probas_pred)
+    with pytest.raises(ValueError):
+        roc_curve(y_true, probas_pred)
 
 
 def test_roc_curve_confidence():
@@ -336,7 +336,8 @@ def test_roc_curve_toydata():
     # assert UndefinedMetricWarning because of no positive sample in y_true
     tpr, fpr, _ = assert_warns(UndefinedMetricWarning, roc_curve, y_true,
                                y_score)
-    assert_raises(ValueError, roc_auc_score, y_true, y_score)
+    with pytest.raises(ValueError):
+        roc_auc_score(y_true, y_score)
     assert_array_almost_equal(tpr, [0., 0.5, 1.])
     assert_array_almost_equal(fpr, [np.nan, np.nan, np.nan])
 
@@ -345,24 +346,27 @@ def test_roc_curve_toydata():
     # assert UndefinedMetricWarning because of no negative sample in y_true
     tpr, fpr, _ = assert_warns(UndefinedMetricWarning, roc_curve, y_true,
                                y_score)
-    assert_raises(ValueError, roc_auc_score, y_true, y_score)
+    with pytest.raises(ValueError):
+        roc_auc_score(y_true, y_score)
     assert_array_almost_equal(tpr, [np.nan, np.nan, np.nan])
     assert_array_almost_equal(fpr, [0., 0.5, 1.])
 
     # Multi-label classification task
     y_true = np.array([[0, 1], [0, 1]])
     y_score = np.array([[0, 1], [0, 1]])
-    assert_raises(ValueError, roc_auc_score, y_true, y_score, average="macro")
-    assert_raises(ValueError, roc_auc_score, y_true, y_score,
-                  average="weighted")
+    with pytest.raises(ValueError):
+        roc_auc_score(y_true, y_score, average="macro")
+    with pytest.raises(ValueError):
+        roc_auc_score(y_true, y_score, average="weighted")
     assert_almost_equal(roc_auc_score(y_true, y_score, average="samples"), 1.)
     assert_almost_equal(roc_auc_score(y_true, y_score, average="micro"), 1.)
 
     y_true = np.array([[0, 1], [0, 1]])
     y_score = np.array([[0, 1], [1, 0]])
-    assert_raises(ValueError, roc_auc_score, y_true, y_score, average="macro")
-    assert_raises(ValueError, roc_auc_score, y_true, y_score,
-                  average="weighted")
+    with pytest.raises(ValueError):
+        roc_auc_score(y_true, y_score, average="macro")
+    with pytest.raises(ValueError):
+        roc_auc_score(y_true, y_score, average="weighted")
     assert_almost_equal(roc_auc_score(y_true, y_score, average="samples"), 0.5)
     assert_almost_equal(roc_auc_score(y_true, y_score, average="micro"), 0.5)
 
@@ -431,10 +435,12 @@ def test_auc():
 
 def test_auc_errors():
     # Incompatible shapes
-    assert_raises(ValueError, auc, [0.0, 0.5, 1.0], [0.1, 0.2])
+    with pytest.raises(ValueError):
+        auc([0.0, 0.5, 1.0], [0.1, 0.2])
 
     # Too few x values
-    assert_raises(ValueError, auc, [0.0], [0.1])
+    with pytest.raises(ValueError):
+        auc([0.0], [0.1])
 
     # x is not in order
     x = [2, 1, 3, 4]
@@ -703,8 +709,8 @@ def _test_precision_recall_curve(y_true, probas_pred):
 
 def test_precision_recall_curve_errors():
     # Contains non-binary labels
-    assert_raises(ValueError, precision_recall_curve,
-                  [0, 1, 2], [[0.0], [1.0], [1.0]])
+    with pytest.raises(ValueError):
+        precision_recall_curve([0, 1, 2], [[0.0], [1.0], [1.0]])
 
 
 def test_precision_recall_curve_toydata():
@@ -755,8 +761,10 @@ def test_precision_recall_curve_toydata():
 
         y_true = [0, 0]
         y_score = [0.25, 0.75]
-        assert_raises(Exception, precision_recall_curve, y_true, y_score)
-        assert_raises(Exception, average_precision_score, y_true, y_score)
+        with pytest.raises(Exception):
+            precision_recall_curve(y_true, y_score)
+        with pytest.raises(Exception):
+            average_precision_score(y_true, y_score)
 
         y_true = [1, 1]
         y_score = [0.25, 0.75]
@@ -768,10 +776,10 @@ def test_precision_recall_curve_toydata():
         # Multi-label classification task
         y_true = np.array([[0, 1], [0, 1]])
         y_score = np.array([[0, 1], [0, 1]])
-        assert_raises(Exception, average_precision_score, y_true, y_score,
-                      average="macro")
-        assert_raises(Exception, average_precision_score, y_true, y_score,
-                      average="weighted")
+        with pytest.raises(Exception):
+            average_precision_score(y_true, y_score, average="macro")
+        with pytest.raises(Exception):
+            average_precision_score(y_true, y_score, average="weighted")
         assert_almost_equal(average_precision_score(y_true, y_score,
                             average="samples"), 1.)
         assert_almost_equal(average_precision_score(y_true, y_score,
@@ -779,10 +787,10 @@ def test_precision_recall_curve_toydata():
 
         y_true = np.array([[0, 1], [0, 1]])
         y_score = np.array([[0, 1], [1, 0]])
-        assert_raises(Exception, average_precision_score, y_true, y_score,
-                      average="macro")
-        assert_raises(Exception, average_precision_score, y_true, y_score,
-                      average="weighted")
+        with pytest.raises(Exception):
+            average_precision_score(y_true, y_score, average="macro")
+        with pytest.raises(Exception):
+            average_precision_score(y_true, y_score, average="weighted")
         assert_almost_equal(average_precision_score(y_true, y_score,
                             average="samples"), 0.75)
         assert_almost_equal(average_precision_score(y_true, y_score,
@@ -955,20 +963,28 @@ def check_zero_or_all_relevant_labels(lrap_score):
 
 def check_lrap_error_raised(lrap_score):
     # Raise value error if not appropriate format
-    assert_raises(ValueError, lrap_score,
-                  [0, 1, 0], [0.25, 0.3, 0.2])
-    assert_raises(ValueError, lrap_score, [0, 1, 2],
-                  [[0.25, 0.75, 0.0], [0.7, 0.3, 0.0], [0.8, 0.2, 0.0]])
-    assert_raises(ValueError, lrap_score, [(0), (1), (2)],
-                  [[0.25, 0.75, 0.0], [0.7, 0.3, 0.0], [0.8, 0.2, 0.0]])
+    with pytest.raises(ValueError):
+        lrap_score([0, 1, 0], [0.25, 0.3, 0.2])
+    with pytest.raises(ValueError):
+        lrap_score([0, 1, 2],
+                   [[0.25, 0.75, 0.0], [0.7, 0.3, 0.0], [0.8, 0.2, 0.0]])
+    with pytest.raises(ValueError):
+        lrap_score([(0), (1), (2)],
+                   [[0.25, 0.75, 0.0], [0.7, 0.3, 0.0], [0.8, 0.2, 0.0]])
 
     # Check that y_true.shape != y_score.shape raise the proper exception
-    assert_raises(ValueError, lrap_score, [[0, 1], [0, 1]], [0, 1])
-    assert_raises(ValueError, lrap_score, [[0, 1], [0, 1]], [[0, 1]])
-    assert_raises(ValueError, lrap_score, [[0, 1], [0, 1]], [[0], [1]])
-    assert_raises(ValueError, lrap_score, [[0, 1]], [[0, 1], [0, 1]])
-    assert_raises(ValueError, lrap_score, [[0], [1]], [[0, 1], [0, 1]])
-    assert_raises(ValueError, lrap_score, [[0, 1], [0, 1]], [[0], [1]])
+    with pytest.raises(ValueError):
+        lrap_score([[0, 1], [0, 1]], [0, 1])
+    with pytest.raises(ValueError):
+        lrap_score([[0, 1], [0, 1]], [[0, 1]])
+    with pytest.raises(ValueError):
+        lrap_score([[0, 1], [0, 1]], [[0], [1]])
+    with pytest.raises(ValueError):
+        lrap_score([[0, 1]], [[0, 1], [0, 1]])
+    with pytest.raises(ValueError):
+        lrap_score([[0], [1]], [[0, 1], [0, 1]])
+    with pytest.raises(ValueError):
+        lrap_score([[0, 1], [0, 1]], [[0], [1]])
 
 
 def check_lrap_only_ties(lrap_score):
@@ -1241,15 +1257,18 @@ def test_label_ranking_loss():
 
 def test_ranking_appropriate_input_shape():
     # Check that y_true.shape != y_score.shape raise the proper exception
-    assert_raises(ValueError, label_ranking_loss, [[0, 1], [0, 1]], [0, 1])
-    assert_raises(ValueError, label_ranking_loss, [[0, 1], [0, 1]], [[0, 1]])
-    assert_raises(ValueError, label_ranking_loss,
-                  [[0, 1], [0, 1]], [[0], [1]])
-
-    assert_raises(ValueError, label_ranking_loss, [[0, 1]], [[0, 1], [0, 1]])
-    assert_raises(ValueError, label_ranking_loss,
-                  [[0], [1]], [[0, 1], [0, 1]])
-    assert_raises(ValueError, label_ranking_loss, [[0, 1], [0, 1]], [[0], [1]])
+    with pytest.raises(ValueError):
+        label_ranking_loss([[0, 1], [0, 1]], [0, 1])
+    with pytest.raises(ValueError):
+        label_ranking_loss([[0, 1], [0, 1]], [[0, 1]])
+    with pytest.raises(ValueError):
+        label_ranking_loss([[0, 1], [0, 1]], [[0], [1]])
+    with pytest.raises(ValueError):
+        label_ranking_loss([[0, 1]], [[0, 1], [0, 1]])
+    with pytest.raises(ValueError):
+        label_ranking_loss([[0], [1]], [[0, 1], [0, 1]])
+    with pytest.raises(ValueError):
+        label_ranking_loss([[0, 1], [0, 1]], [[0], [1]])
 
 
 def test_ranking_loss_ties_handling():
