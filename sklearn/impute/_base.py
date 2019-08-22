@@ -321,10 +321,9 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
         # Most frequent
         elif strategy == "most_frequent":
-            # scipy.stats.mstats.mode cannot be used because it will no work
-            # properly if the first element is masked and if its frequency
-            # is equal to the frequency of the most frequent valid element
-            # See https://github.com/scipy/scipy/issues/2636
+            # Avoid use of scipy.stats.mstats.mode due to the required
+            # additional overhead and slow benchmarking performance.
+            # See Issue 14325 and PR 14399 for full discussion.
 
             # To be able access the elements by columns
             X = X.transpose()
