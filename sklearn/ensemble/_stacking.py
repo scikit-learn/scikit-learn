@@ -197,7 +197,8 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
         # To ensure that the data provided to each estimator are the same, we
         # need to set the random state of the cv if there is one and we need to
         # take a copy.
-        cv = check_cv(self.cv, y=y, classifier=is_classifier(self))
+        cv = 3 if self.cv is None else self.cv
+        cv = check_cv(cv, y=y, classifier=is_classifier(self))
         if hasattr(cv, 'random_state') and cv.random_state is None:
             cv.random_state = np.random.RandomState()
 
@@ -309,7 +310,7 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
         Determines the cross-validation splitting strategy. Possible inputs for
         cv are:
 
-        * None, to use the default 5-fold cross validation,
+        * None, to use the default 3-fold cross validation,
         * integer, to specify the number of folds in a (Stratified) KFold,
         * An object to be used as a cross-validation generator,
         * An iterable yielding train, test splits.
@@ -538,7 +539,7 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
         Determines the cross-validation splitting strategy. Possible inputs for
         cv are:
 
-        * None, to use the default 5-fold cross validation,
+        * None, to use the default 3-fold cross validation,
         * integer, to specify the number of folds in a (Stratified) KFold,
         * An object to be used as a cross-validation generator,
         * An iterable yielding train, test splits.
