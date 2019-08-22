@@ -25,11 +25,12 @@ from .utils.multiclass import check_classification_targets
 from .utils.extmath import softmax
 from .preprocessing import StandardScaler
 
+
 __all__ = ['LinearDiscriminantAnalysis', 'QuadraticDiscriminantAnalysis']
 
 
 def _cov(X, shrinkage=None, covariance_estimator=None, standardize=False):
-    """Estimate covariance matrix (using covariance_estimator).
+    """Estimate covariance matrix (using optional covariance_estimator).
     Parameters
     ----------
     X : array-like, shape (n_samples, n_features)
@@ -48,6 +49,7 @@ def _cov(X, shrinkage=None, covariance_estimator=None, standardize=False):
           - None or 'empirical': no shrinkage (default).
           - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
           - float between 0 and 1: fixed shrinkage parameter.
+
     Returns
     -------
     s : array, shape (n_features, n_features)
@@ -124,12 +126,15 @@ def _class_cov(
         standardize=False
 ):
     """Compute class covariance matrix.
+
     Parameters
     ----------
     X : array-like, shape (n_samples, n_features)
         Input data.
+
     y : array-like, shape (n_samples,) or (n_samples, n_targets)
         Target values.
+
     priors : array-like, shape (n_classes,)
         Class priors.
     covariance_estimator : estimator, or None, default=None
@@ -146,6 +151,7 @@ def _class_cov(
           - None: no shrinkage (default).
           - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
           - float between 0 and 1: fixed shrinkage parameter.
+
     Returns
     -------
     cov : array-like, shape (n_features, n_features)
@@ -876,7 +882,6 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
                 cov.append(np.dot(S2 * Vt.T, Vt))
             scalings.append(S2)
             rotations.append(Vt.T)
-
         if self.store_covariance or store_covariance:
             self.covariance_ = cov
         self.means_ = np.asarray(means)
@@ -1007,6 +1012,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
 
     def _decision_function(self, X):
         check_is_fitted(self, 'classes_')
+
         X = check_array(X)
 
         if self.solver == "svd":

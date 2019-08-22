@@ -30,7 +30,6 @@ from . import is_scalar_nan
 from ..discriminant_analysis import LinearDiscriminantAnalysis
 from ..linear_model import Ridge
 
-
 from ..base import (clone, ClusterMixin, is_classifier, is_regressor,
                     _DEFAULT_TAGS, RegressorMixin, is_outlier_detector)
 
@@ -73,6 +72,7 @@ def _safe_tags(estimator, key=None):
 
 def _yield_checks(name, estimator):
     tags = _safe_tags(estimator)
+    yield check_no_attributes_set_in_init
     yield check_estimators_dtypes
     yield check_fit_score_takes_y
     yield check_sample_weights_pandas_series
@@ -95,6 +95,10 @@ def _yield_checks(name, estimator):
     if not tags["allow_nan"] and not tags["no_validation"]:
         # Test that all estimators check their input for NaN's and infs
         yield check_estimators_nan_inf
+
+    if _is_pairwise(estimator):
+        # Check that pairwise estimator throws error on non-square input
+        yield check_nonsquare_error
 
     yield check_estimators_overwrite_params
     if hasattr(estimator, 'sparsify'):
@@ -263,6 +267,26 @@ def _yield_all_checks(name, estimator):
     yield check_dict_unchanged
     yield check_dont_overwrite_parameters
     yield check_fit_idempotent
+    if tags["requires_positive_X"]:
+        yield check_fit_non_negative
+
+
+def _construct_instance(Estimator):
+    """Construct Estimator instance if possible"""
+    required_parameters = getattr(Estimator, "_required_parameters", [])
+    if len(required_parameters):
+        if required_parameters in (["estimator"], ["base_estimator"]):
+            if issubclass(Estimator, RegressorMixin):
+                estimator = Estimator(Ridge())
+            else:
+                estimator = Estimator(LinearDiscriminantAnalysis())
+        else:
+            raise SkipTest("Can't instantiate estimator {} which requires "
+                           "parameters {}".format(Estimator.__name__,
+                                                  required_parameters))
+    else:
+        estimator = Estimator()
+    return estimator
 
 
 def check_estimator(Estimator):
@@ -287,9 +311,8 @@ def check_estimator(Estimator):
     if isinstance(Estimator, type):
         # got a class
         name = Estimator.__name__
-        estimator = Estimator()
         check_parameters_default_constructible(name, Estimator)
-        check_no_attributes_set_in_init(name, estimator)
+        estimator = _construct_instance(Estimator)
     else:
         # got an instance
         estimator = Estimator
@@ -307,8 +330,7 @@ def check_estimator(Estimator):
 def _boston_subset(n_samples=200):
     global BOSTON
     if BOSTON is None:
-        boston = load_boston()
-        X, y = boston.data, boston.target
+        X, y = load_boston(return_X_y=True)
         X, y = shuffle(X, y, random_state=0)
         X, y = X[:n_samples], y[:n_samples]
         X = StandardScaler().fit_transform(X)
@@ -875,6 +897,8 @@ def check_fit2d_1sample(name, estimator_orig):
     # the number of samples or the number of classes.
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(1, 10))
+    X = pairwise_estimator_convert_X(X, estimator_orig)
+
     y = X[:, 0].astype(np.int)
     estimator = clone(estimator_orig)
     y = enforce_estimator_tags_y(estimator, y)
@@ -962,6 +986,7 @@ def check_transformer_general(name, transformer, readonly_memmap=False):
                       random_state=0, n_features=2, cluster_std=0.1)
     X = StandardScaler().fit_transform(X)
     X -= X.min()
+    X = pairwise_estimator_convert_X(X, transformer)
 
     if readonly_memmap:
         X, y = create_memmap_backed_data([X, y])
@@ -977,6 +1002,7 @@ def check_transformer_data_not_an_array(name, transformer):
     # We need to make sure that we have non negative data, for things
     # like NMF
     X -= X.min() - .1
+    X = pairwise_estimator_convert_X(X, transformer)
     this_X = NotAnArray(X)
     this_y = NotAnArray(np.asarray(y))
     _check_transformer(name, transformer, this_X, this_y)
@@ -1059,14 +1085,17 @@ def _check_transformer(name, transformer_orig, X, y):
             assert _num_samples(X_pred3) == n_samples
 
         # raises error on malformed input for transform
-        if hasattr(X, 'T') and not _safe_tags(transformer, "stateless"):
+        if hasattr(X, 'shape') and \
+           not _safe_tags(transformer, "stateless") and \
+           X.ndim == 2 and X.shape[1] > 1:
+
             # If it's not an array, it does not have a 'T' property
             with assert_raises(ValueError, msg="The transformer {} does "
                                "not raise an error when the number of "
                                "features in transform is different from"
                                " the number of features in "
                                "fit.".format(name)):
-                transformer.transform(X.T)
+                transformer.transform(X[:, :-1])
 
 
 @ignore_warnings
@@ -1246,6 +1275,19 @@ def check_estimators_nan_inf(name, estimator_orig):
                     traceback.print_exc(file=sys.stdout)
                 else:
                     raise AssertionError(error_string_transform, estimator)
+
+
+@ignore_warnings
+def check_nonsquare_error(name, estimator_orig):
+    """Test that error is thrown when non-square data provided"""
+
+    X, y = make_blobs(n_samples=20, n_features=10)
+    estimator = clone(estimator_orig)
+
+    with assert_raises(ValueError, msg="The pairwise estimator {}"
+                       " does not raise an error on non-square data"
+                       .format(name)):
+        estimator.fit(X, y)
 
 
 @ignore_warnings
@@ -1887,8 +1929,10 @@ def check_regressors_train(name, regressor_orig, readonly_memmap=False):
 def check_regressors_no_decision_function(name, regressor_orig):
     # checks whether regressors have decision_function or predict_proba
     rng = np.random.RandomState(0)
-    X = rng.normal(size=(10, 4))
     regressor = clone(regressor_orig)
+
+    X = rng.normal(size=(10, 4))
+    X = pairwise_estimator_convert_X(X, regressor_orig)
     y = enforce_estimator_tags_y(regressor, X[:, 0])
 
     if hasattr(regressor, "n_components"):
@@ -2057,9 +2101,10 @@ def check_estimators_overwrite_params(name, estimator_orig):
             % (name, param_name, original_value, new_value))
 
 
-def check_no_attributes_set_in_init(name, estimator):
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
+def check_no_attributes_set_in_init(name, estimator_orig):
     """Check setting during init. """
-
+    estimator = clone(estimator_orig)
     if hasattr(type(estimator).__init__, "deprecated_original"):
         return
 
@@ -2158,19 +2203,7 @@ def check_parameters_default_constructible(name, Estimator):
     # test default-constructibility
     # get rid of deprecation warnings
     with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
-        required_parameters = getattr(Estimator, "_required_parameters", [])
-        if required_parameters:
-            if required_parameters in (["base_estimator"], ["estimator"]):
-                if issubclass(Estimator, RegressorMixin):
-                    estimator = Estimator(Ridge())
-                else:
-                    estimator = Estimator(LinearDiscriminantAnalysis())
-            else:
-                raise SkipTest("Can't instantiate estimator {} which"
-                               " requires parameters {}".format(
-                                   name, required_parameters))
-        else:
-            estimator = Estimator()
+        estimator = _construct_instance(Estimator)
         # test cloning
         clone(estimator)
         # test __repr__
@@ -2202,9 +2235,9 @@ def check_parameters_default_constructible(name, Estimator):
             # true for mixins
             return
         params = estimator.get_params()
-        if required_parameters == ["estimator"]:
-            # they can need a non-default argument
-            init_params = init_params[1:]
+        # they can need a non-default argument
+        init_params = init_params[len(getattr(
+            estimator, '_required_parameters', [])):]
 
         for init_param in init_params:
             assert init_param.default != init_param.empty, (
@@ -2376,8 +2409,7 @@ def check_set_params(name, estimator_orig):
 def check_classifiers_regression_target(name, estimator_orig):
     # Check if classifier throws an exception when fed regression targets
 
-    boston = load_boston()
-    X, y = boston.data, boston.target
+    X, y = load_boston(return_X_y=True)
     e = clone(estimator_orig)
     msg = 'Unknown label type: '
     if not _safe_tags(e, "no_validation"):
@@ -2452,6 +2484,16 @@ def check_outliers_fit_predict(name, estimator_orig):
         for contamination in [-0.5, 2.3]:
             estimator.set_params(contamination=contamination)
             assert_raises(ValueError, estimator.fit_predict, X)
+
+
+def check_fit_non_negative(name, estimator_orig):
+    # Check that proper warning is raised for non-negative X
+    # when tag requires_positive_X is present
+    X = np.array([[-1., 1], [-1., 1]])
+    y = np.array([1, 2])
+    estimator = clone(estimator_orig)
+    assert_raises_regex(ValueError, "Negative values in data passed to",
+                        estimator.fit, X, y)
 
 
 def check_fit_idempotent(name, estimator_orig):

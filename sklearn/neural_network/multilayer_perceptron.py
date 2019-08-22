@@ -354,10 +354,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             batch_size = np.clip(self.batch_size, 1, n_samples)
 
         # Initialize lists
-        activations = [X]
-        activations.extend(np.empty((batch_size, n_fan_out))
-                           for n_fan_out in layer_units[1:])
-        deltas = [np.empty_like(a_layer) for a_layer in activations]
+        activations = [X] + [None] * (len(layer_units) - 1)
+        deltas = [None] * (len(activations) - 1)
 
         coef_grads = [np.empty((n_fan_in_, n_fan_out_)) for n_fan_in_,
                       n_fan_out_ in zip(layer_units[:-1],
@@ -970,7 +968,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         y : array-like, shape (n_samples,) or (n_samples, n_classes)
             The predicted classes.
         """
-        check_is_fitted(self, "coefs_")
+        check_is_fitted(self)
         y_pred = self._predict(X)
 
         if self.n_outputs_ == 1:
@@ -1071,7 +1069,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
             The predicted probability of the sample for each class in the
             model, where classes are ordered as they are in `self.classes_`.
         """
-        check_is_fitted(self, "coefs_")
+        check_is_fitted(self)
         y_pred = self._predict(X)
 
         if self.n_outputs_ == 1:
@@ -1332,7 +1330,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         y : array-like, shape (n_samples, n_outputs)
             The predicted values.
         """
-        check_is_fitted(self, "coefs_")
+        check_is_fitted(self)
         y_pred = self._predict(X)
         if y_pred.shape[1] == 1:
             return y_pred.ravel()
