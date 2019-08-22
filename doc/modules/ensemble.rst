@@ -888,11 +888,13 @@ generally recommended to use as many bins as possible, which is the default.
 The ``l2_regularization`` parameter is a regularizer on the loss function and
 corresponds to :math:`\lambda` in equation (2) of [XGBoost]_.
 
-Note that **early-stopping is enabled by default**. The early-stopping
-behaviour is controlled via the ``scoring``, ``validation_fraction``,
+Note that **early-stopping is enabled by default if the number of samples is
+larger than 10,000**. The early-stopping behaviour is controlled via the
+``early-stopping``, ``scoring``, ``validation_fraction``,
 ``n_iter_no_change``, and ``tol`` parameters. It is possible to early-stop
 using an arbitrary :term:`scorer`, or just the training or validation loss. By
-default, early-stopping is performed using the default :term:`scorer` of
+default, early-stopping is performed if there are at least 10,000 samples in
+the training set, using the default :term:`scorer` of
 the estimator on a validation set.
 
 Missing values support
@@ -1179,7 +1181,7 @@ The following example shows how to fit the VotingRegressor::
 
    >>> # Loading some example data
    >>> X, y = load_boston(return_X_y=True)
-   
+
    >>> # Training classifiers
    >>> reg1 = GradientBoostingRegressor(random_state=1, n_estimators=10)
    >>> reg2 = RandomForestRegressor(random_state=1, n_estimators=10)
