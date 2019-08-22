@@ -1922,7 +1922,7 @@ class BinnedStratifiedKFold(StratifiedKFold):
 
     See also
     --------
-    StratifiedKFold -- stratified k-fold generator for classification data
+    StratifiedKFold: stratified k-fold generator for classification data
     """
 
     def __init__(self, n_splits=5, shuffle=False, n_bins=5,
