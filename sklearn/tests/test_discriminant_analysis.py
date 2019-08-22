@@ -2,9 +2,9 @@ import numpy as np
 
 import pytest
 
-from numpy.testing import assert_allclose
 from scipy import linalg
 
+from sklearn.base import BaseEstimator
 from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import (assert_array_equal, assert_no_warnings,
@@ -639,6 +639,15 @@ def test_covariance():
 
     c_s = _cov(x, 'auto')
     assert_almost_equal(c_s, c_s.T)
+
+    class WrongCovarianceEstimator(BaseEstimator):
+        """ This estimator is wrong because it has no _covariance attribute
+        """
+        def fit(self, X):
+            return self
+    for standardize in [True, False]:
+        assert_raises(RuntimeError, _cov, x, None, WrongCovarianceEstimator(),
+                      standardize)
 
 
 @pytest.mark.parametrize("solver", ['svd, lsqr', 'eigen'])
