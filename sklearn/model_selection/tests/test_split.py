@@ -1543,7 +1543,7 @@ def test_leave_p_out_empty_trainset():
 
 def test_binnedstratifiedkfold_error():
     with pytest.raises(ValueError, match='Need at least two bins'):
-        BinnedStratifiedKFold(bins=1)
+        BinnedStratifiedKFold(n_bins=1)
 
 
 def test_binnedstratifiedkfold_balance():
