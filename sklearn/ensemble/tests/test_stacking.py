@@ -38,6 +38,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import KFold
 
 from sklearn.utils.testing import assert_allclose
+from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
 
@@ -377,7 +378,6 @@ def test_stacking_classifier_stratify_default():
     clf.fit(X_iris, y_iris)
 
 
-@pytest.mark.filterwarnings(ConvergenceWarning)
 @pytest.mark.parametrize(
     "stacker, X, y",
     [(StackingClassifier(
@@ -391,10 +391,13 @@ def test_stacking_classifier_stratify_default():
                      ('svm', LinearSVR(random_state=42))],
          final_estimator=LinearRegression(),
          cv=KFold(shuffle=True, random_state=42)),
-      X_diabetes, y_diabetes)]
+      X_diabetes, y_diabetes)],
+      ids=['StackingClassifier', 'StackingRegressor']
 )
 def test_stacking_with_sample_weight(stacker, X, y):
     # check that sample weights has an influence on the fitting
+    # note: ConvergenceWarning are catch since we are not worrying about the
+    # convergence here
     n_half_samples = len(y) // 2
     total_sample_weight = np.array(
         [0.1] * n_half_samples + [0.9] * (len(y) - n_half_samples)
@@ -403,17 +406,18 @@ def test_stacking_with_sample_weight(stacker, X, y):
         X, y, total_sample_weight, random_state=42
     )
 
-    stacker.fit(X_train, y_train)
+    with ignore_warnings(category=ConvergenceWarning):
+        stacker.fit(X_train, y_train)
     y_pred_no_weight = stacker.predict(X_test)
 
-    stacker.fit(X_train, y_train, sample_weight=np.ones(y_train.shape))
+    with ignore_warnings(category=ConvergenceWarning):
+        stacker.fit(X_train, y_train, sample_weight=np.ones(y_train.shape))
     y_pred_unit_weight = stacker.predict(X_test)
 
-    # check that no weight is equivalent to unit weight
     assert_allclose(y_pred_no_weight, y_pred_unit_weight)
 
-    stacker.fit(X_train, y_train, sample_weight=sample_weight_train)
+    with ignore_warnings(category=ConvergenceWarning):
+        stacker.fit(X_train, y_train, sample_weight=sample_weight_train)
     y_pred_biased = stacker.predict(X_test)
 
-    # check that weight has an influence on the prediction
     assert np.abs(y_pred_no_weight - y_pred_biased).sum() > 0
