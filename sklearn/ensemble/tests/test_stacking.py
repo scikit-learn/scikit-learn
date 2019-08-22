@@ -11,8 +11,11 @@ from sklearn.base import ClassifierMixin
 from sklearn.base import RegressorMixin
 from sklearn.base import clone
 
+from sklearn.exceptions import ConvergenceWarning
+
 from sklearn.datasets import load_iris
 from sklearn.datasets import load_diabetes
+from sklearn.datasets import load_breast_cancer
 
 from sklearn.dummy import DummyClassifier
 from sklearn.dummy import DummyRegressor
@@ -372,3 +375,45 @@ def test_stacking_classifier_stratify_default():
     # since iris is not shuffled, a simple k-fold would not contain the
     # 3 classes during training
     clf.fit(X_iris, y_iris)
+
+
+@pytest.mark.filterwarnings(ConvergenceWarning)
+@pytest.mark.parametrize(
+    "stacker, X, y",
+    [(StackingClassifier(
+        estimators=[('lr', LogisticRegression()),
+                    ('svm', LinearSVC(random_state=42))],
+        final_estimator=LogisticRegression(),
+        cv=KFold(shuffle=True, random_state=42)),
+      *load_breast_cancer(return_X_y=True)),
+     (StackingRegressor(
+         estimators=[('lr', LinearRegression()),
+                     ('svm', LinearSVR(random_state=42))],
+         final_estimator=LinearRegression(),
+         cv=KFold(shuffle=True, random_state=42)),
+      X_diabetes, y_diabetes)]
+)
+def test_stacking_with_sample_weight(stacker, X, y):
+    # check that sample weights has an influence on the fitting
+    n_half_samples = len(y) // 2
+    total_sample_weight = np.array(
+        [0.1] * n_half_samples + [0.9] * (len(y) - n_half_samples)
+    )
+    X_train, X_test, y_train, _, sample_weight_train, _ = train_test_split(
+        X, y, total_sample_weight, random_state=42
+    )
+
+    stacker.fit(X_train, y_train)
+    y_pred_no_weight = stacker.predict(X_test)
+
+    stacker.fit(X_train, y_train, sample_weight=np.ones(y_train.shape))
+    y_pred_unit_weight = stacker.predict(X_test)
+
+    # check that no weight is equivalent to unit weight
+    assert_allclose(y_pred_no_weight, y_pred_unit_weight)
+
+    stacker.fit(X_train, y_train, sample_weight=sample_weight_train)
+    y_pred_biased = stacker.predict(X_test)
+
+    # check that weight has an influence on the prediction
+    assert np.abs(y_pred_no_weight - y_pred_biased).sum() > 0
