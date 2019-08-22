@@ -272,14 +272,9 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
     allows to use the strength of each individual estimator by using their
     output as input of a final estimator.
 
-    Note that `estimators` are fitted on the full `X` while `final_estimator`
+    Note that `estimators_` are fitted on the full `X` while `final_estimator_`
     is trained using cross-validated predictions of the base estimators using
     `cross_val_predict`.
-
-    When `predict_proba` is used by each estimator (i.e. most of the time for
-    `stack_method='auto'` or specifically for `stack_method='predict_proba'`)
-    one of the column predicted by each estimator will be dropped since they
-    are collinear.
 
     .. versionadded:: 0.22
 
@@ -343,6 +338,13 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
 
     stack_method_ : list of str
         The method used by each base estimator.
+
+    Notes
+    -----
+    When `predict_proba` is used by each estimator (i.e. most of the time for
+    `stack_method='auto'` or specifically for `stack_method='predict_proba'`)
+    one of the column predicted by each estimator will be dropped since they
+    are collinear.
 
     References
     ----------
@@ -455,7 +457,8 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
 
     @if_delegate_has_method(delegate='final_estimator_')
     def predict_proba(self, X):
-        """Predict class probabilities for X.
+        """Predict class probabilities for X using
+        `final_estimator_.predict_proba`.
 
         Parameters
         ----------
@@ -498,7 +501,7 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
     allows to use the strength of each individual estimator by using their
     output as input of a final estimator.
 
-    Note that `estimators` are fitted on the full `X` while `final_estimator`
+    Note that `estimators_` are fitted on the full `X` while `final_estimator_`
     is trained using cross-validated predictions of the base estimators using
     `cross_val_predict`).
 
@@ -580,8 +583,8 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
     0.3...
 
     """
-    def __init__(self, estimators, final_estimator=None, cv=None,
-                 stack_method='auto', n_jobs=None, verbose=0):
+    def __init__(self, estimators, final_estimator=None, cv=None, n_jobs=None,
+                 verbose=0):
         super().__init__(
             estimators=estimators,
             final_estimator=final_estimator,
