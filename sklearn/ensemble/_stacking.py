@@ -65,7 +65,7 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
             self.final_estimator_ = clone(default)
 
     def set_params(self, **params):
-        """Setting the parameters for the stacking estimator.
+        """Set the parameters for the stacking estimator.
 
         Valid parameter keys can be listed with `get_params()`.
 
@@ -265,7 +265,7 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
 
 
 class StackingClassifier(_BaseStacking, ClassifierMixin):
-    """Stacked of estimators using a final classifier.
+    """Stack of estimators with a final classifier.
 
     Stacked generalization consists in stacking the output of individual
     estimator and use a classifier to compute the final prediction. Stacking
