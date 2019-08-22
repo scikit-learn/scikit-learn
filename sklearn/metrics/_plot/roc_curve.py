@@ -72,12 +72,12 @@ class RocCurveDisplay:
 
         name = self.estimator_name if name is None else name
 
-        label_kwargs = {
+        line_kwargs = {
             'label': "{} (AUC = {:0.2f})".format(name, self.roc_auc)
         }
-        label_kwargs.update(**kwargs)
+        line_kwargs.update(**kwargs)
 
-        self.line_ = ax.plot(self.fpr, self.tpr, **label_kwargs)[0]
+        self.line_ = ax.plot(self.fpr, self.tpr, **line_kwargs)[0]
         ax.set_xlabel("False Positive Rate")
         ax.set_ylabel("True Positive Rate")
         ax.legend(loc='lower right')
