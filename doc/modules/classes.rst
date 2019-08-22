@@ -1039,12 +1039,14 @@ See the :ref:`visualizations` section of the user guide for further details.
    :toctree: generated/
    :template: function.rst
 
+   metrics.plot_confusion_matrix
    metrics.plot_roc_curve
 
 .. autosummary::
    :toctree: generated/
    :template: class.rst
 
+   metrics.ConfusionMatrixDisplay
    metrics.RocCurveDisplay
 
 
