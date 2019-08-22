@@ -304,15 +304,16 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         if solver == 'lbfgs':
             def func(coef, X, y, weights, alpha, family, link):
-                mu, devp = \
-                    family._mu_deviance_derivative(coef, X, y, weights, link)
+                mu, devp = family._mu_deviance_derivative(
+                    coef, X, y, weights, link
+                )
                 dev = family.deviance(y, mu, weights)
                 intercept = (coef.size == X.shape[1] + 1)
                 idx = 1 if intercept else 0  # offset if coef[0] is intercept
-                L2 = alpha * coef[idx:]
-                obj = 0.5 * dev + 0.5 * (coef[idx:] @ L2)
+                coef_scaled = alpha * coef[idx:]
+                obj = 0.5 * dev + 0.5 * (coef[idx:] @ coef_scaled)
                 objp = 0.5 * devp
-                objp[idx:] += L2
+                objp[idx:] += coef_scaled
                 return obj, objp
 
             args = (X, y, weights, self.alpha, family, link)
