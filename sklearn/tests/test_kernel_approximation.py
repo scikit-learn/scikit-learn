@@ -113,6 +113,11 @@ def test_skewed_chi2_sampler():
     assert np.isfinite(kernel_approx).all(), \
         'NaNs found in the approximate Gram matrix'
 
+    # test error is raised on when inputs contains negative values
+    Y_neg = Y.copy()
+    Y_neg[0, 0] = -c * 2.
+    assert_raises(ValueError, transform.transform, Y_neg)
+
 
 def test_rbf_sampler():
     # test that RBFSampler approximates kernel on random data
