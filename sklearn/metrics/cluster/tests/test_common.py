@@ -188,18 +188,18 @@ def test_format_invariance(metric_name):
 
 @pytest.mark.parametrize(
     "metric_name",
-    [name for name in SUPERVISED_METRICS]
+    SUPERVISED_METRICS
 )
 # only the supervised metrics support single sample
 def test_single_sample(metric_name):
     metric = SUPERVISED_METRICS[metric_name]
-    for i, j in product([0, 1], repeat=2):
+    for i, j in [(0, 0), (0, 1), (1, 0), (1, 1)]:
         metric([i], [j])
 
 
 @pytest.mark.parametrize(
     "metric_name",
-    [name for name in dict(SUPERVISED_METRICS, **UNSUPERVISED_METRICS)]
+    dict(SUPERVISED_METRICS, **UNSUPERVISED_METRICS)
 )
 def test_inf_nan_input(metric_name):
     if metric_name in SUPERVISED_METRICS:
