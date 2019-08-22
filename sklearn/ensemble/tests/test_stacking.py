@@ -392,7 +392,7 @@ def test_stacking_classifier_stratify_default():
          final_estimator=LinearRegression(),
          cv=KFold(shuffle=True, random_state=42)),
       X_diabetes, y_diabetes)],
-      ids=['StackingClassifier', 'StackingRegressor']
+    ids=['StackingClassifier', 'StackingRegressor']
 )
 def test_stacking_with_sample_weight(stacker, X, y):
     # check that sample weights has an influence on the fitting
