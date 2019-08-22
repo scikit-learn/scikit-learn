@@ -38,7 +38,7 @@ def _cov(X, shrinkage=None, covariance_estimator=None, standardize=False):
     covariance_estimator : estimator, or None, default=None
         A covariance estimator, possible values
             - None: shrinkage parameter drives the estimate
-            - BaseEstimator with a fit method and
+            - estimator: BaseEstimator with a fit method and
                 a .covariance_ attribute like the estimators
                 in sklearn.covariance
     standardize : bool
@@ -140,7 +140,7 @@ def _class_cov(
     covariance_estimator : estimator, or None, default=None
         A covariance estimator, possible values
             - None: shrinkage parameter drives the estimate
-            - BaseEstimator with a fit method and
+            - estimator: BaseEstimator with a fit method and
                 a .covariance_ attribute like the estimators
                 in sklearn.covariance
     standardize : bool
@@ -186,7 +186,7 @@ def _classes_cov(
     covariance_estimator : estimator, or None, default=None
         A covariance estimator, possible values
             - None: shrinkage parameter drives the estimate
-            - BaseEstimator with a fit method and
+            - estimator: BaseEstimator with a fit method and
                 a .covariance_ attribute like the estimators
                 in sklearn.covariance
     standardize : bool
@@ -258,7 +258,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
     covariance_estimator : estimator, or None, default=None
         A covariance estimator, possible values
             - None: shrinkage parameter drives the estimate
-            - BaseEstimator with a fit method and
+            - estimator: BaseEstimator with a fit method and
                 a .covariance_ attribute like the estimators
                 in sklearn.covariance
 
@@ -397,7 +397,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         covariance_estimator : estimator, or None, default=None
             A covariance estimator, possible values
                 - None: shrinkage parameter drives the estimate
-                - BaseEstimator with a fit method and
+                - estimator: BaseEstimator with a fit method and
                     a .covariance_ attribute like the estimators
                     in sklearn.covariance
 
@@ -455,7 +455,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         covariance_estimator : estimator, or None, default=None
             A covariance estimator, possible values
                 - None: shrinkage parameter drives the estimate
-                - BaseEstimator with a fit method and
+                - estimator: BaseEstimator with a fit method and
                     a .covariance_ attribute like the estimators
                     in sklearn.covariance
 
@@ -754,7 +754,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
     covariance_estimator : estimator, or None, default=None
         A covariance estimator, possible values
             - None: shrinkage parameter drives the estimate
-            - BaseEstimator with a fit method and
+            - estimator: BaseEstimator with a fit method and
                 a .covariance_ attribute like the estimators
                 in sklearn.covariance
         Note: does not work when solver='svd'
@@ -916,7 +916,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         covariance_estimator : estimator, or None, default=None
             A covariance estimator, possible values
                 - None: shrinkage parameter drives the estimate
-                - BaseEstimator with a fit method and
+                - estimator: BaseEstimator with a fit method and
                     a .covariance_ attribute like the estimators
                     in sklearn.covariance
             Note: does not work when solver='svd'
