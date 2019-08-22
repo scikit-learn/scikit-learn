@@ -84,6 +84,9 @@ def _cov(X, shrinkage=None, covariance_estimator=None, standardize=False):
             s = sc.scale_[:, np.newaxis] * s * sc.scale_[np.newaxis, :]
         else:
             covariance_estimator.fit(X)
+            if not hasattr(covariance_estimator, 'covariance_'):
+                raise RuntimeError("%s does not have a covariance
+                                   attribute" % covariance_estimator)
             s = covariance_estimator.covariance_
     return s
 
