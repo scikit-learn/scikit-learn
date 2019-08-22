@@ -1934,14 +1934,9 @@ class BinnedStratifiedKFold(StratifiedKFold):
                 n_bins))
 
     def _make_test_folds(self, X, y):
-        if y is None:
-            raise ValueError("no y has been supplied; "
-                             "first argument is not a valid y")
         percentiles = np.percentile(
             y, np.linspace(0, 100, self.n_bins))
         bins = np.digitize(y, bins=percentiles)
-        if len(y) > self.n_bins:
-            assert len(np.unique(bins)) == min(len(np.unique(y)), self.n_bins)
         return super()._make_test_folds(X, bins)
 
 
