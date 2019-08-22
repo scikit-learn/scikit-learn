@@ -679,7 +679,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         if self.solver == 'lsqr':
             raise NotImplementedError("transform not implemented for 'lsqr' "
                                       "solver (use 'svd' or 'eigen').")
-        check_is_fitted(self, ['xbar_', 'scalings_'], all_or_any=any)
+        check_is_fitted(self)
 
         X = check_array(X)
         if self.solver == 'svd':
@@ -702,7 +702,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         C : array, shape (n_samples, n_classes)
             Estimated probabilities.
         """
-        check_is_fitted(self, 'classes_')
+        check_is_fitted(self)
 
         decision = self.decision_function(X)
         if self.classes_.size == 2:
@@ -1011,7 +1011,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         return self
 
     def _decision_function(self, X):
-        check_is_fitted(self, 'classes_')
+        check_is_fitted(self)
 
         X = check_array(X)
 
@@ -1084,7 +1084,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         -------
         C : array, shape = [n_samples]
         """
-        check_is_fitted(self, '_decision_function')
+        check_is_fitted(self)
         d = self._decision_function(X)
         y_pred = self.classes_.take(d.argmax(1))
         return y_pred
@@ -1102,7 +1102,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         C : array, shape = [n_samples, n_classes]
             Posterior probabilities of classification per class.
         """
-        check_is_fitted(self, '_decision_function')
+        check_is_fitted(self)
         values = self._decision_function(X)
         # compute the likelihood of the underlying gaussian models
         # up to a multiplicative constant.
