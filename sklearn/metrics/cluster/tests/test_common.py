@@ -183,10 +183,9 @@ def test_format_invariance(metric_name):
             assert score_1 == metric(X, y_true_fmt)
 
 
-@pytest.mark.parametrize("metric_name", SUPERVISED_METRICS)
-# only the supervised metrics support single sample
-def test_single_sample(metric_name):
-    metric = SUPERVISED_METRICS[metric_name]
+@pytest.mark.parametrize("metric", SUPERVISED_METRICS.values())
+def test_single_sample(metric):
+    # only the supervised metrics support single sample
     for i, j in [(0, 0), (0, 1), (1, 0), (1, 1)]:
         metric([i], [j])
 
