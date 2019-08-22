@@ -21,7 +21,7 @@ def data_binary(data):
     return X[y < 2], y[y < 2]
 
 
-def test_plot_roc_curve_error_non_binary(pyplot, data):
+def test_plot_roc_curve_error_non_binary(data):
     X, y = data
     clf = DecisionTreeClassifier()
     clf.fit(X, y)
@@ -38,8 +38,7 @@ def test_plot_roc_curve_error_non_binary(pyplot, data):
      ("auto", "response methods not defined"),
      ("bad_method", "response_method must be 'predict_proba', "
                     "'decision_function' or 'auto'")])
-def test_plot_roc_curve_error_no_response(pyplot, data_binary, response_method,
-                                          msg):
+def test_plot_roc_curve_error_no_response(data_binary, response_method, msg):
     X, y = data_binary
 
     class MyClassifier:
