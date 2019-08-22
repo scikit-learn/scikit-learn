@@ -23,7 +23,7 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from scipy.sparse import csr_matrix
-from sklearn.utils.testing import assert_raises, ignore_warnings
+from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_raise_message
 
 
@@ -295,7 +295,8 @@ def test_lbfgs_regression_maxfun(X, y):
             assert max_fun >= mlp.n_iter_
 
     mlp.max_fun = -1
-    assert_raises(ValueError, mlp.fit, X, y)
+    with pytest.raises(ValueError):
+        mlp.fit(X, y)
 
 
 def test_learning_rate_warmstart():
@@ -360,7 +361,8 @@ def test_partial_fit_classes_error():
     y = [0]
     clf = MLPClassifier(solver='sgd')
     clf.partial_fit(X, y, classes=[0, 1])
-    assert_raises(ValueError, clf.partial_fit, X, y, classes=[1, 2])
+    with pytest.raises(ValueError):
+        clf.partial_fit(X, y, classes=[1, 2])
 
 
 def test_partial_fit_classification():
@@ -428,8 +430,8 @@ def test_partial_fit_errors():
     y = [1, 0]
 
     # no classes passed
-    assert_raises(ValueError,
-                  MLPClassifier(solver='sgd').partial_fit, X, y, classes=[2])
+    with pytest.raises(ValueError):
+        MLPClassifier(solver='sgd').partial_fit(X, y, classes=[2])
 
     # lbfgs doesn't support partial_fit
     assert not hasattr(MLPClassifier(solver='lbfgs'), 'partial_fit')
@@ -441,27 +443,47 @@ def test_params_errors():
     y = [1, 0]
     clf = MLPClassifier
 
-    assert_raises(ValueError, clf(hidden_layer_sizes=-1).fit, X, y)
-    assert_raises(ValueError, clf(max_iter=-1).fit, X, y)
-    assert_raises(ValueError, clf(shuffle='true').fit, X, y)
-    assert_raises(ValueError, clf(alpha=-1).fit, X, y)
-    assert_raises(ValueError, clf(learning_rate_init=-1).fit, X, y)
-    assert_raises(ValueError, clf(momentum=2).fit, X, y)
-    assert_raises(ValueError, clf(momentum=-0.5).fit, X, y)
-    assert_raises(ValueError, clf(nesterovs_momentum='invalid').fit, X, y)
-    assert_raises(ValueError, clf(early_stopping='invalid').fit, X, y)
-    assert_raises(ValueError, clf(validation_fraction=1).fit, X, y)
-    assert_raises(ValueError, clf(validation_fraction=-0.5).fit, X, y)
-    assert_raises(ValueError, clf(beta_1=1).fit, X, y)
-    assert_raises(ValueError, clf(beta_1=-0.5).fit, X, y)
-    assert_raises(ValueError, clf(beta_2=1).fit, X, y)
-    assert_raises(ValueError, clf(beta_2=-0.5).fit, X, y)
-    assert_raises(ValueError, clf(epsilon=-0.5).fit, X, y)
-    assert_raises(ValueError, clf(n_iter_no_change=-1).fit, X, y)
+    with pytest.raises(ValueError):
+        clf(hidden_layer_sizes=-1).fit(X, y)
+    with pytest.raises(ValueError):
+        clf(max_iter=-1).fit(X, y)
+    with pytest.raises(ValueError):
+        clf(shuffle='true').fit(X, y)
+    with pytest.raises(ValueError):
+        clf(alpha=-1).fit(X, y)
+    with pytest.raises(ValueError):
+        clf(learning_rate_init=-1).fit(X, y)
+    with pytest.raises(ValueError):
+        clf(momentum=2).fit(X, y)
+    with pytest.raises(ValueError):
+        clf(momentum=-0.5).fit(X, y)
+    with pytest.raises(ValueError):
+        clf(nesterovs_momentum='invalid').fit(X, y)
+    with pytest.raises(ValueError):
+        clf(early_stopping='invalid').fit(X, y)
+    with pytest.raises(ValueError):
+        clf(validation_fraction=1).fit(X, y)
+    with pytest.raises(ValueError):
+        clf(validation_fraction=-0.5).fit(X, y)
+    with pytest.raises(ValueError):
+        clf(beta_1=1).fit(X, y)
+    with pytest.raises(ValueError):
+        clf(beta_1=-0.5).fit(X, y)
+    with pytest.raises(ValueError):
+        clf(beta_2=1).fit(X, y)
+    with pytest.raises(ValueError):
+        clf(beta_2=-0.5).fit(X, y)
+    with pytest.raises(ValueError):
+        clf(epsilon=-0.5).fit(X, y)
+    with pytest.raises(ValueError):
+        clf(n_iter_no_change=-1).fit(X, y)
 
-    assert_raises(ValueError, clf(solver='hadoken').fit, X, y)
-    assert_raises(ValueError, clf(learning_rate='converge').fit, X, y)
-    assert_raises(ValueError, clf(activation='cloak').fit, X, y)
+    with pytest.raises(ValueError):
+        clf(solver='hadoken').fit(X, y)
+    with pytest.raises(ValueError):
+        clf(learning_rate='converge').fit(X, y)
+    with pytest.raises(ValueError):
+        clf(activation='cloak').fit(X, y)
 
 
 def test_predict_proba_binary():
