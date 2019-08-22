@@ -583,7 +583,7 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
     >>> from sklearn.ensemble import StackingRegressor
     >>> estimators = [
     ...     ('lr', LinearRegression()),
-    ...     ('svr', LinearSVR(tol=1e-1, random_state=42))
+    ...     ('svr', LinearSVR(random_state=42))
     ... ]
     >>> reg = StackingRegressor(
     ...     estimators=estimators,
