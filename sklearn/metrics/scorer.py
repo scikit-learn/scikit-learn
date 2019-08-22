@@ -84,7 +84,7 @@ class _MultimetricScorer(dict):
     def _use_cache(self, estimator):
         """Return True if using a cache is beneficial.
 
-        Caching is beneficial when of these conditions hold:
+        Caching may be beneficial when one of these conditions holds:
           - `_ProbaScorer` will be called twice.
           - `_PredictScorer` will be called twice.
           - `_ThresholdScorer` will be called twice.
@@ -163,9 +163,9 @@ class _PredictScorer(_BaseScorer):
 
         Parameters
         ----------
-        method_caller: callable
-            Call estimator's method with args and kwargs, potentially caching
-            results.
+        method_caller : callable
+            Returns predictions given an estimator, method name, and other
+            arguments, potentially caching results.
 
         estimator : object
             Trained estimator to use for scoring. Must have a predict_proba
@@ -201,9 +201,9 @@ class _ProbaScorer(_BaseScorer):
 
         Parameters
         ----------
-        method_caller: callable
-            Call estimator's method with args and kwargs, potentially caching
-            results.
+        method_caller : callable
+            Returns predictions given an estimator, method name, and other
+            arguments, potentially caching results.
 
         clf : object
             Trained classifier to use for scoring. Must have a predict_proba
@@ -251,9 +251,9 @@ class _ThresholdScorer(_BaseScorer):
 
         Parameters
         ----------
-        method_caller: callable
-            Call estimator's method with args and kwargs, potentially caching
-            results.
+        method_caller : callable
+            Returns predictions given an estimator, method name, and other
+            arguments, potentially caching results.
 
         clf : object
             Trained classifier to use for scoring. Must have either a
