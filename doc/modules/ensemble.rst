@@ -1262,7 +1262,7 @@ methods, e.g.::
    >>> y_pred = reg.predict(X_test)
    >>> from sklearn.metrics import r2_score
    >>> print('R2 score: {:.2f}'.format(r2_score(y_test, y_pred)))
-   R2 score: 0.81
+   R2 score: 0.85
 
 Note that it is also possible to get the output of the stacked outputs of the
 `estimators` using the `transform` method::
@@ -1297,7 +1297,7 @@ Note that it is also possible to get the output of the stacked outputs of the
     StackingRegressor(...)
     >>> print('R2 score: {:.2f}'
     ...       .format(multi_layer_regressor.score(X_test, y_test)))
-    R2 score: 0.82
+    R2 score: 0.83
 
 .. topic:: References
 
