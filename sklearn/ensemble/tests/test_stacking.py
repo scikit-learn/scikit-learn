@@ -211,6 +211,11 @@ class NoWeightClassifier(BaseEstimator, ClassifierMixin):
                       ('cor', NoWeightClassifier())]},
       TypeError, 'does not support sample weight'),
      (y_iris,
+      {'estimators': [('lr', LogisticRegression()),
+                      ('cor', LinearSVC(max_iter=5e4))],
+       'final_estimator': NoWeightClassifier()},
+      TypeError, 'does not support sample weight'),
+     (y_iris,
       {'estimators': [('lr', 'drop'), ('svm', 'drop')]},
       ValueError, 'All estimators are dropped'),
      (y_iris,
@@ -240,6 +245,11 @@ def test_stacking_classifier_error(y, params, type_err, msg_err):
      (y_diabetes,
       {'estimators': [('lr', LinearRegression()),
                       ('cor', NoWeightRegressor())]},
+      TypeError, 'does not support sample weight'),
+     (y_diabetes,
+      {'estimators': [('lr', LinearRegression()),
+                      ('cor', LinearSVR())],
+       'final_estimator': NoWeightRegressor()},
       TypeError, 'does not support sample weight'),
      (y_diabetes,
       {'estimators': [('lr', 'drop'), ('svm', 'drop')]},
@@ -351,3 +361,14 @@ def test_check_estimators_stacking_estimator(estimator):
     # their testing parameters (for required parameters).
     check_estimator(estimator)
     check_no_attributes_set_in_init(estimator.__class__.__name__, estimator)
+
+
+def test_stacking_classifier_stratify_default():
+    # check that we stratify the classes for the default CV
+    clf = StackingClassifier(
+        estimators=[('lr', LogisticRegression(max_iter=1e4)),
+                    ('svm', LinearSVC(max_iter=1e4))]
+    )
+    # since iris is not shuffled, a simple k-fold would not contain the
+    # 3 classes during training
+    clf.fit(X_iris, y_iris)

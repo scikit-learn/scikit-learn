@@ -197,7 +197,7 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
         # To ensure that the data provided to each estimator are the same, we
         # need to set the random state of the cv if there is one and we need to
         # take a copy.
-        cv = check_cv(self.cv)
+        cv = check_cv(self.cv, y=y, classifier=is_classifier(self))
         if hasattr(cv, 'random_state') and cv.random_state is None:
             cv.random_state = np.random.RandomState()
 
@@ -222,7 +222,21 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
         ]
 
         X_meta = self._concatenate_predictions(predictions)
-        self.final_estimator_.fit(X_meta, y)
+        if sample_weight is not None:
+            try:
+                self.final_estimator_.fit(
+                    X_meta, y, sample_weight=sample_weight
+                )
+            except TypeError as exc:
+                if "unexpected keyword argument 'sample_weight'" in str(exc):
+                    raise TypeError(
+                        "Underlying estimator {} does not support sample "
+                        "weights."
+                        .format(self.final_estimator_.__class__.__name__)
+                    ) from exc
+                raise
+        else:
+            self.final_estimator_.fit(X_meta, y)
 
         return self
 
