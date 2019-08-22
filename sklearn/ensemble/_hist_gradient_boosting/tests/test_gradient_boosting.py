@@ -144,7 +144,7 @@ def test_early_stopping_classification(data, scoring, validation_fraction,
 def test_early_stopping_default(GradientBoosting, X, y):
     # Test that early stopping is enabled by default if and only if there
     # are more than 10000 samples
-    gb = GradientBoosting(max_iter=200)
+    gb = GradientBoosting(min_samples_leaf=50, max_iter=1000)
     gb.fit(X, y)
     if X.shape[0] > 10000:
         assert gb.n_iter_ < gb.max_iter
