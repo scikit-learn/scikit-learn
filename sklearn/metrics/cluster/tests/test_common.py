@@ -1,5 +1,4 @@
 from functools import partial
-from itertools import product
 
 import pytest
 import numpy as np
@@ -127,8 +126,7 @@ def test_normalized_output(metric_name):
 # 0.22 AMI and NMI changes
 @pytest.mark.filterwarnings('ignore::FutureWarning')
 @pytest.mark.parametrize(
-    "metric_name",
-    dict(SUPERVISED_METRICS, **UNSUPERVISED_METRICS)
+    "metric_name", dict(SUPERVISED_METRICS, **UNSUPERVISED_METRICS)
 )
 def test_permute_labels(metric_name):
     # All clustering metrics do not change score due to permutations of labels
@@ -151,8 +149,7 @@ def test_permute_labels(metric_name):
 # 0.22 AMI and NMI changes
 @pytest.mark.filterwarnings('ignore::FutureWarning')
 @pytest.mark.parametrize(
-    "metric_name",
-    dict(SUPERVISED_METRICS, **UNSUPERVISED_METRICS)
+    "metric_name", dict(SUPERVISED_METRICS, **UNSUPERVISED_METRICS)
 )
 # For all clustering metrics Input parameters can be both
 # in the form of arrays lists, positive, negative or string
@@ -186,10 +183,7 @@ def test_format_invariance(metric_name):
             assert score_1 == metric(X, y_true_fmt)
 
 
-@pytest.mark.parametrize(
-    "metric_name",
-    SUPERVISED_METRICS
-)
+@pytest.mark.parametrize("metric_name", SUPERVISED_METRICS)
 # only the supervised metrics support single sample
 def test_single_sample(metric_name):
     metric = SUPERVISED_METRICS[metric_name]
@@ -198,25 +192,19 @@ def test_single_sample(metric_name):
 
 
 @pytest.mark.parametrize(
-    "metric_name",
-    dict(SUPERVISED_METRICS, **UNSUPERVISED_METRICS)
+    "metric_name, metric_func",
+    dict(SUPERVISED_METRICS, **UNSUPERVISED_METRICS).items()
 )
-def test_inf_nan_input(metric_name):
+def test_inf_nan_input(metric_name, metric_func):
     if metric_name in SUPERVISED_METRICS:
         invalids = [([0, 1], [np.inf, np.inf]),
                     ([0, 1], [np.nan, np.nan]),
                     ([0, 1], [np.nan, np.inf])]
-
-        metric = SUPERVISED_METRICS[metric_name]
-        with pytest.raises(ValueError, match="contains NaN, infinity"):
-            for y_true, y_score in invalids:
-                metric(y_true, y_score)
     else:
         X = np.random.randint(10, size=(2, 10))
         invalids = [(X, [np.inf, np.inf]),
                     (X, [np.nan, np.nan]),
                     (X, [np.nan, np.inf])]
-        metric = UNSUPERVISED_METRICS[metric_name]
-        with pytest.raises(ValueError, match="contains NaN, infinity"):
-            for y_true, y_score in invalids:
-                metric(y_true, y_score)
+    with pytest.raises(ValueError, match='contains NaN, infinity'):
+        for args in invalids:
+            metric_func(*args)
