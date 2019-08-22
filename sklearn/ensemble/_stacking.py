@@ -491,7 +491,7 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
 
 
 class StackingRegressor(_BaseStacking, RegressorMixin):
-    """Stacked of estimators using a final regressor.
+    """Stack of estimators with a final regressor.
 
     Stacked generalization consists in stacking the output of individual
     estimator and use a regressor to compute the final prediction. Stacking
