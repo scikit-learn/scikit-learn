@@ -85,8 +85,8 @@ def plot_obs_pred(df, feature, weight, observed, predicted, y_label=None,
 
     Parameters
     ----------
-    df : DataFrame with at least three columns named feature, weight and
-         observed
+    df : DataFrame
+        input data
     feature: str
         a column name of df for the feature to be plotted
     weight : str
