@@ -415,3 +415,14 @@ def test_infinite_values_missing_values():
 
     assert stump_clf.fit(X, y_isinf).score(X, y_isinf) == 1
     assert stump_clf.fit(X, y_isnan).score(X, y_isnan) == 1
+
+
+@pytest.mark.parametrize("scoring", [None, 'loss'])
+def test_string_target_early_stopping(scoring):
+    # Regression tests for #14709 where the targets need to be encoded before
+    # to compute the score
+    rng = np.random.RandomState(42)
+    X = rng.randn(100, 10)
+    y = np.array(['x'] * 50 + ['y'] * 50, dtype=object)
+    gbrt = HistGradientBoostingClassifier(n_iter_no_change=10, scoring=scoring)
+    gbrt.fit(X, y)

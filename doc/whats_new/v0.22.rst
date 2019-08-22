@@ -132,6 +132,8 @@ Changelog
     method for both estimators. :pr:`13769` by `Nicolas Hug`_.
   - |Fix| Estimators now bin the training and validation data separately to
     avoid any data leak. :pr:`13933` by `Nicolas Hug`_.
+  - |Fix| Fixed a bug where early stopping would break with string targets.
+    :pr:`14710` by :user:`Guillaume Lemaitre <glemaitre>`.
 
   Note that pickles from 0.21 will not work in 0.22.
 
