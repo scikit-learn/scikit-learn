@@ -13,7 +13,7 @@ An alternative to pickling is to export the model to another format using one
 of the model export tools listed under :ref:`related_projects`. Unlike
 pickling, once exported you cannot recover the full Scikit-learn estimator
 object, but you can deploy the model for prediction, usually by using tools
-supporting open model interchange formats such as `ONNX`_ or `PMML`_.
+supporting open model interchange formats such as `ONNX <https://onnx.ai/>`_ or `PMML <http://dmg.org/pmml/v4-4/GeneralStructure.html>`_.
 
 Persistence example
 -------------------
