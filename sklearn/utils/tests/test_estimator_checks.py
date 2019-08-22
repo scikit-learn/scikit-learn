@@ -548,8 +548,8 @@ def test_check_class_weight_balanced_linear_classifier():
 
 
 def test_check_constant_features():
-    # Tests that estimators that fail with constant features output passes/fails
-    # the check when the error message is adequate/inadequate
+    # Tests that estimators that fail with constant features passes (fails)
+    # the check when the error message raised is adequate (inadequate)
 
     class FailsWithConstantFeatures(BaseEstimator):
         def __init__(self, err_msg):
