@@ -1541,6 +1541,11 @@ def test_leave_p_out_empty_trainset():
         next(cv.split(X, y, groups=[1, 2]))
 
 
+def test_binnedstratifiedkfold_error():
+    with pytest.raises(ValueError, match='Need at least two bins'):
+        BinnedStratifiedKFold(bins=1)
+
+
 def test_binnedstratifiedkfold_balance():
     rng = np.random.RandomState(0)
     for _ in range(10):
