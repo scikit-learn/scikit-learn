@@ -218,7 +218,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                     raise ValueError("No default link known for the "
                                      "specified distribution family. Please "
                                      "set link manually, i.e. not to 'auto'; "
-                                     "got (link='auto', family={}"
+                                     "got (link='auto', family={})"
                                      .format(self.family))
             elif self.link == 'identity':
                 self._link_instance = IdentityLink()
