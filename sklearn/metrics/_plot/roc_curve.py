@@ -58,6 +58,11 @@ class RocCurveDisplay:
         name : str, default=None
             Name of ROC Curve for labeling. If `None`, use the name of the
             estimator.
+
+        Returns
+        -------
+        display : :class:`~sklearn.metrics.plot.RocCurveDisplay`
+            Object that stores computed values.
         """
         check_matplotlib_support('RocCurveDisplay.plot')
         import matplotlib.pyplot as plt
@@ -130,7 +135,7 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
 
     Returns
     -------
-    viz : :class:`sklearn.metrics.plot.RocCurveDisplay`
+    display : :class:`~sklearn.metrics.RocCurveDisplay`
         Object that stores computed values.
     """
     check_matplotlib_support('plot_roc_curve')
