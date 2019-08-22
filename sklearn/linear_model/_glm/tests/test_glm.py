@@ -232,8 +232,7 @@ def test_warm_start(fit_intercept):
     glm2.fit(X, y)
     assert_allclose(glm1.coef_, glm2.coef_, rtol=1e-5)
     assert_allclose(glm1.score(X, y), glm2.score(X, y), rtol=1e-4)
-    # TODO: investigate why this doesn't match
-    # assert glm1.n_iter_ == glm2.n_iter_ + 2
+    assert glm1.n_iter_ == glm2.n_iter_
 
 
 @pytest.mark.parametrize('n_samples, n_features', [(100, 10), (10, 100)])
