@@ -22,6 +22,7 @@ The module structure is the following:
 
 from abc import ABCMeta
 from abc import abstractmethod
+import warnings
 
 from .base import BaseEnsemble
 from ..base import ClassifierMixin
@@ -50,7 +51,6 @@ from . import _gb_losses
 
 from ..utils import check_random_state
 from ..utils import check_array
-from ..utils import check_X_y
 from ..utils import column_or_1d
 from ..utils import check_consistent_length
 from ..utils import deprecated
@@ -115,7 +115,7 @@ class QuantileEstimator:
         y : array, shape (n_samples,)
             Returns predicted values.
         """
-        check_is_fitted(self, 'quantile')
+        check_is_fitted(self)
 
         y = np.empty((X.shape[0], 1), dtype=np.float64)
         y.fill(self.quantile)
@@ -158,7 +158,7 @@ class MeanEstimator:
         y : array, shape (n_samples,)
             Returns predicted values.
         """
-        check_is_fitted(self, 'mean')
+        check_is_fitted(self)
 
         y = np.empty((X.shape[0], 1), dtype=np.float64)
         y.fill(self.mean)
@@ -210,7 +210,7 @@ class LogOddsEstimator:
         y : array, shape (n_samples,)
             Returns predicted values.
         """
-        check_is_fitted(self, 'prior')
+        check_is_fitted(self)
 
         y = np.empty((X.shape[0], 1), dtype=np.float64)
         y.fill(self.prior)
@@ -262,7 +262,7 @@ class PriorProbabilityEstimator:
         y : array, shape (n_samples,)
             Returns predicted values.
         """
-        check_is_fitted(self, 'priors')
+        check_is_fitted(self)
 
         y = np.empty((X.shape[0], self.priors.shape[0]), dtype=np.float64)
         y[:] = self.priors
@@ -316,7 +316,7 @@ class ZeroEstimator:
         y : array, shape (n_samples,)
             Returns predicted values.
         """
-        check_is_fitted(self, 'n_classes')
+        check_is_fitted(self)
 
         y = np.empty((X.shape[0], self.n_classes), dtype=np.float64)
         y.fill(0.0)
@@ -1170,7 +1170,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     def __init__(self, loss, learning_rate, n_estimators, criterion,
                  min_samples_split, min_samples_leaf, min_weight_fraction_leaf,
                  max_depth, min_impurity_decrease, min_impurity_split,
-                 init, subsample, max_features,
+                 init, subsample, max_features, ccp_alpha,
                  random_state, alpha=0.9, verbose=0, max_leaf_nodes=None,
                  warm_start=False, presort='auto',
                  validation_fraction=0.1, n_iter_no_change=None,
@@ -1188,6 +1188,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self.max_depth = max_depth
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
+        self.ccp_alpha = ccp_alpha
         self.init = init
         self.random_state = random_state
         self.alpha = alpha
@@ -1233,7 +1234,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 max_features=self.max_features,
                 max_leaf_nodes=self.max_leaf_nodes,
                 random_state=random_state,
-                presort=self.presort)
+                presort=self.presort,
+                ccp_alpha=self.ccp_alpha)
 
             if self.subsample < 1.0:
                 # no inplace multiplication!
@@ -1315,7 +1317,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                                  "or 'log2'." % self.max_features)
         elif self.max_features is None:
             max_features = self.n_features_
-        elif isinstance(self.max_features, (numbers.Integral, np.integer)):
+        elif isinstance(self.max_features, numbers.Integral):
             max_features = self.max_features
         else:  # float
             if 0. < self.max_features <= 1.:
@@ -1327,7 +1329,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self.max_features_ = max_features
 
         if not isinstance(self.n_iter_no_change,
-                          (numbers.Integral, np.integer, type(None))):
+                          (numbers.Integral, type(None))):
             raise ValueError("n_iter_no_change should either be None or an "
                              "integer. %r was passed"
                              % self.n_iter_no_change)
@@ -1390,7 +1392,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
     def _check_initialized(self):
         """Check that the estimator is initialized, raising an error if not."""
-        check_is_fitted(self, 'estimators_')
+        check_is_fitted(self)
 
     def fit(self, X, y, sample_weight=None, monitor=None):
         """Fit the gradient boosting model.
@@ -1571,13 +1573,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         n_inbag = max(1, int(self.subsample * n_samples))
         loss_ = self.loss_
 
-        # Set min_weight_leaf from min_weight_fraction_leaf
-        if self.min_weight_fraction_leaf != 0. and sample_weight is not None:
-            min_weight_leaf = (self.min_weight_fraction_leaf *
-                               np.sum(sample_weight))
-        else:
-            min_weight_leaf = 0.
-
         if self.verbose:
             verbose_reporter = VerboseReporter(self.verbose)
             verbose_reporter.init(self, begin_at_stage)
@@ -1729,6 +1724,46 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         avg_feature_importances = np.mean(relevant_feature_importances,
                                           axis=0, dtype=np.float64)
         return avg_feature_importances / np.sum(avg_feature_importances)
+
+    def _compute_partial_dependence_recursion(self, grid, target_features):
+        """Fast partial dependence computation.
+
+        Parameters
+        ----------
+        grid : ndarray, shape (n_samples, n_target_features)
+            The grid points on which the partial dependence should be
+            evaluated.
+        target_features : ndarray, shape (n_target_features)
+            The set of target features for which the partial dependence
+            should be evaluated.
+
+        Returns
+        -------
+        averaged_predictions : ndarray, shape \
+                (n_trees_per_iteration, n_samples)
+            The value of the partial dependence function on each grid point.
+        """
+        check_is_fitted(self,
+                        msg="'estimator' parameter must be a fitted estimator")
+        if self.init is not None:
+            warnings.warn(
+                'Using recursion method with a non-constant init predictor '
+                'will lead to incorrect partial dependence values. '
+                'Got init=%s.' % self.init,
+                UserWarning
+            )
+        grid = np.asarray(grid, dtype=DTYPE, order='C')
+        n_estimators, n_trees_per_stage = self.estimators_.shape
+        averaged_predictions = np.zeros((n_trees_per_stage, grid.shape[0]),
+                                        dtype=np.float64, order='C')
+        for stage in range(n_estimators):
+            for k in range(n_trees_per_stage):
+                tree = self.estimators_[stage, k].tree_
+                tree.compute_partial_dependence(grid, target_features,
+                                                averaged_predictions[k])
+        averaged_predictions *= self.learning_rate
+
+        return averaged_predictions
 
     def _validate_y(self, y, sample_weight):
         # 'sample_weight' is not utilised but is used for
@@ -1966,6 +2001,14 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         .. versionadded:: 0.20
 
+    ccp_alpha : non-negative float, optional (default=0.0)
+        Complexity parameter used for Minimal Cost-Complexity Pruning. The
+        subtree with the largest cost complexity that is smaller than
+        ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
+        :ref:`minimal_cost_complexity_pruning` for details.
+
+        .. versionadded:: 0.22
+
     Attributes
     ----------
     n_estimators_ : int
@@ -2000,6 +2043,9 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 shape (n_estimators, ``loss_.K``)
         The collection of fitted sub-estimators. ``loss_.K`` is 1 for binary
         classification, otherwise n_classes.
+
+    classes_ : array of shape = [n_classes]
+        The classes labels.
 
     Notes
     -----
@@ -2037,7 +2083,7 @@ shape (n_estimators, ``loss_.K``)
                  random_state=None, max_features=None, verbose=0,
                  max_leaf_nodes=None, warm_start=False,
                  presort='auto', validation_fraction=0.1,
-                 n_iter_no_change=None, tol=1e-4):
+                 n_iter_no_change=None, tol=1e-4, ccp_alpha=0.0):
 
         super().__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
@@ -2052,7 +2098,7 @@ shape (n_estimators, ``loss_.K``)
             min_impurity_split=min_impurity_split,
             warm_start=warm_start, presort=presort,
             validation_fraction=validation_fraction,
-            n_iter_no_change=n_iter_no_change, tol=tol)
+            n_iter_no_change=n_iter_no_change, tol=tol, ccp_alpha=ccp_alpha)
 
     def _validate_y(self, y, sample_weight):
         check_classification_targets(y)
@@ -2435,6 +2481,13 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
         .. versionadded:: 0.20
 
+    ccp_alpha : non-negative float, optional (default=0.0)
+        Complexity parameter used for Minimal Cost-Complexity Pruning. The
+        subtree with the largest cost complexity that is smaller than
+        ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
+        :ref:`minimal_cost_complexity_pruning` for details.
+
+        .. versionadded:: 0.22
 
     Attributes
     ----------
@@ -2496,7 +2549,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
                  min_impurity_split=None, init=None, random_state=None,
                  max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
                  warm_start=False, presort='auto', validation_fraction=0.1,
-                 n_iter_no_change=None, tol=1e-4):
+                 n_iter_no_change=None, tol=1e-4, ccp_alpha=0.0):
 
         super().__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
@@ -2510,7 +2563,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             random_state=random_state, alpha=alpha, verbose=verbose,
             max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
             presort=presort, validation_fraction=validation_fraction,
-            n_iter_no_change=n_iter_no_change, tol=tol)
+            n_iter_no_change=n_iter_no_change, tol=tol, ccp_alpha=ccp_alpha)
 
     def predict(self, X):
         """Predict regression target for X.

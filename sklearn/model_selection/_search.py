@@ -15,6 +15,7 @@ from collections import defaultdict
 from collections.abc import Mapping, Sequence, Iterable
 from functools import partial, reduce
 from itertools import product
+import numbers
 import operator
 import time
 import warnings
@@ -28,7 +29,7 @@ from ._split import check_cv
 from ._validation import _fit_and_score
 from ._validation import _aggregate_score_dicts
 from ..exceptions import NotFittedError
-from ..utils._joblib import Parallel, delayed
+from joblib import Parallel, delayed
 from ..utils import check_random_state
 from ..utils.fixes import MaskedArray
 from ..utils.random import sample_without_replacement
@@ -200,11 +201,12 @@ class ParameterSampler:
     Parameters
     ----------
     param_distributions : dict
-        Dictionary where the keys are parameters and values
-        are distributions from which a parameter is to be sampled.
-        Distributions either have to provide a ``rvs`` function
-        to sample from them, or can be given as a list of values,
-        where a uniform distribution is assumed.
+        Dictionary with parameters names (string) as keys and distributions
+        or lists of parameters to try. Distributions must provide a ``rvs``
+        method for sampling (such as those from scipy.stats.distributions).
+        If a list is given, it is sampled uniformly.
+        If a list of dicts is given, first a dict is sampled uniformly, and
+        then a parameter is sampled using that dict as above.
 
     n_iter : integer
         Number of parameter settings that are produced.
@@ -241,16 +243,36 @@ class ParameterSampler:
     True
     """
     def __init__(self, param_distributions, n_iter, random_state=None):
-        self.param_distributions = param_distributions
+        if not isinstance(param_distributions, (Mapping, Iterable)):
+            raise TypeError('Parameter distribution is not a dict or '
+                            'a list ({!r})'.format(param_distributions))
+
+        if isinstance(param_distributions, Mapping):
+            # wrap dictionary in a singleton list to support either dict
+            # or list of dicts
+            param_distributions = [param_distributions]
+
+        for dist in param_distributions:
+            if not isinstance(dist, dict):
+                raise TypeError('Parameter distribution is not a '
+                                'dict ({!r})'.format(dist))
+            for key in dist:
+                if (not isinstance(dist[key], Iterable)
+                        and not hasattr(dist[key], 'rvs')):
+                    raise TypeError('Parameter value is not iterable '
+                                    'or distribution (key={!r}, value={!r})'
+                                    .format(key, dist[key]))
         self.n_iter = n_iter
         self.random_state = random_state
+        self.param_distributions = param_distributions
 
     def __iter__(self):
         # check if all distributions are given as lists
         # in this case we want to sample without replacement
-        all_lists = np.all([not hasattr(v, "rvs")
-                            for v in self.param_distributions.values()])
-        rnd = check_random_state(self.random_state)
+        all_lists = all(
+            all(not hasattr(v, "rvs") for v in dist.values())
+            for dist in self.param_distributions)
+        rng = check_random_state(self.random_state)
 
         if all_lists:
             # look up sampled parameter settings in parameter grid
@@ -266,19 +288,20 @@ class ParameterSampler:
                     % (grid_size, self.n_iter, grid_size), UserWarning)
                 n_iter = grid_size
             for i in sample_without_replacement(grid_size, n_iter,
-                                                random_state=rnd):
+                                                random_state=rng):
                 yield param_grid[i]
 
         else:
-            # Always sort the keys of a dictionary, for reproducibility
-            items = sorted(self.param_distributions.items())
             for _ in range(self.n_iter):
+                dist = rng.choice(self.param_distributions)
+                # Always sort the keys of a dictionary, for reproducibility
+                items = sorted(dist.items())
                 params = dict()
                 for k, v in items:
                     if hasattr(v, "rvs"):
-                        params[k] = v.rvs(random_state=rnd)
+                        params[k] = v.rvs(random_state=rng)
                     else:
-                        params[k] = v[rnd.randint(len(v))]
+                        params[k] = v[rng.randint(len(v))]
                 yield params
 
     def __len__(self):
@@ -287,7 +310,7 @@ class ParameterSampler:
 
 
 def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
-                   verbose, error_score='raise-deprecating', **fit_params):
+                   verbose, error_score=np.nan, **fit_params):
     """Run fit on one set of parameters.
 
     Parameters
@@ -329,8 +352,7 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error. Default is 'raise' but from
-        version 0.22 it will change to np.nan.
+        step, which will always raise the error. Default is ``np.nan``.
 
     Returns
     -------
@@ -381,8 +403,8 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
 
     @abstractmethod
     def __init__(self, estimator, scoring=None, n_jobs=None, iid='deprecated',
-                 refit=True, cv='warn', verbose=0, pre_dispatch='2*n_jobs',
-                 error_score='raise-deprecating', return_train_score=True):
+                 refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs',
+                 error_score=np.nan, return_train_score=True):
 
         self.scoring = scoring
         self.estimator = estimator
@@ -437,7 +459,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
                                  'attribute'
                                  % (type(self).__name__, method_name))
         else:
-            check_is_fitted(self, 'best_estimator_')
+            check_is_fitted(self)
 
     @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
     def predict(self, X):
@@ -596,7 +618,8 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
 
         groups : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
-            train/test set.
+            train/test set. Only used in conjunction with a "Group" `cv`
+            instance (e.g., `GroupKFold`).
 
         **fit_params : dict of string -> object
             Parameters passed to the ``fit`` method of the estimator
@@ -694,7 +717,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
             # parameter set.
             if callable(self.refit):
                 self.best_index_ = self.refit(results)
-                if not isinstance(self.best_index_, (int, np.integer)):
+                if not isinstance(self.best_index_, numbers.Integral):
                     raise TypeError('best_index_ returned is not an integer')
                 if (self.best_index_ < 0 or
                    self.best_index_ >= len(results["params"])):
@@ -893,7 +916,7 @@ class GridSearchCV(BaseSearchCV):
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 3-fold cross validation,
+        - None, to use the default 5-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -905,9 +928,8 @@ class GridSearchCV(BaseSearchCV):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.20
-            ``cv`` default value if None will change from 3-fold to 5-fold
-            in v0.22.
+        .. versionchanged:: 0.22
+            ``cv`` default value if None changed from 3-fold to 5-fold.
 
     refit : boolean, string, or callable, default=True
         Refit an estimator using the best found parameters on the whole
@@ -919,7 +941,10 @@ class GridSearchCV(BaseSearchCV):
 
         Where there are considerations other than maximum score in
         choosing a best estimator, ``refit`` can be set to a function which
-        returns the selected ``best_index_`` given ``cv_results_``.
+        returns the selected ``best_index_`` given ``cv_results_``. In that
+        case, the ``best_estimator_`` and ``best_parameters_`` will be set
+        according to the returned ``best_index_`` while the ``best_score_``
+        attribute will not be availble.
 
         The refitted estimator is made available at the ``best_estimator_``
         attribute and permits using ``predict`` directly on this
@@ -928,7 +953,7 @@ class GridSearchCV(BaseSearchCV):
         Also for multiple metric evaluation, the attributes ``best_index_``,
         ``best_score_`` and ``best_params_`` will only be available if
         ``refit`` is set and all of them will be determined w.r.t this specific
-        scorer. ``best_score_`` is not returned if refit is callable.
+        scorer.
 
         See ``scoring`` parameter to know more about multiple metric
         evaluation.
@@ -943,8 +968,7 @@ class GridSearchCV(BaseSearchCV):
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error. Default is 'raise' but from
-        version 0.22 it will change to np.nan.
+        step, which will always raise the error. Default is ``np.nan``.
 
     return_train_score : boolean, default=False
         If ``False``, the ``cv_results_`` attribute will not include training
@@ -963,22 +987,11 @@ class GridSearchCV(BaseSearchCV):
     >>> iris = datasets.load_iris()
     >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
     >>> svc = svm.SVC()
-    >>> clf = GridSearchCV(svc, parameters, cv=5)
+    >>> clf = GridSearchCV(svc, parameters)
     >>> clf.fit(iris.data, iris.target)
-    ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    GridSearchCV(cv=5, error_score=...,
-           estimator=SVC(C=1.0, break_ties=False, cache_size=...,
-                         class_weight=..., coef0=...,
-                         decision_function_shape='ovr', degree=..., gamma=...,
-                         kernel='rbf', max_iter=-1,
-                         probability=False,
-                         random_state=None, shrinking=True,
-                         tol=..., verbose=False),
-           iid=..., n_jobs=None,
-           param_grid=..., pre_dispatch=..., refit=..., return_train_score=...,
-           scoring=..., verbose=...)
+    GridSearchCV(estimator=SVC(),
+                 param_grid={'C': [1, 10], 'kernel': ('linear', 'rbf')})
     >>> sorted(clf.cv_results_.keys())
-    ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     ['mean_fit_time', 'mean_score_time', 'mean_test_score',...
      'param_C', 'param_kernel', 'params',...
      'rank_test_score', 'split0_test_score',...
@@ -1043,7 +1056,7 @@ class GridSearchCV(BaseSearchCV):
         scorer's name (``'_<scorer_name>'``) instead of ``'_score'`` shown
         above. ('split0_test_precision', 'mean_train_precision' etc.)
 
-    best_estimator_ : estimator or dict
+    best_estimator_ : estimator
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
         on the left out data. Not available if ``refit=False``.
@@ -1055,6 +1068,8 @@ class GridSearchCV(BaseSearchCV):
 
         For multi-metric evaluation, this is present only if ``refit`` is
         specified.
+
+        This attribute is not available if ``refit`` is a function.
 
     best_params_ : dict
         Parameter setting that gave the best results on the hold out data.
@@ -1118,9 +1133,9 @@ class GridSearchCV(BaseSearchCV):
     _required_parameters = ["estimator", "param_grid"]
 
     def __init__(self, estimator, param_grid, scoring=None,
-                 n_jobs=None, iid='deprecated', refit=True, cv='warn',
+                 n_jobs=None, iid='deprecated', refit=True, cv=None,
                  verbose=0, pre_dispatch='2*n_jobs',
-                 error_score='raise-deprecating', return_train_score=False):
+                 error_score=np.nan, return_train_score=False):
         super().__init__(
             estimator=estimator, scoring=scoring,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
@@ -1172,11 +1187,13 @@ class RandomizedSearchCV(BaseSearchCV):
         Either estimator needs to provide a ``score`` function,
         or ``scoring`` must be passed.
 
-    param_distributions : dict
+    param_distributions : dict or list of dicts
         Dictionary with parameters names (string) as keys and distributions
         or lists of parameters to try. Distributions must provide a ``rvs``
         method for sampling (such as those from scipy.stats.distributions).
         If a list is given, it is sampled uniformly.
+        If a list of dicts is given, first a dict is sampled uniformly, and
+        then a parameter is sampled using that dict as above.
 
     n_iter : int, default=10
         Number of parameter settings that are sampled. n_iter trades
@@ -1233,7 +1250,7 @@ class RandomizedSearchCV(BaseSearchCV):
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 3-fold cross validation,
+        - None, to use the default 5-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -1245,9 +1262,8 @@ class RandomizedSearchCV(BaseSearchCV):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.20
-            ``cv`` default value if None will change from 3-fold to 5-fold
-            in v0.22.
+        .. versionchanged:: 0.22
+            ``cv`` default value if None changed from 3-fold to 5-fold.
 
     refit : boolean, string, or callable, default=True
         Refit an estimator using the best found parameters on the whole
@@ -1259,7 +1275,10 @@ class RandomizedSearchCV(BaseSearchCV):
 
         Where there are considerations other than maximum score in
         choosing a best estimator, ``refit`` can be set to a function which
-        returns the selected ``best_index_`` given the ``cv_results``.
+        returns the selected ``best_index_`` given the ``cv_results``. In that
+        case, the ``best_estimator_`` and ``best_parameters_`` will be set
+        according to the returned ``best_index_`` while the ``best_score_``
+        attribute will not be availble.
 
         The refitted estimator is made available at the ``best_estimator_``
         attribute and permits using ``predict`` directly on this
@@ -1268,7 +1287,7 @@ class RandomizedSearchCV(BaseSearchCV):
         Also for multiple metric evaluation, the attributes ``best_index_``,
         ``best_score_`` and ``best_params_`` will only be available if
         ``refit`` is set and all of them will be determined w.r.t this specific
-        scorer. When refit is callable, ``best_score_`` is disabled.
+        scorer.
 
         See ``scoring`` parameter to know more about multiple metric
         evaluation.
@@ -1291,8 +1310,7 @@ class RandomizedSearchCV(BaseSearchCV):
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error. Default is 'raise' but from
-        version 0.22 it will change to np.nan.
+        step, which will always raise the error. Default is ``np.nan``.
 
     return_train_score : boolean, default=False
         If ``False``, the ``cv_results_`` attribute will not include training
@@ -1356,7 +1374,7 @@ class RandomizedSearchCV(BaseSearchCV):
         scorer's name (``'_<scorer_name>'``) instead of ``'_score'`` shown
         above. ('split0_test_precision', 'mean_train_precision' etc.)
 
-    best_estimator_ : estimator or dict
+    best_estimator_ : estimator
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
         on the left out data. Not available if ``refit=False``.
@@ -1371,6 +1389,8 @@ class RandomizedSearchCV(BaseSearchCV):
 
         For multi-metric evaluation, this is not available if ``refit`` is
         ``False``. See ``refit`` parameter for more information.
+
+        This attribute is not available if ``refit`` is a function.
 
     best_params_ : dict
         Parameter setting that gave the best results on the hold out data.
@@ -1426,13 +1446,29 @@ class RandomizedSearchCV(BaseSearchCV):
         A generator over parameter settings, constructed from
         param_distributions.
 
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> from sklearn.model_selection import RandomizedSearchCV
+    >>> from scipy.stats import uniform
+    >>> iris = load_iris()
+    >>> logistic = LogisticRegression(solver='saga', tol=1e-2, max_iter=200,
+    ...                               random_state=0)
+    >>> distributions = dict(C=uniform(loc=0, scale=4),
+    ...                      penalty=['l2', 'l1'])
+    >>> clf = RandomizedSearchCV(logistic, distributions, random_state=0)
+    >>> search = clf.fit(iris.data, iris.target)
+    >>> search.best_params_
+    {'C': 2..., 'penalty': 'l1'}
     """
     _required_parameters = ["estimator", "param_distributions"]
 
     def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
                  n_jobs=None, iid='deprecated', refit=True,
-                 cv='warn', verbose=0, pre_dispatch='2*n_jobs',
-                 random_state=None, error_score='raise-deprecating',
+                 cv=None, verbose=0, pre_dispatch='2*n_jobs',
+                 random_state=None, error_score=np.nan,
                  return_train_score=False):
         self.param_distributions = param_distributions
         self.n_iter = n_iter

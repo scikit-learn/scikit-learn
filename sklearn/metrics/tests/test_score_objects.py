@@ -6,14 +6,13 @@ import numbers
 
 import numpy as np
 import pytest
+import joblib
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_not_equal
 
 from sklearn.base import BaseEstimator
 from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
@@ -37,15 +36,17 @@ from sklearn.datasets import load_diabetes
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.model_selection import GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
-from sklearn.utils import _joblib
 
 
 REGRESSION_SCORERS = ['explained_variance', 'r2',
                       'neg_mean_absolute_error', 'neg_mean_squared_error',
                       'neg_mean_squared_log_error',
-                      'neg_median_absolute_error', 'mean_absolute_error',
+                      'neg_median_absolute_error',
+                      'neg_root_mean_squared_error',
+                      'mean_absolute_error',
                       'mean_squared_error', 'median_absolute_error',
-                      'max_error']
+                      'max_error', 'neg_mean_poisson_deviance',
+                      'neg_mean_gamma_deviance']
 
 CLF_SCORERS = ['accuracy', 'balanced_accuracy',
                'f1', 'f1_weighted', 'f1_macro', 'f1_micro',
@@ -54,7 +55,7 @@ CLF_SCORERS = ['accuracy', 'balanced_accuracy',
                'recall', 'recall_weighted', 'recall_macro', 'recall_micro',
                'neg_log_loss', 'log_loss', 'neg_brier_score',
                'brier_score_loss', 'jaccard', 'jaccard_weighted',
-               'jaccard_macro', 'jaccard_micro']
+               'jaccard_macro', 'jaccard_micro', 'roc_auc_ovr', 'roc_auc_ovo']
 
 # All supervised cluster scorers (They behave like classification metric)
 CLUSTER_SCORERS = ["adjusted_rand_score",
@@ -69,11 +70,22 @@ CLUSTER_SCORERS = ["adjusted_rand_score",
 MULTILABEL_ONLY_SCORERS = ['precision_samples', 'recall_samples', 'f1_samples',
                            'jaccard_samples']
 
+REQUIRE_POSITIVE_Y_SCORERS = ['neg_mean_poisson_deviance',
+                              'neg_mean_gamma_deviance']
+
+
+def _require_positive_y(y):
+    """Make targets strictly positive"""
+    offset = abs(y.min()) + 1
+    y = y + offset
+    return y
+
 
 def _make_estimators(X_train, y_train, y_ml_train):
     # Make estimators that make sense to test various scoring methods
     sensible_regr = DecisionTreeRegressor(random_state=0)
-    sensible_regr.fit(X_train, y_train)
+    # some of the regressions scorers require strictly positive input.
+    sensible_regr.fit(X_train, y_train + 1)
     sensible_clf = DecisionTreeClassifier(random_state=0)
     sensible_clf.fit(X_train, y_train)
     sensible_ml_clf = DecisionTreeClassifier(random_state=0)
@@ -99,8 +111,8 @@ def setup_module():
     _, y_ml = make_multilabel_classification(n_samples=X.shape[0],
                                              random_state=0)
     filename = os.path.join(TEMP_FOLDER, 'test_data.pkl')
-    _joblib.dump((X, y, y_ml), filename)
-    X_mm, y_mm, y_ml_mm = _joblib.load(filename, mmap_mode='r')
+    joblib.dump((X, y, y_ml), filename)
+    X_mm, y_mm, y_ml_mm = joblib.load(filename, mmap_mode='r')
     ESTIMATORS = _make_estimators(X_mm, y_mm, y_ml_mm)
 
 
@@ -198,8 +210,8 @@ def check_multimetric_scoring_single_metric_wrapper(*args, **kwargs):
     if args[0] is not None:
         assert scorers is not None
         names, scorers = zip(*scorers.items())
-        assert_equal(len(scorers), 1)
-        assert_equal(names[0], 'score')
+        assert len(scorers) == 1
+        assert names[0] == 'score'
         scorers = scorers[0]
     return scorers
 
@@ -224,7 +236,7 @@ def test_check_scoring_and_check_multimetric_scoring():
         scorers, is_multi = _check_multimetric_scoring(estimator, scoring)
         assert is_multi
         assert isinstance(scorers, dict)
-        assert_equal(sorted(scorers.keys()), sorted(list(scoring)))
+        assert sorted(scorers.keys()) == sorted(list(scoring))
         assert all([isinstance(scorer, _PredictScorer)
                     for scorer in list(scorers.values())])
 
@@ -252,12 +264,11 @@ def test_check_scoring_and_check_multimetric_scoring():
                              scoring=scoring)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_check_scoring_gridsearchcv():
     # test that check_scoring works on GridSearchCV and pipeline.
     # slightly redundant non-regression test.
 
-    grid = GridSearchCV(LinearSVC(), param_grid={'C': [.1, 1]})
+    grid = GridSearchCV(LinearSVC(), param_grid={'C': [.1, 1]}, cv=3)
     scorer = check_scoring(grid, "f1")
     assert isinstance(scorer, _PredictScorer)
 
@@ -269,7 +280,7 @@ def test_check_scoring_gridsearchcv():
     # and doesn't make any assumptions about the estimator apart from having a
     # fit.
     scores = cross_val_score(EstimatorWithFit(), [[1], [2], [3]], [1, 0, 1],
-                             scoring=DummyScorer())
+                             scoring=DummyScorer(), cv=3)
     assert_array_equal(scores, 1)
 
 
@@ -337,7 +348,6 @@ def test_regression_scorers():
     assert_almost_equal(score1, score2)
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_thresholded_scorers():
     # Test scorers that take thresholds.
     X, y = make_blobs(random_state=0, centers=2)
@@ -481,15 +491,17 @@ def test_scorer_sample_weight():
             target = y_ml_test
         else:
             target = y_test
+        if name in REQUIRE_POSITIVE_Y_SCORERS:
+            target = _require_positive_y(target)
         try:
             weighted = scorer(estimator[name], X_test, target,
                               sample_weight=sample_weight)
             ignored = scorer(estimator[name], X_test[10:], target[10:])
             unweighted = scorer(estimator[name], X_test, target)
-            assert_not_equal(weighted, unweighted,
-                             msg="scorer {0} behaves identically when "
-                             "called with sample weights: {1} vs "
-                             "{2}".format(name, weighted, unweighted))
+            assert weighted != unweighted, (
+                "scorer {0} behaves identically when "
+                "called with sample weights: {1} vs "
+                "{2}".format(name, weighted, unweighted))
             assert_almost_equal(weighted, ignored,
                                 err_msg="scorer {0} behaves differently when "
                                 "ignoring samples and setting sample_weight to"
@@ -502,25 +514,28 @@ def test_scorer_sample_weight():
                 "with sample weights: {1}".format(name, str(e)))
 
 
-@ignore_warnings  # UndefinedMetricWarning for P / R scores
-def check_scorer_memmap(scorer_name):
-    scorer, estimator = SCORERS[scorer_name], ESTIMATORS[scorer_name]
-    if scorer_name in MULTILABEL_ONLY_SCORERS:
-        score = scorer(estimator, X_mm, y_ml_mm)
-    else:
-        score = scorer(estimator, X_mm, y_mm)
-    assert isinstance(score, numbers.Number), scorer_name
-
-
 @pytest.mark.parametrize('name', SCORERS)
 def test_scorer_memmap_input(name):
     # Non-regression test for #6147: some score functions would
     # return singleton memmap when computed on memmap data instead of scalar
     # float values.
-    check_scorer_memmap(name)
+
+    if name in REQUIRE_POSITIVE_Y_SCORERS:
+        y_mm_1 = _require_positive_y(y_mm)
+        y_ml_mm_1 = _require_positive_y(y_ml_mm)
+    else:
+        y_mm_1, y_ml_mm_1 = y_mm, y_ml_mm
+
+    # UndefinedMetricWarning for P / R scores
+    with ignore_warnings():
+        scorer, estimator = SCORERS[name], ESTIMATORS[name]
+        if name in MULTILABEL_ONLY_SCORERS:
+            score = scorer(estimator, X_mm, y_ml_mm_1)
+        else:
+            score = scorer(estimator, X_mm, y_mm_1)
+        assert isinstance(score, numbers.Number), name
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_scoring_is_not_metric():
     assert_raises_regexp(ValueError, 'make_scorer', check_scoring,
                          LogisticRegression(), f1_score)

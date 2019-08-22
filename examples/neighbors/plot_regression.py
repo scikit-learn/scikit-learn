@@ -39,8 +39,8 @@ for i, weights in enumerate(['uniform', 'distance']):
     y_ = knn.fit(X, y).predict(T)
 
     plt.subplot(2, 1, i + 1)
-    plt.scatter(X, y, c='k', label='data')
-    plt.plot(T, y_, c='g', label='prediction')
+    plt.scatter(X, y, color='darkorange', label='data')
+    plt.plot(T, y_, color='navy', label='prediction')
     plt.axis('tight')
     plt.legend()
     plt.title("KNeighborsRegressor (k = %i, weights = '%s')" % (n_neighbors,

@@ -328,7 +328,6 @@ cdef class BestSplitter(BaseDenseSplitter):
 
         cdef SIZE_t f_i = n_features
         cdef SIZE_t f_j
-        cdef SIZE_t tmp
         cdef SIZE_t p
         cdef SIZE_t feature_idx_offset
         cdef SIZE_t feature_offset
@@ -386,9 +385,7 @@ cdef class BestSplitter(BaseDenseSplitter):
 
             if f_j < n_known_constants:
                 # f_j in the interval [n_drawn_constants, n_known_constants[
-                tmp = features[f_j]
-                features[f_j] = features[n_drawn_constants]
-                features[n_drawn_constants] = tmp
+                features[n_drawn_constants], features[f_j] = features[f_j], features[n_drawn_constants]
 
                 n_drawn_constants += 1
 
@@ -419,8 +416,7 @@ cdef class BestSplitter(BaseDenseSplitter):
                     sort(Xf + start, samples + start, end - start)
 
                 if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
-                    features[f_j] = features[n_total_constants]
-                    features[n_total_constants] = current.feature
+                    features[f_j], features[n_total_constants] = features[n_total_constants], features[f_j]
 
                     n_found_constants += 1
                     n_total_constants += 1
@@ -485,9 +481,7 @@ cdef class BestSplitter(BaseDenseSplitter):
                 else:
                     partition_end -= 1
 
-                    tmp = samples[partition_end]
-                    samples[partition_end] = samples[p]
-                    samples[p] = tmp
+                    samples[p], samples[partition_end] = samples[partition_end], samples[p]
 
             self.criterion.reset()
             self.criterion.update(best.pos)
@@ -669,7 +663,7 @@ cdef class RandomSplitter(BaseDenseSplitter):
         cdef SIZE_t f_i = n_features
         cdef SIZE_t f_j
         cdef SIZE_t p
-        cdef SIZE_t tmp
+        cdef SIZE_t partition_end
         cdef SIZE_t feature_stride
         # Number of features discovered to be constant during the split search
         cdef SIZE_t n_found_constants = 0
@@ -682,7 +676,6 @@ cdef class RandomSplitter(BaseDenseSplitter):
         cdef DTYPE_t min_feature_value
         cdef DTYPE_t max_feature_value
         cdef DTYPE_t current_feature_value
-        cdef SIZE_t partition_end
 
         _init_split(&best, end)
 
@@ -719,10 +712,7 @@ cdef class RandomSplitter(BaseDenseSplitter):
 
             if f_j < n_known_constants:
                 # f_j in the interval [n_drawn_constants, n_known_constants[
-                tmp = features[f_j]
-                features[f_j] = features[n_drawn_constants]
-                features[n_drawn_constants] = tmp
-
+                features[n_drawn_constants], features[f_j] = features[f_j], features[n_drawn_constants]
                 n_drawn_constants += 1
 
             else:
@@ -747,8 +737,7 @@ cdef class RandomSplitter(BaseDenseSplitter):
                         max_feature_value = current_feature_value
 
                 if max_feature_value <= min_feature_value + FEATURE_THRESHOLD:
-                    features[f_j] = features[n_total_constants]
-                    features[n_total_constants] = current.feature
+                    features[f_j], features[n_total_constants] = features[n_total_constants], current.feature
 
                     n_found_constants += 1
                     n_total_constants += 1
@@ -766,21 +755,15 @@ cdef class RandomSplitter(BaseDenseSplitter):
                         current.threshold = min_feature_value
 
                     # Partition
-                    partition_end = end
-                    p = start
+                    p, partition_end = start, end
                     while p < partition_end:
-                        current_feature_value = Xf[p]
-                        if current_feature_value <= current.threshold:
+                        if Xf[p] <= current.threshold:
                             p += 1
                         else:
                             partition_end -= 1
 
-                            Xf[p] = Xf[partition_end]
-                            Xf[partition_end] = current_feature_value
-
-                            tmp = samples[partition_end]
-                            samples[partition_end] = samples[p]
-                            samples[p] = tmp
+                            Xf[p], Xf[partition_end] = Xf[partition_end], Xf[p]
+                            samples[p], samples[partition_end] = samples[partition_end], samples[p]
 
                     current.pos = partition_end
 
@@ -807,20 +790,15 @@ cdef class RandomSplitter(BaseDenseSplitter):
         # Reorganize into samples[start:best.pos] + samples[best.pos:end]
         if best.pos < end:
             if current.feature != best.feature:
-                partition_end = end
-                p = start
+                p, partition_end = start, end
 
                 while p < partition_end:
                     if self.X[samples[p], best.feature] <= best.threshold:
                         p += 1
-
                     else:
                         partition_end -= 1
 
-                        tmp = samples[partition_end]
-                        samples[partition_end] = samples[p]
-                        samples[p] = tmp
-
+                        samples[p], samples[partition_end] = samples[partition_end], samples[p]
 
             self.criterion.reset()
             self.criterion.update(best.pos)
@@ -922,9 +900,8 @@ cdef class BaseSparseSplitter(Splitter):
                                   SIZE_t zero_pos) nogil:
         """Partition samples[start:end] based on threshold."""
 
-        cdef double value
-        cdef SIZE_t partition_end
         cdef SIZE_t p
+        cdef SIZE_t partition_end
 
         cdef DTYPE_t* Xf = self.feature_values
         cdef SIZE_t* samples = self.samples
@@ -941,16 +918,13 @@ cdef class BaseSparseSplitter(Splitter):
             return zero_pos
 
         while p < partition_end:
-            value = Xf[p]
-
-            if value <= threshold:
+            if Xf[p] <= threshold:
                 p += 1
 
             else:
                 partition_end -= 1
 
-                Xf[p] = Xf[partition_end]
-                Xf[partition_end] = value
+                Xf[p], Xf[partition_end] = Xf[partition_end], Xf[p]
                 sparse_swap(index_to_samples, samples, p, partition_end)
 
         return partition_end
@@ -1213,7 +1187,7 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
         cdef double best_proxy_improvement = - INFINITY
 
         cdef SIZE_t f_i = n_features
-        cdef SIZE_t f_j, p, tmp
+        cdef SIZE_t f_j, p
         cdef SIZE_t n_visited_features = 0
         # Number of features discovered to be constant during the split search
         cdef SIZE_t n_found_constants = 0
@@ -1268,9 +1242,7 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
 
             if f_j < n_known_constants:
                 # f_j in the interval [n_drawn_constants, n_known_constants[
-                tmp = features[f_j]
-                features[f_j] = features[n_drawn_constants]
-                features[n_drawn_constants] = tmp
+                features[f_j], features[n_drawn_constants] = features[n_drawn_constants], features[f_j]
 
                 n_drawn_constants += 1
 
@@ -1305,8 +1277,7 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                         end_negative += 1
 
                 if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
-                    features[f_j] = features[n_total_constants]
-                    features[n_total_constants] = current.feature
+                    features[f_j], features[n_total_constants] = features[n_total_constants], features[f_j]
 
                     n_found_constants += 1
                     n_total_constants += 1
@@ -1448,7 +1419,7 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
         cdef DTYPE_t current_feature_value
 
         cdef SIZE_t f_i = n_features
-        cdef SIZE_t f_j, p, tmp
+        cdef SIZE_t f_j, p
         cdef SIZE_t n_visited_features = 0
         # Number of features discovered to be constant during the split search
         cdef SIZE_t n_found_constants = 0
@@ -1504,9 +1475,7 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
 
             if f_j < n_known_constants:
                 # f_j in the interval [n_drawn_constants, n_known_constants[
-                tmp = features[f_j]
-                features[f_j] = features[n_drawn_constants]
-                features[n_drawn_constants] = tmp
+                features[f_j], features[n_drawn_constants] = features[n_drawn_constants], features[f_j]
 
                 n_drawn_constants += 1
 

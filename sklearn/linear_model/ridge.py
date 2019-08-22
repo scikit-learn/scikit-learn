@@ -27,6 +27,7 @@ from ..utils import check_array
 from ..utils import check_consistent_length
 from ..utils import compute_sample_weight
 from ..utils import column_or_1d
+from ..utils.validation import _check_sample_weight
 from ..preprocessing import LabelBinarizer
 from ..model_selection import GridSearchCV
 from ..metrics.scorer import check_scoring
@@ -408,7 +409,7 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), solver)
         X = check_array(X, accept_sparse=_accept_sparse, dtype=_dtype,
                         order="C")
-        y = check_array(y, dtype=X.dtype, ensure_2d=False, order="C")
+        y = check_array(y, dtype=X.dtype, ensure_2d=False, order=None)
     check_consistent_length(X, y)
 
     n_samples, n_features = X.shape
@@ -428,8 +429,7 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                          " %d != %d" % (n_samples, n_samples_))
 
     if has_sw:
-        if np.atleast_1d(sample_weight).ndim > 1:
-            raise ValueError("Sample weights must be 1D array or scalar")
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         if solver not in ['sag', 'saga']:
             # SAG supports sample_weight directly. For other solvers,
@@ -545,6 +545,26 @@ class _BaseRidge(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
                          accept_sparse=_accept_sparse,
                          dtype=_dtype,
                          multi_output=True, y_numeric=True)
+        if sparse.issparse(X) and self.fit_intercept:
+            if self.solver not in ['auto', 'sparse_cg', 'sag']:
+                raise ValueError(
+                    "solver='{}' does not support fitting the intercept "
+                    "on sparse data. Please set the solver to 'auto' or "
+                    "'sparse_cg', 'sag', or set `fit_intercept=False`"
+                    .format(self.solver))
+            if (self.solver == 'sag' and self.max_iter is None and
+                    self.tol > 1e-4):
+                warnings.warn(
+                    '"sag" solver requires many iterations to fit '
+                    'an intercept with sparse inputs. Either set the '
+                    'solver to "auto" or "sparse_cg", or set a low '
+                    '"tol" and a high "max_iter" (especially if inputs are '
+                    'not standardized).')
+                solver = 'sag'
+            else:
+                solver = 'sparse_cg'
+        else:
+            solver = self.solver
 
         if ((sample_weight is not None) and
                 np.atleast_1d(sample_weight).ndim > 1):
@@ -555,9 +575,7 @@ class _BaseRidge(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
             X, y, self.fit_intercept, self.normalize, self.copy_X,
             sample_weight=sample_weight, return_mean=True)
 
-        # temporary fix for fitting the intercept with sparse data using 'sag'
-        if (sparse.issparse(X) and self.fit_intercept and
-           self.solver != 'sparse_cg'):
+        if solver == 'sag' and sparse.issparse(X) and self.fit_intercept:
             self.coef_, self.n_iter_, self.intercept_ = _ridge_regression(
                 X, y, alpha=self.alpha, sample_weight=sample_weight,
                 max_iter=self.max_iter, tol=self.tol, solver=self.solver,
@@ -565,8 +583,9 @@ class _BaseRidge(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
                 return_intercept=True, check_input=False)
             # add the offset which was subtracted by _preprocess_data
             self.intercept_ += y_offset
+
         else:
-            if sparse.issparse(X) and self.solver == 'sparse_cg':
+            if sparse.issparse(X) and self.fit_intercept:
                 # required to fit intercept with sparse_cg solver
                 params = {'X_offset': X_offset, 'X_scale': X_scale}
             else:
@@ -575,7 +594,7 @@ class _BaseRidge(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
 
             self.coef_, self.n_iter_ = _ridge_regression(
                 X, y, alpha=self.alpha, sample_weight=sample_weight,
-                max_iter=self.max_iter, tol=self.tol, solver=self.solver,
+                max_iter=self.max_iter, tol=self.tol, solver=solver,
                 random_state=self.random_state, return_n_iter=True,
                 return_intercept=False, check_input=False, **params)
             self._set_intercept(X_offset, y_offset, X_scale)
@@ -609,10 +628,10 @@ class Ridge(_BaseRidge, RegressorMixin):
         assumed to be specific to the targets. Hence they must correspond in
         number.
 
-    fit_intercept : boolean
+    fit_intercept : bool, default True
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
     normalize : boolean, optional, default False
         This parameter is ignored when ``fit_intercept`` is set to False.
@@ -663,8 +682,7 @@ class Ridge(_BaseRidge, RegressorMixin):
           scaler from sklearn.preprocessing.
 
         All last five solvers support both dense and sparse data. However, only
-        'sag' and 'sparse_cg' supports sparse input when `fit_intercept` is
-        True.
+        'sparse_cg' supports sparse input when `fit_intercept` is True.
 
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.
@@ -712,9 +730,8 @@ class Ridge(_BaseRidge, RegressorMixin):
     >>> y = rng.randn(n_samples)
     >>> X = rng.randn(n_samples, n_features)
     >>> clf = Ridge(alpha=1.0)
-    >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
-    Ridge(alpha=1.0, copy_X=True, fit_intercept=True, max_iter=None,
-          normalize=False, random_state=None, solver='auto', tol=0.001)
+    >>> clf.fit(X, y)
+    Ridge()
 
     """
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
@@ -848,13 +865,16 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         Actual number of iterations for each target. Available only for
         sag and lsqr solvers. Other solvers will return None.
 
+    classes_ : array of shape = [n_classes]
+        The classes labels.
+
     Examples
     --------
     >>> from sklearn.datasets import load_breast_cancer
     >>> from sklearn.linear_model import RidgeClassifier
     >>> X, y = load_breast_cancer(return_X_y=True)
     >>> clf = RidgeClassifier().fit(X, y)
-    >>> clf.score(X, y) # doctest: +ELLIPSIS
+    >>> clf.score(X, y)
     0.9595...
 
     See also
@@ -1407,9 +1427,8 @@ class _RidgeGCV(LinearModel):
                 "alphas must be positive. Got {} containing some "
                 "negative or null value instead.".format(self.alphas))
 
-        if sample_weight is not None and not isinstance(sample_weight, float):
-            sample_weight = check_array(sample_weight, ensure_2d=False,
-                                        dtype=X.dtype)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+
         n_samples, n_features = X.shape
 
         X, y, X_offset, y_offset, X_scale = LinearModel._preprocess_data(
@@ -1579,10 +1598,10 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
         LogisticRegression or LinearSVC.
         If using generalized cross-validation, alphas must be positive.
 
-    fit_intercept : boolean
+    fit_intercept : bool, default True
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
     normalize : boolean, optional, default False
         This parameter is ignored when ``fit_intercept`` is set to False.
@@ -1659,7 +1678,7 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
     >>> from sklearn.linear_model import RidgeCV
     >>> X, y = load_diabetes(return_X_y=True)
     >>> clf = RidgeCV(alphas=[1e-3, 1e-2, 1e-1, 1]).fit(X, y)
-    >>> clf.score(X, y) # doctest: +ELLIPSIS
+    >>> clf.score(X, y)
     0.5166...
 
     See also
@@ -1695,7 +1714,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     fit_intercept : boolean
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
     normalize : boolean, optional, default False
         This parameter is ignored when ``fit_intercept`` is set to False.
@@ -1756,13 +1775,16 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     alpha_ : float
         Estimated regularization parameter
 
+    classes_ : array of shape = [n_classes]
+        The classes labels.
+
     Examples
     --------
     >>> from sklearn.datasets import load_breast_cancer
     >>> from sklearn.linear_model import RidgeClassifierCV
     >>> X, y = load_breast_cancer(return_X_y=True)
     >>> clf = RidgeClassifierCV(alphas=[1e-3, 1e-2, 1e-1, 1]).fit(X, y)
-    >>> clf.score(X, y) # doctest: +ELLIPSIS
+    >>> clf.score(X, y)
     0.9630...
 
     See also

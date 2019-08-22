@@ -17,7 +17,6 @@ from sklearn.datasets.samples_generator import make_blobs
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal, assert_raises
 from sklearn.utils.testing import SkipTest
 
 
@@ -77,12 +76,12 @@ def test_sparse_graph_connected_component():
     for start, stop in zip(boundaries[:-1], boundaries[1:]):
         component_1 = _graph_connected_component(affinity, p[start])
         component_size = stop - start
-        assert_equal(component_1.sum(), component_size)
+        assert component_1.sum() == component_size
 
         # We should retrieve the same component mask by starting by both ends
         # of the group
         component_2 = _graph_connected_component(affinity, p[stop - 1])
-        assert_equal(component_2.sum(), component_size)
+        assert component_2.sum() == component_size
         assert_array_equal(component_1, component_2)
 
 
@@ -123,7 +122,7 @@ def test_spectral_embedding_two_components(seed=36):
         se_precomp.fit_transform(affinity.astype(np.float32))
     # thresholding on the first components using 0.
     label_ = np.array(embedded_coordinate.ravel() < 0, dtype="float")
-    assert_equal(normalized_mutual_info_score(true_label, label_), 1.0)
+    assert normalized_mutual_info_score(true_label, label_) == 1.0
 
 
 def test_spectral_embedding_precomputed_affinity(seed=36):
@@ -203,14 +202,16 @@ def test_spectral_embedding_unknown_eigensolver(seed=36):
     se = SpectralEmbedding(n_components=1, affinity="precomputed",
                            random_state=np.random.RandomState(seed),
                            eigen_solver="<unknown>")
-    assert_raises(ValueError, se.fit, S)
+    with pytest.raises(ValueError):
+        se.fit(S)
 
 
 def test_spectral_embedding_unknown_affinity(seed=36):
     # Test that SpectralClustering fails with an unknown affinity type
     se = SpectralEmbedding(n_components=1, affinity="<unknown>",
                            random_state=np.random.RandomState(seed))
-    assert_raises(ValueError, se.fit, S)
+    with pytest.raises(ValueError):
+        se.fit(S)
 
 
 def test_connectivity(seed=36):
@@ -220,17 +221,17 @@ def test_connectivity(seed=36):
                       [0, 1, 1, 1, 0],
                       [0, 0, 1, 1, 1],
                       [0, 0, 0, 1, 1]])
-    assert_equal(_graph_is_connected(graph), False)
-    assert_equal(_graph_is_connected(sparse.csr_matrix(graph)), False)
-    assert_equal(_graph_is_connected(sparse.csc_matrix(graph)), False)
+    assert not _graph_is_connected(graph)
+    assert not _graph_is_connected(sparse.csr_matrix(graph))
+    assert not _graph_is_connected(sparse.csc_matrix(graph))
     graph = np.array([[1, 1, 0, 0, 0],
                       [1, 1, 1, 0, 0],
                       [0, 1, 1, 1, 0],
                       [0, 0, 1, 1, 1],
                       [0, 0, 0, 1, 1]])
-    assert_equal(_graph_is_connected(graph), True)
-    assert_equal(_graph_is_connected(sparse.csr_matrix(graph)), True)
-    assert_equal(_graph_is_connected(sparse.csc_matrix(graph)), True)
+    assert _graph_is_connected(graph)
+    assert _graph_is_connected(sparse.csr_matrix(graph))
+    assert _graph_is_connected(sparse.csc_matrix(graph))
 
 
 def test_spectral_embedding_deterministic():

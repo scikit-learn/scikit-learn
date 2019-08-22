@@ -19,7 +19,6 @@ from sklearn.utils.extmath import row_norms
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils import compute_class_weight
 from sklearn.utils import check_random_state
@@ -471,8 +470,8 @@ def test_sag_regressor():
     clf2.fit(sp.csr_matrix(X), y)
     score1 = clf1.score(X, y)
     score2 = clf2.score(X, y)
-    assert_greater(score1, 0.99)
-    assert_greater(score2, 0.99)
+    assert score1 > 0.99
+    assert score2 > 0.99
 
     # simple linear function with noise
     y = 0.5 * X.ravel() + rng.randn(n_samples, 1).ravel()
@@ -485,8 +484,8 @@ def test_sag_regressor():
     score1 = clf1.score(X, y)
     score2 = clf2.score(X, y)
     score2 = clf2.score(X, y)
-    assert_greater(score1, 0.5)
-    assert_greater(score2, 0.5)
+    assert score1 > 0.5
+    assert score2 > 0.5
 
 
 @pytest.mark.filterwarnings('ignore:The max_iter was reached')
@@ -591,7 +590,6 @@ def test_sag_multiclass_computed_correctly():
         assert_almost_equal(clf2.intercept_[i], intercept2[i], decimal=1)
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_classifier_results():
     """tests if classifier results match target"""
     alpha = .1
@@ -729,7 +727,6 @@ def test_multiclass_classifier_class_weight():
         assert_almost_equal(clf2.intercept_[i], intercept2[i], decimal=1)
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_classifier_single_class():
     """tests if ValueError is thrown with only one class"""
     X = [[1, 2], [3, 4]]
@@ -742,7 +739,6 @@ def test_classifier_single_class():
                          X, y)
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_step_size_alpha_error():
     X = [[0, 0], [0, 0]]
     y = [1, -1]
