@@ -9,7 +9,6 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.utils.testing import (
     assert_array_almost_equal,
     assert_array_equal,
-    assert_raises,
     assert_raise_message,
     assert_warns_message
 )
@@ -128,11 +127,13 @@ def test_same_min_max(strategy):
 def test_transform_1d_behavior():
     X = np.arange(4)
     est = KBinsDiscretizer(n_bins=2)
-    assert_raises(ValueError, est.fit, X)
+    with pytest.raises(ValueError):
+        est.fit(X)
 
     est = KBinsDiscretizer(n_bins=2)
     est.fit(X.reshape(-1, 1))
-    assert_raises(ValueError, est.transform, X)
+    with pytest.raises(ValueError):
+        est.transform(X)
 
 
 @pytest.mark.parametrize('i', range(1, 9))
