@@ -24,6 +24,7 @@ from sklearn.linear_model._glm.distribution import (
 )
 from sklearn.linear_model import Ridge
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.model_selection import train_test_split
 
 GLM_SOLVERS = ['lbfgs']
 
@@ -207,9 +208,8 @@ def test_glm_log_regression(family, solver, tol):
 
 @pytest.mark.parametrize('fit_intercept', [True, False])
 def test_warm_start(fit_intercept):
-    n_samples, n_features = 100, 10
-    n_predict = 10
-    X, y, coef = make_regression(n_samples=n_samples+n_predict,
+    n_samples, n_features = 110, 10
+    X, y, coef = make_regression(n_samples=n_samples,
                                  n_features=n_features,
                                  n_informative=n_features-2, noise=0.5,
                                  coef=True, random_state=42)
@@ -230,7 +230,7 @@ def test_warm_start(fit_intercept):
     assert glm1.score(X, y) > glm2.score(X, y)
     glm2.set_params(max_iter=1000)
     glm2.fit(X, y)
-    assert_allclose(glm1.coef_, glm2.coef_, rtol=1e-4, atol=1e-5)
+    assert_allclose(glm1.coef_, glm2.coef_, rtol=1e-5)
     assert_allclose(glm1.score(X, y), glm2.score(X, y), rtol=1e-4)
     # TODO: investigate why this doesn't match
     # assert glm1.n_iter_ == glm2.n_iter_ + 2
@@ -242,13 +242,14 @@ def test_warm_start(fit_intercept):
 def test_normal_ridge_comparison(n_samples, n_features, fit_intercept, solver):
     """Compare with Ridge regression for Normal distributions."""
     alpha = 1.0
-    n_predict = 10
-    X, y, _ = make_regression(n_samples=n_samples+n_predict,
-                              n_features=n_features,
-                              n_informative=n_features-2, noise=0.5,
-                              coef=True, random_state=42)
-    y = y[0:n_samples]
-    X, T = X[0:n_samples], X[n_samples:]
+    test_size = 10
+    X, y = make_regression(n_samples=n_samples + test_size,
+                           n_features=n_features,
+                           n_informative=n_features-2, noise=0.5,
+                           random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=test_size, random_state=0
+    )
 
     if n_samples > n_features:
         ridge_params = {"solver": "svd"}
@@ -258,17 +259,18 @@ def test_normal_ridge_comparison(n_samples, n_features, fit_intercept, solver):
     # GLM has 1/(2*n) * Loss + 1/2*L2, Ridge has Loss + L2
     ridge = Ridge(alpha=alpha*n_samples, normalize=False,
                   random_state=42, **ridge_params)
-    ridge.fit(X, y)
+    ridge.fit(X_train, y_train)
 
     glm = GeneralizedLinearRegressor(alpha=1.0, family='normal',
                                      link='identity', fit_intercept=True,
-                                     max_iter=300, solver=solver, tol=1e-6,
-                                     check_input=False)
-    glm.fit(X, y)
+                                     solver=solver, check_input=False,
+                                     max_iter=300)
+    glm.fit(X_train, y_train)
     assert glm.coef_.shape == (X.shape[1], )
-    assert_allclose(glm.coef_, ridge.coef_, rtol=5e-6)
+    assert_allclose(glm.coef_, ridge.coef_, atol=5e-5)
     assert_allclose(glm.intercept_, ridge.intercept_, rtol=1e-5)
-    assert_allclose(glm.predict(T), ridge.predict(T), rtol=1e-5)
+    assert_allclose(glm.predict(X_train), ridge.predict(X_train), rtol=5e-5)
+    assert_allclose(glm.predict(X_test), ridge.predict(X_test), rtol=5e-5)
 
 
 @pytest.mark.parametrize('solver, tol', [('lbfgs', 1e-7)])
