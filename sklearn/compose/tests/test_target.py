@@ -7,8 +7,6 @@ from sklearn.base import TransformerMixin
 
 from sklearn.dummy import DummyRegressor
 
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_no_warnings
@@ -31,20 +29,22 @@ def test_transform_target_regressor_error():
     regr = TransformedTargetRegressor(regressor=LinearRegression(),
                                       transformer=StandardScaler(),
                                       func=np.exp, inverse_func=np.log)
-    assert_raises_regex(ValueError, "'transformer' and functions"
-                        " 'func'/'inverse_func' cannot both be set.",
-                        regr.fit, X, y)
+    with pytest.raises(ValueError,
+                       match="'transformer' and functions"
+                       " 'func'/'inverse_func' cannot both be set."):
+        regr.fit(X, y)
     # fit with sample_weight with a regressor which does not support it
     sample_weight = np.ones((y.shape[0],))
     regr = TransformedTargetRegressor(regressor=Lasso(),
                                       transformer=StandardScaler())
-    assert_raises_regex(TypeError, r"fit\(\) got an unexpected keyword "
-                        "argument 'sample_weight'", regr.fit, X, y,
-                        sample_weight=sample_weight)
+    with pytest.raises(TypeError, match=r"fit\(\) got an unexpected "
+                       "keyword argument 'sample_weight'"):
+        regr.fit(X, y, sample_weight=sample_weight)
     # func is given but inverse_func is not
     regr = TransformedTargetRegressor(func=np.exp)
-    assert_raises_regex(ValueError, "When 'func' is provided, 'inverse_func'"
-                        " must also be provided", regr.fit, X, y)
+    with pytest.raises(ValueError, match="When 'func' is provided, "
+                       "'inverse_func' must also be provided"):
+        regr.fit(X, y)
 
 
 def test_transform_target_regressor_invertible():
@@ -262,8 +262,10 @@ def test_transform_target_regressor_ensure_y_array():
                                     check_inverse=False)
     tt.fit(X.tolist(), y.tolist())
     tt.predict(X.tolist())
-    assert_raises(AssertionError, tt.fit, X, y.tolist())
-    assert_raises(AssertionError, tt.predict, X)
+    with pytest.raises(AssertionError):
+        tt.fit(X, y.tolist())
+    with pytest.raises(AssertionError):
+        tt.predict(X)
 
 
 class DummyTransformer(BaseEstimator, TransformerMixin):
