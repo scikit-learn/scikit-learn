@@ -118,7 +118,7 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
     """
 
     if sample_weight is not None:
-        sample_weight = _check_sample_weight(sample_weight, X, np.float64)
+        sample_weight = _check_sample_weight(sample_weight, X)
 
     if check_input:
         X = check_array(X, copy=copy, accept_sparse=['csr', 'csc'],

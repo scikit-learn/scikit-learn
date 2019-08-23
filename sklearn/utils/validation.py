@@ -1025,6 +1025,13 @@ def _check_sample_weight(sample_weight, X, dtype=None):
     """
     n_samples = _num_samples(X)
 
+    # this check is needed to ensure that we don't change the dtype of
+    # of sample_weight if it's already np.float32.
+    # since sample_weight can be a list or an array, we first
+    # need to verify that it has a dtype attribute before the check.
+    # if dtype is None or any other type besides np.float32, np.float64
+    # is given.
+
     if hasattr(sample_weight, "dtype"):
         dtype = sample_weight.dtype
 
@@ -1039,14 +1046,23 @@ def _check_sample_weight(sample_weight, X, dtype=None):
                                     dtype=dtype)
         return sample_weight
 
+    # at this point, sample_weight is either a list or
+    # an array. These checks will validate that the dtype
+    # of the returned sample_weight is either np.float32 or
+    # np.float64. If sample weight contained elements which
+    # cannot be passed safely to the above types, the
+    # following line will raise a ValueError
     sample_weight = np.array(sample_weight, dtype=dtype)
 
+    # sample_weights must be 1-D arrays
     if sample_weight.ndim != 1:
         raise ValueError("Sample weights must be 1D array or scalar")
 
-    if sample_weight.shape != (n_samples,):
+    # and must have the same number of elements
+    # as X
+    if sample_weight.shape[0] != n_samples:
         raise ValueError("sample_weight.shape == {}, expected {}!"
-                             .format(sample_weight.shape, (n_samples,)))
+                         .format(sample_weight.shape, (n_samples, )))
     return sample_weight
 
 

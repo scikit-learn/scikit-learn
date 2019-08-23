@@ -912,6 +912,12 @@ def test_check_sample_weight():
     sample_weight = _check_sample_weight(None, X, dtype=X.dtype)
     assert sample_weight.dtype == np.float64
 
+    # wrongly formated sample_weight
+    sample_weight = np.array(["1", "pi", "e"])
+    err_msg = "could not convert string to float: 'pi'"
+    with pytest.raises(ValueError, match=err_msg):
+        _check_sample_weight(sample_weight, X)
+
 
 @pytest.mark.parametrize("toarray", [
     np.array, sp.csr_matrix, sp.csc_matrix])
