@@ -334,6 +334,9 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
     :class:`sklearn.feature_extraction.text.TfidfTransformer` or
     :class:`sklearn.feature_extraction.text.TfidfVectorizer`.
 
+    The resulting counts are normalized using
+    :func:`sklearn.preprocessing.normalize` unless normalize is set to False.
+
     =================   ==========
     Classes                     20
     Samples total            18846
@@ -373,7 +376,7 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
 
     normalize : boolean, default=True
         If True, normalizes the returned data to unit length using
-        `sklearn.preprocessing.normalize`.
+        :func:`sklearn.preprocessing.normalize`.
 
         .. versionadded:: 0.20
 
