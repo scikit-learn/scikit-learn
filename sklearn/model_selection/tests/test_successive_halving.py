@@ -270,7 +270,7 @@ def test_random_search(max_resources, n_candidates, expected_n_candidates_):
                                max_resources=max_resources, ratio=2,
                                min_resources=4)
     sh.fit(X, y)
-    assert sh.n_candidates_ == expected_n_candidates_
+    assert sh.n_candidates_[0] == expected_n_candidates_
     if n_candidates == 'auto':
         # Make sure 'auto' makes the last iteration use as much budget as we
         # can

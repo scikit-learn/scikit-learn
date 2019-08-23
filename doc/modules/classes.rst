@@ -99,11 +99,11 @@ Classes
    cluster.AgglomerativeClustering
    cluster.Birch
    cluster.DBSCAN
-   cluster.OPTICS
    cluster.FeatureAgglomeration
    cluster.KMeans
    cluster.MiniBatchKMeans
    cluster.MeanShift
+   cluster.OPTICS
    cluster.SpectralClustering
 
 Functions
@@ -658,8 +658,17 @@ Kernels:
 
    inspection.partial_dependence
    inspection.permutation_importance
-   inspection.plot_partial_dependence
 
+Plotting
+--------
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   inspection.plot_partial_dependence
 
 .. _isotonic_ref:
 
@@ -870,6 +879,7 @@ details.
    metrics.classification_report
    metrics.cohen_kappa_score
    metrics.confusion_matrix
+   metrics.dcg_score
    metrics.f1_score
    metrics.fbeta_score
    metrics.hamming_loss
@@ -878,6 +888,7 @@ details.
    metrics.log_loss
    metrics.matthews_corrcoef
    metrics.multilabel_confusion_matrix
+   metrics.ndcg_score
    metrics.precision_recall_curve
    metrics.precision_recall_fscore_support
    metrics.precision_score
@@ -1005,6 +1016,26 @@ See the :ref:`metrics` section of the user guide for further details.
    metrics.pairwise_distances_argmin
    metrics.pairwise_distances_argmin_min
    metrics.pairwise_distances_chunked
+
+
+Plotting
+--------
+
+See the :ref:`visualizations` section of the user guide for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   metrics.plot_roc_curve
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   metrics.RocCurveDisplay
 
 
 .. _mixture_ref:
@@ -1437,9 +1468,18 @@ Low-level methods
    :template: function.rst
 
    tree.export_graphviz
-   tree.plot_tree
    tree.export_text
 
+Plotting
+--------
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   tree.plot_tree
 
 .. _utils_ref:
 

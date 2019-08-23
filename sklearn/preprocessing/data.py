@@ -387,7 +387,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         X : array-like, shape [n_samples, n_features]
             Input data that will be transformed.
         """
-        check_is_fitted(self, 'scale_')
+        check_is_fitted(self)
 
         X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES,
                         force_all_finite="allow-nan")
@@ -404,7 +404,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         X : array-like, shape [n_samples, n_features]
             Input data that will be transformed. It cannot be sparse.
         """
-        check_is_fitted(self, 'scale_')
+        check_is_fitted(self)
 
         X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES,
                         force_all_finite="allow-nan")
@@ -756,7 +756,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         copy : bool, optional (default: None)
             Copy the input X or not.
         """
-        check_is_fitted(self, 'scale_')
+        check_is_fitted(self)
 
         copy = copy if copy is not None else self.copy
         X = check_array(X, accept_sparse='csr', copy=copy,
@@ -792,7 +792,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         X_tr : array-like, shape [n_samples, n_features]
             Transformed array.
         """
-        check_is_fitted(self, 'scale_')
+        check_is_fitted(self)
 
         copy = copy if copy is not None else self.copy
         if sparse.issparse(X):
@@ -957,7 +957,7 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
         X : {array-like, sparse matrix}
             The data that should be scaled.
         """
-        check_is_fitted(self, 'scale_')
+        check_is_fitted(self)
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
@@ -976,7 +976,7 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
         X : {array-like, sparse matrix}
             The data that should be transformed back.
         """
-        check_is_fitted(self, 'scale_')
+        check_is_fitted(self)
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
@@ -1206,7 +1206,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         X : {array-like, sparse matrix}
             The data used to scale along the specified axis.
         """
-        check_is_fitted(self, 'center_', 'scale_')
+        check_is_fitted(self)
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
@@ -1229,7 +1229,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         X : array-like
             The data used to scale along the specified axis.
         """
-        check_is_fitted(self, 'center_', 'scale_')
+        check_is_fitted(self)
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
@@ -1415,7 +1415,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
 
     @property
     def powers_(self):
-        check_is_fitted(self, 'n_input_features_')
+        check_is_fitted(self)
 
         combinations = self._combinations(self.n_input_features_, self.degree,
                                           self.interaction_only,
@@ -1502,7 +1502,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
             The matrix of features, where NP is the number of polynomial
             features generated from the combination of inputs.
         """
-        check_is_fitted(self, ['n_input_features_', 'n_output_features_'])
+        check_is_fitted(self)
 
         X = check_array(X, order='F', dtype=FLOAT_DTYPES,
                         accept_sparse=('csr', 'csc'))
@@ -1986,7 +1986,14 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         -------
         self : returns an instance of self.
         """
+
         K = check_array(K, dtype=FLOAT_DTYPES)
+
+        if K.shape[0] != K.shape[1]:
+            raise ValueError("Kernel matrix must be a square matrix."
+                             " Input is a {}x{} matrix."
+                             .format(K.shape[0], K.shape[1]))
+
         n_samples = K.shape[0]
         self.K_fit_rows_ = np.sum(K, axis=0) / n_samples
         self.K_fit_all_ = self.K_fit_rows_.sum() / n_samples
@@ -2007,7 +2014,7 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         -------
         K_new : numpy array of shape [n_samples1, n_samples2]
         """
-        check_is_fitted(self, 'K_fit_all_')
+        check_is_fitted(self)
 
         K = check_array(K, copy=copy, dtype=FLOAT_DTYPES)
 
@@ -2404,7 +2411,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
     def _check_is_fitted(self, X):
         """Check the inputs before transforming"""
-        check_is_fitted(self, 'quantiles_')
+        check_is_fitted(self)
         # check that the dimension of X are adequate with the fitted data
         if X.shape[1] != self.quantiles_.shape[1]:
             raise ValueError('X does not have the same number of features as'
@@ -2779,7 +2786,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         X_trans : array-like, shape (n_samples, n_features)
             The transformed data.
         """
-        check_is_fitted(self, 'lambdas_')
+        check_is_fitted(self)
         X = self._check_input(X, check_positive=True, check_shape=True)
 
         transform_function = {'box-cox': boxcox,
@@ -2825,7 +2832,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
             The original data
         """
-        check_is_fitted(self, 'lambdas_')
+        check_is_fitted(self)
         X = self._check_input(X, check_shape=True)
 
         if self.standardize:

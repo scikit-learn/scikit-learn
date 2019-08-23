@@ -1,6 +1,24 @@
 """
 Comparison between grid search and successive halving
 =====================================================
+
+This example compares the parameter search performed by
+:class:`HalvingGridSearchCV <sklearn.model_selection.HalvingGridSearchCV>` and
+:class:`GridSearchCV <sklearn.model_selection.GridSearchCV>`.
+
+The heatmap shows the mean test score of the parameter combinations for an
+SVC instance. The
+:class:`HalvingGridSearchCV <sklearn.model_selection.HalvingGridSearchCV>`
+also shows the iteration at which the combinations where last used. The
+combinations marked as ``0`` were only evaluated at the first iteration, while
+the ones with ``5`` are the parameter combinations that are considered the
+best ones.
+
+The
+:class:`HalvingGridSearchCV <sklearn.model_selection.HalvingGridSearchCV>`
+class is able to find parameter combinations that are just as accurate as
+:class:`GridSearchCV <sklearn.model_selection.GridSearchCV>`, in much less
+time.
 """
 from time import time
 
@@ -14,6 +32,8 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import HalvingGridSearchCV
 
 
+print(__doc__)
+
 rng = np.random.RandomState(0)
 X, y = datasets.make_classification(n_samples=1000, random_state=rng)
 
@@ -22,6 +42,8 @@ Cs = [1, 10, 100, 1e3, 1e4, 1e5]
 param_grid = {'gamma': gammas, 'C': Cs}
 
 clf = SVC(random_state=rng)
+
+# run HalvingGridSearchCV
 tic = time()
 gsh = HalvingGridSearchCV(
     estimator=clf,
@@ -35,6 +57,7 @@ gsh = HalvingGridSearchCV(
 gsh.fit(X, y)
 gsh_time = time() - tic
 
+# run GridSearchCV
 tic = time()
 gs = GridSearchCV(
     estimator=clf,
@@ -45,8 +68,10 @@ gs_time = time() - tic
 
 
 def make_heatmap(ax, gs, show_iter=False, make_cbar=False):
+    """Helper to make a heatmap."""
     results = pd.DataFrame.from_dict(gs.cv_results_)
     results['params_str'] = results.params.apply(str)
+    # Take max but there's only one value anyway
     scores = results.groupby(['param_gamma', 'param_C']).mean_test_score.max()
     scores_matrix = scores.values.reshape(len(gammas), len(Cs))
 
@@ -76,10 +101,11 @@ def make_heatmap(ax, gs, show_iter=False, make_cbar=False):
         fig.subplots_adjust(right=0.8)
         cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
         fig.colorbar(im, cax=cbar_ax)
-        cbar_ax.set_ylabel('max mean_test_score', rotation=-90, va="bottom",
+        cbar_ax.set_ylabel('mean_test_score', rotation=-90, va="bottom",
                            fontsize=15)
 
 
+# Plot heatmaps and colorbar
 fig, axes = plt.subplots(ncols=2)
 ax1, ax2 = axes
 

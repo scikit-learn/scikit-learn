@@ -170,7 +170,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
         # Remove duplicates (may happen with random sampling)
         candidate_params = set(tuple(d.items()) for d in candidate_params)
         candidate_params = [dict(t) for t in candidate_params]
-        self.n_candidates_ = len(candidate_params)
 
         if self.resource != 'n_samples' and any(
                 self.resource in candidate for candidate in candidate_params):
@@ -181,7 +180,8 @@ class BaseSuccessiveHalving(BaseSearchCV):
 
         # n_required_iterations is the number of iterations needed so that the
         # last iterations evaluates less than `ratio` candidates.
-        n_required_iterations = 1 + floor(log(self.n_candidates_, self.ratio))
+        n_required_iterations = 1 + floor(log(len(candidate_params),
+                                              self.ratio))
 
         if self.force_exhaust_resources:
             # To exhaust the budget, we want to start with the biggest
@@ -221,6 +221,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
 
         # list of resource_iter for each iteration, used in tests
         self._r_i_list = []
+        self.n_candidates_ = []
 
         for iter_i in range(n_iterations):
 
@@ -241,6 +242,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
             self._r_i_list.append(resource_iter)
 
             n_candidates = len(candidate_params)
+            self.n_candidates_.append(n_candidates)
 
             if self.verbose:
                 print('-' * 10)
@@ -443,9 +445,9 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
     Attributes
     ----------
-    n_candidates_ : int
-        The number of candidate parameters that were evaluated at the first
-        iteartion.
+    n_candidates_ : list of int
+        The number of candidate parameters that were evaluated at each
+        iteration.
 
     n_remaining_candidates_ : int
         The number of candidate parameters that are left after the last
@@ -455,7 +457,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         The maximum number of resources that any candidate is allowed to use
         for a given iteration. Note that since the number of resources used
         at each iteration must be a multiple of ``min_resources_``, the
-        actual number of resources used at the last iteartion may be smaller
+        actual number of resources used at the last iteration may be smaller
         than ``max_resources_``.
 
     min_resources_ : int
@@ -745,9 +747,9 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         is a multiple of both ``min_resources`` and ``ratio``.
     Attributes
     ----------
-    n_candidates_ : int
-        The number of candidate parameters that were evaluated at the first
-        iteartion.
+    n_candidates_ : list of int
+        The number of candidate parameters that were evaluated at each
+        iteration.
 
     n_remaining_candidates_ : int
         The number of candidate parameters that are left after the last
@@ -757,7 +759,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         The maximum number of resources that any candidate is allowed to use
         for a given iteration. Note that since the number of resources used at
         each iteration must be a multiple of ``min_resources_``, the actual
-        number of resources used at the last iteartion may be smaller than
+        number of resources used at the last iteration may be smaller than
         ``max_resources_``.
 
     min_resources_ : int
@@ -897,10 +899,12 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         self.n_candidates = n_candidates
 
     def _generate_candidate_params(self):
-        n_candidates_ = self.n_candidates
-        if n_candidates_ == 'auto':
+        n_candidates_first_iter = self.n_candidates
+        if n_candidates_first_iter == 'auto':
             # This will generate enough candidate so that the last iteration
             # uses as much budget as possible
-            n_candidates_ = self.max_resources_ // self.min_resources_
-        return ParameterSampler(self.param_distributions, n_candidates_,
+            n_candidates_first_iter = (
+                self.max_resources_ // self.min_resources_)
+        return ParameterSampler(self.param_distributions,
+                                n_candidates_first_iter,
                                 self.random_state)
