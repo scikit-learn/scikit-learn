@@ -437,53 +437,37 @@ def test_partial_fit_errors():
     assert not hasattr(MLPClassifier(solver='lbfgs'), 'partial_fit')
 
 
-def test_params_errors():
+@pytest.mark.parametrize(
+        "args",
+        [{'hidden_layer_sizes': -1},
+         {'max_iter': -1},
+         {'shuffle': 'true'},
+         {'alpha': -1},
+         {'learning_rate_init': -1},
+         {'momentum': 2},
+         {'momentum': -0.5},
+         {'nesterovs_momentum': 'invalid'},
+         {'early_stopping': 'invalid'},
+         {'validation_fraction': 1},
+         {'validation_fraction': -0.5},
+         {'beta_1': 1},
+         {'beta_1': -0.5},
+         {'beta_2': 1},
+         {'beta_2': -0.5},
+         {'epsilon': -0.5},
+         {'n_iter_no_change': -1},
+         {'solver': 'hadoken'},
+         {'learning_rate': 'converge'},
+         {'activation': 'cloak'}]
+)
+def test_params_errors(args):
     # Test that invalid parameters raise value error
     X = [[3, 2], [1, 6]]
     y = [1, 0]
     clf = MLPClassifier
 
     with pytest.raises(ValueError):
-        clf(hidden_layer_sizes=-1).fit(X, y)
-    with pytest.raises(ValueError):
-        clf(max_iter=-1).fit(X, y)
-    with pytest.raises(ValueError):
-        clf(shuffle='true').fit(X, y)
-    with pytest.raises(ValueError):
-        clf(alpha=-1).fit(X, y)
-    with pytest.raises(ValueError):
-        clf(learning_rate_init=-1).fit(X, y)
-    with pytest.raises(ValueError):
-        clf(momentum=2).fit(X, y)
-    with pytest.raises(ValueError):
-        clf(momentum=-0.5).fit(X, y)
-    with pytest.raises(ValueError):
-        clf(nesterovs_momentum='invalid').fit(X, y)
-    with pytest.raises(ValueError):
-        clf(early_stopping='invalid').fit(X, y)
-    with pytest.raises(ValueError):
-        clf(validation_fraction=1).fit(X, y)
-    with pytest.raises(ValueError):
-        clf(validation_fraction=-0.5).fit(X, y)
-    with pytest.raises(ValueError):
-        clf(beta_1=1).fit(X, y)
-    with pytest.raises(ValueError):
-        clf(beta_1=-0.5).fit(X, y)
-    with pytest.raises(ValueError):
-        clf(beta_2=1).fit(X, y)
-    with pytest.raises(ValueError):
-        clf(beta_2=-0.5).fit(X, y)
-    with pytest.raises(ValueError):
-        clf(epsilon=-0.5).fit(X, y)
-    with pytest.raises(ValueError):
-        clf(n_iter_no_change=-1).fit(X, y)
-
-    with pytest.raises(ValueError):
-        clf(solver='hadoken').fit(X, y)
-    with pytest.raises(ValueError):
-        clf(learning_rate='converge').fit(X, y)
-    with pytest.raises(ValueError):
-        clf(activation='cloak').fit(X, y)
+        clf(**args).fit(X, y)
 
 
 def test_predict_proba_binary():
