@@ -425,8 +425,8 @@ min_resources = 20``.
 
 .. _successive_halving_cv_results:
 
-The cv_results_ attribute
--------------------------
+Analysing results with the cv_results_ attribute
+------------------------------------------------
 
 The ``cv_results_`` attribute contains useful information for analysing the
 results of a search. It can be converted to a pandas dataframe with ``df =
