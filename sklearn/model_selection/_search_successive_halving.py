@@ -175,7 +175,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 self.resource in candidate for candidate in candidate_params):
             # Can only check this now since we need the candidates list
             raise ValueError(
-                "Cannot budget on parameter {} since it is part of "
+                "Cannot use parameter {} as the resource since it is part of "
                 "the searched parameters.".format(self.resource))
 
         # n_required_iterations is the number of iterations needed so that the
@@ -184,10 +184,10 @@ class BaseSuccessiveHalving(BaseSearchCV):
                                               self.ratio))
 
         if self.force_exhaust_resources:
-            # To exhaust the budget, we want to start with the biggest
+            # To exhaust the resources, we want to start with the biggest
             # min_resources possible so that the last (required) iteration
             # uses as many resources as possible
-            # We only force exhausting the budget if min_resources wasn't
+            # We only force exhausting the resources if min_resources wasn't
             # specified by the user.
             last_iteration = n_required_iterations - 1
             self.min_resources_ = max(
@@ -197,8 +197,9 @@ class BaseSuccessiveHalving(BaseSearchCV):
 
         # n_possible_iterations is the number of iterations that we can
         # actually do starting from min_resources and without exceeding the
-        # budget. Depending on budget size the number of candidates, this may
-        # be higher or smaller than n_required_iterations.
+        # max_resources. Depending on max_resources and the number of
+        # candidates, this may be higher or smaller than
+        # n_required_iterations.
         n_possible_iterations = 1 + floor(log(
             self.max_resources_ // self.min_resources_, self.ratio))
 
@@ -430,7 +431,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         means that only one third of the candidates are selected.
 
     aggressive_elimination : bool, default=False
-        This is only relevant in cases where there isn't enough budget to
+        This is only relevant in cases where there isn't enough resources to
         eliminate enough candidates at the last iteration. If ``True``, then
         the search process will 'replay' the first iteration for as long as
         needed until the number of candidates is small enough. This is
@@ -439,9 +440,9 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
     force_exhaust_resources : bool, default=False
         If True, then ``min_resources`` is set to a specific value such that
-        the last iteration uses as much budget as possible. Namely, the last
-        iteration uses the highest value smaller than ``max_resources`` that
-        is a multiple of both ``min_resources`` and ``ratio``.
+        the last iteration uses as much resources as possible. Namely, the
+        last iteration uses the highest value smaller than ``max_resources``
+        that is a multiple of both ``min_resources`` and ``ratio``.
 
     Attributes
     ----------
@@ -479,7 +480,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         The number of iterations that are required to end up with less than
         ``ratio`` candidates at the last iteration, starting with
         ``min_resources_`` resources. This will be smaller than
-        ``n_possible_iterations_`` when there isn't enough budget.
+        ``n_possible_iterations_`` when there isn't enough resources.
 
     cv_results_ : dict of numpy (masked) ndarrays
         A dict with keys as column headers and values as columns, that can be
@@ -557,6 +558,25 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         Seconds used for refitting the best model on the whole dataset.
 
         This is present only if ``refit`` is not False.
+
+    Examples
+    --------
+
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> from sklearn.model_selection import HalvingGridSearchCV
+    ...
+    >>> X, y = load_iris(return_X_y=True)
+    >>> clf = RandomForestClassifier(random_state=0)
+    ...
+    >>> param_grid = {"max_depth": [3, None],
+    ...               "min_samples_split": [5, 10]}
+    >>> search = HalvingGridSearchCV(clf, param_grid, resource='n_estimators',
+    ...                              max_resources=10,
+    ...                              force_exhaust_resources=True,
+    ...                              random_state=0).fit(X, y)
+    >>> search.best_params_  # doctest: +SKIP
+    {'max_depth': None, 'min_samples_split': 10, 'n_estimators': 9}
 
     Notes
     -----
@@ -733,7 +753,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         means that only one third of the candidates are selected.
 
     aggressive_elimination : bool, default=False
-        This is only relevant in cases where there isn't enough budget to
+        This is only relevant in cases where there isn't enough resources to
         eliminate enough candidates at the last iteration. If ``True``, then
         the search process will 'replay' the first iteration for as long as
         needed until the number of candidates is small enough. This is
@@ -742,9 +762,9 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
     force_exhaust_resources : bool, default=False
         If True, then ``min_resources`` is set to a specific value such that
-        the last iteration uses as much budget as possible. Namely, the last
-        iteration uses the highest value smaller than ``max_resources`` that
-        is a multiple of both ``min_resources`` and ``ratio``.
+        the last iteration uses as much resousrces as possible. Namely, the
+        last iteration uses the highest value smaller than ``max_resources``
+        that is a multiple of both ``min_resources`` and ``ratio``.
     Attributes
     ----------
     n_candidates_ : list of int
@@ -781,7 +801,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         The number of iterations that are required to end up with less than
         ``ratio`` candidates at the last iteration, starting with
         ``min_resources_`` resources. This will be smaller than
-        ``n_possible_iterations_`` when there isn't enough budget.
+        ``n_possible_iterations_`` when there isn't enough resources.
 
     cv_results_ : dict of numpy (masked) ndarrays
         A dict with keys as column headers and values as columns, that can be
@@ -860,6 +880,28 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
         This is present only if ``refit`` is not False.
 
+    Examples
+    --------
+
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> from sklearn.model_selection import HalvingRandomSearchCV
+    >>> from scipy.stats import randint
+    ...
+    >>> X, y = load_iris(return_X_y=True)
+    >>> clf = RandomForestClassifier(random_state=0)
+    >>> np.random.seed(0)
+    ...
+    >>> param_distributions = {"max_depth": [3, None],
+    ...                        "min_samples_split": randint(2, 11)}
+    >>> search = HalvingRandomSearchCV(clf, param_distributions,
+    ...                                resource='n_estimators',
+    ...                                max_resources=10,
+    ...                                force_exhaust_resources=True,
+    ...                                random_state=0).fit(X, y)
+    >>> search.best_params_  # doctest: +SKIP
+    {'max_depth': None, 'min_samples_split': 10, 'n_estimators': 9}
+
     Notes
     -----
     The parameters selected are those that maximize the score of the held-out
@@ -902,7 +944,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         n_candidates_first_iter = self.n_candidates
         if n_candidates_first_iter == 'auto':
             # This will generate enough candidate so that the last iteration
-            # uses as much budget as possible
+            # uses as much resources as possible
             n_candidates_first_iter = (
                 self.max_resources_ // self.min_resources_)
         return ParameterSampler(self.param_distributions,

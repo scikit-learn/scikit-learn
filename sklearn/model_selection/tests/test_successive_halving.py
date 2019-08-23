@@ -35,7 +35,7 @@ def test_aggressive_elimination():
     ratio = 3
 
     # aggressive_elimination is only really relevant when there is not enough
-    # budget.
+    # resources.
     max_resources = 180
 
     # aggressive_elimination=True
@@ -77,8 +77,8 @@ def test_aggressive_elimination():
     assert sh.n_remaining_candidates_ == 3
 
     max_resources = n_samples
-    # with enough budget, aggressive_elimination has no effect since it is not
-    # needed
+    # with enough resources, aggressive_elimination has no effect since it is
+    # not needed
 
     # aggressive_elimination=True
     sh = HalvingGridSearchCV(base_estimator, parameters, cv=5,
@@ -116,7 +116,7 @@ def test_force_exhaust_resources_false():
     base_estimator = FastClassifier()
     ratio = 3
 
-    # with enough budget
+    # with enough resources
     sh = HalvingGridSearchCV(base_estimator, parameters, cv=5,
                              force_exhaust_resources=False, ratio=ratio)
     sh.fit(X, y)
@@ -125,7 +125,7 @@ def test_force_exhaust_resources_false():
     assert sh.n_possible_iterations_ == 4
     assert sh._r_i_list == [20, 60]
 
-    # with enough budget but min_resources!='auto': ignored
+    # with enough resources but min_resources!='auto': ignored
     sh = HalvingGridSearchCV(base_estimator, parameters, cv=5,
                              force_exhaust_resources=False, ratio=ratio,
                              min_resources=50)
@@ -135,7 +135,7 @@ def test_force_exhaust_resources_false():
     assert sh.n_possible_iterations_ == 3
     assert sh._r_i_list == [50, 150]
 
-    # without enough budget (budget is exhausted anyway)
+    # without enough resources (resources are exhausted anyway)
     sh = HalvingGridSearchCV(base_estimator, parameters, cv=5,
                              force_exhaust_resources=False, ratio=ratio,
                              max_resources=30)
@@ -157,10 +157,10 @@ def test_force_exhaust_resources_false():
     (50, [20]),
     (20, [20]),
 ])
-def test_force_exhaust_budget_true(max_resources, r_i_list):
+def test_force_exhaust_resources_true(max_resources, r_i_list):
     # Test the force_exhaust_resources parameter when it's true
     # in this case we need to change min_resources so that the last iteration
-    # uses as much budget as possible
+    # uses as much resources as possible
 
     n_samples = 1000
     X, y = make_classification(n_samples=n_samples, random_state=0)
@@ -187,7 +187,7 @@ def test_force_exhaust_budget_true(max_resources, r_i_list):
 
 @pytest.mark.parametrize(
     'max_resources, n_iterations, n_possible_iterations', [
-        ('auto', 5, 9),  # whole budget is used
+        ('auto', 5, 9),  # all resources are used
         (1024, 5, 9),
         (700, 5, 8),
         (512, 5, 8),
@@ -241,8 +241,8 @@ def test_resource_parameter():
 
     with pytest.raises(
             ValueError,
-            match='Cannot budget on parameter c since it is part of the '
-                  'searched parameters.'):
+            match='Cannot use parameter c as the resource since it is part '
+                  'of the searched parameters.'):
         parameters = {'a': [1, 2], 'b': [1, 2], 'c': [1, 3]}
         sh = HalvingGridSearchCV(base_estimator, parameters, cv=2,
                                  resource='c', max_resources=10)
@@ -272,8 +272,8 @@ def test_random_search(max_resources, n_candidates, expected_n_candidates_):
     sh.fit(X, y)
     assert sh.n_candidates_[0] == expected_n_candidates_
     if n_candidates == 'auto':
-        # Make sure 'auto' makes the last iteration use as much budget as we
-        # can
+        # Make sure 'auto' makes the last iteration use as much resources as
+        # we can
         assert sh._r_i_list[-1] == max_resources
 
 
