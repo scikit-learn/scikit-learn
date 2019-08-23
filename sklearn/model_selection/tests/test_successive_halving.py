@@ -291,9 +291,9 @@ def test_groups_not_supported():
 @pytest.mark.parametrize('klass', (HalvingGridSearchCV, HalvingRandomSearchCV))
 @pytest.mark.parametrize('params, expected_error_message', [
     ({'scoring': {'accuracy', 'accuracy'}},
-     'Multimetric scoring is not supp'),
+     'Multimetric scoring is not supported'),
     ({'resource': 'not_a_parameter'},
-     'Cannot use resource'),
+     'Cannot use resource=not_a_parameter which is not supported'),
     ({'resource': 'a', 'max_resources': 100},
      'Cannot use parameter a as the resource since it is part of'),
     ({'max_resources': 'not_auto'},

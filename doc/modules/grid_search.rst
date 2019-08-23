@@ -423,6 +423,43 @@ Notice that we end with 2 candidates at the last iteration since we have
 eliminated enough candidates during the first iterations, using ``resource_iter =
 min_resources = 20``.
 
+.. _successive_halving_cv_results:
+
+The cv_results_ attribute
+-------------------------
+
+The ``cv_results_`` attribute contains useful information for analysing the
+results of a search. It can be converted to a pandas dataframe with ``df =
+pd.DataFrame(est.cv_results_)``.
+
+Here is an example with some of the columns of a (truncated) dataframe:
+
+====  ======  ===============  =================  =======================================================================================
+  ..    iter    resource_iter    mean_test_score  params
+====  ======  ===============  =================  =======================================================================================
+   0       0              125           0.983667  {'criterion': 'entropy', 'max_depth': None, 'max_features': 9, 'min_samples_split': 5}
+   1       0              125           0.983667  {'criterion': 'gini', 'max_depth': None, 'max_features': 8, 'min_samples_split': 7}
+   2       0              125           0.983667  {'criterion': 'gini', 'max_depth': None, 'max_features': 10, 'min_samples_split': 10}
+   3       0              125           0.983667  {'criterion': 'entropy', 'max_depth': None, 'max_features': 6, 'min_samples_split': 6}
+ ...     ...              ...                ...  ...
+  15       2              500           0.951958  {'criterion': 'entropy', 'max_depth': None, 'max_features': 9, 'min_samples_split': 10}
+  16       2              500           0.947958  {'criterion': 'gini', 'max_depth': None, 'max_features': 10, 'min_samples_split': 10}
+  17       2              500           0.951958  {'criterion': 'gini', 'max_depth': None, 'max_features': 10, 'min_samples_split': 4}
+  18       3             1000           0.961009  {'criterion': 'entropy', 'max_depth': None, 'max_features': 9, 'min_samples_split': 10}
+  19       3             1000           0.955989  {'criterion': 'gini', 'max_depth': None, 'max_features': 10, 'min_samples_split': 4}
+====  ======  ===============  =================  =======================================================================================
+
+Each row corresponds to a given parameter combination (a candidate) and a given
+iteration. The iteration is given by the ``iter`` column. The ``resource_iter``
+column tells you how many resources were used.
+
+In the example above, the best parameter combination is ``{'criterion':
+'entropy', 'max_depth': None, 'max_features': 9, 'min_samples_split': 10}``
+since it has reached the last iteration (3) with the highest score:
+0.96.
+
+Please note that the ``cv_results_`` attributes has much more columns that what
+is shown here.
 
 .. topic:: References:
 

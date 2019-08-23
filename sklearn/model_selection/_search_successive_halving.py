@@ -490,49 +490,11 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
     cv_results_ : dict of numpy (masked) ndarrays
         A dict with keys as column headers and values as columns, that can be
-        imported into a pandas ``DataFrame``.
+        imported into a pandas ``DataFrame``. It contains many informations for
+        analysing the results of a search.
+        Please refer to the :ref:`User guide<successive_halving_cv_results>`
+        for details.
 
-        For instance the below given table
-
-        +--------------+-------------+-------------------+---+---------------+
-        | param_kernel | param_gamma | split0_test_score |...|rank_test_score|
-        +==============+=============+===================+===+===============+
-        |    'rbf'     |     0.1     |       0.80        |...|       2       |
-        +--------------+-------------+-------------------+---+---------------+
-        |    'rbf'     |     0.2     |       0.90        |...|       1       |
-        +--------------+-------------+-------------------+---+---------------+
-        |    'rbf'     |     0.3     |       0.70        |...|       1       |
-        +--------------+-------------+-------------------+---+---------------+
-
-        will be represented by a ``cv_results_`` dict of::
-
-            {
-            'param_kernel' : masked_array(data = ['rbf', 'rbf', 'rbf'],
-                                          mask = False),
-            'param_gamma'  : masked_array(data = [0.1 0.2 0.3], mask = False),
-            'split0_test_score'  : [0.80, 0.90, 0.70],
-            'split1_test_score'  : [0.82, 0.50, 0.70],
-            'mean_test_score'    : [0.81, 0.70, 0.70],
-            'std_test_score'     : [0.01, 0.20, 0.00],
-            'rank_test_score'    : [3, 1, 1],
-            'split0_train_score' : [0.80, 0.92, 0.70],
-            'split1_train_score' : [0.82, 0.55, 0.70],
-            'mean_train_score'   : [0.81, 0.74, 0.70],
-            'std_train_score'    : [0.01, 0.19, 0.00],
-            'mean_fit_time'      : [0.73, 0.63, 0.43],
-            'std_fit_time'       : [0.01, 0.02, 0.01],
-            'mean_score_time'    : [0.01, 0.06, 0.04],
-            'std_score_time'     : [0.00, 0.00, 0.00],
-            'params'             : [{'kernel' : 'rbf', 'gamma' : 0.1}, ...],
-            }
-
-        NOTE
-
-        The key ``'params'`` is used to store a list of parameter
-        settings dicts for all the parameter candidates.
-
-        The ``mean_fit_time``, ``std_fit_time``, ``mean_score_time`` and
-        ``std_score_time`` are all in seconds.
 
     best_estimator_ : estimator or dict
         Estimator that was chosen by the search, i.e. estimator
@@ -811,49 +773,10 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
     cv_results_ : dict of numpy (masked) ndarrays
         A dict with keys as column headers and values as columns, that can be
-        imported into a pandas ``DataFrame``.
-
-        For instance the below given table
-
-        +--------------+-------------+-------------------+---+---------------+
-        | param_kernel | param_gamma | split0_test_score |...|rank_test_score|
-        +==============+=============+===================+===+===============+
-        |    'rbf'     |     0.1     |       0.80        |...|       2       |
-        +--------------+-------------+-------------------+---+---------------+
-        |    'rbf'     |     0.2     |       0.90        |...|       1       |
-        +--------------+-------------+-------------------+---+---------------+
-        |    'rbf'     |     0.3     |       0.70        |...|       1       |
-        +--------------+-------------+-------------------+---+---------------+
-
-        will be represented by a ``cv_results_`` dict of::
-
-            {
-            'param_kernel' : masked_array(data = ['rbf', 'rbf', 'rbf'],
-                                          mask = False),
-            'param_gamma'  : masked_array(data = [0.1 0.2 0.3], mask = False),
-            'split0_test_score'  : [0.80, 0.90, 0.70],
-            'split1_test_score'  : [0.82, 0.50, 0.70],
-            'mean_test_score'    : [0.81, 0.70, 0.70],
-            'std_test_score'     : [0.01, 0.20, 0.00],
-            'rank_test_score'    : [3, 1, 1],
-            'split0_train_score' : [0.80, 0.92, 0.70],
-            'split1_train_score' : [0.82, 0.55, 0.70],
-            'mean_train_score'   : [0.81, 0.74, 0.70],
-            'std_train_score'    : [0.01, 0.19, 0.00],
-            'mean_fit_time'      : [0.73, 0.63, 0.43],
-            'std_fit_time'       : [0.01, 0.02, 0.01],
-            'mean_score_time'    : [0.01, 0.06, 0.04],
-            'std_score_time'     : [0.00, 0.00, 0.00],
-            'params'             : [{'kernel' : 'rbf', 'gamma' : 0.1}, ...],
-            }
-
-        NOTE
-
-        The key ``'params'`` is used to store a list of parameter
-        settings dicts for all the parameter candidates.
-
-        The ``mean_fit_time``, ``std_fit_time``, ``mean_score_time`` and
-        ``std_score_time`` are all in seconds.
+        imported into a pandas ``DataFrame``. It contains many informations for
+        analysing the results of a search.
+        Please refer to the :ref:`User guide<successive_halving_cv_results>`
+        for details.
 
     best_estimator_ : estimator or dict
         Estimator that was chosen by the search, i.e. estimator
