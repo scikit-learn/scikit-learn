@@ -43,7 +43,7 @@ from .base import _pkl_filepath
 from .base import _fetch_remote
 from .base import RemoteFileMetadata
 from ..feature_extraction.text import CountVectorizer
-from ..preprocessing import normalize
+from ..preprocessing import normalize as normalize_function
 from ..utils import check_random_state, Bunch
 
 logger = logging.getLogger(__name__)
@@ -317,7 +317,8 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
 
 
 def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
-                                  download_if_missing=True, return_X_y=False):
+                                  download_if_missing=True, return_X_y=False,
+                                  normalize=True):
     """Load the 20 newsgroups dataset and vectorize it into token counts \
 (classification).
 
@@ -366,9 +367,13 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
         If False, raise an IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    return_X_y : boolean, default=False.
+    return_X_y : boolean, default=False
         If True, returns ``(data.data, data.target)`` instead of a Bunch
         object.
+
+    normalize : boolean, default=True
+        If True, normalizes the returned data to unit length using
+        `sklearn.preprocessing.normalize`.
 
         .. versionadded:: 0.20
 
@@ -418,10 +423,11 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
 
     # the data is stored as int16 for compactness
     # but normalize needs floats
-    X_train = X_train.astype(np.float64)
-    X_test = X_test.astype(np.float64)
-    normalize(X_train, copy=False)
-    normalize(X_test, copy=False)
+    if normalize:
+        X_train = X_train.astype(np.float64)
+        X_test = X_test.astype(np.float64)
+        normalize_function(X_train, copy=False)
+        normalize_function(X_test, copy=False)
 
     target_names = data_train.target_names
 
