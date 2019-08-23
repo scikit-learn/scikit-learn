@@ -43,7 +43,7 @@ from .base import _pkl_filepath
 from .base import _fetch_remote
 from .base import RemoteFileMetadata
 from ..feature_extraction.text import CountVectorizer
-from ..preprocessing import normalize as normalize_function
+from .. import preprocessing
 from ..utils import check_random_state, Bunch
 
 logger = logging.getLogger(__name__)
@@ -431,8 +431,8 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
     if normalize:
         X_train = X_train.astype(np.float64)
         X_test = X_test.astype(np.float64)
-        normalize_function(X_train, copy=False)
-        normalize_function(X_test, copy=False)
+        preprocessing.normalize(X_train, copy=False)
+        preprocessing.normalize(X_test, copy=False)
 
     target_names = data_train.target_names
 
