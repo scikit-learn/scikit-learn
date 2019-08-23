@@ -614,14 +614,16 @@ Finally, follow the formatting rules below to make it consistently good:
         literal (either `hello` or `goodbye`), a bool, or an int. The default
         value is True.
 
-    array_parameter : {array-like, sparse matrix, dataframe}, shape=(n_samples, n_features) or (n_samples,)
+    array_parameter : {array-like, sparse matrix, dataframe} of shape (n_samples, n_features) or (n_samples,)
         This parameter accepts data in either of the mentioned forms, with one
         of the mentioned shapes. The default value is
         `np.ones(shape=(n_samples,))`.
 
-    list_param : list of int, shape=(n_classes,)
+    list_param : list of int of shape (n_classes,)
 
-    sample_weight : array-like, shape=(n_samples,), default=None
+    typed_ndarray : ndarray of shape (n_samples,), dtype=int
+
+    sample_weight : array-like of shape (n_samples,), default=None
 
 In general have the following in mind:
 
@@ -633,10 +635,11 @@ In general have the following in mind:
     4. 1D or 2D data can be a subset of
        ``{array-like, ndarray, sparse matrix, dataframe}``. Note that ``array-like``
        can also be a ``list``, while ``ndarray`` is explicitly only a ``numpy.ndarray``.
-    5. When specifying the data type of an ``array-like`` or ``list``, use 
-       ``of`` as a delimiter: 
-       ``array-like of int`` or ``list of int``.
-    6. When the default is ``None``, ``None`` only needs to be specified at the
+    5. When specifying the data type of an list``, use ``of`` as a delimiter: 
+       ``list of int``.
+    6. When specifying the dtype of an ndarray, use ``dtype=int`` after
+       defining the shape.
+    7. When the default is ``None``, ``None`` only needs to be specified at the
        end with ``default=None``. Be sure to include in the docstring, what it
        means for the parameter or attribute to be ``None``.
 
