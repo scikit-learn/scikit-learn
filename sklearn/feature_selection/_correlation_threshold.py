@@ -83,7 +83,7 @@ class CorrelationThreshold(BaseEstimator, SelectorMixin):
         if issparse(X):
             mins, maxes = min_max_axis(X, axis=0)
             peak_to_peaks = maxes - mins
-            ptp_mask = peak_to_peaks != 0
+            ptp_mask = ~np.isclose(peak_to_peaks, 0.0)
 
             # sparse correlation
             mu, sparse_var = mean_variance_axis(X, 0)
@@ -96,7 +96,7 @@ class CorrelationThreshold(BaseEstimator, SelectorMixin):
             X_corr[:, ptp_mask] /= stddev[ptp_mask][None, :]
         else:
             peak_to_peaks = np.ptp(X, axis=0)
-            ptp_mask = peak_to_peaks != 0
+            ptp_mask = ~np.isclose(peak_to_peaks, 0.0)
             X_corr = np.corrcoef(X, rowvar=False)
 
         np.fabs(X_corr, out=X_corr)
