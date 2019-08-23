@@ -374,11 +374,13 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
         If True, returns ``(data.data, data.target)`` instead of a Bunch
         object.
 
+        .. versionadded:: 0.20
+
     normalize : boolean, default=True
-        If True, normalizes the returned data to unit length using
+        If True, normalizes the returned data to unit norm using
         :func:`sklearn.preprocessing.normalize`.
 
-        .. versionadded:: 0.20
+        .. versionadded:: 0.22
 
     Returns
     -------
