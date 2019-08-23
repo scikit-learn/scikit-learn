@@ -104,7 +104,7 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input values.
 
-    y : array-like of shape (n_samples, )
+    y : array-like of shape (n_samples,)
         Target values.
 
     pos_label : int or str, default=None
@@ -112,7 +112,7 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
         When `pos_label=None`, if y_true is in {-1, 1} or {0, 1},
         `pos_label` is set to 1, otherwise an error will be raised.
 
-    sample_weight : array-like of shape (n_samples, ), default=None
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     drop_intermediate : boolean, default=True
