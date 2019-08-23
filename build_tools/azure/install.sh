@@ -34,15 +34,7 @@ version_ge() {
 
 if [[ "$DISTRIB" == "conda" ]]; then
 
-    # TODO
-    # Remove when wheel issue is fixed with conda installations of python 3.7.4
-    if [[ "$PYTHON_VERSION" == "*" ]]; then
-        PINNED_PYTHON_VERSION="3.7.3"
-    else
-        PINNED_PYTHON_VERSION=$PYTHON_VERSION
-    fi
-
-    TO_INSTALL="python=$PINNED_PYTHON_VERSION pip pytest=$PYTEST_VERSION \
+    TO_INSTALL="python=$PYTHON_VERSION pip pytest=$PYTEST_VERSION \
                 pytest-cov numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
                 cython=$CYTHON_VERSION joblib=$JOBLIB_VERSION"
 
@@ -101,7 +93,11 @@ if [[ "$COVERAGE" == "true" ]]; then
 fi
 
 if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
-    python -m pip install sphinx numpydoc  # numpydoc requires sphinx
+    # numpydoc requires sphinx
+    # FIXME: until jinja2 2.10.2 is released with a fix the import station for
+    # collections.abc so as to not raise a spurious deprecation warning
+    python -m pip install sphinx==2.1.2
+    python -m pip install numpydoc
 fi
 
 python --version

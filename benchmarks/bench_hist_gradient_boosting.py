@@ -2,6 +2,7 @@ from time import time
 import argparse
 
 import matplotlib.pyplot as plt
+import numpy as np
 from sklearn.model_selection import train_test_split
 # To use this experimental feature, we need to explicitly ask for it:
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
@@ -25,6 +26,7 @@ parser.add_argument('--catboost', action="store_true", default=False,
 parser.add_argument('--learning-rate', type=float, default=.1)
 parser.add_argument('--problem', type=str, default='classification',
                     choices=['classification', 'regression'])
+parser.add_argument('--missing-fraction', type=float, default=0)
 parser.add_argument('--n-classes', type=int, default=2)
 parser.add_argument('--n-samples-max', type=int, default=int(1e6))
 parser.add_argument('--n-features', type=int, default=20)
@@ -52,6 +54,11 @@ def get_estimator_and_data():
 
 
 X, y, Estimator = get_estimator_and_data()
+if args.missing_fraction:
+    mask = np.random.binomial(1, args.missing_fraction, size=X.shape).astype(
+        np.bool)
+    X[mask] = np.nan
+
 X_train_, X_test_, y_train_, y_test_ = train_test_split(
     X, y, test_size=0.5, random_state=0)
 
