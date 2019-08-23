@@ -5,15 +5,14 @@ from re import finditer, search
 from textwrap import dedent
 
 from numpy.random import RandomState
+import pytest
 
 from sklearn.base import is_classifier
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.tree import export_graphviz, plot_tree, export_text
 from io import StringIO
-from sklearn.utils.testing import (assert_raises,
-                                   assert_raises_regex,
-                                   assert_raise_message)
+from sklearn.utils.testing import assert_raise_message
 from sklearn.exceptions import NotFittedError
 
 # toy sample
@@ -217,7 +216,8 @@ def test_graphviz_errors():
 
     # Check not-fitted decision tree error
     out = StringIO()
-    assert_raises(NotFittedError, export_graphviz, clf, out)
+    with pytest.raises(NotFittedError):
+        export_graphviz(clf, out)
 
     clf.fit(X, y)
 
@@ -240,14 +240,15 @@ def test_graphviz_errors():
 
     # Check class_names error
     out = StringIO()
-    assert_raises(IndexError, export_graphviz, clf, out, class_names=[])
+    with pytest.raises(IndexError):
+        export_graphviz(clf, out, class_names=[])
 
     # Check precision error
     out = StringIO()
-    assert_raises_regex(ValueError, "should be greater or equal",
-                        export_graphviz, clf, out, precision=-1)
-    assert_raises_regex(ValueError, "should be an integer",
-                        export_graphviz, clf, out, precision="1")
+    with pytest.raises(ValueError, match="should be greater or equal"):
+        export_graphviz(clf, out, precision=-1)
+    with pytest.raises(ValueError, match="should be an integer"):
+        export_graphviz(clf, out, precision="1")
 
 
 def test_friedman_mse_in_graphviz():
