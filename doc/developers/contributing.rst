@@ -638,7 +638,7 @@ In general have the following in mind:
     5. When specifying the data type of an list``, use ``of`` as a delimiter: 
        ``list of int``.
     6. When specifying the dtype of an ndarray, use ``dtype=int`` after
-       defining the shape.
+       defining the shape: ``ndarray of shape (n_samples,), dtype=int``.
     7. When the default is ``None``, ``None`` only needs to be specified at the
        end with ``default=None``. Be sure to include in the docstring, what it
        means for the parameter or attribute to be ``None``.
