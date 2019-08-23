@@ -375,7 +375,7 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
         object.
 
     normalize : boolean, default=True
-        If True, normalizes the returned data to unit length using
+        If True, normalizes the returned data to unit norm using
         :func:`sklearn.preprocessing.normalize`.
 
         .. versionadded:: 0.20
