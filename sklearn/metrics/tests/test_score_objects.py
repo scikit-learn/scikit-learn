@@ -9,6 +9,7 @@ import numpy as np
 import pytest
 import joblib
 
+from numpy.testing import assert_allclose
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
@@ -577,10 +578,11 @@ def test_multimetric_scorer_calls_method_once(scorers, expected_predict_count,
     mock_est.decision_function = decision_function_func
 
     scorer_dict, _ = _check_multimetric_scoring(LogisticRegression(), scorers)
-    scorer = _MultimetricScorer(**scorer_dict)
-    scores = scorer(mock_est, X, y)
+    multi_scorer = _MultimetricScorer(**scorer_dict)
+    scores = multi_scorer(mock_est, X, y)
 
     assert set(scorers) == set(scores)  # compare dict keys
+    assert set(scorers) == set(multi_scorer)  # compare dict keys
 
     assert predict_func.call_count == expected_predict_count
     assert predict_proba_func.call_count == expected_predict_proba_count
@@ -610,7 +612,7 @@ def test_multimetric_scorer_calls_method_once_classifier_no_decision():
     assert predict_proba_call_cnt == 1
 
 
-def test_multimetric_scorer_calls_method_once_regressos_threshold():
+def test_multimetric_scorer_calls_method_once_regressor_threshold():
     predict_called_cnt = 0
 
     class MockDecisionTreeRegressor(DecisionTreeRegressor):
@@ -625,10 +627,7 @@ def test_multimetric_scorer_calls_method_once_regressos_threshold():
     clf = MockDecisionTreeRegressor()
     clf.fit(X, y)
 
-    # regression metric that needs "threshold" which calls predict
-    r2_threshold = make_scorer(r2_score, needs_threshold=True)
-
-    scorers = {'neg_mse': 'neg_mean_squared_error', 'r2': r2_threshold}
+    scorers = {'neg_mse': 'neg_mean_squared_error', 'r2': 'roc_auc'}
     scorer_dict, _ = _check_multimetric_scoring(clf, scorers)
     scorer = _MultimetricScorer(**scorer_dict)
     scorer(clf, X, y)
@@ -637,21 +636,25 @@ def test_multimetric_scorer_calls_method_once_regressos_threshold():
 
 
 def test_multimetric_scorer_sanity_check():
-    # Calling scoring for two different X's return different values
+    # scoring dictionary returned is the same as calling each scroer seperately
     scorers = {'a1': 'accuracy', 'a2': 'accuracy',
                'll1': 'neg_log_loss', 'll2': 'neg_log_loss',
                'ra1': 'roc_auc', 'ra2': 'roc_auc'}
 
-    X1, y1 = make_classification(random_state=0)
-    X2, y2 = make_classification(random_state=1)
+    X, y = make_classification(random_state=0)
 
     clf = DecisionTreeClassifier()
-    clf.fit(X1, y1)
+    clf.fit(X, y)
 
     scorer_dict, _ = _check_multimetric_scoring(clf, scorers)
-    scorer = _MultimetricScorer(**scorer_dict)
+    multi_scorer = _MultimetricScorer(**scorer_dict)
 
-    score1 = scorer(clf, X1, y1)
-    score2 = scorer(clf, X2, y2)
-    assert set(score1) == set(score2)  # compare dict keys
-    assert score1 != score2
+    result = multi_scorer(clf, X, y)
+
+    seperate_scores = {
+        name: get_scorer(name)(clf, X, y)
+        for name in ['accuracy', 'neg_log_loss', 'roc_auc']}
+
+    for key, value in result.items():
+        score_name = scorers[key]
+        assert_allclose(value, seperate_scores[score_name])

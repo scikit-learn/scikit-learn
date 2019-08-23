@@ -63,8 +63,8 @@ class _MultimetricScorer(dict):
     to `predict_proba`, `predict`, and `decision_function`.
 
     `_MultimetricScorer` will return a dictionary of scores corresponding to
-    the scorers in the dictionary. Note `_MultimetricScorer` can be created
-    with a dictionary with one key  (i.e. only one actual scorer).
+    the scorers in the dictionary. Note that `_MultimetricScorer` can be
+    created with a dictionary with one key  (i.e. only one actual scorer).
     """
     def __call__(self, estimator, *args, **kwargs):
         """Evaluate predicted target values."""
@@ -91,7 +91,7 @@ class _MultimetricScorer(dict):
           - `_ThresholdScorer` and `_PredictScorer` are called and
              estimator is a regressor.
           - `_ThresholdScorer` and `_ProbaScorer` are called and
-             estimator does not have `decision_function` an attribute.
+             estimator does not have a `decision_function` attribute.
 
         """
         if len(self) == 1:  # Only one scorer
