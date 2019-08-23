@@ -194,7 +194,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
        the Conference "Lernen, Wissen, Daten, Analysen" (LWDA) (2018): 318-329.
     """
 
-    def __init__(self, min_samples=5, max_eps=np.inf, metric='minkowski', p=2,
+    def __init__(self, min_samples=5, max_eps=np.inf, metric='euclidean', p=2,
                  metric_params=None, cluster_method='xi', eps=None, xi=0.05,
                  predecessor_correction=True, min_cluster_size=None,
                  algorithm='auto', leaf_size=30, n_jobs=None):
@@ -517,7 +517,7 @@ def _set_reach_dist(core_distances_, reachability_, predecessor_,
             # the same logic as neighbors, p is ignored if explicitly set
             # in the dict params
             _params['p'] = p
-        dists = pairwise_distances(P, np.take(X, unproc, axis=0),
+        dists = pairwise_distances(P, X[unproc],
                                    metric, n_jobs=None,
                                    **_params).ravel()
 
