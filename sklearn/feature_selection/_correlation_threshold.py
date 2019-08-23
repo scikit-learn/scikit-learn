@@ -27,22 +27,27 @@ class CorrelationThreshold(BaseEstimator, SelectorMixin):
 
     Attributes
     ----------
-    support_mask_ : bool ndarray of shape (n_features, )
+    support_mask_ : bool ndarray of shape (n_features,)
         Boolean mask for features to keep
 
     Examples
     --------
     The following example shows how one of the first highly correlated features
-    are removed, while the uncorrelated feature remains:
+    are removed, while the uncorrelated features remains:
 
     >>> import numpy as np
     >>> from sklearn.feature_selection import CorrelationThreshold
     >>> X = np.array([[0.0, 1.0, 2.0], [1.1, 2.0, 3.0], [0.5, 10.1, 1.1]]).T
-    >>> selector = CorrelationThreshold()
+    >>> selector = CorrelationThreshold(threshold=0.9)
     >>> selector.fit_transform(X)
     array([[ 1.1,  0.5],
            [ 2. , 10.1],
            [ 3. ,  1.1]])
+
+    References
+    ----------
+    Max Kuhn and Kjell Johnson, "Applied Predictive Modeling", Springer, 2013
+    (Section 3.5)
     """
     def __init__(self, threshold=0.9):
         self.threshold = threshold
@@ -52,7 +57,7 @@ class CorrelationThreshold(BaseEstimator, SelectorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} shape of (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training set to compute correlations.
 
         y : ignored
@@ -66,7 +71,8 @@ class CorrelationThreshold(BaseEstimator, SelectorMixin):
             raise ValueError("threshold must be in [0.0, 1.0], got {}".format(
                              self.threshold))
 
-        X = check_array(X, accept_sparse=['csc', 'csr'], dtype=float)
+        X = check_array(X, accept_sparse=['csc', 'csr'], dtype=[np.float64,
+                                                                np.float32])
 
         n_features = X.shape[1]
         if self.threshold == 1.0 or (1 in X.shape):
@@ -100,8 +106,8 @@ class CorrelationThreshold(BaseEstimator, SelectorMixin):
         upper_idx = np.triu_indices(n_features, 1)
 
         non_constant_features = n_features
-        for i, ptp in enumerate(peak_to_peaks):
-            if ptp == 0.0:
+        for i, mask in enumerate(ptp_mask):
+            if not mask:
                 feat_remove_mask = np.logical_and(upper_idx[0] != i,
                                                   upper_idx[1] != i)
                 upper_idx = (upper_idx[0][feat_remove_mask],

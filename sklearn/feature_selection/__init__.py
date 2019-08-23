@@ -16,7 +16,7 @@ from .univariate_selection import SelectFwe
 from .univariate_selection import GenericUnivariateSelect
 
 from .variance_threshold import VarianceThreshold
-from .correlation_threshold import CorrelationThreshold
+from ._correlation_threshold import CorrelationThreshold
 
 from .rfe import RFE
 from .rfe import RFECV

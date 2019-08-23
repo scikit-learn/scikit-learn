@@ -10,7 +10,8 @@ accuracy on a test dataset. Because this dataset contains multicollinear
 features, the permutation importance will show that none of the features are
 important. Hierarchical clustering is used to visualize the correlations
 between features and :class:`~sklearn.feature_selection.CorrelationThreshold`
-is used to ensure all pairwises correlations are below a certain threshold.
+to filter the features such that all pairwise correlations are below a certain
+threshold.
 
 .. note::
     See also
