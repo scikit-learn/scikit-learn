@@ -333,8 +333,8 @@ def mean_squared_log_error(y_true, y_pred,
 def median_absolute_error(y_true, y_pred, multioutput='uniform_average'):
     """Median absolute error regression loss
 
-    Read more in the :ref:`User Guide <median_absolute_error>`. Median absolute
-    error output is non-negative floating point. The best value is 0.0.
+    Median absolute error output is non-negative floating point. The best value
+    is 0.0. Read more in the :ref:`User Guide <median_absolute_error>`.
 
     Parameters
     ----------
@@ -344,10 +344,10 @@ def median_absolute_error(y_true, y_pred, multioutput='uniform_average'):
     y_pred : array-like of shape = (n_samples) or (n_samples, n_outputs)
         Estimated target values.
 
-    multioutput : {'raw_values', 'uniform_average'}
-        or array-like of shape (n_outputs,)
-        Defines aggregating of multiple output values.
-        Array-like value defines weights used to average errors.
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape
+        (n_outputs,)
+        Defines aggregating of multiple output values. Array-like value defines
+        weights used to average errors.
 
         'raw_values' :
             Returns a full set of errors in case of multioutput input.
