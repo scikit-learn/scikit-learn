@@ -4,7 +4,7 @@ from functools import partial
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils.testing import SkipTest
+from sklearn.utils.testing import SkipTest, assert_allclose_dense_sparse
 from sklearn.datasets.tests.test_common import check_return_X_y
 
 from sklearn import datasets
@@ -106,9 +106,8 @@ def test_20news_normalization():
     except IOError:
         raise SkipTest("Download 20 newsgroups to run this test")
 
-    # to dense because np.allclose fails otherwise.
-    X_norm = X_['data'][:100].todense()
-    X = X['data'][:100].astype(np.float64).todense()
+    X_norm = X_['data'][:100]
+    X = X['data'][:100]
 
-    assert np.allclose(X_norm, normalize(X))
-    assert np.allclose(np.linalg.norm(X_norm, axis=1), 1)
+    assert_allclose_dense_sparse(X_norm, normalize(X))
+    assert np.allclose(np.linalg.norm(X_norm.todense(), axis=1), 1)
