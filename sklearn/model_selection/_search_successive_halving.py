@@ -1,6 +1,7 @@
 from math import ceil, floor, log
 from abc import abstractmethod
 from collections import OrderedDict
+from numbers import Integral
 
 import numpy as np
 from ._search import _check_param_grid
@@ -66,7 +67,8 @@ class BaseSuccessiveHalving(BaseSearchCV):
         if self.scoring is not None and not (isinstance(self.scoring, str)
                                              or callable(self.scoring)):
             raise ValueError('scoring parameter must be a string, '
-                             'a callable or None.')
+                             'a callable or None. Multimetric scoring is not '
+                             'supported.')
 
         if (self.resource != 'n_samples'
                 and self.resource not in self.estimator.get_params()):
@@ -78,22 +80,26 @@ class BaseSuccessiveHalving(BaseSearchCV):
         if (isinstance(self.max_resources, str) and
                 self.max_resources != 'auto'):
             raise ValueError(
-                "max_resources must be either 'auto' or a positive number"
+                "max_resources must be either 'auto' or a positive integer"
             )
-        if self.max_resources != 'auto' and self.max_resources <= 0:
+        if self.max_resources != 'auto' and (
+                not isinstance(self.max_resources, Integral) or
+                self.max_resources <= 0):
             raise ValueError(
-                "max_resources must be either 'auto' or a positive number"
+                "max_resources must be either 'auto' or a positive integer"
             )
 
         if (isinstance(self.min_resources, str) and
                 self.min_resources != 'auto'):
             raise ValueError(
-                "min_resources must be either 'auto' or a positive number "
+                "min_resources must be either 'auto' or a positive integer "
                 "no greater than max_resources."
             )
-        if self.min_resources != 'auto' and self.min_resources <= 0:
+        if self.min_resources != 'auto' and (
+                not isinstance(self.min_resources, Integral) or
+                self.min_resources <= 0):
             raise ValueError(
-                "min_resources must be either 'auto' or a positive number "
+                "min_resources must be either 'auto' or a positive integer "
                 "no greater than max_resources."
             )
 

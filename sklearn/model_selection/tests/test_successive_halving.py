@@ -286,3 +286,41 @@ def test_groups_not_supported():
 
     with pytest.raises(ValueError, match="groups are not supported"):
         sh.fit(X, y, groups)
+
+
+@pytest.mark.parametrize('klass', (HalvingGridSearchCV, HalvingRandomSearchCV))
+@pytest.mark.parametrize('params, expected_error_message', [
+    ({'scoring': {'accuracy', 'accuracy'}},
+     'Multimetric scoring is not supp'),
+    ({'resource': 'not_a_parameter'},
+     'Cannot use resource'),
+    ({'resource': 'a', 'max_resources': 100},
+     'Cannot use parameter a as the resource since it is part of'),
+    ({'max_resources': 'not_auto'},
+     'max_resources must be either'),
+    ({'max_resources': 100.5},
+     'max_resources must be either'),
+    ({'max_resources': -10},
+     'max_resources must be either'),
+    ({'min_resources': 'not_auto'},
+     'min_resources must be either'),
+    ({'min_resources': 0.5},
+     'min_resources must be either'),
+    ({'min_resources': -10},
+     'min_resources must be either'),
+    ({'force_exhaust_resources': True, 'min_resources': 5},
+     'min_resources must be set to auto if '),
+    ({'max_resources': 'auto', 'resource': 'b'},
+     "max_resources can only be 'auto' if resource='n_samples'"),
+    ({'min_resources': 15, 'max_resources': 14},
+     "min_resources_=15 is greater than max_resources_=14"),
+])
+def test_input_errors(klass, params, expected_error_message):
+    base_estimator = FastClassifier()
+    param_grid = {'a': [1]}
+    X, y = make_classification(100)
+
+    sh = klass(base_estimator, param_grid, **params)
+
+    with pytest.raises(ValueError, match=expected_error_message):
+        sh.fit(X, y)
