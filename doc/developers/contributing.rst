@@ -634,6 +634,7 @@ In general have the following in mind:
        ``{array-like, ndarray, sparse matrix, dataframe}``. Note that ``array-like``
        can also be a ``list``, while ``ndarray`` is explicitly only a ``numpy.ndarray``.
     5. When specifying the data type of an ``array-like`` or ``list``, use 
+       ``of`` as a delimiter: 
        ``array-like of int`` or ``list of int``.
     6. When the default is ``None``, ``None`` only needs to be specified at the
        end with ``default=None``. Be sure to include in the docstring, what it
