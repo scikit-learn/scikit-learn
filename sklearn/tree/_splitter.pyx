@@ -85,7 +85,7 @@ cdef class Splitter:
 
          presort : bint
             Indicate whether to presort the data to speed up the finding of best
-            splits in fitting. Default to be 0 (False)
+            splits in fitting.
         """
 
         self.criterion = criterion
@@ -135,10 +135,10 @@ cdef class Splitter:
         X : object
             This contains the inputs. Usually it is a 2d numpy array.
 
-        y : array-like, dtype=DOUBLE_t
+        y : numpy.ndarray, dtype=DOUBLE_t
             This is the vector of targets, or true labels, for the samples
 
-        sample_weight : array-like, dtype=DOUBLE_t
+        sample_weight : DOUBLE_t*
             The weights of the samples, where higher weighted samples are fit
             closer than lower weight samples. If not provided, all samples
             are assumed to have uniform weight.
