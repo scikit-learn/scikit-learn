@@ -1399,9 +1399,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     cases. See :ref:`differences from liblinear <liblinear_differences>`
     in the narrative documentation.
 
-    To evaluate the significance of coefficients, one may use bootstrapping.
+    To evaluate the significance of coefficients using p-value and confidence interval,
+    one may use 'statsmodels' instead.
     For further information, refer the documentation below.
-    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+    https://pypi.org/project/statsmodels/
 
     References
     ----------
