@@ -13,9 +13,6 @@ automatically downloaded, then cached.
 
 """
 
-##############################################################################
-# Setting up commond line parser and data loading
-# ------------------------------------
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Mathieu Blondel <mathieu@mblondel.org>
@@ -96,8 +93,8 @@ op.print_help()
 print()
 
 
-# #############################################################################
-# Load some categories from the training set
+##############################################################################
+# Load data from the training set
 # ------------------------------------
 if opts.all_categories:
     categories = None
@@ -199,10 +196,9 @@ def trim(s):
     return s if len(s) <= 80 else s[:77] + "..."
 
 
-# #############################################################################
+##############################################################################
 # Benchmark classifiers
 # ------------------------------------
-
 def benchmark(clf):
     print('_' * 80)
     print("Training: ")
@@ -295,8 +291,9 @@ results.append(benchmark(Pipeline([
                                                   tol=1e-3))),
   ('classification', LinearSVC(penalty="l2"))])))
 
-# #############################################################################
-# Adding plots
+
+##############################################################################
+# Add plots
 # ------------------------------------
 # The bar plot indicates the accuracy, training time (normalized) and test time
 # (normalized) of each classifier.
