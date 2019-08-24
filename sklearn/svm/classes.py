@@ -912,10 +912,6 @@ class SVR(BaseLibSVM, RegressorMixin):
 
     fit_status_ : int
         0 if correctly fitted, 1 otherwise (will raise warning)
-    
-    probA_ : array, shape = [n_class * (n_class-1) / 2]
-    
-    probB_ : array, shape = []
 
     n_support_ : array-like, dtype=int32, shape = [n_class]
         Number of support vectors for each class.
