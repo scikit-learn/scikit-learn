@@ -96,6 +96,9 @@ print()
 ##############################################################################
 # Load data from the training set
 # ------------------------------------
+# Let's load data from the newsgroups dataset which comprises around 18000 newsgroups
+# posts on 20 topics split in two subsets: one for training (or development)
+# and the other one for testing (or for performance evaluation).
 if opts.all_categories:
     categories = None
 else:
@@ -199,6 +202,8 @@ def trim(s):
 ##############################################################################
 # Benchmark classifiers
 # ------------------------------------
+# We train and test the datasets with 15 different classification models
+# and get performance results for each model.
 def benchmark(clf):
     print('_' * 80)
     print("Training: ")
