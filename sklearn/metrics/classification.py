@@ -2381,3 +2381,55 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
             pos_label = y_true.max()
     y_true = np.array(y_true == pos_label, int)
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
+
+def neg_brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
+    """Compute the negative Brier score.
+
+    The negative Brier score loss, as opposed to the default Brier score loss has lower score
+    indicating worse performance of the model.
+    See :ref:`User Guide <brier_score_loss>` for more on the default.
+
+    Parameters
+    ----------
+    y_true : array, shape (n_samples,)
+        True targets.
+
+    y_prob : array, shape (n_samples,)
+        Probabilities of the positive class.
+
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
+
+    pos_label : int or str, default=None
+        Label of the positive class.
+        Defaults to the greater label unless y_true is all 0 or all -1
+        in which case pos_label defaults to 1.
+
+    Returns
+    -------
+    score : float
+        Brier score
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import neg_brier_score_loss
+    >>> y_true = np.array([0, 1, 1, 0])
+    >>> y_true_categorical = np.array(["spam", "ham", "ham", "spam"])
+    >>> y_prob = np.array([0.1, 0.9, 0.8, 0.3])
+    >>> neg_brier_score_loss(y_true, y_prob)
+    -0.037...
+    >>> neg_brier_score_loss(y_true, 1-y_prob, pos_label=0)
+    -0.037...
+    >>> neg_brier_score_loss(y_true_categorical, y_prob, pos_label="ham")
+    -0.037...
+    >>> neg_brier_score_loss(y_true, np.array(y_prob) > 0.5)
+    0.0
+
+    References
+    ----------
+    .. [1] `Wikipedia entry for the Brier score.
+            <https://en.wikipedia.org/wiki/Brier_score>`_
+    """
+    positive_score = brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None)
+    return (-1)*positive score
