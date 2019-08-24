@@ -520,7 +520,7 @@ def test_vectorizer():
 
 def test_tfidf_vectorizer_setters():
     tv = TfidfVectorizer(norm='l2', use_idf=False, smooth_idf=False,
-                         sublinear_tf=False)
+                         sublinear_tf=False, standard_idf=False)
     tv.norm = 'l1'
     assert tv._tfidf.norm == 'l1'
     tv.use_idf = True
@@ -529,6 +529,8 @@ def test_tfidf_vectorizer_setters():
     assert tv._tfidf.smooth_idf
     tv.sublinear_tf = True
     assert tv._tfidf.sublinear_tf
+    tv.standard_idf = True
+    assert tv._tfidf.standard_idf
 
 
 # FIXME Remove copy parameter support in 0.24
