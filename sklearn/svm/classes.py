@@ -44,9 +44,9 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         Tolerance for stopping criteria.
 
     C : float, optional (default=1.0)
-        Penalty parameter (strictly positive) that is inversely proportional to the 
-        regularization strength and is multiplied to the loss term of the 
-        cost function.
+        Penalty or regularization parameter (strictly positive) that is inversely 
+        proportional to the regularization strength and is multiplied to the 
+        loss term of the cost function.
 
     multi_class : string, 'ovr' or 'crammer_singer' (default='ovr')
         Determines the multi-class strategy if `y` contains more than
@@ -275,9 +275,9 @@ class LinearSVR(LinearModel, RegressorMixin):
         Tolerance for stopping criteria.
 
     C : float, optional (default=1.0)
-        Penalty parameter (strictly positive) that is inversely proportional to the 
-        regularization strength and is multiplied to the loss term of the 
-        cost function.
+        Penalty or regularization parameter (strictly positive) that is inversely 
+        proportional to the regularization strength and is multiplied to the 
+        loss term of the cost function.
 
     loss : string, optional (default='epsilon_insensitive')
         Specifies the loss function. The epsilon-insensitive loss
@@ -457,7 +457,9 @@ class SVC(BaseSVC):
     Parameters
     ----------
     C : float, optional (default=1.0)
-        Penalty parameter C applied to the loss term of the cost function. The bigger this parameter, the less regularization is used.
+        Penalty or regularization parameter (strictly positive) that is inversely 
+        proportional to the regularization strength and is multiplied to the 
+        loss term of the cost function.
 
     kernel : string, optional (default='rbf')
         Specifies the kernel type to be used in the algorithm.
@@ -869,8 +871,10 @@ class SVR(BaseLibSVM, RegressorMixin):
         Tolerance for stopping criterion.
 
     C : float, optional (default=1.0)
-        Penalty parameter C applied to the loss term of the cost function. The bigger this parameter, the less regularization is used.
-
+        Penalty or regularization parameter (strictly positive) that is inversely 
+        proportional to the regularization strength and is multiplied to the 
+        loss term of the cost function.
+        
     epsilon : float, optional (default=0.1)
          Epsilon in the epsilon-SVR model. It specifies the epsilon-tube
          within which no penalty is associated in the training loss function
