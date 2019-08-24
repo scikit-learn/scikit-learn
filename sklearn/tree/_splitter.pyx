@@ -135,7 +135,7 @@ cdef class Splitter:
         X : object
             This contains the inputs. Usually it is a 2d numpy array.
 
-        y : numpy.ndarray, dtype=DOUBLE_t
+        y : ndarray, dtype=DOUBLE_t
             This is the vector of targets, or true labels, for the samples
 
         sample_weight : DOUBLE_t*
@@ -143,7 +143,7 @@ cdef class Splitter:
             closer than lower weight samples. If not provided, all samples
             are assumed to have uniform weight.
 
-        X_idx_sorted: numpy.ndarray (optional)
+        X_idx_sorted: ndarray (optional)
             The indexes of the sorted training input samples
         """
 
@@ -202,7 +202,7 @@ cdef class Splitter:
             The index of the first sample to consider
         end : SIZE_t
             The index of the last sample to consider
-        weighted_n_node_samples : numpy.ndarray, dtype=double pointer
+        weighted_n_node_samples : ndarray, dtype=double pointer
             The total weight of those samples
         """
 
