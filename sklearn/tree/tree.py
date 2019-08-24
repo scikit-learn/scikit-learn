@@ -1403,6 +1403,9 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         or a list containing the number of classes for each
         output (for multi-output problems).
 
+    feature_importances_array of shape = [n_features]
+        Return the feature importances (the higher, the more important the feature).
+
     n_features_ : int
         The number of features when ``fit`` is performed.
 
