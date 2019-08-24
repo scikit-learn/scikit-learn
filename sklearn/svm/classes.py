@@ -866,7 +866,7 @@ class SVR(BaseLibSVM, RegressorMixin):
         Tolerance for stopping criterion.
 
     C : float, optional (default=1.0)
-        Penalty parameter C of the error term.
+        Penalty parameter C of the error term. The bigger this parameter, the less regularization is used.
 
     epsilon : float, optional (default=0.1)
          Epsilon in the epsilon-SVR model. It specifies the epsilon-tube
