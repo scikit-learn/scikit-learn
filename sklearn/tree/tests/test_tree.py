@@ -1954,3 +1954,18 @@ def test_prune_tree_raises_negative_ccp_alpha():
     with pytest.raises(ValueError, match=msg):
         clf.set_params(ccp_alpha=-1.0)
         clf._prune_tree()
+
+def test_classes_deprecated():
+    X = [[0, 0], [2, 2], [4, 6], [10, 11]]
+    y = [0.5, 2.5, 3.5, 5.5]
+    clf = DecisionTreeRegressor()
+    
+    clf = clf.fit(X,y)
+    
+    match = ("'classes_'is to be deprecated from version 0.20 and "
+             "will be removed in 0.22.")
+    
+    with pytest.warns(DeprecationWarning, match=match):
+        n = clf.classes_
+    assert n == clf.classes_
+        

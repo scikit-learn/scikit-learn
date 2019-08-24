@@ -162,7 +162,7 @@ class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
             check_classification_targets(y)
             y = np.copy(y)
 
-            self.classes_ = []
+            self._classes = []
             self.n_classes_ = []
 
             if self.class_weight is not None:
@@ -172,7 +172,7 @@ class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
             for k in range(self.n_outputs_):
                 classes_k, y_encoded[:, k] = np.unique(y[:, k],
                                                        return_inverse=True)
-                self.classes_.append(classes_k)
+                self._classes.append(classes_k)
                 self.n_classes_.append(classes_k.shape[0])
             y = y_encoded
 
@@ -181,7 +181,7 @@ class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
                     self.class_weight, y_original)
 
         else:
-            self.classes_ = [None] * self.n_outputs_
+            self._classes = [None] * self.n_outputs_
             self.n_classes_ = [1] * self.n_outputs_
 
         self.n_classes_ = np.array(self.n_classes_, dtype=np.intp)
@@ -389,11 +389,20 @@ class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
 
         if self.n_outputs_ == 1:
             self.n_classes_ = self.n_classes_[0]
-            self.classes_ = self.classes_[0]
+            self._classes = self._classes[0]
 
         self._prune_tree()
 
         return self
+
+    @property
+    def classes_(self):
+        if is_classifier(self):
+            return self._classes
+        
+        warnings.warn("'classes_'is to be deprecated from version 0.20 and "
+                      "will be removed in 0.22.", DeprecationWarning)
+        return self._classes
 
     def _validate_X_predict(self, X, check_input):
         """Validate X whenever one tries to predict, apply, predict_proba"""
