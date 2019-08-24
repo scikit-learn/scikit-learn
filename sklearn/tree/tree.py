@@ -1391,6 +1391,9 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
     Attributes
     ----------
+    base_estimator_ : ExtraTreeClassifier
+        The child estimator template used to create the collection of fitted sub-estimators.
+
     classes_ : array of shape = [n_classes] or a list of such arrays
         The classes labels (single output problem),
         or a list of arrays of class labels (multi-output problem).
@@ -1417,6 +1420,14 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         ``help(sklearn.tree._tree.Tree)`` for attributes of Tree object and
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
         for basic usage of these attributes.
+
+    oob_score_ : float
+        Score of the training dataset obtained using an out-of-bag estimate.
+
+    oob_decision_function_ : array of shape = [n_samples, n_classes]
+        Decision function computed with out-of-bag estimate on the training set. If n_estimators is small it 
+        might be possible that a data point was never left out during the bootstrap. In this case, 
+        oob_decision_function_ might contain NaN.
 
     See also
     --------
