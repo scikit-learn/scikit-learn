@@ -906,15 +906,8 @@ class SVR(BaseLibSVM, RegressorMixin):
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`.
 
-    class_weight_ : array, shape = [n_class]
-        Multipliers of parameter C of class i (class_weight_[i]*C).
-        Computed based on the ``class_weight`` parameter.
-
     fit_status_ : int
         0 if correctly fitted, 1 otherwise (will raise warning)
-
-    n_support_ : array-like, dtype=int32, shape = [n_class]
-        Number of support vectors for each class.
     
     shape_fit_ : tuple, shape = [n_dimensions_of_X]
         Array dimensions of training vector ``X``.
