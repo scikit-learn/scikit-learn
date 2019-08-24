@@ -1399,8 +1399,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     cases. See :ref:`differences from liblinear <liblinear_differences>`
     in the narrative documentation.
 
-    To evaluate the significance of coefficients using p-value and confidence interval,
-    one may use 'statsmodels' instead.
+    To evaluate the significance of coefficients using p-value and
+    confidence interval, one may use 'statsmodels' instead.
     For further information, refer the documentation below.
     https://pypi.org/project/statsmodels/
 
