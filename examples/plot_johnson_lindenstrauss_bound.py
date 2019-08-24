@@ -115,8 +115,8 @@ plt.show()
 #   ``n_components``.
 #
 # The default dataset is the digits dataset. To run the example on the twenty
-# newsgroups dataset, pass the --twenty-newsgroups command line argument to this
-# script.
+# newsgroups dataset, pass the --twenty-newsgroups command line argument to
+# this script.
 
 if '--twenty-newsgroups' in sys.argv:
     # Need an internet connection hence not enabled by default
@@ -199,9 +199,10 @@ plt.show()
 # will require at least several thousands dimensions, irrespective of the
 # number of features of the original dataset.
 #
-# Hence using random projections on the digits dataset which only has 64 features
-# in the input space does not make sense: it does not allow for dimensionality
-# reduction in this case.
+# Hence using random projections on the digits dataset which only has 64
+# features in the input space does not make sense: it does not allow
+# for dimensionality reduction in this case.
 #
-# On the twenty newsgroups on the other hand the dimensionality can be decreased
-# from 56436 down to 10000 while reasonably preserving pairwise distances.
+# On the twenty newsgroups on the other hand the dimensionality can be
+# decreased from 56436 down to 10000 while reasonably preserving
+# pairwise distances.
