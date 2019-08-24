@@ -384,8 +384,8 @@ removed to avoid them being construed as signal for prediction.  Sometimes,
 however, similar words are useful for prediction, such as in classifying
 writing style or personality.
 
-There are several known issues in our provided 'english' stop word list. See
-[NQY18]_.
+There are several known issues in our provided 'english' stop word list. It
+does not aim to be a general solution to be used for all tasks. See [NQY18]_. 
 
 Please take care in choosing a stop word list.
 Popular stop word lists may include words that are highly informative to
