@@ -100,8 +100,8 @@ def _open_openml_url(openml_path, data_home, expected_md5_checksum=None):
             bytes_content = input_stream.read()
             actual_md5_checksum = hashlib.md5(bytes_content).hexdigest()
             if md5_checksum != actual_md5_checksum:
-                raise ValueError(f"md5checksum {actual_md5_checksum} \
-                does not match {md5_checksum}")
+                raise ValueError(f"md5checksum {actual_md5_checksum} "
+                                 "does not match {md5_checksum}")
             return BytesIO(bytes_content)
 
     if data_home is None:
