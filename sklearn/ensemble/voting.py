@@ -99,16 +99,24 @@ class _BaseVoting(_BaseComposition, TransformerMixin):
                 'All estimators are None or "drop". At least one is required!'
             )
 
-        self.estimators_ = Parallel(n_jobs=self.n_jobs,verbose=self.verbose)(
+        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
                 delayed(_parallel_fit_estimator)(clone(clf), X, y,
-                                                 sample_weight=sample_weight)
-                for clf in clfs if clf not in (None, 'drop')
+                                                 sample_weight=sample_weight,
+                                                 message_clsname='Voting',
+                                                 message=self._log_message(names[idx],
+                                                 idx,len(clfs)))
+                for idx, clf in enumerate(clfs) if clf not in (None, 'drop')
             )
 
         self.named_estimators_ = Bunch()
         for k, e in zip(self.estimators, self.estimators_):
             self.named_estimators_[k[0]] = e
         return self
+
+    def _log_message(self, name, idx, total):
+        if not self.verbose:
+            return None
+        return '(classifier %d of %d) Processing %s' % (idx, total, name)
 
     def set_params(self, **params):
         """ Setting the parameters for the ensemble estimator
@@ -166,11 +174,9 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
         the sums of the predicted probabilities, which is recommended for
         an ensemble of well-calibrated classifiers.
 
-    verbose : int, optional (default=0)
-        Verbosity level, with more frequent messages the higher the number.
-        If it is non-zero, progress messages are printed.
-        If > 50, the output is sent to stdout.
-        If > 10, all iterations are reported.
+    verbose : bool, optional (default=False)
+        If True, the time elapsed while fitting will be printed as it
+        is completed.
 
     weights : array-like, shape (n_classifiers,), optional (default=`None`)
         Sequence of weights (`float` or `int`) to weight the occurrences of
@@ -244,7 +250,7 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
     VotingRegressor: Prediction voting regressor.
     """
 
-    def __init__(self, estimators, voting='hard', verbose=0, weights=None,
+    def __init__(self, estimators, voting='hard', verbose=False, weights=None,
                  n_jobs=None, flatten_transform=True):
         self.estimators = estimators
         self.voting = voting
@@ -401,11 +407,9 @@ class VotingRegressor(_BaseVoting, RegressorMixin):
         ``self.estimators_``. An estimator can be set to ``None`` or ``'drop'``
         using ``set_params``.
 
-    verbose : int, optional (default=0)
-        Verbosity level, with more frequent messages the higher the number.
-        If it is non-zero, progress messages are printed.
-        If > 50, the output is sent to stdout.
-        If > 10, all iterations are reported.
+    verbose : bool, optional (default=False)
+        If True, the time elapsed while fitting will be printed as it
+        is completed.
 
     weights : array-like, shape (n_regressors,), optional (default=`None`)
         Sequence of weights (`float` or `int`) to weight the occurrences of
@@ -445,7 +449,7 @@ class VotingRegressor(_BaseVoting, RegressorMixin):
     VotingClassifier: Soft Voting/Majority Rule classifier.
     """
 
-    def __init__(self, estimators, verbose=0, weights=None, n_jobs=None):
+    def __init__(self, estimators, verbose=False, weights=None, n_jobs=None):
         self.estimators = estimators
         self.verbose = verbose
         self.weights = weights
