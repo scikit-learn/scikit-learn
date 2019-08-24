@@ -138,11 +138,11 @@ Linear model: from regression to sparsity
     sex, weight, blood pressure) measure on 442 patients, and an
     indication of disease progression after one year::
 
-        >>> diabetes = datasets.load_diabetes()
-        >>> diabetes_X_train = diabetes.data[:-20]
-        >>> diabetes_X_test  = diabetes.data[-20:]
-        >>> diabetes_y_train = diabetes.target[:-20]
-        >>> diabetes_y_test  = diabetes.target[-20:]
+        >>> diabetes_X, diabetes_y = datasets.load_diabetes(return_X_y=True)
+        >>> diabetes_X_train = diabetes_X[:-20]
+        >>> diabetes_X_test  = diabetes_X[-20:]
+        >>> diabetes_y_train = diabetes_y[:-20]
+        >>> diabetes_y_test  = diabetes_y[-20:]
 
     The task at hand is to predict disease progression from physiological
     variables.
