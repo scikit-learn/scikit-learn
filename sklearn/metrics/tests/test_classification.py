@@ -44,6 +44,7 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import zero_one_loss
 from sklearn.metrics import brier_score_loss
+from sklearn.metrics import neg_brier_score_loss
 from sklearn.metrics import multilabel_confusion_matrix
 
 from sklearn.metrics.classification import _check_targets
@@ -2012,6 +2013,39 @@ def test_brier_score_loss():
         brier_score_loss(['foo'], [0.4], pos_label='bar'), 0.16)
     assert_almost_equal(
         brier_score_loss(['foo'], [0.4], pos_label='foo'), 0.36)
+
+def test_neg_brier_score_loss():
+    # Check neg_brier_score_loss function
+    y_true = np.array([0, 1, 1, 0, 1, 1])
+    y_pred = np.array([0.1, 0.8, 0.9, 0.3, 1., 0.95])
+    true_score = (-1)*linalg.norm(y_true - y_pred) ** 2 / len(y_true)
+
+    assert_almost_equal(neg_brier_score_loss(y_true, y_true), -0.0)
+    assert_almost_equal(neg_brier_score_loss(y_true, y_pred), true_score)
+    assert_almost_equal(neg_brier_score_loss(1. + y_true, y_pred),
+                        true_score)
+    assert_almost_equal(neg_brier_score_loss(2 * y_true - 1, y_pred),
+                        true_score)
+    assert_raises(ValueError, neg_brier_score_loss, y_true, y_pred[1:])
+    assert_raises(ValueError, neg_brier_score_loss, y_true, y_pred + 1.)
+    assert_raises(ValueError, neg_brier_score_loss, y_true, y_pred - 1.)
+
+    # ensure to raise an error for multiclass y_true
+    y_true = np.array([0, 1, 2, 0])
+    y_pred = np.array([0.8, 0.6, 0.4, 0.2])
+    error_message = ("Only binary classification is supported. Labels "
+                     "in y_true: {}".format(np.array([0, 1, 2])))
+    assert_raise_message(ValueError, error_message, brier_score_loss,
+                         y_true, y_pred)
+
+    # calculate correctly when there's only one class in y_true
+    assert_almost_equal(neg_brier_score_loss([-1], [0.4]), -0.16)
+    assert_almost_equal(neg_brier_score_loss([0], [0.4]), -0.16)
+    assert_almost_equal(neg_brier_score_loss([1], [0.4]), -0.36)
+    assert_almost_equal(
+        neg_brier_score_loss(['foo'], [0.4], pos_label='bar'), -0.64)
+    assert_almost_equal(
+        neg_brier_score_loss(['foo'], [0.4], pos_label='foo'), -0.36)
 
 
 def test_balanced_accuracy_score_unseen():

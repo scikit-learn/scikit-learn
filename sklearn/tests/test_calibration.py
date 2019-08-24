@@ -18,7 +18,7 @@ from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
-from sklearn.metrics import brier_score_loss, log_loss
+from sklearn.metrics import brier_score_loss, neg_brier_score_loss, log_loss
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
 from sklearn.calibration import calibration_curve
@@ -59,6 +59,8 @@ def test_calibration():
             # Check that brier score has improved after calibration
             assert (brier_score_loss(y_test, prob_pos_clf) >
                            brier_score_loss(y_test, prob_pos_pc_clf))
+            assert (neg_brier_score_loss(y_test, prob_pos_clf) <
+                            neg_brier_score_loss(y_test, prob_pos_pc_clf))
 
             # Check invariance against relabeling [0, 1] -> [1, 2]
             pc_clf.fit(this_X_train, y_train + 1, sample_weight=sw_train)
@@ -86,6 +88,10 @@ def test_calibration():
                 assert (brier_score_loss(y_test, prob_pos_clf) >
                                brier_score_loss((y_test + 1) % 2,
                                                 prob_pos_pc_clf_relabeled))
+                assert (neg_brier_score_loss(y_test, prob_pos_clf) <
+                               neg_brier_score_loss((y_test + 1) % 2,
+                                                prob_pos_pc_clf_relabeled))
+
 
         # Check failure cases:
         # only "isotonic" and "sigmoid" should be accepted as methods

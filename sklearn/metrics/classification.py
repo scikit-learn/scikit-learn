@@ -2431,5 +2431,5 @@ def neg_brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     .. [1] `Wikipedia entry for the Brier score.
             <https://en.wikipedia.org/wiki/Brier_score>`_
     """
-    positive_score = brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None)
-    return (-1)*positive score
+    positive_score = brier_score_loss(y_true, y_prob, sample_weight=sample_weight, pos_label=pos_label)
+    return -1.0*positive_score

@@ -565,7 +565,7 @@ SCORERS = dict(explained_variance=explained_variance_scorer,
                average_precision=average_precision_scorer,
                neg_log_loss=neg_log_loss_scorer,
                brier_score_loss=brier_score_loss_scorer,
-               neg_brier_score_loss=neg_brier_score_loss_scorer,,
+               neg_brier_score_loss=neg_brier_score_loss_scorer,
                # Cluster metrics that use supervised evaluation
                adjusted_rand_score=adjusted_rand_scorer,
                homogeneity_score=homogeneity_scorer,
