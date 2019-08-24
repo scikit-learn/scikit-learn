@@ -56,8 +56,8 @@ text document (TF-IDF word frequencies) dataset:
   euclidean spaces with various values for the target number of dimensions
   ``n_components``.
 
-The default dataset is the digits dataset. To run the example on the twenty
-newsgroups dataset, pass the --twenty-newsgroups command line argument to this
+The default dataset is the 20 newsgroups dataset. To run the example on the
+digits dataset, pass the ---use-digits-dataset command line argument to this
 script.
 
 For each value of ``n_components``, we plot:
@@ -146,15 +146,14 @@ plt.xlabel("Distortion eps")
 plt.ylabel("Minimum number of dimensions")
 plt.title("Johnson-Lindenstrauss bounds:\nn_components vs eps")
 
-# Part 2: perform sparse random projection of some digits images which are
-# quite low dimensional and dense or documents of the 20 newsgroups dataset
-# which is both high dimensional and sparse
+# Part 2: perform sparse random projection of some documents of the 20 newsgroups 
+# dataset which is both high dimensional and sparse or some digits images which are
+# quite low dimensional and dense
 
-if '--twenty-newsgroups' in sys.argv:
-    # Need an internet connection hence not enabled by default
-    data = fetch_20newsgroups_vectorized().data[:500]
-else:
+if '---use-digits-dataset' in sys.argv:
     data = load_digits().data[:500]
+else:
+    data = fetch_20newsgroups_vectorized().data[:500]
 
 n_samples, n_features = data.shape
 print("Embedding %d samples with dim %d using various random projections"
@@ -182,7 +181,10 @@ for n_components in n_components_range:
         projected_data, squared=True).ravel()[nonzero]
 
     plt.figure()
-    plt.hexbin(dists, projected_dists, gridsize=100, cmap=plt.cm.PuBu)
+    min_dist = min(projected_dists.max(), dists.min())
+    max_dist = max(projected_dists.max(), dists.max())
+    plt.hexbin(dists, projected_dists, gridsize=100, cmap=plt.cm.PuBu,
+               extent=[min_dist, max_dist, min_dist, max_dist])
     plt.xlabel("Pairwise squared distances in original space")
     plt.ylabel("Pairwise squared distances in projected space")
     plt.title("Pairwise distances distribution for n_components=%d" %
