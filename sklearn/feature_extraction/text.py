@@ -1242,15 +1242,15 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     informative than features that occur in a small fraction of the training
     corpus.
 
-    The formula that is used to compute the tf-idf for a term t of a document d 
-    in a document set is tf-idf(t, d) = tf(t, d) * idf(t). The idf term is 
-    computed as idf(t) = log [n / df(t)] + 1 if ``standard_idf=False``, 
-    otherwise it is computed as idf(t) = log [n / df(t)], where n is the total 
-    number number of documents and df(t) is the document frequency of t; the 
-    document frequency is the number of documents in the document set that 
-    contain the term t. The effect of adding "1" to the idf term in the 
+    The formula that is used to compute the tf-idf for a term t of a document d
+    in a document set is tf-idf(t, d) = tf(t, d) * idf(t). The idf term is
+    computed as idf(t) = log [n / df(t)] + 1 if ``standard_idf=False``,
+    otherwise it is computed as idf(t) = log [n / df(t)], where n is the total
+    number number of documents and df(t) is the document frequency of t; the
+    document frequency is the number of documents in the document set that
+    contain the term t. The effect of adding "1" to the idf term in the
     equation above results in terms with zero idf, i.e., terms that occur in
-    all documents in a training set, will not be entirely ignored. If 
+    all documents in a training set, will not be entirely ignored. If
     ``standard_idf=True`` the standard textbook definition of the idf term
     will be used, which ignores terms with a zero idf.
 
@@ -1677,7 +1677,6 @@ class TfidfVectorizer(CountVectorizer):
     @standard_idf.setter
     def standard_idf(self, value):
         self._tfidf.standard_idf = value
-    
 
     @property
     def idf_(self):
