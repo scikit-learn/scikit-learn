@@ -874,7 +874,7 @@ class SVR(BaseLibSVM, RegressorMixin):
         Penalty or regularization parameter (strictly positive) that is inversely 
         proportional to the regularization strength and is multiplied to the 
         loss term of the cost function.
-        
+
     epsilon : float, optional (default=0.1)
          Epsilon in the epsilon-SVR model. It specifies the epsilon-tube
          within which no penalty is associated in the training loss function
@@ -977,7 +977,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         default 0.5 will be taken.
 
     C : float, optional (default=1.0)
-        Penalty parameter C applied to the loss term of the cost function. The bigger this parameter, the less regularization is used.
+         Penalty parameter C of the error term.
 
     kernel : string, optional (default='rbf')
          Specifies the kernel type to be used in the algorithm.
