@@ -235,21 +235,6 @@ Here is an example of ``cross_validate`` using a single metric::
     >>> sorted(scores.keys())
     ['estimator', 'fit_time', 'score_time', 'test_score', 'train_score']
 
-Cross-validation significance evaluation
-----------------------------------------
-
-Significance of cross validation scores can be evaluated using
-:func:`permutation_test_score` function. The function returns a p-value, which
-approximates the probability that the average cross-validation score would be
-obtained at by chance.
-
-
-It also returns cross_validation scores for each permutation of y labels. It
-permutes the labels of the samples and computes the p-value against the null
-hypothesis that the features and the labels are independent, meaning that there
-is no difference between the classes.
-
-
 Obtaining predictions by cross-validation
 -----------------------------------------
 
@@ -288,6 +273,21 @@ section.
     * :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py`,
     * :ref:`sphx_glr_auto_examples_model_selection_plot_cv_predict.py`,
     * :ref:`sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py`.
+
+Cross-validation significance evaluation
+----------------------------------------
+
+Significance of cross validation scores can be evaluated using
+:func:`permutation_test_score` function. The function returns a p-value, which
+approximates the probability that the average cross-validation score would be
+obtained at by chance.
+
+
+It also returns cross_validation scores for each permutation of y labels. It
+permutes the labels of the samples and computes the p-value against the null
+hypothesis that the features and the labels are independent, meaning that there
+is no difference between the classes.
+
 
 Cross validation iterators
 ==========================

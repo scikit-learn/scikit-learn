@@ -871,8 +871,9 @@ def _index_param_value(X, v, indices):
 def permutation_test_score(estimator, X, y, groups=None, cv=None,
                            n_permutations=100, n_jobs=1, random_state=0,
                            verbose=0, scoring=None):
-    """Evaluate the significance of a cross-validated score by permuting
-    the labels of the samples and computing the p-value against the null
+    """Evaluates the significance of a cross-validated score by permutations. 
+    
+    Permutes labels and computes the p-value against the null
     hypothesis that the features and the labels are independent, meaning that
     there is no difference between the classes.
 
