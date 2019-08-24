@@ -49,9 +49,7 @@ Nearest neighbor and the curse of dimensionality
 
         >>> import numpy as np
         >>> from sklearn import datasets
-        >>> iris = datasets.load_iris()
-        >>> iris_X = iris.data
-        >>> iris_y = iris.target
+        >>> iris_X, iris_y = datasets.load_iris(return_X_y=True)
         >>> np.unique(iris_y)
         array([0, 1, 2])
 

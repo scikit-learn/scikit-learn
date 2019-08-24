@@ -38,8 +38,8 @@ Let's load the iris data set to fit a linear support vector machine on it::
   >>> from sklearn import datasets
   >>> from sklearn import svm
 
-  >>> iris = datasets.load_iris()
-  >>> iris.data.shape, iris.target.shape
+  >>> X, y = datasets.load_iris(return_X_y=True)
+  >>> X.shape, y.shape
   ((150, 4), (150,))
 
 We can now quickly sample a training set while holding out 40% of the
