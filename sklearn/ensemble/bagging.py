@@ -3,7 +3,6 @@
 # Author: Gilles Louppe <g.louppe@gmail.com>
 # License: BSD 3 clause
 
-from __future__ import division
 
 import itertools
 import numbers
@@ -11,9 +10,10 @@ import numpy as np
 from abc import ABCMeta, abstractmethod
 from warnings import warn
 
+from joblib import Parallel, delayed
+
 from .base import BaseEnsemble, _partition_estimators
 from ..base import ClassifierMixin, RegressorMixin
-from ..utils._joblib import Parallel, delayed
 from ..metrics import r2_score, accuracy_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_random_state, check_X_y, check_array, column_or_1d
@@ -202,7 +202,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
                  n_jobs=None,
                  random_state=None,
                  verbose=0):
-        super(BaseBagging, self).__init__(
+        super().__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators)
 
@@ -299,7 +299,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         # Validate max_samples
         if max_samples is None:
             max_samples = self.max_samples
-        elif not isinstance(max_samples, (numbers.Integral, np.integer)):
+        elif not isinstance(max_samples, numbers.Integral):
             max_samples = int(max_samples * X.shape[0])
 
         if not (0 < max_samples <= X.shape[0]):
@@ -309,7 +309,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         self._max_samples = max_samples
 
         # Validate max_features
-        if isinstance(self.max_features, (numbers.Integral, np.integer)):
+        if isinstance(self.max_features, numbers.Integral):
             max_features = self.max_features
         elif isinstance(self.max_features, np.float):
             max_features = self.max_features * self.n_features_
@@ -511,6 +511,9 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
     base_estimator_ : estimator
         The base estimator from which the ensemble is grown.
 
+    n_features_ : int
+        The number of features when `fit` is performed.
+
     estimators_ : list of estimators
         The collection of fitted base estimators.
 
@@ -565,7 +568,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
                  random_state=None,
                  verbose=0):
 
-        super(BaggingClassifier, self).__init__(
+        super().__init__(
             base_estimator,
             n_estimators=n_estimators,
             max_samples=max_samples,
@@ -580,7 +583,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
     def _validate_estimator(self):
         """Check the estimator and set the base_estimator_ attribute."""
-        super(BaggingClassifier, self)._validate_estimator(
+        super()._validate_estimator(
             default=DecisionTreeClassifier())
 
     def _set_oob_score(self, X, y):
@@ -672,7 +675,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
-        check_is_fitted(self, "classes_")
+        check_is_fitted(self)
         # Check data
         X = check_array(
             X, accept_sparse=['csr', 'csc'], dtype=None,
@@ -722,7 +725,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             The class log-probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
-        check_is_fitted(self, "classes_")
+        check_is_fitted(self)
         if hasattr(self.base_estimator_, "predict_log_proba"):
             # Check data
             X = check_array(
@@ -780,7 +783,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             cases with ``k == 1``, otherwise ``k==n_classes``.
 
         """
-        check_is_fitted(self, "classes_")
+        check_is_fitted(self)
 
         # Check data
         X = check_array(
@@ -887,6 +890,12 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
 
     Attributes
     ----------
+    base_estimator_ : estimator
+        The base estimator from which the ensemble is grown.
+
+    n_features_ : int
+        The number of features when `fit` is performed.
+
     estimators_ : list of estimators
         The collection of fitted sub-estimators.
 
@@ -935,7 +944,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
                  n_jobs=None,
                  random_state=None,
                  verbose=0):
-        super(BaggingRegressor, self).__init__(
+        super().__init__(
             base_estimator,
             n_estimators=n_estimators,
             max_samples=max_samples,
@@ -965,7 +974,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         y : array of shape = [n_samples]
             The predicted values.
         """
-        check_is_fitted(self, "estimators_features_")
+        check_is_fitted(self)
         # Check data
         X = check_array(
             X, accept_sparse=['csr', 'csc'], dtype=None,
@@ -990,7 +999,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
 
     def _validate_estimator(self):
         """Check the estimator and set the base_estimator_ attribute."""
-        super(BaggingRegressor, self)._validate_estimator(
+        super()._validate_estimator(
             default=DecisionTreeRegressor())
 
     def _set_oob_score(self, X, y):

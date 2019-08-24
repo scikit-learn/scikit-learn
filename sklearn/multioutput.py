@@ -16,6 +16,8 @@ extends single output estimators to multioutput estimators.
 
 import numpy as np
 import scipy.sparse as sp
+from joblib import Parallel, delayed
+
 from abc import ABCMeta, abstractmethod
 from .base import BaseEstimator, clone, MetaEstimatorMixin
 from .base import RegressorMixin, ClassifierMixin, is_classifier
@@ -25,7 +27,6 @@ from .utils.fixes import parallel_helper
 from .utils.metaestimators import if_delegate_has_method
 from .utils.validation import check_is_fitted, has_fit_parameter
 from .utils.multiclass import check_classification_targets
-from .utils._joblib import Parallel, delayed
 
 __all__ = ["MultiOutputRegressor", "MultiOutputClassifier",
            "ClassifierChain", "RegressorChain"]
@@ -144,7 +145,8 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
         """
 
         if not hasattr(self.estimator, "fit"):
-            raise ValueError("The base estimator should implement a fit method")
+            raise ValueError("The base estimator should implement"
+                             " a fit method")
 
         X, y = check_X_y(X, y,
                          multi_output=True,
@@ -183,9 +185,10 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
             Multi-output targets predicted across multiple predictors.
             Note: Separate models are generated for each predictor.
         """
-        check_is_fitted(self, 'estimators_')
+        check_is_fitted(self)
         if not hasattr(self.estimator, "predict"):
-            raise ValueError("The base estimator should implement a predict method")
+            raise ValueError("The base estimator should implement"
+                             " a predict method")
 
         X = check_array(X, accept_sparse=True)
 
@@ -194,6 +197,9 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
             for e in self.estimators_)
 
         return np.asarray(y).T
+
+    def _more_tags(self):
+        return {'multioutput_only': True}
 
 
 class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
@@ -217,10 +223,15 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
         When individual estimators are fast to train or predict
         using `n_jobs>1` can result in slower performance due
         to the overhead of spawning processes.
+
+    Attributes
+    ----------
+    estimators_ : list of ``n_output`` estimators
+        Estimators used for predictions.
     """
 
     def __init__(self, estimator, n_jobs=None):
-        super(MultiOutputRegressor, self).__init__(estimator, n_jobs)
+        super().__init__(estimator, n_jobs)
 
     @if_delegate_has_method('estimator')
     def partial_fit(self, X, y, sample_weight=None):
@@ -244,9 +255,10 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
         -------
         self : object
         """
-        super(MultiOutputRegressor, self).partial_fit(
+        super().partial_fit(
             X, y, sample_weight=sample_weight)
 
+    # XXX Remove this method in 0.23
     def score(self, X, y, sample_weight=None):
         """Returns the coefficient of determination R^2 of the prediction.
 
@@ -311,11 +323,36 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
     """
 
     def __init__(self, estimator, n_jobs=None):
-        super(MultiOutputClassifier, self).__init__(estimator, n_jobs)
+        super().__init__(estimator, n_jobs)
+
+    def fit(self, X, Y, sample_weight=None):
+        """Fit the model to data matrix X and targets Y.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The input data.
+        Y : array-like of shape (n_samples, n_classes)
+            The target values.
+        sample_weight : array-like of shape (n_samples,) or None
+            Sample weights. If None, then samples are equally weighted.
+            Only supported if the underlying classifier supports sample
+            weights.
+
+        Returns
+        -------
+        self : object
+        """
+        super().fit(X, Y, sample_weight)
+        self.classes_ = [estimator.classes_ for estimator in self.estimators_]
+        return self
 
     def predict_proba(self, X):
         """Probability estimates.
         Returns prediction probabilities for each class of each output.
+
+        This method will raise a ``ValueError`` if any of the
+        estimators do not have ``predict_proba``.
 
         Parameters
         ----------
@@ -329,9 +366,10 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
-        check_is_fitted(self, 'estimators_')
-        if not hasattr(self.estimator, "predict_proba"):
-            raise ValueError("The base estimator should implement"
+        check_is_fitted(self)
+        if not all([hasattr(estimator, "predict_proba")
+                    for estimator in self.estimators_]):
+            raise ValueError("The base estimator should implement "
                              "predict_proba method")
 
         results = [estimator.predict_proba(X) for estimator in
@@ -339,7 +377,7 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
         return results
 
     def score(self, X, y):
-        """"Returns the mean accuracy on the given test data and labels.
+        """Returns the mean accuracy on the given test data and labels.
 
         Parameters
         ----------
@@ -354,7 +392,7 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
         scores : float
             accuracy_score of self.predict(X) versus y
         """
-        check_is_fitted(self, 'estimators_')
+        check_is_fitted(self)
         n_outputs_ = len(self.estimators_)
         if y.ndim == 1:
             raise ValueError("y must have at least two dimensions for "
@@ -365,6 +403,10 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
                              format(n_outputs_, y.shape[1]))
         y_pred = self.predict(X)
         return np.mean(np.all(y == y_pred, axis=1))
+
+    def _more_tags(self):
+        # FIXME
+        return {'_skip_test': True}
 
 
 class _BaseChain(BaseEstimator, metaclass=ABCMeta):
@@ -400,7 +442,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             if self.order_ == 'random':
                 self.order_ = random_state.permutation(Y.shape[1])
         elif sorted(self.order_) != list(range(Y.shape[1])):
-                raise ValueError("invalid order")
+            raise ValueError("invalid order")
 
         self.estimators_ = [clone(self.base_estimator)
                             for _ in range(Y.shape[1])]
@@ -452,6 +494,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             The predicted values.
 
         """
+        check_is_fitted(self)
         X = check_array(X, accept_sparse=True)
         Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
         for chain_idx, estimator in enumerate(self.estimators_):
@@ -561,10 +604,10 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
         -------
         self : object
         """
-        super(ClassifierChain, self).fit(X, Y)
-        self.classes_ = []
-        for chain_idx, estimator in enumerate(self.estimators_):
-            self.classes_.append(estimator.classes_)
+        super().fit(X, Y)
+        self.classes_ = [estimator.classes_
+                         for chain_idx, estimator
+                         in enumerate(self.estimators_)]
         return self
 
     @if_delegate_has_method('base_estimator')
@@ -626,6 +669,10 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
         Y_decision = Y_decision_chain[:, inv_order]
 
         return Y_decision
+
+    def _more_tags(self):
+        return {'_skip_test': True,
+                'multioutput_only': True}
 
 
 class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
@@ -707,5 +754,8 @@ class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
         -------
         self : object
         """
-        super(RegressorChain, self).fit(X, Y)
+        super().fit(X, Y)
         return self
+
+    def _more_tags(self):
+        return {'multioutput_only': True}
