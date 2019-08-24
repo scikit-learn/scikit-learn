@@ -395,6 +395,13 @@ def test_sublinear_tf():
     assert tfidf[1] < 2
     assert tfidf[2] < 3
 
+def test_standard_idf():
+    X = [[1, 1, 1],
+         [1, 1, 0],
+         [1, 0, 0]]
+    tr = TfidfTransformer(standard_idf=True)
+    tfidf = tr.fit_transform(X).toarray()
+    assert np.allclose(np.array([0, 0, 0]), tfidf[:, 0])
 
 def test_vectorizer():
     # raw documents as an iterator
