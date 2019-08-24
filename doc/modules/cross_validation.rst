@@ -238,10 +238,10 @@ Here is an example of ``cross_validate`` using a single metric::
 Cross-validation significance evaluation
 ----------------------------------------
 
-Significance of cross validation scores can be evaluated using
+Significance of cross validation scores can be evaluated using the 
 :func:`permutation_test_score` function. The function returns a p-value, which
 approximates the probability that the average cross-validation score would be
-obtained at by chance.
+obtained by chance if the target is independent of the data.
 
 
 It also returns cross_validation scores for each permutation of y labels. It
