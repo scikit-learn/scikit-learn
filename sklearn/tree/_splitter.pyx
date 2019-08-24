@@ -142,6 +142,7 @@ cdef class Splitter:
             The weights of the samples, where higher weighted samples are fit
             closer than lower weight samples. If not provided, all samples
             are assumed to have uniform weight.
+
         X_idx_sorted: numpy.ndarray (optional)
             The indexes of the sorted training input samples
         """
