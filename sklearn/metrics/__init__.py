@@ -33,6 +33,7 @@ from .classification import precision_score
 from .classification import recall_score
 from .classification import zero_one_loss
 from .classification import brier_score_loss
+from .classification import neg_brier_score_loss
 from .classification import multilabel_confusion_matrix
 
 from . import cluster
@@ -148,4 +149,5 @@ __all__ = [
     'v_measure_score',
     'zero_one_loss',
     'brier_score_loss',
+    'neg_brier_score_loss'
 ]
