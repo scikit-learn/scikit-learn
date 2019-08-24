@@ -1511,7 +1511,8 @@ class ExtraTreesClassifier(ForestClassifier):
         The number of outputs when ``fit`` is performed.
 
     oob_score_ : float
-        Score of the training dataset obtained using an out-of-bag estimate. Exists only if oob_score = True.
+        Score of the training dataset obtained using an out-of-bag estimate. 
+        Exists only if oob_score = True.
 
     oob_decision_function_ : array of shape = [n_samples, n_classes]
         Decision function computed with out-of-bag estimate on the training
