@@ -530,10 +530,14 @@ def test_check_estimators_voting_estimator(estimator):
     check_estimator(estimator)
     check_no_attributes_set_in_init(estimator.__class__.__name__, estimator)
 
+
 @pytest.mark.parametrize('pattern',
-            [r'\[Voting\].*\(classifier 1 of 3\) Processing lr, total=.*\n'
-            r'\[Voting\].*\(classifier 2 of 3\) Processing rf, total=.*\n'
-            r'\[Voting\].*\(classifier 3 of 3\) Processing gnb, total=.*\n$'])
+                         [r'\[Voting\].*\(classifier 1 of 3\)'
+                          ' Processing lr, total=.*\n'
+                          r'\[Voting\].*\(classifier 2 of 3\)'
+                          ' Processing rf, total=.*\n'
+                          r'\[Voting\].*\(classifier 3 of 3\)'
+                          ' Processing gnb, total=.*\n$'])
 def test_voting_verbose(pattern, capsys):
     clf1 = LogisticRegression(random_state=123)
     clf2 = RandomForestClassifier(random_state=123)
