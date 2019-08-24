@@ -2408,7 +2408,7 @@ def neg_brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     Returns
     -------
     score : float
-        Brier score
+        Negative Brier score
 
     Examples
     --------
