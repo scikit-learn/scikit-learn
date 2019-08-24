@@ -187,6 +187,41 @@ Contributing code
 
 How to contribute
 -----------------
+Before you start contributing, you need to setup your development environment. This can be either a virtual environment with Conda or your own primary development environment.
+
+Using a Virtual Environment with Conda
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Using a virtual environment allows you to seperate your working directory and its packages from your primary development environment. This way, the unstable scikit-learn library in development mode does not temper with your system's scikit-learn's performance.
+
+1. `Download the Anaconda Distribution <https://www.anaconda.com/distribution/>`__ for your OS. Make sure you download Python 3.6+ version since scikit-learn only supports the newer versions of Python 3.
+2. Open the Anaconda Command Prompt
+3. Create a virtual environment for scikit-learn development::
+
+       $ conda create -n sklearndev numpy scipy matplotlib pytest sphinx cython ipykernel sphinx-gallery
+
+   Here, you can replace the sklearndev with any name you like. If conda doesn't find any library mentioned above, remove it from the command and proceed to the next steps and install it using pip.
+
+4. Activate the virtual environment::
+
+       $ conda activate sklearndev
+
+5. Install any additional packages using pip::
+
+       $ pip install package-name
+
+Using your primary development environment
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+1. Just install the packages needed for testing::
+
+       $ pip install cython pytest flake8
+
+.. note::
+  If you decide to use your primary development environment, then do remember that when we will be installing scikit-learn in editable mode later on, it will replace your current version of stable scikit-learn and might add inconsistencies to your other projects that depend upon scikit-learn.
+
+Setting your Repository
+^^^^^^^^^^^^^^^^^^^^^^^
 
 The preferred way to contribute to scikit-learn is to fork the `main
 repository <https://github.com/scikit-learn/scikit-learn/>`__ on GitHub,
@@ -207,24 +242,24 @@ then submit a "pull request" (PR):
        $ git clone git@github.com:YourLogin/scikit-learn.git
        $ cd scikit-learn
 
-4. Install the development dependencies::
+4. If you are using a virtual environment, then activate your environment first and then only install your dependencies through it. Install the development dependencies::
 
        $ pip install cython pytest flake8
 
-5. Install scikit-learn in editable mode::
+6. Install scikit-learn in editable mode::
 
        $ pip install --editable .
 
    for more details about advanced installation, see the
-   :ref:`install_bleeding_edge` section.
+   :ref:`install_bleeding_edge` section. Make sure to run the install inside your virtual environment if you are using one. 
 
-6. Add the ``upstream`` remote. This saves a reference to the main
+7. Add the ``upstream`` remote. This saves a reference to the main
    scikit-learn repository, which you can use to keep your repository
    synchronized with the latest changes::
 
     $ git remote add upstream https://github.com/scikit-learn/scikit-learn.git
 
-7. Fetch the ``upstream`` and then create a branch to hold your development
+8. Fetch the ``upstream`` and then create a branch to hold your development
    changes::
 
        $ git fetch upstream
@@ -233,7 +268,7 @@ then submit a "pull request" (PR):
    and start making changes. Always use a ``feature`` branch. It's good
    practice to never work on the ``master`` branch!
 
-8. Develop the feature on your feature branch on your computer, using Git to do the
+9. Develop the feature on your feature branch on your computer, using Git to do the
    version control. When you're done editing, add changed files using ``git add``
    and then ``git commit`` files::
 
@@ -244,9 +279,7 @@ then submit a "pull request" (PR):
 
        $ git push -u origin my-feature
 
-9. Follow `these
-   <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
-   instructions to create a pull request from your fork. This will send an
+10. Follow `these <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_ instructions to create a pull request from your fork. This will send an
    email to the committers. You may want to consider sending an email to the
    mailing list for more visibility.
 
