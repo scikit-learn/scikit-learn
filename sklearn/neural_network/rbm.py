@@ -74,8 +74,9 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         visible units and n_components is the number of hidden units.
 
     h_samples_ : array-like, shape (batch_size, n_components)
-        Model matrix, where batch_size in the number of examples per minibatch
-        and n_components is the number of hidden units.
+        Hidden Activation sampled from the model distribution,
+        where batch_size in the number of examples per minibatch and
+        n_components is the number of hidden units.
 
     Examples
     --------
