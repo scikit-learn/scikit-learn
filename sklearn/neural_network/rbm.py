@@ -73,6 +73,10 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         Weight matrix, where n_features in the number of
         visible units and n_components is the number of hidden units.
 
+    h_samples : array-like, shape (batch_size, n_components)
+        Weight matrix, where batch_size in the number of examples per minibatch
+        and n_components is the number of hidden units.
+
     Examples
     --------
 
