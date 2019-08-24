@@ -977,7 +977,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         default 0.5 will be taken.
 
     C : float, optional (default=1.0)
-         Penalty parameter C of the error term.
+        Penalty parameter C of the error term.
 
     kernel : string, optional (default='rbf')
          Specifies the kernel type to be used in the algorithm.
