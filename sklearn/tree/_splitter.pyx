@@ -82,6 +82,10 @@ cdef class Splitter:
 
         random_state : object
             The user inputted random state to be used for pseudo-randomness
+
+         presort : bint
+            Indicate whether to presort the data to speed up the finding of best
+            splits in fitting. Default to be 0 (False)
         """
 
         self.criterion = criterion
@@ -131,13 +135,15 @@ cdef class Splitter:
         X : object
             This contains the inputs. Usually it is a 2d numpy array.
 
-        y : numpy.ndarray, dtype=DOUBLE_t
+        y : array-like, dtype=DOUBLE_t
             This is the vector of targets, or true labels, for the samples
 
-        sample_weight : numpy.ndarray, dtype=DOUBLE_t (optional)
+        sample_weight : array-like, dtype=DOUBLE_t
             The weights of the samples, where higher weighted samples are fit
             closer than lower weight samples. If not provided, all samples
             are assumed to have uniform weight.
+        X_idx_sorted: numpy.ndarray (optional)
+            The indexes of the sorted training input samples
         """
 
         self.rand_r_state = self.random_state.randint(0, RAND_R_MAX)
