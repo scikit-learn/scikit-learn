@@ -658,7 +658,7 @@ class StratifiedKFold(_BaseKFold):
         # Determine the optimal number of samples from each class in each fold,
         # using round robin over the sorted y. (This can be done direct from
         # counts, but that code is unreadable.)
-        y_order = np.sort(y_encoded, kind='mergesort')
+        y_order = np.sort(y_encoded)
         allocation = np.asarray(
             [np.bincount(y_order[i::self.n_splits], minlength=n_classes)
              for i in range(self.n_splits)])
