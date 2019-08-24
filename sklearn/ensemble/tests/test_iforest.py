@@ -332,25 +332,27 @@ def test_iforest_with_uniform_data():
     iforest = IsolationForest()
     iforest.fit(X)
 
+    rng = np.random.RandomState(0)
+
     assert all(iforest.predict(X) == 1)
-    assert all(iforest.predict(np.random.randn(100, 10)) == 1)
+    assert all(iforest.predict(rng.randn(100, 10)) == 1)
     assert all(iforest.predict(X + 1) == 1)
     assert all(iforest.predict(X - 1) == 1)
 
     # 2-d array where columns contain the same value across rows
-    X = np.repeat(np.random.randn(1, 10), 100, 0)
+    X = np.repeat(rng.randn(1, 10), 100, 0)
     iforest = IsolationForest()
     iforest.fit(X)
 
     assert all(iforest.predict(X) == 1)
-    assert all(iforest.predict(np.random.randn(100, 10)) == 1)
+    assert all(iforest.predict(rng.randn(100, 10)) == 1)
     assert all(iforest.predict(np.ones((100, 10))) == 1)
 
     # Single row
-    X = np.random.randn(1, 10)
+    X = rng.randn(1, 10)
     iforest = IsolationForest()
     iforest.fit(X)
 
     assert all(iforest.predict(X) == 1)
-    assert all(iforest.predict(np.random.randn(100, 10)) == 1)
+    assert all(iforest.predict(rng.randn(100, 10)) == 1)
     assert all(iforest.predict(np.ones((100, 10))) == 1)
