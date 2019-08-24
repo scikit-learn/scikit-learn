@@ -470,6 +470,9 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     classes_ : numpy array of shape [n_classes]
         Array containing labels.
 
+    n_classes_ : int
+        Number of classes 
+
     pairwise_indices_ : list, length = ``len(estimators_)``, or ``None``
         Indices of samples used when training the estimators.
         ``None`` when ``estimator`` does not have ``_pairwise`` attribute.
