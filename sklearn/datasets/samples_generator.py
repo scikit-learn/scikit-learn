@@ -90,7 +90,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     n_clusters_per_class : int, optional (default=2)
         The number of clusters per class.
 
-    weights : list of floats or None (default=None)
+    weights : sequence of floats or None (default=None)
         The proportions of samples assigned to each class. If None, then
         classes are balanced. Note that if ``len(weights) == n_classes - 1``,
         then the last class weight is automatically inferred.
@@ -161,14 +161,14 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     if n_informative < np.log2(n_classes * n_clusters_per_class):
         raise ValueError("n_classes * n_clusters_per_class must"
                          " be smaller or equal 2 ** n_informative")
-    if weights and len(weights) not in [n_classes, n_classes - 1]:
+    if all(weights) and len(weights) not in [n_classes, n_classes - 1]:
         raise ValueError("Weights specified but incompatible with number "
                          "of classes.")
 
     n_useless = n_features - n_informative - n_redundant - n_repeated
     n_clusters = n_classes * n_clusters_per_class
 
-    if weights and len(weights) == (n_classes - 1):
+    if all(weights) and len(weights) == (n_classes - 1):
         weights = weights + [1.0 - sum(weights)]
 
     if weights is None:
