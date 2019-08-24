@@ -44,7 +44,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         Tolerance for stopping criteria.
 
     C : float, optional (default=1.0)
-        Penalty parameter C of the error term.
+        Penalty parameter C of the error term. The bigger this parameter, the less regularization is used.
 
     multi_class : string, 'ovr' or 'crammer_singer' (default='ovr')
         Determines the multi-class strategy if `y` contains more than
@@ -454,7 +454,7 @@ class SVC(BaseSVC):
     Parameters
     ----------
     C : float, optional (default=1.0)
-        Penalty parameter C of the error term.
+        Penalty parameter C of the error term. The bigger this parameter, the less regularization is used.
 
     kernel : string, optional (default='rbf')
         Specifies the kernel type to be used in the algorithm.
@@ -970,7 +970,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         default 0.5 will be taken.
 
     C : float, optional (default=1.0)
-        Penalty parameter C of the error term.
+        Penalty parameter C of the error term. The bigger this parameter, the less regularization is used.
 
     kernel : string, optional (default='rbf')
          Specifies the kernel type to be used in the algorithm.
