@@ -143,7 +143,7 @@ cdef class Splitter:
             closer than lower weight samples. If not provided, all samples
             are assumed to have uniform weight.
 
-        X_idx_sorted: ndarray (optional)
+        X_idx_sorted : ndarray, default=None
             The indexes of the sorted training input samples
         """
 
