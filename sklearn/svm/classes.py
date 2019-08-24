@@ -906,6 +906,12 @@ class SVR(BaseLibSVM, RegressorMixin):
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`.
 
+    fit_status_ : int
+        0 if correctly fitted, 1 otherwise (will raise warning)
+    
+    shape_fit_ : tuple, shape = [n_dimensions_of_X]
+        Array dimensions of training vector ``X``.
+
     intercept_ : array, shape = [1]
         Constants in decision function.
 
@@ -949,6 +955,15 @@ class SVR(BaseLibSVM, RegressorMixin):
             coef0=coef0, tol=tol, C=C, nu=0., epsilon=epsilon, verbose=verbose,
             shrinking=shrinking, probability=False, cache_size=cache_size,
             class_weight=None, max_iter=max_iter, random_state=None)
+
+    @deprecated("The ``probA_`` attribute will be deprecated ")
+    @property
+    def probA_(self):
+        return self.probA_
+
+    @probA_.setter
+    def probA_(self, val):
+        self.probA_ = val
 
 
 class NuSVR(BaseLibSVM, RegressorMixin):
