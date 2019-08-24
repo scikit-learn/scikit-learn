@@ -1325,17 +1325,6 @@ class ExtraTreesClassifier(ForestClassifier):
 
     Parameters
     ----------
-    base_estimator_ : ExtraTreeClassifier
-        The child estimator template used to create the collection of fitted sub-estimators.
-
-    oob_score_ : float
-        Score of the training dataset obtained using an out-of-bag estimate.
-
-    oob_decision_function_ : array of shape = [n_samples, n_classes]
-        Decision function computed with out-of-bag estimate on the training set. If n_estimators is small it 
-        might be possible that a data point was never left out during the bootstrap. In this case, 
-        oob_decision_function_ might contain NaN.
-
     n_estimators : integer, optional (default=10)
         The number of trees in the forest.
 
@@ -1522,13 +1511,14 @@ class ExtraTreesClassifier(ForestClassifier):
         The number of outputs when ``fit`` is performed.
 
     oob_score_ : float
-        Score of the training dataset obtained using an out-of-bag estimate.
+        Score of the training dataset obtained using an out-of-bag estimate. Exists only if oob_score = True.
 
     oob_decision_function_ : array of shape = [n_samples, n_classes]
         Decision function computed with out-of-bag estimate on the training
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
         `oob_decision_function_` might contain NaN.
+        Exists only if oob_score = True.
 
     Notes
     -----
