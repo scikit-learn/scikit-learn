@@ -27,19 +27,6 @@ SVM and also the approximate kernel SVM could be greatly accelerated by using
 stochastic gradient descent via :class:`sklearn.linear_model.SGDClassifier`.
 This is not easily possible for the case of the kernelized SVM.
 
-The second plot visualized the decision surfaces of the RBF kernel SVM and
-the linear SVM with approximate kernel maps.
-The plot shows decision surfaces of the classifiers projected onto
-the first two principal components of the data. This visualization should
-be taken with a grain of salt since it is just an interesting slice through
-the decision surface in 64 dimensions. In particular note that
-a datapoint (represented as a dot) does not necessarily be classified
-into the region it is lying in, since it will not lie on the plane
-that the first two principal components span.
-
-The usage of :class:`RBFSampler` and :class:`Nystroem` is described in detail
-in :ref:`kernel_approximation`.
-
 """
 print(__doc__)
 
@@ -126,10 +113,10 @@ for D in sample_sizes:
     fourier_scores.append(fourier_score)
 
 # plot the results:
-plt.figure(figsize=(8, 8))
-accuracy = plt.subplot(211)
-# second y axis for timeings
-timescale = plt.subplot(212)
+plt.figure(figsize=(16, 4))
+accuracy = plt.subplot(121)
+# second y axis for timings
+timescale = plt.subplot(122)
 
 accuracy.plot(sample_sizes, nystroem_scores, label="Nystroem approx. kernel")
 timescale.plot(sample_sizes, nystroem_times, '--',
@@ -164,6 +151,22 @@ accuracy.set_ylabel("Classification accuracy")
 timescale.set_ylabel("Training time in seconds")
 accuracy.legend(loc='best')
 timescale.legend(loc='best')
+plt.tight_layout()
+plt.show()
+
+
+############################################################################
+#The second plot visualized the decision surfaces of the RBF kernel SVM and
+#the linear SVM with approximate kernel maps.
+#The plot shows decision surfaces of the classifiers projected onto
+#the first two principal components of the data. This visualization should
+#be taken with a grain of salt since it is just an interesting slice through
+#the decision surface in 64 dimensions. In particular note that
+#a datapoint (represented as a dot) does not necessarily be classified
+#into the region it is lying in, since it will not lie on the plane
+#that the first two principal components span.
+#The usage of :class:`RBFSampler` and :class:`Nystroem` is described in detail
+#in :ref:`kernel_approximation`.
 
 # visualize the decision surface, projected down to the first
 # two principal components of the dataset
@@ -188,9 +191,8 @@ titles = ['SVC with rbf kernel',
           'SVC (linear kernel)\n with Nystroem rbf feature map\n'
           'n_components=100']
 
-plt.tight_layout()
-plt.figure(figsize=(12, 5))
-
+plt.figure(figsize=(18, 7.5))
+plt.rcParams.update({'font.size': 14})
 # predict and plot
 for i, clf in enumerate((kernel_svm, nystroem_approx_svm,
                          fourier_approx_svm)):
