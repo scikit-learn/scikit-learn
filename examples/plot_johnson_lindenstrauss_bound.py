@@ -146,9 +146,9 @@ plt.xlabel("Distortion eps")
 plt.ylabel("Minimum number of dimensions")
 plt.title("Johnson-Lindenstrauss bounds:\nn_components vs eps")
 
-# Part 2: perform sparse random projection of some documents of the 20 newsgroups 
-# dataset which is both high dimensional and sparse or some digits images which are
-# quite low dimensional and dense
+# Part 2: perform sparse random projection of some documents of the 20
+# newsgroups dataset which is both high dimensional and sparse or some
+# digits images which are quite low dimensional and dense
 
 if '---use-digits-dataset' in sys.argv:
     data = load_digits().data[:500]
