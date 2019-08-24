@@ -172,12 +172,12 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
         Class labels.
 
     n_classes_ : int
-        Number of classes 
+        Number of classes.
 
     label_binarizer_ : LabelBinarizer object
         Object used to transform multiclass labels to binary labels and
         vice-versa.
-    
+
     multilabel_ : boolean
         Whether a OneVsRestClassifier is a multilabel classifier.
 
