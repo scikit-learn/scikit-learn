@@ -1162,13 +1162,16 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
         The offset is the opposite of `intercept_` and is provided for
         consistency with other outlier detection algorithms.
 
+    fit_status_ : int
+        0 if correctly fitted, 1 otherwise (will raise warning)
+
     Examples
     --------
     >>> from sklearn.svm import OneClassSVM
     >>> X = [[0], [0.44], [0.45], [0.46], [1]]
     >>> clf = OneClassSVM(gamma='auto').fit(X)
     >>> clf.predict(X)
-    array([-1,  1,  1,  1, -1])
+    array([-1,  1,  1,  1, -1], dtype=int64)
     >>> clf.score_samples(X)  # doctest: +ELLIPSIS
     array([1.7798..., 2.0547..., 2.0556..., 2.0561..., 1.7332...])
     """
