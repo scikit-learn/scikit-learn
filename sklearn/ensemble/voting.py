@@ -41,8 +41,8 @@ def _parallel_fit_estimator(estimator, X, y, sample_weight=None,
             except TypeError as exc:
                 if "unexpected keyword argument 'sample_weight'" in str(exc):
                     raise ValueError(
-                        "Underlying estimator {} does not support sample weights."
-                        .format(estimator.__class__.__name__)
+                     "Underlying estimator {} does not support sample weights."
+                     .format(estimator.__class__.__name__)
                     ) from exc
                 raise
         else:
@@ -105,8 +105,8 @@ class _BaseVoting(_BaseComposition, TransformerMixin):
                 delayed(_parallel_fit_estimator)(clone(clf), X, y,
                                                  sample_weight=sample_weight,
                                                  message_clsname='Voting',
-                                                 message=self._log_message(names[idx],
-                                                 idx,len(clfs)))
+                                                 message=self._log_message(
+                                                 names[idx], idx, len(clfs)))
                 for idx, clf in enumerate(clfs) if clf not in (None, 'drop')
             )
 
