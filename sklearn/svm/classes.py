@@ -5,7 +5,7 @@ from .base import _fit_liblinear, BaseSVC, BaseLibSVM
 from ..base import BaseEstimator, RegressorMixin, OutlierMixin
 from ..linear_model.base import LinearClassifierMixin, SparseCoefMixin, \
     LinearModel
-from ..utils import check_X_y
+from ..utils import check_X_y, deprecated
 from ..utils.validation import _num_samples
 from ..utils.multiclass import check_classification_targets
 
@@ -1214,6 +1214,24 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
                     sample_weight=sample_weight, **params)
         self.offset_ = -self._intercept_
         return self
+
+    @deprecated("attribute not applicable for OneClassSVM")
+    @property
+    def probA_(self):
+        return self._probA_
+
+    @probA_.setter
+    def probA_(self, value):
+        self._probA_ = value
+
+    @deprecated("attribute not applicable for OneClassSVM")
+    @property
+    def probB_(self):
+        return self._probB_
+
+    @probB_.setter
+    def probB_(self, value):
+        self._probB_ = value
 
     def decision_function(self, X):
         """Signed distance to the separating hyperplane.
