@@ -115,6 +115,10 @@ class Perceptron(BaseSGDClassifier):
         Number of weight updates performed during training.
         Same as ``(n_iter_ * n_samples)``.
 
+    loss_function_ : concrete ``LossFunction`` 
+        Loss function used by Perceptron. It is Hinge loss for binary 
+        classification with y in {-1,1} with threshold=0.0.
+
     Notes
     -----
 
