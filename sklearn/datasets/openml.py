@@ -1,6 +1,8 @@
 import gzip
 import json
 import os
+from io import BytesIO
+import hashlib
 import shutil
 from os.path import join
 from warnings import warn
@@ -61,7 +63,7 @@ def _retry_with_clean_cache(openml_path, data_home):
     return decorator
 
 
-def _open_openml_url(openml_path, data_home):
+def _open_openml_url(openml_path, data_home, expected_md5_checksum=None):
     """
     Returns a resource from OpenML.org. Caches it to data_home if required.
 
@@ -86,10 +88,29 @@ def _open_openml_url(openml_path, data_home):
     req = Request(_OPENML_PREFIX + openml_path)
     req.add_header('Accept-encoding', 'gzip')
 
+    def _md5_validated_stream(input_stream, md5_checksum):
+        """
+        Consume binary stream to validate checksum,
+        return a new stream with same content
+        :param input_stream: Stream to read bytes from
+        :param md5_checksum: Expected md5 checksum
+        :return: Stream with the original content for consumption
+        """
+        with closing(input_stream):
+            bytes_content = input_stream.read()
+            actual_md5_checksum = hashlib.md5(bytes_content).hexdigest()
+            if md5_checksum != actual_md5_checksum:
+                raise ValueError(f"md5checksum {actual_md5_checksum} \
+                does not match {md5_checksum}")
+            return BytesIO(bytes_content)
+
     if data_home is None:
         fsrc = urlopen(req)
         if is_gzip(fsrc):
-            return gzip.GzipFile(fileobj=fsrc, mode='rb')
+            fsrc = gzip.GzipFile(fileobj=fsrc, mode='rb')
+        if expected_md5_checksum:
+            # validating checksum reads and consumes the stream
+            return _md5_validated_stream(fsrc, expected_md5_checksum)
         return fsrc
 
     local_path = _get_local_path(openml_path, data_home)
@@ -102,6 +123,10 @@ def _open_openml_url(openml_path, data_home):
 
         try:
             with closing(urlopen(req)) as fsrc:
+                if expected_md5_checksum:
+                    if is_gzip(fsrc):
+                        fsrc = gzip.GzipFile(fileobj=fsrc, mode='rb')
+                    fsrc = _md5_validated_stream(fsrc, expected_md5_checksum)
                 if is_gzip(fsrc):
                     with open(local_path, 'wb') as fdst:
                         shutil.copyfileobj(fsrc, fdst)
@@ -448,7 +473,8 @@ def _get_num_samples(data_qualities):
     return int(float(qualities.get('NumberOfInstances', default_n_samples)))
 
 
-def _download_data_arff(file_id, sparse, data_home, encode_nominal=True):
+def _download_data_arff(file_id, sparse, data_home, encode_nominal=True,
+                        expected_md5_checksum=None):
     # Accesses an ARFF file on the OpenML server. Documentation:
     # https://www.openml.org/api_data_docs#!/data/get_download_id
     # encode_nominal argument is to ensure unit testing, do not alter in
@@ -457,7 +483,8 @@ def _download_data_arff(file_id, sparse, data_home, encode_nominal=True):
 
     @_retry_with_clean_cache(url, data_home)
     def _arff_load():
-        with closing(_open_openml_url(url, data_home)) as response:
+        with closing(_open_openml_url(url, data_home, expected_md5_checksum)) \
+                as response:
             if sparse is True:
                 return_type = _arff.COO
             else:
@@ -515,7 +542,7 @@ def _valid_data_column_names(features_list, target_columns):
 
 def fetch_openml(name=None, version='active', data_id=None, data_home=None,
                  target_column='default-target', cache=True, return_X_y=False,
-                 as_frame=False):
+                 as_frame=False, verify_checksum=True):
     """Fetch dataset from openml by name or dataset id.
 
     Datasets are uniquely identified by either an integer ID or by a
@@ -575,6 +602,11 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         The Bunch will contain a ``frame`` attribute with the target and the
         data. If ``return_X_y`` is True, then ``(data, target)`` will be pandas
         DataFrames or Series as describe above.
+
+    verify_checksum : boolean, default=True
+        If True, verifies md5_checksum of file provided in /download/{id}
+        If cache=True, verification only happens during data download
+        from network.
 
     Returns
     -------
@@ -727,8 +759,11 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         shape = None
 
     # obtain the data
-    arff = _download_data_arff(data_description['file_id'], return_sparse,
-                               data_home, encode_nominal=not as_frame)
+    arff = _download_data_arff(data_description['file_id'],
+                               return_sparse,
+                               data_home,
+                               encode_nominal=not as_frame,
+                               expected_md5_checksum=data_description["md5_checksum"] if verify_checksum else None)  # noqa: E501
 
     description = "{}\n\nDownloaded from openml.org.".format(
         data_description.pop('description'))

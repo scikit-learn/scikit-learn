@@ -8,6 +8,7 @@ import re
 import scipy.sparse
 import sklearn
 import pytest
+import shutil
 
 from sklearn import config_context
 from sklearn.datasets import fetch_openml
@@ -48,7 +49,8 @@ def _test_features_list(data_id):
             # non-nominal attribute
             return data_bunch.data[:, col_idx]
 
-    data_bunch = fetch_openml(data_id=data_id, cache=False, target_column=None)
+    data_bunch = fetch_openml(data_id=data_id, cache=False, target_column=None,
+                              verify_checksum=False)
 
     # also obtain decoded arff
     data_description = _get_data_description_by_id(data_id, None)
@@ -79,18 +81,19 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
     # result. Note that this function can be mocked (by invoking
     # _monkey_patch_webbased_functions before invoking this function)
     data_by_name_id = fetch_openml(name=data_name, version=data_version,
-                                   cache=False)
+                                   cache=False, verify_checksum=False)
     assert int(data_by_name_id.details['id']) == data_id
 
     # Please note that cache=False is crucial, as the monkey patched files are
     # not consistent with reality
-    fetch_openml(name=data_name, cache=False)
+    fetch_openml(name=data_name, cache=False, verify_checksum=False)
     # without specifying the version, there is no guarantee that the data id
     # will be the same
 
     # fetch with dataset id
     data_by_id = fetch_openml(data_id=data_id, cache=False,
-                              target_column=target_column)
+                              target_column=target_column,
+                              verify_checksum=False)
     assert data_by_id.details['name'] == data_name
     assert data_by_id.data.shape == (expected_observations, expected_features)
     if isinstance(target_column, str):
@@ -115,7 +118,8 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
 
     if compare_default_target:
         # check whether the data by id and data by id target are equal
-        data_by_id_default = fetch_openml(data_id=data_id, cache=False)
+        data_by_id_default = fetch_openml(data_id=data_id, cache=False,
+                                          verify_checksum=False)
         if data_by_id.data.dtype == np.float64:
             np.testing.assert_allclose(data_by_id.data,
                                        data_by_id_default.data)
@@ -137,7 +141,7 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
 
     # test return_X_y option
     fetch_func = partial(fetch_openml, data_id=data_id, cache=False,
-                         target_column=target_column)
+                         target_column=target_column, verify_checksum=False)
     check_return_X_y(data_by_id, fetch_func)
     return data_by_id
 
@@ -399,7 +403,8 @@ def test_fetch_openml_anneal_pandas(monkeypatch):
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
 
     bunch = fetch_openml(data_id=data_id, as_frame=True,
-                         target_column=target_column, cache=False)
+                         target_column=target_column, cache=False,
+                         verify_checksum=False)
     data = bunch.data
     target = bunch.target
     frame = bunch.frame
@@ -482,7 +487,8 @@ def test_convert_arff_data_dataframe_warning_low_memory_pandas(monkeypatch):
     msg = 'Could not adhere to working_memory config.'
     with pytest.warns(UserWarning, match=msg):
         with config_context(working_memory=1e-6):
-            fetch_openml(data_id=data_id, as_frame=True, cache=False)
+            fetch_openml(data_id=data_id, as_frame=True, cache=False,
+                         verify_checksum=False)
 
 
 def test_fetch_openml_adultcensus_pandas_return_X_y(monkeypatch):
@@ -499,7 +505,7 @@ def test_fetch_openml_adultcensus_pandas_return_X_y(monkeypatch):
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
     X, y = fetch_openml(data_id=data_id, as_frame=True, cache=False,
-                        return_X_y=True)
+                        return_X_y=True, verify_checksum=False)
     assert isinstance(X, pd.DataFrame)
     assert X.shape == data_shape
     n_categories = len([dtype for dtype in X.dtypes
@@ -528,7 +534,8 @@ def test_fetch_openml_adultcensus_pandas(monkeypatch):
     target_column = 'class'
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
-    bunch = fetch_openml(data_id=data_id, as_frame=True, cache=False)
+    bunch = fetch_openml(data_id=data_id, as_frame=True, cache=False,
+                         verify_checksum=False)
     data = bunch.data
     target = bunch.target
     frame = bunch.frame
@@ -566,7 +573,8 @@ def test_fetch_openml_miceprotein_pandas(monkeypatch):
     frame_n_floats = 77
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
-    bunch = fetch_openml(data_id=data_id, as_frame=True, cache=False)
+    bunch = fetch_openml(data_id=data_id, as_frame=True, cache=False,
+                         verify_checksum=False)
     data = bunch.data
     target = bunch.target
     frame = bunch.frame
@@ -606,7 +614,7 @@ def test_fetch_openml_emotions_pandas(monkeypatch):
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
     bunch = fetch_openml(data_id=data_id, as_frame=True, cache=False,
-                         target_column=target_column)
+                         target_column=target_column, verify_checksum=False)
     data = bunch.data
     target = bunch.target
     frame = bunch.frame
@@ -997,7 +1005,8 @@ def test_fetch_openml_cache(monkeypatch, gzip_response, tmpdir):
         monkeypatch, data_id, gzip_response)
     X_fetched, y_fetched = fetch_openml(data_id=data_id, cache=True,
                                         data_home=cache_directory,
-                                        return_X_y=True)
+                                        return_X_y=True,
+                                        verify_checksum=False)
 
     monkeypatch.setattr(sklearn.datasets.openml, 'urlopen',
                         _mock_urlopen_raise)
@@ -1030,12 +1039,13 @@ def test_fetch_openml_inactive(monkeypatch, gzip_response):
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     glas2 = assert_warns_message(
         UserWarning, "Version 1 of dataset glass2 is inactive,", fetch_openml,
-        data_id=data_id, cache=False)
+        data_id=data_id, cache=False, verify_checksum=False)
     # fetch inactive dataset by name and version
     assert glas2.data.shape == (163, 9)
     glas2_by_version = assert_warns_message(
         UserWarning, "Version 1 of dataset glass2 is inactive,", fetch_openml,
-        data_id=None, name="glass2", version=1, cache=False)
+        data_id=None, name="glass2", version=1, cache=False,
+        verify_checksum=False)
     assert int(glas2_by_version.details['id']) == data_id
 
 
@@ -1046,7 +1056,8 @@ def test_fetch_nonexiting(monkeypatch, gzip_response):
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     # Note that we only want to search by name (not data id)
     assert_raise_message(ValueError, "No active dataset glass2 found",
-                         fetch_openml, name='glass2', cache=False)
+                         fetch_openml, name='glass2', cache=False,
+                         verify_checksum=False)
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
@@ -1058,7 +1069,8 @@ def test_raises_illegal_multitarget(monkeypatch, gzip_response):
     assert_raise_message(ValueError,
                          "Can only handle homogeneous multi-target datasets,",
                          fetch_openml, data_id=data_id,
-                         target_column=targets, cache=False)
+                         target_column=targets, cache=False,
+                         verify_checksum=False)
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
@@ -1071,20 +1083,20 @@ def test_warn_ignore_attribute(monkeypatch, gzip_response):
     assert_warns_message(UserWarning, expected_row_id_msg.format('MouseID'),
                          fetch_openml, data_id=data_id,
                          target_column='MouseID',
-                         cache=False)
+                         cache=False, verify_checksum=False)
     assert_warns_message(UserWarning, expected_ignore_msg.format('Genotype'),
                          fetch_openml, data_id=data_id,
                          target_column='Genotype',
-                         cache=False)
+                         cache=False, verify_checksum=False)
     # multi column test
     assert_warns_message(UserWarning, expected_row_id_msg.format('MouseID'),
                          fetch_openml, data_id=data_id,
                          target_column=['MouseID', 'class'],
-                         cache=False)
+                         cache=False, verify_checksum=False)
     assert_warns_message(UserWarning, expected_ignore_msg.format('Genotype'),
                          fetch_openml, data_id=data_id,
                          target_column=['Genotype', 'class'],
-                         cache=False)
+                         cache=False, verify_checksum=False)
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
@@ -1095,7 +1107,8 @@ def test_string_attribute_without_dataframe(monkeypatch, gzip_response):
     assert_raise_message(ValueError,
                          ('STRING attributes are not supported for '
                           'array representation. Try as_frame=True'),
-                         fetch_openml, data_id=data_id, cache=False)
+                         fetch_openml, data_id=data_id, cache=False,
+                         verify_checksum=False)
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
@@ -1106,7 +1119,7 @@ def test_dataset_with_openml_error(monkeypatch, gzip_response):
         UserWarning,
         "OpenML registered a problem with the dataset. It might be unusable. "
         "Error:",
-        fetch_openml, data_id=data_id, cache=False
+        fetch_openml, data_id=data_id, cache=False, verify_checksum=False
     )
 
 
@@ -1173,3 +1186,37 @@ def test_fetch_openml_with_ignored_feature(monkeypatch, gzip_response):
     # so we assert that we don't have the ignored feature in the final Bunch
     assert dataset['data'].shape == (101, 16)
     assert 'animal' not in dataset['feature_names']
+
+
+def test_fetch_openml_verify_checksum(monkeypatch):
+    data_id = 2
+    _monkey_patch_webbased_functions(monkeypatch, data_id, True)
+
+    # modify a mocked file content to change checksum
+    dataset_dir = os.path.join(currdir, 'data', 'openml', str(data_id))
+    original_data_path = os.path.join(dataset_dir,
+                                      'data-v1-download-1666876.arff.gz')
+    backup_data_path = original_data_path + ".back"
+    shutil.copy(original_data_path, backup_data_path)
+
+    try:
+        with gzip.GzipFile(backup_data_path, "rb") as orig_gzip, \
+             gzip.GzipFile(original_data_path, "wb") as modified_gzip:
+            data = bytearray(orig_gzip.read())
+            data[1] = 37
+            modified_gzip.write(data)
+
+        # succeeds if checksum validation is explicitly overriden
+        dataset = sklearn.datasets.fetch_openml(data_id=data_id, cache=False,
+                                                verify_checksum=False)
+        assert dataset
+
+        # fails with checksum validation (default)
+        with pytest.raises(ValueError) as exc:
+            sklearn.datasets.fetch_openml(data_id=data_id, cache=False,
+                                          verify_checksum=True)
+
+        assert exc
+    finally:
+        shutil.copy(backup_data_path, original_data_path)
+        os.remove(backup_data_path)
