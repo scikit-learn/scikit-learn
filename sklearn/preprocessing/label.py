@@ -828,7 +828,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
     >>> mlb.classes_
     array(['-', 'c', 'd', 'e', 'f', 'h', 'i', 'l', 'm', 'o', 'r', 's', 't',
         'y'], dtype=object)
-    
+
     To correct this, the list of labels should be passed in as:
 
     >>> mlb = MultiLabelBinarizer()
