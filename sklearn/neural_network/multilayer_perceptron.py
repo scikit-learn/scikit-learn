@@ -7,6 +7,7 @@
 # License: BSD 3 clause
 
 import numpy as np
+import scipy.sparse as sp
 
 from abc import ABCMeta, abstractmethod
 import warnings
@@ -19,12 +20,12 @@ from ._base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
 from ._stochastic_optimizers import SGDOptimizer, AdamOptimizer
 from ..model_selection import train_test_split
 from ..preprocessing import LabelBinarizer
-from ..utils import gen_batches, check_random_state
-from ..utils import shuffle
+from ..utils import gen_batches, check_random_state, get_chunk_n_rows
+from ..utils import shuffle, safe_indexing
 from ..utils import check_array, check_X_y, column_or_1d
 from ..exceptions import ConvergenceWarning
 from ..utils.extmath import safe_sparse_dot
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, _num_samples
 from ..utils.multiclass import _check_partial_fit_first_call, unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.optimize import _check_optimize_result
@@ -1070,7 +1071,34 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
             model, where classes are ordered as they are in `self.classes_`.
         """
         check_is_fitted(self)
-        y_pred = self._predict(X)
+
+        # Sparse matrix indexing is failing, hence do not chunks
+        if sp.issparse(X):
+            y_pred = self._predict(X)
+        else:
+            # Get the shape of the input
+            n_samples = _num_samples(X)
+            if X.ndim == 2:
+                n_features = X.shape[1]
+            else:
+                n_features = 1
+            n_classes = self.classes_.shape[0]
+
+            # get num rows that can fit in working_memory
+            # referring to IsolationForest -> _compute_chunked_score_samples()
+            chunk_n_rows = get_chunk_n_rows(row_bytes=16 * n_features,
+                                            max_n_rows=n_samples)
+            slices = gen_batches(n_samples, chunk_n_rows)
+
+            # In case of binary classification,
+            # probability of only one class is needed
+            if n_classes == 2:
+                y_pred = np.zeros((n_samples, 1))
+            else:
+                y_pred = np.zeros((n_samples, n_classes))
+
+            for sl in slices:
+                y_pred[sl] = self._predict(safe_indexing(X, sl))
 
         if self.n_outputs_ == 1:
             y_pred = y_pred.ravel()
