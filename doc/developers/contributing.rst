@@ -1722,6 +1722,5 @@ attributes:
        viz = RocCurveDisplay(fpr, tpr, roc_auc, 
                                 estimator.__class__.__name__)
        return viz.plot(ax=ax, name=name, **kwargs)
-```
 
 Read more in the :ref:`User Guide <visualizations>`.
