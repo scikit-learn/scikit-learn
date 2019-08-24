@@ -11,11 +11,11 @@ efficiently handle sparse matrices.
 The dataset used in this example is the 20 newsgroups dataset. It will be
 automatically downloaded, then cached.
 
-The bar plot indicates the accuracy, training time (normalized) and test time
-(normalized) of each classifier.
-
 """
 
+##############################################################################
+# Setting up commond line parser and data loading
+# ------------------------------------
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Mathieu Blondel <mathieu@mblondel.org>
@@ -51,8 +51,6 @@ from sklearn import metrics
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(message)s')
 
-
-# parse commandline arguments
 op = OptionParser()
 op.add_option("--report",
               action="store_true", dest="print_report",
@@ -100,6 +98,7 @@ print()
 
 # #############################################################################
 # Load some categories from the training set
+# ------------------------------------
 if opts.all_categories:
     categories = None
 else:
@@ -202,6 +201,8 @@ def trim(s):
 
 # #############################################################################
 # Benchmark classifiers
+# ------------------------------------
+
 def benchmark(clf):
     print('_' * 80)
     print("Training: ")
@@ -294,8 +295,11 @@ results.append(benchmark(Pipeline([
                                                   tol=1e-3))),
   ('classification', LinearSVC(penalty="l2"))])))
 
-# make some plots
-
+# #############################################################################
+# Adding plots
+# ------------------------------------
+# The bar plot indicates the accuracy, training time (normalized) and test time
+# (normalized) of each classifier.
 indices = np.arange(len(results))
 
 results = [[x[i] for x in results] for i in range(4)]
