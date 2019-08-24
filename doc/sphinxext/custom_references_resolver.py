@@ -120,3 +120,8 @@ def setup(app):
             break
     else:
         raise RuntimeError("ReferencesResolver not found")
+
+    return {
+        'parallel_read_safe': True,
+        'parallel_write_safe': True
+    }
