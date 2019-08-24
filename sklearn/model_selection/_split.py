@@ -601,8 +601,20 @@ class StratifiedKFold(_BaseKFold):
 
     Notes
     -----
-    Train and test sizes may be different in each fold, with a difference of at
-    most ``n_classes``.
+    The implementation is designed to:
+
+    * Generate test sets such that all contain the same distribution of
+      classes, or as close as possible.
+    * Be invariant to class label: relabelling ``y = ["Happy", "Sad"]`` to
+      ``y = [1, 0]`` should not change the indices generated.
+    * Preserve order dependencies in the dataset ordering, when
+      ``shuffle=False``: all samples from class k in some test set were
+      contiguous in y, or separated in y by samples from classes other than k.
+    * Generate test sets where the smallest and largest differ by at most one
+      sample.
+
+    .. versionchanged:: 0.22
+        The previous implementation did not follow the last constraint.
 
     See also
     --------
@@ -623,9 +635,16 @@ class StratifiedKFold(_BaseKFold):
                     allowed_target_types, type_of_target_y))
 
         y = column_or_1d(y)
-        n_samples = y.shape[0]
-        unique_y, y_inversed = np.unique(y, return_inverse=True)
-        y_counts = np.bincount(y_inversed)
+
+        _, y_idx, y_inv = np.unique(y, return_index=True, return_inverse=True)
+        # y_inv encodes y according to lexicographic order. We invert y_idx to
+        # map the classes so that they are encoded by order of appearance:
+        # 0 represents the first label appearing in y, 1 the second, etc.
+        _, class_perm = np.unique(y_idx, return_inverse=True)
+        y_encoded = class_perm[y_inv]
+
+        n_classes = len(y_idx)
+        y_counts = np.bincount(y_encoded)
         min_groups = np.min(y_counts)
         if np.all(self.n_splits > y_counts):
             raise ValueError("n_splits=%d cannot be greater than the"
@@ -633,35 +652,29 @@ class StratifiedKFold(_BaseKFold):
                              % (self.n_splits))
         if self.n_splits > min_groups:
             warnings.warn(("The least populated class in y has only %d"
-                           " members, which is too few. The minimum"
-                           " number of members in any class cannot"
-                           " be less than n_splits=%d."
-                           % (min_groups, self.n_splits)), Warning)
+                           " members, which is less than n_splits=%d."
+                           % (min_groups, self.n_splits)), UserWarning)
 
-        # pre-assign each sample to a test fold index using individual KFold
-        # splitting strategies for each class so as to respect the balance of
-        # classes
-        # NOTE: Passing the data corresponding to ith class say X[y==class_i]
-        # will break when the data is not 100% stratifiable for all classes.
-        # So we pass np.zeroes(max(c, n_splits)) as data to the KFold
-        per_cls_cvs = [
-            KFold(self.n_splits, shuffle=self.shuffle,
-                  random_state=rng).split(np.zeros(max(count, self.n_splits)))
-            for count in y_counts]
+        # Determine the optimal number of samples from each class in each fold,
+        # using round robin over the sorted y. (This can be done direct from
+        # counts, but that code is unreadable.)
+        y_order = np.sort(y_encoded)
+        allocation = np.asarray(
+            [np.bincount(y_order[i::self.n_splits], minlength=n_classes)
+             for i in range(self.n_splits)])
 
-        test_folds = np.zeros(n_samples, dtype=np.int)
-        for test_fold_indices, per_cls_splits in enumerate(zip(*per_cls_cvs)):
-            for cls, (_, test_split) in zip(unique_y, per_cls_splits):
-                cls_test_folds = test_folds[y == cls]
-                # the test split can be too big because we used
-                # KFold(...).split(X[:max(c, n_splits)]) when data is not 100%
-                # stratifiable for all the classes
-                # (we use a warning instead of raising an exception)
-                # If this is the case, let's trim it:
-                test_split = test_split[test_split < len(cls_test_folds)]
-                cls_test_folds[test_split] = test_fold_indices
-                test_folds[y == cls] = cls_test_folds
-
+        # To maintain the data order dependencies as best as possible within
+        # the stratification constraint, we assign samples from each class in
+        # blocks (and then mess that up when shuffle=True).
+        test_folds = np.empty(len(y), dtype='i')
+        for k in range(n_classes):
+            # since the kth column of allocation stores the number of samples
+            # of class k in each test set, this generates blocks of fold
+            # indices corresponding to the allocation for class k.
+            folds_for_class = np.arange(self.n_splits).repeat(allocation[:, k])
+            if self.shuffle:
+                rng.shuffle(folds_for_class)
+            test_folds[y_encoded == k] = folds_for_class
         return test_folds
 
     def _iter_test_masks(self, X, y=None, groups=None):
