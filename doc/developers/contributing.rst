@@ -187,20 +187,30 @@ Contributing code
 
 How to contribute
 -----------------
-Before you start contributing, you need to setup your development environment. This can be either a virtual environment with Conda or your own primary development environment.
+
+Before you start contributing, you need to setup your development environment.
+This can be either a virtual environment with Conda or your own primary 
+development environment.
 
 Using a Virtual Environment with Conda
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Using a virtual environment allows you to seperate your working directory and its packages from your primary development environment. This way, the unstable scikit-learn library in development mode does not temper with your system's scikit-learn's performance.
+Using a virtual environment allows you to seperate your working directory and
+its packages from your primary development environment. This way, the unstable 
+scikit-learn library in development mode does not temper with your system's 
+scikit-learn's performance.
 
-1. `Download the Anaconda Distribution <https://www.anaconda.com/distribution/>`__ for your OS. Make sure you download Python 3.6+ version since scikit-learn only supports the newer versions of Python 3.
+1. `Download the Anaconda Distribution <https://www.anaconda.com/distribution/>`__ for your OS. 
+   Make sure you download Python 3.6+ version since scikit-learn only supports 
+   the newer versions of Python 3.
 2. Open the Anaconda Command Prompt
 3. Create a virtual environment for scikit-learn development::
 
        $ conda create -n sklearndev numpy scipy matplotlib pytest sphinx cython ipykernel sphinx-gallery
 
-   Here, you can replace the sklearndev with any name you like. If conda doesn't find any library mentioned above, remove it from the command and proceed to the next steps and install it using pip.
+   Here, you can replace the sklearndev with any name you like. 
+   If conda doesn't find any library mentioned above, remove it from the command 
+   and proceed to the next steps and install it using pip.
 
 4. Activate the virtual environment::
 
@@ -218,7 +228,10 @@ Using your primary development environment
        $ pip install cython pytest flake8
 
 .. note::
-  If you decide to use your primary development environment, then do remember that when we will be installing scikit-learn in editable mode later on, it will replace your current version of stable scikit-learn and might add inconsistencies to your other projects that depend upon scikit-learn.
+  If you decide to use your primary development environment, then do remember 
+  that when we will be installing scikit-learn in editable mode later on, it 
+  will replace your current version of stable scikit-learn and might add 
+  inconsistencies to your other projects that depend upon scikit-learn.
 
 Setting your Repository
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -242,7 +255,9 @@ then submit a "pull request" (PR):
        $ git clone git@github.com:YourLogin/scikit-learn.git
        $ cd scikit-learn
 
-4. If you are using a virtual environment, then activate your environment first and then only install your dependencies through it. Install the development dependencies::
+4. If you are using a virtual environment, then activate your environment 
+   first and then only install your dependencies through it. 
+   Install the development dependencies::
 
        $ pip install cython pytest flake8
 
@@ -251,7 +266,9 @@ then submit a "pull request" (PR):
        $ pip install --editable .
 
    for more details about advanced installation, see the
-   :ref:`install_bleeding_edge` section. Make sure to run the install inside your virtual environment if you are using one. 
+   :ref:`install_bleeding_edge` section. 
+   Make sure to run the install inside your virtual environment
+   if you are using one. 
 
 7. Add the ``upstream`` remote. This saves a reference to the main
    scikit-learn repository, which you can use to keep your repository
@@ -279,9 +296,10 @@ then submit a "pull request" (PR):
 
        $ git push -u origin my-feature
 
-10. Follow `these <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_ instructions to create a pull request from your fork. This will send an
-   email to the committers. You may want to consider sending an email to the
-   mailing list for more visibility.
+10. Follow `these <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_ instructions 
+    to create a pull request from your fork. This will send an
+    email to the committers. You may want to consider sending an email to the
+    mailing list for more visibility.
 
 .. note::
 
