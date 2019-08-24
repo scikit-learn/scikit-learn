@@ -1364,9 +1364,9 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         The number of iteration on data batches that has been
         performed before.
 
-    random_state_ : RandomState 
+    random_state_ : RandomState
         RandomState instance that is generated either from a seed, the random
-        number generattor or by `np.random`. 
+        number generattor or by `np.random`.
 
     Notes
     -----
