@@ -1292,7 +1292,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     sublinear_tf : boolean (default=False)
         Apply sublinear tf scaling, i.e. replace tf with 1 + log(tf).
 
-    standard_idf: boolean (default=False)
+    standard_idf : boolean (default=False)
         Use standard idf term, log(n/df(t)). If false idf is log(n/df(t)) + 1.
 
     Attributes
@@ -1557,7 +1557,7 @@ class TfidfVectorizer(CountVectorizer):
     sublinear_tf : boolean (default=False)
         Apply sublinear tf scaling, i.e. replace tf with 1 + log(tf).
 
-    standard_idf: boolean (default=False)
+    standard_idf : boolean (default=False)
         Use standard idf term, log(n/df(t)). If false idf is log(n/df(t)) + 1.
 
     Attributes
