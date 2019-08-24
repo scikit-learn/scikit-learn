@@ -1426,7 +1426,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Machine Learning 85(1-2):41-75.
         https://www.csie.ntu.edu.tw/~cjlin/papers/maxent_dual.pdf
 
-    Generalized Linear Model 1.1.11 Logistic Regression
+    Generalized Linear Model 1.1.11 Logistic Regressiongit
         https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
     """
 
