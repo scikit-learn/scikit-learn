@@ -908,7 +908,7 @@ class SVR(BaseLibSVM, RegressorMixin):
 
     fit_status_ : int
         0 if correctly fitted, 1 otherwise (will raise warning)
-    
+
     shape_fit_ : tuple, shape = [n_dimensions_of_X]
         Array dimensions of training vector ``X``.
 
