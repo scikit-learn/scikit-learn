@@ -117,7 +117,7 @@ class Perceptron(BaseSGDClassifier):
 
     loss_function_ : concrete ``LossFunction`` 
         Loss function used by Perceptron. It is Hinge loss for binary 
-        classification with y in {-1,1} with threshold=0.0.
+        classification with y in {-1,1} and threshold=0.0.
 
     Notes
     -----
