@@ -325,7 +325,7 @@ def test_iforest_deprecation():
 
 
 def test_iforest_with_uniform_data():
-    """Test whether iTrees predict inliers when using uniform data."""
+    """Test whether IsolationForest predicts inliers when using uniform data."""
 
     # 2-d array of all 1s
     X = np.ones((100, 10))
