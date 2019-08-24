@@ -156,17 +156,17 @@ plt.show()
 
 
 ############################################################################
-#The second plot visualized the decision surfaces of the RBF kernel SVM and
-#the linear SVM with approximate kernel maps.
-#The plot shows decision surfaces of the classifiers projected onto
-#the first two principal components of the data. This visualization should
-#be taken with a grain of salt since it is just an interesting slice through
-#the decision surface in 64 dimensions. In particular note that
-#a datapoint (represented as a dot) does not necessarily be classified
-#into the region it is lying in, since it will not lie on the plane
-#that the first two principal components span.
-#The usage of :class:`RBFSampler` and :class:`Nystroem` is described in detail
-#in :ref:`kernel_approximation`.
+# The second plot visualized the decision surfaces of the RBF kernel SVM and
+# the linear SVM with approximate kernel maps.
+# The plot shows decision surfaces of the classifiers projected onto
+# the first two principal components of the data. This visualization should
+# be taken with a grain of salt since it is just an interesting slice through
+# the decision surface in 64 dimensions. In particular note that
+# a datapoint (represented as a dot) does not necessarily be classified
+# into the region it is lying in, since it will not lie on the plane
+# that the first two principal components span.
+# The usage of :class:`RBFSampler` and :class:`Nystroem` is described in detail
+# in :ref:`kernel_approximation`.
 
 # visualize the decision surface, projected down to the first
 # two principal components of the dataset
