@@ -46,7 +46,7 @@ We can now quickly sample a training set while holding out 40% of the
 data for testing (evaluating) our classifier::
 
   >>> X_train, X_test, y_train, y_test = train_test_split(
-  ...     iris.data, iris.target, test_size=0.4, random_state=0)
+  ...     X, y, test_size=0.4, random_state=0)
 
   >>> X_train.shape, y_train.shape
   ((90, 4), (90,))
