@@ -228,7 +228,7 @@ then submit a "pull request" (PR):
    changes::
 
        $ git fetch upstream
-       $ git checkout -b my-feature upstream/master
+       $ git checkout -b my-feature
 
    and start making changes. Always use a ``feature`` branch. It's good
    practice to never work on the ``master`` branch!
