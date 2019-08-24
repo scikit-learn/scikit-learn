@@ -146,6 +146,27 @@ def test_make_classification_informative_features():
              n_clusters_per_class=2)
 
 
+def test_make_classification_weights_type():
+    """Test change of type for weights from
+       list or None to sequence or None, so that a
+       numpy array can be also be passed not just a list.
+
+    """
+    # w as None (default)
+    X, y = make_classification()
+    assert X.shape == (100, 20), "X shape mismatch"
+
+    # w as list
+    w = [0.25, 0.75]
+    X, y = make_classification(weights=w)
+    assert X.shape == (100, 20), "X shape mismatch"
+
+    # w as array: should pass in PR_14764, fail in master
+    w = np.array([0.25, 0.75]) 
+    X, y = make_classification(weights=w)
+    assert X.shape == (100, 20), "X shape mismatch"
+
+
 def test_make_multilabel_classification_return_sequences():
     for allow_unlabeled, min_length in zip((True, False), (0, 1)):
         X, Y = make_multilabel_classification(n_samples=100, n_features=20,

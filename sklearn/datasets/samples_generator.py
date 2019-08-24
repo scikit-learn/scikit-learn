@@ -162,15 +162,15 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     if n_informative < np.log2(n_classes * n_clusters_per_class):
         raise ValueError("n_classes * n_clusters_per_class must"
                          " be smaller or equal 2 ** n_informative")
-    if not weights is None:
-        if all(weights) and len(weights) not in [n_classes, n_classes - 1]:
+    if weights is not None and (all(weights) and 
+                                len(weights) not in [n_classes, n_classes - 1]):
             raise ValueError("Weights specified but incompatible with number "
                          "of classes.")
 
     n_useless = n_features - n_informative - n_redundant - n_repeated
     n_clusters = n_classes * n_clusters_per_class
 
-    if not weights is None:
+    if weights is not None:
         if all(weights) and len(weights) == (n_classes - 1):
             weights = weights + [1.0 - sum(weights)]
     else:
