@@ -1400,7 +1400,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     in the narrative documentation.
 
     To evaluate the significance of coefficients, one may use bootstrapping.
-    For further information, refer the documentation.
+    For further information, refer the documentation below.
+    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
 
     References
     ----------
@@ -1426,8 +1427,6 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Machine Learning 85(1-2):41-75.
         https://www.csie.ntu.edu.tw/~cjlin/papers/maxent_dual.pdf
 
-    Generalized Linear Model 1.1.11 Logistic Regression
-        https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
     """
 
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
